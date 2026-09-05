@@ -139,10 +139,11 @@ export function DeskToolShelf() {
   // <= 50 ms; no second fetch storm -- the shade reads the same route).
   const [projectNeedsYou, setProjectNeedsYou] = useState<Record<string, number>>({});
   useEffect(() => {
-    void apiFetch<{ items?: Array<{ projectId?: string }> }>("/api/desk/needs-you")
+    void apiFetch<{ items?: Array<{ projectId?: string; muted?: boolean }> }>("/api/desk/needs-you")
       .then((payload) => {
         const counts: Record<string, number> = {};
-        for (const item of payload?.items ?? []) {
+        // One count everywhere: muted Rooms' items never inflate a badge (counsel C1).
+        for (const item of (payload?.items ?? []).filter((i) => !i.muted)) {
           const pid = item.projectId;
           if (pid) counts[pid] = (counts[pid] ?? 0) + 1;
         }

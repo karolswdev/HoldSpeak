@@ -518,7 +518,7 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 ## MCP sidecar
 
 The MCP sidecar (`holdspeak-mcp`) is the desk's programmable surface over
-stdio. It exposes 197 tools across 35 families and 34 default, non-owner
+stdio. It exposes 201 tools across 36 families and 34 default, non-owner
 resources, so any MCP client can read and drive the desk without the web UI.
 The Concierge family adds five tools (`concierge.detect`, `concierge.propose`,
 `concierge.probe`, `concierge.apply`, `concierge.download`) for engine

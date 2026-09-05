@@ -415,6 +415,11 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
                     unmuted.append(item)
             aggregate["count"] = len(unmuted)
             aggregate["mutedCount"] = muted_count
+            # One count everywhere: "across M projects" counts only Rooms
+            # that still contribute (counsel C2).
+            aggregate["projects"] = sorted(
+                {str(i.get("projectId")) for i in unmuted if i.get("projectId")}
+            )
         return aggregate
 
     _needs_you_cache = NeedsYouCache(_build_needs_you, max_age_s=900.0)
