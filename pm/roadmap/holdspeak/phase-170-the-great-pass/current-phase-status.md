@@ -1,7 +1,7 @@
 # Phase 170 - The Great Pass
 
 - **Project:** holdspeak
-- **Status:** ACTIVE 2/7
+- **Status:** ACTIVE 3/7
 - **Chartered:** 2026-09-05 off main `f8e2739d` (169 The Streamlined Door MERGED via PR #551 → `27eabf0c`; the handover addendum #552)
 - **Canon:** docs/internal/CONSTITUTION.md; docs/internal/DESIGN_SYSTEM.md (the interior canon); web/src/desk/surface/contract.md (the species); **docs/internal/UX-CANON.md (the face canon, born this phase)**; pm/roadmap/holdspeak/THE-TUESDAY-ARC.md (the order of the arc; this phase is its horizontal frame + its 170)
 
@@ -42,7 +42,7 @@ desk we are both proud of.
 
 ## Where we are
 
-**ACTIVE 2/7.** Branch `feat/the-great-pass` off main `f8e2739d`.
+**ACTIVE 3/7.** Branch `feat/the-great-pass` off main `f8e2739d`.
 **01 DONE:** UX-CANON.md; 17 surfaces × 2 widths shot; 671 canon
 violations located and ranked; the rig re-captured green after the
 sweep (the after-census). **02 DONE:** all three sweep lanes
