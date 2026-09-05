@@ -57,12 +57,18 @@ def _window(page: Any) -> Any:
 
 def _shot(page: Any, name: str, width: int) -> Path:
     _settle(page)
+    # Stretch the viewport tall enough to show the whole face without clipping.
+    old_size = page.viewport_size
+    page.set_viewport_size({"width": old_size["width"], "height": 2400})
+    _settle(page)
     path = SHOTS / f"build-{name}-{width}.png"
     win = _window(page)
     if win.count() > 0:
         win.screenshot(path=str(path))
     else:
         page.screenshot(path=str(path), full_page=False)
+    # Restore original viewport
+    page.set_viewport_size(old_size)
     assert path.stat().st_size > 2_000, f"Shot {name} too small ({path.stat().st_size})"
     return path
 
@@ -180,6 +186,20 @@ def test_concierge_main(tmp_path, monkeypatch, width):
             root = page.get_by_test_id("concierge-root")
             raw = root.locator("button:not(.btn):not(.surface-ledger-line):not(.gadget-chip-egress)")
             assert raw.count() == 0, f"Raw <button>: {raw.count()}"
+
+            # Every state chip sits fully inside its row (not clipped)
+            clipped = page.evaluate("""() => {
+              const chips = document.querySelectorAll('.concierge-root .surface-state-chip');
+              for (const chip of chips) {
+                const row = chip.closest('.surface-ledger-row');
+                if (!row) continue;
+                const cr = chip.getBoundingClientRect();
+                const rr = row.getBoundingClientRect();
+                if (cr.right > rr.right - 4) return `${chip.textContent} right=${cr.right} row=${rr.right}`;
+              }
+              return null;
+            }""")
+            assert clipped is None, f"State chip clipped: {clipped}"
 
             if width == 393:
                 assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")

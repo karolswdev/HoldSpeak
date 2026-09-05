@@ -99,6 +99,8 @@
   gap: 6px 10px;
   grid-template-columns: unset !important;
   padding: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .concierge-found-list .surface-ledger-lead,
@@ -172,16 +174,21 @@
   display: contents;
 }
 
+/* State chip right-aligned on line 1 */
+.concierge-found-state {
+  margin-left: auto;
+  flex: none;
+  white-space: nowrap;
+}
+
+/* Host chip on line 2 */
 .concierge-found-line2 {
   display: flex;
   align-items: center;
   gap: 8px;
   flex: 1 0 100%;
+  min-width: 0;
   margin-left: 46px;
-}
-
-.concierge-found-line2 .surface-state-chip {
-  margin-left: auto;
 }
 
 /* ── SET row cells: two-line grammar ──
@@ -192,16 +199,21 @@
   display: contents;
 }
 
+/* State chip right-aligned on line 1 */
+.concierge-set-state {
+  margin-left: auto;
+  flex: none;
+  white-space: nowrap;
+}
+
+/* Latency + host on line 2 */
 .concierge-set-line2 {
   display: flex;
   align-items: center;
   gap: 8px;
   flex: 1 0 100%;
+  min-width: 0;
   margin-left: 46px;
-}
-
-.concierge-set-line2 .surface-state-chip {
-  margin-left: auto;
 }
 
 /* ── Key chip ── */
@@ -378,10 +390,13 @@
   flex-shrink: 0;
 }
 
-/* ── Add an engine: ghost text aligned with names ── */
+/* ── Add an engine: ghost text aligned with names (no box) ── */
 
 .concierge-add-engine {
   padding-left: 48px;
+  font: 400 13px/1.3 Inter, system-ui, sans-serif;
+  color: var(--faint, #767e8d);
+  cursor: pointer;
 }
 
 /* ── Footer: portaled, receipt left-aligned, never wraps ── */

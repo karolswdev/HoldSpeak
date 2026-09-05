@@ -86,14 +86,17 @@ function FoundEngineRow({
               {humanSize(row.progress.received)} / {humanSize(row.progress.total)}
             </span>
           ) : null}
-          {/* Line 2: host + state */}
-          <span className="concierge-found-line2">
-            <EgressChip label={hostLabel} scope={hostScope} />
+          {/* State chip: right-aligned on line 1 */}
+          <span className="concierge-found-state">
             {isReady ? <StateChip state="success" label="READY" icon="●" />
             : isNotSet ? <StateChip state="warning" label="KEY NOT SET" />
             : isUnreachable ? <StateChip state="failure" label="UNREACHABLE" />
             : isWaiting ? <StateChip state="idle" label="WAITING" icon="○" />
             : null}
+          </span>
+          {/* Line 2: host chip */}
+          <span className="concierge-found-line2">
+            <EgressChip label={hostLabel} scope={hostScope} />
           </span>
         </span>
       }
@@ -138,15 +141,18 @@ function SetGroupRow({
               <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
             </svg>
           </Button>
-          {/* Line 2: latency + host + state */}
-          <span className="concierge-set-line2">
-            {!isOff && latency ? <span className="concierge-token">{latency}</span> : null}
-            {!isOff && hostLabel ? <EgressChip label={hostLabel} scope={engine ? engineHostScope(engine) : "local"} /> : null}
+          {/* State chip: right-aligned on line 1 */}
+          <span className="concierge-set-state">
             {row.state === "READY" ? <StateChip state="success" label="READY" icon="●" />
             : row.state === "CHECKING" ? <StateChip state="working" label="CHECKING" icon="○" />
             : row.state === "WAITING" ? <StateChip state="warning" label="WAITING" icon="○" />
             : row.state === "NOT_SET" ? <StateChip state="warning" label="KEY NOT SET" />
             : null}
+          </span>
+          {/* Line 2: latency + host */}
+          <span className="concierge-set-line2">
+            {!isOff && latency ? <span className="concierge-token">{latency}</span> : null}
+            {!isOff && hostLabel ? <EgressChip label={hostLabel} scope={engine ? engineHostScope(engine) : "local"} /> : null}
           </span>
         </span>
       }
@@ -303,8 +309,8 @@ export function ConciergeCore({ scope }: CoreProps) {
             <FoundEngineRow key={row.engine.id} row={row} ctrl={ctrl} />
           ))}
         </ul>
-        <span className="concierge-add-engine" data-testid="concierge-add-engine">
-          <Button dense variant="ghost" onClick={ctrl.addEngine}>Add an engine...</Button>
+        <span className="concierge-add-engine" data-testid="concierge-add-engine" role="button" tabIndex={0} onClick={ctrl.addEngine} onKeyDown={(e) => { if (e.key === "Enter") ctrl.addEngine(); }}>
+          Add an engine...
         </span>
       </div>
 
