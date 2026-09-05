@@ -468,7 +468,7 @@ def _run_room_rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
 
             # Hover the first source row before the shot (for hover-reveal verbs)
             if width >= 1440:
-                first_source = page.locator(".surface-ledger-row").first
+                first_source = page.locator("[data-testid='room-body'] .surface-ledger-row").first
                 if first_source.count() > 0:
                     first_source.hover()
                     _settle(page)
