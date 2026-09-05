@@ -178,11 +178,16 @@ function ConnectedRow({ row, ctrl }: { row: SourceRow; ctrl: DoorController }) {
               {row.plain}
             </span>
           ) : null}
+
+          {/* HS-174-07: Confluence shows SIGNED IN AS <email> */}
+          {row.provider === "confluence" && row.connectionEmail ? (
+            <StateChip state="success" label={`SIGNED IN AS ${row.connectionEmail.toUpperCase()}`} />
+          ) : null}
         </span>
       }
       trailing={
         <span className="door-row-trailing">
-          <EgressChip label={row.host.toUpperCase() || "—"} scope="cloud" />
+          {row.host ? <EgressChip label={row.host.toUpperCase()} scope="cloud" /> : null}
           <Button
             dense
             variant="ghost"

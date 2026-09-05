@@ -55,6 +55,8 @@ export interface SourceRow {
   counts: CountToken[];
   plain: string;
   host: string;
+  /** HS-174-07: connection email for Confluence SIGNED IN chip. */
+  connectionEmail: string;
   reason: string | null;
   pickerOpen: boolean;
   adjustOpen: boolean;
@@ -106,6 +108,7 @@ function makeRow(tool: ConnectionTool): SourceRow {
     counts: [],
     plain: "",
     host: tool.egress_host ?? "",
+    connectionEmail: tool.account?.email ?? "",
     reason: null,
     pickerOpen: false,
     adjustOpen: false,

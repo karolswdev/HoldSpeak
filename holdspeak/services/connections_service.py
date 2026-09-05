@@ -346,9 +346,14 @@ class ConnectionsService:
         for conn in connections:
             state = conn.get("state", "not_configured")
             display = _map_jira_state(state)  # reuse the Jira state mapper
-            site = conn.get("site", "")
-            email = conn.get("email", "")
-            ref = conn.get("connection_ref", f"{site}|{email}")
+            # Parse site|email from external_connection_ref (the confluence identity).
+            ext_ref = str(conn.get("external_connection_ref", ""))
+            if "|" in ext_ref:
+                site, email = ext_ref.split("|", 1)
+            else:
+                site = conn.get("site", "")
+                email = conn.get("email", "")
+            ref = ext_ref or f"{site}|{email}"
             sub_rows.append({
                 "connection_ref": ref,
                 "state": display,
@@ -360,12 +365,20 @@ class ConnectionsService:
             if display == "connected":
                 overall_state = "connected"
                 overall_egress = site
+                first_site = site
+                first_email = email
 
         first = connections[0] if connections else {}
+        first_ext = str(first.get("external_connection_ref", ""))
+        if "|" in first_ext:
+            f_site, f_email = first_ext.split("|", 1)
+        else:
+            f_site = first.get("site", "")
+            f_email = first.get("email", "")
         return {
             "provider_id": "confluence",
             "state": overall_state,
-            "account": {"site": first.get("site", ""), "email": first.get("email", "")},
+            "account": {"site": f_site, "email": f_email},
             "next_action": None,
             "recovery_hint": None,
             "error_detail": None,
