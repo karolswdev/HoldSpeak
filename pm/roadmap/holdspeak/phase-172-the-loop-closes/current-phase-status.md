@@ -108,7 +108,7 @@ between a person's name and a Watch entity's assignee/reviewer.
 | HS-172-06 | The suggested source (meeting mention of a repo/issue as a suggested source row) | backlog | [story-06-the-suggested-source](./story-06-the-suggested-source.md) | -- |
 | HS-172-07 | People in the Room and the shade (the 393 gap; the face at both widths) | backlog | [story-07-people-in-the-room](./story-07-people-in-the-room.md) | -- |
 | HS-172-08 | The walk (his desk: a meeting that closes its loop) | in-progress | [story-08-the-walk](./story-08-the-walk.md) | -- |
-| HS-172-09 | The docs (the loop in the architecture; the People card in the guide) | backlog | [story-09-the-docs](./story-09-the-docs.md) | -- |
+| HS-172-09 | The docs (the loop in the architecture; the People card in the guide) | in-progress | [story-09-the-docs](./story-09-the-docs.md) | -- |
 | HS-172-10 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | backlog | [story-10-the-close](./story-10-the-close.md) | -- |
 
 ## Where we are

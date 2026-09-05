@@ -369,6 +369,59 @@ flowchart TD
   APV -. "authorized only" .-> EXT(["GitHub, Slack"])
 ```
 
+### The loop closes
+
+<!-- verify at build -->
+
+After a meeting ends and its transcript is saved, the loop carries extracted
+intelligence through to confirmed decisions and commitments. The trigger,
+extraction, and proposal path are separate steps; nothing commits without
+a human **Confirm**.
+
+```mermaid
+sequenceDiagram
+  participant MG as meeting_glue.py<br/>(stop capture)
+  participant PS as persistence.py<br/>(session save)
+  participant PD as project_detector.py<br/>(associate Rooms)
+  participant IQ as intel_queue.py<br/>(deferred queue)
+  participant DC as decision_capture<br/>(plugin)
+  participant AO as action_owner_enforcer<br/>(plugin)
+  participant FT as FollowThroughService<br/>(proposal bridge)
+  participant KO as Kernel<br/>(admit + receipt)
+  participant UI as Room NEEDS YOU
+
+  MG->>PS: save meeting
+  PS-->>MG: saved
+  MG->>PD: associate with Rooms
+  PD-->>MG: linked project_ids
+  alt auto-intel enabled AND Room-linked
+    MG->>IQ: enqueue intel job<br/>(transcript_hash dedup)
+    IQ->>DC: run decision_capture
+    DC-->>IQ: decisions[]
+    IQ->>AO: run action_owner_enforcer
+    AO-->>IQ: action_items[]
+    IQ->>FT: bridge: artifacts to proposals
+    FT-->>UI: pending proposals in NEEDS YOU
+  end
+  Note over UI: Owner reviews proposals
+  UI->>KO: Confirm (one proposal)
+  KO-->>UI: decision_record + commitment (receipted)
+  UI->>FT: Drop (one proposal)
+  FT-->>UI: proposal marked dropped (receipted)
+```
+
+The People resolver enriches the 1:1 brief with Watch entity data. It matches
+owner aliases and display names inside the encrypted People boundary at read
+time (`people_service.resolve_relationship_by_watch_identity`). The match
+result never leaves the boundary; only Watch entity data (PR titles, issue
+keys, days waiting) appears in the brief projection.
+
+A suggested source is a post-intel step (not a plugin): it scans the transcript
+for `owner/repo` patterns and Jira-style issue keys, checks them against
+connected providers, and presents rows in the Room's **SOURCES** section.
+**Add** creates a Watch source; **Dismiss** persists the dismissal. A
+suggestion matching an existing Watch source is suppressed.
+
 ### The scheduled recording conductor
 
 The hub can start a recording on its own at a scheduled time. The scheduled

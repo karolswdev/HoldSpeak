@@ -501,14 +501,101 @@ After a meeting, its row in the Meetings stream shows one of these states:
 |---|---|---|
 | **SAVED** | Intelligence ran and results are stored. | **Open** |
 | **OFF** | Has a transcript but intelligence never ran. | **Run intelligence** |
+<!-- verify at build -->
+| **RAN** | Auto-run completed; duration and model host shown (`RAN, 41 S, host`). | **Open** |
+| **RUNNING** | Intelligence is running now. | |
 | **NEEDS YOU** | Open items need your attention (count shown). | **Open** |
 | **NO TRANSCRIPT** | No transcript available yet. | |
-| **FAILED** | Intelligence failed. | **Retry** |
+| **FAILED** | Intelligence failed (the reason is named). | **Retry** |
 | **REC** | Recording now. | |
 
 Choose **Run intelligence** on any **OFF** meeting to process its transcript
 through the configured plugins. The detail view shows the outcomes, the
 transcript, and aftercare when a channel is configured.
+
+## The loop closes
+
+<!-- verify at build -->
+
+The loop is what happens after a meeting ends: intelligence extracts decisions
+and action items, and you decide what to keep. Nothing fires by itself. Every
+extracted item arrives as a proposal; **Confirm** commits it through the kernel.
+
+### The auto-run setting
+
+The auto-run setting controls when meeting intelligence runs. Open
+**Settings, Meetings**. The **Intelligence** row carries a CycleGadget with
+three positions and the model's host chip:
+
+| Position | Behavior |
+|---|---|
+| **OFF** | Intelligence never runs automatically. Use **Run intelligence** on individual meetings. |
+| **ROOM-LINKED ONLY** (default) | Intelligence runs automatically after every meeting linked to a Room. The Room link is the consent act. |
+| **AFTER EVERY MEETING** | Intelligence runs automatically after every meeting, linked or not. |
+
+The model host chip on the row names where intelligence runs (for example
+`THIS DEVICE` or `192.168.1.43, LAN`). When no model is assigned, the chip
+reads **NO MODEL** and auto-run jobs queue with a named failure.
+
+### Proposals in the Room and on the arrival
+
+After intelligence completes, extracted decisions and action items appear as
+proposals in the Room's **NEEDS YOU** section and on the arrival. Each proposal
+row shows:
+
+- The extracted text (for example `Confirm: adopt PostgreSQL 17 for the data layer`).
+- A provenance token naming the meeting and the segment timestamp.
+- The speaker label, when known.
+- The model host chip at the point of extraction.
+
+Three verbs on each proposal:
+
+| Verb | What it does |
+|---|---|
+| **Confirm** | Writes the decision record and the commitment through the kernel. The proposal moves to **DECISIONS & COMMITMENTS**. |
+| **Edit** | Unfolds an inline editor: the extracted text, the owner, and the due date are editable. **Save & confirm** commits the edited version. The original extraction stays as provenance. |
+| **Drop** | Dismisses the proposal with a receipt. No record is created. |
+
+When all proposals are confirmed or dropped, the **NEEDS YOU** section shows
+only Watch items (or is absent when nothing needs you).
+
+### The meeting detail after a run
+
+The meeting row in the stream gains a state token after an auto-run:
+`RAN, 41 S, 192.168.1.43, LAN` (a success chip, the wall-clock duration, and
+the model's host). A failed run reads `FAILED` with the reason named. The
+detail view's **NEEDS YOU** section lists the proposals scoped to that meeting,
+with the same **Confirm** / **Edit** / **Drop** verbs.
+
+### The 1:1 card
+
+Before a 1:1, the person's card in the People Prep lens carries what waits on
+them from your project Watches:
+
+- **PRS WAITING**: PRs where this person is a requested reviewer, with the days
+  since the request and the repo reference. Each row has an **Open** verb.
+- **OPEN ASSIGNMENTS**: Jira issues assigned to this person, with the issue key
+  and status. Each row has an **Open** verb.
+- **COMMITMENTS**: the existing section, with an **OVERDUE** count when any
+  commitment is past due.
+- **LAST MEETING**: the existing section, with the open-items count from the
+  most recent meeting.
+
+The summary line on the People ledger row reads the first two actionable facts
+(for example `2 PRs waiting 3+ days, 1 overdue`). When no Watch data matches
+and no commitments are overdue, the summary is absent. The People boundary
+applies: a name never leaves the encrypted People store. The resolver matches
+owner aliases and display names inside the boundary at read time, and only
+opaque references cross into the Watch projection.
+
+### Suggested sources
+
+When a meeting transcript mentions a repository (`owner/repo`) or an issue key
+that matches a connected provider, the Room's **SOURCES** section shows a
+suggested source row: `SUGGESTED, karolswdev/holdspeak, from Standup` with
+**Add** and **Dismiss**. **Add** creates a Watch source on the Room. **Dismiss**
+hides the suggestion; the same reference will not be suggested again for this
+Room. A suggestion for a reference that already has a Watch source is suppressed.
 
 ## The Arrival
 

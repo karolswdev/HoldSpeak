@@ -26,6 +26,13 @@ Settings, Models. The badge in the corner names what can leave this machine and
 where it goes.
 
 A meeting should change what happens next, not disappear into an archive.
+<!-- verify at build -->
+When a Room-linked meeting ends, meeting intelligence runs automatically on the
+model you assigned. Decisions and action items arrive as proposals you confirm,
+not as committed records: the extraction arms, your **Confirm** fires (Article
+IV in plain words). Before a 1:1, the person's card carries what waits on them
+(PRs, assignments, overdue commitments). A meeting transcript that names a
+repository suggests it as a source for the Room.
 HoldSpeak keeps decisions as durable records with transcript moments, lets you
 accept or supersede them, and promotes the ones that stand into ADRs, notes, or
 decision announcements. Project Memory finds the text years later across the

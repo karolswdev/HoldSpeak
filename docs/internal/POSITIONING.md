@@ -191,6 +191,10 @@ left column is the name; do not alternate with the synonyms.
 | Rhythm (the Settings module for the Heartbeat) | "cadence settings", "heartbeat config" |
 | the shade (the system pull-down) | "the tray", "the notification panel", "the dropdown" |
 | Run intelligence (the verb on an OFF meeting) | "process", "analyze", "run AI" |
+| a proposal (an extracted decision or action item awaiting Confirm) | "suggestion", "recommendation", "finding" |
+| Confirm (the verb that commits a proposal) | "accept", "approve", "apply" |
+| the loop (capture to confirmed decision) | "the pipeline", "the workflow", "the auto-intel flow" |
+| a suggested source (a repo or issue key mentioned in a transcript) | "a recommendation", "a detected source", "an inferred source" |
 
 ## Voice rules (the editing standard for every user-facing doc)
 

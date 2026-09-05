@@ -139,6 +139,15 @@ accepts an optional `evaluation_cadence_minutes` field (integer, 1..10080)
 that sets the per-watch evaluation interval; the same field is accepted by
 the HTTP `PUT /api/projects/{id}/steward/policy` route.
 
+<!-- verify at build -->
+Three suggested-source tools: `project.suggested_sources` returns the pending
+source suggestions for a Room (repositories and issue keys mentioned in meeting
+transcripts that do not already have a Watch source). Each suggestion carries
+the provider, the reference, and the meeting that mentioned it.
+`project.add_suggested_source` accepts one suggestion and creates a Watch
+source on the Room. `project.dismiss_suggested_source` hides the suggestion;
+the same reference will not recur for this Room.
+
 Five resource templates expose project data: `holdspeak://projects/{id}`,
 `.../room`, `.../delta`, `.../updates/{update_id}`, and
 `.../steward/runs/{run_id}`. Unknown ids refuse typed.
@@ -335,6 +344,28 @@ id.
 project, time, and pagination filters. Valid kinds are `decision`, `artifact`,
 `note`, and `thread`.
 
+<!-- verify at build -->
+
+### meeting.proposals
+
+`meeting.proposals` returns the pending proposals for a meeting (decisions and
+action items extracted by meeting intelligence). Each proposal carries the
+extracted text, provenance (meeting title, segment timestamp, speaker label),
+and the model host at extraction time. Proposals with status `confirmed` or
+`dropped` are excluded.
+
+### proposal.confirm and proposal.dismiss
+
+`proposal.confirm` writes a decision record and commitment through the kernel
+for one pending proposal. The proposal transitions from `pending` to
+`confirmed`. An optional `text`, `owner`, and `due` override the extracted
+values (the original extraction stays as provenance).
+
+`proposal.dismiss` marks one pending proposal as `dropped`. No decision record
+or commitment is created. A `proposal.dropped` receipt is written.
+
+Both tools refuse proposals that are not `pending`.
+
 ### people (16 tools)
 
 The encrypted People ledger defaults to `write` for the local owner process.
@@ -350,6 +381,14 @@ done/dismiss/reopen for shared commitments. `people.calendar.link` and
 `people.calendar.unlink` manage ICS calendar source association for a
 relationship. `people.owner_alias.link` and `people.owner_alias.unlink`
 bind and unbind the owner's own alias within the People boundary.
+
+<!-- verify at build -->
+`people.resolve` matches an identity string (a GitHub login, a Jira display
+name, or a plain name) against owner aliases and display names inside the
+encrypted People store. The match runs in memory at read time; no alias
+string or relationship detail appears in the result. The tool returns an
+opaque relationship id when a match exists, or a typed `no_match` when it
+does not. It never writes.
 
 MCP never initializes or recovers the encrypted store and never returns
 leader-private sessions, private prep, agenda, grounding notes, requests, or commitments. It
