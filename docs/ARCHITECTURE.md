@@ -652,6 +652,57 @@ expose `GET /api/connections` and
 `connection.list` and `connection.recheck`
 (`holdspeak/mcp/families/project.py:774,785`).
 
+### The clock
+
+<!-- verify at build --> The clock connects the calendar pipeline to the
+desk's temporal surfaces: the arrival's WEEK strip, event-born
+recordings, the Room's meeting watch, and the weekly brief.
+
+```mermaid
+sequenceDiagram
+  participant HB as Heartbeat sweep
+  participant CC as CalendarIngestConductor<br/>(refresh_all)
+  participant SR as CalendarSourceReader<br/>(file or HTTPS fetch)
+  participant PA as parse_calendar_bytes<br/>(pure ICS parser)
+  participant DB as CalendarEventRepository<br/>(replace_projection)
+  participant EM as Event-Room matcher<br/>(title, manual, attendee)
+  participant SC as ScheduledRecordingRepository<br/>(create idle)
+  participant CD as ScheduledRecordingConductor<br/>(arms at starts_at - 5 min)
+  participant DI as Door + Arrival<br/>(WEEK strip, upcoming)
+
+  HB->>CC: cadence tick
+  loop each enabled CalendarSource
+    CC->>SR: read source
+    alt HTTPS URL
+      SR-->>CC: ICS bytes (the only egress)
+    else local file path
+      SR-->>CC: ICS bytes (no egress)
+    end
+    CC->>PA: parse bytes
+    PA-->>CC: parsed events
+    CC->>DB: replace projection (atomic per source)
+  end
+  CC->>EM: match events to Rooms
+  EM-->>DB: calendar_event_projects
+  CC->>SC: create idle recordings (consent check)
+  SC-->>CD: idle, armed by conductor at starts_at - 5 min
+  DB-->>DI: projection feeds WEEK strip + upcoming
+```
+
+<!-- verify at build --> The `MeetingWatchSource` sits beside
+`GitHubWatchSource` and `JiraWatchSource` in the Watch source dispatch.
+It reads from the local database only (meetings, meeting_intel_snapshots,
+decision_records, meeting_projects). Each entity carries title, date,
+participant count, decisions count, commitments count, intel status, and
+an `updated_at` that participates in the Room's SINCE YOU LOOKED delta.
+Zero egress.
+
+<!-- verify at build --> The brief's `compute_window()` widens from
+day-windowed to week-windowed when a calendar is connected: `period_start`
+is Monday 00:00 of the current week, `period_end` is now. Two new
+collectors (calendar events and meeting Watch entities) produce items in
+the `this_week` and `meetings` sections, deduplicating by `calendar_uid`.
+
 ## The conductor loops and the Heartbeat
 
 The runtime starts several daemon threads, each with its own failure

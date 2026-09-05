@@ -1303,6 +1303,90 @@ reachable through the Projects surface.
 
 ![PROJECTS in the command deck](assets/heartbeat/command-deck-projects-1440.png)
 
+## The clock
+
+<!-- verify at build --> The clock is the calendar on the desk. Connect a
+calendar and the arrival gains a temporal signal: what is coming, what is
+armed, and which meetings belong to your Rooms.
+
+### Connecting a calendar
+
+Open **Settings, Meetings**. The **CALENDAR** section shows each
+configured source. Choose **Add** and paste an ICS URL (an Outlook or
+Google ICS export link) or a local file path. The row shows
+the source label, `ICS`, the egress host for HTTPS sources (absent for
+file sources), and `LAST READ HH:MM` after the first refresh. The
+conductor refreshes every 15 minutes. <!-- verify at build --> The
+snapshot adapter (`IMPORT SCREENSHOT`) extracts events from a calendar
+screenshot via the local vision model; confirmed events become a file
+source ingested through the same pipeline.
+
+### The WEEK strip
+
+<!-- verify at build --> Below the arrival's NEXT line, the WEEK strip
+shows five to seven day tokens (`MON` through `SUN`). Each day carries
+one dot per meeting on that day (maximum four dots; five or more reads
+`5+`). Today's token is accented. Below the dots: `N MEETINGS THIS WEEK`.
+
+The strip is absent when no calendar source is connected or when the
+connected calendar has zero events in the coming week.
+
+### Event rows
+
+<!-- verify at build --> Each calendar event on the arrival shows the
+event title, time (`HH:MM`), the calendar source label, and (when the
+event matches a Room) `ROOM . <name>`. When the event has an armed
+recording, the row carries `ARMS HH:MM` and a **Cancel** verb that
+disarms the recording without affecting the calendar event.
+
+### Auto-record
+
+Open **Settings, Meetings**. The **Auto-record** row carries a cycle
+control with three states:
+
+| State | What it does |
+|---|---|
+| `OFF` (default) | No event-born recordings are created |
+| `ARM ROOM MEETINGS ONLY` | Arms recordings for events matching a Room |
+| `ARM ALL CALENDAR MEETINGS` | Arms recordings for every event with a meeting URL |
+
+<!-- verify at build --> When enabled, the conductor creates an idle
+recording for each matching calendar event. The recording arms at
+`starts_at` minus five minutes. Armed never means started: the recording
+waits for the conductor's existing capture flow (Article IV). A `5 MIN
+BEFORE` token appears beside the toggle. When a calendar event moves,
+the recording's arm time moves with it. When an event disappears from
+the ICS feed, the recording is cancelled with a receipt.
+
+### The Room's meeting watch
+
+<!-- verify at build --> In the Room's **SOURCES** section, a meeting
+watch row sits alongside GitHub and Jira: `MTG` emblem, `MEETINGS`,
+`N THIS WEEK`, `NEXT THU 14:00`, and the Watch verbs (**Pause**,
+**Resume**, **Retire**). The row is absent when no meetings link to the
+Room. The meeting watch feeds into the Room's SINCE YOU LOOKED delta:
+a new intelligence run or a new commitment from a linked meeting
+appears as a change.
+
+### The weekly brief
+
+<!-- verify at build --> When a calendar is connected, the Rhythm module's
+brief row reads `Weekly brief` (it remains `Monday brief` without a
+calendar). The brief's window widens from yesterday-to-now to the full
+week: Monday 00:00 to now (looking back) and now to Sunday 23:59
+(looking ahead).
+
+The brief's week section carries two halves:
+
+- **THIS WEEK**: meetings count, armed recordings count, commitments due
+  with the first item and its day.
+- **SINCE FRIDAY** (or **LAST WEEK**): the existing collectors (Watch
+  changes, pipeline events, meetings) widened to the full week.
+
+Both halves are absent when the calendar has zero events in the week and
+no commitments are due (the brief still runs its existing non-calendar
+collectors).
+
 ## Models: the Concierge
 
 Open **Settings, Models**. The Concierge is one screen that answers three

@@ -206,6 +206,11 @@ left column is the name; do not alternate with the synonyms.
 | the REMOTE badge (the fourth egress state) | "the remote chip", "the network badge", "the external badge" |
 | the overnight runner (the .43 client script) | "the cron job", "the scheduled runner", "the background agent" |
 | the Confluence connector (blog posts + pages by ID) | "the wiki connector", "the Confluence integration", "the Confluence plugin" |
+| the clock (the calendar on the desk) | "the calendar view", "the schedule", "the planner" |
+| the WEEK strip (the arrival's day-token row) | "the week bar", "the calendar bar", "the day pills" |
+| an event-born recording (auto-created from a calendar event) | "a calendar recording", "an auto-recording", "a scheduled capture" |
+| the meeting watch (the Room's meeting Watch source) | "the meeting tracker", "the meeting monitor", "the meeting feed" |
+| the weekly brief (the full-week summary in Rhythm) | "the week report", "the weekly digest", "the week-in-review" |
 
 ## Voice rules (the editing standard for every user-facing doc)
 

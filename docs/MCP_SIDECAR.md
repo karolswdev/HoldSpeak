@@ -156,6 +156,13 @@ the provider, the reference, and the meeting that mentioned it.
 source on the Room. `project.dismiss_suggested_source` hides the suggestion;
 the same reference will not recur for this Room.
 
+<!-- verify at build --> The graduated watch tools also cover the meeting watch:
+a `MeetingWatchSource` adapter (source type `"meeting"`) sits beside
+`GitHubWatchSource` and `JiraWatchSource`. It reads from the local database
+only (meetings, decision_records, meeting_projects). The Room projection
+returned by `project.get_room` includes the meeting watch row in SOURCES when
+meetings are linked to the Room.
+
 Five resource templates expose project data: `holdspeak://projects/{id}`,
 `.../room`, `.../delta`, `.../updates/{update_id}`, and
 `.../steward/runs/{run_id}`. Unknown ids refuse typed.

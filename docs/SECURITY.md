@@ -284,6 +284,18 @@ uses the `acli` CLI with a read-only allowlist (`auth status`, `auth switch`,
 Confluence REST API call is ever made; the CLI holds the credentials. The
 `(site, email)` identity and switch-and-verify pattern are the same as Jira.
 
+**The calendar boundary.** <!-- verify at build --> The only egress in the
+calendar pipeline is the ICS fetch for HTTPS sources
+(`calendar_ingest_conductor.py`); the host is named on the Settings row's
+egress chip. No OAuth flow, no API key, no calendar-side credential is stored
+or managed. File sources cause zero network egress. The snapshot adapter runs
+the vision model locally (the model assignment determines the host; the
+extraction receipt names it). Arming a recording is the owner's standing
+consent per Room or all calendar meetings; armed never means started (Article
+IV). The meeting watch reads the local database only (meetings,
+meeting_intel_snapshots, decision_records, meeting_projects); zero egress,
+zero model invocation.
+
 **Residual risk:** if the machine is compromised at the file level and full-disk
 encryption is off, transcripts, voice embeddings, and the activity ledger are
 readable. We accept this for the local-first, single-user model and **recommend
