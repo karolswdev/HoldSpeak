@@ -254,14 +254,15 @@ def _step_steward_policy(page: Any, token: str, report: WalkReport) -> dict:
         observed=project_name[:12], verdict="DATA", why="real desk content",
     )))
 
-    # Read the steward policy -- try dedicated route first, fall back to
+    # Read the steward policy via the dedicated route, fall back to
     # the project detail payload.
-    # TODO(D3-steward-policy): confirm exact route once wire lands
     steward_result = _api(page, "GET",
-                          f"/api/projects/{project_id}/steward", None, token)
+                          f"/api/projects/{project_id}/steward/policy", None, token)
     if steward_result["status"] == 200:
         steward = steward_result["payload"]
-        policy = steward.get("policy", steward) if isinstance(steward, dict) else {}
+        policy = (steward.get("policy") or steward) if isinstance(steward, dict) else {}
+        if not isinstance(policy, dict):
+            policy = {}
         eligible = policy.get("eligible_effect_kinds",
                               policy.get("eligible_effect_kinds_json", []))
         if isinstance(eligible, str):
@@ -351,19 +352,22 @@ def _step_room_health_api(page: Any, token: str, report: WalkReport,
         report.surprises.append("ROOM HEALTH API: no project_id from step 1")
         return out
 
-    # TODO(D3-room-health): GET /api/projects/{id}/room should return a
-    # health object with per-signal data once the wire lands
+    # GET /api/projects/{id}/room returns a health section with
+    # per-signal data (review_wait, issue_aging, ci, release).
     room_result = _api(page, "GET",
                        f"/api/projects/{project_id}/room", None, token)
     if room_result["status"] == 200:
         room = room_result["payload"]
-        health = room.get("health", {}) if isinstance(room, dict) else {}
+        health_section = room.get("health", {}) if isinstance(room, dict) else {}
+        # The health section wraps the data under a "data" key when state=ok
+        health = health_section.get("data", health_section) if isinstance(health_section, dict) else {}
         out["health"] = health
 
-        # Record each signal if present
-        for signal_key in ("review_latency", "issue_aging", "ci", "release"):
-            signal = health.get(signal_key)
-            if signal:
+        # The wire's four signal keys
+        signals = health.get("signals", {})
+        for signal_key in ("review_wait", "issue_aging", "ci", "release"):
+            signal = signals.get(signal_key) if isinstance(signals, dict) else None
+            if signal and isinstance(signal, dict) and signal.get("present"):
                 tone = signal.get("tone", signal.get("state", "---"))
                 summary = signal.get("summary", signal.get("label", "---"))
                 report.facts.append(asdict(FaceFact(
@@ -386,44 +390,43 @@ def _step_room_health_api(page: Any, token: str, report: WalkReport,
                     why="signal not present in health payload",
                 )))
 
-        # Scorecard composite
-        scorecard = health.get("scorecard", health.get("composite"))
-        if scorecard:
+        # Assessment (at_risk / on_track)
+        assessment = health.get("assessment")
+        if assessment:
             report.facts.append(asdict(FaceFact(
-                face=face, field="health:scorecard",
-                expected="(green/amber/red composite)",
-                observed=str(scorecard)[:80], verdict="DATA",
-                why="release-readiness composite",
-            )))
-
-        # Reviewer-latency per-person breakdown (for NEEDS YOU rows)
-        reviewers = health.get(
-            "reviewers",
-            health.get("review_latency", {}).get("per_person", []),
-        )
-        if isinstance(reviewers, list):
-            report.facts.append(asdict(FaceFact(
-                face=face, field="health:reviewer_count",
-                expected="(count of reviewers with pending PRs)",
-                observed=str(len(reviewers)), verdict="DATA",
+                face=face, field="health:assessment",
+                expected="(at_risk or on_track)",
+                observed=str(assessment), verdict="DATA",
                 why="from Room health payload",
             )))
-            for i, rev in enumerate(reviewers[:5]):
-                name = str(rev.get("name", rev.get("login", "---")))[:12]
-                median = rev.get("median_hours", rev.get("median", "---"))
-                waiting = rev.get("waiting_count", rev.get("count", "---"))
+
+        # Reviewer per-person breakdown (for bottleneck NEEDS YOU rows)
+        people = health.get("people", [])
+        if isinstance(people, list) and people:
+            report.facts.append(asdict(FaceFact(
+                face=face, field="health:people_count",
+                expected="(count of reviewers with pending PRs)",
+                observed=str(len(people)), verdict="DATA",
+                why="from Room health payload",
+            )))
+            for i, person in enumerate(people[:5]):
+                name = str(person.get("display_name", "---"))[:12]
+                median = person.get("median_days", "---")
+                count = person.get("count", "---")
+                nudge = person.get("nudge")
+                nudge_state = nudge.get("state", "---") if isinstance(nudge, dict) else "---"
                 report.facts.append(asdict(FaceFact(
-                    face=face, field=f"health:reviewer:{i}",
-                    expected="(name . median . waiting)",
-                    observed=f"{name} . {median} H . {waiting} waiting",
-                    verdict="DATA", why="per-person reviewer latency",
+                    face=face, field=f"health:person:{i}",
+                    expected="(name . median_days . count . nudge_state)",
+                    observed=f"{name} . {median} D . {count} PRs . nudge={nudge_state}",
+                    verdict="DATA", why="per-person reviewer bottleneck",
                 )))
     elif room_result["status"] == 404:
         report.facts.append(asdict(FaceFact(
             face=face, field="room_health_route", expected="200",
-            observed="404 -- route not wired yet",
+            observed="404",
             verdict="DATA",
-            why="Room health route not found (TODO from D3)",
+            why="Room health route returned 404",
         )))
     else:
         report.facts.append(asdict(FaceFact(
@@ -461,43 +464,36 @@ def _step_room_health_face(page: Any, out_dir: Path, w: int, token: str,
 
     github_comment_enabled = policy.get("github_comment_enabled", False)
 
-    # Read HEALTH section and NEEDS YOU from the Room face.
-    # TODO(D2b-health-section): selector for the HEALTH section caption
-    # TODO(D2b-health-review-latency): selector for REVIEW LATENCY row
-    # TODO(D2b-health-issue-aging): selector for ISSUE AGING row
-    # TODO(D2b-health-ci): selector for CI row
-    # TODO(D2b-health-release): selector for RELEASE row
-    # TODO(D2c-nudge-verb): selector for the Nudge verb on reviewer NEEDS YOU rows
+    # Read HEALTH section and NEEDS YOU / bottleneck rows from the Room face.
+    # HEALTH rows: data-testid="health-row-{key}" (review_wait, issue_aging, ci, release)
+    # Bottleneck rows: data-testid="bottleneck-row" with nudge-verb button
     room_data = page.evaluate("""([githubCommentEnabled]) => {
         const body = document.querySelector('[data-testid="room-body"]');
         if (!body) return {
             healthSectionPresent: false, healthRows: [],
-            needsYouRows: 0, nudgeVerbPresent: false,
+            bottleneckRows: 0, nudgeVerbPresent: false,
             nudgeVerbCount: 0, nudgeWhileIneligible: false,
             zeroCounters: [], rawBtnCount: 0, hasLocal: false,
-            hostDefects: [], clippedTexts: [],
+            hostDefects: [], clippedTexts: [], loginOnFace: false,
         };
 
-        /* --- HEALTH section --- */
-        const sections = body.querySelectorAll(
-            '.surface-section-head, h3, [data-testid]'
-        );
+        /* --- HEALTH section (SurfaceSection label="HEALTH") --- */
+        const sections = body.querySelectorAll('.surface-section-head, h3');
         let healthSectionPresent = false;
         for (const s of sections) {
             const t = (s.textContent || '').trim();
-            if (t.startsWith('HEALTH') ||
-                s.dataset.testid === 'room-health-section') {
+            if (t.startsWith('HEALTH')) {
                 healthSectionPresent = true;
                 break;
             }
         }
 
-        /* --- HEALTH rows --- */
+        /* --- HEALTH rows: data-testid="health-row-{key}" --- */
         const healthRowIds = [
-            'room-health-review-latency',
-            'room-health-issue-aging',
-            'room-health-ci',
-            'room-health-release',
+            'health-row-review_wait',
+            'health-row-issue_aging',
+            'health-row-ci',
+            'health-row-release',
         ];
         const healthRows = [];
         for (const rid of healthRowIds) {
@@ -509,19 +505,15 @@ def _step_room_health_face(page: Any, out_dir: Path, w: int, token: str,
                        (sc.className.match(/state--(\\w+)/) || [])[1] ||
                        '---')
                     : '---';
-                const primary = row.querySelector(
-                    '.surface-ledger-primary, [data-testid$="-primary"]'
-                );
+                const primary = row.querySelector('.surface-primary');
                 const primaryText = primary
                     ? primary.textContent.trim() : '---';
-                const cells = row.querySelector(
-                    '.surface-ledger-cells, [data-testid$="-cells"]'
-                );
-                const cellsText = cells
-                    ? cells.textContent.trim() : '---';
-                const hasDataTokens = Boolean(
-                    cellsText && cellsText !== '---' && cellsText.length > 0
-                );
+                /* data tokens live in .surface-token spans beside the primary */
+                const tokens = row.querySelectorAll('.surface-token');
+                let cellsText = '';
+                for (const tok of tokens) { cellsText += tok.textContent.trim() + ' '; }
+                cellsText = cellsText.trim();
+                const hasDataTokens = Boolean(cellsText.length > 0);
                 healthRows.push({
                     id: rid, present: true, tone,
                     primary: primaryText, cells: cellsText,
@@ -532,16 +524,15 @@ def _step_room_health_face(page: Any, out_dir: Path, w: int, token: str,
             }
         }
 
-        /* --- NEEDS YOU rows --- */
-        const needsYouRows = body.querySelectorAll(
-            '[data-testid="needs-you-row"], [data-testid="room-needs-you-row"]'
-        );
+        /* --- Bottleneck rows: data-testid="bottleneck-row" --- */
+        const bottleneckRowEls = body.querySelectorAll('[data-testid="bottleneck-row"]');
+        /* Also count generic needs-you-row for the total */
+        const needsYouRowEls = body.querySelectorAll('[data-testid="needs-you-row"]');
+
         let nudgeVerbPresent = false;
         let nudgeVerbCount = 0;
-        for (const row of needsYouRows) {
-            const nudgeBtn = row.querySelector(
-                '[data-testid="nudge-verb"], .btn[data-verb="nudge"]'
-            );
+        for (const row of bottleneckRowEls) {
+            const nudgeBtn = row.querySelector('[data-testid="nudge-verb"]');
             if (nudgeBtn) {
                 nudgeVerbPresent = true;
                 nudgeVerbCount++;
@@ -608,12 +599,20 @@ def _step_room_health_face(page: Any, out_dir: Path, w: int, token: str,
             }
         }
 
+        /* --- login string on face (defect: raw login should never appear) --- */
+        const bodyText2 = body.textContent || '';
+        /* Look for patterns like "ania-k" that look like logins (lowercase-dash-lowercase) */
+        const loginOnFace = /\\b[a-z]+-[a-z]+\\b/.test(bodyText2) &&
+            !/REVIEW WAIT|ISSUE AGING|NEEDS YOU|CHECK|CHECKED|PER-NUDGE/i.test(
+                bodyText2.match(/\\b[a-z]+-[a-z]+\\b/)?.[0] || '');
+
         return {
             healthSectionPresent, healthRows,
-            needsYouRows: needsYouRows.length,
+            bottleneckRows: bottleneckRowEls.length,
+            needsYouRows: needsYouRowEls.length,
             nudgeVerbPresent, nudgeVerbCount, nudgeWhileIneligible,
             zeroCounters, hasLocal, rawBtnCount,
-            hostDefects, clippedTexts,
+            hostDefects, clippedTexts, loginOnFace,
         };
     }""", [github_comment_enabled])
 
@@ -628,7 +627,7 @@ def _step_room_health_face(page: Any, out_dir: Path, w: int, token: str,
 
     for hr in room_data.get("healthRows", []):
         rid = hr.get("id", "unknown")
-        short_name = rid.replace("room-health-", "")
+        short_name = rid.replace("health-row-", "")
         if hr.get("present"):
             report.facts.append(asdict(FaceFact(
                 face=face, field=f"health_row:{short_name}",
@@ -652,10 +651,16 @@ def _step_room_health_face(page: Any, out_dir: Path, w: int, token: str,
             )))
 
     report.facts.append(asdict(FaceFact(
+        face=face, field="bottleneck_rows",
+        expected="(varies)",
+        observed=str(room_data.get("bottleneckRows", 0)),
+        verdict="DATA", why="bottleneck rows in NEEDS YOU section",
+    )))
+    report.facts.append(asdict(FaceFact(
         face=face, field="needs_you_rows",
         expected="(varies)",
         observed=str(room_data.get("needsYouRows", 0)),
-        verdict="DATA", why="NEEDS YOU rows in Room",
+        verdict="DATA", why="generic NEEDS YOU rows in Room",
     )))
 
     report.facts.append(asdict(FaceFact(
@@ -695,6 +700,11 @@ def _step_room_health_face(page: Any, out_dir: Path, w: int, token: str,
         report.defects.append(f"ROOM HEALTH: {d}")
     for c in room_data.get("clippedTexts", []):
         report.defects.append(f"ROOM HEALTH: {c}")
+    if room_data.get("loginOnFace"):
+        report.defects.append(
+            "ROOM HEALTH: raw login string visible on face "
+            "(should show display_name, not login)"
+        )
 
     if w == 393:
         err = _check_overflow(page, w, face)
@@ -753,21 +763,37 @@ def _step_update_editor(page: Any, out_dir: Path, w: int, token: str,
         why="who generated the update",
     )))
 
-    # Open the Room (the update editor lives inside the project Room)
-    # TODO(D2a-update-posture): exact navigation to UpdatePosture
+    # Open the Room, then click the "Draft update" verb to enter the update posture.
     _open_surface(page, token, "open-project-memory", f"project:{project_id}")
     _settle(page)
     page.wait_for_timeout(2000)
     _settle(page)
 
+    # Click the updates verb to enter UpdatePosture (list view)
+    updates_btn = page.locator('[data-testid="updates-verb"]')
+    if updates_btn.count() > 0 and updates_btn.is_visible():
+        updates_btn.click()
+        page.wait_for_timeout(1500)
+        _settle(page)
+
+        # Open the first update in the list to see the editor
+        items = page.locator('[data-testid="update-list-item"]')
+        if items.count() > 0:
+            items.first.click()
+            page.wait_for_timeout(1500)
+            _settle(page)
+
     shot = _shoot(page, out_dir, "walk-update", w, window=True)
     report.shots.append({"face": face, "width": w, "path": str(shot)})
 
-    # Read update editor face data.
-    # TODO(D2a-update-posture): selector for UpdatePosture area
-    # TODO(D2a-claim-chip): selector for inline claim chips
-    # TODO(D2a-unverified-chip): selector for UNVERIFIED StateChip markers
-    # TODO(D2a-host-chip): selector for the model host EgressChip
+    # Read update editor face data via real selectors from UpdatePosture.tsx.
+    # update-posture: the posture container
+    # update-editor: the editor view inside
+    # update-generator-label: the generator label token
+    # update-claim-ref: ref chips on claims
+    # update-claim-unverified: UNVERIFIED StateChip markers
+    # update-footer-model: the model name token in the footer
+    # .gadget-chip-egress: the host EgressChip
     update_data = page.evaluate("""() => {
         const body = document.querySelector('[data-testid="room-body"]') ||
                      document.querySelector('.desk-surface-body');
@@ -778,32 +804,25 @@ def _step_update_editor(page: Any, out_dir: Path, w: int, token: str,
             rawBtnCount: 0, hasLocal: false, clippedTexts: [],
         };
 
-        const area = body.querySelector('[data-testid="update-posture"]') ||
-                     body.querySelector('[data-testid="update-editor"]') ||
+        const area = body.querySelector('[data-testid="update-editor"]') ||
+                     body.querySelector('[data-testid="update-posture"]') ||
                      body;
 
-        /* generator token */
-        const genEl = area.querySelector('[data-testid="update-generator"]');
+        /* generator token (data-testid="update-generator-label") */
+        const genEl = area.querySelector('[data-testid="update-generator-label"]');
         const generatorToken = genEl ? genEl.textContent.trim() : '---';
 
-        /* claim chips */
-        const claimChips = area.querySelectorAll(
-            '[data-testid="claim-chip"], .surface-token[data-chip]'
-        );
+        /* claim ref chips (data-testid="update-claim-ref") */
+        const claimChips = area.querySelectorAll('[data-testid="update-claim-ref"]');
         const claimChipCount = claimChips.length;
 
-        /* UNVERIFIED markers */
-        const stateChips = area.querySelectorAll(
-            '[data-testid="unverified-marker"], .surface-state-chip'
-        );
-        let unverifiedCount = 0;
-        for (const chip of stateChips) {
-            if ((chip.textContent || '').trim().includes('UNVERIFIED')) {
-                unverifiedCount++;
-            }
-        }
+        /* UNVERIFIED markers (data-testid="update-claim-unverified") */
+        const unverifiedEls = area.querySelectorAll('[data-testid="update-claim-unverified"]');
+        let unverifiedCount = unverifiedEls.length;
 
-        /* host EgressChip */
+        /* host: footer model token (data-testid="update-footer-model") + EgressChip */
+        const modelToken = area.querySelector('[data-testid="update-footer-model"]');
+        const modelText = modelToken ? modelToken.textContent.trim() : '';
         const hostChip = area.querySelector('.gadget-chip-egress');
         const hostChipText = hostChip ? hostChip.textContent.trim() : '---';
         const hasHostChip = Boolean(hostChip);
@@ -823,14 +842,21 @@ def _step_update_editor(page: Any, out_dir: Path, w: int, token: str,
         for (const btn of allBtns) {
             if (btn.classList.contains('btn') ||
                 btn.classList.contains('desk-mic') ||
+                btn.classList.contains('desk-chip') ||
                 btn.classList.contains('surface-ledger-line') ||
                 btn.classList.contains('surface-edit-in-place') ||
+                btn.classList.contains('surface-disclosure-trigger') ||
+                btn.classList.contains('gadget-transport-key') ||
+                btn.closest('.cm-editor') ||
                 btn.closest('.desk-traffic') ||
                 btn.closest('.desk-wings') ||
                 btn.closest('.gadget-string') ||
+                btn.closest('.mic-button') ||
                 btn.closest('.fold-gadget') ||
                 btn.closest('.check-gadget') ||
                 btn.closest('.cycle-gadget') ||
+                btn.closest('.stepper-gadget') ||
+                btn.closest('.scroll-hint') ||
                 btn.closest('.surface-ledger-row') ||
                 btn.closest('[role="tablist"]')) continue;
             rawBtnCount++;
@@ -850,7 +876,7 @@ def _step_update_editor(page: Any, out_dir: Path, w: int, token: str,
 
         return {
             generatorToken, claimChipCount, unverifiedCount,
-            hostChipText, hasHostChip,
+            hostChipText, hasHostChip, modelText,
             zeroCounters, rawBtnCount, hasLocal, clippedTexts,
         };
     }""")
@@ -883,6 +909,12 @@ def _step_update_editor(page: Any, out_dir: Path, w: int, token: str,
         expected="(true when model, false when deterministic)",
         observed=str(update_data.get("hasHostChip", False)),
         verdict="DATA", why="EgressChip presence",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="model_token",
+        expected="(model name when model-generated, empty for deterministic)",
+        observed=update_data.get("modelText", "---"),
+        verdict="DATA", why="model name token in footer",
     )))
 
     # Defect: UNVERIFIED smoothed when generator is a model
@@ -944,60 +976,87 @@ def _step_steward_posture(page: Any, out_dir: Path, w: int, token: str,
         report.surprises.append("STEWARD POSTURE: no project_id from step 1")
         return
 
-    # TODO(D2d-steward-posture): exact surface-open key for the steward
-    # posture (may be a tab inside the project Room)
+    # Open the Room, then click the Steward verb to enter the steward posture,
+    # then click Policy to see the policy editor with effect kind rows.
     _open_surface(page, token, "open-project-memory", f"project:{project_id}")
     _settle(page)
     page.wait_for_timeout(2000)
     _settle(page)
 
-    # TODO(D2d-steward-tab): navigate to the steward / policy tab
-    # within the Room once the face lands
+    # Click the steward verb to enter StewardPosture (list view)
+    steward_btn = page.locator('[data-testid="steward-verb"]')
+    if steward_btn.count() > 0 and steward_btn.is_visible():
+        steward_btn.click()
+        page.wait_for_timeout(1500)
+        _settle(page)
+
+        # Click Policy to enter the policy editor
+        policy_btn = page.locator('[data-testid="steward-verb-policy"]')
+        if policy_btn.count() > 0 and policy_btn.is_visible():
+            policy_btn.click()
+            page.wait_for_timeout(1500)
+            _settle(page)
 
     shot = _shoot(page, out_dir, "walk-steward-policy", w, window=True)
     report.shots.append({"face": face, "width": w, "path": str(shot)})
 
-    # Read the steward posture face.
-    # TODO(D2d-effects-rows): selector for Effects CheckGadget rows
-    # TODO(D2d-reviewer-nudge-row): selector for github_comment row
-    # TODO(D2d-reviewer-nudge-egress): selector for GITHUB.COM EgressChip
+    # Read the steward posture face via real selectors from StewardPosture.tsx.
+    # steward-policy: the policy editor container
+    # steward-policy-effects: the effects area with CheckGadget rows
+    # steward-policy-kind-label-{kind}: the label for each effect kind
+    # steward-policy-nudge-approval: PER-NUDGE APPROVAL token
+    # steward-policy-nudge-template: the nudge text StringGadget row
     posture_data = page.evaluate("""() => {
         const body = document.querySelector('[data-testid="room-body"]') ||
                      document.querySelector('.desk-surface-body');
         if (!body) return {
             effectsRows: [], reviewerNudgeRow: null,
+            perNudgeApproval: false, nudgeTemplateVisible: false,
             zeroCounters: [], rawBtnCount: 0, hasLocal: false,
         };
 
-        const area = body.querySelector('[data-testid="steward-posture"]') ||
-                     body.querySelector('[data-testid="steward-policy"]') ||
+        const area = body.querySelector('[data-testid="steward-policy"]') ||
+                     body.querySelector('[data-testid="steward-posture"]') ||
                      body;
 
-        /* Effects CheckGadget rows */
-        const checkRows = area.querySelectorAll(
-            '[data-testid="effect-kind-row"], .check-gadget'
-        );
+        /* Effects: inside data-testid="steward-policy-effects" */
+        const effectsArea = area.querySelector('[data-testid="steward-policy-effects"]');
+
+        /* Each effect kind is a .steward-policy-effect-row with a CheckGadget */
+        const effectRowEls = effectsArea
+            ? effectsArea.querySelectorAll('.steward-policy-effect-row')
+            : [];
         const effectsRows = [];
-        for (const row of checkRows) {
-            const lbl = row.querySelector('.check-gadget-label, label');
+        for (const row of effectRowEls) {
+            const lbl = row.querySelector('[data-testid^="steward-policy-kind-label-"]');
             const labelText = lbl ? lbl.textContent.trim() : '---';
+            const kindTestId = lbl ? lbl.dataset.testid : '';
+            const kind = kindTestId.replace('steward-policy-kind-label-', '');
             const inp = row.querySelector('input[type="checkbox"]');
             const checked = inp ? inp.checked : false;
             const egress = row.querySelector('.gadget-chip-egress');
             const egressText = egress ? egress.textContent.trim() : null;
             effectsRows.push({
-                label: labelText, checked, egressChip: egressText,
+                kind, label: labelText, checked, egressChip: egressText,
             });
         }
 
         /* find the Reviewer nudge / github_comment row */
         let reviewerNudgeRow = null;
         for (const er of effectsRows) {
-            if (/reviewer.*nudge|github.comment/i.test(er.label)) {
+            if (er.kind === 'github_comment' || /reviewer.*nudge/i.test(er.label)) {
                 reviewerNudgeRow = er;
                 break;
             }
         }
+
+        /* PER-NUDGE APPROVAL token */
+        const approvalEl = area.querySelector('[data-testid="steward-policy-nudge-approval"]');
+        const perNudgeApproval = Boolean(approvalEl);
+
+        /* Nudge template row (visible only when github_comment is checked) */
+        const templateEl = area.querySelector('[data-testid="steward-policy-nudge-template"]');
+        const nudgeTemplateVisible = Boolean(templateEl);
 
         /* defect scans */
         const areaText = area.textContent || '';
@@ -1029,6 +1088,7 @@ def _step_steward_posture(page: Any, out_dir: Path, w: int, token: str,
 
         return {
             effectsRows, reviewerNudgeRow,
+            perNudgeApproval, nudgeTemplateVisible,
             zeroCounters, rawBtnCount, hasLocal,
         };
     }""")
@@ -1052,6 +1112,21 @@ def _step_steward_posture(page: Any, out_dir: Path, w: int, token: str,
                       f"egress={er.get('egressChip', 'none')}"),
             verdict="DATA", why="effect kind row",
         )))
+
+    report.facts.append(asdict(FaceFact(
+        face=face, field="per_nudge_approval",
+        expected="true",
+        observed=str(posture_data.get("perNudgeApproval", False)),
+        verdict="MATCH" if posture_data.get("perNudgeApproval") else "DATA",
+        why="PER-NUDGE APPROVAL token present",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="nudge_template_visible",
+        expected="(true when github_comment checked, false otherwise)",
+        observed=str(posture_data.get("nudgeTemplateVisible", False)),
+        verdict="DATA",
+        why="Nudge text row visibility",
+    )))
 
     nudge_row = posture_data.get("reviewerNudgeRow")
     if nudge_row:
@@ -1130,8 +1205,11 @@ def _detect_defects(report: WalkReport) -> None:
                 f'"{obs}" -- UX-CANON A.8 forbids counters of zero'
             )
 
-        # D2: host chip without scope
-        if "host_chip" in fact["field"] and obs and obs != "---":
+        # D2: host chip without scope (skip boolean-valued fields like host_chip_present)
+        if ("host_chip" in fact["field"]
+                and not fact["field"].endswith("_present")
+                and obs and obs != "---"
+                and obs.lower() not in ("true", "false")):
             has_cloud = (re.search(r'[.][a-z]+$', obs, re.I)
                          and ' ' not in obs)
             has_scope = re.search(
