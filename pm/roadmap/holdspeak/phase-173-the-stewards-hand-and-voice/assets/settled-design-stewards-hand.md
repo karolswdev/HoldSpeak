@@ -33,7 +33,7 @@ model's host. He opens the update, edits two sentences, presses
 
 Tuesday 09:00. The Room's HEALTH section reads:
 
-    REVIEW LATENCY  47 H MEDIAN  3 WAITING
+    REVIEW WAIT     3 D MEDIAN   3 WAITING
     ISSUE AGING     4 > 14 D
     CI              2 FLAKY  QUEUE 3
     RELEASE         READY
@@ -58,7 +58,7 @@ names the host and the URL.
 | Every external effect admitted and receipted | Constitution Article XI:2 | The nudge is admitted through the kernel before it acts; the terminal receipt records comment URL, PR number, reviewer name, timestamp, approval principal; refusal and failure also receipted |
 | The nudge names its host and its exact text before it goes | Constitution Article III, V | The nudge card shows the proposed comment in full (editable); the host chip reads `GITHUB.COM`; `Send` is the chokepoint; the comment text the owner sees IS the text that posts |
 | Never a nudge without his word on that project | Article V:1, the policy gate | The effect kind gate at project_steward_service.py:898 refuses any effect kind not in the project's eligible list; the Approve step is per-nudge (the owner presses `Send` on each one) |
-| No counters of zero | UX-CANON.md rule A.8 | HEALTH rows absent when no data; REVIEW LATENCY absent when no pending reviews; RELEASE READINESS absent when no signals have data; the section label carries no `0` |
+| No counters of zero | UX-CANON.md rule A.8 | HEALTH rows absent when no data; REVIEW WAIT absent when no pending reviews; RELEASE READINESS absent when no signals have data; the section label carries no `0` |
 | Every verb the library Button | UX-CANON.md rule A.1 | `Send` (primary), `Dismiss` (ghost), `Nudge` (ghost dense), `Publish` / `Copy` / `Save` on the update, `Edit` (inline) -- all library Button |
 | No prose | UX-CANON.md rule A.3 | Tokens, verbs, counts, names. The HEALTH rows are token strips. The nudge card is structured, not a paragraph |
 | No modals | UX-CANON.md rule A.4 | The nudge card unfolds inline under the NEEDS YOU row; the update editor is the existing in-world posture |
