@@ -64,10 +64,15 @@
 - Four recordings dead since AUG 11 still wore `REC` + `Retry` —
   `INTERRUPTED` now; a live capture (ended_at null, started within 6 h)
   keeps `REC`.
-- The dictation engine named `Migrated intel endpoint` (a 143 migration
-  label) with a `THIS DEVICE`, then `CLOUD`, chip on a LAN host —
-  detect names engines by served model and classifies private hosts as
-  LAN; Speak's ENGINE row uses the same resolver.
+- The dictation engine named `Migrated intel endpoint` — a 143
+  migration profile that his real DB reveals as OpenAI `gpt-5-mini`
+  with NO key set. The `CLOUD` chip was honest; the name and a false
+  `READY` were not. Detect names every engine by its served model
+  (extension and quant split off, projector files never engines,
+  private hosts LAN); Speak's ENGINE row resolves through detect and
+  reads `GPT-5 mini · API.OPENAI.COM · ⚠ KEY NOT SET · Choose`. His
+  desk's dictation assignment is the Concierge's first real job: one
+  `Use these` re-points it to a local engine.
 - Parking the Chair board left the 144 Door's action items (`/api/door`:
   overdue · now · waiting · unassigned) with no face — found by the old
   144 rig failing, not by the new rigs passing. They join the arrival's
