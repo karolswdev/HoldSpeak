@@ -115,6 +115,7 @@ first category may participate in a future assignment migration.
 | display-transport | `web/src/desk/api.ts`, `web/src/desk/components/Pullout.tsx`, `web/src/desk/detail-types.ts`, `web/src/desk/infoContract.ts`, `web/src/desk/store/types.ts`, `web/src/lib/primitives.ts`, `web/src/pages/cores/core-types.ts` | 143-11 / 143-10 display contracts; no browser placement writer remains |
 | display-transport | `web/src/pages/cores/ModelLibraryCore.tsx`, `web/src/pages/cores/modelLibrary.ts` | 143-12 availability transport; selection never writes an assignment pointer |
 | display-transport | `web/src/pages/cores/TopologyMapView.tsx` | 156-04 topology graph reads profile_id for node display; never writes an assignment pointer |
+| display-transport | `web/src/features/project-room/ProjectRoomCore.tsx` | 169-07 project room reads assignment state for display; never writes a placement pointer |
 | unrelated | `web/src/desk/components/DeliveryBoard.tsx`, `web/src/desk/deliveryFactory.ts` | 143-01 |
 
 Adding another production routing consumer—or a private selector/recovery
