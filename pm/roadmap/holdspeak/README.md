@@ -1035,6 +1035,9 @@ canon, canon wins.
 | 172 | The Loop Closes: meetings produce decisions and action items as proposals confirmed through the kernel; the People-to-Watch resolver; the 1:1 brief from real signals; suggested sources from meeting mentions. | planned | [phase-172-the-loop-closes](./phase-172-the-loop-closes/) |
 | 173 | The Steward's Hand and Voice: the model drafter with claim refs; reviewer latency and issue aging; the first bounded external effect (the reviewer nudge) behind the policy gate with a receipt; release readiness. | planned | [phase-173-the-stewards-hand-and-voice](./phase-173-the-stewards-hand-and-voice/) |
 | 174 | Reach: MCP remote on the .43 runner over Streamable HTTP behind scoped credentials; one CLI-backed third connector; egress badges on remote reads; LAN companion notifications over the mesh (conditional on the companion track). | planned | [phase-174-reach](./phase-174-reach/) |
+| 175 | Calendar and the Clock: real calendar events on the desk (the 146 adapter used); event-born scheduled recordings; the meeting Watch adapter; the Monday brief widened to the calendar week. | planned | [phase-175-calendar-and-the-clock](./phase-175-calendar-and-the-clock/) |
+| 176 | The Speak Loop: dictation as a daily tool -- the correction taught once and kept, the journal as a stream, the voice law on every input, the desk answering the hand. | planned | [phase-176-the-speak-loop](./phase-176-the-speak-loop/) |
+| 177 | The Thread at Work: the desk chat as a work tool (conditional on a measured week of use) -- Draft / Chase / Plan recipes over real Room data; the ask grounded on Watches and the Room; every effect admitted with a receipt. | planned | [phase-177-the-thread-at-work](./phase-177-the-thread-at-work/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

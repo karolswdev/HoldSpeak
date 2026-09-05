@@ -120,6 +120,18 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
    another CLI; the `remote` egress badge as a fourth chip state;
    credential scope = PROJECT_PALETTE or finer; polling-only V0 for
    long runs or SSE per the current spec.
+   **175–177 CHARTERED as PLANNED**: 175 Calendar and the Clock (9; on
+   171 — calendar_events exists but is empty on his desk; no
+   MeetingWatchSource; the brief has no week window), 176 The Speak
+   Loop (8; on 170 — 0 corrections; ring buffer of 20; MicButton on 7
+   of ~92 inputs), 177 The Thread at Work (8; on 172 — story 01 is a
+   MEASURED DECISION with the kill criterion 0 work threads + 0 runs in
+   a week = CUT; project.* tools are in no thread palette today). His
+   questions: 175 the week boundary; event-born recordings for all
+   meetings or Room-linked only; decisions as entities or rolled up.
+   176 MicButton on every input or a size threshold; 20 corrections
+   enough; the journal in the shade too. 177 when the measured week
+   starts; project.* into Chase/Plan or a Room mode; a softer CUT.
 
 ## 2. Laws learned this sitting (add to the canon of habit)
 
