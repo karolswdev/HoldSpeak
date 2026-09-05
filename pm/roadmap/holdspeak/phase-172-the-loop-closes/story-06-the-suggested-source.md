@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 172
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-172-02
 - **Unblocks:** HS-172-07
 - **Owner:** unassigned
@@ -40,16 +40,16 @@ not produce source suggestions for the Room.
 
 ## Acceptance criteria
 
-- [ ] A completed intel job whose transcript mentions a GitHub repo
+- [x] A completed intel job whose transcript mentions a GitHub repo
       (owner/repo) produces a SUGGESTED source row on the Room;
       verified by a unit test with a seeded transcript.
-- [ ] A completed intel job whose transcript mentions a Jira issue
+- [x] A completed intel job whose transcript mentions a Jira issue
       (PROJ-123) produces a SUGGESTED source row on the Room.
-- [ ] Accept creates a Watch source using the existing add-source
+- [x] Accept creates a Watch source using the existing add-source
       flow; Dismiss hides the suggestion.
-- [ ] A dismissed suggestion does not recur on subsequent intel jobs
+- [x] A dismissed suggestion does not recur on subsequent intel jobs
       for the same meeting.
-- [ ] No auto-application of sources (Article V).
+- [x] No auto-application of sources (Article V).
 
 ## Test plan
 
