@@ -88,7 +88,7 @@ async function openDeck() {
       <DictationCore />
     </MemoryRouter>,
   );
-  return screen.findByRole("button", { name: "Speak" });
+  return screen.findByRole("button", { name: "Talk" });
 }
 
 /** Click-to-toggle: click to start, then click to stop. */

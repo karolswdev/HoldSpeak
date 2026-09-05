@@ -99,7 +99,7 @@ describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
         <DictationCore />
       </MemoryRouter>,
     );
-    const talk = await screen.findByRole("button", { name: "Speak" });
+    const talk = await screen.findByRole("button", { name: "Talk" });
     // Toggle DRY RUN on
     fireEvent.click(screen.getByRole("checkbox", { name: "DRY RUN" }));
 
@@ -128,7 +128,7 @@ describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
         <DictationCore />
       </MemoryRouter>,
     );
-    const talk = await screen.findByRole("button", { name: "Speak" });
+    const talk = await screen.findByRole("button", { name: "Talk" });
 
     await clickToggle(talk);
 
@@ -147,7 +147,7 @@ describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
         <DictationCore />
       </MemoryRouter>,
     );
-    const talk = await screen.findByRole("button", { name: "Speak" });
+    const talk = await screen.findByRole("button", { name: "Talk" });
 
     await clickToggle(talk);
 
@@ -169,7 +169,7 @@ describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
         <DictationCore />
       </MemoryRouter>,
     );
-    const talk = await screen.findByRole("button", { name: "Speak" });
+    const talk = await screen.findByRole("button", { name: "Talk" });
 
     await clickToggle(talk);
 
