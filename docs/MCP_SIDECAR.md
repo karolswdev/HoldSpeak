@@ -295,6 +295,18 @@ Read-only inspection of coder sessions. `coder.list` lists sessions
 (optionally filtered by agent). `coder.get` returns one session by id.
 `coder.audit` reads the bounded steering audit trail.
 
+### concierge (5 tools)
+
+Engine detection and model assignment. `concierge.detect` returns every
+reachable engine (LAN, local, cloud, catalog presets) with hardware facts
+and probe timestamps. `concierge.propose` returns a proposed assignment
+per capability group using the same rules as the Settings, Models face.
+`concierge.probe` runs a bounded latency check against one engine; a paid
+cloud probe requires the explicit `generate:true` flag. `concierge.apply`
+writes the complete assignment set in one step (refuses while any group is
+WAITING and not OFF). `concierge.download` starts a catalog preset download
+through the existing Model Library download path.
+
 ### cadence (11 tools)
 
 The cadence engine: reviews meetings, proposed actions, and waiting coder

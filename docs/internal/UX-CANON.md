@@ -119,3 +119,14 @@ a named allowlist (4 residues with reasons).  (iii) *Healing*: when a
 count drops below the ceiling, the test passes with a notice to lower
 the ceiling.  To lower the ceiling after fixing violations, run:
 `python scripts/ux_canon_scan.py --write-ceiling tests/ux_canon_ceiling.json`.
+
+**The census and the ratchet.** The scanner (`scripts/ux_canon_scan.py`)
+reads every file under `web/src` and counts violations per rule and per
+face. The ceiling file (`tests/ux_canon_ceiling.json`) records the
+highest-known count per rule. The test
+(`tests/unit/test_ux_canon_ratchet.py`) fails when any rule's count
+exceeds its ceiling, so a regression is caught before merge. After a fix,
+lower the ceiling with `python scripts/ux_canon_scan.py --write-ceiling
+tests/ux_canon_ceiling.json`. The review order is: read the shot, read
+the artboard, then read the canon. A face that matches its artboard but
+violates this canon is still wrong.
