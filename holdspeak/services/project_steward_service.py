@@ -53,6 +53,7 @@ DEFAULT_NUDGE_TEMPLATE = (
 
 # HS-173-04: cooldown between nudges for the same (reviewer, PR) pair.
 NUDGE_COOLDOWN_DAYS = 7
+NUDGE_TEXT_MAX_CHARS = 2000  # counsel F3: a bounded --body
 
 # Severity rank for deterministic total order (highest-material first).
 _SEVERITY_RANK: dict[str, int] = {
@@ -1755,6 +1756,8 @@ class ProjectStewardService:
         # Empty text refused.
         if not (text or "").strip():
             return {"error": "empty_text"}
+        if len(text) > NUDGE_TEXT_MAX_CHARS:
+            return {"error": "text_too_long", "max_chars": NUDGE_TEXT_MAX_CHARS}
 
         # Parse payload for project_id from idempotency_key.
         idem_key = step.get("idempotency_key", "")

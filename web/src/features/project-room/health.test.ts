@@ -239,3 +239,24 @@ describe("nudgeCardReducer", () => {
     }
   });
 });
+
+
+// HS-173 counsel C2: the cooldown token never reads "0 D AGO".
+import { nudgeCooldownToken } from "./ProjectRoomCore";
+describe("nudgeCooldownToken", () => {
+  const at = (msAgo: number) => ({ stepId: "s", state: "sent" as const, sentAt: new Date(Date.now() - msAgo).toISOString() });
+  it("reads JUST NOW under an hour", () => {
+    expect(nudgeCooldownToken(at(10 * 60_000))).toBe("NUDGED JUST NOW");
+  });
+  it("reads hours under a day", () => {
+    expect(nudgeCooldownToken(at(3 * 3_600_000))).toBe("NUDGED 3 H AGO");
+    expect(nudgeCooldownToken(at(11 * 3_600_000))).toBe("NUDGED 11 H AGO");
+  });
+  it("reads days from one day on and never zero", () => {
+    expect(nudgeCooldownToken(at(26 * 3_600_000))).toBe("NUDGED 1 D AGO");
+    expect(nudgeCooldownToken(at(3 * 86_400_000))).toBe("NUDGED 3 D AGO");
+  });
+  it("is absent past the cooldown", () => {
+    expect(nudgeCooldownToken(at(8 * 86_400_000))).toBeNull();
+  });
+});
