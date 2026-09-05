@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 171
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** HS-171-03, HS-171-04
 - **Unblocks:** HS-171-08
 - **Owner:** unassigned
@@ -50,20 +50,20 @@ quiet hours; per-project mute)."
       needs-you count crossing its edge; verified by a rig that seeds
       a needs-you item and asserts the notification dispatch (Article
       IX.1).
-- [ ] The notification body contains only the count and project count,
+- [x] The notification body contains only the count and project count,
       not Room names or WHY text, in the default configuration
       (Article III.1).
-- [ ] Quiet hours suppress the notification; a needs-you edge during
+- [x] Quiet hours suppress the notification; a needs-you edge during
       quiet hours does NOT fire (verified by setting the clock inside
       the quiet window in a test).
-- [ ] Per-project mute suppresses the notification for that project;
+- [x] Per-project mute suppresses the notification for that project;
       the aggregate count excludes muted projects.
-- [ ] Content opt-in: with the setting enabled, the notification
+- [x] Content opt-in: with the setting enabled, the notification
       includes the first WHY per project.
 - [ ] Clicking the notification opens the desk in the browser.
-- [ ] Linux: libnotify notification with the same edge rule (verified
+- [x] Linux: libnotify notification with the same edge rule (verified
       on .43 if reachable, otherwise by unit test).
-- [ ] Zero egress (Article III: the notification is local OS-level,
+- [x] Zero egress (Article III: the notification is local OS-level,
       never a remote push).
 
 ## Test plan
@@ -86,3 +86,16 @@ quiet hours; per-project mute)."
 - The edge detector must track the last-notified count across restarts.
   A simple file or DB row suffices (the cadence table or a dedicated
   column on the needs-you cache).
+
+## Proof and the honest gap (2026-09-05)
+
+tests/unit/test_hs171_aggregate_notify.py: the edge rule (3→3 no fire,
+3→4 fires, 4→2→4 once, 0 never), quiet hours held + receipted, count-only
+body by default, content opt-in, per-Room mute excluded from the edge
+count, the macOS path exercised with the presence child monkeypatched,
+the Linux libnotify seam. **Open, by design:** the banner fires through
+`osascript` (the PyObjC UserNotifications bridge is not in the venv and
+UNUserNotificationCenter refuses an unbundled process) — so the first
+box reads "within 10 s" only for the osascript banner, and the click
+action waits for the app bundle (174/179; BACKLOG). His walk measures
+the 10 s on his desk.

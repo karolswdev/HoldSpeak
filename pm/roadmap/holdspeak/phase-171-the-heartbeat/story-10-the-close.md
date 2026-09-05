@@ -34,12 +34,12 @@ merge on the owner's word.
 
 ## Acceptance criteria
 
-- [ ] The full suite passes with zero branch-new failures.
-- [ ] The web baseline check passes with zero branch-new.
-- [ ] The UX canon ratchet is green.
-- [ ] Counsel reads the final tree and passes.
-- [ ] The final summary is written.
-- [ ] The PR is opened and passes CI.
+- [x] The full suite passes with zero branch-new failures. (9501 green; 6 inherited with zero diff vs main; 4 xdist-only green alone; the 4 branch-new paid before the PR.)
+- [x] The web baseline check passes with zero branch-new.
+- [x] The UX canon ratchet is green.
+- [x] Counsel reads the final tree and passes. (RATIFY-W-C; C1/C2 paid the same hour.)
+- [x] The final summary is written. (DRAFT tag lifts on his word.)
+- [ ] The PR is opened and passes CI. (OPEN: https://github.com/karolswdev/HoldSpeak/pull/554 — CI pending.)
 - [ ] The owner's word to merge (Article IX.4).
 
 ## Test plan

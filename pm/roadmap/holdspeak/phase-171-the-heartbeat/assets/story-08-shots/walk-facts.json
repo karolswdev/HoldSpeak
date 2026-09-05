@@ -1,0 +1,555 @@
+{
+  "generated_at": "2026-09-05T07:20:28.255506",
+  "hub_host": "127.0.0.1:62559",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "width": 393,
+      "height": 852
+    }
+  ],
+  "shots": [
+    {
+      "face": "rhythm",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots/walk-rhythm-1440.png"
+    },
+    {
+      "face": "shade",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots/walk-shade-1440.png"
+    },
+    {
+      "face": "dock",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots/walk-dock-1440.png"
+    },
+    {
+      "face": "command-deck",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots/walk-command-deck-1440.png"
+    },
+    {
+      "face": "rhythm",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots/walk-rhythm-393.png"
+    },
+    {
+      "face": "shade",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots/walk-shade-393.png"
+    },
+    {
+      "face": "dock",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots/walk-dock-393.png"
+    },
+    {
+      "face": "command-deck",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots/walk-command-deck-393.png"
+    }
+  ],
+  "facts": [
+    {
+      "face": "heartbeat-settings",
+      "field": "api_status",
+      "expected": "200",
+      "observed": "200",
+      "verdict": "MATCH",
+      "why": "ok"
+    },
+    {
+      "face": "heartbeat-settings",
+      "field": "sweep_every_minutes",
+      "expected": "(owner's setting)",
+      "observed": "15",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "heartbeat-settings",
+      "field": "notify",
+      "expected": "(owner's setting)",
+      "observed": "edge",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "heartbeat-settings",
+      "field": "notify_content",
+      "expected": "(owner's setting)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "heartbeat-settings",
+      "field": "last_sweep_at",
+      "expected": "(owner's setting)",
+      "observed": "2026-09-05T13:05:39+00:00",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "heartbeat-settings",
+      "field": "next_sweep_at",
+      "expected": "(owner's setting)",
+      "observed": "2026-09-05T13:20:39+00:00",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "heartbeat-settings",
+      "field": "quiet_hours",
+      "expected": "(start-end)",
+      "observed": "22-8",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "heartbeat-settings",
+      "field": "muted_projects",
+      "expected": "(list)",
+      "observed": "[]",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "sweep",
+      "field": "api_status",
+      "expected": "200",
+      "observed": "200",
+      "verdict": "MATCH",
+      "why": "ok"
+    },
+    {
+      "face": "sweep",
+      "field": "receipt:rooms",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "sweep",
+      "field": "receipt:watches",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "sweep",
+      "field": "receipt:duration_ms",
+      "expected": "(varies)",
+      "observed": "3.5",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "sweep",
+      "field": "receipt:held",
+      "expected": "(varies)",
+      "observed": "True",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "sweep",
+      "field": "receipt:errors",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "sweep",
+      "field": "receipt:needs_you_count",
+      "expected": "(varies)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "sweep",
+      "field": "receipt:sweep_id",
+      "expected": "(varies)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "headline",
+      "expected": "Every 15 min",
+      "observed": "Every 15 min",
+      "verdict": "MATCH",
+      "why": "exact"
+    },
+    {
+      "face": "rhythm",
+      "field": "sweep_primary",
+      "expected": "Sweep",
+      "observed": "Sweep",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "sweep_interval",
+      "expected": "EVERY 15 MIN",
+      "observed": "EVERY 15 MIN",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "sweep_run_now",
+      "expected": "Run now",
+      "observed": "Run now",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "sweep_facts",
+      "expected": "QUIET HH:00-HH:00 . NEXT HH:MM . LAST HH:MM",
+      "observed": "\u26a0HELD \u00b7 QUIET UNTIL 08:00QUIET 22:00\u201308:00\u00b7NEXT 13:35\u00b7LAST 13:20",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "brief_primary",
+      "expected": "Monday brief",
+      "observed": "Monday brief",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "brief_daily",
+      "expected": "DAILY 08:00",
+      "observed": "DAILY 08:00",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "brief_generate_now",
+      "expected": "Generate now",
+      "observed": "Generate now",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "brief_facts",
+      "expected": "NEXT MON HH:00 . LAST MON DD",
+      "observed": "NEXT MON 08:00\u00b7LAST AUG 19",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "notify_primary",
+      "expected": "Notify",
+      "observed": "Notify",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "notify_gadgets",
+      "expected": "ON THE EDGE | COUNT ONLY",
+      "observed": "ON THE EDGE | COUNT ONLY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "notify_held",
+      "expected": "HELD (quiet hours)",
+      "observed": "HELD",
+      "verdict": "DATA",
+      "why": "quiet hours active"
+    },
+    {
+      "face": "rhythm",
+      "field": "mute_toggle:0",
+      "expected": "(project name) enabled/muted",
+      "observed": "\u2713 COMPLETE DELIVERY OF GOVERNANCE FRAMEWORK FOR EVERDRIVEN SOFTWARE ARCHITECTURE enabled",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "footer_written",
+      "expected": "WRITTEN HH:MM",
+      "observed": "WRITTEN 13:20",
+      "verdict": "MATCH",
+      "why": "timestamp found"
+    },
+    {
+      "face": "shade",
+      "field": "projects_caption",
+      "expected": "PROJECTS . N NEED YOU",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "shade",
+      "field": "brief_row",
+      "expected": "Monday brief N THINGS SEP NN Open",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "dock",
+      "field": "badge_count",
+      "expected": "(aggregate needs-you count or absent)",
+      "observed": "\u2022",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "command-deck",
+      "field": "projects_group_count",
+      "expected": "(N project entries)",
+      "observed": "1",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "command-deck",
+      "field": "project:0",
+      "expected": "Open <name> | N NEED(S) YOU | PROJECT",
+      "observed": "Open Complete delivery of governance framework for EverDriven Software Architecture |  | PROJECT",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "command-deck",
+      "field": "groups",
+      "expected": "PROJECTS, VERBS, PROGRAMS, ...",
+      "observed": "PROJECTS, VERBS, PROGRAMS, SETTINGS",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "headline",
+      "expected": "Every 15 min",
+      "observed": "Every 15 min",
+      "verdict": "MATCH",
+      "why": "exact"
+    },
+    {
+      "face": "rhythm",
+      "field": "sweep_primary",
+      "expected": "Sweep",
+      "observed": "Sweep",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "sweep_interval",
+      "expected": "EVERY 15 MIN",
+      "observed": "EVERY 15 MIN",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "sweep_run_now",
+      "expected": "Run now",
+      "observed": "Run now",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "sweep_facts",
+      "expected": "QUIET HH:00-HH:00 . NEXT HH:MM . LAST HH:MM",
+      "observed": "\u26a0HELD \u00b7 QUIET UNTIL 08:00QUIET 22:00\u201308:00\u00b7NEXT 13:35\u00b7LAST 13:20",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "brief_primary",
+      "expected": "Monday brief",
+      "observed": "Monday brief",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "brief_daily",
+      "expected": "DAILY 08:00",
+      "observed": "DAILY 08:00",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "brief_generate_now",
+      "expected": "Generate now",
+      "observed": "Generate now",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "brief_facts",
+      "expected": "NEXT MON HH:00 . LAST MON DD",
+      "observed": "NEXT MON 08:00\u00b7LAST AUG 19",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "notify_primary",
+      "expected": "Notify",
+      "observed": "Notify",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "notify_gadgets",
+      "expected": "ON THE EDGE | COUNT ONLY",
+      "observed": "ON THE EDGE | COUNT ONLY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "notify_held",
+      "expected": "HELD (quiet hours)",
+      "observed": "HELD",
+      "verdict": "DATA",
+      "why": "quiet hours active"
+    },
+    {
+      "face": "rhythm",
+      "field": "mute_toggle:0",
+      "expected": "(project name) enabled/muted",
+      "observed": "\u2713 COMPLETE DELIVERY OF GOVERNANCE FRAMEWORK FOR EVERDRIVEN SOFTWARE ARCHITECTURE enabled",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "footer_written",
+      "expected": "WRITTEN HH:MM",
+      "observed": "WRITTEN 13:20",
+      "verdict": "MATCH",
+      "why": "timestamp found"
+    },
+    {
+      "face": "shade",
+      "field": "projects_caption",
+      "expected": "PROJECTS . N NEED YOU",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "shade",
+      "field": "brief_row",
+      "expected": "Monday brief N THINGS SEP NN Open",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "dock",
+      "field": "badge_count",
+      "expected": "(aggregate needs-you count or absent)",
+      "observed": "\u2022",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "command-deck",
+      "field": "projects_group_count",
+      "expected": "(N project entries)",
+      "observed": "1",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "command-deck",
+      "field": "project:0",
+      "expected": "Open <name> | N NEED(S) YOU | PROJECT",
+      "observed": "Open Complete delivery of governance framework for EverDriven Software Architecture |  | PROJECT",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "command-deck",
+      "field": "groups",
+      "expected": "PROJECTS, VERBS, PROGRAMS, ...",
+      "observed": "PROJECTS, VERBS, PROGRAMS, SETTINGS",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "notification",
+      "field": "notify_receipts_route",
+      "expected": "(no route exists)",
+      "observed": "NO ROUTE FOR NOTIFY RECEIPTS",
+      "verdict": "DATA",
+      "why": "heartbeat.notify receipts not exposed via HTTP; the notifier (desktop_notify.py) tracks last_notified_count in memory"
+    },
+    {
+      "face": "notification",
+      "field": "last_sweep_at",
+      "expected": "(timestamp)",
+      "observed": "2026-09-05T13:20:30+00:00",
+      "verdict": "DATA",
+      "why": "from GET /api/settings/heartbeat"
+    },
+    {
+      "face": "notification",
+      "field": "next_sweep_at",
+      "expected": "(timestamp)",
+      "observed": "2026-09-05T13:35:30+00:00",
+      "verdict": "DATA",
+      "why": "from GET /api/settings/heartbeat"
+    },
+    {
+      "face": "notification",
+      "field": "banner_expectation",
+      "expected": "NO BANNER (count=0)",
+      "observed": "count=0, no needs-you items",
+      "verdict": "DATA",
+      "why": "no items to notify about"
+    }
+  ],
+  "errors": [],
+  "surprises": [],
+  "defects": [],
+  "sweep_receipt": {
+    "kind": "heartbeat.sweep",
+    "at": "2026-09-05T13:20:30+00:00",
+    "rooms": 0,
+    "watches": 0,
+    "duration_ms": 3.5,
+    "held": true,
+    "errors": 0,
+    "outcomes": {
+      "counts": {},
+      "total": 0,
+      "failed_watch_ids": []
+    }
+  }
+}

@@ -2,7 +2,8 @@
 
 Build-first via glass_infra._ensure_build. One leg on isolated HOME:
   - Open Settings hub (empty install -> 'No default model' headline,
-    Rhythm reads 'NO LOOPS', Models reads 'NO DEFAULT').
+    Rhythm reads 'EVERY 15 MIN' — the heartbeat sweeps by default since
+    HS-171 — Models reads 'NO DEFAULT').
   - Seed one connection + one loop and assert the rows update.
   - Assert exactly one .surface-display.
   - Assert the posture text appears exactly once in the face.
@@ -115,12 +116,14 @@ def test_settings_hub_cold(
                 "Models row missing NO DEFAULT warning chip"
             )
 
-            # Rhythm row should show NO LOOPS (muted token, not counter of zero).
+            # HS-171: the heartbeat sweeps by default, so a cold hub's Rhythm row
+            # reads EVERY 15 MIN (never a counter of zero either way).
             rhythm_row = page.locator(".surface-ledger-row", has=page.locator(
                 ".surface-ledger-primary", has_text="Rhythm"
             ))
             rhythm_text = rhythm_row.text_content() or ""
-            assert "NO LOOPS" in rhythm_text, f"Rhythm should say NO LOOPS, got: {rhythm_text}"
+            assert "EVERY 15 MIN" in rhythm_text or "NO LOOPS" in rhythm_text, f"Rhythm should say EVERY 15 MIN (or NO LOOPS if the sweep is off), got: {rhythm_text}"
+            assert " 0 " not in rhythm_text and "0 LOOPS" not in rhythm_text
             assert "0 LOOP" not in rhythm_text, f"Rhythm must not say 0 LOOPS (zero law): {rhythm_text}"
 
             # Posture text appears exactly once.

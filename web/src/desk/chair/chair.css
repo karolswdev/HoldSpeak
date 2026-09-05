@@ -99,6 +99,11 @@
   color: var(--text);
 }
 
+/* HS-171: muted needs-you rows render dimmed. */
+.arrival-muted-section {
+  opacity: 0.55;
+}
+
 /* 44px row height with hairline separators between rows. */
 .chair .surface-ledger-line {
   min-height: 44px;

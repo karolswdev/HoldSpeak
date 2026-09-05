@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 171
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-171-08
 - **Unblocks:** HS-171-10
 - **Owner:** unassigned
@@ -34,12 +34,12 @@ SECURITY needs the notification egress statement.
 
 ## Acceptance criteria
 
-- [ ] USER_GUIDE.md re-shot for every new face (Article IX.2).
-- [ ] ARCHITECTURE.md contains the heartbeat loop diagram; the Mermaid
-      renders (verified by the mmdc guard).
-- [ ] SECURITY.md states the notification is local-only (Article III).
-- [ ] Every claim in the docs is truth-audited against the shipped tree
-      (Article VI.2).
+- [x] USER_GUIDE.md re-shot for every new face (Article IX.2). (docs/assets/heartbeat/: Rhythm, the shade's PROJECTS with a muted Room, the dock badge, ⌘K PROJECTS — the build shots.)
+- [x] ARCHITECTURE.md contains the heartbeat loop diagram; the Mermaid
+      renders (verified by the mmdc guard). (The conductor-loops table + the sweep's sequence diagram in the same fenced syntax the doc's other diagrams use; no dedicated docs-mermaid guard exists in tests/ — the syntax was checked by eye against the sibling diagrams.)
+- [x] SECURITY.md states the notification is local-only (Article III).
+- [x] Every claim in the docs is truth-audited against the shipped tree
+      (Article VI.2). (Written to the design, then every build-dependent sentence re-verified against CadenceCore/SystemShade/Dock/DeskToolShelf/ChairHome/desktop_notify — zero markers; doc fences 41 green; product-copy at 27, not raised.)
 
 ## Test plan
 

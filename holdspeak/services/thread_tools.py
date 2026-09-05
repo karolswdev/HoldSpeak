@@ -253,6 +253,11 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     # HS-168-02: connection tools (reads only -- no state mutation)
     "connection.list": ("evidence_read", False),
     "connection.recheck": ("evidence_read", False),
+    # HS-171-02: heartbeat family
+    "heartbeat.status": ("evidence_read", False),
+    "heartbeat.run_now": ("effect_proposal", False),
+    "heartbeat.set": ("effect_proposal", False),
+    "heartbeat.notify_test": ("effect_proposal", False),
 }
 
 # Public accessors

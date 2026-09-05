@@ -211,7 +211,9 @@ describe("the reference core (Cadence) is native", () => {
     ]) {
       expect(container.querySelector(cls)).toBeNull();
     }
-    expect(container.querySelector(".surface-verbs")).toBeTruthy();
+    // HS-171-02: the Rhythm face no longer renders SurfaceVerbs in the
+    // hero slot (the hero is null). The loops section renders .surface-rows
+    // and the sweep section renders .surface-ledger (the new heartbeat rows).
     expect(container.querySelector(".surface-rows")).toBeTruthy();
     expect(screen.getByText("agent question")).toBeInTheDocument();
   });

@@ -45,6 +45,7 @@ _FAMILY_MODULE_NAMES: list[str] = [
     "door",
     "thread",
     "project",
+    "heartbeat",
 ]
 
 # MCP-006 isolation: import each family, record failures.
