@@ -14,7 +14,7 @@ column.
 
 ## Status
 
-**PLANNED 0/9.**
+**ACTIVE 0/9 — STACKED on 174 (PR #557) on 173 (#556) on 172 (#555) on 171 (#554) on 170 (#553); branch `feat/calendar-clock` off `feat/reach`.**
 
 **Depends on:** Phase 171 merged (the cadence row drives the brief's
 recurrence and the scheduled-recording conductor's ticks).
@@ -102,7 +102,7 @@ has only GitHubWatchSource:58 and JiraWatchSource:294).
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-175-01 | The design (the calendar week, the event-born recording, the meeting Watch entity on the canvas) | backlog | [story-01-the-design](./story-01-the-design.md) | -- |
+| HS-175-01 | The design (the calendar week, the event-born recording, the meeting Watch entity on the canvas) | in-progress | [story-01-the-design](./story-01-the-design.md) | -- |
 | HS-175-02 | Calendar events on the desk (the week view, the next seam, events as material) | backlog | [story-02-calendar-events-on-the-desk](./story-02-calendar-events-on-the-desk.md) | -- |
 | HS-175-03 | Event-born scheduled recordings (auto-create from calendar events with meeting URLs) | backlog | [story-03-event-born-recordings](./story-03-event-born-recordings.md) | -- |
 | HS-175-04 | The meeting Watch adapter (MeetingWatchSource: meetings as Watch entities in a Room) | backlog | [story-04-the-meeting-watch-adapter](./story-04-the-meeting-watch-adapter.md) | -- |
@@ -114,6 +114,12 @@ has only GitHubWatchSource:58 and JiraWatchSource:294).
 
 ## Where we are
 
+**2026-09-05 21:20 — ACTIVATED, STACKED.** Under the standing goal the
+faces build to counsel-ratified boards and his word gates the MERGE.
+Boards for D2 (a)–(e) dispatched at 1440 + 393; wire lanes follow 174's
+close. Merge order stays his: #553 → #554 → #555 → #556 → #557 → 175's.
+
+Earlier: 
 PLANNED. Waiting for Phase 171 to merge (the cadence row drives the
 brief's recurrence and the conductor's ticks).
 
