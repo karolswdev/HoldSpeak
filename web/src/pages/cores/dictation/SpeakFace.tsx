@@ -117,32 +117,67 @@ export interface TargetProfile {
  *  (c) No match: name from the assignment's label (reject "Migrated ...")
  *      and classify the host with the LAN rule
  */
+export type ResolvedEngine = {
+  name: string | null;
+  egressLabel: string;
+  egressHost: string;
+  /** The detect engine's state (READY, NOT_SET, etc.) when available. */
+  engineState: string | null;
+  keySet: boolean | null;
+};
+
+/** Match a profile_id against detect engines.
+ *  Detect ids are prefixed: "cloud:profileId", "lan:profileId", "local:profileId".
+ *  The assignment entry's profile_id is the raw id (no prefix). */
+function findEngine(engines: Engine[], profileId: string): Engine | undefined {
+  return engines.find(
+    (e) =>
+      e.profileId === profileId ||
+      e.id === profileId ||
+      e.id === `cloud:${profileId}` ||
+      e.id === `lan:${profileId}` ||
+      e.id === `local:${profileId}`,
+  );
+}
+
+/** Build the result from a matched detect engine. */
+function fromDetectEngine(engine: Engine, fallbackLabel: string): ResolvedEngine {
+  const name = engine.name || fallbackLabel;
+  const state = engine.state ?? null;
+  const keySet = engine.keySet ?? null;
+  switch (engine.kind) {
+    case "lan":
+      return { name, egressLabel: `${engine.host} · LAN`, egressHost: engine.host, engineState: state, keySet };
+    case "cloud":
+      // Article III: the host is named on the egress chip.
+      return {
+        name,
+        egressLabel: engine.host ? `${engine.host.toUpperCase()}` : "CLOUD",
+        egressHost: engine.host,
+        engineState: state,
+        keySet,
+      };
+    default:
+      return { name, egressLabel: "THIS DEVICE", egressHost: "", engineState: state, keySet };
+  }
+}
+
+const NO_ENGINE: ResolvedEngine = { name: null, egressLabel: "THIS DEVICE", egressHost: "", engineState: null, keySet: null };
+
 export function resolveEngine(
   assignment: AssignmentEditorProjection | null,
   engines: Engine[],
   targets?: TargetProfile[],
-): { name: string | null; egressLabel: string; egressHost: string } {
+): ResolvedEngine {
   const entries = assignment?.effective?.assignment?.entries;
-  if (!entries?.length) return { name: null, egressLabel: "THIS DEVICE", egressHost: "" };
+  if (!entries?.length) return NO_ENGINE;
 
   const profileId = entries[0].profile_id;
   const label = entries[0].label;
 
   // (a) Match by profileId on the detect engine
-  const byProfile = engines.find(
-    (e) => e.profileId === profileId || e.id === profileId,
-  );
-  if (byProfile) {
-    const name = byProfile.name || label;
-    switch (byProfile.kind) {
-      case "lan":
-        return { name, egressLabel: `${byProfile.host} · LAN`, egressHost: byProfile.host };
-      case "cloud":
-        return { name, egressLabel: "CLOUD", egressHost: byProfile.host };
-      default:
-        return { name, egressLabel: "THIS DEVICE", egressHost: "" };
-    }
-  }
+  const byProfile = findEngine(engines, profileId);
+  if (byProfile) return fromDetectEngine(byProfile, label);
 
   // Find the profile's base_url from the targets list
   const targetProfile = targets?.find(
@@ -154,17 +189,12 @@ export function resolveEngine(
   // (b) Match by base_url host against detect engines
   if (profileHost) {
     const byHost = engines.find((e) => e.host === profileHost);
-    if (byHost) {
-      const name = byHost.name || label;
-      const egress = egressFromHost(profileHost);
-      return { name, ...egress };
-    }
+    if (byHost) return fromDetectEngine(byHost, label);
   }
 
   // (c) No detect match — name and classify from what we have
   const isMigrationLabel = label.startsWith("Migrated");
 
-  // Name: model id from the target, or host:port, never "Migrated ..."
   let name: string;
   if (!isMigrationLabel) {
     name = label;
@@ -181,21 +211,20 @@ export function resolveEngine(
     name = label;
   }
 
-  // Host classification
   if (profileHost) {
-    return { name, ...egressFromHost(profileHost) };
+    const egress = egressFromHost(profileHost);
+    return { name, ...egress, engineState: null, keySet: null };
   }
 
-  // Last resort: assignment boundary
   switch (entries[0].boundary) {
     case "private_network":
-      return { name, egressLabel: "LAN", egressHost: "" };
+      return { name, egressLabel: "LAN", egressHost: "", engineState: null, keySet: null };
     case "mesh":
-      return { name, egressLabel: "PAIRED", egressHost: "" };
+      return { name, egressLabel: "PAIRED", egressHost: "", engineState: null, keySet: null };
     case "cloud":
-      return { name, egressLabel: "CLOUD", egressHost: "" };
+      return { name, egressLabel: "CLOUD", egressHost: "", engineState: null, keySet: null };
     default:
-      return { name, egressLabel: "THIS DEVICE", egressHost: "" };
+      return { name, egressLabel: "THIS DEVICE", egressHost: "", engineState: null, keySet: null };
   }
 }
 
@@ -267,7 +296,7 @@ export function SpeakFace() {
       ) : null}
 
       {/* 5. ENGINE row */}
-      <EngineRow engine={resolved.name} egress={resolved.egressLabel} readiness={deck} />
+      <EngineRow engine={resolved.name} egress={resolved.egressLabel} engineState={resolved.engineState} keySet={resolved.keySet} readiness={deck} />
 
       {/* 6. Details (Disclosure, folded) */}
       <Disclosure label="Details" defaultOpen={false}>
@@ -463,14 +492,23 @@ function ResultRow({
 function EngineRow({
   engine,
   egress,
+  engineState,
+  keySet,
   readiness,
 }: {
   engine: string | null;
   egress: string;
+  engineState: string | null;
+  keySet: boolean | null;
   readiness: ReturnType<typeof useSpeakDeck>;
 }) {
-  const pipelineReady = readiness.pipelineOn && readiness.readinessConfig.pipeline_enabled === true;
+  const openConcierge = () => {
+    import("../../../desk/shell").then(({ openSurface }) =>
+      openSurface("open-concierge"),
+    );
+  };
 
+  // No engine assigned at all
   if (!engine) {
     return (
       <div className="speak-engine">
@@ -478,19 +516,41 @@ function EngineRow({
         <span className="speak-engine-dot">{"·"}</span>
         <StateChip state="warning" label="NOT SET" />
         <span className="speak-transport-spacer" />
-        <Button
-          variant="ghost"
-          dense
-          onClick={() => {
-            import("../../../desk/shell").then(({ openSurface }) =>
-              openSurface("open-concierge"),
-            );
-          }}
-        >
+        <Button variant="ghost" dense onClick={openConcierge}>
           Choose
         </Button>
       </div>
     );
+  }
+
+  // Derive the state chip from the detect engine's state.
+  // When detect provided a state, use it; otherwise fall back to pipeline readiness.
+  let chipState: "success" | "warning";
+  let chipLabel: string;
+  let showChoose = false;
+
+  if (engineState === "NOT_SET") {
+    chipState = "warning";
+    chipLabel = keySet === false ? "KEY NOT SET" : "NOT SET";
+    showChoose = true;
+  } else if (engineState === "UNREACHABLE") {
+    chipState = "warning";
+    chipLabel = "UNREACHABLE";
+    showChoose = true;
+  } else if (engineState === "READY") {
+    chipState = "success";
+    chipLabel = "READY";
+  } else if (engineState) {
+    // WAITING, CHECKING, etc.
+    chipState = "warning";
+    chipLabel = engineState.replace(/_/g, " ");
+    showChoose = true;
+  } else {
+    // No detect state — fall back to pipeline readiness
+    const pipelineReady = readiness.pipelineOn && readiness.readinessConfig.pipeline_enabled === true;
+    chipState = pipelineReady ? "success" : "warning";
+    chipLabel = pipelineReady ? "READY" : "NOT READY";
+    showChoose = !pipelineReady;
   }
 
   return (
@@ -500,10 +560,12 @@ function EngineRow({
       <span className="speak-engine-name">{engine}</span>
       <EgressChip label={egress} />
       <span className="speak-transport-spacer" />
-      <StateChip
-        state={pipelineReady ? "success" : "warning"}
-        label={pipelineReady ? "READY" : "NOT READY"}
-      />
+      <StateChip state={chipState} label={chipLabel} />
+      {showChoose ? (
+        <Button variant="ghost" dense onClick={openConcierge}>
+          Choose
+        </Button>
+      ) : null}
     </div>
   );
 }

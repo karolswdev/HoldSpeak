@@ -208,14 +208,48 @@ describe("resolveEngine (HS-170-04)", () => {
     expect(result.egressLabel).toBe("THIS DEVICE");
   });
 
-  it("shows CLOUD for a cloud engine", () => {
+  // The owner's real fixture: legacy-intel profile → cloud:legacy-intel detect engine
+  it("(a) matches legacy-intel by cloud:profileId prefix and shows GPT-5 mini + host", () => {
+    const assignment = fakeAssignment("legacy-intel", LEGACY_LABEL, "cloud");
+    const engines = [
+      fakeEngine({
+        id: "cloud:legacy-intel",
+        profileId: "legacy-intel",
+        kind: "cloud",
+        name: "GPT 5 mini",
+        host: "api.openai.com",
+        state: "NOT_SET",
+        keySet: false,
+      }),
+    ];
+    const result = resolveEngine(assignment, engines);
+    expect(result.name).toBe("GPT 5 mini");
+    expect(result.egressLabel).toBe("API.OPENAI.COM");
+    expect(result.engineState).toBe("NOT_SET");
+    expect(result.keySet).toBe(false);
+  });
+
+  // State: READY only when detect says READY
+  it("carries READY state from the detect engine", () => {
     const assignment = fakeAssignment("p5", "OpenAI", "cloud");
     const engines = [
-      fakeEngine({ profileId: "p5", kind: "cloud", host: "api.openai.com", name: "GPT-4o" }),
+      fakeEngine({ profileId: "p5", kind: "cloud", host: "api.openai.com", name: "GPT-4o", state: "READY", keySet: true }),
     ];
     const result = resolveEngine(assignment, engines);
     expect(result.name).toBe("GPT-4o");
-    expect(result.egressLabel).toBe("CLOUD");
+    expect(result.egressLabel).toBe("API.OPENAI.COM");
+    expect(result.engineState).toBe("READY");
+    expect(result.keySet).toBe(true);
+  });
+
+  it("carries NOT_SET state when key is missing", () => {
+    const assignment = fakeAssignment("p5b", "OpenAI", "cloud");
+    const engines = [
+      fakeEngine({ profileId: "p5b", kind: "cloud", host: "api.openai.com", name: "GPT-4o", state: "NOT_SET", keySet: false }),
+    ];
+    const result = resolveEngine(assignment, engines);
+    expect(result.engineState).toBe("NOT_SET");
+    expect(result.keySet).toBe(false);
   });
 
   it("returns null name when no assignment entries exist", () => {
