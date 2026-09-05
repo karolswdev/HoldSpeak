@@ -122,8 +122,9 @@ describe("HS-129-07 speakable desk", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Speak Search decisions" }));
     expect(screen.getByRole("searchbox", { name: "Search decisions" })).toHaveValue("spoken");
-    fireEvent.click(screen.getAllByRole("button", { name: "Speak" })[0]);
+    // Index shifted by 1: DecisionsView now carries its own MicButton at [0]
     fireEvent.click(screen.getAllByRole("button", { name: "Speak" })[1]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Speak" })[2]);
     expect(onLineChange).toHaveBeenCalledWith("spoken");
     expect(onPadChange).toHaveBeenCalledWith("spoken");
   });

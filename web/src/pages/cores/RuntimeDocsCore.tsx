@@ -43,7 +43,7 @@ export function RuntimeDocsCore({ hero }: CoreProps) {
         <SurfaceRows>
           <SurfaceRow
             title="SETUP"
-            detail={<Button dense variant="ghost" onClick={() => openSurfaceOr("configure-setup", "/setup")}>Run runtime test</Button>}
+            detail={<Button dense variant="ghost" onClick={() => openSurfaceOr("project-setup", "/")}>Run runtime test</Button>}
           />
           <SurfaceRow
             title="DICTATION"

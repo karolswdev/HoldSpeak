@@ -106,7 +106,7 @@ describe("ThoughtWorkspaceWindow", () => {
     expect(screen.getByRole("button", { name: "Finish Thought" })).not.toHaveClass("btn--primary");
     expect(document.querySelectorAll(".btn--primary")).toHaveLength(1);
     expect(screen.getByRole("region", { name: "Note" })).toHaveTextContent("Launch ownership");
-    expect(screen.getByRole("region", { name: "Interview" })).toHaveTextContent("One click reads the saved Note");
+    expect(screen.getByRole("region", { name: "Interview" })).toHaveTextContent("Reads your Note, asks one question");
     expect(screen.queryByText(/Good enough|Keep refining|Finish instead/)).not.toBeInTheDocument();
   });
 
@@ -245,7 +245,7 @@ describe("ThoughtWorkspaceWindow", () => {
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
     fireEvent.click(await screen.findByRole("button", { name: "Ask AI" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("This hub restarted");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Hub restarted");
     expect(screen.getByRole("textbox", { name: "Note body", hidden: true })).toHaveValue(thought.working_note.body_markdown);
     vi.mocked(thoughtWorkbench).mockResolvedValueOnce(foreign);
     fireEvent.click(screen.getByRole("button", { name: "Reload Thought" }));

@@ -113,9 +113,9 @@ describe("surface windows use the compositor workspace", () => {
     expect(openSurface("configure-settings")).toBe(false);
 
     act(() => {
-      expect(openSurface("configure-setup")).toBe(true);
+      expect(openSurface("project-setup")).toBe(true);
     });
-    expect(useDesk.getState().windowsById["surface-setup"]?.applicationKey)
-      .toBe("configure-setup");
+    expect(useDesk.getState().windowsById["surface-project-setup"]?.applicationKey)
+      .toBe("project-setup");
   });
 });

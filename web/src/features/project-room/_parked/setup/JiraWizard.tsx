@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-166-04 round 2 -- the Jira face, composed from the surface library.
 // HS-168-04: auth folds GONE from the interview; Account step = pick only
 // (skipped when exactly one connection); known-scope card on Project step;

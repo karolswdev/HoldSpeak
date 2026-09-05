@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-166-04 round 2 — JiraWizard tests: accounts (D1), scope (D2),
 // test (D3), mounted flow, suggestion badge.
 

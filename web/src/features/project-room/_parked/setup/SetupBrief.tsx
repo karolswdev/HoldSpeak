@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-167-05 -- the brief recomposed: SurfaceFacts for OUTCOME/NOTICE/TOOLS/SOURCES,
 // proposed watches as a SurfaceLedger cols="room" with provider emblems,
 // cadence tokens, action chips, and ProvenanceChips.

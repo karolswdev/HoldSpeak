@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-159-05 -- SetupInterview component tests: two questions (INT-003),
 // keyboard behaviors (WEB-CMD-005), voice-never-submits (WEB-CMD-006),
 // card object slots (INT-008), brief state mirroring, Blank path.

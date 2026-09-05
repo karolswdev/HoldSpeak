@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-159-05 -- typed API wrappers for the 10 project-setup routes
 // (WEB-ARC-004: decode at the boundary, never pass Record<string,unknown>
 // into views).  Mirrors holdspeak/web/routes/project_setup.py.

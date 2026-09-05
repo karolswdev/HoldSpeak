@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-161-05 -- mounted-path tests: the provider wizard renders in the REAL
 // setup flow (SetupRoot -> controller -> ProviderWizardFlow). Proves the
 // wizard is mounted, not just tested in isolation.

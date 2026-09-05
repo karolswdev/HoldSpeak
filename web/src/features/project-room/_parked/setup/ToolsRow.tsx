@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 import type React from "react";
 // HS-168-04 -- the TOOLS row: connector-pack providers from GET /api/connections.
 // One compact tool card per provider (GitHub, Jira -- native needs none).

@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-167-04 — activation review recomposed on the surface library (D4).
 // WHAT WILL RUN = SurfaceLedger (one row per watch: provider emblem, name,
 // cadence token, ProvenanceChip, CheckGadget trailing).

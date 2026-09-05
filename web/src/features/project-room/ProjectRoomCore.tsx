@@ -269,8 +269,8 @@ function RoomHead({
             data-tone={target.passed ? "danger" : undefined}
           >
             {target.passed
-              ? `OVERDUE BY ${Math.abs(target.daysLeft ?? 0)} DAYS`
-              : `TARGET ${formatTargetDate(target.targetAt)} · ${target.daysLeft} DAYS`
+              ? (target.daysLeft ? `OVERDUE BY ${Math.abs(target.daysLeft)} DAYS` : "OVERDUE TODAY")
+              : `TARGET ${formatTargetDate(target.targetAt)}${target.daysLeft ? ` · ${target.daysLeft} DAYS` : " · TODAY"}`
             }
           </span>
         ) : null}
@@ -733,7 +733,7 @@ function RoomAskWell({
       {result ? (
         <div className="surface-aerogel room-ask-answer" data-testid="room-ask-answer">
           <Material>{result.output}</Material>
-          {receipt ? (
+          {receipt && groundedCount > 0 ? (
             <p className="desk-ask-grounded">
               GROUNDED ON {groundedCount} OF {receipt.matchedCount}
             </p>
@@ -743,7 +743,7 @@ function RoomAskWell({
       ) : null}
       {error ? <p className="room-ask-error">{error}</p> : null}
       <div className="room-ask-well" data-testid="room-ask-input-well">
-        <input
+        <input // UX-CANON: needs redesign (HS-170-04)
           type="text"
           className="room-ask-input"
           aria-label="Ask this project"
@@ -883,7 +883,7 @@ function HistoryWing({
               ))}
             </span>
             <div className="room-history-search">
-              <input
+              <input // UX-CANON: needs redesign (HS-170-04)
                 type="search"
                 aria-label="Search history"
                 placeholder="Search history…"

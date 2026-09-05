@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-167-05 -- test result display (D2/D3): N matches · M calls · s as
 // receipt-style tokens, ledger rows of matches (emblem + title + StateChip),
 // state as a StateChip. No sentence.

@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-161-05 -- provider wizard step tests: all seven provider-state tokens
 // + their ONE next action, recheck flow, discovery + typed fallback, badge
 // presence on card/test, plain-words PR conditions, SETFLOW-003 round-trip

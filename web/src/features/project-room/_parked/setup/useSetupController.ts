@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-159-05 -- setup controller: discriminated stage state mirroring the
 // backend machine. Autosave = every accepted answer POSTs; resume = GET
 // rehydration on mount (WEB-CR-009, INT-005).

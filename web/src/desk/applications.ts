@@ -186,22 +186,12 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
         })),
     },
   },
-  {
-    action: "configure-setup",
-    windowId: "surface-setup",
-    label: "Setup",
-    description: "Configure the first arrival.",
-    glyph: "✓",
-    href: "/setup",
-    surface: {
-      eyebrow: "Arrival",
-      minW: 520,
-      load: () =>
-        import("../pages/cores/SetupCore").then((module) => ({
-          default: module.SetupCore,
-        })),
-    },
-  },
+  // PARKED (HS-170-02): configure-setup retired by Phase 169; project-setup replaced it.
+  // {
+  //   action: "configure-setup",
+  //   windowId: "surface-setup",
+  //   ...
+  // },
   {
     action: "open-constitutional-context",
     windowId: "surface-constitutional-context",

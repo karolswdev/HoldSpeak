@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-159-05 -- decode suites against REAL wire fixtures mined from
 // tests/integration/test_project_setup_routes.py and the service
 // holdspeak/services/project_setup_service.py.

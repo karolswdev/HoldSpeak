@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-159-05 -- controller tests: stage/resume/autosave (mock fetch
 // counting), the two-questions-then-cards law (INT-003), brief state
 // mirroring, Blank path, finalize -> open dispatch.

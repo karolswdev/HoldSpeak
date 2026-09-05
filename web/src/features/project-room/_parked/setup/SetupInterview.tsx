@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-167-04 — the question plane recomposed on the surface library.
 // SurfaceSection label = the question word (OUTCOME / NOTICE); helper = placeholder.
 // AnswerRow = SurfaceLedgerRow (lead ✓, primary = answer, wrap, trailing Edit).

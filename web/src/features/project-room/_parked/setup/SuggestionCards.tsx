@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-159-05 -- suggestion cards consume ChoiceCardShell from the surface
 // library barrel. The shell owns the card visual language (HS-156-08);
 // this feature adds the multi-select listbox interaction model on top

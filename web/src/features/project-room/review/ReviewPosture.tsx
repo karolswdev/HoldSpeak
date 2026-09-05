@@ -20,6 +20,7 @@ import {
   Disclosure,
   humanTime,
   MicButton,
+  countLabel,
   type ChipState,
 } from "../../../desk/surface";
 import type { ReviewController } from "./useReviewController";
@@ -104,7 +105,7 @@ function EditFields({
         <div key={key} className="review-edit-row">
           <label className="review-edit-label">{label}</label>
           <span className="review-edit-input-wrap">
-            <input
+            <input // UX-CANON: needs redesign (HS-170-04)
               className="review-edit-input"
               aria-label={`Edit ${label}`}
               value={renderValue(value)}
@@ -198,7 +199,7 @@ function ExpandedDetail({
                   </span>
                 </SurfaceSection>
                 {hashEntries.length > 0 ? (
-                  <Disclosure label={`hashes ${hashEntries.length}`}>
+                  <Disclosure label={countLabel("HASHES", hashEntries.length)}>
                     <SurfaceCode>
                       {hashEntries.map(([k, v]) => `${k}: ${renderValue(v)}`).join("\n")}
                     </SurfaceCode>
@@ -274,7 +275,7 @@ function ExpandedDetail({
 
           {deferArmed ? (
             <span className="review-defer-group" data-testid="review-defer-armed">
-              <input
+              <input // UX-CANON: needs redesign (HS-170-04)
                 type="date"
                 className="review-defer-date"
                 data-testid="review-defer-date"
@@ -590,14 +591,14 @@ export function ReviewPosture({ ctrl }: { ctrl: ReviewController }) {
           <span className="review-position" data-testid="review-position" role="status"
             aria-live="polite"
             aria-label={
-              p
+              p && ctrl.openProposals.length > 0
                 ? `Proposal ${ctrl.selectedIndex + 1} of ${ctrl.openProposals.length}, ${kindLabel(p.proposalKind)}`
                 : "No proposals"
             }
           >
             {ctrl.openProposals.length > 0
               ? `${ctrl.selectedIndex + 1} / ${ctrl.openProposals.length}`
-              : "0 proposals"}
+              : "No proposals"}
           </span>
         }
       >
@@ -628,7 +629,7 @@ export function ReviewPosture({ ctrl }: { ctrl: ReviewController }) {
 
       {/* D5: full-width SurfaceLedger, SurfaceSection per kind, expandable rows */}
       <div data-testid="review-queue">
-      <SurfaceLedger count={`PROPOSALS ${ctrl.openProposals.length}`} cols="room">
+      <SurfaceLedger count={countLabel("PROPOSALS", ctrl.openProposals.length)} cols="room">
         <div role="listbox" aria-label="Review proposals">
           {ctrl.groups.map((group) => {
             const openInGroup = group.proposals.filter(
@@ -639,9 +640,11 @@ export function ReviewPosture({ ctrl }: { ctrl: ReviewController }) {
               <section key={group.kind} className="surface-section review-kind-section" data-testid="review-kind-group">
                 <header className="surface-section-head">
                   <h3 data-testid="review-kind-label">{kindLabel(group.kind)}</h3>
-                  <span data-testid="review-kind-count" className="surface-token">
-                    {openInGroup.length}
-                  </span>
+                  {openInGroup.length > 0 ? (
+                    <span data-testid="review-kind-count" className="surface-token">
+                      {openInGroup.length}
+                    </span>
+                  ) : null}
                 </header>
                 <ul className="surface-ledger-rows">
                   {openInGroup.map((proposal) => {
@@ -671,7 +674,7 @@ export function ReviewPosture({ ctrl }: { ctrl: ReviewController }) {
                             aria-current={isSelected ? "true" : undefined}
                             role="option"
                             aria-selected={isSelected}
-                            aria-label={`${rowText}, ${kindLabel(proposal.proposalKind)}, ${globalIndex + 1} of ${ctrl.openProposals.length}`}
+                            aria-label={ctrl.openProposals.length > 0 ? `${rowText}, ${kindLabel(proposal.proposalKind)}, ${globalIndex + 1} of ${ctrl.openProposals.length}` : `${rowText}, ${kindLabel(proposal.proposalKind)}`}
                             data-kind={proposal.proposalKind}
                             data-ref={proposal.targetRef}
                           >
@@ -700,7 +703,7 @@ export function ReviewPosture({ ctrl }: { ctrl: ReviewController }) {
                         }
                         open={isSelected}
                         onToggle={() => ctrl.selectByIndex(globalIndex)}
-                        lineLabel={`${rowText}, ${globalIndex + 1} of ${ctrl.openProposals.length}`}
+                        lineLabel={ctrl.openProposals.length > 0 ? `${rowText}, ${globalIndex + 1} of ${ctrl.openProposals.length}` : rowText}
                       >
                         {/* D5: expanded detail inline in the ledger row */}
                         <ExpandedDetail

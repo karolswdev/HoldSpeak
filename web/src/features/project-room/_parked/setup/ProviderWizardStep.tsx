@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-161-05 -- the GitHub provider wizard step: Discover -> Scope -> Test.
 // HS-168-04: connection card REMOVED from the interview; the wizard asks
 // SCOPE + POPULATION + TEST only. Heading = the Watch's ledger row.

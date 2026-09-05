@@ -435,10 +435,10 @@ function AddNodePanel({
         <div className="topology-add-form">
           <span className="topology-add-title">Define endpoint</span>
           <StringGadget label="Name" value={endpoint.label} onChange={(v) => setEndpoint((c) => ({ ...c, label: v }))} placeholder="My server" />
-          <MicButton draftScope="topo-endpoint-name" onResult={(t) => setEndpoint((c) => ({ ...c, label: t }))} />
+          <MicButton draftScope="topo-endpoint-name" onText={(t: string) => setEndpoint((c) => ({ ...c, label: t }))} />
           <StringGadget label="Endpoint" value={endpoint.url} onChange={(v) => setEndpoint((c) => ({ ...c, url: v }))} placeholder="http://192.168.1.43:8080/v1" />
           <StringGadget label="Model" value={endpoint.model} onChange={(v) => setEndpoint((c) => ({ ...c, model: v }))} placeholder="model-name" />
-          <StringGadget label="Provider key" type="password" inputRef={secretRef} placeholder="Key (optional)" />
+          <label className="surface-gadget-label">Provider key<input ref={secretRef} className="hs-control" type="password" autoComplete="new-password" placeholder="Key (optional)" /></label>
           {error ? <ActionNotice tone="danger">{error}</ActionNotice> : null}
           <div className="topology-add-actions">
             <Button variant="ghost" dense onClick={() => setFace("choices")}>Back</Button>
@@ -453,7 +453,7 @@ function AddNodePanel({
           <EgressChip label="Egress" scope="cloud" title="Request leaves this hub." />
           <StringGadget label="Name" value={hosted.label} onChange={(v) => setHosted((c) => ({ ...c, label: v }))} placeholder="Provider" />
           <StringGadget label="Model" value={hosted.model} onChange={(v) => setHosted((c) => ({ ...c, model: v }))} placeholder="model-name" />
-          <StringGadget label="Provider key" type="password" inputRef={secretRef} placeholder="Key" />
+          <label className="surface-gadget-label">Provider key<input ref={secretRef} className="hs-control" type="password" autoComplete="new-password" placeholder="Key" /></label>
           {error ? <ActionNotice tone="danger">{error}</ActionNotice> : null}
           <div className="topology-add-actions">
             <Button variant="ghost" dense onClick={() => setFace("choices")}>Back</Button>

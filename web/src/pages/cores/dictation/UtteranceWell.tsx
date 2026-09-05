@@ -83,7 +83,7 @@ export function UtteranceWell({
             <Button
               dense
               variant="secondary"
-              onClick={() => openSurfaceOr("configure-setup", "/setup")}
+              onClick={() => openSurfaceOr("project-setup", "/")}
             >
               Setup
             </Button>

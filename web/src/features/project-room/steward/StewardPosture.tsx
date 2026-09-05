@@ -21,6 +21,7 @@ import {
   CheckGadget,
   StepperGadget,
   humanTime,
+  countLabel,
   useScrollHint,
   type PlanStep,
 } from "../../../desk/surface";
@@ -297,7 +298,7 @@ function RunDetail({
 function RunList({ ctrl }: { ctrl: StewardController }) {
   return (
     <div className="steward-list" data-testid="steward-list">
-      <SurfaceLedger count={`RUNS ${ctrl.runs.length}`} cols="room">
+      <SurfaceLedger count={countLabel("RUNS", ctrl.runs.length)} cols="room">
         <ul className="surface-ledger-rows">
           {ctrl.runs.map((run) => {
             const tone = runStateTone(run.state);
@@ -386,12 +387,12 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
       {/* R4 item 4: circuit — ActionNotice with tokens, lead=glyph ⌁, StateChip in cells */}
       {circuitWatches.length > 0 ? (
         <>
-          <ActionNotice tone="warn" icon="⚡">
+          <ActionNotice tone="warn" icon="!">
             <span className="surface-token" data-chip>CIRCUIT OPEN</span>
             {" "}
             <span className="surface-token" data-chip>{pluralize(circuitWatches.length, "SOURCE")}</span>
           </ActionNotice>
-          <SurfaceLedger count={`CIRCUITS ${circuitWatches.length}`} cols="room">
+          <SurfaceLedger count={countLabel("CIRCUITS", circuitWatches.length)} cols="room">
             <ul className="surface-ledger-rows">
               {circuitWatches.map((w) => (
                 <SurfaceLedgerRow
@@ -509,7 +510,7 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
                   <EgressChip
                     label="model"
                     scope="mixed"
-                    title="Drafting uses the model assigned to project.update_draft in Settings > Models; if the model fails, drafting falls back to the deterministic composer with a receipt."
+                    title="Uses the model assigned in Settings > Models. Falls back to deterministic."
                   />
                 ) : null}
               </div>
@@ -643,7 +644,7 @@ export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
         <SurfaceFooter
           receipt={
             <span className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
-              {`STEWARD RUNS ${ctrl.runs.length}`}
+              {countLabel("STEWARD RUNS", ctrl.runs.length)}
             </span>
           }
         />

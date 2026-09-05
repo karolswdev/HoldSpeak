@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-166-04 -- controller tests for the Jira section: connection loading,
 // add, recheck, select (auto-discover), scope update, reset.
 // GitHub actions remain unchanged (tested in useSetupController.test.ts).

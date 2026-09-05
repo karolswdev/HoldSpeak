@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-159-05 -- setup domain types and decoders (WEB-ARC-004).
 // Decode from the REAL wire shapes mined from integration tests
 // (tests/integration/test_project_setup_routes.py) and the service

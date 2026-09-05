@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-159-05 -- the setup composition root: SurfaceColumns for
 // question-plane + live-brief at >=560px container; brief follows
 // in DOM order below (WEB-RSP-005).  This is a CoreProps-compatible

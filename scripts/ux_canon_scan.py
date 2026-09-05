@@ -407,7 +407,7 @@ def find_face_files(root: Path) -> list[Path]:
         if p.suffix not in (".tsx", ".css"):
             continue
         rel = str(p.relative_to(src))
-        if "__tests__" in rel or ".test." in rel:
+        if "__tests__" in rel or ".test." in rel or "_parked" in rel:
             continue
         # Only scan face directories
         is_face_dir = False

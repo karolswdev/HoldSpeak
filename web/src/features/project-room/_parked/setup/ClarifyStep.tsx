@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-159-05 -- bounded clarify step (INT-009): cadence preset picker,
 // action choice, scope narrowing.  No unbounded chat.
 

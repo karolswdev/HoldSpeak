@@ -1,3 +1,4 @@
+// PARKED (HS-170-02): retired by Phase 169; kept for reference, not built or scanned.
 // HS-168-05 -- card verb tests: each card species carries one named verb.
 // Connected+untested -> "Set up" primary, click calls onSelect.
 // Connected+tested -> "Remove" ghost, click calls onDeselect.
