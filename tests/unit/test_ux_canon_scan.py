@@ -2,9 +2,12 @@
 
 Plants a tiny fixture tree in tmp_path with one hit per rule class,
 runs the scanner, and asserts the JSON shape + at least one hit per class.
+Also tests false-positive suppression (JSX comments, code fragments,
+property access, boolean .length, import lines).
 """
 from __future__ import annotations
 
+import importlib.util
 import json
 import subprocess
 import sys
@@ -13,6 +16,15 @@ from pathlib import Path
 import pytest
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "ux_canon_scan.py"
+
+
+def _load_scanner():
+    """Import the scanner module in-process."""
+    spec = importlib.util.spec_from_file_location("ux_canon_scan", SCRIPT)
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 
 def _plant_fixture(root: Path) -> None:
@@ -175,3 +187,125 @@ def test_scan_empty_tree(tmp_path: Path) -> None:
     data = json.loads(json_out.read_text())
     assert data["faces"] == {}
     assert data["totals"]["per_rule"] == {}
+
+
+# ---------------------------------------------------------------------------
+# False-positive suppression tests (in-process via scan_file)
+# ---------------------------------------------------------------------------
+
+class TestA1SkipsComments:
+    """A1 must not fire on JSX comments mentioning <button>."""
+
+    def test_jsx_comment_not_flagged(self):
+        mod = _load_scanner()
+        line = '      {/* Condition 1: no raw <button>; visually-hidden submit */}'
+        violations = mod.scan_file("features/test/Foo.tsx", line, [line])
+        a1 = [v for v in violations if v.rule == "A1"]
+        assert not a1, f"A1 fired on JSX comment: {a1[0].text}"
+
+    def test_line_comment_not_flagged(self):
+        mod = _load_scanner()
+        line = '      // no raw <button> here'
+        violations = mod.scan_file("features/test/Foo.tsx", line, [line])
+        a1 = [v for v in violations if v.rule == "A1"]
+        assert not a1
+
+    def test_real_button_still_flagged(self):
+        mod = _load_scanner()
+        line = '      <button type="button" onClick={go}>Go</button>'
+        violations = mod.scan_file("features/test/Foo.tsx", line, [line])
+        a1 = [v for v in violations if v.rule == "A1"]
+        assert len(a1) == 1
+
+
+class TestA3SkipsCode:
+    """A3-sentence must not fire on TypeScript code fragments."""
+
+    def test_usestate_code_not_flagged(self):
+        """Generics boundary like useState<Visibility>(...) must not be treated as JSX text."""
+        mod = _load_scanner()
+        line = 'const [v, setV] = useState<Visibility>("leader_private"); const [busy, setBusy] = useState(false); const [projects, setProjects] = useState<Project[]>([]);'
+        violations = mod.scan_file("pages/cores/Foo.tsx", line, [line])
+        a3s = [v for v in violations if v.rule == "A3-sentence"]
+        assert not a3s, f"A3-sentence fired on code: {a3s[0].text}"
+
+    def test_ternary_code_not_flagged(self):
+        mod = _load_scanner()
+        line = '</> : thought.continuity && isRefining(thought.continuity.state) ? <div className="x">'
+        violations = mod.scan_file("features/test/Foo.tsx", line, [line])
+        a3s = [v for v in violations if v.rule == "A3-sentence"]
+        assert not a3s, f"A3-sentence fired on ternary code: {a3s[0].text}"
+
+    def test_real_sentence_still_flagged(self):
+        mod = _load_scanner()
+        line = '<span>This is a very long sentence that exceeds sixty characters and ends with a period.</span>'
+        violations = mod.scan_file("features/test/Foo.tsx", line, [line])
+        a3s = [v for v in violations if v.rule == "A3-sentence"]
+        assert len(a3s) == 1
+
+
+class TestRawIdsSkipsPropertyAccess:
+    """raw-ids must not fire on property access like brief.open_commitments."""
+
+    def test_property_access_not_flagged(self):
+        mod = _load_scanner()
+        line = '>{brief.open_commitments.length ? <SurfaceRows>'
+        violations = mod.scan_file("pages/cores/Foo.tsx", line, [line])
+        raw = [v for v in violations if v.rule == "raw-ids"
+               and "open_commitments" in v.text]
+        assert not raw, f"raw-ids fired on property access: {raw[0].text}"
+
+    def test_dot_accessor_display_name(self):
+        mod = _load_scanner()
+        line = '>{row.display_name}<'
+        violations = mod.scan_file("pages/cores/Foo.tsx", line, [line])
+        raw = [v for v in violations if v.rule == "raw-ids"
+               and "display_name" in v.text]
+        assert not raw
+
+    def test_bare_snake_still_flagged(self):
+        mod = _load_scanner()
+        line = '>open_pull_requests<'
+        violations = mod.scan_file("features/test/Foo.tsx", line, [line])
+        raw = [v for v in violations if v.rule == "raw-ids"
+               and "open_pull_requests" in v.text]
+        assert len(raw) == 1
+
+
+class TestA8SkipsImportsAndBooleans:
+    """A8 must not fire on import lines or boolean .length patterns."""
+
+    def test_import_line_not_flagged(self):
+        mod = _load_scanner()
+        line = 'import { CitationChips, groundedMatchCount } from "../surface/citations";'
+        violations = mod.scan_file("features/test/Foo.tsx", line, [line])
+        a8 = [v for v in violations if v.rule == "A8"]
+        assert not a8, f"A8 fired on import: {a8[0].text}"
+
+    def test_negation_boolean_not_flagged(self):
+        mod = _load_scanner()
+        line = '  empty={!rows.length}'
+        violations = mod.scan_file("features/test/Foo.tsx", line, [line])
+        a8 = [v for v in violations if v.rule == "A8"]
+        assert not a8, f"A8 fired on boolean !.length: {a8[0].text}"
+
+    def test_disabled_boolean_not_flagged(self):
+        mod = _load_scanner()
+        line = '  disabled={!routines.length}'
+        violations = mod.scan_file("features/test/Foo.tsx", line, [line])
+        a8 = [v for v in violations if v.rule == "A8"]
+        assert not a8
+
+    def test_arithmetic_length_not_flagged(self):
+        mod = _load_scanner()
+        line = '  selection: { anchor: from, head: from + text.length },'
+        violations = mod.scan_file("features/test/Foo.tsx", line, [line])
+        a8 = [v for v in violations if v.rule == "A8"]
+        assert not a8, f"A8 fired on arithmetic .length: {a8[0].text}"
+
+    def test_unguarded_length_still_flagged(self):
+        mod = _load_scanner()
+        line = '  <span>{items.length} items</span>'
+        violations = mod.scan_file("features/test/Foo.tsx", line, [line])
+        a8 = [v for v in violations if v.rule == "A8"]
+        assert len(a8) == 1

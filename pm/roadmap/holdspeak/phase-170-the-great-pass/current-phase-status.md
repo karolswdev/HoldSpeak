@@ -1,7 +1,7 @@
 # Phase 170 - The Great Pass
 
 - **Project:** holdspeak
-- **Status:** ACTIVE 1/7
+- **Status:** ACTIVE 2/7
 - **Chartered:** 2026-09-05 off main `f8e2739d` (169 The Streamlined Door MERGED via PR #551 → `27eabf0c`; the handover addendum #552)
 - **Canon:** docs/internal/CONSTITUTION.md; docs/internal/DESIGN_SYSTEM.md (the interior canon); web/src/desk/surface/contract.md (the species); **docs/internal/UX-CANON.md (the face canon, born this phase)**; pm/roadmap/holdspeak/THE-TUESDAY-ARC.md (the order of the arc; this phase is its horizontal frame + its 170)
 
@@ -33,7 +33,7 @@ desk we are both proud of.
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-170-01 | The census (every surface shot at 1440 + 393 on an isolated desk; the canon-violation scan across the web tree; one ranked table per face by Tuesday use × canon debt) | done | [story-01-the-census](./story-01-the-census.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-170-02 | The species sweep (library-level fixes that lift every face at once; the canon guards made mechanical) | in-progress | [story-02-the-species-sweep](./story-02-the-species-sweep.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-170-02 | The species sweep (library-level fixes that lift every face at once; the canon guards made mechanical) | done | [story-02-the-species-sweep](./story-02-the-species-sweep.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-170-03 | The Concierge — the model front door designed and built to the canon (the Tuesday Arc's 170) | in-progress | [story-03-the-concierge](./story-03-the-concierge.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-170-04 | The top faces re-designed and rebuilt (the Tuesday faces ranked by the census: Settings, Meetings aftercare, People/1:1, the Thread, the shade) | backlog | [story-04-the-top-faces](./story-04-the-top-faces.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-170-05 | The walk (the owner's attended walk of the whole desk on a Tuesday; the stopwatch per face; his verdict) | backlog | [story-05-the-walk](./story-05-the-walk.md) | [evidence-story-05](./evidence-story-05.md) |
@@ -42,15 +42,16 @@ desk we are both proud of.
 
 ## Where we are
 
-**ACTIVE 1/7.** Branch `feat/the-great-pass` off main `f8e2739d`.
+**ACTIVE 2/7.** Branch `feat/the-great-pass` off main `f8e2739d`.
 **01 DONE:** UX-CANON.md; 17 surfaces × 2 widths shot; 671 canon
 violations located and ranked; the rig re-captured green after the
-sweep (the after-census). **02 nearly paid:** all three sweep lanes
+sweep (the after-census). **02 DONE:** all three sweep lanes
 landed (P @3dbe8a82, T @b540dd3a, D @bd47897e) — tree 671 → 222 hits;
 raw `<button>` 147 → 6, accent rails 8 → 0, egress misses 1 → 0; vitest
 2184 green, zero branch-new; the retired setup wizard parked under
-`_parked/`. The ratchet guards are being written (ceiling file + hard
-zeros) — 02 flips when they land. **03 designed:** the Concierge on six
+`_parked/`. The scanner's false positives fixed (151 real hits) and the ratchet
+guards green (ceiling per rule + per face; hard zeros on rails and
+egress). **03 designed:** the Concierge on six
 boards, counsel RATIFY-W-C paid (Use these disabled beside WAITING;
 Anthropic in FOUND; the cloud `Check` with its cost chip; Adjust under
 the set with hosts; the downloading board). **04 designed:** the four

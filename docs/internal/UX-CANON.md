@@ -107,3 +107,15 @@ collapses to one is a defect (the geometry probe).
    design-system token guard; the density guard.
 5. The owner's walk on his desk, both widths, the window shot per
    step; his words verbatim; scars become laws here.
+
+**Guards.** `tests/unit/test_ux_canon_ratchet.py` runs the canon
+scanner (`scripts/ux_canon_scan.py`) against the live `web/src` tree
+and enforces three invariants.  (i) *Ratchet*: per-rule violation
+counts must not exceed the committed ceiling file
+`tests/ux_canon_ceiling.json`; a regression names the rule, the delta,
+and the faces that rose.  (ii) *Hard zeros*: DS6 (accent rail) and A9
+(missing egress) must stay at 0; A1 (raw `<button>`) must stay within
+a named allowlist (4 residues with reasons).  (iii) *Healing*: when a
+count drops below the ceiling, the test passes with a notice to lower
+the ceiling.  To lower the ceiling after fixing violations, run:
+`python scripts/ux_canon_scan.py --write-ceiling tests/ux_canon_ceiling.json`.

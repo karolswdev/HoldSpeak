@@ -1,24 +1,23 @@
 {
   "totals": {
     "per_rule": {
-      "A8": 49,
+      "A8": 28,
       "A3-prose": 12,
-      "raw-ids": 65,
       "mic": 27,
       "emoji": 21,
       "B": 34,
-      "A1": 6,
+      "raw-ids": 20,
+      "A1": 4,
       "C": 4,
-      "A3-sentence": 4
+      "A3-sentence": 1
     },
     "per_face": {
       "FinishThoughtsLane": 1,
-      "DoorBoardLane": 3,
-      "AskPanel": 9,
-      "DeskEditor": 5,
+      "DoorBoardLane": 2,
+      "AskPanel": 8,
       "DeskMenu": 1,
       "DeskSortableTable": 1,
-      "DeskToolInspector": 2,
+      "DeskToolInspector": 1,
       "DeskToolShelf": 2,
       "EditorAIBar": 1,
       "GlassDropLayer": 1,
@@ -30,20 +29,19 @@
       "RepoWindow": 1,
       "ScheduleCreateWindow": 2,
       "SessionPullout": 1,
-      "SystemShade": 2,
+      "SystemShade": 1,
       "ThreadComposer": 2,
       "WhyControl": 1,
       "WorkbenchAutomations": 2,
-      "WorkbenchResourceful": 2,
       "WorkbenchWindow": 2,
       "WorldStage": 1,
       "CoderPullout": 1,
       "MeetingPullout": 1,
-      "NotePullout": 2,
+      "NotePullout": 1,
       "ThoughtContextPicker": 2,
-      "ThreadPullout": 9,
-      "KbEditor": 2,
-      "NoteEditor": 2,
+      "ThreadPullout": 8,
+      "KbEditor": 1,
+      "NoteEditor": 1,
       "ThoughtNoteEditor": 1,
       "WorkflowEditor": 1,
       "CapabilitySection": 1,
@@ -51,39 +49,35 @@
       "LedgerFilter": 1,
       "Surface": 9,
       "XtermPane": 1,
-      "gadgets": 3,
+      "gadgets": 2,
       "TopologySurface": 3,
       "ChoiceCardGroup": 1,
       "ProgressPlan": 2,
       "StateChip": 3,
-      "ThoughtDocumentPane": 3,
-      "ThoughtWorkspaceWindow": 18,
-      "ProjectRoomCore": 6,
+      "ThoughtDocumentPane": 2,
+      "ThoughtWorkspaceWindow": 6,
+      "ProjectRoomCore": 4,
       "DoorCore": 1,
       "ReviewPosture": 5,
-      "StewardPosture": 5,
-      "ActivityCore": 2,
-      "AssignmentEditor": 3,
-      "CadenceCore": 4,
+      "StewardPosture": 3,
+      "ActivityCore": 1,
+      "CadenceCore": 1,
       "CalendarSnapshotReviewCore": 1,
-      "CapabilityAssignmentsCore": 2,
+      "CapabilityAssignmentsCore": 1,
       "CommandsCore": 1,
       "ComponentsCore": 5,
-      "LiveCore": 3,
-      "ModelLibraryCore": 7,
-      "PeopleCore": 33,
+      "LiveCore": 2,
+      "ModelLibraryCore": 5,
+      "PeopleCore": 17,
       "SettingsCore": 3,
       "TopologyMapView": 2,
-      "WorkbenchesHomeCore": 3,
       "ConnectionsPane": 1,
       "Blocks": 1,
-      "DictationSections": 1,
-      "Journal": 3,
+      "Journal": 1,
       "Knowledge": 1,
-      "Memory": 1,
-      "ResultPanel": 4,
+      "ResultPanel": 1,
       "UtteranceWell": 1,
-      "CatalogRail": 4,
+      "CatalogRail": 3,
       "ImportSection": 2,
       "MeetingDetail": 1,
       "MeetingsConfig": 1,
@@ -94,26 +88,12 @@
     "ActivityCore": [
       {
         "file": "pages/cores/ActivityCore.tsx",
-        "line": 124,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): empty={!rows.length}",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/ActivityCore.tsx",
         "line": 1,
         "rule": "mic",
         "text": "Text input found but no MicButton in this face (the voice law)"
       }
     ],
     "AskPanel": [
-      {
-        "file": "desk/components/AskPanel.tsx",
-        "line": 56,
-        "rule": "A8",
-        "text": "Counter may render zero (count pattern): import { CitationChips, groundedMatchCount } from \"../surface/citations\";",
-        "confidence": "low"
-      },
       {
         "file": "desk/components/AskPanel.tsx",
         "line": 171,
@@ -168,26 +148,6 @@
         "confidence": "medium"
       }
     ],
-    "AssignmentEditor": [
-      {
-        "file": "pages/cores/AssignmentEditor.tsx",
-        "line": 185,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"selected_capability\""
-      },
-      {
-        "file": "pages/cores/AssignmentEditor.tsx",
-        "line": 212,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"retry_policy\""
-      },
-      {
-        "file": "pages/cores/AssignmentEditor.tsx",
-        "line": 212,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"default_id\""
-      }
-    ],
     "Blocks": [
       {
         "file": "pages/cores/dictation/Blocks.tsx",
@@ -199,29 +159,9 @@
     "CadenceCore": [
       {
         "file": "pages/cores/CadenceCore.tsx",
-        "line": 103,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): empty={!loops.length}",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/CadenceCore.tsx",
         "line": 164,
         "rule": "A3-prose",
         "text": "Prose in <p>/<small> element: \"{String(next.body ?? next.body_markdown ?? \"\")}...\""
-      },
-      {
-        "file": "pages/cores/CadenceCore.tsx",
-        "line": 164,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"body_markdown\""
-      },
-      {
-        "file": "pages/cores/CadenceCore.tsx",
-        "line": 187,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): empty={!nudges.length}",
-        "confidence": "medium"
       }
     ],
     "CalendarSnapshotReviewCore": [
@@ -233,12 +173,6 @@
       }
     ],
     "CapabilityAssignmentsCore": [
-      {
-        "file": "pages/cores/CapabilityAssignmentsCore.tsx",
-        "line": 77,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"issue_count\""
-      },
       {
         "file": "pages/cores/CapabilityAssignmentsCore.tsx",
         "line": 94,
@@ -261,13 +195,6 @@
         "line": 97,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): matchCount={meetingRows.length}",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/history/CatalogRail.tsx",
-        "line": 192,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): empty={!meetingRows.length}",
         "confidence": "medium"
       },
       {
@@ -348,43 +275,6 @@
         "text": "Text input found but no MicButton in this face (the voice law)"
       }
     ],
-    "DeskEditor": [
-      {
-        "file": "desk/components/DeskEditor.tsx",
-        "line": 68,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): selection: { anchor: from, head: from + text.length },",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/DeskEditor.tsx",
-        "line": 81,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): selection: { anchor: from - marker.length, head: to - marker.length },",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/DeskEditor.tsx",
-        "line": 86,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): selection: { anchor: from + marker.length },",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/DeskEditor.tsx",
-        "line": 91,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): selection: { anchor: from + marker.length, head: to + marker.length },",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/DeskEditor.tsx",
-        "line": 156,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): selection: { anchor: from + 1, head: from + 1 + selected.length },",
-        "confidence": "medium"
-      }
-    ],
     "DeskMenu": [
       {
         "file": "desk/components/DeskMenu.tsx",
@@ -403,12 +293,6 @@
       }
     ],
     "DeskToolInspector": [
-      {
-        "file": "desk/components/DeskToolInspector.tsx",
-        "line": 283,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"resource_ref\""
-      },
       {
         "file": "desk/components/DeskToolInspector.tsx",
         "line": 333,
@@ -432,27 +316,12 @@
         "text": "Text input found but no MicButton in this face (the voice law)"
       }
     ],
-    "DictationSections": [
-      {
-        "file": "pages/cores/dictation/DictationSections.tsx",
-        "line": 134,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): empty={!rows.length}",
-        "confidence": "medium"
-      }
-    ],
     "DoorBoardLane": [
       {
         "file": "desk/chair/lanes/DoorBoardLane.tsx",
         "line": 708,
         "rule": "A3-prose",
         "text": "Prose helper class (hint/help/description): <ScrollHint axis=\"x\" scrollRef={viewportRef} className=\"door-board-hint-wrap\">"
-      },
-      {
-        "file": "desk/chair/lanes/DoorBoardLane.tsx",
-        "line": 738,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"body_preview\""
       },
       {
         "file": "desk/chair/lanes/DoorBoardLane.tsx",
@@ -537,33 +406,12 @@
     "Journal": [
       {
         "file": "pages/cores/dictation/Journal.tsx",
-        "line": 223,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): disabled={!rows.length}",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/dictation/Journal.tsx",
-        "line": 232,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): empty={!filtered.length}",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/dictation/Journal.tsx",
         "line": 1,
         "rule": "mic",
         "text": "Text input found but no MicButton in this face (the voice law)"
       }
     ],
     "KbEditor": [
-      {
-        "file": "desk/pullouts/editors/KbEditor.tsx",
-        "line": 93,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): selection: { anchor: from, head: from + proposal.proposed.length },",
-        "confidence": "medium"
-      },
       {
         "file": "desk/pullouts/editors/KbEditor.tsx",
         "line": 1,
@@ -589,13 +437,6 @@
       }
     ],
     "LiveCore": [
-      {
-        "file": "pages/cores/LiveCore.tsx",
-        "line": 479,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): empty={!asRows(devices.data, [\"devices\", \"items\"]).length}",
-        "confidence": "medium"
-      },
       {
         "file": "pages/cores/LiveCore.tsx",
         "line": 595,
@@ -636,22 +477,7 @@
         "text": "Text input found but no MicButton in this face (the voice law)"
       }
     ],
-    "Memory": [
-      {
-        "file": "pages/cores/dictation/Memory.tsx",
-        "line": 77,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): empty={!rows.length}",
-        "confidence": "medium"
-      }
-    ],
     "ModelLibraryCore": [
-      {
-        "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 338,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"selected_action\""
-      },
       {
         "file": "pages/cores/ModelLibraryCore.tsx",
         "line": 383,
@@ -678,25 +504,12 @@
       },
       {
         "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 436,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"selected_action\""
-      },
-      {
-        "file": "pages/cores/ModelLibraryCore.tsx",
         "line": 1,
         "rule": "mic",
         "text": "Text input found but no MicButton in this face (the voice law)"
       }
     ],
     "NoteEditor": [
-      {
-        "file": "desk/pullouts/editors/NoteEditor.tsx",
-        "line": 98,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): selection: { anchor: from, head: from + proposal.proposed.length },",
-        "confidence": "medium"
-      },
       {
         "file": "desk/pullouts/editors/NoteEditor.tsx",
         "line": 1,
@@ -711,12 +524,6 @@
         "line": 409,
         "rule": "B",
         "text": "Raw control element: return <section className=\"surface-aerogel\" aria-label=\"Refinement question\"><strong>{review.questio"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 457,
-        "rule": "A3-sentence",
-        "text": "Sentence in JSX text (>60 chars): \": thought.continuity && isRefining(thought.continuity.state) ?...\""
       }
     ],
     "PeopleCore": [
@@ -729,18 +536,6 @@
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 259,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"display_name\""
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
-        "line": 312,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"open_commitments\""
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
         "line": 312,
         "rule": "raw-ids",
         "text": "ID field rendered as text: {brief.open_commitments.length ? <SurfaceRows>{brief.open_commitments.map((item) => <SurfaceRow key=",
@@ -750,32 +545,8 @@
         "file": "pages/cores/PeopleCore.tsx",
         "line": 315,
         "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"agenda_items\""
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
-        "line": 315,
-        "rule": "raw-ids",
         "text": "ID field rendered as text: {brief.agenda_items.length ? <SurfaceRows>{brief.agenda_items.map((item) => <SurfaceRow key={item.id",
         "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
-        "line": 317,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"grounding_note_count\""
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
-        "line": 317,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"grounding_note_count\""
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
-        "line": 319,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"linked_meetings\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
@@ -788,12 +559,6 @@
         "file": "pages/cores/PeopleCore.tsx",
         "line": 320,
         "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"open_action_items\""
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
-        "line": 320,
-        "rule": "raw-ids",
         "text": "ID field rendered as text: {meeting.open_action_items.length ? <ul className=\"people-prep-actions\" data-testid=\"prep-meeting-ac",
         "confidence": "medium"
       },
@@ -801,32 +566,8 @@
         "file": "pages/cores/PeopleCore.tsx",
         "line": 321,
         "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"decision_text\""
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
-        "line": 321,
-        "rule": "raw-ids",
         "text": "ID field rendered as text: {meeting.decisions.length ? <ul className=\"people-prep-decisions\" data-testid=\"prep-meeting-decision",
         "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
-        "line": 324,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"unlinked_meeting_count\""
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
-        "line": 324,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"unlinked_meeting_count\""
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
-        "line": 445,
-        "rule": "A3-sentence",
-        "text": "Sentence in JSX text (verb + comma): \"(\"leader_private\"); const [busy, setBusy] = useState(false); const [projects, se...\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
@@ -876,24 +617,6 @@
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 473,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"next_one_on_one\""
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
-        "line": 477,
-        "rule": "A3-sentence",
-        "text": "Sentence in JSX text (verb + comma): \"([]); const [workbenchId, setWorkbenchId] = useState(\"\"); const [items, setItems...\""
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
-        "line": 491,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"workbench_id\""
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
         "line": 508,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"shared_intent\""
@@ -910,18 +633,6 @@
         "rule": "raw-ids",
         "text": "ID field rendered as text: return <SurfaceSection label=\"1:1s\"><div className=\"people-agenda-add\"><PadGadget mic={false} label=",
         "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
-        "line": 513,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"relationship_kind\""
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
-        "line": 513,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"role_context\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
@@ -968,18 +679,6 @@
       },
       {
         "file": "features/project-room/ProjectRoomCore.tsx",
-        "line": 779,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {/* Condition 1: no raw <button>; visually-hidden submit for a11y */}"
-      },
-      {
-        "file": "features/project-room/ProjectRoomCore.tsx",
-        "line": 869,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {/* Condition 1: library Button, not raw <button>; flat filter via data-filter + CSS */}"
-      },
-      {
-        "file": "features/project-room/ProjectRoomCore.tsx",
         "line": 886,
         "rule": "B",
         "text": "Raw control element: <input // UX-CANON: needs redesign (HS-170-04)"
@@ -1018,24 +717,6 @@
       }
     ],
     "ResultPanel": [
-      {
-        "file": "pages/cores/dictation/ResultPanel.tsx",
-        "line": 38,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"final_text\""
-      },
-      {
-        "file": "pages/cores/dictation/ResultPanel.tsx",
-        "line": 42,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"total_ms\""
-      },
-      {
-        "file": "pages/cores/dictation/ResultPanel.tsx",
-        "line": 45,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"target_profile\""
-      },
       {
         "file": "pages/cores/dictation/ResultPanel.tsx",
         "line": 1,
@@ -1160,18 +841,6 @@
       },
       {
         "file": "features/project-room/steward/StewardPosture.tsx",
-        "line": 468,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"evaluation_cadence_minutes\""
-      },
-      {
-        "file": "features/project-room/steward/StewardPosture.tsx",
-        "line": 475,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"max_actions_per_run\""
-      },
-      {
-        "file": "features/project-room/steward/StewardPosture.tsx",
         "line": 513,
         "rule": "A3-sentence",
         "text": "Sentence in prop text: \"Uses the model assigned in Settings > Models. Falls back to deterministic....\""
@@ -1236,13 +905,6 @@
     "SystemShade": [
       {
         "file": "desk/components/SystemShade.tsx",
-        "line": 122,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): Needs you <b>\u00b7 {needsAttentionCount + gate.held.length}</b>",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/SystemShade.tsx",
         "line": 241,
         "rule": "emoji",
         "text": "Emoji in JSX text: \u2726"
@@ -1274,12 +936,6 @@
         "line": 90,
         "rule": "B",
         "text": "Raw control element: {tagsOpen ? <input aria-label=\"Tag names\" value={draft.tags} disabled={disabled} onChange={(event) ="
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtDocumentPane.tsx",
-        "line": 95,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"raw_text\""
       }
     ],
     "ThoughtNoteEditor": [
@@ -1291,42 +947,6 @@
       }
     ],
     "ThoughtWorkspaceWindow": [
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 104,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"intended_placement\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 104,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"target_name\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 108,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"actual_placement\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 108,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"target_name\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 114,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"version_label\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 406,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"filing_status\""
-      },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
         "line": 412,
@@ -1341,45 +961,9 @@
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 414,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"working_revision\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
         "line": 415,
         "rule": "B",
         "text": "Raw control element: {currentQuestion ? <div className=\"thought-question\"><p className=\"thought-question-kicker\">One thin"
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 416,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"body_markdown\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 418,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"terminal_status\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 425,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"leaf_count\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 425,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"leaf_count\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 425,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"is_default\""
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
@@ -1464,12 +1048,6 @@
         "rule": "A8",
         "text": "Zero fallback rendered (?? 0): callMode={detail.thread?.call_mode ?? 0}",
         "confidence": "medium"
-      },
-      {
-        "file": "desk/pullouts/ThreadPullout.tsx",
-        "line": 1649,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"status_line\""
       }
     ],
     "TopologyMapView": [
@@ -1546,22 +1124,6 @@
         "text": "Text input found but no MicButton in this face (the voice law)"
       }
     ],
-    "WorkbenchResourceful": [
-      {
-        "file": "desk/components/WorkbenchResourceful.tsx",
-        "line": 195,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): disabled={!routines.length}",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/WorkbenchResourceful.tsx",
-        "line": 212,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): disabled={!routines.length}",
-        "confidence": "medium"
-      }
-    ],
     "WorkbenchWindow": [
       {
         "file": "desk/components/WorkbenchWindow.tsx",
@@ -1575,26 +1137,6 @@
         "line": 1705,
         "rule": "B",
         "text": "Raw control element: <input"
-      }
-    ],
-    "WorkbenchesHomeCore": [
-      {
-        "file": "pages/cores/WorkbenchesHomeCore.tsx",
-        "line": 114,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"pending_count\""
-      },
-      {
-        "file": "pages/cores/WorkbenchesHomeCore.tsx",
-        "line": 117,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"item_count\""
-      },
-      {
-        "file": "pages/cores/WorkbenchesHomeCore.tsx",
-        "line": 117,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"pending_count\""
       }
     ],
     "WorkflowEditor": [
@@ -1634,13 +1176,6 @@
         "line": 105,
         "rule": "emoji",
         "text": "Emoji in JSX text: {checked ? `\u2713 ${label}` : label}"
-      },
-      {
-        "file": "desk/surface/gadgets.tsx",
-        "line": 543,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): const cols = { \"--gadget-cols\": head.length } as CSSProperties;",
-        "confidence": "medium"
       }
     ]
   }

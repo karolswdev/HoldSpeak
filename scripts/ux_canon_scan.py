@@ -184,17 +184,29 @@ def scan_file(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
             is_button_library = any(k in rel_path for k in (
                 "Signal.tsx", "gadgets.tsx",
             ))
-            if not is_button_library and re.search(r'<button[\s>/]', line_text):
-                # Exclude comments
-                if not stripped.startswith("//") and not stripped.startswith("*") and not stripped.startswith("/*"):
-                    violations.append(Violation(rel_path, i, "A1",
-                        f"Raw <button> element (use library Button): {stripped[:100]}"))
+            if not is_button_library:
+                btn_match = re.search(r'<button[\s>/]', line_text)
+                if btn_match:
+                    # Exclude line-start comments AND JSX comments {/* ... */}
+                    before_btn = line_text[:btn_match.start()]
+                    is_comment = (
+                        stripped.startswith("//") or stripped.startswith("*")
+                        or stripped.startswith("/*") or stripped.startswith("{/*")
+                        or '//' in before_btn or '{/*' in before_btn
+                    )
+                    if not is_comment:
+                        violations.append(Violation(rel_path, i, "A1",
+                            f"Raw <button> element (use library Button): {stripped[:100]}"))
 
             # Rule A3-sentence: text nodes > 60 chars ending in ./!/? or with ", " + verb
             # Look for JSX text content (between > and <, or in template literals)
+            _CODE_INDICATORS = (';', '&&', '||', '=>', 'const ', 'let ', 'var ', 'useState')
             jsx_texts = re.findall(r'>([^<>{]+)<', line_text)
             for txt in jsx_texts:
                 txt = txt.strip()
+                # Skip TypeScript code fragments caught by generic/ternary boundaries
+                if any(ind in txt for ind in _CODE_INDICATORS):
+                    continue
                 if len(txt) > 60 and re.search(r'[.!?]$', txt):
                     violations.append(Violation(rel_path, i, "A3-sentence",
                         f"Sentence in JSX text (>60 chars): \"{txt[:80]}...\""))
@@ -241,34 +253,37 @@ def scan_file(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
                         f"Fixed overlay (possible modal): {stripped[:100]}", confidence="medium"))
 
             # Rule A8: Counters of zero (best effort)
-            # .length interpolations without zero guard
-            if re.search(r'\{[^}]*\.length\s*\}', line_text):
-                # Check for a zero guard (ternary, &&, ?? in the same expression)
-                expr_match = re.search(r'\{([^}]*\.length[^}]*)\}', line_text)
-                if expr_match:
-                    expr = expr_match.group(1)
-                    if not re.search(r'[?&|]|===?\s*0|!==?\s*0|>\s*0', expr):
+            # Skip import lines entirely — identifiers like groundedMatchCount
+            # contain "count" but are not rendered counters.
+            if not stripped.startswith("import "):
+                # .length interpolations without zero guard
+                if re.search(r'\{[^}]*\.length\s*\}', line_text):
+                    # Check for a zero guard (boolean, ternary, logical, arithmetic)
+                    expr_match = re.search(r'\{([^}]*\.length[^}]*)\}', line_text)
+                    if expr_match:
+                        expr = expr_match.group(1)
+                        if not re.search(r'[!?&|+\-]|===?\s*0|!==?\s*0|>\s*0', expr):
+                            violations.append(Violation(rel_path, i, "A8",
+                                f"Counter may render zero (.length without guard): {stripped[:100]}",
+                                confidence="medium"))
+                # {count} Noun pattern
+                if re.search(r'\{[^}]*(?:count|Count|total|num|len)\b[^}]*\}\s*\w', line_text):
+                    if not re.search(r'[?&|]|===?\s*0|!==?\s*0|>\s*0', line_text):
                         violations.append(Violation(rel_path, i, "A8",
-                            f"Counter may render zero (.length without guard): {stripped[:100]}",
-                            confidence="medium"))
-            # {count} Noun pattern
-            if re.search(r'\{[^}]*(?:count|Count|total|num|len)\b[^}]*\}\s*\w', line_text):
-                if not re.search(r'[?&|]|===?\s*0|!==?\s*0|>\s*0', line_text):
+                            f"Counter may render zero (count pattern): {stripped[:100]}",
+                            confidence="low"))
+                # Explicit "0 " or "{0}" patterns (rare but direct)
+                if re.search(r'>\s*0\s+\w', line_text):
                     violations.append(Violation(rel_path, i, "A8",
-                        f"Counter may render zero (count pattern): {stripped[:100]}",
-                        confidence="low"))
-            # Explicit "0 " or "{0}" patterns (rare but direct)
-            if re.search(r'>\s*0\s+\w', line_text):
-                violations.append(Violation(rel_path, i, "A8",
-                    f"Literal zero counter in text: {stripped[:100]}",
-                    confidence="medium"))
-            # ?? 0 pattern (explicitly renders 0 as fallback)
-            if re.search(r'\?\?\s*0\b', line_text):
-                # check if it's rendered as text
-                if re.search(r'\{[^}]*\?\?\s*0[^}]*\}', line_text):
-                    violations.append(Violation(rel_path, i, "A8",
-                        f"Zero fallback rendered (?? 0): {stripped[:100]}",
+                        f"Literal zero counter in text: {stripped[:100]}",
                         confidence="medium"))
+                # ?? 0 pattern (explicitly renders 0 as fallback)
+                if re.search(r'\?\?\s*0\b', line_text):
+                    # check if it's rendered as text
+                    if re.search(r'\{[^}]*\?\?\s*0[^}]*\}', line_text):
+                        violations.append(Violation(rel_path, i, "A8",
+                            f"Zero fallback rendered (?? 0): {stripped[:100]}",
+                            confidence="medium"))
 
             # Rule A9: Provider fetches without EgressChip
             provider_patterns = [
@@ -300,12 +315,17 @@ def scan_file(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
             # Only flag snake_case between > and < (JSX text position)
             jsx_snake_texts = re.findall(r'>([^<]*[a-z]+_[a-z_]+[^<]*)<', line_text)
             for txt in jsx_snake_texts:
-                snakes = re.findall(r'\b([a-z]+_[a-z_]+)\b', txt)
-                for snake in snakes:
-                    if snake not in ("aria_label", "data_testid", "class_name",
-                                     "aria_hidden", "tab_index"):
-                        violations.append(Violation(rel_path, i, "raw-ids",
-                            f"Snake_case literal in rendered text: \"{snake}\""))
+                for sm in re.finditer(r'\b([a-z]+_[a-z_]+)\b', txt):
+                    snake = sm.group(1)
+                    if snake in ("aria_label", "data_testid", "class_name",
+                                 "aria_hidden", "tab_index"):
+                        continue
+                    # Skip property access (e.g. brief.open_commitments, row.display_name)
+                    pos = sm.start()
+                    if pos > 0 and txt[pos - 1] == '.':
+                        continue
+                    violations.append(Violation(rel_path, i, "raw-ids",
+                        f"Snake_case literal in rendered text: \"{snake}\""))
             # Also check title/label props that show visible text with raw IDs
             title_match = re.search(r'(?:title|label)=\{[`"]([^`"]*(?:\.\s*id\b|_id\b)[^`"]*)[`"]\}', line_text)
             if title_match:
@@ -542,6 +562,49 @@ def write_violations_json(path: Path, per_face: dict[str, list[Violation]],
     path.write_text(json.dumps(data, indent=2) + "\n")
 
 
+def scan(root: Path) -> dict[str, Any]:
+    """Run the full scan and return a result dict (totals + faces + face_rule_counts).
+
+    This is the in-process entry point used by the ratchet guard test.
+    """
+    per_face, all_violations = scan_all(root)
+    totals = build_totals(all_violations)
+    # Build per-face-per-rule counts (for the ratchet ceiling diff).
+    face_rule_counts: dict[str, dict[str, int]] = {}
+    for face, violations in per_face.items():
+        counts: dict[str, int] = {}
+        for v in violations:
+            counts[v.rule] = counts.get(v.rule, 0) + 1
+        if counts:
+            face_rule_counts[face] = counts
+    return {
+        "totals": totals,
+        "faces": {
+            face: [v.to_dict() for v in violations]
+            for face, violations in sorted(per_face.items())
+            if violations
+        },
+        "face_rule_counts": face_rule_counts,
+    }
+
+
+def write_ceiling(path: Path, totals: dict[str, dict[str, int]],
+                  face_rule_counts: dict[str, dict[str, int]]) -> None:
+    """Write the ratchet ceiling file (per_rule totals + per-face-per-rule counts).
+
+    All rules in RULE_WEIGHTS are included — zeros explicitly, so
+    hard-zero guards can reference the ceiling.
+    """
+    # Start from all-zero for every known rule, then overlay actual counts.
+    per_rule = {r: 0 for r in sorted(RULE_WEIGHTS)}
+    per_rule.update(totals["per_rule"])
+    data = {
+        "per_rule": dict(sorted(per_rule.items())),
+        "faces": face_rule_counts,
+    }
+    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
+
+
 def write_ranking_md(path: Path, ranking: list[dict[str, Any]]) -> None:
     """Write ranking.md."""
     lines = ["# Face Ranking by Tuesday Use x Canon Debt\n\n"]
@@ -578,6 +641,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="Output MD path (default: assets/census/violations.md)")
     parser.add_argument("--ranking", type=Path, default=None,
                         help="Output ranking MD path")
+    parser.add_argument("--write-ceiling", type=Path, default=None,
+                        help="Write the ratchet ceiling file (per_rule + per-face-per-rule counts)")
     args = parser.parse_args(argv)
 
     root = args.root.resolve()
@@ -602,6 +667,18 @@ def main(argv: list[str] | None = None) -> int:
     write_violations_md(md_path, per_face, totals)
     write_violations_json(json_path, per_face, totals)
     write_ranking_md(ranking_path, ranking)
+
+    # Optional ceiling write
+    if args.write_ceiling:
+        face_rule_counts: dict[str, dict[str, int]] = {}
+        for face, violations in per_face.items():
+            counts: dict[str, int] = {}
+            for v in violations:
+                counts[v.rule] = counts.get(v.rule, 0) + 1
+            if counts:
+                face_rule_counts[face] = counts
+        write_ceiling(args.write_ceiling, totals, face_rule_counts)
+        print(f"  ceiling:         {args.write_ceiling}")
 
     print(f"Scanned {len(find_face_files(root))} files, found {len(all_violations)} violations across {len(per_face)} faces.")
     print(f"  violations.md:   {md_path}")
