@@ -359,3 +359,180 @@ class TestProjectServiceMeetingMaps:
     def test_subject_to_query_kind(self):
         from holdspeak.services.project_service import _SUBJECT_TO_QUERY_KIND
         assert _SUBJECT_TO_QUERY_KIND["meeting"] == "meetings"
+
+
+# ── ensure_meeting_watch: creation trigger + idempotency ─────────
+
+
+class TestEnsureMeetingWatch:
+    """HS-175-04: one meeting Watch per Room, created on link."""
+
+    def test_creates_watch_when_meetings_linked(self, db):
+        from holdspeak.services.watch_service import ensure_meeting_watch
+
+        project_id = _seed_project(db)
+        mid = _seed_meeting(db, title="Standup")
+        _link_meeting_to_project(db, mid, project_id)
+
+        result = ensure_meeting_watch(db, project_id)
+        assert result is not None
+        assert result.get("id")
+
+        watches = db.automations.list_project_watches(project_id)
+        meeting_watches = [w for w in watches if w.get("connector_id") == "meeting"]
+        assert len(meeting_watches) == 1
+        assert meeting_watches[0]["query_kind"] == "meetings"
+
+    def test_idempotent_second_call_returns_none(self, db):
+        from holdspeak.services.watch_service import ensure_meeting_watch
+
+        project_id = _seed_project(db)
+        mid = _seed_meeting(db, title="Standup")
+        _link_meeting_to_project(db, mid, project_id)
+
+        result1 = ensure_meeting_watch(db, project_id)
+        result2 = ensure_meeting_watch(db, project_id)
+
+        assert result1 is not None
+        assert result2 is None
+
+        watches = db.automations.list_project_watches(project_id)
+        meeting_watches = [w for w in watches if w.get("connector_id") == "meeting"]
+        assert len(meeting_watches) == 1
+
+    def test_linking_two_meetings_creates_one_watch(self, db):
+        from holdspeak.services.watch_service import ensure_meeting_watch
+
+        project_id = _seed_project(db)
+        m1 = _seed_meeting(db, title="Standup")
+        m2 = _seed_meeting(db, title="Review")
+        _link_meeting_to_project(db, m1, project_id)
+        ensure_meeting_watch(db, project_id)
+        _link_meeting_to_project(db, m2, project_id)
+        ensure_meeting_watch(db, project_id)
+
+        watches = db.automations.list_project_watches(project_id)
+        meeting_watches = [w for w in watches if w.get("connector_id") == "meeting"]
+        assert len(meeting_watches) == 1
+
+    def test_no_meetings_returns_none(self, db):
+        from holdspeak.services.watch_service import ensure_meeting_watch
+
+        project_id = _seed_project(db)
+        result = ensure_meeting_watch(db, project_id)
+        assert result is None
+
+    def test_room_sources_after_watch_creation(self, db):
+        from holdspeak.services.project_service import ProjectService
+        from holdspeak.services.watch_service import ensure_meeting_watch
+
+        project_id = _seed_project(db)
+        mid = _seed_meeting(db, title="Standup")
+        _link_meeting_to_project(db, mid, project_id)
+        ensure_meeting_watch(db, project_id)
+
+        svc = ProjectService(db)
+        result = svc._read_room_sources(project_id)
+
+        meeting_items = [
+            s for s in result["items"] if s["provider"] == "meeting"
+        ]
+        assert len(meeting_items) == 1
+        row = meeting_items[0]
+        assert row["scope"] == "MEETINGS"
+        assert row["host"] == ""
+        assert row["state"] == "live"
+        assert row["watchId"]
+
+    def test_no_watch_no_row_in_sources(self, db):
+        from holdspeak.services.project_service import ProjectService
+
+        project_id = _seed_project(db)
+        mid = _seed_meeting(db, title="Standup")
+        _link_meeting_to_project(db, mid, project_id)
+
+        svc = ProjectService(db)
+        result = svc._read_room_sources(project_id)
+
+        meeting_items = [
+            s for s in result["items"] if s["provider"] == "meeting"
+        ]
+        assert len(meeting_items) == 0
+
+
+# ── evaluate_once on a meeting Watch ─────────────────────────────
+
+
+class TestMeetingWatchEvaluation:
+    """HS-175-04: end-to-end proof that the WatchService evaluation
+    path dispatches to MeetingWatchSource, produces transitions on
+    a data change, and advances the Room's checkedAt."""
+
+    def test_evaluate_once_meeting_watch(self, db):
+        from holdspeak.services.watch_service import (
+            WatchService,
+            ensure_meeting_watch,
+        )
+        from holdspeak.services.watch_sources import default_snapshot_fetcher
+        from holdspeak.services.project_service import ProjectService
+
+        project_id = _seed_project(db)
+        mid = _seed_meeting(db, title="Design Review",
+                            started_at="2026-09-04T10:00:00")
+        _link_meeting_to_project(db, mid, project_id)
+
+        result = ensure_meeting_watch(db, project_id)
+        assert result is not None
+        watch_id = result["id"]
+
+        watch_row = db.automations.get_watch(watch_id)
+        assert watch_row is not None
+        initial_snapshot = watch_row.get("snapshot") or {}
+        entities = initial_snapshot.get("entities") or {}
+        assert len(entities) >= 1
+        entity = list(entities.values())[0]
+
+        # (a) The fetch dispatched to MeetingWatchSource: entity_type
+        assert entity.get("entity_type") == "meeting"
+        initial_decisions = entity.get("decisions_count", 0)
+
+        svc_proj = ProjectService(db)
+        sources_before = svc_proj._read_room_sources(project_id)
+        meeting_items_before = [
+            s for s in sources_before["items"] if s["provider"] == "meeting"
+        ]
+        assert len(meeting_items_before) == 1
+        checked_before = meeting_items_before[0]["checkedAt"]
+        assert checked_before is not None
+
+        # Mutate: add a decision to the linked meeting
+        _seed_decision(db, meeting_id=mid, text="New architecture decision")
+
+        # Evaluate the Watch
+        fetcher = default_snapshot_fetcher(meeting_db=db)
+        watch_svc = WatchService(db, snapshot_fetcher=fetcher)
+        eval_result = watch_svc.evaluate_once(OWNER, watch_id)
+
+        # (a) entity_type in the fresh snapshot
+        watch_after = db.automations.get_watch(watch_id)
+        snapshot_after = watch_after.get("snapshot") or {}
+        entities_after = snapshot_after.get("entities") or {}
+        assert len(entities_after) >= 1
+        entity_after = list(entities_after.values())[0]
+        assert entity_after.get("entity_type") == "meeting"
+        new_decisions = entity_after.get("decisions_count", 0)
+        assert new_decisions > initial_decisions
+
+        # (b) At least one watch transition event
+        assert eval_result["state"] == "completed"
+        assert eval_result["transitions"] >= 1
+
+        # (c) The Room's checkedAt moved
+        sources_after = svc_proj._read_room_sources(project_id)
+        meeting_items_after = [
+            s for s in sources_after["items"] if s["provider"] == "meeting"
+        ]
+        assert len(meeting_items_after) == 1
+        checked_after = meeting_items_after[0]["checkedAt"]
+        assert checked_after is not None
+        assert checked_after >= checked_before

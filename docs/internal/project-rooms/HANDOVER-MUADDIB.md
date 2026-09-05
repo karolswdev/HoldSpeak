@@ -31,7 +31,7 @@ roadmap files, they win.
 | 172 | The Loop Closes | COMPLETE · **MERGED** PR #555 → `0c17425e` | `…/phase-172-the-loop-closes/` |
 | 173 | The Steward's Hand and Voice | COMPLETE · **MERGED** PR #556 → `d416e08a` | `…/phase-173-the-stewards-hand-and-voice/` |
 | 174 | Reach | COMPLETE 11/11 · **MERGED** PR #557 → `8c994305` (2026-09-05 22:05) | `…/phase-174-reach/` |
-| 175 | Calendar and the Clock | 5/9 · **PARKED** · draft PR **#558**, base main (main merged in @1ef58cb3) | `…/phase-175-calendar-and-the-clock/`, branch `feat/calendar-clock` |
+| 175 | Calendar and the Clock | ACTIVE · faces BUILT · docs paid (6/9 at the next commit) · draft PR **#558**, base main | `…/phase-175-calendar-and-the-clock/`, branch `feat/calendar-clock` (the main working tree) |
 | 176–179 | Speak Loop · Thread at Work · Portfolio · Companion | story scaffolds drafted, NOT chartered, no design | `…/phase-176…` to `…/phase-179…` |
 | 180 | The Proof | named in the arc, nothing drafted | `pm/roadmap/holdspeak/THE-TUESDAY-ARC.md` §6 |
 
@@ -278,6 +278,66 @@ in zsh exits 4 with nothing run.
 4. If the road continues: 175's faces first, to the ratified boards,
    one lane per face, shot beside the board. If he says stop: leave the
    tree exactly as §1 describes and update this section.
+
+## Muad'Dib XV — 2026-09-05 late, 175 RESUMED on his word; the four faces BUILT
+
+**His word.** "I think you could continue working out 175 no?" — read as
+the word that lifts the wind-down for 175 only. The main tree moved to
+`feat/calendar-clock` (the stale wt175 removed; main's handover commits
+merged @85a844cf). Draft PR #558 stays on main.
+
+**Built (to the ratified boards, shot beside each at 1440 + 393, bounced
+until it matched).** (a) The arrival: the WEEK strip, `NEXT · … · ROOM ·
+<name>`, the MEETINGS section, the orphan armed row with `FROM · title
+(source)`. (b) Settings → Meetings' CALENDAR section on SettingsCore's
+meetings case (the board's module; the design's MeetingsConfig pointer
+was wrong), REPLACING the 146-era group — its verbs (`Edit` · `Disable`/
+`Enable` · `Remove` + in-world confirm) carried onto the new rows after
+the old group's tests named them; `Add` + `Snapshot`; the one well with a
+mic; Auto-record with `5 MIN BEFORE` and `N MATCHED THIS WEEK`;
+`GET /api/calendar/sources` (667 routes). (c) The Room's MEETINGS row is a
+REAL Watch: created when a meeting links (routing_glue + the manual path),
+backfilled once by the sweep, evaluated by the sweep (proven:
+decisions_changed → a Watch event → checkedAt moves). (d) Rhythm's Weekly
+brief row and the brief face: one display (the period), THIS WEEK
+composed rows, SINCE FRIDAY flat rows with kind tokens and emblem chips,
+one gutter; `this_week` added to the brief's section vocabulary first;
+the 132/129 triage behaviours kept, their assertions moved to the new DOM.
+
+**Rulings.** Design Addendum 2, B1–B9 (past events count in the strip's
+shape, not the section; no synthetic rows; the board's module wins; a
+replacing face never loses a working verb; `this_week` additive; the
+snapshot egress paid).
+
+**Hygiene.** The census (`assets/hygiene-census-175.md`); P2-2 PAID —
+the snapshot's direct dispatch prefers local/LAN vision profiles and
+records the host (fence test, 3 pass); tz-aware `compute_lookahead`
+default; the swallowed Watch-query load now logs; the canonical schema
+snapshot regenerated (the 02 wire never did); the 173 drafter diagram's
+`PAR` alias (mermaid's `par` keyword) renamed so the render guard passes.
+Four items parked in BACKLOG.md (the 393 Intelligence-row overlap from
+172, per-source refresh status, the Snapshot verb's place for counsel,
+UTC week edges).
+
+**The scar.** A lane ran `git stash` in the SHARED tree to measure a
+before-count and `git stash drop` after: ten files reverted to HEAD (the
+arrival, the Settings face, the door and snapshot fixes, the API surface,
+the schema snapshot, two of mine). Recovered from the dangling stash
+commit (`git fsck --no-reflogs --unreachable`, then `git show <sha>:<path>`
+only over paths at HEAD). The law is now in `.claude/agents/opus-worker.md`
+and memory: no git verb that moves the tree, ever; the orchestrator reads
+`git reflog -3` before every verification run. Rigs also re-shoot OLDER
+phases' PNGs and the ratchet regenerates the 170 census — restore those
+paths before staging, every time.
+
+**Gates at this commit.** Unit set 247 passed (-n auto, isolated HOME);
+web baseline zero branch-new; ratchet green (A8 healed to 24); the 175
+rigs + the 170/171/172 rigs they touch green serially; mermaid guard
+2 passed; api-surface 5 passed. 08 the docs flips here (13 markers paid
+against the shipped tree). Still owed: counsel-on-built, the walk on his
+desk (06; the runner's Settings selectors re-pointed to the built rows),
+07's flip (census done, items paid or parked), the suite in CI shape, the
+close (09), #558 out of draft.
 
 ## Muad'Dib XIV — 2026-09-05 21:50, the stack MERGED; 174 closing; 175 parked
 

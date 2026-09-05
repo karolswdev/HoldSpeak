@@ -358,6 +358,42 @@ class HeartbeatService:
                     "error": str(exc),
                 }
 
+        # HS-175-04: backfill meeting Watches for Rooms that have linked
+        # meetings but no meeting Watch yet.  Idempotent (ensure_meeting_watch
+        # checks before creating).  Own failure boundary.
+        meeting_watch_backfill: dict[str, Any] | None = None
+        if not held:
+            try:
+                from holdspeak.services.watch_service import ensure_meeting_watch
+                with self._db._connection() as conn:
+                    rows = conn.execute(
+                        """SELECT DISTINCT mp.project_id
+                           FROM meeting_projects mp
+                           WHERE NOT EXISTS (
+                               SELECT 1 FROM connector_watches cw
+                               WHERE cw.project_id = mp.project_id
+                                 AND cw.connector_id = 'meeting'
+                                 AND cw.state != 'retired'
+                           )""",
+                    ).fetchall()
+                created = 0
+                for row in rows:
+                    result = ensure_meeting_watch(self._db, str(row["project_id"]))
+                    if result is not None:
+                        created += 1
+                if created > 0:
+                    meeting_watch_backfill = {
+                        "kind": "meeting_watch.backfill",
+                        "created": created,
+                    }
+            except Exception as exc:
+                log.error("heartbeat meeting watch backfill failed: %s", exc)
+                meeting_watch_backfill = {
+                    "kind": "meeting_watch.backfill",
+                    "created": 0,
+                    "error": str(exc),
+                }
+
         # M3: Refresh the aggregate cache via the canonical builder
         self.refresh_aggregate(principal, sweep_id=sweep_id)
 
@@ -386,6 +422,9 @@ class HeartbeatService:
         # HS-175-02: calendar refresh receipt rides along.
         if calendar_refresh_receipt is not None:
             receipt["calendar"] = calendar_refresh_receipt
+        # HS-175-04: meeting watch backfill receipt rides along.
+        if meeting_watch_backfill is not None:
+            receipt["meeting_watch_backfill"] = meeting_watch_backfill
 
         # Write kernel receipt (Article XI.2)
         self._write_receipt(receipt)

@@ -53,7 +53,11 @@ const briefWithPeople = {
   headline: "1 thing changed.",
   is_empty: false,
   shelf: {},
+  period_label: "SEP 01 – 05",
+  generated_label: "GENERATED SEP 05 08:00",
+  period_start: "2026-09-04T17:00:00",
   sections: {
+    this_week: [],
     changed: [
       {
         id: "item-1",
@@ -215,12 +219,14 @@ describe("BriefView person sections", () => {
     mockBrief();
     renderBriefView();
 
+    // HS-175: lookback items are split into kind token + primary.
+    // "Meeting recorded: Standup" -> kind "MEETING RECORDED", primary "Standup".
     await waitFor(() => {
-      expect(screen.getByText("Meeting recorded: Standup")).toBeInTheDocument();
+      expect(screen.getByText("Standup")).toBeInTheDocument();
     });
 
-    // Select the receipt item.
-    fireEvent.click(screen.getByText("Meeting recorded: Standup"));
+    // Select the receipt item by clicking the primary text.
+    fireEvent.click(screen.getByText("Standup"));
 
     await waitFor(() => {
       expect(screen.getByText("Acknowledge")).toBeInTheDocument();
@@ -236,6 +242,7 @@ describe("BriefView person sections", () => {
     await waitFor(() => {
       expect(screen.getByTestId("person-sections-unavailable")).toBeInTheDocument();
     });
-    expect(screen.getByText("People sidecar unavailable")).toBeInTheDocument();
+    // HS-175: now a StateChip token, not prose.
+    expect(screen.getByText(/PEOPLE.*UNAVAILABLE/)).toBeInTheDocument();
   });
 });

@@ -12,7 +12,7 @@ from holdspeak.services.follow_through_service import FollowThroughService
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 
-_SECTIONS = ("changed", "broke", "waiting", "decisions")
+_SECTIONS = ("this_week", "changed", "broke", "waiting", "decisions")
 _PATH_FRAGMENT = re.compile(r'[/\\](?:\w+[/\\]){1,}[\w.]+')
 
 
@@ -89,7 +89,7 @@ SHELF_STATES = ("acknowledged", "deferred")
 @dataclass
 class BriefItem:
     id: str
-    section: str  # changed, broke, waiting, decisions
+    section: str  # this_week, changed, broke, waiting, decisions
     text: str
     detail: str | None = None
     source_ref: str | None = None
@@ -168,7 +168,7 @@ class MondayBriefService:
         HS-175-05: used by the calendar-events and meeting-watch
         collectors for the "what is coming" half of the brief.
         """
-        period_start = now or datetime.datetime.now()
+        period_start = now or datetime.datetime.now().astimezone()
         days_since_monday = period_start.weekday()
         days_to_sunday = 6 - days_since_monday
         sunday = (period_start + datetime.timedelta(days=days_to_sunday)).date()
@@ -232,12 +232,11 @@ class MondayBriefService:
             )
 
             sections = {
+                "this_week": calendar_items + meeting_watch_items,
                 "changed": human_changes
                 + self._collect_meetings(
                     period_start.isoformat(), period_end.isoformat()
-                )
-                + calendar_items
-                + meeting_watch_items,
+                ),
                 "broke": self._collect_breakage(
                     period_start.isoformat(), period_end.isoformat()
                 ),
@@ -303,6 +302,22 @@ class MondayBriefService:
             return f"{count} {singular if count == 1 else plural}"
 
         headline_parts = []
+        if counts["this_week"]:
+            tw_items = finalized_sections["this_week"]
+            meeting_count = 0
+            for item in tw_items:
+                if item.source_ref == "calendar:week":
+                    import re as _re
+                    m = _re.match(r"(\d+)\s+meeting", item.text)
+                    if m:
+                        meeting_count = int(m.group(1))
+            other_tw = counts["this_week"] - (1 if meeting_count else 0)
+            tw_parts = []
+            if meeting_count:
+                tw_parts.append(phrase(meeting_count, "meeting this week", "meetings this week"))
+            if other_tw:
+                tw_parts.append(phrase(other_tw, "watch item", "watch items"))
+            headline_parts.extend(tw_parts)
         if counts["changed"]:
             headline_parts.append(phrase(counts["changed"], "thing changed", "things changed"))
         if counts["broke"]:
@@ -681,9 +696,8 @@ class MondayBriefService:
     ) -> list[BriefItem]:
         """Calendar events in the week range.
 
-        HS-175-05: produces items for the ``this_week`` conceptual
-        section (they land in the ``changed`` section to keep the
-        closed section vocabulary):
+        HS-175-05: produces items for the ``this_week`` section
+        (forward-looking calendar and armed-recording data):
         - ``N meetings`` (count of events in the week).
         - ``Next: [title] at [time]`` (next event after now).
         - ``N armed`` (events with linked armed recordings).
@@ -714,7 +728,7 @@ class MondayBriefService:
             items.append(
                 BriefItem(
                     id=f"brief-cal-total-{uuid.uuid4().hex}",
-                    section="changed",
+                    section="this_week",
                     text=f"{total} meeting{'s' if total != 1 else ''} this week",
                     source_ref="calendar:week",
                     priority=_MEETING_PRIORITY + 10,
@@ -735,7 +749,7 @@ class MondayBriefService:
                     items.append(
                         BriefItem(
                             id=f"brief-cal-next-{uuid.uuid4().hex}",
-                            section="changed",
+                            section="this_week",
                             text=f"Next: {title} at {time_str}",
                             source_ref=f"calendar_event:{row['id']}",
                             priority=_MEETING_PRIORITY + 5,
@@ -761,7 +775,7 @@ class MondayBriefService:
                     items.append(
                         BriefItem(
                             id=f"brief-cal-armed-{uuid.uuid4().hex}",
-                            section="changed",
+                            section="this_week",
                             text=f"{armed} armed",
                             source_ref="calendar:armed",
                             priority=_MEETING_PRIORITY + 3,
@@ -816,7 +830,7 @@ class MondayBriefService:
                 items.append(
                     BriefItem(
                         id=f"brief-mtgwatch-decisions-{uuid.uuid4().hex}",
-                        section="changed",
+                        section="this_week",
                         text=f"{count} new decision{'s' if count != 1 else ''} from meetings",
                         source_ref="meeting_watch:decisions",
                         priority=_MEETING_PRIORITY + 2,
@@ -835,11 +849,32 @@ class MondayBriefService:
 
             if commitment_rows:
                 count = len(commitment_rows)
+                first = commitment_rows[0]
+                first_due = str(first["due_at"] or "")[:10]
+                first_text = None
+                try:
+                    d_row = conn.execute(
+                        """SELECT d.text FROM decisions d
+                           JOIN decision_commitments dc ON dc.decision_id = d.id
+                           WHERE dc.id = ?""",
+                        (str(first["id"]),),
+                    ).fetchone()
+                    if d_row and d_row["text"]:
+                        first_text = str(d_row["text"]).strip()
+                except Exception:
+                    pass
+                detail_parts = []
+                if first_text:
+                    detail_parts.append(first_text)
+                if first_due:
+                    detail_parts.append(first_due)
+                detail = " | ".join(detail_parts) if detail_parts else None
                 items.append(
                     BriefItem(
                         id=f"brief-mtgwatch-commitments-{uuid.uuid4().hex}",
-                        section="changed",
+                        section="this_week",
                         text=f"{count} commitment{'s' if count != 1 else ''} due this week",
+                        detail=detail,
                         source_ref="meeting_watch:commitments_due",
                         priority=_MEETING_PRIORITY + 1,
                     )

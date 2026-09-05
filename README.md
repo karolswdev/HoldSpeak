@@ -59,15 +59,15 @@ A second machine on the tailnet (the `.43` box, for example) runs the sweep and
 the steward's drafter overnight while the Mac stays awake. Confluence joins
 GitHub and Jira on the Door for blog posts and pages by known ID.
 
-<!-- verify at build --> The calendar the desk already reads becomes the clock.
-The arrival's WEEK strip shows the shape of your week (day tokens, one dot per
-meeting, today accented); absent when no calendar is connected or the week is
-empty. Event rows carry the Room name when the event matches a project. A
-recording can arm itself five minutes before a calendar event, only under your
-standing consent (per Room or all calendar meetings; off by default). The Room's
-SOURCES section gains a meeting watch: `MEETINGS`, the count this week, the next
-linked meeting. The weekly brief reads the full calendar week (Monday to now
-looking back, to Sunday looking ahead).
+The calendar the desk already reads becomes the clock. The arrival's WEEK
+strip shows the shape of your week (day tokens, one dot per meeting, today
+accented); absent when no calendar is connected or the week is empty. Event
+rows carry the Room name when the event matches a project. A recording can
+arm itself five minutes before a calendar event, only under your standing
+consent (per Room or all calendar meetings; off by default). The Room's
+SOURCES section gains a meeting watch: `MEETINGS`, the count this week, the
+next linked meeting. The weekly brief reads the full calendar week (Monday
+to now looking back, to Sunday looking ahead).
 
 **Every model attempt has one door and one receipt.** HoldSpeak freezes an
 assigned compatible route before it executes a physical provider attempt. Each

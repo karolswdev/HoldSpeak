@@ -574,7 +574,15 @@ def extract_via_router(
         # refusal fires with zero inference dispatches.
         from ..inference_targets import target_from_profile
 
+        # HS-175 N4: prefer local/LAN vision-capable profiles over cloud
+        # so a cloud model is only selected when it is the only option.
+        # Constitution Art. III + UX-CANON A.9: egress where it happens.
+        _BOUNDARY_RANK = {
+            "same_device": 0, "paired_device": 1,
+            "private_network": 2, "external_service": 3,
+        }
         target = None
+        candidates: list[tuple[int, Any]] = []
         for profile in db.profiles.list():
             if profile.deleted:
                 continue
@@ -582,8 +590,11 @@ def extract_via_router(
                 continue
             candidate = target_from_profile(profile, db)
             if candidate.ready:
-                target = candidate
-                break
+                rank = _BOUNDARY_RANK.get(candidate.boundary, 99)
+                candidates.append((rank, candidate))
+        candidates.sort(key=lambda pair: pair[0])
+        if candidates:
+            target = candidates[0][1]
         if target is None:
             return {
                 "output": json.dumps({
@@ -626,9 +637,20 @@ def extract_via_router(
 
     if outcome.outcome == "succeeded" and captured_result:
         raw_output = str(captured_result[0].get("output", ""))
-        provider = str(captured_result[0].get("provider", ""))
-        scope = "local" if provider == "local" else "cloud"
-        return {"output": raw_output, "egress": {"scope": scope}}
+        # HS-175 N4: derive scope from the revision boundary (the truth)
+        # and record the host for non-local boundaries, mirroring the
+        # routed path (lines 521-537).
+        _BOUNDARY_SCOPE = {
+            "same_device": "local", "paired_device": "mesh",
+            "private_network": "private_network",
+            "external_service": "cloud",
+        }
+        scope = _BOUNDARY_SCOPE.get(revision.boundary, "cloud")
+        egress: dict[str, Any] = {"scope": scope}
+        if scope in {"cloud", "private_network"}:
+            from urllib.parse import urlparse
+            egress["host"] = urlparse(revision.endpoint or "").hostname or ""
+        return {"output": raw_output, "egress": egress}
 
     return {
         "output": json.dumps({

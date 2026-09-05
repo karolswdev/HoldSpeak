@@ -272,12 +272,51 @@ class DoorService:
         events = list(self._calendar_events.list_upcoming(now_iso))
         event_ids = {event.id for event in events}
         # HS-175-03: build an event info index for recording provenance.
+        # Start from the upcoming events, then enrich with any calendar
+        # events that event-born recordings reference but that have left
+        # the upcoming projection (the orphan provenance fix).
         event_info: dict[str, dict[str, str]] = {}
         for event in events:
             event_info[event.id] = {
                 "event_title": event.title,
                 "source_label": event.source_label,
             }
+        # HS-175-02-fix: resolve provenance for orphan recordings whose
+        # event is no longer in list_upcoming (past events).
+        orphan_event_ids = {
+            r.calendar_event_id
+            for r in enabled_recordings
+            if r.calendar_event_id and r.born_from == "calendar_event"
+            and r.calendar_event_id not in event_info
+        }
+        for eid in orphan_event_ids:
+            past_event = self._calendar_events.get(eid)
+            if past_event:
+                event_info[eid] = {
+                    "event_title": past_event.title,
+                    "source_label": past_event.source_label,
+                }
+            else:
+                # Event row is gone entirely; resolve source_label from
+                # the recording's calendar_source_id via configured sources.
+                rec = next(
+                    (r for r in enabled_recordings if r.calendar_event_id == eid),
+                    None,
+                )
+                source_label = ""
+                if rec and rec.calendar_source_id and self._config_loader:
+                    try:
+                        config = self._config_loader()
+                        for src in config.calendar.sources:
+                            if src.id == rec.calendar_source_id:
+                                source_label = src.label
+                                break
+                    except Exception:
+                        pass
+                event_info[eid] = {
+                    "event_title": rec.title if rec else "",
+                    "source_label": source_label,
+                }
         # HS-147-01: build an index of armed calendar_event_id -> schedule info
         # so _calendar_event_item can project armed data without N+1.
         # HS-175-03: enriched to carry arms_at for the ARMS HH:MM token.

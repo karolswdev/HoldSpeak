@@ -1,6 +1,6 @@
 # Phase 175 - Calendar and the Clock
 
-**Last updated:** 2026-09-05.
+**Last updated:** 2026-09-05 (late — the faces built).
 
 ## Goal
 
@@ -14,9 +14,11 @@ column.
 
 ## Status
 
-**ACTIVE 5/9 — wire done, faces NOT built; PAUSED on the owner's wind-down (2026-09-05). Branch `feat/calendar-clock` off `feat/reach` (PR #557); 170–173 merged to main the same day.**
+**ACTIVE 5/9 — wire done, the FOUR FACES BUILT to the ratified boards (2026-09-05, resumed on the owner's word). Branch `feat/calendar-clock`, draft PR #558 on main; 170–174 merged to main.**
 
-**Where we are (2026-09-05 21:45).** 01 the design ratified by counsel (RATIFY-W-C; five conditions paid in the design addendum; canvas republished). 02–05 the wire landed with tests: the calendar refresh rides the heartbeat sweep and the event→Room join with link/unlink routes (02); `meeting.auto_record` off|all_calendar|room_linked and event-born recordings with `born_from` (03); the MeetingWatchSource and the Room's SOURCES meeting row (04); the two-window brief — `compute_window` unchanged, `compute_lookahead` to Sunday (05). Not started: the four faces (arrival WEEK strip and event rows, Settings CALENDAR + auto-record, the Room MEETINGS row, Rhythm/brief WEEK) with their rigs, the docs verify pass (08 drafted), the hygiene lane (07), the walk (06 runner drafted), counsel-on-built, the close (09). Resume from the design addendum and the story files; every face composes library species and is shot beside its board before it counts.
+**Where we are (2026-09-05, late — the faces).** Resumed on his word ("I think you could continue working out 175 no?"). Four Fedaykin face lanes built to the ratified boards in one tree with strict file ownership, each shot beside its board at 1440 + 393 and bounced until it matched: (a) the arrival's WEEK strip, NEXT with the Room token, the MEETINGS section, the orphan armed row (`story-02-shots/`); (b) Settings → Meetings' CALENDAR section on the module the hub row opens — source rows, the in-world connect well with a mic, `Snapshot`, Auto-record with `5 MIN BEFORE` and `N MATCHED THIS WEEK`; the 146-era Calendar group retired so the calendar is said once, its verbs (`Edit` · `Disable`/`Enable` · `Remove` with an in-world confirm) carried onto the new rows because a face that replaces another never loses a working verb (`story-03-shots/`); (c) the Room's real meeting Watch — created when a meeting links, backfilled once by the sweep, evaluated by the sweep, feeding SINCE YOU LOOKED (`story-04-shots/`); (d) Rhythm's Weekly brief row and the brief's THIS WEEK / SINCE FRIDAY at one gutter, `this_week` added to the section vocabulary (`story-05-shots/`). Rulings from the build are in the design's Addendum 2 (B1–B9). One scar: a lane ran `git stash` in the shared tree to measure a before-count and dropped it; ten files reverted to HEAD and were recovered from the dangling stash commit via `git fsck`; the no-tree-git-verbs law is now in `.claude/agents/opus-worker.md`. Hygiene: the census (`assets/hygiene-census-175.md`), the P2-2 snapshot-model fence PAID (local/LAN preferred, host recorded), the tz-aware lookahead default, the logged Watch-query load; four items parked in BACKLOG.md. The canonical schema snapshot regenerated (the 02 wire's join table + index + `born_from`). Next: the docs verify (08), counsel-on-built, the walk on his desk (06), the suite in CI shape, the close (09).
+
+Earlier (2026-09-05 21:45): 01 the design ratified by counsel (RATIFY-W-C; five conditions paid in the design addendum; canvas republished). 02–05 the wire landed with tests.
 
 **Depends on:** Phase 171 merged (the cadence row drives the brief's
 recurrence and the scheduled-recording conductor's ticks).
@@ -111,7 +113,7 @@ has only GitHubWatchSource:58 and JiraWatchSource:294).
 | HS-175-05 | The week brief (Monday brief window widened to the calendar week; calendar + meeting collectors) | done | [story-05-the-week-brief](./story-05-the-week-brief.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-175-06 | The walk (his desk: the event-born recording, the week brief, the meeting Watch entity) | in-progress | [story-06-the-walk](./story-06-the-walk.md) | -- |
 | HS-175-07 | The hygiene lane (items from THE-TUESDAY-ARC.md section 4 that this phase's tree touches) | backlog | [story-07-the-hygiene-lane](./story-07-the-hygiene-lane.md) | -- |
-| HS-175-08 | The docs (the calendar in the architecture; the week brief in the guide) | in-progress | [story-08-the-docs](./story-08-the-docs.md) | -- |
+| HS-175-08 | The docs (the calendar in the architecture; the week brief in the guide) | done | [story-08-the-docs](./story-08-the-docs.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-175-09 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | backlog | [story-09-the-close](./story-09-the-close.md) | -- |
 
 ## Where we are

@@ -42,7 +42,14 @@ vi.mock("../ContextualAssignment", () => ({
   ContextualAssignment: () => null,
 }));
 
-describe("Meetings calendar sources list editor", () => {
+const WELL_INPUT = { name: "Calendar URL or file path" };
+
+// HS-175-03: the 146-era GadgetTable became SurfaceLedgerRows (one per
+// source: StateChip · label · ICS/SNAPSHOT · host EgressChip or THIS
+// DEVICE · verbs Edit / Disable|Enable / Remove) with ONE connect well
+// under the Connect calendar row (Add) or under a source row (Edit).
+// Every behaviour the old group protected is asserted below on the new DOM.
+describe("Meetings calendar source rows", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
@@ -51,35 +58,50 @@ describe("Meetings calendar sources list editor", () => {
 
   afterEach(() => vi.useRealTimers());
 
-  it("renders two source rows with label, url, and enabled controls plus speak-to-fill mics", () => {
+  it("renders two source rows with label, type, enabled state, the verbs, and the speak-to-fill mic on the well", () => {
     render(<SettingsCore scope="meetings" />);
-    const workLabel = screen.getByRole("textbox", { name: "Source 1 label" });
-    expect(workLabel).toHaveValue("Work");
-    const workUrl = screen.getByRole("textbox", { name: "Source 1 URL" });
-    expect(workUrl).toHaveValue("https://work.example/cal.ics");
-    expect(screen.getByRole("checkbox", { name: "Enable source 1" })).toBeChecked();
-    expect(screen.getByRole("textbox", { name: "Source 2 label" })).toHaveValue("Personal");
-    expect(screen.getByRole("textbox", { name: "Source 2 URL" })).toHaveValue("/home/user/personal.ics");
-    expect(screen.getByRole("checkbox", { name: "Enable source 2" })).not.toBeChecked();
-    expect(screen.getByRole("button", { name: /^Speak Source 1 label/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^Speak Source 1 URL/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^Speak Source 2 label/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^Speak Source 2 URL/ })).toBeInTheDocument();
+    const work = screen.getByTestId("calendar-source-src-work");
+    expect(within(work).getByText("Work")).toBeInTheDocument();
+    expect(within(work).getByText("ICS")).toBeInTheDocument();
+    expect(within(work).getByRole("status")).toHaveAttribute("data-state", "idle");
+    expect(within(work).getByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(within(work).getByRole("button", { name: "Disable" })).toBeInTheDocument();
+    expect(within(work).getByRole("button", { name: "Remove" })).toBeInTheDocument();
+
+    const personal = screen.getByTestId("calendar-source-src-personal");
+    expect(within(personal).getByText("Personal")).toBeInTheDocument();
+    expect(within(personal).getByText("THIS DEVICE")).toBeInTheDocument();
+    // A disabled source: idle StateChip, muted label, Enable verb.
+    expect(within(personal).getByRole("status")).toHaveAttribute("data-state", "idle");
+    expect(within(personal).getByText("Personal")).toHaveAttribute("data-muted", "true");
+    expect(within(personal).getByRole("button", { name: "Enable" })).toBeInTheDocument();
+
+    // The one text well carries the mic (the voice law).
+    fireEvent.click(screen.getByTestId("calendar-add-btn"));
+    expect(screen.getByRole("textbox", WELL_INPUT)).toHaveValue("");
+    expect(screen.getByRole("button", { name: /^Speak Calendar URL/ })).toBeInTheDocument();
   });
 
-  it("renders one HTTPS egress chip for the enabled source and none for the disabled file source", () => {
+  it("names the host on the HTTPS source's egress chip and shows THIS DEVICE (no chip) on the file source", () => {
     render(<SettingsCore scope="meetings" />);
-    const chip = screen.getByText(/FETCHES WORK/);
+    const chip = screen.getByText("work.example");
+    expect(chip).toHaveClass("gadget-chip-egress");
     expect(chip).toHaveAttribute("data-scope", "cloud");
     expect(chip).toHaveAttribute("title", expect.stringContaining("Work"));
-    expect(screen.queryByText(/FETCHES PERSONAL/)).not.toBeInTheDocument();
+    const personal = screen.getByTestId("calendar-source-src-personal");
+    expect(personal.querySelector(".gadget-chip-egress")).toBeNull();
+    expect(within(personal).getByText("THIS DEVICE")).toBeInTheDocument();
   });
 
-  it("writes through the sources wire when a URL changes", async () => {
+  it("writes a changed URL through the sources wire from the row's Edit well", async () => {
     render(<SettingsCore scope="meetings" />);
-    fireEvent.change(screen.getByRole("textbox", { name: "Source 1 URL" }), {
-      target: { value: "https://new.example/feed.ics" },
-    });
+    const work = screen.getByTestId("calendar-source-src-work");
+    fireEvent.click(within(work).getByRole("button", { name: "Edit" }));
+    const well = screen.getByTestId("calendar-well");
+    const input = within(well).getByRole("textbox", WELL_INPUT);
+    expect(input).toHaveValue("https://work.example/cal.ics");
+    fireEvent.change(input, { target: { value: "https://new.example/feed.ics" } });
+    fireEvent.click(within(well).getByRole("button", { name: "Save" }));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(700);
     });
@@ -94,13 +116,19 @@ describe("Meetings calendar sources list editor", () => {
         }),
       }),
     });
+    expect(screen.queryByTestId("calendar-well")).not.toBeInTheDocument();
   });
 
-  it("adds a new source row with a minted id on ADD click", async () => {
+  it("adds a new source with a minted id from the Connect calendar well", async () => {
     const randomUUID = vi.spyOn(crypto, "randomUUID").mockReturnValue("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
     try {
       render(<SettingsCore scope="meetings" />);
-      fireEvent.click(screen.getByText("+ ADD SOURCE"));
+      fireEvent.click(screen.getByTestId("calendar-add-btn"));
+      const well = screen.getByTestId("calendar-well");
+      fireEvent.change(within(well).getByRole("textbox", WELL_INPUT), {
+        target: { value: "https://new.example/feed.ics" },
+      });
+      fireEvent.click(within(well).getByRole("button", { name: "Save" }));
       await act(async () => {
         await vi.advanceTimersByTimeAsync(700);
       });
@@ -109,7 +137,12 @@ describe("Meetings calendar sources list editor", () => {
         json: expect.objectContaining({
           calendar: expect.objectContaining({
             sources: expect.arrayContaining([
-              expect.objectContaining({ id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890", label: "", url: "", enabled: true }),
+              expect.objectContaining({
+                id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                label: "",
+                url: "https://new.example/feed.ics",
+                enabled: true,
+              }),
             ]),
           }),
         }),
@@ -119,12 +152,35 @@ describe("Meetings calendar sources list editor", () => {
     }
   });
 
-  it("removes a source row on REMOVE confirmation", async () => {
+  it("keeps the well open and shows the refusal when the wire rejects the URL", async () => {
+    const refusal = new Error('calendar source "sources[2]": calendar.subscription must be a file path or HTTPS URL');
+    apiFetch.mockImplementation((url: string, init?: { method?: string }) => {
+      if (url === "/api/settings" && init?.method === "PUT") return Promise.reject(refusal);
+      return Promise.resolve({ settings: { ...settings, _revision: "calendar-r2" } });
+    });
     render(<SettingsCore scope="meetings" />);
-    const deleteButtons = screen.getAllByRole("button", { name: /Delete row/ });
-    fireEvent.click(deleteButtons[0]);
-    const confirmButton = screen.getByText("REMOVE?");
-    fireEvent.click(confirmButton);
+    fireEvent.click(screen.getByTestId("calendar-add-btn"));
+    const well = screen.getByTestId("calendar-well");
+    fireEvent.change(within(well).getByRole("textbox", WELL_INPUT), {
+      target: { value: "ftp://nope.example/cal.ics" },
+    });
+    fireEvent.click(within(well).getByRole("button", { name: "Save" }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(700);
+    });
+    const stillOpen = screen.getByTestId("calendar-well");
+    expect(within(stillOpen).getByRole("status")).toHaveAttribute("data-state", "failure");
+    expect(stillOpen.textContent).toContain("must be a file path or HTTPS URL");
+  });
+
+  it("removes a source after the in-world confirm step (never a modal)", async () => {
+    render(<SettingsCore scope="meetings" />);
+    const work = screen.getByTestId("calendar-source-src-work");
+    fireEvent.click(within(work).getByRole("button", { name: "Remove" }));
+    const confirm = screen.getByTestId("calendar-remove-confirm");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(within(confirm).getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    fireEvent.click(within(confirm).getByRole("button", { name: "Remove" }));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(700);
     });
@@ -138,10 +194,10 @@ describe("Meetings calendar sources list editor", () => {
     });
   });
 
-  it("toggles a source enabled state", async () => {
+  it("toggles a source's enabled state through the sources wire", async () => {
     render(<SettingsCore scope="meetings" />);
-    const checkbox = screen.getByRole("checkbox", { name: "Enable source 2" });
-    fireEvent.click(checkbox);
+    const personal = screen.getByTestId("calendar-source-src-personal");
+    fireEvent.click(within(personal).getByRole("button", { name: "Enable" }));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(700);
     });
@@ -158,7 +214,7 @@ describe("Meetings calendar sources list editor", () => {
   });
 });
 
-describe("IMPORT SCREENSHOT button refusal (HS-147-05)", () => {
+describe("Snapshot verb refusal (HS-147-05)", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
@@ -190,9 +246,8 @@ describe("IMPORT SCREENSHOT button refusal (HS-147-05)", () => {
       return Promise.resolve({ settings: { ...settings, _revision: "calendar-r2" } });
     });
 
-    // Click the IMPORT SCREENSHOT button
-    const importBtn = screen.getByText("IMPORT SCREENSHOT");
-    fireEvent.click(importBtn);
+    // Click the Snapshot verb on the Connect calendar row
+    fireEvent.click(screen.getByRole("button", { name: "Snapshot" }));
 
     expect(capturedInput).not.toBeNull();
     expect(capturedInput!.type).toBe("file");

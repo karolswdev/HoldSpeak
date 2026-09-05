@@ -249,8 +249,8 @@ class CalendarIngestConductor:
                     q = str(w["query"] or "").strip()
                     if q:
                         room_candidates.append((pid, q, "watch_query"))
-            except Exception:
-                pass
+            except Exception as exc:
+                log.warning("watch query load failed for project %s: %s", pid, exc)
 
         if not room_candidates:
             return

@@ -79,6 +79,16 @@ def _normalize_entity(connector_id: str, entity: Any) -> dict[str, Any]:
             "project_key": str(entity.get("project_key") or "").strip(),
             "status_changed_at": str(entity.get("status_changed_at") or "").strip(),
         })
+    elif connector_id == "meeting":
+        # HS-175-04: meeting-specific fields for token computation.
+        common.update({
+            "entity_type": "meeting",
+            "date": str(entity.get("date") or ""),
+            "participants": entity.get("participants", 0),
+            "decisions_count": entity.get("decisions_count", 0),
+            "commitments_count": entity.get("commitments_count", 0),
+            "intel_status": str(entity.get("intel_status") or "off"),
+        })
     return common
 
 
@@ -152,6 +162,16 @@ def diff_snapshots(connector_id: str, before: dict[str, Any],
                 ("review_decision", "github.pr.review_decision_changed"),
                 ("checks", "github.pr.checks_changed"),
                 ("head_sha", "github.pr.head_changed"),
+            ):
+                if previous.get(field) != current.get(field):
+                    events.append(_event(kind, previous, current,
+                                         {field: [previous.get(field), current.get(field)]}))
+        elif connector_id == "meeting":
+            # HS-175-04: meeting-specific transitions.
+            for field, kind in (
+                ("decisions_count", "meeting.decisions_changed"),
+                ("commitments_count", "meeting.commitments_changed"),
+                ("intel_status", "meeting.intel_status_changed"),
             ):
                 if previous.get(field) != current.get(field):
                     events.append(_event(kind, previous, current,

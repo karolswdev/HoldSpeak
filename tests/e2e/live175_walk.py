@@ -737,50 +737,33 @@ def _step_settings_meetings(page: Any, out_dir: Path, w: int, token: str,
                      document.body;
         const bodyText = body.textContent || '';
 
-        /* Calendar sources: .prefs-calendar-sources inside the GadgetTable */
+        /* Calendar sources (HS-175 build): the CALENDAR SurfaceSection in
+           Settings -> Meetings renders one SurfaceLedgerRow per source
+           inside .prefs-calendar-sources; each row carries the type token
+           (ICS | SNAPSHOT) and, inline, its EgressChip (.gadget-chip-egress)
+           or a THIS DEVICE token for file sources. */
         const sourcesEl = body.querySelector('.prefs-calendar-sources');
         let sourceCount = 0;
         let icsCount = 0;
         let snapshotCount = 0;
         const sourceUrls = [];
+        const egressChips = [];
         if (sourcesEl) {
-            /* Each source is a row in the GadgetTable -- look for
-               StringGadget inputs with value */
-            const inputs = sourcesEl.querySelectorAll('input[type="text"]');
-            for (const inp of inputs) {
-                const val = inp.value || '';
-                const placeholder = inp.placeholder || '';
-                if (placeholder.toLowerCase().includes('ics') ||
-                    placeholder.toLowerCase().includes('url')) {
-                    if (val) {
-                        sourceCount++;
-                        sourceUrls.push(val.slice(0, 30));
-                        if (/\\.ics/i.test(val) || /^https?:\\/\\//i.test(val)) {
-                            icsCount++;
-                        } else if (/snapshot/i.test(val)) {
-                            snapshotCount++;
-                        }
-                    }
+            const rows = Array.from(sourcesEl.children);
+            for (const row of rows) {
+                const text = (row.textContent || '').replace(/\\s+/g, ' ').trim();
+                if (!text) continue;
+                sourceCount++;
+                sourceUrls.push(text.slice(0, 40));
+                if (/\\bSNAPSHOT\\b/.test(text)) snapshotCount++;
+                else if (/\\bICS\\b/.test(text)) icsCount++;
+                for (const chip of row.querySelectorAll('.gadget-chip-egress')) {
+                    egressChips.push(chip.textContent.trim().slice(0, 60));
                 }
             }
-            /* Fallback: count rows by the checkbox gadget (the ON column) */
-            if (sourceCount === 0) {
-                const checkboxes = sourcesEl.querySelectorAll('.check-gadget');
-                sourceCount = checkboxes.length;
-            }
         }
 
-        /* Egress chips (host identity): .prefs-calendar-egress */
-        const egressArea = body.querySelector('.prefs-calendar-egress');
-        const egressChips = [];
-        if (egressArea) {
-            const chips = egressArea.querySelectorAll('.gadget-chip-egress');
-            for (const chip of chips) {
-                egressChips.push(chip.textContent.trim().slice(0, 60));
-            }
-        }
-
-        /* Auto-record: TODO data-testid="settings-auto-record" */
+        /* Auto-record: data-testid="settings-auto-record" (landed) */
         const autoRecordEl = body.querySelector('[data-testid="settings-auto-record"]');
         let autoRecordValue = '--- (face not landed)';
         if (autoRecordEl) {
@@ -790,7 +773,7 @@ def _step_settings_meetings(page: Any, out_dir: Path, w: int, token: str,
                then the adjacent CycleGadget */
             const allText = bodyText;
             if (/Auto.record/i.test(allText)) {
-                const match = allText.match(/Auto.record[\\s\\S]{0,40}?(OFF|WITH URL|ALL)/i);
+                const match = allText.match(/Auto.record[\\s\\S]{0,60}?(OFF|ARM ROOM MEETINGS ONLY|ARM ALL CALENDAR MEETINGS)/i);
                 if (match) autoRecordValue = match[1] + ' (inferred)';
                 else autoRecordValue = 'present (value not parsed)';
             }

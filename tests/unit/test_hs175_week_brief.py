@@ -95,6 +95,14 @@ class TestComputeLookahead:
         assert end.date() == datetime.date(2026, 9, 6)
         assert end.hour == 23
 
+    def test_default_now_is_tz_aware(self, db):
+        """When no `now` is passed, the default is tz-aware local time."""
+        svc = MondayBriefService(db)
+        start, end = svc.compute_lookahead()
+
+        assert start.tzinfo is not None, "Default now should be tz-aware"
+        assert end.tzinfo is not None, "End should inherit tzinfo from now"
+
 
 # ── Calendar events collector ───────────────────────────────────────
 
@@ -132,6 +140,7 @@ class TestCollectCalendarEvents:
         total_items = [i for i in items if i.source_ref == "calendar:week"]
         assert len(total_items) == 1
         assert "2 meetings this week" in total_items[0].text
+        assert total_items[0].section == "this_week"
 
     def test_next_event_after_now(self, db):
         svc = MondayBriefService(db)
@@ -291,3 +300,119 @@ class TestBriefGenerationThisWeek:
         start_dt = datetime.datetime.fromisoformat(brief.period_start)
         # Lookback: Thursday -> previous day 17:00 = Wednesday 17:00
         assert start_dt == datetime.datetime(2026, 9, 2, 17, 0)
+
+    def test_sections_include_this_week(self, db):
+        """The generated brief always has a this_week key in sections."""
+        svc = MondayBriefService(db)
+        now = datetime.datetime(2026, 9, 3, 14, 0, 0)
+        brief = svc.generate(OWNER, now=now)
+
+        assert "this_week" in brief.sections
+        assert isinstance(brief.sections["this_week"], list)
+
+    def test_calendar_items_land_in_this_week(self, db):
+        """Calendar event items go to this_week, not changed."""
+        svc = MondayBriefService(db)
+        with db._connection() as conn:
+            conn.execute(
+                """INSERT INTO calendar_events
+                   (id, uid, title, starts_at, ends_at, last_seen_at,
+                    subscription_revision, source_id, source_label)
+                   VALUES ('evt1', 'uid1', 'Standup',
+                           '2026-09-04T10:00:00', '2026-09-04T11:00:00',
+                           1000.0, 'rev1', 'src1', 'WORK')"""
+            )
+
+        now = datetime.datetime(2026, 9, 3, 14, 0, 0)
+        brief = svc.generate(OWNER, now=now)
+
+        tw = brief.sections["this_week"]
+        cal_items = [i for i in tw if i.source_ref and "calendar" in i.source_ref]
+        assert len(cal_items) > 0, "Calendar items should be in this_week section"
+
+        changed = brief.sections["changed"]
+        cal_in_changed = [i for i in changed if i.source_ref and "calendar" in i.source_ref]
+        assert len(cal_in_changed) == 0, "Calendar items should NOT be in changed section"
+
+    def test_meeting_watch_items_land_in_this_week(self, db):
+        """Meeting watch (commitments due) items go to this_week."""
+        svc = MondayBriefService(db)
+        art_id = f"art-{uuid.uuid4().hex[:8]}"
+        with db._connection() as conn:
+            conn.execute(
+                """INSERT INTO decisions
+                   (id, text, rationale, source_artifact_id, source_meeting_id,
+                    lifecycle, project_key, decided_at)
+                   VALUES ('d1', 'test', '', ?, '', 'recorded', '', datetime('now'))""",
+                (art_id,),
+            )
+            conn.execute(
+                """INSERT INTO decision_commitments
+                   (id, decision_id, action_item_id, owner, due_at, status,
+                    created_at, updated_at)
+                   VALUES ('dc1', 'd1', 'ai1', 'karol', '2026-09-04',
+                           'open', datetime('now'), datetime('now'))"""
+            )
+
+        now = datetime.datetime(2026, 9, 3, 14, 0, 0)
+        brief = svc.generate(OWNER, now=now)
+
+        tw = brief.sections["this_week"]
+        watch_items = [i for i in tw if i.source_ref and "meeting_watch" in i.source_ref]
+        assert len(watch_items) > 0, "Meeting watch items should be in this_week"
+
+    def test_headline_includes_meeting_count(self, db):
+        """When calendar events exist, the headline includes meeting count."""
+        svc = MondayBriefService(db)
+        with db._connection() as conn:
+            conn.execute(
+                """INSERT INTO calendar_events
+                   (id, uid, title, starts_at, ends_at, last_seen_at,
+                    subscription_revision, source_id, source_label)
+                   VALUES ('evt1', 'uid1', 'Standup',
+                           '2026-09-04T10:00:00', '2026-09-04T11:00:00',
+                           1000.0, 'rev1', 'src1', 'WORK')"""
+            )
+            conn.execute(
+                """INSERT INTO calendar_events
+                   (id, uid, title, starts_at, ends_at, last_seen_at,
+                    subscription_revision, source_id, source_label)
+                   VALUES ('evt2', 'uid2', 'Review',
+                           '2026-09-05T14:00:00', '2026-09-05T15:00:00',
+                           1000.0, 'rev1', 'src1', 'WORK')"""
+            )
+
+        now = datetime.datetime(2026, 9, 3, 14, 0, 0)
+        brief = svc.generate(OWNER, now=now)
+
+        assert "2 meetings this week" in brief.headline
+
+    def test_commitment_detail_includes_text_and_date(self, db):
+        """Commitment due item carries the first commitment's text + date."""
+        svc = MondayBriefService(db)
+        art_id = f"art-{uuid.uuid4().hex[:8]}"
+        with db._connection() as conn:
+            conn.execute(
+                """INSERT INTO decisions
+                   (id, text, rationale, source_artifact_id, source_meeting_id,
+                    lifecycle, project_key, decided_at)
+                   VALUES ('d1', 'Ania owns the API spec', '', ?, '', 'recorded', '', datetime('now'))""",
+                (art_id,),
+            )
+            conn.execute(
+                """INSERT INTO decision_commitments
+                   (id, decision_id, action_item_id, owner, due_at, status,
+                    created_at, updated_at)
+                   VALUES ('dc1', 'd1', 'ai1', 'karol', '2026-09-04',
+                           'open', datetime('now'), datetime('now'))"""
+            )
+
+        items = svc._collect_meeting_watch(
+            "2026-08-31T00:00:00", "2026-09-06T23:59:59", None,
+        )
+
+        due_items = [i for i in items if i.source_ref == "meeting_watch:commitments_due"]
+        assert len(due_items) == 1
+        assert due_items[0].detail is not None
+        assert "Ania owns the API spec" in due_items[0].detail
+        assert "2026-09-04" in due_items[0].detail

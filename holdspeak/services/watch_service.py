@@ -1254,3 +1254,123 @@ class WatchService:
             query_kind=watch["query_kind"],
             query=watch["query"],
         )
+
+
+# ── HS-175-04: ensure one meeting Watch per Room ────────────────────
+
+
+def ensure_meeting_watch(db: Any, project_id: str) -> dict[str, Any] | None:
+    """Idempotently create the Room's meeting Watch if it has linked meetings.
+
+    Returns the watch dict if created, None if one already exists or no
+    meetings are linked.  Safe to call on every link and every sweep tick.
+    """
+    from holdspeak.meeting_templates import compile as compile_template
+    from holdspeak.logging_config import get_logger
+
+    _log = get_logger("watch_service.ensure_meeting_watch")
+
+    # 1. Does the Room already have a meeting Watch?
+    with db._connection() as conn:
+        existing = conn.execute(
+            "SELECT id FROM connector_watches "
+            "WHERE project_id = ? AND connector_id = 'meeting' "
+            "AND state != 'retired'",
+            (project_id,),
+        ).fetchone()
+        if existing:
+            return None
+
+        # 2. Does the Room have linked meetings?
+        mtg_count = conn.execute(
+            "SELECT COUNT(*) AS cnt FROM meeting_projects WHERE project_id = ?",
+            (project_id,),
+        ).fetchone()["cnt"]
+        if mtg_count == 0:
+            return None
+
+    # 3. Compile the template
+    spec = compile_template(
+        "watch.meetings.linked",
+        {"project_id": project_id},
+    )
+
+    # 4. Create the Watch + rules in one transaction
+    watch_id = f"w_{uuid.uuid4().hex[:12]}"
+    now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    trigger = spec.get("trigger", {})
+    rules = spec.get("rules", [])
+    query = spec["subject"]["query"]
+
+    with db._connection() as conn:
+        # Double-check idempotency inside the transaction
+        existing = conn.execute(
+            "SELECT id FROM connector_watches "
+            "WHERE project_id = ? AND connector_id = 'meeting' "
+            "AND state != 'retired'",
+            (project_id,),
+        ).fetchone()
+        if existing:
+            return None
+
+        db.automations.create_watch_in_transaction(
+            conn,
+            watch_id=watch_id,
+            connector_id="meeting",
+            query_kind="meetings",
+            name=spec["name"],
+            query_json=json.dumps(query, sort_keys=True, separators=(",", ":")),
+            enabled=True,
+            schema_version="WatchSpec@1",
+            project_id=project_id,
+            intent=spec.get("intent", ""),
+            subject_kind="meetings",
+            trigger_kind=trigger.get("kind", "poll"),
+            trigger_json=json.dumps(trigger, sort_keys=True, separators=(",", ":")),
+            mode=spec.get("mode", "yolo"),
+            state="active",
+            revision=1,
+            baseline_state="",
+            test_state="",
+            created_at=now_iso,
+            updated_at=now_iso,
+        )
+
+        for ordinal, rule in enumerate(rules):
+            rule_id = f"wrule_{uuid.uuid4().hex[:12]}"
+            db.automations.create_rule_in_transaction(
+                conn,
+                rule_id=rule_id,
+                watch_id=watch_id,
+                ordinal=ordinal,
+                condition_schema="WatchCondition@1",
+                condition_json=json.dumps(
+                    rule.get("condition", {}),
+                    sort_keys=True, separators=(",", ":"),
+                ),
+                action_schema="WatchAction@1",
+                action_json=json.dumps(
+                    rule.get("actions", []),
+                    sort_keys=True, separators=(",", ":"),
+                ),
+                enabled=True,
+                revision=0,
+                created_at=now_iso,
+                updated_at=now_iso,
+            )
+
+    # Populate the initial snapshot so the Room's SOURCES shows tokens
+    # immediately (before the first sweep evaluation).
+    try:
+        from holdspeak.services.watch_sources import MeetingWatchSource
+        _principal = Principal(PrincipalKind.OWNER, "ensure-meeting-watch")
+        raw_entities = MeetingWatchSource(db=db).snapshot(
+            _principal, query_kind="meetings", query=query,
+        )
+        snapshot = normalize_snapshot("meeting", raw_entities)
+        db.automations.record_refresh(watch_id, snapshot, [])
+    except Exception as snap_exc:
+        _log.warning("initial snapshot for meeting Watch %s failed: %s", watch_id, snap_exc)
+
+    _log.info("created meeting Watch %s for project %s", watch_id, project_id)
+    return db.automations.get_watch(watch_id) or {"id": watch_id}

@@ -29,7 +29,7 @@ from ..db.core import Database
 from ..db.relationships import qualified_ref
 from ..logging_config import get_logger
 from ..meeting_aftercare import compute_project_since_last_meeting
-from ..principals import Principal
+from ..principals import Principal, PrincipalKind
 from ..project_contracts import (
     CommandResultEnvelope,
     ProjectError,
@@ -845,6 +845,8 @@ class ProjectService:
             if connector_id == "jira":
                 projects = query.get("projects") or []
                 scope = " + ".join(projects) if projects else query.get("connection_ref", "")
+            elif connector_id == "meeting":
+                scope = "MEETINGS"
 
             # Host (egress)
             host = "github.com" if connector_id == "gh" else ""
@@ -2800,6 +2802,13 @@ class ProjectService:
                 conn, cmd_id, project_id, "associate_meeting",
                 req_hash, envelope,
             )
+
+        # HS-175-04: ensure the Room's meeting Watch exists after link
+        try:
+            from holdspeak.services.watch_service import ensure_meeting_watch
+            ensure_meeting_watch(self._db, project_id)
+        except Exception:
+            _log.warning("ensure_meeting_watch failed for project %s", project_id)
 
         return True
 

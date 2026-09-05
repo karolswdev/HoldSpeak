@@ -856,6 +856,16 @@
       ]
     },
     {
+      "path": "/api/calendar/sources",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.calendar_sources",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/chains",
       "methods": [
         "GET"

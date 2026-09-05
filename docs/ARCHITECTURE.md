@@ -433,14 +433,14 @@ nudge (a proposed `gh pr comment`).
 sequenceDiagram
   participant INV as Deterministic inventory<br/>(claim schema)
   participant MDL as Model drafter<br/>(_draft_with_model)
-  participant PAR as Parser<br/>(_parse_model_output)
+  participant PRS as Parser<br/>(_parse_model_output)
   participant VER as Ref verifier
   participant FB as Fallback<br/>(deterministic body)
   participant UI as UpdatePosture
 
   INV->>MDL: claims + refs
-  MDL->>PAR: model output (JSON)
-  PAR->>VER: parsed claims
+  MDL->>PRS: model output (JSON)
+  PRS->>VER: parsed claims
   alt all cited_refs in inventory
     VER-->>UI: verified claims + EgressChip(host)
   else ref missing or no ref
@@ -654,18 +654,18 @@ expose `GET /api/connections` and
 
 ### The clock
 
-<!-- verify at build --> The clock connects the calendar pipeline to the
-desk's temporal surfaces: the arrival's WEEK strip, event-born
-recordings, the Room's meeting watch, and the weekly brief.
+The clock connects the calendar pipeline to the desk's temporal
+surfaces: the arrival's WEEK strip, event-born recordings, the Room's
+meeting watch, and the weekly brief.
 
 ```mermaid
 sequenceDiagram
   participant HB as Heartbeat sweep
-  participant CC as CalendarIngestConductor<br/>(refresh_all)
+  participant CC as CalendarIngestConductor<br/>(refresh)
   participant SR as CalendarSourceReader<br/>(file or HTTPS fetch)
   participant PA as parse_calendar_bytes<br/>(pure ICS parser)
   participant DB as CalendarEventRepository<br/>(replace_projection)
-  participant EM as Event-Room matcher<br/>(title, manual, attendee)
+  participant EM as Event-Room matcher<br/>(title, manual)
   participant SC as ScheduledRecordingRepository<br/>(create idle)
   participant CD as ScheduledRecordingConductor<br/>(arms at starts_at - 5 min)
   participant DI as Door + Arrival<br/>(WEEK strip, upcoming)
@@ -689,19 +689,20 @@ sequenceDiagram
   DB-->>DI: projection feeds WEEK strip + upcoming
 ```
 
-<!-- verify at build --> The `MeetingWatchSource` sits beside
-`GitHubWatchSource` and `JiraWatchSource` in the Watch source dispatch.
-It reads from the local database only (meetings, meeting_intel_snapshots,
-decision_records, meeting_projects). Each entity carries title, date,
-participant count, decisions count, commitments count, intel status, and
-an `updated_at` that participates in the Room's SINCE YOU LOOKED delta.
+The `MeetingWatchSource` sits beside `GitHubWatchSource` and
+`JiraWatchSource` in the Watch source dispatch. It reads from the
+local database only (meetings, meeting_projects, segments,
+decision_record_sources, decision_records, decision_commitments,
+intel_job_attempts). Each entity carries title, date, participant
+count, decisions count, commitments count, intel status, and an
+`updated_at` that participates in the Room's SINCE YOU LOOKED delta.
 Zero egress.
 
-<!-- verify at build --> The brief's `compute_window()` widens from
-day-windowed to week-windowed when a calendar is connected: `period_start`
-is Monday 00:00 of the current week, `period_end` is now. Two new
-collectors (calendar events and meeting Watch entities) produce items in
-the `this_week` and `meetings` sections, deduplicating by `calendar_uid`.
+The brief's lookback window (`compute_window`) is unchanged: the
+preceding business-day close to now. A separate `compute_lookahead`
+returns now to Sunday 23:59. Two new collectors (calendar events and
+meeting Watch entities) produce items in the `this_week` section
+using a full-week window (Monday 00:00 to Sunday 23:59).
 
 ## The conductor loops and the Heartbeat
 
