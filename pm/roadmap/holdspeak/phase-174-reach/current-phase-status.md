@@ -14,7 +14,7 @@ implementation across stdio, web, and remote.
 
 ## Status
 
-**ACTIVE 0/11 — STACKED on 173 (PR #556) on 172 (#555) on 171 (#554) on 170 (#553); branch `feat/reach` off `feat/the-stewards-hand`.**
+**COMPLETE 11/11 — PR #557 (base main) merges on the owner's standing word; 170–173 merged to main 2026-09-05.**
 
 **Depends on:** Phase 171 (the heartbeat's cadence) + Phase 173 (the
 steward's hand and voice).
@@ -117,21 +117,23 @@ the .43 box runs llama.cpp (Q6, 24k context) but no HoldSpeak runner.
 | HS-174-01 | The design (the remote badge, the credential scope face, the third connector's Door card) | done | [story-01-the-design](./story-01-the-design.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-174-02 | The transport (Streamable HTTP on the hub behind scoped credentials) | done | [story-02-the-transport](./story-02-the-transport.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-174-03 | Scoped remote identity (non-OWNER principals, palette-restricted, owner-issued) | done | [story-03-scoped-remote-identity](./story-03-scoped-remote-identity.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-174-04 | Egress badges on remote reads (kernel receipt + badge; local stdio badgeless) | in-progress | [story-04-egress-badges](./story-04-egress-badges.md) | -- |
+| HS-174-04 | Egress badges on remote reads (kernel receipt + badge; local stdio badgeless) | done | [story-04-egress-badges](./story-04-egress-badges.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-174-05 | The long-running contract (run_id + polling over HTTP) | done | [story-05-the-long-running-contract](./story-05-the-long-running-contract.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-174-06 | The third connector decision (candidates, CLI-backed, switch-and-verify) | done | [story-06-the-third-connector-decision](./story-06-the-third-connector-decision.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-174-07 | The third connector (implementation: WatchSource, Door card, templates) | in-progress | [story-07-the-third-connector](./story-07-the-third-connector.md) | -- |
+| HS-174-07 | The third connector (implementation: WatchSource, Door card, templates) | done | [story-07-the-third-connector](./story-07-the-third-connector.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-174-08 | The .43 runner (the live proof: sweep + drafter overnight, receipts on the desk) | done | [story-08-the-43-runner](./story-08-the-43-runner.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-174-09 | LAN companion notifications (Bonjour mesh push; CONDITIONAL on the companion track) | done | [story-09-lan-companion-notifications](./story-09-lan-companion-notifications.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-174-10 | The docs (MCP_SIDECAR.md extended, the guide's companions section, remote in the architecture) | in-progress | [story-10-the-docs](./story-10-the-docs.md) | -- |
-| HS-174-11 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | in-progress | [story-11-the-close](./story-11-the-close.md) | -- |
+| HS-174-10 | The docs (MCP_SIDECAR.md extended, the guide's companions section, remote in the architecture) | done | [story-10-the-docs](./story-10-the-docs.md) | [evidence-story-10](./evidence-story-10.md) |
+| HS-174-11 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | done | [story-11-the-close](./story-11-the-close.md) | [evidence-story-11](./evidence-story-11.md) |
 
 ## Where we are
 
-**2026-09-05 21:25 — 10/11 DONE; only 11 the close remains.** Counsel on
-the built phase reading; the full suite running; the runner's last fixes
-landing; then his-desk walk (the probe credential only if remote is
-already ON) and the close.
+**2026-09-05 22:20 — 11/11 DONE. COMPLETE.** Counsel-on-built RATIFY-W-C paid; the walk on his desk with zero writes (remote OFF); the suite classified (6 inherited · 11 xdist-only · 10 fences paid); PR #557 retargeted to main. Merge is next, then 175 (parked at 5/9, draft #558) rebases on main.
+
+**2026-09-05 21:05 — 8/11 DONE (01 · 02 · 03 · 05 · 06 · 08 · 09 · 10).**
+The docs verified against the built product. Left: 04 and 07 (the last
+Door-row and Room-receipts shots), then counsel-on-built, the runner fill
++ his-desk walk, the suite, 11 the close.
 
 **2026-09-05 20:45 — 7/11 DONE (01 · 02 · 03 · 05 · 06 · 08 · 09); PR #557.**
 The receipts/Door/Rhythm faces are built but their rigs were hollow

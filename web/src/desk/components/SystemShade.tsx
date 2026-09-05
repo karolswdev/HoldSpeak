@@ -12,7 +12,7 @@ import { useProjections } from "../projections";
 import { humanTime } from "../surface/format";
 import { countToken } from "../surface/count";
 import { EgressChip, StringGadget } from "../surface/gadgets";
-import { egressForEvent } from "../surface/egress";
+import { egressForEvent, receiptLabel } from "../surface/egress";
 import { SurfaceState } from "../surface/Surface";
 import { humanizeWireValue } from "../../lib/productLanguage";
 import { MicButton } from "./MicButton";
@@ -340,13 +340,16 @@ export function SystemShade({
           {finished.map((row) => {
             // HS-174-04: derive egress from origin + caller (tolerant: fields may be absent)
             const egress = egressForEvent({ origin: row.origin, caller: row.caller });
+            // Pipeline projections carry raw service.method titles; map them to human grammar.
+            const isPipeline = row.source_kind === "pipeline_event" || row.id.startsWith("pipeline:");
+            const displayTitle = isPipeline ? receiptLabel({ title: row.title }) : row.title;
             return (
             <div className="desk-shade-item" key={row.id}>
               <span className="desk-shade-glyph" aria-hidden="true">
                 ✦
               </span>
               <div className="desk-shade-what">
-                <strong>{row.title}</strong>
+                <strong>{displayTitle}</strong>
                 <small>
                   {row.outcome || row.subject_label}
                   {egress.label ? (

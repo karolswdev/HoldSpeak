@@ -55,6 +55,8 @@ export interface SourceRow {
   counts: CountToken[];
   plain: string;
   host: string;
+  /** HS-174-07: connection email for Confluence SIGNED IN chip. */
+  connectionEmail: string;
   reason: string | null;
   pickerOpen: boolean;
   adjustOpen: boolean;
@@ -106,6 +108,7 @@ function makeRow(tool: ConnectionTool): SourceRow {
     counts: [],
     plain: "",
     host: tool.egress_host ?? "",
+    connectionEmail: tool.account?.email ?? "",
     reason: null,
     pickerOpen: false,
     adjustOpen: false,
@@ -125,16 +128,11 @@ const SOURCE_PROVIDERS = new Set(PROVIDER_ORDER);
 
 function buildRows(tools: ConnectionTool[]): SourceRow[] {
   const sourceTools = tools.filter((t) => SOURCE_PROVIDERS.has(t.provider_id));
-  const connected = sourceTools.filter((t) => t.state === "connected");
-  const notConnected = sourceTools.filter((t) => t.state !== "connected");
-  const sorted = [...connected, ...notConnected];
-  sorted.sort((a, b) => {
-    const ai = PROVIDER_ORDER.indexOf(a.provider_id);
-    const bi = PROVIDER_ORDER.indexOf(b.provider_id);
-    if (a.state === "connected" && b.state !== "connected") return -1;
-    if (a.state !== "connected" && b.state === "connected") return 1;
-    return ai - bi;
-  });
+  /* Fixed order GH, Jira, Confluence whatever is connected -- the board's
+     order (counsel-on-built 174, condition 2). */
+  const sorted = [...sourceTools].sort(
+    (a, b) => PROVIDER_ORDER.indexOf(a.provider_id) - PROVIDER_ORDER.indexOf(b.provider_id),
+  );
   return sorted.map(makeRow);
 }
 

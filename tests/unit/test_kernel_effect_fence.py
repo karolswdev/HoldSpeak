@@ -405,6 +405,12 @@ _MIGRATED_CALLS: dict[tuple[str, str, str, int], str] = {
         1,
     ): "mandatory authenticated owner read",  # HS-166: acli, the gh twin
     (
+        "holdspeak/services/confluence_provider.py",
+        "ConfluenceProviderAdapter._run_acli",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",  # HS-174: acli confluence, the jira twin
+    (
         "holdspeak/missioncontrol_bridge.py",
         "_default_runner",
         "run",

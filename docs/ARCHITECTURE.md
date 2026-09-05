@@ -503,7 +503,7 @@ window suppresses the proposal.
 
 ### Reach
 
-<!-- verify at build --> The hub's Streamable HTTP route (`POST /api/mcp`)
+The hub's Streamable HTTP route (`POST /api/mcp`)
 exposes the same `handle_message` entry point that the stdio sidecar and
 the web runtime's in-process fetcher use. One implementation, three
 transports. The remote path composes on the web runtime's live services
@@ -545,7 +545,7 @@ sequenceDiagram
   ST->>KO: steward receipts (origin=remote)
 ```
 
-<!-- verify at build --> The Confluence adapter sits beside the Jira adapter.
+The Confluence adapter sits beside the Jira adapter.
 Both use the `(site, email)` identity and the switch-and-verify pattern.
 The connector pack (`acli_confluence.py`) names a read-only allowlist:
 `auth status`, `auth switch`, `space list`, `space view`, `page view`,

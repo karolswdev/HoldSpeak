@@ -112,7 +112,7 @@ with code 2.  It does not retry.
 The runner prints one line per step with UTC timestamps:
 
 ```
-[2026-09-05 22:15:01] CONNECT hub=http://100.64.0.2:8765 protocol=2024-11-05 identity=holdspeak-mcp
+[2026-09-05 22:15:01] CONNECT hub=http://100.64.0.2:8765 protocol=2025-03-26 identity=holdspeak-mcp
 [2026-09-05 22:15:02] CALL cadence_run_now
 [2026-09-05 22:15:14] OK sweep completed
 [2026-09-05 22:15:15] CALL project_run_steward project=gov

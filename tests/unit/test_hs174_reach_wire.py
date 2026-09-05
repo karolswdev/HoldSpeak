@@ -294,6 +294,28 @@ def test_agent_from_non_loopback_ok():
     assert resp.status_code == 200
 
 
+# ── Route: token in the query string -> 401 (counsel-on-built C1) ─────
+
+def test_query_string_token_refused_on_mcp_route():
+    """174 counsel-on-built C1: a credential never rides the URL on /api/mcp.
+
+    The middleware may accept ``?token=`` elsewhere on the hub; this route
+    refuses it so the credential never lands in access, proxy or history
+    logs.  The same credential in a header succeeds.
+    """
+    clock, _ = _clock_factory()
+    store = AgentCredentialStore(clock=clock)
+    cred = store.issue("sweep-runner", ttl_seconds=3600)
+    app = _make_app(agent_store=store, fake_client_host="100.64.0.5")
+    client = TestClient(app)
+    body = {"jsonrpc": "2.0", "id": 1, "method": "ping"}
+    refused = client.post(f"/api/mcp?token={cred.token}", json=body)
+    assert refused.status_code == 401, refused.text
+    assert refused.json()["error"] == "token_in_query_refused"
+    ok = client.post("/api/mcp", json=body, headers={"X-HoldSpeak-Token": cred.token})
+    assert ok.status_code == 200
+
+
 # ── Route: unauthenticated -> 401 ─────────────────────────────────────
 
 def test_unauthenticated_401():

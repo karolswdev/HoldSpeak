@@ -445,7 +445,7 @@ export function RemoteAccessModule({
               count={<>
                 CREDENTIALS
                 {activeCount > 0 ? (
-                  <> <span className="surface-token" data-chip data-testid="remote-active-count">
+                  <> · <span className="surface-token" data-chip data-testid="remote-active-count">
                     {countToken(activeCount, "ACTIVE", "ACTIVE")}
                   </span></>
                 ) : null}

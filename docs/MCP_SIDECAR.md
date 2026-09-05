@@ -1066,7 +1066,7 @@ are read-only (list, connection status, bounded discovery, validation).
 
 ### The transports
 
-<!-- verify at build --> The MCP protocol exposes `handle_message` over three
+The MCP protocol exposes `handle_message` over three
 transports. All three announce the same protocol version.
 
 | Transport | Entry point | Principal | Palette |
@@ -1087,14 +1087,14 @@ time; the hub stores the hash.
 
 ### Confluence provider tools
 
-<!-- verify at build --> The Confluence connector adds provider tools beside
+The Confluence connector adds provider tools beside
 the existing Jira and GitHub tools:
 
 | Tool | Family | What it does |
 |---|---|---|
-| `provider_confluence_connections` | `project` | List Confluence connections |
-| `provider_confluence_discover` | `project` | Discover spaces on a connected site |
-| `provider_confluence_validate_space` | `project` | Validate a space key |
+| `provider.confluence_connections` | `project` | List Confluence connections |
+| `provider.confluence_discover` | `project` | Discover spaces on a connected site |
+| `provider.confluence_validate_space` | `project` | Validate a space key |
 
 The tools follow the same read-only provider pattern as `provider_jira_*` and
 `provider_github_*`. No provider writes are available through MCP.

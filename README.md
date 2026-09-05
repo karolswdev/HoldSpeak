@@ -51,7 +51,7 @@ the steward proposes a comment on the waiting PR. You see the exact text and
 the receipt names who, which PR, when, and where. Nothing posts without your
 word on that one.
 
-<!-- verify at build --> The hub speaks Streamable HTTP on the tailnet, off until
+The hub speaks Streamable HTTP on the tailnet, off until
 you turn it on, with no relay. A scoped credential carries a palette (which tool
 families it may call) and a TTL; the token is shown once at issue time. Every
 receipt from a remote caller wears the `REMOTE` badge with the caller's address.
@@ -428,7 +428,7 @@ requires its own CLI:
 
 - **GitHub:** [`gh`](https://cli.github.com/) (`brew install gh`, then `gh auth login`).
 - **Jira:** [`acli`](https://acli.atlassian.com/) (`brew tap atlassian/homebrew-acli && brew install acli`, then `acli jira auth login --site <yoursite>.atlassian.net --email <you> --token`).
-- **Confluence:** the same `acli` binary (`acli confluence auth login --site <yoursite>.atlassian.net --email <you> --token`). <!-- verify at build --> V0 watches blog posts and pages by known ID; no page search until the CLI supports it.
+- **Confluence:** the same `acli` binary (`acli confluence auth login --site <yoursite>.atlassian.net --email <you> --token`). V0 watches blog posts and pages by known ID; no page search until the CLI supports it.
 
 Open **Settings, Connections** to see each tool's readiness, run
 `Recheck`, and follow the recovery command when needed. Jira and

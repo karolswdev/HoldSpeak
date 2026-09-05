@@ -415,6 +415,8 @@ export type RoomTargetData = {
 /** HS-174-04: a pipeline receipt event (tolerant: wire may not exist yet). */
 export type RoomReceiptItem = {
   id: string;
+  /** Raw method name (e.g. "list_meetings", "run_sweep"). */
+  op: string;
   title: string;
   outcome: string;
   timestamp: string;
@@ -772,6 +774,7 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
       items: Array.isArray(s.items)
         ? (s.items as Record<string, unknown>[]).map((r) => ({
             id: String(r.id ?? ""),
+            op: String(r.op ?? r.method ?? ""),
             title: String(r.title ?? ""),
             outcome: String(r.outcome ?? ""),
             timestamp: String(r.timestamp ?? r.created_at ?? ""),

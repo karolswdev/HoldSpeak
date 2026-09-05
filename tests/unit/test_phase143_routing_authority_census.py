@@ -101,7 +101,7 @@ ROUTING_RESOLVER_REFERENCES = {
     # HS-172: resolve_meeting_placement in routing_glue, mcp/tools, settings route
     "holdspeak/runtime/routing_glue.py:368:import:resolve_meeting_placement",
     "holdspeak/runtime/routing_glue.py:369:ref:resolve_meeting_placement",
-    "holdspeak/mcp/tools.py:811:import:resolve_meeting_placement",
+    "holdspeak/mcp/tools.py:836:import:resolve_meeting_placement",
     "holdspeak/web/routes/system/settings.py:44:import:resolve_meeting_placement",
     "holdspeak/web/routes/system/settings.py:45:ref:resolve_meeting_placement",
     "holdspeak/services/settings_service.py:72:import:resolve_meeting_placement",
@@ -134,7 +134,7 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/services/settings_service.py:910:inference_target_id",
     "holdspeak/services/workbench_service.py:562:resolver_profile_id",
     # HS-172: resolve_meeting_placement pointer reads
-    "holdspeak/mcp/tools.py:810:intel_profile_id",
+    "holdspeak/mcp/tools.py:835:intel_profile_id",
     "holdspeak/web/routes/system/settings.py:41:intel_profile_id",
 }
 
@@ -166,7 +166,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/services/model_profile_service.py:225:profile_id",
         "holdspeak/services/model_profile_service.py:264:profile_id",
         # HS-172: meetings host resolve display reads.
-        "holdspeak/mcp/tools.py:813:profile_id",
+        "holdspeak/mcp/tools.py:838:profile_id",
         "holdspeak/web/routes/system/settings.py:46:profile_id",
     }},
     **{site: "immutable evidence" for site in {

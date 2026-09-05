@@ -31,15 +31,27 @@
   device` with `REMOTE OFF|ON`, REMOTE ACCESS (the toggle, the address,
   `N CREDENTIALS`), the CREDENTIALS ledger, the issue well (Name with
   the mic · Palette · TTL · Issue primary · Cancel), the token shown
-  once with Copy; the receipts/Door/Rhythm faces: PENDING THE FACE
-  REPORT.
+  once with Copy; the shade's Finished rows and the Room's RECEIPTS
+  section wearing `REMOTE · host` on remote-origin receipts with human
+  labels (SWEEP · STEWARD RUN · READ <noun>) — `receiptLabel()`; the
+  Door's Confluence row (Connect · SIGN IN · the site|email identity ·
+  RECENT BLOGS on · PAGES BY ID off) in the fixed GH · Jira · Confluence
+  order; Rhythm's `Runs on` (THIS DEVICE | a recorded remote host) with
+  `WHILE THIS MAC IS AWAKE`, `LAST RUN`, `NO RUNS YET` and one `Run now`
+  on the sweep row. Every face shot beside its board at 1440 and 393.
 - **The docs (10):** README, USER_GUIDE "Reach", ARCHITECTURE sequence,
   SECURITY (the remote + Confluence boundaries), MCP_SIDECAR transports,
-  docs/REACH_RUNNER.md, POSITIONING names — the verify-at-build pass
-  PENDING.
-- **The walk (11):** live174_walk.py drafted (one guarded reversible
-  write — the probe credential — only if remote is already ON); the
-  owner's-desk run PENDING.
+  docs/REACH_RUNNER.md, POSITIONING names — verified against the built
+  product (story 10).
+- **The walk (11):** live174_walk.py on the owner's desk 2026-09-05
+  15:51 (Denver): remote OFF, so the one guarded write (the probe
+  credential) was denied by the guard as designed — **zero writes**,
+  8 shots, 0 defects, 0 errors. Facts: System module `THIS DEVICE ·
+  MESH OFF · REMOTE OFF`, Streamable HTTP OFF, Issue credential absent;
+  shade Finished 4 rows, no chip carrying a time; Rhythm `Runs on THIS
+  DEVICE`, one `Run now`, no awake caption when local; Door GH · Jira ·
+  Confluence `NOT SET UP · Connect`. Shots + walk-facts under
+  assets/story-11-shots/.
 
 ## Found in review and paid
 
@@ -51,7 +63,29 @@
 ## Gates
 
 - Counsel on the design: RATIFY-W-C, ruled. Counsel on the built phase:
-  PENDING. Suite: PENDING.
+  RATIFY-W-C — C1 (a token in the URL on /api/mcp) PAID with a test that
+  the refusal fires before the principal guards; C2 (the Door's row order
+  vs the board) PAID — fixed GH · Jira · Confluence; C3 (the LIKE receipt
+  scoping) documented; P1-1 (`NO RUNS YET` on a remote Runs-on with no
+  run) and P2-1 (`CREDENTIALS · N ACTIVE`) PAID; every design-stage
+  condition verified paid by counsel (C1–C6 and the three P2s).
+- Suite (CI shape, -n auto, the built tree): **9814 passed · 98 skipped ·
+  27 failed** = 6 inherited (ask grounding ×2, ask runner migration,
+  the two broker density fences, product copy — zero diff vs main) +
+  11 xdist-only (hs144/152/153/154/163 rigs, the two hs174 rigs before
+  the rebuilt bundle, cadence closeout, the delivery campaign pair, the
+  one-shot conductor — all green serially) + 10 fences moved by this
+  phase and PAID @48c885ed (five connection tools with Confluence; the
+  acli confluence effect site ledgered; the per-route loopback guard
+  allowlisted in the principal-separation census; the origin columns in
+  the canonical schema snapshot; the Room's `receipts` section; the
+  drafter provenance classified; two tools.py line anchors).
+- Web: vitest 273 passed across the door and cores; the inherited
+  baseline run reports 4 HEALED and 1 BRANCH-NEW
+  (`ThoughtDocumentPane.test.tsx` "does not fetch or render raw capture")
+  that is green twice alone — a timing flake under the full run, not
+  this phase's (last touched by 170's sweep); ratchet at its floor.
+- The walk: zero writes on his desk (above).
 
 ## The owner's questions (in the handover)
 

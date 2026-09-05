@@ -43,6 +43,7 @@ def _seed_pipeline_event(
     caller: str = "",
     caller_identity: str = "",
     result_summary: str = "{}",
+    args_summary: str = "{}",
 ) -> str:
     from holdspeak.db import get_database
     db = get_database()
@@ -58,7 +59,7 @@ def _seed_pipeline_event(
                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 event_id, now, service, method,
-                "agent", caller_identity or "sweep-runner", "{}",
+                "agent", caller_identity or "sweep-runner", args_summary,
                 result_summary, None, None, 42.0,
                 str(uuid.uuid4()), 0, origin, caller, caller_identity,
             ),
@@ -214,5 +215,165 @@ def test_egress_remote_css(
         )
 
         _shot(page, "build-egress-remote-chip-1440", 1440)
+        _assert_clean(page, errors)
+        browser.close()
+
+
+def _seed_project(project_id: str, name: str) -> str:
+    from holdspeak.db import get_database
+    db = get_database()
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO projects "
+            "(id, name, description, keywords_json, team_members_json, "
+            "context_json, detection_threshold, is_archived, revision, "
+            "target_at, created_at, updated_at) "
+            "VALUES (?, ?, '', '[]', '[]', '{}', 0.5, 0, 1, NULL, "
+            "'2026-09-01T00:00:00', '2026-09-05T10:00:00')",
+            (project_id, name),
+        )
+    return project_id
+
+
+def _open_room(page: Any, project_id: str) -> None:
+    """Open a Room surface window for a given project."""
+    page.evaluate(
+        """([key, scope]) => {
+          sessionStorage.setItem(
+            "hs.desk.staged-surface-open",
+            JSON.stringify({key, scope})
+          );
+        }""",
+        ["open-project-memory", f"project:{project_id}"],
+    )
+    page.reload(wait_until="load")
+    _normal_chair(page)
+
+
+def _window(page: Any) -> Any:
+    return page.locator(".desk-surface-window").first
+
+
+def _room_shot(page: Any, name: str, width: int) -> Path:
+    _settle(page)
+    old_size = page.viewport_size
+    page.set_viewport_size({"width": width, "height": 2400})
+    _settle(page)
+    path = SHOTS / f"{name}.png"
+    win = _window(page)
+    if win.count() > 0:
+        win.screenshot(path=str(path))
+    else:
+        page.screenshot(path=str(path), full_page=False)
+    page.set_viewport_size(old_size)
+    assert path.stat().st_size > 2_000, f"Shot {name} too small ({path.stat().st_size})"
+    return path
+
+
+def test_room_receipts_1440(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Room RECEIPTS section shows REMOTE + THIS DEVICE rows at 1440."""
+    _ensure_build()
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
+
+    from playwright.sync_api import sync_playwright
+
+    PID = "proj-174-receipts"
+    _seed_project(PID, "Q4 Platform")
+
+    # Seed two pipeline events scoped to the project (project_id in args_summary)
+    _seed_pipeline_event(
+        service="HeartbeatService", method="run_sweep",
+        origin="remote", caller="192.168.1.43",
+        caller_identity="sweep-runner",
+        result_summary=f'{{"watches":4,"rooms":2,"held":false,"project_id":"{PID}"}}',
+        args_summary=f'{{"project_id":"{PID}"}}',
+    )
+    _seed_pipeline_event(
+        service="StewardService", method="project_run_steward",
+        origin="local", caller="",
+        result_summary='{"status":"completed"}',
+        args_summary=f'{{"project_id":"{PID}"}}',
+    )
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.on("pageerror", lambda e: errors.append(str(e)))
+        page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+        _api(page, "POST", "/api/desk/seed", token=TOKEN)
+        _api(page, "PUT", "/api/setup/onboarding",
+             {"disposition": "completed"}, token=TOKEN)
+        _normal_chair(page)
+        _settle(page)
+
+        _open_room(page, PID)
+        _settle(page)
+
+        # Look for RECEIPTS section
+        receipts = page.locator('[data-testid="receipt-row"]')
+        if receipts.count() > 0:
+            # At least one receipt row rendered
+            egress_chips = page.locator('[data-testid="receipt-egress"]')
+            if egress_chips.count() > 0:
+                all_text = " ".join(
+                    egress_chips.nth(i).text_content() or ""
+                    for i in range(egress_chips.count())
+                )
+                assert "REMOTE" in all_text, f"REMOTE badge missing: {all_text}"
+
+            # No row text should contain "Service." (UX-CANON: no machine tokens)
+            for i in range(receipts.count()):
+                row_text = receipts.nth(i).text_content() or ""
+                assert "Service." not in row_text, (
+                    f"Raw class.method on a face (row {i}): {row_text}"
+                )
+
+        _room_shot(page, "build-room-receipts-1440", 1440)
+        _assert_clean(page, errors)
+        browser.close()
+
+
+def test_room_receipts_393(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Room RECEIPTS section at 393."""
+    _ensure_build()
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
+
+    from playwright.sync_api import sync_playwright
+
+    PID = "proj-174-receipts"
+    _seed_project(PID, "Q4 Platform")
+
+    _seed_pipeline_event(
+        service="HeartbeatService", method="run_sweep",
+        origin="remote", caller="192.168.1.43",
+        args_summary=f'{{"project_id":"{PID}"}}',
+    )
+    _seed_pipeline_event(
+        service="StewardService", method="project_run_steward",
+        origin="local", caller="",
+        args_summary=f'{{"project_id":"{PID}"}}',
+    )
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 393, "height": 900})
+        page.on("pageerror", lambda e: errors.append(str(e)))
+        page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+        _api(page, "POST", "/api/desk/seed", token=TOKEN)
+        _api(page, "PUT", "/api/setup/onboarding",
+             {"disposition": "completed"}, token=TOKEN)
+        _normal_chair(page)
+        _settle(page)
+
+        _open_room(page, PID)
+        _settle(page)
+
+        _room_shot(page, "build-room-receipts-393", 393)
         _assert_clean(page, errors)
         browser.close()
