@@ -4067,6 +4067,26 @@
       ]
     },
     {
+      "path": "/api/projects/door",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_door",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/door/count",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_door",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/projects/{project_id}",
       "methods": [
         "DELETE"
@@ -4266,6 +4286,16 @@
       "path": "/api/projects/{project_id}/room",
       "methods": [
         "GET"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/room/read",
+      "methods": [
+        "POST"
       ],
       "module": "web.routes.projects",
       "consumers": [
@@ -5509,7 +5539,9 @@
         "POST"
       ],
       "module": "web.routes.watches",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/watches/{watch_id}/resume",
@@ -5517,7 +5549,9 @@
         "POST"
       ],
       "module": "web.routes.watches",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/watches/{watch_id}/retire",
@@ -5525,7 +5559,9 @@
         "POST"
       ],
       "module": "web.routes.watches",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/watches/{watch_id}/rules",

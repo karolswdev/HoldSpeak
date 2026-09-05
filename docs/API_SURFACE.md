@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 628 (plus static mounts). iOS-consumed: 89. Web-consumed: 473.
+Routes: 631 (plus static mounts). iOS-consumed: 89. Web-consumed: 479.
 
 ## device_audio_ws
 
@@ -772,6 +772,13 @@ Routes: 628 (plus static mounts). iOS-consumed: 89. Web-consumed: 473.
 | PUT | `/api/workflows/{workflow_id}` | web |
 | POST | `/api/workflows/{workflow_id}/run` | ios, web |
 
+## web.routes.project_door
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/projects/door` | web |
+| POST | `/api/projects/door/count` | web |
+
 ## web.routes.project_reviews
 
 | Method | Path | Consumers |
@@ -843,6 +850,7 @@ Routes: 628 (plus static mounts). iOS-consumed: 89. Web-consumed: 473.
 | PUT | `/api/projects/{project_id}/resources/{resource_ref:path}` | server only |
 | POST | `/api/projects/{project_id}/restore` | server only |
 | GET | `/api/projects/{project_id}/room` | web |
+| POST | `/api/projects/{project_id}/room/read` | web |
 | GET | `/api/projects/{project_id}/since-last-meeting` | web |
 | GET | `/api/projects/{project_id}/summary` | server only |
 
@@ -1094,8 +1102,8 @@ Routes: 628 (plus static mounts). iOS-consumed: 89. Web-consumed: 473.
 | GET | `/api/watches/{watch_id}` | web |
 | PATCH | `/api/watches/{watch_id}` | web |
 | POST | `/api/watches/{watch_id}/baseline` | server only |
-| POST | `/api/watches/{watch_id}/pause` | server only |
-| POST | `/api/watches/{watch_id}/resume` | server only |
-| POST | `/api/watches/{watch_id}/retire` | server only |
+| POST | `/api/watches/{watch_id}/pause` | web |
+| POST | `/api/watches/{watch_id}/resume` | web |
+| POST | `/api/watches/{watch_id}/retire` | web |
 | PUT | `/api/watches/{watch_id}/rules` | server only |
 | POST | `/api/watches/{watch_id}/test` | server only |

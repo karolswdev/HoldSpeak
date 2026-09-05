@@ -111,6 +111,7 @@ WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     "web/src/pages/cores/core-types.ts": ("display-transport", "143-11"),
     "web/src/pages/cores/ModelLibraryCore.tsx": ("display-transport", "143-12"),
     "web/src/pages/cores/TopologyMapView.tsx": ("display-transport", "156-04"),
+    "web/src/features/project-room/ProjectRoomCore.tsx": ("display-transport", "169-07"),
     "web/src/pages/cores/modelLibrary.ts": ("display-transport", "143-12"),
 }
 
