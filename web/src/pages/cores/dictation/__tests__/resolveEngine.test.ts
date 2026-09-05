@@ -5,7 +5,7 @@
 //   (b) base_url host match via targets when profileId fails
 //   (c) last-resort classification from profile base_url host
 import { describe, expect, it } from "vitest";
-import { resolveEngine, isLanHost, type TargetProfile } from "../SpeakFace";
+import { resolveEngine, findEngine, isLanHost, type TargetProfile } from "../SpeakFace";
 import type { Engine } from "../../../../features/concierge/api";
 import type { AssignmentEditorProjection } from "../../assignmentExperience";
 
@@ -269,8 +269,72 @@ describe("resolveEngine (HS-170-04)", () => {
   it("returns null engineState when no detect engine matched (for pending/failed)", () => {
     const assignment = fakeAssignment("p7", "Migrated intel endpoint", "cloud");
     const result = resolveEngine(assignment, []);
-    // No detect data — engineState is null; the EngineRow uses detectStatus
-    // to show CHECKING (pending) or UNKNOWN (failed), never READY
     expect(result.engineState).toBeNull();
+  });
+
+  // The owner's real data: the 143 migration double-prefixed the profile_id
+  // as "legacy-legacy-intel" while the profile row is "legacy-intel" and
+  // detect returns {id: "cloud:legacy-intel", profileId: "legacy-intel"}.
+  it("(d) strips legacy- prefix to match double-prefixed profile_id", () => {
+    const assignment = fakeAssignment("legacy-legacy-intel", LEGACY_LABEL, "cloud");
+    const engines = [
+      fakeEngine({
+        id: "cloud:legacy-intel",
+        profileId: "legacy-intel",
+        kind: "cloud",
+        name: "GPT 5 mini",
+        host: "api.openai.com",
+        state: "NOT_SET",
+        keySet: false,
+        legacyLabel: LEGACY_LABEL,
+      }),
+    ];
+    const result = resolveEngine(assignment, engines);
+    expect(result.name).toBe("GPT 5 mini");
+    expect(result.egressLabel).toBe("API.OPENAI.COM");
+    expect(result.engineState).toBe("NOT_SET");
+    expect(result.keySet).toBe(false);
+  });
+
+  it("(e) matches by legacyLabel when profileId stripping fails", () => {
+    // A profile_id that doesn't match even after stripping
+    const assignment = fakeAssignment("unrelated-id", LEGACY_LABEL, "cloud");
+    const engines = [
+      fakeEngine({
+        id: "cloud:legacy-intel",
+        profileId: "legacy-intel",
+        kind: "cloud",
+        name: "GPT 5 mini",
+        host: "api.openai.com",
+        state: "NOT_SET",
+        keySet: false,
+        legacyLabel: LEGACY_LABEL,
+      }),
+    ];
+    const result = resolveEngine(assignment, engines);
+    expect(result.name).toBe("GPT 5 mini");
+    expect(result.egressLabel).toBe("API.OPENAI.COM");
+    expect(result.engineState).toBe("NOT_SET");
+  });
+});
+
+describe("findEngine", () => {
+  it("(d) strips legacy- repeatedly to match double-prefixed ids", () => {
+    const engines = [
+      fakeEngine({ id: "cloud:legacy-intel", profileId: "legacy-intel", name: "GPT 5 mini" }),
+    ];
+    // Double-prefixed entry profile_id
+    const found = findEngine(engines, "legacy-legacy-intel");
+    expect(found).toBeDefined();
+    expect(found!.name).toBe("GPT 5 mini");
+  });
+
+  it("(e) matches by legacyLabel as last resort", () => {
+    const engines = [
+      fakeEngine({ id: "cloud:xyz", profileId: "xyz", legacyLabel: "Migrated intel endpoint" }),
+    ];
+    const found = findEngine(engines, "no-match-id", "Migrated intel endpoint");
+    expect(found).toBeDefined();
+    expect(found!.profileId).toBe("xyz");
   });
 });

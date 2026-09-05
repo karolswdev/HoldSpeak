@@ -126,18 +126,49 @@ export type ResolvedEngine = {
   keySet: boolean | null;
 };
 
-/** Match a profile_id against detect engines.
- *  Detect ids are prefixed: "cloud:profileId", "lan:profileId", "local:profileId".
- *  The assignment entry's profile_id is the raw id (no prefix). */
-function findEngine(engines: Engine[], profileId: string): Engine | undefined {
+/** Try exact profileId / id matches against one candidate id. */
+function exactMatch(engines: Engine[], pid: string): Engine | undefined {
   return engines.find(
     (e) =>
-      e.profileId === profileId ||
-      e.id === profileId ||
-      e.id === `cloud:${profileId}` ||
-      e.id === `lan:${profileId}` ||
-      e.id === `local:${profileId}`,
+      e.profileId === pid ||
+      e.id === pid ||
+      e.id === `cloud:${pid}` ||
+      e.id === `lan:${pid}` ||
+      e.id === `local:${pid}`,
   );
+}
+
+/** Match a profile_id against detect engines.
+ *
+ *  (a) exact profileId / id match
+ *  (d) strip leading "legacy-" repeatedly and retry exact matches
+ *      (the 143 migration double-prefixed some ids: "legacy-legacy-intel")
+ *  (e) match by legacyLabel === entry label (detect carries legacyLabel
+ *      for every profile-born engine) */
+export function findEngine(
+  engines: Engine[],
+  profileId: string,
+  entryLabel?: string,
+): Engine | undefined {
+  // (a) exact
+  const exact = exactMatch(engines, profileId);
+  if (exact) return exact;
+
+  // (d) strip leading "legacy-" repeatedly
+  let stripped = profileId;
+  while (stripped.startsWith("legacy-")) {
+    stripped = stripped.slice("legacy-".length);
+    const found = exactMatch(engines, stripped);
+    if (found) return found;
+  }
+
+  // (e) match by legacyLabel
+  if (entryLabel) {
+    const byLabel = engines.find((e) => e.legacyLabel === entryLabel);
+    if (byLabel) return byLabel;
+  }
+
+  return undefined;
 }
 
 /** Build the result from a matched detect engine. */
@@ -176,7 +207,7 @@ export function resolveEngine(
   const label = entries[0].label;
 
   // (a) Match by profileId on the detect engine
-  const byProfile = findEngine(engines, profileId);
+  const byProfile = findEngine(engines, profileId, label);
   if (byProfile) return fromDetectEngine(byProfile, label);
 
   // Find the profile's base_url from the targets list
