@@ -308,18 +308,17 @@ def test_stopwatch_and_retention(
                 list_items.first.click()
                 page.get_by_test_id("update-editor").wait_for(timeout=10000)
 
-                # The unverified banner (single notice, not per-claim)
-                banner = page.get_by_test_id("update-unverified-banner")
-                if banner.count() > 0:
+                # HS-173-02: per-claim UNVERIFIED badges (inline beside the sentence)
+                unverified_badges = page.get_by_test_id("update-claim-unverified")
+                if unverified_badges.count() > 0:
                     page.screenshot(
                         path=str(SHOTS / f"unverified-span-{width}.png"),
                         full_page=False,
                     )
                     assert (SHOTS / f"unverified-span-{width}.png").stat().st_size > 20_000
-                    assert banner.is_visible()
-                    banner_text = banner.inner_text()
-                    assert "unverified" in banner_text.lower() or "could not be verified" in banner_text.lower(), (
-                        f"Banner should mention unverified, got: {banner_text!r}"
+                    badge_text = unverified_badges.first.inner_text()
+                    assert "unverified" in badge_text.lower(), (
+                        f"Badge should contain UNVERIFIED, got: {badge_text!r}"
                     )
 
                 # HS-167-05: Back button is in SurfaceVerbs inside the editor
@@ -364,21 +363,21 @@ def test_stopwatch_and_retention(
             page.screenshot(path=str(SHOTS / f"editor-claims-{width}.png"), full_page=False)
             assert (SHOTS / f"editor-claims-{width}.png").stat().st_size > 20_000
 
-            # -- Verify source rows render with human-label chips --
-            source_rows = page.get_by_test_id("update-source-row")
-            source_rows.first.wait_for(timeout=5000)
-            assert source_rows.count() >= 1, "Expected >=1 source rows"
+            # -- HS-173-02: inline claims render with ref identity chips --
+            claim_rows = page.get_by_test_id("update-inline-claim")
+            claim_rows.first.wait_for(timeout=5000)
+            assert claim_rows.count() >= 1, "Expected >=1 inline claim rows"
 
             ref_chips = page.get_by_test_id("update-claim-ref")
-            assert ref_chips.count() >= 1, "Expected >=1 ref chips in source rows"
+            assert ref_chips.count() >= 1, "Expected >=1 ref chips in inline claims"
             first_chip = ref_chips.first.inner_text()
-            assert first_chip and len(first_chip) > 0, "Source chip should be non-empty"
-            # Chips now carry derived claim titles, not generic "Open item"
+            assert first_chip and len(first_chip) > 0, "Ref chip should be non-empty"
+            # Chips carry ref identity labels (PR #N, KAN-N, etc.)
             assert first_chip.lower() != "open item", (
-                f"Chip should show derived claim title, not generic label: {first_chip!r}"
+                f"Chip should show ref identity, not generic label: {first_chip!r}"
             )
             assert not _RAW_ID_RE.match(first_chip), (
-                f"Raw ID leaked into source chip: {first_chip!r}"
+                f"Raw ID leaked into ref chip: {first_chip!r}"
             )
 
             # -- No-raw-ids law --
@@ -517,11 +516,11 @@ def test_degraded_model_fallback(
             )
             assert "model_unavailable" not in fb_text
 
-            # -- Source rows still resolve --
-            source_rows = page.get_by_test_id("update-source-row")
-            source_rows.first.wait_for(timeout=5000)
+            # -- HS-173-02: inline claim rows still resolve in degraded mode --
+            claim_rows = page.get_by_test_id("update-inline-claim")
+            claim_rows.first.wait_for(timeout=5000)
             ref_chips = page.get_by_test_id("update-claim-ref")
-            assert ref_chips.count() >= 1, "Source row chips should render in degraded mode"
+            assert ref_chips.count() >= 1, "Ref chips should render in degraded mode"
 
             _assert_no_raw_ids(page)
 
