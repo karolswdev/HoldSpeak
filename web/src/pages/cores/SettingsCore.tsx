@@ -35,12 +35,11 @@ import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { openSurface } from "../../desk/shell";
 import { HotkeyCapture } from "./settingsBespoke";
 import { toggleSfx } from "../../lib/sfx";
-// PARKED (HS-170-03): ModelsModule retired — the Concierge replaces it.
+// PARKED (HS-170-03): ModelsModule retired — the Concierge is its own window now.
 // import { ModelsModule } from "./settingsModels";
 import { TtsSettingsBlock } from "./settingsTts";
 // PARKED (HS-170-03): CapabilityAssignmentsCore — reached via Concierge Adjust.
 // import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
-import { ConciergeCore } from "../../features/concierge/ConciergeCore";
 import { ContextualAssignment } from "./ContextualAssignment";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
@@ -1055,12 +1054,15 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </FoldGadget>
           </>
         );
-      /* ── Models: the Concierge (HS-170-03) ── */
+      /* ── Models: PARKED (HS-170-03) — the Concierge is its own window now.
+         Opening models/assignments redirects to the Concierge surface. ── */
       case "models":
-        return <ConciergeCore scope={scope} />;
-      /* ── Assignments: PARKED (HS-170-03) — reached via Concierge Adjust ── */
-      case "assignments":
-        return <ConciergeCore scope={scope} />;
+      case "assignments": {
+        import("../../desk/shell").then(({ openSurface }) => {
+          openSurface("open-concierge");
+        });
+        return null;
+      }
       /* ── Connections: tools + credentials + RAW ── */
       case "integrations": {
         const RAW_SECRETS = new Set([
