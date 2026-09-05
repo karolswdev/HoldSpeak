@@ -458,7 +458,8 @@ export function FirstWords({
             className="btn btn--secondary"
             onClick={() => {
               void tracker.current?.event("setup_selected");
-              openSurfaceOr("configure-setup", "/setup");
+              // HS-169-03 N-1: open the one-screen Door, not the old setup wizard.
+              openSurfaceOr("project-setup", "/");
             }}
           >
             Setup

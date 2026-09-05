@@ -107,14 +107,14 @@ function roomResponse(overrides: Record<string, unknown> = {}) {
       state: "ok",
       readAt: "2026-09-03T09:21:00",
       groups: [
-        { source: "GitHub", summary: "GitHub · 2 opened · 1 merged", entries: [
+        { source: "GitHub", summary: "2 opened · 1 merged", entries: [
           { phrase: "#618 Footer never truncates a host · opened by mira", at: "2026-09-04T08:00:00", url: null },
           { phrase: "#611 Per-provider proposal cap · merged", at: "2026-09-03T16:00:00", url: null },
         ]},
-        { source: "Jira", summary: "Jira · 1 moved", entries: [
+        { source: "Jira", summary: "1 moved", entries: [
           { phrase: "KAN-2 moved to In Progress", at: "2026-09-03T14:00:00", url: null },
         ]},
-        { source: "Room", summary: "Room", entries: [
+        { source: "Room", summary: "", entries: [
           { phrase: "Update drafted", at: "2026-09-02T10:00:00", url: null },
         ]},
       ],

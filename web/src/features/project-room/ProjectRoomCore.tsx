@@ -29,6 +29,7 @@ import {
 } from "../../pages/cores/assignmentExperience";
 import { runAsk, type AskRunResult } from "../../desk/ask";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
+import { useDesk } from "../../desk/store";
 import type { CoreProps } from "../../pages/cores/core-types";
 import type {
   RoomSnapshot,
@@ -438,12 +439,18 @@ function SourcesSection({
                   expands={false}
                   cells={<StateChip state="warning" label="CAN'T CHECK" />}
                   trailing={
-                    <ConfirmVerb
-                      label="Remove"
-                      confirmLabel="Remove?"
-                      busy={busyWatch === src.watchIds[0]}
-                      onConfirm={() => void handleRetire(src.watchIds)}
-                    />
+                    <>
+                      {/* S-3 / HS-169-07 park candidate: the design names "Fix"
+                          (opens Adjust) beside "Remove".  Adjust is withheld in
+                          this phase; "Fix" will arrive with the extracted
+                          AdjustWell component (PUT /api/watches/{id}/rules). */}
+                      <ConfirmVerb
+                        label="Remove"
+                        confirmLabel="Remove?"
+                        busy={busyWatch === src.watchIds[0]}
+                        onConfirm={() => void handleRetire(src.watchIds)}
+                      />
+                    </>
                   }
                 >
                   {src.plainReason ? (
@@ -546,7 +553,10 @@ function SinceYouLookedSection({ room }: { room: RoomSnapshot }) {
     >
       {groups.map((group, gi) => (
         <div key={gi} className="room-since-group" data-testid="since-read-group">
-          <p className="room-since-group-head surface-primary">{group.summary}</p>
+          {/* S-2: the design's line is "GitHub · 2 opened · 1 merged" */}
+          <p className="room-since-group-head surface-primary">
+            {group.source}{group.summary ? ` · ${group.summary}` : ""}
+          </p>
           <ul className="room-since-entries">
             {group.entries.map((entry, ei) => (
               <li key={ei} className="room-since-entry">
@@ -618,9 +628,17 @@ function DecisionsCommitmentsSection({ room }: { room: RoomSnapshot }) {
 
 /* ── Ask well ── */
 
+/** Resolve the model host label for the ask well's egress chip.
+ *  Article III: the chip names the HOST at the point of decision.
+ *  1. Reads the assignment to find the profile_id.
+ *  2. Looks up the InferenceTarget with that profile_id in the desk store
+ *     to find the endpoint URL (the host the Settings face shows).
+ *  3. Falls back to the boundary label (LOCAL/CLOUD) only when no host exists.
+ *  4. NOT SET when unassigned. */
 function useModelLabel(projectId: string): { host: string; scope: "local" | "cloud" | undefined } {
   const [host, setHost] = useState("NOT SET");
   const [scope, setScope] = useState<"local" | "cloud" | undefined>(undefined);
+  const targets = useDesk((s) => s.inferenceTargets);
   useEffect(() => {
     if (!projectId) return;
     let cancelled = false;
@@ -632,16 +650,43 @@ function useModelLabel(projectId: string): { host: string; scope: "local" | "clo
       const eff = editor.effective;
       if (eff.status === "assigned" && eff.assignment?.entries?.length) {
         const entry = eff.assignment.entries[0];
-        setHost(entry.boundary || entry.label || "Assigned");
-        setScope(entry.boundary?.includes("local") || entry.boundary?.includes("192.168") ? "local" : "cloud");
+        // Look up the InferenceTarget by profile_id for the real host.
+        const target = targets.find((t) => t.profile_id === entry.profile_id);
+        // Extract hostname from the endpoint URL, or use node, or fall back to boundary.
+        let resolvedHost = "";
+        if (target?.endpoint) {
+          try {
+            resolvedHost = new URL(target.endpoint).host;
+          } catch {
+            resolvedHost = target.endpoint;
+          }
+        } else if (target?.node) {
+          resolvedHost = target.node;
+        }
+        // Determine scope from the target's boundary or kind.
+        const boundary = target?.boundary || entry.boundary || "";
+        const isLocal = boundary === "same_device" || boundary === "private_network";
+        setHost(resolvedHost || boundaryToLabel(boundary) || entry.label || "Assigned");
+        setScope(isLocal ? "local" : "cloud");
       } else {
         setHost("NOT SET");
         setScope(undefined);
       }
     }).catch(() => { /* non-fatal */ });
     return () => { cancelled = true; };
-  }, [projectId]);
+  }, [projectId, targets]);
   return { host, scope };
+}
+
+function boundaryToLabel(boundary: string): string {
+  switch (boundary) {
+    case "same_device": return "LOCAL";
+    case "private_network": return "LAN";
+    case "paired_device": return "PAIRED";
+    case "private_mesh": return "MESH";
+    case "external_service": return "CLOUD";
+    default: return "";
+  }
 }
 
 function RoomAskWell({
@@ -818,7 +863,7 @@ function HistoryWing({
   return (
     <div className="room-history" data-testid="room-history">
       <SurfaceStream
-        count={todayCount > 0 ? `${todayCount} today` : "0 today"}
+        count={todayCount > 0 ? `${todayCount} today` : "Nothing today"}
         controls={
           <div className="room-history-controls">
             {/* Condition 1: library Button, not raw <button>; flat filter via data-filter + CSS */}
@@ -971,10 +1016,17 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   const readReceipt = ctrl.readAt ? `READ ${formatTimeShort(ctrl.readAt)}` : "";
   const nextCheck = ctrl.room?.sources.state === "ok" ? ctrl.room.sources.nextCheckAt : null;
 
-  // Condition 2: footer receipt switches on wing — ROOM: READ+NEXT CHECK; HISTORY: N TODAY · M THIS WEEK
+  // S-1: footer receipt omits zero parts — "Nothing today" / "Nothing this week"
+  const historyReceipt = (() => {
+    const { todayCount: t, weekCount: w } = historyCounts;
+    if (t === 0 && w === 0) return "NOTHING THIS WEEK";
+    if (t === 0) return `NOTHING TODAY · ${w} THIS WEEK`;
+    if (w === 0) return `${t} TODAY · NOTHING THIS WEEK`;
+    return `${t} TODAY · ${w} THIS WEEK`;
+  })();
   const footerReceipt = ctrl.view === "history" ? (
     <span className="surface-footer-receipt-line" role="status" data-testid="room-footer-receipt">
-      {historyCounts.todayCount} TODAY {" · "} {historyCounts.weekCount} THIS WEEK
+      {historyReceipt}
     </span>
   ) : (
     <span className="surface-footer-receipt-line" role="status" data-testid="room-footer-receipt">
