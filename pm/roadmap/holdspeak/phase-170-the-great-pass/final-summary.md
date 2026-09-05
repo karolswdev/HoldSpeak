@@ -71,8 +71,12 @@
 - Parking the Chair board left the 144 Door's action items (`/api/door`:
   overdue · now · waiting · unassigned) with no face — found by the old
   144 rig failing, not by the new rigs passing. They join the arrival's
-  NEEDS YOU by addendum; a lost-doors audit of every parked component
-  follows.
+  NEEDS YOU by addendum. The lost-doors audit of every parked component
+  then found four more (Schedule recording; the armed countdown's
+  Cancel; the Door items' inline lawful verbs; Connect calendar) — all
+  re-homed on the arrival by addendum; three demotions named (inline
+  compose → Speak; lane pagination → the Intelligence brief; the setup
+  wizard's JQL editor → post-creation Watch configuration).
 - Fourteen glass rigs never rebuilt the web bundle (the 163 law reached
   19 of 33) — `tests/e2e/conftest.py` makes build-first universal.
 - The Room rig's history seeds landed on yesterday between 00:00 and
