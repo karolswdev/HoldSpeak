@@ -100,7 +100,7 @@ between a person's name and a Watch entity's assignee/reviewer.
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-172-01 | The design (the Loop's faces on the canvas before build) | in-progress | [story-01-the-design](./story-01-the-design.md) | -- |
+| HS-172-01 | The design (the Loop's faces on the canvas before build) | done | [story-01-the-design](./story-01-the-design.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-172-02 | The auto-intel trigger (intelligence by default after every linked meeting) | in-progress | [story-02-the-auto-intel-trigger](./story-02-the-auto-intel-trigger.md) | -- |
 | HS-172-03 | The proposal bridge (extracted items as PROPOSALS in NEEDS YOU; Confirm writes through the kernel) | in-progress | [story-03-the-proposal-bridge](./story-03-the-proposal-bridge.md) | -- |
 | HS-172-04 | The People resolver (display name / alias to Watch assignee / reviewer; encrypted boundary) | in-progress | [story-04-the-people-resolver](./story-04-the-people-resolver.md) | -- |

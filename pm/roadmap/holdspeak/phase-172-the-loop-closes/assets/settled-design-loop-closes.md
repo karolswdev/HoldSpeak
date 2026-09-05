@@ -785,3 +785,11 @@ Counsel's three questions for the owner are carried to the handover
 (prefix vocabulary; the People card's summary-then-Now shape; whether
 assignments belong on the card). The faces build to these rulings; his
 word gates the merge.
+
+**Story 07 boards (RoomPeople, RoomPeoplePhone, ShadePeople) — rulings.**
+The display name is shown as stored, in the Room and in the shade;
+no first name is derived from it (a derivation is an inference, like a
+pronoun). The shade's PEOPLE lane is scoped by caption (`PEOPLE · Q4
+PLATFORM`) and its tokens are terse (`1 OVERDUE`); the Room's are full
+(`1 ASSIGNMENT OVERDUE`). A person lists only with at least one
+non-zero token; the section is absent at zero.
