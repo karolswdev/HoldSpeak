@@ -371,8 +371,6 @@ flowchart TD
 
 ### The loop closes
 
-<!-- verify at build -->
-
 After a meeting ends and its transcript is saved, the loop carries extracted
 intelligence through to confirmed decisions and commitments. The trigger,
 extraction, and proposal path are separate steps; nothing commits without
@@ -407,7 +405,7 @@ sequenceDiagram
   UI->>KO: Confirm (one proposal)
   KO-->>UI: decision_record + commitment (receipted)
   UI->>FT: Dismiss (one proposal)
-  FT-->>UI: proposal marked dropped (receipted)
+  FT-->>UI: proposal marked dismissed (receipted)
 ```
 
 The People resolver enriches the 1:1 brief with Watch entity data. It matches

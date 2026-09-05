@@ -501,7 +501,6 @@ After a meeting, its row in the Meetings stream shows one of these states:
 |---|---|---|
 | **SAVED** | Intelligence ran and results are stored. | **Open** |
 | **OFF** | Has a transcript but intelligence never ran. | **Run intelligence** |
-<!-- verify at build -->
 | **RAN** | Auto-run completed; duration and model host shown (`RAN, 41 S, host`). | **Open** |
 | **RUNNING** | Intelligence is running now. | |
 | **NEEDS YOU** | Open items need your attention (count shown). | **Open** |
@@ -514,8 +513,6 @@ through the configured plugins. The detail view shows the outcomes, the
 transcript, and aftercare when a channel is configured.
 
 ## The loop closes
-
-<!-- verify at build -->
 
 The loop is what happens after a meeting ends: intelligence extracts decisions
 and action items, and you decide what to keep. Nothing fires by itself. Every
@@ -543,12 +540,12 @@ After intelligence completes, extracted decisions and action items appear as
 proposals in the Room's **NEEDS YOU** section and on the arrival. Each proposal
 row shows:
 
-- The extracted text (for example `Confirm: adopt PostgreSQL 17 for the data layer`).
+- A prefix naming the kind: `Decide:` for a decision, `Confirm:` for an action item (for example `Decide: adopt PostgreSQL 17 for the data layer`).
 - A provenance token naming the meeting and the segment timestamp.
 - The speaker label, when known.
 - The model host chip at the point of extraction.
 
-Three verbs on each proposal:
+Three verbs on a Room proposal row:
 
 | Verb | What it does |
 |---|---|
@@ -556,7 +553,10 @@ Three verbs on each proposal:
 | **Edit** | Unfolds an inline editor: the extracted text, the owner, and the due date are editable. **Save & confirm** commits the edited version. The original extraction stays as provenance. |
 | **Dismiss** | Declines the proposal with a receipt. No record is created. |
 
-When all proposals are confirmed or dropped, the **NEEDS YOU** section shows
+On the arrival, each proposal row carries **Confirm** and **Open** (Open lands
+in the Room scrolled to that proposal).
+
+When all proposals are confirmed or dismissed, the **NEEDS YOU** section shows
 only Watch items (or is absent when nothing needs you).
 
 ### The meeting detail after a run
@@ -565,7 +565,7 @@ The meeting row in the stream gains a state token after an auto-run:
 `RAN, 41 S, 192.168.1.43, LAN` (a success chip, the wall-clock duration, and
 the model's host). A failed run reads `FAILED` with the reason named. The
 detail view's **NEEDS YOU** section lists the proposals scoped to that meeting,
-with the same **Confirm** / **Edit** / **Dismiss** verbs.
+with **Confirm** and **Dismiss**.
 
 ### The 1:1 card
 

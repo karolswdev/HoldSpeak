@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-208 tools across 36 families. The default non-owner discovery lists 34
+208 tools across 37 families. The default non-owner discovery lists 34
 resources; the owner discovery lists 37 because access filtering admits 16
 static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
@@ -139,7 +139,6 @@ accepts an optional `evaluation_cadence_minutes` field (integer, 1..10080)
 that sets the per-watch evaluation interval; the same field is accepted by
 the HTTP `PUT /api/projects/{id}/steward/policy` route.
 
-<!-- verify at build -->
 Three suggested-source tools: `project.suggested_sources` returns the pending
 source suggestions for a Room (repositories and issue keys mentioned in meeting
 transcripts that do not already have a Watch source). Each suggestion carries
@@ -344,27 +343,25 @@ id.
 project, time, and pagination filters. Valid kinds are `decision`, `artifact`,
 `note`, and `thread`.
 
-<!-- verify at build -->
-
 ### meeting.proposals
 
 `meeting.proposals` returns the pending proposals for a meeting (decisions and
 action items extracted by meeting intelligence). Each proposal carries the
 extracted text, provenance (meeting title, segment timestamp, speaker label),
-and the model host at extraction time. Proposals with status `confirmed` or
-`dropped` are excluded.
+and the model host at extraction time. Proposals with state `confirmed` or
+`dismissed` are excluded.
 
 ### proposal.confirm and proposal.dismiss
 
 `proposal.confirm` writes a decision record and commitment through the kernel
-for one pending proposal. The proposal transitions from `pending` to
+for one `proposed` proposal. The proposal transitions from `proposed` to
 `confirmed`. An optional `text`, `owner`, and `due` override the extracted
 values (the original extraction stays as provenance).
 
-`proposal.dismiss` marks one pending proposal as `dropped`. No decision record
-or commitment is created. A `proposal.dropped` receipt is written.
+`proposal.dismiss` marks one `proposed` proposal as `dismissed`. No decision
+record or commitment is created. A `proposal.dismissed` receipt is written.
 
-Both tools refuse proposals that are not `pending`.
+Both tools refuse proposals that are not `proposed`.
 
 ### people (16 tools)
 
@@ -382,7 +379,6 @@ done/dismiss/reopen for shared commitments. `people.calendar.link` and
 relationship. `people.owner_alias.link` and `people.owner_alias.unlink`
 bind and unbind the owner's own alias within the People boundary.
 
-<!-- verify at build -->
 `people.resolve` matches an identity string (a GitHub login, a Jira display
 name, or a plain name) against owner aliases and display names inside the
 encrypted People store. The match runs in memory at read time; no alias
@@ -419,7 +415,7 @@ marks a job done. Both refuse running jobs.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 208 tools across 36 families.
+**Registry totals:** 208 tools across 37 families.
 
 #### ask (4)
 
@@ -529,12 +525,13 @@ marks a job done. Both refuse running jobs.
 - `kb.list_members`
 - `kb.remove_member`
 
-#### meeting (7)
+#### meeting (8)
 
 - `meeting.delete`
 - `meeting.export`
 - `meeting.get`
 - `meeting.list`
+- `meeting.proposals`
 - `meeting.run_intelligence`
 - `meeting.start_capture`
 - `meeting.stop_capture`
@@ -558,7 +555,7 @@ marks a job done. Both refuse running jobs.
 - `monday_brief.generate`
 - `monday_brief.get`
 
-#### people (16)
+#### people (17)
 
 - `people.agenda.add`
 - `people.calendar.link`
@@ -576,6 +573,7 @@ marks a job done. Both refuse running jobs.
 - `people.relationship.list`
 - `people.request.accept`
 - `people.request.create`
+- `people.resolve`
 
 #### pipeline (1)
 
@@ -588,13 +586,15 @@ marks a job done. Both refuse running jobs.
 - `plugin_job.retry`
 - `plugin_job.summary`
 
-#### project (35)
+#### project (38)
 
 - `project.accept_review`
+- `project.add_suggested_source`
 - `project.archive`
 - `project.configure_steward`
 - `project.create`
 - `project.decide_proposal`
+- `project.dismiss_suggested_source`
 - `project.draft_update`
 - `project.get`
 - `project.get_delta`
@@ -615,6 +615,7 @@ marks a job done. Both refuse running jobs.
 - `project.setup.suggest`
 - `project.steward.trigger`
 - `project.stop_steward`
+- `project.suggested_sources`
 - `project.unlink`
 - `project.update`
 - `project.update_draft`
@@ -625,6 +626,11 @@ marks a job done. Both refuse running jobs.
 - `project.watch.retire`
 - `project.watch.set_rules`
 - `project.watch.test`
+
+#### proposal (2)
+
+- `proposal.confirm`
+- `proposal.dismiss`
 
 #### provider (10)
 
@@ -835,13 +841,13 @@ read.
 
 ## The project palette (MCP-007)
 
-The project family ships a `PROJECT_PALETTE`: a frozen set of the 47
+The project family ships a `PROJECT_PALETTE`: a frozen set of the 50
 project.*, provider.* and connection.* tool names. Two functions in the MCP layer
 consume it.
 
 `tools_for_palette(palette)` returns only the tools whose names are in
-the palette. A client that lists tools through this filter sees 47 tools
-instead of 197.
+the palette. A client that lists tools through this filter sees 50 tools
+instead of 208.
 
 `dispatch_for_palette(name, arguments, principal, palette)` dispatches
 a tool call only if `name` is in the palette. A name outside the palette

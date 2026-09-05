@@ -26,7 +26,6 @@ Settings, Models. The badge in the corner names what can leave this machine and
 where it goes.
 
 A meeting should change what happens next, not disappear into an archive.
-<!-- verify at build -->
 When a Room-linked meeting ends, meeting intelligence runs automatically on the
 model you assigned. Decisions and action items arrive as proposals you confirm,
 not as committed records: the extraction arms, your **Confirm** fires (Article

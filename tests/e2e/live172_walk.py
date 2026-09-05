@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse, parse_qs
 
-# ── pytest collection guard ──
+# -- pytest collection guard --
 collect_ignore_glob = ["live172_walk.py"]
 
 REPO = Path(__file__).resolve().parents[2]
@@ -41,7 +41,7 @@ VIEWPORTS = [
 ]
 
 
-# ── Data model ──
+# -- Data model --
 
 @dataclass
 class FaceFact:
@@ -66,7 +66,7 @@ class WalkReport:
     intel_receipt: dict = field(default_factory=dict)
 
 
-# ── Helpers ──
+# -- Helpers --
 
 def _settle(page: Any) -> None:
     page.evaluate("""() => {
@@ -96,6 +96,18 @@ def _shoot(page: Any, out_dir: Path, name: str, w: int,
         page.screenshot(path=str(path), full_page=False)
     assert path.exists() and path.stat().st_size > 1_000, f"Shot {fname} missing or too small"
     return path
+
+
+def _check_overflow(page: Any, w: int, face_name: str) -> str | None:
+    result = page.evaluate("""() => {
+        const sw = document.documentElement.scrollWidth;
+        const cw = document.documentElement.clientWidth;
+        return { scrollWidth: sw, clientWidth: cw };
+    }""")
+    if result["scrollWidth"] > result["clientWidth"]:
+        return (f"OVERFLOW on {face_name} at {w}: "
+                f"scrollWidth={result['scrollWidth']} > clientWidth={result['clientWidth']}")
+    return None
 
 
 def _check_raw_buttons(page: Any, face_name: str) -> str | None:
@@ -200,17 +212,15 @@ def _close_surface(page: Any) -> None:
         _settle(page)
 
 
-# ── Step 1: GET /api/settings/meetings/intelligence ──
+# -- Step 1: GET /api/settings/meetings/intelligence --
 
 def _step_intel_settings(page: Any, token: str, report: WalkReport) -> dict:
     """Read auto-run setting + host. Returns the payload for later decisions."""
     face = "intel-settings"
-    # Try the meetings intelligence settings route
     result = _api(page, "GET", "/api/settings", None, token)
     payload = {}
     if result["status"] == 200:
         payload = result["payload"]
-        # The intel settings live under meetings.intel_* or a dedicated key
         intel_enabled = payload.get("meetings", {}).get("intel_enabled", "---")
         intel_model = payload.get("meetings", {}).get("intel_realtime_model", "---")
         intel_provider = payload.get("meetings", {}).get("intel_provider", "---")
@@ -235,14 +245,13 @@ def _step_intel_settings(page: Any, token: str, report: WalkReport) -> dict:
     return payload
 
 
-# ── Step 2: Meeting list + proposals + optional intel run ──
+# -- Step 2: Meeting list + proposals + optional intel run --
 
 def _step_meetings_intel(page: Any, token: str, report: WalkReport,
                          settings: dict) -> str | None:
     """Read meetings, find 'Already titled', read proposals, optionally run intel.
     Returns the meeting ID used (or None)."""
     face = "meeting-intel"
-    # Get meeting list
     result = _api(page, "GET", "/api/meetings", None, token)
     if result["status"] >= 300:
         report.errors.append(f"GET /api/meetings returned {result['status']}")
@@ -250,7 +259,6 @@ def _step_meetings_intel(page: Any, token: str, report: WalkReport,
     meetings = result["payload"]
     rows = meetings if isinstance(meetings, list) else meetings.get("meetings", [])
 
-    # Find "Already titled" meeting
     target = None
     for m in rows:
         title = str(m.get("title", ""))
@@ -304,7 +312,6 @@ def _step_meetings_intel(page: Any, token: str, report: WalkReport,
     # Determine if we can run intel (LAN/local host only)
     intel_provider = str(settings.get("meetings", {}).get("intel_provider", ""))
     intel_model = str(settings.get("meetings", {}).get("intel_realtime_model", ""))
-    # Check if the provider is local/LAN (not cloud)
     is_cloud = any(cloud in intel_provider.lower() for cloud in
                    ("openai", "anthropic", "cloud", "api.")) if intel_provider else False
     if is_cloud:
@@ -315,7 +322,6 @@ def _step_meetings_intel(page: Any, token: str, report: WalkReport,
         )))
         return meeting_id
 
-    # Run intel on the "Already titled" meeting (2 words, LAN model)
     report.facts.append(asdict(FaceFact(
         face=face, field="intel_run_attempt", expected="POST run",
         observed=f"running on meeting {meeting_id[:8]}...",
@@ -332,9 +338,8 @@ def _step_meetings_intel(page: Any, token: str, report: WalkReport,
         why="ok" if run_result["status"] < 300 else f"HTTP {run_result['status']}",
     )))
 
-    # Wait for intel to complete, then re-read proposals
     if run_result["status"] < 300:
-        time.sleep(5)  # Give intel time to process (2-word meeting is fast)
+        time.sleep(5)
         prop_result2 = _api(page, "GET",
                             f"/api/meetings/{meeting_id}/follow-through-proposals", None, token)
         if prop_result2["status"] == 200:
@@ -349,13 +354,12 @@ def _step_meetings_intel(page: Any, token: str, report: WalkReport,
     return meeting_id
 
 
-# ── Step 3: Room ──
+# -- Step 3: Room --
 
 def _step_room(page: Any, out_dir: Path, w: int, token: str,
                report: WalkReport) -> None:
-    """Open the owner's one Room, shoot, record NEEDS YOU + DECISIONS + SOURCES."""
+    """Open the owner's one Room, shoot, record NEEDS YOU + DECISIONS + SOURCES + PEOPLE."""
     face = "room"
-    # Get the project list to find his Room
     result = _api(page, "GET", "/api/projects", None, token)
     if result["status"] >= 300:
         report.errors.append(f"GET /api/projects returned {result['status']}")
@@ -369,9 +373,7 @@ def _step_room(page: Any, out_dir: Path, w: int, token: str,
     project_id = str(proj_list[0].get("id", ""))
     project_name = str(proj_list[0].get("name", proj_list[0].get("title", "---")))
 
-    # Open the Room via surface staging
-    # TODO: refine the surface key for opening a specific Room once built
-    _open_surface(page, token, "project-room", project_id)
+    _open_surface(page, token, "open-project-memory", f"project:{project_id}")
     _settle(page)
     page.wait_for_timeout(2000)
     _settle(page)
@@ -384,51 +386,181 @@ def _step_room(page: Any, out_dir: Path, w: int, token: str,
         observed=project_name, verdict="DATA", why="real desk content",
     )))
 
-    # TODO: NEEDS YOU rows (proposal rows: text . BY . from . host . Confirm/Dismiss)
-    # Selectors to fill once the proposal face lands:
-    #   [data-testid="room-needs-you"] or similar
-    #   [data-proposal] rows with .surface-ledger-row
-    #   EgressChip (.gadget-chip-egress) per proposal
-    #   Button verbs: Confirm / Edit / Drop
-    needs_you_data = page.evaluate("""() => {
-        // Read the Room body's content for NEEDS YOU rows
+    # Read face via real selectors from ProjectRoomCore.tsx
+    room_data = page.evaluate("""() => {
         const body = document.querySelector('[data-testid="room-body"]');
-        if (!body) return { headline: '---', rows: [] };
-        const headline = (body.querySelector('.surface-display, [data-testid="room-headline"]')?.textContent || '').trim();
-        // Look for needs-you rows (generic until testids land)
+        if (!body) return { headline: '---', proposalRows: 0, decisionRows: 0,
+            suggestedRows: 0, peopleRows: 0, sourceRows: 0, needsYouRows: 0 };
+
+        // Headline: data-testid="room-headline"
+        const hl = body.querySelector('[data-testid="room-headline"]');
+        const headline = hl ? hl.textContent.trim() : '---';
+
+        // Proposal rows: data-testid="proposal-row"
+        const propRows = body.querySelectorAll('[data-testid="proposal-row"]');
+        // Check each proposal row for MTG emblem and clipped primary
+        const proposalDefects = [];
+        for (const row of propRows) {
+            const lead = row.querySelector('.surface-ledger-lead');
+            const leadText = lead ? lead.textContent.trim() : '';
+            if (leadText !== 'MTG') {
+                proposalDefects.push('PROPOSAL WITHOUT MTG EMBLEM: lead=' + leadText);
+            }
+            const primary = row.querySelector('[data-testid="proposal-primary"]');
+            if (primary && primary.scrollWidth > primary.clientWidth + 2) {
+                proposalDefects.push('CLIPPED PROPOSAL: ' + (primary.textContent || '').slice(0, 40));
+            }
+        }
+
+        // Decision rows: data-testid="decision-row"
+        const decRows = body.querySelectorAll('[data-testid="decision-row"]');
+
+        // Suggested source rows: data-testid="suggested-source-row"
+        const sugRows = body.querySelectorAll('[data-testid="suggested-source-row"]');
+        const sugRefs = [];
+        for (const row of sugRows) {
+            const ref = row.querySelector('[data-testid="suggested-ref"]');
+            sugRefs.push(ref ? ref.textContent.trim() : '---');
+        }
+
+        // Needs-you rows (non-proposal): data-testid="needs-you-row"
+        const nyRows = body.querySelectorAll('[data-testid="needs-you-row"]');
+
+        // Source scope rows: data-testid="source-scope"
+        const srcRows = body.querySelectorAll('[data-testid="source-scope"]');
+
+        // PEOPLE section: look for rows with monogram lead slots
+        // RoomPeopleSection renders SurfaceLedgerRows with data-testid not set
+        // but the section has PEOPLE N label
         const sections = body.querySelectorAll('.surface-section-head, h3');
-        let needsYouText = '';
+        let peopleSectionText = '';
         for (const s of sections) {
-            if ((s.textContent || '').includes('NEEDS YOU')) {
-                needsYouText = s.textContent.trim();
+            const t = (s.textContent || '').trim();
+            if (t.startsWith('PEOPLE')) {
+                peopleSectionText = t;
                 break;
             }
         }
-        return { headline, needsYouSection: needsYouText };
+
+        // Host chip check: EgressChip (.gadget-chip-egress) without scope word
+        // Exclude chips that validly lack a scope: "MODEL . NOT SET", empty default,
+        // and cloud host chips (github.com etc. -- the scope IS the host name itself).
+        const egressChips = body.querySelectorAll('.gadget-chip-egress');
+        const hostDefects = [];
+        for (const chip of egressChips) {
+            const chipText = chip.textContent.trim();
+            if (!chipText) continue;
+            // Known valid patterns without an explicit scope word:
+            if (/NOT SET/i.test(chipText)) continue;
+            if (/MODEL/i.test(chipText)) continue;
+            // Cloud hosts (github.com, jira.example.com) are their own scope label
+            if (/[.][a-z]+$/i.test(chipText) && chipText.indexOf(' ') < 0) continue;
+            const hasScope = /THIS DEVICE|LAN|CLOUD|MESH|PAIRED/i.test(chipText);
+            if (!hasScope) {
+                hostDefects.push('HOST WITHOUT SCOPE: ' + chipText);
+            }
+        }
+
+        // Check for LOCAL anywhere in room body
+        const bodyText = body.textContent || '';
+        const hasLocal = bodyText.includes('LOCAL');
+
+        // Check for zero counters
+        const zeroCounters = [];
+        const zcRe = /\\b0\\s+(NEEDS|SOURCES|DECISIONS|THINGS|RECORD|PROPOSAL|COMMITMENT|PEOPLE)/g;
+        let zcMatch;
+        while ((zcMatch = zcRe.exec(bodyText)) !== null) {
+            zeroCounters.push(zcMatch[0]);
+        }
+
+        // Check for raw <button>
+        const allBtns = body.querySelectorAll('button');
+        let rawBtnCount = 0;
+        for (const btn of allBtns) {
+            if (btn.classList.contains('btn') ||
+                btn.classList.contains('signal-button') ||
+                btn.classList.contains('surface-ledger-line') ||
+                btn.classList.contains('surface-edit-in-place') ||
+                btn.closest('.gadget-string') ||
+                btn.closest('.mic-button') ||
+                btn.classList.contains('desk-mic')) continue;
+            rawBtnCount++;
+        }
+
+        return {
+            headline,
+            proposalRows: propRows.length,
+            decisionRows: decRows.length,
+            suggestedRows: sugRows.length,
+            suggestedRefs: sugRefs,
+            needsYouRows: nyRows.length,
+            sourceRows: srcRows.length,
+            peopleSectionText,
+            proposalDefects,
+            hostDefects,
+            hasLocal,
+            zeroCounters,
+            rawBtnCount,
+        };
     }""")
+
+    report.facts.append(asdict(_fact(
+        face, "headline", "(N need you or Nothing needs you)",
+        room_data.get("headline", "---"),
+    )))
     report.facts.append(asdict(FaceFact(
-        face=face, field="headline", expected="(N need you or Nothing needs you)",
-        observed=needs_you_data.get("headline", "---"),
+        face=face, field="proposal_rows", expected="(varies)",
+        observed=str(room_data.get("proposalRows", 0)),
         verdict="DATA", why="real desk content",
     )))
     report.facts.append(asdict(FaceFact(
-        face=face, field="needs_you_section", expected="NEEDS YOU N",
-        observed=needs_you_data.get("needsYouSection", "---"),
+        face=face, field="decision_rows", expected="(varies)",
+        observed=str(room_data.get("decisionRows", 0)),
+        verdict="DATA", why="real desk content",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="suggested_source_rows", expected="(varies)",
+        observed=str(room_data.get("suggestedRows", 0)),
+        verdict="DATA", why="real desk content",
+    )))
+    for i, ref in enumerate(room_data.get("suggestedRefs", [])):
+        report.facts.append(asdict(FaceFact(
+            face=face, field=f"suggested_ref:{i}", expected="(repo ref)",
+            observed=ref[:12], verdict="DATA", why="suggested source reference",
+        )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="source_rows", expected="(varies)",
+        observed=str(room_data.get("sourceRows", 0)),
+        verdict="DATA", why="real desk content",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="people_section", expected="PEOPLE N",
+        observed=room_data.get("peopleSectionText", "---"),
         verdict="DATA", why="real desk content",
     )))
 
-    # TODO: DECISIONS & COMMITMENTS section
-    # TODO: SOURCES section incl. SUGGESTED rows
-    # Selectors to fill once the Room face updates land
+    # Record defects from the face evaluation
+    for d in room_data.get("proposalDefects", []):
+        report.defects.append(f"ROOM/{face}: {d}")
+    for d in room_data.get("hostDefects", []):
+        report.defects.append(f"ROOM/{face}: {d}")
+    if room_data.get("hasLocal"):
+        report.defects.append(f"ROOM: LOCAL found (should be THIS DEVICE or LAN)")
+    for z in room_data.get("zeroCounters", []):
+        report.defects.append(f"ROOM: ZERO COUNTER '{z}' -- UX-CANON A.8 forbids counters of zero")
+    if room_data.get("rawBtnCount", 0) > 0:
+        report.defects.append(f"ROOM: {room_data['rawBtnCount']} raw <button>(s) outside library")
 
-    btn_err = _check_raw_buttons(page, face)
-    if btn_err:
-        report.errors.append(btn_err)
+    # Overflow check at 393
+    if w == 393:
+        err = _check_overflow(page, w, face)
+        if err:
+            report.errors.append(err)
 
     _close_surface(page)
 
 
-# ── Step 4: Meeting detail ──
+# -- Step 4: Meeting detail --
 
 def _step_meeting_detail(page: Any, out_dir: Path, w: int, token: str,
                          report: WalkReport, meeting_id: str | None) -> None:
@@ -441,7 +573,6 @@ def _step_meeting_detail(page: Any, out_dir: Path, w: int, token: str,
 
     # Click the first meeting row to open detail
     if meeting_id:
-        # Try to find the specific meeting row
         row_bodies = page.locator('.meetings-stream-row-body')
         if row_bodies.count() > 0:
             row_bodies.first.click()
@@ -451,79 +582,284 @@ def _step_meeting_detail(page: Any, out_dir: Path, w: int, token: str,
     shot = _shoot(page, out_dir, "walk-meeting", w, window=True)
     report.shots.append({"face": face, "width": w, "path": str(shot)})
 
-    # TODO: Record header tokens (RAN . N S . host)
-    # TODO: Record NEEDS YOU rows in the detail
-    # Selectors to fill once the meeting detail proposal face lands
+    # Read detail face using real selectors from MeetingHeader.tsx + NeedsYouTable.tsx
     detail_data = page.evaluate("""() => {
-        // Look for intel status tokens in the meeting detail
-        const detail = document.querySelector('.surface-split-detail, .meeting-detail');
-        if (!detail) return { header: '---', needsYou: '---' };
-        const header = detail.textContent?.substring(0, 200).trim() || '---';
-        return { header };
+        // MeetingHeader.tsx: .meetings-detail-head > .surface-display (title)
+        //   .meetings-detail-facts > token spans + StateChip + EgressChip
+        const head = document.querySelector('.meetings-detail-head');
+        const facts = document.querySelector('.meetings-detail-facts');
+
+        let title = '---';
+        let factTokens = '---';
+        if (head) {
+            const display = head.querySelector('.surface-display');
+            title = display ? display.textContent.trim() : '---';
+        }
+        if (facts) {
+            factTokens = facts.textContent.trim();
+        }
+
+        // Check for RAN chip (StateChip with state="success" label="RAN")
+        const ranChip = facts ? facts.querySelector('.surface-state-chip') : null;
+        const hasRanChip = ranChip ? ranChip.textContent.trim().includes('RAN') : false;
+
+        // EgressChip in detail facts
+        const egressChip = facts ? facts.querySelector('.gadget-chip-egress') : null;
+        const egressText = egressChip ? egressChip.textContent.trim() : '---';
+
+        // NeedsYouTable.tsx: data-testid="meeting-needs-you"
+        const needsYou = document.querySelector('[data-testid="meeting-needs-you"]');
+        let needsCaption = '---';
+        let needsRowCount = 0;
+        if (needsYou) {
+            const caption = needsYou.querySelector('.surface-caption');
+            needsCaption = caption ? caption.textContent.trim() : '---';
+            const outcomes = needsYou.querySelectorAll('.meetings-detail-outcome-row');
+            needsRowCount = outcomes.length;
+        }
+
+        // Defect checks on the detail face
+        const detailBody = document.querySelector('.surface-split-detail') ||
+                           document.querySelector('.desk-surface-body');
+        let hasLocal = false;
+        let rawBtns = 0;
+        let zeroCounters = [];
+        if (detailBody) {
+            const text = detailBody.textContent || '';
+            hasLocal = text.includes('LOCAL');
+            const zcRe = /\\b0\\s+(NEEDS|PROPOSAL|THING)/g;
+            let m;
+            while ((m = zcRe.exec(text)) !== null) zeroCounters.push(m[0]);
+
+            const btns = detailBody.querySelectorAll('button');
+            for (const b of btns) {
+                if (b.classList.contains('btn') || b.classList.contains('desk-mic') ||
+                    b.closest('.desk-traffic') || b.closest('.desk-wings')) continue;
+                rawBtns++;
+            }
+        }
+
+        // Check for clipped outcome text
+        const outcomeTexts = document.querySelectorAll('.meetings-detail-outcome-text');
+        const clipped = [];
+        for (const t of outcomeTexts) {
+            if (t.scrollWidth > t.clientWidth + 2) {
+                clipped.push(t.textContent?.trim().slice(0, 40));
+            }
+        }
+
+        return {
+            title: title.slice(0, 12),
+            factTokens: factTokens.slice(0, 200),
+            hasRanChip,
+            egressText,
+            needsCaption,
+            needsRowCount,
+            hasLocal,
+            rawBtns,
+            zeroCounters,
+            clippedOutcomes: clipped,
+        };
     }""")
+
     report.facts.append(asdict(FaceFact(
-        face=face, field="detail_header", expected="(meeting title + tokens)",
-        observed=detail_data.get("header", "---")[:150],
+        face=face, field="detail_title", expected="(meeting title[:12])",
+        observed=detail_data.get("title", "---"),
         verdict="DATA", why="real desk content",
     )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="detail_facts", expected="DATE . N MIN . RAN . N S . host . LAN",
+        observed=detail_data.get("factTokens", "---")[:200],
+        verdict="DATA", why="real desk content",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="ran_chip", expected="true",
+        observed=str(detail_data.get("hasRanChip", False)),
+        verdict="MATCH" if detail_data.get("hasRanChip") else "DATA",
+        why="RAN chip present" if detail_data.get("hasRanChip") else "no RAN chip",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="egress_chip", expected="(host . LAN or THIS DEVICE)",
+        observed=detail_data.get("egressText", "---"),
+        verdict="DATA", why="real desk content",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="needs_you_caption", expected="NEEDS YOU N",
+        observed=detail_data.get("needsCaption", "---"),
+        verdict="DATA", why="real desk content",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="needs_you_rows", expected="(varies)",
+        observed=str(detail_data.get("needsRowCount", 0)),
+        verdict="DATA", why="real desk content",
+    )))
+
+    # Record defects
+    if detail_data.get("hasLocal"):
+        report.defects.append("MEETING DETAIL: LOCAL found (should be THIS DEVICE or LAN)")
+    if detail_data.get("rawBtns", 0) > 0:
+        report.defects.append(f"MEETING DETAIL: {detail_data['rawBtns']} raw <button>(s)")
+    for z in detail_data.get("zeroCounters", []):
+        report.defects.append(f"MEETING DETAIL: ZERO COUNTER '{z}'")
+    for c in detail_data.get("clippedOutcomes", []):
+        report.defects.append(f"MEETING DETAIL: clipped outcome text: {c}")
 
     _close_surface(page)
 
 
-# ── Step 5: Arrival ──
+# -- Step 5: Arrival --
 
 def _step_arrival(page: Any, out_dir: Path, w: int,
                   report: WalkReport) -> None:
-    """Shoot the arrival, record Confirm: rows in NEEDS YOU."""
+    """Shoot the arrival, record proposal rows + meetings."""
     face = "arrival"
     _settle(page)
     shot = _shoot(page, out_dir, "walk-arrival", w)
     report.shots.append({"face": face, "width": w, "path": str(shot)})
 
-    # TODO: Record Confirm: rows in the arrival's NEEDS YOU
-    # Selectors to fill once the arrival proposal rows land
+    # Read the arrival face using real selectors from ChairHome.tsx
     arrival_data = page.evaluate("""() => {
+        // Headline: data-testid="arrival-display"
         const display = document.querySelector('[data-testid="arrival-display"]');
         const headline = display ? display.textContent.trim() : '---';
-        // Look for proposal/confirm rows
+
+        // NEEDS YOU section: data-testid="arrival-needs-you"
         const needsYou = document.querySelector('[data-testid="arrival-needs-you"]');
-        const rows = [];
-        if (needsYou) {
-            const items = needsYou.querySelectorAll('[data-testid="arrival-needs-you-row"]');
-            for (const item of items) {
-                rows.push(item.textContent.trim().substring(0, 100));
-            }
+
+        // Proposal rows: data-testid="arrival-proposal-row"
+        const propRows = document.querySelectorAll('[data-testid="arrival-proposal-row"]');
+        const proposals = [];
+        for (const row of propRows) {
+            // MTG emblem: data-testid="arrival-source-emblem"
+            const emblem = row.querySelector('[data-testid="arrival-source-emblem"]');
+            const emblemText = emblem ? emblem.textContent.trim() : '---';
+            // Prefix: data-testid="arrival-proposal-prefix"
+            const prefix = row.querySelector('[data-testid="arrival-proposal-prefix"]');
+            const prefixText = prefix ? prefix.textContent.trim() : '---';
+            // Text: data-testid="arrival-proposal-text"
+            const textEl = row.querySelector('[data-testid="arrival-proposal-text"]');
+            const proposalText = textEl ? textEl.textContent.trim().slice(0, 80) : '---';
+            // Confirm verb: data-testid="arrival-proposal-confirm"
+            const confirmBtn = row.querySelector('[data-testid="arrival-proposal-confirm"]');
+            const hasConfirm = Boolean(confirmBtn);
+            // Open verb: data-testid="arrival-proposal-open"
+            const openBtn = row.querySelector('[data-testid="arrival-proposal-open"]');
+            const hasOpen = Boolean(openBtn);
+            proposals.push({ emblem: emblemText, prefix: prefixText,
+                text: proposalText, hasConfirm, hasOpen });
         }
-        return { headline, needsYouCount: rows.length, rows };
+
+        // Other needs-you rows: data-testid="arrival-needs-you-row"
+        const otherRows = document.querySelectorAll('[data-testid="arrival-needs-you-row"]');
+
+        // MEETINGS section: data-testid="arrival-meeting-row"
+        const meetingRows = document.querySelectorAll('[data-testid="arrival-meeting-row"]');
+        let meetingsText = '';
+        for (const mr of meetingRows) {
+            meetingsText += (mr.textContent || '') + ' ';
+        }
+        const hasRAN = meetingsText.includes('RAN');
+
+        // Sections present
+        const sections = [];
+        if (document.querySelector('[data-testid="arrival-needs-you"]')) sections.push('needs_you');
+        if (document.querySelector('[data-testid="arrival-thoughts"]')) sections.push('thoughts');
+        if (document.querySelector('[data-testid="arrival-brief"]')) sections.push('brief');
+        if (document.querySelector('[data-testid="arrival-meetings"]')) sections.push('meetings');
+
+        // Capture bar: data-testid="arrival-capture-bar"
+        const captureBar = document.querySelector('[data-testid="arrival-capture-bar"]');
+        const captureText = captureBar ? captureBar.textContent.trim() : '---';
+
+        // Defect checks on the arrival face
+        const chair = document.querySelector('.chair');
+        const bodyText = chair ? chair.textContent : '';
+        const hasLocal = bodyText.includes('LOCAL');
+        const zeroCounters = [];
+        const zcRe = /\\b0\\s+(NEED|THINGS|MEETING|THOUGHT|AGENT)/g;
+        let m;
+        while ((m = zcRe.exec(bodyText)) !== null) zeroCounters.push(m[0]);
+
+        // Check proposal rows without MTG emblem
+        const missingEmblems = proposals.filter(p => p.emblem !== 'MTG').length;
+
+        // Check for raw login / pronouns in people-like rows
+        const pronounHits = [];
+        const pronounRe = /\\b(her|him|she|he)\\b/gi;
+        if (bodyText) {
+            let pm;
+            while ((pm = pronounRe.exec(bodyText)) !== null) pronounHits.push(pm[0]);
+        }
+
+        return {
+            headline,
+            proposalCount: propRows.length,
+            proposals,
+            otherNeedsYouRows: otherRows.length,
+            meetingRowCount: meetingRows.length,
+            hasRAN,
+            sections,
+            captureText: captureText.slice(0, 100),
+            hasLocal,
+            zeroCounters,
+            missingEmblems,
+            pronounHits,
+        };
     }""")
-    report.facts.append(asdict(FaceFact(
-        face=face, field="headline", expected="(N need you or Nothing needs you)",
-        observed=arrival_data.get("headline", "---"),
-        verdict="DATA", why="real desk content",
+
+    report.facts.append(asdict(_fact(
+        face, "headline", "(N need you or Nothing needs you)",
+        arrival_data.get("headline", "---"),
     )))
     report.facts.append(asdict(FaceFact(
-        face=face, field="needs_you_count", expected="(varies)",
-        observed=str(arrival_data.get("needsYouCount", 0)),
+        face=face, field="proposal_rows", expected="(varies)",
+        observed=str(arrival_data.get("proposalCount", 0)),
         verdict="DATA", why="real desk content",
     )))
-    # Record any Confirm: rows
-    for i, row_text in enumerate(arrival_data.get("rows", [])[:5]):
+    for i, p in enumerate(arrival_data.get("proposals", [])[:5]):
         report.facts.append(asdict(FaceFact(
-            face=face, field=f"needs_you_row:{i}",
-            expected="(Confirm: ... or Watch item)",
-            observed=row_text,
-            verdict="DATA", why="real desk content",
+            face=face, field=f"proposal:{i}",
+            expected="MTG . Confirm:/Decide: . text . Confirm + Open",
+            observed=f"{p['emblem']} . {p['prefix']} . {p['text'][:40]} . confirm={p['hasConfirm']} open={p['hasOpen']}",
+            verdict="DATA", why="arrival proposal row",
         )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="meeting_rows", expected="(varies)",
+        observed=str(arrival_data.get("meetingRowCount", 0)),
+        verdict="DATA", why="real desk content",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="meetings_has_RAN", expected="true",
+        observed=str(arrival_data.get("hasRAN", False)),
+        verdict="MATCH" if arrival_data.get("hasRAN") else "DATA",
+        why="RAN chip in meetings" if arrival_data.get("hasRAN") else "no RAN chip",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="sections_present", expected="(varies by desk state)",
+        observed=", ".join(arrival_data.get("sections", [])) or "none",
+        verdict="DATA", why="real desk state",
+    )))
+
+    # Record defects
+    if arrival_data.get("hasLocal"):
+        report.defects.append("ARRIVAL: LOCAL found (should be THIS DEVICE or LAN)")
+    for z in arrival_data.get("zeroCounters", []):
+        report.defects.append(f"ARRIVAL: ZERO COUNTER '{z}' -- UX-CANON A.8")
+    if arrival_data.get("missingEmblems", 0) > 0:
+        report.defects.append(f"ARRIVAL: {arrival_data['missingEmblems']} proposal row(s) without MTG emblem")
+    if arrival_data.get("pronounHits"):
+        # Filter to unique
+        hits = list(set(arrival_data["pronounHits"]))
+        report.defects.append(f"ARRIVAL: pronoun tokens found: {hits}")
 
 
-# ── Step 6: People ──
+# -- Step 6: People --
 
 def _step_people(page: Any, out_dir: Path, w: int, token: str,
                  report: WalkReport) -> None:
     """Open People, find first relationship, shoot card, record watch_summary.
     Never writes a person's name to the facts file."""
     face = "people"
-    # Get relationships
     result = _api(page, "GET", "/api/people/relationships", None, token)
     if result["status"] >= 300:
         report.facts.append(asdict(FaceFact(
@@ -548,16 +884,15 @@ def _step_people(page: Any, out_dir: Path, w: int, token: str,
 
     # Get 1:1 brief for the first relationship
     brief_result = _api(page, "GET",
-                        f"/api/people/relationships/{rel_id}/one-on-one-brief",
+                        f"/api/people/relationships/{rel_id}/brief",
                         None, token)
     if brief_result["status"] == 200:
         brief = brief_result["payload"]
-        # Record watch_summary if present (PRs waiting, commitments, last meeting)
-        # NEVER write the person's name -- use <person>
-        ws = brief.get("watch_summary", {})
+        brief_data = brief.get("brief", brief) if isinstance(brief, dict) else {}
+        ws = brief_data.get("watch_summary", {})
         prs = ws.get("prs_waiting", [])
         assignments = ws.get("open_assignments", [])
-        overdue = ws.get("commitments_overdue_count", 0)
+
         report.facts.append(asdict(FaceFact(
             face=face, field="watch_summary:prs_waiting",
             expected="(count)",
@@ -570,36 +905,133 @@ def _step_people(page: Any, out_dir: Path, w: int, token: str,
             observed=str(len(assignments)),
             verdict="DATA", why="open assignments for <person>",
         )))
+
+        # Overdue commitments from open_commitments
+        open_commitments = brief_data.get("open_commitments", [])
+        overdue = [c for c in open_commitments if c.get("due")]
         report.facts.append(asdict(FaceFact(
-            face=face, field="watch_summary:commitments_overdue",
+            face=face, field="watch_summary:open_commitments",
             expected="(count)",
-            observed=str(overdue),
-            verdict="DATA", why="overdue commitments for <person>",
+            observed=str(len(open_commitments)),
+            verdict="DATA", why="open commitments for <person>",
         )))
-        # Last meeting count
-        linked = brief.get("linked_meetings", [])
-        if linked:
-            last_mtg = linked[0]
-            items = last_mtg.get("open_action_items", [])
+
+        # Last meeting
+        lm = brief_data.get("last_meeting")
+        if lm:
             report.facts.append(asdict(FaceFact(
                 face=face, field="watch_summary:last_meeting_items",
                 expected="(count)",
-                observed=str(len(items)),
-                verdict="DATA", why="open items from last meeting with <person>",
+                observed=str(lm.get("item_count", 0)),
+                verdict="DATA", why="items from last meeting with <person>",
             )))
+
+        # Defect checks: raw login in watch summary
+        for pr in prs[:3]:
+            pr_title = str(pr.get("title", ""))
+            if re.search(r'\b[a-z]+-[a-z]+\b', pr_title) and not re.search(r'[A-Z]', pr_title):
+                report.defects.append(f"PEOPLE: raw login in PR title: {pr_title[:20]}")
+
     elif brief_result["status"] == 404:
         report.facts.append(asdict(FaceFact(
             face=face, field="one_on_one_brief", expected="200",
             observed="404", verdict="DATA", why="brief route not found",
         )))
 
-    # TODO: Open the People face and shoot once the People card face lands
-    # _open_surface(page, token, "inspect-personas-and-coders")
-    # For now, shoot the arrival (People face not yet built for 172)
-    # Selectors to fill: the People card with watch_summary sections
+    # Open the People face and shoot the Prep lens
+    _open_surface(page, token, "open-people", f"people:{rel_id}:prep")
+    _settle(page)
+    page.wait_for_timeout(2000)
+    _settle(page)
+
+    # Check if prep lens rendered
+    prep_lens = page.locator('[data-testid="people-prep-lens"]')
+    if prep_lens.count() > 0:
+        shot = _shoot(page, out_dir, "walk-people-prep", w, window=True)
+        report.shots.append({"face": f"{face}-prep", "width": w, "path": str(shot)})
+
+        # Read Prep lens data using real selectors from PeopleCore.tsx
+        prep_data = page.evaluate("""() => {
+            const lens = document.querySelector('[data-testid="people-prep-lens"]');
+            if (!lens) return { display: '---', prsRow: false, assignRow: false,
+                commitRow: false, meetingRow: false };
+
+            // Display step: data-testid="prep-display-name"
+            const display = lens.querySelector('[data-testid="prep-display-name"]');
+            const displayText = display ? display.textContent.trim() : '---';
+
+            // PRS WAITING row: data-testid="prep-prs-row"
+            const prsRow = lens.querySelector('[data-testid="prep-prs-row"]');
+            // ASSIGNMENTS row: data-testid="prep-assignments-row"
+            const assignRow = lens.querySelector('[data-testid="prep-assignments-row"]');
+            // COMMITMENTS row: data-testid="prep-commitments-row"
+            const commitRow = lens.querySelector('[data-testid="prep-commitments-row"]');
+            // MEETING row: data-testid="prep-meeting-row"
+            const meetingRow = lens.querySelector('[data-testid="prep-meeting-row"]');
+
+            // Footer: data-testid="prep-receipt"
+            const receipt = lens.querySelector('[data-testid="prep-receipt"]');
+            const receiptText = receipt ? receipt.textContent.trim() : '---';
+
+            // Defect: raw login or pronouns in summary rows
+            const summaryRows = lens.querySelector('[data-testid="prep-summary-rows"]');
+            const summaryText = summaryRows ? summaryRows.textContent : '';
+            const pronounRe = /\\b(her|him|she|he)\\b/gi;
+            const pronouns = [];
+            let pm;
+            while ((pm = pronounRe.exec(summaryText)) !== null) pronouns.push(pm[0]);
+
+            // Zero counter check
+            const zcRe = /\\b0\\s+(PRS?|ASSIGNMENTS?|COMMITMENTS?|ITEMS?)/g;
+            const zc = [];
+            let zm;
+            while ((zm = zcRe.exec(summaryText)) !== null) zc.push(zm[0]);
+
+            return {
+                display: displayText.slice(0, 2) + '***',
+                prsRow: Boolean(prsRow),
+                assignRow: Boolean(assignRow),
+                commitRow: Boolean(commitRow),
+                meetingRow: Boolean(meetingRow),
+                receipt: receiptText,
+                pronouns,
+                zeroCounters: zc,
+            };
+        }""")
+
+        report.facts.append(asdict(FaceFact(
+            face=face, field="prep_display", expected="(person name[:2]***)",
+            observed=prep_data.get("display", "---"),
+            verdict="DATA", why="prep display (truncated for privacy)",
+        )))
+        report.facts.append(asdict(FaceFact(
+            face=face, field="prep_prs_row", expected="(present if prs > 0)",
+            observed=str(prep_data.get("prsRow", False)),
+            verdict="DATA", why="PRS WAITING row",
+        )))
+        report.facts.append(asdict(FaceFact(
+            face=face, field="prep_assignments_row", expected="(present if assigns > 0)",
+            observed=str(prep_data.get("assignRow", False)),
+            verdict="DATA", why="ASSIGNMENTS OPEN row",
+        )))
+        report.facts.append(asdict(FaceFact(
+            face=face, field="prep_receipt", expected="PREPARED HH:MM",
+            observed=prep_data.get("receipt", "---"),
+            verdict="DATA", why="prep footer",
+        )))
+
+        # Defects
+        if prep_data.get("pronouns"):
+            report.defects.append(f"PEOPLE PREP: pronoun tokens: {prep_data['pronouns']}")
+        for z in prep_data.get("zeroCounters", []):
+            report.defects.append(f"PEOPLE PREP: ZERO COUNTER '{z}'")
+    else:
+        report.surprises.append("PEOPLE: Prep lens did not render")
+
+    _close_surface(page)
 
 
-# ── Step 7: Settings -> Meetings ──
+# -- Step 7: Settings -> Meetings --
 
 def _step_settings_meetings(page: Any, out_dir: Path, w: int, token: str,
                             report: WalkReport) -> None:
@@ -613,35 +1045,120 @@ def _step_settings_meetings(page: Any, out_dir: Path, w: int, token: str,
     shot = _shoot(page, out_dir, "walk-settings-meetings", w, window=True)
     report.shots.append({"face": face, "width": w, "path": str(shot)})
 
-    # TODO: Record INTELLIGENCE row (CycleGadget + EgressChip)
-    # Selectors to fill once the meetings settings face updates
-    intel_text = page.evaluate("""() => {
-        // Look for the Intelligence row in the settings module
-        const module = document.querySelector('.prefs-module');
-        if (!module) return '---';
-        const text = module.textContent || '';
-        // Find the section containing "Intelligence" or "intelligence"
-        const rows = module.querySelectorAll('.surface-ledger-row, .gadget-row, .gadget-group');
-        for (const row of rows) {
-            const t = (row.textContent || '').trim();
-            if (t.toLowerCase().includes('intelligence')) return t.substring(0, 200);
+    # Read the Meetings module face using real selectors from SettingsCore.tsx
+    settings_data = page.evaluate("""() => {
+        // Display headline: data-testid="meetings-auto-display"
+        const display = document.querySelector('[data-testid="meetings-auto-display"]');
+        const displayText = display ? display.textContent.trim() : '---';
+
+        // Intelligence row: CycleGadget (.gadget-cycle select)
+        const cycle = document.querySelector('.gadget-cycle select');
+        let cycleValue = '---';
+        if (cycle && cycle.selectedOptions && cycle.selectedOptions.length) {
+            cycleValue = cycle.selectedOptions[0].text.trim();
         }
-        return text.substring(0, 200);
+
+        // EgressChip in the intelligence row (.gadget-chip-egress)
+        const egressChips = document.querySelectorAll('.gadget-chip-egress');
+        let intelEgress = '---';
+        for (const chip of egressChips) {
+            const t = chip.textContent.trim();
+            if (t && !t.includes('FETCHES')) {
+                intelEgress = t;
+                break;
+            }
+        }
+
+        // NO MODEL chip: data-testid="settings-no-model"
+        const noModel = document.querySelector('[data-testid="settings-no-model"]');
+        const hasNoModel = Boolean(noModel);
+
+        // Choose model button: data-testid="settings-choose-model"
+        const chooseModel = document.querySelector('[data-testid="settings-choose-model"]');
+        const hasChooseModel = Boolean(chooseModel);
+
+        // Defect checks on the settings body
+        const body = document.querySelector('.desk-surface-body');
+        const bodyText = body ? body.textContent : '';
+        const hasLocal = bodyText.includes('LOCAL');
+        const zc = [];
+        const zcRe = /\\b0\\s+(NEEDS|SOURCE|ENGINE)/g;
+        let m;
+        while ((m = zcRe.exec(bodyText)) !== null) zc.push(m[0]);
+
+        // Raw <button> check
+        let rawBtns = 0;
+        if (body) {
+            const btns = body.querySelectorAll('button');
+            for (const b of btns) {
+                if (b.classList.contains('btn') || b.classList.contains('desk-mic') ||
+                    b.closest('.gadget-stepper') || b.closest('.gadget-table') ||
+                    b.closest('.gadget-cycle') || b.closest('.fold-gadget') ||
+                    b.closest('.check-gadget') || b.closest('.desk-traffic') ||
+                    b.closest('.desk-wings') || b.closest('.surface-ledger-row') ||
+                    b.classList.contains('surface-ledger-line')) continue;
+                rawBtns++;
+            }
+        }
+
+        return {
+            displayText,
+            cycleValue,
+            intelEgress,
+            hasNoModel,
+            hasChooseModel,
+            hasLocal,
+            zeroCounters: zc,
+            rawBtns,
+        };
     }""")
+
     report.facts.append(asdict(FaceFact(
-        face=face, field="intelligence_row",
-        expected="Intelligence AFTER EVERY MEETING / ROOM-LINKED ONLY / OFF + host chip",
-        observed=intel_text[:200], verdict="DATA", why="real desk content",
+        face=face, field="display_headline",
+        expected="After every meeting / After room meetings / Off",
+        observed=settings_data.get("displayText", "---"),
+        verdict="DATA", why="real desk content",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="intelligence_cycle",
+        expected="AFTER EVERY MEETING / ROOM-LINKED ONLY / OFF",
+        observed=settings_data.get("cycleValue", "---"),
+        verdict="DATA", why="real desk content",
     )))
 
-    btn_err = _check_raw_buttons(page, face)
-    if btn_err:
-        report.errors.append(btn_err)
+    if settings_data.get("hasNoModel"):
+        report.facts.append(asdict(FaceFact(
+            face=face, field="intelligence_model",
+            expected="(model host chip or NO MODEL + Choose)",
+            observed=f"NO MODEL (Choose={settings_data.get('hasChooseModel', False)})",
+            verdict="DATA", why="no model assigned",
+        )))
+    else:
+        report.facts.append(asdict(FaceFact(
+            face=face, field="intelligence_egress",
+            expected="(host . LAN or THIS DEVICE)",
+            observed=settings_data.get("intelEgress", "---"),
+            verdict="DATA", why="intel model host chip",
+        )))
+
+    # Defects
+    if settings_data.get("hasLocal"):
+        report.defects.append("SETTINGS MEETINGS: LOCAL found (should be THIS DEVICE or LAN)")
+    for z in settings_data.get("zeroCounters", []):
+        report.defects.append(f"SETTINGS MEETINGS: ZERO COUNTER '{z}'")
+    if settings_data.get("rawBtns", 0) > 0:
+        report.defects.append(f"SETTINGS MEETINGS: {settings_data['rawBtns']} raw <button>(s)")
+
+    # Overflow at 393
+    if w == 393:
+        err = _check_overflow(page, w, face)
+        if err:
+            report.errors.append(err)
 
     _close_surface(page)
 
 
-# ── Defect detection ──
+# -- Defect detection --
 
 def _detect_defects(report: WalkReport) -> None:
     seen: set[tuple[str, str]] = set()
@@ -653,7 +1170,7 @@ def _detect_defects(report: WalkReport) -> None:
         obs = fact["observed"]
 
         # D1: zero counter (UX-CANON A.8)
-        if re.search(r'\b0\s+(NEED|THINGS|RECORD|PROPOSAL|DECISION|COMMITMENT)', obs):
+        if re.search(r'\b0\s+(NEED|THINGS|RECORD|PROPOSAL|DECISION|COMMITMENT|PEOPLE)', obs):
             report.defects.append(
                 f"ZERO COUNTER on {fact['face']}/{fact['field']}: \"{obs}\" "
                 f"-- UX-CANON A.8 forbids counters of zero"
@@ -667,16 +1184,10 @@ def _detect_defects(report: WalkReport) -> None:
                     f"-- every proposal must name its model host"
                 )
 
-        # D3: a person's real name in a facts field
-        if fact["face"] == "people":
-            # The runner should never write a name; check for accidental leaks
-            # (names are typically > 2 words with capitals)
-            pass  # The runner is designed to write <person> not names
-
     report.defects = list(dict.fromkeys(report.defects))
 
 
-# ── Report writers ──
+# -- Report writers --
 
 def _write_facts_json(report: WalkReport, out_dir: Path) -> Path:
     path = out_dir / "walk-facts.json"
@@ -759,7 +1270,7 @@ def _write_facts_md(report: WalkReport, out_dir: Path) -> Path:
     return path
 
 
-# ── Main ──
+# -- Main --
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="HS-172-08 pre-walk runner")

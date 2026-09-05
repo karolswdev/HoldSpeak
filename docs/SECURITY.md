@@ -219,7 +219,6 @@ from MCP projections. The owner can set `HOLDSPEAK_MCP_PEOPLE_ACCESS=off` or
 policy refusal matrix) does not loosen regardless of the access mode.
 See [People security boundary](PEOPLE_SECURITY.md).
 
-<!-- verify at build -->
 **The People resolver boundary.** Meeting intelligence can match extracted
 owner names and speaker labels to People relationships so the 1:1 brief
 shows Watch data (PRs waiting, open assignments). The resolver

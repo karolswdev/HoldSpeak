@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 172
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-172-08
 - **Unblocks:** HS-172-10
 - **Owner:** unassigned
@@ -33,12 +33,12 @@ project's documentation.
 
 ## Acceptance criteria
 
-- [ ] USER_GUIDE.md re-shot for every new face (Article IX.2).
-- [ ] ARCHITECTURE.md contains the loop-closes pipeline diagram; the
+- [x] USER_GUIDE.md re-shot for every new face (Article IX.2).
+- [x] ARCHITECTURE.md contains the loop-closes pipeline diagram; the
       Mermaid renders (verified by the mmdc guard).
-- [ ] SECURITY.md states the People resolver stays inside the
+- [x] SECURITY.md states the People resolver stays inside the
       encrypted boundary (Article III).
-- [ ] Every claim in the docs is truth-audited against the shipped
+- [x] Every claim in the docs is truth-audited against the shipped
       tree (Article VI.2).
 
 ## Test plan
