@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 169
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-169-05, HS-169-06
 - **Unblocks:** -
 - **Owner:** unassigned
@@ -26,6 +26,26 @@ Every phase closes on the full suite, the sweep against main's baseline, counsel
 
 The full-suite command from CLAUDE.md in an isolated HOME; `scripts/check_web_baseline.py --run`; `.githooks/dw verify --all`.
 
-## Delivered
+## Delivered (2026-09-05)
 
-_(pending)_
+- Counsel on the build diff: RATIFY-W-C, every M/S paid (S-3 documented).
+- Unit fast lane 8011 passed / 14 failed (8 inherited at ce629cc2; 6
+  branch-new paid: the API-surface manifest regenerated, the branch_ci
+  read classified in the effect fence, ProjectRoomCore's model-host
+  lookup classified in the route census, the 166 baseline tests seeded
+  with a GitHub proposal, one xdist flake 3× serial green).
+- Non-unit half 1307 passed; the 49 branch-new failures were the
+  retired faces' rigs and two integration tests: 26 re-pointed through
+  the Room's entries (no capability lost), 21 retired with reasons
+  naming their replacements, the blank + cancel legs ported to a new
+  door-legs rig, the rest selector/fixture edits.
+- Web baseline on the final tree: 2426 passed, zero branch-new.
+- The phase's rigs alone (door, room, door legs, 168 connections, 168
+  wings, the isolated walk) captured in evidence-story-07.md.
+- final-summary.md: what shipped, what the desk found, the debt ledger
+  (incl. the three legs whose live coverage is to be re-pointed), the
+  Tuesday Arc pointer.
+- Phase 168 closed as superseded inside this branch (05 and 07 flipped
+  with their evidence).
+- PR feat/the-streamlined-door → main on the local gates; merged on the
+  owner's word ("LET'S MERGE").

@@ -1,6 +1,6 @@
 {
   "schema": "walk-169-transcript@1",
-  "generated_at": "2026-09-04T19:40:57.298269",
+  "generated_at": "2026-09-04T21:54:09.673779",
   "mode": "isolated",
   "width": 393,
   "clicks": 5,
@@ -12,7 +12,7 @@
       "clicks_cumulative": 0,
       "seconds_cumulative": 3.35,
       "shot_path": "assets/story-05-walk/isolated-connected-phone/01-settings-connections.png",
-      "shot_hash": "28cd1ddae40d47d7",
+      "shot_hash": "118f6aab6305e9d4",
       "notes": "GH: Connected; Jira: Connected"
     },
     {
@@ -20,9 +20,9 @@
       "step_name": "door-empty",
       "width": 393,
       "clicks_cumulative": 0,
-      "seconds_cumulative": 4.82,
+      "seconds_cumulative": 4.91,
       "shot_path": "assets/story-05-walk/isolated-connected-phone/02-door-empty.png",
-      "shot_hash": "cef825cbdaf791ba",
+      "shot_hash": "17942f75b2e873f5",
       "notes": "empty state: placeholder + NO SOURCES + Create disabled"
     },
     {
@@ -30,9 +30,9 @@
       "step_name": "outcome-typed",
       "width": 393,
       "clicks_cumulative": 0,
-      "seconds_cumulative": 4.96,
+      "seconds_cumulative": 5.05,
       "shot_path": "assets/story-05-walk/isolated-connected-phone/03-outcome-typed.png",
-      "shot_hash": "8bbde787f5ea41b6",
+      "shot_hash": "3d27791dcf5dc581",
       "notes": "outcome filled, Create enabled, still NO SOURCES"
     },
     {
@@ -40,9 +40,9 @@
       "step_name": "gh-picker",
       "width": 393,
       "clicks_cumulative": 1,
-      "seconds_cumulative": 7.13,
+      "seconds_cumulative": 7.23,
       "shot_path": "assets/story-05-walk/isolated-connected-phone/04-gh-picker.png",
-      "shot_hash": "6d0216532227f452",
+      "shot_hash": "a62bd774a784ce67",
       "notes": "GitHub picker open"
     },
     {
@@ -50,9 +50,9 @@
       "step_name": "gh-live",
       "width": 393,
       "clicks_cumulative": 2,
-      "seconds_cumulative": 7.73,
+      "seconds_cumulative": 7.82,
       "shot_path": "assets/story-05-walk/isolated-connected-phone/05-gh-live.png",
-      "shot_hash": "909f4cc11b1a07c5",
+      "shot_hash": "f6e6a5dcb22e326f",
       "notes": "GH counts: 3 open PRs \u00b7 CI green"
     },
     {
@@ -60,9 +60,9 @@
       "step_name": "jira-picker",
       "width": 393,
       "clicks_cumulative": 3,
-      "seconds_cumulative": 9.88,
+      "seconds_cumulative": 9.98,
       "shot_path": "assets/story-05-walk/isolated-connected-phone/06-jira-picker.png",
-      "shot_hash": "0aa3774b84dcb528",
+      "shot_hash": "2161ae6222527e4b",
       "notes": "Jira picker open"
     },
     {
@@ -70,9 +70,9 @@
       "step_name": "jira-live",
       "width": 393,
       "clicks_cumulative": 4,
-      "seconds_cumulative": 13.04,
+      "seconds_cumulative": 13.14,
       "shot_path": "assets/story-05-walk/isolated-connected-phone/07-jira-live.png",
-      "shot_hash": "27ad112c74dee094",
+      "shot_hash": "3896e2d82bce3dc9",
       "notes": "receipt: 2 SOURCES \u00b7 4 WATCHES"
     },
     {
@@ -80,9 +80,9 @@
       "step_name": "create",
       "width": 393,
       "clicks_cumulative": 5,
-      "seconds_cumulative": 13.43,
+      "seconds_cumulative": 13.55,
       "shot_path": "assets/story-05-walk/isolated-connected-phone/08-create.png",
-      "shot_hash": "1b89ef365f9ae14b",
+      "shot_hash": "3243565a6f47a412",
       "notes": "5 clicks, Room opening"
     },
     {
@@ -90,19 +90,19 @@
       "step_name": "room-first-paint",
       "width": 393,
       "clicks_cumulative": 5,
-      "seconds_cumulative": 13.63,
+      "seconds_cumulative": 13.75,
       "shot_path": "assets/story-05-walk/isolated-connected-phone/09-room-first-paint.png",
-      "shot_hash": "1b89ef365f9ae14b",
-      "notes": "headline=Nothing needs you; sources=SOURCES 2; door_to_room=11.4s; project_id=proj-19070544665e"
+      "shot_hash": "3243565a6f47a412",
+      "notes": "headline=Nothing needs you; sources=SOURCES 2; door_to_room=11.6s; project_id=proj-73250ccade31"
     },
     {
       "step_num": 10,
       "step_name": "history",
       "width": 393,
       "clicks_cumulative": 5,
-      "seconds_cumulative": 13.79,
+      "seconds_cumulative": 13.92,
       "shot_path": "assets/story-05-walk/isolated-connected-phone/10-history.png",
-      "shot_hash": "728a6f60c4f2202d",
+      "shot_hash": "1b46f39fbf505a2d",
       "notes": ""
     },
     {
@@ -110,9 +110,9 @@
       "step_name": "room-return",
       "width": 393,
       "clicks_cumulative": 5,
-      "seconds_cumulative": 13.96,
+      "seconds_cumulative": 14.09,
       "shot_path": "assets/story-05-walk/isolated-connected-phone/11-room-return.png",
-      "shot_hash": "b708c9a64978b8d8",
+      "shot_hash": "c6aa7392cd8e2928",
       "notes": ""
     }
   ],

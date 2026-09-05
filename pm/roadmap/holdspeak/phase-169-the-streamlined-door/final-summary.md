@@ -1,4 +1,4 @@
-# Phase 169 — The Streamlined Door: final summary (DRAFT, closes with 07)
+# Phase 169 — The Streamlined Door: final summary
 
 ## What shipped
 
@@ -66,7 +66,17 @@
    ask him on the walk whether his own red PRs should call him.
 8. The native `meeting` Watch on his existing project: `CAN'T CHECK ·
    Remove` — his call; the adapter remains unbuilt.
-9. From 168: the name/outcome/purpose derivation at finalize (the door
+9. Live coverage lost with the retirements, to re-point in the next
+   sitting: the Room's DEGRADED rendering when a section throws (158's
+   `test_room_degraded` — the 169 rig covers `cant_check` rows, not a
+   throwing section); the evaluation → delta-review leg (161's
+   `test_evaluation_delta` — create via the API, review through
+   `Review N`); auth-degraded-then-recovered during setup (161's
+   `test_auth_degraded` — the Door's Connect round trip covers the
+   states, not the recovery mid-setup).
+10. The Tuesday Arc (pm/roadmap/holdspeak/THE-TUESDAY-ARC.md) names the
+   next five phases; the owner's word on the order is the first ask.
+11. From 168: the name/outcome/purpose derivation at finalize (the door
    sets name = outcome[:80], outcome = the line, purpose = the line);
    the Room stats row / footer token debts are gone with the old Room.
 
@@ -84,5 +94,19 @@
   8 inherited from main at ce629cc2, 6 branch-new paid @fc1d999b (the
   scheduled-recording one an xdist flake, 3× serial green).
 - Web baseline on the final tree: 2426 passed, zero branch-new.
-- Still to run after the owner's walk (the machine kept quiet under
-  him): the non-unit half of the suite; the four rigs alone.
+- Non-unit half (isolated HOME, `-n auto`): 1307 passed / 51 failed —
+  2 inherited, 49 branch-new = the retired faces' rigs and two
+  integration tests on the old flow. Paid honestly @bf198fa1 +
+  @16a17fe1: the Delta / Update / Steward / Unattended rigs (26 tests)
+  RE-POINTED through the Room's new entries — no capability lost; the
+  158 Room, 159 interview, 161 GitHub wizard and 166 Jira wizard rigs
+  RETIRED with reasons naming their replacement rigs (21 skips, each
+  printed with `-rs`); the blank + cancel legs PORTED to
+  tests/e2e/test_hs169_door_legs_glass.py; the 168 wings rig and the
+  two integration tests given selector/fixture edits. 36 passed / 21
+  documented skips on the re-run.
+- The phase's rigs alone (door, room, door legs, 168 connections, 168
+  wings, the isolated walk): see the captured run in
+  evidence-story-07.md.
+- The owner's word to merge: "LET'S MERGE" (2026-09-05); his attended
+  walk owed.

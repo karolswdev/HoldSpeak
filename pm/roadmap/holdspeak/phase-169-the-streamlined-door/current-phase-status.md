@@ -1,7 +1,7 @@
 # Phase 169 - The Streamlined Door
 
 - **Project:** holdspeak
-- **Status:** ACTIVE 6/7
+- **Status:** COMPLETE 7/7 — merged to main on the owner's word ("LET'S MERGE", 2026-09-05); his attended walk owed
 - **Chartered:** 2026-09-04 off feat/connections-door `1f9798f9` (168 The Connections Door at 5/7: both of the owner's bounces paid, the branch green on its gates, its merge and story 05 waiting on his word; this phase supersedes 168's door and the 167 Room face)
 - **Canon:** docs/internal/CONSTITUTION.md (Articles III, VI, VII, VIII); docs/internal/DESIGN_SYSTEM.md (the interior canon: type scale, composition rules, the aerogel receipt, the banned left rail); web/src/desk/surface (the library); assets/settled-design-streamlined-door.md (D0-D6); the owner's laws: face-design-before-build; every verb is the library Button; no prose in the UI; no modals; "will you use this on a Tuesday?"
 
@@ -61,11 +61,11 @@ module we are both proud of.
 | HS-169-04 | The wire for the four questions (needs-you items derived from real Watch entities; the read marker; the health inputs; the meeting Watch never offered until it evaluates; MCP twins) | done | [story-04-the-wire-for-four-questions](./story-04-the-wire-for-four-questions.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-169-05 | The walk on the owner's desk (the door in 5 clicks; the Room's first paint; the stopwatch; OWNER VERDICT — "the first one we are both proud of") | done | [story-05-the-walk](./story-05-the-walk.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-169-06 | The docs (the guide's New Project + Project Room sections re-shot; MCP_SIDECAR regenerated; the design doc canonized) | done | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-169-07 | The close (gates, the sweep, counsel, the debt ledger, final summary; 168 folded) | in-progress | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-169-07 | The close (gates, the sweep, counsel, the debt ledger, final summary; 168 folded) | done | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-**ACTIVE 6/7.** Branch `feat/the-streamlined-door` off
+**COMPLETE 7/7.** Branch `feat/the-streamlined-door` off
 feat/connections-door `1f9798f9`. **01 DONE:** the settled design,
 eleven artboards over three rounds (every PNG read at true width),
 counsel RATIFY-W-C paid before the owner saw it, the canvas published
@@ -84,7 +84,7 @@ artboard — type steps, token positions, no intersections, the ask
 well in frame, HISTORY's count honest; web baseline zero branch-new).
 **06 DONE** (the guide's New Project + Project Room rewritten claim by
 claim against the code; the rig's shots in the guide; MCP_SIDECAR
-regenerated — zero diff; the roster line). **05 DONE on the owner's word** ("I will trust you on this one" → "LET'S MERGE"; his own attended walk stays OWED — the first item of the next ledger). The Fedaykin BOOSTED to claude-fable-5-1 on his word. 07 in flight: the non-unit half read (1307 passed; 49 branch-new = the retired faces' rigs + two integration tests, being given selector edits or documented retirements); then the rigs alone, final-summary, PR, MERGE (his word given). Earlier: 05 the walk —
+regenerated — zero diff; the roster line). **05 DONE on the owner's word** ("I will trust you on this one" → "LET'S MERGE"; his own attended walk stays OWED — the first item of the next ledger). The Fedaykin BOOSTED to claude-fable-5-1 on his word. **07 DONE:** gates in final-summary.md (unit lane 8011 passed, 6 branch-new paid; non-unit half 1307 passed with the retired faces' rigs re-pointed or retired with reasons; web baseline zero branch-new; the phase's rigs alone 16 passed); PR to main. Earlier: 07 in flight: the non-unit half read (1307 passed; 49 branch-new = the retired faces' rigs + two integration tests, being given selector edits or documented retirements); then the rigs alone, final-summary, PR, MERGE (his word given). Earlier: 05 the walk —
 the runner's isolated leg green (5 clicks, 11 steps, both widths); the
 wire fixed against the owner's REAL rows (dict-keyed entities, the
 Jira host, sources grouped per scope); the door closes after Create;
