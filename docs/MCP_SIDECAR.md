@@ -57,7 +57,7 @@ default.
 
 ## Tool families
 
-The 211 tools are organized into domain families. Each tool follows the
+The 214 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
