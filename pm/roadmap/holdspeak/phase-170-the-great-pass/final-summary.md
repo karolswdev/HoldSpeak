@@ -131,10 +131,18 @@ S-1/N-2/cancel `72f357a8`; S-3/S-5/S-4 `7a5fcba0`; N-1/N-3/S-4
 
 ## The suite
 
-- Full suite, CI shape (-n auto): PENDING the conditions' last commit —
-  the last run before the faces: 9392 passed / 9 failed = 6 inherited or
-  environment-bound (zero diff vs main in every file involved) + 3
-  xdist-only (green serially).
+- Full suite, CI shape (-n auto), after the faces (04:40): 9403 passed /
+  49 failed = 6 inherited (unchanged: ask grounding ×2 + ask runner
+  need his real gguf under an isolated HOME; kernel broker fences ×2;
+  product-copy drift) + 32 rigs of the PARKED faces (the old Models
+  module, the assignments editor, the Chair hero/lanes — re-pointed to
+  the Concierge/arrival or retired with the design line) + 5 History
+  integration tests against the rewritten Meetings page (triaged: any
+  capability the rewrite dropped — search, facets, the archive bound —
+  comes back in the canon's grammar) + 5 fences that learn the new
+  dirs and terms (the UAT ledger, the 143 pointer census, product
+  language, the surface-orphan guard) + the 144 populated leg (serial
+  re-check). The FINAL run's numbers replace this line.
 - vitest 2018 green after the parkings; web baseline zero branch-new;
   the ratchet + 57 guards green; the five hs170 rigs + the 169 rigs +
   the census rig green serially.
