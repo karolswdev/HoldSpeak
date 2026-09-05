@@ -21,6 +21,21 @@ log = get_logger("runtime.heartbeat")
 class HeartbeatMixin:
     """The heartbeat conductor loop -- evaluates due watches on a cadence."""
 
+    def _start_heartbeat_thread(self) -> None:
+        """Construct and start the heartbeat daemon thread.
+
+        Called from WebRuntime.run() beside the plugin-queue and cadence
+        thread starts.  Always-on (no feature gate).
+        """
+        import threading
+
+        self.heartbeat_thread = threading.Thread(
+            target=self._heartbeat_loop,
+            name="HoldSpeakHeartbeat",
+            daemon=True,
+        )
+        self.heartbeat_thread.start()
+
     def _heartbeat_loop(self) -> None:
         """Tick every 60 seconds; on each tick, check if a sweep is due."""
         import time

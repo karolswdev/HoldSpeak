@@ -294,7 +294,6 @@ class WebRuntime(
 
         self.plugin_queue_thread: Optional[threading.Thread] = None
         self.cadence_thread: Optional[threading.Thread] = None  # CAD-1-04 (off by default)
-        self.heartbeat_thread: Optional[threading.Thread] = None  # HS-171-02
         self._cadence_service_obj = None
 
         try:
@@ -535,16 +534,7 @@ class WebRuntime(
                 daemon=True,
             )
             self.cadence_thread.start()
-        # HS-171-02: the heartbeat conductor loop — always-on, evaluates due
-        # watches on the owner's configured sweep interval.  Independent failure
-        # boundary: an exception in the heartbeat never kills the cadence or
-        # plugin-queue threads, and vice versa.
-        self.heartbeat_thread = threading.Thread(
-            target=self._heartbeat_loop,
-            name="HoldSpeakHeartbeat",
-            daemon=True,
-        )
-        self.heartbeat_thread.start()
+        self._start_heartbeat_thread()  # HS-171-02
         self._warm_transcriber_in_background()
 
         try:

@@ -142,6 +142,7 @@ export function CadenceCore({ hero }: CoreProps) {
   const projectsRes = useResource<{ projects: ProjectItem[] }>("/api/projects", { projects: [] });
 
   // ── Existing cadence loop + nudge resources (kept for the NOW N section) ──
+  const cadenceStatus = useResource<Record<string, unknown>>("/api/cadence/status", {});
   const loopsResource = useResource<CadenceLoopsResponse>("/api/cadence/loops", {});
   const history = useResource<CadenceHistoryResponse>("/api/cadence/history?limit=20", {});
   const loops = asRows(loopsResource.data, ["loops"]);
@@ -452,7 +453,7 @@ export function CadenceCore({ hero }: CoreProps) {
         </p>
       ) : null}
       {loops.length > 0 ? (
-        <SurfaceSection label={countLabel("NOW", loops.length)}>
+        <SurfaceSection label={countLabel("NOW", loops.length)} data-engine={cadenceStatus.data?.enabled ?? false}>
           <SurfaceRows>
             {loops.map((loop, index) => {
               const id = rowId(loop, index);

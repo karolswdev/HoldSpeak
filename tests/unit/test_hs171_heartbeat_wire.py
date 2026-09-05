@@ -692,14 +692,21 @@ class TestIndependentConductorLoops:
         start_web_mode or the mixins it inherits."""
         import holdspeak.web_runtime as wr
         import inspect
-        source = inspect.getsource(wr)
+        # Gather source across the full MRO (thread names may live in mixins)
+        sources = []
+        for cls in wr.WebRuntime.__mro__:
+            try:
+                sources.append(inspect.getsource(cls))
+            except (TypeError, OSError):
+                pass
+        combined = "\n".join(sources)
         expected_names = [
             "HoldSpeakMirPluginQueue",
             "HoldSpeakCadenceEngine",
             "HoldSpeakHeartbeat",
         ]
         for name in expected_names:
-            assert name in source, f"Thread name {name!r} not found in web_runtime.py"
+            assert name in combined, f"Thread name {name!r} not found in WebRuntime or its mixins"
 
 
 # ---------------------------------------------------------------------------
