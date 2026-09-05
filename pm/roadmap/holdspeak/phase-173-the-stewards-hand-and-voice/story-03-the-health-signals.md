@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 173
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-173-01
 - **Unblocks:** HS-173-04, HS-173-05
 - **Owner:** unassigned
@@ -47,19 +47,19 @@ surfacing as NEEDS YOU rows and Room tokens."
 
 ## Acceptance criteria
 
-- [ ] Reviewer-latency derivation computes per-person median hours;
+- [x] Reviewer-latency derivation computes per-person median hours;
       verified by a unit test with a seeded PR entity snapshot
       carrying `reviewRequests` and `reviewDecision` timestamps.
-- [ ] Issue-aging derivation computes time-in-status; verified by a
+- [x] Issue-aging derivation computes time-in-status; verified by a
       unit test with a seeded Jira entity snapshot.
-- [ ] Flaky-CI detection identifies 3+ consecutive failures in
+- [x] Flaky-CI detection identifies 3+ consecutive failures in
       `branch_ci` history; verified by a unit test.
-- [ ] Merge-queue depth counts open PRs with passing CI; verified by
+- [x] Merge-queue depth counts open PRs with passing CI; verified by
       a unit test.
-- [ ] Signals exceeding thresholds appear as NEEDS YOU rows in the
+- [x] Signals exceeding thresholds appear as NEEDS YOU rows in the
       Room; verified at both widths.
-- [ ] Signals appear as Room tokens (compact health indicators).
-- [ ] No external writes (reads only; Article V.5).
+- [x] Signals appear as Room tokens (compact health indicators).
+- [x] No external writes (reads only; Article V.5).
 
 ## Test plan
 
