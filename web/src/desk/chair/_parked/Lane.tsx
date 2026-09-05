@@ -1,3 +1,4 @@
+// PARKED (HS-170-04)
 // HS-135-05 -- the Lane component: the composition contract's React
 // shape. Each lane receives {title, maxItems, items, onOpenInWindow,
 // footerVerb}. Header-click fires onOpenInWindow. Renders Surface

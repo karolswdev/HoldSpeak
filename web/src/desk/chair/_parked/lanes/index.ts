@@ -1,3 +1,4 @@
+// PARKED (HS-170-04)
 // HS-135 — the lane registry. Each lane story (07-10) adds exactly one
 // entry at its SHIP; the home surface (story 06) instantiates the Chair
 // from this map generically. Missing lanes render nothing (the Chair's

@@ -1,3 +1,4 @@
+// PARKED (HS-170-04)
 // HS-135-07 -- the Brief lane: the headline truth ("N things waiting"),
 // Changed/Broke/Waiting/Decisions counts, top items to the maxItems
 // bound. Per-item Acknowledge/Defer verbs reuse the existing shelf

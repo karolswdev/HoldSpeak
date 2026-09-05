@@ -1,46 +1,130 @@
-// HS-135-06 -- ChairHome: the landing surface at `/`. Instantiates the
-// Chair with lanes built generically from the LANE_COMPONENTS registry.
-// Missing lanes (not yet shipped by stories 07-10) render nothing; the
-// Chair's 300ms fallback owns the all-blank case.
-// HS-135-11 -- the capture hero fills the hero slot: tap records, voice
-// "start meeting" triggers it, Ask AI one tap away.
+// HS-170-04 -- ChairHome: THE ARRIVAL.
+// The Tuesday face: one display headline, sections only when populated,
+// every verb the library Button, no counters of zero, no sentences.
+// The lane vocabulary is PARKED; the arrival composes directly from
+// the surface library and the needs-you wire.
 
-import { useCallback, type ReactNode } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Chair } from "./Chair";
-import { LANE_ORDER, type LaneId } from "./laneContract";
-import { LANE_COMPONENTS } from "./lanes";
-import { ThoughtEntry } from "./ThoughtEntry";
 import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
-import { openSurface } from "../shell";
+import { openSurface, openSurfaceOr } from "../shell";
+import { apiFetch } from "../../lib/api";
+import { Button } from "../../components/signal/Signal";
+import { MicButton } from "../components/MicButton";
+import { intelBadge } from "./intelBadge";
+import {
+  SurfaceSection,
+  SurfaceLedger,
+  SurfaceLedgerRow,
+  countLabel,
+  countToken,
+} from "../surface";
+import { unfinishedThoughts, type UnfinishedThought } from "../thoughts";
+import type { Meeting } from "../../lib/primitives";
 
-/** The generic open-in-window callback: try the surface dispatcher first
- *  (registered window keys like "review-meetings"), then fall back to the
- *  desk's pullout resolver (bare object IDs like a meeting or note). */
-function chairOpenInWindow(id: string): void {
-  if (openSurface(id)) return;
-  useDesk.getState().openPullout(id);
+// ── Types ──────────────────────────────────────────────────────────
+
+interface NeedsYouItem {
+  projectId: string;
+  projectName: string;
+  ref: string;
+  title: string;
+  why: string;
+  ageToken: string;
+  source: string;
+  verbHref: string | null;
+  severity: string;
 }
 
-/** Build the lanes prop by mapping LANE_ORDER over the registry. */
-function buildLanes(
-  onOpenInWindow: (id: string) => void,
-): Partial<Record<LaneId, ReactNode>> {
-  const lanes: Partial<Record<LaneId, ReactNode>> = {};
-  for (const id of LANE_ORDER) {
-    const Comp = LANE_COMPONENTS[id];
-    if (Comp) lanes[id] = <Comp onOpenInWindow={onOpenInWindow} />;
+interface NeedsYouPayload {
+  count: number;
+  projects: string[];
+  items: NeedsYouItem[];
+  next: { label: string; at: string } | null;
+}
+
+interface BriefItem {
+  id: string;
+  section: string;
+  text: string;
+  detail?: string | null;
+  source_ref?: string | null;
+  priority: number;
+}
+
+interface MondayBrief {
+  id: string;
+  headline: string;
+  sections: Record<string, BriefItem[]>;
+  is_empty: boolean;
+  shelf?: Record<string, string>;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────
+
+const MONTHS = [
+  "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+  "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
+];
+
+function ledgerDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${MONTHS[d.getMonth()]} ${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function durationMin(seconds: number | null | undefined): string {
+  if (!seconds || seconds <= 0) return "";
+  return `${Math.round(seconds / 60)} MIN`;
+}
+
+/** Source emblem token: GH for github, J for jira, etc. */
+function sourceEmblem(source: string): string {
+  const s = source.toLowerCase();
+  if (s === "github") return "GH";
+  if (s === "jira") return "J";
+  if (s === "delta") return "D";
+  return s.slice(0, 2).toUpperCase();
+}
+
+/** WHY token colour: danger = warning/orange, warning = amber, info = muted. */
+function whySeverityTone(severity: string): string {
+  if (severity === "danger") return "failure";
+  if (severity === "warning") return "warning";
+  return "idle";
+}
+
+/** Format NEXT line from the payload. */
+function nextLine(next: NeedsYouPayload["next"]): string | null {
+  if (!next) return null;
+  const parts: string[] = ["NEXT"];
+  if (next.label) parts.push(next.label.toUpperCase());
+  if (next.at) {
+    const d = new Date(next.at);
+    if (!Number.isNaN(d.getTime())) {
+      parts.push(
+        d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }),
+      );
+    }
   }
-  return lanes;
+  return parts.join(" · ");
 }
+
+const continuityLabels: Record<string, string> = {
+  idle: "Continue",
+  reserved: "Working",
+  in_flight: "Working",
+  awaiting_projection: "Working",
+  review_ready: "Ready for you",
+  stale: "Needs attention",
+  named_failure: "Needs attention",
+  unavailable_remote: "Needs attention",
+};
+
+// ── ChairHome ──────────────────────────────────────────────────────
 
 export function ChairHome({ arrivalRequired = false }: { arrivalRequired?: boolean }) {
-  const onOpenInWindow = useCallback(chairOpenInWindow, []);
-  const foregroundWork = useDesk(
-    (state) => state.editingId !== null || state.pullouts.length > 0,
-  );
-  const lanes = buildLanes(onOpenInWindow);
-
   if (arrivalRequired) {
     return (
       <main className="chair chair-first-value" data-testid="chair-first-value">
@@ -53,10 +137,427 @@ export function ChairHome({ arrivalRequired = false }: { arrivalRequired?: boole
   }
 
   return (
-    <Chair
-      hero={foregroundWork ? null : <ThoughtEntry />}
-      activeWork={null}
-      lanes={lanes}
-    />
+    <Chair>
+      <Arrival />
+    </Chair>
+  );
+}
+
+// ── The Arrival face ───────────────────────────────────────────────
+
+function Arrival() {
+  // ── needs-you wire ──
+  const [needsYou, setNeedsYou] = useState<NeedsYouPayload | null>(null);
+  useEffect(() => {
+    void apiFetch<NeedsYouPayload>("/api/desk/needs-you").then(setNeedsYou).catch(() => null);
+  }, []);
+
+  // ── thoughts ──
+  const deskUpdatedAt = useDesk((state) => state.updatedAt);
+  const [thoughts, setThoughts] = useState<UnfinishedThought[]>([]);
+  useEffect(() => {
+    void unfinishedThoughts()
+      .then((page) => setThoughts(page.items))
+      .catch(() => undefined);
+  }, [deskUpdatedAt]);
+
+  // ── brief ──
+  const [brief, setBrief] = useState<MondayBrief | null>(null);
+  const [briefLoading, setBriefLoading] = useState(true);
+  useEffect(() => {
+    void apiFetch<MondayBrief | null>("/api/brief/latest")
+      .then(setBrief)
+      .catch(() => null)
+      .finally(() => setBriefLoading(false));
+  }, []);
+
+  // ── meetings ──
+  const meetings = useDesk((s) => s.items.meeting);
+
+  // ── headline ──
+  const count = needsYou?.count ?? 0;
+  const projectCount = needsYou?.projects?.length ?? 0;
+  const headline =
+    count > 0
+      ? `${count} need you across ${projectCount} ${projectCount === 1 ? "project" : "projects"}`
+      : "Nothing needs you";
+  const headlineAccent = count > 0;
+  const next = needsYou ? nextLine(needsYou.next) : null;
+
+  // ── brief items (untriaged only) ──
+  const briefSections = ["changed", "broke", "waiting", "decisions"] as const;
+  const briefItems: BriefItem[] = brief && !brief.is_empty
+    ? briefSections.flatMap((s) => brief.sections[s] ?? [])
+    : [];
+  const briefShelf = brief?.shelf ?? {};
+  const untriagedBrief = briefItems.filter((item) => !briefShelf[item.id]);
+
+  // ── shelf verbs ──
+  const [busyBriefId, setBusyBriefId] = useState<string | null>(null);
+  const doBriefShelf = async (itemId: string, state: "acknowledged" | "deferred") => {
+    const current = briefShelf[itemId];
+    const next: string | null = current === state ? null : state;
+    setBusyBriefId(itemId);
+    try {
+      await apiFetch(`/api/brief/items/${encodeURIComponent(itemId)}/shelf`, {
+        method: "POST",
+        json: { state: next },
+      });
+      setBrief((prev) => {
+        if (!prev) return prev;
+        const updated = { ...prev.shelf };
+        if (next === null) delete (updated as Record<string, string>)[itemId];
+        else (updated as Record<string, string>)[itemId] = next;
+        return { ...prev, shelf: updated };
+      });
+    } catch { /* row stays */ }
+    finally { setBusyBriefId(null); }
+  };
+
+  // ── intel run ──
+  const [runningIntel, setRunningIntel] = useState<string | null>(null);
+  const runIntelligence = async (meetingId: string) => {
+    setRunningIntel(meetingId);
+    try {
+      await apiFetch(`/api/meetings/${encodeURIComponent(meetingId)}/intelligence/run`, {
+        method: "POST",
+      });
+      void useDesk.getState().refresh();
+    } catch { /* receipt stays */ }
+    finally { setRunningIntel(null); }
+  };
+
+  const multipleProjects = projectCount > 1;
+
+  return (
+    <>
+      {/* ── Headline ── */}
+      <div className="arrival-headline" data-testid="arrival-headline">
+        <h1
+          className={headlineAccent ? "arrival-display arrival-display--accent" : "arrival-display arrival-display--muted"}
+          data-testid="arrival-display"
+        >
+          {headline}
+        </h1>
+        {next ? (
+          <p className="arrival-next" data-testid="arrival-next">{next}</p>
+        ) : null}
+      </div>
+
+      {/* ── Needs You ── */}
+      {count > 0 && needsYou ? (
+        <div data-testid="arrival-needs-you">
+          <NeedsYouSection
+            items={needsYou.items}
+            count={count}
+            multipleProjects={multipleProjects}
+          />
+        </div>
+      ) : null}
+
+      {/* ── Thoughts ── */}
+      {thoughts.length > 0 ? (
+        <div data-testid="arrival-thoughts">
+          <ThoughtsSection thoughts={thoughts} />
+        </div>
+      ) : null}
+
+      {/* ── Brief ── */}
+      {!briefLoading && untriagedBrief.length > 0 ? (
+        <div data-testid="arrival-brief">
+          <BriefSection
+            items={untriagedBrief}
+            busyId={busyBriefId}
+            onShelf={doBriefShelf}
+          />
+        </div>
+      ) : null}
+
+      {/* ── Meetings ── */}
+      {meetings.length > 0 ? (
+        <div data-testid="arrival-meetings">
+          <MeetingsSection
+            meetings={meetings}
+            runningIntel={runningIntel}
+            onRunIntel={runIntelligence}
+          />
+        </div>
+      ) : null}
+
+      {/* ── Capture Bar ── */}
+      <CaptureBar />
+    </>
+  );
+}
+
+// ── Sections ───────────────────────────────────────────────────────
+
+function NeedsYouSection({
+  items,
+  count,
+  multipleProjects,
+}: {
+  items: NeedsYouItem[];
+  count: number;
+  multipleProjects: boolean;
+}) {
+  return (
+    <SurfaceSection label={countLabel("NEEDS YOU", count)}>
+      <SurfaceLedger count={null} cols="room">
+        {items.map((item, i) => (
+          <SurfaceLedgerRow
+            key={`${item.projectId}-${item.ref}-${i}`}
+            lead={
+              <span className="arrival-source-emblem" data-testid="arrival-source-emblem">
+                {sourceEmblem(item.source)}
+              </span>
+            }
+            primary={item.title}
+            cells={
+              <span className="arrival-needs-you-meta">
+                <span
+                  className="arrival-why-token"
+                  data-tone={whySeverityTone(item.severity)}
+                  data-testid="arrival-why"
+                >
+                  {item.why}
+                </span>
+                {multipleProjects ? (
+                  <span className="arrival-project-token">{item.projectName}</span>
+                ) : null}
+              </span>
+            }
+            trailing={
+              item.verbHref ? (
+                <Button
+                  variant="ghost"
+                  dense
+                  onClick={() => {
+                    if (item.verbHref) window.open(item.verbHref, "_blank", "noopener");
+                  }}
+                >
+                  Open
+                </Button>
+              ) : null
+            }
+            wrap
+            expands={false}
+            data-testid="arrival-needs-you-row"
+          />
+        ))}
+      </SurfaceLedger>
+    </SurfaceSection>
+  );
+}
+
+function ThoughtsSection({ thoughts }: { thoughts: UnfinishedThought[] }) {
+  return (
+    <SurfaceSection label={countLabel("THOUGHTS", thoughts.length)}>
+      <SurfaceLedger count={null} cols="room">
+        {thoughts.map((thought, i) => {
+          const stateLabel = continuityLabels[thought.continuity_state] ?? "Continue";
+          const isFirst = i === 0;
+          // Omit the state token when it says the same as the verb
+          // ("CONTINUE" beside "Continue" is the name said twice).
+          const showStateToken = stateLabel !== "Continue";
+          return (
+            <SurfaceLedgerRow
+              key={thought.id}
+              primary={thought.title.trim() || "Untitled thought"}
+              cells={
+                showStateToken ? (
+                  <span className="arrival-thought-state" data-testid="arrival-thought-state">
+                    {stateLabel.toUpperCase()}
+                  </span>
+                ) : null
+              }
+              trailing={
+                isFirst ? (
+                  <Button
+                    variant="primary"
+                    dense
+                    onClick={() =>
+                      useDesk.getState().openPullout(`note:${thought.working_note_id}`)
+                    }
+                  >
+                    Continue
+                  </Button>
+                ) : null
+              }
+              onToggle={() =>
+                useDesk.getState().openPullout(`note:${thought.working_note_id}`)
+              }
+              expands={false}
+              data-testid="arrival-thought-row"
+            />
+          );
+        })}
+      </SurfaceLedger>
+    </SurfaceSection>
+  );
+}
+
+function BriefSection({
+  items,
+  busyId,
+  onShelf,
+}: {
+  items: BriefItem[];
+  busyId: string | null;
+  onShelf: (id: string, state: "acknowledged" | "deferred") => void;
+}) {
+  return (
+    <SurfaceSection
+      label={`BRIEF · ${countToken(items.length, "THING WAITING", "THINGS WAITING") ?? ""}`}
+         >
+      <SurfaceLedger count={null} cols="room">
+        {items.map((item) => (
+          <SurfaceLedgerRow
+            key={item.id}
+            primary={item.text}
+            trailing={
+              <>
+                <Button
+                  variant="ghost"
+                  dense
+                  disabled={busyId === item.id}
+                  onClick={() => onShelf(item.id, "acknowledged")}
+                >
+                  Ack
+                </Button>
+                <Button
+                  variant="ghost"
+                  dense
+                  disabled={busyId === item.id}
+                  onClick={() => onShelf(item.id, "deferred")}
+                >
+                  Defer
+                </Button>
+              </>
+            }
+            expands={false}
+            wrap
+            data-testid="arrival-brief-row"
+          />
+        ))}
+      </SurfaceLedger>
+    </SurfaceSection>
+  );
+}
+
+function MeetingsSection({
+  meetings,
+  runningIntel,
+  onRunIntel,
+}: {
+  meetings: Meeting[];
+  runningIntel: string | null;
+  onRunIntel: (id: string) => void;
+}) {
+  // Sort by startedAt descending, limit to 3.
+  const sorted = [...meetings]
+    .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
+    .slice(0, 3);
+
+  return (
+    <SurfaceSection label={countLabel("MEETINGS", sorted.length)}>
+      <SurfaceLedger count={null} cols="room">
+        {sorted.map((m) => {
+          const badge = intelBadge(m.intelStatus);
+          const hasTranscript = m.transcriptWords != null && m.transcriptWords > 0;
+          const isOff = badge === "OFF";
+          const isSaved = badge === "SAVED";
+          return (
+            <SurfaceLedgerRow
+              key={m.id}
+              time={ledgerDate(m.startedAt)}
+              primary={m.title || "Untitled meeting"}
+              cells={
+                <>
+                  {durationMin(m.durationSeconds) ? (
+                    <span className="arrival-meeting-duration">
+                      {durationMin(m.durationSeconds)}
+                    </span>
+                  ) : null}
+                  <span
+                    className="arrival-meeting-badge"
+                    data-badge={badge.toLowerCase()}
+                    data-testid="arrival-meeting-badge"
+                  >
+                    {badge}
+                  </span>
+                </>
+              }
+              trailing={
+                isOff && hasTranscript ? (
+                  <Button
+                    variant="primary"
+                    dense
+                    disabled={runningIntel === m.id}
+                    onClick={() => onRunIntel(m.id)}
+                    data-testid="arrival-run-intel"
+                  >
+                    {runningIntel === m.id ? "Running…" : "Run intelligence"}
+                  </Button>
+                ) : isSaved ? (
+                  <Button
+                    variant="ghost"
+                    dense
+                    onClick={() =>
+                      openSurfaceOr("review-meetings", "/meetings", m.id)
+                    }
+                  >
+                    Open
+                  </Button>
+                ) : null
+              }
+              onToggle={() =>
+                openSurfaceOr("review-meetings", "/meetings", m.id)
+              }
+              expands={false}
+              wrap
+              data-testid="arrival-meeting-row"
+            />
+          );
+        })}
+      </SurfaceLedger>
+    </SurfaceSection>
+  );
+}
+
+// ── Capture Bar ────────────────────────────────────────────────────
+
+function CaptureBar() {
+  const [dictating, setDictating] = useState(false);
+
+  const handleMicText = useCallback((text: string) => {
+    // Voice commands handled by the MicButton pipeline.
+  }, []);
+
+  return (
+    <footer className="arrival-capture-bar" data-testid="arrival-capture-bar">
+      <span className="arrival-capture-talk">
+        <MicButton
+          onText={handleMicText}
+          label="Talk"
+          variant="transport"
+          onState={(state) => setDictating(state === "listening")}
+        />
+      </span>
+      <Button
+        variant="ghost"
+        onClick={() => openSurfaceOr("dictate", "/dictation")}
+        data-testid="arrival-develop-thought"
+      >
+        Develop a thought
+      </Button>
+      <Button
+        variant="ghost"
+        onClick={() => void useDesk.getState().startRecording()}
+        data-testid="arrival-record-meeting"
+      >
+        Record meeting
+      </Button>
+    </footer>
   );
 }

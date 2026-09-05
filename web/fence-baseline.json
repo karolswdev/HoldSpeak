@@ -1,10 +1,10 @@
 {
   "$doc": "HS-156-03 — legacy violations of the surface library fence. This list can NEVER grow; removing entries is standing work.",
   "private-imports": [
-    "src/desk/chair/Lane.tsx",
-    "src/desk/chair/lanes/AgentsLane.tsx",
-    "src/desk/chair/lanes/BriefLane.tsx",
-    "src/desk/chair/lanes/DoorBoardLane.tsx",
+    "src/desk/chair/_parked/Lane.tsx",
+    "src/desk/chair/_parked/lanes/AgentsLane.tsx",
+    "src/desk/chair/_parked/lanes/BriefLane.tsx",
+    "src/desk/chair/_parked/lanes/DoorBoardLane.tsx",
     "src/desk/components/AskPanel.tsx",
     "src/desk/components/AttentionDrawer.tsx",
     "src/desk/components/DeliveryBoard.tsx",

@@ -1,3 +1,4 @@
+// PARKED (HS-170-04)
 // HS-135-05 -- the lane composition contract (design-laws.md L2 +
 // counsel ruling A.L2). A lane is a composed surface plugged into the
 // Chair's door via this interface. The static order is fixed by

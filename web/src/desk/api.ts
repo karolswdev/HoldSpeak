@@ -444,6 +444,7 @@ const fromWireMeeting = (m: unknown): Meeting | null => {
     calendarEventId: wireStringOrNull(m, "calendar_event_id"),
     calendarEventTitle: wireStringOrNull(m, "calendar_event_title"),
     calendarSourceLabel: wireStringOrNull(m, "calendar_source_label"),
+    transcriptWords: wireRaw(m, "transcriptWords") as number | null | undefined,
   };
 };
 

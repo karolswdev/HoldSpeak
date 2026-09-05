@@ -1,3 +1,4 @@
+// PARKED (HS-170-04)
 import { useEffect, useRef, useState } from "react";
 import { useDesk } from "../store";
 import { unfinishedThoughts, type UnfinishedThought } from "../thoughts";

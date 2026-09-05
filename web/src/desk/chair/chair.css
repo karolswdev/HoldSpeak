@@ -1,9 +1,6 @@
-/* HS-135-05 -- the Chair surface stylesheet.
-   Signal Workbench material; L1 depth grammar; tokens only.
-   Ember-only on the Chair: no cool or gradient accents here
-   (the gradient is hero-only, story 11).
-   HS-135-13 -- void polish: the hero holds the room when lanes are
-   quiet; lanes compose in a coherent grid; empty wrappers collapse. */
+/* HS-170-04 -- the Arrival face stylesheet.
+   The lane vocabulary is PARKED; the Chair is the arrival container,
+   sections compose from the surface library. */
 
 .chair {
   display: flex;
@@ -11,49 +8,24 @@
   gap: var(--space-5);
   padding: var(--space-4);
   max-width: 960px;
-  /* Seat the normal Chair inside the same working band used by windows.
-     Subtracting the chrome bands from height is not enough: without the
-     matching block offsets a populated hero starts underneath the fixed
-     system bar. */
   margin: var(--desk-work-top) auto var(--desk-work-bottom);
-  /* The normal Chair fills the working area between chrome and dock. */
   min-height: calc(100dvh - var(--desk-snap-top) - var(--desk-snap-bottom));
 }
 
-/* HS-150-06 (owner catch) — the working band is law at EVERY height.
-   The populated Chair used to body-scroll at normal heights, sliding
-   lanes underneath the fixed dock and system bar; 144-04's containment
-   was gated to short screens on the premise that the normal-height
-   Chair fits all at once — a premise the four-lane Chair retired. The
-   Chair is capped to the band and the lane column owns its overflow;
-   the chrome never has content pass beneath it. */
+/* HS-150-06 — the working band is law at EVERY height. */
 .chair:not(.chair-first-value) {
   box-sizing: border-box;
   height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
   max-height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
-}
-.chair:not(.chair-first-value) .chair-lanes {
-  flex: 1 1 auto;
-  min-height: 0;
   overflow-y: auto;
   overscroll-behavior-block: contain;
 }
 
-/* ── The capture hero slot (story 11 fills it with mic/record). ──── */
-.chair-hero {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 80px;
-}
-
-/* HS-140-01: during first value, the Chair itself is quiet. The existing
-   FirstWords card stays above the fold without a second page, modal, or dock. */
+/* HS-140-01: first value gate. */
 .chair.chair-first-value {
   min-height: 100dvh;
   align-items: center;
   justify-content: center;
-  /* First value deliberately has no Desk chrome or dock. */
   margin: 0 auto;
   padding: clamp(var(--space-3), 5vw, var(--space-6));
 }
@@ -61,709 +33,198 @@
   box-sizing: border-box;
 }
 
-/* When ALL lanes are quiet the hero expands to hold the room vertically.
-   A lane is "populated" when it contains a .surface-section (real data).
-   Lanes with only SurfaceState[data-kind="empty"] or that returned null
-   (:empty) are quiet. The :has() selector is supported in all target
-   browsers (Chrome 105+, Firefox 121+, Safari 15.4+). */
-.chair-active-work:empty { display: none; }
-.chair-empty-invitation { display: none; }
-.chair:not(:has(.chair-lane .surface-section)):not(:has(.finish-thoughts)) .chair-empty-invitation {
-  display: block;
-  text-align: center;
+/* ── Arrival headline ──────────────────────────────────────────────── */
+.arrival-headline {
+  display: grid;
+  gap: 4px;
+}
+
+.arrival-display {
+  margin: 0;
+  font-family: var(--font-display, var(--font-sans));
+  font-size: var(--desk-type-display-size, 26px);
+  font-weight: var(--desk-type-display-weight, 650);
+  line-height: 1.15;
+}
+.arrival-display--accent {
+  color: var(--accent);
+}
+.arrival-display--muted {
   color: var(--text-muted);
-  font-family: var(--font-mono);
-  margin-top: var(--space-3);
 }
 
-.chair:not(:has(.chair-lane .surface-section)):not(:has(.finish-thoughts)) .chair-hero {
-  flex: 1;
-}
-/* Scale the hero key up for a larger presence in the sparse state. */
-.chair:not(:has(.chair-lane .surface-section)):not(:has(.finish-thoughts)) .capture-hero-key {
-  width: calc(var(--size-key) * 2);
-  height: calc(var(--size-key) * 2);
-  font-size: 11px;
-}
-.chair:not(:has(.chair-lane .surface-section)):not(:has(.finish-thoughts)) .capture-hero-glyph {
-  font-size: var(--size-icon-lg);
-}
-.chair:not(:has(.chair-lane .surface-section)):not(:has(.finish-thoughts)) .capture-hero-glyph img {
-  width: var(--size-icon-lg);
-  height: var(--size-icon-lg);
-}
-
-/* ── The composed lane slots. ────────────────────────────────────── */
-.chair-lanes {
-  display: grid;
-  /* A single `1fr` track has an automatic minimum: a populated lane can
-     otherwise widen the whole phone viewport to its longest row. */
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-5);
-}
-
-/* Two-column grid at wide viewports (1440 desk width). The Door spans
-   both tracks there, so its five live columns need the full desk working band
-   rather than the older, single-lane 960px cap. */
-@media (min-width: 1200px) {
-  .chair {
-    max-width: 1280px;
-  }
-  .chair-lanes {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-/* Empty lane wrappers collapse: when a lane component returns null,
-   its wrapper div is empty and takes no visual space. */
-.chair-lane:empty {
-  display: none;
-}
-
-/* Individual lane wrapper. */
-.chair-lane {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-/* HS-141-03 — the daily entry is deliberately smaller than Speak. */
-.thought-entry {
-  display: grid;
-  width: min(100%, 640px);
-  min-width: 0;
-  gap: var(--space-2);
-}
-.thought-entry textarea {
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  resize: vertical;
-}
-.thought-entry-primary { width: 100%; }
-.thought-entry-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.thought-entry-more { min-width: 0; }
-
-/* Unfinished work is a first-class Chair lane, not an accordion under capture. */
-.chair-active-work {
-  width: min(100%, 640px);
-  min-width: 0;
-  margin-inline: auto;
-}
-.finish-thoughts {
-  min-width: 0;
-}
-.finish-thoughts-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  padding: 0 var(--desk-surface-row-pad-x) var(--space-1);
-}
-.finish-thoughts-head h2 {
+.arrival-next {
   margin: 0;
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: var(--desk-surface-detail-size, 12px);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.finish-thoughts-head > span {
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-variant-numeric: tabular-nums;
+
+/* ── FIX 1+2: Row titles at the PRIMARY type step; 44px rhythm ───── */
+
+/* Override the SurfaceLedgerRow primary in arrival sections:
+   Inter 15px/600, text colour — the thing's name, never mono grey. */
+.chair .surface-ledger-primary {
+  font-family: var(--font-sans);
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+  line-height: var(--desk-type-primary-lh);
+  color: var(--text);
 }
-.finish-thoughts-list {
-  overflow: hidden;
-  margin: 0;
-  padding: 0;
-  border: 1px solid var(--border);
-  background: var(--surface-1);
-  list-style: none;
+
+/* 44px row height with hairline separators between rows. */
+.chair .surface-ledger-line {
+  min-height: 44px;
+  padding-block: 8px;
 }
-.finish-thoughts-item + .finish-thoughts-item {
+.chair .surface-ledger-row + .surface-ledger-row {
   border-top: 1px solid var(--border);
 }
-.finish-thoughts-row {
-  display: flex;
+
+/* ── Needs-You rows ────────────────────────────────────────────────── */
+
+/* The meta container keeps WHY + project tokens as one flex unit so
+   they sit together on line 2 at 393 with Open at the trailing edge. */
+.arrival-needs-you-meta {
+  display: inline-flex;
   align-items: center;
-  width: 100%;
-  min-width: 0;
-  min-height: 52px;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--desk-surface-row-pad-x);
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.finish-thoughts-row:hover,
-.finish-thoughts-row:focus-visible {
-  background: var(--wash-1);
-}
-.finish-thoughts-row:focus-visible {
-  outline: 1px solid var(--accent);
-  outline-offset: -2px;
-}
-.finish-thoughts-copy {
-  display: grid;
-  flex: 1;
-  min-width: 0;
-  gap: 2px;
-}
-.finish-thoughts-copy strong,
-.finish-thoughts-preview,
-.finish-thoughts-meta {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.finish-thoughts-copy strong {
-  font-size: var(--desk-surface-body-size);
-  font-weight: 600;
-}
-.finish-thoughts-preview,
-.finish-thoughts-meta {
-  color: var(--text-muted);
-  font-size: var(--desk-surface-detail-size);
-}
-.finish-thoughts-meta > span + span::before {
-  content: " · ";
-}
-.finish-thoughts-arrow {
-  flex: 0 0 auto;
-  color: var(--text-muted);
-  font-size: var(--font-size-lg);
-}
-.finish-thoughts-row:hover .finish-thoughts-arrow,
-.finish-thoughts-row:focus-visible .finish-thoughts-arrow {
-  color: var(--accent);
-}
-.finish-thoughts-more {
-  width: 100%;
-  margin-top: var(--space-1);
-}
-@media (max-width: 480px) {
-  .thought-entry-actions { display: grid; grid-template-columns: minmax(0, 1fr); }
-  .thought-entry-actions .btn--primary { width: 100%; }
-  .finish-thoughts-row { min-height: 56px; }
-  .finish-thoughts-copy strong {
-    display: -webkit-box;
-    white-space: normal;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-}
-
-/* ── Lane chrome ─────────────────────────────────────────────────── */
-
-/* The lane header verb (count badge, clickable to open full surface). */
-.chair-lane-header-verb {
-  all: unset;
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  padding: 0 var(--space-2);
-}
-.chair-lane-header-verb:hover {
-  color: var(--accent);
-}
-
-/* The lane footer ("N more -- Open SURFACE"). */
-.chair-lane-footer {
-  all: unset;
-  cursor: pointer;
-  display: block;
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-  padding: var(--space-2) 0;
-  text-align: center;
-}
-.chair-lane-footer:hover {
-  color: var(--accent);
-}
-
-/* ── BriefLane counts row (R1) ──────────────────────────────────── */
-.brief-lane-headline {
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-body-size);
-  font-weight: 600;
-  padding: var(--space-1) var(--desk-surface-row-pad-x);
-}
-.brief-lane-counts {
-  display: flex;
-  flex-wrap: wrap;
   gap: 8px;
-  padding: 0 var(--desk-surface-row-pad-x) var(--space-1);
-}
-.brief-lane-count {
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-detail-size);
-  color: var(--text-muted);
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
-/* ── AgentsLane meta slot (R2) ──────────────────────────────────── */
-.agents-lane-meta {
-  display: flex;
+.arrival-source-emblem {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-}
-
-/* ── Empty-chair invitation (R3) ────────────────────────────────── */
-.desk-next .chair-empty-invitation {
-  display: none;
   justify-content: center;
-  padding: var(--space-3) 0;
-}
-.desk-next .chair:not(:has(.chair-lane .surface-section)):not(:has(.finish-thoughts)) .chair-empty-invitation {
-  display: flex;
-}
-.desk-next .chair-empty-invitation-text {
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-detail-size);
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
-}
-
-/* ── HS-144-03 — Door board: one contained workbench rail. ───────── */
-@media (min-width: 1200px) {
-  .chair-lane[data-lane="door"] { grid-column: 1 / -1; }
-  /* HS-150-06: the Door spans first, so lanes pair (2,3), (4,5), … —
-     a dangling EVEN last lane is the orphan and spans the band. */
-  .chair-lane:last-child:nth-child(even) { grid-column: 1 / -1; }
-}
-.door-board-section { min-width: 0; }
-.door-board-summary {
-  min-height: 18px;
-  padding: 0 var(--desk-surface-row-pad-x) var(--space-2);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-detail-size);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.03em;
-}
-.door-board-receipt { margin: 0 var(--desk-surface-row-pad-x) var(--space-2); }
-/* HS-149-01 L2: quiet named People-state line. */
-.door-board-people-state {
-  padding: 0 var(--desk-surface-row-pad-x) var(--space-2);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-detail-size);
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-.door-board-viewport {
-  max-width: 100%;
-  overflow-x: auto;
-  overflow-y: visible;
-  overscroll-behavior-inline: contain;
-  scrollbar-gutter: stable both-edges;
-  outline: none;
-}
-.door-board-viewport:focus-visible {
-  outline: 1px solid var(--accent);
-  outline-offset: -1px;
-}
-/* HS-145-01 — scroll-edge gradient hints on the 393 board viewport.
-   An outer wrapper holds absolutely positioned pseudo-elements that
-   overlay the scroll container without affecting its scroll geometry. */
-.door-board-hint-wrap { position: relative; }
-.door-board-hint-wrap::before,
-.door-board-hint-wrap::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
   width: 28px;
-  display: none;
-  pointer-events: none;
-  z-index: var(--desk-z-local);
-}
-.door-board-hint-wrap::before {
-  left: 0;
-  background: linear-gradient(to right, var(--surface-1), transparent);
-}
-.door-board-hint-wrap::after {
-  right: 0;
-  background: linear-gradient(to left, var(--surface-1), transparent);
-}
-.door-board-hint-wrap[data-scroll-hint="right"]::after,
-.door-board-hint-wrap[data-scroll-hint="both"]::before,
-.door-board-hint-wrap[data-scroll-hint="both"]::after,
-.door-board-hint-wrap[data-scroll-hint="left"]::before {
-  display: block;
-}
-.door-board-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(196px, 1fr));
-  min-width: 980px;
-  gap: var(--space-2);
-  padding: 0 var(--desk-surface-row-pad-x) var(--space-2);
-}
-.door-board-column {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-  box-shadow: var(--desk-window-etch);
-}
-.door-board-column-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 22px;
-  gap: var(--space-2);
-  border-bottom: 1px solid var(--border);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-detail-size);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-.door-board-column-head h4 { margin: 0; font: inherit; font-weight: 600; }
-.door-board-column-head > span { font-variant-numeric: tabular-nums; }
-.door-board-cards { display: grid; align-content: start; gap: var(--space-2); }
-.door-card {
-  min-width: 0;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface-1);
-  box-shadow: var(--desk-window-bevel);
-}
-.door-card-open {
-  display: grid;
-  width: 100%;
-  min-width: 0;
-  gap: 3px;
-  padding: var(--space-2);
-  border: 0;
-  border-radius: inherit;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.door-card-open:hover { background: var(--wash-1); }
-.door-card-open:focus-visible { outline: 1px solid var(--accent); outline-offset: -2px; }
-.door-card-open strong,
-.door-card-open > span,
-.door-card-open small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.door-card-open strong { font-size: var(--desk-surface-body-size); font-weight: 600; }
-.door-card-open > span { color: var(--text-muted); font-size: var(--desk-surface-detail-size); }
-.door-card-open small { color: var(--text-muted); font-family: var(--font-mono); font-size: var(--font-size-xs); }
-.door-card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 0 var(--space-2) var(--space-2);
-}
-.door-card-action { min-width: 0; }
-.door-card-action-seat {
-  display: grid;
-  gap: var(--space-1);
-  margin-top: var(--space-1);
-  padding-top: var(--space-1);
-  border-top: 1px solid var(--border);
-}
-.door-card-action-seat .string-gadget { min-width: 0; }
-.door-board-column-empty {
-  min-height: 64px;
-  padding: var(--space-2);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-detail-size);
-}
-
-/* HS-144-04 — the Door's one chronological future rail. */
-.door-upcoming-rail {
-  display: grid;
-  gap: var(--space-2);
-  margin: var(--space-2) var(--desk-surface-row-pad-x) 0;
-  padding-top: var(--space-2);
-  border-top: 1px solid var(--border);
-}
-.door-upcoming-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-}
-.door-upcoming-head h3 {
-  margin: 0;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-detail-size);
-  font-weight: 600;
-  letter-spacing: 0.05em;
-}
-.door-upcoming-list {
-  display: grid;
-  gap: var(--space-1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.door-upcoming-row {
-  display: grid;
-  grid-template-columns: minmax(130px, auto) minmax(12rem, 1fr) auto;
-  align-items: baseline;
-  gap: 2px var(--space-2);
-  min-width: 0;
-  padding: var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-  box-shadow: var(--desk-window-etch);
-}
-.door-upcoming-kind,
-.door-upcoming-time,
-.door-upcoming-detail,
-.door-upcoming-link,
-.door-upcoming-empty {
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-detail-size);
-}
-.door-upcoming-kind { letter-spacing: 0.04em; }
-.door-upcoming-row strong {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--desk-surface-body-size);
-}
-.door-upcoming-time { white-space: nowrap; }
-.door-upcoming-detail,
-.door-upcoming-link { grid-column: 2 / -1; }
-.door-upcoming-link { color: var(--accent); }
-.door-upcoming-empty {
-  min-height: 38px;
-  display: flex;
-  align-items: center;
-  padding: var(--space-2);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-sm);
-}
-/* HS-146-04 — provenance chip on EVENT rows when >1 calendar source. */
-.door-upcoming-provenance {
-  display: inline-block;
-  /* A grid child stretches by default; a chip hugs its label. */
-  justify-self: start;
-  width: max-content;
-  padding: 1px 6px;
+  height: 28px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  grid-column: 2 / -1;
-}
-/* HS-149-03 — person chip on linked EVENT rows (quiet mono, sibling to provenance). */
-.door-upcoming-person {
-  display: inline-block;
-  justify-self: start;
-  width: max-content;
-  padding: 1px 6px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-  grid-column: 2 / -1;
-}
-/* HS-147-02 — arm/cancel actions + armed chip + in-flow refusal on EVENT rows. */
-.door-upcoming-arm-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  white-space: nowrap;
-}
-.door-upcoming-armed-chip {
-  display: inline-block;
-  padding: 1px 6px;
-  border: 1px solid var(--accent);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-}
-.door-upcoming-refusal {
-  display: inline-block;
-  padding: 1px 6px;
-  border: 1px solid var(--danger, #c53030);
-  border-radius: var(--radius-sm);
-  color: var(--danger, #c53030);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
   letter-spacing: 0.04em;
 }
-/* HS-145-02 — connect-calendar affordance on the empty rail. */
-.door-upcoming-empty--connect { justify-content: space-between; gap: var(--space-2); }
-@media (max-width: 640px) {
-  .door-upcoming-row { grid-template-columns: 1fr auto; }
-  .door-upcoming-kind { grid-column: 1 / -1; }
-  .door-upcoming-arm-actions { grid-column: 1 / -1; }
-  .door-upcoming-detail,
-  .door-upcoming-link { grid-column: 1 / -1; }
-}
-/* The short phone has only one working band. Keep each dense Door region
-   independently browseable there rather than allowing rows to lengthen the
-   Chair beneath the dock. The wider/normal-height Chair keeps its generous
-   all-at-once scan. */
-@media (max-height: 720px) {
-  /* HS-144-04 — the chair-level containment moved to the base rules
-     (HS-150-06, every height); the short screen keeps its region caps so
-     each dense Door region stays independently browseable. */
-  .door-board-viewport {
-    max-block-size: min(30dvh, 14rem);
-    overflow-y: auto;
-    overscroll-behavior-block: contain;
-  }
-  .door-upcoming-list {
-    max-block-size: min(22dvh, 9rem);
-    overflow-y: auto;
-    overscroll-behavior-block: contain;
-  }
-}
-/* HS-150-02 -- person chip row (header filter), card-level person chip, staleness, map affordance. */
-.door-person-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 0 var(--desk-surface-row-pad-x) var(--space-2);
-}
-.door-person-chip-btn {
-  display: inline-block;
-  padding: 1px 8px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
+
+.arrival-why-token {
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-  cursor: pointer;
-}
-.door-person-chip-btn:hover { background: var(--wash-1); }
-.door-person-chip-active {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
-}
-.door-card-person {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 var(--space-2) var(--space-1);
-}
-.door-card-person-btn {
-  display: inline-block;
-  padding: 1px 6px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-  cursor: pointer;
-}
-.door-card-person-btn:hover { background: var(--wash-1); }
-/* HS-153-05: thread provenance chip on Door cards. */
-.door-card-provenance-chip {
-  all: unset;
-  cursor: pointer;
-  display: inline-block;
-  margin: 0 var(--space-2) var(--space-1);
-  padding: 1px 6px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
 }
-.door-card-provenance-chip:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-.door-card-staleness {
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  white-space: nowrap;
-}
-.door-card-map-picker {
-  display: grid;
-  gap: 2px;
-  padding: var(--space-1) 0;
-}
-.door-card-map-option {
-  display: block;
-  width: 100%;
-  padding: var(--space-1) var(--space-2);
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: var(--desk-surface-detail-size);
-  text-align: left;
-  cursor: pointer;
-}
-.door-card-map-option:hover { background: var(--wash-1); }
-.door-card-map-option:disabled { opacity: 0.5; cursor: default; }
-.door-card-map-error {
+.arrival-why-token[data-tone="failure"] {
   color: var(--danger, #c53030);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
 }
-.door-card-map-empty {
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  padding: var(--space-1);
+.arrival-why-token[data-tone="warning"] {
+  color: var(--accent);
 }
 
+.arrival-project-token {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0.6;
+}
+
+/* ── Thoughts ──────────────────────────────────────────────────────── */
+.arrival-thought-state {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Meetings ──────────────────────────────────────────────────────── */
+.arrival-meeting-duration {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.arrival-meeting-badge {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.arrival-meeting-badge[data-badge="off"] {
+  color: var(--text-muted);
+}
+.arrival-meeting-badge[data-badge="saved"] {
+  color: var(--success, #38a169);
+}
+.arrival-meeting-badge[data-badge="failed"] {
+  color: var(--danger, #c53030);
+}
+.arrival-meeting-badge[data-badge="running"],
+.arrival-meeting-badge[data-badge="queued"] {
+  color: var(--accent);
+}
+
+/* ── Capture bar ───────────────────────────────────────────────────── */
+.arrival-capture-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  box-shadow: var(--desk-window-etch);
+}
+
+.arrival-capture-talk {
+  display: flex;
+  align-items: center;
+}
+
+/* ── FIX 4: 393 narrow needs-you rows ─────────────────────────────── */
+/* At narrow width, needs-you row line 2 = WHY + project token + Open
+   together; the trailing Open sits at the far right of that line. */
+@container surface (max-width: 480px) {
+  .arrival-display {
+    font-size: 22px;
+  }
+  .arrival-capture-bar {
+    flex-wrap: wrap;
+  }
+}
+
+/* Fallback viewport media for the shell (container query cannot reach
+   the chair itself -- it is the container ancestor, not a descendant). */
 @media (max-width: 480px) {
-  .door-board-grid { grid-template-columns: repeat(5, minmax(224px, 1fr)); min-width: 1120px; }
-  .door-card-open strong { white-space: normal; }
+  .chair {
+    padding: var(--space-3);
+    gap: var(--space-4);
+  }
+  .arrival-display {
+    font-size: 22px;
+  }
+  .arrival-capture-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: var(--desk-z-local, 1);
+    flex-wrap: wrap;
+  }
 }

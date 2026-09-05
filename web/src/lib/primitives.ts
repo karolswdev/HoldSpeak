@@ -106,6 +106,8 @@ export interface Meeting {
   calendarEventId?: string | null;
   calendarEventTitle?: string | null;
   calendarSourceLabel?: string | null;
+  /** HS-170-04: word count of the transcript (null when no transcript). */
+  transcriptWords?: number | null;
 }
 
 /** 15 server artifact types — synthesized from a meeting's intel. */

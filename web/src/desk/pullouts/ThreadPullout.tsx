@@ -9,7 +9,7 @@ import {
   SurfaceRow,
 } from "../surface/Surface";
 import { Material } from "../surface/Material";
-import { intelBadge } from "../chair/lanes/MeetingsLane";
+import { intelBadge } from "../chair/intelBadge";
 import { LampGadget } from "../surface/gadgets";
 import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
 import { boundaryEgressLamp, egressScopeLamp, type EgressLamp } from "../inferenceEgress";
