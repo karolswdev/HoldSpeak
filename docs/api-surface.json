@@ -5092,7 +5092,9 @@
         "POST"
       ],
       "module": "web.routes.mcp_http",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/settings/remote/credentials/{credential_id}",
@@ -5100,7 +5102,9 @@
         "DELETE"
       ],
       "module": "web.routes.mcp_http",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/settings/secrets/{secret_id}",

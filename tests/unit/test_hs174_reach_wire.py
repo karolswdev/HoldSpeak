@@ -669,3 +669,362 @@ def test_sqlite_observer_insert_has_origin():
     assert "origin" in _INSERT_SQL
     assert "caller" in _INSERT_SQL
     assert "caller_identity" in _INSERT_SQL
+
+
+# ── HS-174-04/08: wire gap tests (projection origin, room receipts,
+#    heartbeat runs_on, remote hosts, last_remote_run_at) ──────────────
+
+@pytest.fixture
+def _wire_db(tmp_path):
+    """Isolated DB for wire-gap tests."""
+    from holdspeak.db import Database
+    return Database(tmp_path / "wire_gap.db")
+
+
+def _insert_pipeline_event(
+    db, *, event_id, service, method, origin="local",
+    caller="", caller_identity="", args_summary="{}", timestamp=None,
+    result_summary="", error=None,
+):
+    """Insert a pipeline_events row directly for testing."""
+    ts = timestamp or time.time()
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT INTO pipeline_events "
+            "(event_id, timestamp, service, method, "
+            " principal_kind, principal_identity, "
+            " args_summary, result_summary, error, error_code, "
+            " duration_ms, correlation_id, is_async, "
+            " origin, caller, caller_identity) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                event_id, ts, service, method,
+                "agent", "sweep-runner",
+                args_summary, result_summary, error, None,
+                10.0, f"corr-{event_id}", 0,
+                origin, caller, caller_identity,
+            ),
+        )
+
+
+# ── 1. Projection read carries origin/caller from remote pipeline event ──
+
+class TestProjectionOriginEnrichment:
+    def test_remote_pipeline_event_surfaces_in_projection(self, _wire_db):
+        """174-04: a remote-tagged pipeline event enriches the matching projection."""
+        db = _wire_db
+        # Create a cadence loop (produces a projection row).
+        with db._connection() as conn:
+            conn.execute(
+                "INSERT INTO cadence_loops "
+                "(id, title, source_type, source_id, status, priority, "
+                " nudge_count, created_at, updated_at) "
+                "VALUES (?,?,?,?,?,?,?,datetime('now'),datetime('now'))",
+                ("loop-abc", "Test loop", "agent_question", "sess-1",
+                 "closed", "normal", 0),
+            )
+        # Insert a remote pipeline event whose args_summary mentions
+        # the source_id "loop-abc".
+        import json as _json
+        _insert_pipeline_event(
+            db,
+            event_id="ev-remote-1",
+            service="CadenceService",
+            method="run_now",
+            origin="remote",
+            caller="100.64.0.5",
+            caller_identity="sweep-runner",
+            args_summary=_json.dumps({"loop_id": "loop-abc"}),
+        )
+
+        # Read projections and find the cadence projection.
+        result = db.projections.list()
+        cadence_rows = [
+            p for p in result["projections"]
+            if p["source_kind"] == "cadence_loop" and p["source_id"] == "loop-abc"
+        ]
+        assert len(cadence_rows) >= 1
+        row = cadence_rows[0]
+        assert row["origin"] == "remote"
+        assert row["caller"] == "100.64.0.5"
+        assert row["caller_identity"] == "sweep-runner"
+
+    def test_local_projection_has_none_origin(self, _wire_db):
+        """174-04: a projection without a remote pipeline event has origin=None."""
+        db = _wire_db
+        with db._connection() as conn:
+            conn.execute(
+                "INSERT INTO cadence_loops "
+                "(id, title, source_type, source_id, status, priority, "
+                " nudge_count, created_at, updated_at) "
+                "VALUES (?,?,?,?,?,?,?,datetime('now'),datetime('now'))",
+                ("loop-local", "Local loop", "agent_question", "sess-2",
+                 "closed", "normal", 0),
+            )
+        result = db.projections.list()
+        cadence_rows = [
+            p for p in result["projections"]
+            if p["source_kind"] == "cadence_loop" and p["source_id"] == "loop-local"
+        ]
+        assert len(cadence_rows) >= 1
+        row = cadence_rows[0]
+        assert row["origin"] is None
+        assert row["caller"] is None
+
+
+# ── 2. Room receipts section ─────────────────────────────────────────────
+
+class TestRoomReceipts:
+    def test_room_receipts_lists_remote_and_local(self, _wire_db):
+        """174-04: Room receipts section lists pipeline events scoped to the project."""
+        db = _wire_db
+        # Create a project.
+        with db._connection() as conn:
+            conn.execute(
+                "INSERT INTO projects "
+                "(id, name, detection_threshold, "
+                " created_at, updated_at) "
+                "VALUES (?,?,?,datetime('now'),datetime('now'))",
+                ("proj-1", "Test Project", 0.4),
+            )
+        import json as _json
+        # Insert a remote pipeline event scoped to the project.
+        _insert_pipeline_event(
+            db,
+            event_id="ev-room-remote",
+            service="ProjectService",
+            method="room",
+            origin="remote",
+            caller="192.168.1.43",
+            caller_identity="sweep-runner",
+            args_summary=_json.dumps({"project_id": "proj-1"}),
+            timestamp=time.time(),
+        )
+        # Insert a local pipeline event scoped to the project.
+        _insert_pipeline_event(
+            db,
+            event_id="ev-room-local",
+            service="ProjectService",
+            method="list_projects",
+            origin="local",
+            caller="",
+            caller_identity="",
+            args_summary=_json.dumps({"project_id": "proj-1"}),
+            timestamp=time.time() - 1,
+        )
+
+        from holdspeak.services.project_service import ProjectService
+        ps = ProjectService(db)
+        room = ps.room(Principal(PrincipalKind.OWNER, "test"), "proj-1")
+
+        # Receipts section should be present and ok.
+        receipts = room.get("receipts", {})
+        assert receipts.get("state") == "ok"
+        items = receipts.get("items", [])
+        assert len(items) == 2
+
+        # First item (newest) should be the remote one.
+        remote_item = items[0]
+        assert remote_item["id"] == "ev-room-remote"
+        assert remote_item["origin"] == "remote"
+        assert remote_item["caller"] == "192.168.1.43"
+        assert remote_item["identity"] == "sweep-runner"
+        assert remote_item["op"] == "room"
+        assert remote_item["title"] == "ProjectService.room"
+
+        # Second item should be local.
+        local_item = items[1]
+        assert local_item["id"] == "ev-room-local"
+        assert local_item["origin"] is None  # local -> None
+        assert local_item["caller"] is None
+
+    def test_room_receipts_empty_when_none(self, _wire_db):
+        """174-04: Room receipts section returns empty items when no events."""
+        db = _wire_db
+        with db._connection() as conn:
+            conn.execute(
+                "INSERT INTO projects "
+                "(id, name, detection_threshold, "
+                " created_at, updated_at) "
+                "VALUES (?,?,?,datetime('now'),datetime('now'))",
+                ("proj-empty", "Empty", 0.4),
+            )
+        from holdspeak.services.project_service import ProjectService
+        ps = ProjectService(db)
+        room = ps.room(Principal(PrincipalKind.OWNER, "test"), "proj-empty")
+        receipts = room.get("receipts", {})
+        assert receipts.get("state") == "ok"
+        assert receipts.get("items") == []
+
+
+# ── 3. Heartbeat settings: runs_on, remote_hosts, last_remote_run_at ────
+
+class TestHeartbeatRunsOn:
+    def test_runs_on_defaults_to_local(self, _wire_db):
+        """174-08: runs_on defaults to 'local'."""
+        from holdspeak.services.heartbeat_service import HeartbeatService
+        hb = HeartbeatService(_wire_db)
+        settings = hb.get_settings()
+        assert settings["runs_on"] == "local"
+        assert settings["remote_hosts"] == []
+        assert settings["last_remote_run_at"] is None
+
+    def test_runs_on_persists(self, _wire_db):
+        """174-08: runs_on round-trips through update_settings."""
+        from holdspeak.services.heartbeat_service import HeartbeatService
+        hb = HeartbeatService(_wire_db)
+        hb.update_settings({"runs_on": "192.168.1.43"})
+        settings = hb.get_settings()
+        assert settings["runs_on"] == "192.168.1.43"
+
+    def test_remote_hosts_lists_callers(self, _wire_db):
+        """174-08: remote_hosts lists distinct callers from pipeline_events."""
+        db = _wire_db
+        _insert_pipeline_event(
+            db, event_id="ev-rh-1",
+            service="HeartbeatService", method="run_sweep",
+            origin="remote", caller="192.168.1.43",
+            caller_identity="sweep-runner",
+        )
+        _insert_pipeline_event(
+            db, event_id="ev-rh-2",
+            service="ProjectService", method="room",
+            origin="remote", caller="100.64.0.5",
+            caller_identity="other-runner",
+        )
+        from holdspeak.services.heartbeat_service import HeartbeatService
+        hb = HeartbeatService(db)
+        settings = hb.get_settings()
+        assert "100.64.0.5" in settings["remote_hosts"]
+        assert "192.168.1.43" in settings["remote_hosts"]
+
+    def test_last_remote_run_at_reflects_newest(self, _wire_db):
+        """174-08: last_remote_run_at is the newest remote HeartbeatService.run_sweep."""
+        db = _wire_db
+        ts_old = time.time() - 3600
+        ts_new = time.time() - 60
+        _insert_pipeline_event(
+            db, event_id="ev-lrr-old",
+            service="HeartbeatService", method="run_sweep",
+            origin="remote", caller="192.168.1.43",
+            caller_identity="sweep-runner",
+            timestamp=ts_old,
+        )
+        _insert_pipeline_event(
+            db, event_id="ev-lrr-new",
+            service="HeartbeatService", method="run_sweep",
+            origin="remote", caller="192.168.1.43",
+            caller_identity="sweep-runner",
+            timestamp=ts_new,
+        )
+        from holdspeak.services.heartbeat_service import HeartbeatService
+        hb = HeartbeatService(db)
+        settings = hb.get_settings()
+        assert settings["last_remote_run_at"] is not None
+        # The ISO string should correspond to ts_new, not ts_old.
+        from datetime import datetime, timezone
+        parsed = datetime.fromisoformat(settings["last_remote_run_at"])
+        assert abs(parsed.timestamp() - ts_new) < 2
+
+    def test_loop_holds_when_runs_on_remote(self, _wire_db):
+        """174-08: runs_on=remote -> the loop records held_remote_runs_on."""
+        from holdspeak.services.heartbeat_service import HeartbeatService
+        from holdspeak.services.sqlite_observer import SQLiteObserver
+
+        db = _wire_db
+        obs = SQLiteObserver(db._connection)
+        hb = HeartbeatService(db, observer=obs)
+
+        # Set runs_on to remote.
+        hb.update_settings({"runs_on": "192.168.1.43"})
+
+        # Record the hold.
+        hb.record_held_remote("192.168.1.43")
+
+        # Verify a pipeline event was written with the hold outcome.
+        with db._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM pipeline_events "
+                "WHERE service='HeartbeatService' AND method='run_sweep' "
+                "ORDER BY timestamp DESC LIMIT 1",
+            ).fetchall()
+        assert len(rows) == 1
+        import json as _json
+        result = _json.loads(rows[0]["result_summary"])
+        assert result["outcome"] == "held_remote_runs_on"
+        assert result["host"] == "192.168.1.43"
+
+    def test_run_now_via_mcp_carries_origin_remote(self, _wire_db):
+        """174-08: heartbeat.run_now over /api/mcp with a SWEEP credential
+        runs the sweep and its pipeline event carries origin=remote.
+        """
+        from holdspeak.services.heartbeat_service import HeartbeatService
+        from holdspeak.services.sqlite_observer import SQLiteObserver
+        from holdspeak.services.observer import _origin, _caller, _caller_identity
+
+        db = _wire_db
+        obs = SQLiteObserver(db._connection)
+        hb = HeartbeatService(db, observer=obs)
+
+        # Simulate the remote context (as mcp_http.py would set it).
+        origin_tok = _origin.set("remote")
+        caller_tok = _caller.set("192.168.1.43")
+        identity_tok = _caller_identity.set("sweep-runner")
+        try:
+            receipt = hb.run_sweep(Principal(PrincipalKind.AGENT, "sweep-runner"))
+        finally:
+            _origin.reset(origin_tok)
+            _caller.reset(caller_tok)
+            _caller_identity.reset(identity_tok)
+
+        # Verify the sweep receipt was produced.
+        assert receipt["kind"] == "heartbeat.sweep"
+
+        # Verify the pipeline event carries origin=remote.
+        with db._connection() as conn:
+            rows = conn.execute(
+                "SELECT origin, caller, caller_identity FROM pipeline_events "
+                "WHERE service='HeartbeatService' AND method='run_sweep' "
+                "ORDER BY timestamp DESC LIMIT 1",
+            ).fetchall()
+        assert len(rows) >= 1
+        assert rows[0]["origin"] == "remote"
+        assert rows[0]["caller"] == "192.168.1.43"
+        assert rows[0]["caller_identity"] == "sweep-runner"
+
+
+# ── 4. DeskProjection payload key names ─────────────────────────────────
+
+def test_desk_projection_to_dict_has_origin_keys():
+    """174-04: DeskProjection.to_dict() includes origin, caller, caller_identity."""
+    from holdspeak.db.projections import DeskProjection
+    proj = DeskProjection(
+        id="test", projection_kind="receipt", subject_ref="s", subject_label="S",
+        title="T", summary="", reason_code="", decision_kind="",
+        attention_state="resolved", actual_destination=None, authority_basis=None,
+        attempt=None, outcome="ok", timestamp="2026-01-01T00:00:00Z",
+        correlation_id=None, source_kind="test", source_id="test-1",
+        source_api="/test", detail_url="/",
+        origin="remote", caller="100.64.0.5", caller_identity="sweep-runner",
+    )
+    d = proj.to_dict()
+    assert d["origin"] == "remote"
+    assert d["caller"] == "100.64.0.5"
+    assert d["caller_identity"] == "sweep-runner"
+
+
+def test_desk_projection_defaults_none():
+    """174-04: origin/caller/caller_identity default to None."""
+    from holdspeak.db.projections import DeskProjection
+    proj = DeskProjection(
+        id="test", projection_kind="receipt", subject_ref="s", subject_label="S",
+        title="T", summary="", reason_code="", decision_kind="",
+        attention_state="resolved", actual_destination=None, authority_basis=None,
+        attempt=None, outcome="ok", timestamp="2026-01-01T00:00:00Z",
+        correlation_id=None, source_kind="test", source_id="test-1",
+        source_api="/test", detail_url="/",
+    )
+    d = proj.to_dict()
+    assert d["origin"] is None
+    assert d["caller"] is None
+    assert d["caller_identity"] is None

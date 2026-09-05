@@ -39,6 +39,10 @@ class DeskProjection:
     severity: str = "normal"
     dismissed: bool = False
     version: int = 1
+    # HS-174-04: origin of the pipeline event (local/remote).
+    origin: Optional[str] = None
+    caller: Optional[str] = None
+    caller_identity: Optional[str] = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -62,11 +66,22 @@ class ProjectionRepository(BaseRepository):
     ) -> dict[str, Any]:
         rows = self._collect()
         states = self._presentation_states()
+        # HS-174-04: batch-enrich projections with origin/caller from
+        # pipeline_events WHERE origin != 'local'.  One query; match by
+        # source_id appearing in the event's args_summary.
+        remote_origin_lookup = self._remote_origin_lookup()
         projected: list[DeskProjection] = []
         for row in rows:
-            row = DeskProjection(
-                **{**row.to_dict(), "timestamp": self._normalize_timestamp(row.timestamp)}
-            )
+            enrichment: dict[str, Any] = {
+                "timestamp": self._normalize_timestamp(row.timestamp),
+            }
+            # Apply remote origin if a matching pipeline event exists.
+            remote_info = remote_origin_lookup.get(row.source_id)
+            if remote_info is not None:
+                enrichment["origin"] = remote_info["origin"]
+                enrichment["caller"] = remote_info["caller"]
+                enrichment["caller_identity"] = remote_info["caller_identity"]
+            row = DeskProjection(**{**row.to_dict(), **enrichment})
             overlay = states.get(row.id)
             if overlay:
                 row = DeskProjection(
@@ -164,6 +179,58 @@ class ProjectionRepository(BaseRepository):
             rows = conn.execute("SELECT * FROM desk_projection_state").fetchall()
         return {str(row["projection_id"]): row for row in rows}
 
+    def _remote_origin_lookup(self) -> dict[str, dict[str, Any]]:
+        """HS-174-04: batch lookup of remote pipeline events keyed by source_id.
+
+        Returns {source_id: {origin, caller, caller_identity}} for any
+        source_id that appears in a remote pipeline event's args_summary.
+        One query, no per-row lookups.  Empty when no remote events exist.
+        """
+        try:
+            with self._connection() as conn:
+                rows = conn.execute(
+                    "SELECT args_summary, origin, caller, caller_identity "
+                    "FROM pipeline_events WHERE origin != 'local' "
+                    "ORDER BY timestamp DESC LIMIT 200",
+                ).fetchall()
+        except Exception:
+            return {}
+        lookup: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            summary = str(row["args_summary"] or "")
+            origin_info = {
+                "origin": str(row["origin"]),
+                "caller": str(row["caller"]) or None,
+                "caller_identity": str(row["caller_identity"]) or None,
+            }
+            # Extract identifiable tokens from the args_summary JSON.
+            # Any projection whose source_id appears in the summary is
+            # attributed to this remote event (newest-wins via ordering).
+            import json as _json
+            try:
+                parsed = _json.loads(summary) if summary.startswith("{") else {}
+            except Exception:
+                parsed = {}
+            # Walk values looking for string tokens that might be source IDs.
+            for v in self._extract_string_values(parsed):
+                if v and v not in lookup:
+                    lookup[v] = origin_info
+        return lookup
+
+    @staticmethod
+    def _extract_string_values(obj: Any) -> list[str]:
+        """Recursively extract all string values from a JSON-like structure."""
+        result: list[str] = []
+        if isinstance(obj, str):
+            result.append(obj)
+        elif isinstance(obj, dict):
+            for v in obj.values():
+                result.extend(ProjectionRepository._extract_string_values(v))
+        elif isinstance(obj, (list, tuple)):
+            for v in obj:
+                result.extend(ProjectionRepository._extract_string_values(v))
+        return result
+
     def _collect(self) -> list[DeskProjection]:
         with self._connection() as conn:
             meetings = {
@@ -180,6 +247,7 @@ class ProjectionRepository(BaseRepository):
             rows.extend(self._artifacts(conn))
             rows.extend(self._jobs(conn, meetings))
             rows.extend(self._cadence(conn))
+            rows.extend(self._pipeline_events(conn))
         return rows
 
     @staticmethod
@@ -566,6 +634,83 @@ class ProjectionRepository(BaseRepository):
                 correlation_id=f"cadence:{row['id']}", source_kind="cadence_loop",
                 source_id=str(row["id"]), source_api=f"/api/cadence/loops/{row['id']}",
                 detail_url="/cadence", severity="warning" if row["priority"] in {"high", "urgent"} else "normal",
+            ))
+        return result
+
+    def _pipeline_events(self, conn: Any) -> list[DeskProjection]:
+        """HS-174-04: surface pipeline events as receipt projections.
+
+        Only events with origin='remote' OR service='HeartbeatService' are
+        surfaced (local reads are too noisy for the shade).  Each row
+        carries origin, caller, and caller_identity for the EgressChip.
+        """
+        result: list[DeskProjection] = []
+        try:
+            rows = conn.execute(
+                """SELECT * FROM pipeline_events
+                   WHERE origin = 'remote'
+                      OR service = 'HeartbeatService'
+                   ORDER BY timestamp DESC LIMIT 20"""
+            ).fetchall()
+        except Exception:
+            return result
+        for row in rows:
+            service = str(row["service"])
+            method = str(row["method"])
+            origin = str(row["origin"]) if row["origin"] else "local"
+            caller_val = str(row["caller"]) if row["caller"] else ""
+            caller_id = str(row["caller_identity"]) if row["caller_identity"] else ""
+            error = row["error"]
+            result_summary = str(row["result_summary"] or "")
+
+            # Build a human title: SERVICE.METHOD -> readable
+            title_map = {
+                "run_sweep": "SWEEP",
+                "project_list": "READ project_list",
+                "project_run_steward": "STEWARD RUN",
+            }
+            title = title_map.get(method, f"{method}")
+            if service == "HeartbeatService" and method == "run_sweep":
+                title = "SWEEP"
+                # Extract entity count from result_summary if available
+                try:
+                    import json as _json
+                    rs = _json.loads(result_summary)
+                    rooms = rs.get("rooms", 0)
+                    if rooms:
+                        title = f"SWEEP {rooms} {'ROOM' if rooms == 1 else 'ROOMS'}"
+                except Exception:
+                    pass
+
+            outcome = "completed" if not error else "failed"
+            ts_epoch = float(row["timestamp"])
+            from datetime import datetime, timezone
+            ts_iso = datetime.fromtimestamp(ts_epoch, tz=timezone.utc).isoformat(timespec="seconds")
+
+            result.append(DeskProjection(
+                id=f"pipeline:{row['event_id']}",
+                projection_kind="receipt",
+                subject_ref=f"service:{service}",
+                subject_label=service.replace("Service", ""),
+                title=title,
+                summary=result_summary,
+                reason_code=f"pipeline_{outcome}",
+                decision_kind="receipt",
+                attention_state="resolved",
+                actual_destination="this_machine",
+                authority_basis="pipeline",
+                attempt=None,
+                outcome=outcome,
+                timestamp=ts_iso,
+                correlation_id=str(row["correlation_id"]),
+                source_kind="pipeline_event",
+                source_id=str(row["event_id"]),
+                source_api="/api/desk/projections",
+                detail_url="/",
+                severity="error" if error else "normal",
+                origin=origin,
+                caller=caller_val,
+                caller_identity=caller_id,
             ))
         return result
 

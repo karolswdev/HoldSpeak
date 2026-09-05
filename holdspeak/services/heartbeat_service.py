@@ -108,6 +108,10 @@ class HeartbeatService:
             "last_sweep_at": config.get("last_sweep_at"),
             "next_sweep_at": config.get("next_sweep_at"),
             "last_notified_count": int(config.get("last_notified_count", 0)),
+            # HS-174-08: remote runner settings.
+            "runs_on": str(config.get("runs_on", "local")),
+            "remote_hosts": self._compute_remote_hosts(),
+            "last_remote_run_at": self._last_remote_run_at(),
         }
 
     def update_settings(self, patch: dict[str, Any]) -> dict[str, Any]:
@@ -133,6 +137,10 @@ class HeartbeatService:
                 current["notify"] = n
         if "muted_projects" in patch:
             current["muted_projects"] = list(patch["muted_projects"])
+        # HS-174-08: runs_on setting.
+        if "runs_on" in patch:
+            val = str(patch["runs_on"]).strip()
+            current["runs_on"] = val if val else "local"
         self._persist(current)
         return current
 
@@ -145,6 +153,11 @@ class HeartbeatService:
             "last_sweep_at": None,
             "next_sweep_at": None,
             "last_notified_count": 0,
+            # HS-174-08: remote runner defaults (computed values added in
+            # get_settings; not stored).
+            "runs_on": "local",
+            "remote_hosts": self._compute_remote_hosts(),
+            "last_remote_run_at": self._last_remote_run_at(),
         }
 
     def _persist(self, settings: dict[str, Any]) -> None:
@@ -159,6 +172,8 @@ class HeartbeatService:
             "last_sweep_at": settings.get("last_sweep_at"),
             "next_sweep_at": settings.get("next_sweep_at"),
             "last_notified_count": settings.get("last_notified_count", 0),
+            # HS-174-08
+            "runs_on": settings.get("runs_on", "local"),
         }
         self._db.cadence.upsert_policy(CadencePolicy(
             id=_HEARTBEAT_POLICY_ID,
@@ -166,6 +181,76 @@ class HeartbeatService:
             enabled=True,
             config=config,
         ))
+
+    # ── HS-174-08: remote runner helpers ─────────────────────────────────
+
+    def _compute_remote_hosts(self) -> list[str]:
+        """Remote hosts that have called POST /api/mcp in the last 30 days.
+
+        Derived from pipeline_events callers with origin='remote'.
+        """
+        thirty_days_ago = time.time() - 30 * 86400
+        try:
+            with self._db._connection() as conn:
+                rows = conn.execute(
+                    "SELECT DISTINCT caller FROM pipeline_events "
+                    "WHERE origin = 'remote' AND caller != '' "
+                    "AND timestamp > ? "
+                    "ORDER BY caller",
+                    (thirty_days_ago,),
+                ).fetchall()
+            return [str(row["caller"]) for row in rows]
+        except Exception:
+            return []
+
+    def _last_remote_run_at(self) -> str | None:
+        """Newest heartbeat.sweep receipt with origin=remote (ISO string)."""
+        try:
+            with self._db._connection() as conn:
+                row = conn.execute(
+                    "SELECT timestamp FROM pipeline_events "
+                    "WHERE service = 'HeartbeatService' AND method = 'run_sweep' "
+                    "AND origin = 'remote' "
+                    "ORDER BY timestamp DESC LIMIT 1",
+                ).fetchone()
+            if row:
+                from datetime import datetime as _dt, timezone as _tz
+                return _dt.fromtimestamp(
+                    float(row["timestamp"]), _tz.utc,
+                ).isoformat(timespec="seconds")
+        except Exception:
+            pass
+        return None
+
+    def record_held_remote(self, host: str) -> None:
+        """Record that the local loop held because runs_on is a remote host.
+
+        Writes a quiet pipeline_events row (no notification, no kernel receipt).
+        """
+        from holdspeak.services.observer import PipelineEvent
+
+        event = PipelineEvent(
+            event_id=str(uuid.uuid4()),
+            timestamp=time.time(),
+            service="HeartbeatService",
+            method="run_sweep",
+            principal_kind="owner",
+            principal_identity="heartbeat-conductor",
+            args_summary=json.dumps({"held": True, "runs_on": host}),
+            result_summary=json.dumps({"outcome": "held_remote_runs_on", "host": host}),
+            error=None,
+            error_code=None,
+            duration_ms=0.0,
+            correlation_id=str(uuid.uuid4()),
+            is_async=False,
+            origin="local",
+            caller="",
+            caller_identity="",
+        )
+        try:
+            self._observer.on_event(event)
+        except Exception:
+            pass
 
     # ── In quiet hours? ────────────────────────────────────────────────
 
@@ -327,8 +412,12 @@ class HeartbeatService:
             log.error("heartbeat receipt write failed: %s", exc)
 
     def _write_pipeline_event(self, receipt: dict[str, Any], duration_ms: float) -> None:
-        """Write a pipeline_events row for the sweep."""
-        from holdspeak.services.observer import PipelineEvent
+        """Write a pipeline_events row for the sweep.
+
+        HS-174-04: propagates origin/caller/caller_identity from the
+        context vars so a remote-triggered sweep carries origin=remote.
+        """
+        from holdspeak.services.observer import PipelineEvent, _origin, _caller, _caller_identity
 
         event = PipelineEvent(
             event_id=str(uuid.uuid4()),
@@ -347,6 +436,10 @@ class HeartbeatService:
             duration_ms=duration_ms,
             correlation_id=str(uuid.uuid4()),
             is_async=False,
+            # HS-174-04: inherit origin from the calling context.
+            origin=_origin.get("local"),
+            caller=_caller.get(""),
+            caller_identity=_caller_identity.get(""),
         )
         try:
             self._observer.on_event(event)
