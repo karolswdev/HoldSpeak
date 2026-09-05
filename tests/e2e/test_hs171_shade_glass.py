@@ -270,10 +270,32 @@ def _run_projects_rig(
         server.stop()
 
 
+def _seed_brief() -> None:
+    """Seed a Monday brief with 4 items so the BRIEF section renders."""
+    from holdspeak.db import get_database
+    db = get_database()
+    brief_id = str(uuid.uuid4())
+    now_iso = datetime.now().isoformat()
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT INTO monday_briefs "
+            "(id, period_start, period_end, headline, generated_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (brief_id, "2026-09-01", "2026-09-05", "4 things this week", now_iso),
+        )
+        for i in range(4):
+            conn.execute(
+                "INSERT INTO monday_brief_items "
+                "(id, brief_id, section, text, priority) "
+                "VALUES (?, ?, 'waiting', ?, 0)",
+                (f"brief-item-{i}", brief_id, f"Item {i + 1}"),
+            )
+
+
 def _run_quiet_rig(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
 ) -> None:
-    """Empty desk: PROJECTS section absent, dock badge absent."""
+    """No Room items but a brief exists: PROJECTS absent, BRIEF present, badge absent."""
     _ensure_build()
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     errors: list[str] = []
@@ -284,11 +306,14 @@ def _run_quiet_rig(
             page = browser.new_page(viewport={"width": width, "height": 900})
             page.on("pageerror", lambda e: errors.append(str(e)))
 
-            # Init desk -- no project seeding
+            # Init desk -- no project seeding, but seed a brief
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
             _api(page, "POST", "/api/desk/seed", token=TOKEN)
             _api(page, "PUT", "/api/setup/onboarding",
                  {"disposition": "completed"}, token=TOKEN)
+
+            _seed_brief()
+
             page.reload(wait_until="load")
             _normal_chair(page)
             _settle(page)
@@ -296,10 +321,22 @@ def _run_quiet_rig(
             # Open the shade
             _open_shade(page)
 
-            # ── PROJECTS section absent ──
+            # ── PROJECTS section absent (no Room has items) ──
             projects_section = page.get_by_test_id("shade-projects")
             assert projects_section.count() == 0, \
-                "PROJECTS section should be absent when no items exist"
+                "PROJECTS section should be absent when no Room has items"
+
+            # ── BRIEF section present ──
+            brief_section = page.get_by_test_id("shade-brief")
+            assert brief_section.count() == 1, \
+                "BRIEF section should be present when a brief exists"
+            brief_row = page.get_by_test_id("shade-brief-row")
+            assert brief_row.count() == 1, "Brief row should be present"
+            brief_text = brief_row.text_content() or ""
+            assert "MONDAY BRIEF" in brief_text.upper(), \
+                f"Brief row should say Monday brief: {brief_text}"
+            assert "THING" in brief_text.upper(), \
+                f"Brief row should have THINGS token: {brief_text}"
 
             # ── Dock badge absent ──
             badge = page.locator(".desk-dock-app .desk-dock-badge")

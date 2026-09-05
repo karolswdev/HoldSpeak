@@ -204,6 +204,10 @@ export function SystemShade({
 
       <ShadeProjects
         needsYou={needsYou}
+        onClose={onClose}
+      />
+
+      <ShadeBrief
         brief={brief}
         onClose={onClose}
       />
@@ -385,10 +389,9 @@ export function SystemShade({
 
 // ── HS-171-04: PROJECTS section in the shade ─────────────────────────
 //
-// FIRST section, above Needs you. Absent when the aggregate count is 0
-// and no brief exists. One row per Room with items; muted Rooms dimmed
-// with a MUTED token and excluded from the caption count. The brief row
-// renders when a brief exists (item count + date).
+// FIRST section, above Needs you. ABSENT when no Room has items (A.8).
+// One row per Room with items; muted Rooms dimmed with a MUTED token
+// and excluded from the caption count.
 
 /** The severity tone for the count chip on a Room row. */
 function roomTone(items: NeedsYouItem[]): "warn" | undefined {
@@ -397,22 +400,20 @@ function roomTone(items: NeedsYouItem[]): "warn" | undefined {
 
 function ShadeProjects({
   needsYou,
-  brief,
   onClose,
 }: {
   needsYou: NeedsYouAggregate | null;
-  brief: { itemCount: number; date: string } | null;
   onClose: () => void;
 }) {
   const rooms = needsYou ? groupByRoom(needsYou.items) : [];
+  // Absent when no Room has items.
+  if (rooms.length === 0) return null;
+
   // The caption count excludes muted Rooms.
   const activeItems = rooms
     .filter((r) => !r.muted)
     .reduce((n, r) => n + r.items.length, 0);
   const captionCount = countToken(activeItems, "NEEDS YOU", "NEED YOU");
-
-  // Absent when no active items and no brief (rule A.8).
-  if (!captionCount && !brief) return null;
 
   return (
     <section
@@ -487,39 +488,61 @@ function ShadeProjects({
           </div>
         );
       })}
+    </section>
+  );
+}
 
-      {brief ? (
-        <div className="desk-shade-item" data-testid="shade-brief-row">
-          <span className="desk-shade-glyph" aria-hidden="true">
-            {"="}
-          </span>
-          <div className="desk-shade-what">
-            <strong>Monday brief</strong>
-            <small>
-              <span className="desk-shade-project-tokens">
-                <span className="surface-token" data-chip>
-                  {countToken(brief.itemCount, "THING") ?? ""}
-                </span>
-                {brief.date ? (
-                  <span className="desk-shade-why">{brief.date}</span>
-                ) : null}
+// ── HS-171-04: BRIEF section — its own section below PROJECTS ────────
+//
+// Absent when no brief exists (A.8). Per ShadeProjectsQuiet board:
+// caption `BRIEF` with one row `Monday brief . N THINGS . <date> . Open`.
+
+function ShadeBrief({
+  brief,
+  onClose,
+}: {
+  brief: { itemCount: number; date: string } | null;
+  onClose: () => void;
+}) {
+  if (!brief) return null;
+
+  return (
+    <section
+      className="desk-shade-group"
+      aria-label="Brief"
+      data-testid="shade-brief"
+    >
+      <h4>Brief</h4>
+      <div className="desk-shade-item" data-testid="shade-brief-row">
+        <span className="desk-shade-glyph" aria-hidden="true">
+          {"="}
+        </span>
+        <div className="desk-shade-what">
+          <strong>Monday brief</strong>
+          <small>
+            <span className="desk-shade-project-tokens">
+              <span className="surface-token" data-chip>
+                {countToken(brief.itemCount, "THING") ?? ""}
               </span>
-            </small>
-            <span className="desk-shade-do">
-              <Button
-                dense
-                variant="ghost"
-                onClick={() => {
-                  onClose();
-                  openSurfaceOr("open-intelligence", "/");
-                }}
-              >
-                Open
-              </Button>
+              {brief.date ? (
+                <span className="desk-shade-why">{brief.date}</span>
+              ) : null}
             </span>
-          </div>
+          </small>
+          <span className="desk-shade-do">
+            <Button
+              dense
+              variant="ghost"
+              onClick={() => {
+                onClose();
+                openSurfaceOr("open-intelligence", "/");
+              }}
+            >
+              Open
+            </Button>
+          </span>
         </div>
-      ) : null}
+      </div>
     </section>
   );
 }
