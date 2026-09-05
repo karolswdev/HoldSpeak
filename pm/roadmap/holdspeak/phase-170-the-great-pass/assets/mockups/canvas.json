@@ -1,0 +1,56 @@
+{
+ "artboards": [
+  {
+   "file": "Main.dc.html",
+   "x": 0,
+   "y": 0,
+   "w": 640,
+   "h": 1116,
+   "title": "Models · found + proposed · 1440"
+  },
+  {
+   "file": "ConciergePicker.dc.html",
+   "x": 760,
+   "y": 0,
+   "w": 640,
+   "h": 878,
+   "title": "Models · picker open · 1440"
+  },
+  {
+   "file": "ConciergeAdjust.dc.html",
+   "x": 1520,
+   "y": 0,
+   "w": 640,
+   "h": 410,
+   "title": "Models · Adjust open · 1440"
+  },
+  {
+   "file": "ConciergeCold.dc.html",
+   "x": 2280,
+   "y": 0,
+   "w": 640,
+   "h": 993,
+   "title": "Models · cold Mac · 1440"
+  },
+  {
+   "file": "ConciergePhone.dc.html",
+   "x": 3040,
+   "y": 0,
+   "w": 393,
+   "h": 1204,
+   "title": "Models · 393"
+  }
+ ],
+ "annotations": [
+  {
+   "id": "read-me",
+   "x": 0,
+   "y": -150,
+   "w": 760,
+   "text": "Phase 170 The Concierge — Settings → Models becomes ONE screen: what was found, one proposed set, Use these."
+  }
+ ],
+ "launch": {
+  "view": "canvas"
+ }
+}

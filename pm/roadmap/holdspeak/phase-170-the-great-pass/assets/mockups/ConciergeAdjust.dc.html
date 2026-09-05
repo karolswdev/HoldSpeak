@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;650;700&amp;family=Space+Grotesk:wght@600;650;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+  </style>
+</helmet>
+
+<!-- ═══ WINDOW "Models" (640) — Adjust open under THE SET ═══ -->
+<div style="width:640px; border:1px solid #363b50; border-radius:2px; background:#15171d; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40), inset 0 0 0 1px #2a2e3e; display:flex; flex-direction:column;">
+
+  <!-- ─── TITLE BAR ─── -->
+  <div style="height:40px; padding:0 12px; display:flex; align-items:center; gap:10px; background:#242833; border-radius:1px 1px 0 0; flex-shrink:0;">
+    <div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
+      <span style="width:12px; height:12px; border-radius:2px; background:#f87171; display:block;"></span>
+      <span style="width:12px; height:12px; border-radius:2px; background:#fbbf24; display:block;"></span>
+      <span style="width:12px; height:12px; border-radius:2px; background:#34d399; display:block;"></span>
+    </div>
+    <span style="font:700 17px/1 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">Models</span>
+  </div>
+
+  <!-- ─── BODY ─── -->
+  <div style="flex:1; padding:12px 14px 14px; display:flex; flex-direction:column; gap:18px;">
+
+    <!-- ═══ HEAD ═══ -->
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="font:650 26px/1.15 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#a86e4a;">3 engines found</div>
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px;">
+        <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">THIS MAC &middot; M-SERIES &middot; 36 GB</span>
+        <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap;">CHECKED 9:41</span>
+      </div>
+    </div>
+
+    <!-- ═══ THE SET (caption + Adjust PRESSED) ═══ -->
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      <div style="display:flex; align-items:baseline; gap:8px; border-top:1px solid rgba(255,255,255,0.035); padding-top:8px;">
+        <h3 style="margin:0; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0;">THE SET</h3>
+        <span style="flex:1;"></span>
+        <!-- Adjust: pressed/active (sunken well look) -->
+        <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Adjust</button>
+      </div>
+
+      <!-- ═══ ADJUST WELL (Disclosure, the capability table) ═══ -->
+      <!-- Species: Disclosure well — the 143 capability table grammar: capability → group → engine, as ledger rows with a picker per row -->
+      <div style="display:flex; flex-direction:column; gap:0; border:1px solid #2a2e3e; border-radius:2px; background:#15171d;">
+
+        <!-- ─── Capability row 1: speech.rewrite → Writing & dictation → Qwen 3.5 0.8B ─── -->
+        <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; border-bottom:1px solid #2a2e3e;">
+          <span style="width:140px; flex-shrink:0; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">speech.rewrite</span>
+          <span style="width:140px; flex-shrink:0; font:600 12px/1 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#767e8d; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Writing &amp; dictation</span>
+          <span style="flex:1;"></span>
+          <button type="button" style="display:inline-flex; align-items:center; gap:4px; height:24px; padding:0 8px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">Qwen 3.5 0.8B<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+        </div>
+
+        <!-- ─── Capability row 2: chat.turn → Chat → Qwen3.6 35B ─── -->
+        <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; border-bottom:1px solid #2a2e3e;">
+          <span style="width:140px; flex-shrink:0; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">chat.turn</span>
+          <span style="width:140px; flex-shrink:0; font:600 12px/1 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#767e8d; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Chat</span>
+          <span style="flex:1;"></span>
+          <button type="button" style="display:inline-flex; align-items:center; gap:4px; height:24px; padding:0 8px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">Qwen3.6 35B<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+        </div>
+
+        <!-- ─── Capability row 3: thought.refine → Thoughts & notes → Qwen3.6 35B ─── -->
+        <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; border-bottom:1px solid #2a2e3e;">
+          <span style="width:140px; flex-shrink:0; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">thought.refine</span>
+          <span style="width:140px; flex-shrink:0; font:600 12px/1 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#767e8d; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Thoughts &amp; notes</span>
+          <span style="flex:1;"></span>
+          <button type="button" style="display:inline-flex; align-items:center; gap:4px; height:24px; padding:0 8px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">Qwen3.6 35B<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+        </div>
+
+        <!-- ─── Capability row 4: meeting.summarize → Meetings → Qwen3.6 35B ─── -->
+        <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; border-bottom:1px solid #2a2e3e;">
+          <span style="width:140px; flex-shrink:0; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">meeting.summarize</span>
+          <span style="width:140px; flex-shrink:0; font:600 12px/1 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#767e8d; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Meetings</span>
+          <span style="flex:1;"></span>
+          <button type="button" style="display:inline-flex; align-items:center; gap:4px; height:24px; padding:0 8px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">Qwen3.6 35B<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+        </div>
+
+        <!-- ─── Capability row 5: agent.tool_use → Agents & tools → Qwen3.6 35B ─── -->
+        <div style="display:flex; align-items:center; gap:8px; padding:6px 12px;">
+          <span style="width:140px; flex-shrink:0; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">agent.tool_use</span>
+          <span style="width:140px; flex-shrink:0; font:600 12px/1 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#767e8d; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Agents &amp; tools</span>
+          <span style="flex:1;"></span>
+          <button type="button" style="display:inline-flex; align-items:center; gap:4px; height:24px; padding:0 8px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">Qwen3.6 35B<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ─── FOOTER ─── -->
+  <footer style="height:36px; padding:0 8px; background:#1c1f27; border-top:1px solid #2a2e3e; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); flex-shrink:0;">
+    <div style="display:grid; grid-template-columns:max-content minmax(0,1fr) max-content; align-items:center; height:100%; gap:6px;">
+      <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0;">7 GROUPS &middot; 3 ENGINES</span>
+      <span></span>
+      <div style="display:flex; justify-content:flex-end; align-items:center; gap:4px;">
+        <button style="min-height:28px; display:inline-flex; align-items:center; justify-content:center; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#9ba2b0; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Cancel</button>
+        <button style="min-height:28px; display:inline-flex; align-items:center; justify-content:center; padding:4px 12px; border:1px solid #a86e4a; border-radius:0; background:#a86e4a; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; box-shadow:inset 0 1px 0 rgba(255,255,255,0.22), 0 1px 2px rgba(0,0,0,0.3);">Use these</button>
+      </div>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+</body>
+</html>
