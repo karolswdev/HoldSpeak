@@ -18,8 +18,9 @@ thoughts) is built and NOT wired (laneContract.ts:28-33).
 **The design.** The arrival answers the Tuesday question first.
 1. **Headline** (display, ONCE): `Nothing needs you` (muted) or `3 need
    you across 2 projects` (accent) — summed from every active Room's
-   `needsYou` (the 169 wire; the sum is read-time over active projects;
-   171 gives it its own route). Under it one line when true: `NEXT ·
+   `needsYou` (the 169 wire; in 170 the sum is read-time over active
+   projects — `GET /api/projects` then each Room's `needsYou`, N+1 by
+   design; 171 gives it one route). Under it one line when true: `NEXT ·
    Standup · 10:00` (the next scheduled recording or calendar event;
    omitted when none — never `No calendar connected.`; connecting a
    calendar is a Settings row).
@@ -27,7 +28,9 @@ thoughts) is built and NOT wired (laneContract.ts:28-33).
    emblem · the thing · WHY · `Open`), the Room's grammar; the row's
    project as a faint token when more than one Room. Empty: the section
    is absent (the headline said it).
-3. **THOUGHTS** — FinishThoughtsLane WIRED at last: unfinished thoughts
+3. **THOUGHTS** — FinishThoughtsLane WIRED at last (`"thoughts"` enters
+   `laneContract.ts` LANE_ORDER between `door` and `brief`, registered in
+   the lane registry; ChairHome imports it): unfinished thoughts
    as rows (`Continue` / `Ready for you` / `Needs attention` as the
    state token; primary `Continue` on the first). Empty: absent.
 4. **BRIEF** — when a brief exists: `N things waiting` rows with `Ack` /
@@ -77,7 +80,8 @@ another name) on `Dictation · No default model`, raw Export button.
 6. **Details** (Disclosure, folded): the pipeline state register, `BUDGET
    600 MS`, `MIC`, the raw trace — engineering under a fold, never on
    the face.
-7. Footer: EgressChip `LOCAL` · receipt `9 TODAY` (journal count via
+7. Footer: EgressChip `THIS DEVICE` (one egress vocabulary on every
+   face — counsel M1; `LOCAL` retired) · receipt `9 TODAY` (journal count via
    countToken) · `Review` (ghost) · `Export` (ghost). Wings Speak ·
    Journal · Blocks stay; Journal becomes a SurfaceStream.
 8. Empty (never talked): the transport + the well with the placeholder
@@ -96,7 +100,9 @@ state; `POSTURE · YOLO · YOLO` (said twice); 70% dead space.
    Tuesday module wins (Models > Connections > Voice).
 2. **Rows** (SurfaceLedgerRow, Tuesday first), each: the module name at
    primary · its STATE token(s) · trailing `Open` (ghost) — `MODELS ·
-   3 ENGINES · 7 GROUPS SET` (or `⚠ NO DEFAULT`) → the Concierge;
+   3 ENGINES · 7 GROUPS SET` (or `⚠ NO DEFAULT`; engines from the model
+   library summary, groups from the assignments summary — two reads
+   composed on the client) → the Concierge;
    `CONNECTIONS · 2 CONNECTED`; `VOICE · LIVE · CLAUDE CODE`; `MEETINGS ·
    INTELLIGENCE OFF` (warning); `RHYTHM · NO LOOPS`; `SOUNDS & PRESENCE ·
    ON`; `SYSTEM · THIS DEVICE · MESH OFF`. No sprites, no icons — the
@@ -128,13 +134,16 @@ button).
    `Retry`; `SAVED` + `Open`; `NEEDS YOU · 3` + `Open`. `1 RECORD` via
    countToken.
 4. **The detail** (SurfaceSplit on select): the header (title · date ·
-   duration · state) · NEEDS YOU (the outcomes table; `Run
-   intelligence` here too when OFF) · the transcript well · AFTERCARE
+   duration · state) · NEEDS YOU (the outcomes table; when the meeting is OFF and has a
+   transcript, `Run intelligence` (primary dense) sits at the trailing
+   edge of the NEEDS YOU caption row in place of the count) · the transcript well · AFTERCARE
    (only when a channel is configured; never an absent section's
    ghost) · the settled list.
 5. **The wire gap paid in this story:** `POST /api/meetings/{id}/intelligence/run`
    — one verb that enqueues a fresh intelligence job for a meeting that
-   never ran (the existing intel job machinery; the plugin set from the
+   never ran (the existing intel job machinery — check first whether
+   `POST /api/intel/process` takes a single meeting id before adding a
+   route; the plugin set from the
    meeting settings; a receipt; the egress chip names the model's host
    at the point of decision).
 6. Footer: EgressChip `THIS DEVICE` · receipt (`1 RECORD`) · export
@@ -158,3 +167,14 @@ Arrival: needs-you (3 across 2 projects + a thought + a meeting OFF) ·
 quiet (`Nothing needs you` + the capture bar) · 393. Speak: idle ·
 landed with result · 393. Settings hub: 1440 (`No default model`) ·
 393. Meetings: list with one OFF row · detail open · 393. Twelve boards.
+
+
+## Counsel (2026-09-05)
+
+RATIFY-W-C. M1 `LOCAL` vs `THIS DEVICE` on the Speak footer — paid on
+the boards and above. S1 the OFF detail placement — written above.
+S2 the Models row's two wire reads — above. S3 the N+1 aggregate — above,
+171 pays it. S4 FinishThoughtsLane's place in LANE_ORDER — above. N1 the
+posture said twice in settingsPrefs.tsx:383 — the build removes the
+`gadget-fact` span. N5 `1,204 WORDS` = the transcript word count. N6 the
+intelligence run route — check `/api/intel/process` first.
