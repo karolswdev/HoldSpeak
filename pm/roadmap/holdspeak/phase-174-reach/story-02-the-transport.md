@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 174
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-174-01
 - **Unblocks:** HS-174-03, HS-174-04, HS-174-05, HS-174-08
 - **Owner:** unassigned
@@ -40,17 +40,17 @@ three transports.
 
 ## Acceptance criteria
 
-- [ ] `POST /api/mcp` (or the Streamable HTTP route path) accepts a
+- [x] `POST /api/mcp` (or the Streamable HTTP route path) accepts a
       JSON-RPC request and returns a JSON-RPC response; the protocol
       version is the Streamable HTTP revision.
-- [ ] The remote handler composes on the web runtime's services (the
+- [x] The remote handler composes on the web runtime's services (the
       fetcher-seam debt paid; the sidecar's bare instances are not used
       by the remote path).
-- [ ] Every tool that passes over stdio passes over HTTP with
+- [x] Every tool that passes over stdio passes over HTTP with
       identical results (parity tests; MCP-001).
-- [ ] A non-loopback request without a valid credential is refused
+- [x] A non-loopback request without a valid credential is refused
       (web_auth.py:73-89).
-- [ ] The protocol version bump is documented in MCP_SIDECAR.md.
+- [x] The protocol version bump is documented in MCP_SIDECAR.md.
 
 ## Test plan
 
