@@ -20,6 +20,7 @@ import {
   countLabel,
   countToken,
 } from "../surface";
+import { openIntelligence } from "../intelligenceNavigation";
 import { unfinishedThoughts, type UnfinishedThought } from "../thoughts";
 import type { Meeting } from "../../lib/primitives";
 
@@ -86,6 +87,14 @@ function sourceEmblem(source: string): string {
   if (s === "jira") return "J";
   if (s === "delta") return "D";
   return s.slice(0, 2).toUpperCase();
+}
+
+/** A brief item whose text is a raw Service.method / dotted-id / snake_case
+ *  internal name is NOT human-facing and must never render on the arrival.
+ *  Examples: "PrimitiveService.delete_directory", "RecipeService.run". */
+const RAW_ID_RE = /^[A-Z][a-zA-Z]*(?:Service|Manager|Handler|Provider)\b|\b[a-z_]+\.[a-z_]+$/;
+function isRawId(text: string): boolean {
+  return RAW_ID_RE.test(text.trim());
 }
 
 /** WHY token colour: danger = warning/orange, warning = amber, info = muted. */
@@ -190,7 +199,9 @@ function Arrival() {
     ? briefSections.flatMap((s) => brief.sections[s] ?? [])
     : [];
   const briefShelf = brief?.shelf ?? {};
-  const untriagedBrief = briefItems.filter((item) => !briefShelf[item.id]);
+  const untriagedBrief = briefItems
+    .filter((item) => !briefShelf[item.id])
+    .filter((item) => !isRawId(item.text));
 
   // ── shelf verbs ──
   const [busyBriefId, setBusyBriefId] = useState<string | null>(null);
@@ -397,6 +408,9 @@ function ThoughtsSection({ thoughts }: { thoughts: UnfinishedThought[] }) {
   );
 }
 
+/** Cap: the arrival shows at most 3 brief rows + a "N more" verb. */
+const BRIEF_CAP = 3;
+
 function BriefSection({
   items,
   busyId,
@@ -406,12 +420,15 @@ function BriefSection({
   busyId: string | null;
   onShelf: (id: string, state: "acknowledged" | "deferred") => void;
 }) {
+  const visible = items.slice(0, BRIEF_CAP);
+  const overflow = items.length - visible.length;
+
   return (
     <SurfaceSection
       label={`BRIEF · ${countToken(items.length, "THING WAITING", "THINGS WAITING") ?? ""}`}
-         >
+    >
       <SurfaceLedger count={null} cols="room">
-        {items.map((item) => (
+        {visible.map((item) => (
           <SurfaceLedgerRow
             key={item.id}
             primary={item.text}
@@ -441,6 +458,16 @@ function BriefSection({
           />
         ))}
       </SurfaceLedger>
+      {overflow > 0 ? (
+        <Button
+          variant="ghost"
+          dense
+          onClick={() => openIntelligence({ view: "brief" })}
+          data-testid="arrival-brief-more"
+        >
+          {overflow} more
+        </Button>
+      ) : null}
     </SurfaceSection>
   );
 }

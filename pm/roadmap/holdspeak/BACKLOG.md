@@ -1027,3 +1027,5 @@ seams (156's apply is the natural migration driver). Owner's words:
 revolution?" — the backend still owes him that revolution.
 
 - **Concierge apply in one transaction** (from HS-170-03, 2026-09-05): `POST /api/concierge/apply` writes per group through the `set_assignment` CAS path like the front door; an atomic seven-group write needs a new InferenceAssignmentService method. Fold into the next Settings→Models pass.
+
+- **The Monday brief carries the kernel operation ledger as "waiting" items** (found on the owner's real desk 2026-09-05 by live170_walk.py: 1837 `Service.method` rows). The arrival filters them client-side (ChairHome.tsx RAW_ID_RE) and caps at 3 + `N more`; the SOURCE fix — the brief service must not emit kernel operations as owner-facing items — belongs to Phase 171 story 06 (the brief recurring).

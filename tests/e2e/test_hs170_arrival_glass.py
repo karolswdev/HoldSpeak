@@ -252,6 +252,61 @@ def _seed_meeting_without_transcript() -> str:
     return meeting_id
 
 
+def _seed_brief_with_kernel_ops_and_human_items() -> None:
+    """Seed a brief with 50 kernel-op items + 2 human-facing items.
+
+    The kernel ops have Service.method names (e.g. PrimitiveService.delete_directory).
+    The human items have normal titles. The arrival must show only the 2 human
+    items and filter out the 50 kernel ops.
+    """
+    from holdspeak.db import get_database
+    db = get_database()
+    brief_id = str(uuid.uuid4())
+    now_iso = datetime.now().isoformat()
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT INTO monday_briefs "
+            "(id, period_start, period_end, headline, generated_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (brief_id, "2026-09-01", "2026-09-05", "50 kernel ops + 2 human", now_iso),
+        )
+        # 50 kernel-op items (Service.method names)
+        kernel_ops = [
+            "PrimitiveService.delete_directory",
+            "PrimitiveService.update_note",
+            "RecipeService.create_recipe",
+            "RecipeService.run",
+            "PrimitiveService.delete_note",
+            "PrimitiveService.update_directory",
+            "PrimitiveService.create_chain",
+            "RecipeService.update_recipe",
+            "CadenceService.evaluate_loop",
+            "ProjectionService.project_thought",
+        ]
+        for i in range(50):
+            item_id = f"kernel-{i}"
+            text = kernel_ops[i % len(kernel_ops)]
+            conn.execute(
+                "INSERT INTO monday_brief_items "
+                "(id, brief_id, section, text, priority) "
+                "VALUES (?, ?, 'waiting', ?, 0)",
+                (item_id, brief_id, text),
+            )
+        # 2 human-facing items
+        conn.execute(
+            "INSERT INTO monday_brief_items "
+            "(id, brief_id, section, text, priority) "
+            "VALUES (?, ?, 'waiting', ?, 0)",
+            ("human-1", brief_id, "CI red on main since Tuesday"),
+        )
+        conn.execute(
+            "INSERT INTO monday_brief_items "
+            "(id, brief_id, section, text, priority) "
+            "VALUES (?, ?, 'waiting', ?, 0)",
+            ("human-2", brief_id, "KAN-7 slipped a week"),
+        )
+
+
 # ── Shot helpers ──────────────────────────────────────────────────
 
 def _shot(page: Any, name: str, width: int) -> Path:
@@ -457,6 +512,79 @@ def _run_quiet_rig(
         server.stop()
 
 
+def _run_brief_rig(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
+) -> None:
+    """Brief with 50 kernel ops + 2 human items: only human items render."""
+    _ensure_build()
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.on("pageerror", lambda e: errors.append(str(e)))
+
+            # Init desk
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _api(page, "POST", "/api/desk/seed", token=TOKEN)
+            _api(page, "PUT", "/api/setup/onboarding",
+                 {"disposition": "completed"}, token=TOKEN)
+
+            # Seed brief with kernel ops + human items
+            _seed_brief_with_kernel_ops_and_human_items()
+
+            # Reload to pick up seeded data
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            _settle(page)
+
+            page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
+            _settle(page)
+
+            # ── BRIEF section present with only human items ──
+            brief_section = page.get_by_test_id("arrival-brief")
+            assert brief_section.count() == 1, "BRIEF section should be present"
+
+            # Only 2 human rows (kernel ops filtered out)
+            brief_rows = page.get_by_test_id("arrival-brief-row")
+            assert brief_rows.count() == 2, \
+                f"Expected 2 human brief rows, got {brief_rows.count()}"
+
+            # No raw Service.method text anywhere in the brief section
+            raw_ids = page.evaluate("""() => {
+                const brief = document.querySelector('[data-testid="arrival-brief"]');
+                if (!brief) return [];
+                const texts = [];
+                const primaries = brief.querySelectorAll('.surface-ledger-primary');
+                for (const el of primaries) {
+                    const t = (el.textContent || '').trim();
+                    if (/Service\\./.test(t) || /^[a-z_]+\\.[a-z_]+$/.test(t)) {
+                        texts.push(t);
+                    }
+                }
+                return texts;
+            }""")
+            assert len(raw_ids) == 0, f"Raw Service.method ids in brief: {raw_ids}"
+
+            # Verify the human items are the ones rendered
+            row_texts = [brief_rows.nth(i).locator(".surface-ledger-primary").text_content()
+                         for i in range(brief_rows.count())]
+            assert any("CI red" in (t or "") for t in row_texts), \
+                f"Expected 'CI red on main since Tuesday' in rows: {row_texts}"
+            assert any("KAN-7" in (t or "") for t in row_texts), \
+                f"Expected 'KAN-7 slipped a week' in rows: {row_texts}"
+
+            # ── Take shot ──
+            _shot(page, "build-arrival-brief", width)
+
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
+
+
 # ── Pytest entry points ───────────────────────────────────────────
 
 
@@ -482,3 +610,8 @@ class TestArrivalGlass:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _run_quiet_rig(tmp_path, monkeypatch, 393)
+
+    def test_arrival_brief_filter_1440(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _run_brief_rig(tmp_path, monkeypatch, 1440)
