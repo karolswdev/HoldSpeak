@@ -15,6 +15,8 @@ changed_refs carries ``project:<id>``; the item id rides in the result
 payload.  Event kind is ``project.updated`` (SS10 has no item event kind).
 """
 from __future__ import annotations
+
+import logging
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import hashlib
@@ -1269,6 +1271,7 @@ class ProjectService:
                     "count": count,
                 })
             except Exception:
+                logging.getLogger(__name__).debug("review people: resolver skipped one reviewer", exc_info=True)
                 continue
         return result
 

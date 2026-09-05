@@ -529,7 +529,7 @@ function NudgeCard({
 
 /* ── HS-173: nudge cooling token (NUDGED N D AGO / NUDGED JUST NOW) ── */
 
-function nudgeCooldownToken(nudge: RoomHealthPerson["nudge"]): string | null {
+export function nudgeCooldownToken(nudge: RoomHealthPerson["nudge"]): string | null {
   if (!nudge || nudge.state !== "sent" || !nudge.sentAt) return null;
   const sentDate = new Date(nudge.sentAt);
   if (Number.isNaN(sentDate.getTime())) return null;
@@ -537,7 +537,8 @@ function nudgeCooldownToken(nudge: RoomHealthPerson["nudge"]): string | null {
   const diffDays = diffMs / 86_400_000;
   if (diffDays > 7) return null; // past cooldown
   if (diffDays < 1 / 24) return "NUDGED JUST NOW"; // under 1 hour
-  return `NUDGED ${Math.round(diffDays)} D AGO`;
+  if (diffDays < 1) return `NUDGED ${Math.max(1, Math.round(diffDays * 24))} H AGO`; // hours under a day
+  return `NUDGED ${Math.max(1, Math.round(diffDays))} D AGO`;
 }
 
 /* ── HS-172-03: Proposal row sub-component ── */
