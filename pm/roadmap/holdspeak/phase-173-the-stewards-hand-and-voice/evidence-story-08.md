@@ -17,3 +17,17 @@
 ..........                                                               [100%]
 10 passed in 1.12s
 ```
+
+### Captured run — 2026-09-05T18:57:30Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.q39rb2oBbp uv run pytest -q -p no:cacheprovider tests/unit/test_no_positional_inserts.py tests/unit/test_backend_density_guard.py tests/unit/test_hs169_wire.py tests/unit/test_hs172_room_people.py tests/unit/test_project_room_fields_write.py tests/unit/test_project_room_read.py tests/unit/test_project_room_schema.py tests/unit/test_project_service_characterization.py `
+- **Cwd:** .
+- **Exit code:** 4
+- **Index-tree:** 04fd41de56cf4e8dc1878a0739a2e985bdc3d2e5
+
+```text
+ERROR: file or directory not found: tests/unit/test_hs169_wire.py tests/unit/test_hs172_room_people.py tests/unit/test_project_room_fields_write.py tests/unit/test_project_room_read.py tests/unit/test_project_room_schema.py tests/unit/test_project_service_characterization.py 
+
+
+no tests ran in 0.00s
+```
