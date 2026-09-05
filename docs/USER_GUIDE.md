@@ -956,7 +956,7 @@ Open **Settings, Rhythm**. The Rhythm module controls the Heartbeat: the
 unattended sweep that evaluates project Watches and refreshes the
 needs-you aggregate on a cadence.
 
-![Rhythm — the sweep, the brief and notify rows](assets/heartbeat/rhythm-1440.png)
+![Rhythm: the sweep, the brief and notify rows](assets/heartbeat/rhythm-1440.png)
 
 ### The sweep row
 

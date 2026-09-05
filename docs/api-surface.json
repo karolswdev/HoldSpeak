@@ -4892,7 +4892,9 @@
         "POST"
       ],
       "module": "web.routes.system.settings",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/settings/hub",
