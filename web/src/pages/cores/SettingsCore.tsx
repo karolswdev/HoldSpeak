@@ -30,7 +30,7 @@ import {
   StringGadget,
   type CycleOption,
 } from "../../desk/surface/gadgets";
-import { Receipt, countToken } from "../../desk/surface";
+import { Receipt, countToken, StateChip } from "../../desk/surface";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { openSurface } from "../../desk/shell";
 import { HotkeyCapture } from "./settingsBespoke";
@@ -40,13 +40,13 @@ import { toggleSfx } from "../../lib/sfx";
 import { TtsSettingsBlock } from "./settingsTts";
 // PARKED (HS-170-03): CapabilityAssignmentsCore — reached via Concierge Adjust.
 // import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
-import { ContextualAssignment } from "./ContextualAssignment";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
 import { ConnectionsPane, type ConnectionsFoot } from "./connections";
 // HS-139-05: activateLauncher removed (Delivery tile absorbed).
 import {
   CADENCE_PRESSURE_OPTIONS,
+  INTELLIGENCE_AUTO_OPTIONS,
   LANGUAGE_OPTIONS,
   DeskModule,
   MIR_PROFILE_OPTIONS,
@@ -55,6 +55,7 @@ import {
   PrefsFace,
   PrefStatusBar,
   WAKE_ACTION_OPTIONS,
+  autoDisplayFact,
   type SettingsHubWire,
 } from "./settingsPrefs";
 
@@ -223,7 +224,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
     models: { engines: 0, groupsSet: 0, defaultSet: false },
     connections: { connected: 0 },
     voice: { live: false, target: "" },
-    meetings: { intelligence: false },
+    meetings: { intelligence: false, auto: "off", host: "" },
     rhythm: { loops: 0 },
     sounds: { on: false },
     system: { host: "THIS DEVICE", mesh: false },
@@ -793,8 +794,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
             <TtsSettingsBlock />
           </>
         );
-      /* ── Meetings: pointer tile + calendar + actuators + RAW ── */
+      /* ── Meetings: display fact + intel row + capture + calendar + actuators + RAW ── */
       case "meetings": {
+        const autoVal = String(val(["meeting", "intelligence_auto"]) ?? "room_linked");
+        const meetingsHub = (hub.data as Record<string, unknown>).meetings as Record<string, unknown> | undefined;
+        const intelHost = String(meetingsHub?.host ?? "");
+        const hasModel = Boolean(intelHost) || hub.data.models?.defaultSet;
         const sourcesPath: string[] = ["calendar", "sources"];
         const sources: Array<{
           id: string;
@@ -814,12 +819,69 @@ function SettingsFace({ hero, scope }: CoreProps) {
         };
         return (
           <>
+            <div className="surface-display" data-testid="meetings-auto-display">
+              {autoDisplayFact(autoVal)}
+            </div>
+            <div className="prefs-rule" aria-hidden="true" />
+            <GadgetRow label="Intelligence">
+              <CycleGadget
+                label="Auto-run intelligence"
+                value={autoVal}
+                options={INTELLIGENCE_AUTO_OPTIONS}
+                onChange={(next) => update(["meeting", "intelligence_auto"], next)}
+              />
+            </GadgetRow>
+            <div className="prefs-egress-line">
+              {hasModel && intelHost ? (
+                <EgressChip
+                  label={intelHost}
+                  scope={intelHost === "THIS DEVICE" ? "local" : "cloud"}
+                />
+              ) : !hasModel ? (
+                <>
+                  <StateChip state="warning" label="NO MODEL" />
+                  <Button variant="ghost" dense onClick={() => openSurface("open-concierge")}>
+                    Choose model
+                  </Button>
+                </>
+              ) : null}
+            </div>
+            <div className="prefs-rule" aria-hidden="true" />
             <GadgetGroup label="Capture + export">
-              <div className="prefs-elsewhere">
-                <span className="prefs-elsewhere-fact">
-                  CONFIG LIVES ON MEETINGS
-                </span>
-              </div>
+              <GadgetRow label="Mic device" fact="device name">
+                <StringGadget
+                  label="Mic device"
+                  value={String(val(["meeting", "mic_device"]) ?? "")}
+                  onChange={(next) => update(["meeting", "mic_device"], next || null)}
+                />
+              </GadgetRow>
+              <GadgetRow label="System audio" fact="device name">
+                <StringGadget
+                  label="System audio device"
+                  value={String(val(["meeting", "system_audio_device"]) ?? "")}
+                  onChange={(next) => update(["meeting", "system_audio_device"], next || null)}
+                />
+              </GadgetRow>
+              <GadgetRow label="Auto export">
+                <CheckGadget
+                  label="Auto export"
+                  checked={Boolean(val(["meeting", "auto_export"]))}
+                  onChange={(next) => update(["meeting", "auto_export"], next)}
+                />
+              </GadgetRow>
+              <GadgetRow label="Format">
+                <CycleGadget
+                  label="Export format"
+                  value={String(val(["meeting", "export_format"]) ?? "txt")}
+                  options={[
+                    { value: "txt", label: "TXT" },
+                    { value: "markdown", label: "MD" },
+                    { value: "json", label: "JSON" },
+                    { value: "srt", label: "SRT" },
+                  ]}
+                  onChange={(next) => update(["meeting", "export_format"], next)}
+                />
+              </GadgetRow>
             </GadgetGroup>
             <GadgetGroup label="Calendar">
               <GadgetRow wide label="Sources" highlight={hl(sourcesPath)}>
@@ -915,19 +977,6 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </GadgetGroup>
             <GadgetGroup label="Actuators">
               {check(["meeting", "allow_actuators"], "Allow actuators")}
-            </GadgetGroup>
-            <GadgetGroup label="Intelligence">
-              <div className="prefs-elsewhere">
-                <span className="prefs-elsewhere-fact">PLACEMENT LIVES IN ASSIGNMENTS</span>
-                <Button dense onClick={() => openModule("assignments")}>
-                  Open Assignments
-                </Button>
-                <ContextualAssignment
-                  label="Meetings"
-                  capabilityId="meeting.live_analysis"
-                  scope={{ kind: "group", group_id: "meetings" }}
-                />
-              </div>
             </GadgetGroup>
             {/* HS-139-04: all operator knobs fold behind one RAW well. */}
             <FoldGadget title="RAW" token="20">

@@ -54,7 +54,7 @@ function MeetingStreamRow({
   const token = stateToken(row);
   let displayLabel = state.label;
   let displayTone = state.tone;
-  if (needsYouCount > 0 && token.label === "SAVED") {
+  if (needsYouCount > 0 && (token.label === "SAVED" || token.label === "RAN")) {
     displayLabel = countToken(needsYouCount, "NEEDS YOU", "NEED YOU") ?? "";
     displayTone = "accent";
   } else if (needsYouCount > 0 && token.label !== "OFF") {

@@ -1,6 +1,6 @@
-// HS-170-04 — the detail's NEEDS YOU section.
+// HS-172 — the detail's NEEDS YOU section.
 // Board: caption `NEEDS YOU 3` with optional `Run intelligence` at trailing.
-// Each row: outcome text + its verb (Decide / Open).
+// Each row: Decide:/Confirm: prefix (accent) + text + verbs.
 // UX-CANON A.8: when zero rows AND not OFF-with-words, the section is ABSENT.
 import { Button } from "../../../components/signal/Signal";
 import { countLabel } from "../../../desk/surface";
@@ -21,16 +21,14 @@ export function NeedsYouTable({
 }) {
   const showRunIntel = intelOff && hasTranscript && Boolean(onRunIntelligence);
 
-  // Section absent when zero rows AND no Run intelligence verb
   if (needsRows.length === 0 && !showRunIntel) return null;
 
   return (
-    <div className="meetings-detail-needs">
+    <div className="meetings-detail-needs" data-testid="meeting-needs-you">
       <div className="meetings-detail-needs-head">
         <span className="surface-caption">
           {countLabel("NEEDS YOU", needsCount)}
         </span>
-        {/* When OFF with transcript, Run intelligence at trailing edge */}
         {showRunIntel ? (
           <Button
             dense

@@ -226,6 +226,15 @@
 .arrival-meeting-badge[data-badge="queued"] {
   color: var(--accent);
 }
+.arrival-meeting-badge[data-badge="ran"] {
+  color: var(--success, #38a169);
+}
+
+/* ── Proposal prefix (HS-172-03) ───────────────────────────────────── */
+.arrival-proposal-prefix {
+  color: var(--accent);
+  font-weight: 600;
+}
 
 /* ── Capture bar ───────────────────────────────────────────────────── */
 .arrival-capture-bar {

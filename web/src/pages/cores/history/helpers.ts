@@ -45,7 +45,7 @@ export function displayState(value: unknown): string {
    the banned abbreviation (HS-100-05 vocabulary guard). The axis word
    rides its own span so the narrow rail can fold it away without
    losing the state. */
-export type StateToken = { axis?: string; label: string; tone?: "warn" | "danger" };
+export type StateToken = { axis?: string; label: string; tone?: "warn" | "danger" | "success" };
 
 /** HS-170-04: liveness heuristic for capture_status=recording rows.
  *  No /api/meetings/active route exists (the active session is process-local
@@ -91,6 +91,8 @@ export function stateToken(row: Record<string, unknown>): StateToken {
     import_failed: { label: "IMPORT FAILED", tone: "danger" },
   };
   if (row.status === "failed") return { label: "FAILED", tone: "danger" };
+  // HS-172: complete intel → RAN (success).
+  if (state === "complete") return { label: "RAN", tone: "success" };
   return known[state] ?? { label: "SAVED" };
 }
 
@@ -113,6 +115,27 @@ export function durationToken(seconds: unknown): string {
   if (!Number.isFinite(minutes) || minutes <= 0) return "";
   if (minutes >= 600) return `${Math.round(minutes / 60)} HR`;
   return `${minutes} MIN`;
+}
+
+/** HS-172: wall-clock seconds the intel job took, derived from
+ *  intel_status.requested_at and intel_status.completed_at. */
+export function intelDurationSeconds(row: Record<string, unknown>): number {
+  const intel = row.intel_status;
+  if (typeof intel !== "object" || intel === null) return 0;
+  const obj = intel as Record<string, unknown>;
+  const req = obj.requested_at;
+  const comp = obj.completed_at;
+  if (!req || !comp) return 0;
+  const start = new Date(String(req)).getTime();
+  const end = new Date(String(comp)).getTime();
+  if (Number.isNaN(start) || Number.isNaN(end)) return 0;
+  return Math.max(0, Math.round((end - start) / 1000));
+}
+
+/** HS-172: intel run duration as `N S` token. Empty when unavailable. */
+export function intelDurationToken(row: Record<string, unknown>): string {
+  const s = intelDurationSeconds(row);
+  return s > 0 ? `${s} S` : "";
 }
 
 /** hh:mm — the receipt stamp's clock. */
@@ -197,7 +220,11 @@ export function meetingRowState(row: Record<string, unknown>): MeetingRowState {
   if (token.label === "FAILED" || token.tone === "danger") {
     return { label: token.label, tone: "danger", verb: "Retry", verbVariant: "primary" };
   }
-  // SAVED (complete)
+  // RAN (complete intel)
+  if (token.label === "RAN") {
+    return { label: "RAN", tone: "success", verb: "Open", verbVariant: "ghost" };
+  }
+  // SAVED (finalized, no intel)
   if (token.label === "SAVED") {
     return { label: "SAVED", tone: "success", verb: "Open", verbVariant: "ghost" };
   }
