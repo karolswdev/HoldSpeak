@@ -14,19 +14,18 @@ import {
 } from "./helpers";
 import type { ReactNode } from "react";
 
-/** Render a list of tokens joined by middle dots (U+00B7). */
+/** Render a list of tokens joined by middle dots (U+00B7).
+ *  Dots are sibling flex children for equal spacing on both sides. */
 function TokenLine({ parts }: { parts: ReactNode[] }) {
   const filtered = parts.filter(Boolean);
-  return (
-    <>
-      {filtered.map((part, i) => (
-        <span key={i}>
-          {i > 0 ? <span className="meetings-stream-dot" aria-hidden="true">{"·"}</span> : null}
-          {part}
-        </span>
-      ))}
-    </>
-  );
+  const interleaved: ReactNode[] = [];
+  filtered.forEach((part, i) => {
+    if (i > 0) interleaved.push(
+      <span key={`dot-${i}`} className="meetings-stream-dot" aria-hidden="true">{"·"}</span>
+    );
+    interleaved.push(<span key={`part-${i}`}>{part}</span>);
+  });
+  return <>{interleaved}</>;
 }
 
 /** HS-170-04 — the stream row: title at primary, tokens under, verb right. */
