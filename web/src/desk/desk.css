@@ -55,13 +55,13 @@
   background:
     linear-gradient(
       to bottom,
-      color-mix(in srgb, #06100d 34%, transparent),
+      color-mix(in srgb, var(--desk-atmosphere-garden-sky) 34%, transparent),
       transparent 46%
     ),
     radial-gradient(
       ellipse at 46% 64%,
       transparent 0 30%,
-      color-mix(in srgb, #020706 52%, transparent) 92%
+      color-mix(in srgb, var(--desk-atmosphere-garden-edge) 52%, transparent) 92%
     );
 }
 .desk-next .desk-atmosphere-grade--quiet-desk {
@@ -69,6 +69,13 @@
     ellipse at 50% 44%,
     color-mix(in srgb, var(--surface-2) 42%, transparent),
     transparent 72%
+  );
+}
+.desk-next .desk-atmosphere-grade--interior {
+  background: radial-gradient(
+    ellipse at 50% 48%,
+    transparent 20%,
+    var(--desk-atmosphere-edge) 100%
   );
 }
 

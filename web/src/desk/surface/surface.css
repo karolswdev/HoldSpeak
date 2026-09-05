@@ -2281,9 +2281,30 @@ button.surface-edit-in-place:hover {
     inset 1px 1px 0 var(--bevel-light),
     inset -1px -1px 0 var(--bevel-dark);
 }
+.prefs-wallpaper-choice {
+  position: relative;
+  min-width: 0;
+}
+.prefs-wallpaper-choice > .prefs-wallpaper-card {
+  width: 100%;
+  height: 100%;
+}
+.prefs-wallpaper-favorite {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  min-width: 36px;
+  min-height: 36px;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+.prefs-wallpaper-favorite[aria-pressed="true"] {
+  color: var(--accent);
+}
 .prefs-wallpaper-card:hover,
 .prefs-wallpaper-card:focus-visible {
-  outline: none;
   border-color: var(--accent);
   background: var(--surface-3);
 }

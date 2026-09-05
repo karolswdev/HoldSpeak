@@ -8,6 +8,7 @@ import "./chrome-menus.css";
 import { useEffect, useState, useRef } from "react";
 import { useTrustWindow } from "./TrustWindow";
 import { useDesk } from "../store";
+import { useSettleState } from "../settleState";
 import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
 import { verbById, verbLabel, type VerbContext } from "../verbRegistry";
 import { useKeymap } from "../keymap";
@@ -124,6 +125,10 @@ export function DeskChrome({
   useDesk((s) => s.positions);
   useDesk((s) => s.viewMode);
   const [menuOpen, setMenuOpen] = useState(false);
+  const settled = useSettleState((s) => s.settled);
+  useEffect(() => {
+    if (settled) setMenuOpen(false);
+  }, [settled]);
   const [menuAt, setMenuAt] = useState<{ x: number; y: number }>({
     x: 0,
     y: 0,
@@ -175,7 +180,7 @@ export function DeskChrome({
             <img src={SYSTEM.menuMark} alt="" width={16} height={16} className="desk-mark-glyph desk-chrome-sprite" draggable={false} />
             HoldSpeak
           </button>
-          {menuOpen &&
+          {!settled && menuOpen &&
             (() => {
               const ctx: VerbContext = { selectedRef: null };
               const row = (id: string): WorkMenuEntry | null => {

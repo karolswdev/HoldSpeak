@@ -3,6 +3,7 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { captureLightBoost } from "./atmosphereLighting";
 import type {
   AtmosphereFrame,
   AtmosphereScene,
@@ -315,6 +316,8 @@ class LanternGardenScene implements AtmosphereScene {
   >;
   private lastElapsed = 0;
   private reducedMotion: boolean;
+  private initialized = false;
+  private lastActivity: AtmosphereFrame["activity"];
   private destroyed = false;
 
   constructor(context: AtmosphereSceneContext) {
@@ -330,7 +333,7 @@ class LanternGardenScene implements AtmosphereScene {
     });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.34;
+    this.renderer.toneMappingExposure = 1.42;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -363,8 +366,8 @@ class LanternGardenScene implements AtmosphereScene {
   }
 
   private buildLights(): void {
-    this.scene.add(new THREE.HemisphereLight(0x526b66, 0x120b07, 1.18));
-    const moon = new THREE.DirectionalLight(0x8eaaa4, 0.86);
+    this.scene.add(new THREE.HemisphereLight(0x526b66, 0x120b07, 1.35));
+    const moon = new THREE.DirectionalLight(0x8eaaa4, 1.1);
     moon.position.set(-14, 22, 12);
     moon.castShadow = true;
     moon.shadow.mapSize.set(1024, 1024);
@@ -532,7 +535,6 @@ class LanternGardenScene implements AtmosphereScene {
     const pebbleGeometry = new THREE.IcosahedronGeometry(0.075, 1);
     const pebbleMaterial = new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      vertexColors: true,
       roughness: 0.78,
     });
     const pebbles = new THREE.InstancedMesh(
@@ -860,7 +862,8 @@ class LanternGardenScene implements AtmosphereScene {
       color: 0xffffff,
       emissive: 0x041109,
       emissiveIntensity: 0.14,
-      vertexColors: true,
+      // InstancedMesh supplies instanceColor. Enabling vertexColors as well
+      // multiplies it by a missing geometry color attribute, blackening leaves.
       roughness: 0.87,
     });
 
@@ -953,7 +956,6 @@ class LanternGardenScene implements AtmosphereScene {
       petalGeometry,
       new THREE.MeshStandardMaterial({
         color: 0xffffff,
-        vertexColors: true,
         roughness: 0.68,
       }),
       flowerCount * 5,
@@ -1203,7 +1205,9 @@ class LanternGardenScene implements AtmosphereScene {
 
   private updateLanterns(frame: AtmosphereFrame): void {
     for (const lantern of this.lanterns) {
-      const glow = lanternGlowAt(frame.elapsed, lantern.phase);
+      const glow =
+        lanternGlowAt(frame.elapsed, lantern.phase) *
+        captureLightBoost(frame.activity);
       lantern.glass.emissiveIntensity = 3.2 * glow;
       lantern.halo.material.opacity = 0.3 * glow * lantern.strength;
       lantern.groundGlow.material.opacity = 0.105 * lantern.strength * glow;
@@ -1265,8 +1269,9 @@ class LanternGardenScene implements AtmosphereScene {
   update(frame: AtmosphereFrame): void {
     if (this.destroyed) return;
     this.lastElapsed = frame.elapsed;
-    if (!this.reducedMotion) {
-      this.updateLanterns(frame);
+    this.lastActivity = frame.activity;
+    this.updateLanterns(frame);
+    if (!this.reducedMotion || !this.initialized) {
       this.updateWater(frame);
       this.updateDrips(frame);
       this.updateDrizzle(frame);
@@ -1275,7 +1280,9 @@ class LanternGardenScene implements AtmosphereScene {
         this.canopyGroups[index].rotation.z = breeze * 0.012;
         this.canopyGroups[index].rotation.x = breeze * 0.004;
       }
+      this.initialized = true;
     }
+    if (this.reducedMotion) return;
 
     const targetX = CAMERA_X + frame.pointer.x * 0.58;
     const targetY = CAMERA_Y - frame.pointer.y * 0.14;
@@ -1293,6 +1300,7 @@ class LanternGardenScene implements AtmosphereScene {
         delta: 0,
         elapsed: this.lastElapsed,
         pointer: { x: 0, y: 0 },
+        activity: this.lastActivity,
       });
     }
   }
@@ -1305,7 +1313,7 @@ class LanternGardenScene implements AtmosphereScene {
       MAX_RENDER_WIDTH / (viewport.width * desiredPixelRatio),
       MAX_RENDER_HEIGHT / (viewport.height * desiredPixelRatio),
     );
-    const pixelRatio = Math.max(0.72, desiredPixelRatio * backingScale);
+    const pixelRatio = desiredPixelRatio * backingScale;
     this.renderer.setPixelRatio(pixelRatio);
     this.renderer.setSize(viewport.width, viewport.height, false);
     this.composer.setPixelRatio(pixelRatio);
@@ -1328,6 +1336,7 @@ class LanternGardenScene implements AtmosphereScene {
     this.outputPass.dispose();
     this.composer.dispose();
     this.renderer.dispose();
+    this.renderer.forceContextLoss();
   }
 }
 

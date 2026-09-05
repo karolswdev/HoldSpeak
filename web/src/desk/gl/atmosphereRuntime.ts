@@ -14,6 +14,21 @@ export interface AtmosphereFrame {
   delta: number;
   elapsed: number;
   pointer: AtmospherePointer;
+  /** Passive product truth; decorative scenes never acquire a microphone. */
+  activity?: AtmosphereActivity;
+}
+
+export interface AtmosphereActivity {
+  recording: boolean;
+  speaking: boolean;
+  level: number;
+  /** Monotonic count of actual newly added Desk objects, excluding initial load. */
+  arrival: number;
+}
+
+export interface AtmosphereActivitySource {
+  read(): AtmosphereActivity;
+  subscribe(listener: () => void): () => void;
 }
 
 export interface AtmosphereScene {
@@ -37,6 +52,8 @@ export type AtmosphereSceneFactory = (
 
 export interface MountAtmosphereOptions {
   seed: number;
+  activity?: AtmosphereActivitySource;
+  motion?: boolean;
 }
 
 /** Browser lifecycle shared by every HoldSpeak atmosphere.
@@ -52,7 +69,7 @@ export function mountAtmosphereScene(
   options: MountAtmosphereOptions,
 ): () => void {
   const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-  let reducedMotion = motionQuery.matches;
+  let reducedMotion = motionQuery.matches || options.motion === false;
   let destroyed = false;
   let animationFrame = 0;
   let elapsed = 0;
@@ -81,7 +98,12 @@ export function mountAtmosphereScene(
     const delta = Math.min(Math.max((now - lastFrame) / 1_000, 0), 0.05);
     lastFrame = now;
     elapsed += delta;
-    scene.update({ delta, elapsed, pointer });
+    scene.update({
+      delta,
+      elapsed,
+      pointer,
+      activity: options.activity?.read(),
+    });
     scene.render();
     animationFrame = requestAnimationFrame(renderFrame);
   };
@@ -100,11 +122,20 @@ export function mountAtmosphereScene(
 
   const onVisibilityChange = () => {
     if (document.hidden) stop();
-    else start();
+    else if (reducedMotion) {
+      // A paused scene may have missed real capture changes while hidden.
+      scene.update({
+        delta: 0,
+        elapsed,
+        pointer,
+        activity: options.activity?.read(),
+      });
+      scene.render();
+    } else start();
   };
 
   const onMotionChange = (event: MediaQueryListEvent) => {
-    reducedMotion = event.matches;
+    reducedMotion = event.matches || options.motion === false;
     scene.setReducedMotion?.(reducedMotion);
     if (reducedMotion) {
       stop();
@@ -118,8 +149,25 @@ export function mountAtmosphereScene(
   window.addEventListener("pointermove", onPointerMove, { passive: true });
   document.addEventListener("visibilitychange", onVisibilityChange);
   motionQuery.addEventListener("change", onMotionChange);
+  // Reduced motion freezes scenery, while real state changes still update the
+  // lamps. Capture-level samples intentionally do not wake a frozen canvas.
+  const unsubscribeActivity = options.activity?.subscribe(() => {
+    if (!reducedMotion || destroyed || document.hidden) return;
+    scene.update({
+      delta: 0,
+      elapsed,
+      pointer,
+      activity: options.activity?.read(),
+    });
+    scene.render();
+  });
   resize();
-  scene.update({ delta: 0, elapsed: 0, pointer });
+  scene.update({
+    delta: 0,
+    elapsed: 0,
+    pointer,
+    activity: options.activity?.read(),
+  });
   scene.render();
   start();
 
@@ -131,6 +179,7 @@ export function mountAtmosphereScene(
     window.removeEventListener("pointermove", onPointerMove);
     document.removeEventListener("visibilitychange", onVisibilityChange);
     motionQuery.removeEventListener("change", onMotionChange);
+    unsubscribeActivity?.();
     scene.dispose();
   };
 }

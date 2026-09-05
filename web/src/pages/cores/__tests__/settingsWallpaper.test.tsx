@@ -19,11 +19,11 @@ describe("Settings wallpaper picker", () => {
     expect(quiet).not.toBeChecked();
     expect(rainy.querySelector("img")).toHaveAttribute(
       "src",
-      expect.stringContaining("rainy-city.png"),
+      expect.stringContaining("rainy-city.webp"),
     );
     expect(garden.querySelector("img")).toHaveAttribute(
       "src",
-      expect.stringContaining("lantern-garden.png"),
+      expect.stringContaining("lantern-garden.webp"),
     );
 
     await user.click(garden);
@@ -31,5 +31,26 @@ describe("Settings wallpaper picker", () => {
     expect(garden).toBeChecked();
     expect(rainy).not.toBeChecked();
     expect(localStorage.getItem(ATMOSPHERE_STORAGE_KEY)).toBe("lantern-garden");
+  });
+
+  it("lets the keyboard select the whole collection from one tab stop", async () => {
+    const user = userEvent.setup();
+    render(<WallpaperModule />);
+    await user.tab();
+    await user.keyboard("{ArrowRight}{ArrowRight}");
+    expect(
+      screen.getByRole("radio", { name: /After-Hours Radio/ }),
+    ).toHaveFocus();
+    expect(
+      screen.getByRole("radio", { name: /After-Hours Radio/ }),
+    ).toBeChecked();
+    expect(localStorage.getItem(ATMOSPHERE_STORAGE_KEY)).toBe("radio-station");
+    await user.keyboard("{End}");
+    expect(screen.getByRole("radio", { name: /Quiet Desk/ })).toHaveFocus();
+    await user.keyboard("{Home}");
+    expect(screen.getByRole("radio", { name: /Rainy City/ })).toHaveFocus();
+    expect(
+      screen.getByRole("checkbox", { name: "Environment sound" }),
+    ).not.toBeChecked();
   });
 });

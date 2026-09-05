@@ -954,6 +954,16 @@
         "doc": "shared atmosphere focus vignette"
       },
       {
+        "name": "--desk-atmosphere-garden-sky",
+        "value": "#06100d",
+        "doc": "Lantern Garden canopy grade"
+      },
+      {
+        "name": "--desk-atmosphere-garden-edge",
+        "value": "#020706",
+        "doc": "Lantern Garden outer shade"
+      },
+      {
         "name": "--desk-z-dock-under",
         "value": "40",
         "doc": "the dock on compact viewports — sheets own the phone's bottom"

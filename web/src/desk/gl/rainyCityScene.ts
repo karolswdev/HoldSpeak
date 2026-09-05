@@ -6,6 +6,7 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import rainyMasonryTextureUrl from "./textures/rainy-masonry.webp";
 import wetAsphaltTextureUrl from "./textures/wet-asphalt.webp";
 import wetConcreteTextureUrl from "./textures/wet-concrete.webp";
+import { captureLightBoost } from "./atmosphereLighting";
 import type {
   AtmosphereFrame,
   AtmosphereScene,
@@ -329,9 +330,13 @@ class RainyCityScene implements AtmosphereScene {
   private neonFlickerStarted = -1;
   private neonFlickerPhase = 0;
   private currentNeonIntensity = 1;
+  private reducedMotion: boolean;
+  private initialized = false;
+  private lastActivity: AtmosphereFrame["activity"];
   private destroyed = false;
 
   constructor(context: AtmosphereSceneContext) {
+    this.reducedMotion = context.reducedMotion;
     this.layoutRandom = makeAtmosphereRandom(context.seed);
     this.weatherRandom = makeAtmosphereRandom(context.seed ^ 0x9e3779b9);
     this.streetRandom = makeAtmosphereRandom(context.seed ^ 0x6c8e9cf5);
@@ -1459,7 +1464,7 @@ class RainyCityScene implements AtmosphereScene {
     const geometry = new THREE.BoxGeometry(0.026, 1, 0.026);
     const material = new THREE.MeshBasicMaterial({
       color: 0xffffff,
-      vertexColors: true,
+      // Rain colors come from instanceColor, not per-vertex geometry colors.
       transparent: true,
       opacity: 0.62,
       depthWrite: false,
@@ -1798,7 +1803,6 @@ class RainyCityScene implements AtmosphereScene {
 
     this.lightning.intensity = this.currentLightning * 5.2;
     this.hemisphere.intensity = 1.62 + this.currentLightning * 1.4;
-    this.lampLight.intensity = LAMP_INTENSITY - this.currentLightning * 2.5;
     this.sky.lerpColors(
       this.baseSky,
       this.lightningSky,
@@ -1838,11 +1842,21 @@ class RainyCityScene implements AtmosphereScene {
   update(frame: AtmosphereFrame): void {
     if (this.destroyed) return;
     this.lastElapsed = frame.elapsed;
-    this.updateNeon(frame);
-    this.updateRain(frame);
-    this.updateSplashes(frame);
-    this.updateSteam(frame);
-    this.updateWeather(frame);
+    this.lastActivity = frame.activity;
+    // Initialize particle transforms once even when the first frame is paused.
+    // Later capture events may update the lamp, but never move frozen scenery.
+    if (!this.reducedMotion || !this.initialized) {
+      this.updateNeon(frame);
+      this.updateRain(frame);
+      this.updateSplashes(frame);
+      this.updateSteam(frame);
+      this.updateWeather(frame);
+      this.initialized = true;
+    }
+    this.lampLight.intensity =
+      LAMP_INTENSITY * captureLightBoost(frame.activity) -
+      this.currentLightning * 2.5;
+    if (this.reducedMotion) return;
 
     const targetX = CAMERA_X + frame.pointer.x * 0.72;
     const targetY = CAMERA_Y - frame.pointer.y * 0.16;
@@ -1853,6 +1867,7 @@ class RainyCityScene implements AtmosphereScene {
   }
 
   setReducedMotion(reducedMotion: boolean): void {
+    this.reducedMotion = reducedMotion;
     if (reducedMotion) {
       this.lightningStarted = -1;
       this.currentLightning = 0;
@@ -1866,6 +1881,14 @@ class RainyCityScene implements AtmosphereScene {
         emitter.material.opacity = emitter.baseOpacity;
       }
       this.neonLight.intensity = 2.15;
+      // Do not leave the whole sky or street frozen at a lightning peak.
+      this.updateWeather({
+        delta: 0,
+        elapsed: this.lastElapsed,
+        pointer: { x: 0, y: 0 },
+      });
+      this.lampLight.intensity =
+        LAMP_INTENSITY * captureLightBoost(this.lastActivity);
     } else {
       this.nextLightning = this.lastElapsed + 4.5 + this.weatherRandom() * 4;
       this.nextNeonFlicker = this.lastElapsed + 1.8 + this.neonRandom() * 3.4;
@@ -1880,7 +1903,7 @@ class RainyCityScene implements AtmosphereScene {
       MAX_RENDER_WIDTH / (viewport.width * desiredPixelRatio),
       MAX_RENDER_HEIGHT / (viewport.height * desiredPixelRatio),
     );
-    const pixelRatio = Math.max(0.72, desiredPixelRatio * backingScale);
+    const pixelRatio = desiredPixelRatio * backingScale;
     this.renderer.setPixelRatio(pixelRatio);
     this.renderer.setSize(viewport.width, viewport.height, false);
     this.composer.setPixelRatio(pixelRatio);
@@ -1905,6 +1928,7 @@ class RainyCityScene implements AtmosphereScene {
     this.outputPass.dispose();
     this.composer.dispose();
     this.renderer.dispose();
+    this.renderer.forceContextLoss();
   }
 }
 

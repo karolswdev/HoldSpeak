@@ -26,7 +26,7 @@ vi.mock("../atmosphereRegistry", () => ({
           load: null,
         }
       : {
-          id: "rainy-city",
+          id,
           name: "Rainy City",
           description: "A test storm.",
           seed: 72,
@@ -61,9 +61,13 @@ describe("Desk atmosphere host", () => {
       "desk-atmosphere-grade--rainy-city",
     );
     await waitFor(() =>
-      expect(mountAtmosphereScene).toHaveBeenCalledWith(canvas, factory, {
-        seed: 72,
-      }),
+      expect(mountAtmosphereScene).toHaveBeenCalledWith(
+        canvas,
+        factory,
+        expect.objectContaining({
+          seed: 72,
+        }),
+      ),
     );
 
     view.unmount();
@@ -88,6 +92,16 @@ describe("Desk atmosphere host", () => {
     view.rerender(<Atmosphere id="quiet-desk" />);
 
     expect(view.container.querySelector("canvas")).toBeNull();
+    expect(cleanup).toHaveBeenCalledOnce();
+  });
+
+  it("gives the next renderer a new canvas after disposal loses the old context", async () => {
+    const view = render(<Atmosphere id="radio-station" />);
+    await waitFor(() => expect(mountAtmosphereScene).toHaveBeenCalledOnce());
+    const firstCanvas = view.container.querySelector("canvas");
+    view.rerender(<Atmosphere id="night-train" />);
+    await waitFor(() => expect(mountAtmosphereScene).toHaveBeenCalledTimes(2));
+    expect(view.container.querySelector("canvas")).not.toBe(firstCanvas);
     expect(cleanup).toHaveBeenCalledOnce();
   });
 });

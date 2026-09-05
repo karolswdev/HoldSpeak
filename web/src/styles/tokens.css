@@ -264,6 +264,8 @@
   --desk-z-stage: -1; /* the fixed atmosphere behind the document */
   --desk-atmosphere-sky-grade: rgba(5, 14, 25, 0.12); /* shared atmosphere skyline depth grade */
   --desk-atmosphere-edge: rgba(2, 6, 12, 0.28); /* shared atmosphere focus vignette */
+  --desk-atmosphere-garden-sky: #06100d; /* Lantern Garden canopy grade */
+  --desk-atmosphere-garden-edge: #020706; /* Lantern Garden outer shade */
   --desk-z-dock-under: 40; /* the dock on compact viewports — sheets own the phone's bottom */
   --desk-z-popover: 82; /* popovers/toasts above even the transient band */
   --desk-glass: var(--surface-2); /* HS-110-01: opaque surface, no frosted glass */

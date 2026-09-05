@@ -45,7 +45,7 @@ describe("DeskOS application manifest", () => {
       DESK_APPLICATIONS.filter((application) => application.shortcut).map(
         (application) => application.shortcut,
       ),
-    ).toEqual(["⌘1", "⌘2", "⌘3", "⌘4"]);
+    ).toEqual(["⌘⇧P", "⌘1", "⌘2", "⌘3", "⌘4"]);
   });
 
   it("derives mark-menu application commands", () => {

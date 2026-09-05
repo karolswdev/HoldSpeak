@@ -5,6 +5,9 @@ import {
   type AtmosphereId,
 } from "./atmosphereRegistry";
 import { mountAtmosphereScene } from "./atmosphereRuntime";
+import { observeAtmosphereActivity } from "./atmosphereActivity";
+import { useAtmosphereControls } from "./atmosphereControls";
+import { useAtmosphereSound } from "./atmosphereSound";
 
 /** The Floor's decorative world backdrop. Product objects remain in the
  * independent Pixi canvas above this layer, so scenery can never intercept a
@@ -15,6 +18,8 @@ export interface AtmosphereProps {
 }
 
 export function Atmosphere({ id = DEFAULT_ATMOSPHERE_ID }: AtmosphereProps) {
+  const { motion } = useAtmosphereControls();
+  useAtmosphereSound(id);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const definition = useMemo(() => resolveAtmosphere(id), [id]);
 
@@ -25,19 +30,24 @@ export function Atmosphere({ id = DEFAULT_ATMOSPHERE_ID }: AtmosphereProps) {
     if (!canvas) return;
     let cancelled = false;
     let cleanup: (() => void) | undefined;
+    const activity = observeAtmosphereActivity();
     void load()
       .then((factory) => {
         if (cancelled) return;
         cleanup = mountAtmosphereScene(canvas, factory, {
           seed: definition.seed,
+          activity,
+          motion,
         });
+        canvas.dataset.ready = "true";
       })
       .catch(() => undefined);
     return () => {
       cancelled = true;
       cleanup?.();
+      activity.dispose();
     };
-  }, [definition]);
+  }, [definition, motion]);
 
   return (
     <div
@@ -46,7 +56,11 @@ export function Atmosphere({ id = DEFAULT_ATMOSPHERE_ID }: AtmosphereProps) {
       aria-hidden="true"
     >
       {definition.load ? (
-        <canvas ref={canvasRef} className="desk-atmosphere-canvas" />
+        <canvas
+          key={`${definition.id}:${motion}`}
+          ref={canvasRef}
+          className="desk-atmosphere-canvas"
+        />
       ) : null}
       <div className={`desk-atmosphere-grade ${definition.gradeClassName}`} />
     </div>
