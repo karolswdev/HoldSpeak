@@ -160,7 +160,14 @@ class TestSweepReceipt:
         assert receipt["held"] is False
         assert "at" in receipt
         assert "errors" in receipt
-        assert "outcomes" in receipt
+        # N2: outcomes is a bounded summary, not the raw list
+        outcomes = receipt["outcomes"]
+        assert isinstance(outcomes, dict)
+        assert "counts" in outcomes
+        assert "total" in outcomes
+        assert outcomes["total"] == 2
+        assert outcomes["counts"].get("evaluated", 0) == 2
+        assert "failed_watch_ids" in outcomes
 
     def test_kernel_receipt_exists_after_sweep(self, db: Database) -> None:
         """A kernel receipt is written after each sweep."""
@@ -293,6 +300,12 @@ class TestHubIntegration:
         assert "held" in rhythm["quiet"]
         assert "loops" in rhythm
 
+    def test_hub_rhythm_contains_loops_key(self, heartbeat_service) -> None:
+        """Ensure loops is always present in rhythm even with no cadence."""
+        rhythm = heartbeat_service.hub_rhythm()
+        assert "loops" in rhythm
+        assert isinstance(rhythm["loops"], int)
+
     def test_hub_rhythm_after_sweep(self, db: Database) -> None:
         """After a sweep, hub_rhythm reflects last/next sweep timestamps."""
         from holdspeak.services.heartbeat_service import HeartbeatService
@@ -309,3 +322,122 @@ class TestHubIntegration:
         rhythm = hb.hub_rhythm()
         assert rhythm["lastSweepAt"] is not None
         assert rhythm["nextSweepAt"] is not None
+
+
+# ---------------------------------------------------------------------------
+# M1 (counsel): muted projects excluded from count, marked in items
+# ---------------------------------------------------------------------------
+
+
+class TestMuteList:
+    def _fake_aggregate(self) -> dict[str, Any]:
+        """Return a canonical-shaped aggregate with items from two projects."""
+        return {
+            "count": 2,
+            "projects": ["proj-active", "proj-muted"],
+            "items": [
+                {"projectId": "proj-muted", "projectName": "Muted",
+                 "title": "PR #1", "why": "overdue", "severity": "warning",
+                 "ref": "PR #1", "ageToken": "", "source": "github", "verbHref": None},
+                {"projectId": "proj-active", "projectName": "Active",
+                 "title": "PR #2", "why": "review needed", "severity": "info",
+                 "ref": "PR #2", "ageToken": "", "source": "github", "verbHref": None},
+            ],
+            "next": None,
+            "computedAt": "2026-09-05T09:00:00",
+            "stale": False,
+            "sweepId": None,
+        }
+
+    def test_muted_room_items_marked_and_not_counted(self, db: Database) -> None:
+        """A muted project's items are marked muted:true and excluded from count."""
+        from holdspeak.services.heartbeat_service import HeartbeatService
+
+        hb = HeartbeatService(db)
+        hb.update_settings({"muted_projects": ["proj-muted"]})
+
+        with patch(
+            "holdspeak.services.needs_you_aggregate.build_aggregate",
+            return_value=self._fake_aggregate(),
+        ):
+            agg = hb._build_aggregate_via_canonical()
+
+        # count excludes muted
+        assert agg["count"] == 1
+        assert agg["mutedCount"] == 1
+        # The muted item is marked
+        muted_items = [i for i in agg["items"] if i.get("muted")]
+        unmuted_items = [i for i in agg["items"] if not i.get("muted")]
+        assert len(muted_items) == 1
+        assert muted_items[0]["projectId"] == "proj-muted"
+        assert len(unmuted_items) == 1
+        assert unmuted_items[0]["projectId"] == "proj-active"
+
+    def test_notification_count_excludes_muted(self, db: Database) -> None:
+        """notification_count returns count without muted projects."""
+        from holdspeak.services.heartbeat_service import HeartbeatService
+
+        hb = HeartbeatService(db)
+        hb.update_settings({"muted_projects": ["proj-muted"]})
+
+        with patch(
+            "holdspeak.services.needs_you_aggregate.build_aggregate",
+            return_value=self._fake_aggregate(),
+        ):
+            count = hb.notification_count()
+
+        assert count == 1  # only the unmuted project counted
+
+    def test_edge_does_not_fire_on_muted_room_rise(self, db: Database) -> None:
+        """M1: an edge driven by only muted items does not fire."""
+        from holdspeak.desktop_notify import EdgeDetector
+
+        edge = EdgeDetector()
+        edge.mark_fired(0)  # last notified at 0
+        # count=0 (after mute exclusion) should not fire
+        assert edge.should_fire(0) is False
+
+
+# ---------------------------------------------------------------------------
+# N2 (counsel): bounded receipt outcomes
+# ---------------------------------------------------------------------------
+
+
+class TestBoundedOutcomes:
+    def test_outcomes_summary_not_raw_list(self, db: Database) -> None:
+        """N2: the receipt outcomes is a bounded summary dict, not the raw list."""
+        from holdspeak.services.heartbeat_service import HeartbeatService, _summarize_outcomes
+
+        raw = [
+            {"watch_id": "w1", "outcome": "evaluated"},
+            {"watch_id": "w2", "outcome": "evaluated"},
+            {"watch_id": "w3", "outcome": "failed"},
+            {"watch_id": "w4", "outcome": "skipped_circuit_open"},
+        ]
+        summary = _summarize_outcomes(raw)
+        assert summary["total"] == 4
+        assert summary["counts"]["evaluated"] == 2
+        assert summary["counts"]["failed"] == 1
+        assert summary["counts"]["skipped_circuit_open"] == 1
+        assert summary["failed_watch_ids"] == ["w3"]
+
+    def test_receipt_outcomes_is_dict_not_list(self, db: Database) -> None:
+        """The receipt from run_sweep has outcomes as a summary dict."""
+        from holdspeak.services.heartbeat_service import HeartbeatService
+
+        mock_ws = MagicMock()
+        mock_ws.evaluate_due.return_value = [
+            {"watch_id": "w1", "outcome": "evaluated"},
+            {"watch_id": "w2", "outcome": "failed"},
+        ]
+        hb = HeartbeatService(db, watch_service=mock_ws)
+        now = datetime.now()
+        hb.update_settings({
+            "quiet_hours": {"start": (now.hour + 3) % 24, "end": (now.hour + 5) % 24},
+        })
+
+        receipt = hb.run_sweep(OWNER)
+        outcomes = receipt["outcomes"]
+        assert isinstance(outcomes, dict), "outcomes must be a bounded summary dict"
+        assert outcomes["total"] == 2
+        assert "w2" in outcomes["failed_watch_ids"]

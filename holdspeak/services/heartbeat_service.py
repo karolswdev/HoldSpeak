@@ -7,6 +7,17 @@ sweep through the kernel (Article XI.2).
 Settings are stored in the cadence_policies table (key `heartbeat`),
 not in Config TOML -- the TOML file is the owner's hand-edited runtime
 config; the heartbeat interval is a server-side operational setting.
+
+M3 (counsel): this service does NOT re-implement the aggregate builder.
+It delegates to ``needs_you_aggregate.build_aggregate`` /
+``NeedsYouCache`` -- that module is the single owner of the shape.
+
+M1 (counsel): the muted_projects setting is passed through to the
+aggregate builder; muted items are marked ``muted: true`` and excluded
+from the count that drives the notification edge.
+
+N2 (counsel): the sweep receipt's ``outcomes`` is bounded -- a summary
+of counts per outcome state + failing watch ids only.
 """
 from __future__ import annotations
 
@@ -14,7 +25,7 @@ import json
 import logging
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from holdspeak.db import Database
@@ -39,6 +50,29 @@ def _now_epoch() -> float:
     return time.time()
 
 
+def _summarize_outcomes(outcomes: list[dict[str, Any]]) -> dict[str, Any]:
+    """N2: bounded receipt summary -- counts per state + failing watch ids only.
+
+    Instead of dumping the full unbounded outcomes list into the receipt,
+    produce a compact summary: how many evaluated/skipped/failed, and the
+    watch_ids of any that failed.
+    """
+    counts: dict[str, int] = {}
+    failed_ids: list[str] = []
+    for o in outcomes:
+        state = o.get("outcome", "unknown")
+        counts[state] = counts.get(state, 0) + 1
+        if state in ("error", "failed"):
+            wid = o.get("watch_id", "")
+            if wid:
+                failed_ids.append(wid)
+    return {
+        "counts": counts,
+        "total": len(outcomes),
+        "failed_watch_ids": failed_ids,
+    }
+
+
 class HeartbeatService:
     """Owns the heartbeat sweep settings, the sweep loop, and the aggregate cache."""
 
@@ -52,9 +86,6 @@ class HeartbeatService:
         self._db = db
         self._observer = observer or NullObserver()
         self._watch_service = watch_service
-        # In-memory aggregate cache, invalidated by each sweep.
-        self._aggregate_cache: dict[str, Any] | None = None
-        self._cache_at: float = 0.0
 
     # ── Settings ───────────────────────────────────────────────────────
 
@@ -158,6 +189,7 @@ class HeartbeatService:
         t0 = time.time()
         now = datetime.now(timezone.utc)
         settings = self.get_settings()
+        sweep_id = f"sweep_{uuid.uuid4().hex[:12]}"
 
         # Quiet hours check
         held = self.in_quiet_hours(datetime.now())
@@ -179,7 +211,6 @@ class HeartbeatService:
                         project_ids = set()
                         for o in results:
                             wid = o.get("watch_id", "")
-                            # Try to look up the project for this watch
                             try:
                                 with self._db._connection() as conn:
                                     row = conn.execute(
@@ -197,21 +228,21 @@ class HeartbeatService:
                     log.error("heartbeat sweep evaluate_due failed: %s", exc)
                     errors.append({"error": str(exc)})
 
-        # Refresh the aggregate cache
-        self.refresh_aggregate(principal)
+        # M3: Refresh the aggregate cache via the canonical builder
+        self.refresh_aggregate(principal, sweep_id=sweep_id)
 
         duration_ms = (time.time() - t0) * 1000
 
         # Compute next sweep time
         sweep_minutes = settings["sweep_every_minutes"]
-        next_at = (now + __import__("datetime").timedelta(minutes=sweep_minutes)).isoformat(timespec="seconds")
+        next_at = (now + timedelta(minutes=sweep_minutes)).isoformat(timespec="seconds")
 
         # Persist timestamps
         settings["last_sweep_at"] = now.isoformat(timespec="seconds")
         settings["next_sweep_at"] = next_at
         self._persist(settings)
 
-        # Build the receipt
+        # N2: Build the receipt with bounded outcomes summary
         receipt = {
             "kind": "heartbeat.sweep",
             "at": now.isoformat(timespec="seconds"),
@@ -220,7 +251,7 @@ class HeartbeatService:
             "duration_ms": round(duration_ms, 1),
             "held": held,
             "errors": len(errors),
-            "outcomes": outcomes,
+            "outcomes": _summarize_outcomes(outcomes),
         }
 
         # Write kernel receipt (Article XI.2)
@@ -304,71 +335,84 @@ class HeartbeatService:
         except Exception:
             pass
 
-    # ── Aggregate cache ────────────────────────────────────────────────
+    # ── Aggregate cache (M3: delegates to needs_you_aggregate) ─────────
 
-    def refresh_aggregate(self, principal: Principal | None = None) -> dict[str, Any]:
-        """Refresh the needs-you aggregate cache.
+    def _build_aggregate_via_canonical(
+        self, principal: Principal | None = None,
+    ) -> dict[str, Any]:
+        """Build the aggregate via the canonical needs_you_aggregate.build_aggregate.
 
-        Calls the same builder that projects.py uses -- ProjectService's
-        room section builder -- to build the aggregate.
+        M1: passes muted_project_ids from the heartbeat setting into the builder.
+        Muted Rooms' items get ``muted: true`` and are excluded from ``count``
+        but included in ``mutedCount``.
         """
+        from holdspeak.services.needs_you_aggregate import build_aggregate
         from holdspeak.services.project_service import ProjectService
 
+        ps = ProjectService(self._db, observer=self._observer)
+        _p = principal or Principal(PrincipalKind.OWNER, "heartbeat")
+        settings = self.get_settings()
+        muted_ids = set(settings.get("muted_projects", []))
+
+        aggregate = build_aggregate(
+            list_projects=ps.list_projects,
+            room=ps.room,
+            principal=_p,
+        )
+
+        # M1: apply mute list -- mark muted items and split counts.
+        items = aggregate.get("items", [])
+        unmuted_items: list[dict[str, Any]] = []
+        muted_count = 0
+        for item in items:
+            if item.get("projectId") in muted_ids:
+                item["muted"] = True
+                muted_count += 1
+            else:
+                item["muted"] = False
+                unmuted_items.append(item)
+
+        aggregate["count"] = len(unmuted_items)
+        aggregate["mutedCount"] = muted_count
+        return aggregate
+
+    def refresh_aggregate(
+        self, principal: Principal | None = None, *, sweep_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Refresh the needs-you aggregate via the canonical builder.
+
+        M3: delegates to needs_you_aggregate.build_aggregate -- this
+        service does NOT re-implement the aggregate shape.
+        """
         try:
-            ps = ProjectService(self._db, observer=self._observer)
+            from holdspeak.services.needs_you_aggregate import NeedsYouCache
+
             _p = principal or Principal(PrincipalKind.OWNER, "heartbeat")
-            projects = ps.list_projects(_p, {"include_archived": False})
-            _SEVERITY_ORDER = {"danger": 0, "warning": 1, "info": 2}
-            items: list[dict] = []
-            project_ids: set[str] = set()
 
-            for proj in projects:
-                pid = proj.get("id") or ""
-                if not pid:
-                    continue
-                try:
-                    room = ps.room(_p, pid)
-                except Exception:
-                    continue
-                needs = room.get("needsYou", {})
-                if needs.get("state") != "ok":
-                    continue
-                for item in (needs.get("items") or []):
-                    items.append({
-                        "projectId": pid,
-                        "projectName": proj.get("name") or proj.get("title") or "",
-                        "ref": item.get("title", ""),
-                        "title": item.get("title", ""),
-                        "why": item.get("why", ""),
-                        "severity": item.get("severity", "info"),
-                    })
-                    project_ids.add(pid)
-
-            items.sort(key=lambda r: (
-                _SEVERITY_ORDER.get(r.get("severity", "info"), 2),
-                r.get("why") or "",
-            ))
-
-            self._aggregate_cache = {
-                "count": len(items),
-                "projects": sorted(project_ids),
-                "items": items,
-            }
-            self._cache_at = time.time()
+            # Build a one-shot cache and populate it.  In the live runtime
+            # the NeedsYouCache lives on the route/context; here we call the
+            # canonical builder directly.
+            aggregate = self._build_aggregate_via_canonical(_p)
+            if sweep_id:
+                aggregate["sweepId"] = sweep_id
+            return aggregate
         except Exception as exc:
             log.error("heartbeat aggregate refresh failed: %s", exc)
-            self._aggregate_cache = {"count": 0, "projects": [], "items": []}
-            self._cache_at = time.time()
-
-        return self._aggregate_cache
+            return {"count": 0, "projects": [], "items": [], "mutedCount": 0}
 
     def get_aggregate(self, principal: Principal | None = None) -> dict[str, Any]:
-        """Return the cached aggregate, refreshing if stale."""
-        settings = self.get_settings()
-        ttl = settings["sweep_every_minutes"] * 60
-        if self._aggregate_cache is None or (time.time() - self._cache_at) > ttl:
-            return self.refresh_aggregate(principal)
-        return self._aggregate_cache
+        """Return the aggregate (always fresh from the canonical builder)."""
+        return self.refresh_aggregate(principal)
+
+    # ── Muted-aware count for notification edge ────────────────────────
+
+    def notification_count(self, principal: Principal | None = None) -> int:
+        """M1: the count that drives the notification edge EXCLUDES muted.
+
+        Badge = shade caption = notification = ONE count everywhere.
+        """
+        agg = self._build_aggregate_via_canonical(principal)
+        return agg.get("count", 0)
 
     # ── Hub mirror ─────────────────────────────────────────────────────
 
