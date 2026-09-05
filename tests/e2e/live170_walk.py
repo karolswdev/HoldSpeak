@@ -587,8 +587,33 @@ def _walk_speak(page: Any, out_dir: Path, w: int, token: str,
     page.wait_for_timeout(1500)
     _settle(page)
 
+    # Wait for the ENGINE row's data-engine-state to leave "pending" (up to 15s).
+    # The detect resolver runs async; the row starts as pending and settles to
+    # ready|not-set|unknown|waiting once detect completes.
+    engine_settled = page.evaluate("""() => {
+        return new Promise(resolve => {
+            const check = () => {
+                const row = document.querySelector('.speak-engine');
+                if (!row) return null;
+                return row.getAttribute('data-engine-state');
+            };
+            const state = check();
+            if (state && state !== 'pending') return resolve(state);
+            let elapsed = 0;
+            const iv = setInterval(() => {
+                elapsed += 500;
+                const s = check();
+                if (s && s !== 'pending') { clearInterval(iv); resolve(s); }
+                else if (elapsed >= 15000) { clearInterval(iv); resolve(s || 'pending'); }
+            }, 500);
+        });
+    }""")
+    _settle(page)
+
     shot = _shoot(page, out_dir, f"walk-speak-idle", w, window=True)
     report.shots.append({"face": face, "width": w, "path": str(shot)})
+    if engine_settled == "pending":
+        report.surprises.append(f"SPEAK: ENGINE row stayed pending after 15s at {w}")
 
     # LANDS IN target
     lands_in = page.evaluate("""() => {
@@ -665,7 +690,22 @@ def _walk_concierge(page: Any, out_dir: Path, w: int, token: str,
     face = "concierge"
     _open_surface(page, token, "open-concierge")
     _settle(page)
-    page.wait_for_timeout(2000)
+    page.wait_for_timeout(1500)
+    _settle(page)
+
+    # Wait for FOUND N to appear (the detect pass populates the list).
+    try:
+        page.wait_for_function(
+            """() => {
+                const label = document.querySelector('[data-testid="concierge-found-label"]');
+                if (!label) return false;
+                const text = label.textContent || '';
+                return /FOUND\\s+\\d+/.test(text);
+            }""",
+            timeout=15000,
+        )
+    except Exception:
+        report.surprises.append(f"CONCIERGE: FOUND N never appeared after 15s at {w}")
     _settle(page)
 
     shot = _shoot(page, out_dir, f"walk-concierge", w, window=True)
