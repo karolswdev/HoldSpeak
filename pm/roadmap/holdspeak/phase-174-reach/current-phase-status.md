@@ -14,7 +14,7 @@ implementation across stdio, web, and remote.
 
 ## Status
 
-**ACTIVE 0/11 — STACKED on 173 (PR #556) on 172 (#555) on 171 (#554) on 170 (#553); branch `feat/reach` off `feat/the-stewards-hand`.**
+**COMPLETE 11/11 — PR #557 (base main) merges on the owner's standing word; 170–173 merged to main 2026-09-05.**
 
 **Depends on:** Phase 171 (the heartbeat's cadence) + Phase 173 (the
 steward's hand and voice).
@@ -124,9 +124,11 @@ the .43 box runs llama.cpp (Q6, 24k context) but no HoldSpeak runner.
 | HS-174-08 | The .43 runner (the live proof: sweep + drafter overnight, receipts on the desk) | done | [story-08-the-43-runner](./story-08-the-43-runner.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-174-09 | LAN companion notifications (Bonjour mesh push; CONDITIONAL on the companion track) | done | [story-09-lan-companion-notifications](./story-09-lan-companion-notifications.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-174-10 | The docs (MCP_SIDECAR.md extended, the guide's companions section, remote in the architecture) | done | [story-10-the-docs](./story-10-the-docs.md) | [evidence-story-10](./evidence-story-10.md) |
-| HS-174-11 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | in-progress | [story-11-the-close](./story-11-the-close.md) | -- |
+| HS-174-11 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | done | [story-11-the-close](./story-11-the-close.md) | [evidence-story-11](./evidence-story-11.md) |
 
 ## Where we are
+
+**2026-09-05 22:20 — 11/11 DONE. COMPLETE.** Counsel-on-built RATIFY-W-C paid; the walk on his desk with zero writes (remote OFF); the suite classified (6 inherited · 11 xdist-only · 10 fences paid); PR #557 retargeted to main. Merge is next, then 175 (parked at 5/9, draft #558) rebases on main.
 
 **2026-09-05 21:05 — 8/11 DONE (01 · 02 · 03 · 05 · 06 · 08 · 09 · 10).**
 The docs verified against the built product. Left: 04 and 07 (the last
