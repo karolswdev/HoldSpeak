@@ -1,0 +1,95 @@
+{
+  "artboards": [
+    {
+      "file": "RoomHealth.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 642,
+      "h": 580,
+      "title": "Room · HEALTH rows + bottleneck · 640"
+    },
+    {
+      "file": "RoomHealthReady.dc.html",
+      "x": 760,
+      "y": 0,
+      "w": 642,
+      "h": 437,
+      "title": "Room · HEALTH all green + RELEASE READY · 640"
+    },
+    {
+      "file": "RoomNudgeCard.dc.html",
+      "x": 1520,
+      "y": 0,
+      "w": 642,
+      "h": 530,
+      "title": "Room · NUDGE card unfolded · 640"
+    },
+    {
+      "file": "RoomNudgeSent.dc.html",
+      "x": 2280,
+      "y": 0,
+      "w": 642,
+      "h": 364,
+      "title": "Room · SENT receipt row · 640"
+    },
+    {
+      "file": "RoomHealthPhone.dc.html",
+      "x": 3040,
+      "y": 0,
+      "w": 395,
+      "h": 950,
+      "title": "Room · HEALTH + nudge card · 393"
+    },
+    {
+      "file": "UpdateDrafted.dc.html",
+      "x": 0,
+      "y": 1300,
+      "w": 642,
+      "h": 480,
+      "title": "Update · model draft with claims · 640"
+    },
+    {
+      "file": "UpdateDeterministic.dc.html",
+      "x": 760,
+      "y": 1300,
+      "w": 642,
+      "h": 420,
+      "title": "Update · deterministic fallback · 640"
+    },
+    {
+      "file": "UpdateDraftedPhone.dc.html",
+      "x": 1520,
+      "y": 1300,
+      "w": 395,
+      "h": 530,
+      "title": "Update · model draft · 393"
+    },
+    {
+      "file": "StewardPolicyEffects.dc.html",
+      "x": 2040,
+      "y": 1300,
+      "w": 642,
+      "h": 520,
+      "title": "Steward · policy effects with Reviewer nudge · 640"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "phase-173-row-1",
+      "x": 0,
+      "y": -140,
+      "w": 760,
+      "text": "Phase 173 The Steward's Hand and Voice. Row 1: the Room's HEALTH rows (review latency · issue aging · CI · release readiness) from snapshots; a reviewer bottleneck under NEEDS YOU with Nudge; the card shows the exact text and GITHUB.COM before Send; the receipt has no Undo. Counsel RATIFY-W-C owed; your word gates the merge."
+    },
+    {
+      "id": "phase-173-row-2",
+      "x": 0,
+      "y": 1160,
+      "w": 760,
+      "text": "Row 2: the weekly update drafted by the model behind the claim schema (every sentence carries its ref; UNVERIFIED never smoothed; the host named), the deterministic fallback without a chip, and the steward policy's sixth effect kind Reviewer nudge, unchecked by default, armed per project."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}
