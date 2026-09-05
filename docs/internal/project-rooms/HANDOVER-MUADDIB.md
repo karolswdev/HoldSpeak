@@ -120,6 +120,18 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
   face; the brief row = 06) → rigs → his-desk walk (a real notification
   at a real edge) → docs → close → stacked PR.
 
+- **171 at 08:00:** the wire complete with counsel's conditions; the
+  shade's PROJECTS + dock badge and ⌘K PROJECTS built, read and
+  committed (one count everywhere — muted Rooms dimmed, `MUTED`,
+  uncounted; the shade's empty sections absent, `NOTHING MISSED` when
+  all are); Rhythm built and BOUNCED once (title `Rhythm`, no eyebrow,
+  accent headline, hug height, WRITTEN receipt, the hub shot); the
+  arrival learning the mutes; docs written with seven markers;
+  live171_walk.py written, selectors filling. Product-copy fence at 26
+  (< the inherited 27: `_parked` skipped). Next: gauntlet → the walk on
+  his hub (run-now on his real Rooms; a banner at a real edge is his to
+  see) → docs markers → counsel-on-built → close → PR stacked on #553.
+
 ## 1. The asks of the owner (in order)
 
 1. His word on the Concierge page of the canvas → build 03's face on
