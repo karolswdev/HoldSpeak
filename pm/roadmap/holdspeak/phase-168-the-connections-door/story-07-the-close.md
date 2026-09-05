@@ -39,3 +39,13 @@ counsel, the debts named, the owner's word.
 ## Test plan
 
 - **Close:** the two-halves close wrapper (the 166/167 pattern) + the candidates re-run; `.githooks/dw check holdspeak`; `.githooks/dw gate --porcelain`.
+
+## Delivered (2026-09-05) — the close, superseded by 169
+
+The pre-bounce gates were green (suite 7946 + 1350 passed, sweep zero
+unexplained, counsel RATIFY-W-C paid, final-summary.md written). The
+owner then bounced the door and the Room on his own walk; the roots
+were paid (2e5b2429, 1cd03962) and the phase's door was replaced by
+Phase 169's on his mandate. This phase merges to main inside 169's
+branch (feat/the-streamlined-door carries feat/connections-door); its
+debts are folded into 169's final-summary ledger. Closed as superseded.

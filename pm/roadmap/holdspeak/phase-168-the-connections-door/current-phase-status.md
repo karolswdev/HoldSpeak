@@ -1,7 +1,7 @@
 # Phase 168 - The Connections Door
 
 - **Project:** holdspeak
-- **Status:** ACTIVE 5/7
+- **Status:** COMPLETE 7/7 — SUPERSEDED BY PHASE 169 (merges inside its branch)
 - **Chartered:** 2026-09-04 off main `ce629cc2` (167 The Room in Use MERGED via PR #549 → `a47ae31f`; the handover PR #550 merged after it)
 - **Canon:** docs/internal/CONSTITUTION.md (Article III honest egress — every connection check names its host; Article XI — the caller supplies neither principal nor authority); docs/internal/POSITIONING.md (the voice rules — zero sentences in the UI); web/src/desk/surface/contract.md (the library contract); docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md §7 (providers) + §9.5 (the wizard); the owner's laws: face-design-before-build (2026-09-03), setup flows must be joyful (2026-08-17), the front-door law from Settings → Models (2026-08-31), "will you use this on a Tuesday?" (Phase 139)
 
@@ -162,7 +162,7 @@ no verb on the cards says they are the entry). Neither paid yet; his word:
 "so prepare another Muad'Dib." The next sitting pays both, re-shoots,
 re-walks his desk, then asks again. 07's gates (suite, sweep, counsel,
 final-summary) are green and stay valid until the tree changes.
-**THE SECOND SITTING (Muad'Dib VII, 2026-09-04) — both roots PAID.** The
+**CLOSED 2026-09-05 as SUPERSEDED BY 169:** its door and Room replaced by the Streamlined Door on the owner's mandate; 05 and 07 flipped on that basis; debts folded into 169's ledger. **THE SECOND SITTING (Muad'Dib VII, 2026-09-04) — both roots PAID.** The
 wings: a window-chrome species fix (the title shrinks first, `min-width: 0`;
 wings and actions `flex-shrink: 0`; nine `wings=` callers covered) pinned by
 a Playwright glass test at 1440 + 393 on a 70-char name (before: wings' right
