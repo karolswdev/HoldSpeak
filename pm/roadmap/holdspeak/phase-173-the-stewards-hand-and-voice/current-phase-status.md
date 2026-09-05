@@ -17,7 +17,7 @@ release-readiness scorecard row appears in the Room.
 
 ## Status
 
-**PLANNED 0/9.**
+**ACTIVE 0/9 — STACKED on 172 (PR #555) on 171 (#554) on 170 (#553); branch `feat/the-stewards-hand` off `feat/the-loop-closes`.**
 
 **Depends on:** Phase 172.
 
@@ -101,7 +101,7 @@ for reads only.
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-173-01 | The design (the Steward's faces on the canvas before build) | backlog | [story-01-the-design](./story-01-the-design.md) | -- |
+| HS-173-01 | The design (the Steward's faces on the canvas before build) | in-progress | [story-01-the-design](./story-01-the-design.md) | -- |
 | HS-173-02 | The model drafter (claims preserved, prose rewritten, unverified marked) | backlog | [story-02-the-model-drafter](./story-02-the-model-drafter.md) | -- |
 | HS-173-03 | The health signals (reviewer latency, issue aging, flaky CI, merge-queue depth) | backlog | [story-03-the-health-signals](./story-03-the-health-signals.md) | -- |
 | HS-173-04 | The reviewer nudge (the first bounded external effect behind the policy gate) | backlog | [story-04-the-reviewer-nudge](./story-04-the-reviewer-nudge.md) | -- |
@@ -113,7 +113,13 @@ for reads only.
 
 ## Where we are
 
-PLANNED. Waiting for Phase 172. The recon is complete: the model drafter
+**2026-09-05 17:25 — ACTIVATED, STACKED.** Under the standing goal the
+faces build to counsel-ratified boards and his word gates the MERGE
+(the decision recorded for 170–172). Boards for D2 (a)–(e) dispatched
+at 1440 + 393; wire lanes follow the 172 suite. Merge order stays his:
+#553 → #554 → #555 → 173's.
+
+Earlier: PLANNED. Waiting for Phase 172. The recon is complete: the model drafter
 exists as `_draft_with_model` (project_update_service.py:679) and is
 functional -- it resolves a deployment revision for the
 `project.update.draft` capability, builds a prompt from the
