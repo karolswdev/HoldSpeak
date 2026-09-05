@@ -81,3 +81,18 @@ from before-build to before-MERGE for this phase (a branch is
 reversible, a merge is not). His walk of the built faces on his desk
 and his word on the canvas are the merge gate; anything he bounces is
 rebuilt to his ruling before the PR.
+
+**02:30 — the faces are BUILT.** Five builders by file ownership, every
+one read shot-beside-board by the orchestrator and bounced until it
+matched: the Settings hub (bounced once: type step, stretched wells,
+Open column), Meetings (bounced once: separators, NEEDS YOU at zero,
+speaker tokens), Speak (bounced once: Talk as primary, the well's mic,
+the LANDED + TEACH states unshot, the void, the footer edge), the
+arrival (bounced once: title step, row rhythm, NEXT unseeded, 393
+orphan), the Concierge (bounced twice: display step, Settings chrome,
+frame, portaled footer, picker cards; then clipped state chips at 640).
+Each ships its glass rig (`tests/e2e/test_hs170_{concierge,arrival,
+settings_hub,speak,meetings}_glass.py`). The Chair hero + lanes and the
+legacy Models/Assignments modules are PARKED. Story 05's pre-walk
+runner (`tests/e2e/live170_walk.py`) is being run on his real hub.
+Phases 171–174 are CHARTERED as PLANNED; 175–180 are being chartered.
