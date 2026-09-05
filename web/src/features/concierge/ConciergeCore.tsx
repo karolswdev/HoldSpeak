@@ -179,7 +179,7 @@ function PickerWell({ row, ctrl, engines }: { row: SetRow; ctrl: ConciergeContro
         const isPreset = alt.kind === "preset";
         const isCloud = alt.kind === "cloud";
         return (
-          <ChoiceCardShell key={alt.id} as="div" selected={row.engineId === alt.id}>
+          <ChoiceCardShell key={alt.id} as="div" selected={row.engineId === alt.id} label={
             <Button
               dense variant="ghost" className="concierge-picker-card"
               onClick={() => ctrl.pickEngine(row.group, alt.id)}
@@ -201,10 +201,10 @@ function PickerWell({ row, ctrl, engines }: { row: SetRow; ctrl: ConciergeContro
                 <EgressChip label={engineHostLabel(alt)} scope={engineHostScope(alt)} />
               ) : null}
             </Button>
-          </ChoiceCardShell>
+          } />
         );
       })}
-      <ChoiceCardShell as="div">
+      <ChoiceCardShell as="div" label={
         <Button
           dense variant="ghost" className="concierge-picker-card"
           onClick={() => ctrl.pickEngine(row.group, "OFF")}
@@ -212,7 +212,7 @@ function PickerWell({ row, ctrl, engines }: { row: SetRow; ctrl: ConciergeContro
         >
           <span className="concierge-picker-card-name">OFF</span>
         </Button>
-      </ChoiceCardShell>
+      } />
     </div>
   );
 }

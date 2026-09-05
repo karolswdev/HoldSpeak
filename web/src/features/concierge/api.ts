@@ -22,7 +22,6 @@ export interface Engine {
   legacyLabel?: string;
   keySet?: boolean;
   profileId?: string;
-  legacyLabel?: string;
   presetId?: string;
   installed?: boolean;
   path?: string;

@@ -9,6 +9,7 @@ import { Chair } from "./Chair";
 import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
 import { openSurface, openSurfaceOr, openCoderSession } from "../shell";
+import { reportWriteFailure, clearWriteFailure } from "../hooks/useWriteReceipt";
 import { apiFetch } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
@@ -301,7 +302,10 @@ function Arrival() {
     try {
       const data = await apiFetch<MondayBrief>("/api/brief/generate", { method: "POST" });
       setBrief(data);
-    } catch { /* stays */ }
+      clearWriteFailure();
+    } catch (error) {
+      reportWriteFailure("Generate brief", error, () => void generateBrief());
+    }
     finally { setGenerating(false); }
   };
 
@@ -377,7 +381,10 @@ function Arrival() {
         else (updated as Record<string, string>)[itemId] = next;
         return { ...prev, shelf: updated };
       });
-    } catch { /* row stays */ }
+      clearWriteFailure();
+    } catch (error) {
+      reportWriteFailure(state === "acknowledged" ? "Acknowledge" : "Defer", error, () => void doBriefShelf(itemId, state));
+    }
     finally { setBusyBriefId(null); }
   };
 
@@ -394,7 +401,10 @@ function Arrival() {
       );
       setIntelReceipt({ meetingId, host: result.host || "THIS DEVICE" });
       void useDesk.getState().refresh();
-    } catch { /* receipt stays */ }
+      clearWriteFailure();
+    } catch (error) {
+      reportWriteFailure("Run intelligence", error, () => void runIntelligence(meetingId));
+    }
     finally { setRunningIntel(null); }
   };
 
@@ -687,7 +697,10 @@ function NeedsYouRowVerbs({
         );
         setDone(true);
         onProposalConfirm?.(item.proposalId!);
-      } catch { /* row stays */ }
+        clearWriteFailure();
+      } catch (error) {
+        reportWriteFailure("Confirm", error, () => void confirmProposal());
+      }
       finally { setBusy(false); }
     };
     if (done) return null;
@@ -733,7 +746,10 @@ function NeedsYouRowVerbs({
       try {
         await apiFetch(cmd.endpoint, { method: "POST", json: cmd.body });
         setDone(true);
-      } catch { /* receipt stays */ }
+        clearWriteFailure();
+      } catch (error) {
+        reportWriteFailure(labelFor(firstVerb), error, () => void fireVerb());
+      }
       finally { setBusy(false); }
     };
 

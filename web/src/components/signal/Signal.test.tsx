@@ -2,6 +2,7 @@
 // (Switch/Tabs/InlineMessage died; wings and FoldGadget carry the
 // keyboard grammar now — see desk/surface tests). What survives here
 // is the surviving roster: Field association and Button semantics.
+import { createRef } from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Button, Field, TextInput } from "./Signal";
@@ -23,6 +24,13 @@ describe("Signal React controls", () => {
     expect(input).toHaveAccessibleDescription(
       "Include the scheme. Could not connect.",
     );
+  });
+
+  it("forwards the native button ref for focus restoration", () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(<Button ref={ref}>Return</Button>);
+    ref.current?.focus();
+    expect(screen.getByRole("button", { name: "Return" })).toHaveFocus();
   });
 
   it("exposes semantic busy and disabled states", () => {
