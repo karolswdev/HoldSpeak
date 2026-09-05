@@ -17,6 +17,8 @@ export interface Engine {
   latencyMs?: number | null;
   sizeBytes?: number | null;
   runtimeToken?: string | null;
+  quantToken?: string | null;
+  visionToken?: string | null;
   keySet?: boolean;
   profileId?: string;
   presetId?: string;
@@ -102,6 +104,8 @@ function decodeEngine(raw: Record<string, unknown>): Engine {
     latencyMs: typeof raw.latencyMs === "number" ? raw.latencyMs : null,
     sizeBytes: typeof raw.sizeBytes === "number" ? raw.sizeBytes : null,
     runtimeToken: typeof raw.runtimeToken === "string" ? raw.runtimeToken : null,
+    quantToken: typeof raw.quantToken === "string" ? raw.quantToken : null,
+    visionToken: typeof raw.visionToken === "string" ? raw.visionToken : null,
     keySet: typeof raw.keySet === "boolean" ? raw.keySet : undefined,
     profileId: typeof raw.profileId === "string" ? raw.profileId : undefined,
     presetId: typeof raw.presetId === "string" ? raw.presetId : undefined,

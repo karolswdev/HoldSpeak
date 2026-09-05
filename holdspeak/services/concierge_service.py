@@ -60,38 +60,51 @@ ASSIGNMENT_GROUPS: tuple[tuple[str, str], ...] = (
 
 import re as _re
 
-_MODEL_ID_RE = _re.compile(
-    r"^(?P<family>[a-zA-Z]+)"       # family: Qwen, Llama, Mistral, …
-    r"(?P<version>[0-9]+(?:\.[0-9]+)*)"  # version: 3.6, 3.5
-    r"(?:[_-]?"                      # optional separator
-    r"(?P<size>[0-9]+(?:\.[0-9]+)?[bBmM]))"  # size: 35b, 0.8B
-    r"(?P<rest>.*)?$"                # rest: -a3b, -instruct, …
+# Known family casing map (lowercase → correct casing)
+_FAMILY_CASE: dict[str, str] = {
+    "gpt": "GPT", "qwen": "Qwen", "qwythos": "Qwythos", "gemma": "Gemma",
+    "llama": "Llama", "mistral": "Mistral", "whisper": "Whisper", "mythos": "Mythos",
+    "claude": "Claude", "phi": "Phi", "deepseek": "DeepSeek", "yi": "Yi",
+    "codellama": "CodeLlama", "starcoder": "StarCoder", "falcon": "Falcon",
+    "mpt": "MPT", "vicuna": "Vicuna", "solar": "Solar", "command": "Command",
+}
+
+# Quantization patterns to strip from the name into a separate token
+_QUANT_RE = _re.compile(
+    r'[-_ ]?'
+    r'(?:UD[-_]?)?'                              # optional UD prefix
+    r'(?:'
+    r'[Qq](?:AT|[0-9]+)(?:[-_][Kk](?:[-_]?[A-Za-z]+)?)?'  # Q4_K_XL, Q6_K, qat, Q5_K_XL
+    r'|[Ff](?:16|32|p16)'                        # f16, f32, fp16
+    r'|(?:MLX[-_ ]?)?[0-9]+[Bb][Ii][Tt]'         # 4bit, MLX-4bit
+    r')'
 )
 
+# Extension to strip
+_EXT_RE = _re.compile(r'\.(gguf|bin|safetensors|pt|pth|onnx)$', _re.IGNORECASE)
 
-def _title_case_model_id(model_id: str) -> str | None:
-    """Title-case a model id like 'qwen3.6-35b' → 'Qwen3.6 35B'.
+# Provider prefix (Qwen/, meta-llama/, etc.)
+_PROVIDER_PREFIX_RE = _re.compile(r'^[A-Za-z][\w-]*/+')
 
-    Returns None if the id does not match the expected pattern.
+# mmproj file detection
+_MMPROJ_RE = _re.compile(r'mmproj', _re.IGNORECASE)
+
+
+def _fix_family_case(word: str) -> str:
+    """Fix casing of a known family name.
+
+    Handles words with version suffixes: 'qwen3.6' → 'Qwen3.6'.
     """
-    clean = model_id.strip().lower()
-    # Try the structured pattern first
-    m = _MODEL_ID_RE.match(clean)
-    if m:
-        family = m.group("family").capitalize()
-        version = m.group("version")
-        size = m.group("size").upper()
-        rest = (m.group("rest") or "").strip("-_ ")
-        parts = [f"{family}{version}", size]
-        if rest:
-            parts.append(rest)
-        return " ".join(parts)
-    # Fallback: if it looks like a model slug (contains digits and letters),
-    # title-case the first segment.
-    if any(c.isdigit() for c in clean) and any(c.isalpha() for c in clean):
-        # Replace hyphens/underscores with spaces and title-case
-        return clean.replace("-", " ").replace("_", " ").title()
-    return None
+    low = word.lower()
+    if low in _FAMILY_CASE:
+        return _FAMILY_CASE[low]
+    # Check if the alphabetic prefix matches a known family
+    alpha_prefix = _re.match(r'^([a-zA-Z]+)', low)
+    if alpha_prefix:
+        prefix = alpha_prefix.group(1)
+        if prefix in _FAMILY_CASE:
+            return _FAMILY_CASE[prefix] + word[len(prefix):]
+    return word
 
 
 def engine_display_name(
@@ -99,38 +112,103 @@ def engine_display_name(
     profile_name: str = "",
     profile_model: str = "",
     served_models: list[str] | None = None,
-) -> str:
-    """The display name for an engine: the served model name, title-cased.
+) -> tuple[str, str]:
+    """The display name and quant token for an engine.
+
+    Returns (name, quant) where quant may be empty.
 
     Priority:
-    1. First served model id (from /v1/models) → title-cased
-    2. profile.model field → title-cased
-    3. profile.name — UNLESS it starts with 'Migrated' (migration placeholder)
-    4. The profile_model raw string as-is
+    1. First served model id (from /v1/models) → cleaned
+    2. profile.model field → cleaned
+    3. profile.name — UNLESS it starts with 'Migrated'
+    4. host:port fallback (caller provides)
     """
-    # 1. Served model ids
+    candidates: list[str] = []
     if served_models:
-        for mid in served_models:
-            titled = _title_case_model_id(mid)
-            if titled:
-                return titled
-
-    # 2. Profile model field
+        candidates.extend(served_models)
     if profile_model and profile_model.lower() not in ("default", ""):
-        titled = _title_case_model_id(profile_model)
-        if titled:
-            return titled
-
-    # 3. Profile name (reject 'Migrated …')
+        candidates.append(profile_model)
     if profile_name and not profile_name.startswith("Migrated"):
-        return profile_name
+        candidates.append(profile_name)
 
-    # 4. Raw model string
-    if profile_model and profile_model.lower() != "default":
-        return profile_model
+    for raw in candidates:
+        name, quant = _clean_model_name(raw)
+        if name:
+            return name, quant
 
-    # 5. Raw name even if migrated (last resort)
-    return profile_name or "Unknown engine"
+    # Last resort: raw profile name even if Migrated
+    if profile_name:
+        name, quant = _clean_model_name(profile_name)
+        return (name or profile_name, quant)
+
+    return ("Unknown engine", "")
+
+
+def _clean_model_name(raw: str) -> tuple[str, str]:
+    """Clean a raw model name/id into (display_name, quant_token).
+
+    Steps: strip extension, strip provider prefix, extract quant tokens,
+    fix family casing, normalize separators.
+    """
+    s = raw.strip()
+    if not s:
+        return ("", "")
+
+    # Strip file extension
+    s = _EXT_RE.sub("", s)
+
+    # Strip provider prefix (Qwen/, meta-llama/)
+    s = _PROVIDER_PREFIX_RE.sub("", s)
+
+    # Extract quant tokens
+    quant_parts: list[str] = []
+    def _collect_quant(m: _re.Match[str]) -> str:
+        quant_parts.append(m.group(0).strip("-_ ").upper())
+        return " "
+    s = _QUANT_RE.sub(_collect_quant, s)
+    quant = " ".join(quant_parts).strip()
+
+    # Normalize separators: replace hyphens/underscores with spaces, collapse
+    s = s.replace("-", " ").replace("_", " ")
+    s = _re.sub(r'\s+', ' ', s).strip()
+
+    # Fix family casing: the first word, and any known family word
+    words = s.split()
+    result: list[str] = []
+    for w in words:
+        fixed = _fix_family_case(w)
+        if fixed != w:
+            result.append(fixed)
+        else:
+            # Keep original casing for size tokens (35B, 8B, E4B, 1M)
+            if _re.match(r'^[0-9eE]+\.?[0-9]*[bBmMkK]$', w):
+                result.append(w.upper() if w[-1].lower() in "bm" else w)
+            else:
+                result.append(w)
+    name = " ".join(result)
+
+    return (name, quant)
+
+
+def is_mmproj_file(path_or_label: str) -> bool:
+    """Whether a path/label is a vision projector file (mmproj-*.gguf)."""
+    return bool(_MMPROJ_RE.search(path_or_label))
+
+
+def mmproj_base_name(path_or_label: str) -> str | None:
+    """Extract the base model name from an mmproj filename.
+
+    E.g. 'mmproj-Qwythos-9B.gguf' → 'Qwythos-9B'.
+    Returns None if not an mmproj file.
+    """
+    if not is_mmproj_file(path_or_label):
+        return None
+    import os
+    base = os.path.basename(path_or_label)
+    base = _EXT_RE.sub("", base)
+    # Remove mmproj prefix
+    base = _re.sub(r'^mmproj[-_ ]*', '', base, flags=_re.IGNORECASE)
+    return base.strip() if base.strip() else None
 
 
 # ---- Host helpers -----------------------------------------------------------
@@ -280,7 +358,7 @@ def detect(
             # Cloud endpoint
             key_set = _profile_key_present(profile.id)
             raw_label = profile.name or profile.id
-            display = engine_display_name(
+            display, quant = engine_display_name(
                 profile_name=raw_label,
                 profile_model=str(getattr(profile, "model", "") or ""),
             )
@@ -288,6 +366,7 @@ def detect(
                 "id": f"cloud:{profile.id}",
                 "kind": KIND_CLOUD,
                 "name": display,
+                "quantToken": quant or None,
                 "legacyLabel": raw_label,
                 "host": host,
                 "state": STATE_READY if key_set else STATE_NOT_SET,
@@ -311,7 +390,7 @@ def detect(
             from urllib.parse import urlparse as _up
             _parsed = _up(base)
             host_port_fallback = f"{_parsed.hostname or host}:{_parsed.port}" if _parsed.port else host
-            display = engine_display_name(
+            display, quant = engine_display_name(
                 profile_name=raw_label,
                 profile_model=profile_model,
                 served_models=served_models,
@@ -319,11 +398,13 @@ def detect(
             # If display is still a migration label, use host:port
             if display.startswith("Migrated"):
                 display = host_port_fallback
+                quant = ""
             kind = KIND_LOCAL if is_loopback else KIND_LAN
             engines.append({
                 "id": f"{kind}:{profile.id}",
                 "kind": kind,
                 "name": display,
+                "quantToken": quant or None,
                 "legacyLabel": raw_label,
                 "host": host,
                 "state": STATE_READY,
@@ -340,7 +421,7 @@ def detect(
         if str(profile.base_url or "").strip():
             continue  # already listed as LAN endpoint
         raw_label = profile.name or profile.id
-        display = engine_display_name(
+        display, quant = engine_display_name(
             profile_name=raw_label,
             profile_model=str(getattr(profile, "model", "") or ""),
         )
@@ -348,6 +429,7 @@ def detect(
             "id": f"lan:{profile.id}",
             "kind": KIND_LAN,
             "name": display,
+            "quantToken": quant or None,
             "legacyLabel": raw_label,
             "host": node,
             "state": STATE_READY,
@@ -360,32 +442,54 @@ def detect(
     for item in local.get("mlx", []):
         model_path = item.get("value", "")
         label = item.get("label", "Local MLX model")
+        display, quant = engine_display_name(profile_name=label)
         engines.append({
             "id": f"local:mlx:{label}",
             "kind": KIND_LOCAL,
-            "name": label,
+            "name": display,
+            "quantToken": quant or None,
+            "legacyLabel": label,
             "host": "THIS DEVICE",
             "runtimeToken": "MLX",
             "state": STATE_READY,
             "path": model_path,
         })
+    # Collect GGUF engines and mmproj files separately
+    gguf_engines: list[dict[str, Any]] = []
+    mmproj_bases: set[str] = set()
     for item in local.get("gguf", []):
         model_path = item.get("value", "")
         label = item.get("label", "Local GGUF model")
+        if is_mmproj_file(label) or is_mmproj_file(model_path):
+            base = mmproj_base_name(label) or mmproj_base_name(model_path)
+            if base:
+                mmproj_bases.add(base.lower())
+            continue  # never a FOUND row
         try:
             size_bytes = Path(model_path).stat().st_size
         except (OSError, ValueError):
             size_bytes = 0
-        engines.append({
+        display, quant = engine_display_name(profile_name=label)
+        gguf_engines.append({
             "id": f"local:gguf:{label}",
             "kind": KIND_LOCAL,
-            "name": label,
+            "name": display,
+            "quantToken": quant or None,
+            "legacyLabel": label,
             "host": "THIS DEVICE",
             "runtimeToken": "LLAMA.CPP" if "llama_cpp_prompt_v1" in runtime_map else None,
             "sizeBytes": size_bytes,
             "state": STATE_READY if "llama_cpp_prompt_v1" in runtime_map else STATE_WAITING,
             "path": model_path,
         })
+    # Attach VISION token to engines whose name matches an mmproj base
+    for eng in gguf_engines:
+        eng_label = (eng.get("legacyLabel") or "").lower()
+        for mp_base in mmproj_bases:
+            if mp_base in eng_label:
+                eng["visionToken"] = "VISION"
+                break
+    engines.extend(gguf_engines)
 
     # 4. Presets not yet downloaded
     for entry in catalog_entries:

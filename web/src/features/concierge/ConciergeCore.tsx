@@ -61,16 +61,16 @@ function FoundEngineRow({
       }
       cells={
         <span className="concierge-found-cells">
-          {/* Line 1 tokens: latency, size, runtime, key */}
+          {/* Line 1 tokens: latency, size, quant, runtime, vision, key */}
           {latency ? <span className="concierge-token">{latency}</span> : null}
           {size ? <span className="concierge-token">{size}</span> : null}
+          {engine.quantToken ? <span className="concierge-token">{engine.quantToken}</span> : null}
           {engine.runtimeToken ? <span className="concierge-token">{engine.runtimeToken}</span> : null}
+          {engine.visionToken ? <span className="concierge-token">{engine.visionToken}</span> : null}
           {isCloud && engine.keySet === true ? (
             <span className="concierge-key-chip" data-set data-testid="key-chip-set">KEY SET</span>
           ) : null}
-          {isCloud && engine.keySet === false ? (
-            <span className="concierge-key-chip" data-not-set data-testid="key-chip-not-set">KEY NOT SET</span>
-          ) : null}
+          {/* KEY NOT SET shown only via the state chip — no duplicate */}
           {isCloud && engine.keySet ? (
             <span className="concierge-cloud-actions">
               <Button dense variant="ghost" onClick={(e: React.MouseEvent) => { e.stopPropagation(); ctrl.checkCloud(engine.id); }} data-testid={`concierge-check-${engine.id}`}>Check</Button>
@@ -90,7 +90,7 @@ function FoundEngineRow({
           {/* State chip: right-aligned on line 1 */}
           <span className="concierge-found-state">
             {isReady ? <StateChip state="success" label="READY" icon="●" />
-            : isNotSet ? <StateChip state="warning" label="KEY NOT SET" />
+            : isNotSet ? <StateChip state="warning" label="NOT SET" />
             : isUnreachable ? <StateChip state="failure" label="UNREACHABLE" />
             : isWaiting ? <StateChip state="idle" label="WAITING" icon="○" />
             : null}
@@ -147,7 +147,7 @@ function SetGroupRow({
             {row.state === "READY" ? <StateChip state="success" label="READY" icon="●" />
             : row.state === "CHECKING" ? <StateChip state="working" label="CHECKING" icon="○" />
             : row.state === "WAITING" ? <StateChip state="warning" label="WAITING" icon="○" />
-            : row.state === "NOT_SET" ? <StateChip state="warning" label="KEY NOT SET" />
+            : row.state === "NOT_SET" ? <StateChip state="warning" label="NOT SET" />
             : null}
           </span>
           {/* Line 2: latency + host */}

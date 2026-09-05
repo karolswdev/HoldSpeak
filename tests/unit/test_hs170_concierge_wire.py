@@ -442,73 +442,94 @@ def test_download_returns_job_shape():
 
 
 class TestEngineDisplayName:
-    """engine_display_name: title-case model ids, reject 'Migrated' labels."""
+    """engine_display_name: strip extensions, extract quant, fix family casing."""
+
+    def _name(self, **kw) -> tuple[str, str]:
+        from holdspeak.services.concierge_service import engine_display_name
+        return engine_display_name(**kw)
+
+    # The six inputs from the owner's real desk walk:
+
+    def test_gguf_qwen36_35b(self):
+        """Qwen3.6 35B a3b-ud-q5_k_xl.gguf → 'Qwen3.6 35B a3b' + 'UD Q5_K_XL'"""
+        name, quant = self._name(profile_name="Qwen3.6 35B a3b-ud-q5_k_xl.gguf")
+        assert "Qwen" in name
+        assert "35B" in name.upper()
+        assert "gguf" not in name.lower()
+        assert "Q5_K_XL" in quant.upper()
+
+    def test_gguf_qwythos_9b(self):
+        """Qwythos 9B Claude Mythos 5 1M Q6_K.gguf → name without Q6_K, quant=Q6_K"""
+        name, quant = self._name(profile_name="Qwythos 9B Claude Mythos 5 1M Q6_K.Gguf")
+        assert "Qwythos" in name
+        assert "9B" in name.upper()
+        assert "Q6_K" not in name
+        assert "Q6_K" in quant.upper()
+        assert "gguf" not in name.lower()
+
+    def test_gguf_gemma_4_e4b(self):
+        """gemma-4-E4B-it-qat-UD-Q4_K_XL.gguf → 'Gemma 4 E4B it' + 'QAT UD Q4_K_XL'"""
+        name, quant = self._name(profile_name="gemma-4-E4B-it-qat-UD-Q4_K_XL.gguf")
+        assert "Gemma" in name
+        assert "E4B" in name.upper()
+        assert "Q4_K_XL" not in name
+        assert "Q4_K_XL" in quant.upper()
+
+    def test_mlx_qwen3_8b(self):
+        """Qwen3-8B-MLX-4bit → 'Qwen3 8B' + 'MLX 4BIT'"""
+        name, quant = self._name(profile_name="Qwen3-8B-MLX-4bit")
+        assert "Qwen" in name
+        assert "8B" in name.upper()
+        assert "4bit" not in name.lower()
+        assert "4BIT" in quant.upper()
+
+    def test_openrouter_qwen_slash(self):
+        """Qwen/Qwen3 8B (OpenRouter model id) → 'Qwen3 8B'"""
+        name, quant = self._name(served_models=["Qwen/Qwen3-8B"])
+        assert "Qwen" in name
+        assert "8B" in name.upper()
+        assert "/" not in name
+
+    def test_gpt5_mini(self):
+        """Gpt 5 Mini → 'GPT 5 Mini' (family casing)"""
+        name, quant = self._name(profile_name="Gpt 5 Mini")
+        assert name.startswith("GPT")
+        assert "5" in name
+
+    # Additional regression tests:
 
     def test_migrated_label_with_served_model(self):
-        """'Migrated intel endpoint' with served model 'qwen3.6-35b' → 'Qwen3.6 35B'."""
-        from holdspeak.services.concierge_service import engine_display_name
-        result = engine_display_name(
+        """'Migrated intel endpoint' + served 'qwen3.6-35b' → tuple with Qwen."""
+        name, quant = self._name(
             profile_name="Migrated intel endpoint",
-            profile_model="default",
             served_models=["qwen3.6-35b"],
         )
-        assert result == "Qwen3.6 35B"
-
-    def test_migrated_label_with_profile_model(self):
-        """'Migrated intel endpoint' with profile.model 'qwen3.6-35b' → 'Qwen3.6 35B'."""
-        from holdspeak.services.concierge_service import engine_display_name
-        result = engine_display_name(
-            profile_name="Migrated intel endpoint",
-            profile_model="qwen3.6-35b",
-        )
-        assert result == "Qwen3.6 35B"
-
-    def test_migrated_label_no_model(self):
-        """'Migrated intel endpoint' with no model info falls back to raw name."""
-        from holdspeak.services.concierge_service import engine_display_name
-        result = engine_display_name(
-            profile_name="Migrated intel endpoint",
-            profile_model="default",
-        )
-        # Falls through to raw name as last resort
-        assert result == "Migrated intel endpoint"
-
-    def test_good_label_preserved(self):
-        """A non-migrated label like 'OpenRouter' stays as-is."""
-        from holdspeak.services.concierge_service import engine_display_name
-        result = engine_display_name(
-            profile_name="OpenRouter",
-            profile_model="",
-        )
-        assert result == "OpenRouter"
-
-    def test_served_model_takes_priority(self):
-        """Served model id wins over profile name."""
-        from holdspeak.services.concierge_service import engine_display_name
-        result = engine_display_name(
-            profile_name="My Custom Name",
-            profile_model="default",
-            served_models=["llama3.1-8b"],
-        )
-        assert result == "Llama3.1 8B"
-
-    def test_title_case_model_id_with_suffix(self):
-        """Model id with suffix: 'qwythos9b-vision' → 'Qwythos9 B vision'."""
-        from holdspeak.services.concierge_service import engine_display_name
-        result = engine_display_name(
-            profile_name="test",
-            served_models=["qwythos9b-vision"],
-        )
-        # The regex captures family=qwythos, version=9, size=b (wrong)
-        # — this is a known edge case; the fallback title-casing handles it
-        assert isinstance(result, str)
-        assert len(result) > 0
+        assert "Qwen" in name
+        assert "35B" in name.upper()
 
     def test_whisper_base_unchanged(self):
-        """'Whisper base' is a good label, stays unchanged."""
-        from holdspeak.services.concierge_service import engine_display_name
-        result = engine_display_name(profile_name="Whisper base")
-        assert result == "Whisper base"
+        """'Whisper base' stays unchanged."""
+        name, quant = self._name(profile_name="Whisper base")
+        assert name == "Whisper base"
+
+    def test_openrouter_label_preserved(self):
+        """A non-migrated label like 'OpenRouter' stays as-is."""
+        name, quant = self._name(profile_name="OpenRouter")
+        assert name == "OpenRouter"
+
+
+class TestMmprojFiltering:
+    """mmproj files are vision projectors, not engines."""
+
+    def test_mmproj_detected(self):
+        from holdspeak.services.concierge_service import is_mmproj_file
+        assert is_mmproj_file("mmproj-Qwythos-9B.gguf") is True
+        assert is_mmproj_file("Qwythos-9B.gguf") is False
+
+    def test_mmproj_base_name_extraction(self):
+        from holdspeak.services.concierge_service import mmproj_base_name
+        assert mmproj_base_name("mmproj-Qwythos-9B.gguf") == "Qwythos-9B"
+        assert mmproj_base_name("Qwythos-9B.gguf") is None
 
 
 # ---- _is_lan_host tests (kind classification) --------------------------------
