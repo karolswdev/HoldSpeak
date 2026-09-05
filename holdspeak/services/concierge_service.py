@@ -56,6 +56,83 @@ ASSIGNMENT_GROUPS: tuple[tuple[str, str], ...] = (
 )
 
 
+# ---- Engine display name ----------------------------------------------------
+
+import re as _re
+
+_MODEL_ID_RE = _re.compile(
+    r"^(?P<family>[a-zA-Z]+)"       # family: Qwen, Llama, Mistral, …
+    r"(?P<version>[0-9]+(?:\.[0-9]+)*)"  # version: 3.6, 3.5
+    r"(?:[_-]?"                      # optional separator
+    r"(?P<size>[0-9]+(?:\.[0-9]+)?[bBmM]))"  # size: 35b, 0.8B
+    r"(?P<rest>.*)?$"                # rest: -a3b, -instruct, …
+)
+
+
+def _title_case_model_id(model_id: str) -> str | None:
+    """Title-case a model id like 'qwen3.6-35b' → 'Qwen3.6 35B'.
+
+    Returns None if the id does not match the expected pattern.
+    """
+    clean = model_id.strip().lower()
+    # Try the structured pattern first
+    m = _MODEL_ID_RE.match(clean)
+    if m:
+        family = m.group("family").capitalize()
+        version = m.group("version")
+        size = m.group("size").upper()
+        rest = (m.group("rest") or "").strip("-_ ")
+        parts = [f"{family}{version}", size]
+        if rest:
+            parts.append(rest)
+        return " ".join(parts)
+    # Fallback: if it looks like a model slug (contains digits and letters),
+    # title-case the first segment.
+    if any(c.isdigit() for c in clean) and any(c.isalpha() for c in clean):
+        # Replace hyphens/underscores with spaces and title-case
+        return clean.replace("-", " ").replace("_", " ").title()
+    return None
+
+
+def engine_display_name(
+    *,
+    profile_name: str = "",
+    profile_model: str = "",
+    served_models: list[str] | None = None,
+) -> str:
+    """The display name for an engine: the served model name, title-cased.
+
+    Priority:
+    1. First served model id (from /v1/models) → title-cased
+    2. profile.model field → title-cased
+    3. profile.name — UNLESS it starts with 'Migrated' (migration placeholder)
+    4. The profile_model raw string as-is
+    """
+    # 1. Served model ids
+    if served_models:
+        for mid in served_models:
+            titled = _title_case_model_id(mid)
+            if titled:
+                return titled
+
+    # 2. Profile model field
+    if profile_model and profile_model.lower() not in ("default", ""):
+        titled = _title_case_model_id(profile_model)
+        if titled:
+            return titled
+
+    # 3. Profile name (reject 'Migrated …')
+    if profile_name and not profile_name.startswith("Migrated"):
+        return profile_name
+
+    # 4. Raw model string
+    if profile_model and profile_model.lower() != "default":
+        return profile_model
+
+    # 5. Raw name even if migrated (last resort)
+    return profile_name or "Unknown engine"
+
+
 # ---- Host helpers -----------------------------------------------------------
 
 def _host_for_profile(profile: Any) -> str:
@@ -180,10 +257,16 @@ def detect(
         if is_cloud and profile.requires_key:
             # Cloud endpoint -- handled separately
             key_set = _profile_key_present(profile.id)
+            raw_label = profile.name or profile.id
+            display = engine_display_name(
+                profile_name=raw_label,
+                profile_model=str(getattr(profile, "model", "") or ""),
+            )
             engines.append({
                 "id": f"cloud:{profile.id}",
                 "kind": KIND_CLOUD,
-                "name": profile.name or profile.id,
+                "name": display,
+                "legacyLabel": raw_label,
                 "host": host,
                 "state": STATE_READY if key_set else STATE_NOT_SET,
                 "keySet": key_set,
@@ -191,11 +274,16 @@ def detect(
             })
         else:
             # LAN or local endpoint
-            runtime_token = None
+            raw_label = profile.name or profile.id
+            display = engine_display_name(
+                profile_name=raw_label,
+                profile_model=str(getattr(profile, "model", "") or ""),
+            )
             engines.append({
                 "id": f"lan:{profile.id}",
                 "kind": KIND_LAN,
-                "name": profile.name or profile.id,
+                "name": display,
+                "legacyLabel": raw_label,
                 "host": host,
                 "state": STATE_READY,
                 "profileId": profile.id,
@@ -210,10 +298,16 @@ def detect(
             continue
         if str(profile.base_url or "").strip():
             continue  # already listed as LAN endpoint
+        raw_label = profile.name or profile.id
+        display = engine_display_name(
+            profile_name=raw_label,
+            profile_model=str(getattr(profile, "model", "") or ""),
+        )
         engines.append({
             "id": f"lan:{profile.id}",
             "kind": KIND_LAN,
-            "name": profile.name or profile.id,
+            "name": display,
+            "legacyLabel": raw_label,
             "host": node,
             "state": STATE_READY,
             "profileId": profile.id,
