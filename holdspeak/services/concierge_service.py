@@ -169,14 +169,27 @@ def _host_for_base_url(base_url: str) -> str:
     return parsed.hostname or base_url
 
 
+_CGNAT_NETWORK = None  # lazy
+
 def _is_lan_host(host: str) -> bool:
-    """Whether a host string is on the local network."""
+    """Whether a host string is on the local network.
+
+    Covers RFC1918 (10/8, 172.16/12, 192.168/16), loopback (127/8),
+    link-local (169.254/16), CGNAT/Tailscale (100.64/10), and named
+    local suffixes (.local, .ts.net, .internal, .lan, .home, .localhost).
+    """
     import ipaddress
     try:
         addr = ipaddress.ip_address(host)
-        return bool(addr.is_private or addr.is_loopback or addr.is_link_local)
+        if addr.is_private or addr.is_loopback or addr.is_link_local:
+            return True
+        # CGNAT / Tailscale range 100.64.0.0/10
+        global _CGNAT_NETWORK
+        if _CGNAT_NETWORK is None:
+            _CGNAT_NETWORK = ipaddress.ip_network("100.64.0.0/10")
+        return addr in _CGNAT_NETWORK
     except ValueError:
-        return host.endswith((".local", ".internal", ".lan", ".home", ".localhost"))
+        return host.endswith((".local", ".internal", ".lan", ".home", ".localhost", ".ts.net"))
 
 
 def _cloud_host(provider_family: str) -> str:
@@ -244,6 +257,7 @@ def detect(
                 installed_ids.add(art.id if hasattr(art, "id") else str(art))
 
     engines: list[dict[str, Any]] = []
+    from ..setup_runtime import discover_endpoint_models
 
     # 1. LAN endpoints (known endpoints from profiles + model library defined endpoints)
     for profile in db.profiles.list():
@@ -254,8 +268,16 @@ def detect(
             continue
         host = _host_for_profile(profile)
         is_cloud = not _is_lan_host(host)
-        if is_cloud and profile.requires_key:
-            # Cloud endpoint -- handled separately
+        is_lan = _is_lan_host(host)
+        is_loopback = False
+        try:
+            import ipaddress as _ipa
+            is_loopback = _ipa.ip_address(host).is_loopback
+        except (ValueError, AttributeError):
+            is_loopback = host in ("localhost", "127.0.0.1", "::1")
+
+        if not is_lan and profile.requires_key:
+            # Cloud endpoint
             key_set = _profile_key_present(profile.id)
             raw_label = profile.name or profile.id
             display = engine_display_name(
@@ -273,15 +295,34 @@ def detect(
                 "profileId": profile.id,
             })
         else:
-            # LAN or local endpoint
+            # LAN or local endpoint — resolve name via /v1/models
             raw_label = profile.name or profile.id
+            profile_model = str(getattr(profile, "model", "") or "")
+            served_models: list[str] = []
+            try:
+                discovered = discover_endpoint_models(
+                    base, timeout_seconds=1.5, http_get=http_get,
+                )
+                if discovered.get("ok"):
+                    served_models = list(discovered.get("models") or [])
+            except Exception:
+                pass  # timeout/failure — fall back
+            # Fallback name: host:port when no model resolved and label is migration
+            from urllib.parse import urlparse as _up
+            _parsed = _up(base)
+            host_port_fallback = f"{_parsed.hostname or host}:{_parsed.port}" if _parsed.port else host
             display = engine_display_name(
                 profile_name=raw_label,
-                profile_model=str(getattr(profile, "model", "") or ""),
+                profile_model=profile_model,
+                served_models=served_models,
             )
+            # If display is still a migration label, use host:port
+            if display.startswith("Migrated"):
+                display = host_port_fallback
+            kind = KIND_LOCAL if is_loopback else KIND_LAN
             engines.append({
-                "id": f"lan:{profile.id}",
-                "kind": KIND_LAN,
+                "id": f"{kind}:{profile.id}",
+                "kind": kind,
                 "name": display,
                 "legacyLabel": raw_label,
                 "host": host,

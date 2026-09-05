@@ -8,6 +8,7 @@ import {
   StateChip,
   EgressChip,
   ChoiceCardShell,
+  StringGadget,
   countToken,
 } from "../../desk/surface";
 import { Button } from "../../components/signal/Signal";
@@ -178,10 +179,9 @@ function PickerWell({ row, ctrl, engines }: { row: SetRow; ctrl: ConciergeContro
         const isPreset = alt.kind === "preset";
         const isCloud = alt.kind === "cloud";
         return (
-          <ChoiceCardShell key={alt.id} as="button" selected={row.engineId === alt.id}>
-            <button
-              type="button"
-              className="btn btn--ghost concierge-picker-card"
+          <ChoiceCardShell key={alt.id} as="div" selected={row.engineId === alt.id}>
+            <Button
+              dense variant="ghost" className="concierge-picker-card"
               onClick={() => ctrl.pickEngine(row.group, alt.id)}
               data-testid={`concierge-pick-${row.group}-${alt.id}`}
             >
@@ -200,19 +200,18 @@ function PickerWell({ row, ctrl, engines }: { row: SetRow; ctrl: ConciergeContro
               {!isPreset && !isCloud ? (
                 <EgressChip label={engineHostLabel(alt)} scope={engineHostScope(alt)} />
               ) : null}
-            </button>
+            </Button>
           </ChoiceCardShell>
         );
       })}
-      <ChoiceCardShell as="button">
-        <button
-          type="button"
-          className="btn btn--ghost concierge-picker-card"
+      <ChoiceCardShell as="div">
+        <Button
+          dense variant="ghost" className="concierge-picker-card"
           onClick={() => ctrl.pickEngine(row.group, "OFF")}
           data-testid={`concierge-pick-${row.group}-off`}
         >
           <span className="concierge-picker-card-name">OFF</span>
-        </button>
+        </Button>
       </ChoiceCardShell>
     </div>
   );
@@ -274,13 +273,25 @@ export function ConciergeCore({ scope }: CoreProps) {
   const foundLabel = ctrl.foundCount > 0 ? `FOUND ${ctrl.foundCount}` : "FOUND";
 
   // Receipt: `7 GROUPS · 3 ENGINES · 1 WAITING` or `NO ENGINE · SET UP NOTHING`
+  // After apply: `3 GROUPS SET · 1 FAILED · <plainReason>`
   const receiptParts: string[] = [];
-  const groupsToken = countToken(ctrl.receipt.groups, "GROUP");
-  const enginesToken = countToken(ctrl.receipt.engines, "ENGINE");
-  const waitingToken = countToken(ctrl.receipt.waiting, "WAITING");
-  if (groupsToken) receiptParts.push(groupsToken);
-  if (enginesToken) receiptParts.push(enginesToken);
-  if (waitingToken) receiptParts.push(waitingToken);
+  if (ctrl.applyFailures.length > 0) {
+    const setCount = ctrl.setRows.length - ctrl.applyFailures.length;
+    const setToken = countToken(setCount, "GROUP SET", "GROUPS SET");
+    const failToken = countToken(ctrl.applyFailures.length, "FAILED");
+    if (setToken) receiptParts.push(setToken);
+    if (failToken) receiptParts.push(failToken);
+    if (ctrl.applyFailures[0]?.plainReason) {
+      receiptParts.push(ctrl.applyFailures[0].plainReason);
+    }
+  } else {
+    const groupsToken = countToken(ctrl.receipt.groups, "GROUP");
+    const enginesToken = countToken(ctrl.receipt.engines, "ENGINE");
+    const waitingToken = countToken(ctrl.receipt.waiting, "WAITING");
+    if (groupsToken) receiptParts.push(groupsToken);
+    if (enginesToken) receiptParts.push(enginesToken);
+    if (waitingToken) receiptParts.push(waitingToken);
+  }
   const receiptText = receiptParts.length > 0 ? receiptParts.join(" · ") : "NO ENGINE · SET UP NOTHING";
 
   return (
@@ -309,9 +320,23 @@ export function ConciergeCore({ scope }: CoreProps) {
             <FoundEngineRow key={row.engine.id} row={row} ctrl={ctrl} />
           ))}
         </ul>
-        <span className="concierge-add-engine" data-testid="concierge-add-engine" role="button" tabIndex={0} onClick={ctrl.addEngine} onKeyDown={(e) => { if (e.key === "Enter") ctrl.addEngine(); }}>
-          Add an engine...
-        </span>
+        {ctrl.addEngineOpen ? (
+          <div className="concierge-add-engine-row" data-testid="concierge-add-engine-row">
+            <StringGadget
+              label="Base URL"
+              value={ctrl.addEngineUrl}
+              onChange={ctrl.setAddEngineUrl}
+              placeholder="http://192.168.1.43:8080/v1"
+              autoFocus
+            />
+            <Button dense variant="ghost" onClick={ctrl.checkNewEngine} disabled={ctrl.addEngineChecking || !ctrl.addEngineUrl.trim()} data-testid="concierge-add-check">Check</Button>
+            <Button dense variant="primary" onClick={ctrl.checkNewEngine} disabled={ctrl.addEngineChecking || !ctrl.addEngineUrl.trim()} loading={ctrl.addEngineChecking} data-testid="concierge-add-submit">Add</Button>
+          </div>
+        ) : (
+          <span className="concierge-add-engine" data-testid="concierge-add-engine" role="button" tabIndex={0} onClick={ctrl.addEngine} onKeyDown={(e) => { if (e.key === "Enter") ctrl.addEngine(); }}>
+            Add an engine...
+          </span>
+        )}
       </div>
 
       {/* 3. THE SET section */}

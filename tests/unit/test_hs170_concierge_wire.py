@@ -103,6 +103,11 @@ class FakeDB:
         return self._conn_mock
 
 
+def _fake_db(profiles: list[Any] | None = None) -> FakeDB:
+    """Shorthand for creating a FakeDB with given profiles."""
+    return FakeDB(profiles=profiles)
+
+
 # ---- Fixtures ---------------------------------------------------------------
 
 @pytest.fixture()
@@ -186,7 +191,8 @@ def test_detect_lists_lan_endpoint_local_file_cloud_key_preset(fake_home, lan_pr
         mock_key.return_value = True  # Cloud key is present
 
         from holdspeak.services.concierge_service import detect
-        result = detect(db=db, home=fake_home)
+        # Pass http_get so detect does not reach the real network
+        result = detect(db=db, home=fake_home, http_get=lambda url, **kw: (200, b'{"data":[]}'))
 
     engines = result["engines"]
     assert isinstance(engines, list)
@@ -503,3 +509,113 @@ class TestEngineDisplayName:
         from holdspeak.services.concierge_service import engine_display_name
         result = engine_display_name(profile_name="Whisper base")
         assert result == "Whisper base"
+
+
+# ---- _is_lan_host tests (kind classification) --------------------------------
+
+
+class TestIsLanHost:
+    """_is_lan_host: classify hosts as LAN or cloud."""
+
+    def test_private_ip_is_lan(self):
+        from holdspeak.services.concierge_service import _is_lan_host
+        assert _is_lan_host("192.168.1.43") is True
+
+    def test_loopback_is_lan(self):
+        from holdspeak.services.concierge_service import _is_lan_host
+        assert _is_lan_host("127.0.0.1") is True
+
+    def test_cloud_host_is_not_lan(self):
+        from holdspeak.services.concierge_service import _is_lan_host
+        assert _is_lan_host("api.anthropic.com") is False
+
+    def test_tailnet_is_lan(self):
+        from holdspeak.services.concierge_service import _is_lan_host
+        assert _is_lan_host("mybox.ts.net") is True
+
+    def test_cgnat_tailscale_is_lan(self):
+        from holdspeak.services.concierge_service import _is_lan_host
+        assert _is_lan_host("100.100.1.1") is True
+
+    def test_ten_network_is_lan(self):
+        from holdspeak.services.concierge_service import _is_lan_host
+        assert _is_lan_host("10.0.0.5") is True
+
+
+# ---- detect name resolution tests -------------------------------------------
+
+
+class TestDetectNameResolution:
+    """detect resolves engine names from /v1/models, not migration labels."""
+
+    def test_lan_endpoint_resolves_name_from_models(self):
+        """A LAN profile with served model 'qwen3.6-35b' names as 'Qwen3.6 35B'."""
+        profile = _fake_profile(
+            profile_id="migrated-intel",
+            name="Migrated intel endpoint",
+            base_url="http://192.168.1.43:8081/v1",
+        )
+        db = _fake_db(profiles=[profile])
+        # Monkeypatch http_get to return a models response
+        import json
+        models_response = json.dumps({
+            "data": [{"id": "qwen3.6-35b"}],
+        }).encode("utf-8")
+
+        def fake_http_get(url, **kw):
+            return (200, models_response)
+
+        from holdspeak.services.concierge_service import detect
+        result = detect(db=db, home=Path("/tmp/test"), http_get=fake_http_get)
+        lan_engines = [e for e in result["engines"] if e["kind"] == "lan"]
+        assert len(lan_engines) >= 1
+        assert lan_engines[0]["name"] == "Qwen3.6 35B"
+        assert lan_engines[0]["legacyLabel"] == "Migrated intel endpoint"
+
+    def test_lan_endpoint_timeout_falls_back_to_host_port(self):
+        """A LAN profile that times out names as 'host:port'."""
+        from urllib.error import URLError
+        profile = _fake_profile(
+            profile_id="timeout-lan",
+            name="Migrated intel endpoint",
+            base_url="http://192.168.1.43:8081/v1",
+        )
+        db = _fake_db(profiles=[profile])
+
+        def fail_http_get(url, **kw):
+            raise URLError("timed out")
+
+        from holdspeak.services.concierge_service import detect
+        result = detect(db=db, home=Path("/tmp/test"), http_get=fail_http_get)
+        lan_engines = [e for e in result["engines"] if e["kind"] == "lan"]
+        assert len(lan_engines) >= 1
+        # Should fall back to host:port, not the migration label
+        assert lan_engines[0]["name"] == "192.168.1.43:8081"
+
+    def test_cloud_endpoint_stays_cloud(self):
+        """api.anthropic.com stays kind=cloud."""
+        profile = _fake_cloud_profile()
+        db = _fake_db(profiles=[profile])
+        from holdspeak.services.concierge_service import detect
+        result = detect(db=db, home=Path("/tmp/test"))
+        cloud_engines = [e for e in result["engines"] if e["kind"] == "cloud"]
+        assert len(cloud_engines) >= 1
+        assert cloud_engines[0]["host"] == "api.anthropic.com"
+
+    def test_192_168_classified_as_lan_not_cloud(self):
+        """A 192.168.x endpoint is LAN, never cloud."""
+        profile = _fake_profile(
+            profile_id="lan-endpoint",
+            name="My LAN box",
+            base_url="http://192.168.1.43:8080/v1",
+        )
+        db = _fake_db(profiles=[profile])
+
+        def noop_http_get(url, **kw):
+            return (200, b'{"data":[]}')
+
+        from holdspeak.services.concierge_service import detect
+        result = detect(db=db, home=Path("/tmp/test"), http_get=noop_http_get)
+        engine = [e for e in result["engines"] if "lan-endpoint" in e["id"]]
+        assert len(engine) == 1
+        assert engine[0]["kind"] == "lan"

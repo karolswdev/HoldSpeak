@@ -399,6 +399,17 @@
   cursor: pointer;
 }
 
+/* ── Add engine inline row (StringGadget + Check + Add) ── */
+
+.concierge-add-engine-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 48px;
+  animation: surface-rise-in var(--duration-medium, 200ms)
+    var(--ease-quart, cubic-bezier(0.25, 1, 0.5, 1)) both;
+}
+
 /* ── Footer: portaled, receipt left-aligned, never wraps ── */
 
 .desk-next .surface-footer-layout.concierge-footer {

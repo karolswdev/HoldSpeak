@@ -134,6 +134,13 @@ export interface ConciergeController {
   applying: boolean;
   applied: boolean;
   canApply: boolean;
+  applyFailures: Array<{ group: string; plainReason: string }>;
+  // Add engine inline
+  addEngineOpen: boolean;
+  addEngineUrl: string;
+  addEngineChecking: boolean;
+  setAddEngineUrl: (v: string) => void;
+  checkNewEngine: () => void;
   // Actions
   openPicker: (group: string) => void;
   closePicker: (group: string) => void;
@@ -157,6 +164,9 @@ export function useConciergeController(): ConciergeController {
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [applyFailures, setApplyFailures] = useState<
+    Array<{ group: string; plainReason: string }>
+  >([]);
   const [downloadingEngines, setDownloadingEngines] = useState<
     Record<string, { received: number; total: number }>
   >({});
@@ -423,16 +433,39 @@ export function useConciergeController(): ConciergeController {
     if (!canApply) return;
     setApplying(true);
     setError("");
+    setApplyFailures([]);
     try {
       const rows = setRows.map((r) => ({
         group: r.group,
         engineId: r.engineId,
         state: r.state,
       }));
-      await conciergeApply(rows);
+      const resp = await conciergeApply(rows);
       safe(() => {
         setApplying(false);
-        setApplied(true);
+        // Read per-group results: update row states and collect failures
+        const failures: Array<{ group: string; plainReason: string }> = [];
+        if (resp.results) {
+          setSetRows((prev) =>
+            prev.map((r) => {
+              const result = resp.results.find((res) => res.group === r.group);
+              if (!result) return r;
+              if (result.state === "FAILED") {
+                failures.push({
+                  group: r.group,
+                  plainReason: result.plainReason ?? "Apply failed",
+                });
+                return { ...r, state: "UNREACHABLE" as EngineState };
+              }
+              if (result.state === "READY") {
+                return { ...r, state: "READY" as EngineState };
+              }
+              return r;
+            }),
+          );
+        }
+        setApplyFailures(failures);
+        setApplied(failures.length === 0);
       });
     } catch (err) {
       safe(() => {
@@ -445,20 +478,53 @@ export function useConciergeController(): ConciergeController {
   /* ── Cancel ── */
 
   const cancel = useCallback(() => {
-    // Close the settings window
     import("../../desk/store").then(({ useDesk }) => {
-      useDesk.getState().closeSurfaceWindow("surface-settings");
+      useDesk.getState().closeSurfaceWindow("surface-concierge");
     });
   }, []);
 
-  /* ── Add engine ── */
+  /* ── Add engine (unfolds the inline StringGadget row) ── */
+
+  const [addEngineOpen, setAddEngineOpen] = useState(false);
+  const [addEngineUrl, setAddEngineUrl] = useState("");
+  const [addEngineChecking, setAddEngineChecking] = useState(false);
 
   const addEngine = useCallback(() => {
-    // Open the model library for manual addition
-    import("../../desk/shell").then(({ openSurface }) => {
-      openSurface("configure-settings", "models-advanced");
-    });
+    setAddEngineOpen(true);
   }, []);
+
+  const checkNewEngine = useCallback(async () => {
+    const url = addEngineUrl.trim();
+    if (!url) return;
+    setAddEngineChecking(true);
+    try {
+      const { apiFetch } = await import("../../lib/api");
+      await apiFetch("/api/inference/model-library/define-endpoint", {
+        method: "POST",
+        json: {
+          draft: {
+            request_id: `concierge-${Date.now()}`,
+            label: url,
+            endpoint: url,
+            model: "",
+            requires_key: false,
+          },
+          secret: null,
+        },
+      });
+      safe(() => {
+        setAddEngineChecking(false);
+        setAddEngineOpen(false);
+        setAddEngineUrl("");
+        void load(); // Re-detect
+      });
+    } catch (err) {
+      safe(() => {
+        setAddEngineChecking(false);
+        setError(readableError(err));
+      });
+    }
+  }, [addEngineUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     loading,
@@ -484,5 +550,11 @@ export function useConciergeController(): ConciergeController {
     apply,
     cancel,
     addEngine,
+    applyFailures,
+    addEngineOpen,
+    addEngineUrl,
+    addEngineChecking,
+    setAddEngineUrl,
+    checkNewEngine,
   };
 }

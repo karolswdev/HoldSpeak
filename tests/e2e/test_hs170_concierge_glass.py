@@ -351,6 +351,15 @@ def test_concierge_use_these_off_frees(tmp_path, monkeypatch):
             page.get_by_test_id("concierge-pick-writing_dictation-off").click()
             _settle(page)
             assert not apply_btn.is_disabled(), "Use these should be enabled after OFF"
+
+            # Cancel closes the Models window (surface-concierge)
+            page.get_by_test_id("concierge-cancel").click()
+            _settle(page)
+            gone = page.evaluate(
+                """() => !document.querySelector('[data-testid="concierge-root"]')"""
+            )
+            assert gone, "Cancel did not close the Models window"
+
             _assert_clean(page, errors)
             browser.close()
     finally:

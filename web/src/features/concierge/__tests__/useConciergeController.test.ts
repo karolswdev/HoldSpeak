@@ -171,3 +171,40 @@ describe("canApply logic", () => {
     expect(canApply([])).toBe(false);
   });
 });
+
+describe("apply failure receipt", () => {
+  // The receipt logic when apply returns mixed results
+  function buildReceipt(
+    totalRows: number,
+    failures: Array<{ group: string; plainReason: string }>,
+  ) {
+    const parts: string[] = [];
+    if (failures.length > 0) {
+      const setCount = totalRows - failures.length;
+      if (setCount > 0) parts.push(`${setCount} ${setCount === 1 ? "GROUP SET" : "GROUPS SET"}`);
+      parts.push(`${failures.length} FAILED`);
+      if (failures[0]?.plainReason) parts.push(failures[0].plainReason);
+    }
+    return parts.join(" · ");
+  }
+
+  it("shows failure count and reason for mixed apply", () => {
+    const receipt = buildReceipt(7, [
+      { group: "meetings", plainReason: "No profile for engine" },
+    ]);
+    expect(receipt).toBe("6 GROUPS SET · 1 FAILED · No profile for engine");
+  });
+
+  it("shows all failed when every group fails", () => {
+    const receipt = buildReceipt(2, [
+      { group: "a", plainReason: "timeout" },
+      { group: "b", plainReason: "denied" },
+    ]);
+    expect(receipt).toBe("2 FAILED · timeout");
+  });
+
+  it("returns empty when no failures", () => {
+    const receipt = buildReceipt(7, []);
+    expect(receipt).toBe("");
+  });
+});
