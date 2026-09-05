@@ -40,51 +40,76 @@ import {
   getAssignmentEditor,
   type AssignmentEditorProjection,
 } from "../assignmentExperience";
+import {
+  conciergeDetect,
+  type Engine,
+} from "../../../features/concierge/api";
 import { DICTATION_FAILURES } from "../../../lib/dictationRecovery";
 import type { MicPhase } from "../../../lib/micSession";
 
-/** Map the egress scope to the settled "THIS DEVICE" / "LAN" vocabulary. */
-function egressLabel(scope: string | null | undefined): string {
-  switch (scope) {
-    case "local":
-      return "THIS DEVICE";
-    case "private_network":
-      return "LAN";
-    case "mesh":
-      return "PAIRED";
-    case "cloud":
-      return "CLOUD";
-    default:
-      return "THIS DEVICE";
-  }
-}
+/** Derive the engine display name and egress from detect + assignment.
+ *  The detect payload carries the real served model name and host;
+ *  the assignment's label is often a stale migration artifact. */
+export function resolveEngine(
+  assignment: AssignmentEditorProjection | null,
+  engines: Engine[],
+): { name: string | null; egressLabel: string; egressHost: string } {
+  const entries = assignment?.effective?.assignment?.entries;
+  if (!entries?.length) return { name: null, egressLabel: "THIS DEVICE", egressHost: "" };
 
-/** Read the model name from the assignment projection. */
-function modelName(editor: AssignmentEditorProjection | null): string | null {
-  if (!editor?.effective?.assignment?.entries?.length) return null;
-  return editor.effective.assignment.entries.map((e) => e.label).join(" + ");
+  const profileId = entries[0].profile_id;
+  const boundary = entries[0].boundary;
+  const matched = engines.find(
+    (e) => e.profileId === profileId || e.id === profileId,
+  );
+
+  // Name: prefer the detect engine's name; fall back to assignment label.
+  const name = matched?.name || entries.map((e) => e.label).join(" + ");
+
+  // Host: the detect engine carries the real host (e.g. "192.168.1.43").
+  // Kind determines the chip label.
+  if (matched) {
+    switch (matched.kind) {
+      case "lan":
+        return { name, egressLabel: `${matched.host} · LAN`, egressHost: matched.host };
+      case "cloud":
+        return { name, egressLabel: "CLOUD", egressHost: matched.host };
+      default:
+        return { name, egressLabel: "THIS DEVICE", egressHost: "" };
+    }
+  }
+
+  // No detect match — fall back to the assignment's boundary field.
+  switch (boundary) {
+    case "private_network":
+      return { name, egressLabel: "LAN", egressHost: "" };
+    case "cloud":
+      return { name, egressLabel: "CLOUD", egressHost: "" };
+    case "mesh":
+      return { name, egressLabel: "PAIRED", egressHost: "" };
+    default:
+      return { name, egressLabel: "THIS DEVICE", egressHost: "" };
+  }
 }
 
 export function SpeakFace() {
   const announce = useAnnounce();
   const deck = useSpeakDeck(announce);
 
-  // Engine assignment state
+  // Engine: assignment projection + concierge detect for real name/host
   const [assignment, setAssignment] = useState<AssignmentEditorProjection | null>(null);
+  const [engines, setEngines] = useState<Engine[]>([]);
   useEffect(() => {
     void getAssignmentEditor(
       { kind: "capability", capability_id: "speech.rewrite" },
       "speech.rewrite",
     ).then(setAssignment).catch(() => {});
+    void conciergeDetect()
+      .then((r) => setEngines(r.engines))
+      .catch(() => {});
   }, []);
 
-  const engine = modelName(assignment);
-  const engineEgress = assignment?.effective?.assignment?.entries?.[0]
-    ? egressLabel(
-        (assignment.effective.assignment.entries[0] as Record<string, unknown>)
-          .egress_boundary as string | undefined,
-      )
-    : "THIS DEVICE";
+  const resolved = resolveEngine(assignment, engines);
 
   return (
     <div className="speak-face">
@@ -131,7 +156,7 @@ export function SpeakFace() {
       ) : null}
 
       {/* 5. ENGINE row */}
-      <EngineRow engine={engine} egress={engineEgress} readiness={deck} />
+      <EngineRow engine={resolved.name} egress={resolved.egressLabel} readiness={deck} />
 
       {/* 6. Details (Disclosure, folded) */}
       <Disclosure label="Details" defaultOpen={false}>
