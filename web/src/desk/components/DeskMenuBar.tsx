@@ -12,6 +12,7 @@
 import "./chrome-menus.css";
 import { useEffect, useRef, useState } from "react";
 import { useDesk } from "../store";
+import { useSettleState } from "../settleState";
 import {
   menuVerbs,
   verbLabel,
@@ -28,7 +29,11 @@ const MENUS: { id: MenuId; label: string }[] = [
 ];
 
 export function DeskMenuBar() {
+  const settled = useSettleState((s) => s.settled);
   const [open, setOpen] = useState<MenuId | null>(null);
+  useEffect(() => {
+    if (settled) setOpen(null);
+  }, [settled]);
   // HS-148-01: track whether the open was intentional (click/keyboard)
   // vs hover-switch. Only intentional opens autoFocus the first item.
   const [intentional, setIntentional] = useState(false);
@@ -109,7 +114,7 @@ export function DeskMenuBar() {
           >
             {m.label}
           </button>
-          {open === m.id && (
+          {!settled && open === m.id && (
             <WorkMenu
               className="desk-verbbar-menu"
               label={`${m.label} menu`}

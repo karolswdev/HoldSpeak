@@ -9,6 +9,11 @@
   background: var(--surface-2);
   box-shadow: var(--desk-window-etch);
 }
+/* Retain the privacy badge, connection state, mic owner and write failures.
+   Only navigational chrome disappears while the owner is settled in. */
+.desk-next[data-settled="true"] .desk-menubar :is(.desk-menu-wrap, .desk-verbbar, .desk-bell, .desk-tools-launch, .desk-clock) {
+  display: none;
+}
 .desk-next .desk-mark {
   display: inline-flex;
   align-items: center;

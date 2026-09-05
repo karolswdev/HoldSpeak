@@ -42,11 +42,6 @@
       "reason": "hand-tuned one-off (glass/glow/ink shade) \u2014 consolidation is HS-96-04's material fold"
     },
     {
-      "file": "src/desk/desk.css",
-      "match": "rgba(255, 255, 255, 0.02)",
-      "reason": "HS-129-10 reviewed floor weave exception \u2014 the 45\u00b0 scanline lattice is atmosphere art, not a semantic surface color"
-    },
-    {
       "file": "src/desk/surface/surface.css",
       "match": "rgba(0, 0, 0, 0.4)",
       "reason": "HS-111 square lamp ink ring \u2014 the 1px dark seat under status lamps"
