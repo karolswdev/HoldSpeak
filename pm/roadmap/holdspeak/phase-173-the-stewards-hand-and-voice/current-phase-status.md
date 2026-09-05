@@ -106,7 +106,7 @@ for reads only.
 | HS-173-03 | The health signals (reviewer latency, issue aging, flaky CI, merge-queue depth) | backlog | [story-03-the-health-signals](./story-03-the-health-signals.md) | -- |
 | HS-173-04 | The reviewer nudge (the first bounded external effect behind the policy gate) | backlog | [story-04-the-reviewer-nudge](./story-04-the-reviewer-nudge.md) | -- |
 | HS-173-05 | The release-readiness scorecard (the Room token row) | backlog | [story-05-the-release-readiness](./story-05-the-release-readiness.md) | -- |
-| HS-173-06 | The walk (his desk: a drafted update, a nudge he approves) | backlog | [story-06-the-walk](./story-06-the-walk.md) | -- |
+| HS-173-06 | The walk (his desk: a drafted update, a nudge he approves) | in-progress | [story-06-the-walk](./story-06-the-walk.md) | -- |
 | HS-173-07 | The docs (the steward's hand in the architecture; the nudge in SECURITY) | backlog | [story-07-the-docs](./story-07-the-docs.md) | -- |
 | HS-173-08 | The hygiene lane (items from THE-TUESDAY-ARC.md section 4 this phase touches) | backlog | [story-08-the-hygiene-lane](./story-08-the-hygiene-lane.md) | -- |
 | HS-173-09 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | backlog | [story-09-the-close](./story-09-the-close.md) | -- |
