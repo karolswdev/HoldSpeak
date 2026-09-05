@@ -39,6 +39,78 @@
       "w": 1440,
       "h": 900,
       "title": "Arrival · orphan armed recording · 1440"
+    },
+    {
+      "file": "SettingsMeetingsCalendar.dc.html",
+      "x": 0,
+      "y": 1400,
+      "w": 642,
+      "h": 800,
+      "title": "Settings > Meetings — CALENDAR rows"
+    },
+    {
+      "file": "SettingsMeetingsCalendarWell.dc.html",
+      "x": 760,
+      "y": 1400,
+      "w": 642,
+      "h": 600,
+      "title": "Settings > Meetings — connect well open"
+    },
+    {
+      "file": "SettingsMeetingsCalendarPhone.dc.html",
+      "x": 1520,
+      "y": 1400,
+      "w": 395,
+      "h": 800,
+      "title": "Settings > Meetings — CALENDAR (393)"
+    },
+    {
+      "file": "RoomSourcesMeetings.dc.html",
+      "x": 2040,
+      "y": 1400,
+      "w": 642,
+      "h": 600,
+      "title": "Room SOURCES — MTG meeting watch row"
+    },
+    {
+      "file": "RoomSourcesMeetingsPhone.dc.html",
+      "x": 2800,
+      "y": 1400,
+      "w": 395,
+      "h": 700,
+      "title": "Room SOURCES — MTG row (393)"
+    },
+    {
+      "file": "RhythmWeeklyBrief.dc.html",
+      "x": 3320,
+      "y": 1400,
+      "w": 642,
+      "h": 500,
+      "title": "Rhythm — Weekly brief row (175)"
+    },
+    {
+      "file": "BriefWeek.dc.html",
+      "x": 4080,
+      "y": 1400,
+      "w": 642,
+      "h": 700,
+      "title": "Brief detail — THIS WEEK + SINCE FRIDAY"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "phase-175-row-1",
+      "x": 0,
+      "y": -140,
+      "w": 760,
+      "text": "Phase 175 Calendar and the Clock. Row 1: the arrival's WEEK strip (dots per day; one count everywhere), event rows with their Room token, ARMS HH:MM and Cancel; the orphan armed row only when its event is not listed; the honest empties. Counsel RATIFY-W-C owed; your word gates the merge."
+    },
+    {
+      "id": "phase-175-row-2",
+      "x": 0,
+      "y": 1260,
+      "w": 760,
+      "text": "Row 2: Settings → Meetings' CALENDAR rows (ICS/SNAPSHOT, the host named, LAST READ), the connect well, Auto-record (OFF default · ARM ROOM MEETINGS ONLY · ARM ALL CALENDAR MEETINGS · 5 MIN BEFORE); the Room's MEETINGS source row; the Weekly brief row and the brief's THIS WEEK / SINCE FRIDAY."
     }
   ],
   "launch": {
