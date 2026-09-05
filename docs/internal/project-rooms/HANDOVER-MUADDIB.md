@@ -98,6 +98,18 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
 
 - **171's design ground is DRAFTED** (pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/settled-design-heartbeat.md, pending 170's merge): six faces with species; recon binds the wire (the txn hook already writes `next_evaluation_at` — nothing ever calls `evaluate_due`; the Cocoa host has AppKit and zero notification calls; the daily brief push never regenerates). His three new questions: the notification's click target (shade or desk); one flat 15-min interval or an active/idle split; whether a muted project vanishes from the shade or only from the count.
 
+- **06:20 — Phase 171 ACTIVATED, STACKED** on branch `feat/the-heartbeat`
+  off `feat/the-great-pass` (the standing goal outranks "one phase at a
+  time" the way it outranked "his word before build"; every MERGE stays
+  his — 170's PR #553 first, then 171's stacked PR). In flight: two
+  artboard lanes (shade PROJECTS · notification · dock badge · ⌘K;
+  Rhythm's cadence row · the brief) from settled-design-heartbeat.md,
+  and two wire lanes (the sweep loop + scheduler + `heartbeat` MCP
+  family; the aggregate cache + the brief's cadence + the notifier).
+  Then counsel on the boards → faces → rigs → his-desk walk → docs →
+  close → stacked PR. If he bounces 170's faces, 171 rebuilds on his
+  ruling.
+
 ## 1. The asks of the owner (in order)
 
 1. His word on the Concierge page of the canvas → build 03's face on
