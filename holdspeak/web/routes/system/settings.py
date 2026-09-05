@@ -122,7 +122,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
             # Meetings: intelligence enabled.
             intel_on = config.meeting.intel_enabled
 
-            # Rhythm: count active cadence loops.
+            # Rhythm: count active cadence loops + heartbeat sweep state.
             loops = 0
             if ctx.cadence_service is not None:
                 try:
@@ -130,6 +130,18 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                     loops = len(loop_list.get("loops", []))
                 except Exception:
                     pass
+
+            # HS-171-02: heartbeat sweep rhythm mirror.
+            heartbeat_rhythm: dict[str, Any] = {"loops": loops}
+            try:
+                from ....services.heartbeat_service import HeartbeatService
+                hb = HeartbeatService(get_database())
+                heartbeat_rhythm = hb.hub_rhythm()
+            except Exception:
+                heartbeat_rhythm["sweepEveryMinutes"] = 15
+                heartbeat_rhythm["nextSweepAt"] = None
+                heartbeat_rhythm["lastSweepAt"] = None
+                heartbeat_rhythm["quiet"] = {"start": 22, "end": 8, "held": False}
 
             # Sounds.
             sounds_on = config.ui.desk_sounds
@@ -159,7 +171,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 "connections": {"connected": connected},
                 "voice": {"live": voice_live, "target": voice_target},
                 "meetings": {"intelligence": intel_on},
-                "rhythm": {"loops": loops},
+                "rhythm": heartbeat_rhythm,
                 "sounds": {"on": sounds_on},
                 "system": {"host": "THIS DEVICE", "mesh": mesh_on},
                 "posture": posture,
@@ -167,6 +179,52 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
             })
         except Exception as exc:
             return error_500(exc, log, "Failed to load settings hub")
+
+    # ── HS-171-02: heartbeat settings + run-now ─────────────────────────
+
+    @router.get("/api/settings/heartbeat")
+    async def api_heartbeat_get(request: Request) -> Any:
+        """HS-171-02: read heartbeat sweep settings."""
+        try:
+            from ....db import get_database
+            from ....services.heartbeat_service import HeartbeatService
+
+            hb = HeartbeatService(get_database())
+            return JSONResponse(hb.get_settings())
+        except Exception as exc:
+            return error_500(exc, log, "Failed to load heartbeat settings")
+
+    @router.put("/api/settings/heartbeat")
+    async def api_heartbeat_put(payload: dict[str, Any], request: Request) -> Any:
+        """HS-171-02: update heartbeat sweep settings."""
+        try:
+            from ....db import get_database
+            from ....services.heartbeat_service import HeartbeatService
+
+            hb = HeartbeatService(get_database())
+            result = hb.update_settings(payload)
+            return JSONResponse(result)
+        except ValidationError as exc:
+            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to update heartbeat settings")
+
+    @router.post("/api/settings/heartbeat/run-now")
+    async def api_heartbeat_run_now(request: Request) -> Any:
+        """HS-171-02: run one sweep out of band (owner only)."""
+        try:
+            from ....db import get_database, get_observer
+            from ....services.heartbeat_service import HeartbeatService
+            from ....services.watch_service import WatchService
+
+            db = get_database()
+            obs = get_observer()
+            ws = WatchService(db, observer=obs)
+            hb = HeartbeatService(db, observer=obs, watch_service=ws)
+            receipt = hb.run_sweep(_principal(request))
+            return JSONResponse(receipt)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to run heartbeat sweep")
 
     register_settings_secret_routes(router, ctx)
     return router
