@@ -700,6 +700,189 @@ the CLI's own probe from this device to the named host.
 its refreshed entry. The MCP twins are `connection.list` and
 `connection.recheck`.
 
+## New Project
+
+Open **New Project** from the Door. The screen has three parts: the
+outcome line, the **SOURCES** section, and the footer.
+
+![New Project with nothing typed and both sources unpicked](assets/project-rooms/new-project-empty.png)
+
+### The outcome line
+
+Type what you are delivering. The placeholder reads `What are you
+delivering?`. A mic button at the right edge accepts voice input. This
+text becomes the project's name (first 80 characters) and its outcome.
+A caption under the input reads `THIS BECOMES THE PROJECT'S NAME`.
+
+### Sources
+
+Each connected tool (GitHub, Jira) appears as one row in the
+**SOURCES** section. The section label carries a count of sources that
+have a scope picked (e.g. `SOURCES 2`).
+
+![New Project with both sources scoped and live counts visible](assets/project-rooms/new-project-live.png)
+
+**A connected row** shows: the provider emblem (`GH` or `J`), a scope
+picker trigger (the picked name or `Choose a repository` /
+`Choose a project`), default Watch toggles as tokens, the live count
+once it arrives, an egress chip naming the host, and an `Adjust`
+button.
+
+**Default Watch toggles.** GitHub: `OPEN PRS` (on), `CI` (on). Jira:
+`OVERDUE` (on), `DUE 7 DAYS` (on), `BLOCKED` (off). Each toggle
+controls whether that Watch is created with the project. The toggles
+are `CheckGadget` tokens: pressed means on.
+
+**The count is the check.** Picking a scope immediately fetches the
+count for every enabled Watch. While the fetch runs, the row reads
+`CHECKING`. When the count arrives, the row displays it in secondary
+text (e.g. `12 open PRs, CI green`). If the fetch fails, the row
+reads `CAN'T CHECK` with the reason in plain words. There is no
+separate test step.
+
+**A not-connected row** shows the emblem, the provider name, a state
+chip (`SIGN IN` or `NOT SET UP`), and a primary `Connect` button. The
+button opens **Settings, Connections**. When you return from
+Connections, the row re-reads the connection state and becomes a
+picker row if the tool is now connected.
+
+![New Project on a cold desk where both providers need connection](assets/project-rooms/new-project-cold.png)
+
+### The picker
+
+Click the scope trigger on a connected row to open the picker. It
+unfolds under the row with a search input (`Search repositories` for
+GitHub, `Search projects` for Jira) and cards listing available
+scopes. A repository or project that another project already watches
+shows a token `ALSO WATCHED BY <project>`. Pick one to collapse the
+picker and start the count fetch. `Show more` loads additional results.
+
+![The GitHub picker open with repository cards](assets/project-rooms/new-project-picker.png)
+
+### Adjust
+
+Click `Adjust` on a connected row to open the disclosure under the
+row. For GitHub: `BASE BRANCH` (default `main`), `LABELS`, and a
+`DRAFTS` toggle. For Jira: `ISSUE TYPES` and `JQL` (optional). This
+is where Watch population settings live. Click `Adjust` again to
+close it.
+
+![The Adjust disclosure open for GitHub showing base branch and label fields](assets/project-rooms/new-project-adjust.png)
+
+### Footer and creation
+
+The footer receipt shows the live totals: `2 SOURCES · 4 WATCHES` when
+sources are picked, or `NO SOURCES · BLANK PROJECT` when none are.
+`Cancel` closes the window. `Create Project` is enabled when the
+outcome line has text. Creating with zero sources is allowed (the
+receipt names this as a blank project). Create builds the project, its
+Watches, and fetches the first counts, then opens the Room.
+
+## Project Room
+
+A project opens as a Room. The title bar carries the project name. Two
+wings: **ROOM** and **HISTORY**. The ROOM wing answers four questions
+in order: what needs me now, what am I watching, what changed since I
+last looked, and what did we decide and what do I owe people. An ask
+well sits at the foot.
+
+![The Room with three items in Needs You, live sources, and a decision](assets/project-rooms/room-needs-you.png)
+
+### The head
+
+The headline at display scale reads `3 need you` (in accent) when
+items need attention, or `Nothing needs you` (muted) when none do.
+Below the headline, chips show the project's health:
+
+- **Health.** A state chip reads `ON TRACK` (success) or `AT RISK`
+  (danger). AT RISK triggers when any of: overdue Jira entities > 0,
+  CI failing on the base branch, or a review waiting on the owner > 3
+  days. The reason token names the first true input.
+- **Target.** When the project has a target date: `TARGET OCT 15 · 41
+  DAYS`. A passed target reads `OVERDUE BY 3 DAYS` in danger tone.
+- **Checked.** `CHECKED 3 MIN AGO` names when sources last ran.
+- **Draft update.** One primary button in the head opens the update
+  posture.
+
+The outcome line appears in the head only when the title bar cannot
+show it whole (long name or narrow viewport).
+
+### Needs you
+
+The **NEEDS YOU** section lists items that require your attention. Each
+row shows a source emblem, the item's title, a WHY token naming the
+reason and age (e.g. `WAITING ON YOUR REVIEW · 3 DAYS`, `OVERDUE · 2
+DAYS`, `DECISION PENDING`), and a verb: `Open` for items with a URL,
+`Decide` for pending proposals.
+
+What feeds this section: review requests assigned to you, CI status on
+the base branch (a failing CI reads `CI failing on main`), overdue
+Jira entities, and pending review proposals.
+
+When empty, the section reads `Nothing needs you` with the next check
+time.
+
+### Sources
+
+The **SOURCES** section shows one row per Watch. Each row shows the
+source emblem, the scope name, live count tokens (zero counts are
+omitted), a `checked` time, the egress chip naming the host, and a
+`Pause` or `Resume` verb.
+
+A Watch in `CAN'T CHECK` state shows the reason in plain words and a
+`Remove` verb. A `SUGGESTED` row (from meeting facts) sits last with
+an `Add` verb, offered but never applied automatically.
+
+The `Steward` button opens the steward's automation settings.
+
+### Since you looked
+
+The **SINCE YOU LOOKED** section uses the server-side read marker. The
+caption reads `SINCE YOU LOOKED` when a prior read exists, or
+`SINCE CREATED` for a brand-new project. The last-read time appears as
+a token (e.g. `WED 09:21`).
+
+Changes are grouped by source with a group heading (e.g. `GitHub · 2
+opened · 1 merged`) and entry rows in phrases (e.g. `#618 opened by
+mira · 2 h ago`). Opening the Room moves the read marker.
+
+When empty: `Nothing since HH:MM` or `Created just now`.
+
+### Decisions and commitments
+
+The **DECISIONS & COMMITMENTS** section is hidden when empty. When
+present, rows read `Decided · <text> · <time>` (from decision records)
+or `You owe · <text> · by <time>` (from commitments). Each row carries
+an `Open` verb.
+
+These come from meetings linked to the project. When no meeting is
+linked, the section is hidden.
+
+### The ask well
+
+At the foot of the Room: an input reading `Ask this project…` with a
+mic button. The model's egress chip sits at the right edge: `MODEL ·
+192.168.1.43` when a model is assigned, or `MODEL · NOT SET` with a
+`Choose` link to Settings, Models when no model is assigned. Answers
+appear as an aerogel inset above the well with grounding citations.
+
+![The Room with nothing needing attention, sources live, and the ask well at the foot](assets/project-rooms/room-quiet.png)
+
+### Footer
+
+On the ROOM wing, the footer receipt reads `READ HH:MM · NEXT CHECK
+HH:MM`. On the HISTORY wing, the receipt reads `N TODAY · M THIS WEEK`.
+A `Refresh` verb reloads the room data and resets the read marker.
+
+### History
+
+The **HISTORY** wing shows a dated stream of project events. A filter
+bar lets you narrow by source: `ALL`, `GITHUB`, `JIRA`, `ROOM`. A
+search input with mic narrows entries by text. Each day group shows its
+entries in phrases with timestamps.
+
+![The History wing with a dated stream of project events](assets/project-rooms/room-history.png)
+
 ## Models
 
 Open **Settings, Models**. The surface opens on the door when any assignment
