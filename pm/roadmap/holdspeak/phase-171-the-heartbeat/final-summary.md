@@ -84,7 +84,19 @@ noted; N1 the tool counts (201 / 36) fixed.
 
 ## The suite
 
-- _filled at close_
+- Full suite, CI shape (-n auto), after everything (10:30): **9501 passed /
+  98 skipped / 14 failed → 6 inherited** (unchanged since 170: ask
+  grounding ×2 + the ask runner need his real gguf under an isolated HOME;
+  the kernel broker's two density fences; the product-copy drift at 27) +
+  4 xdist-only (141 thought workbench, 144 deep link, 153 slash, 4/4 green
+  alone) + 4 branch-new, paid: the allow-list sizes (+ `heartbeat.status`),
+  web_runtime's density budget (the heartbeat thread's start carved into
+  its mixin), the effect census (the receipt writers classified), the
+  cadence smoke test's `/status` read restored on Rhythm.
+- vitest green; web baseline zero branch-new; the ratchet at its floor
+  (A8 26 ≤ 28); product-copy 27 (the parked faces skipped).
+- Rigs green serially: rhythm (7) · shade (12) · command deck (6) + 170's
+  arrival/settings/concierge/speak/meetings + 144 + 169 Room.
 
 ## What the owner owes the phase
 

@@ -112,13 +112,15 @@ class TestAllowLists:
     def test_desk_size(self) -> None:
         # HS-168-02: + connection.list / connection.recheck (evidence_read).
         # HS-170: + concierge.detect/propose/probe, desk.needs_you, settings.hub.
-        assert len(_DESK_TOOLS) == 62
+        # HS-171: + heartbeat.status (evidence_read).
+        assert len(_DESK_TOOLS) == 63
 
     def test_chase_size(self) -> None:
         # Chase includes door.add_item which is a forward reference
         # HS-168-02: + connection.list / connection.recheck (evidence_read).
         # HS-170: + concierge.detect/propose/probe, desk.needs_you, settings.hub.
-        assert len(_CHASE_TOOLS) == 68
+        # HS-171: + heartbeat.status (evidence_read).
+        assert len(_CHASE_TOOLS) == 69
 
     def test_draft_empty(self) -> None:
         assert len(_DRAFT_TOOLS) == 0
