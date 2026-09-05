@@ -34,13 +34,14 @@ log = logging.getLogger(__name__)
 class EdgeDetector:
     """Fire only when the count rises above the last notified level.
 
-    Tracks ``last_notified_count`` in memory (reset on restart is
-    acceptable per the settled design -- the first sweep after restart
-    fires naturally if count > 0).
+    Tracks ``last_notified_count`` in memory.  A persisted seed can be
+    passed via ``initial_count`` so a restart does not re-notify the
+    same count (the heartbeat settings row stores the last-notified
+    count across process lifetimes).
     """
 
-    def __init__(self) -> None:
-        self._last: int = 0
+    def __init__(self, *, initial_count: int = 0) -> None:
+        self._last: int = initial_count
 
     def should_fire(self, count: int) -> bool:
         """True when count > last_notified_count (a rising edge)."""

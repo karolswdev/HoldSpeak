@@ -138,6 +138,10 @@ brief ran ONCE (1839 items on 2026-08-24) and never again.
 
 ## Where we are
 
+**2026-09-05 20:30 — a P0 found after the close, paid on this branch (PR
+#554 updated):** the loop never called the notifier; now it does, with a
+receipt per outcome and a persisted edge. See final-summary.md.
+
 PLANNED. Waiting for Phase 170 to merge. The recon is complete: the
 scheduler has `next_evaluation_at` in the schema (schema.py:2324) but
 null on his watches; the cadence engine exists (cadence/ package) but

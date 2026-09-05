@@ -82,10 +82,12 @@ class HeartbeatService:
         *,
         observer: PipelineObserver | None = None,
         watch_service: Any | None = None,
+        notifier: Any | None = None,
     ) -> None:
         self._db = db
         self._observer = observer or NullObserver()
         self._watch_service = watch_service
+        self._notifier = notifier  # injectable for tests; None = OS default
 
     # ── Settings ───────────────────────────────────────────────────────
 
@@ -105,6 +107,7 @@ class HeartbeatService:
             "muted_projects": list(config.get("muted_projects", [])),
             "last_sweep_at": config.get("last_sweep_at"),
             "next_sweep_at": config.get("next_sweep_at"),
+            "last_notified_count": int(config.get("last_notified_count", 0)),
         }
 
     def update_settings(self, patch: dict[str, Any]) -> dict[str, Any]:
@@ -141,6 +144,7 @@ class HeartbeatService:
             "muted_projects": [],
             "last_sweep_at": None,
             "next_sweep_at": None,
+            "last_notified_count": 0,
         }
 
     def _persist(self, settings: dict[str, Any]) -> None:
@@ -154,6 +158,7 @@ class HeartbeatService:
             "muted_projects": settings["muted_projects"],
             "last_sweep_at": settings.get("last_sweep_at"),
             "next_sweep_at": settings.get("next_sweep_at"),
+            "last_notified_count": settings.get("last_notified_count", 0),
         }
         self._db.cadence.upsert_policy(CadencePolicy(
             id=_HEARTBEAT_POLICY_ID,
@@ -260,6 +265,19 @@ class HeartbeatService:
         # Write pipeline_events
         self._write_pipeline_event(receipt, duration_ms)
 
+        # D3 notifier: run the notification decision after every sweep.
+        # Own failure boundary -- a notifier crash never breaks the loop.
+        try:
+            notify_receipt = self._run_notification_decision(principal, settings)
+            receipt["notify"] = notify_receipt
+        except Exception as exc:
+            log.error("heartbeat notification decision failed: %s", exc)
+            receipt["notify"] = {
+                "kind": "heartbeat.notify",
+                "outcome": "error",
+                "error": str(exc),
+            }
+
         return receipt
 
     def _write_receipt(self, receipt: dict[str, Any]) -> None:
@@ -334,6 +352,154 @@ class HeartbeatService:
             self._observer.on_event(event)
         except Exception:
             pass
+
+    # ── D3 notification decision (wired from run_sweep) ────────────────
+
+    def _run_notification_decision(
+        self, principal: Principal, settings: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Evaluate the notification edge after a sweep and fire if appropriate.
+
+        Persists ``last_notified_count`` in the heartbeat policy config so a
+        restart does not re-notify the same count.  Returns a receipt dict
+        with outcome vocabulary: ``sent``, ``held_quiet_hours``,
+        ``held_no_edge``, ``off``, ``error``.
+        """
+        from holdspeak.desktop_notify import EdgeDetector, heartbeat_notify
+
+        notify_mode = settings.get("notify", _DEFAULT_NOTIFY)
+
+        # Fast path: notifications disabled.
+        if notify_mode == "off":
+            receipt = {"kind": "heartbeat.notify", "outcome": "off"}
+            self._write_notify_receipt(receipt)
+            return receipt
+
+        # Build the aggregate count (muted-aware).
+        count = self.notification_count(principal)
+
+        # Recover persisted edge state.
+        persisted_edge = int(settings.get("last_notified_count", 0))
+        edge = EdgeDetector(initial_count=persisted_edge)
+
+        quiet_start = settings["quiet_hours"]["start"]
+        quiet_end = settings["quiet_hours"]["end"]
+
+        # Build aggregate for project_count.
+        agg = self._build_aggregate_via_canonical(principal)
+        project_count = len(agg.get("projects", []))
+        content_items = agg.get("items", [])
+
+        # The notification decision.
+        result = heartbeat_notify(
+            count,
+            project_count,
+            edge=edge,
+            quiet_hours_start=quiet_start,
+            quiet_hours_end=quiet_end,
+            content_items=content_items,
+            notify_content=False,
+            receipt_writer=None,
+            _notifier=self._notifier,
+        )
+
+        # For mode "edge", rely on the edge detector (heartbeat_notify
+        # already checked it).  For "every_sweep", skip the edge and fire
+        # on any non-zero count not held by quiet hours.
+        if notify_mode == "every_sweep" and not result["fired"] and result["reason"] == "no_edge":
+            # Override edge: fire if count > 0 and not quiet.
+            if count > 0:
+                from holdspeak.desktop_notify import notify as _do_notify
+
+                if project_count > 1:
+                    body = f"{count} need you across {project_count} projects"
+                else:
+                    body = f"{count} need you"
+                _notifier = self._notifier or _do_notify
+                fired = _notifier("HoldSpeak", body, click_url=None)
+                if fired:
+                    edge.mark_fired(count)
+                result["fired"] = fired
+                result["reason"] = "fired" if fired else "dispatch_failed"
+
+        # Map to receipt vocabulary.
+        if result["fired"]:
+            outcome = "sent"
+        elif result.get("held") and result["reason"] == "quiet_hours":
+            outcome = "held_quiet_hours"
+        elif result["reason"] == "no_edge":
+            outcome = "held_no_edge"
+        elif result["reason"] == "dispatch_failed":
+            outcome = "error"
+        else:
+            outcome = "held_no_edge"
+
+        receipt = {
+            "kind": "heartbeat.notify",
+            "outcome": outcome,
+            "count": count,
+            "projectCount": project_count,
+            "fired": result["fired"],
+            "lastNotifiedCount": persisted_edge,
+        }
+
+        # Persist edge state for restart survival.
+        if result["fired"]:
+            self._persist_edge(count)
+        self._write_notify_receipt(receipt)
+        return receipt
+
+    def _persist_edge(self, count: int) -> None:
+        """Persist the last-notified count in the heartbeat policy config."""
+        settings = self.get_settings()
+        settings["last_notified_count"] = count
+        self._persist(settings)
+
+    def _write_notify_receipt(self, receipt: dict[str, Any]) -> None:
+        """Write a kernel receipt for the notification decision."""
+        receipt_id = f"hbn_rcpt_{uuid.uuid4().hex[:12]}"
+        operation_id = f"hbn_op_{uuid.uuid4().hex[:12]}"
+        idem_key = f"heartbeat.notify:{_now_iso()}:{uuid.uuid4().hex[:8]}"
+        now = _now_epoch()
+        state = "succeeded" if receipt.get("outcome") != "error" else "failed"
+        outcome_json = json.dumps(receipt, default=str, separators=(",", ":"))
+
+        try:
+            with self._db._connection() as conn:
+                conn.execute(
+                    """INSERT INTO kernel_operations
+                       (operation_id, request_id, idempotency_key, name, version,
+                        principal_kind, principal_identity, target_ref, placement,
+                        envelope_sha256, policy_version, authority_basis,
+                        state, revision, native_id, created_at, updated_at)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,?)""",
+                    (
+                        operation_id,
+                        idem_key,
+                        idem_key,
+                        "heartbeat.notify",
+                        1,
+                        "owner",
+                        "heartbeat-service",
+                        "heartbeat:notify",
+                        "local",
+                        "",
+                        "",
+                        "heartbeat-conductor",
+                        state,
+                        operation_id,
+                        now,
+                        now,
+                    ),
+                )
+                conn.execute(
+                    """INSERT INTO kernel_receipts
+                       (receipt_id, operation_id, state, outcome, result_ref, created_at)
+                       VALUES (?,?,?,?,?,?)""",
+                    (receipt_id, operation_id, state, outcome_json, "", now),
+                )
+        except Exception as exc:
+            log.error("heartbeat notify receipt write failed: %s", exc)
 
     # ── Aggregate cache (M3: delegates to needs_you_aggregate) ─────────
 
