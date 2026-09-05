@@ -199,6 +199,27 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
             except Exception:
                 pass
 
+            # HS-172-02: most recent completed intel run for the receipt.
+            last_run_at: str | None = None
+            last_run_s: int | None = None
+            try:
+                with get_database()._connection() as _conn:
+                    _row = _conn.execute(
+                        "SELECT intel_completed_at, intel_requested_at "
+                        "FROM meetings "
+                        "WHERE intel_status = 'complete' AND intel_completed_at IS NOT NULL "
+                        "ORDER BY intel_completed_at DESC LIMIT 1"
+                    ).fetchone()
+                    if _row and _row["intel_completed_at"]:
+                        last_run_at = _row["intel_completed_at"]
+                        if _row["intel_requested_at"]:
+                            from datetime import datetime as _dt
+                            _req = _dt.fromisoformat(_row["intel_requested_at"])
+                            _comp = _dt.fromisoformat(_row["intel_completed_at"])
+                            last_run_s = max(0, int((_comp - _req).total_seconds()))
+            except Exception:
+                pass
+
             return JSONResponse({
                 "models": {
                     "engines": engines,
@@ -211,6 +232,8 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                     "intelligence": intel_on,
                     "auto": config.meeting.intelligence_auto,
                     "host": _resolve_meetings_host(config),
+                    "lastRunAt": last_run_at,
+                    "lastRunS": last_run_s,
                 },
                 "rhythm": heartbeat_rhythm,
                 "sounds": {"on": sounds_on},

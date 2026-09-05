@@ -123,24 +123,6 @@ def _seed_action_artifact(
 class TestAutoIntelTrigger:
     """HS-172-02: the auto-intel trigger setting and its conditions."""
 
-    def test_room_linked_meeting_enqueues(self, db: Database) -> None:
-        """A Room-linked meeting with a transcript auto-enqueues under room_linked."""
-        from holdspeak.config.meeting import MeetingConfig
-        cfg = MeetingConfig(intelligence_auto="room_linked")
-        assert cfg.intelligence_auto == "room_linked"
-
-    def test_off_never_enqueues(self, db: Database) -> None:
-        """intelligence_auto=off never auto-enqueues."""
-        from holdspeak.config.meeting import MeetingConfig
-        cfg = MeetingConfig(intelligence_auto="off")
-        assert cfg.intelligence_auto == "off"
-
-    def test_every_enqueues_all(self, db: Database) -> None:
-        """intelligence_auto=every enqueues for all meetings."""
-        from holdspeak.config.meeting import MeetingConfig
-        cfg = MeetingConfig(intelligence_auto="every")
-        assert cfg.intelligence_auto == "every"
-
     def test_invalid_auto_raises(self) -> None:
         """Invalid intelligence_auto value raises ValueError."""
         from holdspeak.config.meeting import MeetingConfig
@@ -152,6 +134,66 @@ class TestAutoIntelTrigger:
         from holdspeak.config.meeting import MeetingConfig
         cfg = MeetingConfig()
         assert cfg.intelligence_auto == "room_linked"
+
+    def test_room_linked_enqueues_with_transcript(self, db: Database) -> None:
+        """_maybe_auto_enqueue_intel enqueues for a Room-linked meeting."""
+        import unittest.mock as mock
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        project_id = f"prj-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id)
+        _seed_project(db, project_id)
+        _link_meeting_project(db, meeting_id, project_id)
+
+        glue = mock.MagicMock()
+        cfg_mock = mock.MagicMock()
+        cfg_mock.meeting.intelligence_auto = "room_linked"
+        with mock.patch("holdspeak.config.Config.load", return_value=cfg_mock):
+            with mock.patch("holdspeak.db.get_database", return_value=db):
+                from holdspeak.runtime.routing_glue import RoutingGlueMixin
+                result = RoutingGlueMixin._maybe_auto_enqueue_intel(glue, meeting_id, None)
+
+        assert result["enqueued"] is True
+        assert result.get("error") is None
+        job = db.intel.get_intel_job(meeting_id)
+        assert job is not None
+        host = db.intel.get_intel_job_model_host(meeting_id)
+        assert host == "local"  # fallback when no placement profile
+
+    def test_unlinked_no_enqueue_under_room_linked(self, db: Database) -> None:
+        """_maybe_auto_enqueue_intel does NOT enqueue for an unlinked meeting under room_linked."""
+        import unittest.mock as mock
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id)
+
+        glue = mock.MagicMock()
+        cfg_mock = mock.MagicMock()
+        cfg_mock.meeting.intelligence_auto = "room_linked"
+        with mock.patch("holdspeak.config.Config.load", return_value=cfg_mock):
+            with mock.patch("holdspeak.db.get_database", return_value=db):
+                from holdspeak.runtime.routing_glue import RoutingGlueMixin
+                result = RoutingGlueMixin._maybe_auto_enqueue_intel(glue, meeting_id, None)
+
+        assert result["enqueued"] is False
+        assert result["reason"] == "not_room_linked"
+
+    def test_off_no_enqueue(self, db: Database) -> None:
+        """_maybe_auto_enqueue_intel does NOT enqueue when auto=off."""
+        import unittest.mock as mock
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id)
+
+        glue = mock.MagicMock()
+        cfg_mock = mock.MagicMock()
+        cfg_mock.meeting.intelligence_auto = "off"
+        with mock.patch("holdspeak.config.Config.load", return_value=cfg_mock):
+            from holdspeak.runtime.routing_glue import RoutingGlueMixin
+            result = RoutingGlueMixin._maybe_auto_enqueue_intel(glue, meeting_id, None)
+
+        assert result["enqueued"] is False
+        assert result["reason"] == "auto_intel_off"
 
 
 # ── Proposal bridge tests ───────────────────────────────────────────
@@ -727,3 +769,225 @@ class TestHostDerivation:
 
         p = FakePlacement(base_url="https://api.openai.com/v1")
         assert _placement_host(p) == "api.openai.com"
+
+
+# ── Pipeline integration (completion -> bridge -> suggestions) ──────
+
+class TestCompletionPipeline:
+    """HS-172-03: _on_intel_complete bridges artifacts and creates suggestions."""
+
+    def test_completion_creates_proposals_and_suggestions(self, db: Database) -> None:
+        """After intel completes, proposals + source suggestions are created."""
+        from holdspeak.intel_queue import _on_intel_complete
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        project_id = f"prj-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id, title="Sprint Review")
+        _seed_project(db, project_id)
+        _link_meeting_project(db, meeting_id, project_id)
+
+        # Seed a decision artifact + action artifact.
+        _seed_decision_artifact(db, meeting_id, [
+            {"text": "Adopt PostgreSQL 17"},
+        ])
+        _seed_action_artifact(db, meeting_id, [
+            {"task": "Migrate the DB", "owner": "Marek"},
+        ])
+
+        # Seed an intel job with a recorded host (simulates the enqueue).
+        with db._connection() as conn:
+            conn.execute(
+                """INSERT INTO intel_jobs
+                   (job_id, meeting_id, work_descriptor_sha256,
+                    transcript_hash, status, model_host,
+                    requested_at, updated_at, attempts)
+                   VALUES (?, ?, 'desc', 'hash', 'succeeded', '192.168.1.43',
+                           datetime('now'), datetime('now'), 1)""",
+                (f"job-{uuid.uuid4().hex[:16]}", meeting_id),
+            )
+
+        # Seed a transcript mentioning a repo (for source suggestions).
+        with db._connection() as conn:
+            conn.execute(
+                """INSERT INTO segments (meeting_id, start_time, end_time, text, speaker)
+                   VALUES (?, 10.0, 20.0, 'We should watch karolswdev/holdspeak for PRs', 'Bob')""",
+                (meeting_id,),
+            )
+
+        _on_intel_complete(db, meeting_id)
+
+        # Assert proposals exist.
+        proposals = db.proposals.list_proposals(meeting_id=meeting_id, state="proposed")
+        assert len(proposals) == 2, f"Expected 2 proposals, got {len(proposals)}"
+        kinds = {p.kind for p in proposals}
+        assert kinds == {"decision", "action"}
+        # model_host came from the job row.
+        for p in proposals:
+            assert p.model_host == "192.168.1.43"
+
+        # Assert source suggestions exist.
+        with db._connection() as conn:
+            sugg = conn.execute(
+                "SELECT * FROM source_suggestions WHERE meeting_id = ? AND status = 'pending'",
+                (meeting_id,),
+            ).fetchall()
+        assert len(sugg) >= 1, f"Expected at least 1 source suggestion, got {len(sugg)}"
+
+    def test_completion_idempotent(self, db: Database) -> None:
+        """Running _on_intel_complete twice creates nothing new (fingerprint dedup)."""
+        from holdspeak.intel_queue import _on_intel_complete
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        project_id = f"prj-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id)
+        _seed_project(db, project_id)
+        _link_meeting_project(db, meeting_id, project_id)
+        _seed_decision_artifact(db, meeting_id, [{"text": "Decision X"}])
+
+        # Seed a job.
+        with db._connection() as conn:
+            conn.execute(
+                """INSERT INTO intel_jobs
+                   (job_id, meeting_id, work_descriptor_sha256,
+                    transcript_hash, status, model_host,
+                    requested_at, updated_at, attempts)
+                   VALUES (?, ?, 'desc', 'hash', 'succeeded', 'local',
+                           datetime('now'), datetime('now'), 1)""",
+                (f"job-{uuid.uuid4().hex[:16]}", meeting_id),
+            )
+
+        _on_intel_complete(db, meeting_id)
+        count_1 = len(db.proposals.list_proposals(meeting_id=meeting_id))
+
+        _on_intel_complete(db, meeting_id)
+        count_2 = len(db.proposals.list_proposals(meeting_id=meeting_id))
+
+        assert count_1 == count_2 == 1, f"Expected idempotent: first={count_1}, second={count_2}"
+
+
+# ── HS-172 counsel: hub last-run fields ──────────────────────────────
+
+def test_hub_last_run_fields(db: Database) -> None:
+    """The hub's meetings block carries lastRunAt / lastRunS from the
+    most recent completed intel job (meetings.intel_completed_at)."""
+    now = datetime.now()
+    req = datetime(2026, 9, 5, 9, 12, 0)
+    comp = datetime(2026, 9, 5, 9, 12, 41)
+    _seed_meeting(db, "m-hub-last")
+    with db._connection() as conn:
+        conn.execute(
+            "UPDATE meetings SET intel_status = 'complete', "
+            "intel_requested_at = ?, intel_completed_at = ? WHERE id = ?",
+            (req.isoformat(), comp.isoformat(), "m-hub-last"),
+        )
+    # Read the last-run directly from the query the hub uses.
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT m.intel_completed_at, m.intel_requested_at "
+            "FROM meetings m "
+            "WHERE m.intel_status = 'complete' AND m.intel_completed_at IS NOT NULL "
+            "ORDER BY m.intel_completed_at DESC LIMIT 1"
+        ).fetchone()
+    assert row is not None, "No completed meeting found"
+    assert row["intel_completed_at"] == comp.isoformat()
+    from datetime import datetime as _dt
+    req_dt = _dt.fromisoformat(row["intel_requested_at"])
+    comp_dt = _dt.fromisoformat(row["intel_completed_at"])
+    duration = max(0, int((comp_dt - req_dt).total_seconds()))
+    assert duration == 41, f"Expected 41 s, got {duration}"
+
+
+# ── Dirty marker + cache refresh ────────────────────────────────────
+
+class TestDirtyMarkerCache:
+    """HS-172-03: durable dirty marker drives cache refresh."""
+
+    def test_completion_sets_marker_and_cache_refreshes(self, db: Database) -> None:
+        """_on_intel_complete sets the dirty marker; cache.get() rebuilds."""
+        from holdspeak.intel_queue import _on_intel_complete
+        from holdspeak.services.needs_you_aggregate import (
+            NeedsYouCache,
+            _read_dirty_at,
+        )
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        project_id = f"prj-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id)
+        _seed_project(db, project_id)
+        _link_meeting_project(db, meeting_id, project_id)
+        _seed_decision_artifact(db, meeting_id, [{"text": "Decide X"}])
+
+        # Seed a job.
+        with db._connection() as conn:
+            conn.execute(
+                """INSERT INTO intel_jobs
+                   (job_id, meeting_id, work_descriptor_sha256,
+                    transcript_hash, status, model_host,
+                    requested_at, updated_at, attempts)
+                   VALUES (?, ?, 'desc', 'hash', 'succeeded', 'local',
+                           datetime('now'), datetime('now'), 1)""",
+                (f"job-{uuid.uuid4().hex[:16]}", meeting_id),
+            )
+
+        # No marker before completion.
+        assert _read_dirty_at(db) is None
+
+        # Prime the cache with an empty aggregate.
+        build_count = [0]
+        def _builder():
+            build_count[0] += 1
+            return {"count": 0, "projects": [], "items": [], "next": None,
+                    "computedAt": datetime.now().isoformat(), "stale": False, "sweepId": None}
+
+        cache = NeedsYouCache(_builder, max_age_s=3600.0, db_factory=lambda: db)
+        result_1 = cache.get()
+        assert build_count[0] == 1
+        assert result_1["count"] == 0
+
+        # Completion sets the marker.
+        _on_intel_complete(db, meeting_id)
+        dirty = _read_dirty_at(db)
+        assert dirty is not None
+
+        # Next cache.get() sees the marker is newer -> rebuilds.
+        result_2 = cache.get()
+        assert build_count[0] == 2, f"Expected rebuild, build_count={build_count[0]}"
+
+    def test_confirm_sets_marker(self, db: Database) -> None:
+        """Confirming a proposal sets the dirty marker."""
+        from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+        from holdspeak.services.needs_you_aggregate import _read_dirty_at
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id)
+        _seed_decision_artifact(db, meeting_id, [{"text": "Confirm me"}])
+
+        bridge = ProposalBridgeService(db)
+        created = bridge.bridge_meeting_artifacts(meeting_id, model_host="local")
+        assert len(created) == 1
+
+        # Clear the marker.
+        with db._connection() as conn:
+            conn.execute("DELETE FROM desk_projection_state WHERE projection_id = 'needs_you_aggregate'")
+        assert _read_dirty_at(db) is None
+
+        bridge.confirm_proposal(OWNER, created[0].id)
+        assert _read_dirty_at(db) is not None
+
+    def test_dismiss_sets_marker(self, db: Database) -> None:
+        """Dismissing a proposal sets the dirty marker."""
+        from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+        from holdspeak.services.needs_you_aggregate import _read_dirty_at
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id)
+        _seed_decision_artifact(db, meeting_id, [{"text": "Dismiss me"}])
+
+        bridge = ProposalBridgeService(db)
+        created = bridge.bridge_meeting_artifacts(meeting_id, model_host="local")
+
+        with db._connection() as conn:
+            conn.execute("DELETE FROM desk_projection_state WHERE projection_id = 'needs_you_aggregate'")
+
+        bridge.dismiss_proposal(OWNER, created[0].id)
+        assert _read_dirty_at(db) is not None

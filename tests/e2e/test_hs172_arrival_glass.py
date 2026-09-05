@@ -292,3 +292,59 @@ class TestArrivalProposals:
             errors.clear()
 
             browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.requires_meeting
+    def test_arrival_confirm_fires(self) -> None:
+        """Click Confirm on a proposal; assert the row leaves, headline drops, kernel fired."""
+        from playwright.sync_api import sync_playwright
+
+        errors: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda err: errors.append(str(err)))
+
+            page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+            _api(page, "POST", "/api/desk/seed", token=TOKEN)
+            _api(page, "PUT", "/api/setup/onboarding",
+                 {"disposition": "completed"}, token=TOKEN)
+            _normal_chair(page)
+
+            headline = page.locator("[data-testid='arrival-display']")
+            headline.wait_for(timeout=10_000)
+            _settle(page)
+
+            confirm_btns = page.locator("[data-testid='arrival-proposal-confirm']")
+            initial_count = confirm_btns.count()
+            assert initial_count >= 1, "No Confirm buttons to click"
+
+            headline_text = headline.text_content() or ""
+
+            confirm_btns.first.click()
+
+            page.wait_for_timeout(1500)
+            _settle(page)
+
+            new_count = page.locator("[data-testid='arrival-proposal-confirm']").count()
+            assert new_count == initial_count - 1, (
+                f"Confirm count didn't drop: {initial_count} -> {new_count}"
+            )
+
+            new_headline = headline.text_content() or ""
+            assert new_headline != headline_text or initial_count == 1, (
+                f"Headline unchanged after confirm: {new_headline}"
+            )
+
+            result = _api(page, "GET",
+                "/api/projects/proj-a/proposals?state=confirmed",
+                token=TOKEN)
+            confirmed = result.get("proposals", [])
+            assert len(confirmed) >= 1, (
+                f"No confirmed proposals in API response: {result}"
+            )
+
+            _assert_clean(page, errors)
+            page.close()
+            browser.close()

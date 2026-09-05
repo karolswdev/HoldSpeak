@@ -6,20 +6,8 @@ import { StateTokenSpan } from "./StateTokenSpan";
 import { StateChip } from "../../../desk/surface";
 import { ledgerDate, durationToken, stateToken, intelDurationToken } from "./helpers";
 import { EgressChip } from "../../../desk/surface/gadgets";
+import { egressFor } from "../../../desk/surface/egress";
 import type { MeetingData } from "./useMeetingData";
-
-function egressLabel(host: string): string {
-  if (host === "local" || host === "LOCAL" || host === "this_device") return "THIS DEVICE";
-  if (host === "THIS DEVICE") return host;
-  if (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return `${host} · LAN`;
-  return `${host} · CLOUD`;
-}
-
-function egressScope(host: string): "local" | "cloud" {
-  if (host === "local" || host === "LOCAL" || host === "this_device" || host === "THIS DEVICE") return "local";
-  if (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return "local";
-  return "cloud";
-}
 
 export function MeetingHeader({
   meeting,
@@ -56,7 +44,8 @@ export function MeetingHeader({
   // Host chip for any intel-active state: RAN, RUNNING, QUEUED.
   const hostStates = ["RAN", "RUNNING", "QUEUED"];
   if (hostStates.includes(token.label) && rawHost) {
-    parts.push(<EgressChip key="intel-host" label={egressLabel(rawHost)} scope={egressScope(rawHost)} />);
+    const eg = egressFor(rawHost);
+    parts.push(<EgressChip key="intel-host" label={eg.label} scope={eg.scope} />);
   }
 
   const interleaved: ReactNode[] = [];

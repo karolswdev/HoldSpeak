@@ -32,6 +32,7 @@ import {
 } from "../../desk/surface/gadgets";
 import { Receipt, countToken, StateChip } from "../../desk/surface";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
+import { egressFor } from "../../desk/surface/egress";
 import { openSurface } from "../../desk/shell";
 import { HotkeyCapture } from "./settingsBespoke";
 import { toggleSfx } from "../../lib/sfx";
@@ -186,18 +187,8 @@ function title(key: string) {
     .join(" ");
 }
 
-/* ── HS-172: egress helpers for the intel model host ── */
-function intelHostLabel(host: string): string {
-  if (host === "local" || host === "LOCAL" || host === "this_device") return "THIS DEVICE";
-  if (host === "THIS DEVICE") return host;
-  if (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return `${host} · LAN`;
-  return `${host} · CLOUD`;
-}
-function intelHostScope(host: string): "local" | "cloud" {
-  if (host === "local" || host === "LOCAL" || host === "this_device" || host === "THIS DEVICE") return "local";
-  if (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return "local";
-  return "cloud";
-}
+/* ── HS-172: egress helper (shared) ── */
+// intelHostLabel / intelHostScope collapsed into egressFor (desk/surface/egress.ts).
 
 const SETTINGS_WINGS = [
   { id: "settings", label: "Settings" },
@@ -819,6 +810,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
           ? true
           : Boolean(hub.data.models?.defaultSet);
         const intelHost = hasModel ? hubHost : null;
+        const lastRunAt = meetingsHub?.lastRunAt ? String(meetingsHub.lastRunAt) : null;
+        const lastRunS = meetingsHub?.lastRunS != null ? Number(meetingsHub.lastRunS) : null;
+        const lastRunReceipt = lastRunAt
+          ? `LAST RAN ${lastRunAt.slice(11, 16)}${lastRunS != null ? " · " + lastRunS + " S" : ""}`
+          : null;
         const sourcesPath: string[] = ["calendar", "sources"];
         const sources: Array<{
           id: string;
@@ -851,8 +847,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
               />
               {hasModel && intelHost ? (
                 <EgressChip
-                  label={intelHostLabel(intelHost)}
-                  scope={intelHostScope(intelHost)}
+                  label={egressFor(intelHost).label}
+                  scope={egressFor(intelHost).scope}
                 />
               ) : !hasModel ? (
                 <>
@@ -861,6 +857,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
                     Choose model
                   </Button>
                 </>
+              ) : null}
+              {lastRunReceipt ? (
+                <span className="gadget-fact" data-testid="settings-last-ran">{lastRunReceipt}</span>
               ) : null}
             </GadgetRow>
             <div className="prefs-rule" aria-hidden="true" />

@@ -280,6 +280,13 @@ class ProposalBridgeService:
             commitment_id=commitment_id,
         )
 
+        # HS-172-03: dirty marker so the needs-you cache refreshes.
+        try:
+            from .needs_you_aggregate import mark_needs_you_dirty
+            mark_needs_you_dirty(self._db)
+        except Exception:
+            pass
+
         return {
             "proposal_id": proposal_id,
             "state": "confirmed",
@@ -321,6 +328,13 @@ class ProposalBridgeService:
                 correlation_id=current_correlation_id(),
                 causation_id=f"proposal:{proposal_id}",
             )
+
+        # HS-172-03: dirty marker so the needs-you cache refreshes.
+        try:
+            from .needs_you_aggregate import mark_needs_you_dirty
+            mark_needs_you_dirty(self._db)
+        except Exception:
+            pass
 
         return {"proposal_id": proposal_id, "state": "dismissed"}
 

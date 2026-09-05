@@ -736,8 +736,10 @@ class MeetingService:
             # HS-172-02: compute duration from the detail payload's timestamps
             # when _summary_payload could not (detail path carries raw dicts).
             if p.get("intel_duration_s") is None:
-                req_raw = p.get("intel_requested_at")
-                comp_raw = p.get("intel_completed_at")
+                # Top-level (summary) or nested inside intel_status (detail).
+                intel_obj = p.get("intel_status") if isinstance(p.get("intel_status"), dict) else {}
+                req_raw = p.get("intel_requested_at") or intel_obj.get("requested_at")
+                comp_raw = p.get("intel_completed_at") or intel_obj.get("completed_at")
                 if req_raw and comp_raw:
                     try:
                         from datetime import datetime as _dt

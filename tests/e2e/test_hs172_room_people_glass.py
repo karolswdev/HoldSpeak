@@ -255,6 +255,10 @@ def _run_room_people_rig(
             people_section.first.wait_for(timeout=10000)
             _settle(page)
 
+            # Scroll PEOPLE into view before the shot (at 393 it's below the fold)
+            people_section.first.scroll_into_view_if_needed()
+            _settle(page)
+
             # Take Room shot
             _shot(page, f"build-room-people-{width}", width)
 

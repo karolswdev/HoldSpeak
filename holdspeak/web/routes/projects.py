@@ -422,7 +422,13 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             )
         return aggregate
 
-    _needs_you_cache = NeedsYouCache(_build_needs_you, max_age_s=900.0)
+    def _get_db():
+        from ...db import get_database
+        return get_database()
+
+    _needs_you_cache = NeedsYouCache(
+        _build_needs_you, max_age_s=900.0, db_factory=_get_db,
+    )
 
     # Expose the cache on the context so the cadence tick can invalidate it.
     ctx._needs_you_cache = _needs_you_cache  # type: ignore[attr-defined]

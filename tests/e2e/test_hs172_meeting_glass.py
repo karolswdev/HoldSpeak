@@ -45,18 +45,31 @@ def _seed(monkeypatch: pytest.MonkeyPatch) -> None:
     db = get_database()
     now = datetime.now()
     with db._connection() as conn:
+        intel_req = (now - timedelta(minutes=30, seconds=41)).isoformat()
+        intel_comp = (now - timedelta(minutes=30)).isoformat()
         conn.execute(
             "INSERT OR IGNORE INTO meetings "
             "(id, started_at, ended_at, title, duration_seconds, "
-            " intel_status, capture_status, provenance) "
-            "VALUES (?, ?, ?, ?, ?, 'complete', 'finalized', 'desktop')",
+            " intel_status, intel_requested_at, intel_completed_at, "
+            " capture_status, provenance) "
+            "VALUES (?, ?, ?, ?, ?, 'complete', ?, ?, 'finalized', 'desktop')",
             (
                 "m-ran",
                 (now - timedelta(hours=1)).isoformat(),
                 (now - timedelta(minutes=30)).isoformat(),
                 "Standup",
                 1800.0,
+                intel_req,
+                intel_comp,
             ),
+        )
+        conn.execute(
+            "INSERT OR IGNORE INTO intel_jobs "
+            "(job_id, meeting_id, work_descriptor_sha256, transcript_hash, "
+            " status, model_host, requested_at, updated_at) "
+            "VALUES (?, 'm-ran', 'desc-hash', 'trans-hash', "
+            " 'complete', '192.168.1.43', ?, ?)",
+            ("job-ran-1", intel_req, intel_comp),
         )
         for i in range(5):
             conn.execute(
@@ -223,9 +236,11 @@ class TestMeetingAfterRun:
                 detail.wait_for(timeout=8_000)
                 _settle(page)
 
-                # Verify RAN in the header tokens
+                # Verify RAN + 41 S + host in the header tokens
                 facts = page.locator(".meetings-detail-facts").text_content() or ""
                 assert "RAN" in facts, f"RAN not in detail facts at {width}: {facts}"
+                assert "41 S" in facts, f"41 S duration not in detail facts: {facts}"
+                assert "192.168.1.43" in facts, f"Host chip not in detail facts: {facts}"
 
                 # NEEDS YOU section with 3 proposals
                 needs = page.locator("[data-testid='meeting-needs-you']")

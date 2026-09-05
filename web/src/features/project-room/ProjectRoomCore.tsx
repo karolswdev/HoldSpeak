@@ -44,6 +44,7 @@ import type {
 } from "./model";
 import { lifecycleLabel } from "./model";
 import { StringGadget } from "../../desk/surface/gadgets";
+import { egressFor } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
 import { useReviewController } from "./review/useReviewController";
 import { ReviewPosture } from "./review/ReviewPosture";
@@ -169,25 +170,6 @@ function formatMMDD(iso: string | null | undefined): string {
   if (Number.isNaN(d.getTime())) return "";
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-/** Format a model host into the egress label.
- *  THIS DEVICE stays as-is; an IP on 192.168.x.x or 10.x.x.x gains "LAN";
- *  everything else names the host. Never "LOCAL". */
-function egressLabel(host: string | null | undefined): string {
-  if (!host) return "";
-  if (host === "local" || host === "LOCAL" || host === "this_device") return "THIS DEVICE";
-  if (host === "THIS DEVICE") return host;
-  // Private network IPs -> append LAN
-  if (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return `${host} · LAN`;
-  return host;
-}
-
-function egressScope(host: string | null | undefined): "local" | "cloud" | undefined {
-  if (!host) return undefined;
-  if (host === "local" || host === "LOCAL" || host === "this_device" || host === "THIS DEVICE") return "local";
-  if (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return "local";
-  return "cloud";
 }
 
 /* ── severity ── */
@@ -400,7 +382,7 @@ function ProposalRow({
     const wasCaption = `WAS: ${origText.toUpperCase()}${origDue ? ` · BY ${origDue.toUpperCase()}` : ""}`;
 
     return (
-      <li className="surface-ledger-row room-proposal-edit-row" data-testid="proposal-edit-row" data-open>
+      <li className={`surface-ledger-row room-proposal-edit-row${isNewest ? " room-needs-you-new" : ""}`} data-testid="proposal-edit-row" data-open>
         <div className="surface-ledger-line room-proposal-edit-line">
           <span className="surface-ledger-lead">MTG</span>
           <span className="surface-ledger-primary">
@@ -463,7 +445,7 @@ function ProposalRow({
             <span className="room-proposal-caption room-proposal-speaker">{speaker.toUpperCase()}</span>
           ) : null}
           {host ? (
-            <EgressChip label={egressLabel(host)} scope={egressScope(host)} />
+            <EgressChip label={egressFor(host).label} scope={egressFor(host).scope} />
           ) : null}
         </>
       }
@@ -535,17 +517,13 @@ function NeedsYouSection({
           {items.map((item, i) => {
             if (item.proposalId) {
               return (
-                <div
+                <ProposalRow
                   key={`prop-${item.proposalId}`}
-                  className={item.proposalId === newestProposalId ? "room-needs-you-new" : undefined}
-                >
-                  <ProposalRow
-                    item={item}
-                    proposal={proposalMap.get(item.proposalId)}
-                    ctrl={ctrl}
-                    isNewest={item.proposalId === newestProposalId}
-                  />
-                </div>
+                  item={item}
+                  proposal={proposalMap.get(item.proposalId)}
+                  ctrl={ctrl}
+                  isNewest={item.proposalId === newestProposalId}
+                />
               );
             }
             return (

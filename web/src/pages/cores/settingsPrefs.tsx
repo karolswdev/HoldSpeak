@@ -336,7 +336,7 @@ export type SettingsHubWire = {
   models: { engines: number; groupsSet: number; defaultSet: boolean };
   connections: { connected: number };
   voice: { live: boolean; target: string };
-  meetings: { intelligence: boolean; auto?: string; host?: string };
+  meetings: { intelligence: boolean; auto?: string; host?: string; lastRunAt?: string | null; lastRunS?: number | null };
   rhythm: {
     loops: number;
     sweepEveryMinutes?: number;
