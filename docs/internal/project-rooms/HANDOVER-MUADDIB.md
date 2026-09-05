@@ -1,3 +1,29 @@
+# HANDOVER: MUAD'DIB VIII — addendum after the merge (2026-09-05)
+
+- **Phase 169 MERGED**: PR #551 → main `27eabf0c` (carries Phase 168,
+  closed as superseded). The owner's word: "I will trust you on this
+  one" → "LET'S MERGE AND DEVISE ADDITIONAL PLANS…". The Fedaykin are
+  BOOSTED to `claude-fable-5-1` (his word; ORCHESTRATION.md §model rule).
+- **The Tuesday Arc** is written: pm/roadmap/holdspeak/THE-TUESDAY-ARC.md
+  (artifact https://claude.ai/code/artifact/2fb168a2-a9c6-454c-ae4a-832962a3e44f):
+  170 The Concierge → 171 The Heartbeat → 172 The Loop Closes → 173 The
+  Steward's Hand and Voice → 174 Reach. **The first asks of the next
+  sitting: his word on the ORDER (charter 170 only on it — no new
+  charters without his word) and his own attended walk of the Door and
+  the Room, which every phase assumes he owns.**
+- **Owed from 169's close** (final-summary.md ledger): re-point three
+  rig legs whose live coverage was lost with the retirements (the
+  degraded Room; evaluation → delta review via the API + `Review N`;
+  auth-degraded mid-setup); the per-source Adjust well; park the old
+  wings' faces + setup/ + `configure-setup`.
+- **His desk**: the hub on 127.0.0.1:64035 and the app's own hub on
+  63051 both run main; his real project reads `karolswdev/HoldSpeak · 2
+  OPEN PRS · 2 CHECKS FAILING`, `KAN · 1 DUE THIS WEEK`, the meeting
+  watch `CAN'T CHECK`. Before any real leg: `pgrep -fl 'uv run
+  holdspeak'` and restart anything older than the last backend change.
+
+---
+
 # HANDOVER: MUAD'DIB VIII — the orchestrator's mind, serialized an eighth time
 
 Read this once, fully, before your first tool call. When you finish,
