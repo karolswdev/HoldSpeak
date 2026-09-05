@@ -397,6 +397,13 @@ def test_door_connected(tmp_path, monkeypatch, width):
             assert "SOURCE" in receipt_text
             assert "WATCH" in receipt_text
 
+            # Page-level shot of the live state (shows window position)
+            if width == 1440:
+                page.screenshot(
+                    path=str(SHOTS / f"door-live-page-{width}.png"),
+                    full_page=False,
+                )
+
             # ── 393 no-intersection probe: no two row children overlap ──
             if width == 393:
                 overlaps = page.evaluate(
@@ -434,6 +441,34 @@ def test_door_connected(tmp_path, monkeypatch, width):
                     f"Overlapping row elements at 393: {overlaps}"
                 )
 
+            # ── Window left-edge assertion: the door window is fully in
+            #    the viewport and the receipt text is not clipped ──
+            win_rect = page.evaluate(
+                """() => {
+                    const win = document.querySelector(
+                        '.desk-surface-window'
+                    );
+                    if (!win) return {left: 0, ok: true};
+                    const r = win.getBoundingClientRect();
+                    return {left: r.left, ok: r.left >= 0};
+                }"""
+            )
+            assert win_rect["ok"], (
+                f"Door window left edge off-viewport: left={win_rect['left']}"
+            )
+            # Receipt text must be fully visible (not clipped)
+            receipt_rect = page.evaluate(
+                """() => {
+                    const el = document.querySelector('[data-testid="door-receipt"]');
+                    if (!el) return {left: 0, right: 0, ok: true};
+                    const r = el.getBoundingClientRect();
+                    return {left: r.left, right: r.right, ok: r.left >= 0};
+                }"""
+            )
+            assert receipt_rect["ok"], (
+                f"Receipt clipped: left={receipt_rect['left']}"
+            )
+
             # ── No-scroll assertion (1440 only) ──
             if width == 1440:
                 no_scroll = page.evaluate(
@@ -467,8 +502,18 @@ def test_door_connected(tmp_path, monkeypatch, width):
 
             assert clicks == 5, f"Expected 5 clicks, got {clicks}"
 
-            # Wait for project creation (the Room opens)
+            # Wait for project creation (the Room opens, Door closes)
             page.wait_for_timeout(3000)
+            _settle(page)
+
+            # ── Door window closed after Create ──
+            door_gone = page.evaluate(
+                """() => {
+                    const d = document.querySelector('[data-testid="door-root"]');
+                    return !d;
+                }"""
+            )
+            assert door_gone, "Door window still open after Create — should close on success"
 
             _assert_clean(page, errors)
             browser.close()

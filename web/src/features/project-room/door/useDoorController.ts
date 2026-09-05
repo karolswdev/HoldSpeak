@@ -489,7 +489,9 @@ export function useDoorController(): DoorController {
       const resp = await doorApi.doorCreate(outcome.trim(), payloads);
       safe(() => {
         setCreating(false);
+        // Open the Room, then close the Door so only the Room remains.
         openSurface("open-project-memory", `project:${resp.projectId}`);
+        useDesk.getState().closeSurfaceWindow("surface-project-setup");
       });
     } catch (err) {
       safe(() => {
