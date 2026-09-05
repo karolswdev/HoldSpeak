@@ -48,4 +48,4 @@ tests/e2e/test_hs170_census_glass.py (isolated HOME, alone); the scan script und
   tiles), MEETINGS (`1 RECORDS`, `0 SEG`) proposed for the canvas in 04;
   Processes (eight zeros), People (one type step), Agents, Commands, the
   calendar snapshot and first-run setup lifted by the sweep.
-- Evidence: the census rig + the scan's smoke test captured green.
+- Evidence: the worker's run of the census rig was green (`1 passed in 96.97s`, 36 PNGs on disk); the orchestrator's CAPTURE of it (evidence-story-01.md, 2026-09-05) FAILED at the build-first step because three sweep lanes were mid-edit on web/src — the scan's smoke test passed in the same capture. The rig is RE-CAPTURED green once the sweep's tree builds (a note the close verifies; an evidence entry is never rewritten).
