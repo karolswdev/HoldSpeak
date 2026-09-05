@@ -13,6 +13,19 @@ runner (08) drafted. Four lanes building: Room faces (03/06), meeting +
 arrival + Settings→Meetings (02/03), the People card (05), and the
 story-07 boards (People in the Room, the shade at 393).
 
+
+**A write on your desk, owed to you (2026-09-05 09:45).** The 172 walk
+runner's guard failed open: it could not read the provider, judged the
+host "LAN/local", and posted `Run intelligence` on your meeting
+"Already titled" (Aug 22). Its model is the migrated cloud profile
+without a key, so the job sits **QUEUED** and cannot run; nothing left
+the machine. Nothing was deleted or undone; `Skip` on that meeting
+clears it, or leave it and the Concierge's next assignment will run it.
+The guard now fails closed (unknown = no; a queued job blocks a second
+run) and prints the values it decided on. The same walk found the
+QUEUED meeting detail still wearing the pre-170 prose panel; fixed in
+this phase.
+
 **Counsel's three questions for the owner (172):**
 1. Decisions lead with `Decide:` and action items with `Confirm:` —
    is the two-prefix vocabulary yours?
