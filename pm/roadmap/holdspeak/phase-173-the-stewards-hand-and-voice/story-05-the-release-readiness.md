@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 173
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-173-03
 - **Unblocks:** HS-173-06
 - **Owner:** unassigned
@@ -41,15 +41,15 @@ four views.
 
 ## Acceptance criteria
 
-- [ ] The Room shows a RELEASE READINESS row with per-signal
+- [x] The Room shows a RELEASE READINESS row with per-signal
       indicators; verified at both widths (1440 + 393).
-- [ ] Each signal's indicator reflects the correct status from the
+- [x] Each signal's indicator reflects the correct status from the
       underlying data; verified by a unit test with seeded data per
       signal.
-- [ ] Thresholds are configurable per project via the steward policy.
-- [ ] The scorecard is absent when no signals have data (UX-CANON.md
+- [x] Thresholds are configurable per project via the steward policy.
+- [x] The scorecard is absent when no signals have data (UX-CANON.md
       rule A.8: no counters of zero).
-- [ ] The scorecard is a read-only derivation; no writes (Article
+- [x] The scorecard is a read-only derivation; no writes (Article
       V.5).
 
 ## Test plan
