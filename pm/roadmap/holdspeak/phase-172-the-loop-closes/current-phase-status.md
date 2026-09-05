@@ -113,7 +113,14 @@ between a person's name and a Watch entity's assignee/reviewer.
 
 ## Where we are
 
-**2026-09-05 -- ACTIVE, STACKED on 171 (#554) on 170 (#553).** The
+**2026-09-05 15:40 -- 5/9 DONE on evidence (01 design, 04 resolver, 05
+brief, 06 suggested source, 07 people in the Room); 02/03 faces built
+and checkpointed, two last wire/face fixes landing (recorded host, never
+a config fallback; the chip inline); 08 the walk runner being filled;
+09 docs await the verify-at-build pass. Then: full suite, counsel on
+the built phase, final summary, PR stacked on #554.**
+
+**2026-09-05 morning -- ACTIVE, STACKED on 171 (#554) on 170 (#553).** The
 thirteen boards are on the canvas
 (https://claude.ai/code/artifact/b153c331-cd38-4856-b38b-837407dd6fba),
 two bounces paid (Dismiss not Drop; Edit is a Button; the lead slot is
