@@ -110,3 +110,15 @@ tests/e2e/glass_infra.py:80: AssertionError
 FAILED tests/e2e/test_hs170_census_glass.py::test_census_glass - AssertionErr...
 1 failed, 2 passed in 0.98s
 ```
+
+### Captured run — 2026-09-05T05:18:43Z
+
+- **Command:** `uv run pytest -q tests/e2e/test_hs170_census_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 07faff567328a0ade3c1e43ad78d47199c672f2d
+
+```text
+.                                                                        [100%]
+1 passed in 91.26s (0:01:31)
+```
