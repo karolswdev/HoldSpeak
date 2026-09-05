@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 169
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-169-02, HS-169-03
 - **Unblocks:** HS-169-07
 - **Owner:** unassigned
@@ -53,4 +53,18 @@ The exit of the phase is the owner's word on his real desk, at both widths, with
   old dispatcher (`GitHub Watches support pull_requests`) — restarted on
   the current code; law: check the age of every `holdspeak` process
   before a real leg.
-- Still to record: the owner's attended walk and his verdict, verbatim.
+
+## THE OWNER'S VERDICT (2026-09-05), verbatim
+
+Handed the hub URL after the real leg, he did not walk it himself that
+night. His words: **"I will trust you on this one. You did your best,
+right?"** — then: **"Muad'Dib, really, ideally - what I'd like for you
+to do is for your Fedaykin to actually be boosted. Let them be
+fable-5-1 models. Let's show Arrakis how much we can push HoldSpeak
+forward. LET'S MERGE AND DEVISE ADDITIONAL PLANS THAT WILL LOOK AT SOME
+OF THE OPPORTUNITIES FOR HOLDSPEAK TO REALLY BECOME AN EXTREMELY
+POWERFUL SET OF TOOLS"**. Recorded honestly: this is his word to
+MERGE on trust, not an attended walk — his own Tuesday walk of the
+door and the Room stays OWED and is the first item of the next
+sitting's ledger; the phase's exit ("the first module we are both
+proud of") is his to confirm at that walk.
