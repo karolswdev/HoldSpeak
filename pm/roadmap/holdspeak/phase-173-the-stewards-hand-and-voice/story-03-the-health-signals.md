@@ -82,3 +82,11 @@ surfacing as NEEDS YOU rows and Room tokens."
 - The `branch_ci` entities carry `status` and `conclusion` fields
   (project_service.py:634-636). History requires reading multiple
   evaluation snapshots or the steward run history.
+
+**Counsel C6 (design, 2026-09-05):** the test plan includes a glass rig
+through `GET /api/projects/{id}/room` — seeded snapshots (PRs with
+review requests + createdAt, Jira issues past the threshold, branch_ci
+history) → the health payload → the four HEALTH rows on the face at
+1440 + 393 (`tests/e2e/test_hs173_health_glass.py`). The 172 law: a
+new entry point needs a production call site and one test through the
+real seam.

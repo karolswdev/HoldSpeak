@@ -29,6 +29,22 @@ report without a rig tail and shots on disk is not a report. The
 ratchet ceiling is restored with `git checkout` when a lane raises it.
 `SurfaceLedger` needs `cols="room"` or the primary collapses.
 
+**Phase 173 (2026-09-05 18:00) — counsel RATIFY-W-C on the design,
+ruled.** Nine boards on
+https://claude.ai/code/artifact/9f1558b4-0867-4152-bc7e-1314dde5e82c.
+Rulings: `REVIEW WAIT` in days from createdAt, never `REVIEW LATENCY`;
+the green state is present with `CLEAR` / `PASSING` / `READY`; the
+nudge text names the tool and no person (`Flagged by HoldSpeak.`, posts
+from your own gh identity, editable per nudge and per project); the
+receipt names who; the model is named beside its host; one `CHECKED N
+MIN AGO` on the HEALTH caption; `NUDGED N D AGO` while cooling.
+
+**Counsel's questions for you (173):** (1) the nudge's attribution —
+tool named, no personal name — is that how you want your team to read
+it? (2) the createdAt approximation — WAIT in days is what the system
+can honestly say; acceptable? (3) the 7-day cooldown shown as `NUDGED
+N D AGO` — adopted; keep?
+
 **Counsel's questions for the owner (172, built):** (1) the two-prefix
 vocabulary `Decide:`/`Confirm:`; (2) the 1:1 card's summary-then-Now
 shape and `2 PRS WAITING ON ANIA` with the name in caps; (3) Jira
