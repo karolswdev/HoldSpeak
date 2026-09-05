@@ -1,0 +1,113 @@
+# Places to think: the night collection
+
+Eight authored Three.js worlds form one collection: the original Rainy City and
+Lantern Garden alongside six interiors. Quiet Desk remains a separate still option.
+
+| Environment | Setting and ambient movement | Product-linked detail |
+| --- | --- | --- |
+| Rainy City | Rain, neon, steam and warm street reflections | Streetlamp gently warms during real capture |
+| Lantern Garden | Wet flagstones, planted borders, drifting drizzle and warm lanterns | Lanterns gently brighten with real capture |
+| After-Hours Radio | Walnut booth, rainy skyline, warm desk lamp | On-air light, recording tape reels, capture-level meters |
+| Midnight Archive | Receding card cabinets, green banker lamps, dust | Pneumatic-tube lamp acknowledges newly added Desk objects |
+| Night Train | Green compartment seats, passing trees and station lights | Quiet capture indicator |
+| Deep-Sea Station | Blue observation port, drifting marine life, sonar | Sonar intensity responds to capture |
+| Storm Greenhouse | Iron rafters, terracotta pots, rain, violet cloud light | Subtle capture-level reflection |
+| Last Laundromat | Mint tiles, moving drums, fluorescent and vending-machine light | Quiet capture indicator |
+
+These are decorative scenes, not new object models. Existing Pixi objects,
+selection, dragging, and windows remain above the non-interactive background.
+Scenes observe existing capture and Desk stores; they never acquire a microphone,
+fetch work data, or invent product events. The Chair is unchanged.
+
+## Controls
+
+**Places** in the Desk dock, **Go → Change places**, or **⌘/Ctrl+Shift+P** opens
+a native window with all nine choices, including Rainy City, Lantern Garden, and
+Quiet Desk. The same picker remains in Settings → Wallpaper. Rainy City is the
+default. Arrow keys and Home/End select scenes and update the Floor live.
+
+Star places to keep browser-local favorites, then use the Favorites filter.
+Favoriting does not switch scenes; selecting a scene does not rearrange work or
+switch from Chair to Floor. **View on Floor** makes that switch explicitly.
+
+- Animation can be paused. OS reduced-motion preferences take precedence.
+- Room sound is off by default. Opting in enables quiet locally synthesized room
+  tone; there are no downloaded sound samples. It fades out while the browser
+  microphone is open or the hub reports recording, and suspends in hidden tabs.
+- Quiet Desk has no animated scene or room sound.
+- Scene, favorites, animation, and sound choices are browser-local, not hub settings.
+
+**Settle in**, in the same dock or Desk menu, quiets navigation and shelf chips.
+Use **⌘/Ctrl+Shift+F** to toggle it, or **Escape / Back to Desk** to restore the
+full chrome. The first Escape restores the Desk without also closing the focused
+window or draft. Open work and the existing recorder stay mounted. The mic lamp,
+connection/privacy indicators, recording state, and record/stop control remain
+available; phone sheets leave room for the quiet shelf. Settle in never starts or
+stops recording, enables sound, or moves work. It resets on reload or leaving the
+Desk; it is not a saved layout.
+
+The common lifecycle suspends animation in hidden tabs and disposes GPU/audio
+resources on scene changes. Each scene is lazy-loaded and uses capped render
+resolution; interiors also batch static geometry by material. The outdoor scenes
+preserve their authored composition and independent weather while sharing the
+same selection, sound, capture observation, and reduced-motion lifecycle.
+
+## Review and verification
+
+From `web/`, with a supported Node version:
+
+```sh
+npm run dev -- --host 127.0.0.1 --port 4322
+```
+
+Open <http://127.0.0.1:4322/_built/atmospheres.html#rainy-city> to browse all
+eight scenes without a hub. Choosing a preview does not save it until **Use on my
+Floor** is pressed. This dev-only entry uses the actual production scene modules.
+
+In another terminal, from `web/`:
+
+```sh
+node scripts/shoot-atmospheres.mjs
+node scripts/check-atmospheres.mjs
+npm run test:web -- src/desk/gl/__tests__ src/pages/cores/__tests__/settingsWallpaper.test.tsx src/design/AtmospherePreview.test.tsx
+npm run test:web -- src/desk/__tests__/settle.test.tsx src/pages/cores/__tests__/ChangePlacesCore.test.tsx
+npm run tokens:check
+npm run tokens:gate
+npm run guard:architecture
+npm run build
+npm run bundle:gate
+```
+
+The screenshot script writes full-size PNG review images and compressed WebP
+picker assets. Both the gallery and screenshot script use the registry's complete
+scenic collection. Browser checks exercise all eight animated and paused scenes,
+wraparound, local selection persistence, and both original worlds under reduced
+motion in a 393px-wide gallery.
+The observed frame rate is local headless-browser evidence, not a hardware-wide
+performance guarantee.
+
+For the production-bundle interaction walk, run the preview server and then the
+check in separate terminals from `web/`:
+
+```sh
+npm exec vite preview -- --host 127.0.0.1 --port 4323
+node scripts/check-environments-floor.mjs
+node scripts/check-environments-floor.mjs --settle
+```
+
+This walk intercepts HTTP APIs with explicit test fixtures in an isolated browser.
+It verifies real Pixi object selection through the atmosphere layer and live
+Settings selection at desktop and phone widths. It does not test a live hub,
+authentication, or WebSocket delivery, and never writes owner Desk data.
+The `--settle` walk also verifies favorites across reload, native shortcuts,
+Escape preserving the same window and recorder nodes, and hit-tested access to
+Back to Desk and Stop above the phone sheet. Its recording state is an explicit
+external-recording fixture, not a real session. It asserts zero microphone
+requests and zero capture-action API writes.
+
+Evidence lives in [assets/screenshots/environments](assets/screenshots/environments/),
+including the contact sheet, desktop/phone images, and JSON browser reports.
+
+Full TypeScript checking currently encounters pre-existing errors in
+`ProjectRoomCore.tsx` and `features/project-room/setup/__tests__/model.test.ts`;
+the environment changes add no errors to that output.

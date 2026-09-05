@@ -1,4 +1,67 @@
 /* ── HS-110-03: the dock — a solid, opaque Workbench taskbar strip ── */
+.desk-next .desk-room-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.desk-next .desk-room-actions > button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 36px;
+  padding: var(--space-2);
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+}
+.desk-next .desk-room-actions > button:hover,
+.desk-next .desk-room-actions > button[aria-pressed="true"] {
+  color: var(--text);
+  background: var(--surface-3);
+}
+.desk-next .desk-settle-capture {
+  font: var(--font-size-xs) var(--font-mono);
+  color: var(--text);
+  white-space: nowrap;
+}
+/* Quiet only the shelf's navigation. The SAME RecordOrb, menu portals,
+   window switcher and shortcuts keep their lifecycles and accessibility. */
+.desk-next[data-settled="true"]
+  .desk-dock
+  > :is(.desk-dock-launch, .desk-dock-chip, .desk-dock-sep, .desk-dock-reset) {
+  display: none;
+}
+.desk-next[data-settled="true"] .desk-dock .desk-orb-note {
+  /* The adjacent capture status already names the recording owner. */
+  display: none;
+}
+@media (max-width: 720px) {
+  .desk-next[data-settled="true"] .desk-room-actions {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: var(--space-1);
+  }
+  .desk-next[data-settled="true"] .desk-settle-capture {
+    grid-column: 1 / -1;
+  }
+  .desk-next[data-settled="true"] .desk-dock {
+    max-width: calc(100vw - 16px);
+    overflow: visible;
+    z-index: var(--desk-z-dock);
+  }
+  .desk-next[data-settled="true"] .desk-window-shell.is-sheet {
+    /* In quiet mode, reserve the shelf and elapsed-time label: recording
+       controls and Back to Desk must remain reachable above every sheet. */
+    bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    max-height: min(
+      78vh,
+      calc(100dvh - 144px - env(safe-area-inset-bottom, 0px))
+    );
+  }
+}
 .desk-next .desk-dock {
   position: fixed;
   left: 50%;
@@ -201,4 +264,3 @@
     max-width: 96px;
   }
 }
-

@@ -47,6 +47,22 @@ export type SurfaceApplication = DeskApplication & {
 
 export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
+    action: "change-places",
+    windowId: "surface-places",
+    label: "Change places",
+    description: "Environments, favorites, atmosphere, wallpaper, and room sound.",
+    glyph: "▧",
+    href: "/",
+    group: "tool",
+    shortcut: "⌘⇧P",
+    surface: {
+      eyebrow: "Places to think",
+      minW: 600,
+      defaultH: 620,
+      load: () => import("../pages/cores/ChangePlacesCore").then((module) => ({ default: module.ChangePlacesCore })),
+    },
+  },
+  {
     action: "open-intelligence",
     windowId: "intelligence:desk",
     label: "Intelligence",

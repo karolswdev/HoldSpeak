@@ -1,0 +1,58 @@
+{
+  "scenes": [
+    {
+      "id": "rainy-city",
+      "observedFps": 60,
+      "animated": true,
+      "pausedStable": true
+    },
+    {
+      "id": "lantern-garden",
+      "observedFps": 60,
+      "animated": true,
+      "pausedStable": true
+    },
+    {
+      "id": "radio-station",
+      "observedFps": 60,
+      "animated": true,
+      "pausedStable": true
+    },
+    {
+      "id": "midnight-archive",
+      "observedFps": 60,
+      "animated": true,
+      "pausedStable": true
+    },
+    {
+      "id": "night-train",
+      "observedFps": 60,
+      "animated": true,
+      "pausedStable": true
+    },
+    {
+      "id": "deep-sea",
+      "observedFps": 60,
+      "animated": true,
+      "pausedStable": true
+    },
+    {
+      "id": "greenhouse",
+      "observedFps": 60,
+      "animated": true,
+      "pausedStable": true
+    },
+    {
+      "id": "laundromat",
+      "observedFps": 60,
+      "animated": true,
+      "pausedStable": true
+    }
+  ],
+  "liveSelection": true,
+  "wraparound": true,
+  "preferenceReload": true,
+  "reducedMotionStable": true,
+  "phoneOverflow": false,
+  "errors": []
+}

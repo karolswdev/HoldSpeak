@@ -34,6 +34,8 @@ import { ApplicationBoundary } from "./components/ApplicationBoundary";
 import { objectByRef } from "./world";
 import { useProjections } from "./projections";
 import { takeFirstValueNoteOpen } from "./firstValue";
+import { useAtmospherePreference } from "./gl/atmospherePreference";
+import { useSettleState } from "./settleState";
 import "./desk.css";
 
 // The Chair is HOME. Floor/GL and object-specific heavyweight windows cross
@@ -85,6 +87,9 @@ export default function DeskApp() {
   const error = useDesk((s) => s.error);
   const { refresh } = useDesk.getState();
   const [refreshFailure, setRefreshFailure] = useState<string | null>(null);
+  const [atmosphereId] = useAtmospherePreference();
+  const settled = useSettleState((s) => s.settled);
+  useEffect(() => () => useSettleState.getState().setSettled(false), []);
 
   const refreshDesk = useCallback(async () => {
     setRefreshFailure(null);
@@ -115,6 +120,9 @@ export default function DeskApp() {
       : null);
   const setupPending = !setupFailure && updatedAt === null && (loading || setup === null);
   const arrivalRequired = setup?.arrival_required === true;
+  useEffect(() => {
+    if (arrivalRequired) useSettleState.getState().setSettled(false);
+  }, [arrivalRequired]);
   // HS-140-01: first value owns HOME. A stale Floor preference must not
   // detour a fresh owner away from the one capture path.
   const showFloor = surface === "floor" && !arrivalRequired;
@@ -163,12 +171,12 @@ export default function DeskApp() {
   }
 
   return (
-    <div className="desk-next" id="desk-next" data-menu-glyphs={menuGlyphsVariant()}>
+    <div className="desk-next" id="desk-next" data-menu-glyphs={menuGlyphsVariant()} data-settled={settled && !arrivalRequired ? "true" : undefined}>
       {/* GL layers render only when the spatial floor is active. */}
       {showFloor && (
         <ApplicationBoundary label="Floor atmosphere">
           <Suspense fallback={null}>
-            <Atmosphere />
+            <Atmosphere id={atmosphereId} />
           </Suspense>
         </ApplicationBoundary>
       )}
@@ -245,7 +253,7 @@ export default function DeskApp() {
         firstValueRecoveryOnly={arrivalRequired}
       />
       {!arrivalRequired && <TrustWindow />}
-      {!arrivalRequired && <Dock center={!empty ? <RecordOrb /> : null} />}
+      {!arrivalRequired && <Dock center={<RecordOrb />} />}
       {!arrivalRequired && <SnapGhost />}
       {!arrivalRequired && <Expose />}
       {!arrivalRequired && <Switcher />}

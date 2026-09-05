@@ -5,6 +5,7 @@ import { useIntelligenceAttention } from "../../intelligenceAttention";
 import { openIntelligence } from "../../intelligenceNavigation";
 import { DOCK_SPRITES, SYSTEM } from "../../systemSprites";
 import { useDesk } from "../../store";
+import { useSettleState } from "../../settleState";
 import { useChairState } from "../../chairState";
 import { useShortcutSheet } from "../../chromeState";
 import { useKeymap } from "../../keymap";
@@ -16,6 +17,7 @@ import { toggleExpose } from "./Expose";
 import { VerbGlyph } from "./VerbGlyph";
 import { ShortcutSheet } from "./ShortcutSheet";
 import { DOCK_APPLICATIONS } from "../../applications";
+import { RoomActions } from "./RoomActions";
 
 /** HS-100-11 — the dock IS the launcher: the four applications ride it
  * always (running mark when their window is open); drawers and tools
@@ -58,6 +60,10 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
     minimized: boolean;
     close: () => void;
   } | null>(null);
+  const settled = useSettleState((s) => s.settled);
+  useEffect(() => {
+    if (settled) setChipMenu(null);
+  }, [settled]);
   useEffect(() => {
     if (!chipMenu) return;
     const close = () => setChipMenu(null);
@@ -200,6 +206,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           </button>
         );
       })}
+      <RoomActions />
       {center}
       {windows.some((w) => !DOCK_APP_IDS.has(w.id)) ? (
         <span className="desk-dock-sep" aria-hidden="true" />
@@ -276,7 +283,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           </button>
         </>
       ) : null}
-      {chipMenu ? (
+      {!settled && chipMenu ? (
         <WorkMenu
           className="desk-dock-menu"
           label={`${chipMenu.label} dock menu`}

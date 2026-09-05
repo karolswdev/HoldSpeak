@@ -8,6 +8,60 @@ live Coder sessions. Zones provide placement for durable work. The Floor
 renders on a WebGL stage; every product surface (Dictation, Meetings, Settings,
 Workbench, and the rest) opens as a window, so nothing navigates away.
 
+Behind the Floor, a procedural Three.js atmosphere turns the stage into a rainy
+city at night: a block-built but human-scaled skyline, wet street, lamplit
+puddle, depth-layered rain, irregular ripples and splash arcs, drifting cloud
+banks, reflected city light, and occasional distant lightning. The off-axis
+street canyon adds façade-aligned buildings, storefronts, a fire escape,
+receding sidewalks and curbs, a two-lane road, a crosswalk, gutter furniture,
+and seeded steam that curls from a foreground manhole into the wind-driven
+rain. A recessed late-night storefront on the right holds a hand-bent cafe
+neon behind rain-streaked glass. It flickers on its own seeded electrical
+rhythm, casting synchronized bloom into nearby rain trajectories and a muted
+color falloff across the wet asphalt.
+Generated high-frequency masonry, asphalt, and concrete maps provide surface
+scale beneath the procedural lighting without turning the world into a painted
+backdrop; all composition, weather, street motion, and light behavior remains
+code.
+A screen-space
+bloom pass, formula-generated radial falloff, and a seeded local rain volume
+make precipitation catch the streetlamp without relying on painted glow or
+weather assets. Pixel art comes from the modeled forms and restrained
+materials rather than an enlarged low-resolution framebuffer, so the scene
+stays crisp at the display's real size. It is decorative and
+pointer-transparent—the Pixi world above it still owns every object and
+gesture.
+
+The second rendered mood, **Lantern Garden**, looks from a rain-darkened patio
+down a winding flagstone path toward a timber gate. Warm path lanterns cast
+bounded light onto the stone and planting beds; a house edge, downspout,
+violet flowers, tree canopy, and the restrained edge of an above-ground pool
+keep the proportions grounded in an ordinary lived-in yard. Leaf movement,
+foliage drips, water rings, lamp variation, and pointer parallax provide quiet
+motion. A very fine drizzle is nearly lost in the dark except
+where sparse drops cross each lantern's local glow. Its mulch grain and every
+glow texture are generated at runtime, so the atmosphere remains procedural
+rather than shipping a painted backdrop or source photograph.
+
+The atmosphere host is also a personalization primitive. A registry entry owns
+the background's stable id, user-facing metadata, seed, visual grade, and lazy
+scene loader. The shared runtime owns resize quality, normalized pointer input,
+visibility suspension, reduced-motion behavior, frame clamping, and teardown.
+A new atmosphere therefore supplies one isolated scene factory instead of
+reimplementing Desk integration or joining the initial bundle. The current
+default is `rainy-city`; **Settings → Wallpaper** renders catalog previews and
+switches the Floor live between Rainy City, Lantern Garden, and the no-WebGL
+Quiet Desk. The selection is a browser-local Desk view preference, survives
+reloads, and falls back safely when a retired or unknown atmosphere id is
+found. Future worlds only add a registry entry and isolated scene factory; the
+picker and Floor do not need another integration path.
+
+When the tab is hidden, the runtime pauses every atmosphere. The operating
+system's reduced-motion setting freezes weather, ambient particles, foliage,
+water, and camera drift while preserving each composition. Lightning is visual
+and deliberately moderate; the decorative layer never starts ambient audio on
+its own.
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/desk.png" alt="The HoldSpeak Desk: pixel-art objects floating on a warm dark stage; a Zone tray holding a filed Meeting; Coder session avatars on a right-edge rail; a record orb bottom-center; the compact HoldSpeak menu and an egress badge top-left; Create controls top-right." width="760">
 </p>

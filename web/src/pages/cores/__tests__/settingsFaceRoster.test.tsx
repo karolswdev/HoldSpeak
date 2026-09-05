@@ -6,7 +6,7 @@ import { MODULE_ALIASES, PREF_MODULES } from "../settingsPrefs";
 
 describe("Settings face roster", () => {
   it("has the Models and Assignments peer destinations", () => {
-    expect(PREF_MODULES).toHaveLength(8);
+    expect(PREF_MODULES).toHaveLength(9);
   });
 
   it("names every tile by what the owner does, not by subsystem", () => {
@@ -14,6 +14,7 @@ describe("Settings face roster", () => {
     expect(ids).toEqual([
       "voice",
       "sounds",
+      "wallpaper",
       "meetings",
       "rhythm",
       "models",
@@ -60,7 +61,12 @@ describe("Settings face roster", () => {
     for (const m of PREF_MODULES) {
       expect(m.glyph, `${m.id} has no glyph`).toBeTruthy();
       expect(m.sprite, `${m.id} has no sprite`).toBeTruthy();
-      if (m.id !== "integrations" && m.id !== "assignments" && m.id !== "system") {
+      if (
+        m.id !== "integrations" &&
+        m.id !== "assignments" &&
+        m.id !== "system" &&
+        m.id !== "wallpaper"
+      ) {
         // system now claims device+mesh via keys
         expect(m.keys.length, `${m.id} has no keys`).toBeGreaterThan(0);
       }

@@ -2259,6 +2259,139 @@ button.surface-edit-in-place:hover {
   flex-direction: column;
   min-height: 0;
 }
+.prefs-wallpaper-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 6px;
+}
+.prefs-wallpaper-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface-2);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-light),
+    inset -1px -1px 0 var(--bevel-dark);
+}
+.prefs-wallpaper-choice {
+  position: relative;
+  min-width: 0;
+}
+.prefs-wallpaper-choice > .prefs-wallpaper-card {
+  width: 100%;
+  height: 100%;
+}
+.prefs-wallpaper-favorite {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  min-width: 36px;
+  min-height: 36px;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+.prefs-wallpaper-favorite[aria-pressed="true"] {
+  color: var(--accent);
+}
+.prefs-wallpaper-card:hover,
+.prefs-wallpaper-card:focus-visible {
+  border-color: var(--accent);
+  background: var(--surface-3);
+}
+.prefs-wallpaper-card[data-selected] {
+  border-color: var(--accent);
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-light),
+    inset -1px -1px 0 var(--bevel-dark),
+    0 0 0 1px var(--accent-tint),
+    0 3px 12px var(--accent-glow);
+}
+.prefs-wallpaper-preview {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 8 / 5;
+  border: 1px solid var(--etch-dark);
+  background: var(--bg);
+}
+.prefs-wallpaper-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.prefs-wallpaper-preview-quiet {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 6px;
+  background:
+    radial-gradient(circle at 50% 42%, var(--surface-3), transparent 48%),
+    var(--bg);
+}
+.prefs-wallpaper-preview-quiet span {
+  display: block;
+  width: 52px;
+  height: 1px;
+  background: var(--border-subtle);
+}
+.prefs-wallpaper-preview-quiet span:nth-child(2) {
+  width: 34px;
+  margin-inline: auto;
+  background: var(--accent-tint);
+}
+.prefs-wallpaper-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.prefs-wallpaper-copy strong,
+.prefs-wallpaper-state,
+.prefs-wallpaper-fact {
+  font-family: var(--font-mono);
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+}
+.prefs-wallpaper-copy strong {
+  font-size: 11px;
+}
+.prefs-wallpaper-copy > span {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.35;
+  text-transform: none;
+}
+.prefs-wallpaper-state {
+  justify-self: end;
+  color: var(--text-muted);
+  font-size: 9px;
+}
+.prefs-wallpaper-card[data-selected] .prefs-wallpaper-state {
+  color: var(--accent);
+}
+.prefs-wallpaper-fact {
+  margin: 0;
+  padding: 4px 6px 8px;
+  color: var(--text-muted);
+  font-size: 9px;
+}
+@container surface (max-width: 419px) {
+  .prefs-wallpaper-grid {
+    grid-template-columns: 1fr;
+  }
+}
 /* "Config lives elsewhere" fact bodies (Delivery, empty System). */
 .prefs-elsewhere {
   display: flex;

@@ -26,7 +26,7 @@ contracts.
 
 ## Architecture
 
-- `src/main.tsx` is the only browser entry.
+- `src/main.tsx` is the only shipped browser entry.
 - `src/routes.tsx` is the canonical client route inventory. Heavy routes are
   lazy-loaded.
 - `src/components/AppShell.tsx` owns navigation and ambient trust/connection
@@ -45,6 +45,18 @@ contracts.
 
 The machine-readable URL/verb/state inventory is
 [`docs/WEB_REACT_PARITY_LEDGER.json`](../docs/WEB_REACT_PARITY_LEDGER.json).
+
+## Environment preview
+
+The Floor's eight night environments (including Rainy City and Lantern Garden)
+can be reviewed without a hub at
+`/_built/atmospheres.html` on the Vite development server. This review entry is
+not included in the production build. The shipped picker opens from **Places**
+in the dock or **Go → Change places** (⌘/Ctrl+Shift+P), with browser-local
+favorites; it also remains in Settings → Wallpaper. **Settle in**
+(⌘/Ctrl+Shift+F) quiets navigation while preserving work and capture controls;
+Escape restores the full Desk. See [environment notes](../docs/ENVIRONMENTS.md)
+for controls, scene behavior, and reproducible visual checks.
 
 ## Output and security contract
 
