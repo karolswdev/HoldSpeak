@@ -193,6 +193,52 @@ export async function dismissSuggestedSource(
   );
 }
 
+/* ── HS-173-04: Nudge API ── */
+
+/** HS-173-04: a proposed nudge from the wire. */
+export type NudgeItem = {
+  step_id: string;
+  state: string;
+  pr_number: number;
+  pr_title: string;
+  pr_url: string;
+  reviewer_login: string;
+  days: number;
+  comment_text: string;
+  host: string;
+  created_at: string;
+};
+
+export async function fetchNudges(
+  projectId: string,
+  state?: string,
+): Promise<NudgeItem[]> {
+  const qs = state ? `?state=${encodeURIComponent(state)}` : "";
+  const raw = await apiFetch<{ nudges: NudgeItem[] }>(
+    `/api/projects/${encodeURIComponent(projectId)}/nudges${qs}`,
+  );
+  return raw.nudges || [];
+}
+
+export async function sendNudge(
+  stepId: string,
+  text: string,
+): Promise<Record<string, unknown>> {
+  return apiFetch<Record<string, unknown>>(
+    `/api/nudges/${encodeURIComponent(stepId)}/send`,
+    { method: "POST", json: { text } },
+  );
+}
+
+export async function dismissNudge(
+  stepId: string,
+): Promise<Record<string, unknown>> {
+  return apiFetch<Record<string, unknown>>(
+    `/api/nudges/${encodeURIComponent(stepId)}/dismiss`,
+    { method: "POST" },
+  );
+}
+
 /* ── HS-172-07: Room people ── */
 
 export type RoomPersonItem = {

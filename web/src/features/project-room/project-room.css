@@ -441,6 +441,96 @@
   flex: none;
 }
 
+/* ── HS-173: HEALTH section ── */
+.room-health-label {
+  font-weight: 600;
+}
+
+/* ── HS-173-04: bottleneck row verbs ── */
+.room-bottleneck-verbs {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  flex: none;
+}
+.room-nudge-cooldown {
+  color: var(--accent, #a86e4a);
+  font-weight: 600;
+}
+
+/* ── HS-173-04: nudge card ── */
+.room-nudge-card-row {
+  list-style: none;
+  padding: 0 var(--desk-surface-row-pad-x, 14px) 0 26px;
+}
+.room-nudge-card-who {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.room-nudge-card-pr {
+  margin-bottom: 6px;
+}
+.room-nudge-pr-link {
+  color: var(--accent, #a86e4a);
+  text-decoration: none;
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+}
+.room-nudge-pr-link:hover {
+  text-decoration: underline;
+}
+.room-nudge-pr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+.room-nudge-pr-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.room-nudge-card-text {
+  margin-bottom: 8px;
+}
+.room-nudge-card-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.room-nudge-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.room-nudge-card-verbs {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* ── HS-173: 393 stacking for health + nudge ── */
+@container surface (max-width: 559px) {
+  .room-nudge-card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .room-nudge-card-verbs {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .room-bottleneck-verbs {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+  }
+}
+
 /* ── legacy ── */
 .project-room-degraded {
   padding: 4px var(--desk-surface-row-pad-x, 14px);

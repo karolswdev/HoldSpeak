@@ -3,7 +3,7 @@
 // since I last looked? What did we decide and what do I owe people?
 // Two wings: ROOM · HISTORY. Ask well at the foot. No counters of zero,
 // no REV, no raw field names, the name said once.
-import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback, useReducer } from "react";
 import {
   SurfaceFooter,
   SurfaceSection,
@@ -12,6 +12,7 @@ import {
   SurfaceStream,
   SurfaceStreamDay,
   SurfaceStreamEntry,
+  SurfaceWell,
   ConfirmVerb,
   EgressChip,
   StateChip,
@@ -41,8 +42,11 @@ import type {
   RoomNeedsYouItem,
   RoomProposalItem,
   RoomSuggestedSourceItem,
+  RoomHealthPerson,
+  NudgeCardState,
+  NudgeCardAction,
 } from "./model";
-import { lifecycleLabel } from "./model";
+import { lifecycleLabel, resolveHealthRows, nudgeCardReducer } from "./model";
 import { StringGadget } from "../../desk/surface/gadgets";
 import { egressFor } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
@@ -53,7 +57,7 @@ import { UpdatePosture } from "./update/UpdatePosture";
 import { useStewardController } from "./steward/useStewardController";
 import { StewardPosture } from "./steward/StewardPosture";
 import * as api from "./api";
-import { RoomPeopleSection } from "./RoomPeopleSection";
+import { RoomPeopleSection, monogram } from "./RoomPeopleSection";
 import "./project-room.css";
 
 /* ── sub-components (kept for backward-compat re-exports) ── */
@@ -326,6 +330,214 @@ function RoomHead({
   );
 }
 
+/* ── HS-173: HEALTH section ── */
+
+function healthToneToState(tone: "green" | "amber" | "red"): "success" | "warning" | "failure" {
+  if (tone === "red") return "failure";
+  if (tone === "amber") return "warning";
+  return "success";
+}
+
+function HealthSection({ room }: { room: RoomSnapshot }) {
+  const health = room.health.state === "ok"
+    ? (room.health as RoomHealthData & { state: "ok" }) : null;
+  if (!health?.signals) return null;
+
+  const rows = resolveHealthRows(health.signals, health.mergeQueueDepth);
+  if (rows.length === 0) return null;
+
+  // CHECKED N MIN AGO on the section caption (addendum P2-8: one token, not per row)
+  const checkedToken = health.checkedAt ? `CHECKED ${humanTime(health.checkedAt)}` : null;
+
+  return (
+    <SurfaceSection
+      label="HEALTH"
+      actions={checkedToken ? (
+        <span className="surface-token room-chip-faint" data-testid="health-checked">{checkedToken}</span>
+      ) : undefined}
+    >
+      <SurfaceLedger count="" cols="room">
+        <ul className="surface-ledger-rows">
+          {rows.map((row) => (
+            <SurfaceLedgerRow
+              key={row.key}
+              data-testid={`health-row-${row.key}`}
+              lead={<StateChip state={healthToneToState(row.tone)} label="" icon={"●"} />}
+              primary={<span className="surface-primary room-health-label">{row.label}</span>}
+              wrap
+              cells={
+                <>
+                  {row.tokens.map((tok, ti) => (
+                    <span key={ti} className="surface-token" data-testid={`health-token-${row.key}-${ti}`}>
+                      {ti > 0 ? " · " : ""}{tok}
+                    </span>
+                  ))}
+                </>
+              }
+            />
+          ))}
+        </ul>
+      </SurfaceLedger>
+    </SurfaceSection>
+  );
+}
+
+/* ── HS-173-04: Nudge card (inline under a bottleneck row) ── */
+
+function NudgeCard({
+  person,
+  needsYouItem,
+  nudgeItem,
+  onReload,
+}: {
+  person: RoomHealthPerson | undefined;
+  needsYouItem: RoomNeedsYouItem;
+  nudgeItem: api.NudgeItem | undefined;
+  onReload: () => void;
+}) {
+  const displayName = person?.displayName || needsYouItem.title;
+  // Bind PR from the nudge step (the wire's authoritative source)
+  const prNumber = nudgeItem?.pr_number ?? person?.prs?.[0]?.number ?? 0;
+  const prTitle = nudgeItem?.pr_title ?? person?.prs?.[0]?.title ?? "";
+  const prUrl = nudgeItem?.pr_url ?? person?.prs?.[0]?.url ?? "";
+  const stepId = nudgeItem?.step_id ?? person?.nudge?.stepId ?? "";
+  const waitDays = Math.round(person?.medianDays || needsYouItem.medianDays || 1);
+  const defaultText = nudgeItem?.comment_text
+    || person?.nudge?.text
+    || `This PR has been waiting for review for ${waitDays} days. Flagged by HoldSpeak.`;
+
+  // The card starts open (it mounts when the user clicks Nudge)
+  const [card, dispatch] = useReducer(nudgeCardReducer, { phase: "open", text: defaultText, busy: false } as NudgeCardState);
+
+  const handleSend = async () => {
+    if (card.phase !== "open" && card.phase !== "failed") return;
+    if (!stepId) return;
+    dispatch({ type: "sending" });
+    try {
+      const result = await api.sendNudge(stepId, card.text);
+      if (result.success) {
+        const sentAt = typeof result.sent_at === "string"
+          ? result.sent_at : new Date().toISOString();
+        dispatch({
+          type: "sent",
+          displayName,
+          prNumber,
+          sentAt,
+        });
+        // Don't call onReload here -- the receipt row stays visible.
+        // The next room load picks up the sent state.
+      } else {
+        dispatch({ type: "failed", reason: String(result.message || "Send failed") });
+      }
+    } catch (err) {
+      dispatch({ type: "failed", reason: String(err) });
+    }
+  };
+
+  const handleDismiss = async () => {
+    if (stepId) {
+      try { await api.dismissNudge(stepId); } catch { /* non-fatal */ }
+    }
+    dispatch({ type: "dismiss" });
+    onReload();
+  };
+
+  // Receipt row (after Send)
+  if (card.phase === "sent") {
+    return (
+      <SurfaceLedgerRow
+        data-testid="nudge-receipt-row"
+        lead={<StateChip state="success" label="" icon={"●"} />}
+        primary={<span className="surface-primary">SENT</span>}
+        wrap
+        cells={
+          <>
+            <span className="surface-token">{displayName}</span>
+            {prNumber ? (
+              <span className="surface-token">
+                {prUrl ? (
+                  <a href={prUrl} target="_blank" rel="noopener noreferrer" className="room-nudge-pr-link">#{prNumber}</a>
+                ) : `#${prNumber}`}
+              </span>
+            ) : null}
+            <span className="surface-token">{formatTimeShort(card.sentAt)}</span>
+            <EgressChip label="GITHUB.COM" scope="cloud" />
+          </>
+        }
+      />
+    );
+  }
+
+  // Nudge card (open / failed state)
+  if (card.phase === "open" || card.phase === "failed") {
+    return (
+      <li className="surface-ledger-row room-nudge-card-row" data-testid="nudge-card" data-open>
+        <SurfaceWell>
+          <div className="room-nudge-card-who surface-primary" data-testid="nudge-card-who">{displayName}</div>
+          {prNumber ? (
+            <div className="room-nudge-card-pr">
+              <a href={prUrl || "#"} target="_blank" rel="noopener noreferrer" className="surface-token room-nudge-pr-link" data-testid="nudge-card-pr">
+                #{prNumber} · {prTitle}
+              </a>
+            </div>
+          ) : null}
+          {person?.prs && person.prs.length > 1 ? (
+            <div className="room-nudge-pr-list" data-testid="nudge-card-pr-list">
+              {person.prs.map((pr) => (
+                <div key={pr.number} className="room-nudge-pr-item">
+                  <a href={pr.url || "#"} target="_blank" rel="noopener noreferrer" className="surface-token room-nudge-pr-link">
+                    #{pr.number} · {pr.title}
+                  </a>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          <div className="room-nudge-card-text" data-testid="nudge-card-text">
+            <StringGadget
+              label="Comment"
+              value={card.text}
+              onChange={(v) => dispatch({ type: "setText", text: v })}
+            />
+          </div>
+          {card.phase === "failed" ? (
+            <div className="room-nudge-card-error">
+              <StateChip state="failure" label="FAILED" icon={"●"} />
+              <span className="surface-token">{card.reason}</span>
+            </div>
+          ) : null}
+          <div className="room-nudge-card-footer">
+            <EgressChip label="GITHUB.COM" scope="cloud" data-testid="nudge-card-egress" />
+            <span className="room-nudge-card-verbs">
+              <Button dense variant="primary" loading={card.phase === "open" && card.busy} onClick={() => void handleSend()} data-testid="nudge-send">
+                Send
+              </Button>
+              <Button dense variant="ghost" onClick={() => void handleDismiss()} data-testid="nudge-dismiss">
+                Dismiss
+              </Button>
+            </span>
+          </div>
+        </SurfaceWell>
+      </li>
+    );
+  }
+
+  // Closed — render as the bottleneck row's trailing verb
+  return null;
+}
+
+/* ── HS-173: nudge cooling token (NUDGED N D AGO / NUDGED JUST NOW) ── */
+
+function nudgeCooldownToken(nudge: RoomHealthPerson["nudge"]): string | null {
+  if (!nudge || nudge.state !== "sent" || !nudge.sentAt) return null;
+  const sentDate = new Date(nudge.sentAt);
+  if (Number.isNaN(sentDate.getTime())) return null;
+  const diffMs = Date.now() - sentDate.getTime();
+  const diffDays = diffMs / 86_400_000;
+  if (diffDays > 7) return null; // past cooldown
+  if (diffDays < 1 / 24) return "NUDGED JUST NOW"; // under 1 hour
+  return `NUDGED ${Math.round(diffDays)} D AGO`;
+}
+
 /* ── HS-172-03: Proposal row sub-component ── */
 
 function ProposalRow({
@@ -484,6 +696,31 @@ function NeedsYouSection({
 
   const nextCheck = room.sources.state === "ok" ? room.sources.nextCheckAt : null;
 
+  // HS-173: build a map of relationship_id -> health person for nudge state
+  const health = room.health.state === "ok"
+    ? (room.health as RoomHealthData & { state: "ok" }) : null;
+  const peopleMap = useMemo(() => {
+    const m = new Map<string, RoomHealthPerson>();
+    if (health?.people) {
+      for (const p of health.people) {
+        if (p.relationshipId) m.set(p.relationshipId, p);
+      }
+    }
+    return m;
+  }, [health?.people]);
+
+  // HS-173-04: build a map of reviewer_login -> nudge item from the controller
+  const nudgeMap = useMemo(() => {
+    const m = new Map<string, api.NudgeItem>();
+    for (const n of ctrl.nudges) {
+      if (n.reviewer_login) m.set(n.reviewer_login.toLowerCase(), n);
+    }
+    return m;
+  }, [ctrl.nudges]);
+
+  // HS-173: track which nudge cards are open (by relationship_id)
+  const [openNudge, setOpenNudge] = useState<string | null>(null);
+
   const reviewAction = pendingCount > 0 ? (
     <Button dense variant="ghost" loading={reviewCtrl.loading} onClick={() => void reviewCtrl.enterReview()} data-testid="review-verb" data-verb="review">
       Review {pendingCount}
@@ -524,6 +761,63 @@ function NeedsYouSection({
                   ctrl={ctrl}
                   isNewest={item.proposalId === newestProposalId}
                 />
+              );
+            }
+            // HS-173: bottleneck rows
+            if (item.kind === "review_bottleneck") {
+              const relId = item.relationshipId || "";
+              const person = relId ? peopleMap.get(relId) : undefined;
+              const login = person?.login || "";
+              const matchedNudge = login ? nudgeMap.get(login.toLowerCase()) : undefined;
+              const mono = monogram(item.title);
+              const cooldown = person ? nudgeCooldownToken(person.nudge) : null;
+              const hasNudgeStep = !!(matchedNudge?.step_id || person?.nudge?.stepId);
+              const isNudgeOpen = openNudge === relId;
+
+              return (
+                <React.Fragment key={`bottleneck-${relId}-${i}`}>
+                  <SurfaceLedgerRow
+                    data-testid="bottleneck-row"
+                    lead={mono}
+                    primary={<span className="surface-primary">{item.title}</span>}
+                    wrap
+                    cells={
+                      <span
+                        className="surface-token room-why-token"
+                        data-testid="bottleneck-why"
+                      >
+                        {item.why}
+                      </span>
+                    }
+                    trailing={
+                      <span className="room-bottleneck-verbs">
+                        {cooldown ? (
+                          <span className="surface-token room-nudge-cooldown" data-testid="nudge-cooldown">{cooldown}</span>
+                        ) : hasNudgeStep ? (
+                          <Button dense variant="ghost" onClick={() => setOpenNudge(isNudgeOpen ? null : relId)} data-testid="nudge-verb">
+                            Nudge
+                          </Button>
+                        ) : null}
+                        <Button
+                          dense
+                          variant="ghost"
+                          onClick={() => openSurfaceOr("open-people", "/", `people:${relId}`)}
+                          data-testid="bottleneck-open"
+                        >
+                          Open
+                        </Button>
+                      </span>
+                    }
+                  />
+                  {isNudgeOpen ? (
+                    <NudgeCard
+                      person={person}
+                      needsYouItem={item}
+                      nudgeItem={matchedNudge}
+                      onReload={() => { setOpenNudge(null); void ctrl.load(); }}
+                    />
+                  ) : null}
+                </React.Fragment>
               );
             }
             return (
@@ -1349,6 +1643,9 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
             <>
               <div className="room-section-rise" style={{ animationDelay: "0ms" }}>
                 <RoomHead room={ctrl.room} ctrl={ctrl} updateCtrl={updateCtrl} />
+              </div>
+              <div className="room-section-rise" style={{ animationDelay: "20ms" }}>
+                <HealthSection room={ctrl.room} />
               </div>
               <div className="room-section-rise" style={{ animationDelay: "40ms" }}>
                 <NeedsYouSection room={ctrl.room} ctrl={ctrl} reviewCtrl={reviewCtrl} pendingCount={pendingCount} />
