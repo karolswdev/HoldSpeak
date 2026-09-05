@@ -1,0 +1,20 @@
+/* HS-171-02 — the Rhythm face layout (CadenceCore.tsx). */
+
+/* Fact token rows below each ledger section */
+.rhythm-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 2px;
+  padding: 4px 12px 12px;
+  font: var(--desk-type-secondary);
+  letter-spacing: 0.06em;
+}
+
+/* Project mute toggles (CheckGadget variant="token") */
+.rhythm-mutes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 12px 12px;
+}
