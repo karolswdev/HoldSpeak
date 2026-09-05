@@ -1030,6 +1030,8 @@ canon, canon wins.
 | 153 | Modes, prompts, guardrails, annotations, compaction and Door-backed todo on the Thread. | not-started | [phase-153-the-practice](./phase-153-the-practice/) |
 | 154 | Kokoro TTS on the hub, VAD in the browser, and a visible voice-call mode on the Thread. | not-started | [phase-154-the-call](./phase-154-the-call/) |
 | 155 | Subthreads on the conductor's run loop with parent↔child notifications — a Thread that delegates. | not-started | [phase-155-the-crew](./phase-155-the-crew/) |
+| 170 | The Great Pass: the face canon written and mechanical; every surface shot and swept at the species; the Concierge and the top Tuesday faces rebuilt to their artboards; his walk face by face. | in-progress | [phase-170-the-great-pass](./phase-170-the-great-pass/) |
+| 171 | The Heartbeat: the desk reaches him — the sweep runs unattended, needs-you across Rooms in the shade and the dock, macOS notifications on the edge, the Monday brief recurring, PROJECTS in the command deck. | planned | [phase-171-the-heartbeat](./phase-171-the-heartbeat/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
