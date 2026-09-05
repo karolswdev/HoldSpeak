@@ -31,3 +31,14 @@ ERROR: file or directory not found: tests/unit/test_hs169_wire.py tests/unit/tes
 
 no tests ran in 0.00s
 ```
+
+### Captured run — 2026-09-05T18:57:49Z
+
+- **Command:** `bash -c HOME=$(mktemp -d) uv run pytest -q -p no:cacheprovider tests/unit/test_no_positional_inserts.py tests/unit/test_backend_density_guard.py tests/unit/test_hs169_wire.py tests/unit/test_hs172_room_people.py $(ls tests/unit/*project_service*.py tests/unit/*project_room*.py 2>/dev/null | tr "\n" " ") 2>&1 | tail -1`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** d375ac788cc5246fda6b8385e79750ded8aa66c7
+
+```text
+214 passed, 1 skipped in 57.70s
+```
