@@ -61,7 +61,7 @@ module we are both proud of.
 | HS-169-04 | The wire for the four questions (needs-you items derived from real Watch entities; the read marker; the health inputs; the meeting Watch never offered until it evaluates; MCP twins) | done | [story-04-the-wire-for-four-questions](./story-04-the-wire-for-four-questions.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-169-05 | The walk on the owner's desk (the door in 5 clicks; the Room's first paint; the stopwatch; OWNER VERDICT — "the first one we are both proud of") | in-progress | [story-05-the-walk](./story-05-the-walk.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-169-06 | The docs (the guide's New Project + Project Room sections re-shot; MCP_SIDECAR regenerated; the design doc canonized) | done | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-169-07 | The close (gates, the sweep, counsel, the debt ledger, final summary; 168 folded) | backlog | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-169-07 | The close (gates, the sweep, counsel, the debt ledger, final summary; 168 folded) | in-progress | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 

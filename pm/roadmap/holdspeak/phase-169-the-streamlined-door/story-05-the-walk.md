@@ -26,6 +26,31 @@ The exit of the phase is the owner's word on his real desk, at both widths, with
 
 `HS169_WALK=1 HS169_WALK_DB=isolated uv run pytest -q tests/e2e/live169_walk.py`, then `HS169_WALK_DB=real` on his desk with the machine otherwise idle.
 
-## Delivered
+## Delivered (2026-09-05)
 
-_(pending)_
+- assets/walk-script.md (11 steps, both legs) and tests/e2e/live169_walk.py
+  (HS169_WALK=1; HS169_WALK_DB=isolated|real; build-first; the face driven,
+  the window shot per step at 1440 + 393; the provider wire timed; the
+  viewport probe; identical consecutive shots fail; the real leg's
+  finally: unattended OFF before archive, archive, and the watch rows
+  READ and printed).
+- Isolated leg: 2 passed; 5 clicks at both widths; door-to-Room 11.7 s.
+- **The REAL leg on the owner's desk (2026-09-04 19:43 local, both widths,
+  alone on the machine): 2 passed; 5 clicks; door-to-Room 24 s at 1440
+  (Create itself 14.7 s — real gh + acli baselines); the Room's first paint
+  showed `Nothing needs you · ON TRACK`, SOURCES 2 — `KAN · 1 DUE THIS
+  WEEK`, `karolswdev/HoldSpeak · 2 OPEN PRS · 2 CHECKS FAILING`; both
+  projects archived (proj-22f86af7fb2e, proj-fd894f49bbd3) with every watch
+  paused and baseline established; no blank list entries.** 168's walk
+  was 17 face steps.
+- Found live and paid: `branch_ci` entities without an id (every default
+  CI watch would have failed normalize_snapshot); the persisted-snapshot
+  shape (dict entities, snake_case) unread by the derivation; the Jira
+  host chip carrying the connection ref; sources duplicated per watch;
+  the History phrase leaking field names; the door left open behind the
+  Room; and a STALE `holdspeak` app process (running since 2026-08-31 on
+  pre-169 code) whose conductor evaluated the new CI watches with the
+  old dispatcher (`GitHub Watches support pull_requests`) — restarted on
+  the current code; law: check the age of every `holdspeak` process
+  before a real leg.
+- Still to record: the owner's attended walk and his verdict, verbatim.
