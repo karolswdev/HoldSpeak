@@ -68,6 +68,13 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
   believing them (106 → 13 real on the same tree), and capture the
   full list with `-rf > file`, never `| tail`.
 
+- **Decision 02:00:** faces build NOW to the ratified boards (the
+  standing goal says do not pause); his word gates the MERGE, not the
+  build. Five builders by file ownership: Concierge (Settings → Models),
+  the arrival (desk/chair), the Settings hub (pages/cores/SettingsCore
+  + settingsPrefs), Speak (features/dictation), Meetings
+  (features/meetings). Each ships its glass rig asserting its boards.
+
 ## 1. The asks of the owner (in order)
 
 1. His word on the Concierge page of the canvas → build 03's face on

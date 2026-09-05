@@ -73,3 +73,11 @@ branch-new failure of the first run (106 → 9) was paid: the second
 sizes, the AGENTS zero law, the Room rig's midnight seed, the Phase 143
 censuses, and the 163 stale-bundle law made universal
 (`tests/e2e/conftest.py`).
+
+**Decision (2026-09-05 02:00, under the owner's standing goal «all
+phases to 180… do not pause to ask»):** the faces of 03 and 04 are
+BUILT NOW to the counsel-ratified artboards; the owner's word moves
+from before-build to before-MERGE for this phase (a branch is
+reversible, a merge is not). His walk of the built faces on his desk
+and his word on the canvas are the merge gate; anything he bounces is
+rebuilt to his ruling before the PR.
