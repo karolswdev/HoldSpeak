@@ -311,7 +311,7 @@ export function SystemShade({
       {finished.length > 0 ? (
         <section className="desk-shade-group" aria-label="Finished">
           <h4>
-            Finished <b>&middot; {finished.length}</b>
+            Finished {finished.length > 0 ? <b>&middot; {finished.length}</b> : null}
           </h4>
           {finished.map((row) => (
             <div className="desk-shade-item" key={row.id}>
@@ -337,7 +337,7 @@ export function SystemShade({
       {learned.length > 0 ? (
         <section className="desk-shade-group" aria-label="Learned">
           <h4>
-            Learned <b>&middot; {learned.length}</b>
+            Learned {learned.length > 0 ? <b>&middot; {learned.length}</b> : null}
           </h4>
           {learned.map((row, index) => {
             const gist = row.gist

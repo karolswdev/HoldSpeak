@@ -214,17 +214,17 @@ export function DeskToolShelf() {
     // ── PROJECTS: one verb per active Room (HS-171-07) ──
     // Sorted by needs-you count desc then name; capped at 10.
     const projectRows = projects
-      .map((p) => ({ project: p, count: projectNeedsYou[p.id] ?? 0 }))
+      .map((p) => ({ project: p, needs: projectNeedsYou[p.id] as number | undefined }))
       .sort((a, b) =>
-        b.count !== a.count
-          ? b.count - a.count
+        (b.needs ?? -1) !== (a.needs ?? -1)
+          ? (b.needs ?? -1) - (a.needs ?? -1)
           : a.project.name.localeCompare(b.project.name),
       )
       .slice(0, 10);
-    for (const { project, count } of projectRows) {
+    for (const { project, needs } of projectRows) {
       const badge =
-        count > 0
-          ? `${count} ${count === 1 ? "NEEDS YOU" : "NEED YOU"}`
+        needs && needs > 0
+          ? `${needs} ${needs === 1 ? "NEEDS YOU" : "NEED YOU"}`
           : undefined;
       push({
         id: `project.open.${project.id}`,
