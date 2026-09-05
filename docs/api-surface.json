@@ -3673,6 +3673,26 @@
       ]
     },
     {
+      "path": "/api/nudges/{step_id}/dismiss",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.steward",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/nudges/{step_id}/send",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.steward",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/people/commitments/{commitment_id}/execution",
       "methods": [
         "GET"
@@ -4297,6 +4317,16 @@
       ],
       "module": "web.routes.projects",
       "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/nudges",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.steward",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/people",

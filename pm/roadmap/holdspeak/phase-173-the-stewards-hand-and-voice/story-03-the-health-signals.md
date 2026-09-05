@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 173
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-173-01
 - **Unblocks:** HS-173-04, HS-173-05
 - **Owner:** unassigned
@@ -47,19 +47,19 @@ surfacing as NEEDS YOU rows and Room tokens."
 
 ## Acceptance criteria
 
-- [ ] Reviewer-latency derivation computes per-person median hours;
+- [x] Reviewer-latency derivation computes per-person median hours;
       verified by a unit test with a seeded PR entity snapshot
       carrying `reviewRequests` and `reviewDecision` timestamps.
-- [ ] Issue-aging derivation computes time-in-status; verified by a
+- [x] Issue-aging derivation computes time-in-status; verified by a
       unit test with a seeded Jira entity snapshot.
-- [ ] Flaky-CI detection identifies 3+ consecutive failures in
+- [x] Flaky-CI detection identifies 3+ consecutive failures in
       `branch_ci` history; verified by a unit test.
-- [ ] Merge-queue depth counts open PRs with passing CI; verified by
+- [x] Merge-queue depth counts open PRs with passing CI; verified by
       a unit test.
-- [ ] Signals exceeding thresholds appear as NEEDS YOU rows in the
+- [x] Signals exceeding thresholds appear as NEEDS YOU rows in the
       Room; verified at both widths.
-- [ ] Signals appear as Room tokens (compact health indicators).
-- [ ] No external writes (reads only; Article V.5).
+- [x] Signals appear as Room tokens (compact health indicators).
+- [x] No external writes (reads only; Article V.5).
 
 ## Test plan
 
@@ -82,3 +82,11 @@ surfacing as NEEDS YOU rows and Room tokens."
 - The `branch_ci` entities carry `status` and `conclusion` fields
   (project_service.py:634-636). History requires reading multiple
   evaluation snapshots or the steward run history.
+
+**Counsel C6 (design, 2026-09-05):** the test plan includes a glass rig
+through `GET /api/projects/{id}/room` — seeded snapshots (PRs with
+review requests + createdAt, Jira issues past the threshold, branch_ci
+history) → the health payload → the four HEALTH rows on the face at
+1440 + 393 (`tests/e2e/test_hs173_health_glass.py`). The 172 law: a
+new entry point needs a production call site and one test through the
+real seam.

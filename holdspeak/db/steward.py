@@ -44,6 +44,7 @@ class StewardPolicyRepository(BaseRepository):
         bounds_json: str = "{}",
         enabled: int = 1,
         unattended_enabled: int = 0,
+        nudge_template: str = "",
     ) -> None:
         with self._connection() as conn:
             self._insert_policy(
@@ -58,6 +59,7 @@ class StewardPolicyRepository(BaseRepository):
                 bounds_json=bounds_json,
                 enabled=enabled,
                 unattended_enabled=unattended_enabled,
+                nudge_template=nudge_template,
             )
 
     def insert_policy_in_transaction(
@@ -74,6 +76,7 @@ class StewardPolicyRepository(BaseRepository):
         bounds_json: str = "{}",
         enabled: int = 1,
         unattended_enabled: int = 0,
+        nudge_template: str = "",
     ) -> None:
         self._insert_policy(
             conn,
@@ -87,6 +90,7 @@ class StewardPolicyRepository(BaseRepository):
             bounds_json=bounds_json,
             enabled=enabled,
             unattended_enabled=unattended_enabled,
+            nudge_template=nudge_template,
         )
 
     @staticmethod
@@ -103,14 +107,16 @@ class StewardPolicyRepository(BaseRepository):
         bounds_json: str,
         enabled: int,
         unattended_enabled: int,
+        nudge_template: str,
     ) -> None:
         now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
         conn.execute(
             """INSERT INTO steward_policies
                (id, project_id, eligible_effect_kinds_json, yolo_flags_json,
                 max_retries, max_actions_per_run, cooldown_seconds,
-                bounds_json, enabled, unattended_enabled, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                bounds_json, enabled, unattended_enabled, nudge_template,
+                created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 str(policy_id).strip(),
                 str(project_id).strip(),
@@ -122,6 +128,7 @@ class StewardPolicyRepository(BaseRepository):
                 bounds_json,
                 int(enabled),
                 int(unattended_enabled),
+                nudge_template,
                 now_iso,
                 now_iso,
             ),
@@ -182,6 +189,7 @@ class StewardPolicyRepository(BaseRepository):
         bounds_json: Optional[str] = None,
         enabled: Optional[int] = None,
         unattended_enabled: Optional[int] = None,
+        nudge_template: Optional[str] = None,
     ) -> None:
         with self._connection() as conn:
             self._update_policy(
@@ -195,6 +203,7 @@ class StewardPolicyRepository(BaseRepository):
                 bounds_json=bounds_json,
                 enabled=enabled,
                 unattended_enabled=unattended_enabled,
+                nudge_template=nudge_template,
             )
 
     def update_policy_in_transaction(
@@ -210,6 +219,7 @@ class StewardPolicyRepository(BaseRepository):
         bounds_json: Optional[str] = None,
         enabled: Optional[int] = None,
         unattended_enabled: Optional[int] = None,
+        nudge_template: Optional[str] = None,
     ) -> None:
         self._update_policy(
             conn,
@@ -222,6 +232,7 @@ class StewardPolicyRepository(BaseRepository):
             bounds_json=bounds_json,
             enabled=enabled,
             unattended_enabled=unattended_enabled,
+            nudge_template=nudge_template,
         )
 
     @staticmethod
@@ -237,6 +248,7 @@ class StewardPolicyRepository(BaseRepository):
         bounds_json: Optional[str],
         enabled: Optional[int],
         unattended_enabled: Optional[int],
+        nudge_template: Optional[str],
     ) -> None:
         updates: list[str] = []
         params: list[Any] = []
@@ -264,6 +276,9 @@ class StewardPolicyRepository(BaseRepository):
         if unattended_enabled is not None:
             updates.append("unattended_enabled = ?")
             params.append(int(unattended_enabled))
+        if nudge_template is not None:
+            updates.append("nudge_template = ?")
+            params.append(nudge_template)
         if not updates:
             return
         now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")

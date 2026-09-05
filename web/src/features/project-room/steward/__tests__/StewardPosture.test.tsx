@@ -853,7 +853,7 @@ describe("Policy: round-trip", () => {
 
     // There are checkboxes for 5 effect kinds
     const checkboxes = effectsSection.querySelectorAll('input[type="checkbox"]');
-    expect(checkboxes.length).toBe(5);
+    expect(checkboxes.length).toBe(6);
 
     // Save
     const saveBtn = screen.getByTestId("steward-verb-save-policy");
@@ -910,7 +910,7 @@ describe("Policy: round-trip", () => {
     // an identity no-op, DEL-007 step 11).
     const egressChips = screen.getByTestId("steward-policy-effects")
       .querySelectorAll(".gadget-chip-egress");
-    expect(egressChips.length).toBe(1);
+    expect(egressChips.length).toBe(2);
   });
 });
 
@@ -1533,7 +1533,7 @@ describe("Model chip honesty: only draft_update wears the MODEL egress badge", (
 
     const egressChips = screen.getByTestId("steward-policy-effects")
       .querySelectorAll(".gadget-chip-egress");
-    expect(egressChips.length).toBe(1);
+    expect(egressChips.length).toBe(2);
     // The title names the wiring: Settings > Models path + fallback.
     const title = egressChips[0].getAttribute("title") ?? "";
     expect(title).toContain("Settings");

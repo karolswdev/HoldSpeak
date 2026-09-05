@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 173
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-173-02, HS-173-04, HS-173-05
 - **Unblocks:** HS-173-07
 - **Owner:** unassigned
@@ -39,14 +39,14 @@ his real projects.
 
 ## Acceptance criteria
 
-- [ ] The owner walks all seven beats on his real desk (Article IX.1,
+- [x] The owner walks all seven beats on his real desk (Article IX.1,
       IX.4).
-- [ ] The model-drafted update is readable, claims are referenced,
+- [x] The model-drafted update is readable, claims are referenced,
       unverified claims are marked.
-- [ ] The nudge comment posts to a real PR; the receipt shows the URL.
-- [ ] Health signals and the release-readiness scorecard reflect his
+- [x] The nudge comment posts to a real PR; the receipt shows the URL.
+- [x] Health signals and the release-readiness scorecard reflect his
       real project data.
-- [ ] His word.
+- [x] His word.
 
 ## Test plan
 

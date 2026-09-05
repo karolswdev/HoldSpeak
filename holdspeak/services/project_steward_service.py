@@ -20,7 +20,7 @@ from __future__ import annotations
 import hashlib
 import json
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 from holdspeak.db.steward import ActiveRunExistsError
@@ -42,7 +42,18 @@ EFFECT_KINDS: tuple[str, ...] = (
     "apply_proposal_effects",
     "draft_update",
     "create_door_item",
+    "github_comment",
 )
+
+# HS-173-04: the default nudge comment template (no personal name — C4).
+DEFAULT_NUDGE_TEMPLATE = (
+    "This PR has been waiting for review for {days} days. "
+    "Flagged by HoldSpeak."
+)
+
+# HS-173-04: cooldown between nudges for the same (reviewer, PR) pair.
+NUDGE_COOLDOWN_DAYS = 7
+NUDGE_TEXT_MAX_CHARS = 2000  # counsel F3: a bounded --body
 
 # Severity rank for deterministic total order (highest-material first).
 _SEVERITY_RANK: dict[str, int] = {
@@ -100,6 +111,7 @@ class ProjectStewardService:
         update_service: Any = None,
         project_service: Any = None,
         door_service: Any = None,
+        subprocess_runner: Any = None,
     ) -> None:
         self._db = db
         self._collector = collector
@@ -107,6 +119,7 @@ class ProjectStewardService:
         self._update_service = update_service
         self._project_service = project_service
         self._door_service = door_service
+        self._subprocess_runner = subprocess_runner
         self._ledger = ServiceEventLedger(db)
 
     # ── public API ────────────────────────────────────────────────────
@@ -764,7 +777,69 @@ class ProjectStewardService:
         if source_meta:
             result["source_meta"] = source_meta
             result["calls"] = total_calls
+
+        # HS-173: collect CI history (last 10 runs per repo) for health
+        # derivations.  Persisted on the step's observed_state_json so
+        # the Room read never calls `gh` itself.
+        ci_history = self._collect_ci_history(principal, project_id)
+        if ci_history:
+            result["ci_history"] = ci_history
+
         return result
+
+    def _collect_ci_history(
+        self, principal: Principal, project_id: str,
+    ) -> list[dict[str, Any]]:
+        """Fetch last 10 CI runs per repo through the existing allowlist.
+
+        Uses ``gh run list --limit 10`` (allowlisted at
+        connector_packs/github_cli.py:38).  Returns a flat list of run
+        dicts across all repos for this project's watches.
+        """
+        from holdspeak.services.watch_sources import (
+            GH_BRANCH_CI_FIELDS,
+            GitHubWatchSource,
+        )
+        automations = getattr(self._db, "automations", None)
+        if automations is None:
+            return []
+        try:
+            watches = automations.list_project_watches(project_id)
+        except Exception:  # best-effort: history never blocks OBSERVE
+            return []
+        history: list[dict[str, Any]] = []
+        seen_repos: set[str] = set()
+
+        for watch in watches:
+            if watch.get("connector_id") != "gh":
+                continue
+            if watch.get("query_kind") != "branch_ci":
+                continue
+            query = watch.get("query") or {}
+            if isinstance(query, str):
+                try:
+                    query = json.loads(query)
+                except (json.JSONDecodeError, TypeError):
+                    continue
+            repo = str(query.get("repository") or "").strip()
+            base = str(query.get("base") or "main").strip()
+            repo_key = f"{repo}:{base}"
+            if not repo or repo_key in seen_repos:
+                continue
+            seen_repos.add(repo_key)
+
+            try:
+                source = GitHubWatchSource(runner=self._runner if hasattr(self, "_runner") else None)
+                entities = source.snapshot(
+                    principal,
+                    query_kind="branch_ci",
+                    query={"repository": repo, "base": base, "limit": 10},
+                )
+                history.extend(entities)
+            except Exception:
+                pass  # Best-effort; a failing repo does not block the phase.
+
+        return history
 
     # ── COMPARE ───────────────────────────────────────────────────────
 
@@ -1118,6 +1193,10 @@ class ProjectStewardService:
             return self._effect_create_door_item(
                 principal, project_id, watermark, phase_results,
             )
+        elif effect_kind == "github_comment":
+            return self._effect_github_comment(
+                principal, run_id, project_id, phase_results,
+            )
         else:
             return {"skipped": True, "reason": f"unknown effect {effect_kind}"}
 
@@ -1269,6 +1348,8 @@ class ProjectStewardService:
                 "update_id": update.get("id", ""),
                 "lifecycle": update.get("lifecycle", "draft"),
                 "generator": update.get("generator", "deterministic"),
+                "generator_host": update.get("generator_host"),
+                "generator_model": update.get("generator_model"),
             }
         except Exception as exc:
             # STW-007: deterministic fallback with receipt.
@@ -1428,6 +1509,462 @@ class ProjectStewardService:
         candidates.sort(key=sort_key)
         return candidates[0]
 
+    # ── Effect 6: github_comment (the reviewer nudge) HS-173-04 ────
+
+    def _effect_github_comment(
+        self,
+        principal: Principal,
+        run_id: str,
+        project_id: str,
+        phase_results: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Propose reviewer nudges as steward steps with state=proposed.
+
+        For each reviewer whose review wait exceeds the threshold and is
+        NOT in cooldown, store a proposed step.  The step is never
+        auto-executed -- the owner must send each one via the nudge route.
+        """
+        from .room_health_service import review_wait as _review_wait
+
+        # Collect PR entities from Watch snapshots for this project.
+        watches = self._db.automations.list_project_watches(project_id)
+        pr_entities: list[dict[str, Any]] = []
+        for watch in watches:
+            connector_id = watch.get("connector_id", "")
+            query_kind = watch.get("query_kind", "")
+            if connector_id != "gh" or query_kind != "pull_requests":
+                continue
+            snapshot = watch.get("snapshot")
+            if not snapshot:
+                continue
+            from .project_service import ProjectService
+            pr_entities.extend(ProjectService._entities(snapshot))
+
+        if not pr_entities:
+            return {
+                "effect": "github_comment",
+                "skipped": True,
+                "reason": "no_pr_entities",
+            }
+
+        now_utc = datetime.now(timezone.utc)
+        rw = _review_wait(pr_entities, now_utc)
+        if not rw.get("present"):
+            return {
+                "effect": "github_comment",
+                "skipped": True,
+                "reason": "no_waiting_reviews",
+            }
+
+        # Load template from policy (or default).
+        policy = self._load_policy(project_id)
+        template = policy.get("nudge_template") or DEFAULT_NUDGE_TEMPLATE
+
+        # Build per-reviewer, per-PR proposals.
+        proposed_count = 0
+        skipped_count = 0
+
+        for entity in pr_entities:
+            state = str(entity.get("state") or "").upper()
+            if state != "OPEN":
+                continue
+            review_requests = (
+                entity.get("review_requests")
+                or entity.get("reviewRequests")
+                or []
+            )
+            if not review_requests:
+                continue
+            review_decision = str(
+                entity.get("review_decision")
+                or entity.get("reviewDecision")
+                or ""
+            ).upper()
+            if review_decision and review_decision not in ("", "REVIEW_REQUIRED"):
+                continue
+
+            pr_number = int(entity.get("number") or 0)
+            pr_title = str(entity.get("title") or "")
+            pr_url = str(entity.get("url") or "")
+            # Derive repo from URL: https://github.com/owner/repo/pull/N
+            repo = ""
+            if pr_url:
+                parts = pr_url.replace("https://github.com/", "").split("/")
+                if len(parts) >= 2:
+                    repo = f"{parts[0]}/{parts[1]}"
+
+            if pr_number < 1 or not repo:
+                continue
+
+            # Compute wait days for this PR.
+            created_at_str = (
+                entity.get("created_at")
+                or entity.get("createdAt")
+                or ""
+            )
+            if not created_at_str:
+                continue
+            try:
+                created_dt = datetime.fromisoformat(
+                    str(created_at_str).replace("Z", "+00:00")
+                ).replace(tzinfo=None)
+                now_naive = now_utc.replace(tzinfo=None)
+                wait_days = max(0, int((now_naive - created_dt).total_seconds() / 86400))
+            except (ValueError, TypeError):
+                continue
+
+            for login_raw in review_requests:
+                login = str(login_raw).strip().lower()
+                if not login:
+                    continue
+
+                # H4: dedup -- one proposed step per (repo, pr_number, login).
+                dedup_key = f"nudge:{project_id}:{repo}:{pr_number}:{login}"
+                existing_step = self._db.steward_steps.get_step_by_idempotency_key(
+                    dedup_key,
+                )
+                if existing_step:
+                    step_state = existing_step.get("state", "")
+                    if step_state == "proposed":
+                        # Already proposed, do not re-propose.
+                        skipped_count += 1
+                        continue
+                    if step_state in ("sent", "dismissed"):
+                        # Cooldown: 7 days from the step's completed_at.
+                        completed_at_str = existing_step.get("completed_at") or ""
+                        if completed_at_str:
+                            try:
+                                completed_dt = datetime.fromisoformat(
+                                    completed_at_str.replace("Z", "+00:00")
+                                ).replace(tzinfo=None)
+                                cooldown_end = completed_dt + timedelta(days=NUDGE_COOLDOWN_DAYS)
+                                if now_utc.replace(tzinfo=None) < cooldown_end:
+                                    skipped_count += 1
+                                    continue
+                            except (ValueError, TypeError):
+                                pass
+
+                # Build the comment text from the template.
+                comment_text = template.replace("{days}", str(wait_days))
+
+                step_id = generate_pststep_id()
+                payload = {
+                    "repo": repo,
+                    "pr_number": pr_number,
+                    "pr_title": pr_title,
+                    "pr_url": pr_url,
+                    "reviewer_login": login,
+                    "days": wait_days,
+                    "comment_text": comment_text,
+                    "host": "github.com",
+                }
+                self._db.steward_steps.insert_step(
+                    step_id=step_id,
+                    run_id=run_id,
+                    phase="act",
+                    seq=0,
+                    state="proposed",
+                    effect_kind="github_comment",
+                    idempotency_key=dedup_key,
+                    expected_state_json=json.dumps(payload, default=str),
+                )
+                proposed_count += 1
+
+        return {
+            "effect": "github_comment",
+            "proposed": proposed_count,
+            "skipped": skipped_count,
+        }
+
+    # ── HS-173-04: Nudge lifecycle methods ───────────────────────────
+
+    def list_nudges(
+        self,
+        project_id: str,
+        state: Optional[str] = None,
+    ) -> list[dict[str, Any]]:
+        """List nudge steps for a project, optionally filtered by state."""
+        # Nudge steps use idempotency_key prefix "nudge:{project_id}:".
+        prefix = f"nudge:{project_id}:"
+        with self._db._connection() as conn:
+            if state:
+                rows = conn.execute(
+                    "SELECT * FROM steward_steps "
+                    "WHERE effect_kind = 'github_comment' "
+                    "AND idempotency_key LIKE ? "
+                    "AND state = ? "
+                    "ORDER BY created_at DESC LIMIT 200",
+                    (prefix + "%", state),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM steward_steps "
+                    "WHERE effect_kind = 'github_comment' "
+                    "AND idempotency_key LIKE ? "
+                    "ORDER BY created_at DESC LIMIT 200",
+                    (prefix + "%",),
+                ).fetchall()
+        return [self._nudge_from_step(dict(r)) for r in rows]
+
+    @staticmethod
+    def _nudge_from_step(step: dict[str, Any]) -> dict[str, Any]:
+        """Serialize a nudge step for the wire."""
+        payload = {}
+        try:
+            payload = json.loads(step.get("expected_state_json") or "{}")
+        except (json.JSONDecodeError, TypeError):
+            pass
+        receipt = {}
+        try:
+            receipt = json.loads(step.get("receipt_json") or "{}")
+        except (json.JSONDecodeError, TypeError):
+            pass
+        return {
+            "step_id": step["id"],
+            "state": step["state"],
+            "effect_kind": step["effect_kind"],
+            "repo": payload.get("repo", ""),
+            "pr_number": payload.get("pr_number", 0),
+            "pr_title": payload.get("pr_title", ""),
+            "pr_url": payload.get("pr_url", ""),
+            "reviewer_login": payload.get("reviewer_login", ""),
+            "days": payload.get("days", 0),
+            "comment_text": payload.get("comment_text", ""),
+            "host": payload.get("host", "github.com"),
+            "receipt": receipt,
+            "created_at": step.get("created_at"),
+            "completed_at": step.get("completed_at"),
+        }
+
+    def send_nudge(
+        self,
+        principal: Principal,
+        step_id: str,
+        text: str,
+    ) -> dict[str, Any]:
+        """Send a nudge: re-check policy, execute via gh pr comment, receipt.
+
+        H1: refuse if the kind is no longer eligible.
+        H5: gh failure -> outcome failed, step back to proposed.
+        """
+        step = self._db.steward_steps.get_step(step_id)
+        if step is None or step["effect_kind"] != "github_comment":
+            return {"error": "nudge_not_found"}
+        if step["state"] != "proposed":
+            return {"error": "nudge_not_proposed", "state": step["state"]}
+
+        # Empty text refused.
+        if not (text or "").strip():
+            return {"error": "empty_text"}
+        if len(text) > NUDGE_TEXT_MAX_CHARS:
+            return {"error": "text_too_long", "max_chars": NUDGE_TEXT_MAX_CHARS}
+
+        # Parse payload for project_id from idempotency_key.
+        idem_key = step.get("idempotency_key", "")
+        # nudge:{project_id}:{repo}:{pr_number}:{login}
+        parts = idem_key.split(":", 2)
+        project_id = parts[1] if len(parts) > 1 else ""
+
+        # H1: re-check policy gate.
+        if project_id:
+            policy = self._load_policy(project_id)
+            eligible_kinds = set(json.loads(
+                policy.get("eligible_effect_kinds_json", "[]")))
+            if "github_comment" not in eligible_kinds:
+                # Receipt the refusal.
+                now_iso = _now_iso()
+                receipt = {
+                    "effect_kind": "github_comment",
+                    "outcome": "refused",
+                    "reason": "kind_no_longer_eligible",
+                    "timestamp": now_iso,
+                    "approval_principal": str(principal),
+                }
+                self._db.steward_steps.update_step(
+                    step_id,
+                    receipt_json=json.dumps(receipt, default=str),
+                )
+                # Log the refusal to the ledger.
+                try:
+                    with self._db._connection() as conn:
+                        self._ledger.append_in_transaction(
+                            conn, principal,
+                            event_type="steward.effect.github_comment",
+                            producer="ProjectStewardService",
+                            subject_ref=f"steward_step:{step_id}",
+                            source_revision="",
+                            facts=receipt,
+                            refs=[
+                                f"project:{project_id}",
+                                f"steward_step:{step_id}",
+                            ],
+                        )
+                except Exception:
+                    pass
+                return {"error": "kind_no_longer_eligible", "receipt": receipt}
+
+        # Parse the payload.
+        payload = {}
+        try:
+            payload = json.loads(step.get("expected_state_json") or "{}")
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+        repo = payload.get("repo", "")
+        pr_number = int(payload.get("pr_number") or 0)
+        reviewer_login = payload.get("reviewer_login", "")
+
+        # Execute via build_github_pr_connector("comment").
+        from holdspeak.plugins.builtin.github_pr_actuator import (
+            build_github_pr_connector,
+        )
+        from types import SimpleNamespace
+
+        connector = build_github_pr_connector("comment", runner=self._subprocess_runner)
+        proposal = SimpleNamespace(payload={
+            "repo": repo,
+            "number": pr_number,
+            "body": text.strip(),
+        })
+
+        now_iso = _now_iso()
+        try:
+            result = connector(proposal)
+            # Parse comment URL from gh output.
+            output = result.get("output", "")
+            comment_url = ""
+            for line in output.splitlines():
+                line = line.strip()
+                if line.startswith("https://"):
+                    comment_url = line
+                    break
+
+            receipt = {
+                "effect_kind": "github_comment",
+                "outcome": "applied",
+                "comment_url": comment_url,
+                "pr_number": pr_number,
+                "reviewer": payload.get("display_name") or reviewer_login,
+                "reviewer_login": reviewer_login,
+                "timestamp": now_iso,
+                "approval_principal": str(principal),
+                "host": "github.com",
+                "text": text.strip(),
+            }
+
+            self._db.steward_steps.update_step(
+                step_id,
+                state="sent",
+                observed_state_json=json.dumps(receipt, default=str),
+                receipt_json=json.dumps(receipt, default=str),
+            )
+
+            # Ledger receipt.
+            try:
+                with self._db._connection() as conn:
+                    self._ledger.append_in_transaction(
+                        conn, principal,
+                        event_type="steward.effect.github_comment",
+                        producer="ProjectStewardService",
+                        subject_ref=f"steward_step:{step_id}",
+                        source_revision="",
+                        facts=receipt,
+                        refs=[
+                            f"project:{project_id}",
+                            f"steward_step:{step_id}",
+                        ],
+                    )
+            except Exception:
+                pass
+
+            return {"success": True, "receipt": receipt}
+
+        except Exception as exc:
+            # H5: gh failure -> failed receipt, step back to proposed.
+            error_summary = str(exc)[:240]
+            receipt = {
+                "effect_kind": "github_comment",
+                "outcome": "failed",
+                "pr_number": pr_number,
+                "reviewer_login": reviewer_login,
+                "timestamp": now_iso,
+                "approval_principal": str(principal),
+                "host": "github.com",
+                "error": error_summary,
+            }
+
+            self._db.steward_steps.update_step(
+                step_id,
+                state="proposed",
+                receipt_json=json.dumps(receipt, default=str),
+            )
+
+            try:
+                with self._db._connection() as conn:
+                    self._ledger.append_in_transaction(
+                        conn, principal,
+                        event_type="steward.effect.github_comment",
+                        producer="ProjectStewardService",
+                        subject_ref=f"steward_step:{step_id}",
+                        source_revision="",
+                        facts=receipt,
+                        refs=[
+                            f"project:{project_id}",
+                            f"steward_step:{step_id}",
+                        ],
+                    )
+            except Exception:
+                pass
+
+            return {"error": "send_failed", "receipt": receipt}
+
+    def dismiss_nudge(
+        self,
+        principal: Principal,
+        step_id: str,
+    ) -> dict[str, Any]:
+        """Dismiss a proposed nudge (7-day cooldown starts)."""
+        step = self._db.steward_steps.get_step(step_id)
+        if step is None or step["effect_kind"] != "github_comment":
+            return {"error": "nudge_not_found"}
+        if step["state"] != "proposed":
+            return {"error": "nudge_not_proposed", "state": step["state"]}
+
+        now_iso = _now_iso()
+        self._db.steward_steps.update_step(
+            step_id,
+            state="dismissed",
+        )
+
+        # Receipt the dismissal.
+        receipt = {
+            "effect_kind": "github_comment",
+            "outcome": "dismissed",
+            "timestamp": now_iso,
+            "approval_principal": str(principal),
+        }
+        try:
+            idem_key = step.get("idempotency_key", "")
+            parts = idem_key.split(":", 2)
+            project_id = parts[1] if len(parts) > 1 else ""
+            with self._db._connection() as conn:
+                self._ledger.append_in_transaction(
+                    conn, principal,
+                    event_type="steward.effect.github_comment",
+                    producer="ProjectStewardService",
+                    subject_ref=f"steward_step:{step_id}",
+                    source_revision="",
+                    facts=receipt,
+                    refs=[
+                        f"project:{project_id}",
+                        f"steward_step:{step_id}",
+                    ],
+                )
+        except Exception:
+            pass
+
+        return {"success": True, "step_id": step_id, "state": "dismissed"}
+
     # ── VERIFY ────────────────────────────────────────────────────────
 
     def _phase_verify(
@@ -1583,6 +2120,8 @@ class ProjectStewardService:
             return {"effect": "draft_update", "project_id": project_id}
         elif effect_kind == "create_door_item":
             return {"effect": "create_door_item", "project_id": project_id}
+        elif effect_kind == "github_comment":
+            return {"effect": "github_comment", "project_id": project_id}
         return {"effect": effect_kind}
 
 

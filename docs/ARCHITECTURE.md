@@ -420,6 +420,87 @@ connected providers, and presents rows in the Room's **SOURCES** section.
 **Add** creates a Watch source; **Dismiss** persists the dismissal. A
 suggestion matching an existing Watch source is suppressed.
 
+### The steward's hand
+
+The steward's hand is the path from observed project
+health to a receipted external action. Two flows share the policy gate: the
+drafted update (model rewrite of the deterministic inventory) and the reviewer
+nudge (a proposed `gh pr comment`).
+
+**The drafter path:**
+
+```mermaid
+sequenceDiagram
+  participant INV as Deterministic inventory<br/>(claim schema)
+  participant MDL as Model drafter<br/>(_draft_with_model)
+  participant PAR as Parser<br/>(_parse_model_output)
+  participant VER as Ref verifier
+  participant FB as Fallback<br/>(deterministic body)
+  participant UI as UpdatePosture
+
+  INV->>MDL: claims + refs
+  MDL->>PAR: model output (JSON)
+  PAR->>VER: parsed claims
+  alt all cited_refs in inventory
+    VER-->>UI: verified claims + EgressChip(host)
+  else ref missing or no ref
+    VER-->>UI: claim marked UNVERIFIED
+  end
+  MDL--xFB: _ModelDraftFailed
+  FB-->>UI: deterministic body (no markers, no egress)
+```
+
+**The nudge path (the first external write):**
+
+```mermaid
+sequenceDiagram
+  participant OBS as OBSERVE<br/>(snapshots + gh run list)
+  participant DRV as Health derivation<br/>(reviewer latency, CI, aging)
+  participant BTL as Bottleneck rows<br/>(NEEDS YOU)
+  participant POL as Policy gate<br/>(eligible_effect_kinds)
+  participant NUD as Proposed nudge card
+  participant OWN as Owner (Send)
+  participant KRN as Kernel<br/>(admit + receipt)
+  participant GH as gh pr comment<br/>(gated connector)
+  participant RCP as Receipt row
+
+  OBS->>DRV: entity snapshots
+  DRV->>BTL: per-reviewer median, count
+  BTL->>POL: github_comment effect kind
+  alt not in eligible kinds
+    POL--xBTL: withheld (no Nudge verb)
+  else eligible
+    POL->>NUD: proposed comment + PR + host
+    NUD->>OWN: exact text + GITHUB.COM
+    alt Send
+      OWN->>KRN: admit nudge
+      KRN->>GH: gh pr comment --repo R -n N -b "text"
+      GH-->>RCP: comment URL + receipt
+    else Dismiss
+      OWN-->>NUD: closed, no write
+    end
+  end
+```
+
+The health derivations read existing Watch snapshots (`ProjectService._entities`).
+Review wait computes `now - createdAt` for open PRs with pending review requests,
+grouped by reviewer. Issue aging counts issues older than the threshold
+(default 14 days). Flaky CI uses the last 10 runs per branch
+(`gh run list --limit 10`, collected during the steward's OBSERVE phase).
+Merge-queue depth counts open PRs with passing CI not yet merged. The release
+readiness scorecard composites the four signals: green when all green, amber
+when any amber and none red, red when any red.
+
+The double gate: the policy eligibility gate (`eligible_effect_kinds_json`)
+prevents the steward from proposing a nudge on a project where it is not armed;
+the per-nudge approval gate (the owner pressing Send) prevents any individual
+nudge from firing without review. Either gate alone is sufficient to block.
+
+The 7-day cooldown: after a nudge is sent for a PR and reviewer, the steward
+checks the receipt ledger before proposing again. A recent
+`steward.effect.github_comment` on the same PR and reviewer within the cooldown
+window suppresses the proposal.
+
 ### The scheduled recording conductor
 
 The hub can start a recording on its own at a scheduled time. The scheduled

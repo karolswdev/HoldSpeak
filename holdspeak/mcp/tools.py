@@ -308,6 +308,31 @@ TOOLS.extend([
         {"proposal_id": {"type": "string", "description": "Proposal identifier."}},
         ["proposal_id"],
     ),
+    # HS-173-04: Reviewer nudge tools
+    _mcp_tool(
+        "steward.nudges",
+        "List reviewer nudge proposals for a project, optionally filtered by state (proposed, sent, dismissed).",
+        {
+            "project_id": {"type": "string", "description": "Project identifier."},
+            "state": {"type": "string", "enum": ["proposed", "sent", "dismissed"], "description": "Optional state filter."},
+        },
+        ["project_id"],
+    ),
+    _mcp_tool(
+        "nudge.send",
+        "Send a reviewer nudge: post the comment to GitHub via gh pr comment. The text is the exact comment posted.",
+        {
+            "step_id": {"type": "string", "description": "Nudge step identifier."},
+            "text": {"type": "string", "description": "The comment text to post (required, non-empty)."},
+        },
+        ["step_id", "text"],
+    ),
+    _mcp_tool(
+        "nudge.dismiss",
+        "Dismiss a proposed reviewer nudge without posting. A 7-day cooldown starts.",
+        {"step_id": {"type": "string", "description": "Nudge step identifier."}},
+        ["step_id"],
+    ),
     _mcp_tool(
         "dictation.list",
         "Read the retained dictation journal, optionally paged and filtered by source.",
@@ -835,6 +860,22 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         from holdspeak.services.proposal_bridge_service import ProposalBridgeService as _PBS3
         pbs = _PBS3(db)
         return pbs.dismiss_proposal(principal, str(args.get("proposal_id") or ""))
+    # HS-173-04: reviewer nudge MCP twins
+    if name == "steward.nudges":
+        from holdspeak.services.project_steward_service import ProjectStewardService as _PSS
+        from unittest.mock import MagicMock
+        svc = _PSS(db, MagicMock(), MagicMock())
+        return {"nudges": svc.list_nudges(str(args.get("project_id") or ""), state=args.get("state"))}
+    if name == "nudge.send":
+        from holdspeak.services.project_steward_service import ProjectStewardService as _PSS2
+        from unittest.mock import MagicMock
+        svc = _PSS2(db, MagicMock(), MagicMock())
+        return svc.send_nudge(principal, str(args.get("step_id") or ""), str(args.get("text") or ""))
+    if name == "nudge.dismiss":
+        from holdspeak.services.project_steward_service import ProjectStewardService as _PSS3
+        from unittest.mock import MagicMock
+        svc = _PSS3(db, MagicMock(), MagicMock())
+        return svc.dismiss_nudge(principal, str(args.get("step_id") or ""))
     if name == "decision_record.list":
         allowed = ("limit", "offset")
         return records.list_records(principal, **{key: args[key] for key in allowed if key in args})

@@ -201,7 +201,7 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
         "chat.compact", "services.thread_practice", "InferenceRunner admitted child",
     ),
     # HS-162-03: model drafter for project update drafting.
-    "holdspeak/services/project_update_service.py:734|ProjectUpdateService._draft_with_model|call": ProposedRoute(
+    "holdspeak/services/project_update_service.py:792|ProjectUpdateService._draft_with_model|call": ProposedRoute(
         "project.update_draft", "services.project_update_service", "InferenceRunner admitted child",
     ),
 }
@@ -301,7 +301,7 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
     "holdspeak/web/routes/primitives/ask.py:49|build_ask_router.api_ask|ask": ProposedRoute(
         "ask.answer", "web.routes.primitives.ask", "AskService semantic caller",
     ),
-    "holdspeak/mcp/tools.py:675|dispatch|run": ProposedRoute(
+    "holdspeak/mcp/tools.py:700|dispatch|run": ProposedRoute(
         "recipe.run", "mcp.tools", "RecipeService semantic caller",
     ),
     # HS-151-02: recipe.chat retired; mcp/tools.py:613 and recipes.py:115

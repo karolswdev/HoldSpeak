@@ -83,6 +83,7 @@ function detailResponse(url: string) {
 
 function response(url: string) {
   if (url.includes("/room")) return roomResponse();
+  if (url.includes("/nudges")) return { nudges: [] };
   return detailResponse(url);
 }
 
@@ -162,9 +163,10 @@ describe("useProjectRoomController — /room first render (HS-158-05)", () => {
     const { result } = renderHook(() => useProjectRoomController("project:p1", "Test"));
     await waitFor(() => expect(result.current.detailStatus).toBe("ready"));
 
-    // After everything completes: /room + 4 detail + 2 HS-172 calls = 7 total
+    // After everything completes: /room + 4 detail + 3 HS-172/173 calls = 8 total
     // HS-172-03/06: proposals (proposed) + suggested-sources
-    expect(apiFetchMock).toHaveBeenCalledTimes(7);
+    // HS-173-04: nudges (proposed)
+    expect(apiFetchMock).toHaveBeenCalledTimes(8);
     const urls = apiFetchMock.mock.calls.map((c: unknown[]) => c[0] as string);
     expect(urls).toContainEqual(expect.stringContaining("/room"));
     expect(urls).toContainEqual(expect.stringContaining("/meetings"));
@@ -173,6 +175,7 @@ describe("useProjectRoomController — /room first render (HS-158-05)", () => {
     expect(urls).toContainEqual(expect.stringContaining("/since-last-meeting"));
     expect(urls).toContainEqual(expect.stringContaining("/proposals"));
     expect(urls).toContainEqual(expect.stringContaining("/suggested-sources"));
+    expect(urls).toContainEqual(expect.stringContaining("/nudges"));
   });
 
   it("initial paint is ready before detail fetches complete", async () => {

@@ -84,6 +84,10 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "meeting.proposals":       ("evidence_read",     False),
     "proposal.confirm":        ("effect_proposal",   False),
     "proposal.dismiss":        ("effect_proposal",   False),
+    # --- reviewer nudge (HS-173-04) ---
+    "steward.nudges":          ("evidence_read",     False),
+    "nudge.send":              ("effect_proposal",   False),
+    "nudge.dismiss":           ("effect_proposal",   False),
     # --- monday brief ---
     "monday_brief.get":       ("evidence_read",     False),
     "monday_brief.generate":  ("candidate_builder", False),

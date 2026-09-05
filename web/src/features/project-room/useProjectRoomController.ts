@@ -61,6 +61,9 @@ export function useProjectRoomController(
   const [suggestedSources, setSuggestedSources] = useState<RoomSuggestedSourceItem[]>([]);
   const [suggestionBusy, setSuggestionBusy] = useState("");
 
+  // HS-173-04: proposed nudges
+  const [nudges, setNudges] = useState<api.NudgeItem[]>([]);
+
   // HS-169-03: POST /room/read after first paint and on Refresh.
   const postRead = async () => {
     if (!projectId) return;
@@ -123,17 +126,19 @@ export function useProjectRoomController(
       setDetailStatus("ready");
     }
 
-    // Phase 3: HS-172-03/06 proposals + suggested sources (non-blocking)
+    // Phase 3: HS-172-03/06 proposals + suggested sources + HS-173-04 nudges (non-blocking)
     // Confirmed proposals are now in the /room decisions list (wire HS-172-03).
     try {
-      const [pendingProps, suggestions] = await Promise.all([
+      const [pendingProps, suggestions, proposedNudges] = await Promise.all([
         api.fetchProjectProposals(projectId, "proposed"),
         api.fetchSuggestedSources(projectId),
+        api.fetchNudges(projectId, "proposed"),
       ]);
       setProposals(pendingProps);
       setSuggestedSources(suggestions);
+      setNudges(proposedNudges);
     } catch {
-      // Non-fatal: the face renders without proposals/suggestions
+      // Non-fatal: the face renders without proposals/suggestions/nudges
     }
   };
 
@@ -314,6 +319,8 @@ export function useProjectRoomController(
     suggestionBusy,
     handleAddSuggestion,
     handleDismissSuggestion,
+    // HS-173-04: nudges
+    nudges,
     // Actions
     load,
     postRead,

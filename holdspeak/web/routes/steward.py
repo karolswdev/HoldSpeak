@@ -430,6 +430,64 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to trigger steward")
 
+    # ── HS-173-04: Nudge routes ──────────────────────────────────────
+
+    @router.get("/api/projects/{project_id}/nudges")
+    async def api_list_nudges(
+        project_id: str,
+        request: Request,
+        state: str | None = None,
+    ) -> Any:
+        try:
+            svc = ctx.project_steward_service
+            nudges = svc.list_nudges(project_id, state=state)
+            return JSONResponse({"nudges": nudges})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to list nudges")
+
+    @router.post("/api/nudges/{step_id}/send")
+    async def api_send_nudge(
+        step_id: str,
+        request: Request,
+        payload: dict[str, Any] | None = None,
+    ) -> Any:
+        try:
+            body = payload or {}
+            text = body.get("text", "")
+            if not (text or "").strip():
+                return JSONResponse(
+                    {"success": False, "code": "empty_text",
+                     "message": "The nudge text must not be empty"},
+                    status_code=400,
+                )
+            svc = ctx.project_steward_service
+            result = svc.send_nudge(principal(request), step_id, text)
+            if "error" in result:
+                status = 404 if result["error"] == "nudge_not_found" else 409
+                return JSONResponse(
+                    {"success": False, **result}, status_code=status,
+                )
+            return JSONResponse({"success": True, **result})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to send nudge")
+
+    @router.post("/api/nudges/{step_id}/dismiss")
+    async def api_dismiss_nudge(
+        step_id: str,
+        request: Request,
+    ) -> Any:
+        try:
+            svc = ctx.project_steward_service
+            result = svc.dismiss_nudge(principal(request), step_id)
+            if "error" in result:
+                status = 404 if result["error"] == "nudge_not_found" else 409
+                return JSONResponse(
+                    {"success": False, **result}, status_code=status,
+                )
+            return JSONResponse({"success": True, **result})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to dismiss nudge")
+
     return router
 
 

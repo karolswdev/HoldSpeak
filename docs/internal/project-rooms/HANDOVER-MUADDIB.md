@@ -1,3 +1,39 @@
+## Muad'Dib XII — 2026-09-05 19:20, the Steward's Hand BUILT
+
+**State.** 173 is 7/9 on evidence on feat/the-stewards-hand; **PR #556**
+open, stacked on #555 (172) on #554 (171) on #553 (170). Counsel on the
+built phase, the runner fill and the full suite are in flight; then the
+walk on his desk with EVERY write denied (no Send, no Publish, no
+steward run, no effect enable) and 09 the close.
+
+**What the phase is.** The steward drafts the weekly update with the
+model behind the claim schema (refs verbatim, UNVERIFIED never smoothed,
+the model and its host named); the Room reads HEALTH from what it
+already watches (`REVIEW WAIT` in days since the PR was created — the
+honest word — · `ISSUE AGING` · `CI` · `RELEASE`); on a project where he
+armed `Reviewer nudge`, a bottleneck row offers `Nudge`, the card shows
+the exact text and `GITHUB.COM`, Send re-checks the gate, admits through
+the kernel, runs only `gh pr comment`, and the receipt names who, where
+and the text. No Undo. 7-day cooldown after Send or Dismiss.
+
+**Laws this phase.** A host and a model are recorded at draft time. A
+nudge step belongs to a real steward run — never a dummy run, never
+foreign keys off. The scanner knows StringGadget carries the mic; the
+ceiling only lowers; the mic stays on every input. A capture that
+selects nothing exits 0 — read the pass line before a flip. zsh does not
+split `$FILES` — wrap captures in `bash -c`.
+
+**Session note.** The account's session limit killed five lanes mid-edit
+once (reset 12:20pm Denver); every lane was resumed by message and
+finished; the tree compiled throughout.
+
+**Counsel on the built 173: RATIFY-W-C, paid** (the cooldown token in
+hours under a day; the nudge text bounded; the vacuous capture redone).
+Its questions, ruled: hours in the first day; `Open` on a bottleneck row
+opens the People card; `PER-NUDGE APPROVAL` stays a token.
+
+**Merge order stays his:** #553 → #554 → #555 → #556.
+
 ## Muad'Dib XI — 2026-09-05 17:10, the Loop Closes BUILT
 
 **State.** 172 is 9/9 on evidence on feat/the-loop-closes (stacked on
@@ -28,6 +64,22 @@ config fallback. A commitment folds into its decision row. A lane's
 report without a rig tail and shots on disk is not a report. The
 ratchet ceiling is restored with `git checkout` when a lane raises it.
 `SurfaceLedger` needs `cols="room"` or the primary collapses.
+
+**Phase 173 (2026-09-05 18:00) — counsel RATIFY-W-C on the design,
+ruled.** Nine boards on
+https://claude.ai/code/artifact/9f1558b4-0867-4152-bc7e-1314dde5e82c.
+Rulings: `REVIEW WAIT` in days from createdAt, never `REVIEW LATENCY`;
+the green state is present with `CLEAR` / `PASSING` / `READY`; the
+nudge text names the tool and no person (`Flagged by HoldSpeak.`, posts
+from your own gh identity, editable per nudge and per project); the
+receipt names who; the model is named beside its host; one `CHECKED N
+MIN AGO` on the HEALTH caption; `NUDGED N D AGO` while cooling.
+
+**Counsel's questions for you (173):** (1) the nudge's attribution —
+tool named, no personal name — is that how you want your team to read
+it? (2) the createdAt approximation — WAIT in days is what the system
+can honestly say; acceptable? (3) the 7-day cooldown shown as `NUDGED
+N D AGO` — adopted; keep?
 
 **Counsel's questions for the owner (172, built):** (1) the two-prefix
 vocabulary `Decide:`/`Confirm:`; (2) the 1:1 card's summary-then-Now

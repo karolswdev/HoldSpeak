@@ -196,7 +196,7 @@ export type RoomNeedsYouItem = {
   why: string;
   since: string;
   url: string | null;
-  verb: "open" | "decide" | "confirm";
+  verb: "open" | "decide" | "confirm" | "nudge";
   severity: "danger" | "warning" | "info";
   proposalId?: string;
   proposalKind?: "decision" | "action";
@@ -207,6 +207,14 @@ export type RoomNeedsYouItem = {
   originalText?: string;
   meetingTitle?: string;
   createdAt?: string;
+  /** HS-173: review_bottleneck kind. */
+  kind?: string;
+  /** HS-173: relationship_id for People window open. */
+  relationshipId?: string;
+  /** HS-173: reviewer median wait in days. */
+  medianDays?: number;
+  /** HS-173: count of PRs waiting on this reviewer. */
+  prCount?: number;
 };
 
 /** Needs-you section data shape (when ok). */
@@ -277,6 +285,80 @@ export type RoomHealthData = {
     reviewWaitingDays: number | null;
     targetPassed: boolean;
   };
+  /** HS-173: structured health signals (present when the wire delivers them). */
+  signals?: RoomHealthSignals;
+  /** HS-173: snapshot freshness timestamp (ISO). */
+  checkedAt?: string | null;
+  /** HS-173: merge-queue depth (open non-draft PRs with passing CI). */
+  mergeQueueDepth?: number;
+  /** HS-173: resolved reviewers with bottleneck data. */
+  people?: RoomHealthPerson[];
+};
+
+/** HS-173: one health signal row. */
+export type RoomHealthSignalRow = {
+  present: boolean;
+  tone?: "green" | "amber" | "red";
+};
+
+/** HS-173: review wait signal. */
+export type RoomReviewWaitSignal = RoomHealthSignalRow & {
+  medianDays: number;
+  waitingCount: number;
+};
+
+/** HS-173: issue aging signal. */
+export type RoomIssueAgingSignal = RoomHealthSignalRow & {
+  agedCount: number;
+  thresholdDays?: number;
+};
+
+/** HS-173: CI signal. */
+export type RoomCISignal = RoomHealthSignalRow & {
+  flakyCount: number;
+  failuresLast3: number;
+};
+
+/** HS-173: release readiness signal. */
+export type RoomReleaseSignal = RoomHealthSignalRow & {
+  composite: "green" | "amber" | "red";
+  blockersCount: number;
+};
+
+/** HS-173: all health signals. */
+export type RoomHealthSignals = {
+  reviewWait: RoomReviewWaitSignal;
+  issueAging: RoomIssueAgingSignal;
+  ci: RoomCISignal;
+  release: RoomReleaseSignal;
+};
+
+/** HS-173: a reviewer person from the health derivation. */
+export type RoomHealthPerson = {
+  relationshipId: string;
+  displayName: string;
+  login: string;
+  medianDays: number;
+  count: number;
+  prs?: RoomHealthPR[];
+  nudge?: RoomHealthNudge | null;
+};
+
+/** HS-173: a PR in the health person's bottleneck list. */
+export type RoomHealthPR = {
+  number: number;
+  title: string;
+  url: string;
+  repo?: string;
+  days: number;
+};
+
+/** HS-173: nudge state for a health person. */
+export type RoomHealthNudge = {
+  stepId: string;
+  state: "proposed" | "sent" | "dismissed" | "failed";
+  sentAt?: string | null;
+  text?: string;
 };
 
 /** A since-read entry. */
@@ -455,7 +537,7 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
             why: String(r.why ?? ""),
             since: String(r.since ?? ""),
             url: r.url != null ? String(r.url) : null,
-            verb: (r.verb === "decide" ? "decide" : r.verb === "confirm" ? "confirm" : "open") as "open" | "decide" | "confirm",
+            verb: (r.verb === "decide" ? "decide" : r.verb === "confirm" ? "confirm" : r.verb === "nudge" ? "nudge" : "open") as "open" | "decide" | "confirm" | "nudge",
             severity: (["danger", "warning", "info"].includes(String(r.severity ?? ""))
               ? String(r.severity) : "info") as "danger" | "warning" | "info",
             proposalId: r.proposal_id != null ? String(r.proposal_id) : undefined,
@@ -467,6 +549,10 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
             originalText: r.original_text != null ? String(r.original_text) : undefined,
             meetingTitle: r.meeting_title != null ? String(r.meeting_title) : undefined,
             createdAt: r.created_at != null ? String(r.created_at) : undefined,
+            kind: r.kind != null ? String(r.kind) : undefined,
+            relationshipId: r.relationship_id != null ? String(r.relationship_id) : undefined,
+            medianDays: r.median_days != null ? Number(r.median_days) : undefined,
+            prCount: r.count != null ? Number(r.count) : undefined,
           }))
         : [],
       count: Number(s.count ?? 0),
@@ -525,17 +611,86 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
         nextCheckAt: s.nextCheckAt != null ? String(s.nextCheckAt) : null,
       };
     }),
-    health: decodeSection<RoomHealthData>(raw.health, (s) => ({
-      assessment: (s.assessment === "at_risk" ? "at_risk" : "on_track") as "at_risk" | "on_track",
-      reason: s.reason != null ? String(s.reason) : null,
-      inputs: {
-        overdue: Number((s.inputs as Record<string, unknown> | undefined)?.overdue ?? 0),
-        ciFailing: Boolean((s.inputs as Record<string, unknown> | undefined)?.ciFailing),
-        reviewWaitingDays: (s.inputs as Record<string, unknown> | undefined)?.reviewWaitingDays != null
-          ? Number((s.inputs as Record<string, unknown>).reviewWaitingDays) : null,
-        targetPassed: Boolean((s.inputs as Record<string, unknown> | undefined)?.targetPassed),
-      },
-    })),
+    health: decodeSection<RoomHealthData>(raw.health, (s) => {
+      // HS-173: decode structured health signals
+      const signalsRaw = s.signals as Record<string, unknown> | undefined;
+      let signals: RoomHealthSignals | undefined;
+      if (signalsRaw && typeof signalsRaw === "object") {
+        const rw = signalsRaw.review_wait as Record<string, unknown> | undefined;
+        const ia = signalsRaw.issue_aging as Record<string, unknown> | undefined;
+        const ci = signalsRaw.ci as Record<string, unknown> | undefined;
+        const rel = signalsRaw.release as Record<string, unknown> | undefined;
+        signals = {
+          reviewWait: {
+            present: Boolean(rw?.present),
+            tone: _healthTone(rw?.tone ?? rw?.composite),
+            medianDays: Number(rw?.median_days ?? 0),
+            waitingCount: Number(rw?.waiting_count ?? 0),
+          },
+          issueAging: {
+            present: Boolean(ia?.present),
+            tone: _healthTone(ia?.tone),
+            agedCount: Number(ia?.aged_count ?? 0),
+          },
+          ci: {
+            present: Boolean(ci?.present),
+            tone: _healthTone(ci?.tone),
+            flakyCount: Number(ci?.flaky_branch_count ?? 0),
+            failuresLast3: Number(ci?.failures_last_3 ?? 0),
+          },
+          release: {
+            present: Boolean(rel?.present),
+            tone: _healthTone(rel?.composite),
+            composite: _healthTone(rel?.composite),
+            blockersCount: Number(rel?.blockers_count ?? 0),
+          },
+        };
+      }
+      // HS-173: decode people array
+      const peopleRaw = s.people as Record<string, unknown>[] | undefined;
+      let people: RoomHealthPerson[] | undefined;
+      if (Array.isArray(peopleRaw)) {
+        people = peopleRaw.map((p) => {
+          const prsRaw = p.prs as Record<string, unknown>[] | undefined;
+          const nudgeRaw = p.nudge as Record<string, unknown> | null | undefined;
+          return {
+            relationshipId: String(p.relationship_id ?? ""),
+            displayName: String(p.display_name ?? ""),
+            login: String(p.login ?? ""),
+            medianDays: Number(p.median_days ?? 0),
+            count: Number(p.count ?? 0),
+            prs: Array.isArray(prsRaw) ? prsRaw.map((pr) => ({
+              number: Number(pr.number ?? 0),
+              title: String(pr.title ?? ""),
+              url: String(pr.url ?? ""),
+              repo: pr.repo != null ? String(pr.repo) : undefined,
+              days: Number(pr.days ?? 0),
+            })) : undefined,
+            nudge: nudgeRaw ? {
+              stepId: String(nudgeRaw.step_id ?? ""),
+              state: String(nudgeRaw.state ?? "proposed") as "proposed" | "sent" | "dismissed" | "failed",
+              sentAt: nudgeRaw.sent_at != null ? String(nudgeRaw.sent_at) : null,
+              text: nudgeRaw.text != null ? String(nudgeRaw.text) : undefined,
+            } : null,
+          };
+        });
+      }
+      return {
+        assessment: (s.assessment === "at_risk" ? "at_risk" : "on_track") as "at_risk" | "on_track",
+        reason: s.reason != null ? String(s.reason) : null,
+        inputs: {
+          overdue: Number((s.inputs as Record<string, unknown> | undefined)?.overdue ?? 0),
+          ciFailing: Boolean((s.inputs as Record<string, unknown> | undefined)?.ciFailing),
+          reviewWaitingDays: (s.inputs as Record<string, unknown> | undefined)?.reviewWaitingDays != null
+            ? Number((s.inputs as Record<string, unknown>).reviewWaitingDays) : null,
+          targetPassed: Boolean((s.inputs as Record<string, unknown> | undefined)?.targetPassed),
+        },
+        signals,
+        checkedAt: s.checked_at != null ? String(s.checked_at) : null,
+        mergeQueueDepth: s.merge_queue_depth != null ? Number(s.merge_queue_depth) : undefined,
+        people,
+      };
+    }),
     sinceRead: decodeSection<RoomSinceReadData>(raw.sinceRead, (s) => ({
       readAt: s.readAt != null ? String(s.readAt) : null,
       groups: Array.isArray(s.groups)
@@ -728,4 +883,142 @@ export function decodeSuggestedSource(raw: Record<string, unknown>): RoomSuggest
       ? String(raw.status) : "pending") as "pending" | "accepted" | "dismissed",
     createdAt: String(raw.created_at ?? ""),
   };
+}
+
+/* ── HS-173: health tone helper ── */
+
+function _healthTone(raw: unknown): "green" | "amber" | "red" {
+  const s = String(raw ?? "green");
+  if (s === "amber" || s === "warning") return "amber";
+  if (s === "red" || s === "danger" || s === "failure") return "red";
+  return "green";
+}
+
+/* ── HS-173: health signal row resolver (pure, testable) ── */
+
+export type HealthRowResolved = {
+  key: string;
+  label: string;
+  tone: "green" | "amber" | "red";
+  tokens: string[];
+};
+
+/** Format days: whole when integral, one decimal otherwise (3 D, 1.5 D). */
+export function formatDays(d: number): string {
+  const rounded = Math.round(d * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
+/**
+ * Resolve which HEALTH rows are present and what they show.
+ * A row is present when its signal's `present` is true.
+ * Returns only the rows that should render (A.8: absent at zero data).
+ */
+export function resolveHealthRows(
+  signals: RoomHealthSignals | undefined,
+  mergeQueueDepth: number | undefined,
+): HealthRowResolved[] {
+  if (!signals) return [];
+
+  const rows: HealthRowResolved[] = [];
+
+  // REVIEW WAIT — tone from the wire (D2e thresholds live on the backend)
+  if (signals.reviewWait.present) {
+    const rw = signals.reviewWait;
+    const tone = rw.tone ?? "green";
+    const tokens: string[] = [];
+    tokens.push(`${formatDays(rw.medianDays)} D MEDIAN`);
+    tokens.push(`${rw.waitingCount} WAITING`);
+    rows.push({ key: "review_wait", label: "REVIEW WAIT", tone, tokens });
+  }
+
+  // ISSUE AGING — tone from the wire; CLEAR at zero aged (A.8)
+  if (signals.issueAging.present) {
+    const ia = signals.issueAging;
+    const tone = ia.tone ?? "green";
+    const tokens: string[] = [];
+    if (ia.agedCount > 0) {
+      tokens.push(`${ia.agedCount} > ${ia.thresholdDays ?? 14} D`);
+    } else {
+      tokens.push("CLEAR");
+    }
+    rows.push({ key: "issue_aging", label: "ISSUE AGING", tone, tokens });
+  }
+
+  // CI — tone from the wire; PASSING when no flaky and no queue (A.8)
+  if (signals.ci.present) {
+    const ci = signals.ci;
+    const tone = ci.tone ?? "green";
+    const tokens: string[] = [];
+    if (ci.flakyCount > 0) tokens.push(`${ci.flakyCount} FLAKY`);
+    const queueDepth = mergeQueueDepth ?? 0;
+    if (queueDepth > 0) tokens.push(`QUEUE ${queueDepth}`);
+    if (tokens.length === 0) tokens.push("PASSING");
+    rows.push({ key: "ci", label: "CI", tone, tokens });
+  }
+
+  // RELEASE — composite from the wire; READY at all-green
+  if (signals.release.present) {
+    const rel = signals.release;
+    const tone = rel.composite;
+    const tokens: string[] = [];
+    if (rel.composite === "green") {
+      tokens.push("READY");
+    } else {
+      if (rel.blockersCount > 0) {
+        tokens.push(rel.blockersCount === 1 ? "1 BLOCKER" : `${rel.blockersCount} BLOCKERS`);
+      } else {
+        tokens.push(rel.composite === "amber" ? "AT RISK" : "BLOCKED");
+      }
+    }
+    rows.push({ key: "release", label: "RELEASE", tone, tokens });
+  }
+
+  return rows;
+}
+
+/* ── HS-173: nudge card state machine ── */
+
+export type NudgeCardState =
+  | { phase: "closed" }
+  | { phase: "open"; text: string; busy: boolean; error?: string }
+  | { phase: "sent"; displayName: string; prNumber: number; sentAt: string }
+  | { phase: "failed"; text: string; reason: string };
+
+export type NudgeCardAction =
+  | { type: "open"; defaultText: string }
+  | { type: "setText"; text: string }
+  | { type: "sending" }
+  | { type: "sent"; displayName: string; prNumber: number; sentAt: string }
+  | { type: "failed"; reason: string }
+  | { type: "dismiss" };
+
+export function nudgeCardReducer(
+  state: NudgeCardState,
+  action: NudgeCardAction,
+): NudgeCardState {
+  switch (action.type) {
+    case "open":
+      return { phase: "open", text: action.defaultText, busy: false };
+    case "setText":
+      if (state.phase !== "open" && state.phase !== "failed") return state;
+      return { ...state, phase: "open", text: action.text, busy: false };
+    case "sending":
+      if (state.phase !== "open" && state.phase !== "failed") return state;
+      return { ...state, phase: "open", busy: true };
+    case "sent":
+      return {
+        phase: "sent",
+        displayName: action.displayName,
+        prNumber: action.prNumber,
+        sentAt: action.sentAt,
+      };
+    case "failed":
+      if (state.phase !== "open") return state;
+      return { phase: "failed", text: state.text, reason: action.reason };
+    case "dismiss":
+      return { phase: "closed" };
+    default:
+      return state;
+  }
 }

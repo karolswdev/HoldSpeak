@@ -29,6 +29,13 @@ from ..runtime_support import error_500
 log = get_logger("web.routes.project_updates")
 
 
+def _enrich_update(update: dict[str, Any]) -> dict[str, Any]:
+    """Add camelCase provenance keys for the face (HS-173-02)."""
+    update["generatorHost"] = update.get("generator_host")
+    update["generatorModel"] = update.get("generator_model")
+    return update
+
+
 def _request_hash(payload: dict[str, Any]) -> str:
     """Deterministic hash for idempotency (mirrors project_service)."""
     material = json.dumps(payload, sort_keys=True, separators=(",", ":"),
@@ -53,7 +60,7 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
             updates = ctx.project_update_service.list_updates(
                 principal(request), project_id, lifecycle=lifecycle,
             )
-            return JSONResponse({"updates": updates})
+            return JSONResponse({"updates": [_enrich_update(u) for u in updates]})
         except NotFound as exc:
             return JSONResponse(
                 {"code": exc.code, "message": exc.detail},
@@ -75,7 +82,7 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
                 principal(request), project_id,
                 generator=generator, command_id=cmd_id,
             )
-            return JSONResponse({"success": True, "update": result})
+            return JSONResponse({"success": True, "update": _enrich_update(result)})
         except NotFound as exc:
             return JSONResponse(
                 {"success": False, "code": exc.code, "message": exc.detail},
@@ -102,7 +109,7 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
                 principal(request), update_id,
                 body_md=body_md, command_id=cmd_id,
             )
-            return JSONResponse({"success": True, "update": result})
+            return JSONResponse({"success": True, "update": _enrich_update(result)})
         except PublishedUpdateError as exc:
             return JSONResponse(
                 {"success": False, "error_code": "published_update",
@@ -135,7 +142,7 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
                 principal(request), update_id,
                 generator=generator, command_id=cmd_id,
             )
-            return JSONResponse({"success": True, "update": result})
+            return JSONResponse({"success": True, "update": _enrich_update(result)})
         except PublishedUpdateError as exc:
             return JSONResponse(
                 {"success": False, "error_code": "published_update",
@@ -168,7 +175,7 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
             result = ctx.project_update_service.publish_update(
                 principal(request), update_id, command_id=cmd_id,
             )
-            return JSONResponse({"success": True, "update": result})
+            return JSONResponse({"success": True, "update": _enrich_update(result)})
         except PublishedUpdateError as exc:
             return JSONResponse(
                 {"success": False, "error_code": "published_update",

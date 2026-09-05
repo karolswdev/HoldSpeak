@@ -34,7 +34,7 @@ Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 GH_WATCH_FIELDS = (
     "number,title,url,state,isDraft,reviewRequests,reviewDecision,"
-    "statusCheckRollup,headRefOid,updatedAt"
+    "statusCheckRollup,headRefOid,updatedAt,createdAt"
 )
 
 
@@ -109,6 +109,7 @@ class GitHubWatchSource:
                 "reviewDecision": row.get("reviewDecision"),
                 "checks": rollup_conclusion(row.get("statusCheckRollup")),
                 "headRefOid": row.get("headRefOid"), "updatedAt": row.get("updatedAt"),
+                "createdAt": row.get("createdAt"),
             })
         return entities
 
@@ -116,14 +117,20 @@ class GitHubWatchSource:
     def _snapshot_branch_ci(
         self, principal: Principal, query: dict[str, Any],
     ) -> list[dict[str, Any]]:
-        """CI status on the base branch: `gh run list --branch <base> --limit 1`."""
+        """CI status on the base branch: `gh run list --branch <base> --limit N`.
+
+        HS-173: the steward's OBSERVE phase passes ``limit=10`` in the
+        query to get CI history for flaky-branch detection; the normal
+        Watch evaluation keeps the default of 1.
+        """
         repository = str(query.get("repository") or "").strip()
         if "/" not in repository or repository.startswith("/") or repository.endswith("/"):
             raise ValidationError("branch_ci requires repository as owner/name")
         base = str(query.get("base") or "main").strip()
+        ci_limit = max(1, min(int(query.get("limit", 1)), 100))
         command = [
             "gh", "run", "list", "--repo", repository,
-            "--branch", base, "--limit", "1",
+            "--branch", base, "--limit", str(ci_limit),
             "--json", GH_BRANCH_CI_FIELDS,
         ]
         if not github_cli.is_command_allowed(command):

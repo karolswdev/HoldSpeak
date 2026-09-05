@@ -510,19 +510,23 @@ def _build_model_prompt(inventory_claims: list[Claim]) -> dict[str, Any]:
             inventory_lines.append(f"- (empty section -- use: {honest!r})")
 
     system_prompt = (
-        "You are a technical project update writer. Given the evidence "
-        "inventory below, rewrite each section with clear, professional "
-        "prose. Every sentence MUST cite its source references.\n\n"
+        "You are a stakeholder update writer. Rewrite the evidence "
+        "inventory below into clear, concise prose that a non-technical "
+        "stakeholder can read. Do NOT add any facts, conclusions, or "
+        "commentary beyond what the inventory states.\n\n"
         "RULES:\n"
-        "1. Every sentence must cite at least one ref from the inventory "
+        "1. Every sentence MUST cite at least one ref from the inventory "
         "using the EXACT ref strings provided.\n"
-        "2. If you add a sentence with no evidence backing, set "
-        "cited_refs to an empty list.\n"
-        "3. Use ONLY refs from the inventory -- never invent refs.\n"
+        "2. Preserve every ref from the inventory verbatim -- never "
+        "invent, abbreviate, or paraphrase a ref.\n"
+        "3. Do NOT add facts, analysis, or value judgments that are not "
+        "grounded in the inventory. If you write a sentence that is "
+        "not directly supported by an inventory entry, set cited_refs "
+        "to an empty list so it can be flagged for review.\n"
         "4. Cover all six sections in order: progress, decisions, "
         "risks_blockers, dependencies, next_actions, source_coverage.\n"
         "5. For empty sections, write the honest minimal line.\n"
-        "6. Keep prose concise and factual.\n\n"
+        "6. Keep prose concise and factual -- no filler.\n\n"
         "Respond with ONLY a JSON object:\n"
         '{"sections": [{"key": "<section_key>", "sentences": '
         '[{"text": "<sentence>", "cited_refs": ["<ref1>", ...]}]}]}'
@@ -651,6 +655,49 @@ def _resolve_for_capability(
         return str(rev["id"]), assignment_id
 
 
+# ── Generator provenance (HS-173-02) ─────────────────────────────────
+
+def _resolve_generator_provenance(
+    db: Any,
+    deployment_rev_id: str,
+) -> tuple[str, str]:
+    """Derive generator host and model display name from a deployment revision.
+
+    Returns ``(host, model_display_name)``.
+    Host is derived the same way as 172's ``_placement_host``: node if
+    present, else ``endpoint_host(endpoint)``, else boundary or ``"local"``.
+    Model display name uses the Concierge's ``engine_display_name``.
+    """
+    from ..intel.providers import endpoint_host
+    from .concierge_service import engine_display_name
+
+    rev = db.deployment_revisions.get(deployment_rev_id)
+    if rev is None:
+        return ("local", "Unknown engine")
+
+    # Host: same derivation as _placement_host in settings route.
+    if rev.node:
+        host = str(rev.node)
+    else:
+        host = endpoint_host(rev.endpoint)
+        if not host:
+            host = rev.boundary or "local"
+
+    # Model display name: look up the profile for its name and model fields.
+    profile = db.profiles.get(rev.model)
+    if profile is not None:
+        display, quant = engine_display_name(
+            profile_name=profile.name or profile.id,
+            profile_model=str(getattr(profile, "model", "") or ""),
+        )
+    else:
+        # Fallback to the deployment revision's own engine field.
+        display, quant = engine_display_name(profile_name=rev.engine)
+
+    model_name = f"{display} {quant}".strip() if quant else display
+    return host, model_name
+
+
 # ── The service ───────────────────────────────────────────────────────
 
 class ProjectUpdateService:
@@ -682,10 +729,11 @@ class ProjectUpdateService:
         det_claims: list[Claim],
         det_sections: dict[str, str],
         det_body_md: str,
-    ) -> tuple[str, str, str]:
+    ) -> tuple[str, str, str, str | None, str | None]:
         """Attempt model drafting over the deterministic evidence inventory.
 
-        Returns ``(body_md, claims_json, generator)`` on success.
+        Returns ``(body_md, claims_json, generator, generator_host,
+        generator_model)`` on success.
         Raises ``_ModelDraftFailed`` on any failure (router unavailable,
         model error, timeout, unparseable output).
         """
@@ -706,6 +754,16 @@ class ProjectUpdateService:
             )
         except RuntimeError as exc:
             raise _ModelDraftFailed(f"no_assignment: {exc}") from exc
+
+        # HS-173-02: derive generator provenance from the deployment revision.
+        gen_host: str | None = None
+        gen_model: str | None = None
+        try:
+            gen_host, gen_model = _resolve_generator_provenance(
+                broker.database, deployment_rev_id,
+            )
+        except Exception:
+            pass  # Provenance is best-effort; never fails the draft.
 
         # Build the evidence inventory from deterministic claims.
         inventory_refs: frozenset[str] = frozenset(
@@ -763,7 +821,7 @@ class ProjectUpdateService:
             separators=(",", ":"),
         )
         generator = f"model:{assignment_id}"
-        return body_md, claims_json, generator
+        return body_md, claims_json, generator, gen_host, gen_model
 
     def draft_update(
         self,
@@ -852,9 +910,11 @@ class ProjectUpdateService:
         )
 
         # 7. Choose body + claims based on generator.
+        actual_host: str | None = None
+        actual_model: str | None = None
         if want_model:
             try:
-                body_md, claims_json, actual_generator = (
+                body_md, claims_json, actual_generator, actual_host, actual_model = (
                     self._draft_with_model(
                         principal, det_claims, det_sections, det_body_md,
                     )
@@ -867,6 +927,8 @@ class ProjectUpdateService:
                 body_md = det_body_md
                 claims_json = det_claims_json
                 actual_generator = "deterministic"
+                actual_host = None
+                actual_model = None
         else:
             body_md = det_body_md
             claims_json = det_claims_json
@@ -889,6 +951,8 @@ class ProjectUpdateService:
                     claims_json=claims_json,
                     source_manifest_json=manifest_json,
                     generator=actual_generator,
+                    generator_host=actual_host,
+                    generator_model=actual_model,
                 )
                 return new_row
             except PublishedUpdateError:
@@ -912,6 +976,8 @@ class ProjectUpdateService:
             claims_json=claims_json,
             source_manifest_json=manifest_json,
             generator=actual_generator,
+            generator_host=actual_host,
+            generator_model=actual_model,
         )
         return self._db.project_updates.get_update(new_id)
 

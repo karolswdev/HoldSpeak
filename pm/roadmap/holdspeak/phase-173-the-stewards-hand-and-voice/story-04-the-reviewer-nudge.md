@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 173
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-173-03
 - **Unblocks:** HS-173-06
 - **Owner:** unassigned
@@ -44,21 +44,21 @@ admitted, receipted).
 
 ## Acceptance criteria
 
-- [ ] `github.comment` is a registered effect kind in EFFECT_KINDS.
-- [ ] The effect is opt-in: a project without `github.comment` in
+- [x] `github.comment` is a registered effect kind in EFFECT_KINDS.
+- [x] The effect is opt-in: a project without `github.comment` in
       `eligible_effect_kinds_json` cannot trigger it; verified by a
       unit test.
-- [ ] The effect fires only with explicit owner approval (Article V);
+- [x] The effect fires only with explicit owner approval (Article V);
       verified by a rig that proposes a nudge and asserts it does not
       execute without approval.
-- [ ] The terminal receipt contains: comment URL, PR number, reviewer
+- [x] The terminal receipt contains: comment URL, PR number, reviewer
       name, timestamp, approval principal; verified by reading the
       receipt after an approved nudge.
-- [ ] The comment is posted via `gh pr comment` (never a raw REST
+- [x] The comment is posted via `gh pr comment` (never a raw REST
       call); verified by asserting the subprocess call.
-- [ ] Counsel reads the nudge implementation (a counsel pass is part
+- [x] Counsel reads the nudge implementation (a counsel pass is part
       of the acceptance).
-- [ ] The nudge card shows the proposed comment text before approval
+- [x] The nudge card shows the proposed comment text before approval
       (Article V: the user sees what will happen).
 
 ## Test plan

@@ -25,6 +25,7 @@ import {
   type ChipState,
 } from "../../../desk/surface";
 import { openSourceRef } from "../../../desk/surface/citations";
+import { egressFor } from "../../../desk/surface/egress";
 import type { UpdateController } from "./useUpdateController";
 import type { ProjectUpdate, UpdateClaim } from "./model";
 import {
@@ -35,6 +36,7 @@ import {
   lifecycleTone,
   provenancePhrase,
   refChipLabel,
+  refIdentityLabel,
   refKind,
 } from "./model";
 import "./update-posture.css";
@@ -72,7 +74,7 @@ function SectionSourceRow({
   onOpen: (ref: string) => void;
 }) {
   const seen = new Set<string>();
-  const uniqueRefs: { ref: string; title: string }[] = [];
+  const uniqueRefs: { ref: string; title: string; verified: boolean }[] = [];
   for (const claim of claims) {
     for (const ref of claim.refs) {
       if (!seen.has(ref)) {
@@ -81,48 +83,96 @@ function SectionSourceRow({
         uniqueRefs.push({
           ref,
           title: derived ?? refChipLabel(ref),
+          verified: claim.verified,
         });
       }
     }
   }
-  const hasUnverifiedNoRef = claims.some((c) => !c.verified && c.refs.length === 0);
+  const unverifiedNoRef = claims.filter((c) => !c.verified && c.refs.length === 0);
 
-  if (uniqueRefs.length === 0 && !hasUnverifiedNoRef) return null;
+  if (uniqueRefs.length === 0 && unverifiedNoRef.length === 0) return null;
 
   return (
     <div data-testid="update-source-row">
-      {uniqueRefs.map(({ ref, title }) => {
+      {uniqueRefs.map(({ ref, title, verified }) => {
         const kind = refChipLabel(ref);
         return (
-          <button
-            key={ref}
-            type="button"
-            className="desk-chip quiet"
-            data-testid="update-claim-ref"
-            data-ref={ref}
-            data-ref-kind={refKind(ref)}
-            title={`${kind}: ${ref}`}
-            aria-label={`${kind}: ${title}`}
-            onClick={() => onOpen(ref)}
-          >
-            {title}
-          </button>
+          <span key={ref} className="update-claim-chip-group">
+            <button
+              type="button"
+              className="desk-chip quiet"
+              data-testid="update-claim-ref"
+              data-ref={ref}
+              data-ref-kind={refKind(ref)}
+              title={`${kind}: ${ref}`}
+              aria-label={`${kind}: ${title}`}
+              onClick={() => onOpen(ref)}
+            >
+              {title}
+            </button>
+            {!verified ? (
+              <span data-testid="update-claim-unverified">
+                <StateChip state="failure" label="UNVERIFIED" />
+              </span>
+            ) : null}
+          </span>
         );
       })}
-      {hasUnverifiedNoRef ? (
-        <span
-          className="surface-token"
-          data-tone="warn"
-          data-testid="update-claim-unverified"
-        >
-          Contains unverified claims
+      {unverifiedNoRef.map((claim) => (
+        <span key={claim.spanId} data-testid="update-claim-unverified">
+          <StateChip state="failure" label="UNVERIFIED" />
         </span>
-      ) : null}
+      ))}
     </div>
   );
 }
 
-/* ── Rendered document view: Material body + citations + ActionNotice ── */
+/* ── HS-173-02: Inline claims view — each sentence with its chip(s) ── */
+
+function InlineClaimsView({
+  claims,
+  onOpen,
+}: {
+  claims: UpdateClaim[];
+  onOpen: (ref: string) => void;
+}) {
+  if (claims.length === 0) return null;
+
+  return (
+    <div className="update-inline-claims" data-testid="update-inline-claims">
+      {claims.map((claim) => (
+        <div key={claim.spanId} className="update-inline-claim" data-testid="update-inline-claim">
+          <span className="update-inline-claim-text">{claim.text}</span>
+          {claim.refs.map((ref) => {
+            const label = refIdentityLabel(ref);
+            return (
+              <button
+                key={ref}
+                type="button"
+                className="desk-chip quiet"
+                data-testid="update-claim-ref"
+                data-ref={ref}
+                data-ref-kind={refKind(ref)}
+                title={ref}
+                aria-label={label}
+                onClick={() => onOpen(ref)}
+              >
+                {label}
+              </button>
+            );
+          })}
+          {!claim.verified ? (
+            <span data-testid="update-claim-unverified">
+              <StateChip state="failure" label="UNVERIFIED" />
+            </span>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Rendered document view: Material body + citations ── */
 
 function RenderedUpdateDocument({
   update,
@@ -145,23 +195,12 @@ function RenderedUpdateDocument({
     grouped[s].push(claim);
   }
 
-  const hasUnverified = claims.some((c) => !c.verified);
-
   return (
     <div data-testid="update-document">
       {/* The rendered markdown body is the hero */}
       <div className="update-document-body" data-testid="update-document-body">
         <Material>{update.bodyMd}</Material>
       </div>
-
-      {/* D6: unverified claim as ActionNotice in flow */}
-      {hasUnverified ? (
-        <div data-testid="update-unverified-banner" role="status">
-          <ActionNotice tone="warn">
-            Some claims in this update could not be verified
-          </ActionNotice>
-        </div>
-      ) : null}
 
       {/* D6: source rows per section (CitationChips grammar, deduplicated) */}
       {sectionOrder.length > 0 ? (
@@ -373,9 +412,9 @@ function UpdateEditor({
         </div>
       )}
 
-      {/* Draft claims: citations below the editor */}
+      {/* HS-173-02: inline claims — each sentence with its chip(s) beside it */}
       {isDraft && update.claims.length > 0 ? (
-        <RenderedUpdateDocument update={update} onOpenRef={onOpenRef} />
+        <InlineClaimsView claims={update.claims} onOpen={onOpenRef} />
       ) : null}
 
       {/* Back verb stays inside the editor (non-portalling, glass locator compat) */}
@@ -470,9 +509,20 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
 
         <SurfaceFooter
           egress={
-            ctrl.current?.generator.startsWith("model:")
-              ? <EgressChip label="model" scope="mixed" title={`Model: ${generatorChipBoundary(ctrl.current.generator)}`} />
-              : <ProvenanceChip source="deterministic" />
+            ctrl.current && ctrl.current.generator !== "deterministic" && ctrl.current.generatorHost
+              ? <>
+                  {ctrl.current.generatorModel ? (
+                    <span className="surface-token" data-chip data-testid="update-footer-model">
+                      {ctrl.current.generatorModel.toUpperCase()}
+                    </span>
+                  ) : null}
+                  <EgressChip
+                    label={egressFor(ctrl.current.generatorHost).label}
+                    scope={egressFor(ctrl.current.generatorHost).scope}
+                    title={`Generated by ${ctrl.current.generatorModel ?? "model"} on ${ctrl.current.generatorHost}`}
+                  />
+                </>
+              : undefined
           }
           receipt={
             <span className="surface-footer-receipt-line" data-testid="update-footer-receipt" role="status">

@@ -229,6 +229,35 @@ name, or relationship detail appears in plaintext outside the People store.
 Intelligence runs on the model's assigned host, named at the point of
 decision by the egress chip.
 
+**The reviewer nudge boundary.** The reviewer nudge is
+the steward's first external write. The only subprocess it may run is
+`gh pr comment` (the `GITHUB_PR_COMMENT_MANIFEST` at
+`github_pr_actuator.py:18` permits exactly one argv prefix:
+`("gh", "pr", "comment")`). Two independent gates block execution: the
+policy eligibility gate (the `github_comment` effect kind must be explicitly
+added to the project's `eligible_effect_kinds_json`; the default is empty)
+and the per-nudge approval gate (the owner presses Send on the nudge card
+after reading the exact comment text and the `GITHUB.COM` host badge). Either
+gate alone is sufficient to prevent the write.
+
+The comment posts from the owner's own authenticated `gh` CLI identity.
+No People data leaves the machine: the reviewer's display name stays inside
+the People store read (the resolver boundary above applies); the reviewer's
+GitHub login is what GitHub already knows. The nudge text carries no personal
+name by default (`Flagged by HoldSpeak.`, not `on behalf of [owner]`);
+the template is editable per project and per nudge.
+
+The receipt persists in the service event ledger: the comment URL, PR number,
+reviewer name, timestamp, host (`github.com`), and approval principal. Refusal
+and failure are also receipted with a named reason. No Undo: a posted comment
+cannot be retracted by HoldSpeak.
+
+The model drafter's egress: when the steward drafts a project update using a
+model, the prompt and the model output transit to the host named by the
+deployment revision (for example `192.168.1.43` on the LAN, or a configured
+cloud endpoint). The model's display name and host appear in the update
+footer's egress chip. The deterministic fallback has no egress.
+
 **Residual risk:** if the machine is compromised at the file level and full-disk
 encryption is off, transcripts, voice embeddings, and the activity ledger are
 readable. We accept this for the local-first, single-user model and **recommend

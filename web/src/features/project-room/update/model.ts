@@ -26,6 +26,8 @@ export type ProjectUpdate = {
   claims: UpdateClaim[];
   sourceManifestJson: string;
   generator: string;
+  generatorHost: string | null;
+  generatorModel: string | null;
   fallbackReason: string | null;
   createdAt: string;
   updatedAt: string;
@@ -78,6 +80,8 @@ export function decodeUpdate(raw: Record<string, unknown>): ProjectUpdate {
     claims,
     sourceManifestJson: String(raw.source_manifest_json ?? "{}"),
     generator: String(raw.generator ?? "deterministic"),
+    generatorHost: raw.generatorHost != null ? String(raw.generatorHost) : null,
+    generatorModel: raw.generatorModel != null ? String(raw.generatorModel) : null,
     fallbackReason: raw.fallback_reason != null
       ? String(raw.fallback_reason)
       : null,
@@ -189,6 +193,39 @@ export function refChipLabel(ref: string): string {
   const kindWord = REF_PREFIX_LABELS[prefix];
   if (kindWord) return `Open ${kindWord.toLowerCase()}`;
   return "Open";
+}
+
+// HS-173-02: Jira-key pattern (ABC-123) and PR pattern (pr-123).
+const JIRA_KEY_RE = /^[a-zA-Z]+-\d+$/;
+const PR_REF_RE = /^pr-(\d+)$/i;
+const MEETING_DATE_RE = /^(\d{4})-?(\d{2})-?(\d{2})/;
+
+/** Short identity label for a ref, matching the board grammar:
+ *  `PR #612`, `KAN-7`, `MTG 09-05`. One chip per ref. */
+export function refIdentityLabel(ref: string): string {
+  const colon = ref.indexOf(":");
+  if (colon < 0) return ref;
+  const prefix = ref.slice(0, colon);
+  const id = ref.slice(colon + 1);
+
+  // Meeting refs: MTG MM-DD (from the meeting id or a date-like id)
+  if (prefix === "meeting") {
+    const dateMatch = id.match(MEETING_DATE_RE);
+    if (dateMatch) {
+      return `MTG ${dateMatch[2]}-${dateMatch[3]}`;
+    }
+    return `MTG ${id}`.toUpperCase();
+  }
+
+  // PR refs: PR #<number>
+  const prMatch = id.match(PR_REF_RE);
+  if (prMatch) return `PR #${prMatch[1]}`;
+
+  // Jira-key refs: uppercase (KAN-7)
+  if (JIRA_KEY_RE.test(id)) return id.toUpperCase();
+
+  // Fallback: uppercase the id
+  return id.toUpperCase();
 }
 
 /** Strip a "Kind [severity]:" prefix from a claim text to get the

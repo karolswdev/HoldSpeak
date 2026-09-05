@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 173
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** Phase 172
 - **Unblocks:** HS-173-02, HS-173-03, HS-173-04, HS-173-05
 - **Owner:** unassigned
@@ -35,17 +35,17 @@ cannot be built to canon.
 
 ## Acceptance criteria
 
-- [ ] Artboards at 1440 + 393 on the ratified shell for every new face
+- [x] Artboards at 1440 + 393 on the ratified shell for every new face
       region (Article IX.2; UX-CANON.md rule E.1).
-- [ ] Counsel reads the artboards before the owner (UX-CANON.md rule
+- [x] Counsel reads the artboards before the owner (UX-CANON.md rule
       E.1).
-- [ ] The owner's word on the canvas (Article IX.4).
-- [ ] No prose in the artboards (Article VII.1; UX-CANON.md rule A.3).
-- [ ] Every artboard uses at least three type steps (UX-CANON.md rule
+- [x] The owner's word on the canvas (Article IX.4).
+- [x] No prose in the artboards (Article VII.1; UX-CANON.md rule A.3).
+- [x] Every artboard uses at least three type steps (UX-CANON.md rule
       C).
-- [ ] The nudge approval card shows the proposed comment text, the
+- [x] The nudge approval card shows the proposed comment text, the
       target PR, and the receipt placeholder.
-- [ ] The egress chip appears on the model-drafted update card
+- [x] The egress chip appears on the model-drafted update card
       (Article III).
 
 ## Test plan

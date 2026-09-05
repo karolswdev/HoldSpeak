@@ -13,6 +13,11 @@ the Door's, the Arrival's, the Heartbeat's, and the Loop Closes' grammar
 (Phases 169--172) are the ratified precedent.
 
 
+> **ON THE CANVAS (2026-09-05)** — nine boards published at
+> https://claude.ai/code/artifact/9f1558b4-0867-4152-bc7e-1314dde5e82c ;
+> counsel reading; faces build to the ratified boards under the standing
+> goal; **his word gates the merge** (stacked on 172 #555).
+
 ## D0 -- the Tuesday moment
 
 Monday 18:00. The steward's unattended run drafts this week's update.
@@ -28,7 +33,7 @@ model's host. He opens the update, edits two sentences, presses
 
 Tuesday 09:00. The Room's HEALTH section reads:
 
-    REVIEW LATENCY  47 H MEDIAN  3 WAITING
+    REVIEW WAIT     3 D MEDIAN   3 WAITING
     ISSUE AGING     4 > 14 D
     CI              2 FLAKY  QUEUE 3
     RELEASE         READY
@@ -53,7 +58,7 @@ names the host and the URL.
 | Every external effect admitted and receipted | Constitution Article XI:2 | The nudge is admitted through the kernel before it acts; the terminal receipt records comment URL, PR number, reviewer name, timestamp, approval principal; refusal and failure also receipted |
 | The nudge names its host and its exact text before it goes | Constitution Article III, V | The nudge card shows the proposed comment in full (editable); the host chip reads `GITHUB.COM`; `Send` is the chokepoint; the comment text the owner sees IS the text that posts |
 | Never a nudge without his word on that project | Article V:1, the policy gate | The effect kind gate at project_steward_service.py:898 refuses any effect kind not in the project's eligible list; the Approve step is per-nudge (the owner presses `Send` on each one) |
-| No counters of zero | UX-CANON.md rule A.8 | HEALTH rows absent when no data; REVIEW LATENCY absent when no pending reviews; RELEASE READINESS absent when no signals have data; the section label carries no `0` |
+| No counters of zero | UX-CANON.md rule A.8 | HEALTH rows absent when no data; REVIEW WAIT absent when no pending reviews; RELEASE READINESS absent when no signals have data; the section label carries no `0` |
 | Every verb the library Button | UX-CANON.md rule A.1 | `Send` (primary), `Dismiss` (ghost), `Nudge` (ghost dense), `Publish` / `Copy` / `Save` on the update, `Edit` (inline) -- all library Button |
 | No prose | UX-CANON.md rule A.3 | Tokens, verbs, counts, names. The HEALTH rows are token strips. The nudge card is structured, not a paragraph |
 | No modals | UX-CANON.md rule A.4 | The nudge card unfolds inline under the NEEDS YOU row; the update editor is the existing in-world posture |
@@ -109,9 +114,9 @@ inline).
 ### (b) The Room's HEALTH rows
 
 **Position:** a new HEALTH section inside the Room, between the
-headline chips (ProjectRoomCore.tsx:255-263, the existing AT RISK / ON
+headline chips (ProjectRoomCore.tsx:285-294, the existing AT RISK / ON
 TRACK health assessment) and the NEEDS YOU section
-(ProjectRoomCore.tsx:299). The HEALTH section is absent when no signals
+(ProjectRoomCore.tsx:469). The HEALTH section is absent when no signals
 have data (rule A.8).
 
 **Section caption:** `HEALTH` (caption step, 11 mono uppercase 0.06em).
@@ -120,18 +125,18 @@ be a counter of implementation, not of reality).
 
 **Rows** (SurfaceLedgerRow, 52px lead slot, one per signal with data):
 
-1. **REVIEW LATENCY** (when at least one person has a computable
-   median):
+1. **REVIEW WAIT** (when at least one open PR carries a review request;
+   days from `createdAt`, never a latency the system does not have):
    - Lead: StateChip `*` (green <= 24 h, amber 24--48 h, red > 48 h;
      the worst person's median sets the tone).
-   - Primary (15/600): `REVIEW LATENCY`.
-   - Cells (secondary step, 12 mono): `47 H MEDIAN` (the overall
-     median across all reviewers) -- `3 WAITING` (count of PRs with
-     pending reviewRequests).
+   - Primary (15/600): `REVIEW WAIT`.
+   - Cells (secondary step, 12 mono): `3 D MEDIAN` (the overall
+     median wait in days across waiting PRs) -- `3 WAITING` (count of
+     PRs with pending reviewRequests).
    - Trailing: no verb (the nudge lives on the per-person NEEDS YOU
      row, not here).
 
-2. **ISSUE AGING** (when at least one issue exceeds the aging
+2. **ISSUE AGING** (when Jira entities exist; `CLEAR` at zero past the
    threshold):
    - Lead: StateChip `*` (green = 0 aged, amber = 1--2, red = 3+).
    - Primary: `ISSUE AGING`.
@@ -396,7 +401,7 @@ fields. Two practical approaches:
 
 **Recommended:** option 2 (add `createdAt`). It is a read-only field
 addition to the `gh pr list --json` call; no new CLI subcommand needed;
-no write; the allowlist at github_cli.py:78 is unaffected (the
+no write; the allowlist at connector_packs/github_cli.py:78 is unaffected (the
 allowlist gates subcommand/verb pairs, not field names). The
 approximation is honest: the face says `WAITING N DAYS` (from
 createdAt), not `REVIEW LATENCY N H` (from a timestamp the system does
@@ -440,7 +445,7 @@ request the last N runs (e.g. `--limit 10`). This means either:
 derivation. This keeps the Watch's 1-latest snapshot lightweight for the
 normal evaluation cadence, while the steward (running less frequently)
 pays the cost of the deeper history. The allowlist permits `("run",
-"list")` (github_cli.py:34, already present).
+"list")` (connector_packs/github_cli.py:34, already present).
 
 **Merge-queue depth:**
 
@@ -481,7 +486,7 @@ the follow-through service's PR comment and status effects. The
 this actuator identically -- the only new code is the steward's effect
 handler that builds the proposal payload and passes it to the connector.
 
-**The `gh` allowlist:** the Watch-side allowlist (github_cli.py:30) is
+**The `gh` allowlist:** the Watch-side allowlist (connector_packs/github_cli.py:30) is
 read-only: `pr view`, `pr list`, `issue view`, `run list`. The
 actuator's allowlist is separate: `GITHUB_PR_COMMENT_MANIFEST.
 allowed_argv_prefixes` = `(("gh", "pr", "comment"),)` (github_pr_
@@ -638,3 +643,76 @@ projects:
 | 08 The hygiene lane | S--M | Depends on which files the phase touches |
 | 09 The close | S | Suite, baseline, canon ratchet, counsel, PR |
 | **Total** | **M--L** | The constitutional weight (the first external write) is the risk, not the LOC |
+
+
+## Addendum — counsel RATIFY-W-C on the design (2026-09-05) and the orchestrator's rulings
+
+Six conditions, ten findings; every cited seam verified to exist. Ruled:
+
+- **C1 — honest vocabulary.** The row is `REVIEW WAIT`, never `REVIEW
+  LATENCY`: the system has PR `createdAt`, not the review-request time.
+  Cells `3 D MEDIAN · 3 WAITING` (days, from createdAt). The
+  bottleneck row under NEEDS YOU reads `REVIEW BOTTLENECK · 3 D MEDIAN
+  · 3 PRS WAITING`. D2b and the boards are corrected. (Article VI:1.)
+- **C2 + C3 — the green state is present, with named tokens.** A
+  HEALTH row is present whenever its SOURCE has entities (Jira
+  entities → ISSUE AGING; branch_ci entities → CI; PRs with review
+  requests → REVIEW WAIT; any of them → RELEASE) and absent only when
+  the source has none. At green: ISSUE AGING reads `CLEAR` (zero issues
+  past the threshold), CI reads `PASSING` (last three runs pass, no
+  flaky branch), REVIEW WAIT keeps its real numbers, RELEASE reads
+  `READY`. No zero counters anywhere (A.8).
+- **C4 — the nudge text carries no personal name.** The comment posts
+  from the owner's own `gh` identity, which already attributes it; the
+  default template is `This PR has been waiting for review for N days.
+  Flagged by HoldSpeak.` — no `[owner]`, no People data leaves the
+  machine. The per-project default template lives in the steward
+  policy (editable); every nudge is still editable before Send.
+- **C5 — the receipt names who.** `SENT · Ania Kowalska · #612 · 18:02
+  · GITHUB.COM` (the display name as stored; the lead is the success
+  chip; the emblem of the source is GITHUB.COM in the chip).
+- **C6 — the health call site is tested end to end.** Story 03's test
+  plan gains a rig through `GET /api/projects/{id}/room` (seeded
+  snapshots → health payload → the HEALTH rows on the face), per the
+  172 law: a new entry point needs a production call site and one test
+  through the real seam.
+- **P2-7 — the model is named.** The update footer reads `<engine
+  display name> · <host> · LAN` using the Concierge's
+  `engine_display_name` (170), so a reader sees which model drafted.
+- **P2-8 — staleness once.** The HEALTH section caption carries one
+  `CHECKED N MIN AGO` token (the snapshots share the Watch cadence), at
+  both widths; not per row.
+- **P2-9 — paths corrected** in this document.
+- **P2-10 — story 06** stays in progress (the runner is drafted with
+  TODO selectors, the 172 precedent); its acceptance waits on 02/04/05.
+
+Counsel's three questions for the owner are in the handover: the
+attribution of the nudge text (ruled: tool named, no personal name,
+editable); the createdAt approximation (ruled: the face says WAIT in
+days, never LATENCY); the 7-day cooldown made visible (`NUDGED 3 D AGO`
+on the bottleneck row while cooling — adopted).
+
+
+## Addendum — counsel on the BUILT phase (2026-09-05): RATIFY-W-C, paid
+
+Two conditions, five findings; every call site verified in production
+(ACT → `_effect_github_comment` gated by eligible kinds; OBSERVE →
+`_collect_ci_history`; the Room read → the health derivations; the
+unattended draft → the model drafter with provenance); every
+design-stage condition C1–C6 and P2-7/8/9 verified PAID.
+
+- **C1** — story 05's evidence had selected nothing (a `-k` expression
+  as one identifier). Recaptured on the health wire + rig (49 passed).
+  Law: read the pass line before a flip.
+- **C2** — `NUDGED 0 D AGO` between one and twelve hours. Paid: hours
+  under a day (`NUDGED 3 H AGO`), never zero; tests.
+- **F2** — the resolver's per-reviewer skip now logs at debug.
+- **F3** — the nudge text is bounded at 2000 characters on the wire.
+- **F4/F5** — `CHECKED <age>` adapts to age (honest); `Regenerate` is
+  162's verb, not a 173 addition.
+
+Counsel's three questions, ruled: the first-day token reads hours
+(done); `Open` on the bottleneck row opens the People card (the
+reviewer is a person; the PR link lives on the card); `PER-NUDGE
+APPROVAL` stays a token under the checkbox (no prose; the card itself
+is the second gate the owner meets).

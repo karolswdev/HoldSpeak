@@ -146,6 +146,12 @@
   flex-shrink: 0;
 }
 
+/* ── HS-173-04: nudge approval token ── */
+
+.steward-policy-nudge-approval {
+  padding-top: 2px;
+}
+
 /* ── R4: grant tokens — separate chips, 6px gap ── */
 
 .steward-grant-tokens {

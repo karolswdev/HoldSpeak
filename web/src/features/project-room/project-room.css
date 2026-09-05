@@ -441,6 +441,120 @@
   flex: none;
 }
 
+/* ── HS-173: HEALTH section ── */
+.room-health-label {
+  font-weight: 600;
+}
+
+/* ── HS-173-04: bottleneck row verbs ── */
+.room-bottleneck-verbs {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  flex: none;
+}
+.room-nudge-cooldown {
+  color: var(--accent, #a86e4a);
+  font-weight: 600;
+}
+
+/* ── HS-173-04: nudge card ── */
+.room-nudge-card-row {
+  list-style: none;
+  padding: 0 var(--desk-surface-row-pad-x, 14px) 0 26px;
+}
+.room-nudge-card-who {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.room-nudge-card-pr {
+  margin-bottom: 6px;
+}
+.room-nudge-pr-link {
+  color: var(--accent, #a86e4a);
+  text-decoration: none;
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+}
+.room-nudge-pr-link:hover {
+  text-decoration: underline;
+}
+.room-nudge-pr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+.room-nudge-pr-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.room-nudge-card-text {
+  margin-bottom: 8px;
+}
+.room-nudge-card-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.room-nudge-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.room-nudge-card-verbs {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* HS-173-04: receipt row — display name as stored, not mono caps */
+.room-nudge-receipt-name {
+  font-family: var(--font-sans, Inter, sans-serif);
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+}
+
+/* ── HS-173: 393 stacking for health + nudge ── */
+@container surface (max-width: 559px) {
+  /* HS-173: HEALTH rows keep lead dot on the same line as the primary
+     (board RoomHealthPhone.png); only cells fall under. Override the
+     room cols' flex: 1 1 100% on the primary — match its specificity. */
+  .surface-ledger[data-cols="room"] .room-health-rows .surface-ledger-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .surface-ledger[data-cols="room"] .room-health-rows .surface-ledger-primary {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .surface-ledger[data-cols="room"] .room-health-rows .surface-ledger-line > .surface-ledger-primary ~ .surface-token {
+    flex: 0 0 100%;
+    margin-left: 26px;
+    margin-top: 2px;
+  }
+  .room-nudge-card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .room-nudge-card-verbs {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .room-bottleneck-verbs {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+  }
+}
+
 /* ── legacy ── */
 .project-room-degraded {
   padding: 4px var(--desk-surface-row-pad-x, 14px);

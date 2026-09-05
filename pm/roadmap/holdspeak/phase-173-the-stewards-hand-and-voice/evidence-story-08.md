@@ -1,0 +1,44 @@
+# Evidence - HS-173-08
+
+- **Story:** HS-173-08 - The hygiene lane (items from THE-TUESDAY-ARC.md section 4 this phase touches)
+- **Status:** done
+- **Date:** 2026-09-05
+
+## Proof
+
+### Captured run — 2026-09-05T18:57:09Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.bm59DKO3FV uv run pytest -q -p no:cacheprovider tests/unit/test_no_positional_inserts.py tests/unit/test_backend_density_guard.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 5bdd3124778d5ec4ebfedde458e29308c8027de9
+
+```text
+..........                                                               [100%]
+10 passed in 1.12s
+```
+
+### Captured run — 2026-09-05T18:57:30Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.q39rb2oBbp uv run pytest -q -p no:cacheprovider tests/unit/test_no_positional_inserts.py tests/unit/test_backend_density_guard.py tests/unit/test_hs169_wire.py tests/unit/test_hs172_room_people.py tests/unit/test_project_room_fields_write.py tests/unit/test_project_room_read.py tests/unit/test_project_room_schema.py tests/unit/test_project_service_characterization.py `
+- **Cwd:** .
+- **Exit code:** 4
+- **Index-tree:** 04fd41de56cf4e8dc1878a0739a2e985bdc3d2e5
+
+```text
+ERROR: file or directory not found: tests/unit/test_hs169_wire.py tests/unit/test_hs172_room_people.py tests/unit/test_project_room_fields_write.py tests/unit/test_project_room_read.py tests/unit/test_project_room_schema.py tests/unit/test_project_service_characterization.py 
+
+
+no tests ran in 0.00s
+```
+
+### Captured run — 2026-09-05T18:57:49Z
+
+- **Command:** `bash -c HOME=$(mktemp -d) uv run pytest -q -p no:cacheprovider tests/unit/test_no_positional_inserts.py tests/unit/test_backend_density_guard.py tests/unit/test_hs169_wire.py tests/unit/test_hs172_room_people.py $(ls tests/unit/*project_service*.py tests/unit/*project_room*.py 2>/dev/null | tr "\n" " ") 2>&1 | tail -1`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** d375ac788cc5246fda6b8385e79750ded8aa66c7
+
+```text
+214 passed, 1 skipped in 57.70s
+```
