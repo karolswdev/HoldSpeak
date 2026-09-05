@@ -44,6 +44,27 @@ OWNER = Principal(PrincipalKind.OWNER, "route-test-owner")
 # ── Fixtures ──────────────────────────────────────────────────────────
 
 
+class _FakeGitHubAdapter:
+    """HS-169-07: meeting proposals retired; use a GitHub adapter mock
+    so _github_candidates returns at least one template proposal."""
+
+    def connection_status(self, principal):
+        return {"state": "connected", "display": {"account": "test"}}
+
+    def snapshot(self, principal, spec):
+        return [
+            {"number": 1, "title": "Test PR", "state": "open",
+             "headRefOid": "abc123", "updatedAt": "2026-09-01T00:00:00Z"},
+        ]
+
+
+def _fake_fetcher(principal, *, connector_id, query_kind, query):
+    return [
+        {"key": "ITEM-1", "title": "Test Item", "status": "Open",
+         "due_at": "2026-09-10", "updated_at": "2026-09-01T00:00:00Z"},
+    ]
+
+
 @pytest.fixture
 def rig(tmp_path, monkeypatch):
     """Full route rig: project-setup + watches + projects routers."""
@@ -52,11 +73,12 @@ def rig(tmp_path, monkeypatch):
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
 
     project_svc = ProjectService(db)
-    watch_svc = WatchService(db)
+    watch_svc = WatchService(db, snapshot_fetcher=_fake_fetcher)
     setup_svc = ProjectSetupService(
         db,
         project_service=project_svc,
         watch_service=watch_svc,
+        github_adapter=_FakeGitHubAdapter(),
     )
 
     ctx = WebContext(
@@ -543,3 +565,81 @@ class TestWatchRules:
             json={"rules": []},
         )
         assert resp.status_code == 404
+
+
+# ── HS-168-04: Re-suggest idempotence ─────────────────────────────────
+
+
+class TestReSuggestIdempotence:
+    """POST /suggest on a session with existing proposals returns those
+    proposals (ids, states, scopes, test results intact) and adds only
+    NEW candidates whose (provider_id, template_key) is not yet present.
+    No duplicates."""
+
+    def test_re_suggest_preserves_selected_proposal(self, rig) -> None:
+        db, client = rig
+        _seed_meeting(db)
+
+        # Start session + answer both questions
+        r1 = client.post("/api/project-setups")
+        assert r1.status_code == 200
+        sid = r1.json()["id"]
+
+        client.post(f"/api/project-setups/{sid}/answers", json={
+            "question_id": "outcome", "payload": {"text": "Ship Q4"},
+        })
+        client.post(f"/api/project-setups/{sid}/answers", json={
+            "question_id": "signals", "payload": {"text": "Missed deadlines"},
+        })
+
+        # First suggest
+        r2 = client.post(f"/api/project-setups/{sid}/suggest")
+        assert r2.status_code == 200
+        first_proposals = r2.json()["proposals"]
+        assert len(first_proposals) >= 1, "Should have at least one proposal"
+        first_ids = {p["id"] for p in first_proposals}
+        first_id = first_proposals[0]["id"]
+
+        # Select the first proposal
+        r3 = client.post(
+            f"/api/project-setups/{sid}/proposals/{first_id}/select",
+        )
+        assert r3.status_code == 200
+        assert r3.json()["state"] == "selected"
+
+        # Re-suggest on the same session
+        r4 = client.post(f"/api/project-setups/{sid}/suggest")
+        assert r4.status_code == 200
+        second_proposals = r4.json()["proposals"]
+        second_ids = {p["id"] for p in second_proposals}
+
+        # The original proposal id MUST still be present
+        assert first_id in second_ids, (
+            f"Original proposal {first_id} must survive re-suggest; "
+            f"got ids: {second_ids}"
+        )
+
+        # Its state MUST still be 'selected'
+        original = next(p for p in second_proposals if p["id"] == first_id)
+        assert original["state"] == "selected", (
+            f"Selected state must survive; got: {original['state']}"
+        )
+
+        # No duplicate dedup keys (HS-169-07: GitHub proposals share
+        # subject.kind; the real dedup key is provider_id:template_id for
+        # provider proposals, provider_id:kind:name for native ones).
+        def _dedup_key(p):
+            pid = p.get("provider_id", "")
+            rationale = p.get("rationale") or {}
+            tmpl = rationale.get("template_id", "")
+            if tmpl:
+                return f"{pid}:{tmpl}"
+            spec = p.get("spec") or {}
+            kind = spec.get("subject", {}).get("kind", "")
+            name = spec.get("name", "") or p.get("name", "")
+            return f"{pid}:{kind}:{name}"
+
+        keys = [_dedup_key(p) for p in second_proposals]
+        assert len(keys) == len(set(keys)), (
+            f"Duplicate dedup keys: {keys}"
+        )

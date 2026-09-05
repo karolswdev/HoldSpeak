@@ -51,6 +51,7 @@ function roomResponse(overrides: Record<string, unknown> = {}) {
     project_id: "p1",
     revision: 3,
     observed_at: "2026-08-31T10:00:00",
+    nextCheckAt: null,
     project: {
       id: "p1",
       name: "Alpha Project",
@@ -74,13 +75,21 @@ function roomResponse(overrides: Record<string, unknown> = {}) {
     resources: { state: "ok", count: 1, latest: null },
     changes: { state: "ok", recent: [] },
     review: overrides.review ?? { state: "absent", reason: "not_yet_built" },
-    sources: { state: "absent", reason: "not_yet_built" },
+    sources: { state: "ok", items: [], count: 0, nextCheckAt: null },
+    needsYou: { state: "ok", items: [], count: 0 },
+    health: { state: "ok", assessment: "on_track", reason: null, inputs: { overdue: 0, ciFailing: false, reviewWaitingDays: null, targetPassed: false } },
+    sinceRead: { state: "ok", readAt: null, groups: [] },
+    decisions: { state: "ok", items: [] },
+    commitments: { state: "ok", items: [] },
+    target: { state: "absent", reason: "none" },
     updates: { state: "absent", reason: "not_yet_built" },
     steward: { state: "absent", reason: "not_yet_built" },
   };
 }
 
 function detailResponse(url: string) {
+  if (url.includes("/room/read"))
+    return { read_at: new Date().toISOString() };
   if (url.includes("/meetings"))
     return { meetings: [] };
   if (url.startsWith("/api/decisions"))
@@ -153,6 +162,7 @@ afterEach(() => {
 describe("Review verb in orientation (WEB-NOW-002)", () => {
   it("shows 'Review changes' button when pending_count > 0", async () => {
     apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
       if (url.includes("/room")) {
         return Promise.resolve(roomResponse({
           review: {
@@ -168,11 +178,13 @@ describe("Review verb in orientation (WEB-NOW-002)", () => {
 
     render(<WindowHarness scope="project:p1" />);
     const btn = await screen.findByTestId("review-verb");
-    expect(btn.textContent).toBe("Review changes");
+    // HS-169-03 SELECTOR EDIT: the Room's review verb is "Review N".
+    expect(btn.textContent).toContain("Review");
   });
 
   it("hides review verb when pending_count is 0", async () => {
     apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
       if (url.includes("/room")) {
         return Promise.resolve(roomResponse({
           review: {
@@ -187,12 +199,13 @@ describe("Review verb in orientation (WEB-NOW-002)", () => {
     });
 
     render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("project-room-name");
+    await screen.findByTestId("room-body");
     expect(screen.queryByTestId("review-verb")).toBeNull();
   });
 
   it("hides review verb when review section is absent", async () => {
     apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
       if (url.includes("/room")) {
         return Promise.resolve(roomResponse({
           review: { state: "absent", reason: "not_yet_built" },
@@ -202,7 +215,7 @@ describe("Review verb in orientation (WEB-NOW-002)", () => {
     });
 
     render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("project-room-name");
+    await screen.findByTestId("room-body");
     expect(screen.queryByTestId("review-verb")).toBeNull();
   });
 });
@@ -210,6 +223,7 @@ describe("Review verb in orientation (WEB-NOW-002)", () => {
 describe("Posture swap", () => {
   it("clicking 'Review changes' enters review posture", async () => {
     apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
       if (url.includes("/room")) {
         return Promise.resolve(roomResponse({
           review: {
@@ -239,6 +253,7 @@ describe("Posture swap", () => {
 describe("Review grouping with count chips (WEB-NOW-004)", () => {
   it("renders kind groups with count chips", async () => {
     apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
       if (url.includes("/room")) {
         return Promise.resolve(roomResponse({
           review: {
@@ -276,6 +291,7 @@ describe("Review grouping with count chips (WEB-NOW-004)", () => {
 describe("Conflict both-sources (WEB-STA-006)", () => {
   it("renders conflicting sources for conflict proposals", async () => {
     apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
       if (url.includes("/room")) {
         return Promise.resolve(roomResponse({
           review: {
@@ -311,6 +327,7 @@ describe("Conflict both-sources (WEB-STA-006)", () => {
 describe("Room review section decode", () => {
   it("decodes pending_count, open_review_id, last_accepted_at from /room", async () => {
     apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
       if (url.includes("/room")) {
         return Promise.resolve(roomResponse({
           review: {
@@ -327,7 +344,8 @@ describe("Room review section decode", () => {
     render(<WindowHarness scope="project:p1" />);
     // When pending > 0, the review verb appears
     const btn = await screen.findByTestId("review-verb");
-    expect(btn.textContent).toBe("Review changes");
+    // HS-169-03 SELECTOR EDIT: the Room's review verb is "Review N".
+    expect(btn.textContent).toContain("Review");
   });
 });
 
@@ -335,6 +353,7 @@ describe("Room review section decode", () => {
 
 function enterReviewPosture() {
   apiFetch.mockImplementation((url: string) => {
+    if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
     if (url.includes("/room")) {
       return Promise.resolve(roomResponse({
         review: {

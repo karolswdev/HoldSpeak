@@ -52,14 +52,19 @@ def _reviewer_names(value: Any) -> list[str]:
     return sorted(set(names))
 
 
+GH_BRANCH_CI_FIELDS = "conclusion,status,name,url,updatedAt,headBranch"
+
+
 class GitHubWatchSource:
     def __init__(self, *, runner: Runner | None = None) -> None:
         self._runner = runner
 
     def snapshot(self, principal: Principal, *, query_kind: str,
                  query: dict[str, Any]) -> list[dict[str, Any]]:
+        if query_kind == "branch_ci":
+            return self._snapshot_branch_ci(principal, query)
         if query_kind != "pull_requests":
-            raise ValidationError("GitHub Watches support pull_requests")
+            raise ValidationError("GitHub Watches support pull_requests and branch_ci")
         repository = str(query.get("repository") or "").strip()
         if "/" not in repository or repository.startswith("/") or repository.endswith("/"):
             raise ValidationError("GitHub Watch requires repository as owner/name")
@@ -107,6 +112,62 @@ class GitHubWatchSource:
             })
         return entities
 
+    # ── branch_ci kind (HS-169-04, counsel M1) ──────────────────────
+    def _snapshot_branch_ci(
+        self, principal: Principal, query: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        """CI status on the base branch: `gh run list --branch <base> --limit 1`."""
+        repository = str(query.get("repository") or "").strip()
+        if "/" not in repository or repository.startswith("/") or repository.endswith("/"):
+            raise ValidationError("branch_ci requires repository as owner/name")
+        base = str(query.get("base") or "main").strip()
+        command = [
+            "gh", "run", "list", "--repo", repository,
+            "--branch", base, "--limit", "1",
+            "--json", GH_BRANCH_CI_FIELDS,
+        ]
+        if not github_cli.is_command_allowed(command):
+            raise ServiceError("connector_command_refused", "GitHub Watch command is not allowlisted")
+        if self._runner is None and shutil.which("gh") is None:
+            raise ServiceError("connector_unavailable", "GitHub CLI is not installed")
+        completed = PermissionGate(github_cli.MANIFEST).run_read_subprocess(
+            command, principal=principal, runner=self._runner,
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            errors="replace", timeout=github_cli.DEFAULT_TIMEOUT_SECONDS,
+        )
+        if completed.returncode != 0:
+            detail = str(completed.stderr or "GitHub CLI query failed").strip()[:500]
+            raise ServiceError("connector_refresh_failed", detail)
+        try:
+            rows = json.loads(completed.stdout or "[]")
+        except json.JSONDecodeError as exc:
+            raise ServiceError("connector_invalid_output", "GitHub CLI returned invalid JSON") from exc
+        if not isinstance(rows, list):
+            raise ServiceError("connector_invalid_output", "GitHub CLI returned a non-array snapshot")
+        entities: list[dict[str, Any]] = []
+        for idx, row in enumerate(rows):
+            if not isinstance(row, dict):
+                continue
+            # HS-169-05: normalize_snapshot requires every entity to carry
+            # id/number/key.  gh run list returns no native id in --json;
+            # derive one from the URL (unique per run) or fall back to the
+            # branch + index so baseline_watch does not fail with
+            # "Every snapshot entity requires id, number, or key".
+            run_url = str(row.get("url") or "")
+            run_id = run_url.rsplit("/", 1)[-1] if "/" in run_url else ""
+            if not run_id:
+                run_id = f"{base}-{idx}"
+            entities.append({
+                "id": run_id,
+                "conclusion": row.get("conclusion"),
+                "status": row.get("status"),
+                "name": row.get("name"),
+                "url": run_url,
+                "updated_at": row.get("updatedAt"),
+                "branch": row.get("headBranch"),
+            })
+        return entities
+
 
 # ── JiraWatchSource (HS-166-03) ─────────────────────────────────────
 
@@ -129,45 +190,64 @@ def _compile_jql(query: dict[str, Any]) -> str:
     """
     clauses: list[str] = []
 
+    # Helper: strip blank/whitespace-only entries so a stored [""]
+    # compiles to no clause (HS-168-05 belt).
+    def _clean(raw: list[str]) -> list[str]:
+        return [v for v in raw if isinstance(v, str) and v.strip()]
+
     # project in (...)
     projects = query.get("projects", [])
-    if isinstance(projects, list) and projects:
+    if isinstance(projects, list):
+        projects = _clean(projects)
+    if projects:
         vals = ", ".join(_jql_quote(p) for p in sorted(projects))
         clauses.append(f"project in ({vals})")
 
     # issuetype in (...)
     issue_types = query.get("issue_types", [])
-    if isinstance(issue_types, list) and issue_types:
+    if isinstance(issue_types, list):
+        issue_types = _clean(issue_types)
+    if issue_types:
         vals = ", ".join(_jql_quote(t) for t in sorted(issue_types))
         clauses.append(f"issuetype in ({vals})")
 
     # statusCategory in (...)
     status_categories = query.get("status_categories", [])
-    if isinstance(status_categories, list) and status_categories:
+    if isinstance(status_categories, list):
+        status_categories = _clean(status_categories)
+    if status_categories:
         vals = ", ".join(_jql_quote(c) for c in sorted(status_categories))
         clauses.append(f"statusCategory in ({vals})")
 
     # priority in (...)
     priorities = query.get("priorities", [])
-    if isinstance(priorities, list) and priorities:
+    if isinstance(priorities, list):
+        priorities = _clean(priorities)
+    if priorities:
         vals = ", ".join(_jql_quote(p) for p in sorted(priorities))
         clauses.append(f"priority in ({vals})")
 
     # assignee in (...)
     assignees = query.get("assignees", [])
-    if isinstance(assignees, list) and assignees:
+    if isinstance(assignees, list):
+        assignees = _clean(assignees)
+    if assignees:
         vals = ", ".join(_jql_quote(a) for a in sorted(assignees))
         clauses.append(f"assignee in ({vals})")
 
     # labels in (...)
     labels = query.get("labels", [])
-    if isinstance(labels, list) and labels:
+    if isinstance(labels, list):
+        labels = _clean(labels)
+    if labels:
         vals = ", ".join(_jql_quote(lb) for lb in sorted(labels))
         clauses.append(f"labels in ({vals})")
 
     # component in (...)
     components = query.get("components", [])
-    if isinstance(components, list) and components:
+    if isinstance(components, list):
+        components = _clean(components)
+    if components:
         vals = ", ".join(_jql_quote(c) for c in sorted(components))
         clauses.append(f"component in ({vals})")
 

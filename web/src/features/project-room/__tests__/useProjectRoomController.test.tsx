@@ -60,7 +60,14 @@ function roomResponse() {
     resources: { state: "ok", count: 0, latest: null },
     changes: { state: "ok", recent: [] },
     review: { state: "absent", reason: "not_yet_built" },
-    sources: { state: "absent", reason: "not_yet_built" },
+    // HS-169-04: the four questions
+    needsYou: { state: "ok", items: [], count: 0 },
+    sources: { state: "ok", items: [], count: 0 },
+    health: { state: "ok", assessment: "on_track", reason: null, inputs: { overdue: 0, ciFailing: false, reviewWaitingDays: null, targetPassed: false } },
+    sinceRead: { state: "ok", readAt: null, groups: [] },
+    decisions: { state: "ok", items: [] },
+    commitments: { state: "ok", items: [] },
+    target: { state: "absent", reason: "none" },
     updates: { state: "absent", reason: "not_yet_built" },
     steward: { state: "absent", reason: "not_yet_built" },
   };
@@ -105,7 +112,9 @@ describe("useProjectRoomController — loadStatus discrimination", () => {
     await waitFor(() => expect(result.current.loadStatus).toBe("ready" satisfies LoadStatus));
     expect(result.current.error).toBe("");
     expect(result.current.projectName).toBe("Test project");
-    expect(result.current.readAt).toBeGreaterThan(0);
+    // HS-169-03: readAt is now a string (ISO) or null from the wire.
+    // When sinceRead is absent on the wire, readAt stays null.
+    expect(result.current.readAt).toBeNull();
   });
 
   it("transitions to ready with error on a failed load", async () => {
@@ -117,9 +126,10 @@ describe("useProjectRoomController — loadStatus discrimination", () => {
 
   it("exposes view and setView from the wings", async () => {
     const { result } = renderHook(() => useProjectRoomController("project:p1", "Test"));
-    expect(result.current.view).toBe("timeline");
-    act(() => result.current.setView("decisions"));
-    expect(result.current.view).toBe("decisions");
+    // HS-169-03 SELECTOR EDIT: wings changed from timeline/decisions/search/ask to room/history
+    expect(result.current.view).toBe("room");
+    act(() => result.current.setView("history"));
+    expect(result.current.view).toBe("history");
   });
 });
 

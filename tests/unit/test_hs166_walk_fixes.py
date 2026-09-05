@@ -37,17 +37,21 @@ class TestBaselinePopulation:
     first evaluate_due yields 0 transitions / 0 effects."""
 
     def _setup_rig(self, db: Any):
-        from holdspeak.meeting_session.models import MeetingState
         from holdspeak.services.project_service import ProjectService
         from holdspeak.services.project_setup_service import ProjectSetupService
         from holdspeak.services.watch_service import WatchService
 
-        db.meetings.save_meeting(MeetingState(
-            id="m-baseline-test",
-            started_at=datetime(2026, 8, 20, 10, 0),
-            title="Sprint Review",
-            capture_status="finalized",
-        ))
+        # HS-169-04 retired meeting proposals; use a GitHub adapter mock
+        # so _github_candidates returns at least one template proposal.
+        class _FakeGitHubAdapter:
+            def connection_status(self, principal):
+                return {"state": "connected", "display": {"account": "test"}}
+
+            def snapshot(self, principal, spec):
+                return [
+                    {"number": 1, "title": "Test PR", "state": "open",
+                     "headRefOid": "abc123", "updatedAt": "2026-09-01T00:00:00Z"},
+                ]
 
         # Fake fetcher that returns canned entities
         def fake_fetcher(principal, *, connector_id, query_kind, query):
@@ -62,6 +66,7 @@ class TestBaselinePopulation:
             db,
             project_service=project_svc,
             watch_service=watch_svc,
+            github_adapter=_FakeGitHubAdapter(),
         )
         return project_svc, setup_svc, watch_svc
 

@@ -1,0 +1,112 @@
+{
+ "artboards": [
+  {
+   "file": "Main.dc.html",
+   "x": 0,
+   "y": 0,
+   "w": 640,
+   "h": 675,
+   "title": "Connections \u00b7 connected \u00b7 1440"
+  },
+  {
+   "file": "ConnectionsCold.dc.html",
+   "x": 760,
+   "y": 0,
+   "w": 640,
+   "h": 839,
+   "title": "Connections \u00b7 cold \u00b7 1440"
+  },
+  {
+   "file": "Sources.dc.html",
+   "x": 1520,
+   "y": 0,
+   "w": 640,
+   "h": 1053,
+   "title": "Sources step \u00b7 1440"
+  },
+  {
+   "file": "GitHubWizard.dc.html",
+   "x": 2280,
+   "y": 0,
+   "w": 640,
+   "h": 593,
+   "title": "GitHub wizard \u00b7 repository \u00b7 1440"
+  },
+  {
+   "file": "GitHubWizardTest.dc.html",
+   "x": 3040,
+   "y": 0,
+   "w": 640,
+   "h": 713,
+   "title": "GitHub wizard \u00b7 tested \u00b7 1440"
+  },
+  {
+   "file": "JiraWizard.dc.html",
+   "x": 3800,
+   "y": 0,
+   "w": 640,
+   "h": 647,
+   "title": "Jira wizard \u00b7 project \u00b7 1440"
+  },
+  {
+   "file": "ConnectionsPhone.dc.html",
+   "x": 0,
+   "y": 1119,
+   "w": 393,
+   "h": 919,
+   "title": "Connections \u00b7 connected \u00b7 393"
+  },
+  {
+   "file": "ConnectionsColdPhone.dc.html",
+   "x": 760,
+   "y": 1119,
+   "w": 393,
+   "h": 930,
+   "title": "Connections \u00b7 cold \u00b7 393"
+  },
+  {
+   "file": "SourcesPhone.dc.html",
+   "x": 1520,
+   "y": 1119,
+   "w": 393,
+   "h": 1222,
+   "title": "Sources step \u00b7 393"
+  },
+  {
+   "file": "GitHubWizardPhone.dc.html",
+   "x": 2280,
+   "y": 1119,
+   "w": 393,
+   "h": 624,
+   "title": "GitHub wizard \u00b7 repository \u00b7 393"
+  },
+  {
+   "file": "GitHubWizardTestPhone.dc.html",
+   "x": 3040,
+   "y": 1119,
+   "w": 393,
+   "h": 741,
+   "title": "GitHub wizard \u00b7 tested \u00b7 393"
+  },
+  {
+   "file": "JiraWizardPhone.dc.html",
+   "x": 3800,
+   "y": 1119,
+   "w": 393,
+   "h": 771,
+   "title": "Jira wizard \u00b7 project \u00b7 393"
+  }
+ ],
+ "annotations": [
+  {
+   "id": "read-me",
+   "x": 0,
+   "y": -140,
+   "w": 700,
+   "text": "Phase 168 The Connections Door \u2014 the front door for connectors.\nTop row: the window at 1440 (640 wide). Bottom row: the 393 glass.\nOne tool, one state, one verb. Sign in ONCE in Settings \u2192 Connections; the interview then asks scope only."
+  }
+ ],
+ "launch": {
+  "view": "canvas"
+ }
+}

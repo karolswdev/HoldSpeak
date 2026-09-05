@@ -330,13 +330,12 @@ class ReactionService:
         if current.tzinfo is None:
             current = current.replace(tzinfo=timezone.utc)
         outcomes: list[dict[str, Any]] = []
-        # HS-166-03 rider-b: graduated watches (state in active/tested/
-        # paused/retired) belong to the WatchService scheduler
-        # (evaluate_due), not the legacy ReactionService pump.
+        # HS-168 legacy-side watch guard: the repo query excludes
+        # paused/retired watches and watches on archived projects at
+        # the SQL level (list_enabled_legacy_watches).  The Python
+        # _GRADUATED_STATES belt below stays as defense-in-depth.
         _GRADUATED_STATES = {"active", "tested", "paused", "retired"}
-        for watch in self._repo.list_watches():
-            if not watch["enabled"]:
-                continue
+        for watch in self._repo.list_enabled_legacy_watches():
             if watch.get("state", "") in _GRADUATED_STATES:
                 continue
             try:

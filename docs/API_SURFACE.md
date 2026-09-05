@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 626 (plus static mounts). iOS-consumed: 89. Web-consumed: 469.
+Routes: 631 (plus static mounts). iOS-consumed: 89. Web-consumed: 479.
 
 ## device_audio_ws
 
@@ -159,6 +159,13 @@ Routes: 626 (plus static mounts). iOS-consumed: 89. Web-consumed: 469.
 |---|---|---|
 | POST | `/api/calendar/snapshot` | web |
 | POST | `/api/calendar/snapshot/confirm` | web |
+
+## web.routes.connections
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/connections` | web |
+| POST | `/api/connections/{provider}/recheck` | web |
 
 ## web.routes.constitutional
 
@@ -765,6 +772,13 @@ Routes: 626 (plus static mounts). iOS-consumed: 89. Web-consumed: 469.
 | PUT | `/api/workflows/{workflow_id}` | web |
 | POST | `/api/workflows/{workflow_id}/run` | ios, web |
 
+## web.routes.project_door
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/projects/door` | web |
+| POST | `/api/projects/door/count` | web |
+
 ## web.routes.project_reviews
 
 | Method | Path | Consumers |
@@ -836,6 +850,7 @@ Routes: 626 (plus static mounts). iOS-consumed: 89. Web-consumed: 469.
 | PUT | `/api/projects/{project_id}/resources/{resource_ref:path}` | server only |
 | POST | `/api/projects/{project_id}/restore` | server only |
 | GET | `/api/projects/{project_id}/room` | web |
+| POST | `/api/projects/{project_id}/room/read` | web |
 | GET | `/api/projects/{project_id}/since-last-meeting` | web |
 | GET | `/api/projects/{project_id}/summary` | server only |
 
@@ -848,8 +863,8 @@ Routes: 626 (plus static mounts). iOS-consumed: 89. Web-consumed: 469.
 | POST | `/api/providers/github/connection/recheck` | server only |
 | GET | `/api/providers/github/discover` | server only |
 | POST | `/api/providers/github/validate-repo` | server only |
-| GET | `/api/providers/jira/connections` | server only |
-| POST | `/api/providers/jira/connections` | server only |
+| GET | `/api/providers/jira/connections` | web |
+| POST | `/api/providers/jira/connections` | web |
 | POST | `/api/providers/jira/connections/{ref}/recheck` | server only |
 | GET | `/api/providers/jira/discover` | server only |
 | POST | `/api/providers/jira/search` | server only |
@@ -1087,8 +1102,8 @@ Routes: 626 (plus static mounts). iOS-consumed: 89. Web-consumed: 469.
 | GET | `/api/watches/{watch_id}` | web |
 | PATCH | `/api/watches/{watch_id}` | web |
 | POST | `/api/watches/{watch_id}/baseline` | server only |
-| POST | `/api/watches/{watch_id}/pause` | server only |
-| POST | `/api/watches/{watch_id}/resume` | server only |
-| POST | `/api/watches/{watch_id}/retire` | server only |
+| POST | `/api/watches/{watch_id}/pause` | web |
+| POST | `/api/watches/{watch_id}/resume` | web |
+| POST | `/api/watches/{watch_id}/retire` | web |
 | PUT | `/api/watches/{watch_id}/rules` | server only |
 | POST | `/api/watches/{watch_id}/test` | server only |

@@ -113,11 +113,13 @@ def update_palette_count(text: str, roster: dict) -> str:
     """Update the PROJECT_PALETTE frozen-set size in the palette section."""
     project_count = roster["families"].get("project", {}).get("count", 0)
     provider_count = roster["families"].get("provider", {}).get("count", 0)
-    palette_size = project_count + provider_count
+    connection_count = roster["families"].get("connection", {}).get("count", 0)
+    palette_size = project_count + provider_count + connection_count
     # The "frozen set of the NN\nproject.*" may wrap across lines.
+    # HS-168-02: connection.* tools are also in the palette.
     text = re.sub(
-        r"a frozen set of the \d+\s+project\.\* and provider\.\*",
-        f"a frozen set of the {palette_size}\nproject.* and provider.*",
+        r"a frozen set of the \d+\s+project\.\*[^\n]*tool\s*names",
+        f"a frozen set of the {palette_size}\nproject.*, provider.* and connection.* tool names",
         text,
         count=1,
     )

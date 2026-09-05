@@ -385,7 +385,11 @@ requires its own CLI:
 - **GitHub:** [`gh`](https://cli.github.com/) (`brew install gh`, then `gh auth login`).
 - **Jira:** [`acli`](https://acli.atlassian.com/) (`brew tap atlassian/homebrew-acli && brew install acli`, then `acli jira auth login --site <yoursite>.atlassian.net --email <you> --token`).
 
-Jira access is read-only and contacts `<site>.atlassian.net` from this device.
+Open **Settings, Connections** to see each tool's readiness, run
+`Recheck`, and follow the recovery command when needed. Jira access
+is read-only and contacts `<site>.atlassian.net` from this device.
+HoldSpeak stores no token; `gh` and `acli` hold credentials on this
+machine.
 
 ### Upgrading and your data
 

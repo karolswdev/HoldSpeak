@@ -174,7 +174,8 @@ describe("FirstWords", () => {
     expect(screen.getByRole("button", { name: "Voice typing unavailable" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Setup" }));
-    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-setup", "/setup");
+    // HS-169-03 N-1: FirstWords now opens the Door, not the old setup.
+    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("project-setup", "/");
   });
 
   it("keeps typed fallback and one Retry for no speech and a timeout", async () => {

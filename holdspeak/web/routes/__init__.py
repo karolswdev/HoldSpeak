@@ -54,9 +54,11 @@ from .system import build_system_router
 from .threads import build_threads_router
 from .tts import build_tts_router
 from .project_reviews import build_project_reviews_router
+from .project_door import build_project_door_router
 from .project_setup import build_project_setup_router
 from .project_updates import build_project_updates_router
 from .providers import build_providers_router
+from .connections import build_connections_router
 from .steward import build_steward_router
 from .watches import build_watches_router
 
@@ -105,9 +107,11 @@ __all__ = [
     "build_threads_router",
     "build_tts_router",
     "build_project_reviews_router",
+    "build_project_door_router",
     "build_project_setup_router",
     "build_project_updates_router",
     "build_providers_router",
+    "build_connections_router",
     "build_steward_router",
     "build_watches_router",
 ]

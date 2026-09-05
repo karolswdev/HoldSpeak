@@ -154,6 +154,13 @@ export type WatchBriefState =
 
 /* ── Proposal ── */
 
+/* ── Connection readiness (HS-168-02) ── */
+
+export type ProposalConnection = {
+  state: string;
+  account: Record<string, unknown> | null;
+};
+
 export type SetupProposal = {
   id: string;
   sessionId: string;
@@ -166,9 +173,25 @@ export type SetupProposal = {
   testResult: TestResult | null;
   createdAt: string;
   updatedAt: string;
+  connection?: ProposalConnection;
 };
 
 /* ── Session ── */
+
+/* ── Known scopes (HS-168-02) ── */
+
+export type KnownScope = {
+  repository?: string;
+  projectKey?: string;
+  site?: string;
+  forProposalId: string;
+  watchName?: string;
+};
+
+export type KnownScopes = {
+  github: KnownScope[];
+  jira: KnownScope[];
+};
 
 export type SetupSession = {
   id: string;
@@ -181,6 +204,7 @@ export type SetupSession = {
   updatedAt: string;
   answers: Record<string, SetupAnswer>;
   proposals: SetupProposal[];
+  knownScopes?: KnownScopes;
 };
 
 /* ── Finalize envelope ── */
@@ -340,7 +364,16 @@ export function decodeProposal(raw: Record<string, unknown>): SetupProposal {
   const testResultData =
     testResultRaw != null ? parseJsonField(testResultRaw) : null;
 
-  return {
+  // HS-168-02: connection readiness annotation (computed projection)
+  const connectionRaw = raw.connection as Record<string, unknown> | undefined;
+  const connection: ProposalConnection | undefined = connectionRaw
+    ? {
+        state: String(connectionRaw.state ?? ""),
+        account: (connectionRaw.account as Record<string, unknown>) ?? null,
+      }
+    : undefined;
+
+  const result: SetupProposal = {
     id: String(raw.id ?? ""),
     sessionId: String(raw.session_id ?? ""),
     providerId: String(raw.provider_id ?? ""),
@@ -353,6 +386,8 @@ export function decodeProposal(raw: Record<string, unknown>): SetupProposal {
     createdAt: String(raw.created_at ?? ""),
     updatedAt: String(raw.updated_at ?? ""),
   };
+  if (connection) result.connection = connection;
+  return result;
 }
 
 export function decodeSession(raw: Record<string, unknown>): SetupSession {
@@ -384,7 +419,33 @@ export function decodeSession(raw: Record<string, unknown>): SetupSession {
     updatedAt: String(raw.updated_at ?? ""),
     answers,
     proposals,
+    ...decodeKnownScopes(raw),
   };
+}
+
+function decodeKnownScopes(raw: Record<string, unknown>): { knownScopes?: KnownScopes } {
+  const ks = raw.known_scopes as Record<string, unknown> | undefined;
+  if (!ks || typeof ks !== "object") return {};
+  const githubArr = Array.isArray(ks.github) ? ks.github : [];
+  const jiraArr = Array.isArray(ks.jira) ? ks.jira : [];
+  const github = githubArr.map((s: unknown) => {
+    const obj = (s && typeof s === "object" ? s : {}) as Record<string, unknown>;
+    return {
+      repository: obj.repository != null ? String(obj.repository) : undefined,
+      forProposalId: String(obj.for_proposal_id ?? ""),
+      watchName: obj.watch_name != null ? String(obj.watch_name) : undefined,
+    };
+  });
+  const jira = jiraArr.map((s: unknown) => {
+    const obj = (s && typeof s === "object" ? s : {}) as Record<string, unknown>;
+    return {
+      projectKey: obj.project_key != null ? String(obj.project_key) : undefined,
+      site: obj.site != null ? String(obj.site) : undefined,
+      forProposalId: String(obj.for_proposal_id ?? ""),
+      watchName: obj.watch_name != null ? String(obj.watch_name) : undefined,
+    };
+  });
+  return { knownScopes: { github, jira } };
 }
 
 export function decodeTestResultResponse(

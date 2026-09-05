@@ -160,6 +160,27 @@ GITHUB_TEMPLATES: tuple[GitHubTemplate, ...] = (
         }],
         query_defaults={"state": "open", "base": "main"},
     ),
+    # HS-169-04: CI on the base branch (counsel M1)
+    GitHubTemplate(
+        template_id="watch.github.branch_ci",
+        name="CI",
+        intent="Monitor CI status on the base branch",
+        cadence_preset="active_work",
+        rules=[{
+            "condition": {
+                "schema": CONDITION_SCHEMA,
+                "operator": "any",
+                "clauses": [
+                    {"field": "conclusion", "comparison": "changed"},
+                    {"field": "status", "comparison": "changed"},
+                ],
+            },
+            "actions": [
+                {"schema": ACTION_SCHEMA, "kind": "project.observe"},
+            ],
+        }],
+        query_defaults={"base": "main"},
+    ),
 )
 
 _TEMPLATE_BY_ID: dict[str, GitHubTemplate] = {
@@ -234,6 +255,9 @@ def compile(
     if "state" in opts:
         query["state"] = opts["state"]
 
+    # HS-169-04: branch_ci uses a different subject kind
+    subject_kind = "branch_ci" if template_id == "watch.github.branch_ci" else "pull_request"
+
     spec: dict[str, Any] = {
         "schema": "WatchSpec@1",
         "name": tmpl.name,
@@ -243,7 +267,7 @@ def compile(
             "transport": "connector_pack",
         },
         "subject": {
-            "kind": "pull_request",
+            "kind": subject_kind,
             "scope": {"repositories": repositories},
             "query": query,
         },

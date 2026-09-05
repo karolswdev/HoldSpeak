@@ -559,6 +559,8 @@ CREATE TABLE IF NOT EXISTS projects (
     revision INTEGER NOT NULL DEFAULT 0,
     last_review_id TEXT,
     last_review_at TEXT,
+    -- HS-169-04: per-project read marker for the Room's "since you looked".
+    room_read_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

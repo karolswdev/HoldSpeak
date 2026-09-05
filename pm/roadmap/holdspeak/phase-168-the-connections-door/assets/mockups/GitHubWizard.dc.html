@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;650;700&family=Space+Grotesk:wght@600;650;700&display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+    a { color: #a86e4a; } a:hover { color: #bc8058; }
+    @keyframes surface-chip-pulse { from { opacity: 1 } to { opacity: .4 } }
+  </style>
+</helmet>
+
+<!-- Window shell -->
+<div style="width:640px; border:1px solid #363b50; border-radius:2px; background:#15171d; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); display:flex; flex-direction:column;">
+
+  <!-- Title bar -->
+  <div style="height:40px; padding:0 12px; display:flex; align-items:center; gap:10px; background:#242833; border-radius:1px 1px 0 0; flex-shrink:0;">
+    <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+      <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="#ff5f57"></circle></svg>
+      <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="#febc2e"></circle></svg>
+      <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="#28c840"></circle></svg>
+    </div>
+    <span style="font:700 17px/1 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">New Project</span>
+  </div>
+
+  <!-- Body -->
+  <div style="flex:1; padding:12px 14px 14px; display:flex; flex-direction:column; gap:18px;">
+
+    <!-- Watch heading ledger row -->
+    <div style="display:flex; align-items:center; gap:10px; min-height:26px; padding:2px 6px; font:12px 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5;">
+      <span style="flex:none; font-size:11px; line-height:1; color:#a86e4a;">&#9679;</span>
+      <span style="font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">PR review queue</span>
+      <span style="padding:2px 7px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; font:11px 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">every 15 min</span>
+      <span style="padding:2px 7px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; font:11px 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">observe</span>
+      <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">GH · GITHUB.COM</span>
+    </div>
+
+    <!-- Compact ProgressPlan -->
+    <div style="display:flex; align-items:center; gap:16px; font:12px 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5;">
+      <span style="display:inline-flex; align-items:center; gap:5px;">
+        <span style="width:14px; text-align:center; font-size:11px; line-height:1; color:#56c7f5;">&#9679;</span>
+        <span style="font-weight:500; color:#56c7f5;">Repository</span>
+      </span>
+      <span style="display:inline-flex; align-items:center; gap:5px;">
+        <span style="width:14px; text-align:center; font-size:11px; line-height:1; color:#9ba2b0;">&#9675;</span>
+        <span style="font-weight:500; color:#9ba2b0;">Population</span>
+      </span>
+      <span style="display:inline-flex; align-items:center; gap:5px;">
+        <span style="width:14px; text-align:center; font-size:11px; line-height:1; color:#9ba2b0;">&#9675;</span>
+        <span style="font-weight:500; color:#9ba2b0;">Test</span>
+      </span>
+    </div>
+
+    <!-- SurfaceSection REPOSITORY -->
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      <div style="display:flex; align-items:baseline; gap:8px; border-top:1px solid rgba(255,255,255,0.035); padding-top:8px;">
+        <h3 style="margin:0; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0;">REPOSITORY</h3>
+      </div>
+
+      <!-- Known-scope card (ChoiceCardShell tier balanced) -->
+      <div style="position:relative; display:flex; flex-direction:column; gap:6px; padding:11px 12px 8px; border:1px solid #2a2e3e; border-top:2px solid #a86e4a; border-radius:2px; background:#15171d;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:15px; line-height:1; color:#a86e4a;">K</span>
+          <span style="font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.02em; color:#f2f3f5;">karolswdev/HoldSpeak</span>
+        </div>
+        <div style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; padding:6px 8px; border-left:2px solid #a86e4a; background:#1c1f27; border-radius:0 2px 2px 0;">chosen for CI health</div>
+        <button style="min-height:27px; padding:0 16px; margin-top:4px; border:1px solid #a86e4a; border-radius:0; background:#a86e4a; color:#f2f3f5; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.04em; text-transform:uppercase; cursor:pointer; align-self:flex-end;">Use this repo</button>
+      </div>
+
+      <!-- Search StringGadget -->
+      <div style="display:flex; align-items:stretch; width:100%; min-height:22px; border:1px solid #2a2e3e; background:#15171d; box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07);">
+        <input type="text" value="" placeholder="Search repositories" readonly="readonly" style="flex:1; min-width:0; min-height:20px; border:0; background:transparent; box-shadow:none; padding:1px 6px; font:400 12px/1.35 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;"></input>
+        <span style="width:20px; height:20px; margin-right:1px; border-radius:0; border:1px solid #2a2e3e; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); display:grid; place-items:center; flex-shrink:0; align-self:center;">
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square"><rect x="5" y="1" width="6" height="9" rx="0"></rect><path d="M3 8v1a5 5 0 0 0 10 0V8M8 14v2"></path></svg>
+        </span>
+      </div>
+
+      <!-- Discovery ChoiceCards -->
+      <div style="display:flex; flex-direction:column; gap:2px;">
+
+        <!-- Card 1: karolswdev/HoldSpeak (SELECTED) -->
+        <div style="position:relative; display:flex; flex-direction:column; gap:6px; padding:12px 12px 8px; border:1px solid #a86e4a; border-radius:2px; background:rgba(168,110,74,0.12); box-shadow:0 0 0 1px rgba(168,110,74,0.4), 0 4px 18px rgba(168,110,74,0.28); cursor:pointer;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:15px; line-height:1; color:#a86e4a;">K</span>
+            <span style="font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.02em; color:#f2f3f5;">karolswdev/HoldSpeak</span>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+            <span style="font:12px 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">public</span>
+            <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">GH · GITHUB.COM</span>
+          </div>
+        </div>
+
+        <!-- Card 2: karolswdev/reusable-processes (unselected) -->
+        <div style="position:relative; display:flex; flex-direction:column; gap:6px; padding:12px 12px 8px; border:1px solid #2a2e3e; border-radius:2px; background:#15171d; cursor:pointer;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:15px; line-height:1; color:#767e8d;">K</span>
+            <span style="font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.02em; color:#f2f3f5;">karolswdev/reusable-processes</span>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+            <span style="font:12px 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">private</span>
+            <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">GH · GITHUB.COM</span>
+          </div>
+        </div>
+
+        <!-- Card 3: karolswdev/warpdrv (unselected) -->
+        <div style="position:relative; display:flex; flex-direction:column; gap:6px; padding:12px 12px 8px; border:1px solid #2a2e3e; border-radius:2px; background:#15171d; cursor:pointer;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:15px; line-height:1; color:#767e8d;">K</span>
+            <span style="font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.02em; color:#f2f3f5;">karolswdev/warpdrv</span>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+            <span style="font:12px 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">public</span>
+            <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">GH · GITHUB.COM</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Typed well: owner/repo with inline Check repo verb -->
+      <div style="display:flex; align-items:stretch; width:100%; min-height:22px; border:1px solid #2a2e3e; background:#15171d; box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); margin-top:10px;">
+        <input type="text" value="" placeholder="owner/repo" readonly="readonly" style="flex:1; min-width:0; min-height:20px; border:0; background:transparent; box-shadow:none; padding:1px 6px; font:400 12px/1.35 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;"></input>
+        <span style="width:20px; height:20px; margin-right:1px; border-radius:0; border:1px solid #2a2e3e; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); display:grid; place-items:center; flex-shrink:0; align-self:center;">
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square"><rect x="5" y="1" width="6" height="9" rx="0"></rect><path d="M3 8v1a5 5 0 0 0 10 0V8M8 14v2"></path></svg>
+        </span>
+        <button style="min-height:20px; padding:1px 8px; border:0; border-left:1px solid #2a2e3e; border-radius:0; background:transparent; color:#9ba2b0; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; white-space:nowrap; flex-shrink:0; align-self:center;">Check repo</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer style="height:36px; padding:0 8px; background:#1c1f27; border-top:1px solid #2a2e3e; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); flex-shrink:0;">
+    <div style="display:grid; grid-template-columns:max-content minmax(0,1fr) max-content; align-items:center; height:100%; gap:6px;">
+      <!-- EgressChip -->
+      <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a;">GITHUB.COM</span>
+      <!-- Receipt (empty) -->
+      <div style="display:flex; justify-content:center; align-items:center; min-width:0;"></div>
+      <!-- Verbs -->
+      <div style="display:flex; justify-content:flex-end; align-items:center; gap:4px;">
+        <button style="min-height:28px; display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#9ba2b0; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Back</button>
+        <button style="min-height:28px; display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:4px 12px; border:1px solid #a86e4a; border-radius:0; background:#a86e4a; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; box-shadow:inset 0 1px 0 rgba(255,255,255,0.22), 0 1px 2px rgba(0,0,0,0.3);">Test this Watch</button>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+</x-dc>
+</body>
+</html>

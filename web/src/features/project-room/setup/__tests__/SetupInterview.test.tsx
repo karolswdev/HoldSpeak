@@ -300,7 +300,8 @@ describe("SetupInterview", () => {
 describe("SuggestionCards", () => {
   const noop = () => {};
 
-  it("renders suggestion cards with object slots (INT-008)", () => {
+  // HS-168-04: card recomposed with chips row + Disclosure rationale
+  it("renders suggestion cards with chips row and testid (INT-008)", () => {
     const proposals = [makeProposal("wprop_1")];
     render(
       <SuggestionCards
@@ -312,20 +313,19 @@ describe("SuggestionCards", () => {
       />,
     );
 
-    // Object slots present
+    // Card present with correct testid and name label
     expect(screen.getByTestId("setup-card-wprop_1")).toBeTruthy();
     expect(screen.getByText("Meeting activity")).toBeTruthy(); // name anchor (label)
-    expect(screen.getByText("native")).toBeTruthy(); // source fact value
-    expect(screen.getByText("meetings")).toBeTruthy(); // subject fact value
-    // Defect 2: plain-words conditions (was "content changed")
-    expect(screen.getByText("When content changes")).toBeTruthy(); // summary
-    // Action lives behind the fold (ChoiceCard fold pattern) — open it
+    // Chips row carries cadence + action tokens
     const card = screen.getByTestId("setup-card-wprop_1");
-    const foldTrigger = card.querySelector(".surface-disclosure-trigger") as HTMLElement;
-    fireEvent.click(foldTrigger);
-    expect(screen.getByText("Put it in Project attention")).toBeTruthy(); // action in fold
-    expect(screen.getByText("Every 35 min")).toBeTruthy(); // cadence fact value
-    expect(screen.getByText(/1 recent meetings/)).toBeTruthy(); // rationale footer
+    expect(card.textContent).toContain("CADENCE");
+    expect(card.textContent).toContain("local");
+    // Rationale in a Disclosure (click to open)
+    const disclosureTrigger = card.querySelector(".surface-disclosure-trigger") as HTMLElement;
+    if (disclosureTrigger) {
+      fireEvent.click(disclosureTrigger);
+      expect(screen.getByText(/1 recent meetings/)).toBeTruthy();
+    }
   });
 
   it("renders Blank path when no proposals (INT-002)", () => {
@@ -441,7 +441,10 @@ describe("SuggestionCards", () => {
       />,
     );
 
-    expect(screen.getByText("Test passed -- 1 current matches")).toBeTruthy();
+    // HS-168-04: passed tests show a "Tested . N matches" StateChip
+    const card = screen.getByTestId("setup-card-wprop_1");
+    expect(card.textContent).toContain("Tested");
+    expect(card.textContent).toContain("1 match");
   });
 });
 
@@ -474,7 +477,7 @@ describe("SetupBrief", () => {
     expect(screen.getByText("Ship Q4")).toBeTruthy();
   });
 
-  it("distinguishes five watch states in brief (INT-011)", () => {
+  it("brief shows only chosen sources, not all proposals (HS-168-05)", () => {
     const proposals: SetupProposal[] = [
       makeProposal("wprop_proposed", { state: "proposed" }),
       makeProposal("wprop_tested", { state: "selected", testState: "passed" }),
@@ -490,19 +493,19 @@ describe("SetupBrief", () => {
     render(<SetupBrief state={state} />);
 
     expect(screen.getByTestId("brief-watches")).toBeTruthy();
-    // Should have groups for proposed, tested, disabled
-    const groups = screen.getByTestId("brief-watches").querySelectorAll("[data-brief-state]");
-    const states = Array.from(groups).map((g) => g.getAttribute("data-brief-state"));
-    expect(states).toContain("proposed");
-    expect(states).toContain("tested");
-    expect(states).toContain("disabled");
+    // Only the tested/selected one appears; proposed/disabled do NOT
+    expect(screen.getByTestId("brief-watch-wprop_tested")).toBeTruthy();
+    expect(screen.queryByTestId("brief-watch-wprop_proposed")).toBeNull();
+    expect(screen.queryByTestId("brief-watch-wprop_disabled")).toBeNull();
+    // SOURCES 1 label
+    const brief = screen.getByTestId("brief-watches");
+    expect(brief.textContent).toContain("SOURCES 1");
   });
 
-  it("brief groups show count chips (defect 5)", () => {
+  it("brief SOURCES shows NONE YET when nothing chosen (HS-168-05)", () => {
     const proposals: SetupProposal[] = [
       makeProposal("wprop_1", { state: "proposed" }),
       makeProposal("wprop_2", { state: "proposed" }),
-      makeProposal("wprop_3", { state: "selected", testState: "passed" }),
     ];
     const state: ControllerState = {
       kind: "proposals",
@@ -513,16 +516,15 @@ describe("SetupBrief", () => {
     };
     render(<SetupBrief state={state} />);
 
-    // Count chips for proposed (2) and tested (1)
-    const proposedCount = screen.getByTestId("brief-count-proposed");
-    expect(proposedCount.textContent).toBe("2");
-    const testedCount = screen.getByTestId("brief-count-tested");
-    expect(testedCount.textContent).toBe("1");
+    const brief = screen.getByTestId("brief-watches");
+    expect(brief.textContent).toContain("SOURCES 0");
+    expect(brief.textContent).toContain("NONE YET");
+    expect(brief.textContent).not.toContain("PROPOSED");
   });
 
   it("brief watch rows show cadence chip and action (defect 5)", () => {
     const proposals: SetupProposal[] = [
-      makeProposal("wprop_1", { state: "proposed" }),
+      makeProposal("wprop_1", { state: "selected", testState: "passed" }),
     ];
     const state: ControllerState = {
       kind: "proposals",
@@ -642,13 +644,12 @@ describe("modeLabel", () => {
 
 /* ── Card object slots (defect 1) ── */
 
-describe("SuggestionCards object structure", () => {
+// HS-168-04: SuggestionCards recomposed — chips row, Disclosure rationale,
+// ProvenanceChip, no ChoiceCard fact slots.
+describe("SuggestionCards structure (HS-168-04)", () => {
   const noop = () => {};
 
-  it("renders chips in ChoiceCardShell fact slots (was bespoke chip row)", () => {
-    // HS-159: facts now flow through ChoiceCardShell's facts prop.
-    // data-chip attributes are gone (the shell renders standard facts).
-    // Glass selectors (.surface-choice-card-fact, -fact-val) preserved.
+  it("card has name label from ChoiceCardShell", () => {
     render(
       <SuggestionCards
         proposals={[makeProposal("wprop_1")]}
@@ -658,20 +659,12 @@ describe("SuggestionCards object structure", () => {
         suggesting={false}
       />,
     );
-
     const card = screen.getByTestId("setup-card-wprop_1");
-    const facts = card.querySelectorAll(".surface-choice-card-fact");
-    expect(facts.length).toBe(4); // source, subject, cadence, mode
-
-    expect(facts[0].querySelector(".surface-choice-card-fact-val")?.textContent).toBe("native");
-    expect(facts[1].querySelector(".surface-choice-card-fact-val")?.textContent).toBe("meetings");
-    expect(facts[2].querySelector(".surface-choice-card-fact-val")?.textContent).toBe("Every 35 min");
-    expect(facts[3].querySelector(".surface-choice-card-fact-val")?.textContent).toBe("YOLO");
+    const label = card.querySelector(".surface-choice-card-label");
+    expect(label?.textContent).toBe("Meeting activity");
   });
 
-  it("card has name as ChoiceCard label anchor (was .setup-card-name)", () => {
-    // CHANGED: name now lives in .surface-choice-card-label
-    // (ChoiceCard head slot) instead of .setup-card-name.
+  it("card renders as ChoiceCard (surface-choice-card class)", () => {
     render(
       <SuggestionCards
         proposals={[makeProposal("wprop_1")]}
@@ -681,13 +674,11 @@ describe("SuggestionCards object structure", () => {
         suggesting={false}
       />,
     );
-
     const card = screen.getByTestId("setup-card-wprop_1");
-    const name = card.querySelector(".surface-choice-card-label");
-    expect(name?.textContent).toBe("Meeting activity");
+    expect(card.classList.contains("surface-choice-card")).toBe(true);
   });
 
-  it("card has rationale as footer", () => {
+  it("chips row has CADENCE and ACTION tokens", () => {
     render(
       <SuggestionCards
         proposals={[makeProposal("wprop_1")]}
@@ -697,51 +688,51 @@ describe("SuggestionCards object structure", () => {
         suggesting={false}
       />,
     );
-
     const card = screen.getByTestId("setup-card-wprop_1");
+    const chipsRow = card.querySelector(".setup-card-chips");
+    expect(chipsRow).toBeTruthy();
+    const text = chipsRow!.textContent ?? "";
+    expect(text).toContain("CADENCE");
+    expect(text).toContain("ACTION");
+  });
+
+  it("ProvenanceChip renders with source 'local' for native cards", () => {
+    render(
+      <SuggestionCards
+        proposals={[makeProposal("wprop_1")]}
+        onSelect={noop}
+        onDeselect={noop}
+        onTest={noop}
+        suggesting={false}
+      />,
+    );
+    const card = screen.getByTestId("setup-card-wprop_1");
+    const provSource = card.querySelector(".surface-provenance-source");
+    expect(provSource?.textContent).toBe("local");
+  });
+
+  it("rationale is inside a Disclosure, not a visible footer", () => {
+    render(
+      <SuggestionCards
+        proposals={[makeProposal("wprop_1")]}
+        onSelect={noop}
+        onDeselect={noop}
+        onTest={noop}
+        suggesting={false}
+      />,
+    );
+    const card = screen.getByTestId("setup-card-wprop_1");
+    const disclosure = card.querySelector(".surface-disclosure");
+    expect(disclosure).toBeTruthy();
+    // Open the disclosure to see the rationale
+    const trigger = card.querySelector(".surface-disclosure-trigger") as HTMLElement;
+    expect(trigger).toBeTruthy();
+    fireEvent.click(trigger);
     const rationale = card.querySelector(".setup-card-rationale");
     expect(rationale?.textContent).toContain("1 recent meetings");
   });
 
-  it("card has readiness state token", () => {
-    render(
-      <SuggestionCards
-        proposals={[makeProposal("wprop_1")]}
-        onSelect={noop}
-        onDeselect={noop}
-        onTest={noop}
-        suggesting={false}
-      />,
-    );
-
-    const card = screen.getByTestId("setup-card-wprop_1");
-    const readiness = card.querySelector(".setup-card-readiness");
-    expect(readiness?.textContent).toBe("Ready to select");
-    expect(readiness?.getAttribute("data-state")).toBe("proposed");
-  });
-
-  it("condition raw values on ChoiceCard summary (was .setup-card-conditions)", () => {
-    // CHANGED: conditions now render in .surface-choice-card-summary
-    // (ChoiceCard one-line anchor slot) instead of .setup-card-conditions.
-    render(
-      <SuggestionCards
-        proposals={[makeProposal("wprop_1")]}
-        onSelect={noop}
-        onDeselect={noop}
-        onTest={noop}
-        suggesting={false}
-      />,
-    );
-
-    const card = screen.getByTestId("setup-card-wprop_1");
-    const summary = card.querySelector(".surface-choice-card-summary");
-    // HS-159: data-condition-raw is now on the content span inside the
-    // summary div (ChoiceCardShell wraps the summary prop in the div).
-    const condSpan = summary?.querySelector("[data-condition-raw]");
-    expect(condSpan?.getAttribute("data-condition-raw")).toBe("content:changed");
-  });
-
-  it("selected card shows presence (accent) via aria-selected", () => {
+  it("selected card shows presence via aria-selected", () => {
     render(
       <SuggestionCards
         proposals={[makeProposal("wprop_1", { state: "selected" })]}
@@ -751,46 +742,11 @@ describe("SuggestionCards object structure", () => {
         suggesting={false}
       />,
     );
-
     const card = screen.getByTestId("setup-card-wprop_1");
     expect(card.getAttribute("aria-selected")).toBe("true");
   });
 
-  /* ── NEW: ChoiceCard visual language assertions (HS-159-05 R4) ── */
-
-  it("renders as ChoiceCard (surface-choice-card class)", () => {
-    render(
-      <SuggestionCards
-        proposals={[makeProposal("wprop_1")]}
-        onSelect={noop}
-        onDeselect={noop}
-        onTest={noop}
-        suggesting={false}
-      />,
-    );
-
-    const card = screen.getByTestId("setup-card-wprop_1");
-    expect(card.classList.contains("surface-choice-card")).toBe(true);
-  });
-
-  it("summary line is the plain-words condition", () => {
-    render(
-      <SuggestionCards
-        proposals={[makeProposal("wprop_1")]}
-        onSelect={noop}
-        onDeselect={noop}
-        onTest={noop}
-        suggesting={false}
-      />,
-    );
-
-    const card = screen.getByTestId("setup-card-wprop_1");
-    const summary = card.querySelector(".surface-choice-card-summary");
-    expect(summary).toBeTruthy();
-    expect(summary?.textContent).toBe("When content changes");
-  });
-
-  it("selection presence via the library's data-selected state", () => {
+  it("selection presence via data-selected state toggle", () => {
     const { rerender } = render(
       <SuggestionCards
         proposals={[makeProposal("wprop_1", { state: "proposed" })]}
@@ -800,12 +756,9 @@ describe("SuggestionCards object structure", () => {
         suggesting={false}
       />,
     );
-
     const card = screen.getByTestId("setup-card-wprop_1");
-    // Unselected: no data-selected
     expect(card.hasAttribute("data-selected")).toBe(false);
 
-    // Re-render as selected
     rerender(
       <SuggestionCards
         proposals={[makeProposal("wprop_1", { state: "selected" })]}
@@ -815,76 +768,7 @@ describe("SuggestionCards object structure", () => {
         suggesting={false}
       />,
     );
-    // Selected: data-selected stamped (drives accent wash via choice-card.css)
     expect(card.hasAttribute("data-selected")).toBe(true);
-  });
-
-  it("fold carries action detail (ChoiceCard fold pattern)", () => {
-    render(
-      <SuggestionCards
-        proposals={[makeProposal("wprop_1")]}
-        onSelect={noop}
-        onDeselect={noop}
-        onTest={noop}
-        suggesting={false}
-      />,
-    );
-
-    const card = screen.getByTestId("setup-card-wprop_1");
-    // Fold is present
-    const fold = card.querySelector(".surface-choice-card-fold");
-    expect(fold).toBeTruthy();
-    // Action hidden until fold opened
-    expect(card.querySelector(".setup-card-action-detail")).toBeNull();
-    // Open the fold
-    const trigger = fold!.querySelector(".surface-disclosure-trigger") as HTMLElement;
-    fireEvent.click(trigger);
-    // Action now visible
-    const actionDetail = card.querySelector(".setup-card-action-detail");
-    expect(actionDetail?.textContent).toBe("Put it in Project attention");
-  });
-
-  it("rationale is visible footer (not folded — glass selector)", () => {
-    render(
-      <SuggestionCards
-        proposals={[makeProposal("wprop_1")]}
-        onSelect={noop}
-        onDeselect={noop}
-        onTest={noop}
-        suggesting={false}
-      />,
-    );
-
-    const card = screen.getByTestId("setup-card-wprop_1");
-    const rationale = card.querySelector(".setup-card-rationale");
-    expect(rationale).toBeTruthy();
-    expect(rationale?.textContent).toContain("1 recent meetings");
-    // Rationale is NOT inside the fold
-    const fold = card.querySelector(".surface-choice-card-fold");
-    expect(fold?.contains(rationale!)).toBe(false);
-  });
-
-  it("chips render in ChoiceCard fact slots", () => {
-    render(
-      <SuggestionCards
-        proposals={[makeProposal("wprop_1")]}
-        onSelect={noop}
-        onDeselect={noop}
-        onTest={noop}
-        suggesting={false}
-      />,
-    );
-
-    const card = screen.getByTestId("setup-card-wprop_1");
-    const factsContainer = card.querySelector(".surface-choice-card-facts");
-    expect(factsContainer).toBeTruthy();
-    const facts = factsContainer!.querySelectorAll(".surface-choice-card-fact");
-    expect(facts.length).toBe(4);
-    // Each fact has key/value structure
-    facts.forEach((fact) => {
-      expect(fact.querySelector(".surface-choice-card-fact-key")).toBeTruthy();
-      expect(fact.querySelector(".surface-choice-card-fact-val")).toBeTruthy();
-    });
   });
 });
 

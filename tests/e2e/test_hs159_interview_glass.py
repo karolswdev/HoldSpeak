@@ -1,5 +1,11 @@
 """HS-159-06 real-hub Interview glass.
 
+RETIRED by HS-169-07: the interview (SetupCore: 4-step plan, suggestion
+cards, provider wizards, Review page) was replaced by the one-screen Door
+(web/src/features/project-room/door/). The replacement rig is
+test_hs169_door_glass.py. The blank/abandon legs are ported to
+test_hs169_door_legs_glass.py.
+
 The browser receives the production bundle and talks to a real
 MeetingWebServer.  The interview setup flow -- answer two questions,
 receive native suggestions seeded from real desk facts, select/test
@@ -140,6 +146,7 @@ def _seed_desk_facts(tmp_path: Path) -> None:
 # ── Tests ─────────────────────────────────────────────────────────
 
 
+@pytest.mark.skip(reason="HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); see test_hs169_door_glass.py for the replacement rig")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.parametrize("width", [1440, 393])
@@ -193,11 +200,13 @@ def test_interview_walk(
             card_count = card_elements.count()
             assert card_count >= 2, f"Expected >=2 cards, got {card_count}"
 
-            # Each card has a visible rationale
+            # HS-168-04: rationale is inside a Disclosure (collapsed by default)
+            # Verify the Disclosure trigger is visible on each card
             for i in range(card_count):
                 card = card_elements.nth(i)
-                rationale = card.locator(".setup-card-rationale")
-                assert rationale.is_visible(), f"Card {i} rationale not visible"
+                disclosure = card.locator(".surface-disclosure-trigger")
+                if disclosure.count() > 0:
+                    assert disclosure.first.is_visible(), f"Card {i} Disclosure trigger not visible"
 
             # ── Face shot: question plane with collapsed answers ──
             if width == 1440:
@@ -234,16 +243,18 @@ def test_interview_walk(
             test_btn.wait_for(timeout=5000)
             test_btn.click()
 
-            # Wait for test result to appear inside the card
-            # SuggestionCard renders .setup-card-test with data-test-state
-            test_result = first_card.locator(".setup-card-test")
-            test_result.wait_for(timeout=15000)
-            assert test_result.is_visible()
-
-            # Verify test result shows "Test passed" with match count
-            result_text = test_result.inner_text()
-            assert "Test passed" in result_text, f"Expected 'Test passed', got: {result_text}"
-            assert "current match" in result_text, f"Expected match count, got: {result_text}"
+            # HS-168-04: Wait for tested StateChip to appear on the card
+            # After test passes, the card shows "Tested . N matches" StateChip
+            page.wait_for_function(
+                """(id) => {
+                    const card = document.querySelector(`[data-testid="setup-card-${id}"]`);
+                    return card && card.textContent.toUpperCase().includes('TESTED');
+                }""",
+                arg=first_card.get_attribute("data-testid").replace("setup-card-", ""),
+                timeout=15000,
+            )
+            card_text = first_card.inner_text().upper()
+            assert "TESTED" in card_text, f"Expected 'TESTED' StateChip, got: {card_text}"
 
             # ── Step 6: RELOAD the page ──
             # Store the session_id for resume verification
@@ -382,6 +393,7 @@ def test_interview_walk(
         reset_database()
 
 
+@pytest.mark.skip(reason="HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); see test_hs169_door_glass.py for the replacement rig")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 def test_interview_face_shots(
@@ -446,6 +458,7 @@ def test_interview_face_shots(
         reset_database()
 
 
+@pytest.mark.skip(reason="HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); blank leg ported to test_hs169_door_legs_glass.py")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 def test_blank_leg(
@@ -538,6 +551,7 @@ def test_blank_leg(
         reset_database()
 
 
+@pytest.mark.skip(reason="HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); abandon leg ported to test_hs169_door_legs_glass.py")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 def test_abandon_leg(

@@ -1,0 +1,195 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;650;700&family=Space+Grotesk:wght@600;650;700&display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+    a { color: #a86e4a; } a:hover { color: #bc8058; }
+  </style>
+</helmet>
+
+<!-- Window shell (393px phone, connected) -->
+<div style="width:393px; border:1px solid #363b50; border-radius:2px; background:#15171d; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40), inset 0 0 0 1px #2a2e3e; display:flex; flex-direction:column;">
+
+  <!-- Title bar -->
+  <div style="height:40px; padding:0 12px; display:flex; align-items:center; gap:8px; background:#242833; border-radius:1px 1px 0 0; flex-shrink:0;">
+    <div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
+      <span style="width:12px; height:12px; border-radius:2px; background:#f87171; display:block;"></span>
+      <span style="width:12px; height:12px; border-radius:2px; background:#fbbf24; display:block;"></span>
+      <span style="width:12px; height:12px; border-radius:2px; background:#34d399; display:block;"></span>
+    </div>
+    <!-- Back chevron -->
+    <span style="font-size:16px; color:#9ba2b0; cursor:pointer; line-height:1; flex-shrink:0;">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#9ba2b0" stroke-width="2" stroke-linecap="square"><path d="M10 3L5 8l5 5"></path></svg>
+    </span>
+    <!-- Pane title -->
+    <span style="font:700 14px/1 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">Connections</span>
+  </div>
+
+  <!-- Body -->
+  <div style="flex:1; padding:12px 14px 14px; display:flex; flex-direction:column; gap:18px;">
+
+    <!-- ═══ CONNECTIONS 4 ═══ -->
+    <section style="display:flex; flex-direction:column; margin-bottom:12px;">
+      <!-- GadgetGroup label -->
+      <div style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+        <span>Tools</span>
+        <span style="color:#f2f3f5;">4</span>
+        <span style="flex:1; height:2px; background:linear-gradient(rgba(0,0,0,0.30) 50%, rgba(255,255,255,0.07) 50%);"></span>
+      </div>
+
+      <!-- Cards stacked -->
+      <div style="display:flex; flex-direction:column; gap:2px;">
+
+        <!-- ── GitHub (connected) ── -->
+        <div style="position:relative; display:flex; flex-direction:column; gap:6px; padding:12px 12px 8px; border:1px solid #2a2e3e; border-radius:2px; background:#15171d;">
+          <!-- Head -->
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font:700 15px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">GH</span>
+            <span style="font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.02em; color:#f2f3f5;">GitHub</span>
+          </div>
+          <!-- Summary -->
+          <div style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5;">karolswdev</div>
+          <!-- Chips -->
+          <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+            <!-- StateChip success Connected -->
+            <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; white-space:nowrap; color:#34d399;"><span style="flex:none; font-size:11px; line-height:1;">&#10003;</span>Connected</span>
+            <!-- ProvenanceChip GH · GITHUB.COM -->
+            <span style="display:inline-flex; align-items:center; gap:0; min-height:18px; padding:0 0 0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">GH<span style="display:inline-flex; align-items:center; padding:0 4px; min-height:14px; background:rgba(168,110,74,0.12); border:1px solid rgba(255,255,255,0.06); font-size:9px; letter-spacing:0.06em; color:#a86e4a; margin-left:6px;">GITHUB.COM</span></span>
+          </div>
+          <!-- Verbs row -->
+          <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+            <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Recheck</button>
+            <!-- EgressChip github.com -->
+            <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a;">GITHUB.COM</span>
+          </div>
+        </div>
+
+        <!-- ── Jira (connected) ── -->
+        <div style="position:relative; display:flex; flex-direction:column; gap:6px; padding:12px 12px 8px; border:1px solid #2a2e3e; border-radius:2px; background:#15171d;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font:700 15px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">J</span>
+            <span style="font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.02em; color:#f2f3f5;">Jira</span>
+          </div>
+          <div style="font:600 12px/1.45 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; overflow-wrap:anywhere;">karolsaneapple.atlassian.net · karolsane@gmail.com</div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+            <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; white-space:nowrap; color:#34d399;"><span style="flex:none; font-size:11px; line-height:1;">&#10003;</span>Connected</span>
+            <span style="display:inline-flex; align-items:center; gap:0; min-height:18px; padding:0 0 0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">ACLI<span style="display:inline-flex; align-items:center; padding:0 4px; min-height:14px; background:rgba(168,110,74,0.12); border:1px solid rgba(255,255,255,0.06); font-size:9px; letter-spacing:0.06em; color:#a86e4a; margin-left:6px;">KAROLSANEAPPLE.ATLASSIAN.NET</span></span>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+            <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Recheck</button>
+            <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a;">KAROLSANEAPPLE.ATLASSIAN.NET</span>
+          </div>
+        </div>
+
+        <!-- ── Calendar (connected) ── -->
+        <div style="position:relative; display:flex; flex-direction:column; gap:6px; padding:12px 12px 8px; border:1px solid #2a2e3e; border-radius:2px; background:#15171d;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="flex-shrink:0; width:16px; height:16px; display:flex; align-items:center; justify-content:center;">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#767e8d" stroke-width="1.5" stroke-linecap="square"><rect x="2" y="3" width="12" height="11" rx="0"></rect><line x1="2" y1="6" x2="14" y2="6"></line><line x1="5" y1="1" x2="5" y2="4"></line><line x1="11" y1="1" x2="11" y2="4"></line></svg>
+            </span>
+            <span style="font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.02em; color:#f2f3f5;">Calendar</span>
+          </div>
+          <div style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5;">2 sources</div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+            <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; white-space:nowrap; color:#34d399;"><span style="flex:none; font-size:11px; line-height:1;">&#10003;</span>Connected</span>
+            <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#9ba2b0;">LOCAL</span>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+            <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Sources</button>
+          </div>
+        </div>
+
+        <!-- ── Models (link card) ── -->
+        <div style="position:relative; display:flex; flex-direction:column; gap:6px; padding:12px 12px 8px; border:1px solid #2a2e3e; border-radius:2px; background:#15171d;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font:700 15px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">M</span>
+            <span style="font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.02em; color:#f2f3f5;">Models</span>
+          </div>
+          <div style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5;">5 of 7 assigned</div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+            <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; white-space:nowrap; color:#a86e4a;"><span style="flex:none; font-size:11px; line-height:1;">&#9679;</span>Assigned</span>
+            <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#9ba2b0;">LOCAL</span>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+            <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Open Models</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══ CREDENTIALS ═══ -->
+    <section style="display:flex; flex-direction:column; margin-bottom:12px;">
+      <div style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+        <span>Credentials</span>
+        <span style="flex:1; height:2px; background:linear-gradient(rgba(0,0,0,0.30) 50%, rgba(255,255,255,0.07) 50%);"></span>
+      </div>
+      <!-- Egress line -->
+      <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px; padding:2px 6px;">
+        <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#34d399;">LOCAL</span>
+        <span style="font:500 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d; text-transform:uppercase; letter-spacing:0.04em;">values stay on this hub</span>
+      </div>
+      <!-- SecretRow: Web pairing token -->
+      <div style="display:grid; grid-template-columns:1fr auto; gap:2px 8px; min-height:auto; padding:4px 6px;">
+        <span style="font:500 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; align-self:center;">Web pairing token</span>
+        <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; justify-self:end; align-self:center;">CONFIGURED</span>
+        <div style="grid-column:1/-1; display:flex; justify-content:flex-end; gap:4px;">
+          <button type="button" style="min-height:24px; padding:2px 8px; border:1px solid transparent; border-radius:0; background:transparent; color:#9ba2b0; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Replace</button>
+          <button type="button" style="min-height:24px; padding:2px 8px; border:1px solid transparent; border-radius:0; background:transparent; color:#9ba2b0; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Rotate</button>
+        </div>
+      </div>
+      <!-- SecretRow: Telegram bot token -->
+      <div style="display:grid; grid-template-columns:1fr auto; gap:2px 8px; min-height:auto; padding:4px 6px;">
+        <span style="font:500 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; align-self:center;">Telegram bot token</span>
+        <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; justify-self:end; align-self:center;">CONFIGURED</span>
+        <div style="grid-column:1/-1; display:flex; justify-content:flex-end; gap:4px;">
+          <button type="button" style="min-height:24px; padding:2px 8px; border:1px solid transparent; border-radius:0; background:transparent; color:#9ba2b0; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Replace</button>
+          <button type="button" style="min-height:24px; padding:2px 8px; border:1px solid transparent; border-radius:0; background:transparent; color:#9ba2b0; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Rotate</button>
+        </div>
+      </div>
+      <!-- SecretRow: Slack webhook -->
+      <div style="display:grid; grid-template-columns:1fr auto; gap:2px 8px; min-height:auto; padding:4px 6px;">
+        <span style="font:500 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; align-self:center;">Slack webhook</span>
+        <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; justify-self:end; align-self:center;">CONFIGURED</span>
+        <div style="grid-column:1/-1; display:flex; justify-content:flex-end; gap:4px;">
+          <button type="button" style="min-height:24px; padding:2px 8px; border:1px solid transparent; border-radius:0; background:transparent; color:#9ba2b0; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Replace</button>
+          <button type="button" style="min-height:24px; padding:2px 8px; border:1px solid transparent; border-radius:0; background:transparent; color:#9ba2b0; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Rotate</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ MESH (RAW fold collapsed) ═══ -->
+    <div style="display:flex; align-items:center; gap:6px; min-height:26px; margin:2px 0; padding:2px 9px 2px 7px; cursor:pointer;">
+      <span style="font-size:11px; color:#9ba2b0;">&#9656;</span>
+      <span style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d;">RAW</span>
+      <span style="margin-left:auto; font:10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; color:#767e8d;">2</span>
+    </div>
+
+  </div>
+
+  <!-- Footer (phone reflow) -->
+  <footer style="height:auto; min-height:36px; padding:4px 8px; background:#1c1f27; border-top:1px solid #2a2e3e; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); flex-shrink:0;">
+    <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:4px;">
+      <!-- EgressChip -->
+      <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a;">GITHUB.COM</span>
+      <!-- Receipt -->
+      <span style="display:inline-flex; align-items:center; gap:5px; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0;">
+        <span style="width:6px; height:6px; flex:none; background:#34d399;"></span>
+        Checked
+        <span style="color:#767e8d; font-variant-numeric:tabular-nums;">13:28:04</span>
+      </span>
+    </div>
+  </footer>
+
+</div>
+
+</x-dc>
+</body>
+</html>

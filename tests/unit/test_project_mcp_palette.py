@@ -84,18 +84,18 @@ def test_palette_is_subset_of_global_tools() -> None:
     assert not missing, f"Palette names not in global registry: {sorted(missing)}"
 
 
-def test_palette_contains_project_and_provider_only() -> None:
-    """The palette holds only project.* and provider.* -- no companions."""
+def test_palette_contains_project_provider_connection_only() -> None:
+    """The palette holds only project.*, provider.* and connection.* -- no companions."""
     for name in PROJECT_PALETTE:
         prefix = name.split(".")[0]
-        assert prefix in {"project", "provider"}, (
+        assert prefix in {"project", "provider", "connection"}, (
             f"Unexpected tool prefix in palette: {name!r}"
         )
 
 
-def test_palette_size_is_45() -> None:
-    """Pin: the project family has 45 tools (35 project.* + 10 provider.*; HS-167-02 added project.steward.trigger)."""
-    assert len(PROJECT_PALETTE) == 45  # HS-167-02: project.steward.trigger
+def test_palette_size_is_47() -> None:
+    """Pin: the project family has 47 tools (35 project.* + 10 provider.* + 2 connection.*; HS-168-02 added connection.list + connection.recheck)."""
+    assert len(PROJECT_PALETTE) == 47  # HS-168-02: connection.list + connection.recheck
 
 
 # ────────────────────────────────────────────────────────────────────

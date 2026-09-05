@@ -2,6 +2,7 @@
 // action choice, scope narrowing.  No unbounded chat.
 
 import { useCallback, useState } from "react";
+import { Button } from "../../../components/signal/Signal";
 import {
   CADENCE_PRESETS,
   ACTION_LABELS,
@@ -128,13 +129,9 @@ export function ClarifyStep({
         </div>
       </fieldset>
 
-      <button
-        type="button"
-        className="setup-clarify-done"
-        onClick={onDone}
-      >
+      <Button dense variant="ghost" onClick={onDone}>
         Done
-      </button>
+      </Button>
     </div>
   );
 }

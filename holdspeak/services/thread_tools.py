@@ -241,6 +241,9 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "project.watch.retire": ("effect_proposal", False),
     "project.watch.set_rules": ("effect_proposal", False),
     "project.watch.test": ("effect_proposal", False),
+    # HS-168-02: connection tools (reads only -- no state mutation)
+    "connection.list": ("evidence_read", False),
+    "connection.recheck": ("evidence_read", False),
 }
 
 # Public accessors

@@ -1172,6 +1172,26 @@
       ]
     },
     {
+      "path": "/api/connections",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.connections",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/connections/{provider}/recheck",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.connections",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/constitutional-context",
       "methods": [
         "GET"
@@ -4047,6 +4067,26 @@
       ]
     },
     {
+      "path": "/api/projects/door",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_door",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/door/count",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_door",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/projects/{project_id}",
       "methods": [
         "DELETE"
@@ -4253,6 +4293,16 @@
       ]
     },
     {
+      "path": "/api/projects/{project_id}/room/read",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/projects/{project_id}/since-last-meeting",
       "methods": [
         "GET"
@@ -4388,7 +4438,9 @@
         "GET"
       ],
       "module": "web.routes.providers",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/providers/jira/connections",
@@ -4396,7 +4448,9 @@
         "POST"
       ],
       "module": "web.routes.providers",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/providers/jira/connections/{ref}/recheck",
@@ -5485,7 +5539,9 @@
         "POST"
       ],
       "module": "web.routes.watches",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/watches/{watch_id}/resume",
@@ -5493,7 +5549,9 @@
         "POST"
       ],
       "module": "web.routes.watches",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/watches/{watch_id}/retire",
@@ -5501,7 +5559,9 @@
         "POST"
       ],
       "module": "web.routes.watches",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/watches/{watch_id}/rules",

@@ -57,7 +57,6 @@ vi.mock("../../../../desk/surface/SurfaceFooter", () => ({
 }));
 
 import {
-  ConnectionStatusCard,
   DiscoveryList,
   TypedRepoInput,
   GitHubTestDisplay,
@@ -301,102 +300,7 @@ describe("Provider decoders", () => {
   });
 });
 
-/* ── ConnectionStatusCard component tests ── */
-
-describe("ConnectionStatusCard", () => {
-  it("renders connected state with account name", () => {
-    const status = decodeProviderConnectionStatus(WIRE_CONNECTED);
-    render(
-      <ConnectionStatusCard
-        status={status}
-        onRecheck={vi.fn()}
-        rechecking={false}
-      />
-    );
-    expect(screen.getByTestId("provider-status-card")).toHaveAttribute("data-state", "connected");
-    expect(screen.getByText("Connected")).toBeInTheDocument();
-    expect(screen.getByText("testuser")).toBeInTheDocument();
-  });
-
-  it("renders owner_action_required state with recovery hint (SETFLOW-003)", () => {
-    const status = decodeProviderConnectionStatus(WIRE_OWNER_ACTION);
-    render(
-      <ConnectionStatusCard
-        status={status}
-        onRecheck={vi.fn()}
-        rechecking={false}
-      />
-    );
-    expect(screen.getByTestId("provider-status-card")).toHaveAttribute("data-state", "owner_action_required");
-    expect(screen.getByText("Authentication required")).toBeInTheDocument();
-    // Recovery card with command
-    expect(screen.getByTestId("provider-recovery")).toBeInTheDocument();
-    expect(screen.getByText("gh auth login")).toBeInTheDocument();
-    // Recheck button present
-    expect(screen.getByTestId("provider-recheck-btn")).toBeInTheDocument();
-  });
-
-  it("fires recheck handler when button clicked", () => {
-    const status = decodeProviderConnectionStatus(WIRE_OWNER_ACTION);
-    const onRecheck = vi.fn();
-    render(
-      <ConnectionStatusCard
-        status={status}
-        onRecheck={onRecheck}
-        rechecking={false}
-      />
-    );
-    fireEvent.click(screen.getByTestId("provider-recheck-btn"));
-    expect(onRecheck).toHaveBeenCalledTimes(1);
-  });
-
-  it("disables recheck button while rechecking", () => {
-    const status = decodeProviderConnectionStatus(WIRE_OWNER_ACTION);
-    render(
-      <ConnectionStatusCard
-        status={status}
-        onRecheck={vi.fn()}
-        rechecking={true}
-      />
-    );
-    expect(screen.getByTestId("provider-recheck-btn")).toBeDisabled();
-    expect(screen.getByText("Checking...")).toBeInTheDocument();
-  });
-
-  it.each([
-    "checking", "connected", "connection_required",
-    "capability_missing", "partial", "unavailable", "owner_action_required",
-  ] as const)("renders %s state with headline", (state) => {
-    const status: ProviderConnectionStatus = {
-      state,
-      errorCode: null,
-      errorDetail: null,
-      display: { account: null, recoveryHint: null },
-    };
-    render(
-      <ConnectionStatusCard
-        status={status}
-        onRecheck={vi.fn()}
-        rechecking={false}
-      />
-    );
-    expect(screen.getByText(PROVIDER_STATE_COPY[state].headline)).toBeInTheDocument();
-  });
-
-  it("shows egress badge on status card", () => {
-    const status = decodeProviderConnectionStatus(WIRE_CONNECTED);
-    const { container } = render(
-      <ConnectionStatusCard
-        status={status}
-        onRecheck={vi.fn()}
-        rechecking={false}
-      />
-    );
-    const badge = container.querySelector(".gadget-chip-egress");
-    expect(badge).not.toBeNull();
-    expect(badge?.textContent).toBe("local + cloud");
-  });
-});
+// HS-168-04: ConnectionStatusCard moved to web/src/pages/cores/connections/ (03 tests it)
 
 /* ── DiscoveryList component tests ── */
 
@@ -482,7 +386,8 @@ describe("DiscoveryList", () => {
     expect(screen.getByText("Load more")).toBeInTheDocument();
   });
 
-  it("egress badge on each discovery card", () => {
+  // HS-168-04: discovery cards use ProvenanceChip instead of EgressChip
+  it("provenance chip on each discovery card", () => {
     const { container } = render(
       <DiscoveryList
         items={items.slice(0, 1)}
@@ -494,8 +399,8 @@ describe("DiscoveryList", () => {
         loading={false}
       />
     );
-    const badges = container.querySelectorAll(".gadget-chip-egress");
-    expect(badges.length).toBeGreaterThanOrEqual(1);
+    const chips = container.querySelectorAll(".surface-provenance-chip");
+    expect(chips.length).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -514,13 +419,13 @@ describe("TypedRepoInput", () => {
     fireEvent.change(screen.getByPlaceholderText("owner/repo"), {
       target: { value: "acme/platform" },
     });
-    fireEvent.click(screen.getByText("Use this repo"));
+    fireEvent.click(screen.getByText("Check repo"));
     expect(onValidate).toHaveBeenCalledWith("acme/platform");
   });
 
   it("disables button when validating", () => {
     render(<TypedRepoInput onValidate={vi.fn()} validating={true} />);
-    expect(screen.getByText("Validating...")).toBeDisabled();
+    expect(screen.getByText("Checking...")).toBeDisabled();
   });
 
   it("calls onValidate on Enter key", () => {
@@ -534,18 +439,19 @@ describe("TypedRepoInput", () => {
 });
 
 /* ── GitHubTestDisplay tests (SS 8.1) ── */
+/* HS-168-04: DOM structure changed to SurfaceSection/SurfaceFacts/SurfaceLedger.
+   Test selector edits to match the new rendering. */
 
-describe("GitHubTestDisplay", () => {
-  it("renders passed test with entity count and representative PRs (normalized shape)", () => {
-    // Normalized entity shape from _normalize_entity: id (PR number), title, state
-    render(
+describe("GitHubTestDisplay (HS-168-04 D3 recomposition)", () => {
+  it("renders passed test with POPULATION facts and MATCHES section", () => {
+    const { container } = render(
       <GitHubTestDisplay
         repo="acme/platform"
-        queryPlainWords="acme/platform, open PRs"
+        queryPlainWordsText="acme/platform, open PRs"
         entityCount={2}
         representativeEntities={[
-          { id: "42", title: "Add routing", state: "open", url: "https://github.com/acme/platform/pull/42" },
-          { id: "43", title: "Fix tests", state: "open", url: "https://github.com/acme/platform/pull/43" },
+          { id: "42", title: "Add routing", state: "open" },
+          { id: "43", title: "Fix tests", state: "open" },
         ]}
         matchedConditions="When CI checks becomes failure"
         observedAt="2026-09-01T10:00:00Z"
@@ -554,57 +460,60 @@ describe("GitHubTestDisplay", () => {
       />
     );
     expect(screen.getByTestId("provider-test-display")).toHaveAttribute("data-test-state", "passed");
-    expect(screen.getByText("Test passed")).toBeInTheDocument();
-    expect(screen.getByText("2 current matches")).toBeInTheDocument();
-    expect(screen.getByText("acme/platform")).toBeInTheDocument();
-    expect(screen.getByText(/#42 Add routing/)).toBeInTheDocument();
-    expect(screen.getByText(/#43 Fix tests/)).toBeInTheDocument();
+    const text = container.textContent ?? "";
+    expect(text).toContain("pull requests");
+    expect(text).toContain("acme/platform, open PRs");
+    expect(text).toContain("#42");
+    expect(text).toContain("Add routing");
+    expect(text).toContain("#43");
+    expect(text).toContain("MATCHES");
   });
 
-  it("normalized entity never renders 'Unknown' for well-formed entity", () => {
-    // Well-formed normalized entity: id, title, state all populated
+  it("renders POPULATION facts with BASE branch when provided", () => {
     const { container } = render(
       <GitHubTestDisplay
         repo="acme/platform"
-        queryPlainWords="acme/platform"
-        entityCount={1}
-        representativeEntities={[
-          { id: "42", title: "Fix flaky login test", state: "open", url: "" },
-        ]}
-        matchedConditions="When CI checks changes"
-        observedAt="2026-09-01T10:00:00Z"
-        error={null}
-        testState="passed"
-      />
-    );
-    // Must render "#42 Fix flaky login test (open)", never "Unknown"
-    expect(screen.getByText(/#42 Fix flaky login test \(open\)/)).toBeInTheDocument();
-    expect(container.textContent).not.toContain("Unknown");
-  });
-
-  it("renders zero-match PASS state honestly (ACT-002)", () => {
-    render(
-      <GitHubTestDisplay
-        repo="acme/platform"
-        queryPlainWords="When CI checks is failure"
+        queryPlainWordsText="acme/platform, open PRs, base: main"
         entityCount={0}
         representativeEntities={[]}
-        matchedConditions="CI checks is failure"
+        matchedConditions=""
+        observedAt="2026-09-01T10:00:00Z"
+        error={null}
+        testState="passed"
+        baseBranch="main"
+      />
+    );
+    const text = container.textContent ?? "";
+    expect(text).toContain("SUBJECT");
+    expect(text).toContain("pull requests");
+    expect(text).toContain("BASE");
+    expect(text).toContain("main");
+    expect(text).toContain("QUERY");
+  });
+
+  it("renders zero-match PASS as StateChip '0 matches' (ACT-002)", () => {
+    const { container } = render(
+      <GitHubTestDisplay
+        repo="acme/platform"
+        queryPlainWordsText="open PRs"
+        entityCount={0}
+        representativeEntities={[]}
+        matchedConditions=""
         observedAt="2026-09-01T10:00:00Z"
         error={null}
         testState="passed"
       />
     );
-    expect(screen.getByText("0 current matches")).toBeInTheDocument();
-    expect(screen.getByTestId("provider-test-zero-match")).toBeInTheDocument();
-    expect(screen.getByText(/0 current matches is a valid result/)).toBeInTheDocument();
+    const text = container.textContent ?? "";
+    expect(text).toContain("0 matches");
+    expect(text).toContain("MATCHES 0");
   });
 
-  it("renders failed test with error", () => {
+  it("renders failed test with error StateChip and message", () => {
     render(
       <GitHubTestDisplay
         repo="acme/platform"
-        queryPlainWords="When CI checks is failure"
+        queryPlainWordsText=""
         entityCount={0}
         representativeEntities={[]}
         matchedConditions=""
@@ -614,22 +523,21 @@ describe("GitHubTestDisplay", () => {
       />
     );
     expect(screen.getByTestId("provider-test-display")).toHaveAttribute("data-test-state", "failed");
-    expect(screen.getByText("Test failed")).toBeInTheDocument();
     expect(screen.getByTestId("provider-test-error")).toBeInTheDocument();
     expect(screen.getByText("PROV-009")).toBeInTheDocument();
     expect(screen.getByText("Authentication expired")).toBeInTheDocument();
   });
 
-  it("limits representative entities to 5", () => {
+  it("limits representative entities to 5 in the ledger", () => {
     const entities = Array.from({ length: 8 }, (_, i) => ({
       id: String(i + 1),
       title: `PR ${i + 1}`,
       state: "open",
     }));
-    render(
+    const { container } = render(
       <GitHubTestDisplay
         repo="acme/platform"
-        queryPlainWords="When CI checks is failure"
+        queryPlainWordsText=""
         entityCount={8}
         representativeEntities={entities}
         matchedConditions=""
@@ -638,26 +546,8 @@ describe("GitHubTestDisplay", () => {
         testState="passed"
       />
     );
-    const entityElements = screen.getAllByText(/#\d+ PR \d+/);
-    expect(entityElements.length).toBeLessThanOrEqual(5);
-  });
-
-  it("shows egress badge on test display", () => {
-    const { container } = render(
-      <GitHubTestDisplay
-        repo="acme/platform"
-        queryPlainWords=""
-        entityCount={0}
-        representativeEntities={[]}
-        matchedConditions=""
-        observedAt="2026-09-01T10:00:00Z"
-        error={null}
-        testState="passed"
-      />
-    );
-    const badge = container.querySelector(".gadget-chip-egress");
-    expect(badge).not.toBeNull();
-    expect(badge?.getAttribute("data-scope")).toBe("mixed");
+    const rows = container.querySelectorAll(".surface-ledger-row");
+    expect(rows.length).toBeLessThanOrEqual(5);
   });
 });
 
@@ -906,8 +796,8 @@ describe("Five-template plain-words truth table", () => {
 
 /* ── SuggestionCards egress badge tests ── */
 
-describe("SuggestionCards egress badge", () => {
-  it("shows egress badge on GitHub provider cards", () => {
+describe("SuggestionCards provenance (HS-168-04)", () => {
+  it("GitHub cards have ProvenanceChip with source 'gh'", () => {
     const proposals = [makeGitHubProposal()];
     const { container } = render(
       <SuggestionCards
@@ -918,11 +808,12 @@ describe("SuggestionCards egress badge", () => {
         suggesting={false}
       />
     );
-    const badges = container.querySelectorAll(".gadget-chip-egress");
-    expect(badges.length).toBeGreaterThanOrEqual(1);
+    const ghChips = container.querySelectorAll(".surface-provenance-source");
+    const ghTexts = Array.from(ghChips).map((el) => el.textContent);
+    expect(ghTexts).toContain("gh");
   });
 
-  it("does NOT show egress badge on native provider cards", () => {
+  it("native cards have ProvenanceChip with source 'local'", () => {
     const proposals = [makeNativeProposal()];
     const { container } = render(
       <SuggestionCards
@@ -933,8 +824,9 @@ describe("SuggestionCards egress badge", () => {
         suggesting={false}
       />
     );
-    const badges = container.querySelectorAll(".gadget-chip-egress");
-    expect(badges.length).toBe(0);
+    const provChips = container.querySelectorAll(".surface-provenance-source");
+    const texts = Array.from(provChips).map((el) => el.textContent);
+    expect(texts).toContain("local");
   });
 });
 
@@ -1023,34 +915,12 @@ describe("ActivationReview GitHub enhancements", () => {
   });
 });
 
-/* ── SETFLOW-003: auth-recovery, state preservation, never-active-before-test ── */
+/* ── SETFLOW-003: state preservation, never-active-before-test ── */
+// HS-168-04: auth-recovery card moved to web/src/pages/cores/connections/ (03 tests it).
+// State preservation + never-active-before-test still tested via SuggestionCards.
 
-describe("SETFLOW-003", () => {
-  it("auth-recovery card names the recovery command", () => {
-    const status = decodeProviderConnectionStatus(WIRE_OWNER_ACTION);
-    render(
-      <ConnectionStatusCard
-        status={status}
-        onRecheck={vi.fn()}
-        rechecking={false}
-      />
-    );
-    // Recovery card names exact command
-    const recovery = screen.getByTestId("provider-recovery");
-    expect(recovery.textContent).toContain("gh auth login");
-    // Recheck button present
-    expect(screen.getByTestId("provider-recheck-btn")).toBeInTheDocument();
-  });
-
-  it("setup state preserved through auth-recovery round-trip", () => {
-    // The key SETFLOW-003 claim: unauthenticated state doesn't lose setup context.
-    // The connection status is HTTP 200, not an error -- setup state is separate.
-    const status = decodeProviderConnectionStatus(WIRE_OWNER_ACTION);
-    expect(status.state).toBe("owner_action_required");
-    // This is NOT an error in the setup -- it's a provider state. The session continues.
-    // The card renders, recheck is offered, and setup state is untouched.
-
-    // Render the recovery card inside a proposals-stage context to prove state is preserved
+describe("SETFLOW-003 state preservation (HS-168-04)", () => {
+  it("suggestion cards render with proposals present — setup state not lost", () => {
     const proposals = [makeGitHubProposal()];
     render(
       <SuggestionCards
@@ -1061,12 +931,11 @@ describe("SETFLOW-003", () => {
         suggesting={false}
       />
     );
-    // The suggestion cards still render -- setup state was not lost
     expect(screen.getByTestId("setup-suggestion-cards")).toBeInTheDocument();
+    expect(screen.getByTestId("setup-card-wprop_gh_01")).toBeInTheDocument();
   });
 
   it("GitHub NEVER appears active before a passing test", () => {
-    // A selected GitHub proposal without test is NOT active
     const ghProposal = makeGitHubProposal({ state: "selected", testState: null });
     const { container } = render(
       <SuggestionCards
@@ -1077,11 +946,9 @@ describe("SETFLOW-003", () => {
         suggesting={false}
       />
     );
-    // State should NOT be "active" or "tested"
     const card = container.querySelector('[data-testid="setup-card-wprop_gh_01"]');
     expect(card?.getAttribute("data-state")).not.toBe("active");
     expect(card?.getAttribute("data-state")).not.toBe("tested");
-    // It should be "proposed" (selected without test)
     expect(card?.getAttribute("data-state")).toBe("proposed");
   });
 

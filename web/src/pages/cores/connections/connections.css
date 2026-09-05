@@ -1,0 +1,181 @@
+/* HS-168-03 — ConnectionsPane layout. Never restyle barrel species. */
+
+/* ── Tool row: the ratified 640 layout ── */
+/* [emblem · label · summary] · [StateChip · ProvenanceChip] · [verb · EgressChip] */
+.connections-tool-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-2) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-1);
+  background: var(--desk-window-well);
+  min-height: 44px;
+}
+
+.connections-tool-row + .connections-tool-row {
+  margin-top: var(--space-1);
+}
+
+/* Identity line: emblem + label ALWAYS on one line, never split. */
+.connections-tool-identity {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.connections-tool-emblem {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-muted);
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* SVG calendar emblem sized to match the text emblems. */
+.connections-tool-emblem-svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.connections-tool-label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.connections-tool-summary {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.connections-tool-chips {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.connections-tool-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ── Fold: sign-in command well ── */
+.connections-fold {
+  width: 100%;
+  padding-top: var(--space-1);
+}
+
+/* Command row inside the well: code left, COPY right edge. */
+.connections-command-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.connections-command-code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  min-width: 0;
+  word-break: break-all;
+}
+
+.connections-fold-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-1);
+  justify-content: flex-end;
+}
+
+/* ── Jira ghost card layout ── */
+.connections-jira-ghost {
+  border-style: dashed;
+}
+
+.connections-jira-ghost-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  padding-top: var(--space-1);
+}
+
+/* Visible field label above the well (the mockup's "Site" / "Email"). */
+.connections-field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.connections-field-label-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Add button: left-aligned, dense, not full-width. */
+.connections-jira-add-row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* ── Receipt footer at the pane bottom ── */
+.connections-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  margin-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.connections-footer-receipt {
+  flex: 1;
+  text-align: right;
+}
+
+/* ── 393 phone: stack card content, but never split identity ── */
+@container surface (max-width: 500px) {
+  .connections-tool-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Identity line stays horizontal even when the row stacks. */
+  .connections-tool-identity {
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+
+  .connections-tool-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .connections-tool-chips {
+    width: 100%;
+  }
+}

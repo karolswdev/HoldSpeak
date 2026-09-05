@@ -1,10 +1,10 @@
-// HS-161-05 -- the GitHub provider wizard step: Check connection -> Discover ->
-// Test -> Activate. ONE next action per state. Recheck flow. Discovery list
-// (searchable, bounded) + typed-repo fallback. SETFLOW-003: auth-recovery
-// preserves setup state, names recovery, offers Recheck. GitHub NEVER
-// appears active before a passing test. Egress badge (EgressChip) on every
-// card and test action -- these reads leave the machine (local+cloud).
-// HS-166-04: Jira wizard lives in JiraWizard.tsx (the D5 rebuild).
+// HS-161-05 -- the GitHub provider wizard step: Discover -> Scope -> Test.
+// HS-168-04: connection card REMOVED from the interview; the wizard asks
+// SCOPE + POPULATION + TEST only. Heading = the Watch's ledger row.
+// ProgressPlan `Repository . Population . Test`. Known-scope card offered
+// at the top of the scope step. Verbs: Back (quiet) / Test this Watch
+// (primary) -> Use this Watch (primary after passing test). EgressChip
+// names the real host at the point of egress.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -15,113 +15,27 @@ import {
   ProvenanceChip,
   Receipt,
   ProgressPlan,
+  SurfaceFacts,
+  SurfaceSection,
+  SurfaceLedger,
+  SurfaceLedgerRow,
   type PlanStep,
 } from "../../../desk/surface";
+import { SurfaceFooter } from "../../../desk/surface/SurfaceFooter";
 import { MicButton } from "../../../desk/surface/controls/MicButton";
 import { Button } from "../../../components/signal/Signal";
 import {
-  PROVIDER_STATE_COPY,
-  PROVIDER_STATE_ACTION,
+  cadenceLabel,
   conditionPlainWords,
   queryPlainWords,
-  type ProviderConnectionStatus,
+  type KnownScopes,
   type DiscoveryItem,
   type DiscoveryResponse,
   type ValidateRepoResponse,
   type ClarifyScopeResponse,
   type SetupProposal,
+  type ProviderConnectionStatus,
 } from "./model";
-
-/* ── Connection status card ── */
-
-export function ConnectionStatusCard({
-  status,
-  onRecheck,
-  rechecking,
-}: {
-  status: ProviderConnectionStatus;
-  onRecheck: () => void;
-  rechecking: boolean;
-}) {
-  const copy = PROVIDER_STATE_COPY[status.state];
-  const action = PROVIDER_STATE_ACTION[status.state];
-  const isOk = status.state === "connected";
-  const needsAuth = status.state === "owner_action_required";
-
-  return (
-    <div
-      className="provider-status-card"
-      data-testid="provider-status-card"
-      data-state={status.state}
-      role="status"
-      aria-live="polite"
-    >
-      <div className="provider-status-headline">
-        <span
-          className="provider-status-icon"
-          aria-hidden="true"
-          data-ok={isOk || undefined}
-          data-warn={needsAuth || undefined}
-        >
-          {isOk ? "✓" : needsAuth ? "!" : "…"}
-        </span>
-        <span className="provider-status-title">{copy.headline}</span>
-        {status.display.account ? (
-          <span className="provider-status-account">
-            {status.display.account}
-          </span>
-        ) : null}
-      </div>
-      <div className="provider-status-detail">{copy.detail}</div>
-
-      <StateChip state={isOk ? "success" : needsAuth ? "warning" : "failure"} label={isOk ? "OK" : needsAuth ? "Sign in" : "Disconnected"} />
-      <ProvenanceChip source="gh" boundary="github.com" />
-
-      {/* SETFLOW-003: auth-recovery card names the recovery command */}
-      {needsAuth && status.display.recoveryHint ? (
-        <div
-          className="provider-recovery"
-          data-testid="provider-recovery"
-          role="alert"
-        >
-          <div className="provider-recovery-label">
-            To connect, run in your terminal:
-          </div>
-          <code className="provider-recovery-command">
-            {status.display.recoveryHint}
-          </code>
-          <div className="provider-recovery-hint">
-            Then press Recheck below.
-          </div>
-        </div>
-      ) : null}
-
-      {/* The ONE next action */}
-      {action.kind === "recheck" || action.kind === "retry" ? (
-        <Button
-          dense
-          data-testid="provider-recheck-btn"
-          onClick={onRecheck}
-          disabled={rechecking}
-          loading={rechecking}
-        >
-          {rechecking ? "Checking..." : action.label}
-        </Button>
-      ) : null}
-
-      {action.kind === "wait" ? (
-        <div className="provider-action-wait">{action.label}</div>
-      ) : null}
-
-      {/* Egress badge: connection check reads leave the machine */}
-      <EgressChip
-        label="local + cloud"
-        scope="mixed"
-        title="This connection check contacts github.com from this device."
-      />
-    </div>
-  );
-}
 
 /* ── Discovery list (searchable, bounded) ── */
 
@@ -158,7 +72,7 @@ export function DiscoveryList({
         <input
           type="text"
           className="provider-discovery-input"
-          placeholder="Search repositories..."
+          placeholder="Search repositories"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           aria-label="Search repositories"
@@ -198,20 +112,15 @@ export function DiscoveryList({
       ) : null}
 
       {cursor ? (
-        <button
-          type="button"
-          className="provider-discovery-more"
-          onClick={onLoadMore}
-          disabled={loading}
-        >
+        <Button dense variant="ghost" onClick={onLoadMore} disabled={loading}>
           Load more
-        </button>
+        </Button>
       ) : null}
     </div>
   );
 }
 
-/* ── Discovery card (ChoiceCardShell + EgressChip) ── */
+/* ── Discovery card (ChoiceCardShell + ProvenanceChip) ── */
 
 function DiscoveryCard({
   item,
@@ -221,6 +130,7 @@ function DiscoveryCard({
   onSelect: (ownerRepo: string) => void;
 }) {
   const ownerRepo = item.id;
+  const ownerInitial = item.owner ? item.owner[0]?.toUpperCase() ?? "?" : "?";
 
   const handleClick = useCallback(() => {
     onSelect(ownerRepo);
@@ -240,9 +150,7 @@ function DiscoveryCard({
     <ChoiceCardShell
       label={ownerRepo}
       summary={item.visibility}
-      facts={[
-        { label: "owner", value: item.owner },
-      ]}
+      emblem={ownerInitial}
       role="option"
       aria-selected={false}
       tabIndex={0}
@@ -250,12 +158,7 @@ function DiscoveryCard({
       onKeyDown={handleKeyDown}
       data-testid={`discovery-card-${ownerRepo}`}
     >
-      {/* Egress badge: discovery reads leave the machine */}
-      <EgressChip
-        label="local + cloud"
-        scope="mixed"
-        title="Repository discovery contacts github.com."
-      />
+      <ProvenanceChip source="gh" boundary="github.com" />
     </ChoiceCardShell>
   );
 }
@@ -298,12 +201,6 @@ export function TypedRepoInput({
 
   return (
     <div className="provider-typed-repo" data-testid="provider-typed-repo">
-      <label
-        className="provider-typed-repo-label"
-        htmlFor="provider-repo-input"
-      >
-        Or type a repository path (owner/repo):
-      </label>
       <div className="provider-typed-repo-row">
         <input
           ref={inputRef}
@@ -317,39 +214,41 @@ export function TypedRepoInput({
           disabled={validating}
         />
         <MicButton onText={handleVoice} label="Speak repository name" />
-        <button
-          type="button"
-          className="provider-typed-repo-btn"
+        <Button
+          dense
+          variant="ghost"
           onClick={handleSubmit}
           disabled={!draft.trim() || validating}
         >
-          {validating ? "Validating..." : "Use this repo"}
-        </button>
+          {validating ? "Checking..." : "Check repo"}
+        </Button>
       </div>
     </div>
   );
 }
 
-/* ── GitHub test result display (SS 8.1) ── */
+/* ── GitHub test result display (D3 recomposition) ── */
 
 export function GitHubTestDisplay({
   repo,
-  queryPlainWords,
+  queryPlainWordsText,
   entityCount,
   representativeEntities,
   matchedConditions,
   observedAt,
   error,
   testState,
+  baseBranch,
 }: {
   repo: string;
-  queryPlainWords: string;
+  queryPlainWordsText: string;
   entityCount: number;
   representativeEntities: Record<string, unknown>[];
   matchedConditions: string;
   observedAt: string;
   error: { type: string; message: string } | null;
   testState: string;
+  baseBranch?: string;
 }) {
   const isPassed = testState === "passed";
   const isFailed = testState === "failed";
@@ -362,126 +261,81 @@ export function GitHubTestDisplay({
       role="status"
       aria-live="polite"
     >
-      {/* ProgressPlan + Receipt (D3 recomposition) */}
-      <ProgressPlan
-        steps={[
-          { id: "auth", label: "Auth", status: (isPassed || isFailed) ? (isPassed ? "done" : "failed") : "queued" as PlanStep["status"] },
-          { id: "read", label: `Read ${repo}`, status: (isPassed || isFailed) ? (isPassed ? "done" : "failed") : "queued" as PlanStep["status"], rate: (isPassed || isFailed) ? `${entityCount} found` : undefined },
-          { id: "baseline", label: "Baseline ready", status: (isPassed || isFailed) ? (isPassed ? "done" : "failed") : "queued" as PlanStep["status"] },
-        ]}
-        receipt={(isPassed || isFailed) ? (
-          <Receipt status={isPassed ? "ok" : "danger"} label={isPassed ? "Passed" : "Failed"} timestamp={observedAt ? formatTestTime(observedAt) : undefined} />
-        ) : undefined}
-        egress={<ProvenanceChip source="gh" boundary="github.com" />}
-        ariaLabel="GitHub watch test"
-      />
+      {/* D3 Population facts: SUBJECT / BASE / QUERY */}
+      <SurfaceSection label="POPULATION">
+        <SurfaceFacts value={{
+          SUBJECT: "pull requests",
+          ...(baseBranch ? { BASE: baseBranch } : {}),
+          QUERY: queryPlainWordsText,
+        }} />
+      </SurfaceSection>
 
-      {/* Status + count */}
-      <div className="provider-test-header">
-        <span className="provider-test-icon" aria-hidden="true">
-          {isPassed ? "✓" : isFailed ? "✗" : "…"}
-        </span>
-        <span className="provider-test-status">
-          {isPassed ? "Test passed" : isFailed ? "Test failed" : "Testing"}
-        </span>
-        <span className="provider-test-count">
-          {entityCount} current {entityCount === 1 ? "match" : "matches"}
-        </span>
-      </div>
+      {/* D3 Test ProgressPlan */}
+      <SurfaceSection label="TEST">
+        <ProgressPlan
+          steps={[
+            { id: "auth", label: "Auth", status: (isPassed || isFailed) ? (isPassed ? "done" : "failed") : "queued" as PlanStep["status"] },
+            { id: "read", label: `Read ${repo}`, status: (isPassed || isFailed) ? (isPassed ? "done" : "failed") : "queued" as PlanStep["status"], rate: (isPassed || isFailed) ? undefined : undefined },
+            { id: "fetch", label: `Fetch ${entityCount}`, status: (isPassed || isFailed) ? (isPassed ? "done" : "failed") : "queued" as PlanStep["status"] },
+            { id: "baseline", label: "Baseline ready", status: (isPassed || isFailed) ? (isPassed ? "done" : "failed") : "queued" as PlanStep["status"] },
+          ]}
+          receipt={(isPassed || isFailed) ? (
+            <Receipt status={isPassed ? "ok" : "danger"} label={isPassed ? "Passed" : "Failed"} timestamp={observedAt ? formatTestTime(observedAt) : undefined} />
+          ) : undefined}
+          ariaLabel="GitHub watch test"
+        />
+      </SurfaceSection>
 
-      {/* ACT-002: zero-match "0 current matches = PASS" */}
-      {isPassed && entityCount === 0 ? (
-        <div className="provider-test-zero-match" data-testid="provider-test-zero-match">
-          0 current matches is a valid result. The Watch is correctly configured
-          and will activate when matching PRs appear.
-        </div>
+      {/* Matches ledger */}
+      {(isPassed || isFailed) ? (
+        <SurfaceSection label={`MATCHES ${entityCount}`}>
+          {entityCount === 0 ? (
+            <StateChip
+              state="success"
+              label="0 matches"
+            />
+          ) : representativeEntities.length > 0 ? (
+            <SurfaceLedger count={`${entityCount}`}>
+              <ul className="surface-ledger-rows">
+                {representativeEntities.slice(0, 5).map((entity, i) => {
+                  const id = entity.id != null ? String(entity.id) : "";
+                  const title = entity.title != null ? String(entity.title) : "";
+                  const state = entity.state != null ? String(entity.state) : "";
+                  const updatedAt = entity.updated_at != null ? String(entity.updated_at) : "";
+                  return (
+                    <SurfaceLedgerRow
+                      key={i}
+                      lead={id ? `#${id}` : ""}
+                      primary={title}
+                      cells={
+                        <StateChip
+                          state={state.toLowerCase() === "open" ? "success" : "idle"}
+                          label={state.toUpperCase()}
+                        />
+                      }
+                      time={updatedAt ? formatRelativeTime(updatedAt) : undefined}
+                      expands={false}
+                    />
+                  );
+                })}
+              </ul>
+            </SurfaceLedger>
+          ) : null}
+        </SurfaceSection>
       ) : null}
 
-      {/* Repository */}
-      <div className="provider-test-field">
-        <span className="provider-test-field-label">Repository</span>
-        <span className="provider-test-field-value">{repo}</span>
-      </div>
-
-      {/* Query in plain words */}
-      <div className="provider-test-field">
-        <span className="provider-test-field-label">Query</span>
-        <span className="provider-test-field-value">{queryPlainWords}</span>
-      </div>
-
-      {/* Entity count */}
-      <div className="provider-test-field">
-        <span className="provider-test-field-label">Entities</span>
-        <span className="provider-test-field-value">{entityCount}</span>
-      </div>
-
-      {/* Representative PRs (up to 5) */}
-      {representativeEntities.length > 0 ? (
-        <div className="provider-test-entities">
-          <span className="provider-test-field-label">
-            Representative PRs ({Math.min(representativeEntities.length, 5)} shown)
-          </span>
-          {representativeEntities.slice(0, 5).map((entity, i) => (
-            <div key={i} className="provider-test-entity">
-              {prEntityLabel(entity)}
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      {/* Matched conditions */}
-      {matchedConditions ? (
-        <div className="provider-test-field">
-          <span className="provider-test-field-label">Conditions</span>
-          <span className="provider-test-field-value">{matchedConditions}</span>
-        </div>
-      ) : null}
-
-      {/* Observed time */}
-      <div className="provider-test-field">
-        <span className="provider-test-field-label">Observed</span>
-        <span className="provider-test-field-value">
-          {formatTestTime(observedAt)}
-        </span>
-      </div>
-
-      {/* PROV-009 error codes rendered honestly */}
+      {/* Error state */}
       {error ? (
         <div className="provider-test-error" data-testid="provider-test-error">
-          <span className="provider-test-error-type">{error.type}</span>
-          <span className="provider-test-error-message">{error.message}</span>
+          <StateChip state="failure" label={error.type} />
+          <div className="provider-test-error-message">{error.message}</div>
         </div>
       ) : null}
-
-      {/* Egress badge on test results */}
-      <EgressChip
-        label="local + cloud"
-        scope="mixed"
-        title="This test contacted github.com to query pull requests."
-      />
     </div>
   );
 }
 
 /* ── Helpers ── */
-
-/** Label a normalized PR entity (fields from _normalize_entity in reaction_service.py).
- *  Normalized shape: id (PR number as string), title, state, url, updated_at,
- *  head_sha, checks, review_decision, review_requests, is_draft. */
-function prEntityLabel(entity: Record<string, unknown>): string {
-  // id IS the PR number in normalized entities (reaction_service._normalize_entity)
-  const id = entity.id != null ? String(entity.id) : "";
-  const num = id ? `#${id}` : "";
-  const title = entity.title != null && String(entity.title) !== ""
-    ? String(entity.title)
-    : null;
-  const state = entity.state != null && String(entity.state) !== ""
-    ? String(entity.state)
-    : "";
-  if (!title && !num) return "Unknown";
-  const label = title ? `${num} ${title}` : num;
-  return `${label}${state ? ` (${state})` : ""}`.trim();
-}
 
 function formatTestTime(iso: string): string {
   if (!iso) return "unknown";
@@ -492,8 +346,48 @@ function formatTestTime(iso: string): string {
   }
 }
 
-/* ── ProviderWizardFlow: the mounted composition that sequences
-     connection -> scope -> test in-world (no modal). ── */
+function formatRelativeTime(iso: string): string {
+  if (!iso) return "";
+  try {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "now";
+    if (mins < 60) return `${mins} min`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} hr`;
+    const days = Math.floor(hours / 24);
+    return `${days} d`;
+  } catch {
+    return "";
+  }
+}
+
+/* ── Known-scope card (D0 vocabulary) ── */
+
+function KnownScopeCard({
+  label,
+  summary,
+  onUse,
+}: {
+  label: string;
+  summary: string;
+  onUse: () => void;
+}) {
+  return (
+    <ChoiceCardShell
+      label={label}
+      summary={summary}
+      tier="balanced"
+      data-testid="known-scope-card"
+    >
+      <Button dense variant="ghost" onClick={onUse} data-testid="known-scope-use">
+        Use this repo
+      </Button>
+    </ChoiceCardShell>
+  );
+}
+
+/* ── ProviderWizardFlow: scope + population + test (no auth) ── */
 
 export function ProviderWizardFlow({
   proposal,
@@ -502,12 +396,14 @@ export function ProviderWizardFlow({
   checking,
   discovering,
   scopeState,
+  knownScopes,
   onCheckConnection,
   onRecheck,
   onDiscover,
   onValidateRepo,
   onClarifyScope,
   onTest,
+  onBack,
   onDone,
 }: {
   proposal: SetupProposal;
@@ -516,12 +412,14 @@ export function ProviderWizardFlow({
   checking: boolean;
   discovering: boolean;
   scopeState: "unscoped" | "scoped" | null;
+  knownScopes: KnownScopes;
   onCheckConnection: () => void;
   onRecheck: () => void;
   onDiscover: (query?: string, cursor?: string) => void;
   onValidateRepo: (ownerRepo: string) => Promise<ValidateRepoResponse | null>;
   onClarifyScope: (repo?: string) => Promise<ClarifyScopeResponse | null>;
   onTest: () => void;
+  onBack: () => void;
   onDone: () => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -545,6 +443,16 @@ export function ProviderWizardFlow({
   const isConnected = connection?.state === "connected";
   const isScoped = scopeState === "scoped";
   const hasPassed = proposal.testState === "passed";
+
+  // HS-168-04: ProgressPlan wizard steps
+  const wizardSteps: PlanStep[] = [
+    { id: "repository", label: "Repository", status: isScoped ? "done" : isConnected ? "running" : "queued" },
+    { id: "population", label: "Population", status: hasPassed ? "done" : isScoped ? "running" : "queued" },
+    { id: "test", label: "Test", status: hasPassed ? "done" : "queued" },
+  ];
+
+  // Known-scope card for this provider
+  const knownGitHub = knownScopes.github.find((ks) => ks.forProposalId !== proposal.id && ks.repository);
 
   // Handle discovery card selection -> clarify scope
   const handleRepoSelect = useCallback(async (ownerRepo: string) => {
@@ -571,6 +479,10 @@ export function ProviderWizardFlow({
     onDiscover(q || undefined);
   }, [onDiscover]);
 
+  // The repo from scope (for the test display)
+  const scopedRepo = String(proposal.spec.subject.scope?.repository ?? "");
+  const baseBranch = String((proposal.spec.subject.scope?.query as Record<string, unknown> | undefined)?.base ?? "");
+
   return (
     <div
       className="provider-wizard-flow"
@@ -578,26 +490,30 @@ export function ProviderWizardFlow({
       role="region"
       aria-label={`Configure ${proposal.spec.name}`}
     >
-      <h3 className="provider-wizard-heading">
-        Configure: {proposal.spec.name}
-      </h3>
+      {/* HS-168-04: heading = the Watch's ledger row as a flex composition */}
+      <div className="setup-wizard-heading" data-testid="wizard-heading">
+        <span className="setup-wizard-heading-name" data-testid="wizard-heading-name">
+          {proposal.spec.name}
+        </span>
+        <span className="surface-token" data-chip>{cadenceLabel(proposal.spec.trigger)}</span>
+        <span className="surface-token" data-chip>{proposal.spec.action.kind === "project.observe" ? "observe" : proposal.spec.action.kind}</span>
+        <ProvenanceChip source="gh" boundary="github.com" />
+      </div>
 
-      {/* Step 1: Connection status (always visible) */}
-      {connection ? (
-        <ConnectionStatusCard
-          status={connection}
-          onRecheck={onRecheck}
-          rechecking={checking}
-        />
-      ) : checking ? (
-        <div className="provider-wizard-loading" aria-live="polite">
-          Checking GitHub connection...
-        </div>
-      ) : null}
+      {/* Wizard ProgressPlan */}
+      <ProgressPlan steps={wizardSteps} compact />
 
-      {/* Step 2: Repo scope (visible when connected and not yet scoped) */}
+      {/* Repository step: known-scope card + discovery + typed repo */}
       {isConnected && !isScoped ? (
-        <>
+        <SurfaceSection label="REPOSITORY">
+          {/* Known-scope card (offered, never applied) */}
+          {knownGitHub ? (
+            <KnownScopeCard
+              label={knownGitHub.repository!}
+              summary={`chosen for ${knownGitHub.watchName ?? "another Watch"}`}
+              onUse={() => void onClarifyScope(knownGitHub.repository!)}
+            />
+          ) : null}
           <DiscoveryList
             items={discovery?.items ?? []}
             cursor={discovery?.cursor ?? null}
@@ -613,61 +529,76 @@ export function ProviderWizardFlow({
           />
           {validationError ? (
             <div className="provider-wizard-error" role="alert">
-              {validationError}
+              <StateChip state="failure" label="Error" />
+              <span>{validationError}</span>
             </div>
           ) : null}
-        </>
+        </SurfaceSection>
       ) : null}
 
-      {/* Step 3: Scoped -- show scope confirmation + test action */}
+      {/* Scoped: population facts + test */}
       {isConnected && isScoped ? (
-        <div className="provider-wizard-scoped" data-testid="provider-wizard-scoped">
-          <div className="provider-wizard-scope-confirmed">
-            Repository scoped. Ready to test.
-          </div>
-
-          {/* Test result if available */}
+        <>
           {proposal.testResult ? (
             <GitHubTestDisplay
-              repo={String(proposal.spec.subject.scope?.repository ?? "")}
-              queryPlainWords={queryPlainWords(proposal.spec)}
+              repo={scopedRepo}
+              queryPlainWordsText={queryPlainWords(proposal.spec)}
               entityCount={proposal.testResult.entityCount}
               representativeEntities={proposal.testResult.representativeEntities}
               matchedConditions={conditionPlainWords(proposal.spec)}
               observedAt={proposal.testResult.observedAt}
               error={proposal.testResult.error}
               testState={proposal.testState ?? ""}
+              baseBranch={baseBranch || undefined}
             />
-          ) : null}
+          ) : (
+            <SurfaceSection label="POPULATION">
+              <SurfaceFacts value={{
+                SUBJECT: "pull requests",
+                ...(baseBranch ? { BASE: baseBranch } : {}),
+                QUERY: queryPlainWords(proposal.spec),
+              }} />
+            </SurfaceSection>
+          )}
+        </>
+      ) : null}
 
-          {/* Test button (if not yet tested) */}
-          {!proposal.testState ? (
-            <Button
-              dense
-              variant="primary"
-              data-testid="provider-test-btn"
-              onClick={onTest}
-            >
-              Test this Watch
-            </Button>
-          ) : null}
+      {/* Checking state */}
+      {!isConnected && checking ? (
+        <div className="provider-wizard-loading" aria-live="polite">
+          Checking GitHub connection...
         </div>
       ) : null}
 
-      {/* Done button + EgressChip */}
-      <div className="provider-wizard-actions">
-        <EgressChip label="github.com" scope="mixed" title="GitHub reads leave the machine." />
-        <Button
-          dense
-          variant="ghost"
-          className="provider-wizard-done"
-          data-testid="provider-wizard-done"
-          onClick={onDone}
-        >
-          {isScoped ? "Done" : "Back to suggestions"}
-        </Button>
-      </div>
+      {/* Footer: EgressChip + Back + Test this Watch / Use this Watch */}
+      <SurfaceFooter
+        egress={<EgressChip label="github.com" scope="mixed" title="GitHub reads leave the machine." />}
+        receipt={hasPassed ? (
+          <Receipt status="ok" label="Passed" timestamp={proposal.testResult?.observedAt ? formatTestTime(proposal.testResult.observedAt) : undefined} />
+        ) : undefined}
+        verbs={
+          <>
+            <Button dense variant="ghost" onClick={onBack} data-testid="provider-wizard-back">
+              Back
+            </Button>
+            {hasPassed ? (
+              <Button dense variant="primary" onClick={onDone} data-testid="provider-wizard-done">
+                Use this Watch
+              </Button>
+            ) : (
+              <Button
+                dense
+                variant="primary"
+                disabled={!isScoped}
+                onClick={onTest}
+                data-testid="provider-test-btn"
+              >
+                Test this Watch
+              </Button>
+            )}
+          </>
+        }
+      />
     </div>
   );
 }
-

@@ -201,7 +201,7 @@ class TestSessionLifecycle:
     def test_resume_after_proposals_stage(self, rig) -> None:
         """Resume at proposals stage with proposals visible."""
         db, _ps, svc = rig
-        _seed_meeting(db)
+        _seed_decision(db, "dec-r1", "Resume decision", "accepted")
         session = svc.start_setup(OWNER)
         svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Ship it"})
         svc.answer(OWNER, session["id"], Q_SIGNALS, {"text": "Watch PRs"})
@@ -226,7 +226,9 @@ class TestSuggestionTruthTables:
         proposals = svc.suggest(OWNER, session["id"])
         assert proposals == []
 
-    def test_meetings_only_yields_meetings_proposal(self, rig) -> None:
+    def test_meetings_only_yields_no_proposal_until_adapter_exists(self, rig) -> None:
+        """HS-169-04: the meeting template is retired until an adapter
+        exists; a desk with only meetings yields zero proposals."""
         db, _ps, svc = rig
         _seed_meeting(db, "m-1", "Sprint review")
         _seed_meeting(db, "m-2", "Planning")
@@ -237,10 +239,7 @@ class TestSuggestionTruthTables:
             p["spec"]["subject"]["kind"]
             for p in proposals
         ]
-        assert "meetings" in kinds
-        meetings_prop = [p for p in proposals if p["spec"]["subject"]["kind"] == "meetings"][0]
-        assert meetings_prop["rationale"]["subject_count"] == 2
-        assert "Sprint review" in meetings_prop["rationale"]["detail"]
+        assert "meetings" not in kinds
 
     def test_decisions_yields_decisions_proposal(self, rig) -> None:
         db, _ps, svc = rig
@@ -262,6 +261,7 @@ class TestSuggestionTruthTables:
         assert "door" in kinds
 
     def test_combined_desk_yields_multiple_proposals(self, rig) -> None:
+        """HS-169-04: meetings retired from suggestions; decisions + door remain."""
         db, _ps, svc = rig
         _seed_meeting(db, "m-1", "Standup")
         _seed_decision(db, "dec-1", "Use Go", "accepted")
@@ -269,7 +269,7 @@ class TestSuggestionTruthTables:
         session = svc.start_setup(OWNER)
         proposals = svc.suggest(OWNER, session["id"])
         kinds = {p["spec"]["subject"]["kind"] for p in proposals}
-        assert "meetings" in kinds
+        assert "meetings" not in kinds  # HS-169-04: retired
         assert "decisions" in kinds
         assert "door" in kinds
 
@@ -313,7 +313,7 @@ class TestSuggestionTruthTables:
 class TestProposalOperations:
     def test_select_deselect_cycle(self, rig) -> None:
         db, _ps, svc = rig
-        _seed_meeting(db)
+        _seed_decision(db, "dec-sd", "Select me", "accepted")
         session = svc.start_setup(OWNER)
         proposals = svc.suggest(OWNER, session["id"])
         pid = proposals[0]["id"]
@@ -326,7 +326,7 @@ class TestProposalOperations:
 
     def test_clarify_updates_cadence(self, rig) -> None:
         db, _ps, svc = rig
-        _seed_meeting(db)
+        _seed_decision(db, "dec-cl", "Clarify me", "accepted")
         session = svc.start_setup(OWNER)
         proposals = svc.suggest(OWNER, session["id"])
         pid = proposals[0]["id"]
@@ -337,15 +337,15 @@ class TestProposalOperations:
         spec = clarified["spec"]
         assert spec["trigger"]["every_minutes"] == 15
 
-    def test_test_proposal_meetings(self, rig) -> None:
-        """ACT-002: test returns current matches."""
+    def test_test_proposal_decisions(self, rig) -> None:
+        """ACT-002: test returns current matches (decisions kind)."""
         db, _ps, svc = rig
-        _seed_meeting(db, "m-1", "Sprint review")
+        _seed_decision(db, "dec-tp", "Test me", "accepted")
         session = svc.start_setup(OWNER)
         proposals = svc.suggest(OWNER, session["id"])
-        meetings_prop = [p for p in proposals if p["spec"]["subject"]["kind"] == "meetings"][0]
+        dec_prop = [p for p in proposals if p["spec"]["subject"]["kind"] == "decisions"][0]
 
-        result = svc.test_proposal(OWNER, session["id"], meetings_prop["id"])
+        result = svc.test_proposal(OWNER, session["id"], dec_prop["id"])
         assert result["test_state"] == "passed"
         assert result["result"]["entity_count"] >= 1
         assert "Test passed" in result["result"]["message"]
@@ -353,16 +353,16 @@ class TestProposalOperations:
     def test_test_proposal_zero_match_honest(self, rig) -> None:
         """ACT-002: zero-match with successful read = passed."""
         db, _ps, svc = rig
-        _seed_meeting(db, "m-1", "Sprint")
+        _seed_decision(db, "dec-zm", "Zero match", "accepted")
         session = svc.start_setup(OWNER)
         proposals = svc.suggest(OWNER, session["id"])
-        meetings_prop = [p for p in proposals if p["spec"]["subject"]["kind"] == "meetings"][0]
+        dec_prop = [p for p in proposals if p["spec"]["subject"]["kind"] == "decisions"][0]
 
-        # Delete the meeting so the test read finds zero
+        # Delete the decisions so the test read finds zero
         with db._connection() as conn:
-            conn.execute("DELETE FROM meetings")
+            conn.execute("DELETE FROM decisions")
 
-        result = svc.test_proposal(OWNER, session["id"], meetings_prop["id"])
+        result = svc.test_proposal(OWNER, session["id"], dec_prop["id"])
         # Zero matches with a successful read = still passed (ACT-002)
         assert result["test_state"] == "passed"
         assert result["result"]["entity_count"] == 0
@@ -377,7 +377,7 @@ class TestFinalizeAtomicity:
 
     def test_finalize_creates_project_and_watches(self, rig) -> None:
         db, ps, svc = rig
-        _seed_meeting(db, "m-1", "Sprint")
+        _seed_decision(db, "dec-fc", "Ship routing decision", "accepted")
         session = svc.start_setup(OWNER)
         svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Ship routing"})
         svc.answer(OWNER, session["id"], Q_SIGNALS, {"text": "Watch PRs"})
@@ -418,7 +418,7 @@ class TestFinalizeAtomicity:
     def test_finalize_refused_untested_proposals(self, rig) -> None:
         """ACT-003: selected but untested proposals refused from activation."""
         db, ps, svc = rig
-        _seed_meeting(db, "m-1", "Sprint")
+        _seed_decision(db, "dec-ru", "Untested decision", "accepted")
         session = svc.start_setup(OWNER)
         svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Goal"})
         proposals = svc.suggest(OWNER, session["id"])
@@ -437,7 +437,7 @@ class TestFinalizeAtomicity:
     def test_finalize_refused_failed_proposals(self, rig) -> None:
         """ACT-003: selected + failed proposals refused."""
         db, ps, svc = rig
-        _seed_meeting(db, "m-1", "Sprint")
+        _seed_decision(db, "dec-rf", "Failed decision", "accepted")
         session = svc.start_setup(OWNER)
         svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Goal"})
         proposals = svc.suggest(OWNER, session["id"])
@@ -488,7 +488,7 @@ class TestFinalizeAtomicity:
     def test_finalize_fault_injection_watch_insert(self, rig) -> None:
         """Fault injection: failure during Watch INSERT leaves zero project rows."""
         db, ps, svc = rig
-        _seed_meeting(db, "m-1", "Sprint")
+        _seed_decision(db, "dec-fi", "Fault inject decision", "accepted")
         session = svc.start_setup(OWNER)
         svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Goal"})
         proposals = svc.suggest(OWNER, session["id"])
@@ -544,7 +544,7 @@ class TestBaselineHonesty:
     def test_finalize_emits_no_watch_events(self, rig) -> None:
         """Ledger silence: no watch transition events on activate."""
         db, ps, svc = rig
-        _seed_meeting(db, "m-1", "Sprint")
+        _seed_decision(db, "dec-bh", "Baseline decision", "accepted")
         session = svc.start_setup(OWNER)
         svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Goal"})
         proposals = svc.suggest(OWNER, session["id"])
@@ -693,7 +693,7 @@ class TestEnvelopePins:
     def test_finalize_with_watches_creates_sources(self, rig) -> None:
         """Project sources are created for activated watches."""
         db, _ps, svc = rig
-        _seed_meeting(db, "m-1", "Sprint")
+        _seed_decision(db, "dec-ws", "Watch sources decision", "accepted")
         session = svc.start_setup(OWNER)
         svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Goal"})
         proposals = svc.suggest(OWNER, session["id"])
@@ -712,7 +712,7 @@ class TestEnvelopePins:
     def test_finalize_watch_has_correct_state(self, rig) -> None:
         """Activated watch has state='active', baseline_state='established'."""
         db, _ps, svc = rig
-        _seed_meeting(db, "m-1", "Sprint")
+        _seed_decision(db, "dec-cs", "Correct state decision", "accepted")
         session = svc.start_setup(OWNER)
         svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Goal"})
         proposals = svc.suggest(OWNER, session["id"])
@@ -743,7 +743,7 @@ class TestEnvelopePins:
     def test_finalize_watch_has_rules(self, rig) -> None:
         """Activated watch has watch_rules rows."""
         db, _ps, svc = rig
-        _seed_meeting(db, "m-1", "Sprint")
+        _seed_decision(db, "dec-wr", "Watch rules decision", "accepted")
         session = svc.start_setup(OWNER)
         svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Goal"})
         proposals = svc.suggest(OWNER, session["id"])
@@ -1061,7 +1061,8 @@ class TestJiraCandidates:
         svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Track Jira issues"})
         proposals = svc.suggest(OWNER, session["id"])
         jira_proposals = [p for p in proposals if p.get("provider_id") == "jira"]
-        assert len(jira_proposals) == 5
+        # HS-168-02: per-provider cap limits to _MAX_PROPOSALS_PER_PROVIDER (4)
+        assert len(jira_proposals) == 4
         for p in jira_proposals:
             assert p["rationale"]["readiness"] == "needs_scope"
             assert p["rationale"]["source"] == "jira"

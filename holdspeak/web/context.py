@@ -71,6 +71,8 @@ class WebContext:
     cadence_service: Optional[Any] = None
     follow_through_service: Optional[Any] = None
     door_service: Optional[Any] = None
+    # HS-169-02: the streamlined one-screen project creation door.
+    project_door_service: Optional[Any] = None
     # Phase 135: encrypted People sidecar service.  It is intentionally not a
     # normal database repository and carries no sync/export/memory collaborator.
     people_service: Optional[Any] = None
@@ -112,6 +114,8 @@ class WebContext:
     github_provider: Optional[Any] = None
     # HS-166-01: the V0 Jira (acli) provider adapter.
     jira_provider: Optional[Any] = None
+    # HS-168-02: ONE readiness shape over existing adapters.
+    connections_service: Optional[Any] = None
     # HS-159-03: the durable setup interview service. Composes
     # ProjectService + WatchService; routes come in P4.
     project_setup_service: Optional[Any] = None

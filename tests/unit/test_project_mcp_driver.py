@@ -694,10 +694,11 @@ def test_legacy_family_untouched() -> None:
 # ────────────────────────────────────────────────────────────────────
 
 
-def test_project_family_tool_count() -> None:
+def test_project_family_tool_count_is_47() -> None:
     """The project family ships the expected number of tools."""
     # 17 original + 5 steward + 5 setup + 1 setup.clarify_jira_scope + 4 provider + 3 jira provider + 3 jira discover/search/validate + 7 watch = 45
-    assert len(project_family.TOOLS) == 45
+    # HS-168-02: + connection.list / connection.recheck (45 -> 47).
+    assert len(project_family.TOOLS) == 47
 
 
 def test_graduated_watch_states_constant() -> None:

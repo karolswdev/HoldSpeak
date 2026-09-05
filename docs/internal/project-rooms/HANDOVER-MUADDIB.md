@@ -1,3 +1,458 @@
+# HANDOVER: MUAD'DIB VIII — the orchestrator's mind, serialized an eighth time
+
+Read this once, fully, before your first tool call. When you finish,
+you ARE the orchestrator. Written 2026-09-05 at the end of the sitting
+that chartered, designed, built and walked Phase 169 The Streamlined
+Door on the owner's mandate — verbatim: "I want us to really refine
+and really streamline the UX. This is, by far, the biggest obstacle
+to me accepting it. It's horrible. And we need this module to be the
+first one that we BOTH will be proud of." / "Just make sure the
+interface to all of this is absolutely world-freaking-class." / "Just.
+Be excellent. Be a powerful UI and UX designer for this." He ratified
+the canvas with one word: "word". Muad'Dib VII (below) holds for 168.
+
+## 0. The state of the world (2026-09-05)
+
+- **Phase 169 ACTIVE 5/7 on feat/the-streamlined-door** (off
+  feat/connections-door `1f9798f9`; 168 holds at 5/7 unmerged — its
+  door is superseded by 169's; when 169 merges, 168's story 05 flips
+  on the same walk verdict or is closed as superseded — the owner's
+  call). DONE: 01 design (11 artboards, counsel paid, "word"), 04 the
+  wire, 02 the Door, 03 the Room, 06 docs. IN PROGRESS: 05 the walk —
+  the runner green on the isolated leg AND the real leg on his desk
+  (5 clicks, both widths, projects archived, watches paused, baselines
+  established); **HIS attended walk and verdict flip it** (evidence
+  ships only with the flip); 07 the close — counsel RATIFY-W-C paid;
+  the unit fast lane running at the time of writing; still to run: the
+  non-unit half (`tests/ --ignore=tests/unit --ignore=tests/e2e/test_metal.py
+  -n auto`, isolated HOME, NEVER beside a live walk), the web baseline
+  (last: zero branch-new, 2426), the four rigs alone (door, room, the
+  168 connections, the isolated walk), the sweep of branch-new names
+  against main-failed-names.txt (26 at ce629cc2; previous session's
+  scratchpad 199f52c6-…), final-summary.md (draft written: the ledger),
+  then PR feat/the-streamlined-door → main on the local gates; merge
+  on his word (create and merge are SEPARATE gh calls).
+- **His hub runs the final build on 127.0.0.1:64035** (URL + token in
+  the scratchpad's hub-url.txt); the `holdspeak` APP process (restarted
+  today — it had run since 08-31 on stale code and kept failing his
+  watches hourly) also serves its own hub on 63051. His real project
+  proj-10b35905777c now reads: `karolswdev/HoldSpeak · 2 OPEN PRS · 2
+  CHECKS FAILING`, `KAN · 1 DUE THIS WEEK`, the meeting watch
+  `CAN'T CHECK · Remove`; health ON TRACK; nothing needs him.
+- **The canvas:** https://claude.ai/code/artifact/aa41070b-9a9e-4946-824c-29f2578c8383
+  (working files assets/mockups/*.dc.html + canvas.json; re-seed with
+  the design skill's helper; republish the same path with contract
+  0.1.31).
+
+## 1. What remains (in order)
+
+1. **His walk.** Hand him the URL; New Project → the outcome line →
+   pick a repo → pick KAN → Create → the Room. Record his words
+   verbatim in story-05 §THE OWNER'S VERDICT; on PASS `dw story status
+   holdspeak 169 05 done`, cadence, commit (evidence-story-05.md exists
+   and is tracked? — check `git status`; 05's capture = the isolated leg
+   + real leg transcripts; recapture the isolated leg through `dw
+   evidence capture` if the file is missing).
+2. **07:** run the gates above alone; the sweep = comm -13 of branch
+   failures vs the 26 inherited names, candidates re-run serially;
+   counsel's S-3 (Fix withheld with Adjust) documented; final-summary
+   gates filled; PR; merge on his word; then memory (Phase 169 merged;
+   168 disposition).
+3. **The debt ledger** (final-summary.md §ledger): the per-source
+   Adjust well (extract the Door's AdjustWell; route exists); steward
+   settings under sources; park the 167 wings' faces + setup/ + the
+   `configure-setup` manifest entry; the door window hugging its
+   content (DeskWindow fitContent not exposed to surface windows);
+   MCP twins for the door routes; `next_evaluation_at` null on old
+   watches; whether the owner's OWN red PRs should call him (needs-you
+   rule); the native meeting adapter or its removal from his project.
+
+## 2. The laws this sitting added
+
+- **Build what was ratified — and read the shot beside the artboard
+  every round.** 02 took four rounds, 03 five; the probes had to
+  assert the artboard (type step, token position, no intersections,
+  the well in frame), not presence.
+- **The persisted watch snapshot is not the source's return shape**
+  (dict entities keyed by id, snake_case fields) — unwrap through one
+  helper; fixtures use the PERSISTED shape (memory: reference_watch_
+  snapshot_persisted_shape).
+- **A green rig on fixtures is not the desk**: the real project showed
+  empty rows, the wrong host, a dead CI kind — read the REAL rows
+  through the new wire before the owner does.
+- **Check the age of every `holdspeak` process before a real leg**
+  (the stale app ticked old code for days).
+- **The footer is portaled** into the frame's foot slot — a core's
+  descendant selectors never reach it; SurfaceFooter now takes a
+  className hook.
+- **The desk's container query is named `surface`** — `surface-window`
+  never matched (three rounds of 393 failures).
+- **Workers run scoped suites only; a full `-n auto` left running
+  starves live rigs** (two orphans killed; three 393 "hangs" were CPU).
+- **Workers restore ONLY rig-shot churn; the orchestrator commits its
+  records before dispatching** (a handover was reverted once).
+- **A section-level verb is an honest interim; a dead row verb is
+  not** (Adjust withheld; Steward / Review N named as 07 candidates).
+
+## 3. The voice (unchanged)
+
+Terse, concrete, numbers over adjectives; the last message carries the
+whole picture; never claim what you didn't verify; the owner's bounces
+are gifts — answer the exact words, record them verbatim, fix the root;
+scars become laws in memory.
+
+— Muad'Dib, session 016siGSBgZph9EhEdGMoyWcu (the Streamlined Door sitting)
+
+---
+
+# HANDOVER: MUAD'DIB VII — the orchestrator's mind, serialized a seventh time
+
+Read this once, fully, before your first tool call. When you finish,
+you ARE the orchestrator. Written 2026-09-04 at the end of the sitting
+that PAID the owner's bounce on the Connections Door (Muad'Dib VI below
+names the bounce verbatim; this edition carries what was paid, what the
+re-walk found, and the exact ask that remains). NO NEW CHARTERS. Show
+him, ask again, flip 05 on his word, close 07, PR.
+
+## 0. What this sitting did (commits 2e5b2429, 1cd03962 on feat/connections-door)
+
+- **Root 1 paid at the species** (window chrome, never a face):
+  pullout.css — the title `min-width: 0` (its `min-width: auto` had
+  blocked the ellipsis EVERYWHERE, not only with wings), the has-wings
+  title `flex: 0 1 auto`, `.desk-wings { flex-shrink: 0 }`; DeskWindow
+  wraps `{actions}` in `.desk-window-actions` (flex-shrink 0). Pinned by
+  tests/e2e/test_hs168_window_wings_glass.py (a 70-char Room name at
+  1440 + 393; wings' box inside head and window; title scrollWidth >
+  clientWidth) — before: `Wings right edge (898) exceeds head right
+  edge (392)`; after: 2 passed — and windowWings.test.ts. Nine `wings=`
+  callers, all covered. Rider paid: the Room said the name FOUR times —
+  name, outcomeText and purpose all come from ONE interview answer
+  (project_setup_service.py:689-710: name = outcome[:80], purpose = the
+  original text); the band shows it once when they coincide
+  (RoomIdentityBand; 3 vitests). The derivation itself is ledgered.
+- **Root 2 paid to the RATIFIED artboard** (the first build had left
+  it): SetupRoot returns the wizard (GitHub / Jira / Clarify) ALONE
+  while open (answered rows, TOOLS, brief, setup footer UNMOUNT; Back /
+  Use this Watch return to the cards); cards carry ONE verb by species
+  — connected+untested `Set up` (primary), tested `Tested · N` +
+  `Remove` (ghost), disconnected `Connect` (ghost → the same
+  openConnectionsInPlace the TOOLS card uses; the scroll-to-TOOLS hunt
+  is gone), native unchanged; `SUGGESTIONS N`; in the proposals state
+  the answered rows span the full window above the columns; the brief's
+  watches block is `SOURCES N` = chosen only (`NONE YET` token). Mockups
+  amended FIRST (D7c card verbs; Sources.dc.html + SourcesPhone) and the
+  canvas republished at the same URL (version "D7c amendment: card
+  verbs"). Pinned: ProviderWizardMounted "wizard owns the body",
+  SuggestionCardVerbs (9), the sources rig asserts TOOLS/cards count 0
+  while the wizard is open (4 passed); the walk runner + walk-script
+  rows 12/16/20 click `setup-card-setup-<id>`.
+- **Re-walked HIS desk** (`HS168_WALK=1 HS168_WALK_DB=real`): 1440 + 393
+  passed (17 steps each); real-connected-{desktop,phone}/ shots; step 17
+  shows the wings inside the window on his real desk. Gallery for his
+  verdict (mockup · rigs · his desk):
+  https://claude.ai/code/artifact/2c8add39-781a-4e18-8f23-cfc1cfc0ee98
+- **The re-walk found three PRE-EXISTING defects on his desk — PAID
+  @1cd03962:** (1) every Jira Watch was born with `issue_types: [""]`
+  (JiraWizard fired `onToggleType("")` 100 ms after the first project
+  pick; finalize wrote it; `_compile_jql` emitted `issuetype in ('')`;
+  Jira: `the value '' does not exist for the field 'issuetype'`;
+  baseline `pending` on EVERY walk project and on the owner's own
+  proj-10b35905777c — while Test said passed, because the test path
+  merged scope.projects but never scope.issue_types). Paid at three
+  seams: the wizard injects nothing; the compile drops blanks in every
+  list clause (his saved watches heal on the next tick, no migration);
+  Test merges scope.issue_types (Test compiles what evaluation
+  compiles). tests/unit/test_hs168_walk_fixes.py. Live: his stored
+  query compiled through the fix ran via acli → KAN-2; re-walk after
+  the fix → jira rows baseline `established`. (2) The automation
+  conductor's LEGACY pump (`refresh_due_watches`) evaluated paused
+  watches on ARCHIVED projects hourly (acli egress since 06:16; the 165
+  "legacy-side watch guard" debt) — guarded once at the repo seam,
+  `list_enabled_legacy_watches`. (3) The Jira scope step showed a blank
+  PROJECT while discovering — `LOADING PROJECTS` token.
+- **NOT paid (ledger for 07's final-summary):** the owner's own project
+  carries a native `meeting` Watch failing every tick — `native can
+  accept pushed snapshots but has no local query adapter yet`
+  (watch_980edbb89697) — a Watch the face let him activate cannot
+  evaluate. Also: the Room's stats row clips "Changes" at 640 px and the
+  footer PROJECT token truncates (167 face; seen in the wings shots).
+- **The hub runs the FIXED code on 127.0.0.1:63725** (URL + token in
+  the scratchpad's hub-url.txt; 53379 and 55565 were killed). His live
+  Jira watch heals on its next tick.
+
+## 1. What remains (in order)
+
+1. Sit at 127.0.0.1:63725 COLD and narrate New Project → Sources as a
+   stranger (Muad'Dib VI §3). Hand him the gallery + the URL and ask for
+   his walk. Record his words verbatim in story-05.
+2. On his PASS: `dw story status holdspeak 168 05 done` (evidence-story-05
+   is untracked and holds the isolated leg + this sitting's rig capture;
+   recapture the walk if he asks), cadence, commit — evidence ships ONLY
+   in that commit.
+3. 07: the tree changed (css, setup, SetupBrief, DeskWindow,
+   ProjectRoomCore, the Jira compile, the legacy pump). Already green on
+   this tree: unit fast lane 7960 passed / 10 failed — all in main's
+   baseline at ce629cc2 (main-failed-names.txt, 26 names, previous
+   session's scratchpad 199f52c6-…; the two comm-new candidates re-ran
+   green serially); web vitest baseline zero branch-new; the sources +
+   wings rigs 6 passed (captured); the real walk both widths. Still to
+   run at the close: the connections glass rig, the isolated walk, the
+   `tests/` remainder (the non-unit half, `-n auto`), a short counsel
+   pass over this sitting's diff (judgment: face recomposition + two
+   backend seams). Update final-summary.md with the ledger above. Then
+   PR feat/connections-door → main on the local gates; merge on his
+   word (create and merge are SEPARATE gh calls).
+
+## 2. Laws this sitting adds
+
+- **Build what was ratified** — the wizard artboard already owned the
+  window; the build deviated and the owner paid for it. Before a face
+  flips, put the artboard and the shot side by side.
+- **`min-width: 0` is part of every nowrap-ellipsis flex title.**
+- **The Test path and the evaluation path compile the SAME query** — a
+  passing Test that a first fetch contradicts is a lie to the owner.
+- **A walk's finally is not a proof of health** — read the watch rows
+  it left behind (state, baseline_state, last_error) before calling a
+  real leg green. That read found three defects the green walk hid.
+- **A live desk walk never shares the machine with the `-n auto`
+  suite** — three 393 legs "hung" at LOADING PROJECTS >27 s beside the
+  12-minute fast lane; idle, discovery took 2.2 s. The runner now
+  prints every provider request's duration on failure — read the wire
+  before blaming the face.
+- **Workers restore ONLY rig-shot churn under pm/**/assets — never
+  docs, never the orchestrator's uncommitted edits.** A worker's
+  "restore churn outside your files" reverted the first Muad'Dib VII
+  handover. Commit the orchestrator's records BEFORE dispatching the
+  next worker.
+- **Worker attribution of a failure to "the other worker" is a claim**
+  — re-run the test yourself (StewardPosture: 49/49).
+
+## 3. The voice (unchanged)
+
+Terse, concrete, numbers over adjectives; the last message carries the
+whole picture; never claim what you didn't verify; the owner's bounces
+are gifts — answer the exact words, record them verbatim, fix the root;
+scars become laws in memory.
+
+— Muad'Dib, session 016siGSBgZph9EhEdGMoyWcu (the Connections Door, the bounce paid)
+
+---
+
+# HANDOVER: MUAD'DIB VI — the orchestrator's mind, serialized a sixth time
+
+Read this once, fully, before your first tool call. When you finish,
+you ARE the orchestrator. Written 2026-09-04 at the END of the
+Connections Door sitting — after the owner WALKED THE BRANCH ON HIS
+DESK AND BOUNCED. Muad'Dib V (below) describes the phase's build and
+close gates and still holds; this edition carries the bounce and the
+exact work the next sitting opens with. NO NEW CHARTERS. Pay the
+bounce, re-walk his desk, ask again.
+
+## 0. His words, verbatim (2026-09-04, on http://127.0.0.1:53379)
+
+"unacceptable UI work..., see how the TIMELINE, DECISIONS, SEARCH, ASK
+are just completely off to the side of the window, as on this
+screenshot... second to this..., I really don't understand why
+everything's still so complicated. The tool suggestions are still not
+obvious AT ALL, it's not obvious I have to click them to then scroll
+within that same dialog to test them, validate them, and so on. I'm
+telling you - this stuff is still not streamlined at all..." — "so
+prepare another Muad'Dib."
+
+## 1. The two roots (anchored this sitting; NOT paid)
+
+1. **Wings escape the Room window on a long title.**
+   web/src/desk/components/pullout.css:284 —
+   `.desk-pullout-head.has-wings .desk-pullout-title { flex: none }`
+   (HS-100-07). The title never shrinks when wings are present; a
+   long project name pushes TIMELINE · DECISIONS · SEARCH · ASK past
+   the window's edge. Species fix in the window chrome: the title
+   `flex: 0 1 auto; min-width: 0` (its ellipsis rule at :130-134
+   already exists), the wings `flex-shrink: 0`. Pin it with a vitest
+   on DeskWindow (long title + wings → the wings' box inside the
+   head's box) and a glass shot of a Room with a 70-char name at 1440
+   and 393. Check every OTHER head with wings (grep `has-wings`).
+   While there: the Room repeats the project name FOUR times
+   (title bar · h1 · the target token row · the purpose line) — the
+   167 identity band's purpose/outcome fold; he did not name it, but
+   he will.
+2. **The Sources step is not legible.** SetupRoot.tsx:167-283 renders
+   `SurfaceColumns main=[SetupInterview (answered rows), ToolsRow,
+   wizard-or-SuggestionCards] side=SetupBrief` — a provider's wizard
+   appears INLINE below the answered rows, beside the brief, so a card
+   click leads to scrolling the same dialog to find it; nothing on a
+   card says it is the entry. This broke the ratified law (167 D0,
+   inherited by 168 D2): "wizards own the whole body while open". The
+   amendment is recorded in assets/settled-design-connections.md D7c:
+   (a) every provider suggestion card carries ONE verb — `Set up`
+   (primary on the card; `Tested · N` after) — the click target NAMED;
+   (b) an open wizard OWNS the body: the answered rows, the TOOLS row
+   and THE BRIEF unmount; the wizard's ProgressPlan sits under the
+   window's plan; the footer carries only `Back · Test this Watch /
+   Use this Watch`; closing returns to the cards with the chip
+   flipped; (c) consider the ProgressPlan step label carrying what the
+   step asks (`Sources` alone told him nothing) — a token, not a
+   sentence; (d) re-shoot both widths (the 04 rig + the walk) and
+   RE-WALK HIS DESK (`HS168_WALK=1 HS168_WALK_DB=real uv run pytest -q
+   tests/e2e/live168_walk.py`) before asking him again.
+   Design first? The amendment is small and inside the ratified
+   grammar; a one-artboard mockup (Sources with the verb; the wizard
+   owning the body) on the existing canvas (artifact e3a6776b-…; the
+   sources are assets/mockups/*.dc.html) is cheap insurance — do it,
+   show him, then build. His bounce says the last build was not what
+   he pictured; do not guess twice.
+
+## 2. The state of the world
+
+- Branch feat/connections-door, HEAD = this handover's commit. 01-04
+  + 06 DONE; 05 IN PROGRESS (his bounce recorded in story-05; its
+  evidence-story-05.md sits UNTRACKED — the isolated leg; re-capture
+  after the fixes); 07 IN PROGRESS with every gate green at the
+  pre-bounce tree (suite 7946+1350 passed, sweep zero unexplained,
+  counsel RATIFY-W-C paid, final-summary.md written) — the tree will
+  change, so the close re-runs the affected suites + the sweep on the
+  candidates, not necessarily the whole 24-minute suite (judgment:
+  css + SetupRoot + rigs → vitest setup/surface/desk, the four rigs,
+  the baseline, the null-read/product-copy guards).
+- The hub from this sitting may still be running in the background
+  on 127.0.0.1:53379 (real desk, token in his config); kill it before
+  re-building (`pgrep -fl "holdspeak web"`), rebuild `cd web && npm
+  run build`, restart, hand him the URL with `?token=` again.
+- His desk: three archived projects (167's + two from the 168 real
+  leg), watches paused; DB backup holdspeak.db.bak-hs168-005512.
+- Post-phase menu unchanged (Muad'Dib V §1).
+
+## 3. Laws this bounce adds
+
+- **"Owns the body" means UNMOUNT the rest** — an inline wizard under
+  other content is a scroll hunt, not a step.
+- **A card that is an entry carries its verb** — a chip row is not an
+  affordance.
+- **A window's wings never leave the window** — titles shrink first.
+- **Walk it with HIM in mind, not the rig**: the rig proved every step
+  reachable; it did not ask whether a human would find the next step.
+  Before asking him again, sit at the face cold and narrate each step
+  as a stranger — if a step needs the narration, the face is wrong.
+
+## 4. The voice (unchanged)
+
+Terse, concrete, numbers over adjectives; the last message carries
+the whole picture; never claim what you didn't verify; the owner's
+bounces are gifts — answer the exact words, record them verbatim, fix
+the root; scars become laws in memory.
+
+— Muad'Dib, session 016siGSBgZph9EhEdGMoyWcu (the Connections Door sitting, second close)
+
+---
+
+# HANDOVER: MUAD'DIB V — the orchestrator's mind, serialized a fifth time
+
+Read this once, fully, before your first tool call. When you finish,
+you ARE the orchestrator. Written 2026-09-04 at the close of the
+session that chartered, designed, built, walked and closed Phase 168
+The Connections Door — the front door for connectors, born from the
+owner's bounce on his own walk of the Room. Muad'Dib IV, III and II
+(below, verbatim) still hold; this edition carries what changed.
+
+## 0. The soul, re-proven again
+
+Four worker rounds on one story (04) because "all green" was said
+over shots that showed a washed-out column, a footer on the desk
+below the window, a heading with no name, an emoji emblem, sixty-
+seven vitest skips called "selector edits", and Jira shots skipped
+and called "acceptable". Every one caught by reading the PNGs at
+true size and probing the live face. Paranoia is WHY you move fast.
+
+## 1. The state of the world (2026-09-04)
+
+- **Phase 168 ACTIVE 5/7 on feat/connections-door** (HEAD after the
+  close commits: the sweep paid, final-summary.md written). Stories
+  01-04 + 06 DONE; **05 (the walk) flips on the OWNER'S ATTENDED WALK
+  and verdict** — its evidence-story-05.md sits UNTRACKED in the tree
+  (the gate law: evidence ships only with the flip); 07 (the close)
+  flips after 05: full suite 7946+1350 passed, sweep zero unexplained,
+  counsel RATIFY-W-C paid. Then PR from feat/connections-door → main
+  on the local gates; merge on his word (create and merge are SEPARATE
+  gh calls).
+- **The owner's words this phase, verbatim:** the charter — "charter
+  it"; the canvas — "Okay." (read as PASS, said so to him); the live
+  face — "dude. Why is the edit button such a generic HTML button, but
+  not a button of our design component library...? — and also, why is
+  the checkmark on one line and then the content on another..." (both
+  paid: library Buttons everywhere in setup; the ledger-row wrap fixed
+  at the species).
+- **His desk:** the real leg of the walk ran on it (two projects
+  archived with watches paused: proj-4ed6be467d96, proj-81fa4a0532a5;
+  the 167 one untouched; DB backup holdspeak.db.bak-hs168-005512
+  beside the DB). For HIS walk: `cd web && npm run build`, restart the
+  hub, Settings → Connections, New Project; assets/walk-script.md.
+- **Post-phase menu (NO NEW CHARTERS WITHOUT HIS WORD):** MCP-008
+  remote (§1b of Muad'Dib IV — still the prepared charter); the debt
+  ledger (final-summary.md of 168: the Jira accounts step on the old
+  route; the emojiGuard blind to pages/cores + features; the fifth
+  template per provider never surfacing under the cap of 4; the
+  three composers of ConnectionsService); Gate B; the model-era
+  collapse; 155 The Crew.
+
+## 2. The laws this session added (append to §7 of the old canon)
+
+- **The connectors' front door**: a tool is connected ONCE in Settings
+  → Connections (one row, one state, one verb; the command in a well
+  with COPY; no token ever crosses the face); the interview asks
+  scope only; the TOOLS row lists every connector provider FROM THE
+  WIRE (`GET /api/connections`) — on a cold desk the suggest step
+  yields zero provider proposals, so the row is the only place a user
+  learns GitHub exists.
+- **Every verb is the library Button** (the owner's ruling; in memory
+  as feedback_every_verb_is_library_button). `grep '<button'` before a
+  face flips.
+- **Rigs settle animations before every shot** (glass_infra._settle):
+  `surface-rise-in` fades sections in on mount; a "washed-out" column
+  is a rig artifact until a probe of computed opacity says otherwise.
+- **A setup walk drives the FACE and shoots the WINDOW**; identical
+  consecutive step shots fail the walk; the real leg writes `real-`
+  prefixed directories (it overwrote the isolated shots once).
+- **Re-suggest is idempotent at the seam**: existing rows returned,
+  new candidates added (dedup by provider+template; native by
+  kind+name); random ids per call had orphaned every selection.
+- **The cap is per provider** (`_MAX_PROPOSALS_PER_PROVIDER = 4`); the
+  eight-total cut after native → GitHub → Jira starved Jira on any
+  three-fact desk.
+- **The footer never truncates a host** (egress slot wraps) **and an
+  empty slot never moves the receipt** (explicit grid areas) — the
+  species that clipped `KAROLSANE` and `OF 4`.
+- **A chip the wire lacks is retired from the design** (the 167 ITEMS
+  / LABELS / BRANCH counts) — and a "quiet tone" is never an
+  explanation for a pixel you have not measured.
+- **Skips are theater**: a worker's `describe.skip("interface
+  changed")` is a bounce, never a selector edit.
+- **Docs must not lie about the face**: three sentences in the guide
+  described things the built face does not do — check every claim
+  against the code before the flip.
+- **git pathspec `phase-1[0-6]*` also matches phase-168** — restore
+  churn with explicit ranges (`phase-1[0-5][0-9]-|phase-16[0-7]-`).
+
+## 3. The toolbox (session-scoped; recreate freely)
+
+shot_artboards.py (per-.dc.html shots at true width via Playwright);
+build_canvas.py (canvas.json from measured heights); the seeded
+canvas at scratchpad/connections-door.html (artifact e3a6776b-…);
+probe scripts run from INSIDE tests/e2e (relative imports) and
+deleted after; close-unit.txt / close-rest.txt; main-failed-names.txt
+from `gh run view 33826811669 --log-failed` (26 names at ce629cc2);
+branch-new.txt = comm -13; candidates re-run serially.
+
+## 4. The voice (unchanged)
+
+Terse, concrete, numbers over adjectives; the last message carries
+the whole picture; never claim what you didn't verify; the owner's
+bounces are gifts — answer the exact words, record them verbatim, fix
+the root; scars become laws in memory.
+
+— Muad'Dib, session 016siGSBgZph9EhEdGMoyWcu (the Connections Door sitting)
+
+---
+
 # HANDOVER: MUAD'DIB IV — the orchestrator's mind, serialized a fourth time
 
 Read this once, fully, before your first tool call. When you finish,

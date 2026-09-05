@@ -52,6 +52,16 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to get project room")
 
+    @router.post("/api/projects/{project_id}/room/read")
+    async def api_mark_room_read(project_id: str, request: Request) -> Any:
+        """HS-169-04: set the per-project read marker to now."""
+        try:
+            return JSONResponse(service.mark_room_read(principal(request), project_id))
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to mark room read")
+
     @router.get("/api/projects")
     async def api_list_projects(request: Request, include_archived: bool = False) -> Any:
         try:

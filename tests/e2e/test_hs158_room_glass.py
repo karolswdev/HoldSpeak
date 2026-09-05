@@ -1,5 +1,10 @@
 """HS-158-05 real-hub Project Room glass.
 
+RETIRED by HS-169-07: the 158 Room (identity band, counters, wings
+TIMELINE/DECISIONS/SEARCH/ASK) was replaced by the four-question Room
+(ROOM/HISTORY; NEEDS YOU, SOURCES, SINCE YOU LOOKED, DECISIONS &
+COMMITMENTS). The replacement rig is test_hs169_room_glass.py.
+
 The browser receives the production bundle and talks to a real
 MeetingWebServer. Every record enters through the production HTTP
 adapter. Room fields (purpose, outcome_text, lifecycle, posture) are
@@ -163,6 +168,7 @@ def _seed_empty_project(page: Any) -> str:
 # ── Tests ───────────────────────────────────────────────────────────
 
 
+@pytest.mark.skip(reason="HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.parametrize("width", [1440, 393])
@@ -223,6 +229,7 @@ def test_room_populated(
         reset_database()
 
 
+@pytest.mark.skip(reason="HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.parametrize("width", [1440, 393])
@@ -271,6 +278,7 @@ def test_room_empty(
         reset_database()
 
 
+@pytest.mark.skip(reason="HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 def test_room_degraded(

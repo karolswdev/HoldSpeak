@@ -11,15 +11,21 @@ great and the product unusable, and the method learned to gate on
 usability, seat a sober eye, ask the Tuesday question, and put the
 owner's nod before every merge.
 
-## The model rule (owner ruling, 2026-08-15)
+## The model rule (owner ruling, 2026-09-05 — the Fedaykin boosted)
 
 **All research, audit, implementation, test-writing, verification, and
-counsel work delegated to agents runs on `claude-opus-4-6[1m]`. Never
-on the orchestrator's own model. No exceptions.** The orchestrator's
-model decides, briefs, and makes the done call; `claude-opus-4-6[1m]`
-does the delegated work. The repo's `.claude/agents/opus-worker.md`
-definition pins this; any orchestration harness (Workflow, Agent) must
-route through it or an equivalent explicit Opus override.
+counsel work delegated to agents runs on `claude-fable-5-1`.** The
+owner's words (2026-09-05): "what I'd like for you to do is for your
+Fedaykin to actually be boosted. Let them be fable-5-1 models. Let's
+show Arrakis how much we can push HoldSpeak forward." This supersedes
+the 2026-08-15 ruling that pinned delegated work to
+`claude-opus-4-6[1m]`. The role structure is unchanged: the
+orchestrator decides, briefs, reads every shot and makes the done call;
+implementer, verifier and counsel are separate sessions; workers run
+scoped tests only and never restore churn outside their paths. The
+repo's `.claude/agents/opus-worker.md` (the name kept for the
+harness's references) carries the model line; any orchestration
+harness (Workflow, Agent) routes through it.
 
 One carve-out exists and only the owner can invoke it: the owner may
 explicitly order a specific task onto a different model (the 2026-08-17

@@ -81,24 +81,25 @@ def test_header_totals_match_roster() -> None:
 
 
 def test_palette_count_matches_registry() -> None:
-    """The PROJECT_PALETTE size in the doc must match project + provider tools."""
+    """The PROJECT_PALETTE size in the doc must match project + provider + connection tools."""
     committed_text = DOC.read_text(encoding="utf-8")
     tool_names = gen.collect_tools()
     roster = gen.build_roster(tool_names)
 
     project_count = roster["families"].get("project", {}).get("count", 0)
     provider_count = roster["families"].get("provider", {}).get("count", 0)
-    expected_palette = project_count + provider_count
+    connection_count = roster["families"].get("connection", {}).get("count", 0)
+    expected_palette = project_count + provider_count + connection_count
 
     m = re.search(
-        r"a frozen set of the (\d+)\s+project\.\* and provider\.\*",
+        r"a frozen set of the (\d+)\s+project\.\*",
         committed_text,
     )
     assert m is not None, "palette count line not found"
     doc_palette = int(m.group(1))
     assert doc_palette == expected_palette, (
         f"palette section says {doc_palette} but registry has "
-        f"{expected_palette} (project={project_count} + provider={provider_count}) "
+        f"{expected_palette} (project={project_count} + provider={provider_count} + connection={connection_count}) "
         "-- regenerate: uv run python scripts/gen_mcp_sidecar_doc.py"
     )
 

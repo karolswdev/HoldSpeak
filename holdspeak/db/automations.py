@@ -92,6 +92,28 @@ class AutomationRepository(BaseRepository):
             rows = conn.execute("SELECT * FROM connector_watches ORDER BY created_at,id").fetchall()
         return [self._payload(row, "query", "snapshot") for row in rows]
 
+    def list_enabled_legacy_watches(self) -> list[dict[str, Any]]:
+        """Select enabled watches eligible for legacy refresh_due_watches.
+
+        Excludes watches whose state is 'paused' or 'retired' (they must
+        never evaluate on any timer) and watches whose project is archived
+        (lifecycle = 'archived').  A watch with no project row is
+        unaffected (LEFT JOIN).  Archive predicate reuses the shape from
+        list_due_watches (HS-167 M-2).
+        """
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT cw.* FROM connector_watches cw
+                   LEFT JOIN projects p ON cw.project_id = p.id
+                   WHERE cw.enabled = 1
+                     AND cw.state NOT IN ('paused', 'retired')
+                     AND (cw.project_id = '' OR cw.project_id IS NULL
+                          OR p.lifecycle IS NULL
+                          OR p.lifecycle != 'archived')
+                   ORDER BY cw.created_at, cw.id""",
+            ).fetchall()
+        return [self._payload(row, "query", "snapshot") for row in rows]
+
     def list_project_watches(self, project_id: str) -> list[dict[str, Any]]:
         """HS-167-02: list watches bound to a project."""
         with self._connection() as conn:

@@ -90,6 +90,7 @@ function roomResponse(overrides: Record<string, unknown> = {}) {
     project_id: "p1",
     revision: 5,
     observed_at: "2026-08-31T10:00:00",
+    nextCheckAt: null,
     project: {
       id: "p1",
       name: "Alpha Project",
@@ -113,7 +114,13 @@ function roomResponse(overrides: Record<string, unknown> = {}) {
     resources: { state: "ok", count: 1, latest: null },
     changes: { state: "ok", recent: [] },
     review: { state: "absent", reason: "not_yet_built" },
-    sources: { state: "absent", reason: "not_yet_built" },
+    needsYou: { state: "ok", items: [], count: 0 },
+    sources: { state: "ok", items: [], count: 0, nextCheckAt: null },
+    health: { state: "ok", assessment: "on_track", reason: null, inputs: { overdue: 0, ciFailing: false, reviewWaitingDays: null, targetPassed: false } },
+    sinceRead: { state: "ok", readAt: null, groups: [] },
+    decisions: { state: "ok", items: [] },
+    commitments: { state: "ok", items: [] },
+    target: { state: "absent", reason: "none" },
     updates: overrides.updates ?? { state: "absent", reason: "not_yet_built" },
     steward: { state: "absent", reason: "not_yet_built" },
     ...overrides,
@@ -230,6 +237,10 @@ function setupUpdatePosture(opts: {
   const draftResult = opts.draftResult ?? draftUpdateFixture();
 
   apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) => {
+    // HS-169-03: room read marker
+    if (url.includes("/room/read")) {
+      return Promise.resolve({ read_at: new Date().toISOString() });
+    }
     // Room
     if (url.includes("/room")) {
       return Promise.resolve(roomResponse());
@@ -281,7 +292,8 @@ describe("Mount proof: Updates verb in Room chrome", () => {
     render(<WindowHarness scope="project:p1" />);
 
     const btn = await screen.findByTestId("updates-verb");
-    expect(btn.textContent).toBe("Updates");
+    // HS-169-03 SELECTOR EDIT: the Room's update verb is "Draft update".
+    expect(btn.textContent).toContain("update");
   });
 
   it("clicking 'Updates' enters the update list posture", async () => {

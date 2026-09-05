@@ -16,11 +16,10 @@ import type { RoomSnapshot } from "./model";
 import { composeProjectTimeline } from "./model";
 import * as api from "./api";
 
+// HS-169-03: two wings only — ROOM (home) and HISTORY.
 const WINGS = [
-  { id: "timeline", label: "Timeline" },
-  { id: "decisions", label: "Decisions" },
-  { id: "search", label: "Search" },
-  { id: "ask", label: "Ask" },
+  { id: "room", label: "Room" },
+  { id: "history", label: "History" },
 ];
 
 /** Discriminated load lifecycle — idle (no scope), loading, or ready
@@ -34,7 +33,7 @@ export function useProjectRoomController(
   const projectId = scope?.startsWith("project:")
     ? scope.slice("project:".length)
     : "";
-  const wings = useCoreWings(WINGS, "timeline");
+  const wings = useCoreWings(WINGS, "room");
   const [project, setProject] = useState<Record<string, unknown>>({});
   const [room, setRoom] = useState<RoomSnapshot | null>(null);
   const [meetings, setMeetings] = useState<Record<string, unknown>[]>([]);
@@ -52,7 +51,19 @@ export function useProjectRoomController(
   const [searching, setSearching] = useState(false);
   const [decisionBusy, setDecisionBusy] = useState("");
   const [successors, setSuccessors] = useState<Record<string, string>>({});
-  const [readAt, setReadAt] = useState<number | null>(null);
+  const [readAt, setReadAt] = useState<string | null>(null);
+
+  // HS-169-03: POST /room/read after first paint and on Refresh.
+  const postRead = async () => {
+    if (!projectId) return;
+    try {
+      const res = await api.markRoomRead(projectId);
+      setReadAt(res.read_at || new Date().toISOString());
+    } catch {
+      // Non-fatal: the read marker is a convenience.
+      setReadAt(new Date().toISOString());
+    }
+  };
 
   const load = async () => {
     if (!projectId) return;
@@ -72,7 +83,10 @@ export function useProjectRoomController(
         created_at: snapshot.project.createdAt,
         updated_at: snapshot.project.updatedAt,
       });
-      setReadAt(Date.now());
+      // HS-169-03: readAt from the wire's sinceRead section (the PREVIOUS read).
+      if (snapshot.sinceRead.state === "ok") {
+        setReadAt(snapshot.sinceRead.readAt);
+      }
     } catch (reason) {
       setError(readableError(reason));
     } finally {
@@ -214,6 +228,7 @@ export function useProjectRoomController(
     setSuccessors,
     // Actions
     load,
+    postRead,
     search,
     openMoment,
     transition,

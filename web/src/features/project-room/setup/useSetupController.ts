@@ -5,7 +5,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { readableError } from "../../../lib/api";
 import { openSurface } from "../../../desk/shell";
+import { useDesk } from "../../../desk/store";
 import * as api from "./api";
+import { fetchConnections, type ConnectionTool, type ConnectionsResponse } from "../../../pages/cores/connections/api";
 import type {
   SetupAnswer,
   SetupProposal,
@@ -14,6 +16,7 @@ import type {
   TestResultResponse,
   FinalizeEnvelope,
   CadencePresetKey,
+  KnownScopes,
   ProviderConnectionStatus,
   DiscoveryResponse,
   ValidateRepoResponse,
@@ -81,6 +84,7 @@ export function useSetupController() {
   const [error, setError] = useState("");
   const sessionRef = useRef<string>("");
   const mountedRef = useRef(true);
+  const [knownScopes, setKnownScopes] = useState<KnownScopes>({ github: [], jira: [] });
 
   /* ── Lifecycle ── */
 
@@ -142,6 +146,11 @@ export function useSetupController() {
   function rehydrate(session: SetupSession): void {
     const outcomeAnswer = session.answers.outcome ?? null;
     const signalsAnswer = session.answers.signals ?? null;
+
+    // HS-168-04: restore known scopes from the session
+    if (session.knownScopes) {
+      setKnownScopes(session.knownScopes);
+    }
 
     // HS-167-02: restore Jira scope from the persisted answer.
     // The scope JSON rides the answer's `original` field (same shape as
@@ -526,6 +535,21 @@ export function useSetupController() {
     });
   }, []);
 
+  /* ── Known scopes refresh (HS-168-04) ── */
+
+  // After clarify-scope succeeds, refresh session to get updated known_scopes
+  const refreshKnownScopes = useCallback(async () => {
+    if (!sessionRef.current) return;
+    try {
+      const session = await api.getSetup(sessionRef.current);
+      if (session.knownScopes) {
+        safe(() => setKnownScopes(session.knownScopes!));
+      }
+    } catch {
+      // best-effort
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   /* ── Provider operations (HS-161-05) ── */
 
   const [providerConnection, setProviderConnection] = useState<ProviderConnectionStatus | null>(null);
@@ -632,6 +656,8 @@ export function useSetupController() {
               };
             });
           });
+          // HS-168-04: refresh known_scopes after successful clarify
+          void refreshKnownScopes();
         }
         return response;
       } catch (reason) {
@@ -639,7 +665,7 @@ export function useSetupController() {
         return null;
       }
     },
-    [], // eslint-disable-line react-hooks/exhaustive-deps
+    [refreshKnownScopes], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const resetProviderState = useCallback(() => {
@@ -870,6 +896,8 @@ export function useSetupController() {
               };
             });
           });
+          // HS-168-04: refresh known_scopes after successful clarify
+          void refreshKnownScopes();
         }
         return response;
       } catch (reason) {
@@ -877,7 +905,7 @@ export function useSetupController() {
         return null;
       }
     },
-    [jiraScope], // eslint-disable-line react-hooks/exhaustive-deps
+    [jiraScope, refreshKnownScopes], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const updateJiraScope = useCallback((partial: Partial<JiraScope>) => {
@@ -908,6 +936,88 @@ export function useSetupController() {
     setJiraDiscovering(false);
     setJiraPreviewing(false);
   }, []);
+
+  /* ── Connections read + re-read subscription (HS-168-04) ── */
+
+  const [connectionTools, setConnectionTools] = useState<ConnectionTool[]>([]);
+  const connectionToolsRef = useRef<ConnectionTool[]>([]);
+  connectionToolsRef.current = connectionTools;
+
+  /** Read GET /api/connections from the 02 wire (via the 03 worker's client). */
+  const readConnections = useCallback(async () => {
+    try {
+      const resp = await fetchConnections();
+      safe(() => setConnectionTools(resp.tools));
+      return resp;
+    } catch {
+      return null;
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Re-suggest on the existing session.  The server is idempotent
+   *  (HS-168-04): existing ids, states, scopes and test results are
+   *  returned unchanged; only genuinely new candidates are added. */
+  const reSuggest = useCallback(async () => {
+    if (!sessionRef.current) return;
+    try {
+      const proposals = await api.suggest(sessionRef.current);
+      safe(() =>
+        setState((prev) => {
+          if (prev.kind !== "proposals") return prev;
+          return { ...prev, proposals, suggesting: false };
+        }),
+      );
+    } catch {
+      // Re-suggest failed -- keep current proposals
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Open Settings -> Connections in place (D2: the connect card verb). */
+  const openConnectionsInPlace = useCallback(() => {
+    useDesk.getState().openSurfaceWindow("configure-settings", "integrations");
+  }, []);
+
+  // Read connections on mount + when the session enters proposals stage
+  useEffect(() => {
+    void readConnections();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Extract known scopes from the session on rehydration
+  useEffect(() => {
+    if (state.kind === "proposals" || state.kind === "review") {
+      // Re-read connections when entering proposals to get fresh state
+      void readConnections();
+    }
+  }, [state.kind]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // HS-168-04: Subscribe to desk store's windowsById for the settings window.
+  // When "surface-settings" LEAVES windowsById, re-read connections and
+  // re-suggest if a provider went from not-connected to connected.
+  const SETTINGS_WINDOW_ID = "surface-settings";
+  useEffect(() => {
+    let prevHadSettings = SETTINGS_WINDOW_ID in useDesk.getState().windowsById;
+    const unsub = useDesk.subscribe((deskState) => {
+      const nowHasSettings = SETTINGS_WINDOW_ID in deskState.windowsById;
+      // The settings window just left the map
+      if (prevHadSettings && !nowHasSettings) {
+        const oldTools = connectionToolsRef.current;
+        void readConnections().then((resp) => {
+          if (!resp || !mountedRef.current) return;
+          // Check if any provider went from not-connected to connected
+          const wasConnected = new Set(
+            oldTools.filter((t) => t.state === "connected").map((t) => t.provider_id),
+          );
+          const nowConnected = resp.tools.filter((t) => t.state === "connected");
+          const newlyConnected = nowConnected.some((t) => !wasConnected.has(t.provider_id));
+          if (newlyConnected) {
+            void reSuggest();
+          }
+        });
+      }
+      prevHadSettings = nowHasSettings;
+    });
+    return unsub;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     state,
@@ -977,5 +1087,12 @@ export function useSetupController() {
     clarifyJiraProposalScope,
     updateJiraScope,
     resetJiraState,
+
+    // Connections + known scopes (HS-168-04)
+    connectionTools,
+    knownScopes,
+    readConnections,
+    openConnectionsInPlace,
+    refreshKnownScopes,
   } as const;
 }

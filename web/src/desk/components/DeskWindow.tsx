@@ -870,7 +870,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             title (Article VII.1); the prop survives for callers/AT. */}
         <span className="desk-pullout-title desk-window-title">{title}</span>
         {wings}
-        {actions}
+        {actions ? <span className="desk-window-actions">{actions}</span> : null}
       </header>
       {headMenu ? (
         <WorkMenu

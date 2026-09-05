@@ -261,7 +261,7 @@ def test_dogfood_run_and_dedup(
             # -- Open project room --
             t0 = time.monotonic()
             _open_project_room(page, url, project_id)
-            page.get_by_test_id("project-room-name").wait_for(timeout=15000)
+            page.get_by_test_id("room-body").wait_for(timeout=15000)
             segments["open_room"] = time.monotonic() - t0
 
             # -- Click Steward verb --
@@ -658,7 +658,7 @@ def test_stop_mid_run(
             _set_policy(page, project_id)
 
             _open_project_room(page, url, project_id)
-            page.get_by_test_id("project-room-name").wait_for(timeout=15000)
+            page.get_by_test_id("room-body").wait_for(timeout=15000)
 
             # -- Enter steward and start run --
             page.get_by_test_id("steward-verb").wait_for(timeout=10000)
@@ -818,7 +818,7 @@ def test_degraded_partial_coverage(
             _set_policy(page, project_id)
 
             _open_project_room(page, url, project_id)
-            page.get_by_test_id("project-room-name").wait_for(timeout=15000)
+            page.get_by_test_id("room-body").wait_for(timeout=15000)
 
             # -- Enter steward and run --
             page.get_by_test_id("steward-verb").wait_for(timeout=10000)
@@ -936,7 +936,7 @@ def test_run_history_and_policy(
             _set_policy(page, project_id)
 
             _open_project_room(page, url, project_id)
-            page.get_by_test_id("project-room-name").wait_for(timeout=15000)
+            page.get_by_test_id("room-body").wait_for(timeout=15000)
 
             # -- Enter steward and start a run (to get history rows) --
             page.get_by_test_id("steward-verb").wait_for(timeout=10000)
