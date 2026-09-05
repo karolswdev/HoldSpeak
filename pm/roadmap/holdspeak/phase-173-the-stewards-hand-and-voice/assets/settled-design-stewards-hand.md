@@ -691,3 +691,28 @@ attribution of the nudge text (ruled: tool named, no personal name,
 editable); the createdAt approximation (ruled: the face says WAIT in
 days, never LATENCY); the 7-day cooldown made visible (`NUDGED 3 D AGO`
 on the bottleneck row while cooling — adopted).
+
+
+## Addendum — counsel on the BUILT phase (2026-09-05): RATIFY-W-C, paid
+
+Two conditions, five findings; every call site verified in production
+(ACT → `_effect_github_comment` gated by eligible kinds; OBSERVE →
+`_collect_ci_history`; the Room read → the health derivations; the
+unattended draft → the model drafter with provenance); every
+design-stage condition C1–C6 and P2-7/8/9 verified PAID.
+
+- **C1** — story 05's evidence had selected nothing (a `-k` expression
+  as one identifier). Recaptured on the health wire + rig (49 passed).
+  Law: read the pass line before a flip.
+- **C2** — `NUDGED 0 D AGO` between one and twelve hours. Paid: hours
+  under a day (`NUDGED 3 H AGO`), never zero; tests.
+- **F2** — the resolver's per-reviewer skip now logs at debug.
+- **F3** — the nudge text is bounded at 2000 characters on the wire.
+- **F4/F5** — `CHECKED <age>` adapts to age (honest); `Regenerate` is
+  162's verb, not a 173 addition.
+
+Counsel's three questions, ruled: the first-day token reads hours
+(done); `Open` on the bottleneck row opens the People card (the
+reviewer is a person; the PR link lives on the card); `PER-NUDGE
+APPROVAL` stays a token under the checkbox (no prose; the card itself
+is the second gate the owner meets).

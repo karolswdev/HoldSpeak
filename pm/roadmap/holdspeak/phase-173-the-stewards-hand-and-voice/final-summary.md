@@ -64,11 +64,16 @@
   steward test fakes lack; guarded (best-effort, never blocks OBSERVE).
 - A nudge step must belong to a real steward run — never a dummy run,
   never foreign keys off.
+- Two evidence captures that proved nothing (a zsh word-split; a `-k`
+  expression as one identifier) — recaptured; the pass line is read
+  before every flip now.
 
 ## Gates
 
 - Counsel on the design: RATIFY-W-C, ruled. Counsel on the built phase:
-  PENDING.
+  RATIFY-W-C — C1 (story 05's vacuous capture) and C2 (`NUDGED 0 D AGO`)
+  PAID, F2/F3 paid, every design-stage ruling verified paid, every new
+  entry point's production call site named (design addendum three).
 - Suite (CI shape): PENDING.
 - Web: baseline zero branch-new; ratchet at its (lowered) floor.
 
