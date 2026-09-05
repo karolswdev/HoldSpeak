@@ -597,6 +597,95 @@ suggested source row: `SUGGESTED, karolswdev/holdspeak, from Standup` with
 hides the suggestion; the same reference will not be suggested again for this
 Room. A suggestion for a reference that already has a Watch source is suppressed.
 
+## The steward's hand
+
+<!-- verify at build --> The steward can draft a weekly project update and
+propose a reviewer nudge. Both are opt-in, receipted, and visible before they
+act.
+
+### The drafted update
+
+When the steward runs (unattended or via **Run now**), it collects every delta
+since the last published update through the claim schema. If you assigned a
+model to the project update capability, the model rewrites the inventory into
+stakeholder-readable prose. Every factual sentence carries its claim ref as an
+inline chip (click to open the source). Sentences the model added beyond the
+inventory are marked **UNVERIFIED**. The model's display name and host appear in
+the footer (for example `Llama 3.3 70B, 192.168.1.43, LAN`).
+
+When no model is assigned or the model fails, the update falls back to the
+deterministic body (no unverified markers, no egress).
+
+Three verbs on the update: **Save** persists the edit without publishing.
+**Copy** copies the Markdown to the clipboard. **Publish** publishes through the
+project revision law.
+
+### The health rows
+
+<!-- verify at build --> The Room's **HEALTH** section appears between the
+headline chips and the **NEEDS YOU** section. It is present when at least one
+source has entities and absent when none do. The section caption carries a
+`CHECKED N MIN AGO` token showing the snapshot age.
+
+Each row is one signal with data:
+
+| Row | Present when | Cells | Green state |
+|---|---|---|---|
+| **REVIEW WAIT** | At least one open PR carries a review request | `3 D MEDIAN`, `3 WAITING` (days since the PR was created, not since the review was requested) | Real numbers (no "zero" row) |
+| **ISSUE AGING** | Jira entities exist | `4 > 14 D` (count of issues older than the threshold, default 14 days) | `CLEAR` |
+| **CI** | Branch CI entities exist | `2 FLAKY` (alternating pass/fail branches), `QUEUE 3` (open PRs with passing CI not yet merged); absent tokens for zero values | `PASSING` |
+| **RELEASE** | Any of the above has data | The composite: `READY` when all green, or a summary naming the worst signal | `READY` |
+
+The lead chip on each row is green, amber, or red. The color reflects the
+worst value for that signal. Absent rows mean no data, not all green (all green
+shows the section with green indicators).
+
+What the system can and cannot know: review wait is days since the PR was
+created (`createdAt`), not since the review was requested. GitHub does not
+expose the review-request timestamp in the `gh pr list` fields the Watch
+collects. The face says WAIT, never LATENCY.
+
+### The reviewer nudge
+
+<!-- verify at build --> A reviewer nudge is a proposed GitHub comment on a PR
+where a reviewer's median wait exceeds the threshold. It is the first external
+write the steward can perform.
+
+**Arming.** Open the steward policy on the project. The **Reviewer nudge** row
+carries a check gadget and an egress badge reading `GITHUB.COM`. Checked means
+the steward may propose a nudge during its next run. Unchecked (the default)
+means nudges are never proposed for this project. This is the first gate.
+
+**The card.** When the steward proposes a nudge, a NEEDS YOU row appears for the
+reviewer: the name, the median wait, the count, and a **Nudge** verb. Pressing
+**Nudge** unfolds the card inline (no modal):
+
+- The reviewer's name.
+- The PR number and title, linked.
+- The proposed comment text, editable in place. The default template:
+  `This PR has been waiting for review for N days. Flagged by HoldSpeak.`
+  No personal name in the text. The per-project default template is editable in
+  the steward policy; every individual nudge is still editable before Send.
+- The host badge: `GITHUB.COM`.
+- **Send** posts the comment from your own `gh` identity. **Dismiss** closes
+  the card with no write.
+
+This is the second gate: you approve each nudge individually.
+
+**The receipt.** After Send, the card becomes a receipt row:
+`SENT, Ania Kowalska, #612, 18:02, GITHUB.COM`. The receipt persists in the
+service event ledger with the comment URL, PR number, reviewer name, timestamp,
+and approval principal. No Undo (a posted comment cannot be retracted by
+HoldSpeak).
+
+**The 7-day cooldown.** After a nudge is sent for a PR and reviewer, the
+steward will not propose the same nudge again for 7 days. While cooling, the
+bottleneck row reads `NUDGED 3 D AGO` instead of offering the Nudge verb.
+
+**Dismiss.** Dismissing a nudge card closes it with no write and no cooldown.
+The steward may re-propose on the next run if the reviewer still exceeds the
+threshold.
+
 ## The Arrival
 
 The arrival is the desk's home screen. Its headline tells you the one fact

@@ -197,6 +197,10 @@ left column is the name; do not alternate with the synonyms.
 | a suggested source (a repo or issue key mentioned in a transcript) | "a recommendation", "a detected source", "an inferred source" |
 | the 1:1 card (the People Prep lens before a meeting) | "the person card", "the prep card", "the contact card" |
 | People in the Room (the PEOPLE section in a project Room) | "room contacts", "project members", "room people section" |
+| the steward's hand (the steward's bounded external actions) | "steward actions", "the hand", "steward effects" |
+| a reviewer nudge (a proposed comment on a waiting PR) | "a ping", "a reminder", "a review request", "a poke" |
+| the health rows (the Room's HEALTH signal section) | "the health dashboard", "the health panel", "the status board" |
+| the drafted update (the model-rewritten weekly update) | "the AI update", "the generated update", "the smart update" |
 
 ## Voice rules (the editing standard for every user-facing doc)
 

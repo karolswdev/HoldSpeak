@@ -40,6 +40,17 @@ states how many matches fit its prompt. The read-only Process window shows what
 the kernel journal says is running, waiting, unknown, or finished without
 controlling the work.
 
+<!-- verify at build --> The steward drafts the weekly project update with the
+model you assigned, every sentence grounded in the claim schema (unverified
+claims marked, the model and its host named beside the draft). The Room reads
+its health from what it already watches: review wait, issue aging, CI, release
+readiness (present when the source has entities, absent when it does not). When
+a reviewer is the bottleneck and you armed the reviewer nudge on that project,
+the steward proposes a comment on the waiting PR. You see the exact text and
+`GITHUB.COM` before Send. The comment posts from your own `gh` identity, and
+the receipt names who, which PR, when, and where. Nothing posts without your
+word on that one.
+
 **Every model attempt has one door and one receipt.** HoldSpeak freezes an
 assigned compatible route before it executes a physical provider attempt. Each
 attempt uses one immutable deployment revision and receives one terminal receipt.
