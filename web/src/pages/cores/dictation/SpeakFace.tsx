@@ -180,7 +180,7 @@ function TransportRow({
       <MicButton
         variant="transport"
         draftScope="dictation-dry-run-voice"
-        label="Speak"
+        label="Talk"
         onText={deck.onReleased}
         onState={(next) => {
           if (next === "busy") deck.releasedAt.current = performance.now();
@@ -371,9 +371,8 @@ function EngineRow({
           variant="ghost"
           dense
           onClick={() => {
-            // Open the concierge / models settings
-            import("../../../desk/shell").then(({ openSurfaceOr }) =>
-              openSurfaceOr("configure-settings", "/settings", "models"),
+            import("../../../desk/shell").then(({ openSurface }) =>
+              openSurface("open-concierge"),
             );
           }}
         >

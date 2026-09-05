@@ -265,25 +265,26 @@ def test_speak_landed_1440(tmp_path, monkeypatch):
             _shot(page, "teach", 1440)
 
             # ── Teach posts a correction via the API ──
-            # Stub the correction route
-            correction_posted = {"called": False}
-            def handle_correction(route):
-                correction_posted["called"] = True
-                route.fulfill(
-                    status=200,
-                    content_type="application/json",
-                    body=json.dumps({"success": True}),
-                )
-            page.route("**/api/dictation/journal/*/correct", handle_correction)
-            page.route("**/api/dictation/corrections", handle_correction)
+            # Stub the correction routes
+            page.route("**/api/dictation/journal/*/correct", lambda route: route.fulfill(
+                status=200, content_type="application/json",
+                body=json.dumps({"success": True}),
+            ))
+            page.route("**/api/dictation/corrections", lambda route: route.fulfill(
+                status=200, content_type="application/json",
+                body=json.dumps({"success": True}),
+            ))
 
-            # Type a correction value and click Teach
+            # Type a correction value and click Teach; wait for the POST
             correction_input = teach_row.locator('input[type="text"]')
             if correction_input.count() > 0:
                 correction_input.fill("Terminal")
-                teach_btn.click()
-                page.wait_for_timeout(1000)
-                assert correction_posted["called"], "Teach did not post a correction"
+                with page.expect_request(
+                    lambda req: "correct" in req.url or "corrections" in req.url,
+                    timeout=5000,
+                ) as req_info:
+                    teach_btn.click()
+                assert req_info.value.method == "POST"
 
             _assert_clean(page, errors)
             browser.close()
