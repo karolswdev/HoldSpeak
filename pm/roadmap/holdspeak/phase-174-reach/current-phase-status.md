@@ -128,6 +128,11 @@ the .43 box runs llama.cpp (Q6, 24k context) but no HoldSpeak runner.
 
 ## Where we are
 
+**2026-09-05 21:25 — 10/11 DONE; only 11 the close remains.** Counsel on
+the built phase reading; the full suite running; the runner's last fixes
+landing; then his-desk walk (the probe credential only if remote is
+already ON) and the close.
+
 **2026-09-05 20:45 — 7/11 DONE (01 · 02 · 03 · 05 · 06 · 08 · 09); PR #557.**
 The receipts/Door/Rhythm faces are built but their rigs were hollow
 (no shade open; no Confluence seeded) — being redone on the wire that
