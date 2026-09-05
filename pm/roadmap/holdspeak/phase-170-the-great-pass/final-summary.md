@@ -72,7 +72,14 @@
   private hosts LAN); Speak's ENGINE row resolves through detect and
   reads `GPT-5 mini · API.OPENAI.COM · ⚠ KEY NOT SET · Choose`. His
   desk's dictation assignment is the Concierge's first real job: one
-  `Use these` re-points it to a local engine.
+  `Use these` re-points it to a local engine. The row resisted three
+  resolver rounds until his real projection was read in-process: the
+  143 migration wrote the entry's profile id as `legacy-legacy-intel`
+  (double prefix) against a profile row `legacy-intel`, with readiness
+  `unknown` — no id match could ever succeed. Matching now strips the
+  migration prefix and falls back to the engine's legacy label; apply
+  writes fresh ids. Law: when a seeded rig passes and the real desk
+  disagrees three times, read the real data, don't re-guess.
 - Parking the Chair board left the 144 Door's action items (`/api/door`:
   overdue · now · waiting · unassigned) with no face — found by the old
   144 rig failing, not by the new rigs passing. They join the arrival's
