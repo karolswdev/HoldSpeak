@@ -1,12 +1,15 @@
 # The Loop Closes -- the settled design (Phase 172, story 01)
 
-> **DRAFT -- pending 170's merge and his word.**
+> **ON THE CANVAS (2026-09-05)** -- thirteen boards published at
+> https://claude.ai/code/artifact/b153c331-cd38-4856-b38b-837407dd6fba ;
+> counsel reading; faces build to the ratified boards under the standing
+> goal; **his word gates the merge** (stacked on 171's #554 on 170's #553).
 
 The owner's Tuesday moment (THE-TUESDAY-ARC.md section 2, "Phase 172"):
 the standup ends; within a minute the Room reads "Standup -- 2 decisions
 -- 3 action items"; NEEDS YOU gains "Confirm: Marek owns the PostgreSQL
 migration -- by Fri"; before the 1:1 with Ania her card reads "2 PRs
-waiting on her 3+ days -- 1 commitment overdue -- last meeting 5 items,
+waiting on Ania 3+ days -- 1 commitment overdue -- last meeting 5 items,
 2 open." The face canon binds (docs/internal/UX-CANON.md); the Door's,
 the Arrival's, and the Heartbeat's grammar (Phases 169-171) are the
 ratified precedent.

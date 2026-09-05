@@ -113,7 +113,19 @@ between a person's name and a Watch entity's assignee/reviewer.
 
 ## Where we are
 
-PLANNED. Waiting for Phase 170 to merge (171 may run beside this phase
+**2026-09-05 -- ACTIVE, STACKED on 171 (#554) on 170 (#553).** The
+thirteen boards are on the canvas
+(https://claude.ai/code/artifact/b153c331-cd38-4856-b38b-837407dd6fba),
+two bounces paid (Dismiss not Drop; Edit is a Button; the lead slot is
+the source; no clipped text; no pronoun from a name; case-insensitive
+dedup; the display step is a fact); counsel reading. Wire B (People
+resolver, 1:1 enrichment, suggested sources) is in the tree green on
+181 scoped tests; Wire A (auto-run trigger + the proposal bridge) is
+landing. Docs (09) and the walk runner (08) are drafted and committed
+in progress. Next: counsel -> faces -> rigs -> his-desk walk -> close
+-> PR stacked on #554.
+
+Earlier: PLANNED. Waiting for Phase 170 to merge (171 may run beside this phase
 -- different seams: meetings/People vs scheduler/shade). The recon is
 complete: 14 intelligence plugins exist (plugins/builtin/) but the
 owner's desk has 0 plugin runs and 6/8 meetings with intelligence
