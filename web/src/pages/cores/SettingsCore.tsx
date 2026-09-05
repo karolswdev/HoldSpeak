@@ -35,9 +35,12 @@ import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { openSurface } from "../../desk/shell";
 import { HotkeyCapture } from "./settingsBespoke";
 import { toggleSfx } from "../../lib/sfx";
-import { ModelsModule } from "./settingsModels";
+// PARKED (HS-170-03): ModelsModule retired — the Concierge replaces it.
+// import { ModelsModule } from "./settingsModels";
 import { TtsSettingsBlock } from "./settingsTts";
-import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
+// PARKED (HS-170-03): CapabilityAssignmentsCore — reached via Concierge Adjust.
+// import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
+import { ConciergeCore } from "../../features/concierge/ConciergeCore";
 import { ContextualAssignment } from "./ContextualAssignment";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
@@ -53,6 +56,7 @@ import {
   PrefsFace,
   PrefStatusBar,
   WAKE_ACTION_OPTIONS,
+  type SettingsHubWire,
 } from "./settingsPrefs";
 
 const SECRET_LABELS: Record<string, string> = {
@@ -215,6 +219,18 @@ function SettingsFace({ hero, scope }: CoreProps) {
     "/api/authority/policy",
     {},
   );
+  // HS-170-04: the hub wire — one read for all seven module rows' state tokens.
+  const hub = useResource<SettingsHubWire>("/api/settings/hub", {
+    models: { engines: 0, groupsSet: 0, defaultSet: false },
+    connections: { connected: 0 },
+    voice: { live: false, target: "" },
+    meetings: { intelligence: false },
+    rhythm: { loops: 0 },
+    sounds: { on: false },
+    system: { host: "THIS DEVICE", mesh: false },
+    posture: "neutral",
+    writtenAt: null,
+  });
   // null = the drawer face; a module id = that module owns the body.
   const [moduleId, setModuleId] = useState<string | null>(
     integrationSubject ? "integrations" : scopedModule,
@@ -1039,14 +1055,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </FoldGadget>
           </>
         );
-      /* ── Models: availability-only Model Library ── */
+      /* ── Models: the Concierge (HS-170-03) ── */
       case "models":
-        return (
-          <ModelsModule onRefuse={setRefusal} />
-        );
-      /* ── Assignments: bounded server-projected routing truth ── */
+        return <ConciergeCore scope={scope} />;
+      /* ── Assignments: PARKED (HS-170-03) — reached via Concierge Adjust ── */
       case "assignments":
-        return <CapabilityAssignmentsCore />;
+        return <ConciergeCore scope={scope} />;
       /* ── Connections: tools + credentials + RAW ── */
       case "integrations": {
         const RAW_SECRETS = new Set([
@@ -1141,7 +1155,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
         ) : (
           <PrefsFace
             onOpen={openModule}
-            posture={String(authority.data.control_mode ?? "neutral")}
+            hub={hub.data}
+            posture={String(hub.data.posture || authority.data.control_mode || "neutral")}
             postureBusy={authorityBusy || authority.loading}
             onPosture={(mode) => void setControlMode(mode)}
             precedence={
@@ -1176,6 +1191,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
               : undefined
           }
           receipt={receipt}
+          hubWrittenAt={
+            hub.data.writtenAt != null
+              ? new Date(hub.data.writtenAt * 1000).toTimeString().slice(0, 5)
+              : null
+          }
         />
       )}
     </>

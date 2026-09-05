@@ -146,7 +146,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     surface: {
       eyebrow: "Configuration",
       minW: 560,
-      defaultH: 760,
+      defaultH: 600,
       load: () =>
         import("../pages/cores/SettingsCore").then((module) => ({
           default: module.SettingsCore,
