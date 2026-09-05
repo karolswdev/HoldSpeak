@@ -261,7 +261,7 @@ def test_stopwatch_and_retention(
             # -- Open room --
             t0 = time.monotonic()
             _open_project_room(page, url, project_id)
-            page.get_by_test_id("project-room-name").wait_for(timeout=15000)
+            page.get_by_test_id("room-body").wait_for(timeout=15000)
             segments["open_room"] = time.monotonic() - t0
 
             # -- Click Updates verb --
@@ -490,7 +490,7 @@ def test_degraded_model_fallback(
             _seed_room_items(page, project_id)
 
             _open_project_room(page, url, project_id)
-            page.get_by_test_id("project-room-name").wait_for(timeout=15000)
+            page.get_by_test_id("room-body").wait_for(timeout=15000)
 
             page.get_by_test_id("updates-verb").wait_for(timeout=10000)
             page.get_by_test_id("updates-verb").click()
@@ -571,7 +571,7 @@ def test_publish_immutability_regenerate(
             rev_before = room_before.get("revision", 0)
 
             _open_project_room(page, url, project_id)
-            page.get_by_test_id("project-room-name").wait_for(timeout=15000)
+            page.get_by_test_id("room-body").wait_for(timeout=15000)
 
             page.get_by_test_id("updates-verb").wait_for(timeout=10000)
             page.get_by_test_id("updates-verb").click()

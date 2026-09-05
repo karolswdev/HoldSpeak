@@ -122,8 +122,8 @@ def _create_project_blank(page: Any, url: str) -> str:
     done.wait_for(timeout=20000)
 
     # Room opens
-    room_name = page.get_by_test_id("project-room-name")
-    room_name.wait_for(timeout=20000)
+    # HS-169: the identity band is gone; room-body is the new anchor.
+    page.get_by_test_id("room-body").wait_for(timeout=20000)
 
     # Extract the project_id from the database
     from holdspeak.db import get_database
@@ -304,8 +304,9 @@ def test_delta_review_loop(
 
             _init_desk(page, url)
 
-            # -- Create project via Blank interview path --
-            project_id = _create_project_blank(page, url)
+            # -- Create project via API (HS-169: interview surface retired;
+            #    seed through the project route as test_hs169_room_glass.py does) --
+            project_id = _create_project_api(page)
             assert project_id, "Project ID should be non-empty"
 
             # -- Seed post-creation facts --
@@ -329,14 +330,16 @@ def test_delta_review_loop(
             # -- Reload the Room: verb should appear --
             _open_project_room(page, url, project_id)
 
-            room_name = page.get_by_test_id("project-room-name")
-            room_name.wait_for(timeout=15000)
+            # HS-169: the identity band is gone; room-body is the new anchor.
+            page.get_by_test_id("room-body").wait_for(timeout=15000)
 
-            # The review verb appears because pending_count > 0
+            # The review verb appears in NEEDS YOU caption because pending_count > 0
             review_verb = page.get_by_test_id("review-verb")
             review_verb.wait_for(timeout=10000)
             assert review_verb.is_visible()
-            assert "Review changes" in review_verb.inner_text()
+            # HS-169: verb text is now "Review N" (count), not "Review changes"
+            review_text = review_verb.inner_text()
+            assert review_text.startswith("Review"), f"Review verb text: {review_text}"
 
             # -- Click the review verb: posture swaps IN PLACE --
             review_verb.click()
@@ -534,8 +537,8 @@ def test_delta_review_loop(
             )
 
             # -- Room: pending 0, review verb gone --
-            room_name = page.get_by_test_id("project-room-name")
-            room_name.wait_for(timeout=10000)
+            # HS-169: the identity band is gone; room-body is the new anchor.
+            page.get_by_test_id("room-body").wait_for(timeout=10000)
 
             # Review verb should NOT appear (pending_count = 0)
             page.wait_for_timeout(1000)  # let the refresh settle
@@ -777,8 +780,8 @@ def test_delta_degraded_coverage(
 
             # -- Open room with the review: degraded visible in face --
             _open_project_room(page, url, project_id)
-            room_name = page.get_by_test_id("project-room-name")
-            room_name.wait_for(timeout=15000)
+            # HS-169: the identity band is gone; room-body is the new anchor.
+            page.get_by_test_id("room-body").wait_for(timeout=15000)
 
             review_verb = page.get_by_test_id("review-verb")
             review_verb.wait_for(timeout=10000)

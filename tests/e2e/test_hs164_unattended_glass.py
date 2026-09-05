@@ -693,7 +693,7 @@ def test_gate_a_two_unattended_runs(
             # -- Open project room and verify on glass --
             t0 = time.monotonic()
             _open_project_room(page, url, project_id)
-            page.get_by_test_id("project-room-name").wait_for(timeout=15000)
+            page.get_by_test_id("room-body").wait_for(timeout=15000)
             segments["open_room"] = time.monotonic() - t0
 
             # Enter steward.
@@ -913,7 +913,7 @@ def test_dedup_across_ticks(
 
             # Verify on glass.
             _open_project_room(page, url, project_id)
-            page.get_by_test_id("project-room-name").wait_for(timeout=15000)
+            page.get_by_test_id("room-body").wait_for(timeout=15000)
             page.get_by_test_id("steward-verb").wait_for(timeout=10000)
             page.get_by_test_id("steward-verb").click()
             page.get_by_test_id("steward-posture").wait_for(timeout=10000)
@@ -1023,7 +1023,7 @@ def test_circuit_open_and_recovery(
 
             # -- Verify on glass: circuit row visible in policy view --
             _open_project_room(page, url, project_id)
-            page.get_by_test_id("project-room-name").wait_for(timeout=15000)
+            page.get_by_test_id("room-body").wait_for(timeout=15000)
             page.get_by_test_id("steward-verb").wait_for(timeout=10000)
             page.get_by_test_id("steward-verb").click()
             page.get_by_test_id("steward-posture").wait_for(timeout=10000)
@@ -1101,7 +1101,7 @@ def test_circuit_open_and_recovery(
             page.reload(wait_until="load")
             _normal_chair(page)
             _open_project_room(page, url, project_id)
-            page.get_by_test_id("project-room-name").wait_for(timeout=15000)
+            page.get_by_test_id("room-body").wait_for(timeout=15000)
             page.get_by_test_id("steward-verb").wait_for(timeout=10000)
             page.get_by_test_id("steward-verb").click()
             page.get_by_test_id("steward-posture").wait_for(timeout=10000)
@@ -1235,7 +1235,7 @@ def test_opt_out_mid_cadence(
 
             # Verify on glass: only 1 run.
             _open_project_room(page, url, project_id)
-            page.get_by_test_id("project-room-name").wait_for(timeout=15000)
+            page.get_by_test_id("room-body").wait_for(timeout=15000)
             page.get_by_test_id("steward-verb").wait_for(timeout=10000)
             page.get_by_test_id("steward-verb").click()
             page.get_by_test_id("steward-posture").wait_for(timeout=10000)
