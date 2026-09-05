@@ -218,8 +218,8 @@ export function ComponentsCore({ hero }: CoreProps) {
           />
         </div>
         <FoldGadget title="RAW · SPECIMEN" token="2 LINES">
-          <p>The fold is the ONE disclosure species: quiet row, caret,</p>
-          <p>trailing token slot; details semantics keep keyboard free.</p>
+          <span className="surface-token">Quiet row, caret, trailing token</span>
+          <span className="surface-token">details semantics, keyboard-free</span>
         </FoldGadget>
       </SurfaceSection>
       <SurfaceSection label="The table and the armed delete">
@@ -267,7 +267,7 @@ export function ComponentsCore({ hero }: CoreProps) {
         </SurfaceRows>
         {confirmed ? (
           <p className="surface-receipt-line" data-tone="ok" role="status">
-            ✓ TWO-STEP FIRED ×{confirmed} · NO MODAL
+            TWO-STEP FIRED ×{confirmed}
           </p>
         ) : null}
         <SurfaceState empty emptyLabel="A quiet empty state" emptyGlyph="○" />
@@ -307,10 +307,10 @@ export function ComponentsCore({ hero }: CoreProps) {
       </SurfaceSection>
       <SurfaceSection label="Disclosure: controlled and uncontrolled">
         <Disclosure label="Uncontrolled fold (default closed)">
-          <p>Content pushed into the layout flow. Escape closes.</p>
+          <span className="surface-token">In-flow content, Escape closes</span>
         </Disclosure>
         <Disclosure label="Uncontrolled fold (default open)" defaultOpen>
-          <p>Started open. The caret rotates with the state.</p>
+          <span className="surface-token">Default open, caret rotates</span>
         </Disclosure>
         <Disclosure
           label="Controlled fold"
@@ -318,10 +318,10 @@ export function ComponentsCore({ hero }: CoreProps) {
           onOpenChange={setDisclosureOpen}
           token="CTRL"
         >
-          <p>This fold is externally controlled. Token slot visible.</p>
+          <span className="surface-token">Externally controlled, token slot</span>
         </Disclosure>
         <Disclosure label="RAW variant" variant="raw" token="DEBUG">
-          <p>The RAW variant for advanced/debug panels.</p>
+          <span className="surface-token">Advanced/debug panels</span>
         </Disclosure>
       </SurfaceSection>
       <SurfaceSection label="ProgressPlan: detailed and compact">
@@ -436,7 +436,7 @@ export function ComponentsCore({ hero }: CoreProps) {
           flows={GALLERY_TOPOLOGY_FLOWS}
           ariaLabel="Gallery topology"
           inspectorSlot={<div style={{ padding: 8, fontSize: 11, fontFamily: "var(--font-mono)" }}>Inspector slot</div>}
-          addNodeSlot={<button type="button" className="signal-btn" style={{ fontSize: 10 }}>+ Add node</button>}
+          addNodeSlot={<Button dense variant="ghost">+ Add node</Button>}
         />
       </SurfaceSection>
       <SurfaceFooter

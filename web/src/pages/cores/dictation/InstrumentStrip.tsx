@@ -98,14 +98,14 @@ export function InstrumentStrip({
           } else {
             setPhase("refused");
             setRefusal("command_failed");
-            announce(`⚠ COMMAND FAILED · ${fired.preview}`, "warn");
+            announce(`COMMAND FAILED · ${fired.preview}`, "warn");
           }
         }}
         onFailure={(category) => {
           setPhase("refused");
           setRefusal(category);
           setLandedMs(null);
-          announce(`⚠ ${DICTATION_FAILURES[category].message}`, "warn");
+          announce(DICTATION_FAILURES[category].message, "warn");
         }}
       />
       {/* HS-112-06 — the open mic latch: one grant, held open, VAD

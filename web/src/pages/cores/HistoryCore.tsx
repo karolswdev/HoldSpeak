@@ -17,6 +17,7 @@ import { Button } from "../../components/signal/Signal";
 import { apiBlob, apiFetch, readableError } from "../../lib/api";
 import { asRows, useResource } from "../pageSupport";
 import { ConfirmVerb, SurfaceSplit, SurfaceState } from "../../desk/surface/Surface";
+import { countToken } from "../../desk/surface";
 import { EgressChip } from "../../desk/surface/gadgets";
 import { useLedgerFilter } from "../../desk/surface/LedgerFilter";
 import { useCoreWings } from "./core-hooks";
@@ -176,7 +177,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       });
     } catch (reason) {
       setReceipt({
-        text: `⚠ REFUSED · ${readableError(reason)}`,
+        text: `REFUSED · ${readableError(reason)}`,
         tone: "danger",
       });
     }
@@ -193,7 +194,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       void meetings.reload();
     } catch (reason) {
       setReceipt({
-        text: `⚠ REFUSED · ${readableError(reason)}`,
+        text: `REFUSED · ${readableError(reason)}`,
         tone: "danger",
       });
     } finally {
@@ -305,7 +306,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           >
             {receipt
               ? receipt.text
-              : `${filteredMeetings.length} RECORDS${filtered ? " · FILTERED" : ""}`}
+              : [countToken(filteredMeetings.length, "RECORD"), filtered ? "FILTERED" : null].filter(Boolean).join(" · ") || "RECORDS"}
           </span>
         }
         verbs={

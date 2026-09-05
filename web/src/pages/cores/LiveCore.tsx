@@ -56,9 +56,9 @@ import {
   GadgetGroup,
   GadgetRow,
   LampGadget,
+  PadGadget,
   StringGadget,
 } from "../../desk/surface/gadgets";
-import { MicButton } from "../../desk/components/MicButton";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { presentValue } from "../../desk/surface/format";
 
@@ -400,17 +400,12 @@ export function LiveCore({ hero }: CoreProps) {
             fact="TESTS ROUTING · NEVER TOUCHES THE LIVE MEETING"
             wide
           >
-            <span className="gadget-string">
-              <textarea
-                aria-label="Preview route"
-                value={previewText}
-                onChange={(event) => setPreviewText(event.target.value)}
-              />
-              <MicButton
-                label="Speak preview text"
-                onText={(text) => setPreviewText(text)}
-              />
-            </span>
+            <PadGadget
+              label="Preview route"
+              value={previewText}
+              rows={2}
+              onChange={setPreviewText}
+            />
           </GadgetRow>
         </GadgetGroup>
         <div className="surface-actions">
@@ -531,12 +526,14 @@ export function LiveCore({ hero }: CoreProps) {
       ) : null}
       {bookmarkReceipt ? (
         <p className="surface-receipt-line" data-tone="ok" role="status">
-          ✓ {bookmarkReceipt.text}
+          <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          {bookmarkReceipt.text}
         </p>
       ) : null}
       {retainedMeetingId ? (
         <p className="surface-receipt-line" data-tone="ok" role="status">
-          ✓ Meeting saved{" "}
+          <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>{" "}
+          Meeting saved{" "}
           <button
             type="button"
             className="btn-link"

@@ -30,7 +30,7 @@ import {
   StringGadget,
   type CycleOption,
 } from "../../desk/surface/gadgets";
-import { Receipt } from "../../desk/surface";
+import { Receipt, countToken } from "../../desk/surface";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { openSurface } from "../../desk/shell";
 import { HotkeyCapture } from "./settingsBespoke";
@@ -630,7 +630,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
               {check(
                 ["dictation", "macros", "enabled"],
                 "Voice commands",
-                `${macroItems.length} configured`,
+                countToken(macroItems.length, "CONFIGURED") ?? undefined,
               )}
             </GadgetGroup>
             <GadgetGroup label="Spoken symbols">

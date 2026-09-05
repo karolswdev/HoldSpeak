@@ -1,6 +1,7 @@
 // HS-117-09 — extracted from MeetingDetail (lines 718-738).
 import { rowId } from "../../pageSupport";
 import { presentValue } from "../../../desk/surface/format";
+import { countLabel } from "../../../desk/surface";
 
 export function SettledList({
   settledActions,
@@ -11,7 +12,7 @@ export function SettledList({
   return (
     <div className="surface-outcome-sec">
       <span className="surface-eyebrow">
-        {`Settled: ${settledActions.length}`}
+        {countLabel("SETTLED", settledActions.length)}
       </span>
       <ul className="surface-settled">
         {settledActions.map((row, index) => (

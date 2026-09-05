@@ -174,12 +174,12 @@ export function AssignmentEditor({
     aria-label={`${title} assignment`}
     onKeyDown={onSheetKeyDown}
   >
-    <header className="assignment-sheet-head"><div><span>Assignments</span><h2>{title}</h2></div><button ref={closeButton} type="button" onClick={onClose}>Close</button></header>
+    <header className="assignment-sheet-head"><div><span>Assignments</span><h2>{title}</h2></div><Button ref={closeButton} dense variant="ghost" onClick={onClose}>Close</Button></header>
     <div className="assignment-sheet-body">
-      {error ? <div className="assignment-sheet-error"><SurfaceState error={error} />{conflict ? <button type="button" onClick={() => void refresh()} disabled={busy}>Refresh</button> : null}</div> : null}
+      {error ? <div className="assignment-sheet-error"><SurfaceState error={error} />{conflict ? <Button dense variant="ghost" onClick={() => void refresh()} disabled={busy}>Refresh</Button> : null}</div> : null}
       <section className="assignment-default" aria-label="Use default">
         <div><strong>Use default</strong><span>{chain(projectedDefault?.entries)}</span></div>
-        {preview ? <button type="button" disabled={busy} onClick={() => void clear()}>Use default</button> : <button type="button" disabled={busy || !editor.configured_assignment} onClick={() => void showDefault()}>Preview</button>}
+        {preview ? <Button dense variant="ghost" disabled={busy} onClick={() => void clear()}>Use default</Button> : <Button dense variant="ghost" disabled={busy || !editor.configured_assignment} onClick={() => void showDefault()}>Preview</Button>}
         {preview ? <div className="assignment-default-preview" role="status">
           <strong>Will use {chain(projectedDefault?.entries)}</strong>
           <span>Retry follows the server policy for {editor.selected_capability.label}.</span>
@@ -187,7 +187,7 @@ export function AssignmentEditor({
         </div> : null}
       </section>
       <section className="assignment-draft" aria-label="Custom assignment">
-        <header><h3>Custom</h3><span>{draft.length}/4</span></header>
+        <header><h3>Custom</h3><span>{draft.length ? `${draft.length}/4` : "—/4"}</span></header>
         {draft.length ? <ol className="assignment-draft-list">{draft.map((entry, index) => <li
           key={`${entry.profile_id}:${entry.profile_revision}`}
           draggable
@@ -198,19 +198,19 @@ export function AssignmentEditor({
           <span className="assignment-ordinal" aria-hidden="true">{index + 1}</span>
           <span className="assignment-leg-name"><strong>{entry.label}</strong><small>{entry.readiness}</small></span>
           {isCloud(entry) ? <EgressChip label="Egress" scope="cloud" title="This fallback can leave this device." /> : null}
-          {entry.readiness !== "ready" ? <button type="button" className="assignment-leg-repair" onClick={() => sheet.current?.querySelector<HTMLElement>(".assignment-candidates button")?.focus()}>Replace unavailable model</button> : null}
+          {entry.readiness !== "ready" ? <Button dense variant="ghost" className="assignment-leg-repair" onClick={() => sheet.current?.querySelector<HTMLElement>(".assignment-candidates button")?.focus()}>Replace unavailable model</Button> : null}
           <div className="assignment-leg-actions">
-            <button type="button" aria-label={`Move ${entry.label} up`} disabled={index === 0} onClick={() => move(index, index - 1)}>Move up</button>
-            <button type="button" aria-label={`Move ${entry.label} down`} disabled={index === draft.length - 1} onClick={() => move(index, index + 1)}>Move down</button>
-            <button type="button" aria-label={`Remove ${entry.label}`} onClick={() => remove(index)}>Remove</button>
+            <Button dense variant="ghost" aria-label={`Move ${entry.label} up`} disabled={index === 0} onClick={() => move(index, index - 1)}>Move up</Button>
+            <Button dense variant="ghost" aria-label={`Move ${entry.label} down`} disabled={index === draft.length - 1} onClick={() => move(index, index + 1)}>Move down</Button>
+            <Button dense variant="ghost" aria-label={`Remove ${entry.label}`} onClick={() => remove(index)}>Remove</Button>
           </div>
         </li>)}</ol> : <p>No custom chain</p>}
         <span className="assignment-section-label">Add fallback</span>
         <AssignmentModelChooser candidates={editor.candidates} draftProfileIds={draftIds} onChoose={choose} />
       </section>
       <div className="assignment-live" aria-live="polite">{announcement}</div>
-      <FoldGadget title="RAW" token="Details"><span>Policy {editor.retry_policy.default_id}</span></FoldGadget>
+      <FoldGadget title="RAW" token="Details"><span>Policy {editor.retry_policy.default_id?.replace(/_/g, " ") ?? "none"}</span></FoldGadget>
     </div>
-    <footer className="assignment-sheet-footer"><button type="button" onClick={onClose}>Cancel</button><Button variant="primary" loading={busy} disabled={busy || !draft.length} onClick={() => void save()}>Save assignment</Button></footer>
+    <footer className="assignment-sheet-footer"><Button dense variant="ghost" onClick={onClose}>Cancel</Button><Button variant="primary" loading={busy} disabled={busy || !draft.length} onClick={() => void save()}>Save assignment</Button></footer>
   </section>;
 }

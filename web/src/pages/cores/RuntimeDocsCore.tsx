@@ -1,7 +1,7 @@
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
-// HS-95-08 — the runtime setup guide, hosted anywhere.
 import { openSurfaceOr } from "../../desk/shell";
 import type { CoreProps } from "./core-types";
+import { Button } from "../../components/signal/Signal";
 import { renderHeroSlot } from "./core-layout";
 import { FoldGadget } from "../../desk/surface/gadgets";
 import { SurfaceRow, SurfaceRows, SurfaceSection } from "../../desk/surface/Surface";
@@ -43,11 +43,11 @@ export function RuntimeDocsCore({ hero }: CoreProps) {
         <SurfaceRows>
           <SurfaceRow
             title="SETUP"
-            detail={<button type="button" className="btn-link" onClick={() => openSurfaceOr("configure-setup", "/setup")}>RUN RUNTIME TEST</button>}
+            detail={<Button dense variant="ghost" onClick={() => openSurfaceOr("configure-setup", "/setup")}>Run runtime test</Button>}
           />
           <SurfaceRow
             title="DICTATION"
-            detail={<button type="button" className="btn-link" onClick={() => openSurfaceOr("dictate", "/dictation")}>CHECK READINESS</button>}
+            detail={<Button dense variant="ghost" onClick={() => openSurfaceOr("dictate", "/dictation")}>Check readiness</Button>}
           />
           <SurfaceRow title="TRY IT" detail="NO-TYPE DRY TEST" />
           <SurfaceRow title="REWRITE" detail="ENABLE AFTER VERIFY" />

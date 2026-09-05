@@ -7,6 +7,7 @@ import { useResource } from "../../pageSupport";
 import type { DictationReadinessResponse } from "../core-types";
 import { egressScopeLamp } from "../../../desk/inferenceEgress";
 import { presentValue } from "../../../desk/surface/format";
+import { countToken } from "../../../desk/surface";
 import { SurfaceFooter } from "../../../desk/surface/SurfaceFooter";
 import {
   SurfaceFacts,
@@ -106,7 +107,7 @@ export function Readiness() {
             data-tone="warn"
             key={String(warning.code ?? index)}
           >
-            ⚠ {presentValue(warning.message) || readableValue(warning)}
+            {presentValue(warning.message) || readableValue(warning)}
           </p>
         ))}
       </GadgetGroup>
@@ -179,7 +180,7 @@ export function ReadinessFooter({
       <SurfaceFooter
         egress={<LampGadget label="PIPELINE UNAVAILABLE" on={false} tone="fail" />}
         receipt={receiptSlot || <span className="surface-footer-readiness" role="alert">READINESS UNAVAILABLE</span>}
-        verbs={<>{exportVerb}<button type="button" className="desk-chip" onClick={onOpenDoor}>Review</button></>}
+        verbs={<>{exportVerb}<Button dense variant="ghost" onClick={onOpenDoor}>Review</Button></>}
       />
     );
   }
@@ -197,7 +198,7 @@ export function ReadinessFooter({
         config.max_total_latency_ms ? `${presentValue(config.max_total_latency_ms)} MS` : "",
       ].filter(Boolean).join(" · ")
     : config.pipeline_enabled === true
-      ? `${warnings.length} ${warnings.length === 1 ? "WARNING" : "WARNINGS"}`
+      ? (countToken(warnings.length, "WARNING") ?? "WARNINGS")
       : "PIPELINE OFF";
 
   return (
@@ -212,7 +213,7 @@ export function ReadinessFooter({
       receipt={receiptSlot || <span className="surface-footer-readiness" role="status">{state}</span>}
       verbs={
         <>
-          {live ? null : <button type="button" className="desk-chip" onClick={onOpenDoor}>Review</button>}
+          {live ? null : <Button dense variant="ghost" onClick={onOpenDoor}>Review</Button>}
           {exportVerb}
         </>
       }

@@ -94,7 +94,7 @@ export function ImportSection({
             {/* Rendered as mono tokens (CSS uppercases); the literal
                 lowercase suffixes and ffmpeg stay in source — they are
                 the wire truth. */}
-            <small>.wav direct · .mp3 .m4a .ogg .flac via ffmpeg · .vtt .srt .txt</small>
+            <span className="surface-token">.WAV .MP3 .M4A .OGG .FLAC .VTT .SRT .TXT</span>
           </>
         )}
       </label>

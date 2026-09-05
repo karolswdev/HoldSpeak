@@ -29,7 +29,7 @@ function LearningDigestFacts({ digest }: { digest: DictationLearningDigestRespon
   const topBlocks = asRows(digest, ["by_block"]).slice(0, 3);
   if (!made && !corrected) {
     // The empty week is an honest zero token, never a sentence.
-    return <p className="speak-token-line">WEEK · TAUGHT 0</p>;
+    return <p className="speak-token-line">WEEK · NO CORRECTIONS</p>;
   }
   return (
     <>

@@ -129,8 +129,8 @@ describe("DictationPage Try it failure actions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry rehearsal" }));
 
     // HS-111: the pipeline result renders as a mono receipt
-    // (FINAL_TEXT: …), so match within the receipt line.
-    await screen.findByText(/FINAL_TEXT: Ran on the alternate target\./);
+    // (FINAL TEXT: …), so match within the receipt line.
+    await screen.findByText(/FINAL TEXT: Ran on the alternate target\./);
     const dryRunCalls = mocks.apiFetch.mock.calls.filter(
       (c) => c[0] === "/api/dictation/dry-run",
     );
@@ -162,7 +162,7 @@ describe("DictationPage Try it failure actions", () => {
     expect(screen.queryByRole("combobox", { name: "Runs on" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Retry rehearsal" }));
 
-    await screen.findByText(/FINAL_TEXT: Done\./);
+    await screen.findByText(/FINAL TEXT: Done\./);
     const dryRunCalls = mocks.apiFetch.mock.calls.filter(
       (c) => c[0] === "/api/dictation/dry-run",
     );

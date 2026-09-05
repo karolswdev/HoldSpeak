@@ -3,6 +3,7 @@ import { Button } from "../../../components/signal/Signal";
 import { SurfaceState } from "../../../desk/surface/Surface";
 import { StateTokenSpan } from "./StateTokenSpan";
 import { ledgerDate, durationToken, stateToken } from "./helpers";
+import { countToken } from "../../../desk/surface";
 import type { MeetingData } from "./useMeetingData";
 
 export function MeetingHeader({
@@ -29,8 +30,8 @@ export function MeetingHeader({
               durationS > 0
                 ? durationToken(durationS) || "1 MIN"
                 : "",
-              segments.length ? `${segments.length} SEG` : "",
-              artifactRows.length ? `${artifactRows.length} ART` : "",
+              countToken(segments.length, "SEG") ?? "",
+              countToken(artifactRows.length, "ART") ?? "",
             ]
               .filter(Boolean)
               .join(" · ")}

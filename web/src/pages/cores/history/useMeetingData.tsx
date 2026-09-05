@@ -137,7 +137,7 @@ export function useMeetingData(
         text: decision === "approved" ? "APPROVED" : "REJECTED",
       });
     } catch (reason) {
-      onReceipt({ text: `⚠ REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
     } finally {
       setBusy(false);
     }
@@ -156,7 +156,7 @@ export function useMeetingData(
         text: what === "digest" ? "PROPOSED DIGEST" : "PROPOSED FOLLOW-UP",
       });
     } catch (reason) {
-      onReceipt({ text: `⚠ REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
     } finally {
       setBusy(false);
     }

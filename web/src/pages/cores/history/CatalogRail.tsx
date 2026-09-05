@@ -17,6 +17,7 @@ import {
 import { spriteUrl } from "../../../desk/sprites";
 import { SPARSE_THRESHOLD } from "../../../desk/surface/sparse";
 import { asRows, rowId } from "../../pageSupport";
+import { countToken } from "../../../desk/surface";
 import { stateToken, durationToken, ledgerDate } from "./helpers";
 import { StateTokenSpan } from "./StateTokenSpan";
 import type { MeetingsFacetsResponse } from "../core-types";
@@ -83,7 +84,7 @@ export function CatalogRail({
     <SurfaceSection label="Meetings">
       <SurfaceLedger
         cols="meetings"
-        count={`${meetingRows.length} RECORDS${needing ? ` · ${needing} NEEDS YOU` : ""}`}
+        count={[countToken(meetingRows.length, "RECORD"), countToken(needing, "NEEDS YOU", "NEED YOU")].filter(Boolean).join(" · ") || undefined}
         controls={
           <>
             <LedgerFilterBar
@@ -234,7 +235,7 @@ export function CatalogRail({
                   cells={
                     <>
                       <span className="surface-ledger-cell">
-                        {`${Number(row.segment_count ?? 0)} SEG`}
+                        {countToken(Number(row.segment_count ?? 0), "SEG") ?? ""}
                       </span>
                       <span className="surface-ledger-cell">
                         {durationToken(row.duration_seconds)}

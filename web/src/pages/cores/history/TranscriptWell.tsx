@@ -4,6 +4,7 @@ import {
   SurfaceState,
   SurfaceWell,
 } from "../../../desk/surface/Surface";
+import { countLabel } from "../../../desk/surface";
 import { rowId } from "../../pageSupport";
 
 export function TranscriptWell({
@@ -26,7 +27,7 @@ export function TranscriptWell({
   }, [id, momentSegmentIndex, segments.length]);
 
   return (
-    <SurfaceWell head={`TRANSCRIPT · ${segments.length} SEG`}>
+    <SurfaceWell head={countLabel("TRANSCRIPT", segments.length)}>
       {segments.length ? (
         <ol className="transcript-list">
           {segments.map((row, index) => (

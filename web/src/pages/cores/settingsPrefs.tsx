@@ -4,6 +4,7 @@ import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // CODE CONSTANT: a new wire key never mints a pane again (unmapped keys
 // land in System, the one place the generic walker survives).
 import { useState, type ReactNode } from "react";
+import { Button } from "../../components/signal/Signal";
 import { CONTROL_MODES, controlModeLabel } from "../../lib/productLanguage";
 import {
   CycleGadget,
@@ -307,7 +308,8 @@ export function DeskModule() {
         />
         {refused ? (
           <span className="gadget-fact" data-tone="danger" role="alert">
-            ⚠ RESET REFUSED
+            <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M8 2 1.5 13.5h13Z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /><line x1="8" y1="6.5" x2="8" y2="9.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /><circle cx="8" cy="11.5" r="0.7" fill="currentColor" /></svg>{" "}
+            RESET REFUSED
           </span>
         ) : receipt ? (
           <span className="gadget-fact" role="status">
@@ -404,7 +406,8 @@ export function PrefStatusBar({
   if (receipt.refusal)
     center = (
       <span className="prefs-receipt" data-tone="danger" role="alert">
-        ⚠ REFUSED · {receipt.refusal}
+        <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M8 2 1.5 13.5h13Z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /><line x1="8" y1="6.5" x2="8" y2="9.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /><circle cx="8" cy="11.5" r="0.7" fill="currentColor" /></svg>{" "}
+        REFUSED · {receipt.refusal}
       </span>
     );
   else if (receipt.saving)
@@ -423,9 +426,9 @@ export function PrefStatusBar({
   return (
     <SurfaceFooter verbs={<>
       {onBack ? (
-        <button type="button" className="prefs-back" onClick={onBack}>
+        <Button variant="ghost" dense className="prefs-back" onClick={onBack}>
           « PREFS
-        </button>
+        </Button>
       ) : (
         <EgressChip />
       )}
