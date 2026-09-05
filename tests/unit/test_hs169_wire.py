@@ -798,6 +798,60 @@ class TestSources:
         # sources.count reflects the group count
         assert sources["count"] == 1
 
+    def test_pr_checks_failing_and_ci_green_both_show(self, db: Database) -> None:
+        """A PR watch with a failing check + a branch_ci success in one
+        scope must show both tokens: CHECKS FAILING (PR-level) and
+        CI GREEN (base-branch). Two different facts, never collapsed."""
+        project_id = _seed_project(db)
+
+        # Watch 1: PR with failing checks
+        _seed_watch(db, project_id, watch_id="w-pr-fail",
+                    connector_id="gh", query_kind="pull_requests",
+                    query={"repository": "karolswdev/HoldSpeak", "state": "open"},
+                    snapshot={"schema": 1, "entities": {
+                        "526": {"id": "526", "title": "Footer fix", "state": "open",
+                                "review_requests": [], "review_decision": "",
+                                "checks": "failing",
+                                "updated_at": "2026-09-03T10:00:00Z"},
+                        "527": {"id": "527", "title": "Docs update", "state": "open",
+                                "review_requests": [], "review_decision": "",
+                                "checks": "passing",
+                                "updated_at": "2026-09-03T11:00:00Z"},
+                        "528": {"id": "528", "title": "Rig settle", "state": "open",
+                                "review_requests": [], "review_decision": "",
+                                "checks": "passing",
+                                "updated_at": "2026-09-03T12:00:00Z"},
+                    }})
+
+        # Watch 2: branch_ci success on the same repo
+        _seed_watch(db, project_id, watch_id="w-ci-green",
+                    connector_id="gh", query_kind="branch_ci",
+                    query={"repository": "karolswdev/HoldSpeak", "base": "main"},
+                    snapshot={"schema": 1, "entities": {
+                        "1": {"id": "1", "conclusion": "success", "status": "completed",
+                              "name": "CI", "branch": "main"},
+                    }})
+
+        svc = ProjectService(db)
+        room = svc.room(OWNER, project_id)
+        sources = room["sources"]
+
+        # ONE merged item
+        gh_items = [s for s in sources["items"] if s["provider"] == "github"]
+        assert len(gh_items) == 1
+        tokens = gh_items[0]["tokens"]
+
+        # Both facts present
+        assert "3 OPEN PRS" in tokens
+        assert "1 CHECKS FAILING" in tokens
+        assert "CI GREEN" in tokens
+
+        # Order: OPEN PRS before CHECKS FAILING before CI
+        pr_idx = tokens.index("3 OPEN PRS")
+        chk_idx = tokens.index("1 CHECKS FAILING")
+        ci_idx = tokens.index("CI GREEN")
+        assert pr_idx < chk_idx < ci_idx
+
 
 # ── target ────────────────────────────────────────────────────────────
 

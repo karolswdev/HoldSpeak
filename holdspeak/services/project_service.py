@@ -717,6 +717,22 @@ class ProjectService:
     # State severity for merging: cant_check > paused > live
     _STATE_SEVERITY = {"cant_check": 0, "paused": 1, "live": 2}
 
+    # Template order for merged source tokens (the artboard's row order)
+    _TOKEN_ORDER_PREFIXES = [
+        "OPEN PRS", "WAITING ON YOU", "CHECKS FAILING",
+        "CI RED", "CI GREEN",
+        "OVERDUE", "DUE THIS WEEK", "BLOCKED",
+        "CLEAR",
+    ]
+
+    @staticmethod
+    def _token_sort_key(token: str) -> int:
+        """Sort key for template order. Known prefixes first; unknown last."""
+        for i, prefix in enumerate(ProjectService._TOKEN_ORDER_PREFIXES):
+            if token.endswith(prefix) or token == prefix:
+                return i
+        return len(ProjectService._TOKEN_ORDER_PREFIXES)
+
     def _read_room_sources(self, project_id: str) -> dict[str, Any]:
         """SOURCES: ONE item per (provider, scope), merged from all watches."""
         watches = self._db.automations.list_project_watches(project_id)
@@ -840,7 +856,7 @@ class ProjectService:
                 merged = dict(items[0])
                 merged["watchIds"] = [merged["watchId"]]
             else:
-                # Merge tokens (in template order, deduped by value)
+                # Merge tokens: collect, dedupe by exact label, sort to template order
                 all_tokens: list[str] = []
                 seen_tokens: set[str] = set()
                 for item in items:
@@ -848,6 +864,7 @@ class ProjectService:
                         if tok not in seen_tokens:
                             all_tokens.append(tok)
                             seen_tokens.add(tok)
+                all_tokens.sort(key=self._token_sort_key)
 
                 # checkedAt: latest non-null
                 checked_vals = [i["checkedAt"] for i in items if i["checkedAt"]]
