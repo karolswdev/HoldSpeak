@@ -1,7 +1,7 @@
 # HS-170-05 walk facts
 
-Generated: 2026-09-05T03:43:01.989117
-Hub: 127.0.0.1:58342
+Generated: 2026-09-05T04:20:02.074603
+Hub: 127.0.0.1:60874
 
 ## arrival
 
@@ -110,148 +110,136 @@ Hub: 127.0.0.1:58342
 |-------|----------|----------|---------|-----|
 | lands_in_target | Claude Code | Codex CLI | DATA | board=Claude Code, real=Codex CLI |
 | engine_caption | DICTATION | DICTATION | MATCH | exact |
-| engine_name | Qwen 3.5 0.8B | Migrated intel endpoint | DATA | board=Qwen 3.5 0.8B, real=Migrated intel endpoint |
-| engine_egress | THIS DEVICE | CLOUD | DATA | board=THIS DEVICE, real=CLOUD |
-| engine_state | READY | ✓READY | MATCH | substring |
+| engine_name | Qwen 3.5 0.8B | GPT 5 mini | DATA | board=Qwen 3.5 0.8B, real=GPT 5 mini |
+| engine_egress | THIS DEVICE | API.OPENAI.COM | DATA | board=THIS DEVICE, real=API.OPENAI.COM |
+| engine_state | READY | ⚠KEY NOT SET | DATA | board=READY, real=⚠KEY NOT SET |
 | footer_receipt | THIS DEVICE N TODAY | THIS DEVICE9 TODAYReviewExport | DATA | real desk content |
 | lands_in_target | Claude Code | Codex CLI | DATA | board=Claude Code, real=Codex CLI |
 | engine_caption | DICTATION | DICTATION | MATCH | exact |
-| engine_name | Qwen 3.5 0.8B | Migrated intel endpoint | DATA | board=Qwen 3.5 0.8B, real=Migrated intel endpoint |
-| engine_egress | THIS DEVICE | CLOUD | DATA | board=THIS DEVICE, real=CLOUD |
-| engine_state | READY | ✓READY | MATCH | substring |
+| engine_name | Qwen 3.5 0.8B | GPT 5 mini | DATA | board=Qwen 3.5 0.8B, real=GPT 5 mini |
+| engine_egress | THIS DEVICE | API.OPENAI.COM | DATA | board=THIS DEVICE, real=API.OPENAI.COM |
+| engine_state | READY | ⚠KEY NOT SET | DATA | board=READY, real=⚠KEY NOT SET |
 | footer_receipt | THIS DEVICE N TODAY | THIS DEVICE9 TODAYReviewExport | DATA | real desk content |
 
 ## concierge
 
 | Field | Expected | Observed | Verdict | Why |
 |-------|----------|----------|---------|-----|
-| headline | N engine(s) found | 10 engines found | DATA | real desk content |
-| found:0:name | (engine name) | Qwen3.6 35B a3b-ud-q5_k_xl.gguf | DATA | real desk content |
+| headline | N engine(s) found | 8 engines found | DATA | real desk content |
+| found:0:name | (engine name) | Qwen3.6 35B A3B | DATA | real desk content |
 | found:0:host | (host chip) | 192.168.1.43 · LAN | DATA | real desk content |
 | found:0:state | (state) | ●READY | DATA | real desk content |
-| found:1:name | (engine name) | Qwythos 9B Claude Mythos 5 1M Q6 K.Gguf | DATA | real desk content |
+| found:1:name | (engine name) | Qwythos 9B Claude Mythos 5 1M | DATA | real desk content |
 | found:1:host | (host chip) | 192.168.1.43 · LAN | DATA | real desk content |
 | found:1:state | (state) | ●READY | DATA | real desk content |
-| found:2:name | (engine name) | Gpt 5 Mini | DATA | real desk content |
+| found:2:name | (engine name) | GPT 5 mini | DATA | real desk content |
 | found:2:host | (host chip) | API.OPENAI.COM | DATA | real desk content |
-| found:2:state | (state) | ⚠KEY NOT SET | DATA | real desk content |
-| found:3:name | (engine name) | Qwen/Qwen3 8B | DATA | real desk content |
+| found:2:state | (state) | ⚠NOT SET | DATA | real desk content |
+| found:3:name | (engine name) | Qwen3 8B | DATA | real desk content |
 | found:3:host | (host chip) | OPENROUTER.AI | DATA | real desk content |
 | found:3:state | (state) | ●READY | DATA | real desk content |
-| found:4:name | (engine name) | Qwen3-8B-MLX-4bit | DATA | real desk content |
+| found:4:name | (engine name) | Qwen3 8B | DATA | real desk content |
 | found:4:host | (host chip) | THIS DEVICE | DATA | real desk content |
 | found:4:state | (state) | ●READY | DATA | real desk content |
-| found:5:name | (engine name) | gemma-4-E4B-it-qat-UD-Q4_K_XL.gguf | DATA | real desk content |
+| found:5:name | (engine name) | Gemma 4 E4B it qat | DATA | real desk content |
 | found:5:host | (host chip) | THIS DEVICE | DATA | real desk content |
 | found:5:state | (state) | ●READY | DATA | real desk content |
-| found:6:name | (engine name) | mmproj-F16.gguf | DATA | real desk content |
+| found:6:name | (engine name) | Qwen3 4B Instruct 2507 | DATA | real desk content |
 | found:6:host | (host chip) | THIS DEVICE | DATA | real desk content |
 | found:6:state | (state) | ●READY | DATA | real desk content |
-| found:7:name | (engine name) | mmproj-Qwythos-9B-Claude-Mythos-5-1M-f16.gguf | DATA | real desk content |
+| found:7:name | (engine name) | Qwythos 9B Claude Mythos 5 1M | DATA | real desk content |
 | found:7:host | (host chip) | THIS DEVICE | DATA | real desk content |
 | found:7:state | (state) | ●READY | DATA | real desk content |
-| found:8:name | (engine name) | Qwen3-4B-Instruct-2507-Q6_K.gguf | DATA | real desk content |
+| found:8:name | (engine name) | Quick local Qwen | DATA | real desk content |
 | found:8:host | (host chip) | THIS DEVICE | DATA | real desk content |
-| found:8:state | (state) | ●READY | DATA | real desk content |
-| found:9:name | (engine name) | Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf | DATA | real desk content |
+| found:8:state | (state) | ○WAITING | DATA | real desk content |
+| found:9:name | (engine name) | Tiny local Qwen | DATA | real desk content |
 | found:9:host | (host chip) | THIS DEVICE | DATA | real desk content |
-| found:9:state | (state) | ●READY | DATA | real desk content |
-| found:10:name | (engine name) | Quick local Qwen | DATA | real desk content |
-| found:10:host | (host chip) | THIS DEVICE | DATA | real desk content |
-| found:10:state | (state) | ○WAITING | DATA | real desk content |
-| found:11:name | (engine name) | Tiny local Qwen | DATA | real desk content |
-| found:11:host | (host chip) | THIS DEVICE | DATA | real desk content |
-| found:11:state | (state) | ○WAITING | DATA | real desk content |
+| found:9:state | (state) | ○WAITING | DATA | real desk content |
 | set:0:group | (group name) |  | DATA | real desk content |
 | set:0:engine | (engine name) |  | DATA | real desk content |
 | set:0:state | (state) |  | DATA | real desk content |
 | set:1:group | (group name) | Thoughts & notes | DATA | real desk content |
-| set:1:engine | (engine name) | Qwen3.6 35B a3b-ud-q5_k_xl.gguf | DATA | real desk content |
+| set:1:engine | (engine name) | Qwen3.6 35B A3B | DATA | real desk content |
 | set:1:state | (state) | ●READY | DATA | real desk content |
 | set:2:group | (group name) | Thoughts & notes | DATA | real desk content |
-| set:2:engine | (engine name) | Qwen3.6 35B a3b-ud-q5_k_xl.gguf | DATA | real desk content |
+| set:2:engine | (engine name) | Qwen3.6 35B A3B | DATA | real desk content |
 | set:2:state | (state) | ●READY | DATA | real desk content |
 | set:3:group | (group name) | Chat | DATA | real desk content |
-| set:3:engine | (engine name) | Qwen3.6 35B a3b-ud-q5_k_xl.gguf | DATA | real desk content |
+| set:3:engine | (engine name) | Qwen3.6 35B A3B | DATA | real desk content |
 | set:3:state | (state) | ●READY | DATA | real desk content |
 | set:4:group | (group name) | Writing & dictation | DATA | real desk content |
-| set:4:engine | (engine name) | mmproj-Qwythos-9B-Claude-Mythos-5-1M-f16.gguf | DATA | real desk content |
+| set:4:engine | (engine name) | Qwen3 4B Instruct 2507 | DATA | real desk content |
 | set:4:state | (state) | ●READY | DATA | real desk content |
 | set:5:group | (group name) | Speech recognition | DATA | real desk content |
 | set:5:engine | (engine name) | Quick local Qwen | DATA | real desk content |
 | set:5:state | (state) | ○WAITING | DATA | real desk content |
 | set:6:group | (group name) | Meetings | DATA | real desk content |
-| set:6:engine | (engine name) | Qwen3.6 35B a3b-ud-q5_k_xl.gguf | DATA | real desk content |
+| set:6:engine | (engine name) | Qwen3.6 35B A3B | DATA | real desk content |
 | set:6:state | (state) | ●READY | DATA | real desk content |
 | set:7:group | (group name) | Agents & tools | DATA | real desk content |
-| set:7:engine | (engine name) | Qwen3.6 35B a3b-ud-q5_k_xl.gguf | DATA | real desk content |
+| set:7:engine | (engine name) | Qwen3.6 35B A3B | DATA | real desk content |
 | set:7:state | (state) | ●READY | DATA | real desk content |
 | set:8:group | (group name) | Background | DATA | real desk content |
-| set:8:engine | (engine name) | Qwen3.6 35B a3b-ud-q5_k_xl.gguf | DATA | real desk content |
+| set:8:engine | (engine name) | Qwen3.6 35B A3B | DATA | real desk content |
 | set:8:state | (state) | ●READY | DATA | real desk content |
-| headline | N engine(s) found | 10 engines found | DATA | real desk content |
-| found:0:name | (engine name) | Qwen3.6 35B a3b-ud-q5_k_xl.gguf | DATA | real desk content |
+| headline | N engine(s) found | 8 engines found | DATA | real desk content |
+| found:0:name | (engine name) | Qwen3.6 35B A3B | DATA | real desk content |
 | found:0:host | (host chip) | 192.168.1.43 · LAN | DATA | real desk content |
 | found:0:state | (state) | ●READY | DATA | real desk content |
-| found:1:name | (engine name) | Qwythos 9B Claude Mythos 5 1M Q6 K.Gguf | DATA | real desk content |
+| found:1:name | (engine name) | Qwythos 9B Claude Mythos 5 1M | DATA | real desk content |
 | found:1:host | (host chip) | 192.168.1.43 · LAN | DATA | real desk content |
 | found:1:state | (state) | ●READY | DATA | real desk content |
-| found:2:name | (engine name) | Gpt 5 Mini | DATA | real desk content |
+| found:2:name | (engine name) | GPT 5 mini | DATA | real desk content |
 | found:2:host | (host chip) | API.OPENAI.COM | DATA | real desk content |
-| found:2:state | (state) | ⚠KEY NOT SET | DATA | real desk content |
-| found:3:name | (engine name) | Qwen/Qwen3 8B | DATA | real desk content |
+| found:2:state | (state) | ⚠NOT SET | DATA | real desk content |
+| found:3:name | (engine name) | Qwen3 8B | DATA | real desk content |
 | found:3:host | (host chip) | OPENROUTER.AI | DATA | real desk content |
 | found:3:state | (state) | ●READY | DATA | real desk content |
-| found:4:name | (engine name) | Qwen3-8B-MLX-4bit | DATA | real desk content |
+| found:4:name | (engine name) | Qwen3 8B | DATA | real desk content |
 | found:4:host | (host chip) | THIS DEVICE | DATA | real desk content |
 | found:4:state | (state) | ●READY | DATA | real desk content |
-| found:5:name | (engine name) | gemma-4-E4B-it-qat-UD-Q4_K_XL.gguf | DATA | real desk content |
+| found:5:name | (engine name) | Gemma 4 E4B it qat | DATA | real desk content |
 | found:5:host | (host chip) | THIS DEVICE | DATA | real desk content |
 | found:5:state | (state) | ●READY | DATA | real desk content |
-| found:6:name | (engine name) | mmproj-F16.gguf | DATA | real desk content |
+| found:6:name | (engine name) | Qwen3 4B Instruct 2507 | DATA | real desk content |
 | found:6:host | (host chip) | THIS DEVICE | DATA | real desk content |
 | found:6:state | (state) | ●READY | DATA | real desk content |
-| found:7:name | (engine name) | mmproj-Qwythos-9B-Claude-Mythos-5-1M-f16.gguf | DATA | real desk content |
+| found:7:name | (engine name) | Qwythos 9B Claude Mythos 5 1M | DATA | real desk content |
 | found:7:host | (host chip) | THIS DEVICE | DATA | real desk content |
 | found:7:state | (state) | ●READY | DATA | real desk content |
-| found:8:name | (engine name) | Qwen3-4B-Instruct-2507-Q6_K.gguf | DATA | real desk content |
+| found:8:name | (engine name) | Quick local Qwen | DATA | real desk content |
 | found:8:host | (host chip) | THIS DEVICE | DATA | real desk content |
-| found:8:state | (state) | ●READY | DATA | real desk content |
-| found:9:name | (engine name) | Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf | DATA | real desk content |
+| found:8:state | (state) | ○WAITING | DATA | real desk content |
+| found:9:name | (engine name) | Tiny local Qwen | DATA | real desk content |
 | found:9:host | (host chip) | THIS DEVICE | DATA | real desk content |
-| found:9:state | (state) | ●READY | DATA | real desk content |
-| found:10:name | (engine name) | Quick local Qwen | DATA | real desk content |
-| found:10:host | (host chip) | THIS DEVICE | DATA | real desk content |
-| found:10:state | (state) | ○WAITING | DATA | real desk content |
-| found:11:name | (engine name) | Tiny local Qwen | DATA | real desk content |
-| found:11:host | (host chip) | THIS DEVICE | DATA | real desk content |
-| found:11:state | (state) | ○WAITING | DATA | real desk content |
+| found:9:state | (state) | ○WAITING | DATA | real desk content |
 | set:0:group | (group name) |  | DATA | real desk content |
 | set:0:engine | (engine name) |  | DATA | real desk content |
 | set:0:state | (state) |  | DATA | real desk content |
 | set:1:group | (group name) | Thoughts & notes | DATA | real desk content |
-| set:1:engine | (engine name) | Qwen3.6 35B a3b-ud-q5_k_xl.gguf | DATA | real desk content |
+| set:1:engine | (engine name) | Qwen3.6 35B A3B | DATA | real desk content |
 | set:1:state | (state) | ●READY | DATA | real desk content |
 | set:2:group | (group name) | Thoughts & notes | DATA | real desk content |
-| set:2:engine | (engine name) | Qwen3.6 35B a3b-ud-q5_k_xl.gguf | DATA | real desk content |
+| set:2:engine | (engine name) | Qwen3.6 35B A3B | DATA | real desk content |
 | set:2:state | (state) | ●READY | DATA | real desk content |
 | set:3:group | (group name) | Chat | DATA | real desk content |
-| set:3:engine | (engine name) | Qwen3.6 35B a3b-ud-q5_k_xl.gguf | DATA | real desk content |
+| set:3:engine | (engine name) | Qwen3.6 35B A3B | DATA | real desk content |
 | set:3:state | (state) | ●READY | DATA | real desk content |
 | set:4:group | (group name) | Writing & dictation | DATA | real desk content |
-| set:4:engine | (engine name) | mmproj-Qwythos-9B-Claude-Mythos-5-1M-f16.gguf | DATA | real desk content |
+| set:4:engine | (engine name) | Qwen3 4B Instruct 2507 | DATA | real desk content |
 | set:4:state | (state) | ●READY | DATA | real desk content |
 | set:5:group | (group name) | Speech recognition | DATA | real desk content |
 | set:5:engine | (engine name) | Quick local Qwen | DATA | real desk content |
 | set:5:state | (state) | ○WAITING | DATA | real desk content |
 | set:6:group | (group name) | Meetings | DATA | real desk content |
-| set:6:engine | (engine name) | Qwen3.6 35B a3b-ud-q5_k_xl.gguf | DATA | real desk content |
+| set:6:engine | (engine name) | Qwen3.6 35B A3B | DATA | real desk content |
 | set:6:state | (state) | ●READY | DATA | real desk content |
 | set:7:group | (group name) | Agents & tools | DATA | real desk content |
-| set:7:engine | (engine name) | Qwen3.6 35B a3b-ud-q5_k_xl.gguf | DATA | real desk content |
+| set:7:engine | (engine name) | Qwen3.6 35B A3B | DATA | real desk content |
 | set:7:state | (state) | ●READY | DATA | real desk content |
 | set:8:group | (group name) | Background | DATA | real desk content |
-| set:8:engine | (engine name) | Qwen3.6 35B a3b-ud-q5_k_xl.gguf | DATA | real desk content |
+| set:8:engine | (engine name) | Qwen3.6 35B A3B | DATA | real desk content |
 | set:8:state | (state) | ●READY | DATA | real desk content |
 
 ## Shots
@@ -268,8 +256,4 @@ Hub: 127.0.0.1:58342
 - meetings-detail @ 393: `walk-meetings-detail-393.png`
 - speak @ 393: `walk-speak-idle-393.png`
 - concierge @ 393: `walk-concierge-393.png`
-
-## Defects
-
-1. SPEAK ENGINE: dictation engine shows "Migrated intel endpoint" instead of the model name -- migration left a placeholder label on a LAN engine (THIS DEVICE egress)
 
