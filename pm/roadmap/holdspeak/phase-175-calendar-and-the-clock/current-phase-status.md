@@ -107,7 +107,7 @@ has only GitHubWatchSource:58 and JiraWatchSource:294).
 | HS-175-03 | Event-born scheduled recordings (auto-create from calendar events with meeting URLs) | backlog | [story-03-event-born-recordings](./story-03-event-born-recordings.md) | -- |
 | HS-175-04 | The meeting Watch adapter (MeetingWatchSource: meetings as Watch entities in a Room) | backlog | [story-04-the-meeting-watch-adapter](./story-04-the-meeting-watch-adapter.md) | -- |
 | HS-175-05 | The week brief (Monday brief window widened to the calendar week; calendar + meeting collectors) | backlog | [story-05-the-week-brief](./story-05-the-week-brief.md) | -- |
-| HS-175-06 | The walk (his desk: the event-born recording, the week brief, the meeting Watch entity) | backlog | [story-06-the-walk](./story-06-the-walk.md) | -- |
+| HS-175-06 | The walk (his desk: the event-born recording, the week brief, the meeting Watch entity) | in-progress | [story-06-the-walk](./story-06-the-walk.md) | -- |
 | HS-175-07 | The hygiene lane (items from THE-TUESDAY-ARC.md section 4 that this phase's tree touches) | backlog | [story-07-the-hygiene-lane](./story-07-the-hygiene-lane.md) | -- |
 | HS-175-08 | The docs (the calendar in the architecture; the week brief in the guide) | in-progress | [story-08-the-docs](./story-08-the-docs.md) | -- |
 | HS-175-09 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | backlog | [story-09-the-close](./story-09-the-close.md) | -- |
