@@ -32,8 +32,8 @@ count everywhere on the deck and in the wire's project list); the first
 walk on his real desk: the sweep held in quiet hours (honest), his
 Monday brief is the kernel ledger (`1839 THINGS · AUG 19` — 06 pays the
 source now), a `PROJECTS` caption over nothing but the brief row (fixed
-to its own `BRIEF` caption). **02, 03, 04, 07 and 09 DONE** on evidence; 06 flips when the brief's
-source fix lands; 05 keeps its click-to-open box open (the bundle);
+to its own `BRIEF` caption). **02, 03, 04, 07 and 09 DONE** on evidence; 06 DONE (the brief counts human items only; the kernel ledger a
+summary); 05 keeps its click-to-open box open (the bundle);
 01/08/10 wait for his word. Then the re-walk, the full suite, the PR
 stacked on #553.
 
@@ -129,7 +129,7 @@ brief ran ONCE (1839 items on 2026-08-24) and never again.
 | HS-171-03 | The needs-you aggregate (cache + cadence-driven refresh; 170's N+1 paid) | done | [story-03-the-needs-you-aggregate](./story-03-the-needs-you-aggregate.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-171-04 | PROJECTS in the shade + the dock badge | done | [story-04-projects-in-the-shade](./story-04-projects-in-the-shade.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-171-05 | macOS notifications on the edge (quiet hours, per-project mute, Article III) | in-progress | [story-05-macos-notifications](./story-05-macos-notifications.md) | -- |
-| HS-171-06 | The Monday brief recurring (its own cadence loop, lands in the shade) | in-progress | [story-06-monday-brief-recurring](./story-06-monday-brief-recurring.md) | -- |
+| HS-171-06 | The Monday brief recurring (its own cadence loop, lands in the shade) | done | [story-06-monday-brief-recurring](./story-06-monday-brief-recurring.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-171-07 | PROJECTS in command-K (every active Room reachable from the deck) | done | [story-07-projects-in-command-k](./story-07-projects-in-command-k.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-171-08 | The walk (his desk: a notification he actually receives) | in-progress | [story-08-the-walk](./story-08-the-walk.md) | -- |
 | HS-171-09 | The docs (guide re-shot for every new face; the heartbeat in the architecture) | done | [story-09-the-docs](./story-09-the-docs.md) | [evidence-story-09](./evidence-story-09.md) |
