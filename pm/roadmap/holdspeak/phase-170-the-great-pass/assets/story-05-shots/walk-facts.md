@@ -1,18 +1,18 @@
 # HS-170-05 walk facts
 
-Generated: 2026-09-05T02:38:05.121679
-Hub: 127.0.0.1:51435
+Generated: 2026-09-05T02:48:01.195277
+Hub: 127.0.0.1:53758
 
 ## arrival
 
 | Field | Expected | Observed | Verdict | Why |
 |-------|----------|----------|---------|-----|
 | headline | (owner's real desk) | Nothing needs you | DATA | board=(owner's real desk), real=Nothing needs you |
-| sections_present | (varies by desk state) | brief, meetings | DATA | real desk state |
-| section_count | (varies) | 2 | DATA | 2 sections visible |
+| sections_present | (varies by desk state) | meetings | DATA | real desk state |
+| section_count | (varies) | 1 | DATA | 1 sections visible |
 | headline | (owner's real desk) | Nothing needs you | DATA | board=(owner's real desk), real=Nothing needs you |
-| sections_present | (varies by desk state) | brief, meetings | DATA | real desk state |
-| section_count | (varies) | 2 | DATA | 2 sections visible |
+| sections_present | (varies by desk state) | meetings | DATA | real desk state |
+| section_count | (varies) | 1 | DATA | 1 sections visible |
 
 ## settings-hub
 
@@ -48,7 +48,7 @@ Hub: 127.0.0.1:51435
 | headline | N meeting(s) need(s) intelligence | Nothing needs you | DATA | real desk content |
 | row:0:title | (real meeting) | Already titled | DATA | real desk content |
 | row:0:tokens | (date, duration, state) | AUG 22·2 WORDS·QUEUED | DATA | real desk content |
-| row:0:verb | Open or Run intelligence |  | DATA | real desk content |
+| row:0:verb | Open or Run intelligence | Open | DATA | real desk content |
 | row:1:title | (real meeting) | Sprint Review | DATA | real desk content |
 | row:1:tokens | (date, duration, state) | AUG 20·NO TRANSCRIPT | DATA | real desk content |
 | row:1:verb | Open or Run intelligence | Open | DATA | real desk content |
@@ -59,23 +59,23 @@ Hub: 127.0.0.1:51435
 | row:3:tokens | (date, duration, state) | AUG 17·1 MIN·26 WORDS·SKIPPED | DATA | real desk content |
 | row:3:verb | Open or Run intelligence | Open | DATA | real desk content |
 | row:4:title | (real meeting) | Meeting | DATA | real desk content |
-| row:4:tokens | (date, duration, state) | AUG 11·REC | DATA | real desk content |
-| row:4:verb | Open or Run intelligence | Retry | DATA | real desk content |
+| row:4:tokens | (date, duration, state) | AUG 11·INTERRUPTED | DATA | real desk content |
+| row:4:verb | Open or Run intelligence | Open | DATA | real desk content |
 | row:5:title | (real meeting) | Meeting | DATA | real desk content |
-| row:5:tokens | (date, duration, state) | AUG 11·REC | DATA | real desk content |
-| row:5:verb | Open or Run intelligence | Retry | DATA | real desk content |
+| row:5:tokens | (date, duration, state) | AUG 11·INTERRUPTED | DATA | real desk content |
+| row:5:verb | Open or Run intelligence | Open | DATA | real desk content |
 | row:6:title | (real meeting) | Meeting | DATA | real desk content |
-| row:6:tokens | (date, duration, state) | AUG 11·REC | DATA | real desk content |
-| row:6:verb | Open or Run intelligence | Retry | DATA | real desk content |
+| row:6:tokens | (date, duration, state) | AUG 11·INTERRUPTED | DATA | real desk content |
+| row:6:verb | Open or Run intelligence | Open | DATA | real desk content |
 | row:7:title | (real meeting) | Meeting | DATA | real desk content |
-| row:7:tokens | (date, duration, state) | AUG 11·REC | DATA | real desk content |
-| row:7:verb | Open or Run intelligence | Retry | DATA | real desk content |
+| row:7:tokens | (date, duration, state) | AUG 11·INTERRUPTED | DATA | real desk content |
+| row:7:verb | Open or Run intelligence | Open | DATA | real desk content |
 | detail:needs_you_label | NEEDS YOU N | --- | DATA | real desk content |
-| detail:needs_you_rows | (varies) | 1840 | DATA | real desk content |
+| detail:needs_you_rows | (varies) | 3 | DATA | real desk content |
 | headline | N meeting(s) need(s) intelligence | Nothing needs you | DATA | real desk content |
 | row:0:title | (real meeting) | Already titled | DATA | real desk content |
 | row:0:tokens | (date, duration, state) | AUG 22·2 WORDS·QUEUED | DATA | real desk content |
-| row:0:verb | Open or Run intelligence |  | DATA | real desk content |
+| row:0:verb | Open or Run intelligence | Open | DATA | real desk content |
 | row:1:title | (real meeting) | Sprint Review | DATA | real desk content |
 | row:1:tokens | (date, duration, state) | AUG 20·NO TRANSCRIPT | DATA | real desk content |
 | row:1:verb | Open or Run intelligence | Open | DATA | real desk content |
@@ -86,19 +86,19 @@ Hub: 127.0.0.1:51435
 | row:3:tokens | (date, duration, state) | AUG 17·1 MIN·26 WORDS·SKIPPED | DATA | real desk content |
 | row:3:verb | Open or Run intelligence | Open | DATA | real desk content |
 | row:4:title | (real meeting) | Meeting | DATA | real desk content |
-| row:4:tokens | (date, duration, state) | AUG 11·REC | DATA | real desk content |
-| row:4:verb | Open or Run intelligence | Retry | DATA | real desk content |
+| row:4:tokens | (date, duration, state) | AUG 11·INTERRUPTED | DATA | real desk content |
+| row:4:verb | Open or Run intelligence | Open | DATA | real desk content |
 | row:5:title | (real meeting) | Meeting | DATA | real desk content |
-| row:5:tokens | (date, duration, state) | AUG 11·REC | DATA | real desk content |
-| row:5:verb | Open or Run intelligence | Retry | DATA | real desk content |
+| row:5:tokens | (date, duration, state) | AUG 11·INTERRUPTED | DATA | real desk content |
+| row:5:verb | Open or Run intelligence | Open | DATA | real desk content |
 | row:6:title | (real meeting) | Meeting | DATA | real desk content |
-| row:6:tokens | (date, duration, state) | AUG 11·REC | DATA | real desk content |
-| row:6:verb | Open or Run intelligence | Retry | DATA | real desk content |
+| row:6:tokens | (date, duration, state) | AUG 11·INTERRUPTED | DATA | real desk content |
+| row:6:verb | Open or Run intelligence | Open | DATA | real desk content |
 | row:7:title | (real meeting) | Meeting | DATA | real desk content |
-| row:7:tokens | (date, duration, state) | AUG 11·REC | DATA | real desk content |
-| row:7:verb | Open or Run intelligence | Retry | DATA | real desk content |
+| row:7:tokens | (date, duration, state) | AUG 11·INTERRUPTED | DATA | real desk content |
+| row:7:verb | Open or Run intelligence | Open | DATA | real desk content |
 | detail:needs_you_label | NEEDS YOU N | --- | DATA | real desk content |
-| detail:needs_you_rows | (varies) | 1840 | DATA | real desk content |
+| detail:needs_you_rows | (varies) | 3 | DATA | real desk content |
 
 ## speak
 
@@ -107,14 +107,14 @@ Hub: 127.0.0.1:51435
 | lands_in_target | Claude Code | Codex CLI | DATA | board=Claude Code, real=Codex CLI |
 | engine_caption | DICTATION | DICTATION | MATCH | exact |
 | engine_name | Qwen 3.5 0.8B | Migrated intel endpoint | DATA | board=Qwen 3.5 0.8B, real=Migrated intel endpoint |
-| engine_egress | THIS DEVICE |  | DATA | no data observed |
-| engine_state | READY |  | DATA | no data observed |
+| engine_egress | THIS DEVICE | CLOUD | DATA | board=THIS DEVICE, real=CLOUD |
+| engine_state | READY | ✓READY | MATCH | substring |
 | footer_receipt | THIS DEVICE N TODAY | THIS DEVICE9 TODAYReviewExport | DATA | real desk content |
 | lands_in_target | Claude Code | Codex CLI | DATA | board=Claude Code, real=Codex CLI |
 | engine_caption | DICTATION | DICTATION | MATCH | exact |
 | engine_name | Qwen 3.5 0.8B | Migrated intel endpoint | DATA | board=Qwen 3.5 0.8B, real=Migrated intel endpoint |
-| engine_egress | THIS DEVICE |  | DATA | no data observed |
-| engine_state | READY |  | DATA | no data observed |
+| engine_egress | THIS DEVICE | CLOUD | DATA | board=THIS DEVICE, real=CLOUD |
+| engine_state | READY | ✓READY | MATCH | substring |
 | footer_receipt | THIS DEVICE N TODAY | THIS DEVICE9 TODAYReviewExport | DATA | real desk content |
 
 ## Shots
@@ -129,4 +129,8 @@ Hub: 127.0.0.1:51435
 - meetings-list @ 393: `walk-meetings-list-393.png`
 - meetings-detail @ 393: `walk-meetings-detail-393.png`
 - speak @ 393: `walk-speak-idle-393.png`
+
+## Defects
+
+1. SPEAK ENGINE: dictation engine shows "Migrated intel endpoint" instead of the model name -- migration left a placeholder label on a LAN engine (THIS DEVICE egress)
 

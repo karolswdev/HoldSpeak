@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-05T02:38:05.121679",
-  "hub_host": "127.0.0.1:51435",
+  "generated_at": "2026-09-05T02:48:01.195277",
+  "hub_host": "127.0.0.1:53758",
   "viewports": [
     {
       "width": 1440,
@@ -76,7 +76,7 @@
       "face": "arrival",
       "field": "sections_present",
       "expected": "(varies by desk state)",
-      "observed": "brief, meetings",
+      "observed": "meetings",
       "verdict": "DATA",
       "why": "real desk state"
     },
@@ -84,9 +84,9 @@
       "face": "arrival",
       "field": "section_count",
       "expected": "(varies)",
-      "observed": "2",
+      "observed": "1",
       "verdict": "DATA",
-      "why": "2 sections visible"
+      "why": "1 sections visible"
     },
     {
       "face": "settings-hub",
@@ -204,7 +204,7 @@
       "face": "meetings",
       "field": "row:0:verb",
       "expected": "Open or Run intelligence",
-      "observed": "",
+      "observed": "Open",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -292,7 +292,7 @@
       "face": "meetings",
       "field": "row:4:tokens",
       "expected": "(date, duration, state)",
-      "observed": "AUG 11\u00b7REC",
+      "observed": "AUG 11\u00b7INTERRUPTED",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -300,7 +300,7 @@
       "face": "meetings",
       "field": "row:4:verb",
       "expected": "Open or Run intelligence",
-      "observed": "Retry",
+      "observed": "Open",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -316,7 +316,7 @@
       "face": "meetings",
       "field": "row:5:tokens",
       "expected": "(date, duration, state)",
-      "observed": "AUG 11\u00b7REC",
+      "observed": "AUG 11\u00b7INTERRUPTED",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -324,7 +324,7 @@
       "face": "meetings",
       "field": "row:5:verb",
       "expected": "Open or Run intelligence",
-      "observed": "Retry",
+      "observed": "Open",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -340,7 +340,7 @@
       "face": "meetings",
       "field": "row:6:tokens",
       "expected": "(date, duration, state)",
-      "observed": "AUG 11\u00b7REC",
+      "observed": "AUG 11\u00b7INTERRUPTED",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -348,7 +348,7 @@
       "face": "meetings",
       "field": "row:6:verb",
       "expected": "Open or Run intelligence",
-      "observed": "Retry",
+      "observed": "Open",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -364,7 +364,7 @@
       "face": "meetings",
       "field": "row:7:tokens",
       "expected": "(date, duration, state)",
-      "observed": "AUG 11\u00b7REC",
+      "observed": "AUG 11\u00b7INTERRUPTED",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -372,7 +372,7 @@
       "face": "meetings",
       "field": "row:7:verb",
       "expected": "Open or Run intelligence",
-      "observed": "Retry",
+      "observed": "Open",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -388,7 +388,7 @@
       "face": "meetings",
       "field": "detail:needs_you_rows",
       "expected": "(varies)",
-      "observed": "1840",
+      "observed": "3",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -420,17 +420,17 @@
       "face": "speak",
       "field": "engine_egress",
       "expected": "THIS DEVICE",
-      "observed": "",
+      "observed": "CLOUD",
       "verdict": "DATA",
-      "why": "no data observed"
+      "why": "board=THIS DEVICE, real=CLOUD"
     },
     {
       "face": "speak",
       "field": "engine_state",
       "expected": "READY",
-      "observed": "",
-      "verdict": "DATA",
-      "why": "no data observed"
+      "observed": "\u2713READY",
+      "verdict": "MATCH",
+      "why": "substring"
     },
     {
       "face": "speak",
@@ -452,7 +452,7 @@
       "face": "arrival",
       "field": "sections_present",
       "expected": "(varies by desk state)",
-      "observed": "brief, meetings",
+      "observed": "meetings",
       "verdict": "DATA",
       "why": "real desk state"
     },
@@ -460,9 +460,9 @@
       "face": "arrival",
       "field": "section_count",
       "expected": "(varies)",
-      "observed": "2",
+      "observed": "1",
       "verdict": "DATA",
-      "why": "2 sections visible"
+      "why": "1 sections visible"
     },
     {
       "face": "settings-hub",
@@ -580,7 +580,7 @@
       "face": "meetings",
       "field": "row:0:verb",
       "expected": "Open or Run intelligence",
-      "observed": "",
+      "observed": "Open",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -668,7 +668,7 @@
       "face": "meetings",
       "field": "row:4:tokens",
       "expected": "(date, duration, state)",
-      "observed": "AUG 11\u00b7REC",
+      "observed": "AUG 11\u00b7INTERRUPTED",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -676,7 +676,7 @@
       "face": "meetings",
       "field": "row:4:verb",
       "expected": "Open or Run intelligence",
-      "observed": "Retry",
+      "observed": "Open",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -692,7 +692,7 @@
       "face": "meetings",
       "field": "row:5:tokens",
       "expected": "(date, duration, state)",
-      "observed": "AUG 11\u00b7REC",
+      "observed": "AUG 11\u00b7INTERRUPTED",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -700,7 +700,7 @@
       "face": "meetings",
       "field": "row:5:verb",
       "expected": "Open or Run intelligence",
-      "observed": "Retry",
+      "observed": "Open",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -716,7 +716,7 @@
       "face": "meetings",
       "field": "row:6:tokens",
       "expected": "(date, duration, state)",
-      "observed": "AUG 11\u00b7REC",
+      "observed": "AUG 11\u00b7INTERRUPTED",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -724,7 +724,7 @@
       "face": "meetings",
       "field": "row:6:verb",
       "expected": "Open or Run intelligence",
-      "observed": "Retry",
+      "observed": "Open",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -740,7 +740,7 @@
       "face": "meetings",
       "field": "row:7:tokens",
       "expected": "(date, duration, state)",
-      "observed": "AUG 11\u00b7REC",
+      "observed": "AUG 11\u00b7INTERRUPTED",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -748,7 +748,7 @@
       "face": "meetings",
       "field": "row:7:verb",
       "expected": "Open or Run intelligence",
-      "observed": "Retry",
+      "observed": "Open",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -764,7 +764,7 @@
       "face": "meetings",
       "field": "detail:needs_you_rows",
       "expected": "(varies)",
-      "observed": "1840",
+      "observed": "3",
       "verdict": "DATA",
       "why": "real desk content"
     },
@@ -796,17 +796,17 @@
       "face": "speak",
       "field": "engine_egress",
       "expected": "THIS DEVICE",
-      "observed": "",
+      "observed": "CLOUD",
       "verdict": "DATA",
-      "why": "no data observed"
+      "why": "board=THIS DEVICE, real=CLOUD"
     },
     {
       "face": "speak",
       "field": "engine_state",
       "expected": "READY",
-      "observed": "",
-      "verdict": "DATA",
-      "why": "no data observed"
+      "observed": "\u2713READY",
+      "verdict": "MATCH",
+      "why": "substring"
     },
     {
       "face": "speak",
@@ -818,5 +818,8 @@
     }
   ],
   "errors": [],
-  "surprises": []
+  "surprises": [],
+  "defects": [
+    "SPEAK ENGINE: dictation engine shows \"Migrated intel endpoint\" instead of the model name -- migration left a placeholder label on a LAN engine (THIS DEVICE egress)"
+  ]
 }
