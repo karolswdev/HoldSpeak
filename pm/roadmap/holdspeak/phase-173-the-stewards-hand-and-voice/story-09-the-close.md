@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 173
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-173-08
 - **Unblocks:** Phase 174
 - **Owner:** unassigned
@@ -35,13 +35,13 @@ summary written, the PR opened, and the merge on the owner's word.
 
 ## Acceptance criteria
 
-- [ ] The full suite passes with zero branch-new failures.
-- [ ] The web baseline check passes with zero branch-new.
-- [ ] The UX canon ratchet is green.
-- [ ] Counsel reads the final tree and passes (with the nudge review).
-- [ ] The final summary is written.
-- [ ] The PR is opened and passes CI.
-- [ ] The owner's word to merge (Article IX.4).
+- [x] The full suite passes with zero branch-new failures.
+- [x] The web baseline check passes with zero branch-new.
+- [x] The UX canon ratchet is green.
+- [x] Counsel reads the final tree and passes (with the nudge review).
+- [x] The final summary is written.
+- [x] The PR is opened and passes CI.
+- [x] The owner's word to merge (Article IX.4).
 
 ## Test plan
 

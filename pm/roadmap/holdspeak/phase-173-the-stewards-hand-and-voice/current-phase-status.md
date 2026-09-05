@@ -109,9 +109,15 @@ for reads only.
 | HS-173-06 | The walk (his desk: a drafted update, a nudge he approves) | done | [story-06-the-walk](./story-06-the-walk.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-173-07 | The docs (the steward's hand in the architecture; the nudge in SECURITY) | done | [story-07-the-docs](./story-07-the-docs.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-173-08 | The hygiene lane (items from THE-TUESDAY-ARC.md section 4 this phase touches) | done | [story-08-the-hygiene-lane](./story-08-the-hygiene-lane.md) | [evidence-story-08](./evidence-story-08.md) |
-| HS-173-09 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | backlog | [story-09-the-close](./story-09-the-close.md) | -- |
+| HS-173-09 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | done | [story-09-the-close](./story-09-the-close.md) | [evidence-story-09](./evidence-story-09.md) |
 
 ## Where we are
+
+**2026-09-05 20:10 — BUILT 9/9 on evidence.** Counsel-on-built
+RATIFY-W-C paid; the walk on his desk zero defects with every write
+denied; suite 9694 passed (6 inherited, the rest xdist-only or paid);
+**PR #556** stacked on #555. The merge is his: #553 → #554 → #555 →
+#556.
 
 **2026-09-05 19:20 — 7/9 DONE on evidence (01 · 02 · 03 · 04 · 05 · 07 ·
 08); **PR #556 OPEN** (`--base feat/the-loop-closes`); counsel on the
