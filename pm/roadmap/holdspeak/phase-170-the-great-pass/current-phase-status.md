@@ -95,4 +95,19 @@ Each ships its glass rig (`tests/e2e/test_hs170_{concierge,arrival,
 settings_hub,speak,meetings}_glass.py`). The Chair hero + lanes and the
 legacy Models/Assignments modules are PARKED. Story 05's pre-walk
 runner (`tests/e2e/live170_walk.py`) is being run on his real hub.
-Phases 171–174 are CHARTERED as PLANNED; 175–180 are being chartered.
+Phases 171–180 are ALL CHARTERED as PLANNED (his questions per phase in
+Muad'Dib IX §1.4).
+
+**03:00 — the pre-walk on his REAL desk** (`tests/e2e/live170_walk.py`,
+story 05) found what five green rigs could not: the arrival's BRIEF
+flooded with 1837 kernel-operation names as rows (`PrimitiveService.
+delete_directory` · Ack · Defer); four dead recordings from AUG 11 still
+wearing `REC` + `Retry`; the dictation engine named `Migrated intel
+endpoint` with a `THIS DEVICE` chip on a LAN host. All four PAID: the
+BRIEF shows human items only, capped at 3 + `N more` (source fix
+backlogged to 171-06); a dead capture reads `INTERRUPTED`, a live one
+`REC`; detect names engines by their served model
+(`engine_display_name`) and Speak's ENGINE row uses it with the real
+host. 06 DONE (docs verified against the built faces). Counsel on the
+built phase and the re-walk are in flight; then the full suite, the
+final summary, the PR — and his word gates the merge.
