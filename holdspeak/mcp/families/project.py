@@ -65,7 +65,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "project.get_room",
-        "description": "Get the coherent room projection for one project (identity, items, meetings, resources, changes, review).",
+        "description": "Get the coherent room projection for one project (identity, items, meetings, resources, changes, review, needsYou, sources, health, sinceRead, decisions, commitments, target).",
         "inputSchema": {
             "$id": "holdspeak://mcp/project.get_room@1",
             "type": "object",

@@ -58,6 +58,7 @@ _PROVIDER_TO_CONNECTOR: dict[str, str] = {"github": "gh", "jira": "jira"}
 _SUBJECT_TO_QUERY_KIND: dict[str, str] = {
     "pull_request": "pull_requests",
     "issue": "issues",
+    "branch_ci": "branch_ci",  # HS-169-04: CI on the base branch
 }
 
 
@@ -166,6 +167,27 @@ ROOM_CHANGES_CAP: int = 10
 
 # Absent-section marker for domains not yet built (Art VI, NFR-006).
 _ABSENT_SECTION: dict[str, str] = {"state": "absent", "reason": "not_yet_built"}
+
+
+def _format_age(iso_str: str, now: datetime) -> str:
+    """Format an ISO timestamp as a human-readable age token."""
+    if not iso_str:
+        return ""
+    try:
+        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00").rstrip("Z"))
+        delta = now - dt.replace(tzinfo=None)
+        days = delta.days
+        if days > 0:
+            return f"{days} DAYS"
+        hours = delta.seconds // 3600
+        if hours > 0:
+            return f"{hours} HOURS"
+        minutes = delta.seconds // 60
+        if minutes > 0:
+            return f"{minutes} MIN AGO"
+        return "JUST NOW"
+    except (ValueError, TypeError):
+        return ""
 
 
 def _request_hash(payload: dict[str, Any]) -> str:
@@ -310,10 +332,25 @@ class ProjectService:
         # observed_at: derived from project.updated_at for full determinism
         observed_at = project.updated_at.isoformat()
 
+        # HS-169-04: the four questions' wire data
+        target_at = (room_fields or {}).get("target_at")
+        room_read_at = (room_fields or {}).get("room_read_at")
+
+        # HS-169-04: build sources first so nextCheckAt can be hoisted
+        sources_section = self._room_section(
+            "sources", lambda: self._read_room_sources(project_id))
+        # Top-level nextCheckAt: from sources section when ok
+        next_check_at = (
+            sources_section.get("nextCheckAt")
+            if sources_section.get("state") == "ok"
+            else None
+        )
+
         return {
             "project_id": project_id,
             "revision": revision,
             "observed_at": observed_at,
+            "nextCheckAt": next_check_at,
             "project": orientation,
             "items": self._room_section(
                 "items", lambda: self._read_room_items(project_id)),
@@ -330,7 +367,20 @@ class ProjectService:
                 if self._delta_service is not None
                 else dict(_ABSENT_SECTION)
             ),
-            "sources": dict(_ABSENT_SECTION),
+            # HS-169-04: the four questions (additive)
+            "needsYou": self._room_section(
+                "needsYou", lambda: self._read_room_needs_you(project_id)),
+            "sources": sources_section,
+            "health": self._room_section(
+                "health", lambda: self._read_room_health(project_id, target_at)),
+            "sinceRead": self._room_section(
+                "sinceRead", lambda: self._read_room_since_read(project_id, room_read_at)),
+            "decisions": self._room_section(
+                "decisions", lambda: self._read_room_decisions(project_id)),
+            "commitments": self._room_section(
+                "commitments", lambda: self._read_room_commitments(project_id)),
+            "target": self._room_section(
+                "target", lambda: self._read_room_target(target_at)),
             "updates": dict(_ABSENT_SECTION),
             "steward": dict(_ABSENT_SECTION),
         }
@@ -448,6 +498,543 @@ class ProjectService:
             "pending_count": pending_count,
             "open_review_id": open_review_id,
         }
+
+    # ── HS-169-04 room sub-readers (the four questions) ──────────────
+
+    # Severity ordering for needsYou rows
+    _SEVERITY_ORDER = {"danger": 0, "warning": 1, "info": 2}
+
+    # Change-kind phrases: raw snake_case kind -> human phrase.
+    # The guard test asserts no raw kind (underscored) leaks into a phrase.
+    _CHANGE_KIND_PHRASES: dict[str, str] = {
+        "project.created": "created",
+        "project.updated": "updated",
+        "project.archived": "archived",
+        "project.restored": "restored",
+        "project.resource.linked": "resource linked",
+        "project.resource.unlinked": "resource unlinked",
+        "watch.created": "watch created",
+        "watch.snapshot": "snapshot refreshed",
+        "watch.evaluated": "watch evaluated",
+        "watch.error": "watch error",
+        "item.created": "item added",
+        "item.updated": "item updated",
+        "item.transitioned": "item transitioned",
+        "meeting.linked": "meeting linked",
+        "meeting.unlinked": "meeting unlinked",
+        "review.opened": "review opened",
+        "review.accepted": "review accepted",
+        "update.drafted": "update drafted",
+        "update.published": "update published",
+        "steward.ran": "steward ran",
+    }
+
+    # Plain-reason mapping for Watch errors (HS-169-04 D4 SOURCES)
+    _PLAIN_REASON_PATTERNS: list[tuple[str, str]] = [
+        ("JQL parse error", "Jira rejected the query"),
+        ("The value '", "Jira rejected the query"),
+        ("does not exist for the field", "Jira rejected the query"),
+        ("no local query adapter", "No local adapter for meeting activity yet"),
+        ("lock timeout", "acli is busy"),
+        ("connector_snapshot_adapter_unavailable", "No local adapter for meeting activity yet"),
+    ]
+
+    @staticmethod
+    def _plain_reason(error: str | None) -> str | None:
+        """Map a raw Watch error to plain words (ONCE in the service)."""
+        if not error:
+            return None
+        lower = error.lower()
+        for pattern, plain in ProjectService._PLAIN_REASON_PATTERNS:
+            if pattern.lower() in lower:
+                return plain
+        # First line of the error, no stack
+        return error.split("\n")[0][:200]
+
+    def _read_room_needs_you(self, project_id: str) -> dict[str, Any]:
+        """NEEDS YOU: items derived from Watch snapshots + Delta review."""
+        watches = self._db.automations.list_project_watches(project_id)
+        needs: list[dict[str, Any]] = []
+        now = datetime.now()
+
+        for watch in watches:
+            connector_id = watch.get("connector_id", "")
+            snapshot = watch.get("snapshot")
+            if not snapshot:
+                continue
+            entities = snapshot if isinstance(snapshot, list) else []
+            query_kind = watch.get("query_kind", "")
+
+            if connector_id == "gh" and query_kind == "pull_requests":
+                # PRs whose reviewRequests name the owner or reviewDecision = CHANGES_REQUESTED
+                # Owner login: from the GitHub connection's account
+                owner_login = self._get_github_owner_login()
+                for entity in entities:
+                    review_requests = entity.get("reviewRequests") or []
+                    review_decision = entity.get("reviewDecision")
+                    waiting_on_owner = (
+                        (owner_login and owner_login.lower() in [r.lower() for r in review_requests])
+                        or review_decision == "CHANGES_REQUESTED"
+                    )
+                    if not waiting_on_owner:
+                        continue
+                    updated_at_str = entity.get("updatedAt") or entity.get("updated_at") or ""
+                    age_str = _format_age(updated_at_str, now)
+                    needs.append({
+                        "source": "github",
+                        "title": f"#{entity.get('number', '')} {entity.get('title', '')}".strip(),
+                        "why": f"WAITING ON YOUR REVIEW · {age_str}" if age_str else "WAITING ON YOUR REVIEW",
+                        "since": updated_at_str,
+                        "url": entity.get("url"),
+                        "verb": "open",
+                        "severity": "warning",
+                    })
+
+            elif connector_id == "gh" and query_kind == "branch_ci":
+                # CI on the base branch
+                for entity in entities:
+                    conclusion = str(entity.get("conclusion") or "").lower()
+                    if conclusion in ("failure", "timed_out", "cancelled"):
+                        base_branch = entity.get("branch") or "main"
+                        needs.append({
+                            "source": "github",
+                            "title": f"CI failing on {base_branch}",
+                            "why": "CI RED",
+                            "since": entity.get("updated_at") or "",
+                            "url": entity.get("url"),
+                            "verb": "open",
+                            "severity": "danger",
+                        })
+
+            elif connector_id == "jira" and query_kind == "issues":
+                # Jira entities from an OVERDUE-kind watch
+                query = watch.get("query") or {}
+                # An overdue watch has due_within_days in its query or its template is due_risk
+                for entity in entities:
+                    due_at = entity.get("due_at") or entity.get("dueDate")
+                    if not due_at:
+                        continue
+                    try:
+                        due_dt = datetime.fromisoformat(str(due_at).replace("Z", "+00:00").split("T")[0])
+                        overdue_days = (now.replace(tzinfo=None) - due_dt.replace(tzinfo=None)).days
+                    except (ValueError, TypeError):
+                        continue
+                    if overdue_days > 0:
+                        needs.append({
+                            "source": "jira",
+                            "title": f"{entity.get('key', '')} {entity.get('summary', entity.get('title', ''))}".strip(),
+                            "why": f"OVERDUE · {overdue_days} DAYS",
+                            "since": due_at,
+                            "url": entity.get("url"),
+                            "verb": "open",
+                            "severity": "danger",
+                        })
+
+        # Delta proposals pending
+        if self._delta_service is not None:
+            try:
+                review_data = self._read_room_review(project_id)
+                pending = review_data.get("pending_count", 0)
+                if pending > 0:
+                    needs.append({
+                        "source": "delta",
+                        "title": f"{pending} proposals waiting",
+                        "why": "DECISION PENDING",
+                        "since": "",
+                        "url": None,
+                        "verb": "decide",
+                        "severity": "info",
+                    })
+            except Exception:
+                pass
+
+        # Sort: danger > warning > info, then by age (oldest first = most urgent)
+        needs.sort(key=lambda r: (
+            self._SEVERITY_ORDER.get(r.get("severity", "info"), 2),
+            r.get("since") or "",
+        ))
+
+        return {"items": needs, "count": len(needs)}
+
+    def _get_github_owner_login(self) -> str | None:
+        """Get the GitHub owner login from the connection service."""
+        try:
+            with self._db._connection() as conn:
+                row = conn.execute(
+                    "SELECT external_connection_ref FROM watch_provider_connections "
+                    "WHERE provider_id = 'github' AND state != '' "
+                    "ORDER BY last_connected_at DESC LIMIT 1"
+                ).fetchone()
+                if row and row["external_connection_ref"]:
+                    return row["external_connection_ref"]
+        except Exception:
+            pass
+        return None
+
+    def _read_room_sources(self, project_id: str) -> dict[str, Any]:
+        """SOURCES: per-Watch status, count tokens, host, state."""
+        watches = self._db.automations.list_project_watches(project_id)
+        sources: list[dict[str, Any]] = []
+
+        for watch in watches:
+            connector_id = watch.get("connector_id", "")
+            query = watch.get("query") or {}
+            snapshot = watch.get("snapshot")
+            entities = snapshot if isinstance(snapshot, list) else []
+            last_error = watch.get("last_error")
+            enabled = watch.get("enabled", True)
+            query_kind = watch.get("query_kind", "")
+
+            # Provider label
+            provider = "github" if connector_id == "gh" else connector_id
+
+            # Scope
+            scope = query.get("repository") or ""
+            if connector_id == "jira":
+                projects = query.get("projects") or []
+                scope = " + ".join(projects) if projects else query.get("connection_ref", "")
+
+            # Host (egress)
+            host = "github.com" if connector_id == "gh" else ""
+            if connector_id == "jira":
+                ref = query.get("connection_ref", "")
+                host = ref.split("//")[-1].split("/")[0] if "//" in ref else ref
+
+            # State
+            if not enabled:
+                state = "paused"
+            elif last_error:
+                state = "cant_check"
+            else:
+                state = "live"
+
+            # Count tokens (zero-count omitted)
+            tokens: list[str] = []
+            if connector_id == "gh" and query_kind == "pull_requests":
+                open_count = sum(1 for e in entities if str(e.get("state", "")).upper() == "OPEN")
+                if open_count:
+                    tokens.append(f"{open_count} OPEN PRS")
+                owner_login = self._get_github_owner_login()
+                if owner_login:
+                    waiting = sum(
+                        1 for e in entities
+                        if owner_login.lower() in [r.lower() for r in (e.get("reviewRequests") or [])]
+                    )
+                    if waiting:
+                        tokens.append(f"{waiting} WAITING ON YOU")
+            elif connector_id == "gh" and query_kind == "branch_ci":
+                for entity in entities:
+                    conclusion = str(entity.get("conclusion") or "").lower()
+                    if conclusion in ("failure", "timed_out", "cancelled"):
+                        tokens.append("CI RED")
+                    elif conclusion == "success":
+                        tokens.append("CI GREEN")
+            elif connector_id == "jira" and query_kind == "issues":
+                overdue_count = 0
+                due_soon_count = 0
+                for entity in entities:
+                    due_at = entity.get("due_at") or entity.get("dueDate")
+                    if not due_at:
+                        continue
+                    try:
+                        due_dt = datetime.fromisoformat(str(due_at).replace("Z", "+00:00").split("T")[0])
+                        days = (datetime.now().replace(tzinfo=None) - due_dt.replace(tzinfo=None)).days
+                    except (ValueError, TypeError):
+                        continue
+                    if days > 0:
+                        overdue_count += 1
+                    elif days >= -7:
+                        due_soon_count += 1
+                if overdue_count:
+                    tokens.append(f"{overdue_count} OVERDUE")
+                if due_soon_count:
+                    tokens.append(f"{due_soon_count} DUE THIS WEEK")
+
+            plain_reason = self._plain_reason(last_error)
+
+            # Meeting watch: connector_id != "gh" and != "jira" -> native
+            if connector_id not in ("gh", "jira"):
+                if not last_error:
+                    plain_reason = "No local adapter for meeting activity yet"
+                    state = "cant_check"
+
+            sources.append({
+                "watchId": watch.get("id"),
+                "provider": provider,
+                "scope": scope,
+                "tokens": tokens,
+                "checkedAt": watch.get("last_success_at"),
+                "nextCheckAt": watch.get("next_evaluation_at"),
+                "host": host,
+                "state": state,
+                "plainReason": plain_reason,
+                "suggested": False,
+            })
+
+        # Top-level nextCheckAt: soonest non-null over live sources
+        live_next = [
+            s["nextCheckAt"] for s in sources
+            if s["state"] == "live" and s["nextCheckAt"]
+        ]
+        next_check_at = min(live_next) if live_next else None
+
+        return {"items": sources, "count": len(sources), "nextCheckAt": next_check_at}
+
+    def _read_room_health(self, project_id: str, target_at: str | None) -> dict[str, Any]:
+        """HEALTH: AT RISK / ON TRACK derivation from room data."""
+        watches = self._db.automations.list_project_watches(project_id)
+        now = datetime.now()
+
+        overdue_count = 0
+        ci_failing = False
+        review_waiting_days: int | None = None
+
+        for watch in watches:
+            connector_id = watch.get("connector_id", "")
+            query_kind = watch.get("query_kind", "")
+            snapshot = watch.get("snapshot")
+            entities = snapshot if isinstance(snapshot, list) else []
+
+            if connector_id == "jira" and query_kind == "issues":
+                for entity in entities:
+                    due_at = entity.get("due_at") or entity.get("dueDate")
+                    if not due_at:
+                        continue
+                    try:
+                        due_dt = datetime.fromisoformat(str(due_at).replace("Z", "+00:00").split("T")[0])
+                        days = (now.replace(tzinfo=None) - due_dt.replace(tzinfo=None)).days
+                    except (ValueError, TypeError):
+                        continue
+                    if days > 0:
+                        overdue_count += 1
+
+            elif connector_id == "gh" and query_kind == "branch_ci":
+                for entity in entities:
+                    conclusion = str(entity.get("conclusion") or "").lower()
+                    if conclusion in ("failure", "timed_out", "cancelled"):
+                        ci_failing = True
+
+            elif connector_id == "gh" and query_kind == "pull_requests":
+                owner_login = self._get_github_owner_login()
+                for entity in entities:
+                    review_requests = entity.get("reviewRequests") or []
+                    if owner_login and owner_login.lower() in [r.lower() for r in review_requests]:
+                        updated_at_str = entity.get("updatedAt") or entity.get("updated_at") or ""
+                        if updated_at_str:
+                            try:
+                                updated_dt = datetime.fromisoformat(
+                                    updated_at_str.replace("Z", "+00:00").rstrip("Z")
+                                )
+                                age_days = (now - updated_dt.replace(tzinfo=None)).days
+                                if review_waiting_days is None or age_days > review_waiting_days:
+                                    review_waiting_days = age_days
+                            except (ValueError, TypeError):
+                                pass
+
+        # Target passed
+        target_passed = False
+        if target_at:
+            try:
+                target_dt = datetime.fromisoformat(target_at.split("T")[0])
+                target_passed = now.replace(tzinfo=None) > target_dt.replace(tzinfo=None)
+            except (ValueError, TypeError):
+                pass
+
+        # AT RISK when ANY of the inputs is true
+        at_risk = (
+            overdue_count > 0
+            or ci_failing
+            or (review_waiting_days is not None and review_waiting_days > 3)
+            or target_passed
+        )
+
+        # Reason: first true input in order
+        reason: str | None = None
+        if overdue_count > 0:
+            reason = f"{overdue_count} OVERDUE"
+        elif ci_failing:
+            reason = "CI RED"
+        elif review_waiting_days is not None and review_waiting_days > 3:
+            reason = f"REVIEW WAITING {review_waiting_days} DAYS"
+        elif target_passed:
+            reason = "TARGET PASSED"
+
+        return {
+            "assessment": "at_risk" if at_risk else "on_track",
+            "reason": reason,
+            "inputs": {
+                "overdue": overdue_count,
+                "ciFailing": ci_failing,
+                "reviewWaitingDays": review_waiting_days,
+                "targetPassed": target_passed,
+            },
+        }
+
+    def _read_room_since_read(self, project_id: str, room_read_at: str | None) -> dict[str, Any]:
+        """SINCE YOU LOOKED: changes grouped by source in phrases."""
+        if room_read_at:
+            # Get changes since the read marker via revision lookup
+            with self._db._connection() as conn:
+                # Find the revision at or after room_read_at
+                row = conn.execute(
+                    "SELECT MIN(project_revision) as min_rev FROM project_changes "
+                    "WHERE project_id = ? AND created_at > ?",
+                    (project_id, room_read_at),
+                ).fetchone()
+                min_rev = row["min_rev"] if row and row["min_rev"] else None
+            if min_rev is not None:
+                changes = self._db.projects.list_project_changes(
+                    project_id, since_revision=min_rev, limit=100,
+                )
+            else:
+                changes = []
+        else:
+            changes = []
+
+        # Group changes by source and map kinds to phrases
+        groups: dict[str, list[dict[str, Any]]] = {}
+        for change in changes:
+            kind = change.get("change_kind", "")
+            # Determine source label from kind
+            if kind.startswith("watch.") or kind.startswith("github."):
+                source_label = "GitHub"
+            elif kind.startswith("jira."):
+                source_label = "Jira"
+            else:
+                source_label = "Room"
+
+            phrase = self._CHANGE_KIND_PHRASES.get(kind, kind.replace("_", " ").replace(".", " "))
+            summary = change.get("summary_json")
+            detail = ""
+            if summary:
+                try:
+                    s = json.loads(summary) if isinstance(summary, str) else summary
+                    if isinstance(s, dict):
+                        if s.get("action"):
+                            detail = f" · {s['action']}"
+                        elif s.get("name"):
+                            detail = f" · {s['name']}"
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+            entry = {
+                "phrase": f"{phrase}{detail}",
+                "at": change.get("created_at", ""),
+                "url": None,
+            }
+            groups.setdefault(source_label, []).append(entry)
+
+        # Build summary per group
+        result_groups: list[dict[str, Any]] = []
+        for source_label, entries in groups.items():
+            # Build a short summary like "2 updated · 1 linked"
+            kind_counts: dict[str, int] = {}
+            for e in entries:
+                verb = e["phrase"].split(" · ")[0] if " · " in e["phrase"] else e["phrase"]
+                kind_counts[verb] = kind_counts.get(verb, 0) + 1
+            summary_parts = [f"{count} {verb}" for verb, count in kind_counts.items()]
+            result_groups.append({
+                "source": source_label,
+                "summary": " · ".join(summary_parts),
+                "entries": entries,
+            })
+
+        return {
+            "readAt": room_read_at,
+            "groups": result_groups,
+        }
+
+    def _read_room_decisions(self, project_id: str) -> dict[str, Any]:
+        """DECISIONS: records whose source meeting is linked to this project."""
+        # Find meetings linked to this project
+        with self._db._connection() as conn:
+            meeting_rows = conn.execute(
+                "SELECT meeting_id FROM meeting_projects WHERE project_id = ?",
+                (project_id,),
+            ).fetchall()
+            meeting_ids = [r["meeting_id"] for r in meeting_rows]
+            if not meeting_ids:
+                return {"items": []}
+
+            # Find decision records sourced from those meetings
+            placeholders = ",".join("?" * len(meeting_ids))
+            decision_rows = conn.execute(
+                f"""SELECT DISTINCT r.id, r.decision_text, r.created_at, r.lifecycle
+                    FROM decision_records r
+                    JOIN decision_record_sources s ON s.record_id = r.id
+                    WHERE s.source_type = 'meeting'
+                      AND s.source_ref IN ({placeholders})
+                      AND r.deleted = 0
+                    ORDER BY r.created_at DESC""",
+                meeting_ids,
+            ).fetchall()
+
+        items = []
+        for row in decision_rows:
+            items.append({
+                "id": row["id"],
+                "text": row["decision_text"],
+                "at": row["created_at"],
+                "url": None,
+            })
+        return {"items": items}
+
+    def _read_room_commitments(self, project_id: str) -> dict[str, Any]:
+        """COMMITMENTS: via their decision (whose source meeting is linked)."""
+        # Get the decision IDs first
+        decisions_data = self._read_room_decisions(project_id)
+        decision_ids = [d["id"] for d in decisions_data.get("items", [])]
+        if not decision_ids:
+            return {"items": []}
+
+        with self._db._connection() as conn:
+            placeholders = ",".join("?" * len(decision_ids))
+            commitment_rows = conn.execute(
+                f"""SELECT c.id, c.owner, c.due_at, c.status,
+                           ai.task AS text
+                    FROM decision_commitments c
+                    LEFT JOIN action_items ai ON ai.id = c.action_item_id
+                    WHERE c.decision_id IN ({placeholders})
+                      AND c.status != 'completed'
+                    ORDER BY c.due_at ASC NULLS LAST, c.created_at ASC""",
+                decision_ids,
+            ).fetchall()
+
+        items = []
+        for row in commitment_rows:
+            items.append({
+                "id": row["id"],
+                "text": row["text"] or "",
+                "dueAt": row["due_at"],
+                "owner": row["owner"],
+            })
+        return {"items": items}
+
+    @staticmethod
+    def _read_room_target(target_at: str | None) -> dict[str, Any]:
+        """TARGET: days left and passed flag."""
+        if not target_at:
+            return {"targetAt": None, "daysLeft": None, "passed": False}
+        try:
+            target_dt = datetime.fromisoformat(target_at.split("T")[0])
+            now = datetime.now()
+            delta = (target_dt.replace(tzinfo=None) - now.replace(tzinfo=None)).days
+            return {
+                "targetAt": target_at,
+                "daysLeft": delta if delta >= 0 else None,
+                "passed": delta < 0,
+            }
+        except (ValueError, TypeError):
+            return {"targetAt": target_at, "daysLeft": None, "passed": False}
+
+    # ── read marker (HS-169-04) ─────────────────────────────────────
+
+    def mark_room_read(self, principal: Principal, project_id: str) -> dict[str, Any]:
+        """Set the per-project read marker to now."""
+        self._require_project(project_id)
+        now_iso = datetime.now().isoformat()
+        self._db.projects.set_room_read_at(project_id, now_iso)
+        return {"readAt": now_iso}
 
     # ── writes (graduated to revision law) ───────────────────────────
 

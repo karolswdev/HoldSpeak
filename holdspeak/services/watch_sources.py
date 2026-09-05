@@ -52,14 +52,19 @@ def _reviewer_names(value: Any) -> list[str]:
     return sorted(set(names))
 
 
+GH_BRANCH_CI_FIELDS = "conclusion,status,name,url,updatedAt,headBranch"
+
+
 class GitHubWatchSource:
     def __init__(self, *, runner: Runner | None = None) -> None:
         self._runner = runner
 
     def snapshot(self, principal: Principal, *, query_kind: str,
                  query: dict[str, Any]) -> list[dict[str, Any]]:
+        if query_kind == "branch_ci":
+            return self._snapshot_branch_ci(principal, query)
         if query_kind != "pull_requests":
-            raise ValidationError("GitHub Watches support pull_requests")
+            raise ValidationError("GitHub Watches support pull_requests and branch_ci")
         repository = str(query.get("repository") or "").strip()
         if "/" not in repository or repository.startswith("/") or repository.endswith("/"):
             raise ValidationError("GitHub Watch requires repository as owner/name")
@@ -104,6 +109,52 @@ class GitHubWatchSource:
                 "reviewDecision": row.get("reviewDecision"),
                 "checks": rollup_conclusion(row.get("statusCheckRollup")),
                 "headRefOid": row.get("headRefOid"), "updatedAt": row.get("updatedAt"),
+            })
+        return entities
+
+    # ── branch_ci kind (HS-169-04, counsel M1) ──────────────────────
+    def _snapshot_branch_ci(
+        self, principal: Principal, query: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        """CI status on the base branch: `gh run list --branch <base> --limit 1`."""
+        repository = str(query.get("repository") or "").strip()
+        if "/" not in repository or repository.startswith("/") or repository.endswith("/"):
+            raise ValidationError("branch_ci requires repository as owner/name")
+        base = str(query.get("base") or "main").strip()
+        command = [
+            "gh", "run", "list", "--repo", repository,
+            "--branch", base, "--limit", "1",
+            "--json", GH_BRANCH_CI_FIELDS,
+        ]
+        if not github_cli.is_command_allowed(command):
+            raise ServiceError("connector_command_refused", "GitHub Watch command is not allowlisted")
+        if self._runner is None and shutil.which("gh") is None:
+            raise ServiceError("connector_unavailable", "GitHub CLI is not installed")
+        completed = PermissionGate(github_cli.MANIFEST).run_read_subprocess(
+            command, principal=principal, runner=self._runner,
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            errors="replace", timeout=github_cli.DEFAULT_TIMEOUT_SECONDS,
+        )
+        if completed.returncode != 0:
+            detail = str(completed.stderr or "GitHub CLI query failed").strip()[:500]
+            raise ServiceError("connector_refresh_failed", detail)
+        try:
+            rows = json.loads(completed.stdout or "[]")
+        except json.JSONDecodeError as exc:
+            raise ServiceError("connector_invalid_output", "GitHub CLI returned invalid JSON") from exc
+        if not isinstance(rows, list):
+            raise ServiceError("connector_invalid_output", "GitHub CLI returned a non-array snapshot")
+        entities: list[dict[str, Any]] = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            entities.append({
+                "conclusion": row.get("conclusion"),
+                "status": row.get("status"),
+                "name": row.get("name"),
+                "url": row.get("url"),
+                "updated_at": row.get("updatedAt"),
+                "branch": row.get("headBranch"),
             })
         return entities
 

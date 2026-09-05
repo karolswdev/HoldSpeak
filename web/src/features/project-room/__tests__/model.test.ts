@@ -172,6 +172,7 @@ function okRoomPayload(): Record<string, unknown> {
     project_id: "proj-abc",
     revision: 3,
     observed_at: "2026-08-31T10:00:00",
+    nextCheckAt: "2026-09-04T10:35:00",
     project: {
       id: "proj-abc",
       name: "Alpha",
@@ -222,7 +223,61 @@ function okRoomPayload(): Record<string, unknown> {
       recent: [{ id: "chg-1", field: "name", old: "A", new: "Alpha" }],
     },
     review: { state: "absent", reason: "not_yet_built" },
-    sources: { state: "absent", reason: "not_yet_built" },
+    // HS-169-04: the four questions
+    needsYou: {
+      state: "ok",
+      items: [
+        { source: "github", title: "#612 Rig settles", why: "WAITING ON YOUR REVIEW · 3 DAYS",
+          since: "2026-09-01T10:00:00Z", url: "https://github.com/acme/app/pull/612",
+          verb: "open", severity: "warning" },
+      ],
+      count: 1,
+    },
+    sources: {
+      state: "ok",
+      items: [
+        { watchId: "w-1", provider: "github", scope: "acme/app",
+          tokens: ["12 OPEN PRS", "2 WAITING ON YOU"], checkedAt: "2026-09-04T10:00:00",
+          nextCheckAt: "2026-09-04T10:35:00",
+          host: "github.com", state: "live", plainReason: null, suggested: false },
+      ],
+      count: 1,
+      nextCheckAt: "2026-09-04T10:35:00",
+    },
+    health: {
+      state: "ok",
+      assessment: "at_risk",
+      reason: "3 OVERDUE",
+      inputs: { overdue: 3, ciFailing: false, reviewWaitingDays: null, targetPassed: false },
+    },
+    sinceRead: {
+      state: "ok",
+      readAt: "2026-09-04T09:00:00",
+      groups: [
+        { source: "Room", summary: "2 updated", entries: [
+          { phrase: "updated · name", at: "2026-09-04T10:00:00", url: null },
+          { phrase: "updated · lifecycle", at: "2026-09-04T10:05:00", url: null },
+        ]},
+      ],
+    },
+    decisions: {
+      state: "ok",
+      items: [
+        { id: "dr-1", text: "Use acli for Jira", at: "2026-09-03T10:00:00", url: null },
+      ],
+    },
+    commitments: {
+      state: "ok",
+      items: [
+        { id: "cmt-1", text: "Review PR #612", dueAt: "2026-09-10", owner: "karol" },
+      ],
+    },
+    target: {
+      state: "ok",
+      targetAt: "2026-12-01",
+      daysLeft: 88,
+      passed: false,
+    },
     updates: { state: "absent", reason: "not_yet_built" },
     steward: { state: "absent", reason: "not_yet_built" },
   };
@@ -234,6 +289,7 @@ describe("decodeRoomSnapshot", () => {
     expect(snap.projectId).toBe("proj-abc");
     expect(snap.revision).toBe(3);
     expect(snap.observedAt).toBe("2026-08-31T10:00:00");
+    expect(snap.nextCheckAt).toBe("2026-09-04T10:35:00");
     expect(snap.project.name).toBe("Alpha");
     expect(snap.project.purpose).toBe("Ship it");
     expect(snap.project.lifecycle).toBe("active");
@@ -270,7 +326,8 @@ describe("decodeRoomSnapshot", () => {
     expect(snap.review.state).toBe("absent");
     if (snap.review.state !== "absent") throw new Error("expected absent");
     expect(snap.review.reason).toBe("not_yet_built");
-    expect(snap.sources.state).toBe("absent");
+    // HS-169-04: sources graduated to live
+    expect(snap.sources.state).toBe("ok");
     expect(snap.updates.state).toBe("absent");
     expect(snap.steward.state).toBe("absent");
   });
@@ -324,5 +381,93 @@ describe("decodeRoomSnapshot", () => {
     // A degraded section never blanks an ok section
     if (snap.items.state !== "ok") throw new Error("items should stay ok");
     expect(snap.items.total).toBe(5);
+  });
+
+  /* ── HS-169-04: the four questions decode ── */
+
+  it("decodes needsYou section", () => {
+    const snap = decodeRoomSnapshot(okRoomPayload());
+    expect(snap.needsYou.state).toBe("ok");
+    if (snap.needsYou.state !== "ok") throw new Error("expected ok");
+    expect(snap.needsYou.items).toHaveLength(1);
+    expect(snap.needsYou.items[0].source).toBe("github");
+    expect(snap.needsYou.items[0].title).toBe("#612 Rig settles");
+    expect(snap.needsYou.items[0].severity).toBe("warning");
+    expect(snap.needsYou.items[0].verb).toBe("open");
+    expect(snap.needsYou.count).toBe(1);
+  });
+
+  it("decodes sources section", () => {
+    const snap = decodeRoomSnapshot(okRoomPayload());
+    expect(snap.sources.state).toBe("ok");
+    if (snap.sources.state !== "ok") throw new Error("expected ok");
+    expect(snap.sources.items).toHaveLength(1);
+    expect(snap.sources.items[0].provider).toBe("github");
+    expect(snap.sources.items[0].scope).toBe("acme/app");
+    expect(snap.sources.items[0].tokens).toEqual(["12 OPEN PRS", "2 WAITING ON YOU"]);
+    expect(snap.sources.items[0].host).toBe("github.com");
+    expect(snap.sources.items[0].state).toBe("live");
+    expect(snap.sources.items[0].nextCheckAt).toBe("2026-09-04T10:35:00");
+    expect(snap.sources.items[0].suggested).toBe(false);
+    expect(snap.sources.count).toBe(1);
+    expect(snap.sources.nextCheckAt).toBe("2026-09-04T10:35:00");
+  });
+
+  it("decodes health section with assessment", () => {
+    const snap = decodeRoomSnapshot(okRoomPayload());
+    expect(snap.health.state).toBe("ok");
+    if (snap.health.state !== "ok") throw new Error("expected ok");
+    expect(snap.health.assessment).toBe("at_risk");
+    expect(snap.health.reason).toBe("3 OVERDUE");
+    expect(snap.health.inputs.overdue).toBe(3);
+    expect(snap.health.inputs.ciFailing).toBe(false);
+    expect(snap.health.inputs.reviewWaitingDays).toBeNull();
+    expect(snap.health.inputs.targetPassed).toBe(false);
+  });
+
+  it("decodes sinceRead section", () => {
+    const snap = decodeRoomSnapshot(okRoomPayload());
+    expect(snap.sinceRead.state).toBe("ok");
+    if (snap.sinceRead.state !== "ok") throw new Error("expected ok");
+    expect(snap.sinceRead.readAt).toBe("2026-09-04T09:00:00");
+    expect(snap.sinceRead.groups).toHaveLength(1);
+    expect(snap.sinceRead.groups[0].source).toBe("Room");
+    expect(snap.sinceRead.groups[0].summary).toBe("2 updated");
+    expect(snap.sinceRead.groups[0].entries).toHaveLength(2);
+  });
+
+  it("decodes decisions and commitments sections", () => {
+    const snap = decodeRoomSnapshot(okRoomPayload());
+    expect(snap.decisions.state).toBe("ok");
+    if (snap.decisions.state !== "ok") throw new Error("expected ok");
+    expect(snap.decisions.items).toHaveLength(1);
+    expect(snap.decisions.items[0].text).toBe("Use acli for Jira");
+
+    expect(snap.commitments.state).toBe("ok");
+    if (snap.commitments.state !== "ok") throw new Error("expected ok");
+    expect(snap.commitments.items).toHaveLength(1);
+    expect(snap.commitments.items[0].text).toBe("Review PR #612");
+    expect(snap.commitments.items[0].owner).toBe("karol");
+  });
+
+  it("decodes target section", () => {
+    const snap = decodeRoomSnapshot(okRoomPayload());
+    expect(snap.target.state).toBe("ok");
+    if (snap.target.state !== "ok") throw new Error("expected ok");
+    expect(snap.target.targetAt).toBe("2026-12-01");
+    expect(snap.target.daysLeft).toBe(88);
+    expect(snap.target.passed).toBe(false);
+  });
+
+  it("handles missing new sections gracefully", () => {
+    const snap = decodeRoomSnapshot({});
+    expect(snap.nextCheckAt).toBeNull();
+    expect(snap.needsYou.state).toBe("absent");
+    expect(snap.sources.state).toBe("absent");
+    expect(snap.health.state).toBe("absent");
+    expect(snap.sinceRead.state).toBe("absent");
+    expect(snap.decisions.state).toBe("absent");
+    expect(snap.commitments.state).toBe("absent");
+    expect(snap.target.state).toBe("absent");
   });
 });

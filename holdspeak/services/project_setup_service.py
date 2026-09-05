@@ -344,14 +344,19 @@ class ProjectSetupService:
         proposals: list[dict[str, Any]] = []
 
         # 1. Recent meetings (desk-wide)
-        try:
-            meeting_summaries = self._db.meetings.list_meetings(limit=10)
-            if meeting_summaries:
-                proposals.append(self._meetings_proposal(
-                    session_id, meeting_summaries,
-                ))
-        except Exception:
-            pass  # Degraded: no meetings
+        # HS-169-04: RETIRED from suggestions. The native meeting Watch
+        # cannot evaluate (no local query adapter). Existing meeting
+        # watches report their failure in plainReason.  The code is
+        # parked, not deleted (owner ruling: never delete, park instead).
+        #
+        # try:
+        #     meeting_summaries = self._db.meetings.list_meetings(limit=10)
+        #     if meeting_summaries:
+        #         proposals.append(self._meetings_proposal(
+        #             session_id, meeting_summaries,
+        #         ))
+        # except Exception:
+        #     pass  # Degraded: no meetings
 
         # 2. Decisions with lifecycle 'accepted' (review candidates)
         try:

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 169
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-169-01
 - **Unblocks:** HS-169-03
 - **Owner:** unassigned
@@ -27,6 +27,11 @@ The Room's four questions need facts the hub already holds but does not serve as
 
 `uv run pytest -q tests/unit/test_hs169_wire.py tests/unit -k "room or project_service or watch"` in an isolated HOME; the MCP parity test; schema snapshot regenerated in the same commit as any column.
 
-## Delivered
+## Delivered (2026-09-05)
 
-_(pending)_
+- `GET /api/projects/{id}/room` extended additively: `needsYou` (PR review requests / CHANGES_REQUESTED aged by updated_at; `CI failing on <base>` from the new `branch_ci` kind; Jira OVERDUE entities; pending Delta proposals; ordered by severity), `sources` (scope, zero-omitted count tokens, checkedAt, nextCheckAt, host, state live/paused/cant_check, plainReason mapped once), `health` (`assessment` at_risk/on_track — the section stamp owns `state` — reason = first true input of overdue > 0, CI failing, review waiting > 3 days, target passed), `sinceRead` (read marker + groups in phrases; a guard forbids raw kinds), `decisions` + `commitments` (records whose source meeting is linked via meeting_projects — a query, no column), `target` (daysLeft, passed), `nextCheckAt` (soonest live source). `POST /api/projects/{id}/room/read` writes the ONE new nullable column `projects.room_read_at` (schema declarative, snapshot regenerated, fence green).
+- `branch_ci` query kind on GitHubWatchSource (`gh run list --repo <r> --branch <base> --limit 1 --json conclusion,status,name,url,updatedAt,headBranch`; `run list` allow-listed in github_cli; template `watch.github.branch_ci` labelled CI).
+- The native meeting template retired from suggestions (project_setup_service.py:347-359, parked not deleted); an existing meeting watch reports `No local adapter for meeting activity yet`.
+- MCP `project_get_room` returns the same shape from the same service (parity test).
+- model.ts decode + types for every new field (model.test.ts 34).
+- Tests: tests/unit/test_hs169_wire.py 27; 15 setup-service tests that used the meeting proposal as a fixture given honest edits; evidence: 149 passed (wire + setup service + templates + room read + the schema fence).

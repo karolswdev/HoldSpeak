@@ -153,18 +153,121 @@ export type RoomReviewData = {
   lastAcceptedAt: string | null;
 };
 
+/* ── HS-169-04: the four questions ── */
+
+/** A "needs you" row: something the owner must act on. */
+export type RoomNeedsYouItem = {
+  source: string;
+  title: string;
+  why: string;
+  since: string;
+  url: string | null;
+  verb: "open" | "decide";
+  severity: "danger" | "warning" | "info";
+};
+
+/** Needs-you section data shape (when ok). */
+export type RoomNeedsYouData = {
+  items: RoomNeedsYouItem[];
+  count: number;
+};
+
+/** A source row: per-Watch status. */
+export type RoomSourceItem = {
+  watchId: string;
+  provider: string;
+  scope: string;
+  tokens: string[];
+  checkedAt: string | null;
+  nextCheckAt: string | null;
+  host: string;
+  state: "live" | "paused" | "cant_check";
+  plainReason: string | null;
+  suggested: boolean;
+};
+
+/** Sources section data shape (when ok). */
+export type RoomSourcesData = {
+  items: RoomSourceItem[];
+  count: number;
+  nextCheckAt: string | null;
+};
+
+/** Health derivation. */
+export type RoomHealthData = {
+  assessment: "at_risk" | "on_track";
+  reason: string | null;
+  inputs: {
+    overdue: number;
+    ciFailing: boolean;
+    reviewWaitingDays: number | null;
+    targetPassed: boolean;
+  };
+};
+
+/** A since-read entry. */
+export type RoomSinceReadEntry = {
+  phrase: string;
+  at: string;
+  url: string | null;
+};
+
+/** A since-read group. */
+export type RoomSinceReadGroup = {
+  source: string;
+  summary: string;
+  entries: RoomSinceReadEntry[];
+};
+
+/** Since-read section data shape. */
+export type RoomSinceReadData = {
+  readAt: string | null;
+  groups: RoomSinceReadGroup[];
+};
+
+/** A decision row. */
+export type RoomDecisionItem = {
+  id: string;
+  text: string;
+  at: string;
+  url: string | null;
+};
+
+/** A commitment row. */
+export type RoomCommitmentItem = {
+  id: string;
+  text: string;
+  dueAt: string | null;
+  owner: string | null;
+};
+
+/** Target section data. */
+export type RoomTargetData = {
+  targetAt: string | null;
+  daysLeft: number | null;
+  passed: boolean;
+};
+
 /** The full room snapshot (typed, WEB-ARC-004). */
 export type RoomSnapshot = {
   projectId: string;
   revision: number;
   observedAt: string;
+  nextCheckAt: string | null;
   project: RoomProjectOrientation;
   items: RoomSection<RoomItemsData>;
   meetings: RoomSection<RoomMeetingsData>;
   resources: RoomSection<RoomResourcesData>;
   changes: RoomSection<RoomChangesData>;
   review: RoomSection<RoomReviewData>;
-  sources: RoomSection<Record<string, never>>;
+  // HS-169-04: the four questions
+  needsYou: RoomSection<RoomNeedsYouData>;
+  sources: RoomSection<RoomSourcesData>;
+  health: RoomSection<RoomHealthData>;
+  sinceRead: RoomSection<RoomSinceReadData>;
+  decisions: RoomSection<{ items: RoomDecisionItem[] }>;
+  commitments: RoomSection<{ items: RoomCommitmentItem[] }>;
+  target: RoomSection<RoomTargetData>;
   updates: RoomSection<Record<string, never>>;
   steward: RoomSection<Record<string, never>>;
 };
@@ -230,6 +333,7 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
     projectId: String(raw.project_id ?? ""),
     revision: Number(raw.revision ?? 0),
     observedAt: String(raw.observed_at ?? ""),
+    nextCheckAt: raw.nextCheckAt != null ? String(raw.nextCheckAt) : null,
     project: decodeOrientation(project),
     items: decodeSection<RoomItemsData>(raw.items, (s) => ({
       focus: Array.isArray(s.focus) ? s.focus.map((r: unknown) => decodeFocusItem(r as Record<string, unknown>)) : [],
@@ -260,7 +364,93 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
       openReviewId: s.open_review_id != null ? String(s.open_review_id) : null,
       lastAcceptedAt: s.last_accepted_at != null ? String(s.last_accepted_at) : null,
     })),
-    sources: decodeSection<Record<string, never>>(raw.sources, () => ({} as Record<string, never>)),
+    // HS-169-04: the four questions
+    needsYou: decodeSection<RoomNeedsYouData>(raw.needsYou, (s) => ({
+      items: Array.isArray(s.items)
+        ? (s.items as Record<string, unknown>[]).map((r) => ({
+            source: String(r.source ?? ""),
+            title: String(r.title ?? ""),
+            why: String(r.why ?? ""),
+            since: String(r.since ?? ""),
+            url: r.url != null ? String(r.url) : null,
+            verb: (r.verb === "decide" ? "decide" : "open") as "open" | "decide",
+            severity: (["danger", "warning", "info"].includes(String(r.severity ?? ""))
+              ? String(r.severity) : "info") as "danger" | "warning" | "info",
+          }))
+        : [],
+      count: Number(s.count ?? 0),
+    })),
+    sources: decodeSection<RoomSourcesData>(raw.sources, (s) => ({
+      items: Array.isArray(s.items)
+        ? (s.items as Record<string, unknown>[]).map((r) => ({
+            watchId: String(r.watchId ?? ""),
+            provider: String(r.provider ?? ""),
+            scope: String(r.scope ?? ""),
+            tokens: Array.isArray(r.tokens) ? (r.tokens as unknown[]).map(String) : [],
+            checkedAt: r.checkedAt != null ? String(r.checkedAt) : null,
+            nextCheckAt: r.nextCheckAt != null ? String(r.nextCheckAt) : null,
+            host: String(r.host ?? ""),
+            state: (["live", "paused", "cant_check"].includes(String(r.state ?? ""))
+              ? String(r.state) : "live") as "live" | "paused" | "cant_check",
+            plainReason: r.plainReason != null ? String(r.plainReason) : null,
+            suggested: Boolean(r.suggested),
+          }))
+        : [],
+      count: Number(s.count ?? 0),
+      nextCheckAt: s.nextCheckAt != null ? String(s.nextCheckAt) : null,
+    })),
+    health: decodeSection<RoomHealthData>(raw.health, (s) => ({
+      assessment: (s.assessment === "at_risk" ? "at_risk" : "on_track") as "at_risk" | "on_track",
+      reason: s.reason != null ? String(s.reason) : null,
+      inputs: {
+        overdue: Number((s.inputs as Record<string, unknown> | undefined)?.overdue ?? 0),
+        ciFailing: Boolean((s.inputs as Record<string, unknown> | undefined)?.ciFailing),
+        reviewWaitingDays: (s.inputs as Record<string, unknown> | undefined)?.reviewWaitingDays != null
+          ? Number((s.inputs as Record<string, unknown>).reviewWaitingDays) : null,
+        targetPassed: Boolean((s.inputs as Record<string, unknown> | undefined)?.targetPassed),
+      },
+    })),
+    sinceRead: decodeSection<RoomSinceReadData>(raw.sinceRead, (s) => ({
+      readAt: s.readAt != null ? String(s.readAt) : null,
+      groups: Array.isArray(s.groups)
+        ? (s.groups as Record<string, unknown>[]).map((g) => ({
+            source: String(g.source ?? ""),
+            summary: String(g.summary ?? ""),
+            entries: Array.isArray(g.entries)
+              ? (g.entries as Record<string, unknown>[]).map((e) => ({
+                  phrase: String(e.phrase ?? ""),
+                  at: String(e.at ?? ""),
+                  url: e.url != null ? String(e.url) : null,
+                }))
+              : [],
+          }))
+        : [],
+    })),
+    decisions: decodeSection<{ items: RoomDecisionItem[] }>(raw.decisions, (s) => ({
+      items: Array.isArray(s.items)
+        ? (s.items as Record<string, unknown>[]).map((r) => ({
+            id: String(r.id ?? ""),
+            text: String(r.text ?? ""),
+            at: String(r.at ?? ""),
+            url: r.url != null ? String(r.url) : null,
+          }))
+        : [],
+    })),
+    commitments: decodeSection<{ items: RoomCommitmentItem[] }>(raw.commitments, (s) => ({
+      items: Array.isArray(s.items)
+        ? (s.items as Record<string, unknown>[]).map((r) => ({
+            id: String(r.id ?? ""),
+            text: String(r.text ?? ""),
+            dueAt: r.dueAt != null ? String(r.dueAt) : null,
+            owner: r.owner != null ? String(r.owner) : null,
+          }))
+        : [],
+    })),
+    target: decodeSection<RoomTargetData>(raw.target, (s) => ({
+      targetAt: s.targetAt != null ? String(s.targetAt) : null,
+      daysLeft: s.daysLeft != null ? Number(s.daysLeft) : null,
+      passed: Boolean(s.passed),
+    })),
     updates: decodeSection<Record<string, never>>(raw.updates, () => ({} as Record<string, never>)),
     steward: decodeSection<Record<string, never>>(raw.steward, () => ({} as Record<string, never>)),
   };

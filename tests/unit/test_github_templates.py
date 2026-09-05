@@ -175,14 +175,16 @@ def _seed_meeting(db: Database, meeting_id: str = "m-001",
 class TestTemplateTruthTable:
     """All five templates compile to valid WatchSpec@1 drafts."""
 
-    def test_five_templates_exist(self) -> None:
-        assert len(GITHUB_TEMPLATES) == 5
+    def test_six_templates_exist(self) -> None:
+        """HS-169-04: branch_ci added as the 6th template."""
+        assert len(GITHUB_TEMPLATES) == 6
         assert TEMPLATE_IDS == {
             "watch.github.review_queue",
             "watch.github.ci_health",
             "watch.github.merge_flow",
             "watch.github.delivery_drift",
             "watch.github.release_readiness",
+            "watch.github.branch_ci",
         }
 
     @pytest.mark.parametrize("tmpl", GITHUB_TEMPLATES, ids=lambda t: t.template_id)
@@ -191,7 +193,8 @@ class TestTemplateTruthTable:
         spec = compile_template(tmpl.template_id, "acme/platform")
         assert spec["schema"] == "WatchSpec@1"
         assert spec["provider"]["id"] == "github"
-        assert spec["subject"]["kind"] == "pull_request"
+        # HS-169-04: branch_ci has its own subject kind
+        assert spec["subject"]["kind"] in ("pull_request", "branch_ci")
         assert "acme/platform" in spec["subject"]["scope"]["repositories"]
         assert spec["trigger"]["kind"] == "poll"
 
@@ -350,17 +353,19 @@ class TestReadinessGating:
         ]
         assert len(github_proposals) == 0
 
-    def test_natives_still_appear_with_adapter(self, rig) -> None:
-        """Native proposals still appear alongside github candidates."""
+    def test_meeting_template_retired_from_suggestions(self, rig) -> None:
+        """HS-169-04: the meeting template is retired; no native meeting
+        proposals appear even when meetings exist on the desk."""
         db, _ps, svc, _adapter = rig
         _seed_meeting(db, "m-1", "Sprint review")
         session = svc.start_setup(OWNER)
         svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Goal"})
         proposals = svc.suggest(OWNER, session["id"])
-        native_proposals = [
-            p for p in proposals if p.get("provider_id") == "native"
+        meeting_proposals = [
+            p for p in proposals
+            if (p.get("spec") or {}).get("subject", {}).get("kind") == "meetings"
         ]
-        assert len(native_proposals) >= 1
+        assert len(meeting_proposals) == 0
 
 
 # ── Candidate shape (INT-008) ────────────────────────────────────────

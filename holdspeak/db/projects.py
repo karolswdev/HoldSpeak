@@ -496,7 +496,8 @@ class ProjectRepository(BaseRepository):
                 SELECT purpose, outcome_text, owner_ref, lifecycle,
                        posture, posture_reason, start_at, target_at,
                        review_cadence_json, next_review_at, template_key,
-                       modules_json, revision, last_review_id, last_review_at
+                       modules_json, revision, last_review_id, last_review_at,
+                       room_read_at
                 FROM projects WHERE id = ?
                 """,
                 (clean_id,),
@@ -519,6 +520,7 @@ class ProjectRepository(BaseRepository):
                 "revision": row["revision"],
                 "last_review_id": row["last_review_id"],
                 "last_review_at": row["last_review_at"],
+                "room_read_at": row["room_read_at"],
             }
 
     def update_project_room_fields(
@@ -544,6 +546,7 @@ class ProjectRepository(BaseRepository):
             "posture", "posture_reason", "start_at", "target_at",
             "review_cadence_json", "next_review_at", "template_key",
             "modules_json", "last_review_id", "last_review_at",
+            "room_read_at",  # HS-169-04
         }
         updates: list[str] = []
         params: list[Any] = []
@@ -581,6 +584,16 @@ class ProjectRepository(BaseRepository):
                 (clean_id,),
             ).fetchone()
             return int(row["revision"])
+
+    def set_room_read_at(self, project_id: str, read_at: str) -> str:
+        """HS-169-04: stamp the per-project read marker and return it."""
+        clean_id = str(project_id).strip()
+        with self._connection() as conn:
+            conn.execute(
+                "UPDATE projects SET room_read_at = ? WHERE id = ?",
+                (read_at, clean_id),
+            )
+        return read_at
 
     # ── project_items CRUD ───────────────────────────────────────────
 

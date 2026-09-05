@@ -35,6 +35,7 @@ ALLOWED_SUBCOMMANDS: frozenset[tuple[str, str]] = frozenset(
         ("pr", "view"),
         ("pr", "list"),
         ("issue", "view"),
+        ("run", "list"),  # HS-169-04: branch_ci kind
     }
 )
 
