@@ -30,8 +30,8 @@ roadmap files, they win.
 | 171 | The Heartbeat | COMPLETE · **MERGED** PR #554 → `397e3594` | `…/phase-171-the-heartbeat/` |
 | 172 | The Loop Closes | COMPLETE · **MERGED** PR #555 → `0c17425e` | `…/phase-172-the-loop-closes/` |
 | 173 | The Steward's Hand and Voice | COMPLETE · **MERGED** PR #556 → `d416e08a` | `…/phase-173-the-stewards-hand-and-voice/` |
-| 174 | Reach | 10/11 · PR **#557 OPEN**, base main · closing (walk + suite + flip 11) | `…/phase-174-reach/`, branch `feat/reach` (the main working tree) |
-| 175 | Calendar and the Clock | 5/9 · **PARKED** · draft PR **#558** on feat/reach | `…/phase-175-calendar-and-the-clock/`, branch `feat/calendar-clock` |
+| 174 | Reach | COMPLETE 11/11 · **MERGED** PR #557 → `8c994305` (2026-09-05 22:05) | `…/phase-174-reach/` |
+| 175 | Calendar and the Clock | 5/9 · **PARKED** · draft PR **#558**, base main (main merged in @1ef58cb3) | `…/phase-175-calendar-and-the-clock/`, branch `feat/calendar-clock` |
 | 176–179 | Speak Loop · Thread at Work · Portfolio · Companion | story scaffolds drafted, NOT chartered, no design | `…/phase-176…` to `…/phase-179…` |
 | 180 | The Proof | named in the arc, nothing drafted | `pm/roadmap/holdspeak/THE-TUESDAY-ARC.md` §6 |
 
@@ -149,8 +149,12 @@ scaffolds are starting points, not charters.
   after merge; the zero-state wording. 175: auto-link vs
   suggestion-only; the two-window brief; a confirmation step before an
   auto-linked event arms.
-- **Merge #557** once 174 closes (the orchestrator does this on his
-  standing word from 2026-09-05 unless he says otherwise).
+- **One honesty line.** The merge of main into feat/calendar-clock hit a
+  conflict in 174's status file; the resolution commit (`1ef58cb3`,
+  main's copy taken) was made with the hooks path unset — the only
+  commit in this arc that did not pass through the gate. `dw verify
+  origin/main..feat/calendar-clock` re-derives the range clean (14
+  commits ok). Do not repeat it: resolve, then commit through the gate.
 
 ## 5. How a phase is worked (the loop that held for six phases)
 
@@ -268,9 +272,7 @@ in zsh exits 4 with nothing run.
 
 1. Read this section, then `git log --oneline -30 main`, then
    `pm/roadmap/holdspeak/README.md` and the 174/175 status files.
-2. Check PRs #557 and #558: if #557 is still open, finish 174's close
-   (§4 last bullet); if it is merged, `git merge --no-edit main` into
-   `feat/calendar-clock` and retarget #558 to main.
+2. Check PR #558 (175, draft on main). Main holds 170–174.
 3. Ask him nothing you can read; put the §4 questions in front of him
    once, in one list, when he sits.
 4. If the road continues: 175's faces first, to the ratified boards,
@@ -285,9 +287,9 @@ You've delivered a lot. A lot of those PRs are basically still open for
 some reason. Shouldn't we have merged all those PRs?" Read as the word
 that gated the merges. Done in order the same hour, branches kept (never
 delete), each dependent PR retargeted to main before its merge:
-#553 → 0e69f3d7, #554 → 397e3594, #555 → 0c17425e, #556 → d416e08a.
-#557 (174) retargeted to main, merges after its close. #558 (175) opened
-as a DRAFT on feat/reach, parked.
+#553 → 0e69f3d7, #554 → 397e3594, #555 → 0c17425e, #556 → d416e08a,
+#557 → 8c994305 (174, after its close: counsel paid, the walk with zero
+writes, the suite classified). #558 (175) is a DRAFT on main, parked.
 
 **CI truth.** Main's Actions were already red before this arc on a
 runner-environment set (no speech engine → `no_assignment`, no
