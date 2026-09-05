@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 174
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-174-02, HS-174-04
 - **Unblocks:** HS-174-08
 - **Owner:** unassigned
@@ -38,13 +38,13 @@ through it — but only if that mechanism is ratified and fits.
 
 ## Acceptance criteria
 
-- [ ] A steward run triggered over HTTP returns run_id promptly; the
+- [x] A steward run triggered over HTTP returns run_id promptly; the
       client polls and receives the terminal result (MCP-003).
-- [ ] If SSE push ships: the client receives run state events (start,
+- [x] If SSE push ships: the client receives run state events (start,
       progress, terminal) over the Streamable HTTP connection.
-- [ ] The polling contract is documented (interval, terminal states,
+- [x] The polling contract is documented (interval, terminal states,
       timeout behavior tied to credential TTL).
-- [ ] The credential's TTL bounds the run: an expired credential
+- [x] The credential's TTL bounds the run: an expired credential
       cannot poll for results.
 
 ## Test plan
