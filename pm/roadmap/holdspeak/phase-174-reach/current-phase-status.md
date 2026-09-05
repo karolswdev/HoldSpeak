@@ -14,7 +14,7 @@ implementation across stdio, web, and remote.
 
 ## Status
 
-**PLANNED 0/11.**
+**ACTIVE 0/11 — STACKED on 173 (PR #556) on 172 (#555) on 171 (#554) on 170 (#553); branch `feat/reach` off `feat/the-stewards-hand`.**
 
 **Depends on:** Phase 171 (the heartbeat's cadence) + Phase 173 (the
 steward's hand and voice).
@@ -114,7 +114,7 @@ the .43 box runs llama.cpp (Q6, 24k context) but no HoldSpeak runner.
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-174-01 | The design (the remote badge, the credential scope face, the third connector's Door card) | backlog | [story-01-the-design](./story-01-the-design.md) | -- |
+| HS-174-01 | The design (the remote badge, the credential scope face, the third connector's Door card) | in-progress | [story-01-the-design](./story-01-the-design.md) | -- |
 | HS-174-02 | The transport (Streamable HTTP on the hub behind scoped credentials) | backlog | [story-02-the-transport](./story-02-the-transport.md) | -- |
 | HS-174-03 | Scoped remote identity (non-OWNER principals, palette-restricted, owner-issued) | backlog | [story-03-scoped-remote-identity](./story-03-scoped-remote-identity.md) | -- |
 | HS-174-04 | Egress badges on remote reads (kernel receipt + badge; local stdio badgeless) | backlog | [story-04-egress-badges](./story-04-egress-badges.md) | -- |
@@ -128,6 +128,18 @@ the .43 box runs llama.cpp (Q6, 24k context) but no HoldSpeak runner.
 
 ## Where we are
 
+**2026-09-05 19:35 — ACTIVATED, STACKED.** Under the standing goal the
+faces build to counsel-ratified boards and his word gates the MERGE (the
+decision recorded for 170–173). Boards for D2 (a)–(d) dispatched at
+1440 + 393; wire lanes follow the 173 suite. Story 06 (the third
+connector) proceeds on the design's leading candidate, Confluence, as a
+reversible default; his word on the choice is owed. Story 08 (the .43
+runner) builds the client and proves it against the hub on this machine;
+the leg on the .43 box itself waits for his sitting (the sandbox does
+not reach the LAN). Merge order stays his: #553 → #554 → #555 → #556 →
+174's.
+
+Earlier: 
 PLANNED. Waiting for Phase 171 (the heartbeat's cadence — without it
 the .43 runner has nothing to run unattended) and Phase 173 (the
 steward's hand and voice — without it the drafter has no model-drafted
