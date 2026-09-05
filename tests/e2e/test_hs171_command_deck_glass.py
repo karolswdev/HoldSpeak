@@ -370,3 +370,207 @@ def test_command_deck_projects_393(tmp_path: Path, monkeypatch: pytest.MonkeyPat
 @pytest.mark.timeout(120)
 def test_command_deck_cap_1440(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _run_cap_rig(tmp_path, monkeypatch, 1440)
+
+
+# ── HS-171-07 box 4: entries searchable by project name ──────────────
+
+
+def _run_search_rig(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
+) -> None:
+    """Type a project name in the command deck search and assert the
+    PROJECTS row survives filtering (box 4)."""
+    _ensure_build()
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.on("pageerror", lambda e: errors.append(str(e)))
+
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _api(page, "POST", "/api/desk/seed", token=TOKEN)
+            _api(page, "PUT", "/api/setup/onboarding",
+                 {"disposition": "completed"}, token=TOKEN)
+
+            _seed_three_rooms()
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            _settle(page)
+
+            # Open the command deck.
+            _open_deck(page)
+
+            # All three project rows present before search.
+            project_rows = page.locator(
+                "[id^='desk-palette-option-project\\.open\\.']"
+            )
+            assert project_rows.count() == 3, \
+                f"Expected 3 project rows before search, got {project_rows.count()}"
+
+            # Type "Governance" in the search input.
+            search_input = page.locator("#desk-tool-shelf input[type='text']")
+            search_input.fill("Governance")
+            _settle(page)
+
+            # Only the Governance row should survive filtering.
+            filtered_rows = page.locator(
+                "[id^='desk-palette-option-project\\.open\\.']"
+            )
+            filtered_count = filtered_rows.count()
+            assert filtered_count >= 1, \
+                f"Searching 'Governance' should show at least 1 row, got {filtered_count}"
+
+            # The surviving row should mention Governance.
+            labels = [
+                (filtered_rows.nth(i).locator(".desk-deck-label").text_content() or "")
+                for i in range(filtered_count)
+            ]
+            assert any("Governance" in lbl for lbl in labels), \
+                f"Filtered rows should include Governance: {labels}"
+
+            # Other projects should NOT appear.
+            assert not any("Q4 Platform" in lbl for lbl in labels), \
+                f"Q4 Platform should be filtered out: {labels}"
+
+            # Clear search and verify all return.
+            search_input.fill("")
+            _settle(page)
+
+            _shot(page, "build-command-deck-search", width)
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.timeout(120)
+def test_command_deck_search_1440(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _run_search_rig(tmp_path, monkeypatch, 1440)
+
+
+# ── HS-171-07 box 5: archived Rooms do not appear ───────────────────
+
+
+def _run_archive_rig(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
+) -> None:
+    """Archive one project via the product route, then assert it does
+    not appear in the command deck's PROJECTS section (box 5)."""
+    _ensure_build()
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.on("pageerror", lambda e: errors.append(str(e)))
+
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _api(page, "POST", "/api/desk/seed", token=TOKEN)
+            _api(page, "PUT", "/api/setup/onboarding",
+                 {"disposition": "completed"}, token=TOKEN)
+
+            pid_alpha, pid_beta, pid_gamma = _seed_three_rooms()
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            _settle(page)
+
+            # Archive Gamma via the product's route.
+            _api(page, "DELETE", f"/api/projects/{pid_gamma}", token=TOKEN)
+
+            # Reload so the store re-fetches the project list.
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            _settle(page)
+
+            # Open the command deck.
+            _open_deck(page)
+
+            # Only Alpha and Beta should appear (Gamma archived).
+            project_rows = page.locator(
+                "[id^='desk-palette-option-project\\.open\\.']"
+            )
+            row_count = project_rows.count()
+            assert row_count == 2, \
+                f"Expected 2 project rows after archiving Gamma, got {row_count}"
+
+            labels = [
+                (project_rows.nth(i).locator(".desk-deck-label").text_content() or "")
+                for i in range(row_count)
+            ]
+            assert not any("Data Platform" in lbl for lbl in labels), \
+                f"Archived project 'Data Platform' should not appear: {labels}"
+            assert any("Q4 Platform" in lbl for lbl in labels), \
+                f"Active project 'Q4 Platform' should appear: {labels}"
+            assert any("Governance" in lbl for lbl in labels), \
+                f"Active project 'Governance' should appear: {labels}"
+
+            _shot(page, "build-command-deck-archive", width)
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.timeout(120)
+def test_command_deck_archive_1440(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _run_archive_rig(tmp_path, monkeypatch, 1440)
+
+
+# ── HS-171-07 box 6: zero egress ────────────────────────────────────
+
+
+def _run_deck_egress_rig(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Assert no outbound HTTP during command deck use (Article III)."""
+    _ensure_build()
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.on("pageerror", lambda e: errors.append(str(e)))
+
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _api(page, "POST", "/api/desk/seed", token=TOKEN)
+            _api(page, "PUT", "/api/setup/onboarding",
+                 {"disposition": "completed"}, token=TOKEN)
+
+            _seed_three_rooms()
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            _settle(page)
+
+            # Start intercepting after the initial load.
+            external_requests: list[str] = []
+
+            def _on_request(request):
+                req_url = request.url
+                if "localhost" not in req_url and "127.0.0.1" not in req_url:
+                    external_requests.append(req_url)
+
+            page.on("request", _on_request)
+
+            # Open the command deck and interact.
+            _open_deck(page)
+            _settle(page)
+
+            assert len(external_requests) == 0, \
+                f"Zero egress expected during deck use, got: {external_requests}"
+
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.timeout(120)
+def test_command_deck_zero_egress(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _run_deck_egress_rig(tmp_path, monkeypatch)

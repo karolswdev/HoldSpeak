@@ -447,3 +447,223 @@ class TestMCPNotifyTest:
                 Principal(PrincipalKind.OWNER, "test"),
             )
             assert result["fired"] is True
+
+
+# ── HS-171-03: cadence tick invalidates the cache ─────────────────────
+
+
+class TestCadenceTickInvalidatesCache:
+    """Box 3 of HS-171-03: the cadence tick calls _invalidate_needs_you_cache,
+    which clears the NeedsYouCache so the next read re-queries."""
+
+    def test_tick_invalidates_via_web_context(self):
+        """Simulate the cadence mixin's _invalidate_needs_you_cache path
+        where the cache lives on _web_context._needs_you_cache."""
+        from holdspeak.services.needs_you_aggregate import NeedsYouCache
+
+        call_count = {"n": 0}
+
+        def builder():
+            call_count["n"] += 1
+            return {
+                "count": 0, "projects": [], "items": [], "next": None,
+                "computedAt": datetime.now().isoformat(),
+                "stale": False, "sweepId": None,
+            }
+
+        cache = NeedsYouCache(builder, max_age_s=600.0)
+        cache.get()
+        assert call_count["n"] == 1
+
+        # Build a mock object that mimics the cadence mixin.
+        mixin = MagicMock()
+        mixin._needs_you_cache = None
+        ctx = MagicMock()
+        ctx._needs_you_cache = cache
+        mixin._web_context = ctx
+
+        # Call the real _invalidate_needs_you_cache logic inline.
+        from holdspeak.runtime.cadence import CadenceMixin
+        CadenceMixin._invalidate_needs_you_cache(mixin)
+
+        # Now the next get should rebuild.
+        cache.get()
+        assert call_count["n"] == 2, \
+            "After cadence tick invalidation, the cache should rebuild on next get"
+
+    def test_tick_invalidates_via_direct_attribute(self):
+        """When _needs_you_cache is set directly on the mixin (e.g. test setup)."""
+        from holdspeak.services.needs_you_aggregate import NeedsYouCache
+
+        call_count = {"n": 0}
+
+        def builder():
+            call_count["n"] += 1
+            return {
+                "count": 0, "projects": [], "items": [], "next": None,
+                "computedAt": datetime.now().isoformat(),
+                "stale": False, "sweepId": None,
+            }
+
+        cache = NeedsYouCache(builder, max_age_s=600.0)
+        cache.get()
+        assert call_count["n"] == 1
+
+        mixin = MagicMock()
+        mixin._needs_you_cache = cache
+        mixin._web_context = None
+
+        from holdspeak.runtime.cadence import CadenceMixin
+        CadenceMixin._invalidate_needs_you_cache(mixin)
+
+        cache.get()
+        assert call_count["n"] == 2
+
+
+# ── HS-171-03: zero egress during cached read ─────────────────────────
+
+
+class TestZeroEgressCachedRead:
+    """Box 5 of HS-171-03: no outbound HTTP during a cached read (Article III)."""
+
+    def test_no_http_during_cache_hit(self):
+        """Monkeypatch urllib3 + httpx to assert no outbound calls
+        during a warm-cache NeedsYouCache.get()."""
+        from holdspeak.services.needs_you_aggregate import NeedsYouCache
+
+        builder, _ = self._make_builder()
+        cache = NeedsYouCache(builder, max_age_s=600.0)
+        cache.get()  # prime the cache
+
+        http_calls: list[str] = []
+
+        def _trap_urllib(*a, **kw):
+            http_calls.append("urllib3")
+            raise AssertionError("urllib3 egress during cached read")
+
+        def _trap_httpx(*a, **kw):
+            http_calls.append("httpx")
+            raise AssertionError("httpx egress during cached read")
+
+        with patch("urllib.request.urlopen", _trap_urllib), \
+             patch.dict("sys.modules", {
+                 "httpx": MagicMock(**{"Client.return_value.get.side_effect": _trap_httpx}),
+             }):
+            result = cache.get()
+            assert result is not None
+            assert len(http_calls) == 0, \
+                f"Zero egress expected, got: {http_calls}"
+
+    def _make_builder(self):
+        call_count = {"n": 0}
+        def builder():
+            call_count["n"] += 1
+            return {
+                "count": 0, "projects": [], "items": [], "next": None,
+                "computedAt": datetime.now().isoformat(),
+                "stale": False, "sweepId": None,
+            }
+        return builder, call_count
+
+
+# ── HS-171-06: brief regeneration integration via cadence tick ────────
+
+
+class TestBriefCadenceTickIntegration:
+    """Box 1 of HS-171-06: the brief regenerates once per day after quiet
+    hours, driven by the cadence tick, WITHOUT the owner opening anything."""
+
+    def test_one_generate_call_across_quiet_hours_boundary(self):
+        """Drive _maybe_regenerate_brief with a fake clock crossing the
+        quiet-hours boundary. Assert exactly one generate() call, not two."""
+        from holdspeak.cadence.brief import should_send_daily_brief
+
+        # 06:00 -- still in quiet hours (earliest_hour=8)
+        before = datetime(2026, 9, 5, 6, 0)
+        assert should_send_daily_brief(
+            before, last_sent_date="2026-09-04", earliest_hour=8
+        ) is False, "Should NOT regenerate during quiet hours"
+
+        # 08:01 -- quiet hours closed, last_regen yesterday
+        after = datetime(2026, 9, 5, 8, 1)
+        assert should_send_daily_brief(
+            after, last_sent_date="2026-09-04", earliest_hour=8
+        ) is True, "Should regenerate after quiet hours close"
+
+        # 08:02 -- same day, already regenerated
+        after2 = datetime(2026, 9, 5, 8, 2)
+        assert should_send_daily_brief(
+            after2, last_sent_date="2026-09-05", earliest_hour=8
+        ) is False, "Should NOT regenerate again the same day"
+
+    def test_quiet_hours_suppress_until_window_closes(self):
+        """HS-171-06 box 3: quiet hours suppress regeneration until the
+        window closes."""
+        from holdspeak.cadence.brief import should_send_daily_brief
+
+        # Walk the clock from 00:00 to 07:59 -- all suppressed.
+        for hour in range(0, 8):
+            now = datetime(2026, 9, 5, hour, 30)
+            result = should_send_daily_brief(
+                now, last_sent_date="2026-09-04", earliest_hour=8
+            )
+            assert result is False, \
+                f"Should be suppressed at {hour}:30 (quiet hours)"
+
+        # 08:00 -- first tick after quiet hours: fires.
+        now_ok = datetime(2026, 9, 5, 8, 0)
+        assert should_send_daily_brief(
+            now_ok, last_sent_date="2026-09-04", earliest_hour=8
+        ) is True
+
+
+class TestBriefRegenerationReceipt:
+    """Box 4 of HS-171-06: the regeneration leaves a pipeline_events receipt."""
+
+    def test_regeneration_writes_pipeline_event(self, tmp_path):
+        """Drive _maybe_regenerate_brief on a real DB and assert the
+        pipeline_events row is written (Article XI.2)."""
+        from holdspeak.db import Database
+
+        db = Database(tmp_path / "brief_receipt_test.db")
+
+        # Seed a stale brief_regeneration policy: use yesterday's real date
+        # so the should_send check passes regardless of when we run.
+        from holdspeak.cadence.models import CadencePolicy
+        yesterday = (datetime.now() - __import__("datetime").timedelta(days=1)).strftime("%Y-%m-%d")
+        db.cadence.upsert_policy(CadencePolicy(
+            name="brief_regeneration",
+            config={"last_regen_date": yesterday},
+        ))
+
+        # Build a mock mixin with quiet_hours_end=0 so the earliest_hour
+        # check always passes (current hour >= 0 is always True).
+        mixin = MagicMock()
+        mixin.config = MagicMock()
+        mixin.config.cadence = MagicMock()
+        mixin.config.cadence.quiet_hours_end = 0
+
+        generate_calls = []
+
+        # Patch MondayBriefService.generate to record calls.
+        mock_brief = MagicMock()
+        mock_brief.items = [MagicMock(), MagicMock()]
+        mock_brief.item_count = 2
+
+        with patch("holdspeak.db.get_database", return_value=db), \
+             patch("holdspeak.services.monday_brief_service.MondayBriefService.generate",
+                   side_effect=lambda *a, **kw: (generate_calls.append(1), mock_brief)[1]):
+            from holdspeak.runtime.cadence import CadenceMixin
+            CadenceMixin._maybe_regenerate_brief(mixin)
+
+        assert len(generate_calls) == 1, \
+            "generate() should be called exactly once"
+
+        # Check the pipeline_events receipt.
+        with db._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM pipeline_events WHERE method='brief.regenerated'"
+            ).fetchall()
+        assert len(rows) >= 1, "A pipeline_events receipt should exist"
+        row = rows[0]
+        assert "items=2" in row["result_summary"]

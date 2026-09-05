@@ -40,7 +40,7 @@ reads serve the cache until the next tick.
       counting `_read_room_needs_you` calls in a rig; Article IX.1).
 - [ ] Response time < 50 ms from cache (measured in the rig).
 - [ ] A cadence tick invalidates the cache; the next call re-queries.
-- [ ] A manual refresh (`?force=true` or a bus event) invalidates the
+- [ ] A manual refresh (`?fresh=1` (the route's name for it) or a bus event) invalidates the
       cache.
 - [ ] Zero egress (Article III).
 
