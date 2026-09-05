@@ -196,7 +196,91 @@ class CalendarIngestConductor:
         except Exception as exc:
             log.error("Calendar orphan cleanup failed: %s", exc)
 
+        # HS-175-02: run the event-to-Room matcher after each refresh.
+        if any_applied:
+            try:
+                self._run_event_room_matcher()
+            except Exception as exc:
+                log.error("Event-to-Room matcher failed: %s", exc)
+
         return any_applied
+
+    def _run_event_room_matcher(self) -> None:
+        """HS-175-02: match calendar events to Rooms by title.
+
+        H3 (counsel): a title match requires the Room name (>= 4 chars) as a
+        whole-word substring of the event title; one-word Room names of <= 3
+        chars never auto-match (too high false-positive risk).
+
+        Manual links are preserved (they override the matcher).  Attendee
+        match is wired as a seam that returns nothing until the parser
+        extracts attendees (D4 H3 / H5).
+        """
+        import re
+
+        db = self._get_db()
+        events = db.calendar_events.list_all()
+        if not events:
+            return
+
+        # Load all non-archived projects (Rooms).
+        try:
+            projects = db.projects.list_projects(include_archived=False)
+        except Exception as exc:
+            log.error("Event-Room matcher: failed to load projects: %s", exc)
+            return
+
+        # Build matcher candidates: Room name and Watch query strings.
+        room_candidates: list[tuple[str, str, str]] = []  # (project_id, name, kind)
+        for proj in projects:
+            name = getattr(proj, "name", "") or ""
+            pid = getattr(proj, "id", "") or ""
+            if not pid or not name:
+                continue
+            room_candidates.append((pid, name, "room_name"))
+            # Also try Watch query strings from connector_watches.
+            try:
+                with db._connection() as conn:
+                    watches = conn.execute(
+                        "SELECT query FROM connector_watches WHERE project_id = ?",
+                        (pid,),
+                    ).fetchall()
+                for w in watches:
+                    q = str(w["query"] or "").strip()
+                    if q:
+                        room_candidates.append((pid, q, "watch_query"))
+            except Exception:
+                pass
+
+        if not room_candidates:
+            return
+
+        links: list[tuple[str, str, str]] = []
+        for event in events:
+            title = (event.title or "").strip()
+            if not title:
+                continue
+            title_lower = title.lower()
+            best_match: tuple[str, int] | None = None  # (project_id, match_length)
+            for pid, candidate, _kind in room_candidates:
+                candidate_stripped = candidate.strip()
+                if len(candidate_stripped) < 4:
+                    # H3: skip short names (too high false-positive risk).
+                    continue
+                candidate_lower = candidate_stripped.lower()
+                # Whole-word substring match.
+                pattern = r'\b' + re.escape(candidate_lower) + r'\b'
+                if re.search(pattern, title_lower):
+                    # Prefer the LONGEST matching Room name.
+                    if best_match is None or len(candidate_stripped) > best_match[1]:
+                        best_match = (pid, len(candidate_stripped))
+            if best_match is not None:
+                links.append((event.id, best_match[0], "title"))
+
+        try:
+            db.calendar_event_projects.replace_auto_links(links)
+        except Exception as exc:
+            log.error("Event-Room matcher: failed to persist links: %s", exc)
 
     def _refresh_source(self, source: CalendarSource) -> bool:
         """Fetch, parse, and replace projection for one source."""
@@ -280,6 +364,10 @@ class CalendarIngestConductor:
         self._reconcile_linked_schedules(
             db, source.id, pre_replace_events, now_epoch,
         )
+
+        # HS-175-03: auto-create event-born recordings for events with a
+        # meeting_url, controlled by the owner's auto_record setting.
+        self._create_event_born_recordings(db, source.id, now_epoch)
 
         for skip in result.skips:
             self._write_event_skip(revision, skip.event_ref, skip.reason)
@@ -488,6 +576,146 @@ class CalendarIngestConductor:
         # Last resort: use created_at as a rough proxy.
         return sched.created_at
 
+    # ── HS-175-03: event-born recordings ────────────────────────────
+
+    def _create_event_born_recordings(
+        self,
+        db: Any,
+        source_id: str,
+        now_epoch: float,
+    ) -> None:
+        """Auto-create recordings for calendar events with meeting URLs.
+
+        Controlled by ``meeting.auto_record``:
+        - ``off``: do nothing (Article IV: arming is his act).
+        - ``all_calendar``: every event with a ``meeting_url``.
+        - ``room_linked``: only events linked to a Room via
+          ``calendar_event_projects``.
+
+        Idempotent: the unique index ``idx_scheduled_recordings_calendar_event_armed``
+        prevents duplicate arms.  Catches its own exceptions.
+        """
+        try:
+            config = self._config_loader()
+        except Exception as exc:
+            log.warning("Event-born recordings: config load failed: %s", exc)
+            return
+
+        auto_record = getattr(config.meeting, "auto_record", "off")
+        if auto_record == "off":
+            return
+
+        lead_minutes = getattr(config.meeting, "auto_record_lead_minutes", 5)
+        now_dt = datetime.fromtimestamp(now_epoch, tz=timezone.utc)
+
+        try:
+            with db._connection() as conn:
+                rows = conn.execute(
+                    """SELECT id, uid, title, starts_at, ends_at, meeting_url,
+                              source_id, source_label
+                       FROM calendar_events
+                       WHERE source_id = ?
+                         AND meeting_url IS NOT NULL
+                         AND meeting_url != ''
+                         AND starts_at > ?
+                       ORDER BY starts_at""",
+                    (source_id, self._utc_iso(now_dt)),
+                ).fetchall()
+        except Exception as exc:
+            log.error("Event-born recordings: event query failed: %s", exc)
+            return
+
+        # When room_linked, check the calendar_event_projects table.
+        linked_event_ids: set[str] | None = None
+        if auto_record == "room_linked":
+            try:
+                with db._connection() as conn:
+                    linked_rows = conn.execute(
+                        "SELECT calendar_event_id FROM calendar_event_projects"
+                    ).fetchall()
+                linked_event_ids = {r["calendar_event_id"] for r in linked_rows}
+            except Exception:
+                # Table may not exist yet (the A lane builds it).
+                # Treat every event as unlinked -- create nothing.
+                log.info(
+                    "Event-born recordings: calendar_event_projects not available; "
+                    "treating all events as unlinked"
+                )
+                return
+
+        for row in rows:
+            event_id = row["id"]
+
+            # Room-linked filter.
+            if linked_event_ids is not None and event_id not in linked_event_ids:
+                continue
+
+            # Compute fire time: starts_at - lead_minutes.
+            try:
+                starts_at = datetime.fromisoformat(
+                    row["starts_at"].replace("Z", "+00:00")
+                ).astimezone(timezone.utc)
+                ends_at = datetime.fromisoformat(
+                    row["ends_at"].replace("Z", "+00:00")
+                ).astimezone(timezone.utc)
+            except Exception as exc:
+                log.warning(
+                    "Event-born recordings: bad timestamp on event %s: %s",
+                    event_id, exc,
+                )
+                continue
+
+            fire_at = (starts_at - timedelta(minutes=lead_minutes)).timestamp()
+            duration_seconds = (ends_at - starts_at).total_seconds()
+            duration_minutes = min(max(1, int(duration_seconds / 60 + 0.5)), 480)
+
+            try:
+                db.scheduled_recordings.create(
+                    title=row["title"] or "",
+                    cron_expr="",
+                    tz="UTC",
+                    one_shot=True,
+                    duration_minutes=duration_minutes,
+                    enabled=True,
+                    next_fire_at=fire_at,
+                    calendar_event_id=event_id,
+                    calendar_uid=row["uid"] or "",
+                    calendar_source_id=source_id,
+                    born_from="calendar_event",
+                )
+                self._write_event_born_receipt(event_id, row["title"] or "")
+                log.info(
+                    "Event-born recording created for event %s (%s)",
+                    event_id, row["title"],
+                )
+            except Exception as exc:
+                # IntegrityError from the unique index means a live arm
+                # already exists — idempotent, not an error.
+                if "UNIQUE constraint failed" in str(exc):
+                    continue
+                log.error(
+                    "Event-born recording creation failed for event %s: %s",
+                    event_id, exc,
+                )
+
+    def _write_event_born_receipt(self, event_id: str, title: str) -> None:
+        """Receipt for an auto-created event-born recording."""
+        digest = hashlib.sha256(
+            f"event_born:{event_id}".encode("utf-8")
+        ).hexdigest()
+        self._write_receipt(
+            revision=f"event_born:{digest[:16]}",
+            category="scheduled_recording",
+            state="succeeded",
+            outcome="scheduled_recording.created.calendar_event",
+            result_ref=f"calendar_event:{event_id}",
+            discriminator=f"event_born:{event_id}",
+        )
+
+    @staticmethod
+    def _utc_iso(dt: datetime) -> str:
+        return dt.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+
     def _loop(self) -> None:
         # Boot is an actual refresh, not merely a delayed first cadence tick.
         self.refresh()
@@ -600,16 +828,32 @@ _conductor: CalendarIngestConductor | None = None
 
 
 def start_calendar_ingest_conductor(**kwargs: Any) -> CalendarIngestConductor:
-    """Start the one process-global calendar conductor exactly once."""
+    """Create the one process-global calendar conductor exactly once.
+
+    HS-175-02: the standalone thread is retired -- the heartbeat sweep
+    calls ``refresh()`` on each tick.  The conductor object is still
+    created so its ``refresh()`` method is callable.  The initial boot
+    refresh is performed synchronously here so the first projection is
+    populated before the first heartbeat tick (matching the old start()
+    behaviour of doing one immediate refresh at boot).
+    """
     global _conductor
     if _conductor is None:
         _conductor = CalendarIngestConductor(**kwargs)
-    _conductor.start()
+    # Boot refresh (synchronous, no thread).
+    try:
+        _conductor.refresh()
+    except Exception as exc:
+        log.warning("Calendar boot refresh failed: %s", exc)
     return _conductor
 
 
 def stop_calendar_ingest_conductor() -> None:
-    """Stop and clear the global conductor during hub shutdown."""
+    """Stop and clear the global conductor during hub shutdown.
+
+    HS-175-02: stop() still works (idempotent); it stops the legacy
+    thread if one was running from an older code path.
+    """
     global _conductor
     if _conductor is not None:
         _conductor.stop()

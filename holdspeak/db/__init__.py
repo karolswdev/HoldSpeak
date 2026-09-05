@@ -50,6 +50,10 @@ from .calendar_events import (  # noqa: F401
     CalendarEvent,
     CalendarEventRepository,
 )
+from .calendar_event_projects import (  # noqa: F401
+    CalendarEventProject,
+    CalendarEventProjectRepository,
+)
 from .threads import (  # noqa: F401
     Thread,
     ThreadMessage,

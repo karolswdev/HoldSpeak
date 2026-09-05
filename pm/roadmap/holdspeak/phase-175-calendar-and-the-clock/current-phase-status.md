@@ -103,7 +103,7 @@ has only GitHubWatchSource:58 and JiraWatchSource:294).
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-175-01 | The design (the calendar week, the event-born recording, the meeting Watch entity on the canvas) | done | [story-01-the-design](./story-01-the-design.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-175-02 | Calendar events on the desk (the week view, the next seam, events as material) | backlog | [story-02-calendar-events-on-the-desk](./story-02-calendar-events-on-the-desk.md) | -- |
+| HS-175-02 | Calendar events on the desk (the week view, the next seam, events as material) | done | [story-02-calendar-events-on-the-desk](./story-02-calendar-events-on-the-desk.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-175-03 | Event-born scheduled recordings (auto-create from calendar events with meeting URLs) | backlog | [story-03-event-born-recordings](./story-03-event-born-recordings.md) | -- |
 | HS-175-04 | The meeting Watch adapter (MeetingWatchSource: meetings as Watch entities in a Room) | backlog | [story-04-the-meeting-watch-adapter](./story-04-the-meeting-watch-adapter.md) | -- |
 | HS-175-05 | The week brief (Monday brief window widened to the calendar week; calendar + meeting collectors) | backlog | [story-05-the-week-brief](./story-05-the-week-brief.md) | -- |

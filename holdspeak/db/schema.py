@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 73  # informational; 72→73: follow_through_proposals (HS-172-03)
+SCHEMA_VERSION = 74  # informational; 73→74: calendar_event_projects (HS-175-02)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -3484,7 +3484,8 @@ CREATE TABLE IF NOT EXISTS scheduled_recordings (
     delegation_receipt_id TEXT NOT NULL DEFAULT '',
     calendar_event_id TEXT NOT NULL DEFAULT '',
     calendar_uid TEXT NOT NULL DEFAULT '',
-    calendar_source_id TEXT NOT NULL DEFAULT ''
+    calendar_source_id TEXT NOT NULL DEFAULT '',
+    born_from TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_scheduled_recordings_enabled
 ON scheduled_recordings(enabled, next_fire_at) WHERE enabled=1;
@@ -4047,4 +4048,16 @@ CREATE INDEX IF NOT EXISTS idx_ftp_project
 CREATE UNIQUE INDEX IF NOT EXISTS idx_ftp_dedup
     ON follow_through_proposals(meeting_id, fingerprint)
     WHERE state = 'proposed';
+
+-- HS-175-02: Calendar event to Room (project) matcher join table.
+CREATE TABLE IF NOT EXISTS calendar_event_projects (
+    calendar_event_id TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    match_source TEXT NOT NULL DEFAULT 'title'
+        CHECK (match_source IN ('title', 'attendee', 'manual')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (calendar_event_id, project_id)
+);
+CREATE INDEX IF NOT EXISTS idx_cep_project
+    ON calendar_event_projects(project_id);
 """

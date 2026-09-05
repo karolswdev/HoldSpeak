@@ -231,6 +231,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 "meetings": {
                     "intelligence": intel_on,
                     "auto": config.meeting.intelligence_auto,
+                    "auto_record": config.meeting.auto_record,
                     "host": _resolve_meetings_host(config),
                     "lastRunAt": last_run_at,
                     "lastRunS": last_run_s,

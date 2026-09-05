@@ -34,6 +34,7 @@ class ScheduledRecording:
     calendar_event_id: str
     calendar_uid: str
     calendar_source_id: str
+    born_from: str
 
 
 def _row_to_model(row: Any) -> ScheduledRecording:
@@ -58,6 +59,7 @@ def _row_to_model(row: Any) -> ScheduledRecording:
         calendar_event_id=str(row["calendar_event_id"] or ""),
         calendar_uid=str(row["calendar_uid"] or ""),
         calendar_source_id=str(row["calendar_source_id"] or ""),
+        born_from=str(row["born_from"] or ""),
     )
 
 
@@ -78,6 +80,7 @@ class ScheduledRecordingRepository(BaseRepository):
         calendar_event_id: str = "",
         calendar_uid: str = "",
         calendar_source_id: str = "",
+        born_from: str = "",
     ) -> ScheduledRecording:
         rec_id = f"sr_{uuid.uuid4().hex[:12]}"
         now = time.time()
@@ -87,8 +90,9 @@ class ScheduledRecordingRepository(BaseRepository):
                    (id, title, cron_expr, tz, one_shot, duration_minutes, enabled,
                     revision, created_at, next_fire_at, state,
                     delegation_receipt_id,
-                    calendar_event_id, calendar_uid, calendar_source_id)
-                   VALUES (?,?,?,?,?,?,?,1,?,?,'idle',?,?,?,?)""",
+                    calendar_event_id, calendar_uid, calendar_source_id,
+                    born_from)
+                   VALUES (?,?,?,?,?,?,?,1,?,?,'idle',?,?,?,?,?)""",
                 (
                     rec_id,
                     str(title or "").strip(),
@@ -103,6 +107,7 @@ class ScheduledRecordingRepository(BaseRepository):
                     str(calendar_event_id or ""),
                     str(calendar_uid or ""),
                     str(calendar_source_id or ""),
+                    str(born_from or ""),
                 ),
             )
             row = conn.execute(

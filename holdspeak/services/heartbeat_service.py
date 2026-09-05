@@ -83,11 +83,14 @@ class HeartbeatService:
         observer: PipelineObserver | None = None,
         watch_service: Any | None = None,
         notifier: Any | None = None,
+        calendar_conductor: Any | None = None,
     ) -> None:
         self._db = db
         self._observer = observer or NullObserver()
         self._watch_service = watch_service
         self._notifier = notifier  # injectable for tests; None = OS default
+        # HS-175-02: the calendar refresh rides the heartbeat sweep.
+        self._calendar_conductor = calendar_conductor
 
     # ── Settings ───────────────────────────────────────────────────────
 
@@ -318,6 +321,43 @@ class HeartbeatService:
                     log.error("heartbeat sweep evaluate_due failed: %s", exc)
                     errors.append({"error": str(exc)})
 
+        # HS-175-02: calendar refresh rides the heartbeat sweep.
+        # Own failure boundary: a conductor crash never breaks the loop.
+        calendar_refresh_receipt: dict[str, Any] | None = None
+        if not held and self._calendar_conductor is not None:
+            try:
+                applied = self._calendar_conductor.refresh()
+                calendar_refresh_receipt = {
+                    "kind": "calendar.refresh",
+                    "applied": applied,
+                }
+                # Per-source outcomes with host for HTTPS sources.
+                try:
+                    config = self._calendar_conductor._config_loader()
+                    source_outcomes: list[dict[str, str]] = []
+                    for src in config.calendar.sources:
+                        if src.enabled:
+                            url = str(src.url or "")
+                            entry: dict[str, str] = {"source_id": src.id}
+                            if url.lower().startswith("https://"):
+                                try:
+                                    from urllib.parse import urlparse
+                                    entry["host"] = urlparse(url).hostname or ""
+                                except Exception:
+                                    entry["host"] = ""
+                            source_outcomes.append(entry)
+                    if source_outcomes:
+                        calendar_refresh_receipt["sources"] = source_outcomes
+                except Exception:
+                    pass
+            except Exception as exc:
+                log.error("heartbeat sweep calendar refresh failed: %s", exc)
+                calendar_refresh_receipt = {
+                    "kind": "calendar.refresh",
+                    "applied": False,
+                    "error": str(exc),
+                }
+
         # M3: Refresh the aggregate cache via the canonical builder
         self.refresh_aggregate(principal, sweep_id=sweep_id)
 
@@ -343,6 +383,9 @@ class HeartbeatService:
             "errors": len(errors),
             "outcomes": _summarize_outcomes(outcomes),
         }
+        # HS-175-02: calendar refresh receipt rides along.
+        if calendar_refresh_receipt is not None:
+            receipt["calendar"] = calendar_refresh_receipt
 
         # Write kernel receipt (Article XI.2)
         self._write_receipt(receipt)

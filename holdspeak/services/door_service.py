@@ -121,6 +121,7 @@ class DoorService:
             "active": self._active_thoughts(principal),
         }
         upcoming = self._upcoming(now_utc)
+        has_calendar = self._calendar_configured()
         result: dict[str, Any] = {
             "board": projected_board,
             "upcoming": upcoming,
@@ -131,7 +132,8 @@ class DoorService:
                 "active": len(projected_board["active"]),
                 "upcoming_today": self._upcoming_today(upcoming, now),
             },
-            "calendar_configured": self._calendar_configured(),
+            "calendar_configured": has_calendar,
+            "week": self._week_strip(now_utc, has_calendar),
         }
         # L2 (HS-149-01): carry the People store state so the Door never
         # renders a broken/locked/absent sidecar as silent emptiness.
@@ -269,12 +271,28 @@ class DoorService:
         now_iso = self._utc_iso(now)
         events = list(self._calendar_events.list_upcoming(now_iso))
         event_ids = {event.id for event in events}
-        # HS-147-01: build an index of armed calendar_event_id -> schedule_id
-        # so _calendar_event_item can project armed_schedule_id without N+1.
-        armed_index: dict[str, str] = {}
+        # HS-175-03: build an event info index for recording provenance.
+        event_info: dict[str, dict[str, str]] = {}
+        for event in events:
+            event_info[event.id] = {
+                "event_title": event.title,
+                "source_label": event.source_label,
+            }
+        # HS-147-01: build an index of armed calendar_event_id -> schedule info
+        # so _calendar_event_item can project armed data without N+1.
+        # HS-175-03: enriched to carry arms_at for the ARMS HH:MM token.
+        armed_index: dict[str, dict[str, Any]] = {}
         for recording in enabled_recordings:
             if recording.calendar_event_id:
-                armed_index[recording.calendar_event_id] = recording.id
+                armed_index[recording.calendar_event_id] = {
+                    "recording_id": recording.id,
+                    "arms_at": (
+                        self._utc_iso(datetime.fromtimestamp(
+                            recording.next_fire_at, tz=timezone.utc
+                        ))
+                        if recording.next_fire_at else None
+                    ),
+                }
                 # HS-147-02 ruling: a linked schedule whose event row is on
                 # the rail would render the same intent twice — the event row
                 # wears ARMED and carries armed_schedule_id, so the schedule
@@ -284,14 +302,19 @@ class DoorService:
                     continue
             if recording.next_fire_at is None or recording.next_fire_at < now.timestamp():
                 continue
-            upcoming.append(self._scheduled_recording_item(recording))
+            upcoming.append(self._scheduled_recording_item(
+                recording, event_info=event_info,
+            ))
         # HS-149-03: build a person label index for linked calendar series.
         # Memoize one resolve per distinct (uid, source_id) in the aggregate
         # build — CHEAP, never cached across requests.
         person_index = self._build_person_index(events)
+        # HS-175-02: build event-to-Room project index for Room tokens.
+        project_index = self._build_event_project_index()
         upcoming.extend(
             self._calendar_event_item(
                 event, armed_index=armed_index, person_index=person_index,
+                project_index=project_index,
             )
             for event in events
         )
@@ -369,11 +392,58 @@ class DoorService:
                 seen[key] = None
         return {k: v for k, v in seen.items() if v}
 
+    def _build_event_project_index(self) -> dict[str, tuple[str, str]]:
+        """HS-175-02: build event_id -> (project_id, project_name) index.
+
+        Reads the calendar_event_projects join table.
+        """
+        if self._db is None:
+            return {}
+        try:
+            return self._db.calendar_event_projects.build_event_project_index()
+        except Exception:
+            return {}
+
+    def _week_strip(self, now: datetime, has_calendar: bool) -> dict[str, Any]:
+        """HS-175-02: build the WEEK strip data for the Door.
+
+        Returns {days: [{date, dow, count}], total, has_calendar} for the
+        current week (Mon-Sun).  Absent when no calendar source is connected.
+        """
+        if not has_calendar:
+            return {"days": [], "total": 0, "has_calendar": False}
+        # Compute Monday 00:00 UTC and Sunday 23:59 UTC of the current week.
+        days_since_monday = now.weekday()  # 0=Mon
+        monday = now - timedelta(days=days_since_monday)
+        monday_start = monday.replace(hour=0, minute=0, second=0, microsecond=0)
+        sunday_end = monday_start + timedelta(days=7)
+        start_iso = self._utc_iso(monday_start)
+        end_iso = self._utc_iso(sunday_end)
+        counts = self._calendar_events.count_per_day(start_iso, end_iso)
+        dow_names = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+        days: list[dict[str, Any]] = []
+        total = 0
+        for i in range(7):
+            day = monday_start + timedelta(days=i)
+            date_str = day.strftime("%Y-%m-%d")
+            count = counts.get(date_str, 0)
+            total += count
+            days.append({
+                "date": date_str,
+                "dow": dow_names[i],
+                "count": count,
+            })
+        return {"days": days, "total": total, "has_calendar": True}
+
     @staticmethod
-    def _scheduled_recording_item(recording: ScheduledRecording) -> dict[str, Any]:
+    def _scheduled_recording_item(
+        recording: ScheduledRecording,
+        *,
+        event_info: dict[str, dict[str, str]] | None = None,
+    ) -> dict[str, Any]:
         starts_at = datetime.fromtimestamp(recording.next_fire_at or 0, tz=timezone.utc)
         ends_at = starts_at + timedelta(minutes=recording.duration_minutes)
-        return {
+        item: dict[str, Any] = {
             "id": recording.id,
             "source": "scheduled_recording",
             "target_ref": f"scheduled_recording:{recording.id}",
@@ -384,13 +454,22 @@ class DoorService:
             "meeting_url": None,
             "state": recording.state,
         }
+        # HS-175-03: project provenance for event-born recordings.
+        if recording.born_from == "calendar_event" and recording.calendar_event_id:
+            info = (event_info or {}).get(recording.calendar_event_id)
+            item["from"] = {
+                "event_title": (info or {}).get("event_title", recording.title),
+                "source_label": (info or {}).get("source_label", ""),
+            }
+        return item
 
     @staticmethod
     def _calendar_event_item(
         event: CalendarEvent,
         *,
-        armed_index: dict[str, str] | None = None,
+        armed_index: dict[str, dict[str, Any]] | None = None,
         person_index: dict[tuple[str, str], tuple[str, str]] | None = None,
+        project_index: dict[str, tuple[str, str]] | None = None,
     ) -> dict[str, Any]:
         """Map the persisted projection into Story 01's reserved timeline row.
 
@@ -403,6 +482,9 @@ class DoorService:
         HS-149-03/04: uid is projected for the picker/link flow; person_label
         and person_relationship_id are projected (only-when-present) for linked
         calendar series.
+
+        HS-175-02: project_id and project_name (Room link) projected when the
+        event is matched to a Room via the calendar_event_projects join.
         """
         item: dict[str, Any] = {
             "id": event.id,
@@ -419,9 +501,13 @@ class DoorService:
             "source_label": event.source_label,
         }
         if armed_index:
-            schedule_id = armed_index.get(event.id)
-            if schedule_id:
-                item["armed_schedule_id"] = schedule_id
+            armed_info = armed_index.get(event.id)
+            if armed_info:
+                item["armed_schedule_id"] = armed_info["recording_id"]
+                item["armed"] = {
+                    "recording_id": armed_info["recording_id"],
+                    "arms_at": armed_info["arms_at"],
+                }
         # HS-149-03/04: person_label + person_relationship_id projected
         # only when present — the armed_schedule_id only-when-present analogy.
         if person_index:
@@ -431,6 +517,12 @@ class DoorService:
                 item["person_label"] = label
                 if rel_id:
                     item["person_relationship_id"] = rel_id
+        # HS-175-02: project (Room) link projected only when present.
+        if project_index:
+            room = project_index.get(event.id)
+            if room:
+                item["project_id"] = room[0]
+                item["project_name"] = room[1]
         return item
 
     @staticmethod
