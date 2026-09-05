@@ -1,3 +1,97 @@
+# HANDOVER: MUAD'DIB IX — Phase 170 The Great Pass, mid-flight (2026-09-05, late)
+
+Read this once, fully, before your first tool call. When you finish,
+you ARE the orchestrator. The owner's standing goal (Stop-hook, verbatim):
+«Fedaykin satisfied all phases all the way up to 180, delivering all
+their might into making HoldSpeak an ultimately useful, beautiful,
+cohesive system». The road: pm/roadmap/holdspeak/THE-TUESDAY-ARC.md
+§6. The face canon: docs/internal/UX-CANON.md. One phase active at a
+time; every face still needs his word on its canvas; each phase merges
+on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
+
+## 0. State (branch `feat/the-great-pass`, Phase 170 ACTIVE 2/7)
+
+- **01 DONE** the census (36 after-shots re-captured green after the
+  sweep). **02 DONE** the species sweep: three Fable lanes (P pages/
+  cores @3dbe8a82 · T thought/threads/project-room + parking @b540dd3a
+  · D desk chrome/pullouts/chair/voice/patterns @bd47897e); tree
+  671 → 222 → 151 real hits after the scanner's own false positives
+  were fixed; raw `<button>` 147 → 4 (allowlisted with reasons), accent
+  rails 0, egress misses 0; vitest 2184 green, zero branch-new; build
+  ok. **The ratchet**: `tests/unit/test_ux_canon_ratchet.py` +
+  `tests/ux_canon_ceiling.json` (per rule + per face; lower it only via
+  `python scripts/ux_canon_scan.py --write-ceiling tests/ux_canon_ceiling.json`;
+  hard zeros DS6 + A9). Library gained `countToken`/`countLabel`
+  (web/src/desk/surface/count.ts). The retired setup wizard is PARKED
+  under web/src/features/project-room/_parked/setup/ (vitest excludes
+  `**/_parked/**`).
+- **03 DESIGNED** the Concierge: settled-design-concierge.md + six
+  boards (Main = found+proposed, Picker, Adjust, Cold, Downloading,
+  Phone). Counsel RATIFY-W-C, every condition PAID (Use these disabled
+  beside any WAITING row; Anthropic in FOUND; headline = FOUND count;
+  cloud rows carry ghost `Check` + `1 TOKEN · $`; Adjust unfolds UNDER
+  the set with a host chip per capability row; `Chat` not `Chat
+  practice`; the `MLX` runtime token is vocabulary).
+- **04 DESIGNED** the four faces: settled-design-four-faces.md + twelve
+  boards (arrival needs-you/quiet/393 · Settings hub 640/393 · Speak
+  idle/landed/unset/393 · Meetings list/detail/393). Counsel RATIFY-W-C
+  PAID (one egress vocabulary — `THIS DEVICE`, `LOCAL` retired; the OFF
+  detail placement; the two wire reads behind the Models row;
+  FinishThoughtsLane between `door` and `brief` in LANE_ORDER; the
+  needs-you aggregate is N+1 until 171).
+- **THE CANVAS (18 boards, both pages, counsel paid):**
+  https://claude.ai/code/artifact/3fc26e25-1d5f-4796-b2e9-0d4bae9bff20
+  Seeded from pm/roadmap/holdspeak/phase-170-the-great-pass/assets/mockups/
+  (`*.dc.html` + canvas.json) into the session scratchpad
+  `the-great-pass.html`; republish = same path, `contract: "0.1.31"`,
+  favicon 🧭, no capabilities. Every board needs the head line
+  `<script src="./support.js"></script>` (seven Speak/Meetings boards
+  were born without it — the helper warns, the editor cannot edit
+  without it).
+- **IN FLIGHT when this was written:** two WIRE workers (no face work
+  — faces wait for his word): the Concierge routes
+  `/api/concierge/detect|propose|probe|apply|download` + MCP parity +
+  tests/unit/test_hs170_concierge_wire.py; the four faces' routes
+  `POST /api/meetings/{id}/intelligence/run` (+ `transcriptWords`),
+  `GET /api/desk/needs-you`, `GET /api/settings/hub` + MCP parity +
+  tests/unit/test_hs170_faces_wire.py. Verify by hand (scoped pytest
+  with `HOME=$(mktemp -d)`), then commit under 03 / 04 (stories stay
+  in-progress until the faces are built and rigged).
+
+## 1. The asks of the owner (in order)
+
+1. His word on the Concierge page of the canvas → build 03's face on
+   the Door's grammar (web/src/features/project-room/door/ is the
+   pattern) to the artboards; rig at 640 + 393 asserting the boards;
+   walk on his desk (his real engines: llama.cpp on 192.168.1.43, the
+   keys in his keychain, his local files).
+2. His word on the four faces AND on the N (four; the census ranking
+   names the next in line) → build 04 face by face; each with its rig;
+   the arrival retires the Chair hero (the `Develop a thought` button in
+   a void, `PEOPLE NOT SET UP`, `No calendar connected.`, `CREW 0`).
+3. His attended walk of the 169 Door + Room — STILL OWED.
+
+## 2. Laws learned this sitting (add to the canon of habit)
+
+- **Count = rows.** A caption `FOUND 5` over three rows is a lie; a
+  board never abbreviates — it shows every row the count claims.
+- **No dead verbs on a board.** A verb whose precondition the row says
+  is unmet (`NO TRANSCRIPT` beside `Run intelligence`) is a design bug,
+  not a build bug. Counsel hunts for it; so should the first read.
+- **One egress vocabulary.** `THIS DEVICE` · `LAN` · a host. Never a
+  synonym on one face.
+- **The scanner lies until it is taught.** Property access is not a
+  raw id; a JSX comment is not a raw button; TypeScript is not a
+  sentence; `!rows.length` is not a counter. Fix the scanner before
+  fixing a face it accuses.
+- **Commit before dispatching; the tree is a snapshot.** A PMO commit
+  may catch another worker's half-drawn board; that is fine — the next
+  commit finishes it. What is never fine is a worker restoring files.
+- **Publish once, right.** The canvas went to the owner only after
+  counsel's conditions were paid on both pages.
+
+---
+
 # HANDOVER: MUAD'DIB VIII — addendum after the merge (2026-09-05)
 
 - **Phase 169 MERGED**: PR #551 → main `27eabf0c` (carries Phase 168,
