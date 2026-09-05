@@ -106,6 +106,10 @@ export function MeetingIntelRecovery({
 
   if (loading && recovery === null) return null;
   if (!error && !recovery?.visible) return null;
+  // HS-172: QUEUED and RUNNING states are shown in the header chip now;
+  // the legacy panel (prose REMAINING + clipped text) is suppressed.
+  const st = recovery?.state?.toLowerCase() ?? "";
+  if (st === "queued" || st === "running" || st === "pending") return null;
 
   const retained = recovery ? retainedToken(recovery.completed) : "";
   const running = recovery?.state === "running";

@@ -32,6 +32,51 @@ from urllib.parse import urlparse, parse_qs
 # -- pytest collection guard --
 collect_ignore_glob = ["live172_walk.py"]
 
+
+# -- Intel run guard --
+
+_LAN_RE = re.compile(
+    r"^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)"
+)
+
+
+def _run_allowed(host: str | None) -> tuple[bool, str]:
+    """Decide whether POST /api/meetings/{id}/intelligence/run is allowed.
+
+    Returns (allowed: bool, reason: str).
+
+    ALLOWED only when *host* is a private-network IP or the literal
+    ``local`` / ``this_device`` / ``THIS DEVICE``.  Every other value
+    -- empty, None, a cloud provider name, a profile label, an unknown
+    string -- is DENIED.
+
+    Cases:
+        _run_allowed(None)                   -> (False, "no host")
+        _run_allowed("")                     -> (False, "empty host")
+        _run_allowed("192.168.1.43")         -> (True,  "LAN")
+        _run_allowed("10.0.0.5")             -> (True,  "LAN")
+        _run_allowed("172.16.0.1")           -> (True,  "LAN")
+        _run_allowed("172.32.0.1")           -> (False, "not LAN: 172.32.0.1")
+        _run_allowed("local")               -> (True,  "local")
+        _run_allowed("this_device")          -> (True,  "local")
+        _run_allowed("THIS DEVICE")          -> (True,  "local")
+        _run_allowed("Migrated intel endpoint") -> (False, "not LAN: Migrated intel endpoint")
+        _run_allowed("openai")              -> (False, "not LAN: openai")
+        _run_allowed("api.openai.com")      -> (False, "not LAN: api.openai.com")
+        _run_allowed("anthropic")           -> (False, "not LAN: anthropic")
+        _run_allowed("external_service")    -> (False, "not LAN: external_service")
+    """
+    if not host:
+        return False, "no host" if host is None else "empty host"
+    h = host.strip()
+    if not h:
+        return False, "empty host"
+    if h.lower() in ("local", "this_device", "this device"):
+        return True, "local"
+    if _LAN_RE.match(h):
+        return True, "LAN"
+    return False, f"not LAN: {h}"
+
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_OUT = REPO / "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-08-shots"
 
@@ -212,37 +257,77 @@ def _close_surface(page: Any) -> None:
         _settle(page)
 
 
-# -- Step 1: GET /api/settings/meetings/intelligence --
+# -- Step 1: read intel settings from GET /api/settings/hub + GET /api/settings --
 
 def _step_intel_settings(page: Any, token: str, report: WalkReport) -> dict:
-    """Read auto-run setting + host. Returns the payload for later decisions."""
+    """Read auto-run setting + host from the hub wire and raw settings.
+
+    Returns a dict with keys the later steps need:
+      hub_meetings_host  -- the resolved model host from /api/settings/hub
+      intelligence_auto   -- "room_linked" | "every" | "off"
+      intel_profile_id    -- the raw profile id from /api/settings
+    """
     face = "intel-settings"
-    result = _api(page, "GET", "/api/settings", None, token)
-    payload = {}
-    if result["status"] == 200:
-        payload = result["payload"]
-        intel_enabled = payload.get("meetings", {}).get("intel_enabled", "---")
-        intel_model = payload.get("meetings", {}).get("intel_realtime_model", "---")
-        intel_provider = payload.get("meetings", {}).get("intel_provider", "---")
+    out: dict[str, Any] = {}
+
+    # 1a. GET /api/settings/hub -- the seven-module summary
+    hub_result = _api(page, "GET", "/api/settings/hub", None, token)
+    if hub_result["status"] == 200:
+        hub = hub_result["payload"]
+        meetings_hub = hub.get("meetings", {}) if isinstance(hub, dict) else {}
+        host = meetings_hub.get("host") or None
+        auto = meetings_hub.get("auto", "---")
+        intelligence = meetings_hub.get("intelligence", "---")
+        out["hub_meetings_host"] = host
+        out["intelligence_auto"] = auto
+
         report.facts.append(asdict(FaceFact(
-            face=face, field="intel_enabled", expected="(owner's setting)",
-            observed=str(intel_enabled), verdict="DATA", why="real desk content",
+            face=face, field="hub_meetings_host", expected="(resolved model host or null)",
+            observed=str(host) if host else "(null)",
+            verdict="DATA", why="from GET /api/settings/hub",
         )))
         report.facts.append(asdict(FaceFact(
-            face=face, field="intel_model", expected="(model name)",
-            observed=str(intel_model), verdict="DATA", why="real desk content",
+            face=face, field="hub_meetings_auto", expected="room_linked / every / off",
+            observed=str(auto), verdict="DATA", why="from GET /api/settings/hub",
         )))
         report.facts.append(asdict(FaceFact(
-            face=face, field="intel_provider", expected="(provider)",
-            observed=str(intel_provider), verdict="DATA", why="real desk content",
+            face=face, field="hub_meetings_intelligence", expected="true / false",
+            observed=str(intelligence), verdict="DATA", why="from GET /api/settings/hub",
         )))
     else:
         report.facts.append(asdict(FaceFact(
-            face=face, field="api_status", expected="200",
-            observed=str(result["status"]), verdict="DATA",
-            why=f"HTTP {result['status']}",
+            face=face, field="hub_api_status", expected="200",
+            observed=str(hub_result["status"]), verdict="DATA",
+            why=f"GET /api/settings/hub returned HTTP {hub_result['status']}",
         )))
-    return payload
+
+    # 1b. GET /api/settings -- the raw settings (for the profile id)
+    settings_result = _api(page, "GET", "/api/settings", None, token)
+    if settings_result["status"] == 200:
+        settings = settings_result["payload"]
+        meeting_block = settings.get("meeting", {}) if isinstance(settings, dict) else {}
+        profile_id = meeting_block.get("intel_profile_id", "---")
+        auto_raw = meeting_block.get("intelligence_auto", "---")
+        out["intel_profile_id"] = profile_id
+
+        report.facts.append(asdict(FaceFact(
+            face=face, field="raw_intel_profile_id", expected="(profile id or empty)",
+            observed=str(profile_id) if profile_id else "(empty)",
+            verdict="DATA", why="from GET /api/settings -> meeting.intel_profile_id",
+        )))
+        report.facts.append(asdict(FaceFact(
+            face=face, field="raw_intelligence_auto", expected="room_linked / every / off",
+            observed=str(auto_raw), verdict="DATA",
+            why="from GET /api/settings -> meeting.intelligence_auto",
+        )))
+    else:
+        report.facts.append(asdict(FaceFact(
+            face=face, field="settings_api_status", expected="200",
+            observed=str(settings_result["status"]), verdict="DATA",
+            why=f"GET /api/settings returned HTTP {settings_result['status']}",
+        )))
+
+    return out
 
 
 # -- Step 2: Meeting list + proposals + optional intel run --
@@ -250,6 +335,12 @@ def _step_intel_settings(page: Any, token: str, report: WalkReport) -> dict:
 def _step_meetings_intel(page: Any, token: str, report: WalkReport,
                          settings: dict) -> str | None:
     """Read meetings, find 'Already titled', read proposals, optionally run intel.
+
+    The intel run is guarded by THREE conditions -- ALL must be true:
+      1. hub_meetings_host passes _run_allowed (private LAN or local)
+      2. The target meeting's intel_status is NOT already complete/running/queued
+      3. _run_allowed returned True
+
     Returns the meeting ID used (or None)."""
     face = "meeting-intel"
     result = _api(page, "GET", "/api/meetings", None, token)
@@ -309,23 +400,35 @@ def _step_meetings_intel(page: Any, token: str, report: WalkReport,
             verdict="DATA", why=f"HTTP {prop_result['status']}",
         )))
 
-    # Determine if we can run intel (LAN/local host only)
-    intel_provider = str(settings.get("meetings", {}).get("intel_provider", ""))
-    intel_model = str(settings.get("meetings", {}).get("intel_realtime_model", ""))
-    is_cloud = any(cloud in intel_provider.lower() for cloud in
-                   ("openai", "anthropic", "cloud", "api.")) if intel_provider else False
-    if is_cloud:
+    # ---- Intel run guard (three conditions) ----
+
+    # Condition 1: host must be private LAN or local
+    hub_host = settings.get("hub_meetings_host")
+    allowed, reason = _run_allowed(hub_host)
+
+    if not allowed:
         report.facts.append(asdict(FaceFact(
-            face=face, field="intel_run", expected="SKIPPED (cloud host)",
-            observed=f"provider={intel_provider}, model={intel_model}",
-            verdict="DATA", why="cloud host -- will not run intel on his desk",
+            face=face, field="intel_run", expected="SKIPPED",
+            observed=f"SKIPPED: {reason} (host={hub_host})",
+            verdict="DATA", why=f"host guard denied: {reason}",
         )))
         return meeting_id
 
+    # Condition 2: meeting must not already have intel complete/running/queued
+    intel_status = str(target.get("intel_status", "disabled")).lower().strip()
+    if intel_status in ("complete", "running", "queued", "importing"):
+        report.facts.append(asdict(FaceFact(
+            face=face, field="intel_run", expected="SKIPPED",
+            observed=f"SKIPPED: meeting already {intel_status}",
+            verdict="DATA", why=f"intel_status={intel_status}, no re-run needed",
+        )))
+        return meeting_id
+
+    # All guards passed -- fire the one allowed write
     report.facts.append(asdict(FaceFact(
         face=face, field="intel_run_attempt", expected="POST run",
-        observed=f"running on meeting {meeting_id[:8]}...",
-        verdict="DATA", why="LAN/local host, allowed",
+        observed=f"running on meeting {meeting_id[:8]}... (host={hub_host}, guard={reason})",
+        verdict="DATA", why=f"LAN/local host ({reason}), intel_status={intel_status}",
     )))
     run_result = _api(page, "POST",
                       f"/api/meetings/{meeting_id}/intelligence/run",

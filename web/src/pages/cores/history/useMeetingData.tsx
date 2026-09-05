@@ -59,6 +59,8 @@ export interface MeetingData {
   proposeSlack: (what: "digest" | "followup") => Promise<void>;
   hasOutcomes: boolean;
   intelOff: boolean;
+  /** The raw intel state string for QUEUED/FAILED verb display. */
+  intelState: string;
   captureBad: boolean;
   needsRows: NeedsRow[];
   needsCount: number;
@@ -222,10 +224,11 @@ export function useMeetingData(
   const startedAt = detail?.started_at ?? meeting?.started_at;
   const durationS = Number(detail?.duration_seconds ?? meeting?.duration_seconds ?? 0);
   const intelStatus = detail?.intel_status;
-  const intelOff =
-    (typeof intelStatus === "object" && intelStatus !== null
+  const intelState =
+    typeof intelStatus === "object" && intelStatus !== null
       ? String((intelStatus as Record<string, unknown>).state ?? "")
-      : String(intelStatus ?? "")) === "disabled";
+      : String(intelStatus ?? "");
+  const intelOff = intelState === "disabled";
   const hasOutcomes =
     proposalRows.length > 0 || openActions.length > 0 || settledActions.length > 0 || ftProposals.length > 0;
   const captureBad =
@@ -366,6 +369,7 @@ export function useMeetingData(
     proposeSlack,
     hasOutcomes,
     intelOff,
+    intelState,
     captureBad,
     needsRows,
     needsCount,

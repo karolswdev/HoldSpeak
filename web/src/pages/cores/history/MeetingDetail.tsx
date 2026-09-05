@@ -42,6 +42,7 @@ export function MeetingDetail({
     segments,
     artifactRows,
     intelOff,
+    intelState,
     needsRows,
     needsCount,
     settledActions,
@@ -92,8 +93,28 @@ export function MeetingDetail({
             needsRows={needsRows}
             needsCount={needsCount}
             intelOff={intelOff}
+            intelState={intelState}
             hasTranscript={hasTranscript}
             onRunIntelligence={onRunIntelligence}
+            onRetryIntelligence={
+              (intelState === "error" || intelState === "failed") && onRunIntelligence
+                ? onRunIntelligence
+                : undefined
+            }
+            onSkipIntelligence={
+              (intelState === "queued" || intelState === "pending" || intelState === "error" || intelState === "failed")
+                ? async () => {
+                    try {
+                      await apiFetch(
+                        `/api/meetings/${encodeURIComponent(id)}/intel-recovery/skip`,
+                        { method: "POST" },
+                      );
+                      setDetail(await apiFetch(`/api/meetings/${encodeURIComponent(id)}`));
+                      onDeleted();
+                    } catch { /* stays */ }
+                  }
+                : undefined
+            }
           />
           <TranscriptWell
             id={id}

@@ -90,6 +90,41 @@ def _seed(monkeypatch: pytest.MonkeyPatch) -> None:
         conn.commit()
 
 
+def _seed_queued(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Seed one meeting with intel_status=queued and a transcript."""
+    from holdspeak.db import get_database
+
+    db = get_database()
+    now = datetime.now()
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO meetings "
+            "(id, started_at, ended_at, title, duration_seconds, "
+            " intel_status, capture_status, provenance) "
+            "VALUES (?, ?, ?, ?, ?, 'queued', 'finalized', 'desktop')",
+            (
+                "m-queued",
+                (now - timedelta(hours=2)).isoformat(),
+                (now - timedelta(hours=1, minutes=30)).isoformat(),
+                "Sprint review",
+                1800.0,
+            ),
+        )
+        for i in range(3):
+            conn.execute(
+                "INSERT INTO segments (meeting_id, text, speaker, start_time, end_time) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (
+                    "m-queued",
+                    f"Sprint topic {i}",
+                    "Karol",
+                    float(i * 600),
+                    float((i + 1) * 600),
+                ),
+            )
+        conn.commit()
+
+
 def _open_meetings(page: Any, url: str) -> None:
     """Navigate to the Meetings surface."""
     page.evaluate("""() => {
@@ -246,4 +281,94 @@ class TestMeetingAfterRun:
             page.close()
             errors.clear()
 
+            browser.close()
+
+
+class TestMeetingQueued:
+    """HS-172 -- a queued meeting shows header chip, no legacy INTELLIGENCE panel."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        _ensure_build()
+        self.server, self.base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        _seed_queued(monkeypatch)
+        self.tmp_path = tmp_path
+
+    @pytest.mark.e2e
+    @pytest.mark.requires_meeting
+    def test_meeting_queued(self) -> None:
+        from playwright.sync_api import sync_playwright
+
+        errors: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda err: errors.append(str(err)))
+
+            page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+            _api(page, "POST", "/api/desk/seed", token=TOKEN)
+            _api(page, "PUT", "/api/setup/onboarding",
+                 {"disposition": "completed"}, token=TOKEN)
+            _normal_chair(page)
+            _open_meetings(page, self.base)
+
+            headline = page.locator("[data-testid='meetings-headline']")
+            headline.wait_for(timeout=8_000)
+            _settle(page)
+
+            # The list row should show QUEUED chip
+            state_tokens = page.locator("[data-testid='state-token']")
+            all_tokens = state_tokens.all_text_contents()
+            assert any("QUEUED" in t for t in all_tokens), (
+                f"QUEUED token missing: {all_tokens}"
+            )
+
+            # Click the queued meeting to open detail
+            row_body = page.locator(
+                "[data-testid='meeting-row-m-queued'] .meetings-stream-row-body"
+            )
+            row_body.click()
+            detail = page.locator(".surface-split-detail .surface-display")
+            detail.wait_for(timeout=8_000)
+            _settle(page)
+
+            # Header shows QUEUED chip
+            facts = page.locator(".meetings-detail-facts").text_content() or ""
+            assert "QUEUED" in facts, f"QUEUED not in detail facts: {facts}"
+
+            # No REMAINING text (legacy panel suppressed)
+            body_text = page.locator(".surface-split-detail").text_content() or ""
+            assert "REMAINING" not in body_text, (
+                f"Legacy REMAINING text found in queued detail: {body_text[:200]}"
+            )
+
+            # No clipped elements in the detail
+            clipped = page.evaluate("""() => {
+                const detail = document.querySelector('.surface-split-detail');
+                if (!detail) return [];
+                const clipped = [];
+                for (const el of detail.querySelectorAll('*')) {
+                    if (el.scrollWidth > el.clientWidth + 4 && el.clientWidth > 0 && el.clientWidth < 20) {
+                        clipped.push(el.textContent?.trim().slice(0, 60));
+                    }
+                }
+                return clipped;
+            }""")
+            assert len(clipped) == 0, f"Clipped elements in queued detail: {clipped}"
+
+            # Skip verb present
+            skip_btn = page.locator("[data-testid='detail-skip-btn']")
+            assert skip_btn.count() >= 1, "Skip button absent on queued meeting"
+
+            # Screenshot
+            SHOTS.mkdir(parents=True, exist_ok=True)
+            _settle(page)
+            page.screenshot(
+                path=str(SHOTS / f"build-meeting-queued-1440.png"),
+                full_page=True,
+            )
+
+            _assert_clean(page, errors)
+            page.close()
             browser.close()

@@ -673,10 +673,57 @@ class TestIntelStatusEnrichment:
         """Hub meetings.host is null when no intel profile is assigned."""
         from holdspeak.web.routes.system.settings import _resolve_meetings_host
 
-        # Create a mock config with no intel_profile_id.
         class _MockMeeting:
             intel_profile_id = None
         class _MockConfig:
             meeting = _MockMeeting()
         result = _resolve_meetings_host(_MockConfig())
         assert result is None
+
+
+# ── Host derivation (three cases) ───────────────────────────────────
+
+class TestHostDerivation:
+    """The host value is the HOST the run egresses to, never a label."""
+
+    def test_lan_endpoint_host(self) -> None:
+        """A LAN endpoint -> its ip/hostname."""
+        from holdspeak.web.routes.system.settings import _placement_host
+        from dataclasses import dataclass
+
+        @dataclass
+        class FakePlacement:
+            node: str | None = None
+            base_url: str | None = None
+            boundary: str = "private_network"
+
+        p = FakePlacement(base_url="http://192.168.1.43:8080/v1")
+        assert _placement_host(p) == "192.168.1.43"
+
+    def test_local_no_base_url(self) -> None:
+        """This device (no base_url) -> 'local'."""
+        from holdspeak.web.routes.system.settings import _placement_host
+        from dataclasses import dataclass
+
+        @dataclass
+        class FakePlacement:
+            node: str | None = None
+            base_url: str | None = None
+            boundary: str = "local"
+
+        p = FakePlacement()
+        assert _placement_host(p) == "local"
+
+    def test_cloud_provider_host(self) -> None:
+        """A cloud provider -> the provider's API host."""
+        from holdspeak.web.routes.system.settings import _placement_host
+        from dataclasses import dataclass
+
+        @dataclass
+        class FakePlacement:
+            node: str | None = None
+            base_url: str | None = None
+            boundary: str = "cloud"
+
+        p = FakePlacement(base_url="https://api.openai.com/v1")
+        assert _placement_host(p) == "api.openai.com"

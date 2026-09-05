@@ -53,7 +53,9 @@ export function MeetingHeader({
   if (token.label === "RAN" && intelDur) {
     parts.push(<span key="intel-dur" className="meetings-stream-fact">{intelDur}</span>);
   }
-  if ((token.label === "RAN" || token.label === "RUNNING") && rawHost) {
+  // Host chip for any intel-active state: RAN, RUNNING, QUEUED.
+  const hostStates = ["RAN", "RUNNING", "QUEUED"];
+  if (hostStates.includes(token.label) && rawHost) {
     parts.push(<EgressChip key="intel-host" label={egressLabel(rawHost)} scope={egressScope(rawHost)} />);
   }
 

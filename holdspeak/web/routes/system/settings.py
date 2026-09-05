@@ -30,26 +30,38 @@ def _service(ctx: WebContext) -> SettingsService:
 def _resolve_meetings_host(config: Any) -> str | None:
     """HS-172-02: resolve the meetings group's assigned model host.
 
-    Returns the host from the assigned profile (stripping ``legacy-``),
-    or None when no model is assigned. Never a default placement.
+    Returns the HOST the run egresses to, never a profile label:
+    - LAN endpoint: its ip/hostname (``192.168.1.43``)
+    - This device: ``local``
+    - Cloud provider: the provider's API host (``api.openai.com``)
+    - Mesh: the node name
+    - No assignment: None
     """
     try:
         profile_id = config.meeting.intel_profile_id
         if not profile_id:
             return None
-        from ....intel.providers import resolve_meeting_placement
+        from ....intel.providers import resolve_meeting_placement, endpoint_host
         placement = resolve_meeting_placement(config.meeting)
-        if placement.profile_id:
-            host = placement.boundary if placement.boundary == "local" else (
-                placement.profile_name or placement.boundary or "local"
-            )
-            # Strip legacy- prefix (the Concierge/Speak resolver convention).
-            if isinstance(host, str) and host.startswith("legacy-"):
-                host = host[len("legacy-"):]
-            return host
-        return None
+        if not placement.profile_id:
+            return None
+        return _placement_host(placement)
     except Exception:
         return None
+
+
+def _placement_host(placement: Any) -> str:
+    """Derive the egress host from a MeetingPlacement.
+
+    Uses ``endpoint_host(base_url)`` for the bare hostname (the same
+    source the Concierge's engine_display_name and the Speak resolver
+    use), falling back to the boundary for local runs.
+    """
+    from ....intel.providers import endpoint_host
+    if placement.node:
+        return str(placement.node)
+    host = endpoint_host(placement.base_url)
+    return host if host else (placement.boundary or "local")
 
 
 def build_settings_router(ctx: WebContext) -> APIRouter:

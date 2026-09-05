@@ -363,12 +363,15 @@ class RoutingGlueMixin:
             )
 
             # Resolve the host at the point of decision (Article III).
+            # The value is the HOST the run egresses to, never a label.
             try:
-                from ..intel.providers import resolve_meeting_placement
+                from ..intel.providers import resolve_meeting_placement, endpoint_host
                 placement = resolve_meeting_placement(cfg)
-                host = placement.boundary if placement.boundary == "local" else (
-                    placement.profile_name or placement.boundary or "local"
-                )
+                if placement.node:
+                    host = str(placement.node)
+                else:
+                    _h = endpoint_host(placement.base_url)
+                    host = _h if _h else (placement.boundary or "local")
             except Exception:
                 host = "local"
 
