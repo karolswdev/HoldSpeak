@@ -60,6 +60,16 @@ report without a rig tail and shots on disk is not a report. The
 ratchet ceiling is restored with `git checkout` when a lane raises it.
 `SurfaceLedger` needs `cols="room"` or the primary collapses.
 
+**Phase 174 Reach (2026-09-05 19:45) — activated, stacked on #556.**
+Boards dispatched. **Your questions (174):** (1) the third connector —
+Confluence is the reversible default, but its CLI cannot list or search
+pages (only blog posts, and pages by known ID); is that enough for your
+team, or do you want another tool? (2) the .43 runner drives the hub
+over the tailnet with a scoped credential (palette + TTL); the leg from
+the .43 box itself waits for your sitting — when? (3) the remote
+listener is off by default; do you want it on for your desk once you
+have issued a credential?
+
 **Phase 173 (2026-09-05 18:00) — counsel RATIFY-W-C on the design,
 ruled.** Nine boards on
 https://claude.ai/code/artifact/9f1558b4-0867-4152-bc7e-1314dde5e82c.

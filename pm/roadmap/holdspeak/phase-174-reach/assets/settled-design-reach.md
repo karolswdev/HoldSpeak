@@ -727,3 +727,30 @@ IX.2). His words verbatim. His verdict.
 | 09 LAN companion notifications | S (conditional) | The reverse Bonjour push; DEFERRED if the companion track stays dormant |
 | 10 The docs | S | Re-shot + MCP_SIDECAR.md generator extension |
 | 11 The close | S | Gates, sweep, the PR |
+
+
+## Addendum — the orchestrator's rulings under the standing goal (2026-09-05)
+
+- **Story 06, the third connector — Confluence as the reversible
+  default; his word owed.** The `acli confluence` gap (no `page list` /
+  `page search`) is real. V0 is honest and limited: the WatchSource
+  watches **blog posts** (`blog list --space-id`) and **pages by known
+  ID** (`page view --id`, IDs from meeting mentions, suggested sources,
+  or the owner typing one) — option (B)+(C). No Confluence REST via
+  `curl` (option A) — the CLI holds the credentials, not HoldSpeak. The
+  Door row says what it can do: defaults `RECENT BLOGS` (on) and
+  `PAGES BY ID` (off); never a `RECENTLY UPDATED` pages promise the
+  tool cannot keep. If he chooses another tool, the grammar stays.
+- **Story 08, the .43 runner — proven on this machine first.** The
+  client script and the Streamable HTTP route are proven end to end
+  against the hub on the Mac (loopback with an agent credential is the
+  same path); the leg from the .43 box itself waits for his sitting
+  (this sandbox does not reach the LAN). The transcript shape in D2(e)
+  is the evidence either way.
+- **Story 09 (LAN companion notifications)** is conditional on 179's
+  companion; in 174 it ships the hub side only (the notification event
+  with `origin` on the mesh bus) and records the dependency.
+- **The REMOTE chip** is the fourth egress state everywhere (`REMOTE ·
+  <caller ip>`); a remote principal is never OWNER; the listener is off
+  by default and the toggle lives in Settings → System with the
+  credentials ledger beneath it.
