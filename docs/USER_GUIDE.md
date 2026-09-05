@@ -530,7 +530,7 @@ three positions and the model's host chip:
 | Position | Behavior |
 |---|---|
 | **OFF** | Intelligence never runs automatically. Use **Run intelligence** on individual meetings. |
-| **ROOM-LINKED ONLY** (default) | Intelligence runs automatically after every meeting linked to a Room. The Room link is the consent act. |
+| **AFTER ROOM MEETINGS** (default) | Intelligence runs automatically after every meeting linked to a Room. The Room link is the consent act. |
 | **AFTER EVERY MEETING** | Intelligence runs automatically after every meeting, linked or not. |
 
 The model host chip on the row names where intelligence runs (for example
@@ -554,7 +554,7 @@ Three verbs on each proposal:
 |---|---|
 | **Confirm** | Writes the decision record and the commitment through the kernel. The proposal moves to **DECISIONS & COMMITMENTS**. |
 | **Edit** | Unfolds an inline editor: the extracted text, the owner, and the due date are editable. **Save & confirm** commits the edited version. The original extraction stays as provenance. |
-| **Drop** | Dismisses the proposal with a receipt. No record is created. |
+| **Dismiss** | Declines the proposal with a receipt. No record is created. |
 
 When all proposals are confirmed or dropped, the **NEEDS YOU** section shows
 only Watch items (or is absent when nothing needs you).
@@ -565,7 +565,7 @@ The meeting row in the stream gains a state token after an auto-run:
 `RAN, 41 S, 192.168.1.43, LAN` (a success chip, the wall-clock duration, and
 the model's host). A failed run reads `FAILED` with the reason named. The
 detail view's **NEEDS YOU** section lists the proposals scoped to that meeting,
-with the same **Confirm** / **Edit** / **Drop** verbs.
+with the same **Confirm** / **Edit** / **Dismiss** verbs.
 
 ### The 1:1 card
 

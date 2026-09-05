@@ -406,7 +406,7 @@ sequenceDiagram
   Note over UI: Owner reviews proposals
   UI->>KO: Confirm (one proposal)
   KO-->>UI: decision_record + commitment (receipted)
-  UI->>FT: Drop (one proposal)
+  UI->>FT: Dismiss (one proposal)
   FT-->>UI: proposal marked dropped (receipted)
 ```
 
