@@ -180,3 +180,21 @@ doc-drift guard retired the Chair lane vocabulary) — above. N1 the
 posture said twice in settingsPrefs.tsx:383 — the build removes the
 `gadget-fact` span. N5 `1,204 WORDS` = the transcript word count. N6 the
 intelligence run route — check `/api/intel/process` first.
+
+
+## Addendum (2026-09-05 03:50) — the Door's items join NEEDS YOU
+
+Parking the Chair board (144) left `/api/door` items — the owner's own
+action items with owners and due dates (overdue · now · waiting ·
+active · unassigned) — with no face. They are needs-you by any reading.
+Ruling: the arrival's NEEDS YOU merges them with the Rooms' items —
+overdue first (`OVERDUE · Nd`, danger), then now (`NOW`, warning), then
+waiting (`WAITING ON <owner>`, muted); unassigned items carry the ghost
+verb `Name an owner` in place of `Open`; active items do not appear (the
+headline says nothing is needed of them). Source emblem = the item's
+origin (`MTG` for a meeting, `TH` for a thought, `DOOR` when unknown);
+`Open` opens the origin. The headline counts them (`N need you` when no
+project is involved; `across M projects` only when Rooms contribute).
+The board's five columns retire; the 144 rig re-points to these rows,
+to the NEXT line (the rail), and to Settings → Meetings for the
+calendar glass.
