@@ -482,160 +482,161 @@ class PeopleService:
         now = datetime.now()
 
         try:
-            conn = db._connection()
+            _cm = db._connection()
         except Exception:
             return empty
+        with _cm as conn:
 
-        for project_id in project_refs:
-            try:
-                watches = conn.execute(
-                    "SELECT * FROM connector_watches WHERE project_id=? "
-                    "ORDER BY created_at,id",
-                    (project_id,),
-                ).fetchall()
-            except Exception:
-                continue
-
-            # Get project name for host context.
-            try:
-                proj_row = conn.execute(
-                    "SELECT name FROM projects WHERE id=?", (project_id,),
-                ).fetchone()
-                project_name = proj_row["name"] if proj_row else project_id
-            except Exception:
-                project_name = project_id
-
-            for watch in watches:
-                connector_id = watch["connector_id"] if isinstance(watch, dict) else (watch[2] if len(watch) > 2 else "")
+            for project_id in project_refs:
                 try:
-                    connector_id = watch["connector_id"]
-                except (KeyError, TypeError):
-                    continue
-                try:
-                    import json as _json
-                    snapshot_raw = watch["snapshot"]
-                    if isinstance(snapshot_raw, str):
-                        snapshot = _json.loads(snapshot_raw)
-                    elif isinstance(snapshot_raw, dict):
-                        snapshot = snapshot_raw
-                    else:
-                        continue
+                    watches = conn.execute(
+                        "SELECT * FROM connector_watches WHERE project_id=? "
+                        "ORDER BY created_at,id",
+                        (project_id,),
+                    ).fetchall()
                 except Exception:
                     continue
 
-                query_kind_raw = ""
+                # Get project name for host context.
                 try:
-                    query_kind_raw = watch["query_kind"]
-                except (KeyError, TypeError):
-                    pass
+                    proj_row = conn.execute(
+                        "SELECT name FROM projects WHERE id=?", (project_id,),
+                    ).fetchone()
+                    project_name = proj_row["name"] if proj_row else project_id
+                except Exception:
+                    project_name = project_id
 
-                # Extract entities from the persisted snapshot shape.
-                entities_raw = snapshot.get("entities") if isinstance(snapshot, dict) else None
-                if isinstance(entities_raw, dict):
-                    entities = list(entities_raw.values())
-                elif isinstance(entities_raw, list):
-                    entities = entities_raw
-                else:
-                    entities = []
+                for watch in watches:
+                    connector_id = watch["connector_id"] if isinstance(watch, dict) else (watch[2] if len(watch) > 2 else "")
+                    try:
+                        connector_id = watch["connector_id"]
+                    except (KeyError, TypeError):
+                        continue
+                    try:
+                        import json as _json
+                        snapshot_raw = watch["snapshot_json"]
+                        if isinstance(snapshot_raw, str):
+                            snapshot = _json.loads(snapshot_raw)
+                        elif isinstance(snapshot_raw, dict):
+                            snapshot = snapshot_raw
+                        else:
+                            continue
+                    except Exception:
+                        continue
 
-                if connector_id == "gh" and query_kind_raw == "pull_requests":
-                    for entity in entities:
-                        if not isinstance(entity, dict):
-                            continue
-                        review_requests = (
-                            entity.get("review_requests")
-                            or entity.get("reviewRequests")
-                            or []
-                        )
-                        state = str(entity.get("state") or "").lower()
-                        if state != "open":
-                            continue
-                        # Check if any identity matches a reviewer.
-                        matched = any(
-                            str(r).casefold() in identities
-                            for r in review_requests
-                        )
-                        if matched:
-                            updated_at_str = (
-                                entity.get("updated_at")
-                                or entity.get("updatedAt")
-                                or ""
+                    query_kind_raw = ""
+                    try:
+                        query_kind_raw = watch["query_kind"]
+                    except (KeyError, TypeError):
+                        pass
+
+                    # Extract entities from the persisted snapshot shape.
+                    entities_raw = snapshot.get("entities") if isinstance(snapshot, dict) else None
+                    if isinstance(entities_raw, dict):
+                        entities = list(entities_raw.values())
+                    elif isinstance(entities_raw, list):
+                        entities = entities_raw
+                    else:
+                        entities = []
+
+                    if connector_id == "gh" and query_kind_raw == "pull_requests":
+                        for entity in entities:
+                            if not isinstance(entity, dict):
+                                continue
+                            review_requests = (
+                                entity.get("review_requests")
+                                or entity.get("reviewRequests")
+                                or []
                             )
-                            days_waiting = 0
-                            if updated_at_str:
+                            state = str(entity.get("state") or "").lower()
+                            if state != "open":
+                                continue
+                            # Check if any identity matches a reviewer.
+                            matched = any(
+                                str(r).casefold() in identities
+                                for r in review_requests
+                            )
+                            if matched:
+                                updated_at_str = (
+                                    entity.get("updated_at")
+                                    or entity.get("updatedAt")
+                                    or ""
+                                )
+                                days_waiting = 0
+                                if updated_at_str:
+                                    try:
+                                        updated_dt = datetime.fromisoformat(
+                                            str(updated_at_str).replace("Z", "+00:00")
+                                        )
+                                        days_waiting = max(
+                                            0,
+                                            (now.replace(tzinfo=None)
+                                             - updated_dt.replace(tzinfo=None)).days,
+                                        )
+                                    except (ValueError, TypeError):
+                                        pass
+                                pr_number = entity.get("number")
+                                repo = ""
+                                url = entity.get("url") or ""
+                                # Extract repo from URL if available.
+                                if url and "github.com/" in url:
+                                    parts = url.split("github.com/")[1].split("/")
+                                    if len(parts) >= 2:
+                                        repo = f"{parts[0]}/{parts[1]}"
+                                prs_waiting.append({
+                                    "title": entity.get("title") or "",
+                                    "repo": repo,
+                                    "pr_number": pr_number,
+                                    "days_waiting": days_waiting,
+                                    "url": url,
+                                    "room_id": project_id,
+                                    "room_name": project_name,
+                                })
+
+                    elif connector_id == "jira" and query_kind_raw == "issues":
+                        for entity in entities:
+                            if not isinstance(entity, dict):
+                                continue
+                            assignee = str(entity.get("assignee") or "")
+                            if not assignee.strip():
+                                continue
+                            if assignee.strip().casefold() not in identities:
+                                continue
+                            status_cat = str(
+                                entity.get("status_category") or ""
+                            ).lower()
+                            if status_cat == "done":
+                                continue
+                            due_at = entity.get("due_at") or entity.get("dueDate") or ""
+                            overdue = False
+                            if due_at:
                                 try:
-                                    updated_dt = datetime.fromisoformat(
-                                        str(updated_at_str).replace("Z", "+00:00")
+                                    due_dt = datetime.fromisoformat(
+                                        str(due_at).replace("Z", "+00:00").split("T")[0]
                                     )
-                                    days_waiting = max(
-                                        0,
-                                        (now.replace(tzinfo=None)
-                                         - updated_dt.replace(tzinfo=None)).days,
-                                    )
+                                    overdue = (
+                                        now.replace(tzinfo=None)
+                                        - due_dt.replace(tzinfo=None)
+                                    ).days > 0
                                 except (ValueError, TypeError):
                                     pass
-                            pr_number = entity.get("number")
-                            repo = ""
-                            url = entity.get("url") or ""
-                            # Extract repo from URL if available.
-                            if url and "github.com/" in url:
-                                parts = url.split("github.com/")[1].split("/")
-                                if len(parts) >= 2:
-                                    repo = f"{parts[0]}/{parts[1]}"
-                            prs_waiting.append({
-                                "title": entity.get("title") or "",
-                                "repo": repo,
-                                "pr_number": pr_number,
-                                "days_waiting": days_waiting,
-                                "url": url,
+                            open_assignments.append({
+                                "summary": entity.get("summary")
+                                           or entity.get("title") or "",
+                                "key": entity.get("key") or "",
+                                "status": entity.get("status") or "",
+                                "url": entity.get("url") or "",
+                                "overdue": overdue,
                                 "room_id": project_id,
                                 "room_name": project_name,
                             })
 
-                elif connector_id == "jira" and query_kind_raw == "issues":
-                    for entity in entities:
-                        if not isinstance(entity, dict):
-                            continue
-                        assignee = str(entity.get("assignee") or "")
-                        if not assignee.strip():
-                            continue
-                        if assignee.strip().casefold() not in identities:
-                            continue
-                        status_cat = str(
-                            entity.get("status_category") or ""
-                        ).lower()
-                        if status_cat == "done":
-                            continue
-                        due_at = entity.get("due_at") or entity.get("dueDate") or ""
-                        overdue = False
-                        if due_at:
-                            try:
-                                due_dt = datetime.fromisoformat(
-                                    str(due_at).replace("Z", "+00:00").split("T")[0]
-                                )
-                                overdue = (
-                                    now.replace(tzinfo=None)
-                                    - due_dt.replace(tzinfo=None)
-                                ).days > 0
-                            except (ValueError, TypeError):
-                                pass
-                        open_assignments.append({
-                            "summary": entity.get("summary")
-                                       or entity.get("title") or "",
-                            "key": entity.get("key") or "",
-                            "status": entity.get("status") or "",
-                            "url": entity.get("url") or "",
-                            "overdue": overdue,
-                            "room_id": project_id,
-                            "room_name": project_name,
-                        })
-
-        oldest = max((p["days_waiting"] for p in prs_waiting), default=0)
-        return {
-            "prs_waiting": prs_waiting,
-            "oldest_waiting_days": oldest,
-            "open_assignments": open_assignments,
-        }
+            oldest = max((p["days_waiting"] for p in prs_waiting), default=0)
+            return {
+                "prs_waiting": prs_waiting,
+                "oldest_waiting_days": oldest,
+                "open_assignments": open_assignments,
+            }
 
     @staticmethod
     def _brief_plaintext(

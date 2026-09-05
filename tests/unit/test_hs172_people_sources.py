@@ -51,7 +51,7 @@ def plain_db(tmp_path: Path) -> Any:
     )""")
     conn.execute("""CREATE TABLE IF NOT EXISTS connector_watches (
         id TEXT PRIMARY KEY, project_id TEXT, connector_id TEXT,
-        query_kind TEXT, query TEXT, snapshot TEXT, enabled INTEGER DEFAULT 1,
+        query_kind TEXT, query TEXT, snapshot_json TEXT, enabled INTEGER DEFAULT 1,
         state TEXT DEFAULT 'active', baseline_state TEXT DEFAULT 'established',
         last_error TEXT, created_at TEXT DEFAULT (datetime('now')),
         updated_at TEXT DEFAULT (datetime('now'))
@@ -113,7 +113,7 @@ def _seed_watch(
     )
     snapshot = json.dumps({"schema": 1, "entities": {str(i): e for i, e in enumerate(entities)}})
     conn.execute(
-        "INSERT INTO connector_watches (id, project_id, connector_id, query_kind, snapshot, query) "
+        "INSERT INTO connector_watches (id, project_id, connector_id, query_kind, snapshot_json, query) "
         "VALUES (?, ?, ?, ?, ?, '{}')",
         (f"w_{project_id}_{connector_id}_{query_kind}", project_id, connector_id, query_kind, snapshot),
     )
