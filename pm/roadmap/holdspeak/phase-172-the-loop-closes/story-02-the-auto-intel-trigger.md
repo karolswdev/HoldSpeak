@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 172
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-172-01
 - **Unblocks:** HS-172-03
 - **Owner:** unassigned
@@ -42,19 +42,19 @@ user chose to link the meeting to a project; that is the arming act).
 
 ## Acceptance criteria
 
-- [ ] A meeting linked to a Room via `meeting_projects` triggers an
+- [x] A meeting linked to a Room via `meeting_projects` triggers an
       intel job automatically after capture stops; verified by a rig
       that boots a hub, creates a Room-linked meeting, stops capture,
       and asserts an intel job exists for that meeting.
-- [ ] A meeting NOT linked to any Room does NOT auto-trigger intel
+- [x] A meeting NOT linked to any Room does NOT auto-trigger intel
       (unless manually enabled via the per-meeting toggle).
-- [ ] If no model is assigned (no 170 concierge), the job queues with
+- [x] If no model is assigned (no 170 concierge), the job queues with
       status "no_model_assigned" and the Room shows "No model" (Article
       VI: honest at zero).
-- [ ] Duplicate enqueue is idempotent (same transcript hash = no new
+- [x] Duplicate enqueue is idempotent (same transcript hash = no new
       job); verified by calling `stop_capture` twice.
-- [ ] Every enqueue leaves a kernel receipt (Article XI.2).
-- [ ] Zero egress; the model runs locally (Article III).
+- [x] Every enqueue leaves a kernel receipt (Article XI.2).
+- [x] Zero egress; the model runs locally (Article III).
 
 ## Test plan
 
