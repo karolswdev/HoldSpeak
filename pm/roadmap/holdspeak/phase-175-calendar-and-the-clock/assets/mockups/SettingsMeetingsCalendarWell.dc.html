@@ -13,7 +13,7 @@
   </style>
 </helmet>
 
-<!-- ═══ WINDOW "Meetings" (640) — connect well open ═══ -->
+<!-- ═══ WINDOW "Meetings" (640) — connect well open, order: Intelligence · CAPTURE+EXPORT · CALENDAR ═══ -->
 <div style="width:640px; border:1px solid #363b50; border-radius:2px; background:#15171d; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40), inset 0 0 0 1px #2a2e3e; display:flex; flex-direction:column;">
 
   <!-- ─── TITLE BAR ─── -->
@@ -38,7 +38,39 @@
       <div style="font:650 26px/1.15 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">After room meetings</div>
     </div>
 
-    <!-- ═══ CALENDAR section ═══ -->
+    <!-- ═══ INTELLIGENCE ROW (from 172) ═══ -->
+    <div style="display:flex; flex-direction:column; gap:4px; padding:10px 0; border-top:1px solid #2a2e3e;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">Intelligence</span>
+        <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">AFTER ROOM MEETINGS<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+        <span style="flex:1;"></span>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px;">
+        <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">192.168.1.43 &middot; LAN</span>
+        <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap;">LAST RAN 09:12 &middot; 41 S</span>
+      </div>
+    </div>
+
+    <!-- ═══ CAPTURE + EXPORT (stays right under Intelligence) ═══ -->
+    <div style="display:flex; flex-direction:column;">
+      <div style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; margin-bottom:6px;">CAPTURE + EXPORT</div>
+
+      <div style="display:flex; align-items:center; gap:8px; padding:10px 0; border-top:1px solid #2a2e3e;">
+        <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">Mic device</span>
+        <span style="flex:1;"></span>
+        <div style="display:flex; align-items:center; gap:8px; padding:4px 10px; background:#1c1f27; border:1px solid #2a2e3e; border-radius:2px; box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07);">
+          <span style="font:13px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#9ba2b0;">MacBook Pro Microphone</span>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px; padding:10px 0; border-top:1px solid #2a2e3e;">
+        <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">Format</span>
+        <span style="flex:1;"></span>
+        <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">TXT<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+      </div>
+    </div>
+
+    <!-- ═══ CALENDAR section (below CAPTURE+EXPORT per design D2c) ═══ -->
     <div style="display:flex; flex-direction:column;">
       <div style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; margin-bottom:6px;">CALENDAR</div>
 
@@ -56,7 +88,7 @@
         </div>
       </div>
 
-      <!-- Connect row (label) -->
+      <!-- Connect row -->
       <div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid #2a2e3e;">
         <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#9ba2b0; white-space:nowrap;">Connect calendar</span>
         <span style="flex:1;"></span>
