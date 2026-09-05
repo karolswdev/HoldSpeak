@@ -1,0 +1,22 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 642, "h": 660, "title": "Room · proposals in NEEDS YOU · 640" },
+    { "file": "RoomProposalEdit.dc.html", "x": 760, "y": 0, "w": 642, "h": 494, "title": "Room · Edit in place · 640" },
+    { "file": "RoomProposalsPhone.dc.html", "x": 1520, "y": 0, "w": 395, "h": 827, "title": "Room · proposals · 393" },
+    { "file": "MeetingAfterRun.dc.html", "x": 2040, "y": 0, "w": 642, "h": 526, "title": "Meeting · after the run · 640" },
+    { "file": "MeetingAfterRunPhone.dc.html", "x": 2800, "y": 0, "w": 395, "h": 571, "title": "Meeting · after the run · 393" },
+    { "file": "ArrivalConfirm.dc.html", "x": 3320, "y": 0, "w": 1440, "h": 900, "title": "Arrival · Confirm: rows · 1440" },
+    { "file": "ArrivalConfirmPhone.dc.html", "x": 4880, "y": 0, "w": 393, "h": 718, "title": "Arrival · Confirm: rows · 393" },
+    { "file": "PeopleOneOnOne.dc.html", "x": 0, "y": 1200, "w": 640, "h": 461, "title": "People · the 1:1 card · 640" },
+    { "file": "PeopleOneOnOnePhone.dc.html", "x": 760, "y": 1200, "w": 393, "h": 489, "title": "People · the 1:1 card · 393" },
+    { "file": "RoomSuggestedSource.dc.html", "x": 1280, "y": 1200, "w": 640, "h": 421, "title": "Room · SOURCES with SUGGESTED · 640" },
+    { "file": "RoomSuggestedSourcePhone.dc.html", "x": 2040, "y": 1200, "w": 393, "h": 444, "title": "Room · SOURCES with SUGGESTED · 393" },
+    { "file": "SettingsMeetingsAutoRun.dc.html", "x": 2560, "y": 1200, "w": 640, "h": 465, "title": "Settings · Meetings · Intelligence · 640" },
+    { "file": "SettingsMeetingsAutoRunPhone.dc.html", "x": 3320, "y": 1200, "w": 393, "h": 548, "title": "Settings · Meetings · Intelligence · 393" }
+  ],
+  "annotations": [
+    { "id": "phase-172-row-1", "x": 0, "y": -140, "w": 760, "text": "Phase 172 The Loop Closes. Row 1: the meeting's intelligence becomes proposals you Confirm, Edit, or Dismiss in the Room, on the meeting, and on the arrival. Every run names its host. Counsel RATIFY-W-C owed; your word gates the merge." },
+    { "id": "phase-172-row-2", "x": 0, "y": 1060, "w": 760, "text": "Row 2: the 1:1 card carries what waits on the person (PRs, commitments, last meeting); a transcript naming a repo suggests it as a source (Add / Dismiss); Settings → Meetings holds the auto-run choice with its host." }
+  ],
+  "launch": { "view": "canvas" }
+}
