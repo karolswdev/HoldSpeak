@@ -46,6 +46,8 @@ class UpdatesRepository(BaseRepository):
         claims_json: str = "{}",
         source_manifest_json: str = "{}",
         generator: str = "deterministic",
+        generator_host: Optional[str] = None,
+        generator_model: Optional[str] = None,
     ) -> None:
         """Insert a new draft update."""
         with self._connection() as conn:
@@ -60,6 +62,8 @@ class UpdatesRepository(BaseRepository):
                 claims_json=claims_json,
                 source_manifest_json=source_manifest_json,
                 generator=generator,
+                generator_host=generator_host,
+                generator_model=generator_model,
             )
 
     def insert_update_in_transaction(
@@ -75,6 +79,8 @@ class UpdatesRepository(BaseRepository):
         claims_json: str = "{}",
         source_manifest_json: str = "{}",
         generator: str = "deterministic",
+        generator_host: Optional[str] = None,
+        generator_model: Optional[str] = None,
     ) -> None:
         """Insert a new draft update on a caller-owned connection."""
         self._insert_update(
@@ -88,6 +94,8 @@ class UpdatesRepository(BaseRepository):
             claims_json=claims_json,
             source_manifest_json=source_manifest_json,
             generator=generator,
+            generator_host=generator_host,
+            generator_model=generator_model,
         )
 
     @staticmethod
@@ -103,14 +111,19 @@ class UpdatesRepository(BaseRepository):
         claims_json: str,
         source_manifest_json: str,
         generator: str,
+        generator_host: Optional[str] = None,
+        generator_model: Optional[str] = None,
     ) -> None:
         now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
         conn.execute(
             """INSERT INTO project_updates
                (id, project_id, project_revision, review_id,
                 lifecycle, draft_revision, body_md, claims_json,
-                source_manifest_json, generator, created_at, updated_at)
-               VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?)""",
+                source_manifest_json, generator,
+                generator_host, generator_model,
+                created_at, updated_at)
+               VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?,
+                       ?, ?, ?, ?)""",
             (
                 str(update_id).strip(),
                 str(project_id).strip(),
@@ -121,6 +134,8 @@ class UpdatesRepository(BaseRepository):
                 claims_json,
                 source_manifest_json,
                 generator,
+                generator_host,
+                generator_model,
                 now_iso,
                 now_iso,
             ),
@@ -324,6 +339,8 @@ class UpdatesRepository(BaseRepository):
         claims_json: str = "{}",
         source_manifest_json: str = "{}",
         generator: str = "deterministic",
+        generator_host: Optional[str] = None,
+        generator_model: Optional[str] = None,
     ) -> dict[str, Any]:
         """Supersede an unaccepted draft and create the next draft_revision.
 
@@ -342,6 +359,8 @@ class UpdatesRepository(BaseRepository):
                 claims_json=claims_json,
                 source_manifest_json=source_manifest_json,
                 generator=generator,
+                generator_host=generator_host,
+                generator_model=generator_model,
             )
 
     def supersede_draft_in_transaction(
@@ -354,6 +373,8 @@ class UpdatesRepository(BaseRepository):
         claims_json: str = "{}",
         source_manifest_json: str = "{}",
         generator: str = "deterministic",
+        generator_host: Optional[str] = None,
+        generator_model: Optional[str] = None,
     ) -> dict[str, Any]:
         """Supersede on a caller-owned connection."""
         return self._supersede_draft(
@@ -364,6 +385,8 @@ class UpdatesRepository(BaseRepository):
             claims_json=claims_json,
             source_manifest_json=source_manifest_json,
             generator=generator,
+            generator_host=generator_host,
+            generator_model=generator_model,
         )
 
     @staticmethod
@@ -376,6 +399,8 @@ class UpdatesRepository(BaseRepository):
         claims_json: str,
         source_manifest_json: str,
         generator: str,
+        generator_host: Optional[str] = None,
+        generator_model: Optional[str] = None,
     ) -> dict[str, Any]:
         clean_old = str(old_update_id).strip()
         old_row = conn.execute(
@@ -406,8 +431,11 @@ class UpdatesRepository(BaseRepository):
             """INSERT INTO project_updates
                (id, project_id, project_revision, review_id,
                 lifecycle, draft_revision, body_md, claims_json,
-                source_manifest_json, generator, created_at, updated_at)
-               VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?)""",
+                source_manifest_json, generator,
+                generator_host, generator_model,
+                created_at, updated_at)
+               VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?,
+                       ?, ?, ?, ?)""",
             (
                 str(new_update_id).strip(),
                 old["project_id"],
@@ -418,6 +446,8 @@ class UpdatesRepository(BaseRepository):
                 claims_json,
                 source_manifest_json,
                 generator,
+                generator_host,
+                generator_model,
                 now_iso,
                 now_iso,
             ),

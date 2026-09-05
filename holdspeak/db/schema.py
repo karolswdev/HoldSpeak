@@ -3894,6 +3894,8 @@ CREATE TABLE IF NOT EXISTS project_updates (
     claims_json TEXT NOT NULL DEFAULT '{}',
     source_manifest_json TEXT NOT NULL DEFAULT '{}',
     generator TEXT NOT NULL DEFAULT 'deterministic',
+    generator_host TEXT,
+    generator_model TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     published_at TEXT
@@ -3917,6 +3919,8 @@ CREATE TABLE IF NOT EXISTS steward_policies (
     enabled INTEGER NOT NULL DEFAULT 1,
     -- HS-164-01: explicit per-project unattended opt-in (default OFF).
     unattended_enabled INTEGER NOT NULL DEFAULT 0,
+    -- HS-173-04: per-project nudge comment template ({days} placeholder).
+    nudge_template TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
