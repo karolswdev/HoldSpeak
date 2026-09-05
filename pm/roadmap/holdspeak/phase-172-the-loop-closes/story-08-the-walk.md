@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 172
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-172-07
 - **Unblocks:** HS-172-09
 - **Owner:** unassigned
@@ -40,15 +40,15 @@ meetings close their loop.
 
 ## Acceptance criteria
 
-- [ ] The owner walks all seven beats on his real desk (Article IX.1,
+- [x] The owner walks all seven beats on his real desk (Article IX.1,
       IX.4).
-- [ ] Intelligence runs automatically after the meeting stops
+- [x] Intelligence runs automatically after the meeting stops
       (measured with the stopwatch).
-- [ ] PROPOSALS appear in NEEDS YOU; Confirm and Drop work.
-- [ ] The People card shows Watch-derived data for a team member.
-- [ ] A suggested source appears and can be accepted or dismissed.
-- [ ] People are reachable from the Room at 393.
-- [ ] His word.
+- [x] PROPOSALS appear in NEEDS YOU; Confirm and Drop work.
+- [x] The People card shows Watch-derived data for a team member.
+- [x] A suggested source appears and can be accepted or dismissed.
+- [x] People are reachable from the Room at 393.
+- [x] His word.
 
 ## Test plan
 
