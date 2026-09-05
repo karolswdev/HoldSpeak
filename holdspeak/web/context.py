@@ -71,6 +71,8 @@ class WebContext:
     cadence_service: Optional[Any] = None
     follow_through_service: Optional[Any] = None
     door_service: Optional[Any] = None
+    # HS-169-02: the streamlined one-screen project creation door.
+    project_door_service: Optional[Any] = None
     # Phase 135: encrypted People sidecar service.  It is intentionally not a
     # normal database repository and carries no sync/export/memory collaborator.
     people_service: Optional[Any] = None

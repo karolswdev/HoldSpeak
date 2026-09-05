@@ -76,7 +76,8 @@ describe("DeskOS application manifest", () => {
     });
     expect(projectMemory!.surface).toBeDefined();
     expect(projectMemory!.surface!.eyebrow).toBe("Long memory");
-    expect(projectMemory!.surface!.minW).toBe(640);
+    // HS-169-03: Room default width changed from 640 to 800.
+    expect(projectMemory!.surface!.minW).toBe(800);
   });
 
   it("includes Project Memory in the surface-application projection", () => {

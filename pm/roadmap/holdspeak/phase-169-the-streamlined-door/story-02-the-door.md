@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 169
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-169-01
 - **Unblocks:** HS-169-03, HS-169-05
 - **Owner:** unassigned
@@ -28,6 +28,40 @@ The 168 door needed 17 face steps and ~60 objects to pick a repo and a Jira proj
 
 `cd web && npx vitest run src/features/project-room/door`; tests/e2e/test_hs169_door_glass.py at 1440 + 393 (isolated HOME, build-first, settle before every shot); `uv run python scripts/check_web_baseline.py --run`; the parity test under tests/unit/test_hs169_door.py.
 
-## Delivered
+## Delivered (2026-09-05)
 
-_(pending)_
+- **The wire (holdspeak/services/project_door_service.py; routes/project_door.py):**
+  `POST /api/projects/door/count` {provider, scope, watches, adjust?} →
+  tokens · plain count · checkedAt · host · state live/cant_check ·
+  plain reason — the count runs the SAME source snapshot and compile the
+  Watch's evaluation runs (parity tests for GitHub and Jira in
+  tests/unit/test_hs169_door.py); `POST /api/projects/door` {outcome,
+  sources[]} → ONE service call: project (name = outcome[:80], the
+  finalize derivation) + one Watch per default per source + baseline;
+  zero sources = a blank project. Defaults: GitHub OPEN PRS + CI (the
+  `branch_ci` kind from 04); Jira OVERDUE + DUE 7 DAYS (+ BLOCKED off).
+- **The face (web/src/features/project-room/door/):** DoorCore replaces
+  SetupCore at the `project-setup` surface key (applications.ts; the
+  setup/ folder stays in the tree unused for 07 to park). Composed from
+  the library: the outcome well + MicButton; SOURCES rows (boxed, one
+  grammar at both widths — a container query switches to the four-line
+  grammar under 560px); the beveled picker control with the stroke
+  chevron; default-Watch toggles as the TOKEN species (CheckGadget
+  `variant="token"` added to the library); the three row states
+  (UNPICKED / CHECKING pulsing / LIVE); the in-world picker (typeahead +
+  mic; recent first; known scope by token); Adjust as a Disclosure well
+  (BASE BRANCH · LABELS · INCLUDE DRAFTS; ISSUE TYPES · JQL); the
+  not-connected row with `Connect` → Settings → Connections in place and
+  the re-read on return; the footer receipt at the left edge; motion
+  moments 1 and 2. The window opens at 640 × 580 so the picker fits.
+- **Tests:** vitest door 28; tests/unit/test_hs169_door.py 11; design
+  system + density guards; web baseline zero Door branch-new; the glass
+  rig tests/e2e/test_hs169_door_glass.py (1440 + 393; connected + cold
+  legs): 5 clicks to Create, no body scroll at 1440, no overlapping row
+  children at 393, the cold Connect round trip returns to the door;
+  shots in assets/story-02-shots/ read beside the artboards.
+- **168's Sources rig** retired with a documented skip naming its
+  replacement.
+- **Debt (07 ledger):** the door window should hug its content and grow
+  with the picker (DeskWindow's `fitContent` is not exposed to surface
+  windows and does not re-measure); MCP twins for the two door routes.

@@ -81,12 +81,32 @@ export function CheckGadget({
   checked,
   onChange,
   disabled,
+  variant,
 }: {
   label: string;
   checked: boolean;
   onChange(next: boolean): void;
   disabled?: boolean;
+  /** "token" renders a bordered mono-uppercase token with ✓ glyph
+   *  (HS-169-02 Door toggles). Default is the checkbox square. */
+  variant?: "default" | "token";
 }) {
+  if (variant === "token") {
+    return (
+      <label className={`gadget-check-token ${checked ? "is-on" : "is-off"}`}>
+        <input
+          type="checkbox"
+          aria-label={label}
+          checked={checked}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.checked)}
+        />
+        <span className="gadget-check-token-face" aria-hidden="true">
+          {checked ? `✓ ${label}` : label}
+        </span>
+      </label>
+    );
+  }
   return (
     <label className="gadget-check">
       <input

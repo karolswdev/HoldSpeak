@@ -279,27 +279,28 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/project-memory",
     surface: {
       eyebrow: "Long memory",
-      minW: 640,
+      minW: 800,
       load: () =>
         import("../pages/cores/ProjectMemoryCore").then((module) => ({
           default: module.ProjectMemoryCore,
         })),
     },
   },
-  // HS-159-05: project-setup surface (the interview)
+  // HS-169-02: the streamlined Door (replaces the setup interview)
   {
     action: "project-setup",
     windowId: "surface-project-setup",
     label: "New Project",
-    description: "Create a Project through the guided interview.",
+    description: "Create a Project in one screen.",
     glyph: "▣",
     href: "/",
     surface: {
       eyebrow: "Setup",
       minW: 560,
+      defaultH: 580,
       load: () =>
-        import("../features/project-room/setup/SetupRoot").then((module) => ({
-          default: module.SetupCore,
+        import("../features/project-room/door/DoorCore").then((module) => ({
+          default: module.DoorCore,
         })),
     },
   },

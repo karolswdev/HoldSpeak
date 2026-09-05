@@ -695,6 +695,7 @@ class MeetingWebServer:
             build_threads_router,
             build_tts_router,
             build_project_reviews_router,
+            build_project_door_router,
             build_project_setup_router,
             build_project_updates_router,
             build_providers_router,
@@ -712,6 +713,7 @@ class MeetingWebServer:
         from .services.watch_service import WatchService
         from .services.github_provider import GitHubProviderAdapter
         from .services.jira_provider import JiraProviderAdapter
+        from .services.project_door_service import ProjectDoorService
         from .services.project_setup_service import ProjectSetupService
         from .services.project_evidence_collector import ProjectEvidenceCollector
         from .services.project_delta_service import ProjectDeltaService
@@ -943,6 +945,17 @@ class MeetingWebServer:
                     inference_assignment_service=inference_assignment_service,
                 ),
             ),
+            project_door_service=ProjectDoorService(
+                project_service=ProjectService(get_database(), observer=obs),
+                watch_service=WatchService(
+                    get_database(), observer=obs,
+                    **self._gh_watch_service_kwargs(),
+                ),
+                gh_runner=self._gh_runner,
+                jira_adapter=JiraProviderAdapter(
+                    db=get_database(), runner=self._acli_runner,
+                ),
+            ),
             project_evidence_collector=ProjectEvidenceCollector(get_database()),
             project_delta_service=_project_delta_service,
             project_update_service=(_project_update_service := ProjectUpdateService(
@@ -1104,6 +1117,7 @@ class MeetingWebServer:
         app.include_router(build_threads_router(web_ctx))
         app.include_router(build_tts_router(web_ctx))
         app.include_router(build_project_reviews_router(web_ctx))
+        app.include_router(build_project_door_router(web_ctx))
         app.include_router(build_project_setup_router(web_ctx))
         app.include_router(build_project_updates_router(web_ctx))
         app.include_router(build_providers_router(web_ctx))

@@ -278,6 +278,7 @@ def _make_jira_runner() -> Any:
 # ── Tests ─────────────────────────────────────────────────────────
 
 
+@pytest.mark.skip(reason="HS-169-02 retired the Sources step (ProgressPlan, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.parametrize("width", [1440, 393])
@@ -363,6 +364,7 @@ def test_sources_cold(tmp_path, monkeypatch, width):
         server.stop()
 
 
+@pytest.mark.skip(reason="HS-169-02 retired the Sources step (ProgressPlan, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.parametrize("width", [1440, 393])
