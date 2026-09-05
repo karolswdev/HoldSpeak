@@ -15,6 +15,11 @@ Arrival's, the Heartbeat's, the Loop Closes', and the Steward's grammar
 (Phases 169--173) are the ratified precedent.
 
 
+> **ON THE CANVAS (2026-09-05)** — twelve boards published at
+> https://claude.ai/code/artifact/113102aa-7bc9-4508-a334-79e22d542155 ;
+> counsel reading; faces build to the ratified boards under the standing
+> goal; **his word gates the merge** (stacked on 174 #557).
+
 ## D0 -- the Tuesday moment
 
 Monday 07:55. The arrival reads:
