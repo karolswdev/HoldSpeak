@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 173
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-173-06
 - **Unblocks:** HS-173-09
 - **Owner:** unassigned
@@ -28,9 +28,9 @@ erroring web files in the steward/update UI area.
 
 ## Acceptance criteria
 
-- [ ] Every hygiene lane item whose tree this phase touches is
+- [x] Every hygiene lane item whose tree this phase touches is
       identified and paid.
-- [ ] The record names what was paid and what remains for later phases.
+- [x] The record names what was paid and what remains for later phases.
 
 ## Test plan
 

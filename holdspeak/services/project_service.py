@@ -5,7 +5,9 @@ exactly once, appends a project_changes row and a ServiceEventLedger event
 in the same transaction (DOM-003, DOM-004, API-004).  Optional
 expected_revision / command_id enforce optimistic concurrency (API-001)
 and idempotent replay (API-002, DOM-010).  Absent params = legacy behavior
-(API-006).
+(API-006).  HS-173-08 / 158 S-1: the four legacy-wrapping methods
+(add/remove_resource, associate/disassociate_meeting) folded from three
+separate transactions into one atomic transaction each.
 
 HS-158-03: item commands under the revision law (create/update/transition/
 list).  Items are Project-OWNED records (SS5.3), not citizens (SS3.2).
@@ -2399,6 +2401,12 @@ class ProjectService:
         now_iso = datetime.now().isoformat()
         project_ref = format_ref("project", project_id)
 
+        # HS-173-08 / 158 S-1: single transaction for revision bump +
+        # resource upsert + change row + event + command.
+        relation = str(body.get("relationship") or "member").strip().lower()
+        if relation not in {"member", "source", "output", "related"}:
+            raise ValueError(f"unknown project relationship: {relation}")
+
         with self._db._connection() as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
@@ -2417,14 +2425,25 @@ class ProjectService:
                 (new_revision, now_iso, project_id),
             )
 
-        # The upsert through the repo layer (its own connection/transaction)
-        row = self._db.project_relationships.upsert(
-            project_id=project_id, resource_ref=ref_str,
-            relationship=str(body.get("relationship") or "member"),
-            source="manual", confidence=1.0,
-        )
+            # Inline the resource upsert (was repo layer's own transaction).
+            prior = conn.execute(
+                "SELECT created_at FROM project_resources "
+                "WHERE project_id=? AND resource_ref=?",
+                (project_id, ref_str),
+            ).fetchone()
+            conn.execute(
+                """INSERT INTO project_resources
+                   (project_id, resource_ref, relationship, source, confidence,
+                    created_at, last_modified, deleted)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+                   ON CONFLICT(project_id, resource_ref) DO UPDATE SET
+                     relationship=excluded.relationship, source=excluded.source,
+                     confidence=excluded.confidence, last_modified=excluded.last_modified,
+                     deleted=excluded.deleted""",
+                (project_id, ref_str, relation, "manual", 1.0,
+                 prior[0] if prior else now_iso, now_iso),
+            )
 
-        with self._db._connection() as conn:
             change_id = generate_pchg_id(
                 project_id=project_id,
                 project_revision=new_revision,
@@ -2470,7 +2489,11 @@ class ProjectService:
                 req_hash, envelope,
             )
 
-        result = row.to_dict()
+        # Read the committed row through the repo layer (read-only).
+        row = self._db.project_relationships.get(
+            project_id, ref_str, include_deleted=True,
+        )
+        result = row.to_dict()  # type: ignore[union-attr]
         result.update(_envelope_to_dict(envelope))
         return result
 
@@ -2493,6 +2516,8 @@ class ProjectService:
         now_iso = datetime.now().isoformat()
         project_ref = format_ref("project", project_id)
 
+        # HS-173-08 / 158 S-1: single transaction for revision bump +
+        # resource soft-delete + change row + event + command.
         with self._db._connection() as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
@@ -2511,9 +2536,14 @@ class ProjectService:
                 (new_revision, now_iso, project_id),
             )
 
-        deleted = self._db.project_relationships.delete(project_id, ref_str)
+            # Inline the resource soft-delete (was repo layer's own transaction).
+            cur = conn.execute(
+                "UPDATE project_resources SET deleted=1, last_modified=? "
+                "WHERE project_id=? AND resource_ref=? AND deleted=0",
+                (now_iso, project_id, ref_str),
+            )
+            deleted = bool(cur.rowcount)
 
-        with self._db._connection() as conn:
             change_id = generate_pchg_id(
                 project_id=project_id,
                 project_revision=new_revision,
@@ -2590,6 +2620,11 @@ class ProjectService:
         project_ref = format_ref("project", project_id)
         meeting_ref = format_ref("meeting", meeting_id)
 
+        # HS-173-08 / 158 S-1: single transaction for revision bump +
+        # meeting association + change row + event + command.
+        mid = str(meeting_id).strip()
+        pid = str(project_id).strip()
+
         with self._db._connection() as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
@@ -2608,13 +2643,29 @@ class ProjectService:
                 (new_revision, now_iso, project_id),
             )
 
-        # The legacy repo layer does its own connection
-        self._db.projects.associate_meeting_project(
-            meeting_id=meeting_id, project_id=project_id,
-            source="manual", confidence=1.0,
-        )
+            # Inline meeting association (was repo layer's own transaction).
+            conn.execute(
+                """INSERT INTO meeting_projects
+                   (meeting_id, project_id, source, confidence, detected_at)
+                   VALUES (?, ?, ?, ?, ?)
+                   ON CONFLICT(meeting_id, project_id) DO UPDATE SET
+                     source = excluded.source,
+                     confidence = MAX(meeting_projects.confidence, excluded.confidence),
+                     detected_at = excluded.detected_at""",
+                (mid, pid, "manual", 1.0, now_iso),
+            )
+            conn.execute(
+                """INSERT INTO project_resources
+                   (project_id, resource_ref, relationship, source, confidence,
+                    created_at, last_modified, deleted)
+                   VALUES (?, ?, 'member', ?, ?, ?, ?, 0)
+                   ON CONFLICT(project_id, resource_ref) DO UPDATE SET
+                     source=excluded.source,
+                     confidence=MAX(project_resources.confidence, excluded.confidence),
+                     last_modified=excluded.last_modified, deleted=0""",
+                (pid, f"meeting:{mid}", "manual", 1.0, now_iso, now_iso),
+            )
 
-        with self._db._connection() as conn:
             change_id = generate_pchg_id(
                 project_id=project_id,
                 project_revision=new_revision,
@@ -2692,6 +2743,11 @@ class ProjectService:
         project_ref = format_ref("project", project_id)
         meeting_ref = format_ref("meeting", meeting_id)
 
+        # HS-173-08 / 158 S-1: single transaction for revision bump +
+        # meeting disassociation + change row + event + command.
+        mid = str(meeting_id).strip()
+        pid = str(project_id).strip()
+
         with self._db._connection() as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
@@ -2710,11 +2766,18 @@ class ProjectService:
                 (new_revision, now_iso, project_id),
             )
 
-        self._db.projects.disassociate_meeting_project(
-            meeting_id=meeting_id, project_id=project_id,
-        )
+            # Inline meeting disassociation (was repo layer's own transaction).
+            conn.execute(
+                "DELETE FROM meeting_projects "
+                "WHERE meeting_id = ? AND project_id = ?",
+                (mid, pid),
+            )
+            conn.execute(
+                "UPDATE project_resources SET deleted=1, last_modified=? "
+                "WHERE project_id=? AND resource_ref=?",
+                (now_iso, pid, f"meeting:{mid}"),
+            )
 
-        with self._db._connection() as conn:
             change_id = generate_pchg_id(
                 project_id=project_id,
                 project_revision=new_revision,

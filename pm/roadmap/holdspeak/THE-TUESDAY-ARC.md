@@ -225,11 +225,14 @@ tailnet.
 From the 169 ledger and the census: the per-source Adjust well; steward
 settings under sources; park the 167 wings' faces, setup/ and the
 `configure-setup` manifest entry; the door window hugging its content;
-MCP twins for the door routes; the four legacy-wrapping writes in one
-transaction (158 S-1, open since); empty-patch revisions (158 N-1); the
-sidecar fetcher seam (165); the second acli account proof (166); the
-nine tsc-erroring web files (150); the five conductor loops in
-parallel. Each phase's 07 takes the ones its tree touches.
+MCP twins for the door routes; ~~the four legacy-wrapping writes in one
+transaction (158 S-1)~~ (paid in 173 — four methods folded to one
+transaction each); empty-patch revisions (158 N-1); ~~the sidecar
+fetcher seam (165)~~ (paid before 173 — project MCP family fixed;
+heartbeat instance remains in 171's tree); the second acli account
+proof (166); the nine tsc-erroring web files (150) (steward/update
+area clear; remaining errors outside the 173 tree); the five conductor
+loops in parallel. Each phase's 07 takes the ones its tree touches.
 
 ## 5. The recommended order and the first ask
 
