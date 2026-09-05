@@ -1,3 +1,110 @@
+# HANDOVER: MUAD'DIB VIII — the orchestrator's mind, serialized an eighth time
+
+Read this once, fully, before your first tool call. When you finish,
+you ARE the orchestrator. Written 2026-09-05 at the end of the sitting
+that chartered, designed, built and walked Phase 169 The Streamlined
+Door on the owner's mandate — verbatim: "I want us to really refine
+and really streamline the UX. This is, by far, the biggest obstacle
+to me accepting it. It's horrible. And we need this module to be the
+first one that we BOTH will be proud of." / "Just make sure the
+interface to all of this is absolutely world-freaking-class." / "Just.
+Be excellent. Be a powerful UI and UX designer for this." He ratified
+the canvas with one word: "word". Muad'Dib VII (below) holds for 168.
+
+## 0. The state of the world (2026-09-05)
+
+- **Phase 169 ACTIVE 5/7 on feat/the-streamlined-door** (off
+  feat/connections-door `1f9798f9`; 168 holds at 5/7 unmerged — its
+  door is superseded by 169's; when 169 merges, 168's story 05 flips
+  on the same walk verdict or is closed as superseded — the owner's
+  call). DONE: 01 design (11 artboards, counsel paid, "word"), 04 the
+  wire, 02 the Door, 03 the Room, 06 docs. IN PROGRESS: 05 the walk —
+  the runner green on the isolated leg AND the real leg on his desk
+  (5 clicks, both widths, projects archived, watches paused, baselines
+  established); **HIS attended walk and verdict flip it** (evidence
+  ships only with the flip); 07 the close — counsel RATIFY-W-C paid;
+  the unit fast lane running at the time of writing; still to run: the
+  non-unit half (`tests/ --ignore=tests/unit --ignore=tests/e2e/test_metal.py
+  -n auto`, isolated HOME, NEVER beside a live walk), the web baseline
+  (last: zero branch-new, 2426), the four rigs alone (door, room, the
+  168 connections, the isolated walk), the sweep of branch-new names
+  against main-failed-names.txt (26 at ce629cc2; previous session's
+  scratchpad 199f52c6-…), final-summary.md (draft written: the ledger),
+  then PR feat/the-streamlined-door → main on the local gates; merge
+  on his word (create and merge are SEPARATE gh calls).
+- **His hub runs the final build on 127.0.0.1:64035** (URL + token in
+  the scratchpad's hub-url.txt); the `holdspeak` APP process (restarted
+  today — it had run since 08-31 on stale code and kept failing his
+  watches hourly) also serves its own hub on 63051. His real project
+  proj-10b35905777c now reads: `karolswdev/HoldSpeak · 2 OPEN PRS · 2
+  CHECKS FAILING`, `KAN · 1 DUE THIS WEEK`, the meeting watch
+  `CAN'T CHECK · Remove`; health ON TRACK; nothing needs him.
+- **The canvas:** https://claude.ai/code/artifact/aa41070b-9a9e-4946-824c-29f2578c8383
+  (working files assets/mockups/*.dc.html + canvas.json; re-seed with
+  the design skill's helper; republish the same path with contract
+  0.1.31).
+
+## 1. What remains (in order)
+
+1. **His walk.** Hand him the URL; New Project → the outcome line →
+   pick a repo → pick KAN → Create → the Room. Record his words
+   verbatim in story-05 §THE OWNER'S VERDICT; on PASS `dw story status
+   holdspeak 169 05 done`, cadence, commit (evidence-story-05.md exists
+   and is tracked? — check `git status`; 05's capture = the isolated leg
+   + real leg transcripts; recapture the isolated leg through `dw
+   evidence capture` if the file is missing).
+2. **07:** run the gates above alone; the sweep = comm -13 of branch
+   failures vs the 26 inherited names, candidates re-run serially;
+   counsel's S-3 (Fix withheld with Adjust) documented; final-summary
+   gates filled; PR; merge on his word; then memory (Phase 169 merged;
+   168 disposition).
+3. **The debt ledger** (final-summary.md §ledger): the per-source
+   Adjust well (extract the Door's AdjustWell; route exists); steward
+   settings under sources; park the 167 wings' faces + setup/ + the
+   `configure-setup` manifest entry; the door window hugging its
+   content (DeskWindow fitContent not exposed to surface windows);
+   MCP twins for the door routes; `next_evaluation_at` null on old
+   watches; whether the owner's OWN red PRs should call him (needs-you
+   rule); the native meeting adapter or its removal from his project.
+
+## 2. The laws this sitting added
+
+- **Build what was ratified — and read the shot beside the artboard
+  every round.** 02 took four rounds, 03 five; the probes had to
+  assert the artboard (type step, token position, no intersections,
+  the well in frame), not presence.
+- **The persisted watch snapshot is not the source's return shape**
+  (dict entities keyed by id, snake_case fields) — unwrap through one
+  helper; fixtures use the PERSISTED shape (memory: reference_watch_
+  snapshot_persisted_shape).
+- **A green rig on fixtures is not the desk**: the real project showed
+  empty rows, the wrong host, a dead CI kind — read the REAL rows
+  through the new wire before the owner does.
+- **Check the age of every `holdspeak` process before a real leg**
+  (the stale app ticked old code for days).
+- **The footer is portaled** into the frame's foot slot — a core's
+  descendant selectors never reach it; SurfaceFooter now takes a
+  className hook.
+- **The desk's container query is named `surface`** — `surface-window`
+  never matched (three rounds of 393 failures).
+- **Workers run scoped suites only; a full `-n auto` left running
+  starves live rigs** (two orphans killed; three 393 "hangs" were CPU).
+- **Workers restore ONLY rig-shot churn; the orchestrator commits its
+  records before dispatching** (a handover was reverted once).
+- **A section-level verb is an honest interim; a dead row verb is
+  not** (Adjust withheld; Steward / Review N named as 07 candidates).
+
+## 3. The voice (unchanged)
+
+Terse, concrete, numbers over adjectives; the last message carries the
+whole picture; never claim what you didn't verify; the owner's bounces
+are gifts — answer the exact words, record them verbatim, fix the root;
+scars become laws in memory.
+
+— Muad'Dib, session 016siGSBgZph9EhEdGMoyWcu (the Streamlined Door sitting)
+
+---
+
 # HANDOVER: MUAD'DIB VII — the orchestrator's mind, serialized a seventh time
 
 Read this once, fully, before your first tool call. When you finish,
