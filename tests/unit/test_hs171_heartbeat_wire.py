@@ -949,3 +949,256 @@ class TestZeroEgressOnLANWatches:
         # No ADDITIONAL host outside the connector should be contacted.
         # The key assertion: no requests module import or urllib egress.
         assert True  # structural pass -- the mock boundaries prove isolation
+
+
+# ---------------------------------------------------------------------------
+# D3 notification wire: sweep triggers heartbeat_notify
+# ---------------------------------------------------------------------------
+
+
+class TestSweepNotificationWire:
+    """After a sweep with count > 0 and mode edge, the service calls
+    heartbeat_notify and receipts the outcome.  Six cases per the brief."""
+
+    @pytest.fixture
+    def _notifier_calls(self):
+        """Returns (calls_list, notifier_fn) where notifier records and succeeds."""
+        calls: list[tuple[str, str]] = []
+
+        def fake_notifier(title: str, body: str, *, click_url=None) -> bool:
+            calls.append((title, body))
+            return True
+
+        return calls, fake_notifier
+
+    @pytest.fixture
+    def hb_service(self, db: Database, _notifier_calls):
+        """HeartbeatService with mock WatchService and stubbed notifier."""
+        from holdspeak.services.heartbeat_service import HeartbeatService
+
+        calls, fake_notifier = _notifier_calls
+        mock_ws = MagicMock()
+        mock_ws.evaluate_due.return_value = []
+        svc = HeartbeatService(
+            db, watch_service=mock_ws, notifier=fake_notifier,
+        )
+        # Seed the notify mode to edge (default) and make it NOT quiet hours.
+        svc.update_settings({"notify": "edge", "quiet_hours": {"start": 2, "end": 3}})
+        return svc, calls
+
+    def _seed_aggregate(self, db: Database, count: int, project_count: int = 1):
+        """Patch the aggregate builder to return a fixed count."""
+        items = []
+        for i in range(count):
+            items.append({
+                "projectId": f"proj-{i % project_count}",
+                "projectName": f"Project {i % project_count}",
+                "ref": f"item-{i}",
+                "title": f"Item {i}",
+                "why": "needs review",
+                "ageToken": "",
+                "source": "test",
+                "severity": "info",
+                "muted": False,
+            })
+        projects = list({f"proj-{i % project_count}" for i in range(count)})
+        return {
+            "count": count,
+            "projects": projects,
+            "items": items,
+            "next": None,
+            "computedAt": "2026-09-05T08:00:00",
+            "stale": False,
+            "sweepId": None,
+            "mutedCount": 0,
+        }
+
+    def test_sweep_count_3_mode_edge_fires_notification_and_receipts(
+        self, db: Database, hb_service,
+    ):
+        """After a sweep with count=3 and mode=edge, one notification + receipt."""
+        svc, calls = hb_service
+        agg = self._seed_aggregate(db, 3, 2)
+
+        with patch.object(svc, "_build_aggregate_via_canonical", return_value=agg):
+            with patch.object(svc, "notification_count", return_value=3):
+                receipt = svc.run_sweep(OWNER)
+
+        # One notification was fired.
+        assert len(calls) == 1
+        assert "3 need you" in calls[0][1]
+        assert receipt["notify"]["outcome"] == "sent"
+        assert receipt["notify"]["fired"] is True
+        assert receipt["notify"]["count"] == 3
+
+        # The kernel receipt was written.
+        with db._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM kernel_operations WHERE name='heartbeat.notify'"
+            ).fetchall()
+        assert len(rows) >= 1
+
+    def test_same_count_next_sweep_held_no_edge(
+        self, db: Database, hb_service,
+    ):
+        """The same count on the next sweep -> held_no_edge, no notification."""
+        svc, calls = hb_service
+        agg = self._seed_aggregate(db, 3, 2)
+
+        with patch.object(svc, "_build_aggregate_via_canonical", return_value=agg):
+            with patch.object(svc, "notification_count", return_value=3):
+                # First sweep: fires.
+                receipt1 = svc.run_sweep(OWNER)
+                assert receipt1["notify"]["outcome"] == "sent"
+                calls.clear()
+
+                # Second sweep: same count -> no edge.
+                receipt2 = svc.run_sweep(OWNER)
+
+        assert len(calls) == 0
+        assert receipt2["notify"]["outcome"] == "held_no_edge"
+        assert receipt2["notify"]["fired"] is False
+
+    def test_quiet_hours_holds_notification_and_receipts(
+        self, db: Database, _notifier_calls,
+    ):
+        """Quiet hours -> held_quiet_hours + receipt, nothing sent."""
+        from holdspeak.services.heartbeat_service import HeartbeatService
+
+        calls, fake_notifier = _notifier_calls
+        mock_ws = MagicMock()
+        mock_ws.evaluate_due.return_value = []
+        svc = HeartbeatService(
+            db, watch_service=mock_ws, notifier=fake_notifier,
+        )
+        # Set quiet hours to cover the current hour.
+        svc.update_settings({
+            "notify": "edge",
+            "quiet_hours": {"start": 0, "end": 23},
+        })
+
+        agg = self._seed_aggregate(db, 3, 2)
+        with patch.object(svc, "_build_aggregate_via_canonical", return_value=agg):
+            with patch.object(svc, "notification_count", return_value=3):
+                receipt = svc.run_sweep(OWNER)
+
+        assert len(calls) == 0
+        assert receipt["notify"]["outcome"] == "held_quiet_hours"
+        assert receipt["notify"]["fired"] is False
+
+        # Receipt was written.
+        with db._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM kernel_operations WHERE name='heartbeat.notify'"
+            ).fetchall()
+        assert len(rows) >= 1
+
+    def test_mode_off_nothing_sent_and_receipted(
+        self, db: Database, _notifier_calls,
+    ):
+        """Mode off -> nothing sent and a receipt with outcome 'off'."""
+        from holdspeak.services.heartbeat_service import HeartbeatService
+
+        calls, fake_notifier = _notifier_calls
+        mock_ws = MagicMock()
+        mock_ws.evaluate_due.return_value = []
+        svc = HeartbeatService(
+            db, watch_service=mock_ws, notifier=fake_notifier,
+        )
+        svc.update_settings({
+            "notify": "off",
+            "quiet_hours": {"start": 2, "end": 3},
+        })
+
+        agg = self._seed_aggregate(db, 3, 2)
+        with patch.object(svc, "_build_aggregate_via_canonical", return_value=agg):
+            with patch.object(svc, "notification_count", return_value=3):
+                receipt = svc.run_sweep(OWNER)
+
+        assert len(calls) == 0
+        assert receipt["notify"]["outcome"] == "off"
+
+        # Receipt was written even for off.
+        with db._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM kernel_operations WHERE name='heartbeat.notify'"
+            ).fetchall()
+        assert len(rows) >= 1
+
+    def test_notifier_exception_sweep_completes_and_failure_receipted(
+        self, db: Database,
+    ):
+        """A notifier exception -> the sweep still completes and the failure is receipted."""
+        from holdspeak.services.heartbeat_service import HeartbeatService
+
+        def exploding_notifier(title, body, *, click_url=None):
+            raise RuntimeError("OS notification daemon crashed")
+
+        mock_ws = MagicMock()
+        mock_ws.evaluate_due.return_value = []
+        svc = HeartbeatService(
+            db, watch_service=mock_ws, notifier=exploding_notifier,
+        )
+        svc.update_settings({
+            "notify": "edge",
+            "quiet_hours": {"start": 2, "end": 3},
+        })
+
+        agg = self._seed_aggregate(db, 5)
+        with patch.object(svc, "_build_aggregate_via_canonical", return_value=agg):
+            with patch.object(svc, "notification_count", return_value=5):
+                # The sweep must NOT raise.
+                receipt = svc.run_sweep(OWNER)
+
+        # Sweep completed successfully (the sweep receipt is present).
+        assert receipt["kind"] == "heartbeat.sweep"
+        # Notification decision recorded the failure.
+        notify_info = receipt.get("notify", {})
+        # The notifier raised, so heartbeat_notify returns fired=False/dispatch_failed,
+        # OR the outer boundary caught it and receipted as error.
+        assert notify_info.get("outcome") in ("error",) or notify_info.get("fired") is False
+
+    def test_restart_persisted_edge_no_renotify(
+        self, db: Database, _notifier_calls,
+    ):
+        """Restart (new service instance with persisted edge) -> no re-notify."""
+        from holdspeak.services.heartbeat_service import HeartbeatService
+
+        calls, fake_notifier = _notifier_calls
+        mock_ws = MagicMock()
+        mock_ws.evaluate_due.return_value = []
+
+        # First instance: fires for count=3.
+        svc1 = HeartbeatService(
+            db, watch_service=mock_ws, notifier=fake_notifier,
+        )
+        svc1.update_settings({
+            "notify": "edge",
+            "quiet_hours": {"start": 2, "end": 3},
+        })
+
+        agg = self._seed_aggregate(db, 3, 2)
+        with patch.object(svc1, "_build_aggregate_via_canonical", return_value=agg):
+            with patch.object(svc1, "notification_count", return_value=3):
+                receipt1 = svc1.run_sweep(OWNER)
+        assert receipt1["notify"]["outcome"] == "sent"
+        assert len(calls) == 1
+
+        # Verify the edge was persisted.
+        settings = svc1.get_settings()
+        assert settings["last_notified_count"] == 3
+
+        # Second instance (simulates restart): reads persisted edge.
+        calls.clear()
+        svc2 = HeartbeatService(
+            db, watch_service=mock_ws, notifier=fake_notifier,
+        )
+
+        with patch.object(svc2, "_build_aggregate_via_canonical", return_value=agg):
+            with patch.object(svc2, "notification_count", return_value=3):
+                receipt2 = svc2.run_sweep(OWNER)
+
+        # No re-notification for the same count after restart.
+        assert len(calls) == 0
+        assert receipt2["notify"]["outcome"] == "held_no_edge"
+        assert receipt2["notify"]["fired"] is False
