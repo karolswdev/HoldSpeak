@@ -18,7 +18,7 @@ Every phase closes on the gates.
 
 ## Acceptance criteria
 
-- [ ] Zero unexplained branch-new failures; counsel RATIFY; final-summary; PR; merge on his word. (2026-09-05 03:20: counsel RATIFY-W-C on the built phase — conditions being paid; final-summary DRAFT written; the suite re-runs after the last condition; the PR opens then; the merge is his.)
+- [ ] Zero unexplained branch-new failures; counsel RATIFY; final-summary; PR; merge on his word. (2026-09-05 03:20: counsel RATIFY-W-C on the built phase — conditions being paid; final-summary DRAFT written; the suite re-runs after the last condition; the PR opens then; the merge is his.) 05:50: PR #553 OPEN — https://github.com/karolswdev/HoldSpeak/pull/553.
 
 ## Test plan
 

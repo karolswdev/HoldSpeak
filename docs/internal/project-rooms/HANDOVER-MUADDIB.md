@@ -88,6 +88,14 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
   faces' evidence captures live untracked until the flips (the gate
   refuses orphan evidence).
 
+- **PR #553 is OPEN** (https://github.com/karolswdev/HoldSpeak/pull/553,
+  05:50): 99 commits; the final suite 9404 green / 6 inherited / 11
+  xdist-only green alone. On his word: merge → flip 03/04/05/07 with
+  the untracked evidence captures (`dw evidence capture` again if stale)
+  → final-summary loses its DRAFT tag → Phase 171 activates
+  (`.githooks/dw story status holdspeak phase-171-the-heartbeat
+  story-01-the-design in-progress`, README "Current phase" line).
+
 ## 1. The asks of the owner (in order)
 
 1. His word on the Concierge page of the canvas → build 03's face on
