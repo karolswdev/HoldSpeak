@@ -48,7 +48,7 @@ def _navigate_to_settings_hub(page: Any, url: str) -> None:
         );
     }""")
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-    page.wait_for_timeout(2000)
+    page.locator(".prefs-hub-headline").wait_for(timeout=10_000)
 
 
 def _shot(page: Any, name: str) -> Path:
@@ -254,10 +254,9 @@ def test_settings_hub_open_verb_opens_surface(
             ))
             open_btn = voice_row.locator(".btn", has_text="Open")
             open_btn.click()
-            page.wait_for_timeout(1500)
+            page.locator(".prefs-module").wait_for(timeout=5_000)
 
             # The module pane should now show the Voice module content.
-            # The module title or a gadget-group label should be visible.
             module_pane = page.locator(".prefs-module")
             assert module_pane.count() > 0, "Voice module pane did not open"
 
@@ -265,18 +264,16 @@ def test_settings_hub_open_verb_opens_surface(
             back_btn = page.locator(".prefs-back")
             if back_btn.count() > 0:
                 back_btn.click()
-                page.wait_for_timeout(1000)
+                page.locator(".prefs-hub-headline").wait_for(timeout=5_000)
             else:
-                # Re-navigate to the hub.
                 _navigate_to_settings_hub(page, url)
-                page.locator(".prefs-hub-headline").wait_for(timeout=10_000)
 
             system_row = page.locator(".surface-ledger-row", has=page.locator(
                 ".surface-ledger-primary", has_text="System"
             ))
             sys_open = system_row.locator(".btn", has_text="Open")
             sys_open.click()
-            page.wait_for_timeout(1500)
+            page.locator(".prefs-module").wait_for(timeout=5_000)
 
             module_pane = page.locator(".prefs-module")
             assert module_pane.count() > 0, "System module pane did not open"
