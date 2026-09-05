@@ -132,6 +132,19 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
    176 MicButton on every input or a size threshold; 20 corrections
    enough; the journal in the shade too. 177 when the measured week
    starts; project.* into Chase/Plan or a Room mode; a softer CUT.
+   **178–180 CHARTERED as PLANNED** — the arc to 180 is chartered end
+   to end: 178 The Portfolio (10; on 173 + 177 — no cross-Room read
+   exists, the needs-you aggregate is flat), 179 The Companion (11; on
+   174 + the web spec finished through 178 — apple/App/ holds
+   pre-Constitution Swift; mesh.py advertises, never pushes), 180 The
+   Proof (10; the measured week, the census at the ratchet floor, the
+   Constitution audit article by article, the suite + live legs, the
+   performance ledger, the positioning re-read, the retrospective, the
+   release candidate). His questions: 178 portfolio as a window or the
+   shade's PROJECTS deepened; cross-source dependency alerts; the
+   brief's portfolio row. 179 iPad-only or universal; off-LAN honest
+   disconnect or cached; QR pairing. 180 Gate B advisory or blocking;
+   the week's journal structured; 1.0.0 or 0.x.
 
 ## 2. Laws learned this sitting (add to the canon of habit)
 

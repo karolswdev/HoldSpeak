@@ -1038,6 +1038,9 @@ canon, canon wins.
 | 175 | Calendar and the Clock: real calendar events on the desk (the 146 adapter used); event-born scheduled recordings; the meeting Watch adapter; the Monday brief widened to the calendar week. | planned | [phase-175-calendar-and-the-clock](./phase-175-calendar-and-the-clock/) |
 | 176 | The Speak Loop: dictation as a daily tool -- the correction taught once and kept, the journal as a stream, the voice law on every input, the desk answering the hand. | planned | [phase-176-the-speak-loop](./phase-176-the-speak-loop/) |
 | 177 | The Thread at Work: the desk chat as a work tool (conditional on a measured week of use) -- Draft / Chase / Plan recipes over real Room data; the ask grounded on Watches and the Room; every effect admitted with a receipt. | planned | [phase-177-the-thread-at-work](./phase-177-the-thread-at-work/) |
+| 178 | The Portfolio: many Rooms as one desk -- a Projects surface, cross-project needs-you in depth, release readiness across Rooms, dependency alerts, the command deck to any Room, the Monday brief portfolio section. | planned | [phase-178-the-portfolio](./phase-178-the-portfolio/) |
+| 179 | The Companion: the phone and the iPad as the desk's reach -- the Swift recreation from the finished web spec, LAN-only discovery and auth, the portfolio and Room drill-down, LAN notifications; the HSM track wakes. | planned | [phase-179-the-companion](./phase-179-the-companion/) |
+| 180 | The Proof: a measured week of real use on his desk; the census re-run at the ratchet's floor; the Constitution audit article by article; the full suite and live legs; the performance ledger; the positioning re-read; Gate B partner feedback; the release candidate. | planned | [phase-180-the-proof](./phase-180-the-proof/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
