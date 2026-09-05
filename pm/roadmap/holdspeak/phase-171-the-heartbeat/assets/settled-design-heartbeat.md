@@ -438,3 +438,28 @@ banner. The needs-you aggregate lives in
 stale-while-refresh cache; `?fresh=1` rebuilds; `computedAt`, `stale`,
 `sweepId` on the wire). The brief regenerates once a day after quiet
 hours (`runtime/cadence.py::_maybe_regenerate_brief`) before any push.
+
+
+## Counsel (2026-09-05 07:40): RATIFY-W-C — the rulings
+
+- **M1 mute:** the mute list filters BOTH the notification edge count and
+  the aggregate count; muted Rooms still appear in the shade, dimmed,
+  with a `MUTED` token, and are NOT counted in the caption — ONE count
+  everywhere (badge = shade caption = notification). (M2 ruled with it.)
+- **M3:** `needs_you_aggregate.build_aggregate` is the single builder;
+  `HeartbeatService.refresh_aggregate` calls it.
+- **S1:** the shade caption is the SHORT form `PROJECTS · N NEED YOU`
+  (the rows say which Rooms; the notification says `across M projects`).
+- **S2:** D2(b)'s click action is DEFERRED to the bundle (174/179); the
+  V0 banner is informational only and says so nowhere on the face (no
+  promise, no sentence).
+- **S3:** the second bubble on the Notification board is a design-only
+  reference of what is SWALLOWED in quiet hours — never fired.
+- **S4:** `Generate now` is disabled while a brief generates (a
+  `GENERATING` token on the row), exactly like `Run now` mid-sweep.
+- **S5:** ⌘K's PROJECTS group lists at most 10 Rooms — by needs-you
+  count, then name; the rest reach through the Projects surface.
+- **N1:** the sweep's rate bound = the per-watch cadence floor (1 min)
+  × the tick (15 min); LAN reads are free; documented, no cap in V0.
+- **N2:** the sweep receipt summarizes outcomes (counts per state + the
+  failures' ids), never the full list.
