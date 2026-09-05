@@ -116,7 +116,7 @@ the .43 box runs llama.cpp (Q6, 24k context) but no HoldSpeak runner.
 | --- | --- | --- | --- | --- |
 | HS-174-01 | The design (the remote badge, the credential scope face, the third connector's Door card) | done | [story-01-the-design](./story-01-the-design.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-174-02 | The transport (Streamable HTTP on the hub behind scoped credentials) | done | [story-02-the-transport](./story-02-the-transport.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-174-03 | Scoped remote identity (non-OWNER principals, palette-restricted, owner-issued) | in-progress | [story-03-scoped-remote-identity](./story-03-scoped-remote-identity.md) | -- |
+| HS-174-03 | Scoped remote identity (non-OWNER principals, palette-restricted, owner-issued) | done | [story-03-scoped-remote-identity](./story-03-scoped-remote-identity.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-174-04 | Egress badges on remote reads (kernel receipt + badge; local stdio badgeless) | in-progress | [story-04-egress-badges](./story-04-egress-badges.md) | -- |
 | HS-174-05 | The long-running contract (run_id + polling over HTTP) | in-progress | [story-05-the-long-running-contract](./story-05-the-long-running-contract.md) | -- |
 | HS-174-06 | The third connector decision (candidates, CLI-backed, switch-and-verify) | done | [story-06-the-third-connector-decision](./story-06-the-third-connector-decision.md) | [evidence-story-06](./evidence-story-06.md) |
