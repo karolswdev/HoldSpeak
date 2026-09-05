@@ -28,6 +28,7 @@ from .delivery_terminal import build_delivery_terminal_router
 from .delivery_factory import build_delivery_factory_router
 from .dictation import build_dictation_router
 from .door import build_door_router
+from .concierge import build_concierge_router
 from .front_door import build_front_door_router
 from .follow_through import build_follow_through_router
 from .people import build_people_router
@@ -81,6 +82,7 @@ __all__ = [
     "build_delivery_factory_router",
     "build_dictation_router",
     "build_door_router",
+    "build_concierge_router",
     "build_front_door_router",
     "build_follow_through_router",
     "build_people_router",

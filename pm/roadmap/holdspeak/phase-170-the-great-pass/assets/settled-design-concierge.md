@@ -151,3 +151,14 @@ mid-download board. All paid on the boards and above.
 4. Models · first open, cold Mac (`No engine yet`; Download rows; Add an
    engine…)
 5. Models · 393 (found + proposed)
+
+
+## D3 addendum — the wire as built (2026-09-05)
+
+`holdspeak/services/concierge_service.py` + `holdspeak/web/routes/concierge.py`
++ MCP family `concierge` (five tools). Apply writes through the existing
+`set_assignment` CAS path — one write per group, the same way the front
+door applies today; a single-transaction write across the seven groups
+would need a new service method and is BACKLOGGED (BACKLOG.md), not
+faked. Apply refuses 409 while any row is WAITING and not OFF. A cloud
+probe without `generate:true` never touches the network.

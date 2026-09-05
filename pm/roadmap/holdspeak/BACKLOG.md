@@ -1025,3 +1025,5 @@ profile. Charter after Phase 156 proves the front door on the current
 seams (156's apply is the natural migration driver). Owner's words:
 "didn't we get rid of the whole compat kind of thing with that big
 revolution?" — the backend still owes him that revolution.
+
+- **Concierge apply in one transaction** (from HS-170-03, 2026-09-05): `POST /api/concierge/apply` writes per group through the `set_assignment` CAS path like the front door; an atomic seven-group write needs a new InferenceAssignmentService method. Fold into the next Settings→Models pass.
