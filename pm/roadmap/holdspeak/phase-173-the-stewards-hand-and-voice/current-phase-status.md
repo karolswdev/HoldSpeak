@@ -103,9 +103,9 @@ for reads only.
 | --- | --- | --- | --- | --- |
 | HS-173-01 | The design (the Steward's faces on the canvas before build) | done | [story-01-the-design](./story-01-the-design.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-173-02 | The model drafter (claims preserved, prose rewritten, unverified marked) | backlog | [story-02-the-model-drafter](./story-02-the-model-drafter.md) | -- |
-| HS-173-03 | The health signals (reviewer latency, issue aging, flaky CI, merge-queue depth) | backlog | [story-03-the-health-signals](./story-03-the-health-signals.md) | -- |
+| HS-173-03 | The health signals (reviewer latency, issue aging, flaky CI, merge-queue depth) | in-progress | [story-03-the-health-signals](./story-03-the-health-signals.md) | -- |
 | HS-173-04 | The reviewer nudge (the first bounded external effect behind the policy gate) | backlog | [story-04-the-reviewer-nudge](./story-04-the-reviewer-nudge.md) | -- |
-| HS-173-05 | The release-readiness scorecard (the Room token row) | backlog | [story-05-the-release-readiness](./story-05-the-release-readiness.md) | -- |
+| HS-173-05 | The release-readiness scorecard (the Room token row) | in-progress | [story-05-the-release-readiness](./story-05-the-release-readiness.md) | -- |
 | HS-173-06 | The walk (his desk: a drafted update, a nudge he approves) | in-progress | [story-06-the-walk](./story-06-the-walk.md) | -- |
 | HS-173-07 | The docs (the steward's hand in the architecture; the nudge in SECURITY) | in-progress | [story-07-the-docs](./story-07-the-docs.md) | -- |
 | HS-173-08 | The hygiene lane (items from THE-TUESDAY-ARC.md section 4 this phase touches) | backlog | [story-08-the-hygiene-lane](./story-08-the-hygiene-lane.md) | -- |

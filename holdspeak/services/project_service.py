@@ -730,6 +730,46 @@ class ProjectService:
         except Exception:
             pass
 
+        # HS-173: review bottleneck items (resolved reviewers whose median
+        # exceeds the threshold get a NEEDS YOU row).
+        try:
+            from holdspeak.services.room_health_service import review_wait as _review_wait
+            from datetime import timezone as _tz
+            now_utc = datetime.now(_tz.utc)
+
+            # Gather all PR entities from watches (already iterated above)
+            all_pr_entities: list[dict[str, Any]] = []
+            for watch in watches:
+                cid = watch.get("connector_id", "")
+                qk = watch.get("query_kind", "")
+                snap = watch.get("snapshot")
+                if cid == "gh" and qk == "pull_requests" and snap:
+                    all_pr_entities.extend(self._entities(snap))
+
+            if all_pr_entities:
+                review_signal = _review_wait(all_pr_entities, now_utc)
+                bottleneck_people = self._resolve_review_people(
+                    project_id, review_signal.get("per_reviewer", []))
+                for person in bottleneck_people:
+                    median_d = person.get("median_days", 0)
+                    pr_count = person.get("count", 0)
+                    display = person.get("display_name", "")
+                    needs.append({
+                        "source": "github",
+                        "kind": "review_bottleneck",
+                        "title": display,
+                        "why": f"REVIEW BOTTLENECK · {median_d} D MEDIAN · {pr_count} PRS WAITING",
+                        "since": "",
+                        "url": None,
+                        "verb": "nudge",
+                        "severity": "warning",
+                        "relationship_id": person.get("relationship_id"),
+                        "median_days": median_d,
+                        "count": pr_count,
+                    })
+        except Exception:
+            pass
+
         # Sort: danger > warning > info, then by age (oldest first = most urgent)
         needs.sort(key=lambda r: (
             self._SEVERITY_ORDER.get(r.get("severity", "info"), 2),
@@ -955,7 +995,16 @@ class ProjectService:
         return {"items": sources, "count": len(sources), "nextCheckAt": next_check_at}
 
     def _read_room_health(self, project_id: str, target_at: str | None) -> dict[str, Any]:
-        """HEALTH: AT RISK / ON TRACK derivation from room data."""
+        """HEALTH: AT RISK / ON TRACK derivation + HS-173 health signals."""
+        from holdspeak.services.room_health_service import (
+            ci_health as _ci_health,
+            issue_aging as _issue_aging,
+            merge_queue_depth as _merge_queue_depth,
+            readiness as _readiness,
+            review_wait as _review_wait,
+        )
+        from holdspeak.services.room_people_service import room_people as _room_people
+
         watches = self._db.automations.list_project_watches(project_id)
         now = datetime.now()
 
@@ -963,13 +1012,25 @@ class ProjectService:
         ci_failing = False
         review_waiting_days: int | None = None
 
+        # HS-173: collect entities by kind for health derivations
+        pr_entities: list[dict[str, Any]] = []
+        jira_entities: list[dict[str, Any]] = []
+        ci_entities: list[dict[str, Any]] = []
+        newest_snapshot_at: str | None = None
+
         for watch in watches:
             connector_id = watch.get("connector_id", "")
             query_kind = watch.get("query_kind", "")
             snapshot = watch.get("snapshot")
             entities = self._entities(snapshot)
 
+            # Track newest snapshot timestamp for checked_at
+            updated_at = watch.get("updated_at") or ""
+            if updated_at and (newest_snapshot_at is None or updated_at > newest_snapshot_at):
+                newest_snapshot_at = updated_at
+
             if connector_id == "jira" and query_kind == "issues":
+                jira_entities.extend(entities)
                 for entity in entities:
                     due_at = entity.get("due_at") or entity.get("dueDate")
                     if not due_at:
@@ -983,12 +1044,14 @@ class ProjectService:
                         overdue_count += 1
 
             elif connector_id == "gh" and query_kind == "branch_ci":
+                ci_entities.extend(entities)
                 for entity in entities:
                     conclusion = str(entity.get("conclusion") or "").lower()
                     if conclusion in ("failure", "timed_out", "cancelled"):
                         ci_failing = True
 
             elif connector_id == "gh" and query_kind == "pull_requests":
+                pr_entities.extend(entities)
                 owner_login = self._get_github_owner_login()
                 for entity in entities:
                     review_requests = entity.get("review_requests") or entity.get("reviewRequests") or []
@@ -1033,6 +1096,61 @@ class ProjectService:
         elif target_passed:
             reason = "TARGET PASSED"
 
+        # ── HS-173: health signal derivations ────────────────────────
+        from datetime import timezone as _tz
+        now_utc = datetime.now(_tz.utc)
+
+        review_signal = _review_wait(pr_entities, now_utc)
+        issue_signal = _issue_aging(jira_entities, now_utc)
+
+        # CI history: try the latest steward run's OBSERVE step first,
+        # fall back to the branch_ci snapshot entities.
+        ci_history = self._load_ci_history(project_id) or ci_entities
+        queue_depth = _merge_queue_depth(pr_entities)
+        ci_signal = _ci_health(ci_history, queue=queue_depth)
+
+        # Overdue commitments from follow-through
+        ft_overdue = 0
+        try:
+            ft_overdue = self._count_overdue_commitments(project_id)
+        except Exception:
+            pass
+
+        # Blocker count: issues with priority blocker/critical or labels
+        # containing "blocker"
+        blocker_count = 0
+        for entity in jira_entities:
+            priority = str(entity.get("priority") or "").lower()
+            labels = entity.get("labels") or []
+            status = str(entity.get("status") or "").lower()
+            if status in ("done", "closed"):
+                continue
+            if priority in ("blocker", "critical") or any(
+                "blocker" in str(lbl).lower() for lbl in labels
+            ):
+                blocker_count += 1
+
+        release_signal = _readiness(
+            review_signal=review_signal,
+            ci_signal=ci_signal,
+            blocker_count=blocker_count,
+            overdue_count=ft_overdue,
+        )
+
+        # HS-173: resolve reviewers to people for the bottleneck rows
+        people: list[dict[str, Any]] = []
+        try:
+            people = self._resolve_review_people(
+                project_id, review_signal.get("per_reviewer", []))
+        except Exception:
+            pass
+
+        # HS-173-04: enrich people rows with nudge state
+        try:
+            self._enrich_people_with_nudge_state(project_id, people, pr_entities)
+        except Exception:
+            pass
+
         return {
             "assessment": "at_risk" if at_risk else "on_track",
             "reason": reason,
@@ -1042,7 +1160,158 @@ class ProjectService:
                 "reviewWaitingDays": review_waiting_days,
                 "targetPassed": target_passed,
             },
+            # HS-173: structured health signals
+            "signals": {
+                "review_wait": review_signal,
+                "issue_aging": issue_signal,
+                "ci": ci_signal,
+                "release": release_signal,
+            },
+            "checked_at": newest_snapshot_at,
+            "merge_queue_depth": queue_depth,
+            "people": people,
         }
+
+    def _load_ci_history(self, project_id: str) -> list[dict[str, Any]] | None:
+        """Load CI history from the latest completed steward run's OBSERVE step.
+
+        Returns a list of CI run dicts, or None when no history is available.
+        The steward's OBSERVE phase persists ci_history on the step's
+        observed_state_json (HS-173).
+        """
+        try:
+            runs = self._db.steward_runs.list_runs(
+                project_id, state="completed", limit=1)
+            if not runs:
+                return None
+            run_id = runs[0]["id"]
+            steps = self._db.steward_steps.list_steps(
+                run_id, phase="observe", limit=1)
+            if not steps:
+                return None
+            observed_raw = steps[0].get("observed_state_json") or "{}"
+            if isinstance(observed_raw, str):
+                observed = json.loads(observed_raw)
+            else:
+                observed = observed_raw
+            history = observed.get("ci_history")
+            if isinstance(history, list) and history:
+                return history
+        except Exception:
+            pass
+        return None
+
+    def _count_overdue_commitments(self, project_id: str) -> int:
+        """Count overdue commitments for a project from decision_commitments."""
+        from datetime import date as _date
+        today = _date.today()
+        try:
+            with self._db._connection() as conn:
+                row = conn.execute(
+                    "SELECT COUNT(*) as cnt FROM decision_commitments c "
+                    "JOIN decision_records dr ON dr.source_id = c.decision_id "
+                    "JOIN project_meetings pm ON pm.meeting_id = dr.source_meeting_id "
+                    "WHERE pm.project_id = ? "
+                    "AND c.status NOT IN ('completed', 'dismissed', 'done') "
+                    "AND c.due_at IS NOT NULL AND c.due_at < ?",
+                    (project_id, today.isoformat()),
+                ).fetchone()
+                return int(row["cnt"]) if row else 0
+        except Exception:
+            return 0
+
+    def _resolve_review_people(
+        self,
+        project_id: str,
+        per_reviewer: list[dict[str, Any]],
+        threshold_days: float = 2.0,
+    ) -> list[dict[str, Any]]:
+        """Resolve reviewer logins to People relationships for bottleneck rows.
+
+        Only RESOLVED reviewers whose median exceeds the threshold appear.
+        Unresolved reviewers are counted in overall median but get no row
+        (no raw login on the face).
+        """
+        people_svc = getattr(self, "_people_service", None)
+        if people_svc is None:
+            # Try to construct from the DB if available
+            try:
+                from holdspeak.services.people_service import PeopleService
+                people_svc = PeopleService(self._db)
+            except Exception:
+                return []
+
+        result: list[dict[str, Any]] = []
+        for reviewer in per_reviewer:
+            login = reviewer.get("login", "")
+            median_days = reviewer.get("median_days", 0.0)
+            count = reviewer.get("count", 0)
+            if median_days < threshold_days:
+                continue
+            try:
+                resolved = people_svc.resolve_relationship_by_watch_identity(login)
+                if not resolved or resolved.get("state") != "ready":
+                    continue
+                relationship = resolved.get("relationship")
+                if not relationship:
+                    continue
+                rel_id = relationship.get("id")
+                display_name = relationship.get("display_name") or ""
+                if not rel_id or not display_name:
+                    continue
+                result.append({
+                    "relationship_id": rel_id,
+                    "display_name": display_name,
+                    "login": login,
+                    "median_days": median_days,
+                    "count": count,
+                })
+            except Exception:
+                continue
+        return result
+
+    def _enrich_people_with_nudge_state(
+        self,
+        project_id: str,
+        people: list[dict[str, Any]],
+        pr_entities: list[dict[str, Any]],
+    ) -> None:
+        """HS-173-04: add nudge={step_id, state, sent_at?} to each person row."""
+        if not people:
+            return
+        # Build a map of login -> latest nudge step for this project.
+        prefix = f"nudge:{project_id}:"
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM steward_steps "
+                "WHERE effect_kind = 'github_comment' "
+                "AND idempotency_key LIKE ? "
+                "ORDER BY created_at DESC LIMIT 500",
+                (prefix + "%",),
+            ).fetchall()
+
+        # Group by reviewer login, keep the most recent per login.
+        nudge_by_login: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            step = dict(row)
+            idem_key = step.get("idempotency_key", "")
+            # nudge:{project_id}:{repo}:{pr_number}:{login}
+            parts = idem_key.split(":")
+            if len(parts) >= 5:
+                login = parts[-1]
+            else:
+                continue
+            if login not in nudge_by_login:
+                nudge_by_login[login] = {
+                    "step_id": step["id"],
+                    "state": step["state"],
+                    "sent_at": step.get("completed_at") if step["state"] == "sent" else None,
+                }
+
+        for person in people:
+            login = (person.get("login") or "").lower()
+            if login in nudge_by_login:
+                person["nudge"] = nudge_by_login[login]
 
     def _read_room_since_read(self, project_id: str, room_read_at: str | None) -> dict[str, Any]:
         """SINCE YOU LOOKED: changes grouped by source in phrases."""
