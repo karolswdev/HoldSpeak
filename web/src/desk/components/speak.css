@@ -201,6 +201,22 @@
   padding-right: 8px;
 }
 
+/* 393 footer: one line — chip · receipt (truncated) · verbs trailing. */
+@container surface (max-width: 420px) {
+  .desk-next .speak-footer {
+    grid-template-columns: max-content minmax(0, 1fr) max-content;
+    grid-template-areas: "egress receipt verbs";
+    row-gap: 0;
+  }
+  .desk-next .speak-footer .surface-footer-receipt {
+    height: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+}
+
 /* ── 393: phone stacking ── */
 @container surface (max-width: 500px) {
   .desk-next .speak-transport {
