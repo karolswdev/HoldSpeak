@@ -942,7 +942,7 @@ Each module is a row with its name, its state tokens, and **Open**:
 | **CONNECTIONS** | `N CONNECTED` (absent at zero) |
 | **VOICE** | `LIVE` + the current target name |
 | **MEETINGS** | `INTELLIGENCE ON` or `INTELLIGENCE OFF` |
-| **RHYTHM** | `N LOOPS` or `NO LOOPS` |
+| **RHYTHM** | `EVERY 15 MIN . NEXT hh:mm` when the sweep runs; `NO LOOPS` at zero |
 | **SOUNDS & PRESENCE** | `ON` or `OFF` |
 | **SYSTEM** | `THIS DEVICE` + `MESH ON` or `MESH OFF` |
 
@@ -956,43 +956,41 @@ Open **Settings, Rhythm**. The Rhythm module controls the Heartbeat: the
 unattended sweep that evaluates project Watches and refreshes the
 needs-you aggregate on a cadence.
 
-### The cadence row
+![Rhythm — the sweep, the brief and notify rows](assets/heartbeat/rhythm-1440.png)
 
-The **Watch sweep** row controls the sweep interval:
+### The sweep row
 
-| Cell | What it shows |
-|---|---|
-| **Interval** | A cycle control: `EVERY 15 MIN`, `EVERY 30 MIN`, `EVERY 1 HR`, `EVERY 4 HR`. Default: `EVERY 15 MIN`. |
-| **Quiet hours** | `QUIET 22:00--08:00` (read-only on this row; edited in the quiet-hours setting). Notifications are suppressed during this window. |
-| **Next sweep** | `NEXT 08:20` (the earliest `next_evaluation_at` from the graduated Watches, as local time). Absent when no Watches are graduated. |
-| **Run now** | A ghost button that triggers one immediate sweep and refreshes the **NEXT** token. |
-<!-- verify at build -->
+The **Sweep** row controls the sweep interval with a cycle control
+(`EVERY 5 MIN`, `EVERY 15 MIN`, `EVERY 30 MIN`, `EVERY 60 MIN`;
+default `EVERY 15 MIN`). **Run now** triggers one immediate sweep
+(allowed during quiet hours). Fact tokens below the row read
+`QUIET hh:mm-hh:mm`, `NEXT hh:mm`, `LAST hh:mm`, and after a sweep
+`N ROOMS` and `N MS`. During quiet hours a `HELD . QUIET UNTIL hh:mm`
+chip replaces the fact tokens.
 
 ### The Monday brief row
 
-| Cell | What it shows |
-|---|---|
-| **Cadence** | `DAILY AFTER 08:00`. The brief regenerates once per day after quiet hours close. |
-| **Last** | `LAST SEP 04` (the most recent brief's date), or `NEVER` when no brief has been generated. |
-| **Generate** | A ghost button that triggers immediate brief regeneration. Disabled while a brief generates (a `GENERATING` token replaces the verb). |
-<!-- verify at build -->
+The **Monday brief** row shows a fixed `DAILY hh:mm` token (the hour
+is quiet hours end; this is not a setting). The brief regenerates once a
+day after quiet hours close. Fact tokens read `NEXT MON hh:mm` and
+`LAST <date>`. **Generate now** triggers immediate regeneration;
+disabled while generating (a `GENERATING` chip replaces the verb).
 
 ### Notifications
 
-The **NOTIFY** row controls whether the Heartbeat posts a macOS
-notification banner when the needs-you count rises:
+The **Notify** row carries two cycle controls:
 
-| Setting | Behavior |
+| Control | Options |
 |---|---|
-| **off** | No notification fires. |
-| **edge** (the default) | A notification fires when the count crosses from 0 to positive, or when it increases since the last notification. |
-| **every sweep** | A notification fires after every sweep that finds items needing you. |
+| **Mode** | `OFF`, `ON THE EDGE` (the default), `EVERY SWEEP` |
+| **Content** | `COUNT ONLY` (the default), `ROOM NAMES` |
 
-The body is the count only by default (`3 need you across 2 projects`).
-Room names and item text are omitted unless the content opt-in setting is
-enabled; that setting adds the first WHY per project (at most three
-lines) to the body.
-<!-- verify at build -->
+`ON THE EDGE` fires when the needs-you count crosses from 0 to
+positive, or when it increases since the last notification. `EVERY
+SWEEP` fires after every sweep that finds items. `COUNT ONLY` limits
+the body to the count (`3 need you across 2 projects`); `ROOM NAMES`
+adds the first WHY per project (at most three lines). During quiet
+hours a `HELD` chip appears on the row.
 
 ### Per-Room mute
 
@@ -1009,6 +1007,10 @@ verb. The section caption reads `PROJECTS` with the aggregate count
 (`N NEED YOU`). The dock badge carries the same number. When the
 aggregate is zero, the section is absent.
 
+![The shade's PROJECTS section, one Room muted](assets/heartbeat/shade-projects-1440.png)
+
+![The dock badge carries the same count](assets/heartbeat/dock-badge-1440.png)
+
 ### PROJECTS in the command deck
 
 Type a project name in the command deck (Cmd+K). Up to 10 Rooms appear
@@ -1016,6 +1018,8 @@ as verb entries (sorted by needs-you count, then name), each with the
 project kind glyph, the project name, and a trailing count badge (zero
 badges omitted). Selecting a Room opens it. Additional Rooms are
 reachable through the Projects surface.
+
+![PROJECTS in the command deck](assets/heartbeat/command-deck-projects-1440.png)
 
 ## Models: the Concierge
 
