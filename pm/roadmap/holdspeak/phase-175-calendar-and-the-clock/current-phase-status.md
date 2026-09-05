@@ -105,7 +105,7 @@ has only GitHubWatchSource:58 and JiraWatchSource:294).
 | HS-175-01 | The design (the calendar week, the event-born recording, the meeting Watch entity on the canvas) | done | [story-01-the-design](./story-01-the-design.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-175-02 | Calendar events on the desk (the week view, the next seam, events as material) | done | [story-02-calendar-events-on-the-desk](./story-02-calendar-events-on-the-desk.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-175-03 | Event-born scheduled recordings (auto-create from calendar events with meeting URLs) | done | [story-03-event-born-recordings](./story-03-event-born-recordings.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-175-04 | The meeting Watch adapter (MeetingWatchSource: meetings as Watch entities in a Room) | backlog | [story-04-the-meeting-watch-adapter](./story-04-the-meeting-watch-adapter.md) | -- |
+| HS-175-04 | The meeting Watch adapter (MeetingWatchSource: meetings as Watch entities in a Room) | done | [story-04-the-meeting-watch-adapter](./story-04-the-meeting-watch-adapter.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-175-05 | The week brief (Monday brief window widened to the calendar week; calendar + meeting collectors) | backlog | [story-05-the-week-brief](./story-05-the-week-brief.md) | -- |
 | HS-175-06 | The walk (his desk: the event-born recording, the week brief, the meeting Watch entity) | in-progress | [story-06-the-walk](./story-06-the-walk.md) | -- |
 | HS-175-07 | The hygiene lane (items from THE-TUESDAY-ARC.md section 4 that this phase's tree touches) | backlog | [story-07-the-hygiene-lane](./story-07-the-hygiene-lane.md) | -- |

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 175
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-175-01, Phase 172 merged (the auto-intel extraction
   produces the decisions and commitments this adapter surfaces)
 - **Unblocks:** HS-175-05

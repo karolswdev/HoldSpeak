@@ -22,7 +22,7 @@ from holdspeak.services.observer import NullObserver, PipelineObserver, observe_
 import hashlib
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Optional
 
 from ..db.core import Database
@@ -57,12 +57,15 @@ _log = get_logger("services.project_service")
 # ("pull_request"), but GitHubWatchSource.snapshot demands the plural
 # wire form ("pull_requests").  The mapping lives here rather than in
 # the spec so the spec vocabulary stays domain-level.
-_PROVIDER_TO_CONNECTOR: dict[str, str] = {"github": "gh", "jira": "jira"}
+_PROVIDER_TO_CONNECTOR: dict[str, str] = {
+    "github": "gh", "jira": "jira", "meeting": "meeting",
+}
 
 _SUBJECT_TO_QUERY_KIND: dict[str, str] = {
     "pull_request": "pull_requests",
     "issue": "issues",
     "branch_ci": "branch_ci",  # HS-169-04: CI on the base branch
+    "meeting": "meetings",  # HS-175-04: meeting watch adapter
 }
 
 
@@ -912,13 +915,46 @@ class ProjectService:
                     tokens.append(f"{overdue_count} OVERDUE")
                 if due_soon_count:
                     tokens.append(f"{due_soon_count} DUE THIS WEEK")
+            # HS-175-04: meeting watch tokens
+            elif connector_id == "meeting" and query_kind == "meetings":
+                # Count meetings this week (started_at in the current week)
+                now = datetime.now()
+                days_since_monday = now.weekday()
+                monday = (now - timedelta(days=days_since_monday)).replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
+                sunday = monday + timedelta(days=7)
+                this_week_count = sum(
+                    1 for e in entities
+                    if monday.isoformat() <= str(e.get("date", "")) < sunday.isoformat()
+                )
+                if this_week_count:
+                    tokens.append(f"{this_week_count} THIS WEEK")
+                # Next meeting (first entity with date > now)
+                now_iso = now.isoformat()
+                future = [
+                    e for e in entities
+                    if str(e.get("date", "")) > now_iso
+                ]
+                if future:
+                    future.sort(key=lambda e: str(e.get("date", "")))
+                    next_mtg = future[0]
+                    next_date = str(next_mtg.get("date", ""))
+                    try:
+                        next_dt = datetime.fromisoformat(next_date.replace("Z", "+00:00"))
+                        day_name = next_dt.strftime("%a").upper()
+                        time_str = next_dt.strftime("%H:%M")
+                        tokens.append(f"NEXT {day_name} {time_str}")
+                    except (ValueError, TypeError):
+                        pass
 
             plain_reason = self._plain_reason(last_error)
 
-            # Meeting watch: connector_id != "gh" and != "jira" -> native
-            if connector_id not in ("gh", "jira"):
+            # Unknown connectors with no local adapter
+            _KNOWN_CONNECTORS = {"gh", "jira", "confluence", "meeting"}
+            if connector_id not in _KNOWN_CONNECTORS:
                 if not last_error:
-                    plain_reason = "No local adapter for meeting activity yet"
+                    plain_reason = "No local adapter for this source yet"
                     w_state = "cant_check"
 
             entry = {
