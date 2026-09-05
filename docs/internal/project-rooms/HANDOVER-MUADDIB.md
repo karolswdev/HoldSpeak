@@ -109,6 +109,17 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
    section or as needs-you rows. For 173: nudge wording (named or
    steward-anonymous); 48 h latency default; the readiness signal set;
    nudge per-PR or per-person; `github.comment` as a sixth effect kind.
+   **174 Reach is CHARTERED as PLANNED** (11 stories, L). Recon that
+   binds it: the MCP server is stdio-only but `handle_message()`
+   (holdspeak/mcp/server.py:30) is transport-agnostic — the Streamable
+   HTTP route calls it behind the existing `_web_auth_gate`;
+   AgentCredentialStore mints TTL tokens but has NO palette scope yet;
+   the only CLI-backed third-connector candidate installed is `acli
+   confluence`. His questions: can .43 reach the Mac's hub over the
+   tailnet (unverified); Confluence as the third connector or install
+   another CLI; the `remote` egress badge as a fourth chip state;
+   credential scope = PROJECT_PALETTE or finer; polling-only V0 for
+   long runs or SSE per the current spec.
 
 ## 2. Laws learned this sitting (add to the canon of habit)
 

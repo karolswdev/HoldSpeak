@@ -1034,6 +1034,7 @@ canon, canon wins.
 | 171 | The Heartbeat: the desk reaches him — the sweep runs unattended, needs-you across Rooms in the shade and the dock, macOS notifications on the edge, the Monday brief recurring, PROJECTS in the command deck. | planned | [phase-171-the-heartbeat](./phase-171-the-heartbeat/) |
 | 172 | The Loop Closes: meetings produce decisions and action items as proposals confirmed through the kernel; the People-to-Watch resolver; the 1:1 brief from real signals; suggested sources from meeting mentions. | planned | [phase-172-the-loop-closes](./phase-172-the-loop-closes/) |
 | 173 | The Steward's Hand and Voice: the model drafter with claim refs; reviewer latency and issue aging; the first bounded external effect (the reviewer nudge) behind the policy gate with a receipt; release readiness. | planned | [phase-173-the-stewards-hand-and-voice](./phase-173-the-stewards-hand-and-voice/) |
+| 174 | Reach: MCP remote on the .43 runner over Streamable HTTP behind scoped credentials; one CLI-backed third connector; egress badges on remote reads; LAN companion notifications over the mesh (conditional on the companion track). | planned | [phase-174-reach](./phase-174-reach/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
