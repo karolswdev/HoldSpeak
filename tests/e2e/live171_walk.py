@@ -238,14 +238,31 @@ def _step_heartbeat_settings(page: Any, token: str, report: WalkReport) -> None:
         face=face, field="api_status", expected="200",
         observed="200", verdict="MATCH", why="ok",
     )))
-    # Record the settings fields we can see
-    for key in ("sweep_interval_minutes", "quiet_hours_start", "quiet_hours_end",
-                "notify_mode", "notify_content", "sweep_enabled"):
+    # Record the settings fields (wire keys from HeartbeatService)
+    for key in ("sweep_every_minutes", "notify", "notify_content",
+                "last_sweep_at", "next_sweep_at"):
         val = payload.get(key, "---")
         report.facts.append(asdict(FaceFact(
             face=face, field=key, expected="(owner's setting)",
             observed=str(val), verdict="DATA", why="real desk content",
         )))
+    # quiet_hours is a nested object {start, end}
+    qh = payload.get("quiet_hours", {})
+    if isinstance(qh, dict):
+        report.facts.append(asdict(FaceFact(
+            face=face, field="quiet_hours",
+            expected="(start-end)",
+            observed=f"{qh.get('start', '---')}-{qh.get('end', '---')}",
+            verdict="DATA", why="real desk content",
+        )))
+    # muted_projects
+    muted = payload.get("muted_projects", [])
+    report.facts.append(asdict(FaceFact(
+        face=face, field="muted_projects",
+        expected="(list)",
+        observed=str(muted) if muted else "[]",
+        verdict="DATA", why="real desk content",
+    )))
 
 
 # ── Step 2: Settings -> Rhythm ──
@@ -282,7 +299,7 @@ def _step_rhythm(page: Any, out_dir: Path, w: int, token: str,
         const facts = document.querySelector('[data-testid="rhythm-sweep-facts"]');
         return {
             primary: row ? (row.querySelector('.surface-ledger-primary')?.textContent || '').trim() : '---',
-            interval: row ? (row.querySelector('.cycle-gadget')?.textContent || '').trim() : '---',
+            interval: (() => { if (!row) return '---'; const sel = row.querySelector('.gadget-cycle select'); return sel && sel.selectedOptions.length ? sel.selectedOptions[0].text.trim() : '---'; })(),
             runNow: row ? (row.querySelector('[data-testid="rhythm-run-now"]')?.textContent || '').trim() : '---',
             facts: facts ? facts.textContent.trim() : '---',
         };
@@ -343,9 +360,11 @@ def _step_rhythm(page: Any, out_dir: Path, w: int, token: str,
         const row = document.querySelector('[data-testid="rhythm-notify-row"]');
         if (!row) return { primary: '---', gadgets: '---', held: false };
         const primary = (row.querySelector('.surface-ledger-primary')?.textContent || '').trim();
-        const cycles = row.querySelectorAll('.cycle-gadget');
+        const cycles = row.querySelectorAll('.gadget-cycle select');
         const gadgetTexts = [];
-        for (const c of cycles) gadgetTexts.push(c.textContent.trim());
+        for (const sel of cycles) {
+            gadgetTexts.push(sel.selectedOptions.length ? sel.selectedOptions[0].text.trim() : '---');
+        }
         const heldEl = row.querySelector('.surface-token[data-tone="warn"]');
         return {
             primary,
@@ -369,15 +388,17 @@ def _step_rhythm(page: Any, out_dir: Path, w: int, token: str,
 
     # Project mute toggles: data-testid="rhythm-mute-toggles"
     #   Each: CheckGadget variant="token" with the project name uppercase
+    # CheckGadget variant="token" renders as .gadget-check-token with
+    # .is-on/.is-off and the label inside .gadget-check-token-face
     mute_data = page.evaluate("""() => {
         const container = document.querySelector('[data-testid="rhythm-mute-toggles"]');
         if (!container) return [];
-        const gadgets = container.querySelectorAll('.check-gadget');
+        const gadgets = container.querySelectorAll('.gadget-check-token');
         const result = [];
         for (const g of gadgets) {
-            const label = (g.textContent || '').trim();
-            const input = g.querySelector('input[type="checkbox"]');
-            const checked = input ? input.checked : null;
+            const face = g.querySelector('.gadget-check-token-face');
+            const label = face ? face.textContent.trim() : g.textContent.trim();
+            const checked = g.classList.contains('is-on');
             result.push({ label, checked });
         }
         return result;
@@ -596,6 +617,9 @@ def _step_command_deck(page: Any, out_dir: Path, w: int,
     #            #desk-palette-listbox > li > .desk-deck-row (entry)
     #   inside each .desk-deck-row: .desk-deck-label, .desk-deck-badge
     #   (needs-you count chip, HS-171-07), .desk-deck-kind
+    # The band caption and the first row share an <li>: the <li> contains
+    # both .desk-deck-band AND .desk-deck-row as siblings. Parse each <li>
+    # for BOTH a band (updates the current group) AND a row (records it).
     deck_data = page.evaluate("""() => {
         const list = document.getElementById('desk-palette-listbox');
         if (!list) return { groups: {} };
@@ -606,15 +630,15 @@ def _step_command_deck(page: Any, out_dir: Path, w: int,
             if (band) {
                 currentGroup = band.textContent.trim();
                 if (!groups[currentGroup]) groups[currentGroup] = [];
-                continue;
             }
             const row = li.querySelector('.desk-deck-row');
-            if (!row) continue;
-            if (!groups[currentGroup]) groups[currentGroup] = [];
-            const label = (row.querySelector('.desk-deck-label')?.textContent || '').trim();
-            const badge = (row.querySelector('.desk-deck-badge')?.textContent || '').trim();
-            const kind = (row.querySelector('.desk-deck-kind')?.textContent || '').trim();
-            groups[currentGroup].push({ label, badge, kind });
+            if (row) {
+                if (!groups[currentGroup]) groups[currentGroup] = [];
+                const label = (row.querySelector('.desk-deck-label')?.textContent || '').trim();
+                const badge = (row.querySelector('.desk-deck-badge')?.textContent || '').trim();
+                const kind = (row.querySelector('.desk-deck-kind')?.textContent || '').trim();
+                groups[currentGroup].push({ label, badge, kind });
+            }
         }
         return { groups };
     }""")
@@ -656,75 +680,77 @@ def _step_notification_receipts(page: Any, token: str,
                                 report: WalkReport) -> None:
     """Read heartbeat.notify receipts from the API if a route exists."""
     face = "notification"
-    # Try pipeline_events for heartbeat.notify receipts
-    result = _api(page, "GET", "/api/pipeline-events?kind=heartbeat.notify&limit=5",
-                  None, token)
-    if result["status"] == 200:
-        payload = result["payload"]
-        events = payload if isinstance(payload, list) else payload.get("events", payload.get("items", []))
+    # No HTTP route exposes heartbeat.notify receipts (no /api/pipeline-events).
+    # The heartbeat.status MCP tool reads settings but is not an HTTP route.
+    # Record the seam honestly and read last_sweep_at from the settings instead.
+    report.facts.append(asdict(FaceFact(
+        face=face, field="notify_receipts_route",
+        expected="(no route exists)",
+        observed="NO ROUTE FOR NOTIFY RECEIPTS",
+        verdict="DATA", why="heartbeat.notify receipts not exposed via HTTP; "
+                "the notifier (desktop_notify.py) tracks last_notified_count in memory",
+    )))
+
+    # Read last_sweep_at from the heartbeat settings as the best available timestamp
+    settings_result = _api(page, "GET", "/api/settings/heartbeat", None, token)
+    if settings_result["status"] == 200:
+        hb = settings_result["payload"]
+        last_sweep = hb.get("last_sweep_at", "---")
+        next_sweep = hb.get("next_sweep_at", "---")
         report.facts.append(asdict(FaceFact(
-            face=face, field="receipt_count",
-            expected="(varies)",
-            observed=str(len(events)),
-            verdict="DATA", why="real desk content",
+            face=face, field="last_sweep_at",
+            expected="(timestamp)",
+            observed=str(last_sweep),
+            verdict="DATA", why="from GET /api/settings/heartbeat",
         )))
-        for i, ev in enumerate(events[:3]):
-            summary = str(ev)[:150] if isinstance(ev, dict) else str(ev)[:150]
-            report.facts.append(asdict(FaceFact(
-                face=face, field=f"receipt:{i}",
-                expected="(heartbeat.notify receipt)",
-                observed=summary,
-                verdict="DATA", why="real desk content",
-            )))
-    elif result["status"] == 404:
         report.facts.append(asdict(FaceFact(
-            face=face, field="pipeline_events_route",
-            expected="200",
-            observed="404 -- seam not wired yet",
-            verdict="DATA", why="route not found",
-        )))
-    else:
-        report.facts.append(asdict(FaceFact(
-            face=face, field="pipeline_events_route",
-            expected="200",
-            observed=f"HTTP {result['status']}",
-            verdict="DATA", why=f"unexpected status",
+            face=face, field="next_sweep_at",
+            expected="(timestamp)",
+            observed=str(next_sweep),
+            verdict="DATA", why="from GET /api/settings/heartbeat",
         )))
 
     # Check if a banner should be expected
-    # Read the aggregate count from the sweep receipt
-    sweep_count = report.sweep_receipt.get("needs_you_count", 0)
-    if isinstance(sweep_count, int) and sweep_count > 0:
-        # Check quiet hours from settings
-        settings_facts = [f for f in report.facts if f["face"] == "heartbeat-settings"]
-        quiet_start = next((f["observed"] for f in settings_facts
-                           if f["field"] == "quiet_hours_start"), "22:00")
-        quiet_end = next((f["observed"] for f in settings_facts
-                         if f["field"] == "quiet_hours_end"), "08:00")
-        now_hour = datetime.now().hour
-        # Simple quiet-hours check (assumes HH:MM format)
-        try:
-            qs = int(quiet_start.split(":")[0]) if ":" in str(quiet_start) else 22
-            qe = int(quiet_end.split(":")[0]) if ":" in str(quiet_end) else 8
-            in_quiet = (qs > qe and (now_hour >= qs or now_hour < qe)) or \
-                       (qs <= qe and qs <= now_hour < qe)
-        except (ValueError, TypeError):
-            in_quiet = False
+    # Read the aggregate's needs-you count from the sweep receipt or the
+    # outcomes total.
+    outcomes = report.sweep_receipt.get("outcomes", {})
+    sweep_count = outcomes.get("total", 0) if isinstance(outcomes, dict) else 0
+    # Also check quiet hours from the settings
+    qh = {}
+    if settings_result["status"] == 200:
+        qh = settings_result["payload"].get("quiet_hours", {})
+    qs = int(qh.get("start", 22))
+    qe = int(qh.get("end", 8))
+    now_hour = datetime.now().hour
+    if qs > qe:
+        in_quiet = now_hour >= qs or now_hour < qe
+    elif qs < qe:
+        in_quiet = qs <= now_hour < qe
+    else:
+        in_quiet = False
 
-        if in_quiet:
-            report.facts.append(asdict(FaceFact(
-                face=face, field="banner_expectation",
-                expected="HELD (quiet hours)",
-                observed=f"quiet hours active ({quiet_start}-{quiet_end}), count={sweep_count}",
-                verdict="DATA", why="notification held during quiet hours",
-            )))
-        else:
-            report.facts.append(asdict(FaceFact(
-                face=face, field="banner_expectation",
-                expected="EXPECT A BANNER ON HIS SCREEN",
-                observed=f"count={sweep_count}, outside quiet hours",
-                verdict="DATA", why="EXPECT A BANNER ON HIS SCREEN",
-            )))
+    held = report.sweep_receipt.get("held", False)
+    if sweep_count > 0 and not held and not in_quiet:
+        report.facts.append(asdict(FaceFact(
+            face=face, field="banner_expectation",
+            expected="EXPECT A BANNER ON HIS SCREEN",
+            observed=f"count={sweep_count}, outside quiet hours",
+            verdict="DATA", why="EXPECT A BANNER ON HIS SCREEN",
+        )))
+    elif sweep_count > 0 and (held or in_quiet):
+        report.facts.append(asdict(FaceFact(
+            face=face, field="banner_expectation",
+            expected="HELD (quiet hours)",
+            observed=f"count={sweep_count}, quiet hours {qs}:00-{qe}:00, held={held}",
+            verdict="DATA", why="notification held during quiet hours",
+        )))
+    else:
+        report.facts.append(asdict(FaceFact(
+            face=face, field="banner_expectation",
+            expected="NO BANNER (count=0)",
+            observed=f"count={sweep_count}, no needs-you items",
+            verdict="DATA", why="no items to notify about",
+        )))
 
 
 # ── Defect detection ──
