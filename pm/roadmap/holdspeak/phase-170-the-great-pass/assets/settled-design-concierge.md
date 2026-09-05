@@ -30,15 +30,20 @@ row.
 
 ## D2 — the face (window "Models", 640 wide at 1440; 393 glass)
 
-1. **The headline** at display step ONCE: `3 engines found` (accent)
+1. **The headline** at display step ONCE: `5 engines found` (accent) —
+   the count IS the FOUND count (every found item is an engine: LAN,
+   local, cloud key; presets not yet downloaded are listed but not
+   counted)
    or `No engine yet` (muted). Under it the chip row: `THIS MAC · M‑series
    · 36 GB` (hardware fact) · `CHECKED 9:41`.
 2. **FOUND** (caption + count): one ledger row per engine: lead = a kind
    glyph (LAN / THIS MAC / CLOUD from the library vocabulary); primary =
    the engine name (`Qwen3.6 35B`, `Whisper base`, `Qwythos 9B vision`,
    `OpenRouter`, `Anthropic`); cells = `41 MS` latency token when
-   probed, a size token for files (`26.5 GB`), `KEY SET` / `KEY NOT SET`
-   for cloud; trailing = EgressChip host (`192.168.1.43 · LAN` /
+   probed, a size token for files (`26.5 GB`), a runtime token for a
+   local engine (`MLX`, `LLAMA.CPP`), `KEY SET` / `KEY NOT SET` for
+   cloud (a cloud row also carries a ghost `Check` with the cost chip
+   `1 TOKEN · $` — the only way a paid key is ever probed); trailing = EgressChip host (`192.168.1.43 · LAN` /
    `THIS DEVICE` / `openrouter.ai`) + StateChip `● READY` /
    `⚠ UNREACHABLE`. A catalog preset that is not on disk is a row too:
    `Qwen 3.5 0.8B · 532 MB` with the primary verb `Download` (his A) and
@@ -48,7 +53,7 @@ row.
    host is known; an unknown LAN host is added by one row `Add an
    engine…` → a StringGadget for the base URL + `Check` (the probe).
 3. **THE SET** (caption; the proposal): one row per capability group in
-   plain names — `Thoughts & notes` · `Chat` · `Writing & dictation` ·
+   plain names — `Thoughts & notes` · `Chat` (the wire's `chat_practice` label becomes `Chat` in the build) · `Writing & dictation` ·
    `Speech recognition` · `Meetings` · `Agents & tools` · `Background`
    — lead = the group glyph; primary = the group name; the PICKER (the
    Door's beveled control with the stroke chevron) holding the proposed
@@ -68,7 +73,8 @@ row.
    probes on his explicit `Check` with the cost named on the chip:
    `1 TOKEN · $`). The receipt records every probe (Article XI).
 5. **`Adjust`** (ghost, by THE SET's caption) unfolds the capability
-   table in place — every capability, its group, its explicit override,
+   table in place UNDER the set rows (the set stays visible; every
+   capability row carries its engine's host chip) — every capability, its group, its explicit override,
    the 143 map — for the "advanced" B. It never replaces the set; it
    edits it.
 6. **Footer**: receipt `7 GROUPS · 3 ENGINES` (`NO ENGINE · SET UP
@@ -111,6 +117,13 @@ row.
   tombstones written; `profiles` becomes read-only history.
 
 ## D4 — laws and counsel's hunts
+
+Counsel (2026-09-05): RATIFY-W-C — M-1 `Use these` enabled beside a
+WAITING row; M-2 Anthropic's set key absent from FOUND; S-1 `Chat` vs
+the wire's `Chat practice`; S-2 headline vs FOUND count; S-3 Adjust
+replacing the set; S-4 no hosts on Adjust rows; S-5 no cloud `Check`;
+N-1 the `MLX` token; N-2 the phone board's abbreviation; N-3 no
+mid-download board. All paid on the boards and above.
 
 - Speech recognition is local-only by boundary; a proposal that puts it
   anywhere else is a defect.
