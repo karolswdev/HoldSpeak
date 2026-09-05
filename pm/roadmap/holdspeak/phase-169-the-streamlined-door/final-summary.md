@@ -80,4 +80,9 @@
   the count; every verb a Button; no sentences; egress at every point
   of decision; CHECKED/READ/headline honest; the schema additive; the
   walk's finally lawful; the tests assert what they claim.
-- Full suite / sweep / web baseline / rigs — pending 07.
+- Unit fast lane (isolated HOME, `-n auto`): 8011 passed / 14 failed —
+  8 inherited from main at ce629cc2, 6 branch-new paid @fc1d999b (the
+  scheduled-recording one an xdist flake, 3× serial green).
+- Web baseline on the final tree: 2426 passed, zero branch-new.
+- Still to run after the owner's walk (the machine kept quiet under
+  him): the non-unit half of the suite; the four rigs alone.
