@@ -469,11 +469,11 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             sug = SuggestedSourceService(service._db)
 
             # Find the suggestion by reference.
-            conn = service._db._connection()
-            row = conn.execute(
-                "SELECT * FROM source_suggestions WHERE project_id=? AND reference=? AND status='pending'",
-                (project_id, ref),
-            ).fetchone()
+            with service._db._connection() as conn:
+                row = conn.execute(
+                    "SELECT * FROM source_suggestions WHERE project_id=? AND reference=? AND status='pending'",
+                    (project_id, ref),
+                ).fetchone()
             if row is None:
                 return JSONResponse({"error": "Suggestion not found or already resolved"}, status_code=404)
 
@@ -506,11 +506,11 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             from ...services.suggested_source_service import SuggestedSourceService
             sug = SuggestedSourceService(service._db)
 
-            conn = service._db._connection()
-            row = conn.execute(
-                "SELECT * FROM source_suggestions WHERE project_id=? AND reference=? AND status='pending'",
-                (project_id, ref),
-            ).fetchone()
+            with service._db._connection() as conn:
+                row = conn.execute(
+                    "SELECT * FROM source_suggestions WHERE project_id=? AND reference=? AND status='pending'",
+                    (project_id, ref),
+                ).fetchone()
             if row is None:
                 return JSONResponse({"error": "Suggestion not found or already resolved"}, status_code=404)
 
@@ -520,5 +520,20 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return not_found(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to dismiss suggested source")
+
+    # ── HS-172-07: Room people ──────────────────────────────────────
+
+    @router.get("/api/projects/{project_id}/people")
+    async def api_project_people(project_id: str, request: Request) -> Any:
+        """Resolved people from a Room's Watch entities (read-only)."""
+        try:
+            from ...services.room_people_service import room_people
+            people_svc = ctx.people_service
+            result = room_people(service, people_svc, project_id)
+            return JSONResponse({"people": result})
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to get project people")
 
     return router

@@ -3263,7 +3263,9 @@
         "GET"
       ],
       "module": "web.routes.proposals",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/meetings/{meeting_id}/followup-draft",
@@ -4297,12 +4299,24 @@
       "consumers": []
     },
     {
+      "path": "/api/projects/{project_id}/people",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/projects/{project_id}/proposals",
       "methods": [
         "GET"
       ],
       "module": "web.routes.proposals",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/resources",
@@ -4452,7 +4466,9 @@
         "GET"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/suggested-sources/{ref}/add",
@@ -4460,7 +4476,9 @@
         "POST"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/suggested-sources/{ref}/dismiss",
@@ -4468,7 +4486,9 @@
         "POST"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/summary",
@@ -4514,7 +4534,9 @@
         "POST"
       ],
       "module": "web.routes.proposals",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/proposals/{proposal_id}/dismiss",
@@ -4522,7 +4544,9 @@
         "POST"
       ],
       "module": "web.routes.proposals",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/providers",

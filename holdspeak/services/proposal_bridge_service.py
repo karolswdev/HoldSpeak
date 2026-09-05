@@ -152,107 +152,137 @@ class ProposalBridgeService:
         owner: Optional[str] = None,
         due: Optional[str] = None,
     ) -> dict[str, Any]:
-        """Confirm a proposal: write decision_record + commitment through the kernel."""
+        """Confirm a proposal: write decision_record + commitment through the kernel.
+
+        Both decision-kind and action-kind create the full chain:
+        decisions -> decision_records (+ sources) -> action_items -> decision_commitments
+        so the Room's DECISIONS & COMMITMENTS reads see them.
+        """
         proposal = self._db.proposals.get_proposal(proposal_id)
         if proposal is None or proposal.state != "proposed":
             return {"error": "Proposal not found or already decided"}
-
-        # Confirm in the proposals table.
-        confirmed = self._db.proposals.confirm_proposal(
-            proposal_id, text=text, owner=owner, due=due,
-        )
-        if confirmed is None:
-            return {"error": "Failed to confirm proposal"}
 
         final_text = text or proposal.text
         final_owner = owner or proposal.owner_hint
         final_due = due or proposal.due_hint
         now = datetime.now().isoformat()
 
-        result: dict[str, Any] = {
+        decision_id = f"dec-{uuid.uuid4().hex[:16]}"
+        record_id = f"record-{uuid.uuid4().hex[:16]}"
+        record_source_id = f"record-source-{uuid.uuid4().hex[:16]}"
+        action_id = f"action-{uuid.uuid4().hex[:16]}"
+        commitment_id = f"commitment-{uuid.uuid4().hex[:16]}"
+
+        with self._db._connection() as conn:
+            # 1. decisions row (raw meeting decision, lifecycle=accepted).
+            conn.execute(
+                """INSERT INTO decisions
+                   (id, text, rationale, decided_at, date_basis,
+                    source_timestamp, source_artifact_id,
+                    source_meeting_id, project_key, lifecycle,
+                    created_at, updated_at, last_modified)
+                   VALUES (?, ?, '', ?, 'meeting_date', ?, ?, ?, ?, 'accepted',
+                           ?, ?, ?)""",
+                (
+                    decision_id, final_text, now,
+                    proposal.segment_timestamp,
+                    proposal.source_artifact_id or "",
+                    proposal.meeting_id,
+                    self._project_key(proposal.project_id),
+                    now, now, now,
+                ),
+            )
+
+            # 2. decision_records row (the durable canon the Room reads).
+            conn.execute(
+                """INSERT INTO decision_records
+                   (id, decision_text, rationale, alternatives, owner,
+                    review_date, lifecycle, source_type, source_id,
+                    created_at, updated_at)
+                   VALUES (?, ?, '', '', ?, '', 'active', 'meeting', ?,
+                           ?, ?)""",
+                (record_id, final_text, final_owner, decision_id, now, now),
+            )
+
+            # 3. decision_record_sources linking to the meeting.
+            conn.execute(
+                """INSERT INTO decision_record_sources
+                   (id, record_id, source_type, source_ref, created_at)
+                   VALUES (?, ?, 'meeting', ?, ?)""",
+                (record_source_id, record_id, proposal.meeting_id, now),
+            )
+
+            # 4. action_items row.
+            delegated_at = now if final_owner else None
+            conn.execute(
+                """INSERT INTO action_items
+                   (id, meeting_id, task, owner, due, status,
+                    review_state, source_timestamp, created_at, delegated_at)
+                   VALUES (?, ?, ?, ?, ?, 'open', 'accepted', ?, ?, ?)""",
+                (
+                    action_id, proposal.meeting_id, final_text,
+                    final_owner, final_due,
+                    proposal.segment_timestamp, now, delegated_at,
+                ),
+            )
+
+            # 5. decision_commitments linking decision to action_item.
+            conn.execute(
+                """INSERT INTO decision_commitments
+                   (id, decision_id, action_item_id, owner, due_at, status,
+                    created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, 'open', ?, ?)""",
+                (commitment_id, decision_id, action_id, final_owner, final_due, now, now),
+            )
+
+            # Kernel receipt (Article XI).
+            ServiceEventLedger(self._db).append_in_transaction(
+                conn, principal,
+                event_type="proposal.confirmed",
+                producer="ProposalBridgeService",
+                subject_ref=f"proposal:{proposal_id}",
+                source_revision=record_id,
+                facts={
+                    "proposal_id": proposal_id,
+                    "kind": proposal.kind,
+                    "decision_id": decision_id,
+                    "decision_record_id": record_id,
+                    "action_item_id": action_id,
+                    "commitment_id": commitment_id,
+                    "text": final_text,
+                    "original_text": proposal.original_text,
+                    "owner": final_owner,
+                    "due": final_due,
+                },
+                refs=[
+                    f"proposal:{proposal_id}",
+                    f"decision:{decision_id}",
+                    f"decision_record:{record_id}",
+                    f"action_item:{action_id}",
+                    f"commitment:{commitment_id}",
+                ],
+                correlation_id=current_correlation_id(),
+                causation_id=f"proposal:{proposal_id}",
+            )
+
+        # Update the proposal row with the record/commitment ids.
+        # owner_hint and due_hint stay as extraction originals for was{}.
+        self._db.proposals.confirm_proposal(
+            proposal_id,
+            text=text,
+            decision_record_id=record_id,
+            commitment_id=commitment_id,
+        )
+
+        return {
             "proposal_id": proposal_id,
             "state": "confirmed",
             "original_text": proposal.original_text,
+            "decision_id": decision_id,
+            "decision_record_id": record_id,
+            "action_item_id": action_id,
+            "commitment_id": commitment_id,
         }
-
-        if proposal.kind == "decision":
-            # Create a decision_record via the decisions table.
-            decision_id = f"dec-{uuid.uuid4().hex[:16]}"
-            with self._db._connection() as conn:
-                conn.execute(
-                    """INSERT INTO decisions
-                       (id, text, rationale, decided_at, date_basis,
-                        source_timestamp, source_artifact_id,
-                        source_meeting_id, project_key, lifecycle,
-                        created_at, updated_at, last_modified)
-                       VALUES (?, ?, '', ?, 'meeting_date', ?, ?, ?, ?, 'accepted',
-                               ?, ?, ?)""",
-                    (
-                        decision_id, final_text, now,
-                        proposal.segment_timestamp,
-                        proposal.source_artifact_id or "",
-                        proposal.meeting_id,
-                        self._project_key(proposal.project_id),
-                        now, now, now,
-                    ),
-                )
-                ServiceEventLedger(self._db).append_in_transaction(
-                    conn, principal,
-                    event_type="proposal.confirmed",
-                    producer="ProposalBridgeService",
-                    subject_ref=f"proposal:{proposal_id}",
-                    source_revision=decision_id,
-                    facts={
-                        "proposal_id": proposal_id,
-                        "decision_id": decision_id,
-                        "kind": "decision",
-                        "text": final_text,
-                        "original_text": proposal.original_text,
-                    },
-                    refs=[f"proposal:{proposal_id}", f"decision:{decision_id}"],
-                    correlation_id=current_correlation_id(),
-                    causation_id=f"proposal:{proposal_id}",
-                )
-            result["decision_id"] = decision_id
-
-        elif proposal.kind == "action":
-            # Create an action_item directly.
-            action_id = f"action-{uuid.uuid4().hex[:16]}"
-            delegated_at = now if final_owner else None
-            with self._db._connection() as conn:
-                conn.execute(
-                    """INSERT INTO action_items
-                       (id, meeting_id, task, owner, due, status,
-                        review_state, source_timestamp, created_at, delegated_at)
-                       VALUES (?, ?, ?, ?, ?, 'open', 'accepted', ?, ?, ?)""",
-                    (
-                        action_id, proposal.meeting_id, final_text,
-                        final_owner, final_due,
-                        proposal.segment_timestamp, now, delegated_at,
-                    ),
-                )
-                ServiceEventLedger(self._db).append_in_transaction(
-                    conn, principal,
-                    event_type="proposal.confirmed",
-                    producer="ProposalBridgeService",
-                    subject_ref=f"proposal:{proposal_id}",
-                    source_revision=action_id,
-                    facts={
-                        "proposal_id": proposal_id,
-                        "action_item_id": action_id,
-                        "kind": "action",
-                        "text": final_text,
-                        "original_text": proposal.original_text,
-                        "owner": final_owner,
-                        "due": final_due,
-                    },
-                    refs=[f"proposal:{proposal_id}", f"action_item:{action_id}"],
-                    correlation_id=current_correlation_id(),
-                    causation_id=f"proposal:{proposal_id}",
-                )
-            result["action_item_id"] = action_id
-
-        return result
 
     def dismiss_proposal(
         self,
@@ -327,6 +357,8 @@ class ProposalBridgeService:
             "model_host": p.model_host,
             "state": p.state,
             "original_text": p.original_text,
+            "decision_record_id": p.decision_record_id,
+            "commitment_id": p.commitment_id,
             "created_at": p.created_at,
             "decided_at": p.decided_at,
         }

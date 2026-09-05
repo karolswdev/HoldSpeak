@@ -4024,6 +4024,8 @@ CREATE TABLE IF NOT EXISTS follow_through_proposals (
     state TEXT NOT NULL DEFAULT 'proposed'
         CHECK (state IN ('proposed', 'confirmed', 'dismissed')),
     original_text TEXT,
+    decision_record_id TEXT,
+    commitment_id TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     decided_at TEXT
 );

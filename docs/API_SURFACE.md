@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 650 (plus static mounts). iOS-consumed: 89. Web-consumed: 490.
+Routes: 651 (plus static mounts). iOS-consumed: 89. Web-consumed: 498.
 
 ## device_audio_ws
 
@@ -858,6 +858,7 @@ Routes: 650 (plus static mounts). iOS-consumed: 89. Web-consumed: 490.
 | GET | `/api/projects/{project_id}/meetings` | web |
 | DELETE | `/api/projects/{project_id}/meetings/{meeting_id}` | server only |
 | POST | `/api/projects/{project_id}/meetings/{meeting_id}` | server only |
+| GET | `/api/projects/{project_id}/people` | web |
 | GET | `/api/projects/{project_id}/resources` | web |
 | DELETE | `/api/projects/{project_id}/resources/{resource_ref:path}` | server only |
 | PUT | `/api/projects/{project_id}/resources/{resource_ref:path}` | server only |
@@ -865,19 +866,19 @@ Routes: 650 (plus static mounts). iOS-consumed: 89. Web-consumed: 490.
 | GET | `/api/projects/{project_id}/room` | web |
 | POST | `/api/projects/{project_id}/room/read` | web |
 | GET | `/api/projects/{project_id}/since-last-meeting` | web |
-| GET | `/api/projects/{project_id}/suggested-sources` | server only |
-| POST | `/api/projects/{project_id}/suggested-sources/{ref}/add` | server only |
-| POST | `/api/projects/{project_id}/suggested-sources/{ref}/dismiss` | server only |
+| GET | `/api/projects/{project_id}/suggested-sources` | web |
+| POST | `/api/projects/{project_id}/suggested-sources/{ref}/add` | web |
+| POST | `/api/projects/{project_id}/suggested-sources/{ref}/dismiss` | web |
 | GET | `/api/projects/{project_id}/summary` | server only |
 
 ## web.routes.proposals
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/meetings/{meeting_id}/follow-through-proposals` | server only |
-| GET | `/api/projects/{project_id}/proposals` | server only |
-| POST | `/api/proposals/{proposal_id}/confirm` | server only |
-| POST | `/api/proposals/{proposal_id}/dismiss` | server only |
+| GET | `/api/meetings/{meeting_id}/follow-through-proposals` | web |
+| GET | `/api/projects/{project_id}/proposals` | web |
+| POST | `/api/proposals/{proposal_id}/confirm` | web |
+| POST | `/api/proposals/{proposal_id}/dismiss` | web |
 
 ## web.routes.providers
 

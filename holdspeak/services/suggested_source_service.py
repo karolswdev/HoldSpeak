@@ -114,25 +114,24 @@ class SuggestedSourceService:
         """Persist scanned suggestions as pending rows."""
         rows: list[dict[str, Any]] = []
         now = datetime.now().isoformat()
-        conn = self._db._connection()
-        for s in suggestions:
-            row_id = f"ssug_{uuid.uuid4().hex[:12]}"
-            conn.execute(
-                "INSERT OR IGNORE INTO source_suggestions "
-                "(id, project_id, meeting_id, provider, reference, status, created_at) "
-                "VALUES (?, ?, ?, ?, ?, 'pending', ?)",
-                (row_id, project_id, meeting_id, s["provider"], s["reference"], now),
-            )
-            rows.append({
-                "id": row_id,
-                "project_id": project_id,
-                "meeting_id": meeting_id,
-                "provider": s["provider"],
-                "reference": s["reference"],
-                "status": "pending",
-                "created_at": now,
-            })
-        conn.commit()
+        with self._db._connection() as conn:
+            for s in suggestions:
+                row_id = f"ssug_{uuid.uuid4().hex[:12]}"
+                conn.execute(
+                    "INSERT OR IGNORE INTO source_suggestions "
+                    "(id, project_id, meeting_id, provider, reference, status, created_at) "
+                    "VALUES (?, ?, ?, ?, ?, 'pending', ?)",
+                    (row_id, project_id, meeting_id, s["provider"], s["reference"], now),
+                )
+                rows.append({
+                    "id": row_id,
+                    "project_id": project_id,
+                    "meeting_id": meeting_id,
+                    "provider": s["provider"],
+                    "reference": s["reference"],
+                    "status": "pending",
+                    "created_at": now,
+                })
         return rows
 
     # ---- CRUD ----------------------------------------------------------------
@@ -141,25 +140,24 @@ class SuggestedSourceService:
         self, project_id: str, *, status: str = "pending",
     ) -> list[dict[str, Any]]:
         """List suggestions for a project filtered by status."""
-        conn = self._db._connection()
-        rows = conn.execute(
-            "SELECT * FROM source_suggestions WHERE project_id=? AND status=? "
-            "ORDER BY created_at",
-            (project_id, status),
-        ).fetchall()
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM source_suggestions WHERE project_id=? AND status=? "
+                "ORDER BY created_at",
+                (project_id, status),
+            ).fetchall()
         return [dict(row) for row in rows]
 
     def accept_suggestion(self, suggestion_id: str) -> dict[str, Any]:
         """Mark a suggestion as accepted.  Returns the updated row."""
-        conn = self._db._connection()
-        conn.execute(
-            "UPDATE source_suggestions SET status='accepted' WHERE id=?",
-            (suggestion_id,),
-        )
-        conn.commit()
-        row = conn.execute(
-            "SELECT * FROM source_suggestions WHERE id=?", (suggestion_id,),
-        ).fetchone()
+        with self._db._connection() as conn:
+            conn.execute(
+                "UPDATE source_suggestions SET status='accepted' WHERE id=?",
+                (suggestion_id,),
+            )
+            row = conn.execute(
+                "SELECT * FROM source_suggestions WHERE id=?", (suggestion_id,),
+            ).fetchone()
         if row is None:
             from .errors import NotFound
             raise NotFound("suggestion", suggestion_id)
@@ -167,15 +165,14 @@ class SuggestedSourceService:
 
     def dismiss_suggestion(self, suggestion_id: str) -> dict[str, Any]:
         """Mark a suggestion as dismissed.  Returns the updated row."""
-        conn = self._db._connection()
-        conn.execute(
-            "UPDATE source_suggestions SET status='dismissed' WHERE id=?",
-            (suggestion_id,),
-        )
-        conn.commit()
-        row = conn.execute(
-            "SELECT * FROM source_suggestions WHERE id=?", (suggestion_id,),
-        ).fetchone()
+        with self._db._connection() as conn:
+            conn.execute(
+                "UPDATE source_suggestions SET status='dismissed' WHERE id=?",
+                (suggestion_id,),
+            )
+            row = conn.execute(
+                "SELECT * FROM source_suggestions WHERE id=?", (suggestion_id,),
+            ).fetchone()
         if row is None:
             from .errors import NotFound
             raise NotFound("suggestion", suggestion_id)
@@ -183,10 +180,10 @@ class SuggestedSourceService:
 
     def get_suggestion(self, suggestion_id: str) -> dict[str, Any]:
         """Get a single suggestion by ID."""
-        conn = self._db._connection()
-        row = conn.execute(
-            "SELECT * FROM source_suggestions WHERE id=?", (suggestion_id,),
-        ).fetchone()
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM source_suggestions WHERE id=?", (suggestion_id,),
+            ).fetchone()
         if row is None:
             from .errors import NotFound
             raise NotFound("suggestion", suggestion_id)
@@ -200,11 +197,11 @@ class SuggestedSourceService:
         GitHub refs are normalized lower-cased; Jira refs upper-cased.
         A dismissed suggestion is included so it is never raised again.
         """
-        conn = self._db._connection()
-        rows = conn.execute(
-            "SELECT provider, reference FROM source_suggestions WHERE project_id=?",
-            (project_id,),
-        ).fetchall()
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                "SELECT provider, reference FROM source_suggestions WHERE project_id=?",
+                (project_id,),
+            ).fetchall()
         pairs: set[tuple[str, str]] = set()
         for row in rows:
             provider = row["provider"]

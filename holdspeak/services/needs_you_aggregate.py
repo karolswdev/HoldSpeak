@@ -57,7 +57,7 @@ def build_aggregate(
         if needs.get("state") != "ok":
             continue
         for item in needs.get("items") or []:
-            items.append({
+            row: dict[str, Any] = {
                 "projectId": pid,
                 "projectName": proj.get("name") or proj.get("title") or "",
                 "ref": item.get("title", ""),
@@ -65,9 +65,16 @@ def build_aggregate(
                 "why": item.get("why", ""),
                 "ageToken": item.get("since", ""),
                 "source": item.get("source", ""),
-                "verbHref": item.get("url"),
+                "verbHref": item.get("url") or item.get("verbHref"),
                 "severity": item.get("severity", "info"),
-            })
+            }
+            if item.get("proposal_id"):
+                row["proposalId"] = item["proposal_id"]
+                row["proposalKind"] = item.get("proposal_kind", "action")
+                row["proposalHost"] = item.get("host")
+                row["proposalDue"] = item.get("due_hint")
+                row["meetingTitle"] = item.get("meeting_title")
+            items.append(row)
             project_ids.add(pid)
 
     items.sort(key=lambda r: (

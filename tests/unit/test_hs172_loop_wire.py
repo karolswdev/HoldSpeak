@@ -201,8 +201,8 @@ class TestProposalBridge:
         second = bridge.bridge_meeting_artifacts(meeting_id)
         assert len(second) == 0
 
-    def test_confirm_decision_writes_record(self, db: Database) -> None:
-        """Confirming a decision proposal writes a decisions row and a receipt."""
+    def test_confirm_decision_writes_full_chain(self, db: Database) -> None:
+        """Confirming a decision proposal writes decisions + decision_records + commitment."""
         from holdspeak.services.proposal_bridge_service import ProposalBridgeService
 
         meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
@@ -219,19 +219,48 @@ class TestProposalBridge:
         result = bridge.confirm_proposal(OWNER, prop.id)
         assert result.get("state") == "confirmed"
         assert "decision_id" in result
+        assert "decision_record_id" in result
+        assert "action_item_id" in result
+        assert "commitment_id" in result
 
-        # Verify the decision row exists.
         with db._connection() as conn:
-            row = conn.execute(
+            # decisions row
+            dec = conn.execute(
                 "SELECT * FROM decisions WHERE id = ?",
                 (result["decision_id"],),
             ).fetchone()
-            assert row is not None
-            assert row["text"] == "Use Redis for caching"
-            assert row["lifecycle"] == "accepted"
+            assert dec is not None
+            assert dec["text"] == "Use Redis for caching"
+            assert dec["lifecycle"] == "accepted"
 
-    def test_confirm_action_writes_action_item(self, db: Database) -> None:
-        """Confirming an action proposal writes an action_items row."""
+            # decision_records row (what the Room reads)
+            rec = conn.execute(
+                "SELECT * FROM decision_records WHERE id = ?",
+                (result["decision_record_id"],),
+            ).fetchone()
+            assert rec is not None
+            assert rec["decision_text"] == "Use Redis for caching"
+
+            # decision_record_sources links to the meeting
+            src = conn.execute(
+                "SELECT * FROM decision_record_sources WHERE record_id = ?",
+                (result["decision_record_id"],),
+            ).fetchone()
+            assert src is not None
+            assert src["source_type"] == "meeting"
+            assert src["source_ref"] == meeting_id
+
+            # decision_commitments row
+            cmt = conn.execute(
+                "SELECT * FROM decision_commitments WHERE id = ?",
+                (result["commitment_id"],),
+            ).fetchone()
+            assert cmt is not None
+            assert cmt["decision_id"] == result["decision_id"]
+            assert cmt["action_item_id"] == result["action_item_id"]
+
+    def test_confirm_action_writes_full_chain(self, db: Database) -> None:
+        """Confirming an action proposal writes the full chain."""
         from holdspeak.services.proposal_bridge_service import ProposalBridgeService
 
         meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
@@ -248,16 +277,34 @@ class TestProposalBridge:
         result = bridge.confirm_proposal(OWNER, prop.id, owner="Alice", due="Monday")
         assert result.get("state") == "confirmed"
         assert "action_item_id" in result
+        assert "decision_record_id" in result
+        assert "commitment_id" in result
 
-        # Verify the action_items row.
         with db._connection() as conn:
-            row = conn.execute(
+            # action_items row
+            ai = conn.execute(
                 "SELECT * FROM action_items WHERE id = ?",
                 (result["action_item_id"],),
             ).fetchone()
-            assert row is not None
-            assert row["task"] == "Review the PR"
-            assert row["owner"] == "Alice"
+            assert ai is not None
+            assert ai["task"] == "Review the PR"
+            assert ai["owner"] == "Alice"
+
+            # decision_records row
+            rec = conn.execute(
+                "SELECT * FROM decision_records WHERE id = ?",
+                (result["decision_record_id"],),
+            ).fetchone()
+            assert rec is not None
+
+            # commitment links them
+            cmt = conn.execute(
+                "SELECT * FROM decision_commitments WHERE id = ?",
+                (result["commitment_id"],),
+            ).fetchone()
+            assert cmt is not None
+            assert cmt["action_item_id"] == result["action_item_id"]
+            assert cmt["owner"] == "Alice"
 
     def test_confirm_keeps_original_text(self, db: Database) -> None:
         """Confirming with amended text keeps original_text."""
@@ -404,3 +451,177 @@ class TestProposalListing:
 
         proposals = bridge.list_project_proposals(project_id)
         assert len(proposals) == 2
+
+
+# ── Room decisions read with proposal provenance ────────────────────
+
+class TestRoomDecisionsRead:
+    """HS-172-03: confirmed proposals appear in Room DECISIONS once, with provenance."""
+
+    def _room_decisions(self, db: Database, project_id: str) -> dict[str, Any]:
+        """Call _read_room_decisions via ProjectService."""
+        from holdspeak.services.project_service import ProjectService
+        svc = ProjectService(db)
+        return svc._read_room_decisions(project_id)
+
+    def _room_commitments(self, db: Database, project_id: str) -> dict[str, Any]:
+        from holdspeak.services.project_service import ProjectService
+        svc = ProjectService(db)
+        return svc._read_room_commitments(project_id)
+
+    def test_decision_confirm_shows_once_with_source(self, db: Database) -> None:
+        """A confirmed decision-kind proposal appears exactly once in decisions."""
+        from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        project_id = f"prj-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id, title="Sprint Review")
+        _seed_project(db, project_id)
+        _link_meeting_project(db, meeting_id, project_id)
+        _seed_decision_artifact(db, meeting_id, [
+            {"text": "Adopt PostgreSQL 17"},
+        ])
+
+        bridge = ProposalBridgeService(db)
+        created = bridge.bridge_meeting_artifacts(meeting_id)
+        bridge.confirm_proposal(OWNER, created[0].id)
+
+        decisions = self._room_decisions(db, project_id)
+        items = decisions["items"]
+        assert len(items) == 1, f"Expected 1 decision, got {len(items)}"
+        item = items[0]
+        assert item["text"] == "Adopt PostgreSQL 17"
+        assert item["source"] == "meeting"
+        assert item["meeting_title"] == "Sprint Review"
+        assert item["confirmed_at"] is not None
+        assert item["proposal_id"] is not None
+
+    def test_decision_confirm_with_edit_has_was(self, db: Database) -> None:
+        """A confirmed decision with amended text carries 'was' with the original."""
+        from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        project_id = f"prj-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id, title="Standup")
+        _seed_project(db, project_id)
+        _link_meeting_project(db, meeting_id, project_id)
+        _seed_decision_artifact(db, meeting_id, [
+            {"text": "Use MySQL"},
+        ])
+
+        bridge = ProposalBridgeService(db)
+        created = bridge.bridge_meeting_artifacts(meeting_id)
+        bridge.confirm_proposal(OWNER, created[0].id, text="Use PostgreSQL")
+
+        decisions = self._room_decisions(db, project_id)
+        item = decisions["items"][0]
+        assert item["text"] == "Use PostgreSQL"
+        assert "was" in item
+        assert item["was"]["text"] == "Use MySQL"
+
+    def test_action_confirm_shows_once(self, db: Database) -> None:
+        """A confirmed action-kind proposal shows once in decisions."""
+        from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        project_id = f"prj-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id, title="Planning")
+        _seed_project(db, project_id)
+        _link_meeting_project(db, meeting_id, project_id)
+        _seed_action_artifact(db, meeting_id, [
+            {"task": "Fix the bug", "owner": "Alice"},
+        ])
+
+        bridge = ProposalBridgeService(db)
+        created = bridge.bridge_meeting_artifacts(meeting_id)
+        bridge.confirm_proposal(OWNER, created[0].id, owner="Alice")
+
+        decisions = self._room_decisions(db, project_id)
+        assert len(decisions["items"]) == 1
+
+        # Also shows in commitments.
+        commitments = self._room_commitments(db, project_id)
+        assert len(commitments["items"]) == 1
+        assert commitments["items"][0]["owner"] == "Alice"
+
+    def test_dismiss_leaves_nothing_in_decisions(self, db: Database) -> None:
+        """A dismissed proposal leaves zero rows in Room decisions."""
+        from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        project_id = f"prj-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id)
+        _seed_project(db, project_id)
+        _link_meeting_project(db, meeting_id, project_id)
+        _seed_decision_artifact(db, meeting_id, [{"text": "Bad idea"}])
+
+        bridge = ProposalBridgeService(db)
+        created = bridge.bridge_meeting_artifacts(meeting_id)
+        bridge.dismiss_proposal(OWNER, created[0].id)
+
+        decisions = self._room_decisions(db, project_id)
+        assert len(decisions["items"]) == 0
+
+    def test_was_due_when_due_changed(self, db: Database) -> None:
+        """was.due appears when the owner changes the due date on confirm."""
+        from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        project_id = f"prj-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id, title="Sprint")
+        _seed_project(db, project_id)
+        _link_meeting_project(db, meeting_id, project_id)
+        _seed_action_artifact(db, meeting_id, [
+            {"task": "Deploy v2", "owner": "Bob", "due": "Friday"},
+        ])
+
+        bridge = ProposalBridgeService(db)
+        created = bridge.bridge_meeting_artifacts(meeting_id)
+        bridge.confirm_proposal(OWNER, created[0].id, due="Monday")
+
+        decisions = self._room_decisions(db, project_id)
+        item = decisions["items"][0]
+        assert "was" in item
+        assert item["was"]["due"] == "Friday"
+
+
+# ── Intel status enrichment ─────────────────────────────────────────
+
+class TestIntelStatusEnrichment:
+    """HS-172-02: intel_model_host and intel_duration_s on meeting payloads."""
+
+    def test_summary_payload_has_intel_keys(self, db: Database) -> None:
+        """_summary_payload includes intel_model_host and intel_duration_s."""
+        from holdspeak.services.meeting_service import MeetingService
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id)
+
+        # Set intel timestamps.
+        with db._connection() as conn:
+            conn.execute(
+                "UPDATE meetings SET intel_requested_at = ?, intel_completed_at = ? WHERE id = ?",
+                ("2026-09-04T09:35:00", "2026-09-04T09:35:41", meeting_id),
+            )
+
+        meetings = db.meetings.list_meetings(limit=10)
+        assert len(meetings) >= 1
+        target = [m for m in meetings if m.id == meeting_id][0]
+
+        payload = MeetingService._summary_payload(target)
+        assert "intel_model_host" in payload
+        assert "intel_duration_s" in payload
+        assert payload["intel_duration_s"] == 41
+
+    def test_summary_payload_null_when_not_completed(self, db: Database) -> None:
+        """duration_s is None when intel has not completed."""
+        from holdspeak.services.meeting_service import MeetingService
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id)
+
+        meetings = db.meetings.list_meetings(limit=10)
+        target = [m for m in meetings if m.id == meeting_id][0]
+
+        payload = MeetingService._summary_payload(target)
+        assert payload["intel_duration_s"] is None

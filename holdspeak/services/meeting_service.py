@@ -318,6 +318,7 @@ class MeetingService:
         total = len(meetings) if filtered else self._db.meetings.get_meeting_count()
         payloads = [self._summary_payload(meeting) for meeting in meetings]
         self._enrich_calendar_origin(payloads)
+        self._enrich_intel_status(payloads)
         return {
             "meetings": payloads,
             "total": total,
@@ -341,6 +342,8 @@ class MeetingService:
             raise NotFound("meeting", resolved_id)
         payload = meeting.to_dict()
         self._enrich_calendar_origin([payload])
+        # HS-172-02: intel host + duration on the detail payload.
+        self._enrich_intel_status([payload])
         return payload
 
     def start_capture(
@@ -715,8 +718,53 @@ class MeetingService:
                     except Exception:
                         pass
 
+    def _enrich_intel_status(self, payloads: list[dict[str, Any]]) -> None:
+        """HS-172-02: stamp intel_model_host on meeting payloads.
+
+        The host is resolved from the config at the point of the read (the
+        model placement may have changed since the meeting ran; this is the
+        current assignment, consistent with the hub's meetings.host).
+        """
+        host: str | None = None
+        try:
+            from ..config import Config
+            from ..intel.providers import resolve_meeting_placement
+            placement = resolve_meeting_placement(Config.load().meeting)
+            host = placement.boundary if placement.boundary == "local" else (
+                placement.profile_name or placement.boundary or "local"
+            )
+        except Exception:
+            host = "local"
+        for p in payloads:
+            if p.get("intel_model_host") is None:
+                p["intel_model_host"] = host
+            # HS-172-02: compute duration from the detail payload's timestamps
+            # when _summary_payload could not (detail path carries raw dicts).
+            if p.get("intel_duration_s") is None:
+                req_raw = p.get("intel_requested_at")
+                comp_raw = p.get("intel_completed_at")
+                if req_raw and comp_raw:
+                    try:
+                        from datetime import datetime as _dt
+                        req_dt = _dt.fromisoformat(str(req_raw)) if isinstance(req_raw, str) else req_raw
+                        comp_dt = _dt.fromisoformat(str(comp_raw)) if isinstance(comp_raw, str) else comp_raw
+                        p["intel_duration_s"] = max(0, int((comp_dt - req_dt).total_seconds()))
+                    except Exception:
+                        pass
+
     @staticmethod
     def _summary_payload(meeting: Any) -> dict[str, Any]:
+        # HS-172-02: intel duration (requested_at -> completed_at).
+        intel_duration_s: int | None = None
+        req = getattr(meeting, "intel_requested_at", None)
+        comp = getattr(meeting, "intel_completed_at", None)
+        if req is not None and comp is not None:
+            try:
+                intel_duration_s = max(0, int((comp - req).total_seconds()))
+            except Exception:
+                pass
+        # HS-172-02: model host at point of decision.
+        intel_model_host = getattr(meeting, "intel_model_host", None)
         return {
             "id": meeting.id,
             "started_at": meeting.started_at.isoformat(),
@@ -728,6 +776,8 @@ class MeetingService:
             "tags": meeting.tags,
             "intel_status": meeting.intel_status,
             "intel_status_detail": meeting.intel_status_detail,
+            "intel_model_host": intel_model_host,
+            "intel_duration_s": intel_duration_s,
             "capture_status": meeting.capture_status,
             "capture_failure": meeting.capture_failure,
             "capture_checkpoint_seconds": meeting.capture_checkpoint_seconds,
@@ -737,4 +787,5 @@ class MeetingService:
             # transcript (never 0). The list query computes it via subquery;
             # the detail computes it from the loaded segments.
             "transcriptWords": getattr(meeting, "transcript_words", None),
+            "needs_you_count": getattr(meeting, "needs_you_count", 0),
         }

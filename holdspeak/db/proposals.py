@@ -32,6 +32,8 @@ class Proposal:
     fingerprint: str
     state: str  # "proposed" | "confirmed" | "dismissed"
     original_text: Optional[str]
+    decision_record_id: Optional[str]
+    commitment_id: Optional[str]
     created_at: str
     decided_at: Optional[str]
 
@@ -103,6 +105,8 @@ class ProposalRepository(BaseRepository):
             fingerprint=fp,
             state="proposed",
             original_text=text,
+            decision_record_id=None,
+            commitment_id=None,
             created_at=now,
             decided_at=None,
         )
@@ -149,6 +153,8 @@ class ProposalRepository(BaseRepository):
         text: Optional[str] = None,
         owner: Optional[str] = None,
         due: Optional[str] = None,
+        decision_record_id: Optional[str] = None,
+        commitment_id: Optional[str] = None,
     ) -> Optional[Proposal]:
         """Confirm a proposal: set state=confirmed; optionally amend text/owner/due."""
         now = datetime.now().isoformat()
@@ -164,12 +170,15 @@ class ProposalRepository(BaseRepository):
             if text is not None:
                 updates.append("text = ?")
                 params.append(text)
-            if owner is not None:
-                updates.append("owner_hint = ?")
-                params.append(owner)
-            if due is not None:
-                updates.append("due_hint = ?")
-                params.append(due)
+            # owner_hint and due_hint are the ORIGINAL extraction hints;
+            # they stay unchanged so was{} can compare them against the
+            # confirmed values in decision_commitments.
+            if decision_record_id is not None:
+                updates.append("decision_record_id = ?")
+                params.append(decision_record_id)
+            if commitment_id is not None:
+                updates.append("commitment_id = ?")
+                params.append(commitment_id)
             params.append(proposal_id)
             conn.execute(
                 f"UPDATE follow_through_proposals SET {', '.join(updates)} WHERE id = ?",
@@ -219,6 +228,8 @@ class ProposalRepository(BaseRepository):
             fingerprint=str(row["fingerprint"]),
             state=str(row["state"]),
             original_text=str(row["original_text"]) if row["original_text"] else None,
+            decision_record_id=str(row["decision_record_id"]) if row["decision_record_id"] else None,
+            commitment_id=str(row["commitment_id"]) if row["commitment_id"] else None,
             created_at=str(row["created_at"]),
             decided_at=str(row["decided_at"]) if row["decided_at"] else None,
         )
