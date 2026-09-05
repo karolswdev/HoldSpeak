@@ -130,8 +130,9 @@ the .43 box runs llama.cpp (Q6, 24k context) but no HoldSpeak runner.
 
 **2026-09-05 19:35 — ACTIVATED, STACKED.** Under the standing goal the
 faces build to counsel-ratified boards and his word gates the MERGE (the
-decision recorded for 170–173). Boards for D2 (a)–(d) dispatched at
-1440 + 393; wire lanes follow the 173 suite. Story 06 (the third
+decision recorded for 170–173). Eleven boards for D2 (a)–(d) on the canvas
+(https://claude.ai/code/artifact/5719ec5d-4d70-4acc-9f7a-fbffa2d863a0),
+counsel reading; wire lanes follow the 173 suite. Story 06 (the third
 connector) proceeds on the design's leading candidate, Confluence, as a
 reversible default; his word on the choice is owed. Story 08 (the .43
 runner) builds the client and proves it against the hub on this machine;

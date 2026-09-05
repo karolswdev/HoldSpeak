@@ -11,6 +11,11 @@ the Heartbeat's, the Loop Closes', and the Steward's grammar (Phases
 169--173) are the ratified precedent.
 
 
+> **ON THE CANVAS (2026-09-05)** — eleven boards published at
+> https://claude.ai/code/artifact/5719ec5d-4d70-4acc-9f7a-fbffa2d863a0 ;
+> counsel reading; faces build to the ratified boards under the standing
+> goal; **his word gates the merge** (stacked on 173 #556).
+
 ## D0 -- the Tuesday moment
 
 22:00. He closes the MacBook lid and leaves. The .43 box on the
