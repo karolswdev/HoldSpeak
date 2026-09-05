@@ -1,6 +1,6 @@
 // HS-170-04 — the detail header: display title + token row.
 // Board: `Design review` (display) + `SEP 02 · 45 MIN · SAVED` tokens.
-// Middle dot (U+00B7) between every token.
+// Middle dot (U+00B7) between every token, equal space both sides.
 import type { ReactNode } from "react";
 import { StateTokenSpan } from "./StateTokenSpan";
 import { ledgerDate, durationToken, stateToken } from "./helpers";
@@ -24,16 +24,20 @@ export function MeetingHeader({
   if (durStr) parts.push(<span key="dur" className="meetings-stream-fact">{durStr}</span>);
   parts.push(<StateTokenSpan key="state" token={token} />);
 
+  // Interleave dots as sibling flex children for equal spacing
+  const interleaved: ReactNode[] = [];
+  parts.forEach((part, i) => {
+    if (i > 0) interleaved.push(
+      <span key={`dot-${i}`} className="meetings-stream-dot" aria-hidden="true">{"·"}</span>
+    );
+    interleaved.push(part);
+  });
+
   return (
     <div className="meetings-detail-head">
       <div className="surface-display">{title}</div>
       <div className="meetings-detail-facts">
-        {parts.map((part, i) => (
-          <span key={i}>
-            {i > 0 ? <span className="meetings-stream-dot" aria-hidden="true">{"·"}</span> : null}
-            {part}
-          </span>
-        ))}
+        {interleaved}
       </div>
     </div>
   );
