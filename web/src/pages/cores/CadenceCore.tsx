@@ -53,6 +53,8 @@ type HeartbeatSettings = {
   next_sweep_at: string | null;
   /** HS-174-08: host the sweep runs on ("local" or a remote host). */
   runs_on?: string | null;
+  /** HS-174-08: known remote hosts from pipeline events. */
+  remote_hosts?: string[];
   /** HS-174-08: last remote run timestamp (ISO). */
   last_remote_run_at?: string | null;
 };
@@ -177,6 +179,7 @@ export function CadenceCore({ hero }: CoreProps) {
     last_sweep_at: raw?.last_sweep_at ?? null,
     next_sweep_at: raw?.next_sweep_at ?? null,
     runs_on: raw?.runs_on ?? null,
+    remote_hosts: Array.isArray(raw?.remote_hosts) ? raw.remote_hosts : [],
     last_remote_run_at: raw?.last_remote_run_at ?? null,
   };
   const projects = projectsRes.data?.projects ?? [];
@@ -358,7 +361,7 @@ export function CadenceCore({ hero }: CoreProps) {
               value={settings.runs_on || "local"}
               options={[
                 { value: "local", label: "THIS DEVICE" },
-                { value: "192.168.1.43", label: "192.168.1.43" },
+                ...(settings.remote_hosts ?? []).map((h) => ({ value: h, label: h })),
               ]}
               onChange={(v) => void putSetting({ runs_on: v })}
               data-testid="rhythm-runs-on-gadget"

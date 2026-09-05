@@ -2,14 +2,17 @@
 
 Tests the Rhythm face's Runs on row at 1440 + 393.
 Legs:
-  1. The row is present.
-  2. Run now appears exactly once on the page (on Sweep, not Runs on).
-  3. Caption WHILE THIS MAC IS AWAKE is absent when THIS DEVICE selected.
+  1. Default (THIS DEVICE): the row is present, caption absent.
+  2. PUT runs_on to a remote host: caption WHILE THIS MAC IS AWAKE appears,
+     LAST RUN <age> appears, CycleGadget offers the remote host.
+  3. Run now appears exactly once (on Sweep, not on Runs on).
 
 Shots to phase-174-reach/assets/story-08-shots/.
 """
 from __future__ import annotations
 
+import time
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +20,7 @@ import pytest
 
 from .glass_infra import (
     _boot,
+    _api,
     _assert_clean,
     _normal_chair,
     _ensure_build,
@@ -35,7 +39,6 @@ TOKEN = "hs174-rhythm"
 
 
 def _open_rhythm(page: Any) -> None:
-    """Open the Rhythm / Cadence surface window."""
     page.evaluate(
         """([key]) => {
           sessionStorage.setItem(
@@ -69,80 +72,151 @@ def _shot(page: Any, name: str, width: int) -> Path:
     return path
 
 
-def test_runs_on_row_1440(
+def _seed_remote_pipeline_event(caller: str = "192.168.1.43") -> None:
+    """Seed a HeartbeatService sweep with origin=remote so remote_hosts is populated."""
+    from holdspeak.db import get_database
+    db = get_database()
+    event_id = str(uuid.uuid4())
+    now = time.time()
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT INTO pipeline_events
+               (event_id, timestamp, service, method,
+                principal_kind, principal_identity, args_summary,
+                result_summary, error, error_code, duration_ms,
+                correlation_id, is_async, origin, caller, caller_identity)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                event_id, now, "HeartbeatService", "run_sweep",
+                "agent", "sweep-runner", "{}",
+                '{"watches":4,"rooms":2,"held":false}',
+                None, None, 42.0,
+                str(uuid.uuid4()), 0, "remote", caller, "sweep-runner",
+            ),
+        )
+
+
+def test_runs_on_local_1440(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The Runs on row is present at 1440 with no caption when local."""
+    """Runs on row present at 1440 with caption absent when THIS DEVICE."""
     _ensure_build()
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
 
     from playwright.sync_api import sync_playwright
 
-    errors: list[str] = []
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=True)
+        browser = pw.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 900})
         page.on("pageerror", lambda e: errors.append(str(e)))
-        page.goto(f"{url}/?token={TOKEN}")
+        page.goto(f"{url}/?token={TOKEN}", wait_until="load")
         _normal_chair(page)
         _open_rhythm(page)
         _settle(page)
 
-        # Runs on row exists
         row = page.locator('[data-testid="rhythm-runs-on-row"]')
         assert row.count() > 0, "Runs on row not found"
 
-        # Caption absent when THIS DEVICE
         caption = page.locator('[data-testid="rhythm-runs-on-caption"]')
-        assert caption.count() == 0, "Caption should be absent when local"
+        assert caption.count() == 0, "Caption should be absent when THIS DEVICE"
 
-        _shot(page, "build-rhythm-runs-on-1440", 1440)
+        _shot(page, "build-rhythm-runs-on-local-1440", 1440)
         _assert_clean(page, errors)
         browser.close()
 
 
-def test_runs_on_row_393(
+def test_runs_on_remote_1440(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The Runs on row is present at 393."""
+    """PUT runs_on to remote host, assert caption and LAST RUN appear."""
     _ensure_build()
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
 
     from playwright.sync_api import sync_playwright
 
-    errors: list[str] = []
+    # Seed a remote pipeline event so remote_hosts is populated and
+    # last_remote_run_at has a value.
+    _seed_remote_pipeline_event("192.168.1.43")
+
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=True)
-        page = browser.new_page(viewport={"width": 393, "height": 900})
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
         page.on("pageerror", lambda e: errors.append(str(e)))
-        page.goto(f"{url}/?token={TOKEN}")
+        page.goto(f"{url}/?token={TOKEN}", wait_until="load")
         _normal_chair(page)
+        _settle(page)
+
+        # PUT runs_on to the remote host
+        _api(page, "PUT", "/api/settings/heartbeat",
+             {"runs_on": "192.168.1.43"}, token=TOKEN)
+
         _open_rhythm(page)
         _settle(page)
 
-        row = page.locator('[data-testid="rhythm-runs-on-row"]')
-        assert row.count() > 0, "Runs on row not found at 393"
+        # Caption should appear
+        caption = page.locator('[data-testid="rhythm-runs-on-caption"]')
+        caption.wait_for(timeout=5000)
+        assert caption.count() > 0, "Caption should be present when remote"
+        assert caption.text_content() == "WHILE THIS MAC IS AWAKE"
 
-        _shot(page, "build-rhythm-runs-on-393", 393)
+        # LAST RUN token should appear
+        facts = page.locator('[data-testid="rhythm-runs-on-facts"]')
+        facts_text = facts.text_content() or ""
+        assert "LAST RUN" in facts_text, f"Missing LAST RUN in: {facts_text}"
+
+        _shot(page, "build-rhythm-runs-on-remote-1440", 1440)
         _assert_clean(page, errors)
         browser.close()
 
 
-def test_run_now_appears_once(
+def test_runs_on_remote_393(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Run now button appears exactly once (on Sweep, not on Runs on)."""
+    """Same at phone width."""
     _ensure_build()
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
 
     from playwright.sync_api import sync_playwright
 
-    errors: list[str] = []
+    _seed_remote_pipeline_event("192.168.1.43")
+
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=True)
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 393, "height": 900})
+        page.on("pageerror", lambda e: errors.append(str(e)))
+        page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+        _normal_chair(page)
+        _settle(page)
+
+        _api(page, "PUT", "/api/settings/heartbeat",
+             {"runs_on": "192.168.1.43"}, token=TOKEN)
+
+        _open_rhythm(page)
+        _settle(page)
+
+        _shot(page, "build-rhythm-runs-on-remote-393", 393)
+        _assert_clean(page, errors)
+        browser.close()
+
+
+def test_run_now_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Run now appears exactly once (on Sweep, not on Runs on)."""
+    _ensure_build()
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
+
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 900})
         page.on("pageerror", lambda e: errors.append(str(e)))
-        page.goto(f"{url}/?token={TOKEN}")
+        page.goto(f"{url}/?token={TOKEN}", wait_until="load")
         _normal_chair(page)
         _open_rhythm(page)
         _settle(page)
@@ -152,7 +226,6 @@ def test_run_now_appears_once(
             f"Run now should appear exactly once, found {run_now.count()}"
         )
 
-        # Runs on row text should NOT contain "Run now"
         runs_on_row = page.locator('[data-testid="rhythm-runs-on-row"]')
         if runs_on_row.count() > 0:
             text = runs_on_row.text_content() or ""

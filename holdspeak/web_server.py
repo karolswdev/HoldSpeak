@@ -351,6 +351,19 @@ class MeetingWebServer:
         )
         return {"snapshot_fetcher": fetcher}
 
+    def _build_confluence_adapter(self) -> Any:
+        """HS-174-07: build the Confluence adapter if acli runner is available."""
+        if not self._acli_runner:
+            return None
+        try:
+            from .db import get_database
+            from .services.confluence_provider import ConfluenceProviderAdapter
+            return ConfluenceProviderAdapter(
+                db=get_database(), runner=self._acli_runner,
+            )
+        except Exception:
+            return None
+
     @property
     def url(self) -> Optional[str]:
         if self.port is None:
@@ -921,6 +934,7 @@ class MeetingWebServer:
                 jira_adapter=JiraProviderAdapter(
                     db=get_database(), runner=self._acli_runner,
                 ),
+                confluence_adapter=self._build_confluence_adapter(),
                 config_loader=Config.load,
                 inference_assignment_service=inference_assignment_service,
             ),
