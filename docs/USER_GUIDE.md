@@ -701,7 +701,7 @@ two machines talk directly on the tailnet.
 
 Open **Settings, System**. The hub row gains a `REMOTE OFF` token. Toggle it
 to `REMOTE ON`; the row shows the tailnet address the hub listens on (for
-example `100.64.0.2:8765`). <!-- verify at build --> The listener is off by
+example `100.64.0.2:8765`). The listener is off by
 default. No traffic is accepted on the remote path until you turn it on.
 
 ### Issuing a credential
@@ -715,7 +715,7 @@ Choose **Issue credential**. A well opens in-world with three fields:
 | **Palette** | `PROJECT` / `SWEEP` / `DESK` / `ALL` | `PROJECT` |
 | **TTL** | `12 H` / `24 H` / `7 D` / `30 D` | `12 H` |
 
-<!-- verify at build --> The palette controls which tool families the credential
+The palette controls which tool families the credential
 may call. `PROJECT` restricts to project tools only. `ALL` grants the full
 non-owner tool set. The TTL caps the credential's lifetime at 30 days.
 
@@ -723,11 +723,11 @@ Press **Issue**. The well shows the token once: `TOKEN SHOWN ONCE -- COPY IT
 NOW`. Copy it. The plaintext is never shown again; the hub stores a hash.
 
 Each credential row in the ledger shows its name, palette, expiry, and last-used
-age. <!-- verify at build --> The section caption reads `N CREDENTIALS` (total
+age. The section caption reads `N CREDENTIALS` (total
 including expired) and `N ACTIVE` (non-expired only). Both are absent at zero.
 **Revoke** on any row invalidates the credential immediately.
 
-<!-- verify at build --> Credentials are in-memory. A hub restart clears them;
+Credentials are in-memory. A hub restart clears them;
 re-issue after a restart.
 
 ### What a remote caller can and cannot do
@@ -735,13 +735,13 @@ re-issue after a restart.
 A remote credential derives an `AGENT` principal, never `OWNER`. The owner's
 web token is refused on a non-loopback request. The caller may invoke only the
 tool families named in its palette; calls outside the palette return a capability
-error. <!-- verify at build --> `X-Forwarded-For` is never read for principal
+error. `X-Forwarded-For` is never read for principal
 derivation on any route.
 
 Every remote tool call writes a receipt carrying `origin: remote` and the
 caller's identity label. The receipt rows in the shade and the Room's pipeline
 observer wear the `REMOTE` badge with the caller's tailnet IP (for example
-`REMOTE, 192.168.1.43`).
+`REMOTE · 192.168.1.43`).
 
 ### The overnight runner
 
@@ -763,12 +763,12 @@ shape.
 Open **Settings, Rhythm**. Below the sweep cadence row, the `Runs on` row
 carries a picker: `THIS DEVICE` or a configured remote host (for example
 `192.168.1.43`). When a remote host is selected, a caption reads
-`WHILE THIS MAC IS AWAKE`. <!-- verify at build --> `Run now` stays on the
+`WHILE THIS MAC IS AWAKE`. `Run now` stays on the
 sweep row (one verb, once); the `Runs on` row has no trailing verb.
 
 ### Confluence on the Door
 
-<!-- verify at build --> Confluence joins GitHub and Jira on the Door. The
+Confluence joins GitHub and Jira on the Door. The
 source row shows the Confluence emblem, the site host (for example
 `karolswdev.atlassian.net`), and the connection state. Default watch templates:
 `RECENT BLOGS` (on by default) and `PAGES BY ID` (off by default).
@@ -781,7 +781,7 @@ Connections**.
 **Honest limit:** V0 watches blog posts via `blog list` and pages by known ID
 via `page view --id`. Full-space page search is not available until the CLI
 supports `page list`. The Door defaults name what works today, not what might
-work later. <!-- verify at build --> No Confluence REST API call is ever made;
+work later. No Confluence REST API call is ever made;
 the CLI holds the credentials.
 
 ### Receipt rows
@@ -789,7 +789,7 @@ the CLI holds the credentials.
 Remote operations appear in the shade's pipeline observer and each Room's
 observer pane. Each receipt from a remote caller carries a `REMOTE` badge
 naming the caller's tailnet IP. Steward runs triggered remotely read
-`STEWARD RUN, draft, REMOTE, 192.168.1.43`. Local operations continue to
+`STEWARD RUN · draft · REMOTE · 192.168.1.43`. Local operations continue to
 read `THIS DEVICE`.
 
 ## The Arrival

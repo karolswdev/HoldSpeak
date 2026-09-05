@@ -258,7 +258,7 @@ deployment revision (for example `192.168.1.43` on the LAN, or a configured
 cloud endpoint). The model's display name and host appear in the update
 footer's egress chip. The deterministic fallback has no egress.
 
-**The remote boundary.** <!-- verify at build --> The Streamable HTTP listener
+**The remote boundary.** The Streamable HTTP listener
 (`POST /api/mcp`) is opt-in and off by default. When enabled, it accepts
 connections on the tailnet address only. An `OWNER` principal is never derived
 from a non-loopback request on this route; the owner's web token presented from
@@ -278,7 +278,7 @@ intermediate server. The `.43` runner triggers the hub's sweep and drafter; it
 does not perform inference itself (the hub calls the `.43` model through the
 existing inference runner, and the response returns to the hub).
 
-**The Confluence connector's boundary.** <!-- verify at build --> The connector
+**The Confluence connector's boundary.** The connector
 uses the `acli` CLI with a read-only allowlist (`auth status`, `auth switch`,
 `space list`, `space view`, `page view`, `blog list`, `blog view`). No
 Confluence REST API call is ever made; the CLI holds the credentials. The

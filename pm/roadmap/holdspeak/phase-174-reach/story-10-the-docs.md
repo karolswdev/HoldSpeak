@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 174
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-174-08, HS-174-09 (if not deferred)
 - **Unblocks:** HS-174-11
 - **Owner:** unassigned
@@ -35,14 +35,14 @@ the README's prerequisites (the third connector's CLI).
 
 ## Acceptance criteria
 
-- [ ] MCP_SIDECAR.md reflects the Streamable HTTP transport, scoped
+- [x] MCP_SIDECAR.md reflects the Streamable HTTP transport, scoped
       credentials, egress badges, and the protocol version (the
       generator is extended, not hand-edited).
-- [ ] The user guide documents the .43 runner scenario and the remote
+- [x] The user guide documents the .43 runner scenario and the remote
       credential lifecycle.
-- [ ] The README's prerequisites name the third connector's CLI.
-- [ ] Every new face is re-shot in the guide at both widths.
-- [ ] "Ecosystem publication" is documented as self-hosted
+- [x] The README's prerequisites name the third connector's CLI.
+- [x] Every new face is re-shot in the guide at both widths.
+- [x] "Ecosystem publication" is documented as self-hosted
       discoverability, not a hosted relay.
 
 ## Test plan

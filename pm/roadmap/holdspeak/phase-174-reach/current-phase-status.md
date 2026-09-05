@@ -123,7 +123,7 @@ the .43 box runs llama.cpp (Q6, 24k context) but no HoldSpeak runner.
 | HS-174-07 | The third connector (implementation: WatchSource, Door card, templates) | in-progress | [story-07-the-third-connector](./story-07-the-third-connector.md) | -- |
 | HS-174-08 | The .43 runner (the live proof: sweep + drafter overnight, receipts on the desk) | done | [story-08-the-43-runner](./story-08-the-43-runner.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-174-09 | LAN companion notifications (Bonjour mesh push; CONDITIONAL on the companion track) | done | [story-09-lan-companion-notifications](./story-09-lan-companion-notifications.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-174-10 | The docs (MCP_SIDECAR.md extended, the guide's companions section, remote in the architecture) | in-progress | [story-10-the-docs](./story-10-the-docs.md) | -- |
+| HS-174-10 | The docs (MCP_SIDECAR.md extended, the guide's companions section, remote in the architecture) | done | [story-10-the-docs](./story-10-the-docs.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-174-11 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | in-progress | [story-11-the-close](./story-11-the-close.md) | -- |
 
 ## Where we are
