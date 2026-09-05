@@ -128,6 +128,14 @@ the .43 box runs llama.cpp (Q6, 24k context) but no HoldSpeak runner.
 
 ## Where we are
 
+**2026-09-05 20:35 — 4/11 DONE (01 · 06 · 08 · 09).** The runner is proven
+on this machine (the real hub on loopback, a SWEEP credential, receipts
+origin=remote, the owner token refused off-loopback); the .43 leg waits
+for his sitting. The Settings → System face is checkpointed with two
+last fixes landing; the receipts/Door/Rhythm faces building. Then
+counsel-on-built → docs verify → his-desk walk (the probe credential
+only if remote is already ON) → suite → close → PR.
+
 **2026-09-05 20:45 — 2/11 DONE (01 design · 06 the decision); the wire
 LANDED for 02/03/04/05 (2cc6f07c: POST /api/mcp on the live runtime,
 hashed scoped credentials, origin on receipts, MCP-005), 07 (1dabc8f7:
