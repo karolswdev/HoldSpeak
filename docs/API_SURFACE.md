@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 639 (plus static mounts). iOS-consumed: 89. Web-consumed: 483.
+Routes: 639 (plus static mounts). iOS-consumed: 89. Web-consumed: 486.
 
 ## device_audio_ws
 
@@ -82,7 +82,7 @@ Routes: 639 (plus static mounts). iOS-consumed: 89. Web-consumed: 483.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/plugin-jobs` | server only |
+| GET | `/api/plugin-jobs` | web |
 | POST | `/api/plugin-jobs/process` | web |
 | GET | `/api/plugin-jobs/summary` | web |
 | POST | `/api/plugin-jobs/{job_id}/cancel` | server only |
@@ -423,7 +423,7 @@ Routes: 639 (plus static mounts). iOS-consumed: 89. Web-consumed: 483.
 | PATCH | `/api/action-items/{item_id}` | web |
 | PATCH | `/api/action-items/{item_id}/edit` | server only |
 | PATCH | `/api/action-items/{item_id}/review` | server only |
-| GET | `/api/all-action-items` | server only |
+| GET | `/api/all-action-items` | web |
 | PATCH | `/api/all-action-items/{item_id}` | web |
 | PATCH | `/api/all-action-items/{item_id}/edit` | server only |
 | PATCH | `/api/all-action-items/{item_id}/review` | server only |
@@ -488,7 +488,7 @@ Routes: 639 (plus static mounts). iOS-consumed: 89. Web-consumed: 483.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/speakers` | server only |
+| GET | `/api/speakers` | web |
 | GET | `/api/speakers/{speaker_id}` | web |
 | PATCH | `/api/speakers/{speaker_id}` | web |
 

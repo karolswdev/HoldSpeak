@@ -131,18 +131,17 @@ S-1/N-2/cancel `72f357a8`; S-3/S-5/S-4 `7a5fcba0`; N-1/N-3/S-4
 
 ## The suite
 
-- Full suite, CI shape (-n auto), after the faces (04:40): 9403 passed /
-  49 failed = 6 inherited (unchanged: ask grounding ×2 + ask runner
-  need his real gguf under an isolated HOME; kernel broker fences ×2;
-  product-copy drift) + 32 rigs of the PARKED faces (the old Models
-  module, the assignments editor, the Chair hero/lanes — re-pointed to
-  the Concierge/arrival or retired with the design line) + 5 History
-  integration tests against the rewritten Meetings page (triaged: any
-  capability the rewrite dropped — search, facets, the archive bound —
-  comes back in the canon's grammar) + 5 fences that learn the new
-  dirs and terms (the UAT ledger, the 143 pointer census, product
-  language, the surface-orphan guard) + the 144 populated leg (serial
-  re-check). The FINAL run's numbers replace this line.
+- Full suite, CI shape (-n auto), FINAL (05:45): **9404 passed / 98
+  skipped / 17 failed → 6 real**. The six are inherited or
+  environment-bound with zero diff vs main in every file involved: ask
+  grounding ×2 + the ask runner need the owner's real gguf under an
+  isolated HOME; the kernel broker's two density fences; the
+  product-copy drift (27, unchanged). The other eleven pass serially
+  (xdist starvation: 141 thought workbench, 144 door ×2, 152 hands, 153
+  practice ×3, 163 steward, the jira-enrichment integration, the
+  scheduled-recording conductor) — 33/33 green alone; the api-surface
+  manifest regenerated after the Meetings wires returned. Runs one to
+  five: 106 → 13 → 9 → 49 → 17 → 6.
 - vitest 2018 green after the parkings; web baseline zero branch-new;
   the ratchet + 57 guards green; the five hs170 rigs + the 169 rigs +
   the census rig green serially.

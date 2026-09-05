@@ -404,7 +404,9 @@
         "GET"
       ],
       "module": "web.routes.meetings.action_items",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/all-action-items/{item_id}",
@@ -3916,7 +3918,9 @@
         "GET"
       ],
       "module": "web.routes.activity.plugin_jobs",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/plugin-jobs/process",
@@ -5039,7 +5043,9 @@
         "GET"
       ],
       "module": "web.routes.meetings.speakers",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/speakers/{speaker_id}",
