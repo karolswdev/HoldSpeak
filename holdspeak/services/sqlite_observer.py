@@ -14,8 +14,9 @@ INSERT INTO pipeline_events (
     principal_kind, principal_identity,
     args_summary, result_summary,
     error, error_code, duration_ms,
-    correlation_id, is_async
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    correlation_id, is_async,
+    origin, caller, caller_identity
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 
 
@@ -42,6 +43,9 @@ class SQLiteObserver:
                         event.duration_ms,
                         event.correlation_id,
                         int(event.is_async),
+                        event.origin,
+                        event.caller,
+                        event.caller_identity,
                     ),
                 )
         except Exception:

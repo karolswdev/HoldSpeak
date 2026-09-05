@@ -20,6 +20,12 @@ def current_correlation_id() -> str:
     return str(_correlation_id.get(""))
 
 
+# HS-174: context var for origin tagging on remote MCP calls.
+_origin: contextvars.ContextVar[str] = contextvars.ContextVar("_origin", default="local")
+_caller: contextvars.ContextVar[str] = contextvars.ContextVar("_caller", default="")
+_caller_identity: contextvars.ContextVar[str] = contextvars.ContextVar("_caller_identity", default="")
+
+
 @dataclass(frozen=True)
 class PipelineEvent:
     event_id: str
@@ -35,6 +41,10 @@ class PipelineEvent:
     duration_ms: float
     correlation_id: str
     is_async: bool
+    # HS-174: origin of the call.
+    origin: str = "local"
+    caller: str = ""
+    caller_identity: str = ""
 
 
 @runtime_checkable
@@ -112,6 +122,9 @@ def observed(fn: Any) -> Any:
             duration_ms=(time.time() - t0) * 1000,
             correlation_id=correlation_id,
             is_async=is_async,
+            origin=_origin.get("local"),
+            caller=_caller.get(""),
+            caller_identity=_caller_identity.get(""),
         )
         observer = getattr(self, "_observer", None) or NullObserver()
         try:

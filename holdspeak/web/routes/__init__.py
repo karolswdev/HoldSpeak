@@ -63,6 +63,7 @@ from .connections import build_connections_router
 from .steward import build_steward_router
 from .proposals import build_proposal_router
 from .watches import build_watches_router
+from .mcp_http import build_mcp_http_router
 
 __all__ = [
     "build_activity_router",
@@ -118,4 +119,5 @@ __all__ = [
     "build_steward_router",
     "build_proposal_router",
     "build_watches_router",
+    "build_mcp_http_router",
 ]

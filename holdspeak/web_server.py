@@ -704,6 +704,7 @@ class MeetingWebServer:
             build_connections_router,
             build_steward_router,
             build_watches_router,
+            build_mcp_http_router,
         )
 
         from .services.meeting_aftercare_service import MeetingAftercareService
@@ -1128,6 +1129,7 @@ class MeetingWebServer:
         app.include_router(build_connections_router(web_ctx))
         app.include_router(build_steward_router(web_ctx))
         app.include_router(build_watches_router(web_ctx))
+        app.include_router(build_mcp_http_router(web_ctx))
 
         @app.on_event("startup")
         async def _startup() -> None:
