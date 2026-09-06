@@ -264,7 +264,11 @@ class WorkbenchRunner:
                 if claimed != 1:
                     return self._adopt_terminal(run_id, parent)
                 emit_item_claimed(workbench_id=workbench_id,run_id=run_id,item_id=item.id,title=item.title,index=ordinal,total=len(items))
-                parts=[x for x in (context,memory,_hydrate_item_grounding(self.db,item.grounding_json),f"[TASK]\n{item.title}",item.body) if x]
+                parts=[x for x in (context,memory,_hydrate_item_grounding(
+                    self.db,
+                    item.grounding_json,
+                    query=f"{item.title}\n{item.body}",
+                ),f"[TASK]\n{item.title}",item.body) if x]
                 prompt="\n\n".join(parts)
                 item_operation="workbench_item_"+uuid.uuid4().hex
                 payload={"workbench_id":workbench_id,"workbench_revision":str(wb.last_modified),"item_id":item.id,"item_revision":str(item.last_modified),"recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"system_prompt":system,"user_prompt":prompt,"rendered_input_sha256":_sha(prompt),"skills":skills,"context_hash":_sha(context),"attempt_ordinal":ordinal}

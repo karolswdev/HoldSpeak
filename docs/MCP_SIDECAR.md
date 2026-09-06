@@ -364,8 +364,11 @@ id.
 ### memory (1 tool)
 
 `memory.search` queries the long-horizon memory store with optional kind,
-project, time, and pagination filters. Valid kinds are `decision`, `artifact`,
-`note`, and `thread`.
+project, time, and pagination filters. Valid kinds are `decision`,
+`decision_record`, `desk_decision`, `artifact`, `meeting`, `note`, `thread`,
+`action`, `project_item`, `workbench_item`, and `cadence`. Each hit identifies
+whether it matched lexically or arrived over one authoritative relationship;
+the same contract powers Desk and Project search.
 
 ### meeting.proposals
 

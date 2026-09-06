@@ -101,7 +101,15 @@ def compose_from_body(
         return JSONResponse({"error": "text is required"}, status_code=400)
     grounding = body.get("grounding")
     if grounding is None:
-        return compose_steer(text, [])
+        blocks, unknown = service.hydrate_refs(
+            principal, [], [], "summary", query=text
+        )
+        if unknown:
+            return JSONResponse(
+                {"error": "grounding ids not on this hub", "unknown_ids": unknown},
+                status_code=400,
+            )
+        return compose_steer(text, blocks)
     if not isinstance(grounding, dict):
         return JSONResponse({"error": "grounding must be an object"}, status_code=400)
     raw_m = grounding.get("meeting_ids")
@@ -134,7 +142,7 @@ def compose_from_body(
             status_code=400,
         )
     blocks, unknown = service.hydrate_refs(
-        principal, meeting_ids, artifact_ids, expand
+        principal, meeting_ids, artifact_ids, expand, query=text
     )
     if rails_refs:
         from ....grounding_rails import hydrate_rails_refs

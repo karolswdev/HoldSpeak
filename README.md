@@ -46,6 +46,7 @@ If capture fails, use the recovery action on the screen or run `holdspeak doctor
 | Develop your working context | Revisit Interview sections for goals, Projects, cadences, decisions, and delegation. | [Interview](docs/INTERVIEW.md) |
 | Prepare architecture work | Draft a decision brief, review questions, or an agent brief from available records. | [Architecture work recipes](docs/ARCHITECTURE_WORK.md) |
 | Follow project changes | Connect Project sources and configure supported Watches. | [Project Rooms](docs/PROJECT_ROOMS.md) |
+| Find earlier work | Search Notes, Meetings, Decisions, Threads, Project items, Workbench results, and Cadence loops from one Desk memory window. Connected evidence arrives with the relationship that reached it. | [Relationship-aware memory](docs/RELATIONSHIP_AWARE_MEMORY.md) |
 | Let the calendar set the clock | Connect an ICS calendar. See the week on the arrival, arm recordings before meetings under your consent, and read the weekly brief. | [The clock](docs/USER_GUIDE.md#the-clock) |
 | Direct AI work | Use Threads, Workflows, Coder steering, or an MCP client. | [Automation](docs/AUTOMATION.md) |
 | Change your workspace | Select a place, save favorites, or use **Settle in**. | [Places](docs/ENVIRONMENTS.md) |

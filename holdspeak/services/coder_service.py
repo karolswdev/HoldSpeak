@@ -133,11 +133,20 @@ class CoderService:
         meeting_ids: list[str],
         artifact_ids: list[str],
         expand: str,
+        *,
+        query: str = "",
     ) -> tuple[list[Any], list[str]]:
         """Hydrate steer grounding through the application's database boundary."""
         from ..grounding import hydrate_refs
 
-        return hydrate_refs(self._db, meeting_ids, artifact_ids, expand)
+        return hydrate_refs(
+            self._db,
+            meeting_ids,
+            artifact_ids,
+            expand,
+            query=query,
+            include_memory=True,
+        )
 
     def process_input_commands(self, targets: Any) -> Any:
         """Compose the local process-input command service for coder steering."""

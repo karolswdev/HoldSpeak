@@ -33,7 +33,10 @@ export function useProjectRoomController(
   const projectId = scope?.startsWith("project:")
     ? scope.slice("project:".length)
     : "";
-  const wings = useCoreWings(WINGS, "room");
+  // The unscoped surface is Desk memory, which has neither a Room nor a
+  // History: a wing that leads nowhere would be a verb that does nothing
+  // (UX-CANON A.11).
+  const wings = useCoreWings(projectId ? WINGS : [], "room");
   const [project, setProject] = useState<Record<string, unknown>>({});
   const [room, setRoom] = useState<RoomSnapshot | null>(null);
   const [meetings, setMeetings] = useState<Record<string, unknown>[]>([]);
@@ -151,7 +154,7 @@ export function useProjectRoomController(
     [meetings, decisions, artifacts],
   );
   const projectName = String(
-    room?.project.name || project.name || scopeLabel || "Project",
+    room?.project.name || project.name || scopeLabel || (projectId ? "Project" : "Desk memory"),
   );
 
   const openMoment = async (decision: Record<string, unknown>) => {
@@ -204,7 +207,9 @@ export function useProjectRoomController(
       wings.setView("decisions");
       return;
     }
-    openSourceRef(ref);
+    // Memory ranks the child message that matched, but the Desk opens the
+    // parent conversation.  Other qualified refs are already parent refs.
+    openSourceRef(ref.startsWith("thread:") ? ref.split("#", 1)[0] : ref);
   };
 
   // HS-172-03: proposal actions

@@ -151,7 +151,9 @@ def _cron_is_due(cron_expr: str) -> bool:
     return cron_is_due(cron_expr)
 
 
-def _hydrate_item_grounding(db: Any, grounding_json: str) -> str:
+def _hydrate_item_grounding(
+    db: Any, grounding_json: str, *, query: str = ""
+) -> str:
     """Hydrate an item's grounding refs into text blocks.
 
     Uses the same hydration pipeline as the recipe chat endpoint — meeting
@@ -163,14 +165,14 @@ def _hydrate_item_grounding(db: Any, grounding_json: str) -> str:
         grounding = json.loads(grounding_json) if grounding_json else {}
     except (json.JSONDecodeError, TypeError):
         return ""
-    if not grounding or not isinstance(grounding, dict):
+    if not isinstance(grounding, dict):
         return ""
 
     meeting_ids = [str(x) for x in grounding.get("meeting_ids", []) if x]
     artifact_ids = [str(x) for x in grounding.get("artifact_ids", []) if x]
     refs = [str(x) for x in grounding.get("refs", []) if x]
 
-    if not meeting_ids and not artifact_ids and not refs:
+    if not meeting_ids and not artifact_ids and not refs and not query.strip():
         return ""
 
     # HS-118-02: cap enforcement. Total refs capped at GROUNDING_MAX_REFS (16).
@@ -206,6 +208,8 @@ def _hydrate_item_grounding(db: Any, grounding_json: str) -> str:
             artifact_ids,
             "full",
             qualified_refs=refs if refs else None,
+            query=query,
+            include_memory=True,
         )
         if unknown:
             log.warning(f"Grounding hydration: {len(unknown)} unknown ref(s) skipped: {unknown}")
