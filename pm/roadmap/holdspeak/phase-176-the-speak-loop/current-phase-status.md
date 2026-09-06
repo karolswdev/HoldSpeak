@@ -1,6 +1,6 @@
 # Phase 176 - The Speak Loop
 
-**Last updated:** 2026-09-05.
+**Last updated:** 2026-09-06 — CHARTERED and ACTIVE on the orchestrator's ruling after the owner deferred the road ("you decide"); branch `feat/the-speak-loop` off main `7a47904e`; story 01 the design in progress.
 
 ## Goal
 
@@ -14,11 +14,11 @@ learning loop that has never been trained gets its first real data.
 
 ## Status
 
-**PLANNED 0/8.**
+**ACTIVE 0/8.** Story 01 (the design) in progress.
 
 **Depends on:** Phase 170 merged (the Speak face is rebuilt in 170's
 Great Pass; the correction flow and journal stream build on that
-rebuilt face).
+rebuilt face) — SATISFIED: 170–175 merged to main (#553–#558, #564).
 
 ## Charter
 
@@ -42,26 +42,31 @@ never been taught; the journal exists (journal.py:1-50,
 DictationJournalRecorder, durable, secret-redacted) but is not a live
 stream on the face; MicButton is on 7 surfaces but ~92 text inputs
 exist across web/src/desk/ — the voice law (Article IV.1) is not
-satisfied.
+satisfied. (The 2026-09-06 recount against main supersedes the mic
+numbers: 17 sites; and the store's two kinds are routing corrections,
+so the "postgress" Tuesday needs the `text` kind this phase adds.)
 
 ## Scope
 
 - In:
-  - The first correction: the correction flow on the Speak face (tap
-    Correct on a landed utterance, type the correction, save; the
-    CorrectionStore persists it via DictationCorrectionRepository;
-    the pipeline's Jaccard matcher applies it to the next matching
-    utterance; the learning digest reads > 0).
+  - The first correction: the teach row on the Speak face completed
+    (`Wrong` → FIELD `TEXT · INTENT · TARGET` → `Teach` → the `TAUGHT`
+    receipt); a third correction kind `text` (heard phrase → said
+    phrase) persisted via DictationCorrectionRepository and applied
+    deterministically at the transcript seam inside Pipeline.run on
+    the next utterance that carries the phrase (the `APPLIED` chip);
+    the routing kinds taught as a pick over the real enum; the
+    learning digest reads > 0.
   - The journal as a stream: the Journal face
     (web/src/pages/cores/dictation/Journal.tsx) shows utterances as a
     live feed (source, target, latency, corrections applied, intent
     tag from DIR-01); filterable by source
     (dictation/browser/hotkey); searchable by text.
-  - The voice law: MicButton on every text input across the desk
-    (Article IV.1; UX-CANON.md rule B). The census identifies ~92
-    text inputs; 7 have MicButton today. The gap is closed by
-    ensuring every StringGadget, EditInPlace, and text input renders
-    MicButton.
+  - The voice law: MicButton on every dictatable text input across
+    the desk (Article IV.1; UX-CANON.md rule B). The census
+    (assets/mic-census-176.md, main `7a47904e`) finds 17 sites: 8 raw
+    elements and 9 unjustified `mic={false}` opt-outs; the scanner's
+    `mic` rule made per-element with a 23-entry reasoned allowlist.
   - The desk answering the hand: the full loop from speak → land →
     judge → teach → apply, visible in one session on the Speak
     window. The correction fires on the next matching utterance
@@ -70,7 +75,9 @@ satisfied.
   - His walk on his desk: one correction taught and applied.
 - Out:
   - New dictation pipeline stages beyond DIR-01 (the pipeline is
-    shipped; this phase uses it, does not extend it).
+    shipped; this phase uses it, does not extend it). The `text`
+    correction kind is a correction applied at the existing transcript
+    seam, not a stage: no StageResult, no stage_ms, no requires_llm.
   - Cloud-based correction or learning (all local; Article III).
   - Correction import/export (the correction store is local; file
     exchange is a future phase).
@@ -83,17 +90,19 @@ satisfied.
 
 ## Exit criteria (evidence required)
 
-- [ ] A correction is taught via the Speak face, persisted by
-      DictationCorrectionRepository, and applied by the pipeline's
-      Jaccard matcher to the next matching utterance; the
-      correction_count on his desk is > 0.
+- [ ] A `text` correction is taught via the Speak face, persisted by
+      DictationCorrectionRepository, and applied deterministically to
+      the next utterance carrying the phrase; a routing correction is
+      taught as a pick over the real enum and nudges the next similar
+      utterance; the correction count on his desk is > 0.
 - [ ] The learning digest (dictation_learning.py) reads > 0
       corrections with honest reach numbers.
 - [ ] The journal face shows utterances as a live stream with source,
       target, latency, and corrections applied; filterable by source;
       searchable.
-- [ ] MicButton is on every text input across web/src/desk/; the
-      census shows 0 uncovered inputs (Article IV.1).
+- [ ] MicButton is on every dictatable text input across web/src;
+      the census shows 0 uncovered sites and the scanner's `mic` rule
+      reads 0 with the reasoned allowlist (Article IV.1).
 - [ ] The full speak → land → judge → teach → apply loop works in one
       session without restart.
 - [ ] The design on the canvas at 1440 + 393 is ratified by the owner
@@ -106,7 +115,7 @@ satisfied.
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-176-01 | The design (the correction flow, the journal stream, the MicButton census on the canvas) | backlog | [story-01-the-design](./story-01-the-design.md) | -- |
+| HS-176-01 | The design (the correction flow, the journal stream, the MicButton census on the canvas) | in-progress | [story-01-the-design](./story-01-the-design.md) | -- |
 | HS-176-02 | The first correction (teach, persist, apply to the next match; learning digest > 0) | backlog | [story-02-the-first-correction](./story-02-the-first-correction.md) | -- |
 | HS-176-03 | The journal as a stream (live feed, filterable, searchable; the voice-typing act visible) | backlog | [story-03-the-journal-stream](./story-03-the-journal-stream.md) | -- |
 | HS-176-04 | The voice law (MicButton on every text input across the desk; the census gap closed) | backlog | [story-04-the-voice-law](./story-04-the-voice-law.md) | -- |
@@ -117,8 +126,16 @@ satisfied.
 
 ## Where we are
 
-PLANNED. Waiting for Phase 170 to merge (the Speak face is rebuilt
-in 170's Great Pass).
+ACTIVE 0/8 (2026-09-06). Story 01 in progress: the settled design
+re-verified against main, the mic census recomputed, the boards drawn
+at 1440 + 393 under assets/mockups/ (seventeen boards on the canvas:
+https://claude.ai/code/artifact/36f77f70-fb03-461d-a0dd-8b43c4682e63),
+counsel's hunt on the design, the owner's word asked. Nothing builds before his
+word on the canvas.
+
+The recon below was taken 2026-09-05 on feat/the-great-pass; the
+settled design and assets/mic-census-176.md hold the numbers as of
+main today (they win where the two disagree).
 
 The recon is complete:
 
@@ -165,7 +182,63 @@ extend it.
 
 ## Decisions made (this phase)
 
-- (none yet -- PLANNED)
+- **2026-09-06 — the road continues (the orchestrator's ruling on the
+  owner's deferral).** The owner: "muad'dib... you decide. we push
+  this forward, or it's phase 200 time..." Ruled PUSH FORWARD: 176
+  chartered and active. Reasons: the road to 180 is his standing goal
+  (THE-TUESDAY-ARC.md section 6); this phase's charter and recon were
+  already written against the tree; the voice law (Constitution
+  Article IV.1) is an unpaid canon debt; the correction loop has never
+  been taught (dictation_corrections 0 on his desk); "phase 200" names
+  no thesis anywhere in the tree, so a pivot would abandon a named road
+  for an unnamed one. What stays his: the canvas (his word before any
+  face is built) and the merge.
+- **2026-09-06 — the design is refreshed, not redrawn.** The 2026-09-05
+  draft (settled-design-speak-loop.md) was written on
+  feat/the-great-pass; every file:line pointer is re-verified against
+  main after 170–175, the mic census is recomputed
+  (assets/mic-census-176.md), the face shapes stand unless the built
+  tree makes one impossible (changes listed at the end of the design).
+- **2026-09-06 — counsel's bounce and the ruling: a third correction
+  kind.** Counsel (assets/counsel-on-design-176.md) found the P0: the
+  correction store holds ROUTING corrections only (`intent` = a block
+  id, `target` = a profile id; corrections.py:33, intent_router.py:215,
+  target_profile.py:149), so the charter's Tuesday ("postgress →
+  PostgreSQL") cannot happen on this wire, and the teach row 170
+  shipped is dead for a typed sentence. Counsel proposed shrinking the
+  teach to a pick over the enum. RULED otherwise: the Tuesday is a
+  TEXT correction, so the store gains a `text` kind (heard phrase →
+  said phrase), applied deterministically at the transcript seam
+  before the rewrite pass and the router (beside the spoken-symbol
+  substitution in text_processor.py), exact-phrase not Jaccard; the
+  teach field cycles TEXT · INTENT · TARGET, TEXT as one pre-filled
+  well the owner edits (the desk learns the differing span), the
+  routing kinds as a pick over the real enum with human labels. The
+  carve: this is a correction kind at an existing seam, not a new
+  pipeline stage. Counsel's C2–C14 accepted as rulings R2–R14 (the
+  design's addendum): chips render only from a stored per-run fact;
+  `N APPLIED` counts real firings; the refusal key and the
+  mark-corrected order fixed; the overloaded flag split; the filter
+  species named truly; the one-word routing gist refused by name;
+  one word one meaning (LEARNED the wing, TAUGHT the receipt, APPLIED
+  the chip); the scanner sees textareas; the walk's writes stated
+  honestly; the Journal's opened-row verbs kept; labels sourced; the
+  well's mic off; the phone board follows 170.
+- **2026-09-06 — counsel's re-read: RATIFY-W-C, five conditions, all
+  ruled accepted (N1–N5 in the design's addendum).** N1 `auto` in the
+  target pick raises on the live path (no label in the map): six ids
+  offered, `_profile` belt-fixed. N2 the TEXT well pre-fills with the
+  RAW transcript (as heard), which the run response now serves; the
+  diff runs against it. N3 the matcher strips punctuation; boundary =
+  non-alphanumeric-or-edge. N4 a text rule rewrites every future
+  occurrence of its phrase on every dictation source; said honestly in
+  D4; "should a first application confirm?" rides to his walk. N5 the
+  Journal row he taught from wears `TAUGHT`; the Learned wing carries
+  no caption count (the tab is the name, the rows are the count).
+- **2026-09-06 — the walk's writes.** The walk on his desk writes what
+  his own hand writes: the journal rows of his dictations, the
+  retention prune, and the one correction he teaches; the runner seeds
+  nothing and asserts the rows added equal his beats.
 
 ## Decisions deferred
 

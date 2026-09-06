@@ -44,7 +44,7 @@ roadmap files, they win. Memory (the Claude Code auto-memory, index
 | 173 | The Steward's Hand and Voice | MERGED #556 → `d416e08a` |
 | 174 | Reach | MERGED #557 → `8c994305` |
 | 175 | Calendar and the Clock | **COMPLETE 9/9 · MERGED #558 → `aa278604`** on his word; the R1 follow-up MERGED #564 → `7d897302`; his attended walk OWED |
-| 176 | The Speak Loop | story scaffold only; NOT chartered; no design — starts on his word, canvas first |
+| 176 | The Speak Loop | **CHARTERED + ACTIVE 0/8** on `feat/the-speak-loop` (2026-09-06, the orchestrator's ruling on his deferral); design SETTLED against main, fifteen boards on the canvas `36f77f70-fb03-461d-a0dd-8b43c4682e63`, counsel's hunt paid; **his word on the canvas gates the build** |
 | 177–179 | Thread at Work · Portfolio · Companion | scaffolds; not chartered |
 | 180 | The Proof | named in `THE-TUESDAY-ARC.md` §6; nothing drafted |
 
@@ -263,12 +263,74 @@ gh pr ready N ; gh pr view N --json mergeable,mergeStateStatus ; gh pr merge N -
    `.claude/agents/opus-worker.md` if it is missing (Opus, not Fable).
 2. Ask him nothing you can read. What is his: the attended walks
    (170–175), the queued "Already titled" job, 172–174's questions.
-3. If the road continues: charter 176 The Speak Loop on his word —
+3. The road CONTINUES (ruled 2026-09-06 on his deferral): 176 is chartered and on the canvas; the build starts on his word on the canvas —
    dictation as a daily tool (the correction taught once and kept; the
    journal as a stream; the voice law on every input; the desk answering
    the hand). Canvas first; counsel on the design; his word; then build
    by the loop in §5. If he says stop: leave the tree on main, update
    this section, write memory.
+
+## Muad'Dib XVI — 2026-09-06, the road continues on the orchestrator's ruling; 176 CHARTERED and on the canvas
+
+**His word.** "muad'dib... you decide. we push this forward, or it's
+phase 200 time..." — a deferral of the ROAD itself. Ruled: PUSH
+FORWARD. Reasons on the record (176's status file, "Decisions made"):
+the road to 180 is his standing goal; 176's charter and recon were
+already written; the voice law (Article IV.1) is an unpaid canon debt;
+the correction loop has never been taught (census 0); "phase 200"
+names no thesis anywhere in the tree, so a pivot would trade a named
+road for an unnamed one. What stays his: the canvas and the merge.
+
+**Done this sitting.** Branch `feat/the-speak-loop` off main
+`7a47904e`. HS-176-01 in progress. The 2026-09-05 design draft
+RE-VERIFIED against main by a Fedaykin (18 pointer fixes, 11 of them
+claims, not lines): the teach path is `POST
+/api/dictation/journal/{id}/correct` with the corrections route as
+fallback; `corrected` is already stored and served and the Journal
+already renders `TAUGHT · N SIMILAR`; the real gap is that the LIVE
+nudge's `corrected` never reaches the recorder; the route's `source`
+filter exists but is clamped to two of four sources; `Review` opens the
+Configure door; the scanner ALREADY has the voice-law rule, id `mic`
+(ceiling 6), file-scoped and voided by one opt-out; the intent bar is
+0.5 not 0.6; a live defect — Memory.tsx reads `row.gist`, the route
+serves `key` (GIST renders a dash on his desk); a 170 drift — a second
+mic on the utterance well against "Talk is the only mic". The census
+recomputed (`assets/mic-census-176.md`): 44 raw elements, 8 uncovered
+dictatable + 9 unjustified `mic={false}` opt-outs = 17 sites (the
+draft's 31 counted tests, `_parked/` and library internals); 170 left
+four orphaned dictation components (park them). Stories 02–05 corrected
+to those truths. Fifteen boards drawn to 175's `.dc.html` + `canvas.json`
+format, rendered and read beside the design, published:
+https://claude.ai/code/artifact/36f77f70-fb03-461d-a0dd-8b43c4682e63 .
+Counsel's hunt on the design: `assets/counsel-on-design-176.md` —
+**BOUNCE on one P0**: the correction store holds ROUTING corrections
+only (`intent` = a block id, `target` = a profile id), so the charter's
+Tuesday ("postgress → PostgreSQL") cannot happen on that wire and the
+teach row 170 shipped is dead for a typed sentence. Counsel proposed a
+pick over the enum. RULED otherwise: a third kind `text` (heard phrase →
+said phrase) applied deterministically at the transcript seam beside
+the spoken-symbol substitution (`text_processor.py`), exact-phrase; the
+teach field cycles TEXT · INTENT · TARGET; C2–C14 accepted as R2–R14
+(the design's addendum; one word one meaning: LEARNED the wing, TAUGHT
+the receipt, APPLIED the chip). Design and boards redrawn to the
+rulings; counsel's re-read RATIFY-W-C (N1–N5: no `auto` in the pick —
+it raises on the live path; the TEXT well pre-fills with the RAW
+transcript; punctuation-stripped matching; the text rule's blast radius
+said honestly; the taught-from row wears `TAUGHT`; no caption count on
+the Learned wing), all ruled accepted and paid; then his word.
+
+**Laws this sitting added.** When he defers the road, RULE and record
+the ruling where the phase lives (the status file's "Decisions made"),
+then act. A design drafted on one branch is re-verified against main
+before it goes on the canvas — every pointer, every claim; the refresh
+found eleven false claims in a 465-line draft. The design's own census
+is recomputed on the tree it will build on, excluding tests, `_parked/`
+and library internals, and each `mic={false}` is a voice-law hole the
+raw-element count cannot see.
+
+**Owed to him.** His word on the 176 canvas (the build waits on it);
+the attended walks 170–175; the queued "Already titled" job; 172–174's
+questions.
 
 ## Muad'Dib XV — 2026-09-05 late, 175 RESUMED on his word; the four faces BUILT
 
