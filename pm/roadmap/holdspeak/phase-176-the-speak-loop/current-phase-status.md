@@ -14,7 +14,7 @@ learning loop that has never been trained gets its first real data.
 
 ## Status
 
-**ACTIVE 0/8.** Story 01 (the design) in progress.
+**ACTIVE 1/8.** Story 01 (the design) DONE on his word; 02, 03, 04 in progress (wave 1, the wire).
 
 **Depends on:** Phase 170 merged (the Speak face is rebuilt in 170's
 Great Pass; the correction flow and journal stream build on that
@@ -115,10 +115,10 @@ so the "postgress" Tuesday needs the `text` kind this phase adds.)
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-176-01 | The design (the correction flow, the journal stream, the MicButton census on the canvas) | in-progress | [story-01-the-design](./story-01-the-design.md) | -- |
-| HS-176-02 | The first correction (teach, persist, apply to the next match; learning digest > 0) | backlog | [story-02-the-first-correction](./story-02-the-first-correction.md) | -- |
-| HS-176-03 | The journal as a stream (live feed, filterable, searchable; the voice-typing act visible) | backlog | [story-03-the-journal-stream](./story-03-the-journal-stream.md) | -- |
-| HS-176-04 | The voice law (MicButton on every text input across the desk; the census gap closed) | backlog | [story-04-the-voice-law](./story-04-the-voice-law.md) | -- |
+| HS-176-01 | The design (the correction flow, the journal stream, the MicButton census on the canvas) | done | [story-01-the-design](./story-01-the-design.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-176-02 | The first correction (teach, persist, apply to the next match; learning digest > 0) | in-progress | [story-02-the-first-correction](./story-02-the-first-correction.md) | -- |
+| HS-176-03 | The journal as a stream (live feed, filterable, searchable; the voice-typing act visible) | in-progress | [story-03-the-journal-stream](./story-03-the-journal-stream.md) | -- |
+| HS-176-04 | The voice law (MicButton on every text input across the desk; the census gap closed) | in-progress | [story-04-the-voice-law](./story-04-the-voice-law.md) | -- |
 | HS-176-05 | The desk answering the hand (the full loop: speak, land, judge, teach, apply) | backlog | [story-05-the-desk-answering-the-hand](./story-05-the-desk-answering-the-hand.md) | -- |
 | HS-176-06 | The walk (his desk: correction taught, journal streaming, MicButton everywhere, the loop) | backlog | [story-06-the-walk](./story-06-the-walk.md) | -- |
 | HS-176-07 | The docs (the Speak Loop in the guide; the correction flow in the architecture) | backlog | [story-07-the-docs](./story-07-the-docs.md) | -- |
@@ -126,12 +126,15 @@ so the "postgress" Tuesday needs the `text` kind this phase adds.)
 
 ## Where we are
 
-ACTIVE 0/8 (2026-09-06). Story 01 in progress: the settled design
-re-verified against main, the mic census recomputed, the boards drawn
-at 1440 + 393 under assets/mockups/ (seventeen boards on the canvas:
-https://claude.ai/code/artifact/36f77f70-fb03-461d-a0dd-8b43c4682e63),
-counsel's hunt on the design, the owner's word asked. Nothing builds before his
-word on the canvas.
+ACTIVE 1/8 (2026-09-06). Story 01 DONE: the settled design re-verified
+against main, the mic census recomputed, seventeen boards at 1440 + 393
+under assets/mockups/ on the canvas
+(https://claude.ai/code/artifact/36f77f70-fb03-461d-a0dd-8b43c4682e63),
+counsel's hunt (BOUNCE → the rulings) and re-read (RATIFY-W-C, N1–N5
+paid), his word ("Let's follow your ruling"). Wave 1 in flight: lane A
+the wire core (02), lane B the routes (02+03), lane C the voice law
+(04). Then the face lanes to the boards, 05, counsel-on-built, docs,
+his walk, the suite, the close.
 
 The recon below was taken 2026-09-05 on feat/the-great-pass; the
 settled design and assets/mic-census-176.md hold the numbers as of
@@ -235,6 +238,16 @@ extend it.
   D4; "should a first application confirm?" rides to his walk. N5 the
   Journal row he taught from wears `TAUGHT`; the Learned wing carries
   no caption count (the tab is the name, the rows are the count).
+- **2026-09-06 — his word: build.** The owner: "Well. Let's follow your
+  ruling, then. It's important we continue to make progress..." Read
+  as his word to build to the design counsel ratified on his behalf
+  (HANDOVER §0: a face is built only to boards he or
+  counsel-on-his-behalf ratified); the merge stays on his word, shots
+  beside boards before it. Wave 1 (wire) launched: lane A the `text`
+  kind + the Pipeline.run seam + the journal column + the recorder's
+  bus seam; lane B the routes (R4 fixes, the diff, the raw transcript,
+  N APPLIED, the label sources, the journal clamp + pagination); lane
+  C the voice law (scanner per-element, 17 sites, 4 orphans parked).
 - **2026-09-06 — the walk's writes.** The walk on his desk writes what
   his own hand writes: the journal rows of his dictations, the
   retention prune, and the one correction he teaches; the runner seeds
