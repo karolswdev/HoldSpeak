@@ -5408,6 +5408,16 @@
       ]
     },
     {
+      "path": "/api/system/identity",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.health",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/thoughts",
       "methods": [
         "GET"

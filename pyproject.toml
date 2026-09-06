@@ -162,6 +162,9 @@ markers = [
     "e2e: end-to-end test",
     "metal: hardware tests requiring real mic/model/keyboard (local only)",
     "spoken_e2e: opt-in spoken-meeting e2e (say + Whisper + .43 LLM + Playwright; set HOLDSPEAK_SPOKEN_E2E=1)",
+    "critical: G0 critical journey (tests/critical); real services, substituted external adapters",
+    "requires_mlx_whisper: requires the mlx_whisper package on this machine",
+    "requires_local_dictation_route: requires this machine to resolve an on-device dictation artifact from default configuration",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",

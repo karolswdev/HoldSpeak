@@ -1,8 +1,9 @@
 """Concierge routes (HS-170-03).
 
-GET  /api/concierge/detect    -- every engine found
+GET  /api/concierge/detect    -- every engine found, plus the named repair states
 POST /api/concierge/propose   -- the seven groups with proposed engines
-POST /api/concierge/probe     -- one-token probe for an engine
+POST /api/concierge/probe     -- reachability for an engine, or `task: true` for
+                                 one REAL request through the assigned route
 POST /api/concierge/apply     -- write the assignment set
 POST /api/concierge/download  -- start a preset download
 """
@@ -63,6 +64,20 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             home = setup_svc._home_provider() if setup_svc is not None else Path.home()
 
             result = detect(db=db, home=home)
+            # HS-200-04: `needs_attention` resolved into named repair states,
+            # each carrying the ONE verb that opens an existing control.  A
+            # repair read never blocks the face: it degrades to no rows.
+            try:
+                from ...services.concierge_service import repairs
+
+                result["repairs"] = repairs(
+                    db=db,
+                    assignment_service=ctx.inference_assignment_service,
+                    principal=getattr(request.state, "principal", None),
+                )
+            except Exception as exc:  # pragma: no cover - never break detect
+                log.warning(f"concierge repairs unavailable: {exc}")
+                result["repairs"] = []
             return JSONResponse(result)
         except ServiceError as exc:
             return _safe_error(exc)
@@ -111,6 +126,40 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
 
             engine_id = body.get("engineId")
             generate = bool(body.get("generate", False))
+
+            # HS-200-04: the task probe. One real request through the frozen
+            # route the assignment resolves to, so the answer names the model
+            # that actually served it and the boundary it actually crossed.
+            if bool(body.get("task", False)):
+                from ...kernel.runtime import _service as kernel_service
+                from ...services.route_probe import (
+                    DEFAULT_PROBE_CAPABILITY,
+                    PROBE_CAPABILITIES,
+                    task_probe,
+                )
+
+                capability_id = str(body.get("capabilityId") or DEFAULT_PROBE_CAPABILITY)
+                if capability_id not in PROBE_CAPABILITIES:
+                    raise ServiceError(
+                        "concierge_probe_invalid",
+                        "capabilityId is not probeable.",
+                        context={"status": 400},
+                    )
+                setup_svc = ctx.inference_setup_service
+                db = setup_svc._db if setup_svc is not None else None
+                if db is None:
+                    return JSONResponse(
+                        {"code": "concierge_unavailable", "message": "Database is not available."},
+                        status_code=503,
+                    )
+                result = task_probe(
+                    kernel_service(),
+                    request.state.principal,
+                    db=db,
+                    capability_id=capability_id,
+                    allow_off_machine=bool(body.get("confirmOffMachine", False)),
+                )
+                return JSONResponse(result)
 
             if not engine_id or not isinstance(engine_id, str):
                 raise ServiceError(

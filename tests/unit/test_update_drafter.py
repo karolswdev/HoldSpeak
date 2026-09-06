@@ -539,11 +539,17 @@ class TestClaimSchema:
             section="progress",
         )
         d = c.to_dict()
+        # HS-200-06: the three C2 axes ride on every claim.  A bare
+        # Claim carries the conservative defaults (unknown support,
+        # unreviewed acceptance); the drafters set them explicitly.
         assert d == {
             "span_id": "s_progress_0",
             "text": "Milestone: Launch -- planned",
             "refs": ["item:pitem_001"],
             "section": "progress",
+            "kind": "observation",
+            "support": "unknown",
+            "acceptance": "unreviewed",
         }
 
     def test_claim_immutable(self):
@@ -1235,7 +1241,7 @@ class TestClaimVerifiedSerialization:
         assert d["verified"] is False
 
     def test_deterministic_claim_json_unchanged(self):
-        """Adding verified=True default does NOT change deterministic JSON."""
+        """verified=True stays absent; the C2 axes are always written."""
         c = Claim(
             span_id="s_progress_0",
             text="Milestone: Launch -- planned",
@@ -1244,10 +1250,13 @@ class TestClaimVerifiedSerialization:
         )
         j = json.dumps(c.to_dict(), sort_keys=True, separators=(",", ":"))
         expected = (
-            '{"refs":["item:pitem_001"],"section":"progress",'
-            '"span_id":"s_progress_0","text":"Milestone: Launch -- planned"}'
+            '{"acceptance":"unreviewed","kind":"observation",'
+            '"refs":["item:pitem_001"],"section":"progress",'
+            '"span_id":"s_progress_0","support":"unknown",'
+            '"text":"Milestone: Launch -- planned"}'
         )
         assert j == expected
+        assert "verified" not in j
 
 
 # ── BUILD MODEL PROMPT ───────────────────────────────────────────────

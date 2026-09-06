@@ -132,6 +132,7 @@ from .runtime.heartbeat import HeartbeatMixin
 from .runtime.device_glue import DeviceGlueMixin
 from .runtime.dictation_capture import DictationCaptureMixin
 from .runtime.meeting_glue import MeetingGlueMixin
+from .runtime.ownership import DatabaseOwnershipMixin
 from .runtime.plugin_queue import PluginQueueMixin
 from .runtime.routing_glue import RoutingGlueMixin
 from .runtime.transcriber_state import TranscriberStateMixin
@@ -149,6 +150,7 @@ class WebRuntime(
     DeviceGlueMixin,
     CadenceMixin,
     HeartbeatMixin,
+    DatabaseOwnershipMixin,
 ):
     """Web-first runtime: owns the web server, hotkey/device capture, the
     meeting session, and the MIR plugin pipeline.
@@ -187,6 +189,9 @@ class WebRuntime(
         self.mir_override_intents: list[str] = []
         self.last_route_preview: Optional[dict[str, object]] = None
         self.runtime_url: Optional[str] = None
+        # HS-200-02: does THIS process own the database owner lock? Only the
+        # owner runs the scheduled sweeps (C1).
+        self.owns_database: bool = False
 
         self.hotkey_listener: Optional[HotkeyListener] = None
         self.recorder: Optional[AudioRecorder] = None
@@ -457,6 +462,7 @@ class WebRuntime(
 
     def run(self) -> None:
         """Start the web server + capture stack and keep it alive until stop."""
+        self._capture_identity_and_claim()  # HS-200-02
         try:
             self.server = MeetingWebServer(
                 WebRuntimeCallbacks(
@@ -518,23 +524,15 @@ class WebRuntime(
             log.error(f"Failed to start web mode: {exc}", exc_info=True)
             raise SystemExit(1) from exc
 
+        self._note_serving_port()
+
         self.plugin_queue_thread = threading.Thread(
             target=self._deferred_plugin_queue_loop,
             name="HoldSpeakMirPluginQueue",
             daemon=True,
         )
         self.plugin_queue_thread.start()
-        # The Cadence Engine tick — OFF BY DEFAULT (CAD-1-04). The thread starts only
-        # when the user has opted in; otherwise the runtime is byte-identical to a
-        # build without cadence.
-        if self._cadence_enabled():
-            self.cadence_thread = threading.Thread(
-                target=self._cadence_loop,
-                name="HoldSpeakCadenceEngine",
-                daemon=True,
-            )
-            self.cadence_thread.start()
-        self._start_heartbeat_thread()  # HS-171-02
+        self._start_scheduled_work()
         self._warm_transcriber_in_background()
 
         try:
@@ -628,6 +626,7 @@ class WebRuntime(
                 self.plugin_queue_thread.join(timeout=2.0)
             if self.cadence_thread is not None:
                 self.cadence_thread.join(timeout=2.0)
+            self._release_database()  # HS-200-02
 
 
 def run_web_runtime(

@@ -101,6 +101,7 @@ is a mixin in **`holdspeak/runtime/`**, composed by the class:
 | `dictation_capture.py` | transcribe-and-type, the hotkey handlers, tmux agent reply, voice-command dispatch |
 | `wake_glue.py` | the wake-word listener lifecycle, armed capture, the preview/type fork |
 | `device_glue.py` | AIPI-Lite voice sessions, events, health, queries |
+| `ownership.py` | the database owner claim, the served-port note, the ownership-gated sweeps (HS-200-02) |
 
 **`holdspeak/meeting_session/` (a package; the old module path is the
 package, so every existing import works)**:

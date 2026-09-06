@@ -46,7 +46,9 @@ roadmap files, they win. Memory (the Claude Code auto-memory, index
 | 175 | Calendar and the Clock | **COMPLETE 9/9 · MERGED #558 → `aa278604`** on his word; the R1 follow-up MERGED #564 → `7d897302`; his attended walk OWED |
 | 176 | The Speak Loop | **CLOSED 7/8** on `feat/the-speak-loop` (PR #566, out of draft; merge on his word); built on his word ("Let's follow your ruling"); the `text` correction kind, the Journal stream, the Learned wing, the voice law paid; counsel-on-built's bounce paid; the suite classified; **06 his attended walk OWED** (the hub from this branch is up on his desk, port in the scratchpad only) |
 | 177–179 | Thread at Work · Portfolio · Companion | scaffolds; not chartered |
-| 180 | The Proof | named in `THE-TUESDAY-ARC.md` §6; nothing drafted |
+| 177–179 | Thread at Work · Portfolio · Companion | PARKED behind Phase 200 (never deleted) |
+| 180 | The Proof | folds into Phase 200's G5 |
+| **200** | **The Working Practice** | **CURRENT** — his charter (PR #563 → `bea4176c`): six gates G0–G5, forty stories; HS-200-01 in progress on `feat/phase-200-g0` |
 
 Main also carries work that landed beside 175 from elsewhere: #560 (the
 web integration checks restored — the product-copy and write-receipt
@@ -348,10 +350,29 @@ Laws added to UX-CANON §D: one word one meaning; the species that has
 the value wins the face; a `mic={false}` is a hole; a rig never types
 into the focused window.
 
+**The evening: #566 MERGED on his word, and the road turned.** "Merge
+man. And let's keep going. Although, I do believe there are other PRs
+that need to be merged to main based on what's out there on `gh`?" —
+#566 merged (`8fb56d97`). Two PRs were open: #563, HIS OWN charter for
+**Phase 200 The Working Practice** ("the owner-directed line in the sand
+for new delivery"; the "phase 200" of his morning question), and #526,
+relationship-aware memory (Sept 2, 61 files, conflicting). #563 was
+merged into main in a worktree (the roadmap README carries both 176's
+close and Phase 200 as the CURRENT phase; a merge commit needs
+`.tmp/BUNDLE-OK.md`), taken out of draft and merged (`bea4176c`). Phase
+200 is the road now; 177–179 of the Tuesday arc are PARKED behind it
+(never deleted); 180 The Proof folds into its G5. HS-200-01 (the
+baseline and obligation map) is in progress on `feat/phase-200-g0`.
+#526's merge of main is being resolved in a worktree (seven conflicts:
+four docs, the Room face, its css, a glyph test) by a Fedaykin; the
+orchestrator commits and merges it on the gates.
+
 **Owed to him.** His attended walk on 176 (beat 0: the engine key or a
-local engine; then the seven beats and the two walk questions); his word
-on the merge of #566; the attended walks 170–175; the queued "Already
-titled" job; 172–174's questions.
+local engine; then the seven beats and the two walk questions; the hub
+from the 176 build is up on his desk, port in the scratchpad only); the
+pilot Project for Phase 200 (his desk holds zero Projects: which real
+transformation stream, which sources); the attended walks 170–175; the
+queued "Already titled" job; 172–174's questions.
 
 ## Muad'Dib XV — 2026-09-05 late, 175 RESUMED on his word; the four faces BUILT
 

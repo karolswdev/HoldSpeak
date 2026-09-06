@@ -58,12 +58,12 @@ EXPECTED_CALL_SITES = frozenset("""
 holdspeak/commands/dictation.py:166|_cmd_dry_run|build_pipeline|call
 holdspeak/dictation_runner.py:386|run_pipeline_corrections_only|build_pipeline|call
 holdspeak/dictation_runner.py:589|run_dictation_pipeline|build_pipeline|call
-holdspeak/inference_targets.py:655|local_pinned_meeting_intel|_local_pinned_engine|call
-holdspeak/inference_targets.py:678|_local_pinned_engine|MeetingIntel|call
-holdspeak/inference_targets.py:700|build_intel_for_revision|_engine_for_revision|call
-holdspeak/inference_targets.py:727|_engine_for_revision|MeetingIntel|call
-holdspeak/inference_targets.py:734|_engine_for_revision|local_pinned_meeting_intel|call
-holdspeak/inference_targets.py:754|_engine_for_revision|build_meeting_intel_for_profile|call
+holdspeak/inference_targets.py:672|local_pinned_meeting_intel|_local_pinned_engine|call
+holdspeak/inference_targets.py:695|_local_pinned_engine|MeetingIntel|call
+holdspeak/inference_targets.py:717|build_intel_for_revision|_engine_for_revision|call
+holdspeak/inference_targets.py:744|_engine_for_revision|MeetingIntel|call
+holdspeak/inference_targets.py:751|_engine_for_revision|local_pinned_meeting_intel|call
+holdspeak/inference_targets.py:771|_engine_for_revision|build_meeting_intel_for_profile|call
 holdspeak/intel/engine.py:250|MeetingIntel._ensure_openai_client_loaded|OpenAI|call
 holdspeak/intel/engine.py:290|MeetingIntel._ensure_local_model_loaded|Llama|call
 holdspeak/intel/engine.py:312|MeetingIntel._ensure_runtime_loaded|_ensure_local_model_loaded|call
@@ -201,7 +201,7 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
         "chat.compact", "services.thread_practice", "InferenceRunner admitted child",
     ),
     # HS-162-03: model drafter for project update drafting.
-    "holdspeak/services/project_update_service.py:792|ProjectUpdateService._draft_with_model|call": ProposedRoute(
+    "holdspeak/services/project_update_service.py:1184|ProjectUpdateService._draft_with_model|call": ProposedRoute(
         "project.update_draft", "services.project_update_service", "InferenceRunner admitted child",
     ),
 }
@@ -378,12 +378,12 @@ holdspeak/services/agent_turn_service.py:44|_PromptToolProviderTransport.dispatc
 holdspeak/services/agent_turn_service.py:202|AgentTurnService.dispatch_plugin|_chat_completion_text|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "inference_targets", "InferenceRunner gateway/context-gated adapter"), """
-holdspeak/inference_targets.py:655|local_pinned_meeting_intel|_local_pinned_engine|call
-holdspeak/inference_targets.py:678|_local_pinned_engine|MeetingIntel|call
-holdspeak/inference_targets.py:700|build_intel_for_revision|_engine_for_revision|call
-holdspeak/inference_targets.py:727|_engine_for_revision|MeetingIntel|call
-holdspeak/inference_targets.py:734|_engine_for_revision|local_pinned_meeting_intel|call
-holdspeak/inference_targets.py:754|_engine_for_revision|build_meeting_intel_for_profile|call
+holdspeak/inference_targets.py:672|local_pinned_meeting_intel|_local_pinned_engine|call
+holdspeak/inference_targets.py:695|_local_pinned_engine|MeetingIntel|call
+holdspeak/inference_targets.py:717|build_intel_for_revision|_engine_for_revision|call
+holdspeak/inference_targets.py:744|_engine_for_revision|MeetingIntel|call
+holdspeak/inference_targets.py:751|_engine_for_revision|local_pinned_meeting_intel|call
+holdspeak/inference_targets.py:771|_engine_for_revision|build_meeting_intel_for_profile|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "intel.engine", "InferenceRunner gateway/context-gated adapter"), """
 holdspeak/intel/engine.py:250|MeetingIntel._ensure_openai_client_loaded|OpenAI|call

@@ -308,18 +308,24 @@ def test_stopwatch_and_retention(
                 list_items.first.click()
                 page.get_by_test_id("update-editor").wait_for(timeout=10000)
 
-                # HS-173-02: per-claim UNVERIFIED badges (inline beside the sentence)
-                unverified_badges = page.get_by_test_id("update-claim-unverified")
-                if unverified_badges.count() > 0:
-                    page.screenshot(
-                        path=str(SHOTS / f"unverified-span-{width}.png"),
-                        full_page=False,
-                    )
-                    assert (SHOTS / f"unverified-span-{width}.png").stat().st_size > 20_000
-                    badge_text = unverified_badges.first.inner_text()
-                    assert "unverified" in badge_text.lower(), (
-                        f"Badge should contain UNVERIFIED, got: {badge_text!r}"
-                    )
+                # HS-200-06: the sentence with no source reads
+                # UNSUPPORTED on its support token (the C2 axes replace
+                # the old per-claim UNVERIFIED badge on served records).
+                support_labels = page.eval_on_selector_all(
+                    '[data-testid="update-claim-support"] .surface-state-chip',
+                    "els => els.map(el => el.getAttribute('aria-label'))",
+                )
+                # Two of the three seeded claims cite nothing (the model
+                # sentence and the honest-minimal line), so both read
+                # UNSUPPORTED; the cited one reads LINKED · MIGRATED.
+                assert support_labels == [
+                    "LINKED · MIGRATED", "UNSUPPORTED", "UNSUPPORTED",
+                ], support_labels
+                page.screenshot(
+                    path=str(SHOTS / f"unverified-span-{width}.png"),
+                    full_page=False,
+                )
+                assert (SHOTS / f"unverified-span-{width}.png").stat().st_size > 20_000
 
                 # HS-167-05: Back button is in SurfaceVerbs inside the editor
                 back_btn = page.locator(

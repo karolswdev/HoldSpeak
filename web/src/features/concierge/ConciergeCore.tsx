@@ -27,7 +27,7 @@ import {
   type FoundRow,
   type SetRow,
 } from "./useConciergeController";
-import type { Engine } from "./api";
+import type { Engine, Repair } from "./api";
 import "./concierge.css";
 
 /* ── Found engine row ── */
@@ -241,6 +241,104 @@ function AdjustWell({ ctrl }: { ctrl: ConciergeController }) {
   );
 }
 
+/* ── Repair row (HS-200-04) ──
+   One named state, one verb, the host named where the repair happens. */
+
+function RepairRow({ repair, ctrl }: { repair: Repair; ctrl: ConciergeController }) {
+  const blocking =
+    repair.token === "CREDENTIAL EXPIRED" || repair.token === "ENDPOINT UNREACHABLE";
+  return (
+    <SurfaceLedgerRow
+      lead={<span className="concierge-lead">{"\u26a0"}</span>}
+      primary={<span className="concierge-engine-name">{repair.subject}</span>}
+      cells={
+        <span className="concierge-found-cells">
+          {repair.groupLabels.map((label) => (
+            <span className="concierge-token" key={label}>
+              {label.toUpperCase()}
+            </span>
+          ))}
+          <span className="concierge-cloud-actions">
+            <Button
+              dense
+              variant="primary"
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                ctrl.runRepair(repair);
+              }}
+              data-testid={`concierge-repair-verb-${repair.token.replace(/ /g, "-").toLowerCase()}`}
+            >
+              {repair.verb}
+            </Button>
+          </span>
+          <span className="concierge-found-state">
+            <StateChip
+              state={blocking ? "failure" : "warning"}
+              label={repair.token}
+            />
+          </span>
+          {repair.host ? (
+            <span className="concierge-found-line2">
+              <EgressChip label={repair.host.toUpperCase()} scope={repair.scope} />
+            </span>
+          ) : null}
+        </span>
+      }
+      expands={false}
+      wrap
+      data-testid={`concierge-repair-${repair.token.replace(/ /g, "-").toLowerCase()}`}
+    />
+  );
+}
+
+/* ── Probe row (HS-200-04) ──
+   One real request through the assigned route; the answer names the model that
+   served it and the boundary it crossed. */
+
+function ProbeRow({ ctrl }: { ctrl: ConciergeController }) {
+  const result = ctrl.probeResult;
+  const refused = result?.state === "REFUSED";
+  const latency = result ? latencyToken(result.latencyMs ?? null) : null;
+  return (
+    <div className="concierge-probe-row" data-testid="concierge-probe-row">
+      <span className="concierge-section-label">PROBE</span>
+      {result?.model ? (
+        <span className="concierge-engine-name" data-testid="concierge-probe-model">
+          {result.model}
+        </span>
+      ) : null}
+      {latency ? <span className="concierge-token">{latency}</span> : null}
+      {result?.host ? (
+        <EgressChip
+          label={result.host.toUpperCase()}
+          scope={result.boundary === "local" ? "local" : "cloud"}
+        />
+      ) : null}
+      {refused && result?.paid ? (
+        <span className="concierge-cost-chip">1 TOKEN · $</span>
+      ) : null}
+      {result && !refused ? (
+        <StateChip
+          state={result.ok ? "success" : "failure"}
+          label={result.ok ? "READY" : "UNREACHABLE"}
+          icon={result.ok ? "●" : undefined}
+        />
+      ) : null}
+      <span className="concierge-probe-spacer" />
+      <Button
+        dense
+        variant="ghost"
+        loading={ctrl.probing}
+        disabled={ctrl.probing}
+        onClick={() => ctrl.runTaskProbe(refused ? true : undefined)}
+        data-testid="concierge-probe-run"
+      >
+        Test
+      </Button>
+    </div>
+  );
+}
+
 /* ── ConciergeCore ── */
 
 export function ConciergeCore({ scope }: CoreProps) {
@@ -310,7 +408,23 @@ export function ConciergeCore({ scope }: CoreProps) {
         </div>
       </div>
 
-      {/* 2. FOUND section */}
+      {/* 2. NEEDS YOU — the named repair states (UX-CANON A8: no zero row) */}
+      {ctrl.repairs.length > 0 ? (
+        <div className="concierge-section">
+          <div className="concierge-section-header">
+            <span className="concierge-section-label" data-testid="concierge-repairs-label">
+              {`NEEDS YOU ${ctrl.repairs.length}`}
+            </span>
+          </div>
+          <ul className="concierge-repair-list" data-testid="concierge-repair-list">
+            {ctrl.repairs.map((repair) => (
+              <RepairRow key={repair.id} repair={repair} ctrl={ctrl} />
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {/* 3. FOUND section */}
       <div className="concierge-section">
         <div className="concierge-section-header">
           <span className="concierge-section-label" data-testid="concierge-found-label">{foundLabel}</span>
@@ -339,7 +453,7 @@ export function ConciergeCore({ scope }: CoreProps) {
         )}
       </div>
 
-      {/* 3. THE SET section */}
+      {/* 4. THE SET section */}
       <div className="concierge-section">
         <div className="concierge-section-header">
           <span className="concierge-section-label" data-testid="concierge-set-label">THE SET</span>
@@ -350,10 +464,11 @@ export function ConciergeCore({ scope }: CoreProps) {
             <SetGroupRow key={row.group} row={row} ctrl={ctrl} engines={ctrl.engines} />
           ))}
         </ul>
+        <ProbeRow ctrl={ctrl} />
         {ctrl.adjustOpen ? <AdjustWell ctrl={ctrl} /> : null}
       </div>
 
-      {/* 4. Footer — portaled into the frame's foot slot */}
+      {/* 5. Footer — portaled into the frame's foot slot */}
       <SurfaceFooter
         className="concierge-footer"
         receipt={<span className="concierge-receipt" data-testid="concierge-receipt">{receiptText}</span>}

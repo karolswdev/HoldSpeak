@@ -2,6 +2,8 @@
 
 **Last updated:** 2026-09-05.
 
+> **PARKED behind Phase 200 The Working Practice (2026-09-06, the owner's line in the sand, PR #563). Not deleted; re-chartered on his word when Phase 200's gates say the desk is used daily.**
+
 ## Goal
 
 The desk chat becomes a work tool. Draft / Chase / Plan recipes run

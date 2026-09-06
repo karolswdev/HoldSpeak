@@ -13,15 +13,16 @@ from holdspeak.web.routes import build_primitives_router
 
 
 @pytest.fixture
-def rig(tmp_path, monkeypatch):
+def rig(tmp_path, monkeypatch, local_model_present):
     reset_database()
     db = Database(tmp_path / "ask_grounding.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
     # These route tests inject an engine; local model-file readiness is outside
-    # the behavior they cover.
-    monkeypatch.setattr(
-        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
-    )
+    # the behavior they cover. HS-200-03: `local_model_present` substitutes the
+    # ONE readiness predicate. Patching `_this_machine_readiness` alone missed
+    # `this_machine_target_from_model_path()`, which the Ask placement actually
+    # resolves through, so these two tests silently required the developer's
+    # `~/Models/gguf/...` file and returned 409 everywhere else.
     app = FastAPI()
     app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
     yield db, TestClient(app)

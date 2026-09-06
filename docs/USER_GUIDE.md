@@ -414,6 +414,64 @@ Every text input on the Desk takes your voice. A mic is a toggle: select it
 once to start, and select it once to stop. On the Speak face, **Talk** is
 the one mic authority, so the utterance well shows none.
 
+### Who owns the microphone
+
+One machine has one microphone, and HoldSpeak treats it as one floor with one
+owner. The hotkey, a meeting recording, the wake listener and the browser mic
+all claim the same floor, so two of them can never record at once.
+
+Open **Details** on the Speak face to see the `Mic` row. It reads one word:
+`CLOSED` (the device is released, not muted), `SUSPENDED` (the grant is kept
+and nothing is captured), `OPEN`, `SEGMENTING`, or `HELD` (a push to talk hold
+owns the floor).
+
+If another source already has the floor when you press **Talk**, the face says
+so by name rather than failing quietly, for example `FLOOR HELD MEETING`. If
+the floor is taken away while you are speaking, capture stops at once with
+`AUDIO FLOOR LOST` and the session closes; press the mic again to start a new
+one.
+
+### When capture goes wrong
+
+Every capture that does not finish is named, and your typed words stay in the
+well where you can retry, copy them, or keep them as a note.
+
+| What happened | What you see | What happens to the words |
+|---|---|---|
+| Microphone access is blocked in the browser or the operating system | `PERMISSION DENIED` | Nothing is captured. Your draft stays editable. |
+| You said nothing | No speech was detected | No journal row is written. This is not an error. |
+| The speech engine failed | `TRANSCRIPTION FAILED` | No journal row is written. Retry, or type instead. |
+| Another source took the microphone mid sentence | `AUDIO FLOOR LOST` | The half sentence is discarded rather than delivered from a session that was already told it was over. Your draft stays editable. |
+| The session closed on you (inactivity, the thirty minute ceiling, a cancel) | `MIC INTERVAL CLOSED` | Your draft stays editable. Click the mic again to continue. |
+| The tab or the connection dropped after you had spoken | nothing, the page is gone | The words already captured are still transcribed and kept, so you find them on the **Journal** wing. |
+
+### When a delivery outcome is unknown
+
+Typing into another application is a real effect, and HoldSpeak will not repeat
+one it cannot prove did not happen. If the typing adapter fails after the text
+may already have landed, the delivery is parked as `OUTCOME UNKNOWN` and the
+words stay in the well. Sending the same delivery again reads that parked
+outcome instead of typing a second time, so a retry can never double type. To
+deliver after an unknown outcome, send the words yourself.
+
+### What survives a restart
+
+Journal rows and corrections live in the database on this device, not in the
+running process. Stop HoldSpeak and start it again on the same data root and
+you get back:
+
+- every kept journal row, with its source, its transcript and the rules that
+  fired on it;
+- every correction you taught, with its `N APPLIED` count unchanged;
+- a rule that still fires: the next utterance containing the phrase is
+  rewritten exactly as it was before the restart.
+
+`N APPLIED` counts the kept journal rows in which the rule actually changed the
+words. Teaching a rule does not count as an application, and neither does
+**Replay**: a replay re runs a stored transcript through the current pipeline
+as a preview, so you can watch the rule take effect, but it writes no journal
+row and moves no count.
+
 ## The Dictation Pipeline For Coding Assistants
 
 HoldSpeak can do more than transcription. With the dictation pipeline enabled, it can transform a rough spoken thought into a useful prompt for Claude, Codex, a terminal, a browser, or another target.
@@ -722,11 +780,44 @@ since the last published update through the claim schema. If you assigned a
 model to the project update capability, the model rewrites the inventory into
 stakeholder-readable prose. Every factual sentence carries its claim ref as an
 inline chip (click to open the source). Sentences the model added beyond the
-inventory are marked **UNVERIFIED**. The model's display name and host appear in
-the footer (for example `Llama 3.3 70B, 192.168.1.43, LAN`).
+inventory are marked **UNVERIFIED** in the body. The model's display name and
+host appear in the footer (for example `Llama 3.3 70B, 192.168.1.43, LAN`).
 
 When no model is assigned or the model fails, the update falls back to the
 deterministic body (no unverified markers, no egress).
+
+### What a claim state means
+
+Every claim states three separate things, each as its own token beside the
+sentence. They are independent: a citation says nothing about acceptance, and
+acceptance says nothing about evidence.
+
+**What the sentence asserts** is the lead token: `OBSERVATION` (a recorded
+status read off a source), `INFERENCE` (prose written over that record),
+`PROPOSAL`, `DECISION`, `EXECUTION RESULT`, or `OUTCOME MEASURE`.
+
+**What the evidence establishes:**
+
+| Token | Meaning |
+|---|---|
+| `SUPPORTED` | The value was read from the named source version by a field mapping, or a person attested it. The record names which. |
+| `LINKED` | The sentence cites a real source and nothing more. A valid citation never makes an invented sentence true. |
+| `LINKED · MIGRATED` | A record written before claim states existed. Its citation was kept; nobody reviewed it. |
+| `LINKED · EDITED` | The sentence was edited after it was supported, so its support was withdrawn. The old record is kept with the reason. |
+| `UNSUPPORTED` | No source at all. |
+| `DISPUTED` | Someone disagrees with the claim. |
+
+**Who judged it:** `UNREVIEWED`, `ACCEPTED`, `REJECTED`, or `SUPERSEDED`. Only
+you move this token. No model score can accept a claim.
+
+A name, a deadline, or a number that the cited source does not carry appears
+beside the sentence as its own token (for example `NAME · Priya` or
+`NUMBER · 95%`). The sentence keeps its citation; the figure stays an open
+question until a source carries it.
+
+Editing a supported sentence withdraws its support until it is checked again.
+Nothing is deleted: the old support record keeps its source version, its
+method, and the time it was withdrawn.
 
 Four verbs on the update: **Save** persists the edit without publishing.
 **Regenerate** rebuilds the draft from the current inventory (deterministic).
@@ -1579,6 +1670,35 @@ appears only when you pick it in the picker.
 **Use these** (the one primary verb) writes the whole set in one step. It is
 disabled until every group is **READY** or explicitly **OFF**.
 
+### NEEDS YOU: the repair states
+
+When something an assigned group depends on is not usable, a **NEEDS YOU**
+section appears above **FOUND**. Each row names the state, the affected
+capability groups, the host where the repair happens, and carries one verb:
+
+| State | Verb | Where it takes you |
+|---|---|---|
+| **MODEL FILE MISSING** | **Download** | The Model Library acquisition for that model. |
+| **ENDPOINT UNREACHABLE** | **Check** | The endpoint field, on that address. |
+| **TOOL INCOMPATIBLE** | **Choose** | That group's engine list, in place. |
+| **CREDENTIAL EXPIRED** | **Connections** | Settings, Connections. |
+
+The rows come from assigned routes and connected sources, so every row is
+something the product will actually hit. An engine that several groups share
+appears once and names those groups. When nothing needs you the section is
+absent.
+
+### Test: the task probe
+
+**Test**, on the **PROBE** row under the set, sends one short real request
+through the route your assignment resolves to and reports the model that
+answered, the time it took, and the host it reached (`THIS DEVICE` when
+nothing left the machine).
+
+When the route's first destination is off this machine, the first **Test**
+refuses and names the boundary; a paid destination also shows `1 TOKEN · $`.
+Selecting **Test** again runs it. Nothing is sent before that.
+
 ### Adjust
 
 Choose **Adjust** (the ghost verb by the set's caption) and the full
@@ -1612,6 +1732,13 @@ when nothing is found). **Cancel** appears when the set has unsaved changes.
 The headline reads `No engine yet`. The FOUND section lists catalog presets
 as **Download** rows and the `Add an engine...` entry. **Use these** is
 disabled. One path forward: download a preset or add an engine, then apply.
+
+### Coming back to an unfinished task
+
+Opening **Models** from a Thought, an Interview step, or a Speak utterance
+opens it as a window over that work. The task keeps its text. When you apply a
+set with **Use these**, the face you came from re-reads readiness by itself:
+no page reload, and nothing configured twice.
 
 The full reference for model files, endpoints, and providers is
 [Models (bring your own)](MODELS.md).

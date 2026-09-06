@@ -46,6 +46,39 @@ jobs:
           npm ci --no-audit --no-fund
           npm run check
 
+  critical-journeys:
+    name: Critical Journeys (G0)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run the G0 critical journeys
+        # HS-200-03: the four journeys a release candidate must complete —
+        # runtime identity, backup/restore, the first kept sentence, and a
+        # Project's first result. They run the real services with only the
+        # external adapters substituted, so this job deliberately has NO local
+        # model, NO PortAudio, NO macOS and no network: if a journey needs any
+        # of those it is not a G0 journey.
+        #
+        # HOME is isolated so the run cannot touch an installation, which the
+        # guard in tests/conftest.py also enforces. This job must be green;
+        # it is reported separately from the historical jobs so a reader can
+        # tell the release gate from the inherited backlog.
+        run: |
+          HOME=$(mktemp -d) uv run --extra test pytest -q -m critical tests/critical -p no:cacheprovider
+
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -192,13 +225,13 @@ jobs:
         env:
           HOLDSPEAK_REQUIRE_LIVE_BUS: "1"
         run: |
-          uv run --extra test python -m pytest tests/e2e/test_live_bus.py -v
+          HOME=$(mktemp -d) uv run --extra test python -m pytest tests/e2e/test_live_bus.py -v
 
       - name: Run E2E tests with coverage
         run: |
           # Mock-based e2e (excluding metal hardware tests). The live-bus file
           # ran above as a mandatory no-skip browser gate.
-          uv run --extra test python -m pytest tests/e2e/ -v -m "e2e and not metal" --ignore=tests/e2e/test_live_bus.py --cov=holdspeak --cov-report=xml --cov-report=term-missing
+          HOME=$(mktemp -d) uv run --extra test python -m pytest tests/e2e/ -v -m "e2e and not metal" --ignore=tests/e2e/test_live_bus.py --cov=holdspeak --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -245,13 +278,14 @@ jobs:
   all-tests:
     name: All Tests Summary
     runs-on: ubuntu-latest
-    needs: [unit-tests, integration-tests, e2e-tests, linux-smoke]
+    needs: [critical-journeys, unit-tests, integration-tests, e2e-tests, linux-smoke]
     if: always()
 
     steps:
       - name: Check test results
         run: |
-          if [[ "${{ needs.unit-tests.result }}" == "failure" ]] || \
+          if [[ "${{ needs.critical-journeys.result }}" == "failure" ]] || \
+             [[ "${{ needs.unit-tests.result }}" == "failure" ]] || \
              [[ "${{ needs.integration-tests.result }}" == "failure" ]] || \
              [[ "${{ needs.e2e-tests.result }}" == "failure" ]] || \
              [[ "${{ needs.linux-smoke.result }}" == "failure" ]]; then

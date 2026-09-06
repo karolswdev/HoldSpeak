@@ -53,6 +53,48 @@ A cloud row showing **KEY NOT SET** requires credential setup before a paid chec
 **Use these** requires every group to be ready or explicitly off.
 A successful check establishes current availability. It does not guarantee future availability or model quality.
 
+## Test the assigned route
+
+**Test**, below the proposed set, sends one short request through the route the
+assignment currently resolves to. It reports the model that answered, the
+measured time, and the host the request reached. `THIS DEVICE` means nothing
+left the machine.
+
+A route whose first destination is off this machine is not tested until you
+select **Test** a second time. A paid destination shows its cost indicator
+first. Nothing is sent before that second selection.
+
+A reachability **Check** proves that an address answered. **Test** proves that
+the assigned route completed a task and names what served it.
+
+## Repair states
+
+When something the assigned set depends on is not usable, the Concierge lists it
+under **NEEDS YOU**. Each row names the state, the host where the repair
+happens, the capability groups affected, and one control.
+
+| State | Meaning | Control |
+| --- | --- | --- |
+| **MODEL FILE MISSING** | An assigned local model is not on disk. | **Download** opens the Model Library acquisition. |
+| **ENDPOINT UNREACHABLE** | An assigned endpoint did not answer. | **Check** opens the endpoint field on that address. |
+| **TOOL INCOMPATIBLE** | The assigned model cannot serve that capability. | **Choose** opens that group's engine list. |
+| **CREDENTIAL EXPIRED** | A required key or source credential is absent or rejected. | **Connections** opens Settings, Connections. |
+
+The list is derived from assigned routes and connected sources.
+An engine several groups share appears once and names those groups.
+No row appears when nothing needs you.
+
+## Failure and fallback
+
+An assignment can hold up to four models in order. A request uses them in that
+order and stops at the first one that completes.
+
+The order is fixed when the request starts. A later assignment change does not
+move a request that has already started, and no model outside that order is
+ever used in its place. When every model in the order fails, the request fails
+and the Receipt names the route and each model it tried. HoldSpeak does not
+substitute a different provider.
+
 ## Adjust individual capabilities
 
 Select **Adjust** below the proposed set to open the capability table.
@@ -119,6 +161,8 @@ Use the returned error and Receipt when you diagnose a failed request.
 | A local model remains unavailable | Check the model file, optional runtime, and capability requirements. |
 | An endpoint is unreachable | Check its address, required credential, and network path. Repeat **Check**. |
 | An assignment cannot run | Use **Adjust** to select a compatible engine for that capability. |
+| A repair state is shown | Use the control on that row. Each state has one. |
+| **Test** reports UNREACHABLE | Read the Receipt. It names the route and each model that was tried. |
 | **Use these** remains disabled | Resolve each waiting group or explicitly set an unneeded group to off. |
 | Tool results are unreliable | Review the sources and model output. A readiness check does not evaluate recommendation quality. |
 
