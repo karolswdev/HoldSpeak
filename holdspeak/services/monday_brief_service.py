@@ -185,7 +185,11 @@ class MondayBriefService:
         """Generate or return the existing brief for the current local date."""
         period_start, period_end = self.compute_window(now)
         date_key = period_end.date().isoformat()
-        waiting_items = self._collect_waiting(principal)
+        # HS-200-07 (C4): the needs-you half of the brief names what was
+        # NOT observed, so an empty brief cannot read as an all-clear over
+        # a source that failed.
+        waiting_items = self._collect_coverage_gaps(principal) + \
+            self._collect_waiting(principal)
 
         with self._db._connection() as conn:
             row = conn.execute(
@@ -566,6 +570,68 @@ class MondayBriefService:
                         )
                     )
 
+        return items
+
+    def _collect_coverage_gaps(self, principal: Any) -> list[BriefItem]:
+        """HS-200-07 (C4): one WAITING row per source that was not observed.
+
+        Reads the SAME coverage projection the arrival and the shade read
+        (``needs_you_aggregate.build_aggregate``) -- no second attention
+        store, no second vocabulary.  A source the aggregate reports as
+        available produces nothing.
+        """
+        from holdspeak.services.needs_you_aggregate import (
+            LastKnownStore, build_aggregate,
+        )
+        from holdspeak.services.project_service import ProjectService
+
+        try:
+            service = ProjectService(self._db)
+            # Its OWN memory: the brief reports coverage, it does not
+            # replay another reader's remembered items (and it never
+            # writes into the arrival's memory).
+            aggregate = build_aggregate(
+                list_projects=service.list_projects,
+                room=service.room,
+                principal=principal,
+                last_known=LastKnownStore(),
+            )
+            coverage = aggregate.get("coverage") or []
+        except Exception as exc:  # pragma: no cover - defensive
+            return [
+                BriefItem(
+                    id=f"brief-item-{uuid.uuid4().hex}",
+                    section="waiting",
+                    text="Not observed: attention coverage",
+                    detail=str(exc).split("\n")[0][:120] or "Coverage unavailable",
+                    source_ref="coverage:aggregate",
+                    priority=320,
+                )
+            ]
+
+        items: list[BriefItem] = []
+        for row in coverage:
+            if row.get("state") == "available":
+                continue
+            repair = row.get("repair") or {}
+            label = str(row.get("label") or row.get("source_id") or "source")
+            detail_parts = [str(repair.get("token") or row.get("state") or "").strip()]
+            if row.get("reason"):
+                detail_parts.append(str(row["reason"]))
+            if row.get("observed_at"):
+                detail_parts.append(f"last seen {str(row['observed_at'])[:16]}")
+            items.append(
+                BriefItem(
+                    id=f"brief-item-{uuid.uuid4().hex}",
+                    section="waiting",
+                    text=f"Not observed: {label}",
+                    detail=" · ".join(part for part in detail_parts if part),
+                    source_ref=f"coverage:{row.get('source_id')}",
+                    # Above every other WAITING row: an unobserved source
+                    # changes what the rest of the brief can claim.
+                    priority=320,
+                )
+            )
         return items
 
     def _collect_waiting(self, principal: Any) -> list[BriefItem]:

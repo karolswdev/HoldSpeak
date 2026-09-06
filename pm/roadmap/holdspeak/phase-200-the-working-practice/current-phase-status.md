@@ -1,6 +1,6 @@
 # Phase 200: The Working Practice
 
-**Last updated:** 2026-09-06 — HS-200-01–04 DONE (the baseline; runtime identity + the owner lock + restore; the release checks; first value cold + the real task probe + four repair states + return-to-task); HS-200-05 physical voice and custody in progress (its physical beats are his walk); HS-200-06 DONE (claim kind, support and acceptance separated; a citation buys source linkage only; old citation-only records migrated conservatively and readable as LINKED · MIGRATED).
+**Last updated:** 2026-09-06 — G0: 01–04 DONE, 05's automatable half proved (its physical beats are his walk); G1: 06 claim support DONE, 07 attention coverage DONE (a coverage record per expected source; an empty partial result never reads as an all-clear on the arrival, the shade, the deck or the brief; the MCP needs-you surface no longer skips a failed Room); 08 the evaluation harness in progress.
 **Status:** planning. Forty stories defined; zero implementation stories completed.
 **Product owner:** Karol.
 **Delivery owner:** unassigned until implementation starts.
@@ -44,8 +44,8 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-04 | Make first value and model readiness work cold | done | [story-04](story-04-first-value-and-model-readiness.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-200-05 | Prove physical voice capture, correction, and custody | in-progress | [story-05](story-05-physical-voice-and-custody.md) | — |
 | HS-200-06 | Separate citation, factual support, and acceptance | done | [story-06](story-06-claim-support-semantics.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-200-07 | Make incomplete attention coverage explicit | in-progress | [story-07](story-07-coverage-and-partial-results.md) | — |
-| HS-200-08 | Establish repeatable live-model quality evaluation | backlog | [story-08](story-08-semantic-evaluation-harness.md) | — |
+| HS-200-07 | Make incomplete attention coverage explicit | done | [story-07](story-07-coverage-and-partial-results.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-200-08 | Establish repeatable live-model quality evaluation | in-progress | [story-08](story-08-semantic-evaluation-harness.md) | — |
 | HS-200-09 | Design the daily Project workflow on existing surfaces | backlog | [story-09](story-09-daily-workflow-design.md) | — |
 | HS-200-10 | Promote reusable working context into canonical records | backlog | [story-10](story-10-scoped-working-context.md) | — |
 | HS-200-11 | Produce a useful Project preparation brief | backlog | [story-11](story-11-project-preparation.md) | — |
@@ -81,7 +81,20 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 
 ## Where we are
 
-2026-09-06 (night, later): HS-200-04 DONE — cold first value proven and
+2026-09-06 (late night): HS-200-07 DONE — the aggregate carries `coverage`
+(one record per expected Project/watch/meeting/commitment source: state
+available · stale · failed · forbidden · unavailable, observed_at, the
+repair token + verb, the reason) and `complete`; computedAt is the aggregate
+clock only; a failed source replays its last-known items with their
+observation time so severity cannot drop by disappearance, reconciled by
+stable ids on recovery; the cache is single-flight with a build counter
+and keeps its last good payload as stale; the arrival says "Nothing needs
+you" only when complete, else "Coverage incomplete" + `COVERAGE · N OF M`
++ a repair row per gap (Retry / Reconnect / Open source); the shade and
+the deck carry the same truth; the brief gains a `Not observed` row per gap;
+the MCP `desk.needs_you` now calls build_aggregate (it silently skipped a
+failed Room). Not durable across a restart by design (no second store).
+HS-200-06 DONE (the three claim axes). HS-200-04 DONE — cold first value proven and
 fenced (Speak and FirstWords read no readiness; Copy and Keep need no
 LLM); a real task probe (`POST /api/concierge/probe {task:true}`, the
 PROBE row's `Test`) through the same adapter Ask uses, recording the

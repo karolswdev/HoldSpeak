@@ -17,6 +17,12 @@ import { SurfaceState } from "../surface/Surface";
 import { humanizeWireValue } from "../../lib/productLanguage";
 import { MicButton } from "./MicButton";
 import { openPrimitive, openSurfaceOr, openSurfaceWhenReady } from "../shell";
+import {
+  readCoverage,
+  observedToken,
+  sourceLabel,
+  type CoverageRecord,
+} from "../coverage";
 
 type Correction = Record<string, unknown>;
 
@@ -43,6 +49,9 @@ type NeedsYouAggregate = {
   computedAt?: string;
   stale?: boolean;
   sweepId?: string | null;
+  /** HS-200-07 (C4): one record per expected source. */
+  coverage?: CoverageRecord[];
+  complete?: boolean;
 };
 
 /** Group items by projectId, returning one entry per Room with items. */
@@ -84,6 +93,8 @@ export function SystemShade({
   const gate = useGate();
   const [corrections, setCorrections] = useState<Correction[] | null>(null);
   const [needsYou, setNeedsYou] = useState<NeedsYouAggregate | null>(null);
+  // HS-200-07 (C4): a read that never landed is a coverage gap, not quiet.
+  const [needsYouUnread, setNeedsYouUnread] = useState(false);
   const [brief, setBrief] = useState<{ itemCount: number; date: string; hasThisWeek: boolean } | null>(null);
   const [denyingId, setDenyingId] = useState<string | null>(null);
   const [denyReason, setDenyReason] = useState("");
@@ -115,8 +126,8 @@ export function SystemShade({
       .catch(() => setCorrections([]));
     // HS-171-04: fetch needs-you aggregate (initial; polling below)
     void apiFetch<NeedsYouAggregate>("/api/desk/needs-you")
-      .then((data) => setNeedsYou(data))
-      .catch(() => setNeedsYou(null));
+      .then((data) => { setNeedsYou(data); setNeedsYouUnread(false); })
+      .catch(() => { setNeedsYou(null); setNeedsYouUnread(true); });
     // HS-171-04: fetch brief latest for the shade row
     void apiFetch<Record<string, unknown> | null>("/api/brief/latest")
       .then((data) => {
@@ -142,8 +153,8 @@ export function SystemShade({
     if (!open) return;
     const timer = window.setInterval(() => {
       void apiFetch<NeedsYouAggregate>("/api/desk/needs-you")
-        .then((data) => setNeedsYou(data))
-        .catch(() => {});
+        .then((data) => { setNeedsYou(data); setNeedsYouUnread(false); })
+        .catch(() => setNeedsYouUnread(true));
     }, 5000);
     return () => window.clearInterval(timer);
   }, [open]);
@@ -206,6 +217,13 @@ export function SystemShade({
 
       <ShadeProjects
         needsYou={needsYou}
+        onClose={onClose}
+      />
+
+      {/* HS-200-07 (C4): what was NOT observed, before anything is
+          called quiet. */}
+      <ShadeCoverage
+        reading={readCoverage(needsYou?.coverage, needsYou?.complete, needsYouUnread)}
         onClose={onClose}
       />
 
@@ -397,11 +415,79 @@ export function SystemShade({
         </section>
       ) : null}
 
-      {/* When EVERY section is empty: one muted caption. */}
-      {!needsYou?.items?.length && !brief && !(needsAttentionCount + gate.held.length) && !finished.length && !learned.length ? (
+      {/* When EVERY section is empty: one muted caption.
+          HS-200-07 (C4): "Nothing missed" is an ALL-CLEAR — it is spoken
+          only over complete coverage; a partial read shows the coverage
+          section above instead. */}
+      {!needsYou?.items?.length && !brief && !(needsAttentionCount + gate.held.length) && !finished.length && !learned.length
+        && readCoverage(needsYou?.coverage, needsYou?.complete, needsYouUnread).complete ? (
         <p className="desk-shade-quiet">Nothing missed</p>
       ) : null}
     </div>
+  );
+}
+
+
+// ── HS-200-07 (C4): COVERAGE section in the shade ────────────────────
+//
+// Absent when coverage is complete (A.8). One row per unobserved source
+// with its repair token, its observation time, and the owning verb.
+
+function ShadeCoverage({
+  reading,
+  onClose,
+}: {
+  reading: ReturnType<typeof readCoverage>;
+  onClose: () => void;
+}) {
+  if (reading.complete) return null;
+  const open = (gap: CoverageRecord) => {
+    onClose();
+    if (gap.repair?.href.startsWith("/settings")) {
+      openSurfaceOr("configure-settings", "/settings", "connections");
+      return;
+    }
+    openSurfaceOr("project-room", "/projects", gap.project_id ?? "");
+  };
+  return (
+    <section
+      className="desk-shade-group"
+      aria-label="Coverage"
+      data-testid="shade-coverage"
+    >
+      <h4>
+        Coverage <b>&middot; {reading.available} of {reading.expected}</b>
+      </h4>
+      {reading.gaps.map((gap) => (
+        <div className="desk-shade-item" key={gap.source_id} data-testid="shade-coverage-row">
+          <span className="desk-shade-glyph" aria-hidden="true">⊘</span>
+          <div className="desk-shade-what">
+            <strong>{sourceLabel(gap)}</strong>
+            <small>
+              <span className="surface-token" data-chip data-tone="warn">
+                {gap.repair?.token ?? gap.state.toUpperCase()}
+              </span>
+              {" "}
+              <span className="surface-token" data-chip>
+                {observedToken(gap.observed_at)}
+              </span>
+            </small>
+            {gap.repair ? (
+              <span className="desk-shade-do">
+                <Button
+                  dense
+                  variant="ghost"
+                  onClick={() => open(gap)}
+                  data-testid="shade-coverage-verb"
+                >
+                  {gap.repair.verb === "Retry" ? "Open source" : gap.repair.verb}
+                </Button>
+              </span>
+            ) : null}
+          </div>
+        </div>
+      ))}
+    </section>
   );
 }
 

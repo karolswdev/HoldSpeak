@@ -349,7 +349,7 @@ TOOLS.extend([
         ["entry_id"],
     ),
     _mcp_tool("desk.snapshot", "Read one coherent snapshot of the durable HoldSpeak desk.", {}),
-    _mcp_tool("desk.needs_you", "Aggregate needs-you items across all active project rooms. Returns {count, projects, items, next}.", {}),
+    _mcp_tool("desk.needs_you", "Aggregate needs-you items across all active project rooms. Returns {count, projects, items, next, coverage, complete} -- coverage names every expected source that was not observed.", {}),
     _mcp_tool("settings.hub", "Read the settings hub row facts: module state tokens for the settings truth table.", {}),
     _mcp_tool(
         "decision_record.list", "List durable decision records, newest first.",
@@ -754,28 +754,17 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     if name == "desk.snapshot":
         return desk.snapshot(principal)
     if name == "desk.needs_you":
+        # HS-200-07 (C4): ONE owner of the aggregate shape.  The inline
+        # copy that lived here skipped a failed Room silently, so an
+        # unobserved source read as an all-clear on this surface.
+        from holdspeak.services.needs_you_aggregate import build_aggregate
         from holdspeak.services.project_service import ProjectService
         project_service = ProjectService(db, observer=obs)
-        projects = project_service.list_projects(principal, {"include_archived": False})
-        _sev = {"danger": 0, "warning": 1, "info": 2}
-        items: list[dict] = []
-        project_ids: set[str] = set()
-        for proj in projects:
-            pid = proj.get("id") or ""
-            if not pid:
-                continue
-            try:
-                room = project_service.room(principal, pid)
-            except Exception:
-                continue
-            needs = room.get("needsYou", {})
-            if needs.get("state") != "ok":
-                continue
-            for item in (needs.get("items") or []):
-                items.append({"projectId": pid, "projectName": proj.get("name") or proj.get("title") or "", "ref": item.get("title", ""), "title": item.get("title", ""), "why": item.get("why", ""), "ageToken": item.get("since", ""), "source": item.get("source", ""), "verbHref": item.get("url"), "severity": item.get("severity", "info")})
-                project_ids.add(pid)
-        items.sort(key=lambda r: (_sev.get(r.get("severity", "info"), 2), r.get("ageToken") or ""))
-        return {"count": len(items), "projects": sorted(project_ids), "items": items, "next": None}
+        return build_aggregate(
+            list_projects=project_service.list_projects,
+            room=project_service.room,
+            principal=principal,
+        )
     if name == "settings.hub":
         from holdspeak.config import Config, CONFIG_FILE
         from holdspeak.services.inference_assignment_service import InferenceAssignmentService

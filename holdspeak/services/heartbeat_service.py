@@ -773,7 +773,20 @@ class HeartbeatService:
             return aggregate
         except Exception as exc:
             log.error("heartbeat aggregate refresh failed: %s", exc)
-            return {"count": 0, "projects": [], "items": [], "mutedCount": 0}
+            # HS-200-07 (C4): a refresh that failed observed NOTHING; the
+            # empty payload says so rather than reading as an all-clear.
+            return {
+                "count": 0, "projects": [], "items": [], "mutedCount": 0,
+                "coverage": [{
+                    "source_id": "projects", "kind": "project",
+                    "state": "failed", "observed_at": None,
+                    "label": "Projects", "project_id": "",
+                    "reason": str(exc).split("\n")[0][:200] or type(exc).__name__,
+                    "repair": {"token": "READ FAILED", "verb": "Retry",
+                               "href": "/projects"},
+                }],
+                "complete": False,
+            }
 
     def get_aggregate(self, principal: Principal | None = None) -> dict[str, Any]:
         """Return the aggregate (always fresh from the canonical builder)."""

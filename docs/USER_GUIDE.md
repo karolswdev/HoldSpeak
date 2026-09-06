@@ -1006,6 +1006,38 @@ next scheduled recording or calendar event when one exists.
 why, **Open**). Each row carries its project token when more than one room
 contributes. When nothing needs you the section is absent.
 
+### When a source was not observed
+
+`Nothing needs you` is an all-clear, so the desk says it only when every
+expected source actually answered. When one did not, the headline reads
+`Coverage incomplete` instead and a **COVERAGE** section appears above
+**NEEDS YOU**, captioned with how many sources of how many were observed
+(`COVERAGE · 3 OF 4`).
+
+Each coverage row names the source that went unobserved, why, when it was
+last seen (`LAST SEEN 09-06 08:12`, or `NEVER OBSERVED`), and the verb that
+repairs it:
+
+| Row token | What it means | Verb |
+|---|---|---|
+| `READ FAILED` | The room could not be read on this pass. | **Retry** |
+| `CANT CHECK` | A watch reported an error, usually a credential. | **Reconnect** |
+| `STALE` | The watch last succeeded too long ago to stand for now. | **Retry** |
+| `PAUSED` | The watch is paused, so nothing is being observed. | **Open source** |
+| `NEVER CHECKED` | The watch has never completed a check. | **Open source** |
+| `NOT OBSERVED` | The source is expected but was not read. | **Retry** |
+| `FORBIDDEN` | The source refused the read. | **Open source** |
+
+Items a failing source told you about last time do not disappear while it
+is down. They stay in **NEEDS YOU** with the time they were last seen, and
+they return to their normal state when the source answers again.
+
+The shade behind the bell carries the same truth: it shows a **Coverage**
+group instead of `Nothing missed`, and the command deck badges an
+unobserved room with its repair token rather than a blank count. The brief
+lists each unobserved source as a `Not observed:` line in its waiting
+section, so a quiet brief is never a quiet desk in disguise.
+
 **THOUGHTS** lists unfinished thoughts. The first carries **Continue**;
 others show their state (**Ready for you**, **Needs attention**). Empty:
 absent.
