@@ -1,3 +1,4 @@
+import { countLabel } from "../surface";
 /** HS-151-05 — Thread pullout content: head (in-place title, egress lamp,
  * status line, token meter), body (user/assistant rows with StreamingMaterial,
  * reasoning folded behind RAW, error row in-flow, CRASHED + Retry, sibling
@@ -27,7 +28,6 @@ import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import {
   useThreadStore,
   isCrashed,
-  sendTurn,
   abortThread,
   patchThread,
   keepMessage,
@@ -56,6 +56,7 @@ import { ThreadComposer, InlineEditor } from "../components/ThreadComposer";
 import { MicButton } from "../components/MicButton";
 import { Button } from "../../components/signal/Signal";
 import { ModeTabs } from "../components/ModeTabs";
+import { InterviewPanel } from "../components/InterviewPanel";
 import { CallChip } from "../components/CallChip";
 import { SpeakerGlyph } from "../components/SpeakerGlyph";
 import {
@@ -986,9 +987,8 @@ function MessageRow({
   const isDone = !msg.streaming && !hasError && !crashed;
 
   // Assemble the display text: from buffer if streaming, from parts if done.
-  const displayText = isStreaming
-    ? bufferText
-    : msg.parts.filter((p) => p.kind === "text").map((p) => p.text).join("");
+  const savedText = msg.parts.filter((p) => p.kind === "text").map((p) => p.text).join("");
+  const displayText = isStreaming && bufferText.startsWith(savedText) ? bufferText : savedText;
   const reasoningText = msg.parts
     .filter((p) => p.kind === "reasoning")
     .map((p) => p.text)
@@ -999,12 +999,19 @@ function MessageRow({
   const receiptShort = msg.receiptId && msg.receiptId.length > 4
     ? msg.receiptId.slice(-4)
     : msg.receiptId || null;
+  const routineTools = toolRows?.filter((row) =>
+    row.state === "pending" || row.state === "running" || row.state === "receipted",
+  ) ?? [];
+  const attentionTools = toolRows?.filter((row) =>
+    row.state !== "pending" && row.state !== "running" && row.state !== "receipted",
+  ) ?? [];
+  const toolsWorking = routineTools.some((row) => row.state !== "receipted");
 
   if (msg.role === "user") {
     const userText = msg.parts.map((p) => p.text).join("") || "";
     return (
       <div className="thread-row thread-row-user" data-message-id={msg.id}>
-        <div className="thread-row-label">YOU</div>
+        <div className="thread-row-label">YOU{msg.pending && <span> · Sending…</span>}</div>
         {editing ? (
           <InlineEditor
             initialText={userText}
@@ -1018,8 +1025,8 @@ function MessageRow({
         ) : (
           <div
             className="thread-row-body thread-row-body-editable"
-            onClick={() => setEditing(true)}
-            title="Click to edit and resend"
+            onClick={msg.pending ? undefined : () => setEditing(true)}
+            title={msg.pending ? undefined : "Click to edit and resend"}
           >
             {userText || "(empty)"}
           </div>
@@ -1103,17 +1110,21 @@ function MessageRow({
       {/* HS-153-03: guardrail row (before tool rows) */}
       {guardrailRow && <GuardrailRowView row={guardrailRow} />}
 
-      {/* HS-152-04: tool rows */}
-      {toolRows && toolRows.length > 0 && (
+      {/* Routine activity stays folded throughout the turn. Native details
+          preserves the reader's choice to inspect it as results arrive. */}
+      {routineTools.length > 0 && (
+        <details className="thread-raw-fold" data-testid="tool-activity">
+          <summary className="thread-raw-toggle">
+            {countLabel("Actions ·", routineTools.length)}{toolsWorking && " · Working…"}
+          </summary>
+          <div className="thread-tool-rows">
+            {routineTools.map((row) => <ToolRowView key={row.callId} row={row} threadId={threadId} onDecide={onDecide} />)}
+          </div>
+        </details>
+      )}
+      {attentionTools.length > 0 && (
         <div className="thread-tool-rows">
-          {toolRows.map((row) => (
-            <ToolRowView
-              key={row.callId}
-              row={row}
-              threadId={threadId}
-              onDecide={onDecide}
-            />
-          ))}
+          {attentionTools.map((row) => <ToolRowView key={row.callId} row={row} threadId={threadId} onDecide={onDecide} />)}
         </div>
       )}
 
@@ -1207,6 +1218,7 @@ function ThreadPulloutInner({
   const [restoreFocus, setRestoreFocus] = useState(false);
 
   const bodyRef = useRef<HTMLDivElement>(null);
+  const followTail = useRef(true);
 
   // Load thread on mount
   useEffect(() => {
@@ -1215,10 +1227,10 @@ function ThreadPulloutInner({
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
-    if (bodyRef.current) {
+    if (bodyRef.current && followTail.current) {
       bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
     }
-  }, [detail?.messages.length, buffers, threadToolRows]);
+  }, [detail?.messages, buffers, threadToolRows]);
 
   // Subscribe to bus frames for this thread
   useEffect(() => {
@@ -1313,14 +1325,17 @@ function ThreadPulloutInner({
   }, [titleDraft, initialTitle, threadId, attempt]);
 
   const handleSend = useCallback(
-    (text: string, refs: Array<{ ref_kind: string; ref_id: string }>) => {
+    async (text: string, refs: Array<{ ref_kind: string; ref_id: string }>) => {
+      followTail.current = true;
       // HS-153-04: clear draft annotations optimistically on send (they are promoted server-side).
       useThreadStore.setState((s) => ({
         draftAnnotations: { ...s.draftAnnotations, [threadId]: [] },
       }));
-      void attempt("send turn", () =>
-        sendTurn(threadId, { text, refs: refs.length > 0 ? refs : undefined }),
+      const result = await attempt("send turn", () =>
+        useThreadStore.getState().submitTurn(threadId, { text, refs: refs.length > 0 ? refs : undefined }),
+        { retry: false },
       );
+      return result.ok;
     },
     [threadId, attempt],
   );
@@ -1381,6 +1396,21 @@ function ThreadPulloutInner({
   }, []);
 
   const isStreaming = detail?.messages.some((m) => m.streaming) ?? false;
+  const hasPendingSend = detail?.messages.some((m) => m.pending) ?? false;
+
+  // Recover missed start/delta/done frames while a local turn is active.
+  // Read-only reconciliation never resubmits the owner's message.
+  useEffect(() => {
+    if (!isStreaming && !hasPendingSend) return;
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const refresh = async () => {
+      if (!useThreadStore.getState().loading[threadId]) await loadThread(threadId);
+      if (!stopped) timer = setTimeout(refresh, 1500);
+    };
+    timer = setTimeout(refresh, 1500);
+    return () => { stopped = true; clearTimeout(timer); };
+  }, [threadId, isStreaming, hasPendingSend, loadThread]);
 
   // HS-154-04: sync auto-speak active state with call_mode.
   const callMode = detail?.thread?.call_mode ?? 0;
@@ -1592,7 +1622,11 @@ function ThreadPulloutInner({
 
   return (
     <>
-      <div className="desk-pullout-body desk-surface-body thread-pullout-body" ref={bodyCallbackRef}>
+      <div className="desk-pullout-body desk-surface-body thread-pullout-body" ref={bodyCallbackRef}
+        onScroll={(event) => {
+          const body = event.currentTarget;
+          followTail.current = body.scrollHeight - body.scrollTop - body.clientHeight < 40;
+        }}>
         {/* Head: title, egress, status, token meter */}
         <div className="thread-head">
           {editingTitle ? (
@@ -1713,6 +1747,13 @@ function ThreadPulloutInner({
           SurfaceFooter, which is a 36px bar). The composer needs its
           full height to render the textarea + mic + Send/Stop. */}
       <div className="thread-foot">
+        {detail.thread.interview && <InterviewPanel
+          key={threadId}
+          state={detail.thread.interview}
+          disabled={isStreaming}
+          reload={() => loadThread(threadId)}
+          onTry={(text) => handleSend(text, [])}
+        />}
         <ModeTabs
           activeMode={detail.thread?.mode ?? null}
           onSelect={(recipeId) => void setMode(threadId, recipeId)}
@@ -1724,7 +1765,7 @@ function ThreadPulloutInner({
           annotations={draftAnnotations}
           onRemove={handleAnnotationRemove}
         />
-        <ThreadComposer
+        {detail.thread.interview?.section !== "people" && <ThreadComposer
           threadId={threadId}
           onSend={handleSend}
           onStop={handleStop}
@@ -1743,7 +1784,7 @@ function ThreadPulloutInner({
           streaming={isStreaming}
           lastAssistantId={lastAssistant?.id ?? null}
           restoreFocus={restoreFocus}
-        />
+        />}
       </div>
     </>
   );

@@ -163,10 +163,10 @@ function ConnectedRow({ row, ctrl }: { row: SourceRow; ctrl: DoorController }) {
           ))}
 
           {row.state === "checking" ? (
-            <StateChip state="working" label="CHECKING" icon="○" />
+            <StateChip className="door-row-status" state="working" label="CHECKING" icon="○" />
           ) : row.state === "cant_check" ? (
             <>
-              <StateChip state="warning" label="CAN'T CHECK" />
+              <StateChip className="door-row-status" state="warning" label="CAN'T CHECK" />
               {row.reason ? (
                 <span className="door-count-line door-count-reason">
                   {row.reason}
@@ -181,7 +181,7 @@ function ConnectedRow({ row, ctrl }: { row: SourceRow; ctrl: DoorController }) {
 
           {/* HS-174-07: Confluence shows SIGNED IN AS <email> */}
           {row.provider === "confluence" && row.connectionEmail ? (
-            <StateChip state="success" label={`SIGNED IN AS ${row.connectionEmail.toUpperCase()}`} />
+            <StateChip className="door-row-status" state="success" label={`SIGNED IN AS ${row.connectionEmail.toUpperCase()}`} />
           ) : null}
         </span>
       }

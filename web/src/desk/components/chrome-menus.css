@@ -9,6 +9,11 @@
   background: var(--surface-2);
   box-shadow: var(--desk-window-etch);
 }
+/* Retain the privacy badge, connection state, mic owner and write failures.
+   Only navigational chrome disappears while the owner is settled in. */
+.desk-next[data-settled="true"] .desk-menubar :is(.desk-menu-wrap, .desk-verbbar, .desk-bell, .desk-tools-launch, .desk-clock) {
+  display: none;
+}
 .desk-next .desk-mark {
   display: inline-flex;
   align-items: center;
@@ -501,7 +506,7 @@
 }
 .desk-next .desk-deck-row.is-selected .desk-deck-badge,
 .desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-badge {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--bevel-light-hover);
   color: var(--text-on-accent);
 }
 .desk-next .desk-tool-empty {

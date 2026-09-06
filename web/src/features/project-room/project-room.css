@@ -279,14 +279,14 @@
 .room-ask-container {
   position: sticky;
   bottom: 0;
-  z-index: 1;
+  z-index: var(--desk-z-local);
   background: var(--surface-1, #15171d);
   padding-bottom: 8px;
 }
 
 /* ── moment 4: new needs-you row accent fade ── */
 @keyframes room-needs-you-accent {
-  from { background: rgba(168, 110, 74, 0.08); }
+  from { background: var(--accent-tint-faint); }
   to   { background: transparent; }
 }
 .room-needs-you-new { animation: room-needs-you-accent 1.2s ease-out; }

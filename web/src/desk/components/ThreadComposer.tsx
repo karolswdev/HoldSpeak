@@ -29,6 +29,7 @@ import { useDesk } from "../store";
 import { apiFetch } from "../../lib/api";
 import { KIND_GLYPH } from "../tools";
 import { SurfaceRows, SurfaceRow } from "../surface/Surface";
+import { useThreadComposerDraft } from "../threadComposerDrafts";
 
 // ── ref chip (the attachment) ───────────────────────────────────────
 
@@ -334,7 +335,7 @@ export interface ThreadComposerProps {
   /** The thread id — needed by /compact and /todo verbs (HS-153-05). */
   threadId: string;
   /** Send a turn with text + refs. */
-  onSend: (text: string, refs: Array<{ ref_kind: string; ref_id: string }>) => void;
+  onSend: (text: string, refs: Array<{ ref_kind: string; ref_id: string }>) => void | boolean | Promise<void | boolean>;
   /** Abort the running turn. */
   onStop: () => void;
   /** Keep the latest assistant message. */
@@ -375,9 +376,7 @@ export function ThreadComposer({
   disabled,
 }: ThreadComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [draft, setDraft] = useState("");
-  const [chips, setChips] = useState<RefChip[]>([]);
-  const [sending, setSending] = useState(false);
+  const { draft, setDraft, chips, setChips, sending, setSending } = useThreadComposerDraft(threadId);
 
   // autocomplete state
   const [acOpen, setAcOpen] = useState(false);
@@ -791,10 +790,18 @@ export function ThreadComposer({
       ref_kind: c.ref.kind,
       ref_id: c.ref.id,
     }));
-    setDraft("");
-    setChips([]);
-    onSend(text, refs);
-    setSending(false);
+    try {
+      const accepted = await onSend(text, refs);
+      if (accepted !== false) {
+        setDraft("");
+        setChips([]);
+      }
+    } catch {
+      // Keep the owner's words available after an unconfirmed send.
+    } finally {
+      setSending(false);
+      textareaRef.current?.focus();
+    }
   }, [draft, sending, chips, onSend, executeSlashCommand]);
 
   const handleKeyDown = useCallback(

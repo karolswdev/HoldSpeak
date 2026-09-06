@@ -302,10 +302,6 @@
     var(--ease-quart, cubic-bezier(0.25, 1, 0.5, 1)) both;
 }
 
-.concierge-picker-well .surface-choice-card-shell {
-  cursor: pointer;
-}
-
 .concierge-picker-card {
   display: flex !important;
   align-items: center;

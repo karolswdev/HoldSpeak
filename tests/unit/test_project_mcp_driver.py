@@ -421,6 +421,60 @@ def test_run_steward_poll_reaches_terminal(db: Database) -> None:
 # ────────────────────────────────────────────────────────────────────
 
 
+def test_setup_proposal_tools_test_before_activation_and_resume(db: Database) -> None:
+    from tests.unit.test_project_setup_service import _seed_decision
+    _seed_decision(db, "interview-decision", "Keep the decision rationale", "accepted")
+    error, session = _call("project.setup.start")
+    assert not error
+    sid = session["id"]
+    assert not _call("project.setup.answer", {"session_id": sid, "question_id": "outcome", "payload": {"text": "Decision review"}})[0]
+    error, proposed = _call("project.setup.suggest", {"session_id": sid})
+    assert not error
+    proposal = next(p for p in proposed["proposals"] if p["spec"]["subject"]["kind"] == "decisions")
+    args = {"session_id": sid, "proposal_id": proposal["id"]}
+    assert not _call("project.setup.select_proposal", args)[0]
+    error, tested = _call("project.setup.test_proposal", args)
+    assert not error
+    assert tested["test_state"] == "passed"
+    assert tested["result"]["entity_count"] >= 1
+    assert not _call("project.setup.deselect_proposal", args)[0]
+    assert not _call("project.setup.select_proposal", args)[0]
+    error, finalized = _call("project.setup.finalize", {"session_id": sid, "command_id": "interview-finalize"})
+    assert not error, finalized
+    assert len(finalized["activated_watches"]) == 1
+    assert finalized["refused_proposals"] == []
+    error, replay = _call("project.setup.finalize", {"session_id": sid, "command_id": "interview-finalize"})
+    assert not error
+    assert replay["project_id"] == finalized["project_id"]
+
+
+def test_setup_finalize_refuses_untested_watch_but_allows_blank_project(db: Database) -> None:
+    from tests.unit.test_project_setup_service import _seed_decision
+    _seed_decision(db, "untested-decision", "Keep the rationale", "accepted")
+    error, session = _call("project.setup.start")
+    assert not error
+    sid = session["id"]
+    error, proposed = _call("project.setup.suggest", {"session_id": sid})
+    assert not error
+    proposal = next(p for p in proposed["proposals"] if p["spec"]["subject"]["kind"] == "decisions")
+    assert not _call("project.setup.select_proposal", {"session_id": sid, "proposal_id": proposal["id"]})[0]
+    error, result = _call("project.setup.finalize", {"session_id": sid})
+    assert not error
+    assert result["project_id"]
+    assert result["activated_watches"] == []
+    assert [p["id"] for p in result["refused_proposals"]] == [proposal["id"]]
+
+
+@pytest.mark.parametrize("verb", ["select_proposal", "deselect_proposal", "test_proposal", "clarify_repo_scope"])
+def test_setup_proposal_tools_refuse_unknown_fields_and_nonowner(db: Database, verb: str) -> None:
+    from holdspeak.services.errors import ServiceError
+    name = f"project.setup.{verb}"
+    error, result = _call(name, {"session_id": "unknown", "proposal_id": "unknown", "unreviewed": True})
+    assert error and result.get("code") == "validation_error"
+    with pytest.raises(ServiceError, match="OWNER"):
+        project_family.dispatch(name, {}, Principal(PrincipalKind.AGENT, "unrelated-agent"))
+
+
 def test_setup_start_and_resume(db: Database) -> None:
     """Start creates a session; resume reads it back (durable)."""
     is_error, data = _call("project.setup.start")
@@ -694,12 +748,14 @@ def test_legacy_family_untouched() -> None:
 # ────────────────────────────────────────────────────────────────────
 
 
-def test_project_family_tool_count_is_53() -> None:
+def test_project_family_tool_count_is_57() -> None:
     """The project family ships the expected number of tools."""
     # 17 original + 5 steward + 5 setup + 1 setup.clarify_jira_scope + 4 provider + 3 jira provider + 3 jira discover/search/validate + 7 watch = 45
     # HS-168-02: + connection.list / connection.recheck (45 -> 47).
     # HS-172-06: + project.suggested_sources / add_suggested_source / dismiss_suggested_source (47 -> 50).
-    assert len(project_family.TOOLS) == 53
+    # Reach: + three Confluence operations (50 -> 53).
+    # Interview: + four setup-proposal operations (53 -> 57).
+    assert len(project_family.TOOLS) == 57
 
 
 def test_graduated_watch_states_constant() -> None:

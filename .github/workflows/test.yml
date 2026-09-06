@@ -10,6 +10,21 @@ env:
   UV_SYSTEM_PYTHON: 1
 
 jobs:
+  docs-navigation:
+    name: Documentation Navigation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check public documentation links and headings
+        run: |
+          python -m unittest discover -s tests/unit -p test_docs_navigation.py
+          python scripts/check_docs.py
+
   web-quality:
     name: DeskOS Web Quality
     runs-on: ubuntu-latest

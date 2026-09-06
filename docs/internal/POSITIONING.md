@@ -177,6 +177,9 @@ left column is the name; do not alternate with the synonyms.
 | agents (tailored personas you author) | "bots", "assistants" |
 | coders (live coding sessions awaiting you) | "agents" for this concept, "companions" (the word is retired: an agent is a persona you author; a coder is a live Claude or Codex session) |
 | the iPad app | "the companion", "the companion app" |
+| Interview (repeatable Thread mode) | "the onboarding wizard" for the entire capability; distinguish the Thought Workbench Interview pane |
+| Places (Floor environment picker) | "desktop themes" for this surface |
+| Settle in (temporary quiet Desk view) | "saved focus layout" |
 | Threads (multi-turn desk conversations) | "chat", "chat app", "PersonaChat" |
 | Automations (the watch/reaction surface) | "event triggers", "webhooks", "watches" (except the Project-scoped Watches of Project Rooms) |
 | Watches (Project-scoped) | "event triggers", "monitors", "subscriptions" |
@@ -213,6 +216,11 @@ left column is the name; do not alternate with the synonyms.
 | the weekly brief (the full-week summary in Rhythm) | "the week report", "the weekly digest", "the week-in-review" |
 
 ## Voice rules (the editing standard for every user-facing doc)
+
+The controlled-English policy is [DOCS_STYLE.md](DOCS_STYLE.md), using
+ASD-STE100 Issue 9 as its language reference. The rules below continue to
+govern product voice and names. [DOCS_TERMINOLOGY.md](DOCS_TERMINOLOGY.md)
+records the domain terms used with that policy.
 
 - **The humanizer standard applies** (the vendored skill): no AI-vocab
   (delve, seamless, leverage, robust, comprehensive, supercharge…), no

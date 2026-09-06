@@ -5728,6 +5728,16 @@
       ]
     },
     {
+      "path": "/api/threads/{thread_id}/interview",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.threads",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/threads/{thread_id}/keep",
       "methods": [
         "POST"

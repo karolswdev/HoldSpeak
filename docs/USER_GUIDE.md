@@ -1,31 +1,29 @@
 # HoldSpeak User Guide
 
-Start with one useful loop: open HoldSpeak, **Dictate one sentence**, edit it,
-then **Copy** or **Keep as Note**. The first completion furnishes the Desk
-automatically with Inbox, Personal, Work, Meetings, Decisions, and Reference;
-a Start here note; and editable prompts in **Everyday context**. Its shipped
-default is unused: explicitly attach it for one Thought, or explicitly make an
-attached set the default for future local Thoughts. No extra setup is required
-for this first value.
+Use this guide as a reference for daily work on the Desk.
+For installation and first capture, read [Getting Started](GETTING_STARTED.md).
 
-HoldSpeak is one local copilot with two modes, and this guide is the day-to-day
-map of both:
+HoldSpeak connects voice typing, Meetings, saved records, Threads, and supported automation.
+The [documentation index](README.md) groups the guides by task.
+These documents describe `main`, which can differ from your installed release.
 
-- **Dictate:** hold a hotkey, speak, and insert useful text into the active app. With the dictation pipeline on, HoldSpeak uses project context and recent Claude/Codex state to rewrite rough speech into better prompts, and the dictation journal records every run so corrections teach it.
-- **Meet:** record conversations (or import recordings and transcripts), transcribe them, and extract topics, actions, summaries, and reviewable artifacts, with meeting aftercare showing what is still open when it ends.
-
-HoldSpeak is private by default. Audio capture, transcription, project context, and session metadata are stored locally unless you explicitly configure a cloud or OpenAI-compatible endpoint.
+Configured models, connectors, remote clients, and outbound actions have separate data boundaries.
+See [Security & Privacy](SECURITY.md) for the full contract.
+The default Control mode is **YOLO**. Read [Control modes](AUTHORITY.md) before configuring external effects.
 
 ## Start Here
 
-Use these guides when you are ready for more than the first sentence:
-
-| Goal | Guide |
+| Task | Guide |
 | --- | --- |
-| Install HoldSpeak and take the first-sentence loop | [Getting Started](GETTING_STARTED.md) |
-| Configure the project-aware dictation pipeline | [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md) |
-| Record and review meetings | [Meeting Mode Guide](MEETING_MODE_GUIDE.md) |
-| Configure local/LAN dictation models | `/docs/dictation-runtime` in the local web UI |
+| Install and capture a sentence | [Getting Started](GETTING_STARTED.md) |
+| Describe goals and receive suggestions | [Interview](INTERVIEW.md) |
+| Prepare a decision review or manual agent brief | [Architecture work recipes](ARCHITECTURE_WORK.md) |
+| Choose an automation path | [Automation](AUTOMATION.md) |
+| Configure model engines | [Models](MODELS.md) |
+| Record or review a meeting | [Meeting mode](MEETING_MODE_GUIDE.md) |
+| Configure coding dictation | [Dictation pipeline](DICTATION_PIPELINE_GUIDE.md) |
+| Use Desk windows and objects | [The Desk](WEB_DESK.md) |
+| Select an environment | [Places](ENVIRONMENTS.md) |
 
 ## Product Map
 
@@ -40,11 +38,16 @@ Use these guides when you are ready for more than the first sentence:
 | Meeting intelligence | Produces transcript, topics, summaries, actions, artifacts; **Run intelligence** on any meeting that never ran | Meetings |
 | iPad app | Drives both modes from another device over the hub's HTTP API: dictate into the desk, read a meeting back with its artifacts and sources, approve a proposal, browse the archive | [Companions](#companions) |
 | AIPI-Lite companion | Portable ESPHome device for meeting controls, status, and spoken replies to waiting Claude/Codex sessions | [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md), `/companion` |
-| Threads | Multi-turn streamed conversations grounded on desk material with `@`-refs, receipts, and search | The Desk, **Continue in thread** on any object |
+| Threads | Saved conversations with sources, model replies, and applicable tools | **Desk > New Thread** or **Continue in thread** on a supported object |
+| Interview | Repeatable sections, saved context, and contextual suggestions | The **Interview** Thread mode |
+| Places | Floor environments, favorites, and Settle in | The dock or **Go > Change places** |
 | Connections | See each external tool's readiness (GitHub, Jira, Calendar, Models), run Recheck, and follow the recovery command when a tool is not connected | Settings, Connections |
 | Models | The Concierge detects engines, proposes one assignment set, and applies with **Use these**; choose **Adjust** for individual capability assignments | Settings, Models |
 
 ## Develop a thought
+
+The Interview pane described here refines one Note.
+The separate [Interview Thread mode](INTERVIEW.md) develops working context across repeatable sections.
 
 Keep a rough sentence as a Note, then choose **Develop this thought**. HoldSpeak
 preserves the original bytes and opens a dedicated Thought Workbench. Its Note
@@ -112,27 +115,9 @@ or remove the selection explicitly.
 
 ## Install And Start
 
-Install from this checkout:
-
-```bash
-uv pip install -e .
-```
-
-If first capture needs repair, run diagnostics:
-
-```bash
-holdspeak doctor
-```
-
-Start the local web runtime:
-
-```bash
-holdspeak
-```
-
-By default, the web server binds to loopback only (`127.0.0.1`). The browser
-opens on the first-sentence surface before the broader Desk, meeting, and
-advanced dictation controls.
+Follow [Getting Started](GETTING_STARTED.md) for platform dependencies, environment setup, and the first capture.
+Start `holdspeak` from the installed environment.
+Open the URL printed by the runtime.
 
 ## Voice Typing
 
@@ -356,11 +341,13 @@ Use `openai_compatible` when the model is served somewhere else:
 - LiteLLM
 - OpenAI or another hosted compatible API
 
-The one path: add the endpoint once under **Settings > Models > Model Library**,
-then choose it for **Writing & dictation** under **Assignments**.
+The one path: add the endpoint once under **Settings > Models**,
+then select it for **Writing & dictation** in the Concierge set.
+Select **Use these** to apply the set.
 Assigning a model is itself the "run it there" instruction, so the
-dictation backend follows. Set
-or replace its key on the model profile in Model Library; the environment variable
+dictation backend follows.
+For keyed providers, use the owner Model Library API described in [Models](MODELS.md).
+The environment variable
 `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless fallback.
 
 The old `dictation.runtime.openai_compatible_*` fields no longer configure
@@ -1031,7 +1018,7 @@ its refreshed entry. The MCP twins are `connection.list` and
 
 ## New Project
 
-Open **New Project** from the Door. The screen has three parts: the
+Select **Desk > New Project**. The screen has three parts: the
 outcome line, the **SOURCES** section, and the footer.
 
 ![New Project with nothing typed and both sources unpicked](assets/project-rooms/new-project-empty.png)
@@ -1226,6 +1213,7 @@ Each module is a row with its name, its state tokens, and **Open**:
 | **CONNECTIONS** | `N CONNECTED` (absent at zero) |
 | **VOICE** | `LIVE` + the current target name |
 | **MEETINGS** | `INTELLIGENCE ON` or `INTELLIGENCE OFF` |
+| **WALLPAPER** | The selected place |
 | **RHYTHM** | `EVERY 15 MIN . NEXT hh:mm` when the sweep runs; `NO LOOPS` at zero |
 | **SOUNDS & PRESENCE** | `ON` or `OFF` |
 | **SYSTEM** | `THIS DEVICE` + `MESH ON` or `MESH OFF` |
@@ -1648,176 +1636,176 @@ sidecar and the dev sidecar exist, doctor warns: "BOTH WORLDS EXIST."
 
 ## Threads
 
-A Thread is a multi-turn conversation that lives on the Desk as a first-class
-object. Unlike the old one-shot Ask loop, a Thread persists in the hub's
-SQLite, streams token by token, and can be grounded on desk material through
-`@`-references.
+A Thread is a saved conversation on the hub.
+It contains your sent messages, model replies, source references, and tool results.
+Use a Thread when you want to continue work across multiple turns.
 
 ### Start a Thread
 
-Open a new Thread from the Desk menu or choose **Continue in thread** on any
-desk object (a meeting, a note, a person, a decision). The object becomes a
-frozen reference: its content at the moment you ask is what the model sees.
+1. Select **Desk > New Thread**.
+2. Select a mode if the task requires one.
+3. Enter your request.
+4. Select **Send**.
+
+You can also select **Continue in thread** on a supported Desk object.
+That object becomes a source reference for the conversation.
+The hub resolves the referenced content for the turn.
 
 ### The composer
 
-The Thread composer sits at the foot of the pullout. Type or tap the mic
-(click-to-toggle, never hold-to-talk). `@` opens the reference picker:
-meetings, notes, artifacts, decisions, and people by title. Each picked
-reference appears as a chip above the field. Enter sends, Shift+Enter inserts
-a newline, Esc stops a running turn. The Send button flips to Stop while the
-model is streaming.
+Type your request or use the click-to-toggle microphone control.
+Use `@` to attach supported records such as Meetings, Notes, Artifacts, and decisions.
+Each attachment appears as a chip above the field.
+
+**Enter** sends the request. **Shift+Enter** inserts a new line.
+The Send control becomes Stop during generation.
+Your prompt appears immediately while the request starts.
+A failed send retains the text for correction or retry.
+
+Chair/Floor changes preserve the open Thread and its current draft.
+An unsent composer draft has no durable-save guarantee across a reload.
+Sent messages are separate from that temporary draft state.
 
 ### Streaming, receipts, and egress
 
-Each assistant turn streams over the WebSocket bus. One egress badge and one
-receipt appear per turn. The badge names where the turn ran (this device, a
-private endpoint, or an external service). A turn that errors shows its
-failure in flow, never overlapping the UI. A turn whose stream stalls
-(no update for 10 s) renders as CRASHED with a Retry verb.
+Replies stream into the conversation.
+The turn's boundary and Receipt identify where it ran and the reported result.
+A failure appears with the affected turn.
+
+Routine tool calls remain collapsed under **Actions**, including before the final answer arrives.
+Open **Actions** when you want to inspect them.
+An explicit choice to open the details remains in effect as the turn updates.
+Approval requests, tool questions, failures, and denials remain visible outside the routine group.
 
 ### Branch, keep, and search
 
-Edit a past user message or regenerate an assistant reply to create a branch.
-The pullout shows siblings as `< n/m >`. Keep any reply as a Note or Artifact
-with its provenance recorded. Desk search federates Threads alongside meetings,
-notes, and decisions through `memory.search` (kind `thread`).
+Editing a past user message or regenerating a reply creates a conversation branch.
+The branch controls let you inspect sibling branches.
+Keep a useful reply as a separate Note or Artifact with its provenance.
+Desk search includes saved Threads.
 
 ### People boundary
 
-When a Thread references a People record, those parts are marked sensitive.
-If the thread's model assignment resolves to a cloud endpoint, the assembler
-redacts sensitive content before it reaches the provider.
+People source parts have a sensitive classification.
+The context assembler redacts those parts before a cloud model turn.
+The People tools expose only the permitted shared-intent data for the authenticated caller.
+See [People security](PEOPLE_SECURITY.md) for the complete confidentiality boundary.
+
+In Interview's **People** section, use **Open People** for relationship work.
+That section omits the Thread composer.
 
 ### The Thread has hands
 
-During a turn the model may call the desk's own tools. Each call
-renders as a tool row: name, class glyph, arguments head, state.
+A model can request tools exposed by the current mode.
+The Thread tool gate checks the tool class, Control mode, and any recorded tool policy.
+The called service also applies its own operation rules.
 
-In yolo mode every call executes immediately and the row shows DONE
-with a receipt short-id. In safe mode, effect tools are held. Three
-verbs appear:
+Without an explicit per-tool policy:
 
-- **Allow once.** Executes this call. No policy row written.
-- **Allow always.** Writes a per-thread policy row so future calls
-  to the same tool auto-admit. No "Never" is offered.
-- **Deny.** Refuses this call only. No row written.
+| Control mode | Tool admission |
+| --- | --- |
+| **Secure** | Evidence reads proceed. Candidate builders and effect proposals wait for a decision. |
+| **Normal** | Evidence reads and candidate builders proceed. Effect proposals wait for a decision. |
+| **YOLO** | Classified, offered tools can proceed through the Thread gate. Service-level authority checks still apply. |
 
-A tool may ask a question mid-call (elicitation). The row renders a
-JSON-Schema form: string, number, boolean, and enum fields. Submit
-sends the answer; Decline refuses.
+A held call offers these controls:
 
-Results from `people.*` tools carry a PEOPLE badge. These parts are
-marked sensitive and never leave the machine on a cloud turn.
+- **Allow once** admits this call.
+- **Allow always** records a policy for this tool in this Thread.
+- **Deny** refuses this call.
 
-Every receipted row carries a collapsed **RAW** fold with the full
-JSON payload. A TRUNCATED tag appears when the result exceeded the
-32 KB byte cap.
+A recorded per-tool policy takes precedence at the Thread gate.
+It does not bypass destination, credential, or permission checks in the service.
+See [Control modes](AUTHORITY.md) for central operation policy.
 
-`thread.set_status` writes the status line shown under the thread
-title in the pullout head.
+A tool can also request structured input during a call.
+Submit the requested values or decline the question.
+The tool result includes execution state and available Receipt information.
+The collapsed raw-result view exposes the returned payload, subject to the tool result size limit.
 
 ### Modes
 
-Bind a mode to steer the thread's tool palette and system prompt. Four
-built-in modes ship as seeds:
+Modes select a system instruction and a tool set for the Thread.
+The built-in modes include:
 
-| Mode | Tools |
-|---|---|
-| **Desk** | Evidence reads, candidate builder (no effects) |
-| **Chase** | Desk + People effects, follow-through, `door.add_item` |
-| **Draft** | No tools (writing model only) |
-| **Plan** | `thought.*` reads, `door.get`, `memory.search`, `decision_record.*` reads |
+| Mode | Purpose |
+| --- | --- |
+| **Desk** | Read Desk evidence and prepare candidates. |
+| **Chase** | Use broader Desk and People operations for follow-through. |
+| **Draft** | Write without tools. |
+| **Plan** | Read Thoughts, decisions, and relevant Desk context. |
+| **Project** | Use the Project-oriented mode and its existing MCP path. |
+| **Interview** | Revisit sections, save working context, and develop suggestions. |
 
-Mode tabs render above the composer. Click a tab to bind; click the
-active tab to unbind. A mode change applies from the next turn.
+Select a mode above the composer.
+A mode change applies to the next turn.
+Selecting the active mode again removes that binding.
+For Interview's sections, suggestion controls, and limits, read [Interview](INTERVIEW.md).
 
 ### Saved prompts
 
-A prompt is a Note tagged `prompt`. `/prompt <name>` inserts the note
-body at the caret. Seed prompts ship with the desk (Weekly update,
-1:1 prep).
+A saved prompt is a Note tagged `prompt`.
+Use `/prompt <name>` to insert its text into the composer.
+Review the inserted text before you send it.
 
 ### Guardrails
 
-A guardrail is a Note tagged `guardrail` with a YAML front matter
-block (instruction, trigger tools, N messages). Two seeds ship:
-`effect-guard` (flags an effect touching a person's ledger without a
-named source) and `egress-guard` (flags cloud egress of a `people.*`
-read).
-
-Guardrails are enabled per mode. The guardrail assignment runs once
-per tool-requesting pass, before the per-call admission. It returns
-violations and warnings rendered as a row above the pending-tool
-box. It never auto-denies; in safe mode a violation flips the decision
-box default to Deny. `/guardrail <name>` toggles a guardrail on the
-thread's mode.
+A guardrail is a Note tagged `guardrail` with configuration in its front matter.
+Guardrails can review tool-requesting passes and display violations or warnings.
+They do not automatically deny every flagged request.
+The normal tool and operation gates remain responsible for execution authority.
 
 ### Annotations
 
-Select text in any assistant part to open an in-flow popover (comment
-field with mic). Save adds an annotation chip above the composer.
-Chips are draft parts on a pending user message; Send promotes them
-with the next turn as a prefix ("The owner annotated: ..."). Chips
-survive a reload.
+Select text in an assistant reply to add a comment.
+Saved annotation chips become part of the next message when you send it.
+These saved annotations can survive reload independently of the unsent text draft.
 
 ### Compaction
 
-`/compact` summarises earlier turns into a cut marker. The assembler
-includes only the summary and what follows. A cut marker row renders
-in the pullout with a RAW fold showing the summary text. Earlier
-messages fold behind a toggle.
+Use `/compact` to summarize earlier turns into a cut marker.
+Later model context includes that summary and subsequent messages.
+Earlier messages remain behind the conversation's history control.
+Review the summary when the omitted detail matters to your task.
 
 ### Todo
 
-`/todo <text>` writes an action item to the Door with
-`source_type='thread'`. The Door card shows a "from a thread" chip
-that opens the thread pullout.
+Use `/todo <text>` to create an action item from the Thread.
+The item retains a source reference to the conversation.
+An action item does not configure an automation.
 
 ### Slash commands
 
-`/` at the start of a line opens the verb palette. Mid-line `/` types
-a literal slash.
+Enter `/` at the start of a line to open the command palette.
 
 | Command | Action |
-|---|---|
-| `/mode <name>` | Bind or switch the thread's mode |
-| `/prompt <name>` | Insert a saved prompt at the caret |
-| `/tools` | List the mode's tool palette |
+| --- | --- |
+| `/mode <name>` | Select a Thread mode |
+| `/prompt <name>` | Insert a saved prompt |
+| `/tools` | List the mode's tools |
 | `/guardrail <name>` | Toggle a guardrail on the mode |
-| `/todo <text>` | Write an action item to the Door |
-| `/compact` | Summarise earlier turns behind a cut |
+| `/todo <text>` | Create an action item |
+| `/compact` | Summarize earlier turns |
 | `/keep` | Keep the last reply as a Note |
 | `/fork` | Branch the conversation |
-| `/stop` | Stop a running turn |
-| `/new` | Start a new thread |
+| `/stop` | Stop generation |
+| `/new` | Create a Thread |
 
 ### The Call
 
-Start a call on any thread to hear every reply and talk back hands-free.
-The call chip in the thread head shows four states: OFF, LISTENING,
-THINKING, SPEAKING. Click the chip in any non-OFF state to stop (TTS
-stops, mic closes, call ends). A fresh thread is always OFF.
+Call mode combines spoken replies with microphone input for the Thread.
+A new Thread starts with Call off.
+The Call control reports listening, thinking, or speaking while active.
+Select the active control to stop the call.
 
-Every assistant turn shows a speaker glyph. Click the glyph to replay
-the turn through the voice. In call mode, speech starts at sentence
-boundaries while the reply is still streaming (auto-speak). Barge-in
-(speak or click) stops TTS immediately and returns to LISTENING.
+The reply's speaker control can replay an answer.
+Browser speech synthesis is the default voice path.
+The optional `tts` extra supplies server voices through kokoro-onnx.
+Voice availability depends on the configured path and runtime.
 
-**Default voice.** The browser's Web Speech API (`speechSynthesis`):
-zero dependencies, zero egress, instant.
-
-**Server voice.** Install the optional extra for kokoro-onnx voices:
-
-```
-pip install holdspeak[tts]
-```
-
-The `phonemizer` and `espeak-ng` dependencies are GPL-3.0. When
-enabled, Settings shows the server voice block. When absent, the
-route answers 404 and the client stays on the browser voice. If the
-server voice's first chunk exceeds 2 s, that utterance falls back to
-the browser voice (R4).
+The server voice dependencies include GPL-3.0 components.
+See the package and Settings voice information when you enable that extra.
+Call hardware and voice quality require validation on the actual device.
 
 ## Schedule A Recording
 
@@ -1829,7 +1817,7 @@ path a manual recording uses; no browser needs to be open.
 
 Use any of four paths:
 
-1. **The Chair Door.** In **Upcoming**, choose **Schedule recording**. The
+1. **The arrival.** Select **Schedule** in the capture bar. The
    in-world schedule window lets you name the recording, choose **Once** or
    **Recurring**, and set a duration (default 60 minutes).
 2. **From a calendar event.** Tap **Record this** on any event in the
@@ -1876,8 +1864,8 @@ Local-first behavior:
 Cloud or homelab behavior:
 
 - If you set `meeting.intel_provider` to `cloud` (or `auto`, which can fall back to it), meeting text may be sent to the model endpoint you picked for analysis.
-- The one path: add the endpoint once under **Settings > Models > Model Library**,
-  then choose it for **Meetings** under **Assignments**. The
+- The one path: add the endpoint once under **Settings > Models**,
+  then select it for **Meetings** in the Concierge set and apply **Use these**. The
   `intel_cloud_*` fields are legacy migration inputs and do not configure runs.
 - Use `holdspeak doctor` from the same shell environment to verify endpoint, model, TLS, DNS, and authentication; its placement line names the model each pipeline resolves to.
 
@@ -2327,7 +2315,7 @@ Sensitive files:
 
 - Do not place secrets in `.hs/`.
 - Use `.hs/ignore` to document paths and topics that should not be injected.
-- Set model-profile keys in **Model Library**; use environment variables
+- Set model-profile keys in the configured credential controls; use environment variables
   when provisioning a headless hub.
 
 ## Troubleshooting
@@ -2364,7 +2352,9 @@ Common issues:
 ## See also
 
 - [README](../README.md): install, platform notes, configuration reference.
-- [Getting Started](GETTING_STARTED.md): first-run setup and basic voice typing.
+- [Getting Started](GETTING_STARTED.md): first capture and installation.
+- [Interview](INTERVIEW.md): saved context, suggestions, and manual drafts.
+- [Automation](AUTOMATION.md): triggers, tools, and execution limits.
 - [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md): dictation pipeline, project context, output-target override, OpenAI-compatible endpoints, and automation hooks.
 - [Dictation runtime setup](../web/src/pages/cores/RuntimeDocsCore.tsx): source for the local Web runtime setup page.
 - [Meeting Mode Guide](MEETING_MODE_GUIDE.md): meeting-specific setup and troubleshooting.

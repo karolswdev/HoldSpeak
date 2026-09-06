@@ -1,6 +1,6 @@
 import "./session-pullout.css";
 import { Button } from "../../components/signal/Signal";
-import { StringGadget, PadGadget } from "../surface/gadgets";
+import { StringGadget, PadGadget } from "../surface";
 import { MicButton } from "./MicButton";
 
 interface DeskComposerProps {

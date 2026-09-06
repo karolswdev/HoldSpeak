@@ -9,6 +9,7 @@ import { Chair } from "./Chair";
 import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
 import { openSurface, openSurfaceOr, openCoderSession } from "../shell";
+import { reportWriteFailure, clearWriteFailure } from "../hooks/useWriteReceipt";
 import { apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
@@ -382,7 +383,10 @@ function Arrival() {
     try {
       const data = await apiFetch<MondayBrief>("/api/brief/generate", { method: "POST" });
       setBrief(data);
-    } catch { /* stays */ }
+      clearWriteFailure();
+    } catch (error) {
+      reportWriteFailure("Generate brief", error, () => void generateBrief());
+    }
     finally { setGenerating(false); }
   };
 
@@ -460,7 +464,10 @@ function Arrival() {
         else (updated as Record<string, string>)[itemId] = next;
         return { ...prev, shelf: updated };
       });
-    } catch { /* row stays */ }
+      clearWriteFailure();
+    } catch (error) {
+      reportWriteFailure(state === "acknowledged" ? "Acknowledge" : "Defer", error, () => void doBriefShelf(itemId, state));
+    }
     finally { setBusyBriefId(null); }
   };
 
@@ -477,7 +484,10 @@ function Arrival() {
       );
       setIntelReceipt({ meetingId, host: result.host || "THIS DEVICE" });
       void useDesk.getState().refresh();
-    } catch { /* receipt stays */ }
+      clearWriteFailure();
+    } catch (error) {
+      reportWriteFailure("Run intelligence", error, () => void runIntelligence(meetingId));
+    }
     finally { setRunningIntel(null); }
   };
 
@@ -866,7 +876,10 @@ function NeedsYouRowVerbs({
         );
         setDone(true);
         onProposalConfirm?.(item.proposalId!);
-      } catch { /* row stays */ }
+        clearWriteFailure();
+      } catch (error) {
+        reportWriteFailure("Confirm", error, () => void confirmProposal());
+      }
       finally { setBusy(false); }
     };
     if (done) return null;
@@ -912,7 +925,10 @@ function NeedsYouRowVerbs({
       try {
         await apiFetch(cmd.endpoint, { method: "POST", json: cmd.body });
         setDone(true);
-      } catch { /* receipt stays */ }
+        clearWriteFailure();
+      } catch (error) {
+        reportWriteFailure(labelFor(firstVerb), error, () => void fireVerb());
+      }
       finally { setBusy(false); }
     };
 
@@ -1351,7 +1367,7 @@ function CalendarMeetingsSection({
                   ) : null}
                   {unlinkRefusal ? (
                     <span data-testid="arrival-unlink-refused">
-                      <StateChip state="failure" label={`CAN'T UNLINK \u00b7 ${unlinkRefusal}`} />
+                      <StateChip state="failure" label="CAN'T UNLINK" />{" "}<span className="surface-token" data-chip="">{unlinkRefusal}</span>
                     </span>
                   ) : null}
                   {ev.source_label ? (
@@ -1372,7 +1388,7 @@ function CalendarMeetingsSection({
                   ) : null}
                   {cancelRefusal ? (
                     <span data-testid="arrival-cancel-refused">
-                      <StateChip state="failure" label={`CAN'T CANCEL \u00b7 ${cancelRefusal}`} />
+                      <StateChip state="failure" label="CAN'T CANCEL" />{" "}<span className="surface-token" data-chip="">{cancelRefusal}</span>
                     </span>
                   ) : null}
                 </>
@@ -1434,7 +1450,7 @@ function OrphanArmedRow({
       ) : null}
       {refusal ? (
         <span data-testid="arrival-cancel-refused">
-          <StateChip state="failure" label={`CAN'T CANCEL \u00b7 ${refusal}`} />
+          <StateChip state="failure" label="CAN'T CANCEL" />{" "}<span className="surface-token" data-chip="">{refusal}</span>
         </span>
       ) : null}
       <span className="arrival-orphan-spacer" />

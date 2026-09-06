@@ -1,184 +1,140 @@
 # The Desk
 
-The Chair Door is HoldSpeak's post-first-value arrival at `/`. Its board and
-upcoming rail put the next work first. The **Floor** is the Desk's spatial
-object world, reached through the existing **Floor** control. There you work
-with Meetings, Notes, Knowledge, Agents, Sequences, Workflows, Artifacts, and
-live Coder sessions. Zones provide placement for durable work. The Floor
-renders on a WebGL stage; every product surface (Dictation, Meetings, Settings,
-Workbench, and the rest) opens as a window, so nothing navigates away.
+The Desk holds your records and opens the tools you use to work with them.
+Use the arrival for current work and the Floor for spatial organization.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/desk.png" alt="The HoldSpeak Desk: pixel-art objects floating on a warm dark stage; a Zone tray holding a filed Meeting; Coder session avatars on a right-edge rail; a record orb bottom-center; the compact HoldSpeak menu and an egress badge top-left; Create controls top-right." width="760">
-</p>
+## Start a task
 
-It serves at `/`. On a fresh install the first-run guard sends you to the
-`/welcome` wizard instead, and a hard-blocked setup goes to `/setup`; after
-first value, everyone else arrives at the Chair Door. (`/desk`, the old
-address, redirects home.)
+1. Open the URL printed by `holdspeak`.
+2. Select an item on the arrival, or select **Floor**.
+3. Open the **Desk** menu to create a record.
+4. Open the **Go** menu to select a tool.
 
-## What you see
+On a new installation, the Desk first offers **Dictate one sentence**.
+See [Getting Started](GETTING_STARTED.md) for that first capture.
 
-Desk items use distinct visual forms:
+## The arrival and Floor
 
-- **meetings** are cassette tapes,
-- **notes** are notepads,
-- **Knowledge** collections are crystals,
-- **Agents** and **Coder sessions** are characters,
-- **Sequences** and **Workflows** are cartridges,
-- **artifacts** are typed pages, each carrying its lineage.
+The **arrival** is the Desk's home screen.
+It shows items that need you, unfinished Thoughts, a brief, and recent Meetings when those records exist.
+Its capture bar provides **Talk**, **Develop a thought**, and **Record meeting**.
+See [The Arrival](USER_GUIDE.md#the-arrival) for the individual controls.
 
-A freshly created object arrives at the center of the stage with a short
-glow and a NEW mark, then settles.
+The **Floor** shows Meetings, Notes, Artifacts, Projects, and other records as objects.
+You can open these objects or file durable work in Zones.
+Changing between Chair and Floor preserves an open Thread and its current draft.
 
-## The chrome
+## Create and open work
 
-Primary controls stay compact:
+Use the **Desk** menu for **New Note**, **New Decision**, **New Thread**, and other creation controls.
+**New Project** opens the Project setup surface.
+The Floor's context menu also exposes creation and launch controls.
 
-- **Top left**: the HoldSpeak mark opens the menu; each room (Dictation,
-  Meetings, Studio, Settings) opens as a window in place. Beside it, the
-  hub dot (green when connected) and the current data-boundary badge.
-- **Top right**: **Dictate**, **Record**, and one **Create** menu for Note,
-  Zone, Knowledge, Agent, and Workflow.
-- **Tool shelf**: advanced Desk tools and Runs on destinations.
-- **Right edge**: the Agent rail.
+Select an object to work with it.
+Use the **Object** menu for applicable operations such as **Open**, **Rename**, **Move to Zone**, or **Continue in thread**.
+An unavailable operation shows its reason.
+A live Coder session can have different controls from a saved Note.
 
-## Windows, the dock, and tiles
+## File and arrange objects
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/desk-windows.png" alt="Two windows on the Desk: the Dictation cockpit and the Meetings memory, cascaded over floating meeting cassettes and workflow cartridges, with dock chips bottom left." width="760">
-</p>
+Drag an object to change its position.
+Use **Move to Zone** or the supported drag target to file an object in a Zone.
+Open a Zone to work with its contents.
 
-Every surface is a window with one chrome: drag it by its head, resize it
-by the corner grip, minimize it to the dock, maximize it to the full
-stage, or close it. Releasing a drag at a screen edge snaps a half or
-quarter tile. The dock (bottom left) lists every open window; a dimmed
-chip is parked and a tap brings it back; the ⟲ chip resets the layout.
-`Ctrl+\`` cycles windows in most-recently-used order. Your arrangement
-persists on this device. On phones a window presents as a bottom sheet.
+Object positions are view preferences on this device.
+The underlying records remain on the hub.
+Use **Arrange desk** when you want the automatic arrangement.
 
-Old page addresses (`/dictation`, `/history`, `/settings`, ...) are deep
-links: each lands on the Desk with the matching window open, at the same
-scope the link named.
+## Use windows
 
-## Create, in place
+Speak, Meetings, Settings, and other tools open in Desk windows.
+You can drag a window by its title bar or resize it with its handle.
+Minimize it to the dock when you want to keep it available.
+Select its dock entry to return to it.
 
-Choose **Create**, then select Note, Zone, Knowledge, Agent, or Workflow.
-The new item opens in context. Agent and Workflow editors expose their Runs
-on destination and Knowledge only when those settings are relevant.
+The **Window** menu provides focus, snap, and maximize controls with their shortcuts.
+On phones, windows use sheets fitted to the available space.
+Saved window arrangement and saved product records are separate kinds of state.
 
-## Open, in place
+Existing addresses open the corresponding Desk surface:
 
-Select an object to open its contextual panel. A Meeting shows
-its summary, action items, and artifacts; tapping an artifact opens it in
-the same panel. An Artifact's lineage names its source and capability.
-Focused actions such as **Review meeting** and **Edit Workflow** enter the
-relevant workroom and retain the Desk subject for return.
+| Address | Surface |
+| --- | --- |
+| `/dictation` | Speak |
+| `/history` | Meetings |
+| `/studio` | Studio |
+| `/settings` | Settings |
+| `/setup` | Setup diagnostics and recovery |
 
-## File and dive
+## Record a meeting
 
-A Zone is a findable placement for Desk items:
+Use **Record meeting** or the Floor recorder control to start hub meeting capture.
+This uses the hub recorder. It is separate from microphone input in a browser text field.
+The recorder state also reflects a meeting started from another supported surface.
 
-- **File**: drag an object onto a zone (the tray lifts as you hover), or
-  use **Move to…** in its panel. Filing again from the panel un-files it.
-- **Dive**: click a zone and the camera moves in; only its members remain
-  on stage. **All** surfaces back out.
-- **Rename**: click a zone's title and type. A new zone arrives with its
-  name field already focused.
+Use the visible stop control to end recording.
+Then open the Meeting to inspect its transcript and results.
+See [Meeting mode](MEETING_MODE_GUIDE.md) for microphone selection, system audio, and import.
 
-## Record from the orb
+## Use a Thread
 
-Press the orb and the hub starts recording a meeting (the same recorder
-the Live meeting window drives; never the browser's microphone). While
-recording, the orb pulses with the elapsed time; a meeting started
-anywhere else shows here too, marked "live elsewhere", and the orb can
-only stop it. When the recording ends, the finished meeting lands on the
-stage as an object.
+1. Select **Desk > New Thread**.
+2. Enter your request in the composer.
+3. Attach relevant records with `@` if required.
+4. Select **Send**.
 
-## Converse from the rail
+Your prompt appears while the request starts.
+Routine tool calls remain collapsed under **Actions**, including while the reply streams.
+Tool questions, approval requests, and failures remain visible.
+The Thread stores sent messages on the hub.
+Keep a reply separately when you want a Note or Artifact outside the conversation.
 
-The right-edge rail holds Agents, each with its Runs on status. Select one
-to open its **conversation**, a docked thread rather than a one-shot prompt.
-Turns accumulate, the
-thread survives a reload (it lives on this device; Agents sync, threads
-stay yours), and **Clear** empties it when you want a fresh start.
+Use **Interview** mode to develop repeatable working context.
+See [Interview](INTERVIEW.md) for its sections, saved facts, and suggestions.
+See [Threads](USER_GUIDE.md#threads) for all conversation controls.
 
-Each reply names where that turn ran. **Keep as Artifact** stores the Result
-as an Artifact on the Desk with lineage naming the Agent. Nothing is
-stored until you save it.
+## Ask with selected context
 
-Below the Agents, the rail lists available models from each Runs on
-destination. Select one to open a conversation pinned to that model. If the
-model is unavailable, the run fails before execution and lists available
-alternatives.
+Select the relevant Floor objects and use **Ask AI**.
+The supported selection tools include the selection rectangle and modifier-click selection.
+An Ask can use selected records as source context.
 
-## Ground this ask
+Inspect the result and its sources before you keep it.
+A kept result becomes an Artifact with its lineage.
+The Ask result and the Thread conversation have different persistence rules.
+Keeping an Artifact is separate from saving Thread messages.
 
-Both composers (the Ask AI panel and any conversation) carry an attach
-control: **Ground this ask**. Open it and pick meetings; each one
-expands to its digest, its transcript, and every artifact it produced,
-each independently toggleable. A gauge prices the selection against the
-model's window from the records' real sizes, and a selection past the
-window refuses before anything runs.
+## Use speech input
 
-The run sends references, not copies: the hub reads the selected records
-from its own store and answers from them. A kept answer names the
-meetings and artifacts that grounded it, and an unknown reference
-refuses with its id instead of silently guessing. In a conversation the
-selection sticks, so every following turn stays grounded on the same
-records.
+Microphone controls differ by surface.
+The Thread composer uses click-to-toggle microphone input.
+Voice typing uses the configured global hold-to-talk hotkey.
+Follow the control shown on the current surface.
 
-## Rope things together and Ask AI
+Browser microphone input sends audio to the configured hub for transcription.
+A Coder reply can then deliver the resulting text to a live session under the applicable authority.
+See [Coder steering](USER_GUIDE.md#steer-a-session-from-the-desk) before you deliver session input.
 
-Contextual Ask needs no saved Agent. Drag on the
-empty desk and a rope follows your pointer; everything inside it is
-selected (shift-click or cmd-click ropes objects one at a time). A bar
-rises with the count and one action: **Ask AI**.
+## Change the environment
 
-The composer docks at the edge with the desk still alive behind it. Pick
-a lens (Summarize, Action items, Risks, Decisions, Draft email) or speak
-your own instruction with the mic, choose where it runs (the hub's
-default or another Runs on destination), and Ask. The hub reads the selected
-objects from its own store (a note's body, an artifact's text, a
-meeting's summary and actions) and runs your instruction over exactly
-that pile.
+Open **Places** to select one of eight animated scenes or Quiet Desk.
+You can save favorites, pause animation, and enable optional room sound.
+Use **Settle in** to reduce navigation controls around your work.
+See [Places](ENVIRONMENTS.md) for shortcuts and persistence details.
 
-The answer prints as a card wearing an honest badge: which model ran it
-and, for an endpoint run, which host it went to. This run, not the app
-default. Then you judge it:
+## Troubleshooting
 
-- **Keep** makes it a real artifact on the stage, and its lineage names
-  every object it read plus the exact instruction you gave.
-- **Bin** closes it. Nothing is stored.
+| Problem | Action |
+| --- | --- |
+| A window seems absent | Check its dock entry and the **Window** menu. |
+| A tool cannot run | Read its reason. Check the connection, required selection, or model assignment. |
+| A Thread send fails | Read the failure before retrying. The composer retains failed text. |
+| Navigation is reduced | Exit Settle in with **Back to Desk** or **Escape**. |
+| A result is absent from Notes | Open the Thread. Use Keep on the reply if you need a separate Note. |
 
-A kept ask syncs like any other artifact, so the card you keep here
-shows the same lineage on the iPad, and one kept there lands here.
+## See also
 
-## Talk, don't type
-
-Every text input on the Desk carries a mic: hold it, speak, release, and
-the words land in the field. The browser sends audio to the configured hub;
-the applicable Runs on and boundary labels state where transcription occurs.
-
-A waiting Coder session takes speech too: its panel shows the Coder's
-question, and **Hold to answer** sends your spoken reply straight into
-the session. **Use the hotkey** instead selects it as your dictation
-target for the held-key flow.
-
-## The preview card
-
-If you turn on **Preview before it types** (Settings, Voice), every
-finished dictation appears on a card above the orb instead of typing:
-**Type it** commits, **Discard** or Escape drops it. The card follows you
-to every room, not just the desk.
-
-## Arrange the desk
-
-Drag any object to move it. The layout is stored on this device
-and never syncs; **Tidy** snaps everything back to the automatic layout.
-
-## Qlippy
-
-Qlippy is an optional visual presence for contextual attention. It is off by
-default and uses the same action, authority, and Receipt copy as other Desk
-surfaces.
+- [User Guide](USER_GUIDE.md): individual features and advanced controls.
+- [Interview](INTERVIEW.md): repeatable context and manual drafts.
+- [Places](ENVIRONMENTS.md): scenes, favorites, and Settle in.
+- [Control modes](AUTHORITY.md): authority for tool effects and Coder input.

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { VERBS, verbLabel } from "../../verbRegistry";
+import { useSettleState } from "../../settleState";
 
 /** HS-101 B8 — the shortcut sheet, drawn (never a doc link).
  * HS-111-07 — rows DERIVE from the registry's key fields (doctrine
@@ -16,6 +17,7 @@ const SHEET_GROUPS: { title: string; scopes: string[] }[] = [
 ];
 
 export function ShortcutSheet({ onClose }: { onClose: () => void }) {
+  const settled = useSettleState((state) => state.settled);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -34,7 +36,10 @@ export function ShortcutSheet({ onClose }: { onClose: () => void }) {
       keys.sort((a, b) => a[0].localeCompare(b[0]));
     return [group.title, keys];
   });
-  rows[1][1].push(["Esc", "Close / cancel"]);
+  rows[1][1].push([
+    "Esc",
+    settled ? "Back to Desk (keep work open)" : "Close / cancel",
+  ]);
   return createPortal(
     <div
       className="desk-shortcut-sheet"

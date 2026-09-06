@@ -5,6 +5,7 @@
 // no REV, no raw field names, the name said once.
 import React, { useEffect, useRef, useState, useMemo, useCallback, useReducer } from "react";
 import {
+  countLabel,
   SurfaceFooter,
   SurfaceSection,
   SurfaceLedger,
@@ -1099,7 +1100,7 @@ function ReceiptsSection({ room }: { room: RoomSnapshot }) {
   if (items.length === 0) return null;
 
   return (
-    <SurfaceSection label={items.length > 0 ? `RECEIPTS ${items.length}` : "RECEIPTS"}>
+    <SurfaceSection label={countLabel("RECEIPTS", items.length)}>
       <SurfaceLedger count="" cols="room">
         <ul className="surface-ledger-rows">
           {items.map((item) => {
