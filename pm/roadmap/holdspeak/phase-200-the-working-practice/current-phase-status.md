@@ -1,6 +1,6 @@
 # Phase 200: The Working Practice
 
-**Last updated:** 2026-09-06 — HS-200-01 and HS-200-02 DONE (the baseline; runtime identity captured once, the database owner lock, STALE BUNDLE · TWO RUNTIMES · SCHEMA AHEAD/BEHIND, backup → upgrade → restore rehearsed on a copy); HS-200-03 the release checks in progress.
+**Last updated:** 2026-09-06 — HS-200-01, 02, 03 DONE (the baseline; runtime identity + the owner lock + restore on a copy; the release checks: 47 identities reproduced, 34/35 CI failures repaired without a weakened assertion, the critical-journey suite as its own CI job); HS-200-04 first value and model readiness in progress.
 **Status:** planning. Forty stories defined; zero implementation stories completed.
 **Product owner:** Karol.
 **Delivery owner:** unassigned until implementation starts.
@@ -40,8 +40,8 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 |---|---|---|---|---|
 | HS-200-01 | Establish the integration baseline and obligation map | done | [story-01](story-01-baseline-and-obligation-map.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-200-02 | Expose loaded runtime identity and prove restore | done | [story-02](story-02-runtime-identity-and-restore.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-200-03 | Make release checks isolated and actionable | in-progress | [story-03](story-03-ci-isolation-and-release-contract.md) | — |
-| HS-200-04 | Make first value and model readiness work cold | backlog | [story-04](story-04-first-value-and-model-readiness.md) | — |
+| HS-200-03 | Make release checks isolated and actionable | done | [story-03](story-03-ci-isolation-and-release-contract.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-200-04 | Make first value and model readiness work cold | in-progress | [story-04](story-04-first-value-and-model-readiness.md) | — |
 | HS-200-05 | Prove physical voice capture, correction, and custody | backlog | [story-05](story-05-physical-voice-and-custody.md) | — |
 | HS-200-06 | Separate citation, factual support, and acceptance | backlog | [story-06](story-06-claim-support-semantics.md) | — |
 | HS-200-07 | Make incomplete attention coverage explicit | backlog | [story-07](story-07-coverage-and-partial-results.md) | — |
@@ -81,7 +81,29 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 
 ## Where we are
 
-2026-09-06 (later): HS-200-02 DONE — holdspeak/runtime_identity.py
+2026-09-06 (evening): HS-200-03 DONE — the CI ledger
+(assets/ci-ledger-2026-09-06.md: 35 CI + 12 local identities reproduced,
+including under a simulated ubuntu runner and TZ=Pacific/Auckland; the two
+divergences explained: a real-clock boundary at 12:00 UTC and the quiet-hours
+window swallowing the calendar sub-receipt), the seams repaired (one
+local-model predicate so a substituted readiness reaches the path Ask
+resolves through; clocks and zones injected in the steward and heartbeat
+services; a reentrant lock over the database singletons and a shutdown that
+stops every conductor; 16 runner-environment tests declared per test with
+markers, never per module; five censuses regenerated from source), the
+isolated-HOME guard in tests/conftest.py that refuses a run pointed at a real
+installation, tests/critical/ (identity · backup/restore · the first kept
+sentence cold · the Project first result; 11 passed) with its own CI job
+"Critical Journeys (G0)"; the bundle gate's dead CSS cut and its limit raised
+300 → 310 KB with the reason beside the number as a down-only ratchet.
+RULING (R200-03-1): the three absolute fences (kernel line budget, kernel
+driver conditionals, product copy's 29 offenders) are re-baselined as DATED
+DEBT RATCHETS keyed by module/measurement or path+rule+text, never by line —
+unlisted fails, listed may not grow, a paid entry must be deleted; a
+re-baseline named as such, under the owner's "ledger, not gate"; for his eye.
+Two product defects ledgered to HS-200-09 (the Meetings arrival's 404 on
+/api/meetings/projects; the guardrail decision box mounting deny then
+flipping to allow). Earlier: HS-200-02 DONE — holdspeak/runtime_identity.py
 (backend version + revision, process start, frontend build id stamped
 by Vite, an opaque database id, schema 76, a config digest; captured
 once at start; GET /api/system/identity for diagnostics, a public

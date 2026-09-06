@@ -28,6 +28,16 @@ const object = {
   ref: { kind: "intelligence" as const, id: "desk", name: "Intelligence" },
 };
 
+/** The wire shape of one brief item (mirrors BriefItem in views/BriefView). */
+type BriefFixtureItem = {
+  id: string;
+  section: string;
+  text: string;
+  detail: string;
+  source_ref: string;
+  priority: number;
+};
+
 const brief = {
   id: "brief-1",
   headline: "One thing changed.",
@@ -37,7 +47,7 @@ const brief = {
   generated_label: "GENERATED SEP 05 08:00",
   period_start: "2026-09-04T17:00:00",
   sections: {
-    this_week: [] as unknown[],
+    this_week: [] as BriefFixtureItem[],
     changed: [
       {
         id: "brief-item-1",

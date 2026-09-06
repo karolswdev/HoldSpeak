@@ -84,6 +84,8 @@ class HeartbeatService:
         watch_service: Any | None = None,
         notifier: Any | None = None,
         calendar_conductor: Any | None = None,
+        clock: Any | None = None,
+        local_zone: Any | None = None,
     ) -> None:
         self._db = db
         self._observer = observer or NullObserver()
@@ -91,6 +93,30 @@ class HeartbeatService:
         self._notifier = notifier  # injectable for tests; None = OS default
         # HS-175-02: the calendar refresh rides the heartbeat sweep.
         self._calendar_conductor = calendar_conductor
+        # HS-200-03: the sweep read the clock TWICE — once as aware UTC for the
+        # receipt and once as naive local for the quiet-hours test — so the two
+        # could straddle a second, and neither could be injected. A sweep held
+        # by quiet hours writes no `calendar` sub-receipt, which is why
+        # tests/unit/test_hs175_calendar_wire.py passed by day and failed on any
+        # machine running it between 22:00 and 08:00 local, the CI runner
+        # included. One injectable instant now serves both readings.
+        self._clock = clock
+        # Quiet hours are LOCAL hours, so the zone is as much an input as the
+        # instant. Injecting the instant alone is not enough: a fixed UTC noon
+        # is midnight in Auckland and still lands inside the default window.
+        # None keeps production behaviour -- this machine's own zone.
+        self._local_zone = local_zone
+
+    def _now_utc(self) -> datetime:
+        """The current instant, aware and in UTC, from the injected clock."""
+        if self._clock is None:
+            return datetime.now(timezone.utc)
+        now = self._clock()
+        return now if now.tzinfo is not None else now.replace(tzinfo=timezone.utc)
+
+    def _now_local(self) -> datetime:
+        """The one sweep instant expressed in the quiet-hours zone."""
+        return self._now_utc().astimezone(self._local_zone)
 
     # ── Settings ───────────────────────────────────────────────────────
 
@@ -261,7 +287,9 @@ class HeartbeatService:
         """Check whether the current time falls within quiet hours."""
         settings = self.get_settings()
         if now is None:
-            now = datetime.now()
+            # HS-200-03: default through the injected clock, in local hours,
+            # so no caller can reach an un-injectable wall clock from here.
+            now = self._now_local()
         hour = now.hour
         start = settings["quiet_hours"]["start"]
         end = settings["quiet_hours"]["end"]
@@ -280,12 +308,14 @@ class HeartbeatService:
         Returns the sweep receipt payload.
         """
         t0 = time.time()
-        now = datetime.now(timezone.utc)
+        now = self._now_utc()
         settings = self.get_settings()
         sweep_id = f"sweep_{uuid.uuid4().hex[:12]}"
 
-        # Quiet hours check
-        held = self.in_quiet_hours(datetime.now())
+        # Quiet hours check. Quiet hours are the owner's LOCAL hours, so the one
+        # sweep instant is converted to this machine's zone rather than read
+        # from the clock a second time.
+        held = self.in_quiet_hours(self._now_local())
 
         outcomes: list[dict[str, Any]] = []
         rooms_evaluated = 0

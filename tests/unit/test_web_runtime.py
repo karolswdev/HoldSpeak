@@ -260,6 +260,13 @@ def test_configured_web_port_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     assert web_runtime._configured_web_port_from_env() is None
 
 
+# HS-200-03: this machine must resolve an on-device dictation artifact
+# from default configuration, or the session plan records the transcription
+# capability UNRESOLVED and admission refuses `no_assignment`. That is the
+# environment (no MLX runtime, no configured llama.cpp model), not a product
+# defect, so the dependency is DECLARED and skips with its reason rather
+# than failing as if the product were broken.
+@pytest.mark.requires_local_dictation_route
 def test_run_web_runtime_warms_transcriber_on_start(
     tmp_path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

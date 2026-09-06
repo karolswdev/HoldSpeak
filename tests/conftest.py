@@ -312,6 +312,105 @@ def pytest_addoption(parser):
     )
 
 
+# ============================================================
+# HS-200-03: the isolated-HOME guard
+# ============================================================
+
+REAL_HOME_OPT_IN = "HOLDSPEAK_ALLOW_REAL_HOME"
+
+# `holdspeak.config.core.CONFIG_DIR` and `holdspeak.db.core.DEFAULT_DB_PATH`
+# are built from `Path.home()` at IMPORT time, so an installation is detected
+# by the two directories those constants live in — named here rather than
+# imported, because importing holdspeak would freeze the very paths we are
+# checking before the guard could refuse.
+_INSTALLATION_MARKERS = (
+    Path(".local") / "share" / "holdspeak",
+    Path(".config") / "holdspeak",
+)
+
+
+def _passwd_home() -> Path | None:
+    """The account's home from the password database, ignoring ``$HOME``.
+
+    ``$HOME`` is the thing under test, so it cannot also be the reference.
+    """
+    import pwd
+    import os as _os
+
+    try:
+        return Path(pwd.getpwuid(_os.getuid()).pw_dir)
+    except Exception:  # pragma: no cover - no passwd entry (some containers)
+        return None
+
+
+def real_home_violation(
+    home: Path | str, passwd_home: Path | str | None, *, opt_in: str = ""
+) -> str:
+    """The refusal text for a run pointed at a real installation, else ``""``.
+
+    The dangerous condition is precise: ``$HOME`` is the account's own home
+    AND a HoldSpeak installation lives under it. That is the owner's real
+    database and config, and a product suite writing there has destroyed real
+    rows before (schema v43 pollution, the 167/168 walk seeds). A bare CI
+    runner is also its own passwd home but holds no installation, so it is
+    lawful and is not refused.
+
+    ``opt_in`` is the value of ``HOLDSPEAK_ALLOW_REAL_HOME``; a live attended
+    walk sets it to the name of the walk it is running, which is echoed back
+    in the run header so the choice is never silent.
+    """
+    if str(opt_in).strip():
+        return ""
+    if passwd_home is None:
+        return ""
+    try:
+        resolved_home = Path(home).expanduser().resolve()
+        resolved_passwd = Path(passwd_home).expanduser().resolve()
+    except Exception:  # pragma: no cover - unresolvable path
+        return ""
+    if resolved_home != resolved_passwd:
+        return ""
+    present = [
+        str(resolved_home / marker)
+        for marker in _INSTALLATION_MARKERS
+        if (resolved_home / marker).exists()
+    ]
+    if not present:
+        return ""
+    return (
+        "refusing to run the product suite against a real HoldSpeak "
+        f"installation: HOME={resolved_home} holds " + ", ".join(present) + ". "
+        "Run with an isolated HOME instead:\n"
+        "  HOME=$(mktemp -d) uv run pytest ...\n"
+        f"An attended live walk sets {REAL_HOME_OPT_IN}=<walk name> to accept "
+        "this deliberately."
+    )
+
+
+def _enforce_isolated_home(config) -> None:
+    import os
+
+    home = os.environ.get("HOME") or str(Path.home())
+    opt_in = os.environ.get(REAL_HOME_OPT_IN, "")
+    violation = real_home_violation(home, _passwd_home(), opt_in=opt_in)
+    if violation:
+        raise pytest.UsageError(violation)
+
+
+def pytest_report_header(config):
+    """Never silent: every run states where its HOME points."""
+    import os
+
+    home = os.environ.get("HOME") or str(Path.home())
+    opt_in = os.environ.get(REAL_HOME_OPT_IN, "")
+    if opt_in.strip():
+        return (
+            f"holdspeak: HOME isolation WAIVED by {REAL_HOME_OPT_IN}="
+            f"{opt_in!r} — running against HOME={home}"
+        )
+    return f"holdspeak: HOME={home}"
+
+
 def pytest_configure(config):
     """Register custom markers; isolate HOME per xdist worker."""
     # HS-132-12: under pytest-xdist every worker inherited ONE $HOME, so any
@@ -323,6 +422,11 @@ def pytest_configure(config):
     # absolute-path passthroughs (PLAYWRIGHT_BROWSERS_PATH, npm_config_cache)
     # are unaffected.
     import os
+
+    # HS-200-03: refuse a real installation BEFORE anything imports holdspeak
+    # (its path constants freeze at import) and before the xdist rewrite below
+    # turns HOME into a subdirectory of whatever it was.
+    _enforce_isolated_home(config)
 
     worker = os.environ.get("PYTEST_XDIST_WORKER")
     if worker:
@@ -340,6 +444,102 @@ def pytest_configure(config):
     )
     config.addinivalue_line("markers", "integration: integration test")
     config.addinivalue_line("markers", "e2e: end-to-end test")
+    config.addinivalue_line(
+        "markers", "critical: G0 critical journey (tests/critical)"
+    )
+    config.addinivalue_line(
+        "markers",
+        "requires_mlx_whisper: requires the mlx_whisper package on this machine",
+    )
+    config.addinivalue_line(
+        "markers",
+        "requires_local_dictation_route: requires this machine to resolve an "
+        "on-device dictation artifact from default configuration",
+    )
+
+
+# ============================================================
+# HS-200-03: availability probes behind the dependency markers
+#
+# A declared dependency that is absent must SKIP with the reason. It must
+# never pass silently (the absence would then be invisible) and it must never
+# fail as if the product were broken (it is the environment that is missing).
+# Each probe answers "" when the dependency is present, or the reason text.
+# ============================================================
+
+
+def missing_local_model_reason() -> str:
+    """Why the configured local meeting-intel model file cannot be loaded."""
+    try:
+        from holdspeak.inference_targets import local_model_file_present
+        from holdspeak.intel.providers import configured_local_meeting_model_path
+
+        path = configured_local_meeting_model_path()
+    except Exception as exc:  # pragma: no cover - import-time environment fault
+        return f"local model readiness could not be probed: {exc}"
+    if local_model_file_present(path):
+        return ""
+    return f"no local model file on this machine: {path or '<unconfigured>'}"
+
+
+def missing_mlx_whisper_reason() -> str:
+    """Why mlx_whisper is unusable here (absent off Apple silicon)."""
+    import importlib.util
+
+    try:
+        if importlib.util.find_spec("mlx_whisper") is not None:
+            return ""
+    except Exception as exc:  # pragma: no cover - broken namespace package
+        return f"mlx_whisper is not importable: {exc}"
+    return "mlx_whisper is not installed on this machine"
+
+
+def missing_local_dictation_route_reason() -> str:
+    """Why default configuration names no on-device dictation artifact.
+
+    `_local_dictation_engine` resolves `auto` to MLX on Apple silicon with
+    `mlx_lm` importable, and to llama.cpp everywhere else. Neither engine's
+    package is a core dependency: `mlx-whisper` is `sys_platform == 'darwin'
+    and platform_machine == 'arm64'` and `llama-cpp-python` lives in the
+    `meeting` extra (pyproject.toml). The Unit job installs `--extra test`
+    only, so on that runner the resolved engine has no package behind it, the
+    speech route cannot be frozen, and admission refuses `no_assignment`.
+
+    That is the environment, not a product defect, so the tests that assert on
+    a resolved speech route declare the dependency and skip with this reason.
+    """
+    try:
+        import importlib.util
+
+        from holdspeak.config import Config
+        from holdspeak.speech_session.plan import (
+            _local_dictation_engine,
+            _pipeline_terms,
+            dictation_local_deployment_identity,
+        )
+
+        terms = _pipeline_terms(Config())
+        engine = _local_dictation_engine(str(terms.get("runtime_backend", "") or ""))
+    except Exception as exc:  # pragma: no cover - import-time environment fault
+        return f"dictation route could not be probed: {exc}"
+    if not engine:
+        return "default configuration names no on-device dictation engine"
+    if dictation_local_deployment_identity(terms) is None:
+        return f"default configuration names no {engine} dictation artifact"
+    package = {"mlx": "mlx_lm", "llama_cpp": "llama_cpp"}.get(engine, "")
+    if package and importlib.util.find_spec(package) is None:
+        return (
+            f"this machine resolves the {engine} dictation engine but "
+            f"{package!r} is not installed (it is an optional extra)"
+        )
+    return ""
+
+
+_DEPENDENCY_PROBES = {
+    "requires_model": missing_local_model_reason,
+    "requires_mlx_whisper": missing_mlx_whisper_reason,
+    "requires_local_dictation_route": missing_local_dictation_route_reason,
+}
 
 
 def pytest_collection_modifyitems(config, items):
@@ -350,8 +550,21 @@ def pytest_collection_modifyitems(config, items):
     skip_metal = pytest.mark.skip(
         reason="real hardware lane; rerun with -m metal --run-metal"
     )
+    # Probe each declared dependency at most once per run, and only when some
+    # collected item actually declares it.
+    probed: dict[str, str] = {}
+
+    def dependency_reason(name: str) -> str:
+        if name not in probed:
+            probed[name] = _DEPENDENCY_PROBES[name]()
+        return probed[name]
 
     for item in items:
+        for marker_name in _DEPENDENCY_PROBES:
+            if marker_name in item.keywords:
+                reason = dependency_reason(marker_name)
+                if reason:
+                    item.add_marker(pytest.mark.skip(reason=reason))
         # Skip macOS tests on other platforms
         if "requires_macos" in item.keywords and sys.platform != "darwin":
             item.add_marker(skip_macos)
@@ -389,6 +602,26 @@ def _isolate_config_file(tmp_path_factory, monkeypatch):
 
     cfg = tmp_path_factory.mktemp("config") / "config.json"
     monkeypatch.setattr(config_mod, "CONFIG_FILE", cfg)
+
+
+@pytest.fixture
+def local_model_present(monkeypatch):
+    """Declare the local model artifact present, without a developer's disk.
+
+    HS-200-03: the admission path refuses with 409 `target_unavailable` when
+    the configured local model file is missing. Route tests that inject their
+    own engine are not testing artifact readiness, so they substitute the one
+    readiness predicate rather than requiring `~/Models` to exist — which is
+    what made them pass on the owner's machine and fail on every runner.
+    Tests that DO mean to exercise a real artifact declare
+    `@pytest.mark.requires_model` instead and skip when it is absent.
+    """
+    import holdspeak.inference_targets as inference_targets
+
+    monkeypatch.setattr(
+        inference_targets, "local_model_file_present", lambda _path: True
+    )
+    return inference_targets
 
 
 @pytest.fixture(autouse=True)

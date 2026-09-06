@@ -144,6 +144,53 @@ setting.
 
 Run `doctor` after an upgrade if you want confirmation that everything lines up.
 
+## Running the checks
+
+There are three levels, and they answer different questions.
+
+**The critical journeys** are the release gate. Four journeys — the
+installation can say what it is, it can be backed up and restored, a cold
+install reaches a kept sentence with no model, and a Project reaches its first
+result — run the real services with only the external adapters substituted.
+They need no model, no microphone, no network and no macOS, and they run in
+seconds:
+
+```sh
+HOME=$(mktemp -d) uv run pytest -q -m critical tests/critical -p no:cacheprovider
+```
+
+CI reports them as their own job, `Critical Journeys (G0)`, separately from
+the historical jobs, so a green line there means the release gate passed
+rather than that nothing anywhere is red.
+
+**The full suite** is the regression net. It is larger, slower, and parts of
+it depend on what this particular machine has installed:
+
+```sh
+HOME_REAL=$HOME; HOME=$(mktemp -d) \
+  PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright \
+  npm_config_cache=$HOME_REAL/.npm \
+  uv run pytest -q -n auto --ignore=tests/e2e/test_metal.py
+```
+
+**The hardware lane** (`-m metal --run-metal`) needs a real microphone, model
+and keyboard, and is never run in CI.
+
+### Why the isolated home is not optional
+
+`holdspeak` resolves its database and configuration from your home directory,
+and it does so at import time. A suite run under your own home writes to your
+real installation: it has created rows in it before. Every command in this
+document therefore starts with `HOME=$(mktemp -d)`, and the suite refuses to
+start if it finds itself pointed at a real installation.
+
+### Skips are information
+
+A test whose declared dependency is absent skips and says which dependency and
+why. Nothing passes silently for want of a package. If a check you expected to
+run was skipped, install what the reason names or accept that this machine
+cannot answer that question.
+
 ## Maintainer release checklist
 
 For whoever cuts a release:
@@ -158,8 +205,32 @@ For whoever cuts a release:
    (`holdspeak/config/core.py`). The
    schema reconcile handles forward changes automatically (additive-only); the
    version bump is an informational stamp. Most releases change neither.
-4. Run the suite and read the output:
-   `uv run pytest -q --ignore=tests/e2e/test_metal.py`.
+4. Run the checks and read the output. **Always with an isolated home**, so a
+   test can never open your real database or config:
+
+   ```sh
+   # The four critical journeys. Fast, and they must be green.
+   HOME=$(mktemp -d) uv run pytest -q -m critical tests/critical -p no:cacheprovider
+
+   # The full suite the way CI sees it.
+   HOME_REAL=$HOME; HOME=$(mktemp -d) \
+     PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright \
+     npm_config_cache=$HOME_REAL/.npm \
+     uv run pytest -q -n auto --ignore=tests/e2e/test_metal.py
+
+   # The web contract.
+   npm --prefix web run check
+   ```
+
+   A run pointed at a real installation is refused before it starts, with a
+   message naming the remedy. An attended live walk that means to use the real
+   installation sets `HOLDSPEAK_ALLOW_REAL_HOME=<name of the walk>`, which is
+   echoed in the run header so the choice is never silent.
+
+   A dependency this machine does not have (a local model file, `mlx_whisper`,
+   an on-device dictation runtime) makes its tests **skip with the reason**
+   rather than fail. Read the skip reasons: a skip is a statement about the
+   machine, not a pass.
 5. Verify the clean install: a fresh virtual environment, `uv pip install -e .`,
    then `holdspeak doctor` reaches exit 0 (optional gaps like a missing local
    model are fine). See the captured example in the release evidence.

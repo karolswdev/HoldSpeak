@@ -87,14 +87,6 @@
   pointer-events: none;
 }
 
-/* ── HS-110 Workbench depth grammar ── */
-.wb-raised {
-  box-shadow: var(--desk-window-bevel);
-}
-.wb-sunken {
-  box-shadow: var(--desk-window-etch);
-}
-
 /* ── the world (HS-71-03/04 values) ── */
 .desk-next .desk-world {
   position: relative;

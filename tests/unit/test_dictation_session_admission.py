@@ -493,6 +493,9 @@ def _production_cold_mlx_transcriber(monkeypatch):
     return transcriber, physical_loads
 
 
+# The cold-wake bundle also loads Whisper through mlx_whisper.
+@pytest.mark.requires_mlx_whisper
+@pytest.mark.requires_local_dictation_route
 def test_phase_d_default_cold_wake_runs_its_complete_routed_bundle(
     tmp_path, monkeypatch
 ):
@@ -918,6 +921,7 @@ class _Mlx(_MlxTranscriber):
         return TEXT_SENTINEL
 
 
+@pytest.mark.requires_local_dictation_route
 def test_phase_d_day_one_standalone_speak_to_fill_uses_the_migrated_route(
     tmp_path, monkeypatch
 ):
@@ -986,6 +990,7 @@ def test_phase_d_day_one_standalone_speak_to_fill_uses_the_migrated_route(
     assert tuple(readiness) == ("ready", "loaded_under_speech_preload")
 
 
+@pytest.mark.requires_local_dictation_route
 def test_phase_d_couples_speech_and_writing_markers_for_one_complete_pipeline(
     tmp_path, monkeypatch
 ):
@@ -1167,6 +1172,7 @@ def test_every_preload_candidate_failing_refuses_without_transcribing(tmp_path, 
     ]
 
 
+@pytest.mark.requires_local_dictation_route
 def test_pre_session_warm_uses_the_assigned_speech_route_not_the_legacy_knob(tmp_path, monkeypatch):
     db, _broker, _host, _impl = _build_host(tmp_path, monkeypatch, legacy=False)
     config = Config()
@@ -1181,6 +1187,13 @@ def test_pre_session_warm_uses_the_assigned_speech_route_not_the_legacy_knob(tmp
     assert _parents(db) == []
 
 
+# HS-200-03: this machine must resolve an on-device dictation artifact
+# from default configuration, or the session plan records the transcription
+# capability UNRESOLVED and admission refuses `no_assignment`. That is the
+# environment (no MLX runtime, no configured llama.cpp model), not a product
+# defect, so the dependency is DECLARED and skips with its reason rather
+# than failing as if the product were broken.
+@pytest.mark.requires_local_dictation_route
 def test_authorized_pre_session_warm_runs_as_the_preload_service(tmp_path, monkeypatch):
     db, _broker, _host, _impl = _build_host(tmp_path, monkeypatch, legacy=False)
     config = Config()
@@ -2210,6 +2223,7 @@ def test_the_ws_final_pass_sends_an_error_not_raw_text_for_a_fatal_signal(
 # ----------------------------------- 6. legacy preload knobs have no authority
 
 
+@pytest.mark.requires_local_dictation_route
 def test_mutable_preload_knobs_cannot_change_the_frozen_parentless_source(tmp_path, monkeypatch):
     """Warm authority is the persisted capability row, never ModelConfig bytes."""
     db, _broker, _host, _impl = _build_host(tmp_path, monkeypatch, legacy=False)
@@ -2461,6 +2475,7 @@ def test_the_egress_label_follows_the_frozen_revision_off_this_machine(
     session.close("succeeded")
 
 
+@pytest.mark.requires_local_dictation_route
 def test_phase_f_routed_text_entry_uses_provider_route_egress_without_transcription(
     tmp_path, monkeypatch
 ):
@@ -2500,6 +2515,7 @@ def test_phase_f_routed_text_entry_uses_provider_route_egress_without_transcript
     session.close("succeeded")
 
 
+@pytest.mark.requires_local_dictation_route
 def test_phase_d_local_transcription_route_reports_local_egress(tmp_path, monkeypatch):
     """Amendment 7: the ordinary migrated speech route remains local."""
     from holdspeak.speech_session import admit_one_shot_session
@@ -2514,6 +2530,7 @@ def test_phase_d_local_transcription_route_reports_local_egress(tmp_path, monkey
 
 
 @pytest.mark.parametrize("boundary", ["mesh", "private_network"])
+@pytest.mark.requires_local_dictation_route
 def test_phase_d_nonlocal_historical_speech_refuses_before_construction_or_dispatch(
     tmp_path, monkeypatch, boundary
 ):
@@ -2552,6 +2569,7 @@ def test_phase_d_nonlocal_historical_speech_refuses_before_construction_or_dispa
         assert conn.execute("SELECT COUNT(*) FROM kernel_receipts").fetchone()[0] == 0
 
 
+@pytest.mark.requires_local_dictation_route
 def test_phase_d_egress_refuses_a_missing_frozen_transcription_entry(
     tmp_path, monkeypatch
 ):
