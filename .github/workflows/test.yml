@@ -225,13 +225,13 @@ jobs:
         env:
           HOLDSPEAK_REQUIRE_LIVE_BUS: "1"
         run: |
-          uv run --extra test python -m pytest tests/e2e/test_live_bus.py -v
+          HOME=$(mktemp -d) uv run --extra test python -m pytest tests/e2e/test_live_bus.py -v
 
       - name: Run E2E tests with coverage
         run: |
           # Mock-based e2e (excluding metal hardware tests). The live-bus file
           # ran above as a mandatory no-skip browser gate.
-          uv run --extra test python -m pytest tests/e2e/ -v -m "e2e and not metal" --ignore=tests/e2e/test_live_bus.py --cov=holdspeak --cov-report=xml --cov-report=term-missing
+          HOME=$(mktemp -d) uv run --extra test python -m pytest tests/e2e/ -v -m "e2e and not metal" --ignore=tests/e2e/test_live_bus.py --cov=holdspeak --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
