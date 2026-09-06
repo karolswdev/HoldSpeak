@@ -1,283 +1,274 @@
-# THE HANDOVER — 2026-09-05, from Muad'Dib XIV to the next (READ THIS FIRST)
+# THE HANDOVER — 2026-09-06, from Muad'Dib XV to XVI (READ THIS FIRST)
 
 The entries below this section are the running log, newest first. This
 section is the whole picture in one sitting. When it disagrees with a
 log entry, this section wins; when it disagrees with the code or the
-roadmap files, they win.
+roadmap files, they win. Memory (the Claude Code auto-memory, index
+`MEMORY.md`) holds the same facts as pointers; the repo holds the truth.
 
-## 0. Who is who
+## 0. Who is who (and the one change)
 
 - **The owner** — a Senior Architect managing three people, one desk.
   His word gates two things and only two: the CANVAS (a face is built
   only to boards he or counsel-on-his-behalf ratified) and the MERGE.
-  Never his walks, never the build. Address him as the owner; never a
-  first name or a pronoun derived from a name in anything he sees.
-- **Muad'Dib** — the orchestrator (you). Charters, briefs, reads every
-  shot beside its board, bounces with specifics, runs the gates, commits,
-  opens PRs, merges on his word. Never delegates the gates.
-- **The Fedaykin** — the workers, `.claude/agents/opus-worker.md`,
-  boosted to `claude-fable-5-1` on his word (2026-09-05). Scoped tests
-  only, never git, never the owner's real DB, never a secret in the
-  tree. "Counsel" is a Fedaykin briefed to hunt the design or the build.
+  Never his walks, never the build. He also DEFERS: on 2026-09-06 he
+  handed 175's seven open questions to the orchestrator ("The decision
+  is deferred to you") — when he does that, RULE, record the ruling in
+  the phase's final-summary, act, and tell him what you ruled. Address
+  him as the owner; never a first name; never a pronoun from a name.
+- **Muad'Dib** — the orchestrator (you), on Fable. Charters, briefs,
+  reads every shot beside its board, bounces with specifics, runs the
+  gates, commits, opens PRs, merges on his word. Never delegates the
+  gates. Never lets a worker touch git.
+- **The Fedaykin** — the workers, `.claude/agents/opus-worker.md`.
+  **NERF 2026-09-06: they are OPUS 5.1 again** ("All his workers are
+  now Opus 5.1. Not Fable 5.1."); the file says `model: opus`. The file
+  is gitignored — on a fresh clone re-create it (memory
+  `feedback_opus_terra_verify_model` has the text). Scoped tests only,
+  isolated HOME, never git, never his real DB, never a secret in the
+  tree, honest reports ("could not verify X" is a good answer).
+- **Counsel** — a Fedaykin briefed to HUNT (the design, then the built
+  phase, then a re-read after the fixes). Counsel's verdict is advice;
+  the orchestrator outranks it and rules; his word outranks both.
 - **Delivery Workbench** — the PMO gate (`.githooks/dw`). Markdown is the
-  truth; a story flips done only with evidence in the same commit.
+  truth; a story flips done only with evidence in the same commit;
+  evidence never ships without its story (the gate refuses).
 
-## 1. The state of the tree (2026-09-05 21:50 Denver)
+## 1. The state of the tree (2026-09-06)
 
-| Phase | Name | State | Where |
-|---|---|---|---|
-| 170 | The Great Pass | COMPLETE · **MERGED** PR #553 → main `0e69f3d7` | `pm/roadmap/holdspeak/phase-170-the-great-pass/` |
-| 171 | The Heartbeat | COMPLETE · **MERGED** PR #554 → `397e3594` | `…/phase-171-the-heartbeat/` |
-| 172 | The Loop Closes | COMPLETE · **MERGED** PR #555 → `0c17425e` | `…/phase-172-the-loop-closes/` |
-| 173 | The Steward's Hand and Voice | COMPLETE · **MERGED** PR #556 → `d416e08a` | `…/phase-173-the-stewards-hand-and-voice/` |
-| 174 | Reach | COMPLETE 11/11 · **MERGED** PR #557 → `8c994305` (2026-09-05 22:05) | `…/phase-174-reach/` |
-| 175 | Calendar and the Clock | COMPLETE 9/9 · PR **#558** → main on his word (2026-09-06; his attended walk owed; seven questions in final-summary.md) | `…/phase-175-calendar-and-the-clock/` |
-| 176–179 | Speak Loop · Thread at Work · Portfolio · Companion | story scaffolds drafted, NOT chartered, no design | `…/phase-176…` to `…/phase-179…` |
-| 180 | The Proof | named in the arc, nothing drafted | `pm/roadmap/holdspeak/THE-TUESDAY-ARC.md` §6 |
+| Phase | Name | State |
+|---|---|---|
+| 170 | The Great Pass | MERGED #553 → `0e69f3d7` |
+| 171 | The Heartbeat | MERGED #554 → `397e3594` |
+| 172 | The Loop Closes | MERGED #555 → `0c17425e` |
+| 173 | The Steward's Hand and Voice | MERGED #556 → `d416e08a` |
+| 174 | Reach | MERGED #557 → `8c994305` |
+| 175 | Calendar and the Clock | **COMPLETE 9/9 · MERGED #558 → `aa278604`** on his word; the R1 follow-up MERGED #564 → `7d897302`; his attended walk OWED |
+| 176 | The Speak Loop | story scaffold only; NOT chartered; no design — starts on his word, canvas first |
+| 177–179 | Thread at Work · Portfolio · Companion | scaffolds; not chartered |
+| 180 | The Proof | named in `THE-TUESDAY-ARC.md` §6; nothing drafted |
 
-Merges happened in order the hour he said "Shouldn't we have merged all
-those PRs?"; branches were kept (never delete), each dependent PR was
-retargeted to main before its own merge.
+Main also carries work that landed beside 175 from elsewhere: #560 (the
+web integration checks restored — the product-copy and write-receipt
+guards are LIVE again), #561 (repeatable interview delivery; new
+`interview_*` tables), #562 (the product docs refresh + an STE writing
+policy — README rewritten in that voice; no dashes in prose), #528 (the
+rainy-city desk atmosphere; `three` is a web dependency now — `npm ci`
+in `web/` after pulling). `dw next` still surfaces an ancient
+`HS-91-10 in-progress` — a stale leftover, not the current road.
 
-**CI truth.** GitHub Actions on main is RED and was red before this arc.
-The Unit job dies on a runner-environment set (no speech engine →
-`no_assignment`, no `mlx_whisper`, no PortAudio, the Q6 model file
-absent, the two kernel-broker density fences, product-copy drift) plus
-a rotating flaky family (hs144 door glass, hs153 practice glass, the
-workbench preset facade); "DeskOS Web Quality" exits 1 too. The gate
-this repo actually runs is the LOCAL CI-shape suite (six inherited
-failures, listed in every final-summary) plus his word. Parked in
-`BACKLOG.md` as "CI runner environment is red on main" — a phase of its
-own; do not read the badge as a gate until it is paid.
+**CI truth, unchanged.** GitHub Actions on main is RED on a
+runner-environment set (no speech engine, no `mlx_whisper`, no
+PortAudio, the Q6 model absent, the two broker density fences,
+product-copy drift) plus a rotating flaky rig family. The gate this
+repo runs is the LOCAL CI-shape suite + his word. Parked in BACKLOG.
 
-## 2. What was delivered, in plain words
+**The desk.** His hub was left running on `127.0.0.1:54644` (the
+pre-merge 175 build) for his walk; the owner URL is
+`http://127.0.0.1:<port>/?token=<meeting.web_auth_token from
+~/.config/holdspeak/config.json>` — the token lives ONLY in the
+scratchpad (`hub-url.txt`), never in the repo or an evidence file
+(redact `token=` when capturing a walk). His real DB is
+`~/.local/share/holdspeak/holdspeak.db`; it now holds SIX real meetings
+(the two 167/168 walk seeds were deleted on his deferral through the
+product's `meeting_delete`).
 
-The thesis of the arc (THE-TUESDAY-ARC.md): "will you use this on a
-Tuesday?" Every phase bought one piece of a manager's Tuesday.
+## 2. What 175 delivered, in plain words
 
-- **170 The Great Pass** — the face rulebook was written down
-  (`docs/internal/UX-CANON.md`) and made mechanical: a ratchet test
-  (`tests/unit/test_ux_canon_ratchet.py` + `tests/ux_canon_ceiling.json`)
-  that can only go down. Every screen was photographed at 1440 and 393,
-  671 rule breaks were found, most were paid (raw buttons 147 → 4, emoji
-  112 → 21, accent rails 0). The Concierge (the model front door) and the
-  top Tuesday faces were rebuilt to ratified boards.
-- **171 The Heartbeat** — the desk runs unattended. One cadence setting
-  drives a sweep; "needs you" across all Rooms shows in the shade, the
-  dock badge, ⌘K; a macOS notification fires on the EDGE (only when the
-  count rises) and is held in quiet hours; the Monday brief recurs. A late
-  P0 (the loop never called the notifier) was paid before merge.
-- **172 The Loop Closes** — a recorded meeting becomes work: decisions
-  and action items arrive as PROPOSALS on the Room (Confirm · Edit ·
-  Dismiss, `Decide:` / `Confirm:` prefixes), confirmed ones become
-  commitments, and the 1:1 brief reads real signals through the People ↔
-  Watch resolver. The Room's SOURCES gained SUGGESTED rows.
-- **173 The Steward's Hand and Voice** — the project update writes itself
-  (a deterministic drafter first, the model drafter behind claim refs);
-  HEALTH rows show review wait in days and issue aging; the first bounded
-  external effect — the reviewer NUDGE — sits behind the gate with a
-  cooldown and a receipt that names who.
-- **174 Reach** — the hub is reachable from the .43 box: `POST /api/mcp`
-  (Streamable HTTP, off by default), scoped AGENT credentials (sha256 at
-  rest, palette, TTL ≤ 30 d, revoke), OWNER refused off-loopback on that
-  route only, every remote receipt wears `REMOTE · host`. Confluence is
-  the third connector (acli, `site|email` identity). `scripts/reach_runner.py`
-  runs the sweep from the runner and exits 2 on a sleeping hub; the face
-  says WHILE THIS MAC IS AWAKE because nothing prevents sleep.
-  Counsel-on-built's conditions are paid (`bc02a6de`): no token in the
-  URL on /api/mcp, the Door's fixed GH · Jira · Confluence order, the
-  LIKE scoping documented, NO RUNS YET, `CREDENTIALS · N ACTIVE`.
-- **175 Calendar and the Clock (the wire only)** — the calendar refresh
-  rides the heartbeat sweep; events link to Rooms by title
-  (`calendar_event_projects`, link/unlink routes, ≥ 4-char whole word,
-  longest Room wins); recordings are BORN from events
-  (`meeting.auto_record` off | all_calendar | room_linked, `born_from`,
-  idempotent on the armed index); meetings are a Watch entity
-  (`MeetingWatchSource`); the brief has two windows — the old SINCE
-  FRIDAY lookback unchanged and a new THIS WEEK look-ahead to Sunday.
-  Design ratified with counsel's five conditions paid; the canvas is
-  https://claude.ai/code/artifact/113102aa-7bc9-4508-a334-79e22d542155.
+The calendar gave the desk its clock. The arrival: a WEEK strip (local
+Mon–Sun, one dot per meeting, today accented, `N MEETINGS THIS WEEK` ==
+the dots, always), `NEXT · <title> · HH:MM · ROOM · <name>`, a
+`THIS WEEK` section (what is still coming; `ROOM ·`, the source label,
+`ARMS HH:MM` + `Cancel`, `Unlink` on hover) and an orphan armed row
+(`ARMED · HH:MM · FROM · title (source)`). Settings → Meetings gained the
+CALENDAR section on the module the hub row opens (SettingsCore's
+meetings case; it REPLACED the 146 group): one row per source (● ·
+label · `ICS`|`SNAPSHOT` · host EgressChip for https, nothing for a
+file · `N EVENTS` · `LAST READ HH:MM` · `Edit` · `Disable`/`Enable` ·
+`Remove` with an in-world confirm), `Connect calendar` with `Add` (one
+well, a mic) and `Snapshot` (the vision adapter, its host chip beside
+it), `Auto-record` (`OFF` default · `ARM ROOM MEETINGS ONLY` · `ARM ALL
+CALENDAR MEETINGS`, `5 MIN BEFORE`, `N MATCHED THIS WEEK`). The Room's
+SOURCES gained a REAL meeting Watch (`MTG · MEETINGS · N THIS WEEK ·
+NEXT DAY HH:MM · CHECKED`, Pause/Resume; created when a meeting links,
+backfilled once by the sweep, evaluated by the sweep, feeding SINCE YOU
+LOOKED; Retire is a tombstone). Rhythm reads `Weekly brief · DAILY
+08:00 · LAST MON DD` with a summary line; the brief face is one display
+(the period), THIS WEEK composed rows, SINCE FRIDAY flat rows with kind
+tokens and emblem chips, one gutter, no counters of zero.
 
-## 3. What was planned and is NOT built
+The wire: the calendar refresh rides the heartbeat sweep; events link to
+Rooms by the Room's FULL name as a phrase (ruling R1; a one-word generic
+Room name never links; Unlink is durable via a suppression table);
+event-born recordings arm at `starts_at − 5 min` and RECORD at the event
+like every scheduled recording (ruling B11/R2 — the toggle is the
+consent, OFF by default); Cancel works for the row's whole life, names
+its refusal, and is FINAL per occurrence (the cancelled row is the
+tombstone; Delete behaves as Cancel); Remove/Disable prune and disarm
+(a snapshot's generated ICS deleted on Remove); every arm has its own
+receipt; local time per instant everywhere (DST-safe). Schema 75
+(additive). API surface 668 routes on main.
 
-- **175's faces** — none built: the arrival's WEEK strip and event rows
-  with the Room token and `ARMS 09:55`; Settings → Meetings' CALENDAR
-  rows + the Auto-record CycleGadget with `N MATCHED THIS WEEK`; the
-  Room's SOURCES meeting row; Rhythm's Weekly brief row and the brief's
-  THIS WEEK section. Then rigs (seed → open → assert → shoot, serial),
-  the docs verify pass (08 drafted: README, USER_GUIDE "## The clock",
-  ARCHITECTURE "### The clock", SECURITY, MCP_SIDECAR, POSITIONING; 13
-  markers), the hygiene lane (07; includes a fence that the calendar
-  snapshot model assignment is local-or-named), the walk on his desk
-  (`tests/e2e/live175_walk.py` drafted, every write denied),
-  counsel-on-built, the close (09), PR #558 out of draft.
-- **176 The Speak Loop** — dictation as a daily tool: the correction
-  taught once and kept (his desk has 0 corrections though the store and
-  routes exist), the journal as a stream, the voice law on every input
-  (mic on every text input — `StringGadget` carries it unless
-  `mic={false}`), the desk answering the hand. Eight stories drafted.
-- **177 The Thread at Work** — opens on a MEASURED decision (story 01):
-  Draft / Chase / Plan recipes over real Room data, the ask grounded on
-  Watches and the Room, every effect admitted with a receipt.
-- **178 The Portfolio** — many Rooms as one desk: a Projects surface,
-  cross-project needs-you in depth, release readiness across Rooms,
-  dependency alerts, the Monday brief as a portfolio, ⌘K to any Room.
-- **179 The Companion** — the phone and iPad as the desk's reach, Swift
-  recreated from the FINISHED web spec (standing rule), LAN-only, no
-  relay; wakes the dormant HSM track.
-- **180 The Proof** — a measured week of real use on his desk, Gate B
-  partner feedback, the doctor's bill of health, the release candidate.
-  Nothing drafted.
+## 3. The seven rulings (his deferral, 2026-09-06) — final-summary.md §"The seven questions"
 
-Each of 176–180 is chartered on his word when its turn comes; the
-scaffolds are starting points, not charters.
+R1 auto-link stays, full-name phrase, generic one-word never (#564) ·
+R2 the toggle = record at the event, OFF by default · R3 Cancel = this
+occurrence · R4 Remove = gone · R5 the hub's local clock · R6 the
+arrival's calendar caption is `THIS WEEK` (the recorded-meetings ledger
+owns MEETINGS) · R7 the seed rows deleted. If he ever flips one, the
+addendum rows B11–B17 in the design doc name the code that moves.
 
 ## 4. Owed to the owner
 
-- **His walks** on 170–175 — every phase's walk so far was the runner
-  on his desk, read-only; his attended walk is still his.
-- **Skip the queued job** — 172's runner accidentally POSTed
-  `intelligence/run` on one of his meetings (a cloud profile with no
-  key; it sits queued as "Already titled"). Nothing was undone; it is
-  his to Skip. The guard is now fail-closed.
-- **His answers** — 172: the two prefixes, the 1:1 card shape, Jira
-  assignments. 173: nudge attribution, WAIT in days, the cooldown token.
-  174: Confluence blogs vs page search; the awake-Mac prerequisite;
-  in-memory credentials re-issued after restart vs persisted; the .43
-  leg at his sitting; the listener on for his desk; the Door order
-  preference; the richer receipt grammar (✓ · `overnight`) before or
-  after merge; the zero-state wording. 175: auto-link vs
-  suggestion-only; the two-window brief; a confirmation step before an
-  auto-linked event arms.
-- **One honesty line.** The merge of main into feat/calendar-clock hit a
-  conflict in 174's status file; the resolution commit (`1ef58cb3`,
-  main's copy taken) was made with the hooks path unset — the only
-  commit in this arc that did not pass through the gate. `dw verify
-  origin/main..feat/calendar-clock` re-derives the range clean (14
-  commits ok). Do not repeat it: resolve, then commit through the gate.
+- His ATTENDED walks on 170–175 (every phase's walk so far was the
+  read-only runner on his desk).
+- Skip the queued "Already titled" job (172's accidental write).
+- 172/173/174's earlier questions (the handover XIII/XIV lists) — he
+  has not answered them; 175's are ruled.
 
-## 5. How a phase is worked (the loop that held for six phases)
+## 5. The loop that held (six phases, refined by 175)
 
-1. **Charter** — story files under `pm/roadmap/holdspeak/phase-NNN-…/`,
-   `current-phase-status.md`, the value-era question first
-   ("will you use this on a Tuesday?"). Author PMO content directly.
-2. **Design on the canvas BEFORE build** — a settled-design doc
-   (D0 the Tuesday moment · D1 laws · D2 faces element by element with
-   species named · D3 the wire with file:line · D4 counsel's hunts ·
-   D5 the walk · honest sizes) and `.dc.html` boards composed from the
-   library species, both widths (1440 and 393). Seed with the design
-   skill (`seed-canvas.mjs … --canvas canvas.json`), publish with
-   `contract: "0.1.31"`. Counsel hunts the design → RATIFY / W-C /
-   BOUNCE; rule every condition into an addendum; republish.
-3. **Build to the boards** — wire lanes first (Fedaykin by file
-   ownership; tests through the real seam, never only SQL-seeded), then
-   face lanes; every new service entry point needs a production CALL
-   SITE. Each face's rig SEEDS the state the board shows, OPENS the
-   surface, ASSERTS the tokens, SHOOTS; the orchestrator Reads the shot
-   beside the board and bounces with specifics.
-4. **Counsel on the built phase** — pay every condition or rule it,
-   with the owner's questions carried forward.
-5. **Docs** — a dedicated docs story; verify markers in README,
-   USER_GUIDE, ARCHITECTURE, SECURITY, MCP_SIDECAR, POSITIONING;
-   regenerate `docs/api-surface.json` and the MCP sidecar doc when
-   routes/tools change.
-6. **The walk on his desk** — a runner (`tests/e2e/liveNNN_walk.py`)
-   against his real hub, EVERY write denied by a guard that prints its
-   decision table, `HUB SERVES NO BUNDLE` on a hub without a build,
-   never beside the parallel suite. Read the shots.
-7. **The suite in CI shape** — see §6; classify every failure into the
-   final-summary (inherited · flaky family · branch-new-and-paid).
-8. **Close** — `final-summary.md` with the gates; status COMPLETE; the
-   project README "Last updated"; this handover; memory; PR; his word;
-   merge with a merge commit; sync.
+1. **Charter** — story files, `current-phase-status.md`, the value-era
+   question first ("will you use this on a Tuesday?"). Author PMO directly.
+2. **Design on the canvas BEFORE build** — settled-design doc (D0 the
+   Tuesday moment · D1 laws · D2 faces element by element with species
+   · D3 wire with file:line · D4 counsel's hunts · D5 the walk · honest
+   sizes) + `.dc.html` boards at 1440 and 393; counsel hunts the design;
+   his word. **Check the design's file pointers against the tree** —
+   175's design pointed the Settings section at `MeetingsConfig.tsx`
+   (the Meetings window's gear panel) while the BOARD was Settings →
+   Meetings (`SettingsCore` `case "meetings"`); a lane built the wrong
+   face first. The board wins; the pointer is a hint.
+3. **Build to the boards** — wire lanes first, then face lanes, ONE
+   FACE PER LANE in the same tree with STRICT FILE OWNERSHIP (name every
+   file each lane owns; a shared file is a collision). Every face's rig
+   SEEDS through the real seam, OPENS the face, ASSERTS the artboard,
+   SHOOTS both widths; the orchestrator Reads every PNG beside the board
+   and bounces with specifics (175: A 2 rounds, B 4, C 3, D 3).
+   **A replacing face never loses a working verb** — the old group's
+   TESTS name its behaviours (Edit/Disable/Remove); read them before
+   retiring anything.
+4. **Counsel on the built phase**, then FIX LANES by ownership, then
+   counsel's RE-READ. Expect a bounce: 175's spine (record vs arm,
+   a dead Cancel, re-arm on refresh) only fell to counsel with
+   reproductions. Rule what is his to rule and carry it.
+5. **Docs** — a dedicated docs story; verify-at-build markers paid
+   against the SHIPPED tree (a docs worker reading mid-edit files writes
+   fiction — run it after the faces settle); shots for the guide go
+   under `docs/assets/`, never linked into `pm/roadmap/` (the drift
+   guard); no dashes in prose (the vocabulary guard; a date range uses
+   a hyphen in source).
+6. **The walk on his desk** — `tests/e2e/liveNNN_walk.py`, every write
+   denied with a printed decision table, refuses a hub without a
+   bundle, never clicks "Continue later" (a write), never beside the
+   parallel suite; `configure-settings` then the Meetings row's `Open`
+   is the real path into Settings → Meetings. Redact the token in the
+   capture. Then census his DB read-only for anything the walk should
+   not have touched.
+7. **The suite in CI shape** — see §6 commands; classify every failure
+   (inherited · xdist-only · mid-edit → re-run serially · paid). Run it
+   when NO lane is editing, or classify twice.
+8. **Close** — final-summary.md with the gates; COMPLETE; the project
+   README "Last updated"; this handover; memory; PR out of draft; his
+   word; `gh pr merge --merge`; sync main; `npm ci` if web deps moved.
 
 ## 6. Commands that matter
 
 ```bash
 # orientation
-.githooks/dw next holdspeak ; .githooks/dw check holdspeak
+.githooks/dw next holdspeak ; .githooks/dw check holdspeak ; git reflog -3   # reflog BEFORE every verification run
 # a story
-.githooks/dw story status holdspeak phase-175-calendar-and-the-clock HS-175-06 in-progress
-.githooks/dw evidence capture holdspeak <phase-dir> HS-175-06 -- bash -c '<command>'   # zsh: always bash -c
-.githooks/dw story status holdspeak <phase-dir> HS-175-06 done
-# a commit (stage FIRST, then the contract, flip every box, commit; never --no-verify)
-git add … && .githooks/dw contract new --story HS-175-06 --force --tests-capture <evidence.md>
-sed -i '' 's/^- \[ \] /- [x] /' .tmp/CONTRACT.md && git commit
-# the suite in CI shape (prefer -n auto; live walks NEVER beside it)
-HOME_REAL=$HOME; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright \
-  npm_config_cache=$HOME_REAL/.npm uv run pytest -q --ignore=tests/e2e/test_metal.py -n auto -p no:cacheprovider -rf > suite.log
-# web baseline
-uv run python scripts/check_web_baseline.py --run
-# a worktree for a stacked branch (the law once the next phase is active in the main tree)
-git worktree add <scratch>/wt175 feat/calendar-clock
-PYTHONPATH=<scratch>/wt175 HOME=$(mktemp -d) /Users/karol/dev/tools/HoldSpeak/.venv/bin/python -m pytest -q …
-cp -R holdspeak/static/_built <scratch>/wt175/holdspeak/static/_built    # a hub needs the bundle (gitignored)
-# the hub for a walk
-cd web && npm run build && cd .. && nohup uv run holdspeak web --no-open &
-uv run python tests/e2e/live174_walk.py --hub "$(cat <scratch>/hub-url.txt)"   # URL+token live ONLY in the scratchpad
-# merging (three separate steps; never chain a merge after a watch)
-gh pr view N --json mergeable,mergeStateStatus ; gh pr merge N --merge ; gh pr edit N+1 --base main
+.githooks/dw story status holdspeak <phase-dir> HS-NNN-NN in-progress
+.githooks/dw evidence capture holdspeak <phase-dir> HS-NNN-NN -- bash -c 'set -o pipefail; <command> 2>&1 | tail -3'   # pipefail, or a green tail hides a red exit
+.githooks/dw story status holdspeak <phase-dir> HS-NNN-NN done
+# restore what rigs and the scanner rewrite under OTHER phases, right before staging, every time
+git status --short | grep '^ M pm/roadmap/holdspeak/phase-1' | grep -v <this-phase> | awk '{print $2}' | xargs -r git checkout --
+# a commit (stage FIRST, then the contract, flip every box, commit; never --no-verify; two flips need .tmp/BUNDLE-OK.md)
+git add … && .githooks/dw contract new --story HS-NNN-NN --force --tests-capture <evidence.md>
+sed -i '' 's/^- \[ \] /- [x] /' .tmp/CONTRACT.md && git commit -F <msgfile>
+# the suite in CI shape (detached — the tool's 10-min cap kills a 30-min run; poll a .done file)
+HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright npm_config_cache=$HOME_REAL/.npm PUPPETEER_CACHE_DIR=$HOME_REAL/.cache/puppeteer \
+  uv run pytest -q --ignore=tests/e2e/test_metal.py -n auto -p no:cacheprovider -rf > suite.log; echo done > suite.done
+# mermaid render guard needs PUPPETEER_CACHE_DIR from the real home under an isolated HOME
+# web baseline · ratchet · api surface · schema snapshot (regen with the normalizer in tests/unit/test_db.py, never by hand)
+uv run python scripts/check_web_baseline.py --run ; uv run pytest -q tests/unit/test_ux_canon_ratchet.py ; uv run python scripts/gen_api_surface.py
+# the hub for a walk (URL+token ONLY in the scratchpad)
+nohup uv run holdspeak web --no-open > hub.log & ; lsof -nP -iTCP -sTCP:LISTEN | grep python   # the log stays silent; find the port
+# merging — three separate steps
+gh pr ready N ; gh pr view N --json mergeable,mergeStateStatus ; gh pr merge N --merge
 ```
 
-Read the pass line before every flip: a `-k` expression written as one
-identifier deselects everything and still exits 0; an unsplit `$FILES`
-in zsh exits 4 with nothing run.
+## 7. The laws in one screen (long form: UX-CANON.md, CONSTITUTION.md, memory)
 
-## 7. The laws in one screen (the long form is UX-CANON.md and memory)
-
-- The Constitution (`docs/internal/CONSTITUTION.md`) above all; cite
-  articles. UX-CANON is the face canon; POSITIONING the voice.
-- Every verb is the library Button (ghost-dense is a species, not a
-  bounce); no prose; no modals — edit in-world; no counters of zero; ONE
-  count everywhere; the lead slot is the source emblem; no clipped text;
-  one egress vocabulary THIS DEVICE · LAN · host · REMOTE; hosts RECORDED
-  at run time, never resolved from config; receipts wear human labels
-  (SWEEP · STEWARD RUN · READ <noun>); Dismiss never Drop; a mic on every
-  text input; the ratchet never rises.
-- Ledger, not gate: the kernel is a flight recorder; ceremony only where
-  it buys a receipt, provenance or undo. Open throttle by default; the
-  hard boundary is custody, People refusals, egress badges, receipts.
-- Never delete — park (BACKLOG.md). Migrations stay minimal and
-  additive; INSERTs name their columns (a fence enforces it).
-- The owner's real DB is read-only to every agent; local pytest reaches
-  it through `Path.home()` — always isolate HOME.
-- No hub token in the repo (`grep -r uMcN` before a commit); no real
-  `gh`/`acli` calls in tests; no cloud probes; no hosted relay.
+- The Constitution above all; UX-CANON is the face canon; POSITIONING
+  the voice (now with the STE policy: no dashes in prose).
+- Every verb the library Button; no prose; no modals; no counters of
+  zero; ONE count everywhere; the lead slot is the emblem; egress
+  exactly where it happens; receipts wear human labels; a mic on every
+  text input; the ratchet never rises; the name said once per face
+  (two identical captions on one face is a defect — 175's THIS WEEK).
+- Ledger, not gate; open throttle; the hard boundary is custody, People
+  refusals, egress badges, receipts. A scheduled recording records.
+- Never delete — park (BACKLOG.md). Migrations additive; INSERTs name
+  columns; regenerate the canonical schema snapshot in the same commit.
+- **NO GIT VERB THAT MOVES THE TREE, FROM ANY WORKER, EVER** (stash,
+  reset, checkout --, restore, clean, switch). 175's scar: a lane ran
+  `git stash` to measure a before-count and dropped it; ten files of
+  three lanes reverted. Recovery: `git fsck --no-reflogs --unreachable
+  | grep commit` finds the dropped stash; `git show <sha>:<path> >
+  <path>` only over paths at HEAD. Read `git reflog -3` before every
+  verification run; grep worker transcripts for git verbs when in doubt.
 - Workers run scoped tests; the orchestrator runs the suite and owns
-  every gate and every git verb.
-- Screenshot-walk on the real hub at 1440 and 393 before claiming a face
-  done; a hollow walk (hub serving "build missing") counts as nothing.
-- Scars become laws: write them into UX-CANON.md and memory the same day.
+  every gate and git verb. Rigs and the canon scanner REWRITE other
+  phases' PNGs and the 170 census — restore before staging.
+- The owner's real DB is read-only to every agent; a walk writes
+  nothing; a rig seeds only an isolated HOME. Anything a test seeds into
+  his DB is a scar (167/168's was found and removed on his deferral).
+- Line-anchored fences (`test_phase143_*` censuses, the surface-fallback
+  census + its artifact under phase-143's assets, `test_hs169_wire`,
+  the schema-version floor tests) MOVE whenever the files they anchor
+  change; pay them in the same commit, never by deleting assertions.
+- A capability census matches inference vocabulary by NAME (`rebind`,
+  `dispatch`, …) — do not name a repository method with one.
+- Scars become laws the same day: UX-CANON.md, this file, memory.
 
 ## 8. Where things live
 
-- Roadmap: `pm/roadmap/holdspeak/README.md` (current phase link),
-  `THE-TUESDAY-ARC.md` (the road to 180), `BACKLOG.md` (the parking lot),
-  `PMO-CONTRACT.md` (the gate rules).
+- Roadmap: `pm/roadmap/holdspeak/README.md`, `THE-TUESDAY-ARC.md` (the
+  road to 180), `BACKLOG.md` (the parking lot; 175's P2 ledger is there),
+  `PMO-CONTRACT.md`.
+- 175: `pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/` —
+  `final-summary.md` (gates + the seven rulings), `assets/settled-design-
+  calendar-clock.md` (Addendum 1 counsel's conditions; Addendum 2 the
+  build rulings B1–B17), `assets/counsel-on-built-175.md` + `-reread.md`,
+  `assets/hygiene-census-175.md`, the shots under `assets/story-0N-shots/`.
 - Canon: `docs/internal/CONSTITUTION.md`, `UX-CANON.md`, `POSITIONING.md`.
 - This log: `docs/internal/project-rooms/HANDOVER-MUADDIB.md`.
-- Design canvases: 171 `82c55045…`, 172 `b153c331…`, 173 `9f1558b4…`,
-  174 `5719ec5d…`, 175 `113102aa…` (all `https://claude.ai/code/artifact/<id>`).
-- Memory (Claude Code auto-memory, index `MEMORY.md`): the feedback
-  files are his rulings; the project files are per-phase state; the
-  reference files are the gotchas (xdist starvation, the effect ledger
-  tombstone, the double-prefixed legacy profile ids, the .43 endpoint).
-- Ephemeral (dies with the session): the scratchpad worktrees wt171/2/3/5,
-  `hub-url.txt`, the seeded canvas `.html` files, suite logs.
-  Re-create worktrees from the branches; never look for these in the repo.
-- The .43 box: llama.cpp at 192.168.1.43:8080 (Q6); sandboxed Bash cannot
-  reach the LAN — live proofs run from an unsandboxed shell.
+- Canvases: 171 `82c55045…`, 172 `b153c331…`, 173 `9f1558b4…`, 174
+  `5719ec5d…`, 175 `113102aa-7bc9-4508-a334-79e22d542155`
+  (`https://claude.ai/code/artifact/<id>`).
+- Memory: `MEMORY.md` index; `feedback_*` = his rulings; `project_*` =
+  per-phase state; `reference_*` = gotchas (the git-stash scar, the
+  walk seeds, xdist starvation, the effect-ledger tombstone, the
+  double-prefixed legacy ids, the .43 endpoint).
+- Ephemeral: the scratchpad (worktrees, `hub-url.txt`, suite logs,
+  counsel's repro scripts) dies with the session.
+- The .43 box: llama.cpp at 192.168.1.43:8080; sandboxed Bash cannot
+  reach the LAN.
 
 ## 9. Your first hour
 
-1. Read this section, then `git log --oneline -30 main`, then
-   `pm/roadmap/holdspeak/README.md` and the 174/175 status files.
-2. Main holds 170–175. Put 175's seven questions (final-summary.md §Owed) in front of him at his sitting, with his attended walks (170–175) still owed. If the road continues: charter 176 The Speak Loop on his word (scaffold in pm/roadmap/holdspeak/phase-176-…), design on the canvas first.
-3. Ask him nothing you can read; put the §4 questions in front of him
-   once, in one list, when he sits.
-4. If the road continues: 175's faces first, to the ratified boards,
-   one lane per face, shot beside the board. If he says stop: leave the
-   tree exactly as §1 describes and update this section.
+1. Read this section, `git log --oneline -20 main`, `pm/roadmap/holdspeak/
+   README.md`, 175's `final-summary.md`. `cd web && npm ci`. Re-create
+   `.claude/agents/opus-worker.md` if it is missing (Opus, not Fable).
+2. Ask him nothing you can read. What is his: the attended walks
+   (170–175), the queued "Already titled" job, 172–174's questions.
+3. If the road continues: charter 176 The Speak Loop on his word —
+   dictation as a daily tool (the correction taught once and kept; the
+   journal as a stream; the voice law on every input; the desk answering
+   the hand). Canvas first; counsel on the design; his word; then build
+   by the loop in §5. If he says stop: leave the tree on main, update
+   this section, write memory.
 
 ## Muad'Dib XV — 2026-09-05 late, 175 RESUMED on his word; the four faces BUILT
 
