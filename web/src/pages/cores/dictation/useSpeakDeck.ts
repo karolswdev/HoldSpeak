@@ -552,6 +552,9 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
     readinessConfig,
     readinessTarget,
     pipelineOn,
+    // HS-200-04: re-read readiness after the owner configures a model, without
+    // reloading the page (a reload would drop the utterance in the well).
+    refreshReadiness: readiness.reload,
     // derived
     actions,
     previewOnly,

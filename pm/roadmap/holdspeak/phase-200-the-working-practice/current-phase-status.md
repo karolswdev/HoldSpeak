@@ -1,6 +1,6 @@
 # Phase 200: The Working Practice
 
-**Last updated:** 2026-09-06 — HS-200-01, 02, 03 DONE (the baseline; runtime identity + the owner lock + restore on a copy; the release checks: 47 identities reproduced, 34/35 CI failures repaired without a weakened assertion, the critical-journey suite as its own CI job); HS-200-04 first value and model readiness in progress.
+**Last updated:** 2026-09-06 — HS-200-01–04 DONE (the baseline; runtime identity + the owner lock + restore; the release checks; first value cold + the real task probe + four repair states + return-to-task); HS-200-05 physical voice and custody in progress (its physical beats are his walk).
 **Status:** planning. Forty stories defined; zero implementation stories completed.
 **Product owner:** Karol.
 **Delivery owner:** unassigned until implementation starts.
@@ -41,8 +41,8 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-01 | Establish the integration baseline and obligation map | done | [story-01](story-01-baseline-and-obligation-map.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-200-02 | Expose loaded runtime identity and prove restore | done | [story-02](story-02-runtime-identity-and-restore.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-200-03 | Make release checks isolated and actionable | done | [story-03](story-03-ci-isolation-and-release-contract.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-200-04 | Make first value and model readiness work cold | in-progress | [story-04](story-04-first-value-and-model-readiness.md) | — |
-| HS-200-05 | Prove physical voice capture, correction, and custody | backlog | [story-05](story-05-physical-voice-and-custody.md) | — |
+| HS-200-04 | Make first value and model readiness work cold | done | [story-04](story-04-first-value-and-model-readiness.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-200-05 | Prove physical voice capture, correction, and custody | in-progress | [story-05](story-05-physical-voice-and-custody.md) | — |
 | HS-200-06 | Separate citation, factual support, and acceptance | backlog | [story-06](story-06-claim-support-semantics.md) | — |
 | HS-200-07 | Make incomplete attention coverage explicit | backlog | [story-07](story-07-coverage-and-partial-results.md) | — |
 | HS-200-08 | Establish repeatable live-model quality evaluation | backlog | [story-08](story-08-semantic-evaluation-harness.md) | — |
@@ -80,6 +80,31 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-40 | Close Phase 200 on outcomes and release evidence | backlog | [story-40](story-40-release-and-phase-close.md) | — |
 
 ## Where we are
+
+2026-09-06 (night, later): HS-200-04 DONE — cold first value proven and
+fenced (Speak and FirstWords read no readiness; Copy and Keep need no
+LLM); a real task probe (`POST /api/concierge/probe {task:true}`, the
+PROBE row's `Test`) through the same adapter Ask uses, recording the
+serving deployment, the winning boundary and the host, refusing an
+off-machine route by name until confirmed (the LIVE LAN probe is his
+attended beat); four NEEDS YOU repair states on the Concierge with one
+verb each (MODEL FILE MISSING · Download; ENDPOINT UNREACHABLE · Check;
+TOOL INCOMPATIBLE · Choose; CREDENTIAL EXPIRED · Connections) — his live
+condition is CREDENTIAL EXPIRED on the migrated intel endpoint; a real
+defect fixed: every "Set up AI" handoff navigated to /settings and lost
+the Thought — the Concierge now opens over the task and applying
+announces settings-updated so the Speak face refreshes readiness;
+another: detect never emitted baseUrl so the endpoint probe never had a
+target. The eight fences that moved paid (9c143f0a) without a budget
+raised. Then: the CI-shape suite at `cbd8049d` (`-n auto`, isolated
+HOME, run beside story 04's building lane): 25 failed / 10308 passed / 97
+skipped / 1 error. The twelve formerly inherited failures are GONE (03's
+repairs hold). Remaining: 17 rigs (to re-run serially once no lane edits;
+the 175/176 families and the hs14x/15x set), 7 fences that moved with
+stories 02/03 (the build ledger, the backend density guard on
+web_runtime.py, a dash in a doc, the ask v1 contract hash, one-path
+cardinality, the two phase-143 censuses) — a fence lane is paying them —
+and one setup error (test_loop_detail_404_then_ok) to classify.
 
 2026-09-06 (evening): HS-200-03 DONE — the CI ledger
 (assets/ci-ledger-2026-09-06.md: 35 CI + 12 local identities reproduced,

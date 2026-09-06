@@ -99,6 +99,12 @@ See [Security & Privacy](SECURITY.md) before you enable remote access.
 4. Edit the transcript if necessary.
 5. Select **Copy** or **Keep as Note**.
 
+This step requires no model and no configured AI service.
+Type the sentence instead when a microphone is unavailable.
+**Copy** and **Keep as Note** become available as soon as the text field contains text.
+A setup verdict of `needs_attention` or `blocked` describes later AI work.
+It does not withhold this first sentence.
+
 The first completion creates six drawers: Inbox, Personal, Work, Meetings, Decisions, and Reference.
 It also creates a Start here Note and the **Everyday context** prompts.
 These prompts contain questions and examples. They contain no inferred personal facts.
@@ -137,7 +143,11 @@ See [The Desk](WEB_DESK.md) for windows, objects, and navigation.
 
 Use **Adjust** when an individual capability needs a different assignment.
 A cloud **Check** can make a paid request. Its control shows the cost indicator.
+Select **Test** under the proposed set to run one real request through the assigned route.
 See [Models](MODELS.md) for setup requirements and readiness failures.
+
+Opening **Models** from an unfinished task opens it as a window over that task.
+The task keeps its text. Readiness is re-read when you apply a set with **Use these**.
 
 ## Start an Interview
 

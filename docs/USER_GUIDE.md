@@ -1579,6 +1579,35 @@ appears only when you pick it in the picker.
 **Use these** (the one primary verb) writes the whole set in one step. It is
 disabled until every group is **READY** or explicitly **OFF**.
 
+### NEEDS YOU: the repair states
+
+When something an assigned group depends on is not usable, a **NEEDS YOU**
+section appears above **FOUND**. Each row names the state, the affected
+capability groups, the host where the repair happens, and carries one verb:
+
+| State | Verb | Where it takes you |
+|---|---|---|
+| **MODEL FILE MISSING** | **Download** | The Model Library acquisition for that model. |
+| **ENDPOINT UNREACHABLE** | **Check** | The endpoint field, on that address. |
+| **TOOL INCOMPATIBLE** | **Choose** | That group's engine list, in place. |
+| **CREDENTIAL EXPIRED** | **Connections** | Settings, Connections. |
+
+The rows come from assigned routes and connected sources, so every row is
+something the product will actually hit. An engine that several groups share
+appears once and names those groups. When nothing needs you the section is
+absent.
+
+### Test: the task probe
+
+**Test**, on the **PROBE** row under the set, sends one short real request
+through the route your assignment resolves to and reports the model that
+answered, the time it took, and the host it reached (`THIS DEVICE` when
+nothing left the machine).
+
+When the route's first destination is off this machine, the first **Test**
+refuses and names the boundary; a paid destination also shows `1 TOKEN · $`.
+Selecting **Test** again runs it. Nothing is sent before that.
+
 ### Adjust
 
 Choose **Adjust** (the ghost verb by the set's caption) and the full
@@ -1612,6 +1641,13 @@ when nothing is found). **Cancel** appears when the set has unsaved changes.
 The headline reads `No engine yet`. The FOUND section lists catalog presets
 as **Download** rows and the `Add an engine...` entry. **Use these** is
 disabled. One path forward: download a preset or add an engine, then apply.
+
+### Coming back to an unfinished task
+
+Opening **Models** from a Thought, an Interview step, or a Speak utterance
+opens it as a window over that work. The task keeps its text. When you apply a
+set with **Use these**, the face you came from re-reads readiness by itself:
+no page reload, and nothing configured twice.
 
 The full reference for model files, endpoints, and providers is
 [Models (bring your own)](MODELS.md).
