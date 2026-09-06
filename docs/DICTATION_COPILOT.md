@@ -183,10 +183,11 @@ at any local or LAN [OpenAI-compatible / GGUF / MLX endpoint](./MODELS.md)):
 ```
 
 The endpoint and model are not dictation config fields. Add the endpoint once
-in **Settings > Models > Model Library** and select it for **Writing &
-dictation** in **Assignments**; assigning it also selects the
-`openai_compatible` backend. Set or replace its key in Model Library; the environment
-variable `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless fallback.
+in **Settings > Models** and select it for **Writing &
+dictation** in the Concierge set. Apply the set with **Use these**.
+The assignment also selects the
+`openai_compatible` backend. For keyed providers, use the owner Model Library API described in [Models](MODELS.md).
+The environment variable `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless fallback.
 
 </details>
 

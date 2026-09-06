@@ -283,14 +283,15 @@ Notes:
 For local-first capture plus remote intel on your LAN:
 
 1. Run an OpenAI-compatible endpoint on homelab (for example vLLM/Ollama-compatible API).
-2. Add it in **Settings > Models > Model Library** with the endpoint's
-   `http://host:port/v1` URL.
-3. Select that model for **Meetings** in **Assignments**. Deferred intelligence
-   remains enabled, so meetings continue when the homelab is temporarily
-   unavailable.
-4. Set the model profile's key in Model Library and run `holdspeak doctor` to
-   preflight reachability and availability. `HOLDSPEAK_PROFILE_<ID>_KEY`
-   remains a headless fallback.
+2. Open **Settings > Models**.
+3. Add the endpoint through **Add an engine...** if it is a keyless compatible endpoint.
+4. Select the model for **Meetings** in the Concierge set.
+5. Select **Use these** to apply the set.
+6. Run `holdspeak doctor` to inspect readiness.
+
+For keyed providers, use the owner Model Library API or documented headless credential fallback.
+See [Models](MODELS.md) for those paths.
+Deferred intelligence remains enabled when the model host is temporarily unavailable.
 
 ### What It Extracts
 
@@ -563,8 +564,9 @@ Configuration file: `~/.config/holdspeak/config.json`
 
 The browser Settings surfaces are the preferred editor. This representative
 `meeting` block shows the supported low-level controls most often needed for
-capture, intelligence, routing, and connectors. Model placement itself belongs
-in Model Library and Assignments, not in hand-authored endpoint fields.
+capture, intelligence, routing, and connectors.
+The model services store availability and assignments.
+Use the Concierge for current model setup. See [Models](MODELS.md).
 
 ```json
 {
@@ -780,11 +782,10 @@ Send `"ping"` text message, receive `"pong"` response.
 
 1. Run `holdspeak doctor` and check the `Cloud intel preflight` line.
 2. If it reports DNS/connection failures, verify the homelab hostname/IP, LAN routing, and firewall.
-3. If it reports auth failures (HTTP 401/403), check the model profile's key in
-   **Settings > Models > Model Library**. For a headless hub, check its
-   `HOLDSPEAK_PROFILE_<ID>_KEY` fallback.
+3. If it reports an authentication failure, check the model profile's credential configuration.
+   See [Models](MODELS.md) for owner API and headless credential paths.
 4. If it reports model mismatch, set that profile's model to one of the model IDs exposed by `/models`.
-5. Verify that profile's base URL starts with `http://` or `https://` and includes the right API prefix (commonly `/v1`). **Probe** in Model Library tests reachability.
+5. Verify that profile's base URL starts with `http://` or `https://` and includes the right API prefix (commonly `/v1`). **Check** in the Concierge tests the selected engine.
 
 ### Transcription quality is poor
 

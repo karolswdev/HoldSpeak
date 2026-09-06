@@ -1,15 +1,19 @@
 # Control modes, decisions, and grants
 
-HoldSpeak separates three questions that used to hide behind one proposal
-status:
+Use Control mode to choose how future operations request authority.
+The default is **YOLO**, which permits eligible effects within configured scope without another HoldSpeak approval prompt.
 
-- `ReviewDecision`: is the content accepted or dismissed?
-- `AuthorizationState`: may the described effect happen?
-- `ExecutionState`: has an executor started, succeeded, failed, or become unavailable?
+HoldSpeak records content review, authorization, and execution separately:
 
-Approving an effect does not claim that it ran. Every proposed action API returns
-all three axes, its typed operation, the policy snapshot used for the decision,
-and a commitment label such as **Approve and send to Slack**.
+| State | Question |
+| --- | --- |
+| `ReviewDecision` | Is the proposed content accepted or dismissed? |
+| `AuthorizationState` | May this effect occur? |
+| `ExecutionState` | Did execution start, complete, fail, or become unavailable? |
+
+An accepted proposal does not prove that its effect ran.
+Inspect the execution state and Receipt before you report completion.
+The operation's commitment label describes the intended effect, such as **Approve and send to Slack**.
 
 ## Control mode
 
@@ -74,3 +78,18 @@ Authentication, secret custody, destination binding, payload binding, pane
 identity, audit receipts, configuration integrity, and schema safety run in all
 three modes. YOLO reduces repeated confirmation only inside authority the owner
 already bounded; it is not a bypass.
+
+## Troubleshooting
+
+| Problem | Action |
+| --- | --- |
+| Approval did not produce the expected result | Inspect execution state and the terminal Receipt. Resolve the named executor failure. |
+| A reusable grant stopped working | Check expiry, use count, destination changes, revocation, and Control mode changes. |
+| A Coder delivery is refused | Check the current pane identity and the applicable grant or mode. |
+| YOLO does not admit an operation | Read the refusal. Unsupported families and hard invariants still apply. |
+
+## See also
+
+- [Automation](AUTOMATION.md): triggers and execution paths.
+- [Threads](USER_GUIDE.md#the-thread-has-hands): per-tool policy and Thread admission.
+- [Security & Privacy](SECURITY.md): credentials and data boundaries.

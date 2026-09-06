@@ -1,156 +1,85 @@
-# Places to think: the night collection
+# Places
 
-Eight authored Three.js worlds form one collection: the original Rainy City and
-Lantern Garden alongside six interiors. Quiet Desk remains a separate still option.
+Choose an environment for the Floor and save your favorites.
+Use **Settle in** when you want fewer navigation controls around your open work.
 
-| Environment | Setting and ambient movement | Product-linked detail |
-| --- | --- | --- |
-| Rainy City | Rain, neon, steam and warm street reflections | Streetlamp gently warms during real capture |
-| Lantern Garden | Wet flagstones, planted borders, drifting drizzle and warm lanterns | Lanterns gently brighten with real capture |
-| After-Hours Radio | Walnut booth, rainy skyline, warm desk lamp | On-air light, recording tape reels, capture-level meters |
-| Midnight Archive | Receding card cabinets, green banker lamps, dust | Pneumatic-tube lamp acknowledges newly added Desk objects |
-| Night Train | Green compartment seats, passing trees and station lights | Quiet capture indicator |
-| Deep-Sea Station | Blue observation port, drifting marine life, sonar | Sonar intensity responds to capture |
-| Storm Greenhouse | Iron rafters, terracotta pots, rain, violet cloud light | Subtle capture-level reflection |
-| Last Laundromat | Mint tiles, moving drums, fluorescent and vending-machine light | Quiet capture indicator |
+## Change places
 
-These are decorative scenes, not new object models. Existing Pixi objects,
-selection, dragging, and windows remain above the non-interactive background.
-Scenes observe existing capture and Desk stores; they never acquire a microphone,
-fetch work data, or invent product events. The Chair is unchanged.
+1. Open **Places** from the dock or **Go > Change places**.
+2. Select an environment.
+3. Select **View on Floor** if you want to switch from Chair to Floor.
 
-## Controls
+The picker changes the Floor immediately.
+Selecting a place preserves your work and object positions.
+You can also open the picker with **Command/Ctrl+Shift+P** or **Settings > Wallpaper**.
+Arrow keys and Home/End change the selected place.
 
-**Places** in the Desk dock, **Go → Change places**, or **⌘/Ctrl+Shift+P** opens
-a native window with all nine choices, including Rainy City, Lantern Garden, and
-Quiet Desk. The same picker remains in Settings → Wallpaper. Rainy City is the
-default. Arrow keys and Home/End select scenes and update the Floor live.
+## Available places
 
-Star places to keep browser-local favorites, then use the Favorites filter.
-Favoriting does not switch scenes; selecting a scene does not rearrange work or
-switch from Chair to Floor. **View on Floor** makes that switch explicitly.
+Rainy City is the default. Eight animated scenes and one still option are available.
 
-- Animation can be paused. OS reduced-motion preferences take precedence.
-- Room sound is off by default. Opting in enables quiet locally synthesized room
-  tone; there are no downloaded sound samples. It fades out while the browser
-  microphone is open or the hub reports recording, and suspends in hidden tabs.
-- Quiet Desk has no animated scene or room sound.
-- Scene, favorites, animation, and sound choices are browser-local, not hub settings.
+| Place | Scene |
+| --- | --- |
+| Rainy City | Rain, neon signs, steam, and street reflections |
+| Lantern Garden | Wet stone paths, plants, drizzle, and lanterns |
+| After-Hours Radio | A walnut radio booth with a rainy skyline |
+| Midnight Archive | Card cabinets, green lamps, and dust |
+| Night Train | A green train compartment with passing trees and station lights |
+| Deep-Sea Station | An observation port with marine life and sonar |
+| Storm Greenhouse | Iron rafters, terracotta pots, rain, and cloud light |
+| Last Laundromat | Mint tiles, moving drums, and fluorescent light |
+| Quiet Desk | A still background without room sound |
 
-**Settle in**, in the same dock or Desk menu, quiets navigation and shelf chips.
-Use **⌘/Ctrl+Shift+F** to toggle it, or **Escape / Back to Desk** to restore the
-full chrome. The first Escape restores the Desk without also closing the focused
-window or draft. Open work and the existing recorder stay mounted. The mic lamp,
-connection/privacy indicators, recording state, and record/stop control remain
-available; phone sheets leave room for the quiet shelf. Settle in never starts or
-stops recording, enables sound, or moves work. It resets on reload or leaving the
-Desk; it is not a saved layout.
+The scenes are decorative. Capture indicators can respond to the existing recorder state.
+The scenes do not acquire a microphone or start product work.
 
-The common lifecycle suspends animation in hidden tabs and disposes GPU/audio
-resources on scene changes. Each scene is lazy-loaded and uses capped render
-resolution; interiors also batch static geometry by material. The outdoor scenes
-preserve their authored composition and independent weather while sharing the
-same selection, sound, capture observation, and reduced-motion lifecycle.
+## Save favorites
 
-## Review and verification
+Select the star beside a place to add or remove a favorite.
+Use the **Favorites** filter to show your selected places.
+The star changes the favorite state. It does not select the place.
 
-From `web/`, with a supported Node version:
+The selected place, favorites, animation preference, and sound preference are local to this browser.
+They survive a reload but do not become shared hub settings.
 
-```sh
-npm run dev -- --host 127.0.0.1 --port 4322
-```
+## Control motion and sound
 
-Open <http://127.0.0.1:4322/_built/atmospheres.html#rainy-city> to browse all
-eight scenes without a hub. Choosing a preview does not save it until **Use on my
-Floor** is pressed. This dev-only entry uses the actual production scene modules.
+You can pause animation in the picker.
+The operating system's reduced-motion preference takes precedence over the animation setting.
+Hidden tabs pause the scenes.
 
-In another terminal, from `web/`:
+Room sound is off by default.
+When enabled, HoldSpeak generates quiet room sound locally.
+It reduces the sound while the browser microphone is open or the hub reports recording.
+It suspends sound in hidden tabs.
+Quiet Desk has no room sound.
 
-```sh
-node scripts/shoot-atmospheres.mjs
-node scripts/check-atmospheres.mjs
-npm run test:web -- src/desk/gl/__tests__ src/pages/cores/__tests__/settingsWallpaper.test.tsx src/design/AtmospherePreview.test.tsx
-npm run test:web -- src/desk/__tests__/settle.test.tsx src/pages/cores/__tests__/ChangePlacesCore.test.tsx
-npm run tokens:check
-npm run tokens:gate
-npm run guard:architecture
-npm run build
-npm run bundle:gate
-```
+## Settle in
 
-The screenshot script writes full-size PNG review images and compressed WebP
-picker assets. Both the gallery and screenshot script use the registry's complete
-scenic collection. Browser checks exercise all eight animated and paused scenes,
-wraparound, local selection persistence, and both original worlds under reduced
-motion in a 393px-wide gallery.
-The observed frame rate is local headless-browser evidence, not a hardware-wide
-performance guarantee.
+1. Select **Settle in** in the dock or Desk menu.
+2. Continue your work in the open windows.
+3. Select **Back to Desk** to restore the navigation controls.
 
-For the production-bundle interaction walk, run the preview server and then the
-check in separate terminals from `web/`:
+**Command/Ctrl+Shift+F** toggles Settle in.
+The first **Escape** restores the Desk without also closing the focused window or draft.
+The recorder state and record/stop control remain available.
+Settle in does not change recording or enable room sound.
 
-```sh
-npm exec vite preview -- --host 127.0.0.1 --port 4323
-node scripts/check-environments-floor.mjs
-node scripts/check-environments-floor.mjs --settle
-```
+Settle in resets when you reload or leave the Desk.
+It is a temporary view state, not a saved layout.
 
-This walk intercepts HTTP APIs with explicit test fixtures in an isolated browser.
-It verifies real Pixi object selection through the atmosphere layer and live
-Settings selection at desktop and phone widths. It does not test a live hub,
-authentication, or WebSocket delivery, and never writes owner Desk data.
-The `--settle` walk also verifies favorites across reload, native shortcuts,
-Escape preserving the same window and recorder nodes, and hit-tested access to
-Back to Desk and Stop above the phone sheet. Its recording state is an explicit
-external-recording fixture, not a real session. It asserts zero microphone
-requests and zero capture-action API writes.
+## Troubleshooting
 
-Evidence lives in [assets/screenshots/environments](assets/screenshots/environments/),
-including the contact sheet, desktop/phone images, and JSON browser reports.
+| Problem | Action |
+| --- | --- |
+| An animated scene stays still | Check the animation control and the operating system's reduced-motion setting. |
+| There is no room sound | Enable sound in the picker. Check whether recording or a hidden tab has suspended it. |
+| Favorites are absent in another browser | Set favorites in that browser. The preference does not synchronize through the hub. |
+| Navigation controls are absent | Select **Back to Desk** or press **Escape**. |
+| A scene is too distracting or slow | Select Quiet Desk or pause animation. |
 
-Full TypeScript checking currently encounters pre-existing errors in
-`ProjectRoomCore.tsx` and `features/project-room/setup/__tests__/model.test.ts`;
-the environment changes add no errors to that output.
+## See also
 
-## Main integration verification — 2026-09-05
-
-Refreshed PR #528 onto main `855b34cb` while preserving its original history and the newer Concierge/Settings behavior. The Settings hub now exposes Wallpaper and its live selected-place fact. Production controls use the shared Button; favorites use a decorative SVG. The browser harness includes the current Thoughts, needs-you, and Settings hub responses and opens Wallpaper through the current row UI.
-
-Actual output from the complete `npm run check`:
-
-```text
-tokens.css and tokens.gen.ts match design-tokens.json
-token gate: clean (11 allow-listed exceptions, all in use)
-React architecture guard passed (703 source files; zero framework residue).
- Test Files  233 passed (233)
-      Tests  2220 passed (2220)
-bundle gate passed (Desk JS 1255406 B; Desk CSS 297160 B; source maps 0)
-```
-
-After the final shared-control and Settings-row corrections: 16 focused control tests passed; TypeScript and a fresh production build passed. The production-browser checks were rerun at 1440 and 393 against that build:
-
-```json
-{
-  "bundle": "production",
-  "backend": "isolated HTTP fixtures",
-  "pixiSelection": true,
-  "settingsLiveSelection": true,
-  "selectedPreviewsLoaded": true,
-  "originalWorldsIncluded": true,
-  "phoneOverflow": false,
-  "errors": []
-}
-{
-  "bundle": "production",
-  "backend": "isolated HTTP fixtures",
-  "preservedWindow": true,
-  "preservedCaptureControl": true,
-  "captureReachableOverPhoneSheet": true,
-  "favoritesPersist": true,
-  "nativeShortcuts": true,
-  "escapeRestores": true,
-  "phoneOverflow": false
-}
-```
-
-Screenshots in this directory's linked assets were refreshed and inspected. Logs are in the desktop-delivery worktree's `.tmp/desktop-*` files. The browser checks use isolated HTTP fixtures and do not establish microphone hardware readiness or live-model quality. GitHub's broader Python/macOS jobs run separately; this local evidence does not claim they passed.
+- [The Desk](WEB_DESK.md): objects, windows, and navigation.
+- [Getting Started](GETTING_STARTED.md): installation and first capture.
+- [User Guide](USER_GUIDE.md): daily work on the Desk.

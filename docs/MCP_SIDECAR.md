@@ -57,13 +57,13 @@ default.
 
 ## Tool families
 
-The 214 tools are organized into domain families. Each tool follows the
+The registered tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
-### desk (52 tools)
+### desk
 
-The original surface. CRUD for desk primitives (meetings, notes, artifacts,
+The original tools cover CRUD for desk primitives (meetings, notes, artifacts,
 projects, decision records, zones, workbenches, recipes, agents, sequences,
 workflows), the pipeline observer, follow-through lanes, inference
 invocations, and the Monday Brief. Five of the `desk.*` tools
@@ -73,7 +73,7 @@ rows; the remaining 12 (including the singleton People surface) are computed,
 composite, or managed by a dedicated capability. Each description names
 which kinds it handles.
 
-### ask (4 tools)
+### ask
 
 Ask the desk a question. `ask.resolve_grounding` hydrates grounding references
 without running inference. `ask.run` submits a question through the admitted
@@ -81,7 +81,7 @@ inference path and returns the answer with its receipt. `ask.cancel` cancels an
 in-flight invocation. `ask.keep` persists an answer as a desk artifact (not
 model-invoking). Model selection is never an Ask-side MCP control.
 
-### door (2 tools)
+### door
 
 `door.get` returns one closed, read-only Dashboard Door aggregate: the board,
 active Thoughts, and a mixed upcoming timeline of calendar events (from all
@@ -97,7 +97,7 @@ Door has no MCP resource. Its
 Follow-Through People overlay respects `HOLDSPEAK_MCP_PEOPLE_ACCESS` and is
 safely empty when that encrypted disclosure capability is unavailable or off.
 
-### project (35 tools)
+### project
 
 Three read tools: `project.list` returns all projects (optionally
 including archived). `project.get` returns one project by id with room
@@ -130,12 +130,16 @@ PR number, reviewer, timestamp, and host. `nudge.dismiss` closes one pending
 nudge with no write; a 7-day cooldown starts. Both refuse nudges that are not
 in `proposed` state.
 
-Six setup interview drivers: `project.setup.start`, `project.setup.resume`,
-`project.setup.answer`, `project.setup.suggest`, `project.setup.finalize`,
-and `project.setup.clarify_jira_scope` (refines a Jira proposal's project
-keys and issue types within a setup session).
-The durable session resumes across tool calls; finalize activates atomically
-through the same ProjectService.create_from_setup seam as the web route.
+Project setup drivers include `project.setup.start`, `project.setup.resume`,
+`project.setup.answer`, and `project.setup.suggest`.
+Use `project.setup.select_proposal` and `project.setup.deselect_proposal` to
+record the chosen scope. `project.setup.test_proposal` tests it.
+`project.setup.clarify_repo_scope` and `project.setup.clarify_jira_scope`
+refine the provider scope. `project.setup.finalize` applies the chosen setup
+through the existing Project service.
+The durable session resumes across tool calls.
+The [Interview user guide](INTERVIEW.md) explains the conversation that uses
+these drivers. The generated roster below lists all current tool names.
 
 Seven graduated watch tools: `project.watch.inspect`, `project.watch.test`,
 `project.watch.evaluate`, `project.watch.set_rules`, `project.watch.pause`,
@@ -160,7 +164,7 @@ Five resource templates expose project data: `holdspeak://projects/{id}`,
 `.../room`, `.../delta`, `.../updates/{update_id}`, and
 `.../steward/runs/{run_id}`. Unknown ids refuse typed.
 
-### provider (10 tools)
+### provider
 
 Provider discovery and connection status for GitHub and Jira.
 
@@ -218,7 +222,7 @@ verification begins. It cannot change model availability or any assignment.
 Model acquisition enters through the seven Model Library commands below; model
 and agent principals receive no authority through this tool.
 
-### model library (7 tools)
+### model library
 
 Owner-only availability commands over the same Model Library application service
 as the HTTP owner API: `model_library.get`, `model_library.download`,
@@ -232,7 +236,7 @@ deletes it after the command; client paths are refused. Hosted-provider secrets
 have a dedicated write-only `secret` field and never appear in errors, logs, or
 receipts.
 
-### inference assignment (5 tools)
+### inference assignment
 
 Owner-only assignment projection and command twins over the same Assignment
 application service as HTTP: `inference_assignment.summary`,
@@ -243,7 +247,7 @@ clear preserve the canonical narrow CAS and stable command replay; replay
 returns the original committed-effect chain and hash, never a route, endpoint,
 path, secret, or binding detail.
 
-### thought (18 tools)
+### thought
 
 Develop a durable Thought through one explicit model turn. `thought.refine`
 asks one useful question using server-loaded authoritative material;
@@ -299,20 +303,20 @@ detail, `code` is the stable service code, and safe conflict context such as
 the current Thought projection is retained. Thought resource failures carry
 the same stable code in JSON-RPC `error.data`.
 
-### settings (2 tools)
+### settings
 
 `settings.get` returns the current configuration with secrets redacted
 and a `_revision` field for optimistic concurrency. `settings.update`
 applies a partial patch. Secrets and inference assignments cannot be written
 through this tool.
 
-### coder (3 tools)
+### coder
 
 Read-only inspection of coder sessions. `coder.list` lists sessions
 (optionally filtered by agent). `coder.get` returns one session by id.
 `coder.audit` reads the bounded steering audit trail.
 
-### concierge (5 tools)
+### concierge
 
 Engine detection and model assignment. `concierge.detect` returns every
 reachable engine (LAN, local, cloud, catalog presets) with hardware facts
@@ -324,7 +328,7 @@ writes the complete assignment set in one step (refuses while any group is
 WAITING and not OFF). `concierge.download` starts a catalog preset download
 through the existing Model Library download path.
 
-### cadence (11 tools)
+### cadence
 
 The cadence engine: reviews meetings, proposed actions, and waiting coder
 sessions, then prepares next actions. `cadence.status` returns the engine
@@ -335,13 +339,13 @@ closeout. `cadence.history` and `cadence.audit` read the event history.
 `cadence.apply_closeout` are safe write verbs that mutate only the local
 database.
 
-### sequence (2 tools)
+### sequence
 
 `sequence.run` runs a sequence (chain) through the admitted inference
 path. `sequence.cancel` cancels a running sequence by its parent operation
 id.
 
-### workflow (2 tools)
+### workflow
 
 `workflow.run` runs a workflow through the admitted inference path.
 `workflow.cancel` cancels a running workflow by its parent operation id.
@@ -372,7 +376,7 @@ record or commitment is created. A `proposal.dismissed` receipt is written.
 
 Both tools refuse proposals that are not `proposed`.
 
-### people (16 tools)
+### people
 
 The encrypted People ledger defaults to `write` for the local owner process.
 `people.readiness` is content-free and also works while access is explicitly
@@ -402,7 +406,7 @@ search, sync, export, connector, or employment-decision tool. Tool results are
 transient stdio disclosure to the explicitly trusted parent client; they are
 not written to HoldSpeak's plaintext database, observer, FTS, or Cadence.
 
-### heartbeat (4 tools)
+### heartbeat
 
 The Heartbeat sweep: the unattended cadence that evaluates due Watches and
 caches the needs-you aggregate. `heartbeat.status` reads the current
@@ -416,7 +420,7 @@ updates the sweep settings: `sweep_every_minutes` (1 to 1440, default
 from the notification aggregate). `heartbeat.notify_test` fires one test
 desktop notification and returns `{fired: boolean}`.
 
-### plugin_job (4 tools)
+### plugin_job
 
 `plugin_job.list` and `plugin_job.summary` read deferred plugin job state.
 `plugin_job.retry` re-queues a failed or completed job. `plugin_job.cancel`

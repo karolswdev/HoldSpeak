@@ -1,88 +1,136 @@
 # Contributing to HoldSpeak
 
-Thanks for your interest in HoldSpeak! This is a small, early-stage project —
-contributions, bug reports, and ideas are all welcome.
+Use this guide to prepare, verify, and submit a change.
+For installation without development tools, read [Getting Started](docs/GETTING_STARTED.md).
 
-## Setup
+## Set up a checkout
 
-HoldSpeak uses [`uv`](https://docs.astral.sh/uv/) for environment and dependency
-management.
+Install Python 3.10 or later, `uv`, and Node.js 22.12 or later first.
+Install the platform audio dependencies listed in Getting Started.
 
-```bash
-git clone https://github.com/karolswdev/HoldSpeak.git && cd HoldSpeak
+```sh
+git clone https://github.com/karolswdev/HoldSpeak.git
+cd HoldSpeak
+uv venv
+source .venv/bin/activate
 uv pip install -e '.[dev]'
-
-# One-time: enable the project's git hooks (see "Commit workflow" below).
 git config core.hooksPath .githooks
 ```
 
-Optional runtime extras (install what you're working on):
+The build hook installs Web dependencies and builds the bundled app.
+Use the `linux` extra on Linux when you need transcription.
+Install other runtime extras only for the capabilities you develop.
+See [Models](docs/MODELS.md) for model runtime requirements.
 
-- `.[meeting]` — meeting mode + local intel
-- `.[dictation-mlx]` / `.[dictation-llama]` / `.[dictation-openai]` — dictation LLM backends
-- `.[linux]` — `faster-whisper` for Linux transcription
+## Read the applicable contract
 
-The LLM is bring-your-own — see [`docs/MODELS.md`](docs/MODELS.md).
+| Change | Reference |
+| --- | --- |
+| Product behavior | [Constitution](docs/internal/CONSTITUTION.md) and the feature guide |
+| Web interface | [UX canon](docs/internal/UX-CANON.md) and [frontend architecture](docs/internal/ARCHITECTURE_WEB_FRONTEND.md) |
+| Runtime or meeting session | [Backend architecture](docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md) |
+| Documentation | [Writing standard](docs/internal/DOCS_STYLE.md) and [terminology register](docs/internal/DOCS_TERMINOLOGY.md) |
+| API or MCP contract | [API surface](docs/API_SURFACE.md) and [MCP sidecar](docs/MCP_SIDECAR.md) |
 
-## Running the tests
+## Update documentation
 
-```bash
-# Full suite (the metal test hangs without a real mic — always exclude it):
-uv run pytest -q --ignore=tests/e2e/test_metal.py
+New and revised prose follows the ASD-STE100 reference and the repository's product terminology.
+The writing standard defines page structure, language review, and the limits of automated checks.
 
-# Lint:
-uv run ruff check holdspeak/
+1. Verify each changed procedure against the current control, command, or service contract.
+2. Update the relevant guide in the same change as the behavior.
+3. Add new guides to [the documentation index](docs/README.md).
+4. Review language and technical terms against the writing standard.
+5. Run the applicable documentation checks.
+6. Record the results and any remaining uncertainty in the PR.
+
+For documentation changes, run from the repository root:
+
+```sh
+python scripts/check_docs.py
+python -m unittest discover -s tests/unit -p test_docs_navigation.py
+python docs/internal/architect-assistant/proof/run_tests.py -q --tb=short tests/unit/test_doc_drift_guard.py tests/unit/test_mcp_sidecar_doc_drift.py tests/unit/test_api_surface.py
 ```
 
-Run the **whole** suite before sending changes — `-k` filters miss real
-regressions. If you touch anything under `web/`, rebuild the static bundle
-(`cd web && npm run build`; Node ≥ 22.12) since some tests read the built JS.
-Before changing web pages or their scripts, read
-[`docs/internal/ARCHITECTURE_WEB_FRONTEND.md`](docs/internal/ARCHITECTURE_WEB_FRONTEND.md)
-— it records the React/Vite source boundaries, Desk surface-core pattern,
-runtime bus, design-token contract, and the architectural guards. Before changing `web_runtime.py` or
-`meeting_session/`, read
-[`docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md`](docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md)
-— the backend twin: the mixin pattern, where patch targets live, and the
-backend density budgets.
+The proof driver isolates Python home/path resolution before it imports pytest.
+It avoids the owner's application database without changing the shell's home variable.
+It is suitable for the listed Python documentation checks.
+It does not isolate arbitrary subprocesses for every possible test suite.
 
-For the runtime view — how the pieces connect and how an utterance flows
-through them, with diagrams — start at
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); the two docs above are the
-module-structure detail beneath it.
+The navigation checker verifies local links and heading targets in public Markdown.
+The drift guards compare documented counts, product terms, and generated contracts with their sources.
+These checks do not certify STE vocabulary or meaning.
+Review those manually with the official standard and the terminology register.
 
-Beyond the unit suites there is a whole-product exercise:
-[`dogfood/`](dogfood/README.md) is a self-contained harness (isolated sandbox,
-three mock repos with `.hs/` context, `say`-rendered meetings and dictation)
-with a fillable protocol ([`dogfood/PROTOCOL.md`](dogfood/PROTOCOL.md)) that
-walks every user-facing surface across a no-LLM tier and a real-metal tier.
-Run it before a release, or when you want to feel the product end to end the
-way a user does.
+After changing HTTP routes or MCP tools, regenerate the relevant reference:
+
+```sh
+python scripts/gen_api_surface.py
+python scripts/gen_mcp_sidecar_doc.py
+```
+
+Run generators and application tests in an isolated development or CI environment.
+The existing generator fixtures use temporary databases for their inventories.
+Do not use an owner's live database as test data.
+
+## Test implementation changes
+
+Run the tests that exercise the changed behavior and its integration boundaries.
+Run the complete relevant suite for broad runtime changes and release validation.
+Use the isolated CI jobs or a disposable development environment for tests that start product processes.
+
+```sh
+python -m pytest -q --ignore=tests/e2e/test_metal.py
+ruff check holdspeak/
+```
+
+The excluded test requires microphone, model, and desktop hardware.
+A type check alone does not validate runtime behavior.
+
+For changes under `web/`, run the complete Web contract from that directory:
+
+```sh
+npm ci
+npm run check
+```
+
+The command checks tokens, architecture, types, tests, the production build, and bundle limits.
+Some Python integration tests also require that built bundle.
+Use the [dogfood protocol](dogfood/PROTOCOL.md) for whole-product or release exercises.
 
 ## Commit workflow
 
-This repo gates every commit on a small "commit contract" via a pre-commit hook
-(installed by the `git config core.hooksPath .githooks` step above). Before each
-commit, write `.tmp/CONTRACT.md` from the template in
-[`pm/roadmap/PMO-CONTRACT.md`](pm/roadmap/PMO-CONTRACT.md) and check each box only
-after honestly verifying it. The hook validates and deletes the file on success;
-if it blocks you, its stderr says exactly which rule failed.
+Every commit requires a generated contract tied to the staged tree.
+Read [the contract rules](pm/roadmap/PMO-CONTRACT.md) before certifying the change.
 
-A few house rules the hook (and reviewers) expect:
+1. Stage the intended files with `git add`.
+2. Generate the contract.
 
-- **Tests ran** — actually run the suite and read the output; a type-check is not
-  validation.
-- **Docs updated** — if you change behavior, update the relevant doc in the same
-  commit.
-- No `--no-verify`.
+   ```sh
+   .githooks/dw contract new
+   ```
 
-The project's planning of record lives under
-[`pm/roadmap/holdspeak/`](pm/roadmap/holdspeak/); the documentation index is
-[`docs/README.md`](docs/README.md).
+3. Read `.tmp/CONTRACT.md`.
+4. Mark each box only after you verify its statement.
+5. Commit normally with `git commit`.
 
-## Reporting issues
+The hooks validate the staged facts and archive the successful contract.
+If you change the staged files, regenerate the contract with `--force` before committing.
+A hand-written contract or `--no-verify` bypass is not an accepted workflow.
 
-Open an issue at
-[github.com/karolswdev/HoldSpeak/issues](https://github.com/karolswdev/HoldSpeak/issues).
-For anything security- or privacy-sensitive, see
-[`docs/SECURITY.md`](docs/SECURITY.md) first.
+For roadmap work, update the associated tracking and evidence in the same commit.
+For other work, include the actual validation results in the commit or PR description.
+The [repository working agreements](CLAUDE.md) describe the complete process.
+
+## Report a problem
+
+Use the [issue tracker](https://github.com/karolswdev/HoldSpeak/issues) for reproducible product problems.
+Include the version, relevant setup, steps, expected result, and observed result.
+Remove secrets and private source content before attaching logs.
+For a security issue, read [Security & Privacy](docs/SECURITY.md) first.
+
+## See also
+
+- [Documentation index](docs/README.md): user guides and technical references.
+- [Writing standard](docs/internal/DOCS_STYLE.md): controlled English and source review.
+- [Architecture](docs/ARCHITECTURE.md): runtime and data flow.

@@ -11,13 +11,49 @@ The diagrams are Mermaid and render on GitHub. A guard
 (`tests/e2e/test_mermaid_renders.py`) checks that every block in the docs
 still renders, so a broken diagram cannot ship.
 
+## Interview and Thread state
+
+Interview composes the existing Thread conversation, model routing, and MCP services.
+It does not create a separate model runtime or a universal automation engine.
+
+| Component | Responsibility |
+| --- | --- |
+| Thread window and store | Display sent messages, streamed replies, references, and tool activity. |
+| Thread service | Run the model conversation and its tool loop. |
+| Interview section descriptors | Declare each section's purpose, tool set, and handoff. |
+| Interview service | Validate and persist facts, suggestion choices, section changes, and revisions. |
+| MCP family | Expose Interview operations through the common service contract. |
+| Existing Project services | Perform supported setup operations under their own policy. |
+
+The model chooses its question or proposed tool call.
+The controller validates the resulting operation and state change.
+These checks make state transitions predictable. They do not make model recommendations deterministic or necessarily correct.
+
+Interview state belongs to a Thread.
+Each change includes an expected revision and a command identity.
+A stale revision refuses the change. A repeated command cannot substitute a different payload.
+Source references distinguish stated facts from inferred context.
+Changed or removed facts invalidate or remove dependent suggestions.
+
+The initial capability prepares manual drafts and supports the existing Project setup path.
+General scheduled work and agent assignment through Interview remain target requirements.
+See [Interview](INTERVIEW.md) for user behavior and the
+[specification package](internal/architect-assistant/README.md) for requirements and verification limits.
+
+Implementation references:
+
+- [Section descriptors](../holdspeak/services/interview_contracts.py).
+- [Interview service](../holdspeak/services/interview_service.py).
+- [MCP family](../holdspeak/mcp/families/interview.py).
+- [Thread service](../holdspeak/services/thread_service.py).
+
 ## The shape of it
 
-HoldSpeak is one process. A web runtime (`WebRuntime`, the
-mixin-composed orchestrator in `holdspeak/web_runtime.py`) owns the
-hardware-facing pieces and a local FastAPI server (`MeetingWebServer`) that
-serves the web UI and the API. Two modes run on top of the same building
-blocks:
+The Web runtime is the main runtime process.
+`WebRuntime` owns the hardware-facing components and the local FastAPI server
+(`MeetingWebServer`) that serves the Web app and API.
+Supporting processes include the MCP sidecar and the isolated desktop typing executor.
+Dictation and Meetings use the shared runtime components:
 
 - **Dictation** turns held-key or wake-word speech into typed text. Its
   always-on pipeline routes it through local stages and uses a model only for
