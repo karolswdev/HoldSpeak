@@ -1,6 +1,14 @@
 /* HS-111-02 — correction memory is a machine table: KIND | GIST |
-   VALUE | REACH, the arming per row. REACH is the wire's `similar`
-   count — what makes the memory legible as equipment. */
+   VALUE | APPLIED, the arming per row.
+   HS-176-02 — three fixes on the live defect:
+   (1) the route serves the gist as `key` (corrections.py), never
+       `gist`, so every GIST cell on the owner's desk read a dash;
+   (2) REACH was the wire's `similar` — similar transcripts, counting
+       the teaching utterance itself. It is now `applied`: the real
+       count of retained journal rows the rule FIRED on, absent at zero
+       (rule A.8);
+   (3) the remove verb is the library Button `Forget`, not the `×`
+       glyph (rule A.1). */
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { asRows, useResource } from "../../pageSupport";
@@ -80,16 +88,16 @@ export function Memory() {
           onRetry={() => void resource.reload()}
         >
           <GadgetTable
-            head={["Kind", "Gist", "Value", "Reach"]}
+            head={["Kind", "Gist", "Value", "Applied"]}
             rows={rows.map((row) => [
-              String(row.kind ?? "—"),
-              String(row.gist ?? "—"),
+              String(row.kind ?? "—").toUpperCase(),
+              String(row.key ?? "—"),
               presentValue(row.value ?? row.replacement) || "—",
-              presentValue(row.similar) || "—",
+              Number(row.applied ?? 0) > 0 ? `${Number(row.applied)} APPLIED` : "—",
             ])}
             verbs={(index) => (
               <ConfirmVerb
-                label="×"
+                label="Forget"
                 confirmLabel="Forget?"
                 onConfirm={() => void remove(rows[index])}
               />

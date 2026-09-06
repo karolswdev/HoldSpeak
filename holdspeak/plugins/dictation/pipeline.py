@@ -13,7 +13,8 @@ from __future__ import annotations
 import time
 from collections import deque
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
+from typing import Any
+from dataclasses import dataclass, field, replace
 
 from holdspeak.plugins.dictation.contracts import (
     IntentTag,
@@ -54,6 +55,14 @@ class PipelineRun:
     warnings: list[str]
     total_elapsed_ms: float
     short_circuited: bool
+    # HS-176-02 (ruling R2): the durable ids of the corrections that ACTUALLY
+    # fired on this run — the `text` rules applied at the transcript seam below,
+    # plus the routing nudge's rule when the router marked the intent corrected.
+    # It carries a DEFAULT on purpose: `journal.passthrough_run`
+    # (`plugins/dictation/journal.py:32-49`) fakes a run with a
+    # `SimpleNamespace`, and the recorder reads this field with `getattr(...)`,
+    # so the pipeline-off path can never raise on it.
+    corrections_applied: tuple[int, ...] = ()
 
 
 class DictationPipeline:
@@ -68,11 +77,18 @@ class DictationPipeline:
         ring_buffer_size: int = 20,
         on_run: Callable[[PipelineRun], None] | None = None,
         clock: Callable[[], float] | None = None,
+        corrections: Sequence[Any] | None = None,
     ) -> None:
         self._stages: list[Transducer] = list(stages)
         self._enabled = enabled
         self._llm_enabled = llm_enabled
         self._on_run = on_run
+        # HS-176-02: the same correction snapshot the intent-router stage gets
+        # (`assembly.build_pipeline` hands both the one gated list). The `text`
+        # subset is applied here, at the transcript seam; the routing subset is
+        # the router's business and is only read back to name the rule that
+        # fired.
+        self._corrections: list[Any] = list(corrections or [])
         self._clock = clock if clock is not None else time.perf_counter
         self._recent: deque[PipelineRun] = deque(maxlen=ring_buffer_size)
 
@@ -95,6 +111,16 @@ class DictationPipeline:
         results: list[StageResult] = []
         warnings: list[str] = []
         intent: IntentTag | None = None
+
+        # ── HS-176-02: the `text` correction seam (ruling R1) ──────────────
+        # The one funnel every dictation source passes through. The stored
+        # `text` rules rewrite the raw transcript BEFORE the stage loop, and a
+        # corrected `Utterance` (frozen — `dataclasses.replace`) is what every
+        # stage receives, so the rewrite pass and the router both see the words
+        # he actually said. It is NOT a stage: no StageResult, no `stage_ms`
+        # entry, no `requires_llm`, nothing added to `self._stages`.
+        utt, applied_ids = self._apply_text_corrections(utt)
+
         current_text = utt.raw_text
         short_circuited = False
 
@@ -139,6 +165,15 @@ class DictationPipeline:
 
         total_elapsed_ms = (self._clock() - run_start) * 1000.0
 
+        # The routing nudge's own rule, when one fired (R2). The router marks
+        # `extras["corrected"]` (builtin/intent_router.py:225, :233) but carries
+        # no id, so the fired rule is re-resolved here through the SAME
+        # function, list and text the router used — a deterministic lookup, not
+        # a guess.
+        nudge_id = self._intent_correction_id(intent, utt.raw_text)
+        if nudge_id is not None and nudge_id not in applied_ids:
+            applied_ids = (*applied_ids, nudge_id)
+
         run_record = PipelineRun(
             final_text=current_text,
             stage_results=results,
@@ -146,6 +181,7 @@ class DictationPipeline:
             warnings=warnings,
             total_elapsed_ms=total_elapsed_ms,
             short_circuited=short_circuited,
+            corrections_applied=applied_ids,
         )
         self._recent.append(run_record)
 
@@ -164,8 +200,53 @@ class DictationPipeline:
                     warnings=[*run_record.warnings, hook_warning],
                     total_elapsed_ms=run_record.total_elapsed_ms,
                     short_circuited=run_record.short_circuited,
+                    corrections_applied=run_record.corrections_applied,
                 )
                 self._recent[-1] = updated
                 run_record = updated
 
         return run_record
+
+    # ── HS-176-02 helpers ─────────────────────────────────────────────────
+
+    def _apply_text_corrections(self, utt: Utterance) -> tuple[Utterance, tuple[int, ...]]:
+        """Rewrite `utt.raw_text` through the stored `text` rules.
+
+        Returns the utterance the stages will see (the SAME object when nothing
+        fired, so a pipeline with no corrections is byte-identical) and the ids
+        of the rules that changed the text.
+        """
+        if not self._corrections:
+            return utt, ()
+        try:
+            from holdspeak.plugins.dictation.corrections import apply_text_corrections
+
+            corrected, applied = apply_text_corrections(utt.raw_text, self._corrections)
+        except Exception:  # pragma: no cover - a correction must never break typing
+            return utt, ()
+        if corrected == utt.raw_text:
+            return utt, applied
+        return replace(utt, raw_text=corrected), applied
+
+    def _intent_correction_id(self, intent: IntentTag | None, text: str) -> int | None:
+        """The durable id of the `intent` correction the router nudged with."""
+        if intent is None or not self._corrections:
+            return None
+        extras = getattr(intent, "extras", None) or {}
+        if not extras.get("corrected"):
+            return None
+        try:
+            from holdspeak.plugins.dictation.builtin.intent_router import (
+                _NUDGE_SIMILARITY,
+            )
+            from holdspeak.plugins.dictation.corrections import best_match_in
+
+            match = best_match_in(
+                self._corrections, "intent", text, min_similarity=_NUDGE_SIMILARITY
+            )
+        except Exception:  # pragma: no cover - defensive; never break a run
+            return None
+        if match is None or match.value != getattr(intent, "block_id", None):
+            return None
+        rule_id = getattr(match, "correction_id", None)
+        return int(rule_id) if rule_id is not None else None

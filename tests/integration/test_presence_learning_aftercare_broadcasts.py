@@ -110,8 +110,9 @@ def test_correct_route_broadcasts_learning_event_with_real_reach(client, db, bro
 
 
 def test_no_learning_event_when_nothing_was_taught(client, db, broadcasts):
-    # A secret-shaped transcript: the store refuses the teach (taught=False) —
-    # the entry is still flagged corrected, but the mascot stays silent.
+    # A secret-shaped transcript: the store refuses the teach (taught=False) and
+    # HS-176-02 (R4) makes that refusal write NOTHING — no correction row, no
+    # `corrected` flag, no id linkage — and the mascot stays silent.
     entry = db.dictation_journal.record(
         source="dictation",
         transcript="set the api_key to sk-abcdefghijklmnop1234",
@@ -123,7 +124,7 @@ def test_no_learning_event_when_nothing_was_taught(client, db, broadcasts):
     )
     assert response.status_code == 200
     body = response.json()
-    assert body["corrected"] is True
+    assert body["corrected"] is False
     assert body["taught"] is False
 
     events = [d for (t, d) in broadcasts if t == "learning_event"]

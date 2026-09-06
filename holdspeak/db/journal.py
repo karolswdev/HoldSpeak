@@ -15,6 +15,7 @@ use the shared `_json_*` helpers.
 """
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from typing import Any, Optional
 
@@ -23,6 +24,35 @@ from .models import DictationJournalRecord
 
 #: Run sources accepted for persistence (mirrors the recorder's `VALID_SOURCES`).
 VALID_JOURNAL_SOURCES = frozenset({"dictation", "dry_run", "browser", "hotkey"})
+
+
+def _applied_ids(row: Any) -> list[int]:
+    """The row's `corrections_applied` ids, tolerant of an older row shape.
+
+    A database opened before HS-176-02's additive column is reconciled on open,
+    but a `sqlite3.Row` selected by an older query (or a test double) may not
+    carry the key at all — so the read is defensive and yields `[]` rather than
+    raising into a journal read.
+    """
+    try:
+        raw = row["corrections_applied"]
+    except (IndexError, KeyError, TypeError):
+        return []
+    if not isinstance(raw, str) or not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+    except Exception:
+        return []
+    if not isinstance(parsed, list):
+        return []
+    ids: list[int] = []
+    for item in parsed:
+        try:
+            ids.append(int(item))
+        except (TypeError, ValueError):
+            continue
+    return ids
 
 
 class DictationJournalRepository(BaseRepository):
@@ -45,6 +75,7 @@ class DictationJournalRepository(BaseRepository):
         rewrite_pass_ms: Optional[list[float]] = None,
         confidence: Optional[float] = None,
         warnings: Optional[list[str]] = None,
+        corrections_applied: Optional[list[int]] = None,
         retention: Optional[int] = None,
     ) -> DictationJournalRecord:
         """Persist one journal row; prune to `retention` (last-N); return the row.
@@ -64,14 +95,20 @@ class DictationJournalRepository(BaseRepository):
         warnings_json = self._json_dumps(
             [str(w) for w in (warnings or [])], fallback="[]"
         )
+        # HS-176-02: the ids of the corrections that fired on this run. Named in
+        # the INSERT below, never positional (the positional-INSERT scar).
+        applied_json = self._json_dumps(
+            [int(x) for x in (corrections_applied or [])], fallback="[]"
+        )
         with self._connection() as conn:
             cursor = conn.execute(
                 """
                 INSERT INTO dictation_journal (
                     created_at, source, project_root, transcript, intent,
                     block_id, target_profile, final_text, stage_ms, total_ms,
-                    rewrite_pass_ms, confidence, warnings, corrected, correction_id
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL)
+                    rewrite_pass_ms, confidence, warnings, corrections_applied,
+                    corrected, correction_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL)
                 """,
                 (
                     now,
@@ -87,6 +124,7 @@ class DictationJournalRepository(BaseRepository):
                     passes_json,
                     (float(confidence) if confidence is not None else None),
                     warnings_json,
+                    applied_json,
                 ),
             )
             new_id = cursor.lastrowid
@@ -98,14 +136,28 @@ class DictationJournalRepository(BaseRepository):
         return self._row_to_record(row)
 
     def recent(
-        self, *, limit: Optional[int] = None, source: Optional[str] = None
+        self,
+        *,
+        limit: Optional[int] = None,
+        source: Optional[str] = None,
+        before: Optional[int] = None,
     ) -> list[DictationJournalRecord]:
-        """Stored entries newest-first, optionally filtered by `source`/limited."""
+        """Stored entries newest-first, optionally filtered by `source`/limited.
+
+        HS-176-02: `before` is the scroll-to-load cursor — only rows with an id
+        strictly LESS than it, still newest-first, still `limit`-bounded. It is
+        the id of the oldest row the caller already holds, so paging never
+        repeats or skips a row the way an offset does when a write lands
+        mid-scroll.
+        """
         clauses = []
         params: list[Any] = []
         if source is not None:
             clauses.append("source = ?")
             params.append(str(source).strip().lower())
+        if before is not None:
+            clauses.append("id < ?")
+            params.append(int(before))
         where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
         sql = (
             f"SELECT * FROM dictation_journal {where} "
@@ -186,6 +238,29 @@ class DictationJournalRepository(BaseRepository):
             ).fetchone()
         return int(row["n"]) if row is not None else 0
 
+    def count_applied(self, correction_id: int) -> int:
+        """HS-176-02 (ruling R3): journal rows where this correction FIRED.
+
+        A real count of applications — not `reach_for_gist`'s "how many stored
+        transcripts does this gist resemble", which counts the teaching
+        utterance itself. It counts the **retained** journal: every insert
+        prunes to `retention` (see `_prune`), so this number can go down over
+        time as old rows age out. That is honest, and said on the face.
+
+        Matching is done in Python over the stored JSON arrays rather than with
+        a LIKE, so `12` can never be counted as a hit for `1`.
+        """
+        target = int(correction_id)
+        total = 0
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT corrections_applied FROM dictation_journal"
+            ).fetchall()
+        for row in rows:
+            if target in _applied_ids(row):
+                total += 1
+        return total
+
     def _prune(self, conn: Any, retention: int) -> None:
         """Prune to the newest `retention` rows (last-N cap)."""
         keep = max(1, int(retention))
@@ -224,6 +299,7 @@ class DictationJournalRepository(BaseRepository):
                 float(row["confidence"]) if row["confidence"] is not None else None
             ),
             warnings=[str(w) for w in self._json_loads_list(row["warnings"])],
+            corrections_applied=_applied_ids(row),
             corrected=bool(row["corrected"]),
             correction_id=(
                 int(row["correction_id"])

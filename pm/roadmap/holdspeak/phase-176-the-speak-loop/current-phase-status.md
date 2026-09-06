@@ -14,7 +14,7 @@ learning loop that has never been trained gets its first real data.
 
 ## Status
 
-**ACTIVE 2/8.** 01 the design DONE on his word; 04 the voice law DONE (mic 17 → 0, ceiling 0, four orphans parked); 02 and 03 in progress (wire landed; faces building to the boards).
+**ACTIVE 3/8.** 01 the design DONE on his word; 04 the voice law DONE; 02 the first correction DONE (the `text` kind, schema 76, the routes, the teach row to its five boards); 03 the journal stream built and shot (flips next); 05 next.
 
 **Depends on:** Phase 170 merged (the Speak face is rebuilt in 170's
 Great Pass; the correction flow and journal stream build on that
@@ -116,7 +116,7 @@ so the "postgress" Tuesday needs the `text` kind this phase adds.)
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-176-01 | The design (the correction flow, the journal stream, the MicButton census on the canvas) | done | [story-01-the-design](./story-01-the-design.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-176-02 | The first correction (teach, persist, apply to the next match; learning digest > 0) | in-progress | [story-02-the-first-correction](./story-02-the-first-correction.md) | -- |
+| HS-176-02 | The first correction (teach, persist, apply to the next match; learning digest > 0) | done | [story-02-the-first-correction](./story-02-the-first-correction.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-176-03 | The journal as a stream (live feed, filterable, searchable; the voice-typing act visible) | in-progress | [story-03-the-journal-stream](./story-03-the-journal-stream.md) | -- |
 | HS-176-04 | The voice law (MicButton on every text input across the desk; the census gap closed) | done | [story-04-the-voice-law](./story-04-the-voice-law.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-176-05 | The desk answering the hand (the full loop: speak, land, judge, teach, apply) | backlog | [story-05-the-desk-answering-the-hand](./story-05-the-desk-answering-the-hand.md) | -- |
@@ -126,7 +126,23 @@ so the "postgress" Tuesday needs the `text` kind this phase adds.)
 
 ## Where we are
 
-ACTIVE 2/8 (2026-09-06). Story 04 DONE: the scanner's `mic` rule made
+ACTIVE 3/8 (2026-09-06). Story 02 DONE: the `text` correction kind
+(exact-phrase, punctuation-stripped, whole-word bounded, first-letter
+case kept) applied at the seam inside Pipeline.run before the stage
+loop; `corrections_applied` on the run and the journal row (schema 76,
+named INSERT, snapshot regenerated); the recorder's bus seam; the R4
+route fixes, the server-side diff, the raw transcript on the run
+response, `N APPLIED` as a real count, the six target labels on
+readiness; the teach row FIELD `TEXT · INTENT · TARGET` with the
+receipts `TAUGHT` · `NO CHANGE` · `REFUSED · SECRET|ONE WORD` and the
+`APPLIED` chip + its well, shot at 1440 + 393 through the real routes
+(assets/story-02-shots/); the ritual fence re-pointed at SpeakFace.
+Build rulings: no MATCH score (the wire carries none; painting the
+threshold would be a lie); the pick is CycleGadget (no picker species
+exists); the chip is a library Button + region (Disclosure cannot sit
+inline); the receipt lives in the row only (the footer never mirrors
+it); the 393 well is PadGadget rows=1 autoGrow (a single-line field
+cannot wrap). Story 04 DONE: the scanner's `mic` rule made
 per-element and un-gated with a 24-entry reasoned allowlist (23 from
 the census + the utterance well pre-armed for story 05), the 8 raw
 sites and 9 opt-outs paid, ceiling `mic: 0`, rule B healed 34 → 32

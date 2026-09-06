@@ -28,7 +28,6 @@ import {
   LampGadget,
   CycleGadget,
   PadGadget,
-  StringGadget,
   EgressChip,
   CheckGadget,
 } from "../../../desk/surface/gadgets";
@@ -312,20 +311,7 @@ export function SpeakFace() {
       <LandsInRow deck={deck} />
 
       {/* 4. RESULT (when landed) */}
-      {deck.result ? (
-        <ResultRow
-          result={deck.result}
-          verdict={deck.verdict}
-          setVerdict={deck.setVerdict}
-          correctionKind={deck.correctionKind}
-          setCorrectionKind={deck.setCorrectionKind}
-          correctionValue={deck.correctionValue}
-          setCorrectionValue={deck.setCorrectionValue}
-          busy={deck.busy}
-          onTeach={() => void deck.teach()}
-          announce={announce}
-        />
-      ) : null}
+      {deck.result ? <ResultRow deck={deck} announce={announce} /> : null}
 
       {/* 5. ENGINE row */}
       <EngineRow engine={resolved.name} egress={resolved.egressLabel} engineState={resolved.engineState} keySet={resolved.keySet} detectStatus={detectStatus} readiness={deck} />
@@ -433,42 +419,143 @@ function LandsInRow({ deck }: { deck: ReturnType<typeof useSpeakDeck> }) {
   );
 }
 
-/* ── RESULT row ── */
+/* ── RESULT row ──
+
+   HS-176-02 — the teach loop, element by element:
+   - the RESULT line: the landed text + the `APPLIED` chip (only when
+     this run's own `corrections_applied` is non-empty) + the verdict
+     pair OK / Wrong (one species, two states: the selected verdict
+     takes `data-verdict-active`).
+   - `APPLIED` unfolds a well beneath naming each rule that FIRED.
+   - `Wrong` unfolds the teach row: FIELD cycles TEXT · INTENT · TARGET;
+     TEXT is one wrapping well pre-filled with the RAW transcript, the
+     routing kinds are a pick over the real enum (label on the face, id
+     on the wire).
+   - `Teach` replaces the row with a token receipt — TAUGHT · a -> b,
+     NO CHANGE, REFUSED · SECRET, REFUSED · ONE WORD. Never a sentence,
+     never a modal. */
+
+function AppliedRule({
+  rule,
+}: {
+  rule: { id: number; kind: string; key: string; value: string; label: string };
+}) {
+  const text = rule.kind === "text";
+  return (
+    <div className="speak-applied-rule">
+      <div className="speak-applied-fact">
+        <span className="speak-applied-caption">{text ? "HEARD" : "WHEN"}</span>
+        <span className="speak-applied-heard">{rule.key}</span>
+      </div>
+      <div className="speak-applied-fact">
+        <span className="speak-applied-caption">{text ? "SAID" : "ROUTE"}</span>
+        <span className="speak-applied-said">{rule.label || rule.value}</span>
+      </div>
+      <div className="speak-applied-fact">
+        <span className="surface-token" data-chip="">
+          {(rule.kind || "rule").toUpperCase()}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function TeachRow({
+  deck,
+  onTeach,
+}: {
+  deck: ReturnType<typeof useSpeakDeck>;
+  onTeach: () => void;
+}) {
+  const text = deck.correctionKind === "text";
+  const pickLabel =
+    deck.correctionKind === "target" ? "Delivery target" : "Intent block";
+  return (
+    <div className="speak-teach" role="group" aria-label="Correct this result">
+      <span className="speak-teach-field">
+        <span className="speak-teach-caption">FIELD</span>
+        <CycleGadget
+          label="Correction field"
+          value={deck.correctionKind}
+          options={deck.correctionFields}
+          onChange={deck.pickCorrectionKind}
+        />
+      </span>
+      {text ? (
+        /* The well he EDITS never truncates what it is holding: the
+           value WRAPS (design P2 / the phone board), so at 393 the
+           transcript takes a second line with `Teach` level with the
+           first. A single-line text field cannot wrap, so the species
+           is the kit's one multiline face at a single row, grown by its
+           content — and it carries its own mic, as every well does. */
+        <PadGadget
+          label="What you said"
+          value={deck.correctionSaid}
+          onChange={deck.setCorrectionSaid}
+          rows={1}
+          autoGrow
+        />
+      ) : (
+        <CycleGadget
+          label={pickLabel}
+          value={deck.correctionValue}
+          options={deck.correctionOptions}
+          onChange={deck.setCorrectionValue}
+        />
+      )}
+      <Button
+        variant="primary"
+        dense
+        loading={deck.busy}
+        disabled={
+          text
+            ? !deck.correctionSaid.trim()
+            : !deck.correctionValue.trim()
+        }
+        aria-label="Teach correction"
+        onClick={onTeach}
+      >
+        Teach
+      </Button>
+    </div>
+  );
+}
 
 function ResultRow({
-  result,
-  verdict,
-  setVerdict,
-  correctionKind,
-  setCorrectionKind,
-  correctionValue,
-  setCorrectionValue,
-  busy,
-  onTeach,
+  deck,
   announce,
 }: {
-  result: Record<string, unknown>;
-  verdict: "" | "right" | "wrong";
-  setVerdict: (next: "" | "right" | "wrong") => void;
-  correctionKind: string;
-  setCorrectionKind: (next: string) => void;
-  correctionValue: string;
-  setCorrectionValue: (next: string) => void;
-  busy: boolean;
-  onTeach: () => void;
+  deck: ReturnType<typeof useSpeakDeck>;
   announce: (text: string, tone?: "ok" | "warn") => void;
 }) {
+  const result = (deck.result ?? {}) as Record<string, unknown>;
   const finalText = String(result.final_text ?? result.text ?? result.output ?? "");
+  const [appliedOpen, setAppliedOpen] = useState(false);
+  const applied = deck.appliedRules;
+  const receipt = deck.receipt;
 
   return (
     <section className="speak-result" aria-label="Pipeline result">
       <div className="speak-result-line">
         <span className="speak-result-text">{finalText}</span>
+        {applied.length ? (
+          <Button
+            variant="ghost"
+            dense
+            className="speak-applied-chip"
+            aria-expanded={appliedOpen}
+            aria-label="Corrections applied"
+            onClick={() => setAppliedOpen(!appliedOpen)}
+          >
+            APPLIED
+          </Button>
+        ) : null}
         <Button
           variant="ghost"
           dense
+          data-verdict-active={deck.verdict === "right" || undefined}
           onClick={() => {
-            setVerdict("right");
+            deck.setVerdict("right");
             announce("Marked OK");
           }}
         >
@@ -477,43 +564,38 @@ function ResultRow({
         <Button
           variant="ghost"
           dense
-          onClick={() => setVerdict("wrong")}
+          data-verdict-active={deck.verdict === "wrong" || undefined}
+          onClick={() => deck.setVerdict("wrong")}
         >
           Wrong
         </Button>
       </div>
-      {verdict === "wrong" ? (
+      {applied.length && appliedOpen ? (
         <div
-          className="speak-teach"
-          role="group"
-          aria-label="Correct this result"
+          className="speak-applied-body"
+          role="region"
+          aria-label="Corrections applied"
         >
-          <CycleGadget
-            label="Correction field"
-            value={correctionKind}
-            options={[
-              { value: "target", label: "Delivery target" },
-              { value: "intent", label: "Intent" },
-            ]}
-            onChange={setCorrectionKind}
-          />
-          <StringGadget
-            label="Correct value"
-            value={correctionValue}
-            onChange={setCorrectionValue}
-            placeholder="Terminal"
-          />
-          <Button
-            variant="primary"
-            dense
-            loading={busy}
-            disabled={!correctionValue.trim()}
-            aria-label="Teach correction"
-            onClick={onTeach}
-          >
-            Teach
-          </Button>
+          {applied.map((rule) => (
+            <AppliedRule key={rule.id} rule={rule} />
+          ))}
         </div>
+      ) : null}
+      {receipt ? (
+        <div className="speak-receipt" role="status">
+          <span
+            className="surface-token"
+            data-chip=""
+            data-tone={receipt.tone}
+          >
+            {receipt.token}
+          </span>
+          {receipt.tail ? (
+            <span className="speak-receipt-tail">{receipt.tail}</span>
+          ) : null}
+        </div>
+      ) : deck.verdict === "wrong" ? (
+        <TeachRow deck={deck} onTeach={() => void deck.teach()} />
       ) : null}
     </section>
   );

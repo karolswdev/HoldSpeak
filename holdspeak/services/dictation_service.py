@@ -47,14 +47,29 @@ class DictationService:
         cursor: int | None = None,
         source: str | None = None,
     ) -> dict[str, Any]:
-        clean_source = source if source in {"dictation", "dry_run", "browser", "hotkey"} else None
-        records = (
-            self._journal.recent(limit=limit, source=clean_source)
-            if self._journal is not None
-            else []
-        )
-        if cursor is not None:
-            records = [record for record in records if record.id < cursor]
+        from ..plugins.dictation.journal import VALID_SOURCES
+
+        clean_source = source if source in VALID_SOURCES else None
+        records: list[Any] = []
+        if self._journal is not None:
+            if cursor is None:
+                records = self._journal.recent(limit=limit, source=clean_source)
+            else:
+                # HS-176-03: `before` is a PAGE cursor, so it has to bound the
+                # query, not the page it produced — filtering the newest `limit`
+                # rows after the fact returns nothing once the cursor is older
+                # than the first page. Prefer the repository's own `before`;
+                # fall back to an unbounded read + slice while it lands.
+                try:
+                    records = self._journal.recent(
+                        limit=limit, source=clean_source, before=cursor
+                    )
+                except TypeError:
+                    records = [
+                        record
+                        for record in self._journal.recent(source=clean_source)
+                        if record.id < cursor
+                    ][: max(0, int(limit))]
         cfg = Config.load().dictation.pipeline
         return {
             "enabled": bool(getattr(cfg, "journal_enabled", True)),
@@ -178,4 +193,13 @@ class DictationService:
             "warnings": record.warnings,
             "corrected": record.corrected,
             "correction_id": record.correction_id,
+            # HS-176-02 (R5): the two stored facts, split and both named.
+            # `taught_from` is the existing `corrected` column under its true
+            # meaning — "he taught FROM this row"; `corrections_applied` is the
+            # new per-run fact — "these stored rules fired ON this row". The
+            # `getattr` keeps a record shape that predates the column working.
+            "taught_from": bool(record.corrected),
+            "corrections_applied": [
+                int(x) for x in (getattr(record, "corrections_applied", None) or [])
+            ],
         }

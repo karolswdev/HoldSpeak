@@ -23,7 +23,10 @@ from .models import DictationCorrectionRecord
 log = get_logger("db.corrections")
 
 #: Kinds accepted for persistence (mirrors `corrections.CORRECTION_KINDS`).
-VALID_CORRECTION_KINDS = frozenset({"intent", "target"})
+#: HS-176-02 adds "text" — a words correction (key = the phrase as heard,
+#: stored punctuation-stripped and lowercased by `CorrectionStore.record`;
+#: value = the phrase as said). Additive: the table shape is unchanged.
+VALID_CORRECTION_KINDS = frozenset({"intent", "target", "text"})
 
 
 class DictationCorrectionRepository(BaseRepository):

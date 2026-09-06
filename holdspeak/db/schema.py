@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 75  # informational; 73→74: calendar_event_projects (HS-175-02); 74→75: calendar_event_link_suppressions (HS-175 counsel C5)
+SCHEMA_VERSION = 76  # informational; 74→75: calendar_event_link_suppressions (HS-175 counsel C5); 75→76: dictation_journal.corrections_applied (HS-176-02)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -836,6 +836,9 @@ ON remote_dictation_deliveries(updated_at DESC);
 -- + final text are secret-filtered before insert and the table is retention-
 -- capped (prune-on-insert to a last-N bound). `corrected` / `correction_id` are
 -- set by HS-45-03 when a user fixes an entry in the moment.
+-- HS-176-02 (ruling R5) splits the two facts: `corrected` keeps its meaning
+-- ("he taught FROM this row"), and `corrections_applied` is a JSON array of
+-- the correction ids that FIRED ON this row.
 CREATE TABLE IF NOT EXISTS dictation_journal (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -852,7 +855,8 @@ CREATE TABLE IF NOT EXISTS dictation_journal (
     confidence REAL,
     warnings TEXT NOT NULL DEFAULT '[]',
     corrected INTEGER NOT NULL DEFAULT 0,
-    correction_id INTEGER
+    correction_id INTEGER,
+    corrections_applied TEXT NOT NULL DEFAULT '[]'
 );
 
 CREATE INDEX IF NOT EXISTS idx_dictation_journal_recent

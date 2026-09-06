@@ -23,7 +23,11 @@ from holdspeak.plugins.dictation.corrections import (
 
 def test_record_and_recent_roundtrip():
     store = CorrectionStore()
-    assert store.record("intent", "fix the cli thing", "code_exercise") is True
+    outcome = store.record("intent", "fix the cli thing", "code_exercise")
+    # HS-176-02: `record` returns a RecordOutcome — truthy exactly where the
+    # old bool was True, and carrying the stored id + the refusal's name.
+    assert bool(outcome) is True
+    assert outcome.refusal is None
     assert len(store) == 1
     recent = store.recent("intent")
     assert recent[0].kind == "intent"
@@ -33,15 +37,15 @@ def test_record_and_recent_roundtrip():
 
 def test_record_rejects_invalid_kind_or_empty():
     store = CorrectionStore()
-    assert store.record("bogus", "text", "value") is False
-    assert store.record("intent", "   ", "value") is False
-    assert store.record("intent", "text", "") is False
+    assert store.record("bogus", "text", "value").refusal == "kind"
+    assert store.record("intent", "   ", "value").refusal == "empty"
+    assert store.record("intent", "text", "").refusal == "empty"
     assert len(store) == 0
 
 
 def test_record_rejects_secret_like_gist():
     store = CorrectionStore()
-    assert store.record("intent", "my key is sk-abcdef0123456789abcd", "code_exercise") is False
+    assert store.record("intent", "my key is sk-abcdef0123456789abcd", "code_exercise").refusal == "secret"
     assert len(store) == 0
 
 
@@ -117,7 +121,11 @@ def repo():
 
 def test_record_writes_through_to_repository(repo):
     store = CorrectionStore(repository=repo)
-    assert store.record("intent", "fix the cli thing", "code_exercise") is True
+    outcome = store.record("intent", "fix the cli thing", "code_exercise")
+    assert bool(outcome) is True
+    # HS-176-02: the durable row id comes back so the journal route can link
+    # `correction_id` instead of guessing it from the newest row.
+    assert outcome.correction_id == repo.recent_corrections()[0].id
     # In-memory ring updated…
     assert len(store) == 1
     # …and the durable repository persisted it.
@@ -130,8 +138,8 @@ def test_record_writes_through_to_repository(repo):
 
 def test_secret_and_invalid_are_not_persisted(repo):
     store = CorrectionStore(repository=repo)
-    assert store.record("intent", "my key is sk-abcdef0123456789abcd", "code_exercise") is False
-    assert store.record("bogus", "text", "value") is False
+    assert bool(store.record("intent", "my key is sk-abcdef0123456789abcd", "code_exercise")) is False
+    assert bool(store.record("bogus", "text", "value")) is False
     assert len(store) == 0
     assert repo.recent_corrections() == []
 

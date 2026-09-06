@@ -56,7 +56,15 @@ def test_record_and_list_correction(test_client: TestClient, settings_path: Path
         json={"kind": "intent", "text": "fix the cli thing", "value": "code_exercise"},
     )
     assert resp.status_code == 200
-    assert resp.json() == {"recorded": True, "size": 1}
+    # HS-176-02 (R4): an accepted teach also names the stored row, so the
+    # journal route can link `correction_id` instead of guessing it.
+    body = resp.json()
+    assert body["recorded"] is True and body["size"] == 1
+    assert (body["kind"], body["key"], body["value"]) == (
+        "intent",
+        "fix the cli thing",
+        "code_exercise",
+    )
 
     listed = test_client.get("/api/dictation/corrections").json()
     assert listed["size"] == 1
@@ -87,7 +95,9 @@ def test_record_silently_drops_secret(test_client: TestClient, settings_path: Pa
         json={"kind": "intent", "text": "token is sk-abcdef0123456789abcd", "value": "code_exercise"},
     )
     assert resp.status_code == 200
-    assert resp.json() == {"recorded": False, "size": 0}
+    # HS-176-02 (R4): the refusal is NAMED, not smoothed — the face renders
+    # `REFUSED · SECRET` from this token.
+    assert resp.json() == {"recorded": False, "size": 0, "reason": "secret"}
     assert test_client.get("/api/dictation/corrections").json()["size"] == 0
 
 
@@ -136,9 +146,11 @@ def test_post_writes_through_to_db(persistent_db: Database, settings_path: Path)
         json={"kind": "target", "text": "route this to codex", "value": "codex_cli"},
     )
     assert resp.status_code == 200
-    assert resp.json() == {"recorded": True, "size": 1}
+    body = resp.json()
+    assert body["recorded"] is True and body["size"] == 1
     # The correction is durable: it's in the DB, visible to a fresh repo read.
     persisted = persistent_db.dictation_corrections.recent_corrections()
+    assert body["id"] == persisted[0].id  # HS-176-02 (R4): the real stored id
     assert len(persisted) == 1
     assert persisted[0].kind == "target"
     assert persisted[0].value == "codex_cli"

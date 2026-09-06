@@ -77,43 +77,69 @@ def _client(database: Database) -> TestClient:
 
 # ── Memory list ────────────────────────────────────────────────────────────
 
-def test_corrections_list_carries_real_reach(persistent_db: Database, settings_path: Path) -> None:
+def test_corrections_list_carries_real_applications(
+    persistent_db: Database, settings_path: Path
+) -> None:
+    """HS-176-02 (R3): the list's count is FIRINGS, not similar transcripts.
+
+    It was `reach_for_gist` — a Jaccard reach that counted the teaching
+    utterance itself, so a brand-new correction read `1 APPLIED` meaning zero
+    applications. It is now the number of retained journal rows whose stored
+    `corrections_applied` names the rule.
+    """
     _write_config(settings_path)
-    persistent_db.dictation_corrections.record_correction(
+    rule = persistent_db.dictation_corrections.record_correction(
         kind="intent", gist="follow up with sam about launch", value="action_item"
     )
-    for t in ["follow up with sam about launch checklist", "follow up with sam about launch", "water the plants"]:
+    # Two similar transcripts the rule never fired on, and one it did.
+    for t in ["follow up with sam about launch checklist", "follow up with sam about launch"]:
         persistent_db.dictation_journal.record(source="dictation", transcript=t, final_text=t)
+    persistent_db.dictation_journal.record(
+        source="dictation",
+        transcript="water the plants",
+        final_text="water the plants",
+        corrections_applied=[rule.id],
+    )
     body = _client(persistent_db).get("/api/dictation/corrections").json()
-    assert body["items"][0]["similar"] == 2  # the two launch lines, not the plants line
+    item = next(i for i in body["items"] if i["id"] == rule.id)
+    assert "similar" not in item  # reach_for_gist appears on no face
+    assert item["applied"] == 1  # the one row it actually fired on
 
 
 # ── journal entries ─────────────────────────────────────────────────────────
 
-def test_journal_entries_carry_signal_only_when_corrections_enabled(
+def test_journal_entries_carry_the_stored_firing_fact_not_a_would_match(
     persistent_db: Database, settings_path: Path
 ) -> None:
-    persistent_db.dictation_corrections.record_correction(
+    """HS-176-03 (R2): the row's chip is a STORED per-run fact.
+
+    `learning` / `best_correction_signal` was computed at read time over the
+    whole journal, so it painted rows recorded BEFORE the correction was ever
+    taught — and it flipped with the `corrections_enabled` toggle rather than
+    with what happened. The row now carries `corrections_applied` (what fired on
+    it) and `taught_from` (whether he taught FROM it), and nothing else.
+    """
+    rule = persistent_db.dictation_corrections.record_correction(
         kind="intent", gist="deploy the billing service", value="deploy_block"
     )
-    persistent_db.dictation_journal.record(
-        source="dictation", transcript="deploy the billing service to staging", final_text="x"
+    fired = persistent_db.dictation_journal.record(
+        source="dictation",
+        transcript="deploy the billing service to staging",
+        final_text="x",
+        corrections_applied=[rule.id],
     )
-    persistent_db.dictation_journal.record(source="dictation", transcript="buy more coffee", final_text="y")
+    quiet = persistent_db.dictation_journal.record(
+        source="dictation", transcript="buy more coffee", final_text="y"
+    )
 
-    # Off (default): the router nudges nothing, so we claim nothing.
-    _write_config(settings_path, corrections=False)
-    off = _client(persistent_db).get("/api/dictation/journal").json()
-    assert all(i["learning"] is None for i in off["items"])
-
-    # On: the matching entry carries the signal; the unrelated one stays quiet.
-    _write_config(settings_path, corrections=True)
-    on = _client(persistent_db).get("/api/dictation/journal").json()
-    by_text = {i["transcript"]: i for i in on["items"]}
-    sig = by_text["deploy the billing service to staging"]["learning"]
-    assert sig and sig["matched"] is True and sig["value"] == "deploy_block"
-    assert sig["similar"] >= 1
-    assert by_text["buy more coffee"]["learning"] is None
+    for corrections in (False, True):
+        _write_config(settings_path, corrections=corrections)
+        rows = {i["id"]: i for i in _client(persistent_db).get("/api/dictation/journal").json()["items"]}
+        assert all("learning" not in i for i in rows.values())
+        # The stored fact does not move with the toggle.
+        assert rows[fired.id]["corrections_applied"] == [rule.id]
+        assert rows[quiet.id]["corrections_applied"] == []
+        assert rows[fired.id]["taught_from"] is False
 
 
 # ── dry-run result ───────────────────────────────────────────────────────────
