@@ -258,6 +258,43 @@ describe("Project Memory", () => {
     expect(historyTab).toBeTruthy();
   });
 
+  it("names evidence reached through a durable relationship", async () => {
+    apiFetch.mockImplementation((url: string) =>
+      Promise.resolve(
+        url.startsWith("/api/memory/search")
+          ? {
+              hits: [
+                {
+                  source_ref: "artifact:a1",
+                  title: "Rollout checklist",
+                  snippet: "<mark>Owners</mark> and gates",
+                  kind: "artifact",
+                  retrieval_origin: "relationship",
+                  related_to: "meeting:m1",
+                  relationship: "meeting_artifact",
+                },
+              ],
+            }
+          : response(url),
+      ),
+    );
+    // HS-169-03 keeps the Room at its four questions, so memory search
+    // lives on the unscoped Desk memory surface.
+    render(<ProjectMemoryCore />);
+
+    fireEvent.change(
+      await screen.findByRole("searchbox", { name: "Search the Desk" }),
+      {
+        target: { value: "zephyr" },
+      },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+
+    expect(await screen.findByText("Rollout checklist")).toBeTruthy();
+    expect(screen.getByText("Owners").tagName).toBe("MARK");
+    expect(screen.getByText("Related · meeting artifact")).toBeTruthy();
+  });
+
   it("registers and restores the scoped Project Memory surface", async () => {
     render(<SurfaceWindows />);
     expect(openSurface("open-project-memory", "project:p1")).toBe(true);
@@ -284,9 +321,17 @@ describe("Project Memory", () => {
     expect(await screen.findByText("Network failure")).toBeTruthy();
   });
 
-  // HS-157-04: WEB-ARC-006 gap coverage — no-scope empty state
-  it("shows an empty state when no project scope is provided", () => {
+  it("turns the unscoped surface into global Desk memory search", async () => {
     render(<ProjectMemoryCore />);
-    expect(screen.getByText("Open a Project")).toBeTruthy();
+    const input = screen.getByRole("searchbox", { name: "Search the Desk" });
+    fireEvent.change(input, { target: { value: "connected evidence" } });
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/^\/api\/memory\/search\?query=connected\+evidence$/),
+      ),
+    );
+    expect(screen.getByText("DESK MEMORY · RELATIONSHIP-AWARE")).toBeTruthy();
   });
 });

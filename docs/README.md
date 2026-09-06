@@ -35,6 +35,7 @@ The guides describe `main`. Check your installed version when a control is absen
 | Review recent activity before dictation | [Activity pre-briefing](ACTIVITY_PREBRIEFING.md) |
 | Record, import, or review a meeting | [Meeting mode](MEETING_MODE_GUIDE.md) |
 | Review attention items and Receipts | [Desk memory](DESK_MEMORY.md) |
+| Find earlier work across your records | [Relationship-aware memory](RELATIONSHIP_AWARE_MEMORY.md) |
 
 ## Configure models and automation
 

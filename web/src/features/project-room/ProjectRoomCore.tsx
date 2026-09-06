@@ -8,6 +8,9 @@ import {
   countLabel,
   SurfaceFooter,
   SurfaceSection,
+  SurfaceRows,
+  SurfaceRow,
+  SurfaceState,
   SurfaceLedger,
   SurfaceLedgerRow,
   SurfaceStream,
@@ -22,6 +25,7 @@ import {
   MicButton,
   groundedMatchCount,
   CitationChips,
+  sourceLabel,
   Material,
 } from "../../desk/surface";
 import { useWindowTitle } from "../../desk/surface/title";
@@ -1467,6 +1471,99 @@ function RoomAskWell({
   );
 }
 
+/* ── Desk memory: the relationship-aware retrieval face ── */
+
+/** Render the trusted FTS marker grammar without injecting result HTML. */
+function MemorySnippet({ value }: { value: string }) {
+  const parts = value.split(/(<mark>.*?<\/mark>)/gi);
+  return (
+    <>
+      {parts.map((part, index) =>
+        /^<mark>.*<\/mark>$/i.test(part) ? (
+          <mark className="project-memory-highlight" key={index}>
+            {part.replace(/^<mark>|<\/mark>$/gi, "")}
+          </mark>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
+}
+
+/** The Desk's retrieval face: one query across every canonical record.
+ *  A hit reached over a durable provenance edge names the edge. The Room
+ *  keeps its four questions (HS-169-03); memory lives here. */
+function MemorySearchFace({
+  ctrl,
+}: {
+  ctrl: ReturnType<typeof useProjectRoomController>;
+}) {
+  return (
+    <SurfaceSection label="Search the Desk">
+      <div className="desk-chat-well project-memory-search">
+        <div className="desk-chat-composer">
+          {/* The library's text species carries the voice law's mic. */}
+          <StringGadget
+            label="Search the Desk"
+            type="search"
+            value={ctrl.searchQuery}
+            placeholder="Search"
+            onChange={(next) => ctrl.setSearchQuery(next)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") void ctrl.search();
+            }}
+          />
+          <Button
+            dense
+            variant="primary"
+            loading={ctrl.searching}
+            disabled={!ctrl.searchQuery.trim()}
+            onClick={() => void ctrl.search()}
+          >
+            Search
+          </Button>
+        </div>
+      </div>
+      <SurfaceState
+        loading={ctrl.searching}
+        error={ctrl.error}
+        empty={ctrl.searched && !ctrl.searchHits.length}
+        emptyLabel="No matches"
+        emptyGlyph={"⌕"}
+        onRetry={() => void ctrl.search()}
+      >
+        <SurfaceRows>
+          {ctrl.searchHits.map((hit) => (
+            <SurfaceRow
+              key={String(hit.source_ref)}
+              title={String(hit.title || sourceLabel(String(hit.source_ref)))}
+              detail={<MemorySnippet value={String(hit.snippet || "")} />}
+              meta={
+                <span className="project-memory-meta">
+                  <span className="surface-token">
+                    {String(hit.kind || "Memory")}
+                  </span>
+                  {hit.retrieval_origin === "relationship" ? (
+                    <span className="surface-token">
+                      Related ·{" "}
+                      {String(hit.relationship || "linked source").replaceAll(
+                        "_",
+                        " ",
+                      )}
+                    </span>
+                  ) : null}
+                </span>
+              }
+              onOpen={() => ctrl.openProjectRef(String(hit.source_ref))}
+            />
+          ))}
+        </SurfaceRows>
+      </SurfaceState>
+    </SurfaceSection>
+  );
+}
+
 /* ── HISTORY wing ── */
 
 interface HistoryEntry {
@@ -1660,11 +1757,26 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     return computeHistoryCounts(ctrl.room.changes.recent);
   }, [ctrl.room]);
 
+  // The unscoped surface is Desk memory: one relationship-aware search
+  // across every canonical record, never a dead empty state.
   if (!ctrl.projectId)
     return (
-      <div className="room-empty-state">
-        <p className="room-empty-line">Open a Project</p>
-      </div>
+      <>
+        <div className="room-body desk-memory-body" data-testid="desk-memory-body">
+          <MemorySearchFace ctrl={ctrl} />
+        </div>
+        <SurfaceFooter
+          receipt={
+            <span
+              className="surface-footer-receipt-line"
+              role="status"
+              data-testid="room-footer-receipt"
+            >
+              DESK MEMORY · RELATIONSHIP-AWARE
+            </span>
+          }
+        />
+      </>
     );
 
   // Posture routing: Review > Update > Steward > Room

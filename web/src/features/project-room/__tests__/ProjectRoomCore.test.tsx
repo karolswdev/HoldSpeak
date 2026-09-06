@@ -259,9 +259,10 @@ describe("ProjectRoomCore — two wings (was: four wings)", () => {
 });
 
 describe("ProjectRoomCore — no-scope states", () => {
-  it("shows empty state when no project scope is provided", () => {
+  it("shows global Desk memory search when no project scope is provided", () => {
     render(<ProjectRoomCore />);
-    expect(screen.getByText("Open a Project")).toBeTruthy();
+    expect(screen.getByRole("searchbox", { name: "Search the Desk" })).toBeTruthy();
+    expect(screen.getByText("DESK MEMORY · RELATIONSHIP-AWARE")).toBeTruthy();
   });
 });
 

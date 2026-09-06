@@ -73,6 +73,34 @@
   font-family: var(--font-sans, Inter, sans-serif);
 }
 
+/* ── Desk memory: the trusted FTS marker grammar ── */
+.project-memory-highlight {
+  padding: 0 2px;
+  background: var(--accent-tint);
+  color: var(--text);
+}
+.project-memory-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* One row grammar at both widths: in a narrow window the row's facts fall
+   under the name instead of squeezing it to an ellipsis (UX-CANON D). */
+@container surface (max-width: 540px) {
+  .desk-memory-body .surface-row-open,
+  .desk-memory-body .surface-row-main {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .desk-memory-body .surface-row-text {
+    flex: 1 0 100%;
+  }
+  .desk-memory-body .project-memory-meta {
+    flex-wrap: wrap;
+  }
+}
+
 /* ── needs you — WHY token ── */
 .room-why-token { font-weight: 600; }
 

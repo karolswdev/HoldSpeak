@@ -13,6 +13,16 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 ## [Unreleased]
 
 ### Added
+- **Relationship-aware Desk Memory.** One retrieval contract now spans Meetings,
+  Artifacts, Notes, Threads, extracted and authored Decisions, durable Decision
+  Records, follow-through Actions, Project items, Workbench items/results, and
+  Cadence loops. Child transcript/message matches return their parent; a bounded
+  zero-LLM pass follows only durable provenance edges. The same context boundary
+  now serves Ask and Thought refinement, Threads and Agent chat, Recipe runs,
+  Sequences, Workflows, Workbenches, and Coder steering, while HTTP/MCP expose
+  the identical result contract. The unscoped Desk Memory window performs real
+  global search; Project Rooms retain scoped search. This is an original
+  HoldSpeak adaptation of RAGFlow's compiled expansion and parent/child recall.
 - **One Model Library and one Assignments editor.** Models are registered once,
   secrets stay in owner-only custody, and each capability receives an ordered
   model list without adding or editing a model silently changing placement.
