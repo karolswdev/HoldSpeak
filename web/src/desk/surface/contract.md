@@ -87,3 +87,32 @@ A ChoiceCard is an OBJECT, not a list. Beyond label/description/facts/cost:
 
 - `countToken(n, singular, plural?)` → `"N NOUN"` or `null` at zero — the one way a face says a count (UX-CANON A8: no counters of zero). Render nothing (or the face's one true line) when it returns null.
 - `countLabel(label, n)` → `"LABEL N"` at n>0, `"LABEL"` at zero — for section captions.
+
+## FilterTokens (HS-176-03)
+
+The flat one-tap filter strip: `role="group"` over library `Button` species,
+one active at a time. Promoted from the composition ratified on the Project
+Room's history wing (`ProjectRoomCore.tsx:1550-1566`) per canon B — a
+recurring element the library lacked.
+
+- `options: FilterTokenOption[]` — `{ value, label }`; the label is a
+  caption-step word (`ALL`, `DICTATION`), never a sentence
+- `value: string` — the active option's `value` (the caller owns the state;
+  an empty string is the usual "no filter" wire value)
+- `onChange(next: string)` — the one-tap toggle
+- `label: string` — the group's accessible name (e.g. `"Source filter"`)
+- `className?: string` — an extra class on the group span
+
+Presence rules (they are the species, not the caller's business):
+
+- The active token is `Button` **primary dense**, the resting ones **ghost
+  dense**; each carries `aria-pressed` and the active one `data-filter-active`.
+  No raw `<button>` (UX-CANON A.1).
+- **No sparse rule — it never returns `null`.** A strip that vanishes on a
+  short or empty list leaves no way to widen the view; it renders over an
+  empty stream. This is the difference from `LedgerFilterBar`, which returns
+  `null` below `SPARSE_THRESHOLD` (`LedgerFilter.tsx:104`, `sparse.ts:4`).
+- **It carries no count.** `matchCount/total` would be a second count on a
+  face that says its one count elsewhere (UX-CANON A.7/A.8).
+- Not to be confused with `SurfaceWings`: filters are flat tokens, wings are
+  the beveled strip, and the two never look alike (canon D).

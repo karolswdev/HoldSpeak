@@ -19,6 +19,7 @@ import {
   startStreamSession,
   type StreamSession,
   type StreamEvent,
+  type SpokenRunFacts,
   type VoiceCommandFired,
 } from "../../lib/micStreamSession";
 import { loadPendingVoice } from "../../lib/pendingVoice";
@@ -53,7 +54,11 @@ export function MicButton({
   pipeline,
   onCommand,
 }: {
-  onText: (text: string) => void;
+  /* HS-176 C1 — the second argument carries the SPOKEN run's own facts
+     (`raw_text`, `corrections_applied`, `journal_id`) when the server sent
+     them on the `final` frame. Optional: every field mic ignores it and
+     behaves exactly as before. */
+  onText: (text: string, facts?: SpokenRunFacts) => void;
   label?: string;
   onFailure?: (failure: DictationFailure) => void;
   draftScope?: string;
@@ -87,6 +92,9 @@ export function MicButton({
   const [level, setLevel] = useState(0);
   const sessionRef = useRef<StreamSession | null>(null);
   const firedRef = useRef<VoiceCommandFired | null>(null);
+  /* HS-176 C1 — the SPOKEN run's facts, read off the `final` frame and held
+     until `stop()` resolves with the text they belong to. */
+  const factsRef = useRef<SpokenRunFacts | null>(null);
   /* HS-132-05 — the session's OWN refusal. Once the server named a failure,
      the empty final that follows is a consequence of it, never "no words". */
   const refusedRef = useRef<StreamRefusal | null>(null);
@@ -170,9 +178,12 @@ export function MicButton({
     );
   }
 
-  const routeTranscript = async (text: string) => {
+  const routeTranscript = async (text: string, facts?: SpokenRunFacts) => {
     if (!grammar) {
-      onText(text);
+      // The second argument exists only when the server sent facts, so every
+      // caller that never asked for them sees the call it has always seen.
+      if (facts) onText(text, facts);
+      else onText(text);
       return;
     }
     const loadingProposal: VoiceProposal = {
@@ -262,10 +273,26 @@ export function MicButton({
 
       firedRef.current = null;
       refusedRef.current = null;
+      factsRef.current = null;
       const onEvent = (event: StreamEvent) => {
         if (event.type === "final" && event.fired) {
           // a macro fired on the server: this utterance is spent as a command.
           firedRef.current = event.fired;
+        } else if (event.type === "final") {
+          // HS-176 C1 — the run's facts ride the final frame. `session.stop()`
+          // resolves with the text alone, so they are kept here and handed to
+          // the caller beside it.
+          if (
+            event.raw_text !== undefined ||
+            event.corrections_applied !== undefined ||
+            event.journal_id !== undefined
+          ) {
+            factsRef.current = {
+              raw_text: event.raw_text,
+              corrections_applied: event.corrections_applied,
+              journal_id: event.journal_id,
+            };
+          }
         } else if (event.type === "error") {
           // HS-132-05: the refusal arrives NAMED — reason, failure_category,
           // and the closed-interval marker — and it is shown by that name.
@@ -311,7 +338,9 @@ export function MicButton({
         return;
       }
       if (text) {
-        await routeTranscript(text);
+        const facts = factsRef.current;
+        factsRef.current = null;
+        await routeTranscript(text, facts ?? undefined);
         setAudioRetained(false);
         setFailure(null);
         setFailureCode(null);

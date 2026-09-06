@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 176
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-176-02, HS-176-03, HS-176-04
 - **Unblocks:** HS-176-06
 - **Owner:** unassigned
@@ -22,8 +22,10 @@ learns.
 
 - In:
   - The Speak face shows the full loop in one session: the owner
-    speaks, the text lands (UtteranceWell), he judges (the utterance
-    row is tappable), he teaches (the correction well from story 02),
+    speaks, the text lands (the utterance well on SpeakFace.tsx; the
+    170 UtteranceWell component is an orphan parked by story 04), he
+    judges (`OK` / `Wrong`), he teaches (the teach row from story 02),
+    `Review` re-pointed at the Journal wing,
     he speaks again and the correction fires (the correction chip on
     the new row), the journal shows both utterances with the
     correction applied on the second.

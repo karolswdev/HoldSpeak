@@ -417,3 +417,114 @@ def test_run_pipeline_corrections_only_skips_target(monkeypatch) -> None:
         skip_target_detection=True,
     )
     assert result == "test"
+
+
+# --- HS-176 C1: the run's own facts leave the run (the SPOKEN half) ---
+#
+# The browser stream is the leg that runs the pipeline and writes the journal
+# row for a spoken Speak-face utterance; the delivery that follows sends
+# `raw: true` and computes nothing. `facts` is the sink that carries
+# `raw_text` / `corrections_applied` / `journal_id` out of the publication that
+# produced them — never a read-time "newest journal row" lookup (R2).
+
+
+def test_process_transcript_fills_the_facts_sink_on_the_passthrough_lane() -> None:
+    """Pipeline off: the row still exists, so the sink still names it."""
+    cfg = _enabled_config()
+    cfg.dictation.pipeline.enabled = False
+    server = _bare_server()
+    server.dictation_journal = _JournalSpy()
+    facts: dict = {}
+
+    result = asyncio.run(
+        process_transcript(
+            "test transcript",
+            source="browser",
+            context=None,
+            config=cfg,
+            server=server,
+            facts=facts,
+        )
+    )
+
+    assert result == "test transcript"
+    assert facts == {
+        "raw_text": "test transcript",
+        "corrections_applied": [],
+        "journal_id": 99,
+    }
+
+
+def test_process_transcript_facts_carry_the_ids_that_fired(monkeypatch) -> None:
+    """A run whose rules fired reports THOSE ids, beside the heard transcript."""
+    import holdspeak.plugins.dictation.assembly as assembly
+    import holdspeak.plugins.dictation.project_root as project_root
+
+    class _Run:
+        final_text = "PostgreSQL needs a bump"
+        corrections_applied = (5, 9)
+        warnings: list = []
+        total_elapsed_ms = 1.0
+
+    class _Pipeline:
+        def __init__(self) -> None:
+            self.heard: list[str] = []
+
+        def run(self, utterance):
+            self.heard.append(utterance.raw_text)
+            return _Run()
+
+    pipeline = _Pipeline()
+    monkeypatch.setattr(
+        assembly,
+        "build_pipeline",
+        lambda *_a, **_kw: SimpleNamespace(
+            runtime_status="loaded", runtime_detail="", pipeline=pipeline, runtime=None
+        ),
+    )
+    monkeypatch.setattr(project_root, "detect_project_for_cwd", lambda *_a, **_kw: None)
+
+    cfg = _enabled_config()
+    server = _bare_server()
+    server.dictation_journal = _JournalSpy()
+    facts: dict = {}
+
+    result = asyncio.run(
+        process_transcript(
+            "postgress needs a bump",
+            source="browser",
+            context=None,
+            config=cfg,
+            server=server,
+            facts=facts,
+        )
+    )
+
+    assert result == "PostgreSQL needs a bump"
+    assert pipeline.heard == ["postgress needs a bump"]
+    # the transcript AS HEARD, not the landed text -- the TEXT teach diffs
+    # heard-vs-said, and a key harvested from the landed text never matches.
+    assert facts["raw_text"] == "postgress needs a bump"
+    assert facts["corrections_applied"] == [5, 9]
+    assert facts["journal_id"] == 99
+
+
+def test_process_transcript_without_a_sink_is_unchanged() -> None:
+    """Every existing caller passes no sink and behaves exactly as before."""
+    cfg = _enabled_config()
+    cfg.dictation.pipeline.enabled = False
+    server = _bare_server()
+    server.dictation_journal = _JournalSpy()
+
+    result = asyncio.run(
+        process_transcript(
+            "test transcript",
+            source="browser",
+            context=None,
+            config=cfg,
+            server=server,
+        )
+    )
+
+    assert result == "test transcript"
+    assert len(server.dictation_journal.calls) == 1

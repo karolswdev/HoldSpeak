@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../../components/signal/Signal";
 import { countToken } from "../surface";
+import { MicButton } from "../components/MicButton";
 import { readableError } from "../../lib/api";
 import {
   attachThoughtContext,
@@ -187,8 +188,8 @@ export function ThoughtContextPicker({
       })}</ul>}
       {defaultContext?.selections.length ? <Button variant="ghost" dense className="thought-context-policy-action" disabled={Boolean(pending)} onClick={() => void replaceDefault([], "stop")}>{pending === "default:stop" ? "Stopping…" : "Stop using by default"}</Button> : null}
     </div>
-    {/* UX-CANON: needs redesign (HS-170-04) */}
-    <label className="thought-context-search"><span className="sr-only">Search notes</span><span aria-hidden="true">⌕</span><input type="search" value={query} placeholder="Find a note…" onChange={(event) => { setQuery(event.target.value); setView("compact"); }} /></label>
+    {/* HS-176-04 — the voice law: the note search is spoken or typed. */}
+    <label className="thought-context-search"><span className="sr-only">Search notes</span><span aria-hidden="true">⌕</span><input type="search" value={query} placeholder="Find a note…" onChange={(event) => { setQuery(event.target.value); setView("compact"); }} /><MicButton label="Speak note search" onText={(spoken) => { setQuery(spoken); setView("compact"); }} /></label>
     {error ? <p role="alert" className="thought-context-error">{error}</p> : null}
     {loading && !pinned.length && !recent.length && !results.length ? <p role="status" className="thought-context-empty">Loading context…</p> : null}
     {!searching && view === "compact" ? <>

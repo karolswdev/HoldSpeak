@@ -143,11 +143,18 @@ def test_correct_rejects_bad_kind(persistent_db: Database, settings_path: Path) 
     assert resp.status_code == 400
 
 
-def test_correct_secret_transcript_marks_corrected_but_does_not_teach(
+def test_correct_secret_transcript_teaches_nothing_and_writes_nothing(
     persistent_db: Database, settings_path: Path
 ) -> None:
+    """HS-176-02 (R4): a refused teach writes NOTHING.
+
+    Through Phase 175 `mark_corrected` fired outside `if recorded`, so a secret
+    gist that was never stored still flipped the row's `corrected` flag and
+    linked whatever correction happened to be newest. The row now stays clean
+    and the response names the refusal.
+    """
     # The journal redacts secrets, so a real entry can't carry one — but assert
-    # the teach path itself drops a secret-like gist while still flagging.
+    # the teach path itself drops a secret-like gist.
     entry = persistent_db.dictation_journal.record(
         source="dry_run", transcript="token is sk-abcdef0123456789abcd", final_text="x"
     )
@@ -157,10 +164,13 @@ def test_correct_secret_transcript_marks_corrected_but_does_not_teach(
         json={"kind": "intent", "value": "agent_task_buildout"},
     )
     body = resp.json()
-    assert body["corrected"] is True
-    assert body["taught"] is False  # secret gist → not stored
+    assert body["corrected"] is False
+    assert body["recorded"] is False and body["taught"] is False  # secret gist → not stored
+    assert body["reason"] == "secret"
+    assert body["correction_id"] is None
     assert persistent_db.dictation_corrections.recent_corrections() == []
-    assert persistent_db.dictation_journal.get(entry.id).corrected is True
+    row = persistent_db.dictation_journal.get(entry.id)
+    assert row.corrected is False and row.correction_id is None
 
 
 # ── dry-run carries a journal_id ───────────────────────────────────────

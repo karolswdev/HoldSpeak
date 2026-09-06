@@ -9,6 +9,7 @@ import { DeskFilingStrip } from "../components/DeskFilingStrip";
 import { Material } from "../surface/Material";
 import { SurfaceState } from "../surface/Surface";
 import { countToken } from "../surface/count";
+import { PadGadget } from "../surface/gadgets";
 import { INLINE_EDITOR_CONTENT } from "./editors";
 import { ThoughtNoteEditor, type ThoughtNoteEditorHandle } from "./editors/ThoughtNoteEditor";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
@@ -403,10 +404,9 @@ export function NotePullout({
           {contextPicker ? <ThoughtContextPicker thought={thought} anchor={contextRow.current} onApplied={applyContextResult} onDefaultApplied={applyDefaultResult} onClose={closeContextPicker} /> : null}
         </div> : null}
         {thought?.continuity && isRefining(thought.continuity.state) ? <p role="status" className="surface-receipt-line">Finding one useful question…</p> : null}
-        {/* UX-CANON: needs redesign (HS-170-04) — raw textarea below */}
         {review?.kind === "question" ? (() => {
           const usedCtx = review.used_context;
-          return <section className="surface-aerogel" aria-label="Refinement question"><strong>{review.question}</strong>{review.reason ? <span>{review.reason}</span> : null}{usedCtx ? <UsedContext receipt={usedCtx} /> : null}<label>Answer<textarea value={answer} onChange={(event) => setAnswer(event.target.value)} /></label></section>;
+          return <section className="surface-aerogel" aria-label="Refinement question"><strong>{review.question}</strong>{review.reason ? <span>{review.reason}</span> : null}{usedCtx ? <UsedContext receipt={usedCtx} /> : null}<label>Answer<PadGadget label="Answer" value={answer} onChange={setAnswer} /></label></section>;
         })() : null}
         {review?.kind === "synthesis" ? (() => {
           const bodyMd = review.body_markdown;

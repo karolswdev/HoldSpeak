@@ -239,8 +239,13 @@ class MeetingWebServer:
         # dictation stays byte-identical (no DB touched).
         from .plugins.dictation.journal import DictationJournalRecorder
 
+        # HS-176-02: the recorder also pushes one `dictation.journal.entry`
+        # frame per stored row over the existing runtime bus. `self.broadcast`
+        # resolves its event loop at call time and no-ops without one, so
+        # binding it here is safe before the server starts.
         self.dictation_journal = DictationJournalRecorder(
-            repository=dictation_journal_repository
+            repository=dictation_journal_repository,
+            broadcast=self.broadcast,
         )
         self.on_bookmark = callbacks.on_bookmark
         self.on_stop = callbacks.on_stop

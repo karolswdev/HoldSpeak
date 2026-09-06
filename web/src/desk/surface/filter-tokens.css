@@ -1,0 +1,39 @@
+/* HS-176-03 — FilterTokens: the flat one-tap filter strip.
+
+   Canon D: "Filters are flat tokens; wings are the beveled strip; the two
+   never look alike." The tokens therefore drop the Button's bevel and wear
+   the caption type step (11 mono uppercase, 0.06em) — the material stays
+   the library Button's, so the active token is the accent fill the
+   `btn--primary` species already paints. */
+
+.surface-filter-tokens {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+
+.surface-filter-token.btn {
+  min-height: 26px;
+  padding: var(--space-1) var(--space-3);
+  border-radius: 0;
+  box-shadow: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The strip reads as one control: adjacent tokens share their edge. */
+.surface-filter-token.btn + .surface-filter-token.btn {
+  margin-left: -1px;
+}
+
+/* The active token keeps the Button primary species' fill; this only holds
+   its bevel-free presence through hover so the strip never bounces. */
+.surface-filter-token.btn[data-filter-active] {
+  box-shadow: none;
+}

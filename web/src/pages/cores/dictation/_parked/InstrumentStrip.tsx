@@ -1,21 +1,21 @@
 // HS-111-02 — the instrument strip: TALK transport key, LED level meter,
 // STATE register, etched readout cells.
-import { MicButton, type MicState } from "../../../desk/components/MicButton";
-import { presentValue } from "../../../desk/surface/format";
+import { MicButton, type MicState } from "../../../../desk/components/MicButton";
+import { presentValue } from "../../../../desk/surface/format";
 import {
   LampGadget,
   LedMeter,
   TransportKey,
-} from "../../../desk/surface/gadgets";
+} from "../../../../desk/surface/gadgets";
 import {
   STATE_TOKENS,
   MIC_PHASE_FACT,
   MIC_PHASE_LIVE,
   refusalLabel,
-} from "./shared";
-import type { MicPhase } from "../../../lib/micSession";
-import type { DictationFailure } from "../../../lib/dictationRecovery";
-import { DICTATION_FAILURES } from "../../../lib/dictationRecovery";
+} from "../shared";
+import type { MicPhase } from "../../../../lib/micSession";
+import type { DictationFailure } from "../../../../lib/dictationRecovery";
+import { DICTATION_FAILURES } from "../../../../lib/dictationRecovery";
 
 export function InstrumentStrip({
   micState,

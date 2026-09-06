@@ -40,8 +40,23 @@ export type StreamRefusalEvent = {
    utterance is now one transcription pass; the chunks are still shipped as
    they are captured (bounded memory, and each one heartbeats the server's
    audio-floor lease). */
+/* HS-176 C1 (the SPOKEN half) — the three facts of the run that produced
+   this utterance, carried on the `final` frame by the leg that computed them
+   (`voice_stream.py`). The delivery that follows sends `raw: true` and runs no
+   pipeline, so it has none of these to give; they arrive here or nowhere.
+   Absent whenever the run published nothing — never invented. */
+export type SpokenRunFacts = {
+  /** The transcript AS HEARD, before the rewrite pass (the string the
+   *  `text` rules were applied to) — what the TEXT teach diffs against. */
+  raw_text?: string;
+  /** The ids of the rules that actually FIRED on this run (R2). */
+  corrections_applied?: number[];
+  /** The journal row this run wrote, so a teach takes the journal route. */
+  journal_id?: number | null;
+};
+
 export type StreamEvent =
-  | { type: "final"; text: string; fired?: VoiceCommandFired }
+  | ({ type: "final"; text: string; fired?: VoiceCommandFired } & SpokenRunFacts)
   | StreamRefusalEvent;
 
 export type StreamSession = {

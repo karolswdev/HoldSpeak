@@ -47,12 +47,17 @@ vi.mock("../../lib/speakToFill", () => ({
   stopAndTranscribe: vi.fn(),
   cancelCapture: vi.fn(),
   retryPendingTranscription: mocks.retryPendingTranscription,
+  // HS-176-04 — the dictated-text well carries the library mic again
+  // (the voice law), and MicButton subscribes to the capture level.
+  subscribeCaptureLevel: () => () => undefined,
+  speakToFillUnsupportedReason: () => "This browser cannot capture microphone audio.",
 }));
 
 vi.mock("../../lib/micStreamSession", () => ({
   micStreamSupported: () => mocks.streamSupported,
   startStreamSession: mocks.startStreamSession,
   subscribeCaptureLevel: () => () => undefined,
+  speakToFillUnsupportedReason: () => "This browser cannot capture microphone audio.",
 }));
 
 vi.mock("../../lib/pendingVoice", () => ({

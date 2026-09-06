@@ -1,0 +1,162 @@
+/* HS-176-03 — the Journal wing's ledger geometry (the settled boards
+   `JournalStream` / `JournalRowOpen` / `JournalFiltered` / `JournalQuiet`
+   / `JournalStreamPhone`).
+
+   The ONE row grammar at both widths (canon D, rule 1):
+     1440 — time · transcript · LANDED IN <label> · N MS · [APPLIED|TAUGHT]
+            · source badge
+      393 — line 1: time · transcript · source badge
+            line 2: LANDED IN <label> · N MS · [APPLIED|TAUGHT], indented
+
+   The `.journal-mark` slot holds its width whether or not the row carries a
+   token, so a row with neither never moves its neighbours (canon D: "empty
+   slots never move their neighbours"). The search's `IN FINAL` mark shares that
+   one slot, which widens on every row while a search runs — so it too never
+   moves a neighbour, and costs the transcript nothing when idle. */
+
+.speak-journal .surface-ledger-head {
+  display: block;
+  padding: 2px 4px 6px;
+}
+/* No caption count on this wing: the footer's `N TODAY` is the one count per
+   face (UX-CANON A.7; ruling R8). */
+.speak-journal .surface-ledger-count {
+  display: none;
+}
+.speak-journal .surface-ledger-controls {
+  margin-left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.speak-journal .journal-search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.speak-journal .surface-ledger-controls .gadget-string {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+.speak-journal .journal-filters {
+  align-self: flex-start;
+}
+
+/* ── the row ─────────────────────────────────────────────────────── */
+
+.speak-journal .surface-ledger-line {
+  display: flex;
+  align-items: center;
+  gap: 0 10px;
+  min-height: 30px;
+  padding: 5px 6px;
+  border-top: 1px solid var(--wash-1);
+}
+.speak-journal .surface-ledger-time {
+  flex: 0 0 52px;
+}
+.speak-journal .surface-ledger-primary {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: var(--desk-type-primary-size);
+  font-weight: 600;
+  color: var(--text);
+}
+.speak-journal .journal-cells {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  min-width: 0;
+}
+.speak-journal .journal-landed {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.speak-journal .journal-ms {
+  min-width: 6ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+/* The one fixed slot for APPLIED / TAUGHT — held open when empty. */
+.speak-journal .journal-mark {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: none;
+  min-width: 72px;
+}
+/* While a search runs the same slot widens on EVERY row, so the search's
+   `IN FINAL` mark sits beside APPLIED/TAUGHT without moving a neighbour —
+   and costs the transcript nothing when no search is running. */
+.speak-journal .journal-cells[data-searching="true"] .journal-mark {
+  min-width: 128px;
+}
+.speak-journal .surface-ledger-trailing {
+  flex: none;
+  min-width: 76px;
+  justify-content: flex-end;
+}
+
+/* ── the opened row ──────────────────────────────────────────────── */
+
+/* The board draws Delete in the danger tone at rest; ConfirmVerb keeps the
+   in-world confirm (no modals) and the library's danger fill once armed. */
+.speak-journal .journal-delete .btn--ghost {
+  color: var(--danger);
+}
+.speak-journal .journal-preview-tokens {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ── 393 (the desk's `surface` container, never a viewport media) ─── */
+
+@container surface (max-width: 559.9px) {
+  .speak-journal .surface-ledger-line {
+    flex-wrap: wrap;
+    row-gap: 5px;
+  }
+  .speak-journal .surface-ledger-time {
+    order: 0;
+    flex: 0 0 auto;
+  }
+  .speak-journal .surface-ledger-primary {
+    order: 1;
+    flex: 1 1 0;
+  }
+  .speak-journal .surface-ledger-trailing {
+    order: 2;
+    min-width: 0;
+  }
+  .speak-journal .journal-cells {
+    order: 3;
+    flex: 1 0 100%;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: 44px;
+  }
+  .speak-journal .journal-ms {
+    min-width: 0;
+    text-align: left;
+  }
+  .speak-journal .journal-mark {
+    min-width: 0;
+    justify-content: flex-start;
+  }
+  .speak-journal .journal-cells[data-searching="true"] .journal-mark {
+    min-width: 0;
+  }
+  .speak-journal .surface-ledger-controls .gadget-string {
+    width: auto;
+  }
+}

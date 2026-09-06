@@ -1008,6 +1008,25 @@ after DC-04; Kokoro server-side vs in-browser; any external MCP server
 wanted on day one.
 
 
+### AG. Phase 176 remainders — counsel-on-built's P2s (parked 2026-09-06, from assets/counsel-on-built-176.md)
+
+- **HS-176 C5:** `APPLIED` can name a text rule that changed nothing (a case-only rule fires on already-correct text and is still recorded, corrections.py `apply_text_corrections`). Record a text rule's id only when the replacement differs from the matched span.
+- **HS-176 C6:** the intent nudge's reinforce branch sets `corrected=True` even when the block and the confidence are unchanged (intent_router.py `_apply_correction_nudge`), so `APPLIED` can mark a nudge that did nothing. Mark only when it raised the confidence or changed the block.
+- **HS-176 C7:** 17 of the 24 `MIC_ALLOWLIST` entries suppress nothing (the rule's `type` filter already excludes them). Trim to the load-bearing entries or fence that every entry suppresses at least one element.
+- **HS-176 C8:** a pure insertion or deletion becomes a whole-sentence rule that fires only on that exact sentence, and the receipt still reads `TAUGHT`. Say `TAUGHT · PHRASE` for a whole-sentence rule, or refuse it by name.
+- **HS-176 C9:** the Learned wing subscribes to `learning_event`, which a `text` teach never emits (`similar` is 0 for text and the broadcast is gated on it). Emit a frame for every stored rule, or subscribe to the journal frame.
+- **HS-176 C10:** after `Forget`, an unresolved id in a still-mounted run renders an empty HEARD/SAID well (useSpeakDeck `appliedRules`). Drop unresolved ids.
+- **HS-176 C11:** the footer receipt (`REHEARSED · NOT DELIVERED`) survives a wing switch and masks `N TODAY` on the Journal and Learned wings. Clear it on a wing switch.
+- **HS-176 C12:** a teach that 500s after the store already wrote (`mark_corrected` unguarded) shows `REFUSED · nothing written` though a rule exists. Guard the post-write steps and report honestly.
+- **HS-176 C13:** `Pipeline.run` returns before the correction seam when the pipeline is disabled, and the hotkey path returns before `run()` when the runtime is not loaded, so a purely lexical text rule silently does nothing on both. State it on the face or apply text rules on the passthrough too.
+- **HS-176 C15:** the Journal row shows the transcript while search also matches `final_text`, so a hit's visible text can lack the needle (a `MATCHED · FINAL` token was added in the C2 fix; revisit the row's primary).
+- **HS-176 C16:** a frame arriving between the initial GET and `setRows` was discarded (buffered in the C2 fix; keep an eye on the order).
+- **HS-176 walk finding (his desk, read-only leg):** a journal row with an EMPTY transcript (Aug 21, 08:04, 357 MS, BROWSER) renders a blank primary on the Journal wing. Show the token `NO TEXT` in the primary when the transcript is empty (the opened row's preview already does).
+- **HS-176 walk finding (his desk):** the Speak face reads `DICTATION · GPT 5 mini · API.OPENAI.COM · KEY NOT SET` — his dictation engine is a cloud engine without a key, so Talk cannot land until he sets the key or picks a local engine; the face says it honestly (the EgressChip and the KEY NOT SET token), nothing to build; noted for his attended walk's beat 0.
+- **HS-176 counsel re-read N2:** a spoken Speak-face utterance journals with source `browser` (voice_stream.py) while the desktop hotkey journals `dictation`; ruled to keep, but the two names may deserve one word for "his voice" (SPOKEN) vs the typed dry run. Revisit with the owner.
+- **HS-176 counsel re-read C3 note:** the widened secret guard (`_looks_secret`) drives the journal's whole-field redaction and the project-doc suggestions product-wide; zero false positives on fifteen architect sentences, but name it if a redaction surprises him.
+- **HS-176 docs:** `docs/DICTATION_PIPELINE_GUIDE.md` §12 still describes the retired `/dictation` tabbed page and its Memory tab shots; a full rewrite is its own story. Two stale code comments: useSpeakDeck.ts calls the TEXT well "one StringGadget" (it is a PadGadget); DictationCore.tsx says Learned is imported outside the barrel (it is exported there).
+
 ## The model-era collapse (parked 2026-08-31, from the owner's question)
 
 The #511 revolution collapsed the WEB platform's parallel authorities;

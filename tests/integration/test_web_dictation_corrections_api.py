@@ -56,7 +56,15 @@ def test_record_and_list_correction(test_client: TestClient, settings_path: Path
         json={"kind": "intent", "text": "fix the cli thing", "value": "code_exercise"},
     )
     assert resp.status_code == 200
-    assert resp.json() == {"recorded": True, "size": 1}
+    # HS-176-02 (R4): an accepted teach also names the stored row, so the
+    # journal route can link `correction_id` instead of guessing it.
+    body = resp.json()
+    assert body["recorded"] is True and body["size"] == 1
+    assert (body["kind"], body["key"], body["value"]) == (
+        "intent",
+        "fix the cli thing",
+        "code_exercise",
+    )
 
     listed = test_client.get("/api/dictation/corrections").json()
     assert listed["size"] == 1
@@ -87,7 +95,9 @@ def test_record_silently_drops_secret(test_client: TestClient, settings_path: Pa
         json={"kind": "intent", "text": "token is sk-abcdef0123456789abcd", "value": "code_exercise"},
     )
     assert resp.status_code == 200
-    assert resp.json() == {"recorded": False, "size": 0}
+    # HS-176-02 (R4): the refusal is NAMED, not smoothed — the face renders
+    # `REFUSED · SECRET` from this token.
+    assert resp.json() == {"recorded": False, "size": 0, "reason": "secret"}
     assert test_client.get("/api/dictation/corrections").json()["size"] == 0
 
 
@@ -136,9 +146,11 @@ def test_post_writes_through_to_db(persistent_db: Database, settings_path: Path)
         json={"kind": "target", "text": "route this to codex", "value": "codex_cli"},
     )
     assert resp.status_code == 200
-    assert resp.json() == {"recorded": True, "size": 1}
+    body = resp.json()
+    assert body["recorded"] is True and body["size"] == 1
     # The correction is durable: it's in the DB, visible to a fresh repo read.
     persisted = persistent_db.dictation_corrections.recent_corrections()
+    assert body["id"] == persisted[0].id  # HS-176-02 (R4): the real stored id
     assert len(persisted) == 1
     assert persisted[0].kind == "target"
     assert persisted[0].value == "codex_cli"
@@ -192,14 +204,18 @@ def test_delete_without_repo_404s(test_client: TestClient, settings_path: Path) 
 
 def test_dictation_page_includes_memory_tab(test_client: TestClient) -> None:
     assert '<div id="root"></div>' in test_client.get("/dictation").text
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
-    # HS-100-07: correction memory lives behind the Speak door.
+    root = Path(__file__).resolve().parents[2]
+    source = (root / "web/src/pages/cores/DictationCore.tsx").read_text()
+    # HS-100-07: correction memory lived behind the Speak door.
+    # HS-176-05: the corrections TABLE moved OUT of the door and became the
+    # `Learned` wing (settled design D2(c)) — "the only path to what the
+    # pipeline learned is the gear" was the defect. The door keeps the
+    # learning digest, so `<Memory />` still stacks in it; the corrections
+    # wire moved with the table.
     assert "<Memory />" in source
-    # HS-132-12: HS-117-08 moved the section's wire calls into
-    # cores/dictation/Memory.tsx; the door still stacks it.
-    memory = (
-        Path(__file__).resolve().parents[2]
-        / "web/src/pages/cores/dictation/Memory.tsx"
-    ).read_text()
-    assert "/api/dictation/corrections" in memory
+    assert "<Learned />" in source
+    memory = (root / "web/src/pages/cores/dictation/Memory.tsx").read_text()
     assert "/api/dictation/learning-digest" in memory
+    assert "/api/dictation/corrections" not in memory
+    learned = (root / "web/src/pages/cores/dictation/Learned.tsx").read_text()
+    assert "/api/dictation/corrections" in learned

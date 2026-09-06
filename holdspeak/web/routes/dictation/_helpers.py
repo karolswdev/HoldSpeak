@@ -755,6 +755,13 @@ def _run_dictation_dry_run_text(
                 "blocks_count": 0,
                 "stages": [],
                 "final_text": text,
+                # HS-176-02 (N2): the transcript AS HEARD, before any rewrite.
+                # The TEXT teach well pre-fills from this, and the word-level
+                # diff runs heard(raw) vs said(his edit) — a key harvested from
+                # `final_text` would be matched against a string it never equals.
+                # Pipeline off: nothing rewrote and no rule fired.
+                "raw_text": text,
+                "corrections_applied": [],
                 "total_elapsed_ms": 0.0,
                 "warnings": warnings,
                 "journal_id": journal_id,
@@ -892,6 +899,16 @@ def _run_dictation_dry_run_text(
             "blocks_count": len(result.blocks.blocks),
             "stages": stages,
             "final_text": run.final_text,
+            # HS-176-02 (N2): the transcript AS HEARD — the exact string the
+            # `text` rules are applied to at the head of `Pipeline.run` — beside
+            # the landed text, plus the ids of the rules that actually fired on
+            # this run (R2: the APPLIED chip renders from this stored fact, never
+            # from a read-time "would match"). `getattr` because `PipelineRun`'s
+            # field is additive and the passthrough fakes a run (C5 note).
+            "raw_text": text,
+            "corrections_applied": _correction_ids(
+                getattr(run, "corrections_applied", None)
+            ),
             "total_elapsed_ms": float(run.total_elapsed_ms),
             "warnings": warnings,
             "telemetry": summarize_dry_run(
@@ -1018,3 +1035,180 @@ def _runtime_readiness(cfg: Any) -> dict[str, Any]:
         max_total_latency_ms=cfg.pipeline.max_total_latency_ms,
     )
     return payload
+
+
+# ── HS-176-02: the teach seam (the ONE server-side diff + refusal vocabulary) ──
+#
+# The `text` correction kind teaches from a pair: what the mic HEARD (the raw
+# transcript, now served on the run response beside `final_text`) and what the
+# owner SAID (his edit). The word-level diff runs HERE, on the server, so both
+# teach routes — `POST /api/dictation/corrections` and
+# `POST /api/dictation/journal/{entry_id}/correct` — produce identical rules.
+#
+# The ruled outcomes (assets/settled-design-speak-loop.md D2(a), rulings R1/N3):
+#   * no difference                          -> nothing stored, reason `no_change`
+#   * exactly one contiguous differing span,
+#     at most half the heard tokens          -> a WORD rule (key = the heard
+#                                               span, value = the said span)
+#   * more than one span, or a span over
+#     half the tokens                        -> a WHOLE-PHRASE rule (key = the
+#                                               full heard text, value = the
+#                                               full said text)
+#
+# N3: `Utterance.raw_text` is post-TextProcessor on the capture path, so spoken
+# punctuation is already attached to the token (`postgress,`). Every stored span
+# is therefore stripped of leading/trailing punctuation before it is stored, and
+# the key is stored lowercased (matching is case-insensitive; the store's own
+# matcher is case-preserving on the first letter).
+
+#: Named refusal reasons on the teach wire. The face turns these into
+#: `REFUSED · SECRET` / `REFUSED · ONE WORD` / `NO CHANGE` (R4, R7, R8).
+TEACH_NO_CHANGE = "no_change"
+TEACH_EMPTY = "empty"
+TEACH_SECRET = "secret"
+TEACH_ONE_WORD = "one_word"
+TEACH_REFUSED = "refused"
+
+#: Leading/trailing characters stripped from a stored span (N3).
+_TEACH_PUNCTUATION = "\"'`.,;:!?()[]{}<>…-–—*_/\\"
+
+
+def _strip_span(span: str) -> str:
+    """One whitespace-collapsed line, stripped of leading/trailing punctuation."""
+    return " ".join(str(span or "").split()).strip(_TEACH_PUNCTUATION).strip()
+
+
+def diff_text_correction(heard: str, said: str) -> dict[str, Any]:
+    """The ruled word-level diff of `heard` vs `said`.
+
+    Returns ``{"rule": {"key", "value", "shape"}, "reason": None}`` when
+    something should be stored, or ``{"rule": None, "reason": "<token>"}`` when
+    nothing should be — `no_change` when the two texts agree, `empty` when a
+    side is blank. `shape` is ``"word"`` or ``"phrase"`` (diagnostic only; the
+    stored kind is `text` either way).
+    """
+    from difflib import SequenceMatcher
+
+    heard_norm = " ".join(str(heard or "").split())
+    said_norm = " ".join(str(said or "").split())
+    if not heard_norm or not said_norm:
+        return {"rule": None, "reason": TEACH_EMPTY}
+    if heard_norm == said_norm:
+        return {"rule": None, "reason": TEACH_NO_CHANGE}
+
+    heard_tokens = heard_norm.split()
+    said_tokens = said_norm.split()
+    spans = [
+        op
+        for op in SequenceMatcher(
+            a=heard_tokens, b=said_tokens, autojunk=False
+        ).get_opcodes()
+        if op[0] != "equal"
+    ]
+
+    key_raw = ""
+    value = ""
+    shape = "phrase"
+    if len(spans) == 1:
+        _tag, i1, i2, j1, j2 = spans[0]
+        heard_span = " ".join(heard_tokens[i1:i2])
+        said_span = " ".join(said_tokens[j1:j2])
+        # A pure insertion has no heard span and a pure deletion no said span —
+        # neither can be keyed as a word rule. A span over half the heard tokens
+        # is the sentence, not a word.
+        if heard_span and said_span and (i2 - i1) * 2 <= len(heard_tokens):
+            key_raw = _strip_span(heard_span)
+            value = _strip_span(said_span)
+            shape = "word"
+    if shape != "word" or not key_raw or not value:
+        key_raw = _strip_span(heard_norm)
+        value = _strip_span(said_norm)
+        shape = "phrase"
+
+    if not key_raw or not value:
+        return {"rule": None, "reason": TEACH_EMPTY}
+    if key_raw == value:
+        # Only whitespace or edge punctuation differed: the rule would be a
+        # no-op, so nothing is written and the receipt says so.
+        return {"rule": None, "reason": TEACH_NO_CHANGE}
+    return {"rule": {"key": key_raw.lower(), "value": value, "shape": shape}, "reason": None}
+
+
+def teach_refusal_reason(kind: str, key: str, value: str) -> str:
+    """The named reason `CorrectionStore.record` refused a teach (R4/R7).
+
+    `CorrectionStore.record` names its own refusal (`kind` / `empty` / `secret` /
+    `one_word`) and `record_correction` passes that through verbatim — the ONE
+    vocabulary. This is the fallback for a store that predates that contract:
+    the same guards, mirrored, so the wire can still NAME the refusal instead of
+    smoothing it (Article V.3). `refused` when no guard explains the no-op.
+    """
+    from ....project_doc_suggestions import looks_like_secret
+
+    clean_key = " ".join(str(key or "").split())
+    clean_value = str(value or "").strip()
+    if not clean_key or not clean_value:
+        return TEACH_EMPTY
+    try:
+        if looks_like_secret(clean_key) or looks_like_secret(clean_value):
+            return TEACH_SECRET
+    except Exception:  # pragma: no cover - the secret check must never raise here
+        pass
+    # The one-word refusal binds the ROUTING kinds only: a `text` rule is
+    # exact-phrase, so a single token is legal and precise (R7).
+    if kind in ("intent", "target") and len(clean_key.split()) < 2:
+        return TEACH_ONE_WORD
+    return TEACH_REFUSED
+
+
+def _newest_correction_id(store: Any) -> Optional[int]:
+    """The durable id of the newest stored correction, or None."""
+    try:
+        items = store.list_for_display()
+    except Exception:  # pragma: no cover - the id linkage is best-effort
+        return None
+    if items and items[0].get("id") is not None:
+        try:
+            return int(items[0]["id"])
+        except (TypeError, ValueError):
+            return None
+    return None
+
+
+def record_correction(
+    store: Any, kind: str, key: str, value: str
+) -> tuple[bool, Optional[int], Optional[str]]:
+    """Teach one correction; return ``(recorded, stored id, refusal reason)``.
+
+    R4: the id and the refusal's NAME both come from `CorrectionStore.record`,
+    which returns a `RecordOutcome` (`stored` / `correction_id` / `refusal`).
+    No more guessing the id from `list_for_display()[0]` — on a refusal that was
+    somebody else's rule entirely.
+
+    The older return shapes are still honoured so a bare/older store cannot
+    500 the route: a plain `bool` reads the id back from the durable list and
+    ONLY when the record was accepted (which is itself the R4 fix), and the
+    refusal is then re-derived from the store's own guards.
+    """
+    outcome = store.record(kind, key, value)
+    stored = getattr(outcome, "stored", None)
+    if stored is not None:  # the HS-176-02 `RecordOutcome`
+        if not bool(stored):
+            reason = getattr(outcome, "refusal", None)
+            return False, None, str(reason) if reason else TEACH_REFUSED
+        correction_id = getattr(outcome, "correction_id", None)
+        return True, (int(correction_id) if correction_id is not None else None), None
+    if not bool(outcome):
+        return False, None, teach_refusal_reason(kind, key, value)
+    return True, _newest_correction_id(store), None
+
+
+def _correction_ids(value: Any) -> list[int]:
+    """A clean ``list[int]`` of correction ids from whatever the run carries."""
+    ids: list[int] = []
+    for item in (value or []):
+        try:
+            ids.append(int(item))
+        except (TypeError, ValueError):  # pragma: no cover - defensive
+            continue
+    return ids

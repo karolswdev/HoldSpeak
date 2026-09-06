@@ -998,6 +998,9 @@ class DictationJournalRecord:
     rewrite_pass_ms: list[float] = field(default_factory=list)
     confidence: Optional[float] = None
     warnings: list[str] = field(default_factory=list)
+    # HS-176-02 (ruling R5): the correction ids that FIRED on this row. The
+    # opposite fact from `corrected`, which means "he taught FROM this row".
+    corrections_applied: list[int] = field(default_factory=list)
     corrected: bool = False
     correction_id: Optional[int] = None
 

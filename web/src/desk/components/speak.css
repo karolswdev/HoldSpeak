@@ -301,3 +301,151 @@
   flex-direction: column;
   gap: 16px;
 }
+
+/* ————— HS-176-02 — the teach loop on the RESULT row —————
+   The FIELD caption, the APPLIED chip and its unfolding well, and the
+   token receipt that replaces the teach row. Tokens, verbs, counts —
+   no sentence anywhere. */
+
+/* The verdict pair is ONE species in two states: the selected verdict
+   takes the pressed frame, never a second button species. */
+.desk-next .speak-result-line .btn[data-verdict-active] {
+  border-color: var(--border);
+  background: var(--desk-window-well, rgba(0, 0, 0, 0.28));
+  box-shadow: inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light);
+  color: var(--text);
+}
+
+/* APPLIED — a chip that is also a verb (rule A.1: the library Button). */
+.desk-next .speak-result-line .btn.speak-applied-chip {
+  min-height: 18px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--desk-window-well, rgba(0, 0, 0, 0.28));
+  box-shadow: inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light);
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ok);
+  flex: none;
+}
+
+/* The rules that fired, unfolded in-world beneath the RESULT line. */
+.desk-next .speak-applied-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 2px 0 0 18px;
+  padding: 10px 12px;
+  background: var(--desk-window-well, var(--surface-1));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light);
+}
+.desk-next .speak-applied-rule {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.desk-next .speak-applied-rule + .speak-applied-rule {
+  padding-top: 8px;
+  border-top: 1px solid var(--border-faint, rgba(255, 255, 255, 0.035));
+}
+.desk-next .speak-applied-fact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.desk-next .speak-applied-caption {
+  font: 600 11px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.desk-next .speak-applied-heard,
+.desk-next .speak-applied-said {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 12px / 1 var(--font-mono);
+}
+.desk-next .speak-applied-heard {
+  color: var(--text-muted);
+}
+.desk-next .speak-applied-said {
+  color: var(--text);
+}
+
+/* FIELD and its cycle are one object: at 393 they take the first line
+   whole, so the value control and `Teach` share the second (the board's
+   phone composition). */
+.desk-next .speak-teach-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+/* The FIELD caption leads the teach row. */
+.desk-next .speak-teach-caption {
+  font: 600 11px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+/* The value well fills the row and WRAPS — it never truncates the text
+   he is being asked to edit. */
+.desk-next .speak-teach .gadget-pad {
+  flex: 1;
+  min-width: 0;
+}
+.desk-next .speak-teach .gadget-pad textarea {
+  /* The desk floors every textarea at two control heights (global.css:
+     `.desk-next textarea`), which is right for a pad you compose in and
+     wrong for a one-line value you EDIT: the board draws this well at a
+     single control height at 1440 and lets it grow at 393. The floor is
+     lowered HERE only, and `autoGrow` sizes the rest. */
+  min-height: var(--desk-control-h);
+  padding: 5px 26px 5px 8px;
+  overflow-wrap: anywhere;
+}
+
+/* The receipt takes the teach row's place: a token, and the pair or
+   the label beside it. It fades; it never becomes a sentence. */
+.desk-next .speak-receipt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--border-faint, rgba(255, 255, 255, 0.035));
+}
+.desk-next .speak-receipt-tail {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 12px / 1 var(--font-mono);
+  color: var(--text-muted);
+}
+
+@container surface (max-width: 500px) {
+  .desk-next .speak-receipt {
+    flex-wrap: wrap;
+  }
+  .desk-next .speak-teach-field {
+    flex-basis: 100%;
+  }
+  /* The well wraps to as many lines as it needs; `Teach` stays at the
+     trailing edge, level with the first line. */
+  .desk-next .speak-teach {
+    align-items: flex-start;
+  }
+  .desk-next .speak-teach-field {
+    align-items: center;
+  }
+}

@@ -130,6 +130,12 @@ def build_pipeline(
         enabled=True,
         llm_enabled=llm_enabled,
         on_run=on_run,
+        # HS-176-02: the pipeline gets the SAME gated snapshot the intent-router
+        # stage gets. It keeps the `text` subset for its own transcript seam
+        # (ruling R1) and reads the routing subset back only to name the rule
+        # the router nudged with. `None` when corrections are off, so a desk
+        # with the feature disabled is byte-identical.
+        corrections=intent_corrections,
     )
     return BuildResult(
         pipeline=pipeline,

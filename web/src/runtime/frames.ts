@@ -19,6 +19,7 @@ export const RUNTIME_FRAME_TYPES = [
   "bookmark",
   "capture_recovery",
   "device_health",
+  "dictation.journal.entry",
   "dictation_preview",
   "duration",
   "intel_complete",

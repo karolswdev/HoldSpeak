@@ -41,6 +41,7 @@ If capture fails, use the recovery action on the screen or run `holdspeak doctor
 | --- | --- | --- |
 | Dictate into another app | Hold the global hotkey, speak, then release it to insert text. | [Voice typing](docs/USER_GUIDE.md#voice-typing) |
 | Refine a coding prompt | Use project facts, project context, and an optional model in the dictation pipeline. | [Dictation pipeline](docs/DICTATION_PIPELINE_GUIDE.md) |
+| Teach a dictation correction | Select **Wrong** on a result, correct the words or the route, then **Teach**. The next dictation that carries the phrase is corrected. | [Speak](docs/USER_GUIDE.md#speak) |
 | Review a meeting | Record or import a meeting. Review the transcript, decisions, action items, and artifacts. | [Meeting mode](docs/MEETING_MODE_GUIDE.md) |
 | Develop your working context | Revisit Interview sections for goals, Projects, cadences, decisions, and delegation. | [Interview](docs/INTERVIEW.md) |
 | Prepare architecture work | Draft a decision brief, review questions, or an agent brief from available records. | [Architecture work recipes](docs/ARCHITECTURE_WORK.md) |

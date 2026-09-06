@@ -126,6 +126,248 @@ def face_for_file(rel: str) -> str | None:
 
 
 # ---------------------------------------------------------------------------
+# The voice law (rule `mic`) — Constitution Article IV.1
+# ---------------------------------------------------------------------------
+# "Every text input can be spoken into.  The mic is an affordance of the OS,
+# not of any one feature."
+#
+# HS-176-04 (ruling R9) makes the rule PER ELEMENT.  Every raw `<input>` that
+# takes dictatable text and every `<textarea>` under web/src is counted, plus
+# every `mic={false}` on a mic-bearing library species — an opt-out is a hole
+# the raw-element count cannot see.  An element is COVERED when an explicit
+# `<MicButton>` renders inside the same component function (the three species
+# render their own).  Everything else is named in MIC_ALLOWLIST with a reason.
+#
+# The four defects the old file-scoped flag carried (design D2(d).2):
+#   (i)   `<textarea` never matched;
+#   (ii)  `<StringGadget` counted as an uncovered input (it is covered by
+#         definition);
+#   (iii) one violation per file however many elements were bare;
+#   (iv)  gated on classify_face, so non-face files were never checked.
+
+# `<input type="...">` values that are not dictatable text.  An absent or
+# dynamic type is treated as text (StringGadget's own input is `type={type}`).
+MIC_TEXT_TYPES = frozenset({"text", "search", "url", "email", "tel"})
+
+# The library species that render a MicButton by default (gadgets.tsx:243,
+# gadgets.tsx:315, Surface.tsx:1070).
+MIC_SPECIES = ("StringGadget", "PadGadget", "EditInPlace")
+
+# The named allowlist: (path relative to web/src, needle, reason).
+#
+# The needle is matched against the element's NEIGHBOURHOOD — its own tag text
+# plus the two preceding lines — never a line number (line-anchored fences
+# move).  Every entry is one element of the HS-176-01 census
+# (pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/mic-census-176.md
+# §2c and §3): 19 raw non-text controls + 4 justified `mic={false}` opt-outs
+# = 23, plus the 24th added by ruling R13 (the Speak face's utterance well).
+MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
+    # -- 19 raw elements the census names (census §2c) ----------------------
+    ("components/signal/Signal.tsx", 'hs-control ${props.className',
+     "TextInput library primitive; zero call sites in web/src (dead export)"),
+    ("components/signal/Signal.tsx", "signal-textarea",
+     "TextArea library primitive; zero call sites in web/src (dead export)"),
+    ("desk/surface/gadgets.tsx", "gadget-check-token",
+     "CheckGadget (token variant) checkbox — not a text input"),
+    ("desk/surface/gadgets.tsx", 'className="gadget-check"',
+     "CheckGadget checkbox — not a text input"),
+    ("desk/surface/gadgets.tsx", "gadget-mx-row",
+     "MxRadio radio — not a text input"),
+    ("desk/surface/gadgets.tsx", "gadget-stepper",
+     "StepperGadget number — a stepped quantity, not dictatable text"),
+    ("desk/surface/gadgets.tsx", 'type="range"',
+     "PropGadget slider — not a text input"),
+    ("desk/surface/patterns/ChoiceCardGroup.tsx", "surface-choice-card-radio",
+     "ChoiceCard radio — not a text input"),
+    ("desk/pullouts/ThreadPullout.tsx", "thread-elicitation-boolean",
+     "Elicitation boolean checkbox — not a text input"),
+    ("desk/pullouts/ThreadPullout.tsx", 'type="number"',
+     "Elicitation numeric field — a number, not dictatable text"),
+    ("desk/components/ScheduleCreateWindow.tsx", 'type="datetime-local"',
+     "Date/time picker — a calendar value, not dictatable text"),
+    ("features/project-room/review/ReviewPosture.tsx", "review-defer-date",
+     "Defer-until date picker — a calendar value, not dictatable text"),
+    ("pages/cores/ModelLibraryCore.tsx", "Hosted provider",
+     "Provider key (password) — a secret is never dictated"),
+    ("pages/cores/ModelLibraryCore.tsx", "Endpoint provider",
+     "Provider key (password) — a secret is never dictated"),
+    ("pages/cores/ModelLibraryCore.tsx", 'accept=".gguf,.mlx"',
+     "Model file chooser — an OS file picker, not a text input"),
+    ("pages/cores/ModelLibraryCore.tsx", "name={groupName}",
+     "Model row selection radio — not a text input"),
+    ("pages/cores/TopologyMapView.tsx", 'placeholder="Key (optional)"',
+     "Provider key (password) — a secret is never dictated"),
+    ("pages/cores/TopologyMapView.tsx", 'placeholder="Provider"',
+     "Provider key (password) — a secret is never dictated"),
+    ("pages/cores/history/ImportSection.tsx", "audio/*,.wav",
+     "Audio/transcript import chooser — an OS file picker, not a text input"),
+    # -- 4 justified `mic={false}` opt-outs (census §3) ---------------------
+    ("desk/components/ScheduleCreateWindow.tsx", 'label="Cron expression"',
+     "Cron syntax field — a five-token expression, not dictatable prose"),
+    ("pages/cores/CalendarSnapshotReviewCore.tsx", 'key="start"',
+     "HH:MM time field — a clock value, not dictatable prose"),
+    ("pages/cores/CalendarSnapshotReviewCore.tsx", 'key="end"',
+     "HH:MM time field — a clock value, not dictatable prose"),
+    ("pages/cores/SettingsCore.tsx", 'key="symbol"',
+     "Glyph field (a single symbol such as →) — not dictatable prose"),
+    # -- the 24th, ruling R13 (HS-176-05) ----------------------------------
+    ("pages/cores/dictation/SpeakFace.tsx", 'label="Utterance"',
+     "The Talk transport is this face's mic authority (Article IV.3, R13)"),
+)
+
+
+def _mic_tag_text(content: str, start: int, limit: int = 4000) -> str:
+    """The opening tag beginning at `start`, across however many lines.
+
+    Stops at the first `>` outside a string and outside a `{...}` expression,
+    so `onChange={(e) => ...}` and `placeholder="https://…"` never end it.
+    """
+    depth = 0
+    quote: str | None = None
+    end = min(len(content), start + limit)
+    i = start
+    while i < end:
+        ch = content[i]
+        if quote:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == quote:
+                quote = None
+        elif ch in "\"'`":
+            quote = ch
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+        elif ch == ">" and depth == 0:
+            return content[start:i + 1]
+        i += 1
+    return content[start:end]
+
+
+def _mic_component_spans(content: str) -> list[tuple[int, int, str]]:
+    """(start, end, name) for every top-level function/const in the file."""
+    starts: list[tuple[int, str]] = []
+    for m in re.finditer(
+        r'^(?:export\s+)?(?:default\s+)?(?:async\s+)?'
+        r'(?:function\s+(\w+)|const\s+(\w+)\s*[:=])',
+        content, re.MULTILINE,
+    ):
+        starts.append((m.start(), m.group(1) or m.group(2) or "?"))
+    if not starts:
+        return [(0, len(content), "<module>")]
+    spans: list[tuple[int, int, str]] = []
+    if starts[0][0] > 0:
+        spans.append((0, starts[0][0], "<module>"))
+    for i, (off, name) in enumerate(starts):
+        end = starts[i + 1][0] if i + 1 < len(starts) else len(content)
+        spans.append((off, end, name))
+    return spans
+
+
+def _mic_is_commented(lines: list[str], line_no: int, col: int) -> bool:
+    """True when the match sits inside a `//` or an unclosed `/* */` comment.
+
+    A CLOSED block comment before the element does not comment it out —
+    `{/* UX-CANON: … */}<textarea …>` is live code, and three of the census's
+    eight gap sites carry exactly that marker.
+    """
+    if line_no - 1 >= len(lines):
+        return False
+    line = lines[line_no - 1]
+    stripped = line.strip()
+    if (stripped.startswith("//") or stripped.startswith("*")
+            or stripped.startswith("/*") or stripped.startswith("{/*")):
+        return True
+    before = line[:col]
+    quote: str | None = None
+    i = 0
+    while i < len(before):
+        ch = before[i]
+        if quote:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == quote:
+                quote = None
+        elif ch in "\"'`":
+            quote = ch
+        elif before.startswith("//", i):
+            return True
+        elif before.startswith("/*", i):
+            end = before.find("*/", i + 2)
+            if end == -1:
+                return True
+            i = end + 2
+            continue
+        i += 1
+    return False
+
+
+def _mic_neighbourhood(lines: list[str], line_no: int, tag: str) -> str:
+    """The element's tag text plus the two lines above it."""
+    lead = lines[max(0, line_no - 3):line_no - 1]
+    return "\n".join(lead) + "\n" + tag
+
+
+def scan_mic(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
+    """Rule `mic`, per element (the voice law).  TSX only."""
+    if not rel_path.endswith(".tsx"):
+        return []
+
+    spans = _mic_component_spans(content)
+    mic_offsets = [m.start() for m in re.finditer(r'<MicButton\b', content)]
+
+    def line_of(offset: int) -> int:
+        return content.count("\n", 0, offset) + 1
+
+    def covered(offset: int) -> bool:
+        """An explicit MicButton inside the same component function."""
+        for start, end, _name in spans:
+            if start <= offset < end:
+                return any(start <= mic < end for mic in mic_offsets)
+        return False
+
+    candidates: list[tuple[int, str, str, str]] = []  # offset, kind, what, tag
+
+    for m in re.finditer(r'<(input|textarea)\b', content):
+        tag = _mic_tag_text(content, m.start())
+        if m.group(1) == "input":
+            tm = re.search(r'\btype\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|\{)', tag)
+            if tm:
+                literal = tm.group(1) if tm.group(1) is not None else tm.group(2)
+                # A dynamic `type={...}` has no literal: treat it as text.
+                if literal is not None and literal.strip().lower() not in MIC_TEXT_TYPES:
+                    continue
+        candidates.append((m.start(), "raw", f"<{m.group(1)}>", tag))
+
+    for m in re.finditer(r'<(%s)\b' % "|".join(MIC_SPECIES), content):
+        tag = _mic_tag_text(content, m.start())
+        if re.search(r'\bmic\s*=\s*\{\s*false\s*\}', tag):
+            candidates.append((m.start(), "optout", f"<{m.group(1)} mic={{false}}>", tag))
+
+    violations: list[Violation] = []
+    for offset, kind, what, tag in candidates:
+        line_no = line_of(offset)
+        col = offset - (content.rfind("\n", 0, offset) + 1)
+        if _mic_is_commented(lines, line_no, col):
+            continue
+        # An opt-out is an explicit refusal: a MicButton elsewhere in the
+        # component never covers it.
+        if kind == "raw" and covered(offset):
+            continue
+        hood = _mic_neighbourhood(lines, line_no, tag)
+        if any(rel_path == path and needle in hood for path, needle, _r in MIC_ALLOWLIST):
+            continue
+        first = tag.strip().splitlines()[0].strip()
+        violations.append(Violation(
+            rel_path, line_no, "mic",
+            f"No MicButton on {what} (the voice law, Article IV.1): {first[:100]}"))
+    return violations
+
+
+# ---------------------------------------------------------------------------
 # Scanning rules
 # ---------------------------------------------------------------------------
 
@@ -161,8 +403,6 @@ def scan_file(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
     has_button_import = False
     has_egress_chip = False
     has_provider_fetch = False
-    has_mic_button = False
-    has_text_input = False
     font_sizes: set[str] = set()
 
     if is_tsx:
@@ -172,12 +412,8 @@ def scan_file(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
             content
         ))
         has_egress_chip = "EgressChip" in content
-        # The voice law is satisfied by the MicButton species OR by the
-        # library StringGadget (which renders MicButton itself) unless the
-        # face opted out with mic={false}.
-        has_mic_button = ("MicButton" in content) or (
-            "StringGadget" in content and "mic={false}" not in content
-        )
+        # The voice law counts per element — see scan_mic().
+        violations.extend(scan_mic(rel_path, content, lines))
 
     for i, line_text in enumerate(lines, 1):
         stripped = line_text.strip()
@@ -357,11 +593,6 @@ def scan_file(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
                         violations.append(Violation(rel_path, i, "emoji",
                             f"Emoji in JSX text: {stripped[:100]}"))
 
-            # Rule mic: Track text inputs
-            if re.search(r'<(?:input|StringGadget|TextInput)\b', line_text):
-                if re.search(r'type\s*=\s*["\']text["\']', line_text) or not re.search(r'type\s*=', line_text):
-                    has_text_input = True
-
         if is_css:
             # Rule DS6: Accent left rails (border-left with accent/color)
             if re.search(r'border-left\s*:', line_text):
@@ -406,13 +637,6 @@ def scan_file(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
                 f"Type-step collapse: only {len(font_sizes)} distinct font-size ({', '.join(font_sizes)})",
                 confidence="medium"))
 
-    # Rule mic: Missing MicButton on text input
-    if is_tsx and has_text_input and not has_mic_button:
-        face = classify_face(rel_path)
-        if face:  # Only flag for face files
-            violations.append(Violation(rel_path, 1, "mic",
-                "Text input found but no MicButton in this face (the voice law)"))
-
     return violations
 
 
@@ -445,6 +669,27 @@ def find_face_files(root: Path) -> list[Path]:
     return result
 
 
+def find_mic_files(root: Path) -> list[Path]:
+    """Every .tsx under web/src — the voice law's scope (census §Scope).
+
+    Wider than find_face_files(): the mic rule is not gated on face
+    classification (design D2(d).2 defect iv), so a text input in a shared
+    component outside features/ · pages/cores/ · desk/ is counted too.
+    """
+    result = []
+    src = root / "web" / "src"
+    if not src.is_dir():
+        return result
+    for p in sorted(src.rglob("*.tsx")):
+        if not p.is_file():
+            continue
+        rel = str(p.relative_to(src))
+        if "__tests__" in rel or ".test." in rel or "_parked" in rel:
+            continue
+        result.append(p)
+    return result
+
+
 def file_to_face(rel: str) -> str:
     """Map a relative path to a face name for grouping."""
     stem = Path(rel).stem
@@ -470,6 +715,19 @@ def scan_all(root: Path) -> tuple[dict[str, list[Violation]], list[Violation]]:
 
         face = file_to_face(rel)
         per_face[face].extend(violations)
+        all_violations.extend(violations)
+
+    # The voice law reaches every .tsx, not only the face directories.
+    face_paths = {f for f in files}
+    for f in find_mic_files(root):
+        if f in face_paths:
+            continue
+        rel = str(f.relative_to(src))
+        content = f.read_text(errors="replace")
+        violations = scan_mic(rel, content, content.splitlines())
+        if not violations:
+            continue
+        per_face[file_to_face(rel)].extend(violations)
         all_violations.extend(violations)
 
     return dict(per_face), all_violations

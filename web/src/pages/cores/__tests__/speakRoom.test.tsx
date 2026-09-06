@@ -440,3 +440,56 @@ describe("HS-170-04 Speak footer composition", () => {
     expect(screen.getByRole("button", { name: "Export" })).toBeVisible();
   });
 });
+
+/* HS-176 counsel C4 — the footer's ONE surviving count says TODAY, so it
+   counts TODAY. 176 removed both wings' caption counts on the argument that
+   this is the one true count per face (design D1, D2(b).7, N5b); until now it
+   read `count`, the ALL-TIME retained journal total, so the phase's only count
+   was mislabelled. `count` stays what it is (Export sizes its fetch by it). */
+describe("the footer's N TODAY counts today (counsel C4)", () => {
+  it("reads `today`, not the all-time retained `count`", async () => {
+    mockRoutes({
+      "/api/dictation/journal": () =>
+        Promise.resolve({ count: 412, today: 3, items: [] }),
+    });
+    render(
+      <MemoryRouter>
+        <DictationCore />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("3 TODAY")).toBeVisible();
+    expect(screen.queryByText("412 TODAY")).toBeNull();
+  });
+
+  it("says TODAY in the singular for one utterance", async () => {
+    mockRoutes({
+      "/api/dictation/journal": () =>
+        Promise.resolve({ count: 412, today: 1, items: [] }),
+    });
+    render(
+      <MemoryRouter>
+        <DictationCore />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("1 TODAY")).toBeVisible();
+  });
+
+  it("withholds the token at zero even with a full retained journal (A.8)", async () => {
+    mockRoutes({
+      "/api/dictation/journal": () =>
+        Promise.resolve({ count: 412, today: 0, items: [] }),
+    });
+    render(
+      <MemoryRouter>
+        <DictationCore />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getAllByText("THIS DEVICE").length).toBeGreaterThan(0),
+    );
+    expect(screen.queryByText(/\d+ TODAY/)).toBeNull();
+  });
+});

@@ -1,14 +1,14 @@
 // The response display with correction form (verdict + teach).
-import { Button } from "../../../components/signal/Signal";
+import { Button } from "../../../../components/signal/Signal";
 import {
   SurfaceCode,
-} from "../../../desk/surface/Surface";
+} from "../../../../desk/surface/Surface";
 import {
   CycleGadget,
   FoldGadget,
   GadgetRow,
   StringGadget,
-} from "../../../desk/surface/gadgets";
+} from "../../../../desk/surface/gadgets";
 
 export function ResultPanel({
   result,

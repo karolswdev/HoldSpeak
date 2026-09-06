@@ -91,6 +91,21 @@ collapses to one is a defect (the geometry probe).
 - Empty slots never move their neighbours (the footer's egress slot).
 - Filters are flat tokens; wings are the beveled strip; the two never
   look alike.
+- One word, one meaning per face (176): the wing is the noun (LEARNED),
+  the receipt is the act (TAUGHT), the chip is the fact (APPLIED); a
+  chip renders only from a stored per-run fact, never a read-time
+  "would match"; a count on a face is a real count of what it names
+  (`N APPLIED` = firings; `N TODAY` = today).
+- The species that has the value wins the face: a single-line field
+  cannot wrap, so a value that must wrap at 393 is a PadGadget; the
+  pick over a closed set is CycleGadget until a picker species exists;
+  a chip that must sit inline is a library Button with a region, not
+  Disclosure.
+- A `mic={false}` on a gadget is a voice-law hole the raw-element count
+  cannot see; the scanner counts per element with a reasoned allowlist,
+  and one mic authority per face (Talk on the Speak face).
+- A rig never types into the machine's focused window; the real landing
+  is the owner's walk.
 
 ## E. The review protocol (how a face flips)
 

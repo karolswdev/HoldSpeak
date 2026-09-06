@@ -148,7 +148,14 @@ def apply_target_correction(
     value = match.value
     if value not in TARGET_PROFILE_OVERRIDE_OPTIONS or value == profile.id:
         return profile
-    return _profile(value, 0.95, "correction", {}, details={"matched": "correction"})
+    # HS-176-02: carry the fired rule's durable id so the journal recorder can
+    # name it in `corrections_applied` — `_target_name` keeps only the profile
+    # id, so `details` is the one place the fact survives the hand-off.
+    details: dict[str, Any] = {"matched": "correction"}
+    rule_id = getattr(match, "correction_id", None)
+    if rule_id is not None:
+        details["correction_id"] = int(rule_id)
+    return _profile(value, 0.95, "correction", {}, details=details)
 
 
 # HS-39-03: the user-selectable profiles the LLM fallback may choose from
@@ -288,7 +295,13 @@ def _profile(
     }
     return TargetProfile(
         id=profile_id,
-        label=labels[profile_id],
+        # HS-176-02 (N1 belt): `labels.get`, never `labels[...]`. `auto` is a
+        # member of TARGET_PROFILE_OVERRIDE_OPTIONS and therefore clears the
+        # membership guard in `apply_target_correction`, but the map has no
+        # `auto` key — the bare lookup raised `KeyError` inside the live typing
+        # path (dictation_runner.py:389, :565) and the dry-run route. No member
+        # of the option set can raise here now.
+        label=labels.get(profile_id, profile_id),
         confidence=confidence,
         source=source,
         app_name=_optional_raw(raw, "app", "app_name", "application"),
