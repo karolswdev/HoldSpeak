@@ -234,7 +234,8 @@ flowchart TD
   VC -- yes --> FIRE["Fire the bounded connector<br/>open URL, launch app, run command, type a snippet"]
   VC -- no --> PIPE{"Dictation pipeline enabled?"}
   PIPE -- "off, the default" --> FORK
-  PIPE -- "on" --> STAGES["Stages, in order:<br/>intent-router, project-rewriter, kb-enricher<br/>(model stages use admitted invocation children)"]
+  PIPE -- "on" --> CORR["Text corrections applied to the transcript<br/>(pipeline.py, before the stage loop)"]
+  CORR --> STAGES["Stages, in order:<br/>intent-router, project-rewriter, kb-enricher<br/>(model stages use admitted invocation children)"]
   STAGES --> FORK{"Preview first?"}
   FORK -- "no, the default for hotkey and device" --> TYPE["Type into the focused app<br/>(typer.py)"]
   FORK -- "wake word (its default), or the opt-in<br/>dictation.preview_before_type" --> PREVIEW["Preview card, nothing typed yet<br/>(one-shot server token)"]
@@ -245,19 +246,88 @@ flowchart TD
 
 ### The learning loop
 
-Every dictation is recorded, so you can correct a wrong result once and
-watch the change take effect, rather than trusting that it did.
+Every dictation run is journaled, so you can correct one wrong result and
+watch the next matching utterance change. The store holds three kinds of
+correction (`holdspeak/plugins/dictation/corrections.py`).
+
+| Kind | Key | Value | How it matches |
+| --- | --- | --- | --- |
+| `text` | the phrase as heard | the phrase as said | exact phrase, deterministic |
+| `intent` | a gist of the utterance | a block id | Jaccard token overlap at or above 0.5 |
+| `target` | a gist of the utterance | a target profile id | Jaccard token overlap at or above 0.5 |
+
+**The text matcher.** The key is stored with repeated whitespace collapsed,
+edge punctuation stripped, and the whole key lowercased. Matching is
+case-insensitive, and the stored words are rejoined on `\s+`, so a rule
+taught on one line fires across a line break. The boundary test is not a
+regular-expression word boundary: the characters on each side of the match
+must be non-alphanumeric or the edge of the string, which keeps the rule
+Unicode-honest. When the heard occurrence starts with an uppercase letter,
+the first letter of the replacement is uppercased. Rules apply longest key
+first, recency breaking a tie, and each rule sees the text the previous
+rules left.
+
+**Where a text correction is applied.** Inside `Pipeline.run`, before the
+stage loop. The corrected transcript is carried by a new frozen `Utterance`
+built with `dataclasses.replace`, and that object is what every stage
+receives, so the intent router and the rewrite passes read the corrected
+words. It is not a stage: it emits no `StageResult`, no `stage_ms` entry and
+no `requires_llm` flag, and it adds nothing to the pipeline's stage list.
+`TextProcessor` would have been the wrong host, because only the runtime
+capture path calls it, so browser and dry-run dictations would never see a
+rule.
+
+**What each run stores.** `PipelineRun.corrections_applied` carries the ids
+of the rules that changed the run, text rules plus the intent nudge. The
+recorder writes that list to the journal row (`corrections_applied`, schema
+76, an additive column with a named INSERT). The older `corrected` column
+keeps its own meaning, "you taught from this row", and only `mark_corrected`
+sets it. The face reads both facts and never a read-time similarity guess.
+The Learned wing's `N APPLIED` is a count of journal rows whose
+`corrections_applied` holds that correction id.
+
+**The live stream.** After the repository returns the stored row, the
+recorder broadcasts one frame, `dictation.journal.entry`, over the runtime
+WebSocket that every other live frame already uses. The frame carries `id`,
+`created_at`, `source`, `transcript`, `final_text`, `total_ms`,
+`corrections_applied`, `taught_from`, `intent_tag`, and `target_profile`.
+It is built from the stored row, and `filter_secret` runs before the
+repository call, so redaction cannot be bypassed. The Journal wing
+subscribes to that frame and prepends new entries, deduplicated by id.
 
 ```mermaid
 flowchart LR
-  RUN["A dictation runs"] --> J[("Dictation journal:<br/>said, typed, route, latency")]
-  J --> REVIEW["Review at /dictation"]
-  REVIEW --> FIX["One-tap correction"]
-  FIX --> MEM[("Correction memory<br/>db/corrections.py")]
-  MEM -. "nudges future routing" .-> RUN
-  J --> REPLAY["Replay an utterance through<br/>the updated pipeline"]
-  MEM -. "applied" .-> REPLAY
+  SPEAK["You speak or type<br/>in the Speak wing"] --> RUN["Pipeline.run<br/>plugins/dictation/pipeline.py"]
+  MEM[("Correction store<br/>db/corrections.py")] -. "text rules rewrite the transcript<br/>before the stage loop" .-> RUN
+  MEM -. "routing rules nudge<br/>the intent router and the target" .-> RUN
+  RUN --> LAND["RESULT row:<br/>final text, plus APPLIED when a rule fired"]
+  LAND --> J[("Dictation journal<br/>db/journal.py<br/>corrections_applied per row")]
+  J --> BUS["dictation.journal.entry<br/>over the runtime WebSocket"]
+  BUS --> STREAM["The Journal wing,<br/>prepended live"]
+  LAND --> JUDGE{"OK or Wrong?"}
+  JUDGE -- "Wrong" --> TEACH["FIELD: TEXT, INTENT or TARGET,<br/>then Teach"]
+  TEACH --> MEM
+  MEM --> LEARNED["The Learned wing:<br/>key, value, N APPLIED, Forget"]
+  J --> REPLAY["Replay one utterance through<br/>the current pipeline, preview only"]
 ```
+
+**The routes this loop uses.**
+
+| Route | What it carries |
+| --- | --- |
+| `POST /api/dictation/dry-run`, `POST /api/dictation/remote` | the run response, including `raw_text` (the transcript before the seam) and `corrections_applied` |
+| `POST /api/dictation/journal/{entry_id}/correct` | teach from a journal row. The response carries `recorded`, `correction_id`, `id`, `kind`, `key`, `value`, and `reason` on a refusal. `mark_corrected` runs only when `recorded` is true |
+| `POST /api/dictation/corrections` | teach without a journal row. The response carries `recorded`, `size`, then `id`, `kind`, `key`, `value`, or `reason` |
+| `GET /api/dictation/corrections` | one item per correction, each with `applied`, the count of journal rows the rule fired on |
+| `GET /api/dictation/journal` | `limit`, `source` (any of `dictation`, `dry_run`, `browser`, `hotkey`), and the `before` cursor for older pages |
+| `GET /api/dictation/readiness` | `target.overrides`, six `{id, label}` entries. `auto` is never offered, because it is not a correction a user can mean |
+| `DELETE /api/dictation/corrections/{id}` | Forget one correction |
+
+`CorrectionStore.record` returns a `RecordOutcome` with `stored`, the durable
+`correction_id`, and a `refusal` name (`kind`, `empty`, `secret`, or
+`one_word`). The one-word refusal applies to the routing kinds only, because
+a text rule is exact and a one-word key is legal for it. A refused teach
+writes nothing.
 
 ### The device path
 
