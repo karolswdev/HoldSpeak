@@ -31,7 +31,7 @@ roadmap files, they win.
 | 172 | The Loop Closes | COMPLETE · **MERGED** PR #555 → `0c17425e` | `…/phase-172-the-loop-closes/` |
 | 173 | The Steward's Hand and Voice | COMPLETE · **MERGED** PR #556 → `d416e08a` | `…/phase-173-the-stewards-hand-and-voice/` |
 | 174 | Reach | COMPLETE 11/11 · **MERGED** PR #557 → `8c994305` (2026-09-05 22:05) | `…/phase-174-reach/` |
-| 175 | Calendar and the Clock | ACTIVE · faces BUILT · docs paid (6/9 at the next commit) · draft PR **#558**, base main | `…/phase-175-calendar-and-the-clock/`, branch `feat/calendar-clock` (the main working tree) |
+| 175 | Calendar and the Clock | 7/9 · faces BUILT, counsel paid (re-read RATIFY-W-C), docs + hygiene DONE · c98ccf2f · draft PR **#558**, base main · OPEN: 06 his attended walk, 09 the close | `…/phase-175-calendar-and-the-clock/`, branch `feat/calendar-clock` (the main working tree) |
 | 176–179 | Speak Loop · Thread at Work · Portfolio · Companion | story scaffolds drafted, NOT chartered, no design | `…/phase-176…` to `…/phase-179…` |
 | 180 | The Proof | named in the arc, nothing drafted | `pm/roadmap/holdspeak/THE-TUESDAY-ARC.md` §6 |
 
@@ -272,7 +272,7 @@ in zsh exits 4 with nothing run.
 
 1. Read this section, then `git log --oneline -30 main`, then
    `pm/roadmap/holdspeak/README.md` and the 174/175 status files.
-2. Check PR #558 (175, draft on main). Main holds 170–174.
+2. Check PR #558 (175, draft on main, at c98ccf2f). Main holds 170–174. 175 is 7/9: put the seven questions in the status file / final-summary.md in front of him, walk it with him (06), then the close (09), #558 out of draft, merge on his word.
 3. Ask him nothing you can read; put the §4 questions in front of him
    once, in one list, when he sits.
 4. If the road continues: 175's faces first, to the ratified boards,
