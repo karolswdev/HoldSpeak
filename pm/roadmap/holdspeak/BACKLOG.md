@@ -1,5 +1,26 @@
 # HoldSpeak — Backlog (living candidate phases)
 
+## Phase 200 takes delivery priority
+
+**Updated:** 2026-09-05, on the owner's request for a major Phase 200 roadmap.
+
+[Phase 200: The Working Practice](./phase-200-the-working-practice/README.md)
+is the current delivery program.
+Its [disposition map](./phase-200-the-working-practice/BASELINE.md#earlier-roadmap-accounting)
+assigns the relevant work from Phases 170–180 and the architect-assistant package.
+Its six gates carry forty scoped stories and a measured owner pilot.
+
+This is the explicit owner-directed exception to the historical argument against one large phase below.
+Delivery still uses small PRs and incremental release gates.
+Existing implementation is reused and proved before replacement work is proposed.
+Earlier stories retain their actual status; this entry does not close or discard them.
+
+New portfolio surfaces, extra connectors, native parity, and additional worker adapters
+need a measured Phase 200 pilot gap before they take delivery capacity.
+The outcome review in HS-200-37 records each expansion decision.
+
+## Earlier backlog record
+
 The parking lot so good ideas do not get lost between phases. Each entry is a
 **candidate future phase**, not committed work. When one is picked up it graduates
 into its own `phase-NN-*/` folder with an AGENT-BRIEF + stories, and its row here
