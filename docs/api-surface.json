@@ -825,7 +825,9 @@
         "DELETE"
       ],
       "module": "web.routes.calendar_events",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/calendar/events/{event_id}/link",
@@ -833,7 +835,9 @@
         "POST"
       ],
       "module": "web.routes.calendar_events",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/calendar/snapshot",

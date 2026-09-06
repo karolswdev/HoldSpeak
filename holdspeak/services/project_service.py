@@ -22,7 +22,7 @@ from holdspeak.services.observer import NullObserver, PipelineObserver, observe_
 import hashlib
 import json
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 from ..db.core import Database
@@ -46,6 +46,77 @@ from .project_setup_service import CADENCE_PRESETS
 from .service_event_ledger import ServiceEventLedger
 
 _log = get_logger("services.project_service")
+
+
+# ── HS-175 counsel C8: the hub's local week, one helper ──────────────
+#
+# Calendar events are stored UTC (``YYYY-MM-DDTHH:MM:SSZ``); the owner's
+# week is his local week.  Every "this week" read in this service and the
+# calendar sources route goes through this helper so the Monday boundary
+# is the hub's local Monday (``datetime.now().astimezone()``), consistent
+# with the arrival's strip.
+
+
+def local_now(now: datetime | None = None) -> datetime:
+    """The hub's local, tz-aware now (or ``now`` made aware in local tz)."""
+    if now is None:
+        return datetime.now().astimezone()
+    if now.tzinfo is None:
+        return now.astimezone()
+    return now
+
+
+def localize(wall: datetime) -> datetime:
+    """A naive LOCAL wall-clock -> aware, with THAT instant's offset.
+
+    Counsel re-read condition 4 (DST): ``datetime.now().astimezone()`` yields
+    a FIXED offset; arithmetic in it crosses a DST edge an hour off.  A
+    naive value's ``.astimezone()`` consults the system zone's rules for the
+    instant itself, so every bound carries its own true offset.
+    """
+    return wall.replace(tzinfo=None).astimezone()
+
+
+def local_week_bounds(now: datetime | None = None) -> tuple[datetime, datetime]:
+    """(local Monday 00:00, next local Monday 00:00) as aware datetimes,
+    each localized per instant (DST-safe)."""
+    current = local_now(now)
+    wall = current.replace(tzinfo=None)
+    monday_wall = (wall - timedelta(days=wall.weekday())).replace(
+        hour=0, minute=0, second=0, microsecond=0,
+    )
+    return localize(monday_wall), localize(monday_wall + timedelta(days=7))
+
+
+def utc_z(value: datetime) -> str:
+    """Aware datetime -> the stored calendar_events form ``...Z``."""
+    return (
+        value.astimezone(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
+
+
+def aware_iso(value: Any) -> str | None:
+    """Normalize a stored timestamp to an offset-carrying ISO string.
+
+    SQLite's ``datetime('now')`` writes naive UTC (``YYYY-MM-DD HH:MM:SS``);
+    the browser's ``new Date()`` would read that as LOCAL time and print
+    the wrong clock (counsel H4-1: ``CHECKED 23:47`` beside ``READ 17:48``).
+    A naive value is UTC here by construction; an aware value passes
+    through.  ``None``/empty stays ``None``.
+    """
+    if value is None or value == "":
+        return None
+    text = str(value).strip()
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return text
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.isoformat(timespec="seconds")
 
 
 # ── M-1 finalize mapping tables (HS-161-07 counsel) ─────────────────
@@ -822,6 +893,65 @@ class ProjectService:
                 return i
         return len(ProjectService._TOKEN_ORDER_PREFIXES)
 
+    def _meeting_calendar_tokens(
+        self, project_id: str, *, now: datetime | None = None,
+    ) -> list[str]:
+        """``N THIS WEEK`` and ``NEXT DAY HH:MM`` from the Room's linked
+        calendar events (HS-175 counsel C8/C9c).
+
+        Inline query over ``calendar_event_projects`` joined to
+        ``calendar_events`` (stored UTC ``...Z``); the week is the hub's
+        local week and the NEXT clock is local.  A suppressed link (a
+        durable Unlink, if present) does not count.
+        """
+        tokens: list[str] = []
+        current = local_now(now)
+        monday, next_monday = local_week_bounds(current)
+        week_start, week_end = utc_z(monday), utc_z(next_monday)
+        now_z = utc_z(current)
+        try:
+            with self._db._connection() as conn:
+                week_row = conn.execute(
+                    """SELECT COUNT(DISTINCT ce.id) AS cnt
+                       FROM calendar_event_projects cep
+                       JOIN calendar_events ce ON ce.id = cep.calendar_event_id
+                       WHERE cep.project_id = ?
+                         AND cep.match_source != 'suppressed'
+                         AND ce.starts_at >= ? AND ce.starts_at < ?""",
+                    (project_id, week_start, week_end),
+                ).fetchone()
+                next_row = conn.execute(
+                    """SELECT ce.starts_at
+                       FROM calendar_event_projects cep
+                       JOIN calendar_events ce ON ce.id = cep.calendar_event_id
+                       WHERE cep.project_id = ?
+                         AND cep.match_source != 'suppressed'
+                         AND ce.starts_at > ?
+                       ORDER BY ce.starts_at ASC LIMIT 1""",
+                    (project_id, now_z),
+                ).fetchone()
+        except Exception as exc:  # pragma: no cover - a missing table on an old DB
+            _log.warning("meeting calendar tokens failed for %s: %s", project_id, exc)
+            return tokens
+        this_week = int(week_row["cnt"]) if week_row else 0
+        if this_week:
+            tokens.append(f"{this_week} THIS WEEK")
+        if next_row and next_row["starts_at"]:
+            try:
+                next_dt = datetime.fromisoformat(
+                    str(next_row["starts_at"]).replace("Z", "+00:00")
+                )
+                if next_dt.tzinfo is None:
+                    next_dt = next_dt.replace(tzinfo=timezone.utc)
+                # Per-instant local conversion (DST-safe), never now's offset.
+                local_next = next_dt.astimezone()
+                tokens.append(
+                    f"NEXT {local_next.strftime('%a').upper()} {local_next.strftime('%H:%M')}"
+                )
+            except (ValueError, TypeError):
+                pass
+        return tokens
+
     def _read_room_sources(self, project_id: str) -> dict[str, Any]:
         """SOURCES: ONE item per (provider, scope), merged from all watches."""
         watches = self._db.automations.list_project_watches(project_id)
@@ -829,12 +959,17 @@ class ProjectService:
         groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
 
         for watch in watches:
+            # HS-175 counsel C7: a retired Watch is not a source row (the
+            # owner said no); folding it into the live row hid Retire.
+            if str(watch.get("state") or "") == "retired":
+                continue
             connector_id = watch.get("connector_id", "")
             query = watch.get("query") or {}
             snapshot = watch.get("snapshot")
             entities = self._entities(snapshot)
             last_error = watch.get("last_error")
             enabled = watch.get("enabled", True)
+            watch_state = str(watch.get("state") or "")
             query_kind = watch.get("query_kind", "")
 
             # Provider label
@@ -856,8 +991,10 @@ class ProjectService:
                 site = ref.split("|")[0] if "|" in ref else ref
                 host = site.split("//")[-1].split("/")[0] if "//" in site else site
 
-            # State
-            if not enabled:
+            # State -- HS-175 counsel C7(b): Pause writes ``state='paused'``
+            # (watch_service.pause_watch) and leaves ``enabled`` alone, so the
+            # row reads ``state`` first; a disabled watch is paused too.
+            if watch_state == "paused" or not enabled:
                 w_state = "paused"
             elif last_error:
                 w_state = "cant_check"
@@ -917,38 +1054,17 @@ class ProjectService:
                     tokens.append(f"{overdue_count} OVERDUE")
                 if due_soon_count:
                     tokens.append(f"{due_soon_count} DUE THIS WEEK")
-            # HS-175-04: meeting watch tokens
+            # HS-175-04: meeting watch tokens.
+            # HS-175 counsel C9(c)/C8: the Watch's entities are RECORDED
+            # meetings (started_at in the past) -- they can never yield a
+            # future NEXT.  Both tokens read the Room's linked CALENDAR
+            # events (calendar_event_projects x calendar_events) in the
+            # hub's local week:  ``N THIS WEEK`` = linked events whose
+            # starts_at falls in [local Monday, next local Monday);
+            # ``NEXT DAY HH:MM`` = the first linked event after now, in
+            # local time.  Both absent at zero (A.8).
             elif connector_id == "meeting" and query_kind == "meetings":
-                # Count meetings this week (started_at in the current week)
-                now = datetime.now()
-                days_since_monday = now.weekday()
-                monday = (now - timedelta(days=days_since_monday)).replace(
-                    hour=0, minute=0, second=0, microsecond=0
-                )
-                sunday = monday + timedelta(days=7)
-                this_week_count = sum(
-                    1 for e in entities
-                    if monday.isoformat() <= str(e.get("date", "")) < sunday.isoformat()
-                )
-                if this_week_count:
-                    tokens.append(f"{this_week_count} THIS WEEK")
-                # Next meeting (first entity with date > now)
-                now_iso = now.isoformat()
-                future = [
-                    e for e in entities
-                    if str(e.get("date", "")) > now_iso
-                ]
-                if future:
-                    future.sort(key=lambda e: str(e.get("date", "")))
-                    next_mtg = future[0]
-                    next_date = str(next_mtg.get("date", ""))
-                    try:
-                        next_dt = datetime.fromisoformat(next_date.replace("Z", "+00:00"))
-                        day_name = next_dt.strftime("%a").upper()
-                        time_str = next_dt.strftime("%H:%M")
-                        tokens.append(f"NEXT {day_name} {time_str}")
-                    except (ValueError, TypeError):
-                        pass
+                tokens.extend(self._meeting_calendar_tokens(project_id))
 
             plain_reason = self._plain_reason(last_error)
 
@@ -964,8 +1080,10 @@ class ProjectService:
                 "provider": provider,
                 "scope": scope,
                 "tokens": tokens,
-                "checkedAt": watch.get("last_success_at"),
-                "nextCheckAt": watch.get("next_evaluation_at"),
+                # C8: SQLite's naive-UTC stamps leave here with an offset so
+                # the face prints the viewer's local clock.
+                "checkedAt": aware_iso(watch.get("last_success_at")),
+                "nextCheckAt": aware_iso(watch.get("next_evaluation_at")),
                 "host": host,
                 "state": w_state,
                 "plainReason": plain_reason,
@@ -2806,7 +2924,7 @@ class ProjectService:
         # HS-175-04: ensure the Room's meeting Watch exists after link
         try:
             from holdspeak.services.watch_service import ensure_meeting_watch
-            ensure_meeting_watch(self._db, project_id)
+            ensure_meeting_watch(self._db, project_id, why="meeting linked")
         except Exception:
             _log.warning("ensure_meeting_watch failed for project %s", project_id)
 

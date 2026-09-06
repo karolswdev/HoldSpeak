@@ -7,6 +7,12 @@ StateChip, Pause verb, no EgressChip.
 A Room with no linked meetings shows NO meeting row (A.8).
 Seeds one GH Watch alongside so all three rows are shot together.
 Shots at 1440 and 393.
+
+HS-175 counsel C7 / C8 / C9(c): the rig seeds only states the product
+can produce -- recorded meetings are in the PAST; NEXT comes from a
+FUTURE calendar event linked to the Room (calendar_event_projects), in
+the viewer's local clock.  Pause shows PAUSED + Resume; Retire (the API
+verb) is a tombstone the next link does not resurrect.
 """
 from __future__ import annotations
 
@@ -269,17 +275,46 @@ def _assert_no_egress_on_meeting(page: Any) -> None:
 # ── Seed combos ──────────────────────────────────────────────────────
 
 
+def _seed_future_linked_event(project_id: str) -> "datetime":
+    """A calendar event two days out at 14:00Z linked to the Room -- the
+    product's own source of NEXT (C9c).  Returns the aware start instant."""
+    from datetime import timezone
+    from holdspeak.db import get_database
+    db = get_database()
+    starts = (datetime.now(timezone.utc) + timedelta(days=2)).replace(
+        hour=14, minute=0, second=0, microsecond=0,
+    )
+    ends = starts + timedelta(hours=1)
+    fmt = lambda d: d.isoformat().replace("+00:00", "Z")
+    eid = f"ce_{uuid.uuid4().hex[:12]}"
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT INTO calendar_events
+               (id, uid, title, starts_at, ends_at, last_seen_at,
+                subscription_revision, source_id, source_label)
+               VALUES (?, ?, 'Sprint Planning', ?, ?, ?, 'rev', 'src-1', 'WORK')""",
+            (eid, f"uid-{eid}", fmt(starts), fmt(ends), datetime.now().timestamp()),
+        )
+        conn.execute(
+            "INSERT INTO calendar_event_projects (calendar_event_id, project_id, match_source) "
+            "VALUES (?, ?, 'title')",
+            (eid, project_id),
+        )
+    return starts
+
+
 def _seed_room_with_meetings(project_id: str) -> tuple[str, str]:
-    """Seed two meetings linked to the project, one in the future.
+    """Seed two RECORDED meetings (both in the past -- the only state the
+    product produces) and one FUTURE calendar event linked to the Room.
 
     Creates the meeting Watch through the real seam (ensure_meeting_watch).
     Also seeds one GH Watch so all source rows appear together.
 
-    Returns (past_meeting_id, future_meeting_id).
+    Returns (past_meeting_id, recent_meeting_id).
     """
     now = datetime.now()
-    # Past meeting: yesterday
-    past_dt = now - timedelta(days=1)
+    # Past meeting: two days ago
+    past_dt = now - timedelta(days=2)
     past_iso = past_dt.replace(hour=10, minute=0, second=0, microsecond=0).isoformat()
     past_mid = f"mtg-past-{uuid.uuid4().hex[:8]}"
     _seed_meeting(past_mid, title="Architecture Review", started_at=past_iso)
@@ -287,13 +322,13 @@ def _seed_room_with_meetings(project_id: str) -> tuple[str, str]:
     _seed_intel_attempt(past_mid, created_at=past_iso)
     _seed_decision(past_mid, text="Refactor the API layer")
 
-    # Future meeting: tomorrow
-    future_dt = now + timedelta(days=1)
-    future_iso = future_dt.replace(hour=14, minute=0, second=0, microsecond=0).isoformat()
-    future_mid = f"mtg-future-{uuid.uuid4().hex[:8]}"
-    _seed_meeting(future_mid, title="Sprint Planning", started_at=future_iso,
+    # Recent meeting: yesterday (recorded; intel off)
+    recent_dt = now - timedelta(days=1)
+    recent_iso = recent_dt.replace(hour=14, minute=0, second=0, microsecond=0).isoformat()
+    recent_mid = f"mtg-recent-{uuid.uuid4().hex[:8]}"
+    _seed_meeting(recent_mid, title="Sprint Planning", started_at=recent_iso,
                   intel_status="disabled")
-    _link_meeting_project(future_mid, project_id)
+    _link_meeting_project(recent_mid, project_id)
 
     # Create the meeting Watch via the real seam
     _ensure_meeting_watch(project_id)
@@ -301,7 +336,7 @@ def _seed_room_with_meetings(project_id: str) -> tuple[str, str]:
     # Seed one GH Watch so GH + MTG rows appear together
     _seed_gh_watch(project_id)
 
-    return past_mid, future_mid
+    return past_mid, recent_mid
 
 
 # ── Test runners ─────────────────────────────────────────────────────
@@ -325,6 +360,7 @@ def _run_meeting_source_rig(
             _init_desk(page, url)
             project_id = _seed_project()
             _seed_room_with_meetings(project_id)
+            next_starts = _seed_future_linked_event(project_id)
 
             _open_room(page, url, project_id)
             page.get_by_test_id("room-body").wait_for(timeout=15000)
@@ -370,6 +406,22 @@ def _run_meeting_source_rig(
                 f"Expected THIS WEEK or NEXT token, got: {tokens}"
             )
 
+            # C9(c) / C8: NEXT is the linked FUTURE calendar event, printed
+            # in the viewer's local clock (the hub and the browser share
+            # this process's zone).  Never from a recorded meeting.
+            local_next = next_starts.astimezone()
+            expected_next = f"NEXT {local_next.strftime('%a').upper()} {local_next.strftime('%H:%M')}"
+            assert expected_next in token_text, (
+                f"Expected {expected_next!r} from the linked calendar event, got: {tokens}"
+            )
+            # N THIS WEEK counts linked calendar events inside the LOCAL week.
+            from holdspeak.services.project_service import local_week_bounds
+            monday, next_monday = local_week_bounds()
+            if monday <= local_next < next_monday:
+                assert "1 THIS WEEK" in token_text, f"Expected 1 THIS WEEK, got: {tokens}"
+            else:
+                assert "THIS WEEK" not in token_text, f"Unexpected THIS WEEK, got: {tokens}"
+
             # Assert: CHECKED/NEVER StateChip on line 2
             checked = page.locator('[data-testid="source-meeting-checked"]')
             assert checked.count() >= 1, "Expected CHECKED/NEVER chip"
@@ -388,6 +440,23 @@ def _run_meeting_source_rig(
 
             # Assert: no EgressChip on the meeting row
             _assert_no_egress_on_meeting(page)
+
+            # C7(b): Pause -> PAUSED idle chip + Resume; Resume -> Pause.
+            assert pause_text == "Pause"
+            pause_btn.first.click()
+            page.locator('[data-testid="source-paused"]').first.wait_for(timeout=8000)
+            _settle(page)
+            verb = page.locator('[data-testid="source-meeting-verb"]').first
+            assert verb.inner_text() == "Resume", f"After Pause the verb reads {verb.inner_text()!r}"
+            assert "PAUSED" in page.locator('[data-testid="source-paused"]').first.inner_text()
+            if width >= 1440:
+                _shot(page, "room-sources-meetings-paused-1440", width)
+            verb.click()
+            page.wait_for_function(
+                "() => document.querySelector('[data-testid=\"source-meeting-verb\"]')?.textContent?.trim() === 'Pause'",
+                timeout=8000,
+            )
+            assert page.locator('[data-testid="source-paused"]').count() == 0
 
             # Assert: SOURCES count includes the meeting row (>= 2: GH + MTG)
             import re
@@ -408,6 +477,65 @@ def _run_meeting_source_rig(
                 assert count >= 2, f"SOURCES count {count} should include GH + MTG"
 
             _assert_no_raw_button(page)
+            _assert_no_zero_counter(page)
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
+
+
+def _run_retire_tombstone_rig(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """C7(a): Retire on the meeting Watch is final -- a later link (the
+    real seam, ensure_meeting_watch) does not resurrect it; the Room shows
+    no meeting row and the table holds one retired Watch."""
+    _ensure_build()
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.on("pageerror", lambda e: errors.append(str(e)))
+
+            _init_desk(page, url)
+            project_id = _seed_project("Retire Room")
+            _seed_room_with_meetings(project_id)
+
+            _open_room(page, url, project_id)
+            page.get_by_test_id("room-body").wait_for(timeout=15000)
+            _settle(page)
+            assert page.locator('[data-testid="source-meeting-row"]').count() == 1
+
+            from holdspeak.db import get_database
+            db = get_database()
+            watches = [w for w in db.automations.list_project_watches(project_id)
+                       if w.get("connector_id") == "meeting"]
+            assert len(watches) == 1
+            watch_id = watches[0]["id"]
+
+            # The owner's Retire (the API verb the Room's rows call).
+            _api(page, "POST", f"/api/watches/{watch_id}/retire", {}, token=TOKEN)
+
+            # A new meeting is linked -> the link path runs ensure again.
+            mid = f"mtg-late-{uuid.uuid4().hex[:8]}"
+            _seed_meeting(mid, title="Late Standup",
+                          started_at=(datetime.now() - timedelta(hours=3)).isoformat())
+            _link_meeting_project(mid, project_id)
+            assert _ensure_meeting_watch(project_id) is None, "Retire was resurrected on link"
+
+            states = sorted((w["id"], w["state"]) for w in db.automations.list_project_watches(project_id)
+                            if w.get("connector_id") == "meeting")
+            assert states == [(watch_id, "retired")], states
+
+            _open_room(page, url, project_id)
+            page.get_by_test_id("room-body").wait_for(timeout=15000)
+            _settle(page)
+            assert page.locator('[data-testid="source-meeting-row"]').count() == 0, (
+                "a retired meeting Watch still renders as a source row"
+            )
             _assert_no_zero_counter(page)
             _assert_clean(page, errors)
             browser.close()
@@ -470,3 +598,8 @@ class TestRoomMeetingSourceGlass:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         _run_no_meetings_rig(tmp_path, monkeypatch)
+
+    def test_retire_is_a_tombstone(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _run_retire_tombstone_rig(tmp_path, monkeypatch)

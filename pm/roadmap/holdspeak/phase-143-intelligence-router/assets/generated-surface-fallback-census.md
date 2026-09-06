@@ -98,6 +98,7 @@ story that owns their migration.
 | 143-11 | `holdspeak/mcp/{tools,resources}.py`, `holdspeak/mcp/families/{ask,inference,sequence,settings}.py`, `holdspeak/services/{recipe_service,sync_service,workbench_service}.py` |
 | 143-12 | `holdspeak/services/model_library_service.py`, `holdspeak/services/inference_acquisition_service.py`, `holdspeak/services/inference_setup_service.py`, `holdspeak/web/routes/primitives/profiles.py` (private-target side-door refusal) |
 | 156-04 | `holdspeak/services/front_door_service.py` (pack preset selection, profile extraction from receipt, group assignment composition; not assignment authority) |
+| 175-07 | `holdspeak/services/calendar_snapshot_service.py` (egress host read off the admitted route plan for the snapshot receipt; vision-capable profile ordering by boundary, local first, for the direct-dispatch fallback, receipted with its host; not route selection) |
 
 ## Guarded web routing consumers
 

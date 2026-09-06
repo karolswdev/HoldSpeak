@@ -201,19 +201,23 @@ class MondayBriefService:
                 period_start.isoformat(), period_end.isoformat()
             )
 
-            # HS-175-05: the THIS WEEK section uses a full-week window
-            # (Monday 00:00 to Sunday 23:59) independent of the lookback.
-            days_since_monday = period_end.weekday()
-            week_monday = (
-                period_end - datetime.timedelta(days=days_since_monday)
-            ).date()
-            week_start_dt = datetime.datetime.combine(
-                week_monday, datetime.time(0, 0), tzinfo=period_end.tzinfo,
-            )
-            _, lookahead_end = self.compute_lookahead(period_end)
-            week_start_iso = week_start_dt.isoformat()
-            week_end_iso = lookahead_end.isoformat()
-            now_iso = period_end.isoformat()
+            # HS-175-05 / counsel C11: the THIS WEEK half is the ruled
+            # forward window [now, Sunday 23:59] (Addendum 1, condition 2)
+            # -- never from Monday 00:00, so it cannot overlap the SINCE
+            # FRIDAY lookback.  ``compute_window`` is untouched.
+            #
+            # calendar_events.starts_at is stored as UTC ('...Z', see
+            # calendar_ingest.py:407), so the boundaries are normalised to UTC
+            # ISO before the string compare; a naive ``now`` (what the
+            # cadence and the route pass) is read as local time, the same
+            # convention compute_window keeps.  Dates (commitments' due_at)
+            # are compared as the owner's local dates.
+            ahead_start, ahead_end = self.compute_lookahead(period_end)
+            ahead_start_iso = self._utc_iso(ahead_start)
+            ahead_end_iso = self._utc_iso(ahead_end)
+            local_start = ahead_start if ahead_start.tzinfo else ahead_start.astimezone()
+            local_end = ahead_end if ahead_end.tzinfo else ahead_end.astimezone()
+            clock_tz = local_start.tzinfo
 
             # Last brief generated_at for "since last brief" filtering
             last_brief_row = conn.execute(
@@ -223,12 +227,24 @@ class MondayBriefService:
                 last_brief_row and last_brief_row["latest"]
             ) else None
 
+            # C11: dedup against the lookback's "Meeting recorded" rows --
+            # an occurrence already recorded is SINCE FRIDAY's, not THIS
+            # WEEK's.
+            recorded_event_ids = self._recorded_calendar_event_ids(
+                period_start.isoformat(), period_end.isoformat()
+            )
+
             # HS-175-05: new collectors (THIS WEEK section, forward-looking)
             calendar_items = self._collect_calendar_events(
-                week_start_iso, week_end_iso, now_iso,
+                ahead_start_iso, ahead_end_iso, ahead_start_iso,
+                exclude_event_ids=recorded_event_ids,
+                clock_tz=clock_tz,
             )
             meeting_watch_items = self._collect_meeting_watch(
-                week_start_iso, week_end_iso, last_brief_at,
+                ahead_start_iso, ahead_end_iso, last_brief_at,
+                decisions_since=period_start.isoformat(),
+                due_from=local_start.date().isoformat(),
+                due_until=local_end.date().isoformat() + "T23:59:59",
             )
 
             sections = {
@@ -241,7 +257,18 @@ class MondayBriefService:
                     period_start.isoformat(), period_end.isoformat()
                 ),
                 "waiting": waiting_items,
-                "decisions": self._collect_decisions(principal),
+                # C11 follow-up: a commitment is said once -- the ids THIS
+                # WEEK counts are dropped from the lookback's due items.
+                "decisions": self._collect_decisions(
+                    principal,
+                    {
+                        str(r["id"]) for r in self._commitments_due_rows(
+                            conn,
+                            local_start.date().isoformat(),
+                            local_end.date().isoformat() + "T23:59:59",
+                        )
+                    },
+                ),
             }
             headline, sections = self._compose(sections)
             brief_id = f"brief-{uuid.uuid4().hex}"
@@ -303,21 +330,35 @@ class MondayBriefService:
 
         headline_parts = []
         if counts["this_week"]:
+            # C11: calendar items are counted as what they are -- meetings,
+            # armed recordings, commitments due, new decisions -- never as
+            # "watch items".  The `Next:` row is detail, not a count.
             tw_items = finalized_sections["this_week"]
-            meeting_count = 0
-            for item in tw_items:
-                if item.source_ref == "calendar:week":
-                    import re as _re
-                    m = _re.match(r"(\d+)\s+meeting", item.text)
-                    if m:
-                        meeting_count = int(m.group(1))
-            other_tw = counts["this_week"] - (1 if meeting_count else 0)
-            tw_parts = []
-            if meeting_count:
-                tw_parts.append(phrase(meeting_count, "meeting this week", "meetings this week"))
+            meetings = self._leading_count(tw_items, "calendar:week")
+            armed = self._leading_count(tw_items, "calendar:armed")
+            due = self._leading_count(tw_items, "meeting_watch:commitments_due")
+            decisions = self._leading_count(tw_items, "meeting_watch:decisions")
+            known_refs = {
+                "calendar:week", "calendar:armed",
+                "meeting_watch:commitments_due", "meeting_watch:decisions",
+            }
+            # A `Next:` row is detail under its count; alone (never in the
+            # product -- the collector emits the count first) it is an item.
+            other_tw = sum(
+                1 for item in tw_items
+                if item.source_ref not in known_refs
+                and (meetings == 0 or not str(item.source_ref or "").startswith("calendar_event:"))
+            )
+            if meetings:
+                headline_parts.append(phrase(meetings, "meeting this week", "meetings this week"))
+            if armed:
+                headline_parts.append(phrase(armed, "armed", "armed"))
+            if due:
+                headline_parts.append(phrase(due, "commitment due", "commitments due"))
+            if decisions:
+                headline_parts.append(phrase(decisions, "new decision", "new decisions"))
             if other_tw:
-                tw_parts.append(phrase(other_tw, "watch item", "watch items"))
-            headline_parts.extend(tw_parts)
+                headline_parts.append(phrase(other_tw, "item this week", "items this week"))
         if counts["changed"]:
             headline_parts.append(phrase(counts["changed"], "thing changed", "things changed"))
         if counts["broke"]:
@@ -611,10 +652,19 @@ class MondayBriefService:
 
         return sorted(items, key=lambda item: (-item.priority, item.source_ref or ""))
 
-    def _collect_decisions(self, principal: Any) -> list[BriefItem]:
-        """Gather decisions requiring owner attention."""
+    def _collect_decisions(
+        self, principal: Any, exclude_commitment_ids: set[str] | None = None,
+    ) -> list[BriefItem]:
+        """Gather decisions requiring owner attention.
+
+        C11 follow-up: a commitment is said once.  ``exclude_commitment_ids``
+        are the commitment ids THIS WEEK already counts (``N commitments
+        due this week``); their lookback ``Commitment due`` items are
+        dropped -- dedup by commitment id, never by text.
+        """
         del principal
         items: list[BriefItem] = []
+        excluded_commitments = exclude_commitment_ids or set()
 
         # A proposed actuator cannot cross the egress boundary until its owner
         # grants authorization, so it always leads the decision queue.
@@ -669,6 +719,8 @@ class MondayBriefService:
                    ORDER BY dc.due_at ASC, dc.id ASC"""
             ).fetchall()
         for commitment in commitments:
+            if str(commitment["id"]) in excluded_commitments:
+                continue  # already said under THIS WEEK
             try:
                 due_date = datetime.datetime.fromisoformat(
                     str(commitment["due_at"]).replace("Z", "+00:00")
@@ -693,6 +745,9 @@ class MondayBriefService:
 
     def _collect_calendar_events(
         self, week_start: str, week_end: str, now_iso: str,
+        *,
+        exclude_event_ids: set[str] | None = None,
+        clock_tz: datetime.tzinfo | None = None,
     ) -> list[BriefItem]:
         """Calendar events in the week range.
 
@@ -702,10 +757,18 @@ class MondayBriefService:
         - ``Next: [title] at [time]`` (next event after now).
         - ``N armed`` (events with linked armed recordings).
 
+        C11: ``exclude_event_ids`` is the calendar_uid dedup against the
+        lookback's "Meeting recorded" rows, keyed by the occurrence (the
+        projection id hashes uid + starts_at) so a recurring series' next
+        occurrence is never hidden by its last recording.  ``clock_tz``
+        renders the ``Next:`` clock in the brief's own zone rather than
+        the stored UTC.
+
         Returns an empty list when no calendar events exist (no
         calendar configured or no events in range).
         """
         items: list[BriefItem] = []
+        excluded = exclude_event_ids or set()
         with self._db._connection() as conn:
             # Check that calendar_events table exists (belt -- fresh DBs)
             table_check = conn.execute(
@@ -714,13 +777,16 @@ class MondayBriefService:
             if table_check is None:
                 return items
 
-            event_rows = conn.execute(
-                """SELECT id, uid, title, starts_at, meeting_url
-                   FROM calendar_events
-                   WHERE starts_at >= ? AND starts_at < ?
-                   ORDER BY starts_at ASC, id ASC""",
-                (week_start, week_end),
-            ).fetchall()
+            event_rows = [
+                row for row in conn.execute(
+                    """SELECT id, uid, title, starts_at, meeting_url
+                       FROM calendar_events
+                       WHERE starts_at >= ? AND starts_at < ?
+                       ORDER BY starts_at ASC, id ASC""",
+                    (week_start, week_end),
+                ).fetchall()
+                if str(row["id"]) not in excluded
+            ]
             if not event_rows:
                 return items
 
@@ -742,6 +808,8 @@ class MondayBriefService:
                         next_dt = datetime.datetime.fromisoformat(
                             str(row["starts_at"]).replace("Z", "+00:00")
                         )
+                        if clock_tz is not None and next_dt.tzinfo is not None:
+                            next_dt = next_dt.astimezone(clock_tz)
                         time_str = next_dt.strftime("%H:%M")
                     except (ValueError, TypeError):
                         time_str = ""
@@ -786,6 +854,10 @@ class MondayBriefService:
 
     def _collect_meeting_watch(
         self, week_start: str, week_end: str, last_brief_at: str | None,
+        *,
+        decisions_since: str | None = None,
+        due_from: str | None = None,
+        due_until: str | None = None,
     ) -> list[BriefItem]:
         """Meeting watch items: new decisions and commitments.
 
@@ -796,12 +868,19 @@ class MondayBriefService:
         - Meetings with new commitments.
         - Commitments due this week.
 
-        Dedup by calendar_uid is not needed here because these items
-        come from meeting data (not calendar_events); the calendar
-        collector handles calendar_events.
+        C11: ``week_start`` is the forward window's start (``now``).  New
+        decisions are a "since the last brief" fact, so their fallback
+        floor is ``decisions_since`` (the lookback's start), not ``now``.
+        Commitments carry due DATES, so they are bounded by the owner's
+        local dates ``due_from`` (today) and ``due_until`` (Sunday), not by
+        UTC instants.  The calendar_uid dedup lives in the calendar
+        collector (``exclude_event_ids``); these items are counts over
+        meeting data and name no event.
         """
         items: list[BriefItem] = []
-        since = last_brief_at or week_start
+        since = last_brief_at or decisions_since or week_start
+        due_lo = due_from or week_start[:10]
+        due_hi = due_until or week_end
 
         with self._db._connection() as conn:
             # Check tables exist
@@ -838,14 +917,7 @@ class MondayBriefService:
                 )
 
             # Commitments due this week
-            commitment_rows = conn.execute(
-                """SELECT dc.id, dc.due_at, dc.status, dc.owner
-                   FROM decision_commitments dc
-                   WHERE dc.status = 'open'
-                     AND dc.due_at >= ? AND dc.due_at < ?
-                   ORDER BY dc.due_at ASC""",
-                (week_start, week_end),
-            ).fetchall()
+            commitment_rows = self._commitments_due_rows(conn, due_lo, due_hi)
 
             if commitment_rows:
                 count = len(commitment_rows)
@@ -886,6 +958,66 @@ class MondayBriefService:
     def _window_timestamp(value: str) -> float:
         """Convert an ISO brief boundary to the event ledger's epoch timestamp."""
         return datetime.datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+
+    @staticmethod
+    def _utc_iso(value: datetime.datetime) -> str:
+        """C11: one boundary shape for the UTC-stored calendar projection.
+
+        A naive value is read as local time (the convention the cadence
+        and the route pass ``now`` in); an aware one keeps its zone.  Both
+        land as ``YYYY-MM-DDTHH:MM:SS+00:00``, the exact shape
+        ``calendar_ingest`` stores ``starts_at`` in, so the string compare
+        in the collectors is a real instant compare.
+        """
+        aware = value if value.tzinfo is not None else value.astimezone()
+        return aware.astimezone(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    def _recorded_calendar_event_ids(
+        self, window_start: str, window_end: str,
+    ) -> set[str]:
+        """C11: the calendar occurrences already recorded inside the lookback.
+
+        Mirrors ``_collect_meetings``' predicate so an event that is a
+        "Meeting recorded" row in SINCE FRIDAY is never also counted or
+        named in THIS WEEK.
+        """
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                """SELECT DISTINCT m.calendar_event_id AS event_id
+                   FROM meetings AS m
+                   WHERE m.calendar_event_id IS NOT NULL
+                     AND m.calendar_event_id != ''
+                     AND COALESCE(m.ended_at, m.started_at) BETWEEN ? AND ?
+                     AND m.capture_status NOT IN ('recording', 'provisional')""",
+                (window_start, window_end),
+            ).fetchall()
+        return {str(r["event_id"]) for r in rows}
+
+    @staticmethod
+    def _commitments_due_rows(conn: Any, due_lo: str, due_hi: str) -> list[Any]:
+        """Open commitments due in ``[due_lo, due_hi)`` -- the one query THIS
+        WEEK counts and the lookback dedups against (by commitment id)."""
+        try:
+            return conn.execute(
+                """SELECT dc.id, dc.due_at, dc.status, dc.owner
+                   FROM decision_commitments dc
+                   WHERE dc.status = 'open'
+                     AND dc.due_at >= ? AND dc.due_at < ?
+                   ORDER BY dc.due_at ASC""",
+                (due_lo, due_hi),
+            ).fetchall()
+        except Exception:
+            return []
+
+    @staticmethod
+    def _leading_count(items: list[BriefItem], source_ref: str) -> int:
+        """The leading integer of the one count item carrying *source_ref*."""
+        for item in items:
+            if item.source_ref == source_ref:
+                match = re.match(r"\s*(\d+)\b", item.text)
+                if match:
+                    return int(match.group(1))
+        return 0
 
     def get_latest(self, principal: Any) -> MondayBrief | None:
         """Return the most recently generated brief, if one exists."""

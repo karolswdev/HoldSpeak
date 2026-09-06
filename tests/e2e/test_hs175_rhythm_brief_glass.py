@@ -1,8 +1,10 @@
 """HS-175: Rhythm weekly brief row + brief detail THIS WEEK section glass rig.
 
 Two legs:
-  1. Calendar configured: the brief row reads "Weekly brief", shows
-     WEEKLY MON 08:00 token, LAST chip, summary line, and Generate verb.
+  1. Calendar configured: the brief row reads "Weekly brief", shows the
+     TRUE cadence token DAILY 08:00 (HS-175 counsel C9a: the brief
+     regenerates once a day after quiet hours; no weekly cadence exists),
+     LAST chip, the summary line with honest singulars, and Generate.
      The brief detail shows THIS WEEK before SINCE FRIDAY with rows and
      source emblem chips.
   2. No calendar: the row reads "Monday brief", no THIS WEEK section.
@@ -101,35 +103,54 @@ def _shot(page: Any, name: str, width: int, *, pullout: bool = False) -> Path:
     return path
 
 
+def _local_week_end() -> "datetime.datetime":
+    """Sunday 23:59 of the hub's LOCAL week (aware)."""
+    import datetime as _dt
+    now = _dt.datetime.now().astimezone()
+    monday = (now - _dt.timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    return monday + _dt.timedelta(days=7) - _dt.timedelta(minutes=1)
+
+
+def _ahead_event_start() -> "datetime.datetime":
+    """An instant still ahead inside the brief's forward window
+    [now, Sunday 23:59 local]: one hour out, or five minutes out when the
+    week is nearly over (aware, local zone)."""
+    import datetime as _dt
+    now = _dt.datetime.now().astimezone()
+    candidate = now + _dt.timedelta(hours=1)
+    return candidate if candidate < _local_week_end() else now + _dt.timedelta(minutes=5)
+
+
+def _utc_z(value: "datetime.datetime") -> str:
+    import datetime as _dt
+    return value.astimezone(_dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
 def _seed_calendar_events(page: Any) -> None:
-    """Seed 4 calendar events this week via the DB."""
+    """Seed calendar events the way the ingest stores them (UTC ``...Z``):
+    two earlier this local week, two still AHEAD inside the brief's forward
+    window (HS-175 counsel C11: ``[now, Sunday 23:59]``), so ``Next:`` and
+    the armed count are real."""
+    import datetime as _dt
     from holdspeak.db import get_database
 
     db = get_database()
-    now = time.time()
-    # Events must fall within the current ISO week (Monday..Sunday of now).
-    # The brief's week window runs from this week's Monday 00:00 to Sunday 23:59.
-    # At least one event must be in the future (after now) so the "Next:"
-    # item is produced.  Place two past, one later today, one tomorrow.
-    import datetime as _dt
-    today = _dt.date.today()
-    days_since_monday = today.weekday()
-    monday = today - _dt.timedelta(days=days_since_monday)
-    tomorrow = today + _dt.timedelta(days=1)
-    # Ensure tomorrow is within the same ISO week (i.e. not past Sunday)
-    if tomorrow.weekday() == 0:
-        # today is Sunday; put the future event later today instead
-        tomorrow = today
+    now_epoch = time.time()
+    now = _dt.datetime.now().astimezone()
+    monday = (now - _dt.timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    ahead = _ahead_event_start()
+    later = ahead + _dt.timedelta(minutes=20)
+    if later >= _local_week_end():
+        later = ahead + _dt.timedelta(minutes=2)
     events = [
         ("evt-glass-1", "uid-1", "Team Standup",
-         f"{monday.isoformat()}T10:00:00", f"{monday.isoformat()}T10:30:00"),
+         _utc_z(monday + _dt.timedelta(hours=10)), _utc_z(monday + _dt.timedelta(hours=10, minutes=30))),
         ("evt-glass-2", "uid-2", "Architecture Review",
-         f"{(monday + _dt.timedelta(days=1)).isoformat()}T14:00:00",
-         f"{(monday + _dt.timedelta(days=1)).isoformat()}T15:00:00"),
+         _utc_z(monday + _dt.timedelta(days=1, hours=14)), _utc_z(monday + _dt.timedelta(days=1, hours=15))),
         ("evt-glass-3", "uid-3", "Sprint Planning",
-         f"{today.isoformat()}T23:30:00", f"{today.isoformat()}T23:59:00"),
+         _utc_z(ahead), _utc_z(ahead + _dt.timedelta(minutes=30))),
         ("evt-glass-4", "uid-4", "1:1 with Ania",
-         f"{tomorrow.isoformat()}T11:00:00", f"{tomorrow.isoformat()}T11:30:00"),
+         _utc_z(later), _utc_z(later + _dt.timedelta(minutes=30))),
     ]
     with db._connection() as conn:
         for eid, uid, title, starts, ends in events:
@@ -138,7 +159,7 @@ def _seed_calendar_events(page: Any) -> None:
                    (id, uid, title, starts_at, ends_at, last_seen_at,
                     subscription_revision, source_id, source_label)
                    VALUES (?, ?, ?, ?, ?, ?, 'rev1', 'src1', 'WORK')""",
-                (eid, uid, title, starts, ends, now),
+                (eid, uid, title, starts, ends, now_epoch),
             )
 
 
@@ -148,15 +169,18 @@ def _seed_armed_recording(page: Any) -> None:
 
     db = get_database()
     now = time.time()
+    # Armed on the event still AHEAD (evt-glass-3): the brief counts armed
+    # recordings only for events inside its forward window.
+    fire_at = _ahead_event_start().timestamp() - 300
     with db._connection() as conn:
         conn.execute(
             """INSERT INTO scheduled_recordings
                (id, title, cron_expr, enabled, next_fire_at, state,
                 calendar_event_id, calendar_uid, calendar_source_id,
                 created_at)
-               VALUES ('sr-glass-1', 'Team Standup', '0 55 9 * * *', 1, ?,
-                       'idle', 'evt-glass-1', 'uid-1', 'src1', ?)""",
-            (now, now),
+               VALUES ('sr-glass-1', 'Sprint Planning', '0 55 9 * * *', 1, ?,
+                       'idle', 'evt-glass-3', 'uid-3', 'src1', ?)""",
+            (fire_at, now),
         )
 
 
@@ -168,9 +192,9 @@ def _seed_commitment(page: Any) -> None:
     art_id = f"art-{uuid.uuid4().hex[:8]}"
     import datetime as _dt
     today = _dt.date.today()
-    days_since_monday = today.weekday()
-    # Due Friday of this week
-    friday = today - _dt.timedelta(days=days_since_monday) + _dt.timedelta(days=4)
+    # Due TODAY: inside the brief's forward window [today, Sunday] whatever
+    # the weekday the rig runs on (C11 bounds commitments by local dates).
+    friday = today
 
     with db._connection() as conn:
         conn.execute(
@@ -283,8 +307,8 @@ def glass_no_calendar(tmp_path, monkeypatch, _build):
 class TestRhythmWeeklyBrief:
 
     def test_rhythm_brief_row_with_calendar(self, glass_with_calendar):
-        """When calendar is configured: Weekly brief label, WEEKLY token,
-        LAST chip, summary line, Generate verb."""
+        """When calendar is configured: Weekly brief label, DAILY token
+        (the true cadence), LAST chip, summary line, Generate verb."""
         page, errors, _ = glass_with_calendar
 
         _open_rhythm(page)
@@ -300,12 +324,14 @@ class TestRhythmWeeklyBrief:
         label_text = primary.text_content().strip() if primary.count() > 0 else row_text.split("\n")[0].strip()
         assert "Weekly brief" in label_text, f"Expected 'Weekly brief', got: {label_text}"
 
-        # WEEKLY token
+        # C9(a): the cadence token tells the truth -- DAILY HH:00 (the brief
+        # regenerates once a day after quiet hours close); never WEEKLY MON.
+        import re as _re
         cadence_token = page.locator('[data-testid="rhythm-brief-cadence"]')
         assert cadence_token.count() > 0, "Cadence token not found"
-        cadence_text = cadence_token.text_content() or ""
-        assert "WEEKLY" in cadence_text.upper(), f"Expected WEEKLY in cadence token, got: {cadence_text}"
-        assert "MON" in cadence_text.upper(), f"Expected MON in cadence token, got: {cadence_text}"
+        cadence_text = (cadence_token.text_content() or "").strip()
+        assert _re.fullmatch(r"DAILY \d{2}:00", cadence_text), f"Expected DAILY HH:00, got: {cadence_text!r}"
+        assert "WEEKLY" not in cadence_text.upper() and "MON" not in cadence_text.upper()
 
         # LAST chip (StateChip)
         last_chip = page.locator('[data-testid="rhythm-brief-last"]')
@@ -313,11 +339,20 @@ class TestRhythmWeeklyBrief:
         last_text = last_chip.text_content() or ""
         assert "LAST" in last_text.upper(), f"Expected LAST in chip, got: {last_text}"
 
-        # Summary line
+        # Summary line -- C9(a) / H10-3: honest plurals, ARMED named.
+        # Seeded: 4 events this week, 1 armed recording, 1 commitment due.
         summary = page.locator('[data-testid="rhythm-brief-summary"]')
         assert summary.count() > 0, "Summary line not found (no zero parts)"
-        summary_text = summary.text_content() or ""
-        assert "MEETINGS" in summary_text.upper(), f"Expected MEETINGS in summary, got: {summary_text}"
+        summary_text = (summary.text_content() or "").strip()
+        assert _re.search(r"\b\d+ MEETINGS?\b", summary_text), f"Expected N MEETING(S) in summary, got: {summary_text}"
+        assert "1 ARMED" in summary_text, f"Expected 1 ARMED named in summary, got: {summary_text}"
+        assert "1 COMMITMENT DUE" in summary_text, f"Expected 1 COMMITMENT DUE, got: {summary_text}"
+        assert "1 COMMITMENTS" not in summary_text and "1 WATCH ITEMS" not in summary_text, (
+            f"a singular count printed a plural: {summary_text}"
+        )
+        assert "WATCH ITEM" not in summary_text, (
+            f"ARMED counted as a WATCH ITEM: {summary_text}"
+        )
 
         # Generate verb
         gen_btn = page.locator('[data-testid="rhythm-generate-now"]')

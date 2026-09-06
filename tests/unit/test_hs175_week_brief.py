@@ -416,3 +416,312 @@ class TestBriefGenerationThisWeek:
         assert due_items[0].detail is not None
         assert "Ania owns the API spec" in due_items[0].detail
         assert "2026-09-04" in due_items[0].detail
+
+
+# -- HS-175 counsel-on-built C11: the two windows as ruled -------------------
+#
+# - compute_window is byte-identical (its body digest is pinned).
+# - the forward half reads [now, Sunday 23:59], never from Monday 00:00.
+# - boundaries are UTC-normalised against the UTC-stored starts_at; a naive
+#   local `now` (what the cadence and the route pass) is read as local.
+# - an occurrence already recorded in the lookback is deduped out.
+# - _compose counts calendar items as meetings / armed / due, never "watch items".
+
+import ast
+import hashlib
+import inspect
+import textwrap
+
+from holdspeak.services.monday_brief_service import BriefItem
+
+UTC = datetime.timezone.utc
+COMPUTE_WINDOW_BODY_SHA256 = "2a4925ac6b2f80ae2d3061b52a148af34af7a2cc03c0171d55f7a792c02b4a9f"
+
+
+def _seed_utc_event(db, eid: str, title: str, starts_at: str, *, uid: str | None = None) -> None:
+    """Seed the production shape: starts_at/ends_at stored as UTC '+00:00'."""
+    start = datetime.datetime.fromisoformat(starts_at)
+    end = (start + datetime.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT INTO calendar_events
+               (id, uid, title, starts_at, ends_at, last_seen_at,
+                subscription_revision, source_id, source_label)
+               VALUES (?, ?, ?, ?, ?, 1000.0, 'rev1', 'src1', 'WORK')""",
+            (eid, uid or f"uid-{eid}", title, starts_at, end),
+        )
+
+
+def _seed_recorded_meeting(db, mid: str, *, calendar_event_id: str, started_at: str, ended_at: str) -> None:
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT INTO meetings (id, title, started_at, ended_at, capture_status, calendar_event_id)
+               VALUES (?, 'Recorded', ?, ?, 'finalized', ?)""",
+            (mid, started_at, ended_at, calendar_event_id),
+        )
+
+
+def _this_week(brief, ref: str):
+    return [i for i in brief.sections["this_week"] if i.source_ref == ref]
+
+
+class TestComputeWindowByteIdentical:
+    def test_body_digest_pinned(self, db):
+        """The SINCE FRIDAY half is untouched: the body (docstring stripped)
+        hashes to the digest counsel verified against be6c630e."""
+        src = textwrap.dedent(inspect.getsource(MondayBriefService.compute_window))
+        fn = ast.parse(src).body[0]
+        body = fn.body
+        if isinstance(body[0], ast.Expr) and isinstance(getattr(body[0], "value", None), ast.Constant):
+            body = body[1:]
+        digest = hashlib.sha256(
+            ast.unparse(ast.Module(body=body, type_ignores=[])).encode()
+        ).hexdigest()
+        assert digest == COMPUTE_WINDOW_BODY_SHA256
+
+
+class TestForwardHalfReadsFromNow:
+    def test_monday_afternoon_counts_only_what_is_coming(self, db):
+        svc = MondayBriefService(db)
+        now = datetime.datetime(2026, 9, 7, 14, 0, tzinfo=UTC)  # Monday
+        _seed_utc_event(db, "e-past", "Morning sync", "2026-09-07T10:00:00+00:00")  # this week, already past
+        _seed_utc_event(db, "e-next", "Design review", "2026-09-08T09:00:00+00:00")
+        _seed_utc_event(db, "e-sun", "Sunday late", "2026-09-13T23:30:00+00:00")  # inside Sunday 23:59
+        _seed_utc_event(db, "e-mon", "Next Monday", "2026-09-14T00:30:00+00:00")  # next week
+
+        brief = svc.generate(OWNER, now=now)
+
+        assert _this_week(brief, "calendar:week")[0].text == "2 meetings this week"
+        nxt = [i for i in brief.sections["this_week"] if i.text.startswith("Next:")]
+        assert [i.text for i in nxt] == ["Next: Design review at 09:00"]
+        assert "2 meetings this week" in brief.headline
+        assert "watch item" not in brief.headline
+        # The lookback is untouched: Monday still opens at Friday 17:00.
+        assert brief.period_start == datetime.datetime(2026, 9, 4, 17, 0, tzinfo=UTC).isoformat()
+
+    def test_naive_local_now_is_read_as_local(self, db, monkeypatch):
+        """Counsel H6-1 inverted: under TZ=Europe/Warsaw a naive Saturday
+        10:00 local `now` counts the two Saturday meetings and NOT next
+        Monday's 00:30 local one; `Next:` is one hour away, in local time."""
+        monkeypatch.setenv("TZ", "Europe/Warsaw")
+        time.tzset()
+        try:
+            svc = MondayBriefService(db)
+            _seed_utc_event(db, "e-11", "Standup", "2026-09-05T09:00:00+00:00")   # Sat 11:00 local
+            _seed_utc_event(db, "e-15", "Review", "2026-09-05T13:00:00+00:00")    # Sat 15:00 local
+            _seed_utc_event(db, "e-mon", "Next-week planning", "2026-09-06T22:30:00+00:00")  # Mon 00:30 local
+
+            brief = svc.generate(OWNER, now=datetime.datetime(2026, 9, 5, 10, 0))  # naive, Saturday
+
+            assert _this_week(brief, "calendar:week")[0].text == "2 meetings this week"
+            nxt = [i for i in brief.sections["this_week"] if i.text.startswith("Next:")]
+            assert [i.text for i in nxt] == ["Next: Standup at 11:00"]
+        finally:
+            monkeypatch.undo()
+            time.tzset()
+
+    def test_commitment_due_today_counts_and_next_week_does_not(self, db):
+        svc = MondayBriefService(db)
+        now = datetime.datetime(2026, 9, 7, 14, 0, tzinfo=UTC)  # Monday
+        art = f"art-{uuid.uuid4().hex[:8]}"
+        with db._connection() as conn:
+            conn.execute(
+                """INSERT INTO decisions (id, text, rationale, source_artifact_id, source_meeting_id,
+                                          lifecycle, project_key, decided_at)
+                   VALUES ('d1', 'Ship the spec', '', ?, '', 'recorded', '', datetime('now'))""",
+                (art,),
+            )
+            for cid, due in (("dc-today", "2026-09-07"), ("dc-sun", "2026-09-13"), ("dc-next", "2026-09-14")):
+                conn.execute(
+                    """INSERT INTO decision_commitments
+                       (id, decision_id, action_item_id, owner, due_at, status, created_at, updated_at)
+                       VALUES (?, 'd1', ?, 'karol', ?, 'open', datetime('now'), datetime('now'))""",
+                    (cid, f"ai-{cid}", due),
+                )
+
+        brief = svc.generate(OWNER, now=now)
+
+        due = _this_week(brief, "meeting_watch:commitments_due")
+        assert [i.text for i in due] == ["2 commitments due this week"]
+        assert "2 commitments due" in brief.headline
+
+
+class TestRecordedOccurrenceDedup:
+    def test_recorded_occurrence_is_since_fridays_not_this_weeks(self, db):
+        """The calendar_uid dedup, occurrence-scoped: an event whose
+        recording already sits in the lookback as `Meeting recorded` is
+        neither counted nor named in THIS WEEK."""
+        svc = MondayBriefService(db)
+        now = datetime.datetime(2026, 9, 7, 14, 0, tzinfo=UTC)
+        _seed_utc_event(db, "e-a", "Standup", "2026-09-07T15:00:00+00:00")  # still 'coming' by the clock
+        _seed_utc_event(db, "e-b", "Review", "2026-09-08T09:00:00+00:00")
+        # The owner started the armed row early and stopped it: recorded, inside the lookback.
+        _seed_recorded_meeting(
+            db, "m-a", calendar_event_id="e-a",
+            started_at="2026-09-07T13:40:00+00:00", ended_at="2026-09-07T13:58:00+00:00",
+        )
+
+        brief = svc.generate(OWNER, now=now)
+
+        assert _this_week(brief, "calendar:week")[0].text == "1 meeting this week"
+        assert [i.source_ref for i in brief.sections["this_week"] if i.text.startswith("Next:")] == ["calendar_event:e-b"]
+        assert any(i.text.startswith("Meeting recorded") for i in brief.sections["changed"])
+
+    def test_recurring_series_next_occurrence_survives(self, db):
+        """Dedup by uid ALONE would hide Tuesday's standup because Monday's
+        was recorded; the occurrence key keeps it."""
+        svc = MondayBriefService(db)
+        now = datetime.datetime(2026, 9, 7, 14, 0, tzinfo=UTC)
+        _seed_utc_event(db, "e-mon", "Standup", "2026-09-07T09:00:00+00:00", uid="series-1")
+        _seed_utc_event(db, "e-tue", "Standup", "2026-09-08T09:00:00+00:00", uid="series-1")
+        _seed_recorded_meeting(
+            db, "m-mon", calendar_event_id="e-mon",
+            started_at="2026-09-07T08:55:00+00:00", ended_at="2026-09-07T09:30:00+00:00",
+        )
+
+        brief = svc.generate(OWNER, now=now)
+
+        assert _this_week(brief, "calendar:week")[0].text == "1 meeting this week"
+        assert [i.source_ref for i in brief.sections["this_week"] if i.text.startswith("Next:")] == ["calendar_event:e-tue"]
+
+
+class TestComposeCountsCalendarItems:
+    def test_headline_names_meetings_armed_and_due(self):
+        """Counsel's repro_compose inverted: no 'watch items' on a desk with
+        zero Watch changes; `Next:` is detail, not a count."""
+        svc = MondayBriefService(db=None)
+        tw = [
+            BriefItem("a", "this_week", "3 meetings this week", source_ref="calendar:week", priority=60),
+            BriefItem("b", "this_week", "Next: Standup at 07:00", source_ref="calendar_event:x", priority=55),
+            BriefItem("c", "this_week", "2 armed", source_ref="calendar:armed", priority=53),
+            BriefItem("d", "this_week", "1 commitment due this week", detail="Ship v2 | 2026-09-04",
+                      source_ref="meeting_watch:commitments_due", priority=51),
+        ]
+        headline, _ = svc._compose(
+            {"this_week": tw, "changed": [], "broke": [], "waiting": [], "decisions": []}
+        )
+        assert headline == "3 meetings this week, 2 armed, 1 commitment due."
+
+    def test_headline_with_decisions(self):
+        svc = MondayBriefService(db=None)
+        tw = [
+            BriefItem("a", "this_week", "1 meeting this week", source_ref="calendar:week", priority=60),
+            BriefItem("e", "this_week", "2 new decisions from meetings", source_ref="meeting_watch:decisions", priority=52),
+        ]
+        headline, _ = svc._compose(
+            {"this_week": tw, "changed": [], "broke": [], "waiting": [], "decisions": []}
+        )
+        assert headline == "1 meeting this week, 2 new decisions."
+
+
+class TestCommitmentSaidOnce:
+    """C11 follow-up: a commitment THIS WEEK counts is dropped from the
+    lookback's `Commitment due` items -- dedup by commitment id, not text."""
+
+    def _seed(self, db, cid: str, due: str, text: str) -> None:
+        art = f"art-{uuid.uuid4().hex[:8]}"
+        did = f"d-{cid}"
+        with db._connection() as conn:
+            conn.execute(
+                """INSERT INTO decisions (id, text, rationale, source_artifact_id, source_meeting_id,
+                                          lifecycle, project_key, decided_at)
+                   VALUES (?, ?, '', ?, '', 'recorded', '', datetime('now'))""",
+                (did, text, art),
+            )
+            conn.execute(
+                """INSERT INTO decision_commitments
+                   (id, decision_id, action_item_id, owner, due_at, status, created_at, updated_at)
+                   VALUES (?, ?, ?, 'karol', ?, 'open', datetime('now'), datetime('now'))""",
+                (cid, did, f"ai-{cid}", due),
+            )
+
+    def test_commitment_due_today_appears_once_in_this_week(self, db):
+        svc = MondayBriefService(db)
+        now = datetime.datetime(2026, 9, 7, 14, 0, tzinfo=UTC)  # Monday
+        self._seed(db, "dc-today", "2026-09-07", "Ship the spec")   # THIS WEEK's
+        self._seed(db, "dc-past", "2026-09-01", "Ship the spec")    # overdue: the lookback's, same TEXT
+
+        brief = svc.generate(OWNER, now=now)
+
+        due = _this_week(brief, "meeting_watch:commitments_due")
+        assert [i.text for i in due] == ["1 commitment due this week"]
+        lookback_due = [i for i in brief.sections["decisions"] if i.text.startswith("Commitment due")]
+        # The same text is no dedup key: the overdue one (a different id) stays.
+        assert [i.text for i in lookback_due] == ["Commitment due 2026-09-01: Ship the spec"]
+        assert not any("2026-09-07" in i.text for i in lookback_due)
+
+
+class TestShadeReadOfSeededBrief:
+    """The shade's read (GET /api/brief/latest) of the hs171 shade rig's seed
+    (tests/e2e/test_hs171_shade_glass.py::_seed_brief): a brief row with four
+    `waiting` items, generated_at = naive local now.  Mirrored here against
+    the route, then a hub-like cadence `generate()` (naive local `now`, the
+    same local day) runs AFTER the seed -- the shade must still see the
+    seeded brief with its four items.
+
+    The rig hardcodes period_end='2026-09-05'; this test seeds today's date
+    so it says what the rig means on any day (a cadence generate on a later
+    local day writes a newer brief, which is the shade's own hazard, not
+    the seed's)."""
+
+    def _client(self, db, monkeypatch):
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from holdspeak.web.routes import monday_brief as brief_routes
+
+        monkeypatch.setattr(brief_routes, "get_database", lambda: db)
+        monkeypatch.setattr(brief_routes, "get_observer", lambda: None)
+        app = FastAPI()
+        app.include_router(brief_routes.build_monday_brief_router(None))
+        return TestClient(app)
+
+    def test_latest_returns_the_seed_before_and_after_a_hub_generate(self, db, monkeypatch):
+        client = self._client(db, monkeypatch)
+        assert client.get("/api/brief/latest").json() is None
+
+        today = datetime.date.today().isoformat()
+        brief_id = str(uuid.uuid4())
+        with db._connection() as conn:
+            conn.execute(
+                "INSERT INTO monday_briefs (id, period_start, period_end, headline, generated_at) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (brief_id, "2026-09-01", today, "4 things this week", datetime.datetime.now().isoformat()),
+            )
+            for i in range(4):
+                conn.execute(
+                    "INSERT INTO monday_brief_items (id, brief_id, section, text, priority) "
+                    "VALUES (?, ?, 'waiting', ?, 0)",
+                    (f"brief-item-{i}", brief_id, f"Item {i + 1}"),
+                )
+
+        def shade_sees(payload):
+            sections = payload["sections"]
+            return (
+                payload["id"], payload["is_empty"],
+                sum(len(v) for v in sections.values()), len(sections.get("this_week", [])),
+            )
+
+        first = client.get("/api/brief/latest")
+        assert first.status_code == 200
+        assert shade_sees(first.json()) == (brief_id, False, 4, 0)
+
+        # The hub's cadence regenerates with a naive local `now` (runtime/cadence.py:112-121).
+        generated = MondayBriefService(db).generate(None, now=datetime.datetime.now())
+        assert generated.id == brief_id, "same local day: generate() returns the seed, writes no row"
+
+        again = client.get("/api/brief/latest")
+        assert again.status_code == 200
+        assert shade_sees(again.json()) == (brief_id, False, 4, 0)
+        assert client.post("/api/brief/generate").status_code == 200
+
+
+class TestComposeNeverPrintsABareStop:
+    def test_next_row_alone_is_one_item(self):
+        """Counsel's H-E: a this_week holding only a `Next:` row (impossible
+        in the product) must not headline as '.'."""
+        svc = MondayBriefService(db=None)
+        tw = [BriefItem("b", "this_week", "Next: Standup at 07:00", source_ref="calendar_event:x", priority=55)]
+        headline, _ = svc._compose(
+            {"this_week": tw, "changed": [], "broke": [], "waiting": [], "decisions": []}
+        )
+        assert headline == "1 item this week."

@@ -1060,6 +1060,11 @@ function SourcesSection({
                 }
               >
                 <div className="room-source-line2">
+                  {/* HS-175 counsel C7(b): a paused Watch SAYS so (idle chip)
+                      beside its Resume verb -- one grammar for MTG / GH / J. */}
+                  {src.state === "paused" ? (
+                    <span data-testid="source-paused"><StateChip state="idle" label="PAUSED" /></span>
+                  ) : null}
                   {isMeeting ? (
                     <span data-testid="source-meeting-checked">
                       {src.checkedAt ? (

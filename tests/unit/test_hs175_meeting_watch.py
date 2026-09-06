@@ -536,3 +536,471 @@ class TestMeetingWatchEvaluation:
         checked_after = meeting_items_after[0]["checkedAt"]
         assert checked_after is not None
         assert checked_after >= checked_before
+
+
+# ── HS-175 counsel C7: the Watch's verbs are real ─────────────────
+
+
+def _set_tz(monkeypatch, name: str) -> None:
+    """Run the hub at a fixed zone (the owner sits at -06:00)."""
+    import time as _time
+    monkeypatch.setenv("TZ", name)
+    _time.tzset()
+
+
+@pytest.fixture()
+def denver(monkeypatch):
+    """The hub at America/Denver (-06:00 in September); restored after."""
+    import os
+    import time as _time
+    previous = os.environ.get("TZ")
+    _set_tz(monkeypatch, "America/Denver")
+    yield
+    if previous is None:
+        monkeypatch.delenv("TZ", raising=False)
+    else:
+        monkeypatch.setenv("TZ", previous)
+    _time.tzset()
+
+
+def _watch_created_receipts(db, watch_id: str) -> list[dict]:
+    import json as _json
+    with db._connection() as conn:
+        rows = conn.execute(
+            "SELECT outcome FROM kernel_receipts WHERE result_ref = ?",
+            (f"watch:{watch_id}",),
+        ).fetchall()
+    return [_json.loads(r["outcome"]) for r in rows]
+
+
+def _meeting_watches(db, project_id):
+    return [
+        w for w in db.automations.list_project_watches(project_id)
+        if w.get("connector_id") == "meeting"
+    ]
+
+
+class TestRetireIsATombstone:
+    """C7(a): a retired meeting Watch is never resurrected (R6 inverted)."""
+
+    def test_link_path_does_not_resurrect_retired_watch(self, db):
+        from holdspeak.services.watch_service import ensure_meeting_watch
+
+        project_id = _seed_project(db)
+        m1 = _seed_meeting(db, title="Standup")
+        _link_meeting_to_project(db, m1, project_id)
+        created = ensure_meeting_watch(db, project_id, why="meeting linked")
+        assert created is not None
+
+        db.automations.update_watch_spec(created["id"], state="retired")
+
+        # A new meeting is linked -> the link path calls ensure again.
+        m2 = _seed_meeting(db, title="Review")
+        _link_meeting_to_project(db, m2, project_id)
+        again = ensure_meeting_watch(db, project_id, why="meeting linked")
+
+        assert again is None, "a retired meeting Watch was resurrected on link"
+        watches = _meeting_watches(db, project_id)
+        assert [(w["id"], w["state"]) for w in watches] == [(created["id"], "retired")]
+
+    def test_backfill_query_skips_rooms_with_a_retired_watch(self, db):
+        """The heartbeat's backfill SQL treats ANY meeting Watch as present."""
+        from holdspeak.services.watch_service import ensure_meeting_watch
+
+        project_id = _seed_project(db)
+        mid = _seed_meeting(db)
+        _link_meeting_to_project(db, mid, project_id)
+        created = ensure_meeting_watch(db, project_id)
+        db.automations.update_watch_spec(created["id"], state="retired")
+
+        # The exact predicate heartbeat_service.run_sweep uses.
+        with db._connection() as conn:
+            rows = conn.execute(
+                """SELECT DISTINCT mp.project_id
+                   FROM meeting_projects mp
+                   WHERE NOT EXISTS (
+                       SELECT 1 FROM connector_watches cw
+                       WHERE cw.project_id = mp.project_id
+                         AND cw.connector_id = 'meeting'
+                   )""",
+            ).fetchall()
+        assert [r["project_id"] for r in rows] == []
+
+    def test_heartbeat_backfill_does_not_resurrect(self, db):
+        """The whole sweep backfill, source-checked: the predicate has no
+        ``state != 'retired'`` escape hatch."""
+        import inspect
+        from holdspeak.services import heartbeat_service
+
+        source = inspect.getsource(heartbeat_service.HeartbeatService.run_sweep)
+        block = source[source.index("backfill meeting Watches"):]
+        block = block[: block.index("meeting_watch_backfill = {")]
+        assert "cw.connector_id = 'meeting'" in block
+        assert "state != 'retired'" not in block
+        assert 'why="backfill"' in block
+
+    def test_retired_watch_is_not_a_source_row(self, db):
+        """A retired Watch does not fold into the Room's SOURCES."""
+        from holdspeak.services.project_service import ProjectService
+        from holdspeak.services.watch_service import ensure_meeting_watch
+
+        project_id = _seed_project(db)
+        mid = _seed_meeting(db)
+        _link_meeting_to_project(db, mid, project_id)
+        created = ensure_meeting_watch(db, project_id)
+        db.automations.update_watch_spec(created["id"], state="retired")
+
+        result = ProjectService(db)._read_room_sources(project_id)
+        assert [s for s in result["items"] if s["provider"] == "meeting"] == []
+
+
+class TestPauseShowsPaused:
+    """C7(b): Pause writes state='paused'; the row reads it (R7 inverted)."""
+
+    def _row(self, db, project_id, provider):
+        from holdspeak.services.project_service import ProjectService
+        items = ProjectService(db)._read_room_sources(project_id)["items"]
+        rows = [s for s in items if s["provider"] == provider]
+        assert len(rows) == 1, rows
+        return rows[0]
+
+    def test_meeting_row_paused_after_pause_watch(self, db):
+        from holdspeak.services.watch_service import WatchService, ensure_meeting_watch
+
+        project_id = _seed_project(db)
+        mid = _seed_meeting(db)
+        _link_meeting_to_project(db, mid, project_id)
+        created = ensure_meeting_watch(db, project_id)
+
+        assert self._row(db, project_id, "meeting")["state"] == "live"
+        WatchService(db).pause_watch(OWNER, created["id"])
+        row = self._row(db, project_id, "meeting")
+        assert row["state"] == "paused"
+        # enabled is untouched by Pause -- the read must not depend on it
+        stored = db.automations.get_watch(created["id"])
+        assert stored["state"] == "paused" and stored["enabled"] is True
+
+        WatchService(db).resume_watch(OWNER, created["id"])
+        assert self._row(db, project_id, "meeting")["state"] == "live"
+
+    @pytest.mark.parametrize("connector_id,query_kind,query,provider", [
+        ("gh", "pull_requests", {"repository": "acme/app"}, "github"),
+        ("jira", "issues", {"projects": ["ACME"], "connection_ref": "acme.atlassian.net|me@x"}, "jira"),
+    ])
+    def test_github_and_jira_rows_paused_after_pause_watch(
+        self, db, connector_id, query_kind, query, provider,
+    ):
+        """The derivation is shared with GH/J rows -- prove all three."""
+        import json as _json
+        from datetime import datetime as _dt, timezone as _tz
+        from holdspeak.services.watch_service import WatchService
+
+        project_id = _seed_project(db)
+        watch_id = f"w_{uuid.uuid4().hex[:12]}"
+        now_iso = _dt.now(_tz.utc).isoformat(timespec="seconds")
+        with db._connection() as conn:
+            db.automations.create_watch_in_transaction(
+                conn, watch_id=watch_id, connector_id=connector_id,
+                query_kind=query_kind, name=f"{provider} watch",
+                query_json=_json.dumps(query, sort_keys=True), enabled=True,
+                schema_version="WatchSpec@1", project_id=project_id,
+                intent="", subject_kind=query_kind, trigger_kind="poll",
+                trigger_json="{}", mode="yolo", state="active", revision=1,
+                baseline_state="", test_state="", created_at=now_iso,
+                updated_at=now_iso,
+            )
+        assert self._row(db, project_id, provider)["state"] == "live"
+        WatchService(db).pause_watch(OWNER, watch_id)
+        assert self._row(db, project_id, provider)["state"] == "paused"
+        WatchService(db).resume_watch(OWNER, watch_id)
+        assert self._row(db, project_id, provider)["state"] == "live"
+
+
+class TestCreationIsReceipted:
+    """C7(c): both creation paths write ``watch.created`` with a why."""
+
+    def test_link_path_receipt(self, db):
+        from holdspeak.services.watch_service import ensure_meeting_watch
+
+        project_id = _seed_project(db)
+        mid = _seed_meeting(db)
+        _link_meeting_to_project(db, mid, project_id)
+        created = ensure_meeting_watch(db, project_id, why="meeting linked")
+
+        receipts = _watch_created_receipts(db, created["id"])
+        assert len(receipts) == 1
+        assert receipts[0]["kind"] == "watch.created"
+        assert receipts[0]["why"] == "meeting linked"
+        assert receipts[0]["project_id"] == project_id
+        assert receipts[0]["connector_id"] == "meeting"
+
+    def test_backfill_receipt(self, db):
+        from holdspeak.services.watch_service import ensure_meeting_watch
+
+        project_id = _seed_project(db)
+        mid = _seed_meeting(db)
+        _link_meeting_to_project(db, mid, project_id)
+        created = ensure_meeting_watch(db, project_id, why="backfill")
+        receipts = _watch_created_receipts(db, created["id"])
+        assert [r["why"] for r in receipts] == ["backfill"]
+
+    def test_default_why_is_the_link_path(self, db):
+        """routing_glue / project_service call with why='meeting linked'."""
+        import inspect
+        from holdspeak.runtime import routing_glue
+        from holdspeak.services import project_service
+
+        assert 'ensure_meeting_watch(db, pid, why="meeting linked")' in inspect.getsource(routing_glue)
+        assert 'ensure_meeting_watch(self._db, project_id, why="meeting linked")' in inspect.getsource(project_service)
+
+
+# ── HS-175 counsel C8 / C9(c): the Room row's clocks ─────────────
+
+
+def _seed_calendar_event(db, *, event_id=None, uid=None, title="Sprint Planning",
+                         starts_at="2026-09-10T20:00:00Z", source_id="src-1"):
+    from datetime import datetime as _dt, timedelta as _td
+    eid = event_id or f"ce_{uuid.uuid4().hex[:12]}"
+    ends = (_dt.fromisoformat(starts_at.replace("Z", "+00:00")) + _td(hours=1))
+    ends_at = ends.isoformat().replace("+00:00", "Z")
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT INTO calendar_events
+               (id, uid, title, starts_at, ends_at, last_seen_at,
+                subscription_revision, source_id, source_label)
+               VALUES (?, ?, ?, ?, ?, 0, 'rev', ?, 'WORK')""",
+            (eid, uid or f"uid-{eid}", title, starts_at, ends_at, source_id),
+        )
+    return eid
+
+
+def _link_event(db, event_id, project_id, match_source="title"):
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT INTO calendar_event_projects (calendar_event_id, project_id, match_source) VALUES (?, ?, ?)",
+            (event_id, project_id, match_source),
+        )
+
+
+class TestRoomRowClocks:
+    """The Room's MEETINGS tokens come from linked CALENDAR events in the
+    hub's LOCAL week; CHECKED leaves with an offset."""
+
+    def test_next_from_future_linked_event_not_from_meeting_entities(self, db, denver):
+        from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+        from holdspeak.services.project_service import ProjectService
+        from holdspeak.services.watch_service import ensure_meeting_watch
+
+        project_id = _seed_project(db)
+        mid = _seed_meeting(db, title="Standup")  # a recorded meeting, in the past
+        _link_meeting_to_project(db, mid, project_id)
+        ensure_meeting_watch(db, project_id)
+
+        # No linked calendar event -> no NEXT (never from the entities)
+        tokens = ProjectService(db)._read_room_sources(project_id)["items"][0]["tokens"]
+        assert not any(t.startswith("NEXT") for t in tokens)
+
+        # A linked event 2 days out at 14:00 UTC = 08:00 Denver
+        future = (_dt.now(_tz.utc) + _td(days=2)).replace(hour=14, minute=0, second=0, microsecond=0)
+        eid = _seed_calendar_event(db, starts_at=future.isoformat().replace("+00:00", "Z"))
+        _link_event(db, eid, project_id)
+
+        tokens = ProjectService(db)._read_room_sources(project_id)["items"][0]["tokens"]
+        expected_day = future.astimezone().strftime("%a").upper()
+        assert f"NEXT {expected_day} 08:00" in tokens, tokens
+
+    def test_this_week_counts_linked_events_in_the_local_week(self, db, denver):
+        """A Sunday 23:00 Denver event (Monday 05:00 UTC) is THIS week here."""
+        from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+        from holdspeak.services.project_service import (
+            ProjectService, local_week_bounds, utc_z,
+        )
+        from holdspeak.services.watch_service import ensure_meeting_watch
+
+        project_id = _seed_project(db)
+        mid = _seed_meeting(db)
+        _link_meeting_to_project(db, mid, project_id)
+        ensure_meeting_watch(db, project_id)
+
+        monday, next_monday = local_week_bounds()
+        # Sunday 23:00 local of THIS week: inside the local week, but the
+        # UTC week already rolled over (it is Monday 05:00Z).
+        sunday_late = next_monday - _td(hours=1)
+        # Monday 05:00Z of the PREVIOUS local Monday = Sunday 23:00 local of last week: out.
+        last_week = monday - _td(hours=1)
+        e_in = _seed_calendar_event(db, starts_at=utc_z(sunday_late), uid="in")
+        e_out = _seed_calendar_event(db, starts_at=utc_z(last_week), uid="out")
+        _link_event(db, e_in, project_id)
+        _link_event(db, e_out, project_id)
+
+        # The UTC-week reading would have dropped e_in (its UTC day is next
+        # Monday) and kept e_out; the local week keeps exactly e_in.
+        tokens = ProjectService(db)._read_room_sources(project_id)["items"][0]["tokens"]
+        assert "1 THIS WEEK" in tokens, tokens
+
+    def test_meeting_entities_do_not_count_toward_this_week(self, db, denver):
+        """N THIS WEEK is ONE count: linked calendar events (not recordings)."""
+        from datetime import datetime as _dt
+        from holdspeak.services.project_service import ProjectService
+        from holdspeak.services.watch_service import ensure_meeting_watch
+
+        project_id = _seed_project(db)
+        mid = _seed_meeting(db, started_at=_dt.now().isoformat(timespec="seconds"))
+        _link_meeting_to_project(db, mid, project_id)
+        ensure_meeting_watch(db, project_id)
+        tokens = ProjectService(db)._read_room_sources(project_id)["items"][0]["tokens"]
+        assert not any(t.endswith("THIS WEEK") for t in tokens), tokens
+
+    def test_checked_at_carries_an_offset(self, db):
+        """SQLite's naive-UTC last_success_at leaves as +00:00 so the browser
+        prints the viewer's local clock (H4-1: CHECKED 23:47 beside READ 17:48)."""
+        from holdspeak.services.project_service import ProjectService, aware_iso
+        from holdspeak.services.watch_service import ensure_meeting_watch
+
+        project_id = _seed_project(db)
+        mid = _seed_meeting(db)
+        _link_meeting_to_project(db, mid, project_id)
+        created = ensure_meeting_watch(db, project_id)
+        with db._connection() as conn:
+            conn.execute(
+                "UPDATE connector_watches SET last_success_at='2026-09-05 23:47:00' WHERE id=?",
+                (created["id"],),
+            )
+        row = ProjectService(db)._read_room_sources(project_id)["items"][0]
+        assert row["checkedAt"] == "2026-09-05T23:47:00+00:00"
+        assert aware_iso("2026-09-05T17:47:00-06:00") == "2026-09-05T17:47:00-06:00"
+        assert aware_iso(None) is None
+
+    def test_local_week_bounds_at_denver(self, denver):
+        from datetime import datetime as _dt, timedelta as _td
+        from holdspeak.services.project_service import local_week_bounds, utc_z
+
+        # Monday 2026-09-07 20:00 Denver
+        now = _dt(2026, 9, 7, 20, 0).astimezone()
+        monday, next_monday = local_week_bounds(now)
+        assert (monday.year, monday.month, monday.day, monday.hour) == (2026, 9, 7, 0)
+        assert next_monday - monday == _td(days=7)
+        assert utc_z(monday) == "2026-09-07T06:00:00Z"
+
+
+# ── ids never collide with a seed or another Watch; idempotency is by
+# (project_id, connector), never by id ────────────────────────────────
+
+
+def _seed_fixed_id_watch(db, project_id, watch_id, connector_id="gh", query_kind="pull_requests"):
+    import json as _json
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT INTO connector_watches "
+            "(id, connector_id, query_kind, name, query_json, snapshot_json, enabled, "
+            " project_id, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, '[]', 1, ?, datetime('now'), datetime('now'))",
+            (watch_id, connector_id, query_kind, f"{connector_id} {query_kind}",
+             _json.dumps({}), project_id),
+        )
+
+
+class TestMeetingWatchIdsNeverCollide:
+    """The shade/room rigs seed Watches with FIXED ids (``w-171-alpha-prs``)
+    before and after the hub's sweep runs; the minted meeting Watch id must
+    never be one a seed could use, and a fixed-id seed beside it must never
+    make ``ensure`` collide or double-create."""
+
+    def test_minted_id_is_a_uuid_suffix_no_seed_uses(self, db):
+        import re
+        from holdspeak.services.watch_service import ensure_meeting_watch
+        ids = set()
+        for _ in range(50):
+            pid = _seed_project(db)
+            mid = _seed_meeting(db)
+            _link_meeting_to_project(db, mid, pid)
+            created = ensure_meeting_watch(db, pid)
+            assert created is not None
+            assert re.fullmatch(r"w_[0-9a-f]{12}", created["id"]), created["id"]
+            ids.add(created["id"])
+        assert len(ids) == 50  # every mint distinct
+
+    def test_fixed_id_seeds_on_the_same_room_do_not_collide(self, db):
+        """GH/CI seeds with rig-style fixed ids sit beside the minted meeting
+        Watch; ensure creates exactly one meeting Watch with a fresh id and a
+        second call is a no-op (keyed on (project_id, 'meeting'))."""
+        from holdspeak.services.watch_service import ensure_meeting_watch
+        pid = _seed_project(db, project_id="proj-alpha-171")
+        _seed_fixed_id_watch(db, pid, "w-171-alpha-prs")
+        _seed_fixed_id_watch(db, pid, "w-171-alpha-ci", query_kind="branch_ci")
+        mid = _seed_meeting(db)
+        _link_meeting_to_project(db, mid, pid)
+
+        created = ensure_meeting_watch(db, pid)
+        assert created is not None
+        assert created["id"] not in {"w-171-alpha-prs", "w-171-alpha-ci"}
+        assert ensure_meeting_watch(db, pid) is None
+
+        # A fixed-id seed AFTER the mint still inserts (no id was taken).
+        _seed_fixed_id_watch(db, pid, "w-171-beta-ci", query_kind="branch_ci")
+        ids = sorted(w["id"] for w in db.automations.list_project_watches(pid))
+        assert ids == sorted(["w-171-alpha-prs", "w-171-alpha-ci", "w-171-beta-ci", created["id"]])
+        meeting = [w for w in db.automations.list_project_watches(pid) if w["connector_id"] == "meeting"]
+        assert len(meeting) == 1
+
+    def test_idempotency_is_by_project_and_connector_not_id(self, db):
+        """A meeting Watch seeded under ANY id (a rig's fixed id) already
+        satisfies the Room -- ensure does not mint a second one."""
+        from holdspeak.services.watch_service import ensure_meeting_watch
+        pid = _seed_project(db)
+        mid = _seed_meeting(db)
+        _link_meeting_to_project(db, mid, pid)
+        _seed_fixed_id_watch(db, pid, "w-171-mtg", connector_id="meeting", query_kind="meetings")
+        assert ensure_meeting_watch(db, pid) is None
+        meeting = [w for w in db.automations.list_project_watches(pid) if w["connector_id"] == "meeting"]
+        assert [w["id"] for w in meeting] == ["w-171-mtg"]
+
+
+# ── counsel re-read condition 4: the DST edge (H-C) ──────────────────
+
+
+class TestDstEdge:
+    """TZ=America/Denver, Sunday 2026-11-01 20:00 (after the fall-back, MST):
+    the week's Monday is Oct 26 00:00 MDT (-06:00), not an hour off, even
+    when ``now`` arrives with the fixed -07:00 offset production passes."""
+
+    def test_local_week_bounds_across_fall_back(self, denver):
+        from datetime import datetime, timedelta
+        from zoneinfo import ZoneInfo
+        from holdspeak.services.project_service import local_week_bounds, utc_z
+        tz = ZoneInfo("America/Denver")
+        now_fixed = datetime(2026, 11, 1, 20, 0, tzinfo=tz).astimezone()  # fixed -07:00
+        assert now_fixed.utcoffset() == timedelta(hours=-7)
+        monday, next_monday = local_week_bounds(now_fixed)
+        assert utc_z(monday) == utc_z(datetime(2026, 10, 26, 0, 0, tzinfo=tz)) == "2026-10-26T06:00:00Z"
+        assert utc_z(next_monday) == utc_z(datetime(2026, 11, 2, 0, 0, tzinfo=tz)) == "2026-11-02T07:00:00Z"
+        # each bound wears its own true offset
+        assert monday.utcoffset() == timedelta(hours=-6)
+        assert next_monday.utcoffset() == timedelta(hours=-7)
+
+    def test_room_tokens_across_fall_back(self, db, denver):
+        """Mon Oct 26 00:30 MDT and Sun Nov 1 00:30 MDT both count THIS WEEK
+        on Sunday evening; the NEXT clock on Monday Nov 2 09:00 MST is 09:00."""
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        from holdspeak.services.project_service import ProjectService, utc_z
+        from holdspeak.services.watch_service import ensure_meeting_watch
+        tz = ZoneInfo("America/Denver")
+        now_fixed = datetime(2026, 11, 1, 20, 0, tzinfo=tz).astimezone()
+
+        pid = _seed_project(db)
+        mid = _seed_meeting(db)
+        _link_meeting_to_project(db, mid, pid)
+        ensure_meeting_watch(db, pid)
+        for uid, local in [
+            ("e-mon", datetime(2026, 10, 26, 0, 30, tzinfo=tz)),
+            ("e-sun", datetime(2026, 11, 1, 0, 30, tzinfo=tz)),
+            ("e-next", datetime(2026, 11, 2, 9, 0, tzinfo=tz)),
+            ("e-prev", datetime(2026, 10, 25, 23, 30, tzinfo=tz)),
+        ]:
+            _link_event(db, _seed_calendar_event(db, uid=uid, starts_at=utc_z(local)), pid)
+
+        tokens = ProjectService(db)._meeting_calendar_tokens(pid, now=now_fixed)
+        assert "2 THIS WEEK" in tokens, tokens
+        assert "NEXT MON 09:00" in tokens, tokens
+

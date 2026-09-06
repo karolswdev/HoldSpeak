@@ -189,7 +189,7 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     ),
     # HS-146-07: the snapshot adapter's direct-dispatch fallback (the ask
     # template) when no calendar.snapshot_extract assignment exists.
-    "holdspeak/services/calendar_snapshot_service.py:604|extract_via_router|call": ProposedRoute(
+    "holdspeak/services/calendar_snapshot_service.py:668|extract_via_router|call": ProposedRoute(
         "calendar.snapshot_extract", "services.calendar_snapshot_service", "InferenceRunner direct dispatch fallback (routed path preferred when assigned)",
     ),
     # HS-153-03/05: chat practice capabilities (guardrail + compaction).

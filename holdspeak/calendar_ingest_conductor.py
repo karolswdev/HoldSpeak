@@ -3,6 +3,14 @@
 This conductor owns only calendar source I/O, projection replacement, and the
 existing kernel receipts that make failed or skipped untrusted input visible.
 It deliberately has no recording, mic-floor, route-plan, or browser concerns.
+
+HS-175 (counsel-on-built, conditions C3/C4/C6): one ``refresh()`` runs, in
+order, (1) every enabled source's fetch + replace + linked-schedule
+reconciliation, (2) the prune of sources no longer enabled -- their
+projection, their orphaned links, and their idle event-born recordings
+(cancelled with a receipt) -- which runs even when zero sources are
+enabled, (3) the event-to-Room matcher, and (4) the per-source auto-create
+of event-born recordings, so a Room-linked event arms on the FIRST refresh.
 """
 from __future__ import annotations
 
@@ -181,29 +189,91 @@ class CalendarIngestConductor:
             log.warning("Calendar configuration reload failed: %s", exc)
             return False
 
+        configured_ids = [s.id for s in config.calendar.sources]
         sources = [s for s in config.calendar.sources if s.enabled]
-        if not sources:
-            return False
+        enabled_ids = [s.id for s in sources]
 
         any_applied = False
-        enabled_ids = [s.id for s in sources]
+        applied_ids: list[str] = []
         for source in sources:
             if self._refresh_source(source):
                 any_applied = True
+                applied_ids.append(source.id)
 
-        try:
-            self._get_db().calendar_events.delete_sources_not_in(enabled_ids)
-        except Exception as exc:
-            log.error("Calendar orphan cleanup failed: %s", exc)
+        # C4: Remove/Disable disarms.  The prune runs even with ZERO enabled
+        # sources -- the old early return left a removed source's events on
+        # the desk and its event-born recordings armed.
+        self._prune_unlisted_sources(enabled_ids, configured_ids)
 
-        # HS-175-02: run the event-to-Room matcher after each refresh.
+        if not sources:
+            return False
+
+        # C6(b): the event-to-Room matcher runs BEFORE the per-source
+        # auto-create, so a new event's link exists when its arm is decided.
         if any_applied:
             try:
                 self._run_event_room_matcher()
             except Exception as exc:
                 log.error("Event-to-Room matcher failed: %s", exc)
 
+        # HS-175-03: auto-create event-born recordings for events with a
+        # meeting_url, controlled by the owner's auto_record setting.
+        now_epoch = self._clock()
+        db = self._get_db()
+        for source_id in applied_ids:
+            self._create_event_born_recordings(db, source_id, now_epoch)
+
         return any_applied
+
+    def _prune_unlisted_sources(
+        self, enabled_ids: list[str], configured_ids: list[str],
+    ) -> None:
+        """C4: a source that is no longer enabled leaves nothing behind.
+
+        Its projection is deleted (``delete_sources_not_in``), the links
+        that pointed at those events are dropped, and every idle
+        event-born recording it bore is cancelled with a receipt naming
+        why: ``calendar_source_disabled`` when the source is still in the
+        config with ``enabled=False``, ``calendar_source_removed`` when it
+        is gone.  Idempotent; catches its own exceptions.
+        """
+        try:
+            db = self._get_db()
+        except Exception as exc:
+            log.error("Calendar prune: no database: %s", exc)
+            return
+
+        try:
+            db.calendar_events.delete_sources_not_in(enabled_ids)
+        except Exception as exc:
+            log.error("Calendar orphan cleanup failed: %s", exc)
+
+        try:
+            gone = db.scheduled_recordings.list_idle_for_sources_not_in(enabled_ids)
+        except Exception as exc:
+            log.error("Calendar prune: listing source-gone recordings failed: %s", exc)
+            gone = []
+        configured = set(configured_ids)
+        for sched in gone:
+            outcome = (
+                "calendar_source_disabled"
+                if sched.calendar_source_id in configured
+                else "calendar_source_removed"
+            )
+            try:
+                db.scheduled_recordings.cancel_for_source_gone(sched.id, outcome)
+                self._write_source_gone_receipt(sched.id, sched.calendar_source_id, outcome)
+                log.info(
+                    "Calendar prune: cancelled schedule %s (%s: source %s)",
+                    sched.id, outcome, sched.calendar_source_id,
+                )
+            except Exception as exc:
+                log.error("Calendar prune: cancel of %s failed: %s", sched.id, exc)
+
+        try:
+            db.calendar_event_projects.delete_orphans()
+        except Exception as exc:
+            log.error("Calendar prune: link orphan cleanup failed: %s", exc)
 
     def _run_event_room_matcher(self) -> None:
         """HS-175-02: match calendar events to Rooms by title.
@@ -212,9 +282,17 @@ class CalendarIngestConductor:
         whole-word substring of the event title; one-word Room names of <= 3
         chars never auto-match (too high false-positive risk).
 
-        Manual links are preserved (they override the matcher).  Attendee
-        match is wired as a seam that returns nothing until the parser
-        extracts attendees (D4 H3 / H5).
+        Manual links are preserved (they override the matcher), and a pair
+        the owner unlinked is never re-linked (C5, the suppression table).
+        Attendee match is wired as a seam that returns nothing until the
+        parser extracts attendees (D4 H3 / H5).
+
+        C6(a): the Room-name title match is the V0 matcher, and the only
+        one.  The former Watch-query branch selected a column that does
+        not exist (``query`` -- the column is ``query_json``, a JSON
+        object like ``{"repository": "acme/platform"}`` that no title can
+        whole-word contain), so it warned on every refresh per Room and
+        could never match.  Dropped honestly rather than "fixed".
         """
         import re
 
@@ -230,7 +308,7 @@ class CalendarIngestConductor:
             log.error("Event-Room matcher: failed to load projects: %s", exc)
             return
 
-        # Build matcher candidates: Room name and Watch query strings.
+        # Matcher candidates: Room names only (C6(a)).
         room_candidates: list[tuple[str, str, str]] = []  # (project_id, name, kind)
         for proj in projects:
             name = getattr(proj, "name", "") or ""
@@ -238,23 +316,9 @@ class CalendarIngestConductor:
             if not pid or not name:
                 continue
             room_candidates.append((pid, name, "room_name"))
-            # Also try Watch query strings from connector_watches.
-            try:
-                with db._connection() as conn:
-                    watches = conn.execute(
-                        "SELECT query FROM connector_watches WHERE project_id = ?",
-                        (pid,),
-                    ).fetchall()
-                for w in watches:
-                    q = str(w["query"] or "").strip()
-                    if q:
-                        room_candidates.append((pid, q, "watch_query"))
-            except Exception as exc:
-                log.warning("watch query load failed for project %s: %s", pid, exc)
 
-        if not room_candidates:
-            return
-
+        # With no Rooms the matcher's honest output is "no auto links":
+        # replace_auto_links([]) clears stale title links of deleted Rooms.
         links: list[tuple[str, str, str]] = []
         for event in events:
             title = (event.title or "").strip()
@@ -346,6 +410,15 @@ class CalendarIngestConductor:
             # Proceed: reconciliation degrades to R3 for anything it cannot
             # reconstruct, which is safer than skipping the whole refresh.
 
+        # C6(c): snapshot the owner's manual links on this source BEFORE the
+        # replace, so they can be rebound by (source_id, uid) when a time
+        # change regenerates the projection id.
+        pre_manual_links: list[Any] = []
+        try:
+            pre_manual_links = db.calendar_event_projects.list_manual_for_source(source.id)
+        except Exception as exc:
+            log.warning("Pre-replace manual-link snapshot failed (%s): %s", source.id, exc)
+
         try:
             db.calendar_events.replace_projection(
                 revision,
@@ -365,13 +438,68 @@ class CalendarIngestConductor:
             db, source.id, pre_replace_events, now_epoch,
         )
 
-        # HS-175-03: auto-create event-born recordings for events with a
-        # meeting_url, controlled by the owner's auto_record setting.
-        self._create_event_born_recordings(db, source.id, now_epoch)
+        # C6(c): manual links follow their event across a time change.
+        self._rebind_manual_links(db, source.id, pre_manual_links)
+
+        # The event-born auto-create no longer runs here: refresh() runs it
+        # once per applied source AFTER the matcher (C6(b)).
 
         for skip in result.skips:
             self._write_event_skip(revision, skip.event_ref, skip.reason)
         return True
+
+    def _rebind_manual_links(
+        self, db: Any, source_id: str, pre_manual_links: list[Any],
+    ) -> None:
+        """C6(c): move manual links whose projection id died in the replace.
+
+        The projection id hashes ``(revision, uid, starts_at)``, so an
+        event whose time changed gets a new id and the owner's manual link
+        would point at nothing forever.  Rebind by ``(source_id, uid)`` to
+        the occurrence nearest the old ``starts_at`` (the same rule R2
+        uses for recordings); if the uid left the feed, drop the dead row.
+        Idempotent; catches its own exceptions.
+        """
+        for snap in pre_manual_links:
+            try:
+                if db.calendar_events.get(snap.calendar_event_id) is not None:
+                    continue  # id survived: nothing to do
+                candidates = self._find_uid_occurrences(db, source_id, snap.uid)
+                if not candidates:
+                    db.calendar_event_projects.delete_link(
+                        snap.calendar_event_id, snap.project_id,
+                    )
+                    log.info(
+                        "Manual link dropped: event %s (uid %s) left source %s",
+                        snap.calendar_event_id, snap.uid, source_id,
+                    )
+                    continue
+                try:
+                    old_epoch = datetime.fromisoformat(
+                        snap.starts_at.replace("Z", "+00:00")
+                    ).timestamp()
+                except Exception:
+                    old_epoch = 0.0
+                best = min(
+                    candidates,
+                    key=lambda ev: abs(
+                        datetime.fromisoformat(
+                            ev.starts_at.replace("Z", "+00:00")
+                        ).timestamp() - old_epoch
+                    ),
+                )
+                db.calendar_event_projects.rebind_manual_link(
+                    snap.calendar_event_id, best.id, snap.project_id,
+                )
+                log.info(
+                    "Manual link rebound: %s -> %s (uid %s, Room %s)",
+                    snap.calendar_event_id, best.id, snap.uid, snap.project_id,
+                )
+            except Exception as exc:
+                log.error(
+                    "Manual link rebind failed for %s/%s: %s",
+                    snap.calendar_event_id, snap.project_id, exc,
+                )
 
     # ── HS-147-03: post-replace reconciliation ─────────────────────
 
@@ -519,6 +647,7 @@ class CalendarIngestConductor:
                     next_fire_at=next_fire_at,
                     duration_minutes=duration_minutes,
                     title=best.title,
+                    calendar_starts_at=best.starts_at,
                 )
                 log.info(
                     "Reconcile R2: rebound schedule %s to event %s "
@@ -529,8 +658,10 @@ class CalendarIngestConductor:
                 )
                 return
 
-        # R3: uid gone from the projection -> cancel.
+        # R3: uid gone from the projection -> cancel, receipted (the design's
+        # scheduled_recording.cancelled.calendar_event_removed; counsel P2-2).
         db.scheduled_recordings.cancel_for_event_removed(sched.id)
+        self._write_event_removed_receipt(sched.id, sched.calendar_event_id)
         log.info(
             "Reconcile R3: cancelled schedule %s (event %s removed from feed)",
             sched.id, sched.calendar_event_id,
@@ -586,14 +717,27 @@ class CalendarIngestConductor:
     ) -> None:
         """Auto-create recordings for calendar events with meeting URLs.
 
-        Controlled by ``meeting.auto_record``:
-        - ``off``: do nothing (Article IV: arming is his act).
+        Controlled by ``meeting.auto_record`` (OFF by default):
+        - ``off``: do nothing.
         - ``all_calendar``: every event with a ``meeting_url``.
         - ``room_linked``: only events linked to a Room via
-          ``calendar_event_projects``.
+          ``calendar_event_projects`` (the matcher has already run this
+          refresh -- C6(b) -- so a new event's link is visible here).
+
+        An event-born recording behaves exactly like a 136 cron scheduled
+        recording: it arms at ``starts_at - lead`` and the
+        scheduled-recording conductor records at the event.  The
+        Auto-record toggle is the owner's standing consent to RECORD those
+        meetings (design B11).
+
+        C3 -- the owner's cancel is final: an event whose ``(source, uid)``
+        carries an owner-cancelled row is skipped, receipted once
+        (``scheduled_recording.skipped.owner_cancelled``), and is never
+        re-armed by a refresh.  A cancelled row is ``enabled=0`` and so is
+        never listed as armed.
 
         Idempotent: the unique index ``idx_scheduled_recordings_calendar_event_armed``
-        prevents duplicate arms.  Catches its own exceptions.
+        prevents duplicate live arms.  Catches its own exceptions.
         """
         try:
             config = self._config_loader()
@@ -625,29 +769,40 @@ class CalendarIngestConductor:
             log.error("Event-born recordings: event query failed: %s", exc)
             return
 
-        # When room_linked, check the calendar_event_projects table.
+        # When room_linked, only events with a live Room link qualify.
         linked_event_ids: set[str] | None = None
         if auto_record == "room_linked":
             try:
-                with db._connection() as conn:
-                    linked_rows = conn.execute(
-                        "SELECT calendar_event_id FROM calendar_event_projects"
-                    ).fetchall()
-                linked_event_ids = {r["calendar_event_id"] for r in linked_rows}
-            except Exception:
-                # Table may not exist yet (the A lane builds it).
-                # Treat every event as unlinked -- create nothing.
-                log.info(
-                    "Event-born recordings: calendar_event_projects not available; "
-                    "treating all events as unlinked"
+                linked_event_ids = db.calendar_event_projects.list_linked_event_ids()
+            except Exception as exc:
+                log.warning(
+                    "Event-born recordings: link table unavailable (%s); "
+                    "treating all events as unlinked", exc,
                 )
                 return
 
+        # C3 (re-read 1): the owner's cancelled OCCURRENCES on this source,
+        # keyed by (uid, starts_at) -- Cancel means "this one"; a series'
+        # siblings stay armed.  (uid, '') is the uid-wide fallback for a
+        # row whose occurrence cannot be resolved.
+        try:
+            tombstoned = db.scheduled_recordings.list_owner_cancelled_occurrences(source_id)
+        except Exception as exc:
+            log.warning("Event-born recordings: tombstone read failed: %s", exc)
+            tombstoned = set()
+
         for row in rows:
             event_id = row["id"]
+            uid = str(row["uid"] or "")
+            starts_at = str(row["starts_at"] or "")
 
             # Room-linked filter.
             if linked_event_ids is not None and event_id not in linked_event_ids:
+                continue
+
+            # C3: the owner said no to this meeting; his word outlasts the refresh.
+            if uid and ((uid, starts_at) in tombstoned or (uid, "") in tombstoned):
+                self._write_event_born_skip_receipt(source_id, uid, starts_at, event_id)
                 continue
 
             # Compute fire time: starts_at - lead_minutes.
@@ -670,7 +825,7 @@ class CalendarIngestConductor:
             duration_minutes = min(max(1, int(duration_seconds / 60 + 0.5)), 480)
 
             try:
-                db.scheduled_recordings.create(
+                created = db.scheduled_recordings.create(
                     title=row["title"] or "",
                     cron_expr="",
                     tz="UTC",
@@ -682,8 +837,9 @@ class CalendarIngestConductor:
                     calendar_uid=row["uid"] or "",
                     calendar_source_id=source_id,
                     born_from="calendar_event",
+                    calendar_starts_at=str(row["starts_at"] or ""),
                 )
-                self._write_event_born_receipt(event_id, row["title"] or "")
+                self._write_event_born_receipt(event_id, row["title"] or "", created.id)
                 log.info(
                     "Event-born recording created for event %s (%s)",
                     event_id, row["title"],
@@ -698,8 +854,15 @@ class CalendarIngestConductor:
                     event_id, exc,
                 )
 
-    def _write_event_born_receipt(self, event_id: str, title: str) -> None:
-        """Receipt for an auto-created event-born recording."""
+    def _write_event_born_receipt(
+        self, event_id: str, title: str, schedule_id: str = "",
+    ) -> None:
+        """Receipt for an auto-created event-born recording.
+
+        Re-read (2): EVERY arm is receipted -- the schedule id rides the
+        discriminator, so a re-arm after Enable (or after a delete) has its
+        own receipt instead of folding into the first one.
+        """
         digest = hashlib.sha256(
             f"event_born:{event_id}".encode("utf-8")
         ).hexdigest()
@@ -709,7 +872,48 @@ class CalendarIngestConductor:
             state="succeeded",
             outcome="scheduled_recording.created.calendar_event",
             result_ref=f"calendar_event:{event_id}",
-            discriminator=f"event_born:{event_id}",
+            discriminator=f"event_born:{event_id}:{schedule_id}",
+        )
+
+    def _write_event_born_skip_receipt(
+        self, source_id: str, uid: str, starts_at: str, event_id: str,
+    ) -> None:
+        """C3: one refusal receipt per occurrence (source, uid, starts_at)
+        the owner cancelled."""
+        digest = hashlib.sha256(
+            f"owner_cancelled:{source_id}:{uid}:{starts_at}".encode("utf-8")
+        ).hexdigest()
+        self._write_receipt(
+            revision=f"event_born_skip:{digest[:16]}",
+            category="scheduled_recording",
+            state="refused",
+            outcome="scheduled_recording.skipped.owner_cancelled",
+            result_ref=f"calendar_event:{event_id}",
+            discriminator=f"owner_cancelled:{source_id}:{uid}:{starts_at}",
+        )
+
+    def _write_source_gone_receipt(
+        self, schedule_id: str, source_id: str, outcome: str,
+    ) -> None:
+        """C4: the cancel of a recording whose source was removed/disabled."""
+        self._write_receipt(
+            revision=f"source_gone:{source_id[:16]}",
+            category="scheduled_recording",
+            state="succeeded",
+            outcome=f"scheduled_recording.cancelled.{outcome}",
+            result_ref=f"scheduled_recording:{schedule_id}",
+            discriminator=f"{outcome}:{schedule_id}",
+        )
+
+    def _write_event_removed_receipt(self, schedule_id: str, event_id: str) -> None:
+        """R3: the design's ``scheduled_recording.cancelled.calendar_event_removed``."""
+        self._write_receipt(
+            revision=f"event_removed:{event_id[:16]}",
+            category="scheduled_recording",
+            state="succeeded",
+            outcome="scheduled_recording.cancelled.calendar_event_removed",
+            result_ref=f"scheduled_recording:{schedule_id}",
+            discriminator=f"event_removed:{schedule_id}:{event_id}",
         )
 
     @staticmethod

@@ -82,6 +82,18 @@ def _seed_calendar_sources(tmp_path: Path) -> dict[str, str]:
         "END:VCALENDAR\n"
     )
 
+    # HS-175 counsel C10: a third source the Snapshot verb created (its
+    # path is generated -> Edit withheld), and a LAN vision profile so the
+    # chip beside Snapshot names the host the upload would reach.
+    sid_snap = str(uuid.uuid4())
+    snap_path = tmp_path / "home" / ".local" / "share" / "holdspeak" / "calendar-snapshots" / "snap.ics"
+    snap_path.parent.mkdir(parents=True, exist_ok=True)
+    snap_path.write_text("BEGIN:VCALENDAR\nVERSION:2.0\nEND:VCALENDAR\n")
+    db.profiles.upsert(
+        profile_id="prof_lan_vision", name="LAN vision", kind="openAICompatible",
+        base_url="http://192.168.1.50:8080", model="vision", requires_key=False,
+    )
+
     sources = [
         CalendarSource(
             id=sid_file,
@@ -93,6 +105,12 @@ def _seed_calendar_sources(tmp_path: Path) -> dict[str, str]:
             id=sid_https,
             label="PERSONAL",
             url="https://calendar.google.com/ics/personal.ics",
+            enabled=True,
+        ),
+        CalendarSource(
+            id=sid_snap,
+            label="O365 SNAPSHOT",
+            url=str(snap_path),
             enabled=True,
         ),
     ]
@@ -162,8 +180,10 @@ def _seed_calendar_sources(tmp_path: Path) -> dict[str, str]:
     return {
         "source_id_file": sid_file,
         "source_id_https": sid_https,
+        "source_id_snap": sid_snap,
         "project_id": pid,
         "https_event_id": https_event_id,
+        "seen_at": now,
     }
 
 
@@ -246,8 +266,8 @@ class TestSettingsCalendarSection:
 
             # StateChip dots present.
             state_chips = sources_container.locator(".surface-state-chip")
-            assert state_chips.count() >= 2, (
-                f"Expected 2 StateChips on source rows at {width}, got {state_chips.count()}"
+            assert state_chips.count() >= 3, (
+                f"Expected 3 StateChips on source rows at {width}, got {state_chips.count()}"
             )
 
             # EgressChip on the HTTPS source.
@@ -255,20 +275,59 @@ class TestSettingsCalendarSection:
                 f"Egress host missing at {width}: {sources_text[:200]}"
             )
 
-            # THIS DEVICE on the file source.
-            assert "THIS DEVICE" in sources_text, (
-                f"THIS DEVICE chip missing for file source at {width}"
+            # HS-175 counsel H2-2 / C9: NO reassurance chip on a file ICS
+            # row -- absence is the signal.  THIS DEVICE belongs to the
+            # snapshot's vision model only.
+            file_row = page.locator(f"[data-testid='calendar-source-{self.ids['source_id_file']}']")
+            file_row_text = file_row.text_content() or ""
+            assert "THIS DEVICE" not in file_row_text, (
+                f"THIS DEVICE chip on a file ICS row at {width}: {file_row_text}"
+            )
+            assert file_row.locator(".gadget-chip-egress").count() == 0, (
+                f"EgressChip on a file ICS row at {width}"
             )
 
-            # N CALENDARS present (both sources have events).
-            assert "CALENDAR" in sources_text, (
-                f"CALENDAR count token missing at {width}"
+            # C9(b): the count names what it counts -- EVENTS, never CALENDARS.
+            assert "CALENDARS" not in sources_text, (
+                f"N CALENDARS still printed at {width}: {sources_text[:300]}"
+            )
+            events_tokens = sources_container.locator("[data-testid='calendar-source-events']")
+            assert events_tokens.count() >= 2, (
+                f"N EVENTS tokens missing at {width}: {sources_text[:300]}"
+            )
+            assert "1 EVENT" in sources_text and "EVENTS" not in file_row_text, (
+                f"singular EVENT expected on the one-event file row at {width}: {file_row_text}"
             )
 
-            # LAST READ present.
-            assert "LAST READ" in sources_text, (
-                f"LAST READ token missing at {width}"
+            # C8: LAST READ prints the seeded read instant in the VIEWER's
+            # local clock (the browser and this process share one zone).
+            expected_clock = time.strftime("%H:%M", time.localtime(self.ids["seen_at"]))
+            last_read = sources_container.locator("[data-testid='calendar-source-last-read']")
+            assert last_read.count() >= 2, f"LAST READ tokens missing at {width}"
+            assert last_read.first.text_content() == f"LAST READ {expected_clock}", (
+                f"LAST READ is not the local clock at {width}: "
+                f"{last_read.first.text_content()!r} vs {expected_clock}"
             )
+
+            # C10: Edit is withheld on the SNAPSHOT row; Disable / Remove stay.
+            snap_row = page.locator(f"[data-testid='calendar-source-{self.ids['source_id_snap']}']")
+            assert snap_row.count() == 1, f"SNAPSHOT row missing at {width}"
+            snap_text = snap_row.text_content() or ""
+            assert "SNAPSHOT" in snap_text, f"SNAPSHOT type token missing at {width}"
+            assert snap_row.locator(".btn", has_text="Edit").count() == 0, (
+                f"Edit offered on the SNAPSHOT row at {width}"
+            )
+            assert snap_row.locator(".btn", has_text="Disable").count() == 1
+            assert snap_row.locator(".btn", has_text="Remove").count() == 1
+
+            # C10: the vision model's egress on the face BEFORE the upload,
+            # beside the Snapshot verb (the LAN profile seeded above).
+            snap_chip = page.locator("[data-testid='calendar-snapshot-egress'] .gadget-chip-egress")
+            assert snap_chip.count() == 1, f"snapshot EgressChip missing at {width}"
+            assert snap_chip.text_content() == "192.168.1.50", (
+                f"snapshot chip names {snap_chip.text_content()!r}, expected the LAN host"
+            )
+            assert page.locator("[data-testid='calendar-snapshot-btn']").count() == 1
 
             # -- Connect calendar row --
             connect_row = page.locator("[data-testid='calendar-connect-row']")
@@ -410,7 +469,7 @@ class TestSettingsCalendarSection:
                 const el = document.querySelector('.prefs-calendar-section');
                 if (!el) return [];
                 const text = el.textContent || '';
-                const re = /\\b0\\s+(SOURCE|CALENDAR|RECORDING|MATCHED)/gi;
+                const re = /\\b0\\s+(SOURCE|CALENDAR|EVENT|RECORDING|MATCHED)/gi;
                 const matches = [];
                 let m;
                 while ((m = re.exec(text)) !== null) matches.push(m[0]);

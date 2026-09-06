@@ -64,6 +64,35 @@ def _placement_host(placement: Any) -> str:
     return host if host else (placement.boundary or "local")
 
 
+def _calendar_sources_snapshot() -> dict[str, str]:
+    """{source id: url} of the calendar sources on disk right now."""
+    try:
+        from ....config import Config
+
+        return {s.id: str(s.url or "") for s in Config.load().calendar.sources}
+    except Exception:
+        return {}
+
+
+def remove_generated_ics_for_removed_sources(
+    before: dict[str, str], after: dict[str, str],
+) -> list[str]:
+    """HS-175 counsel C4 (the Remove half): a calendar source removed by
+    this settings write whose URL is an ICS the Snapshot verb generated
+    takes its file with it (receipted).  Only files inside the snapshot
+    directory are ever deleted; an owner's own file path is never touched.
+    Returns the paths deleted."""
+    from ....services.calendar_snapshot_service import delete_generated_ics
+
+    removed: list[str] = []
+    for source_id, url in before.items():
+        if source_id in after:
+            continue
+        if delete_generated_ics(url):
+            removed.append(url)
+    return removed
+
+
 def build_settings_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
@@ -86,7 +115,15 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
     @router.put("/api/settings")
     async def api_update_settings(payload: dict[str, Any], request: Request) -> Any:
         try:
-            return JSONResponse(_service(ctx).update_settings(_principal(request), payload))
+            touches_sources = isinstance(payload.get("calendar"), dict) and "sources" in payload["calendar"]
+            before = _calendar_sources_snapshot() if touches_sources else {}
+            result = _service(ctx).update_settings(_principal(request), payload)
+            if touches_sources and isinstance(result, dict) and result.get("success", True):
+                try:
+                    remove_generated_ics_for_removed_sources(before, _calendar_sources_snapshot())
+                except Exception as exc:  # the write stands; the file cleanup is logged
+                    log.warning("snapshot ICS cleanup after settings write failed: %s", exc)
+            return JSONResponse(result)
         except ConflictError as exc:
             # HS-130-07: a stale partial-tree write. Reject with 409 and hand
             # back the current revision so the client can reload + reconcile.

@@ -311,7 +311,7 @@ class RoutingGlueMixin:
                     # HS-175-04: ensure the Room's meeting Watch exists
                     try:
                         from holdspeak.services.watch_service import ensure_meeting_watch
-                        ensure_meeting_watch(db, pid)
+                        ensure_meeting_watch(db, pid, why="meeting linked")
                     except Exception as mw_exc:
                         log.warning("ensure_meeting_watch failed for %s: %s", pid, mw_exc)
 

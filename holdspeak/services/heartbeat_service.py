@@ -361,6 +361,9 @@ class HeartbeatService:
         # HS-175-04: backfill meeting Watches for Rooms that have linked
         # meetings but no meeting Watch yet.  Idempotent (ensure_meeting_watch
         # checks before creating).  Own failure boundary.
+        # HS-175 counsel C7(a): a Room with a meeting Watch in ANY state
+        # (retired included) is never backfilled -- Retire is the owner's
+        # word and the sweep does not take it back.
         meeting_watch_backfill: dict[str, Any] | None = None
         if not held:
             try:
@@ -373,12 +376,13 @@ class HeartbeatService:
                                SELECT 1 FROM connector_watches cw
                                WHERE cw.project_id = mp.project_id
                                  AND cw.connector_id = 'meeting'
-                                 AND cw.state != 'retired'
                            )""",
                     ).fetchall()
                 created = 0
                 for row in rows:
-                    result = ensure_meeting_watch(self._db, str(row["project_id"]))
+                    result = ensure_meeting_watch(
+                        self._db, str(row["project_id"]), why="backfill",
+                    )
                     if result is not None:
                         created += 1
                 if created > 0:

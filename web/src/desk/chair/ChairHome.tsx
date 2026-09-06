@@ -9,7 +9,7 @@ import { Chair } from "./Chair";
 import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
 import { openSurface, openSurfaceOr, openCoderSession } from "../shell";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { intelBadge } from "./intelBadge";
@@ -91,6 +91,8 @@ interface DoorCard {
 interface UpcomingArmed {
   recording_id: string;
   arms_at: string;
+  /** HS-175 C2: the recording's state; Cancel is withheld while `recording`. */
+  state?: string;
 }
 
 interface UpcomingFrom {
@@ -123,6 +125,9 @@ interface WeekStripData {
   days: WeekDay[];
   total: number;
   has_calendar: boolean;
+  /** HS-175 C9: the local week's bounds as UTC instants (ends_at exclusive). */
+  starts_at?: string;
+  ends_at?: string;
 }
 
 interface DoorProjection {
@@ -507,12 +512,19 @@ function Arrival() {
 
   // ── HS-175-02: calendar events and week strip from door ──
   const week = door?.week;
+  // HS-175 C9: the THIS WEEK section is bounded to the week the strip
+  // draws (the door's `upcoming` is a longer projection; the NEXT line
+  // may still name next week's very next event).
   const calendarEvents = useMemo(() => {
     if (!door?.upcoming) return [];
-    return door.upcoming.filter(
-      (item) => item.source === "calendar_event",
-    );
-  }, [door]);
+    const weekEnd = week?.ends_at ? new Date(week.ends_at).getTime() : NaN;
+    return door.upcoming.filter((item) => {
+      if (item.source !== "calendar_event") return false;
+      if (Number.isNaN(weekEnd)) return true;
+      const at = new Date(item.starts_at).getTime();
+      return Number.isNaN(at) || at < weekEnd;
+    });
+  }, [door, week]);
 
   const orphanRecordings = useMemo(() => {
     if (!door?.upcoming) return [];
@@ -521,9 +533,42 @@ function Arrival() {
     );
   }, [door]);
 
+  // HS-175 C2: a refused Cancel is named on its row (A.10 plain reason),
+  // never swallowed; a success clears any earlier refusal for that row.
+  const [cancelRefusals, setCancelRefusals] = useState<Record<string, string>>({});
   const cancelArmedRecording = useCallback(async (recordingId: string) => {
-    await useDesk.getState().cancelArmedSchedule(recordingId);
+    const result = await useDesk.getState().cancelArmedSchedule(recordingId);
+    setCancelRefusals((prev) => {
+      const next = { ...prev };
+      if (result.ok) delete next[recordingId];
+      else next[recordingId] = result.reason;
+      return next;
+    });
     void apiFetch<DoorProjection>("/api/door").then(setDoor).catch(() => null);
+  }, []);
+
+  // HS-175 C5: Unlink on the event row -- DELETE /api/calendar/events/{id}/link
+  // (the route writes the receipt); the ROOM token leaves with the link.
+  const [unlinkRefusals, setUnlinkRefusals] = useState<Record<string, string>>({});
+  const [busyUnlink, setBusyUnlink] = useState<string | null>(null);
+  const unlinkRoom = useCallback(async (eventId: string) => {
+    setBusyUnlink(eventId);
+    try {
+      await apiFetch(`/api/calendar/events/${encodeURIComponent(eventId)}/link`, {
+        method: "DELETE",
+      });
+      setUnlinkRefusals((prev) => {
+        const next = { ...prev };
+        delete next[eventId];
+        return next;
+      });
+      const fresh = await apiFetch<DoorProjection>("/api/door").catch(() => null);
+      if (fresh) setDoor(fresh);
+    } catch (err) {
+      setUnlinkRefusals((prev) => ({ ...prev, [eventId]: readableError(err) }));
+    } finally {
+      setBusyUnlink(null);
+    }
   }, []);
 
   return (
@@ -603,11 +648,17 @@ function Arrival() {
       ) : null}
 
       {/* ── Calendar Meetings (HS-175-02) ── */}
+      {/* P2-14 / counsel re-read: the calendar section wears its own
+          testid; the recorded-meetings ledger below keeps `arrival-meetings`. */}
       {calendarEvents.length > 0 ? (
-        <div data-testid="arrival-meetings">
+        <div data-testid="arrival-this-week">
           <CalendarMeetingsSection
             events={calendarEvents}
             onCancel={cancelArmedRecording}
+            onUnlink={unlinkRoom}
+            busyUnlink={busyUnlink}
+            cancelRefusals={cancelRefusals}
+            unlinkRefusals={unlinkRefusals}
           />
         </div>
       ) : null}
@@ -620,6 +671,7 @@ function Arrival() {
               key={rec.id}
               recording={rec}
               onCancel={cancelArmedRecording}
+              refusal={cancelRefusals[rec.id]}
             />
           ))}
         </div>
@@ -1218,8 +1270,13 @@ function WeekStripSection({ week }: { week: WeekStripData }) {
                     ))
                   : d.count > 4
                     ? (
-                        <span className="arrival-week-overflow" data-testid="arrival-week-dot">
-                          {d.count}+
+                        // The design: five or more reads exactly `5+`.
+                        <span
+                          className="arrival-week-overflow"
+                          data-testid="arrival-week-overflow"
+                          data-count={d.count}
+                        >
+                          5+
                         </span>
                       )
                     : null}
@@ -1241,56 +1298,103 @@ function WeekStripSection({ week }: { week: WeekStripData }) {
 function CalendarMeetingsSection({
   events,
   onCancel,
+  onUnlink,
+  busyUnlink,
+  cancelRefusals,
+  unlinkRefusals,
 }: {
   events: UpcomingItem[];
   onCancel: (recordingId: string) => void;
+  onUnlink: (eventId: string) => void;
+  busyUnlink: string | null;
+  cancelRefusals: Record<string, string>;
+  unlinkRefusals: Record<string, string>;
 }) {
+  // Ruling B10 (2026-09-05): captioned THIS WEEK, not MEETINGS -- the
+  // recorded-meetings ledger already owns MEETINGS (UX-CANON D one grammar
+  // per object; A.7 said once). The strip says N MEETINGS THIS WEEK; the
+  // brief's section is THIS WEEK too. Count unchanged.
   return (
-    <SurfaceSection label={countLabel("MEETINGS", events.length)}>
+    <SurfaceSection label={countLabel("THIS WEEK", events.length)}>
       <SurfaceLedger count={null} cols="room">
-        {events.map((ev) => (
-          <SurfaceLedgerRow
-            key={ev.id}
-            time={formatEventTime(ev.starts_at)}
-            primary={ev.title || "Untitled event"}
-            cells={
-              <>
-                {ev.project_name ? (
-                  <span className="arrival-meeting-room">
-                    ROOM &middot; {ev.project_name.toUpperCase()}
-                  </span>
-                ) : null}
-                {ev.source_label ? (
-                  <span className="arrival-meeting-source">
-                    {ev.source_label.toUpperCase()}
-                  </span>
-                ) : null}
-                {ev.armed ? (
-                  <StateChip
-                    state="success"
-                    label={`ARMS ${formatArmsTime(ev.armed.arms_at)}`}
-                    icon="●"
-                  />
-                ) : null}
-              </>
-            }
-            trailing={
-              ev.armed ? (
-                <Button
-                  variant="ghost"
-                  dense
-                  onClick={() => onCancel(ev.armed!.recording_id)}
-                  data-testid="arrival-cancel-armed"
-                >
-                  Cancel
-                </Button>
-              ) : null
-            }
-            expands={false}
-            wrap
-            data-testid="arrival-meeting-row"
-          />
-        ))}
+        {events.map((ev) => {
+          const recordingId = ev.armed?.recording_id;
+          const isRecording = ev.armed?.state === "recording";
+          const cancelRefusal = recordingId ? cancelRefusals[recordingId] : undefined;
+          const unlinkRefusal = unlinkRefusals[ev.id];
+          return (
+            <SurfaceLedgerRow
+              key={ev.id}
+              time={formatEventTime(ev.starts_at)}
+              primary={ev.title || "Untitled event"}
+              cells={
+                <>
+                  {ev.project_name ? (
+                    <>
+                      <span className="arrival-meeting-room" data-testid="arrival-meeting-room">
+                        ROOM &middot; {ev.project_name.toUpperCase()}
+                      </span>
+                      {/* HS-175 C5: Unlink beside the ROOM token -- a hover
+                          verb at the desk width, visible at the phone width. */}
+                      <span className="arrival-meeting-verbs">
+                        <Button
+                          variant="ghost"
+                          dense
+                          loading={busyUnlink === ev.id}
+                          onClick={() => onUnlink(ev.id)}
+                          data-testid="arrival-unlink-room"
+                        >
+                          Unlink
+                        </Button>
+                      </span>
+                    </>
+                  ) : null}
+                  {unlinkRefusal ? (
+                    <span data-testid="arrival-unlink-refused">
+                      <StateChip state="failure" label={`CAN'T UNLINK \u00b7 ${unlinkRefusal}`} />
+                    </span>
+                  ) : null}
+                  {ev.source_label ? (
+                    <span className="arrival-meeting-source">
+                      {ev.source_label.toUpperCase()}
+                    </span>
+                  ) : null}
+                  {ev.armed && isRecording ? (
+                    // HS-175 C2: capture is running -- ARMS would be a lie and
+                    // Cancel a dead verb; the meeting's Stop is the honest one.
+                    <StateChip state="active" label="RECORDING" icon="●" />
+                  ) : ev.armed ? (
+                    <StateChip
+                      state="success"
+                      label={`ARMS ${formatArmsTime(ev.armed.arms_at)}`}
+                      icon="●"
+                    />
+                  ) : null}
+                  {cancelRefusal ? (
+                    <span data-testid="arrival-cancel-refused">
+                      <StateChip state="failure" label={`CAN'T CANCEL \u00b7 ${cancelRefusal}`} />
+                    </span>
+                  ) : null}
+                </>
+              }
+              trailing={
+                ev.armed && !isRecording ? (
+                  <Button
+                    variant="ghost"
+                    dense
+                    onClick={() => onCancel(ev.armed!.recording_id)}
+                    data-testid="arrival-cancel-armed"
+                  >
+                    Cancel
+                  </Button>
+                ) : null
+              }
+              expands={false}
+              wrap
+              data-testid="arrival-meeting-row"
+            />
+          );
+        })}
       </SurfaceLedger>
     </SurfaceSection>
   );
@@ -1301,14 +1405,22 @@ function CalendarMeetingsSection({
 function OrphanArmedRow({
   recording,
   onCancel,
+  refusal,
 }: {
   recording: UpcomingItem;
   onCancel: (recordingId: string) => void;
+  /** HS-175 C2: the hub's plain reason when Cancel was refused. */
+  refusal?: string;
 }) {
+  const isRecording = recording.state === "recording";
   return (
     <div className="arrival-orphan-row" data-testid="arrival-orphan-row">
       <span className="arrival-orphan-title">{recording.title}</span>
-      <StateChip state="success" label="ARMED" icon="●" />
+      {isRecording ? (
+        <StateChip state="active" label="RECORDING" icon="●" />
+      ) : (
+        <StateChip state="success" label="ARMED" icon="●" />
+      )}
       <span className="arrival-meeting-time">
         {formatArmsTime(recording.starts_at)}
       </span>
@@ -1320,15 +1432,22 @@ function OrphanArmedRow({
             : null}
         </span>
       ) : null}
+      {refusal ? (
+        <span data-testid="arrival-cancel-refused">
+          <StateChip state="failure" label={`CAN'T CANCEL \u00b7 ${refusal}`} />
+        </span>
+      ) : null}
       <span className="arrival-orphan-spacer" />
-      <Button
-        variant="ghost"
-        dense
-        onClick={() => onCancel(recording.id)}
-        data-testid="arrival-cancel-armed"
-      >
-        Cancel
-      </Button>
+      {isRecording ? null : (
+        <Button
+          variant="ghost"
+          dense
+          onClick={() => onCancel(recording.id)}
+          data-testid="arrival-cancel-armed"
+        >
+          Cancel
+        </Button>
+      )}
     </div>
   );
 }

@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 667 (plus static mounts). iOS-consumed: 89. Web-consumed: 507.
+Routes: 667 (plus static mounts). iOS-consumed: 89. Web-consumed: 509.
 
 ## device_audio_ws
 
@@ -158,8 +158,8 @@ Routes: 667 (plus static mounts). iOS-consumed: 89. Web-consumed: 507.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/calendar/events` | web |
-| DELETE | `/api/calendar/events/{event_id}/link` | server only |
-| POST | `/api/calendar/events/{event_id}/link` | server only |
+| DELETE | `/api/calendar/events/{event_id}/link` | web |
+| POST | `/api/calendar/events/{event_id}/link` | web |
 
 ## web.routes.calendar_snapshot
 

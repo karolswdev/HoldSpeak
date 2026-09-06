@@ -26,6 +26,7 @@ import {
   SurfaceSection,
   StateChip,
   countLabel,
+  countToken,
 } from "../../desk/surface";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressForEvent } from "../../desk/surface/egress";
@@ -129,6 +130,32 @@ function fmtDate(iso: string | null | undefined): string | null {
   } catch {
     return null;
   }
+}
+
+/** HS-175 counsel C9(a): the Rhythm summary line, honest at one and zero.
+ * `1 MEETING · 1 ARMED · 1 WATCH ITEM · 1 COMMITMENT DUE`; null when no
+ * part counts (A.8). */
+export function briefSummaryLine(
+  items: Array<{ source_ref?: string | null; text?: string | null }> | undefined,
+): string | null {
+  if (!items || items.length === 0) return null;
+  let meetings = 0, armed = 0, watch = 0, due = 0;
+  const lead = (text: string) => { const m = text.match(/^(\d+)\s+/); return m ? parseInt(m[1], 10) : 0; };
+  for (const item of items) {
+    const ref = item.source_ref ?? "";
+    const text = item.text ?? "";
+    if (ref === "calendar:week") meetings += lead(text);
+    else if (ref === "calendar:armed") armed += lead(text);
+    else if (ref === "meeting_watch:commitments_due") due += lead(text);
+    else if (ref === "meeting_watch:decisions") watch += lead(text);
+  }
+  const parts = [
+    countToken(meetings, "MEETING"),
+    countToken(armed, "ARMED", "ARMED"),
+    countToken(watch, "WATCH ITEM"),
+    countToken(due, "COMMITMENT DUE", "COMMITMENTS DUE"),
+  ].filter((p): p is string => Boolean(p));
+  return parts.length > 0 ? parts.join(" · ") : null;
 }
 
 /** Format epoch seconds as HH:MM. */
@@ -270,26 +297,9 @@ export function CadenceCore({ hero }: CoreProps) {
   const calendarConfigured = doorRes.data?.calendar_configured ?? false;
 
   // HS-175: brief summary line from this_week section items.
-  const briefSummary = (() => {
-    const tw = brief?.sections?.this_week;
-    if (!tw || tw.length === 0) return null;
-    const parts: string[] = [];
-    for (const item of tw) {
-      const ref = item.source_ref ?? "";
-      const text = item.text ?? "";
-      if (ref === "calendar:week") {
-        const m = text.match(/^(\d+)\s+meeting/);
-        if (m) parts.push(`${m[1]} MEETINGS`);
-      } else if (ref === "meeting_watch:commitments_due") {
-        const m = text.match(/^(\d+)\s+commitment/);
-        if (m) parts.push(`${m[1]} COMMITMENTS DUE`);
-      } else if (ref === "meeting_watch:decisions" || ref === "calendar:armed") {
-        const m = text.match(/^(\d+)\s+/);
-        if (m) parts.push(`${m[1]} WATCH ITEMS`);
-      }
-    }
-    return parts.length > 0 ? parts.join(" · ") : null;
-  })();
+  // Counsel C9(a) / H10-3: every part through countToken (singular at one,
+  // absent at zero) and ARMED named as ARMED, not folded into WATCH ITEMS.
+  const briefSummary = briefSummaryLine(brief?.sections?.this_week);
 
   return (
     <>
@@ -455,10 +465,13 @@ export function CadenceCore({ hero }: CoreProps) {
           }
           cells={
             <>
+              {/* HS-175 counsel C9(a) / H4-0: the brief regenerates once a
+                  DAY after quiet hours close (runtime/cadence.py
+                  _maybe_regenerate_brief); no weekly cadence exists, so the
+                  token says DAILY on both rows.  The row's name stays
+                  "Weekly brief" -- it is the week-window brief. */}
               <span className="surface-token" data-chip data-muted data-testid="rhythm-brief-cadence">
-                {calendarConfigured
-                  ? `WEEKLY MON ${fmtHour(settings.quiet_hours.end)}`
-                  : `DAILY ${fmtHour(settings.quiet_hours.end)}`}
+                {`DAILY ${fmtHour(settings.quiet_hours.end)}`}
               </span>
               <span data-testid="rhythm-brief-last">
                 {briefDate ? (

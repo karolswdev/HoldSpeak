@@ -94,7 +94,14 @@ def build_calendar_events_router(ctx: WebContext) -> APIRouter:
         event_id: str,
         body: dict[str, Any] = Body(default={}),
     ) -> Any:
-        """Remove a manual link between a calendar event and a Room."""
+        """Remove a link (manual or auto) between a calendar event and a Room.
+
+        HS-175 counsel C5: the unlink is DURABLE.  The repository records
+        the pair in ``calendar_event_link_suppressions`` keyed by the
+        event's (source, uid), so the next refresh's matcher never
+        re-links it by title and a time change does not revive it.  A
+        later manual POST /link clears the suppression.
+        """
         db = get_database()
         project_id = body.get("project_id", "")
         if not project_id:
@@ -103,7 +110,7 @@ def build_calendar_events_router(ctx: WebContext) -> APIRouter:
         else:
             count = db.calendar_event_projects.unlink(event_id, project_id)
         _write_link_receipt(event_id, project_id or "*", "unlink")
-        return JSONResponse({"unlinked": count, "event_id": event_id})
+        return JSONResponse({"unlinked": count, "event_id": event_id, "durable": True})
 
     return router
 

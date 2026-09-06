@@ -49,17 +49,12 @@ const LOOKBACK_SECTIONS: readonly BriefSection[] = ["changed", "broke", "waiting
 
 const _MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
-/** SINCE FRIDAY / SINCE THURSDAY / ... from the lookback start day. */
-function sinceFridayLabel(periodStart: string | undefined): string {
-  if (!periodStart) return "SINCE FRIDAY";
-  try {
-    const d = new Date(periodStart);
-    if (isNaN(d.getTime())) return "SINCE FRIDAY";
-    const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
-    return `SINCE ${days[d.getDay()]}`;
-  } catch {
-    return "SINCE FRIDAY";
-  }
+/** SINCE FRIDAY / SINCE THURSDAY / ... from the lookback start day (local). */
+export function sinceFridayLabel(periodStart: string | undefined): string {
+  const d = parseLocal(periodStart);
+  if (!d) return "SINCE FRIDAY";
+  const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+  return `SINCE ${days[d.getDay()]}`;
 }
 
 /** Source emblem chip from source_ref (for SINCE FRIDAY items). */
@@ -83,16 +78,45 @@ function humanizeDate(text: string): string {
   });
 }
 
-/** Extract day-of-week from an ISO date. */
-function dayToken(iso: string | null | undefined): string | null {
+/** HS-175 counsel C8: parse an ISO value in the VIEWER's local time.
+ * A bare `YYYY-MM-DD` is a calendar day, not UTC midnight (`new Date`
+ * would shift it a day west of UTC); a timestamp parses as an instant. */
+export function parseLocal(iso: string | null | undefined): Date | null {
   if (!iso) return null;
-  try {
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return null;
-    return ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][d.getDay()];
-  } catch {
-    return null;
-  }
+  const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+  const d = day
+    ? new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3]))
+    : new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Extract day-of-week from an ISO date (local). */
+export function dayToken(iso: string | null | undefined): string | null {
+  const d = parseLocal(iso);
+  return d ? ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][d.getDay()] : null;
+}
+
+/** `SEP 01 – 05` / `AUG 31 – SEP 05`: the local Monday of `generatedAt`'s
+ * week through its local day (the brief's period, viewer's clock). */
+export function periodLabelLocal(generatedAt: string | null | undefined): string | null {
+  const gen = parseLocal(generatedAt);
+  if (!gen) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const daysSinceMonday = (gen.getDay() + 6) % 7;
+  const monday = new Date(gen.getFullYear(), gen.getMonth(), gen.getDate() - daysSinceMonday);
+  const monMonth = _MONTHS[monday.getMonth()];
+  const genMonth = _MONTHS[gen.getMonth()];
+  // A plain hyphen: the vocabulary guard forbids em/en dashes in rendered copy.
+  if (monday.getMonth() === gen.getMonth()) return `${monMonth} ${pad(monday.getDate())}-${pad(gen.getDate())}`;
+  return `${monMonth} ${pad(monday.getDate())} - ${genMonth} ${pad(gen.getDate())}`;
+}
+
+/** `GENERATED SEP 05 08:00` in the viewer's local time. */
+export function generatedLabelLocal(generatedAt: string | null | undefined): string | null {
+  const gen = parseLocal(generatedAt);
+  if (!gen) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `GENERATED ${_MONTHS[gen.getMonth()]} ${pad(gen.getDate())} ${pad(gen.getHours())}:${pad(gen.getMinutes())}`;
 }
 
 /** Parse a lookback item into kind token + primary + detail.
@@ -281,17 +305,25 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
     <SurfaceState empty emptyLabel="Nothing material changed" />
   ) : (
     <>
-      {/* ── HEAD: period (display, ONCE) + generated (caption) ── */}
-      {brief.period_label ? (
-        <div className="intelligence-brief-period" data-testid="brief-period-label" role="heading" aria-level={2}>
-          {brief.period_label}
-        </div>
-      ) : null}
-      {brief.generated_label ? (
-        <div className="intelligence-brief-generated" data-testid="brief-generated-label">
-          {brief.generated_label}
-        </div>
-      ) : null}
+      {/* ── HEAD: period (display, ONCE) + generated (caption) ──
+          HS-175 counsel C8: both formatted HERE from generated_at in the
+          viewer's local time; the hub's labels are the fallback. */}
+      {(() => {
+        const period = periodLabelLocal(brief.generated_at) ?? brief.period_label;
+        return period ? (
+          <div className="intelligence-brief-period" data-testid="brief-period-label" role="heading" aria-level={2}>
+            {period}
+          </div>
+        ) : null;
+      })()}
+      {(() => {
+        const generated = generatedLabelLocal(brief.generated_at) ?? brief.generated_label;
+        return generated ? (
+          <div className="intelligence-brief-generated" data-testid="brief-generated-label">
+            {generated}
+          </div>
+        ) : null;
+      })()}
 
       {/* ── THIS WEEK (absent when empty per A.8) ──────────────── */}
       {hasThisWeek ? (

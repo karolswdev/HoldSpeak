@@ -7,7 +7,7 @@ from __future__ import annotations
 import uuid
 import time
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 
 from .base import BaseRepository
 
@@ -35,6 +35,11 @@ class ScheduledRecording:
     calendar_uid: str
     calendar_source_id: str
     born_from: str
+    # HS-175 C3: the owner's Cancel stamps this; it is the tombstone.
+    owner_cancelled_at: Optional[float] = None
+    # HS-175 re-read (1): the occurrence's starts_at, so the tombstone
+    # means "this one" and never the series.
+    calendar_starts_at: str = ""
 
 
 def _row_to_model(row: Any) -> ScheduledRecording:
@@ -60,6 +65,14 @@ def _row_to_model(row: Any) -> ScheduledRecording:
         calendar_uid=str(row["calendar_uid"] or ""),
         calendar_source_id=str(row["calendar_source_id"] or ""),
         born_from=str(row["born_from"] or ""),
+        owner_cancelled_at=(
+            float(row["owner_cancelled_at"])
+            if "owner_cancelled_at" in row.keys() and row["owner_cancelled_at"] is not None
+            else None
+        ),
+        calendar_starts_at=(
+            str(row["calendar_starts_at"] or "") if "calendar_starts_at" in row.keys() else ""
+        ),
     )
 
 
@@ -81,6 +94,7 @@ class ScheduledRecordingRepository(BaseRepository):
         calendar_uid: str = "",
         calendar_source_id: str = "",
         born_from: str = "",
+        calendar_starts_at: str = "",
     ) -> ScheduledRecording:
         rec_id = f"sr_{uuid.uuid4().hex[:12]}"
         now = time.time()
@@ -91,8 +105,8 @@ class ScheduledRecordingRepository(BaseRepository):
                     revision, created_at, next_fire_at, state,
                     delegation_receipt_id,
                     calendar_event_id, calendar_uid, calendar_source_id,
-                    born_from)
-                   VALUES (?,?,?,?,?,?,?,1,?,?,'idle',?,?,?,?,?)""",
+                    born_from, calendar_starts_at)
+                   VALUES (?,?,?,?,?,?,?,1,?,?,'idle',?,?,?,?,?,?)""",
                 (
                     rec_id,
                     str(title or "").strip(),
@@ -108,6 +122,7 @@ class ScheduledRecordingRepository(BaseRepository):
                     str(calendar_uid or ""),
                     str(calendar_source_id or ""),
                     str(born_from or ""),
+                    str(calendar_starts_at or ""),
                 ),
             )
             row = conn.execute(
@@ -272,12 +287,14 @@ class ScheduledRecordingRepository(BaseRepository):
         next_fire_at: Optional[float],
         duration_minutes: int,
         title: str,
+        calendar_starts_at: Optional[str] = None,
     ) -> Optional[ScheduledRecording]:
         """Rebind a schedule to a new event occurrence (R2).
 
-        Updates the projection id, fire time, duration, and title in one
-        atomic statement.  Returns None if the row vanished between query
-        and update (conductor interleave -- harmless).
+        Updates the projection id, fire time, duration, title and (when
+        given) the occurrence's ``calendar_starts_at`` in one atomic
+        statement.  Returns None if the row vanished between query and
+        update (conductor interleave -- harmless).
         """
         with self._connection() as conn:
             conn.execute(
@@ -285,13 +302,15 @@ class ScheduledRecordingRepository(BaseRepository):
                    SET calendar_event_id = ?,
                        next_fire_at = ?,
                        duration_minutes = ?,
-                       title = ?
+                       title = ?,
+                       calendar_starts_at = COALESCE(?, calendar_starts_at)
                    WHERE id = ?""",
                 (
                     str(calendar_event_id),
                     next_fire_at,
                     max(1, int(duration_minutes)),
                     str(title or "").strip(),
+                    None if calendar_starts_at is None else str(calendar_starts_at),
                     str(rec_id),
                 ),
             )
@@ -345,6 +364,113 @@ class ScheduledRecordingRepository(BaseRepository):
                        next_fire_at = NULL
                    WHERE id = ?""",
                 (str(rec_id),),
+            )
+            row = conn.execute(
+                "SELECT * FROM scheduled_recordings WHERE id=?",
+                (str(rec_id),),
+            ).fetchone()
+        return _row_to_model(row) if row else None
+
+    # ── HS-175 counsel C3 / C4: the owner's cancel is final; Remove disarms ──
+
+    OWNER_CANCEL_OUTCOMES = ("owner_cancelled", "cancelled")
+    SOURCE_GONE_OUTCOMES = ("calendar_source_removed", "calendar_source_disabled")
+
+    def list_owner_cancelled_uids(self, source_id: str) -> set[str]:
+        """Calendar uids on one source whose recording the owner cancelled (C3).
+
+        The cancelled row IS the tombstone: keyed by
+        ``(calendar_source_id, calendar_uid)`` so a rescheduled occurrence
+        (a new projection id, the same uid) stays cancelled.  The owner's
+        Cancel stamps ``owner_cancelled_at``; the 136 countdown cancel
+        leaves ``last_outcome='cancelled'`` -- both are his word.  The
+        feed's outcomes (``event_removed``, the source-gone pair) are not:
+        the toggle's consent stands if the event or source comes back.
+        """
+        placeholders = ", ".join("?" for _ in self.OWNER_CANCEL_OUTCOMES)
+        with self._connection() as conn:
+            rows = conn.execute(
+                f"""SELECT DISTINCT calendar_uid FROM scheduled_recordings
+                    WHERE calendar_source_id = ?
+                      AND calendar_uid != ''
+                      AND enabled = 0
+                      AND (owner_cancelled_at IS NOT NULL
+                           OR last_outcome IN ({placeholders}))""",
+                (str(source_id), *self.OWNER_CANCEL_OUTCOMES),
+            ).fetchall()
+        return {str(r["calendar_uid"]) for r in rows}
+
+    def list_owner_cancelled_occurrences(self, source_id: str) -> set[tuple[str, str]]:
+        """Owner-cancelled OCCURRENCES on one source, as ``(calendar_uid, starts_at)``.
+
+        Counsel re-read (1): a recurring series shares one uid, so the
+        tombstone is keyed by occurrence -- Cancel means "this one", the
+        armed siblings stay armed.  ``starts_at`` is the row's
+        ``calendar_starts_at``, or the projected event's ``starts_at`` for
+        rows born before the column; a row whose occurrence cannot be
+        resolved at all yields ``(uid, '')``, which the conductor treats as
+        the uid-wide fallback (conservative: refuse rather than record).
+        """
+        placeholders = ", ".join("?" for _ in self.OWNER_CANCEL_OUTCOMES)
+        with self._connection() as conn:
+            rows = conn.execute(
+                f"""SELECT DISTINCT sr.calendar_uid AS uid,
+                           COALESCE(NULLIF(sr.calendar_starts_at, ''), ce.starts_at, '') AS starts_at
+                    FROM scheduled_recordings sr
+                    LEFT JOIN calendar_events ce ON ce.id = sr.calendar_event_id
+                    WHERE sr.calendar_source_id = ?
+                      AND sr.calendar_uid != ''
+                      AND sr.enabled = 0
+                      AND (sr.owner_cancelled_at IS NOT NULL
+                           OR sr.last_outcome IN ({placeholders}))""",
+                (str(source_id), *self.OWNER_CANCEL_OUTCOMES),
+            ).fetchall()
+        return {(str(r["uid"]), str(r["starts_at"] or "")) for r in rows}
+
+    def list_idle_for_sources_not_in(
+        self, enabled_source_ids: Sequence[str],
+    ) -> list[ScheduledRecording]:
+        """Enabled idle recordings bound to a source that is no longer enabled (C4).
+
+        X1: only ``idle`` rows -- an arming or recording row is the other
+        conductor's to finish.
+        """
+        ids = [str(s) for s in enabled_source_ids]
+        not_in = ""
+        if ids:
+            placeholders = ", ".join("?" for _ in ids)
+            not_in = f" AND calendar_source_id NOT IN ({placeholders})"
+        with self._connection() as conn:
+            rows = conn.execute(
+                f"""SELECT * FROM scheduled_recordings
+                    WHERE enabled = 1
+                      AND state = 'idle'
+                      AND calendar_source_id != ''{not_in}
+                    ORDER BY created_at""",
+                tuple(ids),
+            ).fetchall()
+        return [_row_to_model(r) for r in rows]
+
+    def cancel_for_source_gone(
+        self, rec_id: str, outcome: str,
+    ) -> Optional[ScheduledRecording]:
+        """Cancel a recording whose calendar source was removed or disabled (C4).
+
+        ``outcome`` is ``calendar_source_removed`` or
+        ``calendar_source_disabled``.  Same shape as
+        :meth:`cancel_for_event_removed`; existing state vocabulary only.
+        """
+        if outcome not in self.SOURCE_GONE_OUTCOMES:
+            raise ValueError(f"unknown source-gone outcome: {outcome}")
+        with self._connection() as conn:
+            conn.execute(
+                """UPDATE scheduled_recordings
+                   SET state = 'cancelled',
+                       last_outcome = ?,
+                       enabled = 0,
+                       next_fire_at = NULL
+                   WHERE id = ?""",
+                (outcome, str(rec_id)),
             )
             row = conn.execute(
                 "SELECT * FROM scheduled_recordings WHERE id=?",

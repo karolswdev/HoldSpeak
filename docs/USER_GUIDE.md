@@ -1316,8 +1316,9 @@ which meetings belong to your Rooms.
 Open **Settings, Meetings**. The **CALENDAR** section shows one ledger
 row per source: a state dot (idle when the source is disabled), the
 source label, `ICS` or `SNAPSHOT`, the egress chip naming the host for
-an HTTPS source or `THIS DEVICE` for a file, `N CALENDARS`, and
-`LAST READ HH:MM` after the first refresh. Each row carries the verbs
+an HTTPS source (a file source carries no chip: nothing leaves the
+machine), `N EVENTS`, and `LAST READ HH:MM` (your local clock) after the
+first refresh. Each row carries the verbs
 **Edit**, **Disable** (or **Enable**), and **Remove**; Remove arms a
 one-step confirm under the row (`REMOVE <LABEL>`, **Remove** /
 **Cancel**).
@@ -1332,7 +1333,7 @@ via the assigned vision model (local/LAN profiles preferred; the host
 is recorded on the egress); confirmed events become a file source
 ingested through the same pipeline.
 
-![Settings Meetings: calendar sources and auto-record](../pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-03-shots/settings-calendar-1440.png)
+![Settings Meetings: calendar sources and auto-record](assets/calendar-clock/settings-calendar-1440.png)
 
 ### The WEEK strip
 
@@ -1346,7 +1347,7 @@ Below the dots: `N MEETINGS THIS WEEK`.
 The strip is absent when no calendar source is connected or when the
 week has zero events.
 
-![The WEEK strip on the arrival](../pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-02-shots/arrival-week-1440.png)
+![The WEEK strip on the arrival](assets/calendar-clock/arrival-week-1440.png)
 
 ### Event rows
 
@@ -1373,8 +1374,10 @@ control with three states:
 
 When enabled, the conductor creates an idle recording for each
 matching calendar event. The recording arms at `starts_at` minus five
-minutes. Armed never means started: the recording waits for the
-conductor's existing capture flow (Article IV). A `5 MIN BEFORE` token
+minutes and, like every scheduled recording, records at the event
+(the toggle is your standing consent to record; OFF by default).
+**Cancel** on the row stops it for good: a cancelled row is never
+re-armed by a later refresh. A `5 MIN BEFORE` token
 appears beside the toggle; when `ARM ROOM MEETINGS ONLY` is active, an
 `N MATCHED THIS WEEK` token follows. When a calendar event moves, the
 recording's arm time moves with it. When an event disappears from the
@@ -1389,13 +1392,14 @@ row is absent when no meetings link to the Room. The meeting watch
 feeds into the Room's SINCE YOU LOOKED delta: a new intelligence run
 or a new commitment from a linked meeting appears as a change.
 
-![Room SOURCES with a meeting watch row](../pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-04-shots/room-sources-meetings-1440.png)
+![Room SOURCES with a meeting watch row](assets/calendar-clock/room-sources-meetings-1440.png)
 
 ### The weekly brief
 
 When a calendar is connected, the Rhythm module's brief row reads
-`Weekly brief` with cadence `WEEKLY MON HH:MM` (it remains `Monday
-brief` without a calendar). The lookback window is unchanged
+`Weekly brief` with its true cadence `DAILY HH:MM`: the brief
+regenerates every morning and reads the whole week ahead (it remains
+`Monday brief` without a calendar). The lookback window is unchanged
 (preceding business-day close to now). A separate `compute_lookahead`
 covers now to Sunday 23:59.
 
@@ -1410,7 +1414,7 @@ The `changed`, `broke`, `waiting`, and `decisions` sections use the
 unchanged lookback window. All sections are absent when they have zero
 items (the brief still runs its existing non-calendar collectors).
 
-![The weekly brief with THIS WEEK items](../pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-05-shots/brief-week-1440.png)
+![The weekly brief with THIS WEEK items](assets/calendar-clock/brief-week-1440.png)
 
 ## Models: the Concierge
 

@@ -12,6 +12,25 @@ Tests:
   2. test_arrival_orphan: orphan armed recording below MEETINGS,
      not counted in MEETINGS or the strip; at 1440.
   3. test_arrival_no_calendar: strip absent, NO CALENDAR shown; at 1440.
+
+HS-175 counsel-on-built (lane W2) adds:
+  4. test_arrival_cancel_idle_event_born: Cancel on an idle event-born
+     row succeeds -- the row loses ARMS, the recording is disabled on
+     the API (state cancelled, last_outcome owner_cancelled), a
+     scheduled_recording.cancelled.owner receipt exists.
+  5. test_arrival_cancel_refused_names_reason: the row moved to
+     `recording` under a stale face; Cancel is refused BY NAME on the
+     row (CAN'T CANCEL . <plain reason>), then withheld.
+  6. test_arrival_unlink_room: Unlink beside ROOM . Q4 PLATFORM removes
+     the link (the token leaves the row and the NEXT line); at 1440
+     (hover verb) + 393 (visible verb).
+  7. test_arrival_this_week_bound: a next-week event stays out of the
+     THIS WEEK section and the strip's total. The calendar section wears
+     `arrival-this-week` (the recorded ledger keeps `arrival-meetings`).
+  8. test_arrival_week_overflow_reads_five_plus: five or more on one
+     day reads exactly `5+`.
+  9. test_arrival_local_clock_minus_six: the row time and ARMS tokens
+     are the browser's local clock (-06:00), never UTC.
 """
 from __future__ import annotations
 
@@ -27,6 +46,7 @@ import pytest
 from .glass_infra import (
     _boot,
     _api,
+    _api_allow_error,
     _assert_clean,
     _normal_chair,
     _ensure_build,
@@ -177,7 +197,6 @@ def _seed_week_strip(home: Path) -> None:
 
     db = get_database()
     now = datetime.now(tz=timezone.utc)
-    today = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Create ICS file and configure it
     ics_path = _create_ics_file(home, [])
@@ -200,7 +219,10 @@ def _seed_week_strip(home: Path) -> None:
         # Anchor to tomorrow 08:00 UTC: always future, always within
         # the same Mon-Sun week (unless today is Sunday -- handled by
         # softening the today-accent assertion below).
-        anchor = (today + timedelta(days=1)).replace(hour=8)
+        # now + 1h: always future, and inside this Mon-Sun UTC week except
+        # during the last hour of Sunday UTC (the one unavoidable hole;
+        # "tomorrow 08:00" fell into next week on Sunday -- seen live).
+        anchor = now + timedelta(hours=1)
 
         # Event 1: Standup, armed, linked to Q4 Platform
         ev1_start = anchor
@@ -254,7 +276,10 @@ def _seed_orphan(home: Path) -> None:
         _seed_project(conn, "proj-q4", "Q4 Platform")
 
         # Anchor to tomorrow 08:00 UTC (always future).
-        anchor = (today + timedelta(days=1)).replace(hour=8)
+        # now + 1h: always future, and inside this Mon-Sun UTC week except
+        # during the last hour of Sunday UTC (the one unavoidable hole;
+        # "tomorrow 08:00" fell into next week on Sunday -- seen live).
+        anchor = now + timedelta(hours=1)
 
         # Event 1: Standup, armed, linked
         ev1_start = anchor
@@ -309,29 +334,22 @@ def _seed_past_future_mix(home: Path) -> None:
 
     db = get_database()
     now = datetime.now(tz=timezone.utc)
-    today = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     ics_path = _create_ics_file(home, [])
     _write_calendar_config(home, ics_path)
 
     with db._connection() as conn:
-        # All 3 events on tomorrow's UTC date so count_per_day groups
-        # them on one day regardless of when the test runs.
-        anchor = (today + timedelta(days=1)).replace(hour=0)
-
-        # Past event: 01:00 tomorrow (seeded as past by lying about the
-        # date; list_upcoming uses starts_at >= now, so this event at
-        # anchor + 1h is "past" only if now > anchor + 1h.  Instead,
-        # put it on today's date so it is genuinely past.)
-        past_start = today.replace(hour=2)  # 02:00 today UTC (past)
+        # Past event: now - 1h (genuinely past; still inside this Mon-Sun
+        # week except the first hour of Monday UTC).
+        past_start = now - timedelta(hours=1)
         past_end = past_start + timedelta(minutes=30)
         _seed_calendar_event(
             conn, "ev-past-today", "Morning standup",
             past_start.isoformat(), past_end.isoformat(),
         )
 
-        # Future events on tomorrow 08:00+ (always future)
-        future_anchor = anchor.replace(hour=8)
+        # Future events at now + 1h / + 4h (always future, in-week).
+        future_anchor = now + timedelta(hours=1)
         _seed_calendar_event(
             conn, "ev-future1", "Design review",
             future_anchor.isoformat(),
@@ -352,6 +370,72 @@ def _seed_no_calendar(home: Path) -> None:
     """No calendar source configured; strip should be absent."""
     # Do NOT write calendar config -- calendar_configured will be False.
     pass
+
+
+def _local_week_bounds() -> tuple[datetime, datetime]:
+    """Monday 00:00 and next Monday 00:00 of the CURRENT LOCAL week -- the
+    hub runs in this process's zone, so the rig's week is the hub's week."""
+    local_now = datetime.now().astimezone()
+    monday = (local_now - timedelta(days=local_now.weekday())).replace(
+        hour=0, minute=0, second=0, microsecond=0,
+    )
+    return monday, monday + timedelta(days=7)
+
+
+def _seed_next_week_event(home: Path) -> str:
+    """One event next Monday 10:00 LOCAL on top of the week-strip scenario.
+    Returns its title."""
+    from holdspeak.db import get_database
+
+    _seed_week_strip(home)
+    _, next_monday = _local_week_bounds()
+    starts = (next_monday + timedelta(hours=10)).astimezone(timezone.utc)
+    db = get_database()
+    with db._connection() as conn:
+        _seed_calendar_event(
+            conn, "ev-next-week", "Next week planning",
+            starts.isoformat(), (starts + timedelta(hours=1)).isoformat(),
+        )
+        conn.commit()
+    return "Next week planning"
+
+
+def _seed_overflow_day(home: Path) -> None:
+    """Five extra events beside the three of the week-strip scenario, all on
+    the anchor's day (now + 1h .. + 1h50), so one local day carries >= 5."""
+    from holdspeak.db import get_database
+
+    _seed_week_strip(home)
+    db = get_database()
+    anchor = datetime.now(tz=timezone.utc) + timedelta(hours=1)
+    with db._connection() as conn:
+        for i in range(5):
+            start = anchor + timedelta(minutes=10 * (i + 1))
+            _seed_calendar_event(
+                conn, f"ev-overflow-{i}", f"Sync {i + 1}",
+                start.isoformat(), (start + timedelta(minutes=5)).isoformat(),
+            )
+        conn.commit()
+
+
+def _open_arrival(page: Any, base: str) -> None:
+    page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+    _api(page, "POST", "/api/desk/seed", token=TOKEN)
+    _api(page, "PUT", "/api/setup/onboarding",
+         {"disposition": "completed"}, token=TOKEN)
+    _normal_chair(page)
+    page.locator("[data-testid='arrival-display']").wait_for(timeout=10_000)
+    _settle(page)
+
+
+def _receipts(outcome: str) -> list[Any]:
+    from holdspeak.db import get_database
+
+    with get_database()._connection() as conn:
+        return conn.execute(
+            "SELECT receipt_id, state, result_ref FROM kernel_receipts WHERE outcome = ?",
+            (outcome,),
+        ).fetchall()
 
 
 # ── The rig ────────────────────────────────────────────────────
@@ -433,10 +517,17 @@ class TestArrivalWeekStrip:
                     f"No today-accented day at {width} (weekday)"
                 )
 
-            # ── MEETINGS section count == rows ──
-            meetings_section = page.locator("[data-testid='arrival-meetings']")
+            # ── THIS WEEK section (ruling B10) count == rows ──
+            meetings_section = page.locator("[data-testid='arrival-this-week']")
             assert meetings_section.count() >= 1, (
-                f"MEETINGS section missing at {width}"
+                f"THIS WEEK section missing at {width}"
+            )
+            section_text = meetings_section.first.text_content() or ""
+            assert "THIS WEEK" in section_text, (
+                f"Calendar section caption must read THIS WEEK at {width}: {section_text[:80]}"
+            )
+            assert "MEETINGS 3" not in section_text, (
+                f"Calendar section must not be captioned MEETINGS (B10) at {width}"
             )
             meeting_rows = page.locator("[data-testid='arrival-meeting-row']")
             row_count = meeting_rows.count()
@@ -531,7 +622,13 @@ class TestArrivalWeekStrip:
             headline.wait_for(timeout=10_000)
             _settle(page)
 
-            # MEETINGS section: 2 events (not counting orphan)
+            # THIS WEEK section: 2 events (not counting orphan)
+            section_text = (
+                page.locator("[data-testid='arrival-this-week']").first.text_content() or ""
+            )
+            assert "THIS WEEK 2" in section_text, (
+                f"Calendar section caption must read THIS WEEK 2 (B10): {section_text[:80]}"
+            )
             meeting_rows = page.locator("[data-testid='arrival-meeting-row']")
             row_count = meeting_rows.count()
             assert row_count == 2, (
@@ -703,3 +800,338 @@ class TestArrivalWeekStrip:
             _assert_clean(page, errors)
             page.close()
             browser.close()
+
+    # ── HS-175 counsel-on-built, lane W2 ───────────────────────────
+
+    @pytest.mark.e2e
+    def test_arrival_cancel_idle_event_born(self) -> None:
+        """C2: Cancel on an idle event-born row is a real verb."""
+        from playwright.sync_api import sync_playwright
+
+        _seed_week_strip(self.home)
+
+        errors: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda err: errors.append(str(err)))
+            _open_arrival(page, self.base)
+
+            row = page.locator("[data-testid='arrival-meeting-row']", has_text="Standup")
+            assert row.count() == 1
+            assert "ARMS" in (row.first.text_content() or "")
+            cancel = row.first.locator("[data-testid='arrival-cancel-armed']")
+            assert cancel.count() == 1, "Cancel missing on the idle event-born row"
+            cancel.first.click()
+
+            # The row loses ARMS and its Cancel (the door refetched).
+            page.wait_for_function(
+                """() => {
+                    const rows = Array.from(document.querySelectorAll("[data-testid='arrival-meeting-row']"));
+                    const row = rows.find(r => (r.textContent || '').includes('Standup'));
+                    return !!row && !(row.textContent || '').includes('ARMS')
+                        && !row.querySelector("[data-testid='arrival-cancel-armed']");
+                }""",
+                timeout=10_000,
+            )
+            assert page.locator("[data-testid='arrival-cancel-refused']").count() == 0, (
+                "a successful cancel must not name a refusal"
+            )
+            # The row itself stays (the meeting is still on the calendar).
+            assert page.locator("[data-testid='arrival-meeting-row']").count() == 3
+
+            # The wire: disabled, cancelled, by the owner, receipted.
+            schedule = _api(page, "GET", "/api/scheduled-recordings/rec-standup", token=TOKEN)["schedule"]
+            assert schedule["enabled"] is False, schedule
+            assert schedule["state"] == "cancelled", schedule
+            assert schedule["last_outcome"] == "owner_cancelled", schedule
+            assert schedule["next_fire_at"] is None, schedule
+            receipts = _receipts("scheduled_recording.cancelled.owner")
+            assert len(receipts) == 1, receipts
+            assert receipts[0]["state"] == "succeeded"
+            assert "ev-standup" in receipts[0]["result_ref"]
+
+            _settle(page)
+            SHOTS.mkdir(parents=True, exist_ok=True)
+            page.screenshot(path=str(SHOTS / "arrival-cancelled-1440.png"), full_page=True)
+            _assert_clean(page, errors)
+            page.close()
+            browser.close()
+
+    @pytest.mark.e2e
+    def test_arrival_cancel_refused_names_reason(self) -> None:
+        """C2: a refusal is named on the row, never swallowed. The face is
+        stale (the row still says ARMS . Cancel) while the recording has
+        started on the hub -- the one honest race."""
+        from holdspeak.db import get_database
+        from playwright.sync_api import sync_playwright
+
+        _seed_week_strip(self.home)
+
+        errors: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda err: errors.append(str(err)))
+            _open_arrival(page, self.base)
+
+            row = page.locator("[data-testid='arrival-meeting-row']", has_text="Standup")
+            assert row.first.locator("[data-testid='arrival-cancel-armed']").count() == 1
+
+            # Capture starts under the stale face.
+            with get_database()._connection() as conn:
+                conn.execute(
+                    "UPDATE scheduled_recordings SET state='recording' WHERE id='rec-standup'"
+                )
+                conn.commit()
+            status, payload = _api_allow_error(
+                page, "POST", "/api/scheduled-recordings/rec-standup/cancel", token=TOKEN,
+            )
+            assert status == 409 and payload.get("code") == "already_recording", (status, payload)
+
+            row.first.locator("[data-testid='arrival-cancel-armed']").first.click()
+
+            refused = page.locator("[data-testid='arrival-cancel-refused']")
+            refused.first.wait_for(timeout=10_000)
+            refused_text = (refused.first.text_content() or "").upper()
+            assert "CAN'T CANCEL" in refused_text, refused_text
+            assert "STOP THE MEETING" in refused_text, refused_text
+            assert "TRACEBACK" not in refused_text and "ERROR:" not in refused_text
+            chip = refused.first.locator(".surface-state-chip[data-state='failure']")
+            assert chip.count() == 1, "the refusal is a StateChip failure token"
+
+            # After the refetch the row is honest: RECORDING, no ARMS, no Cancel.
+            page.wait_for_function(
+                """() => {
+                    const rows = Array.from(document.querySelectorAll("[data-testid='arrival-meeting-row']"));
+                    const row = rows.find(r => (r.textContent || '').includes('Standup'));
+                    return !!row && (row.textContent || '').includes('RECORDING')
+                        && !row.querySelector("[data-testid='arrival-cancel-armed']");
+                }""",
+                timeout=10_000,
+            )
+            row_text = row.first.text_content() or ""
+            assert "ARMS" not in row_text, row_text
+
+            # The hub did not touch the recording.
+            schedule = _api(page, "GET", "/api/scheduled-recordings/rec-standup", token=TOKEN)["schedule"]
+            assert schedule["state"] == "recording" and schedule["enabled"] is True, schedule
+            assert _receipts("scheduled_recording.cancelled.owner") == []
+
+            _settle(page)
+            SHOTS.mkdir(parents=True, exist_ok=True)
+            page.screenshot(path=str(SHOTS / "arrival-cancel-refused-1440.png"), full_page=True)
+            _assert_clean(page, errors)
+            page.close()
+            browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_arrival_unlink_room(self, width: int) -> None:
+        """C5 (face): Unlink beside ROOM . Q4 PLATFORM calls
+        DELETE /api/calendar/events/{id}/link; the token leaves."""
+        from holdspeak.db import get_database
+        from playwright.sync_api import sync_playwright
+
+        _seed_week_strip(self.home)
+
+        errors: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda err: errors.append(str(err)))
+            _open_arrival(page, self.base)
+
+            row = page.locator("[data-testid='arrival-meeting-row']", has_text="Standup")
+            assert row.count() == 1
+            room = row.first.locator("[data-testid='arrival-meeting-room']")
+            assert room.count() == 1 and "Q4 PLATFORM" in (room.first.text_content() or "")
+            unlink = row.first.locator("[data-testid='arrival-unlink-room']")
+            assert unlink.count() == 1, "Unlink missing beside the ROOM token"
+            # Only the linked row wears the verb.
+            assert page.locator("[data-testid='arrival-unlink-room']").count() == 1
+
+            # Hover verb at the desk width; visible at the phone width.
+            at_rest = unlink.first.evaluate("el => getComputedStyle(el.parentElement).opacity")
+            if width == 1440:
+                assert at_rest == "0", f"Unlink must be a hover verb at 1440 (opacity {at_rest})"
+                row.first.hover()
+                page.wait_for_function(
+                    """() => {
+                        const el = document.querySelector("[data-testid='arrival-unlink-room']");
+                        return !!el && getComputedStyle(el.parentElement).opacity === '1';
+                    }""",
+                    timeout=5_000,
+                )
+            else:
+                assert at_rest == "1", f"Unlink must be visible at 393 (opacity {at_rest})"
+
+            _settle(page)
+            SHOTS.mkdir(parents=True, exist_ok=True)
+            suffix = "1440" if width == 1440 else "393"
+            page.screenshot(path=str(SHOTS / f"arrival-unlink-{suffix}.png"), full_page=True)
+
+            unlink.first.click()
+            page.wait_for_function(
+                """() => {
+                    const rows = Array.from(document.querySelectorAll("[data-testid='arrival-meeting-row']"));
+                    const row = rows.find(r => (r.textContent || '').includes('Standup'));
+                    return !!row && !row.querySelector("[data-testid='arrival-meeting-room']")
+                        && !row.querySelector("[data-testid='arrival-unlink-room']");
+                }""",
+                timeout=10_000,
+            )
+            assert page.locator("[data-testid='arrival-unlink-refused']").count() == 0
+            # The NEXT line drops the Room token too (same door read).
+            next_text = page.locator("[data-testid='arrival-next']").first.text_content() or ""
+            assert "Q4 PLATFORM" not in next_text.upper(), next_text
+            # The row and its ARMS stay: unlink is not cancel.
+            row_text = row.first.text_content() or ""
+            assert "ARMS" in row_text and "ROOM" not in row_text, row_text
+
+            with get_database()._connection() as conn:
+                links = conn.execute(
+                    "SELECT COUNT(*) FROM calendar_event_projects WHERE calendar_event_id='ev-standup'"
+                ).fetchone()[0]
+                receipts = conn.execute(
+                    "SELECT method, args_summary FROM pipeline_events "
+                    "WHERE service='CalendarEventLink' AND method='unlink'"
+                ).fetchall()
+            assert links == 0
+            assert len(receipts) == 1 and "ev-standup" in receipts[0]["args_summary"], receipts
+
+            _assert_clean(page, errors)
+            page.close()
+            browser.close()
+
+    @pytest.mark.e2e
+    def test_arrival_this_week_bound(self) -> None:
+        """C9: the THIS WEEK section is bounded to the strip's week."""
+        from playwright.sync_api import sync_playwright
+
+        next_title = _seed_next_week_event(self.home)
+
+        errors: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda err: errors.append(str(err)))
+            _open_arrival(page, self.base)
+
+            # The projection carries the next-week event; the face bounds it.
+            door = _api(page, "GET", "/api/door", token=TOKEN)
+            assert any(i["title"] == next_title for i in door["upcoming"]), door["upcoming"]
+            assert door["week"]["ends_at"], door["week"]
+
+            section = page.locator("[data-testid='arrival-this-week']")
+            assert section.count() == 1, "exactly one calendar section (P2-14)"
+            section_text = section.first.text_content() or ""
+            assert "THIS WEEK 3" in section_text, section_text[:120]
+            assert next_title not in section_text, section_text[:200]
+            assert page.locator("[data-testid='arrival-meeting-row']").count() == 3
+
+            import re
+            total_text = page.locator("[data-testid='arrival-week-total']").text_content() or ""
+            m = re.match(r"(\d+)\s+MEETING", total_text)
+            assert m and int(m.group(1)) == 3, total_text
+            assert page.locator("[data-testid='arrival-week-dot']").count() == 3
+
+            _settle(page)
+            SHOTS.mkdir(parents=True, exist_ok=True)
+            page.screenshot(path=str(SHOTS / "arrival-this-week-bound-1440.png"), full_page=True)
+            _assert_clean(page, errors)
+            page.close()
+            browser.close()
+
+    @pytest.mark.e2e
+    def test_arrival_week_overflow_reads_five_plus(self) -> None:
+        """C9: five or more on one day reads exactly `5+` (the design)."""
+        from playwright.sync_api import sync_playwright
+
+        _seed_overflow_day(self.home)
+
+        errors: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda err: errors.append(str(err)))
+            _open_arrival(page, self.base)
+
+            overflow = page.locator("[data-testid='arrival-week-overflow']")
+            assert overflow.count() >= 1, "no overflow day rendered"
+            for i in range(overflow.count()):
+                el = overflow.nth(i)
+                assert (el.text_content() or "").strip() == "5+", el.text_content()
+                assert int(el.get_attribute("data-count") or "0") >= 5
+            # Dots and overflow days together account for the strip's total.
+            import re
+            total_text = page.locator("[data-testid='arrival-week-total']").text_content() or ""
+            m = re.match(r"(\d+)\s+MEETING", total_text)
+            assert m and int(m.group(1)) == 8, total_text
+            dots = page.locator("[data-testid='arrival-week-dot']").count()
+            overflow_sum = sum(
+                int(overflow.nth(i).get_attribute("data-count") or "0")
+                for i in range(overflow.count())
+            )
+            assert dots + overflow_sum == 8, (dots, overflow_sum)
+            chair_text = page.locator(".chair").text_content() or ""
+            assert "8+" not in chair_text, "overflow must read 5+, never {count}+"
+
+            _assert_clean(page, errors)
+            page.close()
+            browser.close()
+
+    @pytest.mark.e2e
+    def test_arrival_local_clock_minus_six(self) -> None:
+        """C8: the row time and ARMS tokens are the viewer's local clock.
+        The browser sits at -06:00 (Etc/GMT+6); the hub stores UTC."""
+        from playwright.sync_api import sync_playwright
+
+        _seed_week_strip(self.home)
+        minus_six = timezone(timedelta(hours=-6))
+        with __import__("holdspeak.db", fromlist=["get_database"]).get_database()._connection() as conn:
+            starts_at, fire_at = conn.execute(
+                "SELECT e.starts_at, r.next_fire_at FROM calendar_events e "
+                "JOIN scheduled_recordings r ON r.calendar_event_id = e.id "
+                "WHERE e.id='ev-standup'"
+            ).fetchone()
+        start_local = datetime.fromisoformat(starts_at.replace("Z", "+00:00")).astimezone(minus_six)
+        arms_local = datetime.fromtimestamp(float(fire_at), tz=minus_six)
+        expected_arms = f"ARMS {arms_local:%H:%M}"
+        today_local = datetime.now(tz=minus_six).date()
+        expected_time = (
+            f"{start_local:%H:%M}" if start_local.date() == today_local
+            else f"{start_local:%a %H:%M}".upper()
+        )
+        utc_arms = f"ARMS {datetime.fromtimestamp(float(fire_at), tz=timezone.utc):%H:%M}"
+
+        errors: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            context = browser.new_context(
+                viewport={"width": 1440, "height": 900}, timezone_id="Etc/GMT+6",
+            )
+            page = context.new_page()
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda err: errors.append(str(err)))
+            _open_arrival(page, self.base)
+
+            row = page.locator("[data-testid='arrival-meeting-row']", has_text="Standup")
+            assert row.count() == 1
+            time_token = row.first.locator(".surface-ledger-time").first.text_content() or ""
+            assert time_token.strip() == expected_time, (time_token, expected_time)
+            arms_chip = row.first.locator(".surface-state-chip", has_text="ARMS")
+            arms_text = (arms_chip.first.text_content() or "").replace("●", "").strip()
+            assert arms_text == expected_arms, (arms_text, expected_arms)
+            assert arms_text != utc_arms, "ARMS printed the UTC clock"
+
+            _assert_clean(page, errors)
+            page.close()
+            context.close()
+            browser.close()
+

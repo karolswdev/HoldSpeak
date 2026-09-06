@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { calendarSourceEgressChips, SettingsCore } from "../SettingsCore";
+import { calendarSourceEgressChips, formatLocalClock, snapshotEgressChip, SettingsCore } from "../SettingsCore";
 import type { SettingsResponse } from "../core-types";
 
 const apiFetch = vi.hoisted(() => vi.fn());
@@ -70,7 +70,8 @@ describe("Meetings calendar source rows", () => {
 
     const personal = screen.getByTestId("calendar-source-src-personal");
     expect(within(personal).getByText("Personal")).toBeInTheDocument();
-    expect(within(personal).getByText("THIS DEVICE")).toBeInTheDocument();
+    // HS-175 counsel H2-2: a file source wears no reassurance chip.
+    expect(within(personal).queryByText("THIS DEVICE")).toBeNull();
     // A disabled source: idle StateChip, muted label, Enable verb.
     expect(within(personal).getByRole("status")).toHaveAttribute("data-state", "idle");
     expect(within(personal).getByText("Personal")).toHaveAttribute("data-muted", "true");
@@ -82,7 +83,10 @@ describe("Meetings calendar source rows", () => {
     expect(screen.getByRole("button", { name: /^Speak Calendar URL/ })).toBeInTheDocument();
   });
 
-  it("names the host on the HTTPS source's egress chip and shows THIS DEVICE (no chip) on the file source", () => {
+  it("names the host on the HTTPS source's egress chip and wears NO chip on the file source (absence is the signal)", () => {
+    // HS-175 counsel C9 (H2-2): egress where egress happens; a file source
+    // carries no reassurance chip -- THIS DEVICE belongs to the SNAPSHOT
+    // verb, where a model runs.
     render(<SettingsCore scope="meetings" />);
     const chip = screen.getByText("work.example");
     expect(chip).toHaveClass("gadget-chip-egress");
@@ -90,7 +94,7 @@ describe("Meetings calendar source rows", () => {
     expect(chip).toHaveAttribute("title", expect.stringContaining("Work"));
     const personal = screen.getByTestId("calendar-source-src-personal");
     expect(personal.querySelector(".gadget-chip-egress")).toBeNull();
-    expect(within(personal).getByText("THIS DEVICE")).toBeInTheDocument();
+    expect(within(personal).queryByText("THIS DEVICE")).toBeNull();
   });
 
   it("writes a changed URL through the sources wire from the row's Edit well", async () => {
@@ -303,3 +307,108 @@ describe("calendarSourceEgressChips", () => {
     expect(calendarSourceEgressChips(undefined)).toEqual([]);
   });
 });
+
+// HS-175 counsel C8 / C9(b) / C10 on the Settings rows: N EVENTS, LAST READ in
+// the viewer's clock, the snapshot's egress chip beside Snapshot, Edit
+// withheld on the SNAPSHOT row.
+describe("HS-175 counsel: honest tokens on the calendar rows", () => {
+  const snapshotSettings: SettingsResponse = {
+    ...settings,
+    calendar: {
+      sources: [
+        ...(settings.calendar as { sources: unknown[] }).sources,
+        { id: "src-snap", label: "O365 SNAPSHOT", url: "/home/user/.local/share/holdspeak/calendar-snapshots/x.ics", enabled: true },
+      ],
+    },
+  } as SettingsResponse;
+  const calSources = {
+    sources: [
+      { id: "src-work", label: "Work", type: "ICS", status: "success", host: "work.example", event_count: 40, last_read: "17:47", last_read_at: "2026-09-05T23:47:00Z", egress: true },
+      { id: "src-snap", label: "O365 SNAPSHOT", type: "SNAPSHOT", status: "success", host: null, event_count: 1, last_read: null, last_read_at: null, egress: false },
+    ],
+    auto_record: "off",
+    auto_record_lead_minutes: 5,
+    matched_this_week: 0,
+    snapshot_egress: { scope: "private_network", host: "192.168.1.43" },
+  };
+
+  const sourcesOf = (s: SettingsResponse) => (s.calendar as { sources: Array<Record<string, unknown>> }).sources;
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    // The rows come from the settings resource (mocked useResource), so the
+    // SNAPSHOT source rides the hoisted settings for this block only.
+    sourcesOf(settings).push({ id: "src-snap", label: "O365 SNAPSHOT", url: "/home/user/.local/share/holdspeak/calendar-snapshots/x.ics", enabled: true });
+    apiFetch.mockImplementation((url: string) => {
+      if (url === "/api/calendar/sources") return Promise.resolve(calSources);
+      return Promise.resolve({ settings: { ...snapshotSettings, _revision: "calendar-r2" } });
+    });
+  });
+  afterEach(() => {
+    sourcesOf(settings).pop();
+    vi.useRealTimers();
+  });
+
+  it("counts EVENTS (never CALENDARS) and prints LAST READ in the viewer's local clock", async () => {
+    render(<SettingsCore scope="meetings" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+    const work = screen.getByTestId("calendar-source-src-work");
+    expect(within(work).getByTestId("calendar-source-events").textContent).toBe("40 EVENTS");
+    expect(within(work).queryByText(/CALENDARS/)).toBeNull();
+    const expected = formatLocalClock("2026-09-05T23:47:00Z");
+    expect(within(work).getByTestId("calendar-source-last-read").textContent).toBe(`LAST READ ${expected}`);
+  });
+
+  it("wears the vision model's egress chip beside Snapshot BEFORE any upload", async () => {
+    render(<SettingsCore scope="meetings" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+    const chip = screen.getByTestId("calendar-snapshot-egress").querySelector(".gadget-chip-egress") as HTMLElement;
+    expect(chip).not.toBeNull();
+    expect(chip).toHaveAttribute("data-scope", "mixed");
+    expect(chip.textContent).toBe("192.168.1.43");
+    expect(screen.getByTestId("calendar-snapshot-btn")).toBeInTheDocument();
+  });
+
+  it("withholds Edit on the SNAPSHOT row (its path is generated) and keeps Disable / Remove", async () => {
+    render(<SettingsCore scope="meetings" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+    const snap = screen.getByTestId("calendar-source-src-snap");
+    expect(within(snap).queryByRole("button", { name: "Edit" })).toBeNull();
+    expect(within(snap).getByRole("button", { name: "Disable" })).toBeInTheDocument();
+    expect(within(snap).getByRole("button", { name: "Remove" })).toBeInTheDocument();
+    expect(within(snap).getByText("SNAPSHOT")).toBeInTheDocument();
+    const work = screen.getByTestId("calendar-source-src-work");
+    expect(within(work).getByRole("button", { name: "Edit" })).toBeInTheDocument();
+  });
+});
+
+describe("formatLocalClock (C8)", () => {
+  it("prints HH:MM in the viewer's zone from an ISO-UTC instant", () => {
+    const d = new Date("2026-09-05T23:47:00Z");
+    const pad = (n: number) => String(n).padStart(2, "0");
+    expect(formatLocalClock("2026-09-05T23:47:00Z")).toBe(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
+    expect(formatLocalClock("2026-09-05T17:47:00-06:00")).toBe(formatLocalClock("2026-09-05T23:47:00Z"));
+  });
+  it("prints nothing for an empty or unparseable value", () => {
+    expect(formatLocalClock(null)).toBeNull();
+    expect(formatLocalClock("")).toBeNull();
+    expect(formatLocalClock("not a clock")).toBeNull();
+  });
+});
+
+describe("snapshotEgressChip (C10)", () => {
+  it("is THIS DEVICE when the vision model runs locally", () => {
+    expect(snapshotEgressChip({ scope: "local" })).toMatchObject({ label: "THIS DEVICE", scope: "local" });
+  });
+  it("names the LAN / paired / cloud host", () => {
+    expect(snapshotEgressChip({ scope: "private_network", host: "192.168.1.43" })).toMatchObject({ label: "192.168.1.43", scope: "mixed" });
+    expect(snapshotEgressChip({ scope: "mesh", host: "desktop" })).toMatchObject({ label: "desktop", scope: "mixed" });
+    expect(snapshotEgressChip({ scope: "cloud", host: "api.openai.com" })).toMatchObject({ label: "api.openai.com", scope: "cloud" });
+  });
+  it("is absent when nothing resolves (nothing can leave)", () => {
+    expect(snapshotEgressChip(null)).toBeNull();
+    expect(snapshotEgressChip(undefined)).toBeNull();
+    expect(snapshotEgressChip({ scope: "cloud", host: "" })).toBeNull();
+  });
+});
+

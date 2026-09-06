@@ -1259,23 +1259,35 @@ class WatchService:
 # ── HS-175-04: ensure one meeting Watch per Room ────────────────────
 
 
-def ensure_meeting_watch(db: Any, project_id: str) -> dict[str, Any] | None:
+def ensure_meeting_watch(
+    db: Any, project_id: str, *, why: str = "meeting linked",
+) -> dict[str, Any] | None:
     """Idempotently create the Room's meeting Watch if it has linked meetings.
 
     Returns the watch dict if created, None if one already exists or no
     meetings are linked.  Safe to call on every link and every sweep tick.
+
+    HS-175 counsel C7(a): a meeting Watch in ANY state counts as existing.
+    A retired meeting Watch is the owner's "no" for that Room -- a
+    tombstone -- and is never resurrected by the link path or the sweep's
+    backfill.  Creation happens only when the Room has NO meeting Watch at
+    all (UX-CANON A.11: a verb's effect is never silently reverted).
+
+    HS-175 counsel C7(c): every creation is receipted (``watch.created``
+    with ``why``: ``meeting linked`` on the link path, ``backfill`` on the
+    sweep).
     """
     from holdspeak.meeting_templates import compile as compile_template
     from holdspeak.logging_config import get_logger
 
     _log = get_logger("watch_service.ensure_meeting_watch")
 
-    # 1. Does the Room already have a meeting Watch?
+    # 1. Does the Room already have a meeting Watch (any state, retired
+    #    included -- the tombstone)?
     with db._connection() as conn:
         existing = conn.execute(
             "SELECT id FROM connector_watches "
-            "WHERE project_id = ? AND connector_id = 'meeting' "
-            "AND state != 'retired'",
+            "WHERE project_id = ? AND connector_id = 'meeting'",
             (project_id,),
         ).fetchone()
         if existing:
@@ -1303,11 +1315,10 @@ def ensure_meeting_watch(db: Any, project_id: str) -> dict[str, Any] | None:
     query = spec["subject"]["query"]
 
     with db._connection() as conn:
-        # Double-check idempotency inside the transaction
+        # Double-check idempotency inside the transaction (any state)
         existing = conn.execute(
             "SELECT id FROM connector_watches "
-            "WHERE project_id = ? AND connector_id = 'meeting' "
-            "AND state != 'retired'",
+            "WHERE project_id = ? AND connector_id = 'meeting'",
             (project_id,),
         ).fetchone()
         if existing:
@@ -1372,5 +1383,64 @@ def ensure_meeting_watch(db: Any, project_id: str) -> dict[str, Any] | None:
     except Exception as snap_exc:
         _log.warning("initial snapshot for meeting Watch %s failed: %s", watch_id, snap_exc)
 
-    _log.info("created meeting Watch %s for project %s", watch_id, project_id)
+    # C7(c): the creation is receipted on both paths (Article V:2).
+    _write_watch_created_receipt(
+        db, watch_id=watch_id, project_id=project_id, why=why,
+    )
+
+    _log.info("created meeting Watch %s for project %s (%s)", watch_id, project_id, why)
     return db.automations.get_watch(watch_id) or {"id": watch_id}
+
+
+def _write_watch_created_receipt(
+    db: Any, *, watch_id: str, project_id: str, why: str,
+) -> None:
+    """Kernel receipt for a meeting Watch creation (Article V:2, XI.2).
+
+    Mirrors HeartbeatService._write_receipt: one kernel_operations row
+    (``watch.create``) and one kernel_receipts row whose outcome names the
+    watch, the Room and why it was created.  Never raises -- a receipt
+    failure is logged, the Watch stays.
+    """
+    from holdspeak.logging_config import get_logger
+
+    _log = get_logger("watch_service.ensure_meeting_watch")
+    receipt_id = f"mw_rcpt_{uuid.uuid4().hex[:12]}"
+    operation_id = f"mw_op_{uuid.uuid4().hex[:12]}"
+    idem_key = f"meeting_watch:{watch_id}"
+    now = time.time()
+    outcome = json.dumps(
+        {
+            "kind": "watch.created",
+            "watch_id": watch_id,
+            "project_id": project_id,
+            "connector_id": "meeting",
+            "why": why,
+        },
+        separators=(",", ":"),
+    )
+    try:
+        with db._connection() as conn:
+            conn.execute(
+                """INSERT INTO kernel_operations
+                   (operation_id, request_id, idempotency_key, name, version,
+                    principal_kind, principal_identity, target_ref, placement,
+                    envelope_sha256, policy_version, authority_basis,
+                    state, revision, native_id, created_at, updated_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,?)""",
+                (
+                    operation_id, idem_key, idem_key, "watch.create", 1,
+                    "owner", "ensure-meeting-watch",
+                    f"watch:{watch_id}", "local", "", "",
+                    "meeting-link" if why == "meeting linked" else "heartbeat-conductor",
+                    "succeeded", operation_id, now, now,
+                ),
+            )
+            conn.execute(
+                """INSERT INTO kernel_receipts
+                   (receipt_id, operation_id, state, outcome, result_ref, created_at)
+                   VALUES (?,?,?,?,?,?)""",
+                (receipt_id, operation_id, "succeeded", outcome, f"watch:{watch_id}", now),
+            )
+    except Exception as exc:
+        _log.warning("meeting Watch creation receipt failed for %s: %s", watch_id, exc)

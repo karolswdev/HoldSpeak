@@ -330,6 +330,21 @@ and memory: no git verb that moves the tree, ever; the orchestrator reads
 phases' PNGs and the ratchet regenerates the 170 census — restore those
 paths before staging, every time.
 
+**Counsel on the built phase (the second commit).** BOUNCE on twelve
+conditions, six reproduced: an event-born recording FIRED capture while
+the copy said "armed, never started" (ruled B11: it records at the event
+like every scheduled recording; the toggle is the consent; carried to the
+owner); the arrival's Cancel dead outside `arming`; a cancel re-armed by
+the next refresh; Remove/Disable leaving recordings armed; the ratified
+Unlink on no face; the matcher selecting a phantom column; UTC on the
+faces; `WEEKLY MON 08:00` naming a cadence that does not exist. Three fix
+lanes paid C2–C11 (B12–B15); the re-read ratified with six conditions,
+five paid (B16–B17: Cancel means this occurrence; every arm receipted;
+Delete behaves as Cancel; per-instant local time on the DST edge; the
+B11 hand-off proven by a test that runs both conductors), the sixth is
+his walk. Seven questions ride to him (see the status file and the
+re-read). Schema 75; api-surface 667.
+
 **Gates at this commit.** Unit set 247 passed (-n auto, isolated HOME);
 web baseline zero branch-new; ratchet green (A8 healed to 24); the 175
 rigs + the 170/171/172 rigs they touch green serially; mermaid guard

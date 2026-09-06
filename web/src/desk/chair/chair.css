@@ -181,6 +181,27 @@
   white-space: nowrap;
 }
 
+/* HS-175 C5: the row's Unlink rides beside the ROOM token -- hidden at
+   rest on a fine pointer (the ledger's hover-verb grammar, opacity only
+   so it stays in the tree for focus); always visible for coarse pointers
+   and at the phone width. */
+.arrival-meeting-verbs {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--duration-short) var(--ease-quart);
+}
+.surface-ledger-row:hover .arrival-meeting-verbs,
+.surface-ledger-row:focus-within .arrival-meeting-verbs {
+  opacity: 1;
+}
+@media (pointer: coarse) {
+  .arrival-meeting-verbs {
+    opacity: 1;
+  }
+}
+
 /* ── Orphan armed recording row (HS-175-02) ───────────────────────── */
 .arrival-orphan-row {
   display: flex;
@@ -413,6 +434,10 @@
   .arrival-capture-bar {
     flex-wrap: wrap;
   }
+  /* HS-175 C5: Unlink is visible at the phone width (no hover there). */
+  .arrival-meeting-verbs {
+    opacity: 1;
+  }
   /* HS-175-02: week strip scrolls horizontally at narrow width. */
   .arrival-week-days {
     overflow-x: auto;
@@ -438,6 +463,10 @@
   .chair {
     padding: var(--space-3);
     gap: var(--space-4);
+  }
+  /* HS-175 C5: Unlink visible at the phone width (viewport fallback). */
+  .arrival-meeting-verbs {
+    opacity: 1;
   }
   .arrival-display {
     font-size: 22px;

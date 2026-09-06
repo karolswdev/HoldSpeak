@@ -1,6 +1,6 @@
 /** Scheduled recording slice (HS-136-03): schedule CRUD, arming countdown
  * state from conductor broadcasts, and the create-window lifecycle. */
-import { apiFetch } from "../../lib/api";
+import { ApiError, apiFetch, readableError } from "../../lib/api";
 import type { DeskState, ScheduledArmingState, ScheduledRecording, SliceCreator } from "./types";
 
 export type ScheduledRecordingSlice = Pick<
@@ -66,13 +66,28 @@ export const createScheduledRecordingSlice: SliceCreator<ScheduledRecordingSlice
   },
 
   async cancelArmedSchedule(id) {
+    // HS-175 C2: a refusal is returned by name -- the hub's plain reason and
+    // code -- never swallowed into `false`. The face renders it on the row.
     try {
       await apiFetch(`/api/scheduled-recordings/${encodeURIComponent(id)}/cancel`, {
         method: "POST",
       });
-      return true;
-    } catch {
-      return false;
+      void get().loadSchedules();
+      return { ok: true };
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const payload = (err.payload && typeof err.payload === "object"
+          ? err.payload
+          : {}) as { error?: unknown; code?: unknown };
+        const reason = typeof payload.error === "string" && payload.error
+          ? payload.error
+          : err.message;
+        const code = typeof payload.code === "string" && payload.code
+          ? payload.code
+          : `http_${err.status}`;
+        return { ok: false, reason, code, status: err.status };
+      }
+      return { ok: false, reason: readableError(err), code: "unreachable", status: 0 };
     }
   },
 

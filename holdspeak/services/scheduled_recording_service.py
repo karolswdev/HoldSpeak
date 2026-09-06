@@ -411,6 +411,24 @@ class ScheduledRecordingService:
                 code="schedule_in_progress",
             )
 
+        # HS-175 counsel re-read, condition 3: an event-linked row is also the
+        # owner's cancel tombstone (db/scheduled_recordings.list_owner_cancelled_uids).
+        # Hard-deleting it would let the next calendar refresh re-arm the
+        # event silently. Delete on a live event-born row therefore does what
+        # the owner meant -- it cancels (disable + owner_cancelled + receipt);
+        # an already-cancelled or finished event row is refused by name so the
+        # tombstone stays. Hard delete remains for cron rows.
+        if existing.calendar_event_id:
+            if existing.state == "idle" and existing.enabled:
+                result = self._cancel_idle_event_recording(existing, schedule_id)
+                result["deleted"] = False
+                return result
+            raise ConflictError(
+                "Event-born recording is kept as the owner's cancel; "
+                "cancel instead of delete",
+                code="event_born_cancel_instead",
+            )
+
         receipt_id = _write_receipt(
             self.db, schedule_id, "succeeded", "schedule_deleted",
             detail=f"Deleted schedule '{existing.title}' (id={schedule_id})",
@@ -422,24 +440,54 @@ class ScheduledRecordingService:
     def cancel_armed(
         self, principal: Principal, schedule_id: str
     ) -> dict[str, Any]:
-        """Cancel an armed (counting-down) scheduled recording.
+        """Cancel an armed scheduled recording -- the owner takes his consent back.
 
-        Delegates to the conductor's cancel_armed seam. The conductor
-        handles the state transition and writes its own receipt for the
-        cancel event. This service writes an additional management receipt
-        for the cancel request itself.
+        Two lawful shapes (HS-175 counsel-on-built C2):
+
+        * ``arming`` -- delegates to the conductor's cancel_armed seam (the
+          countdown thread writes the state transition and its own receipt);
+          this service adds the management receipt for the request.
+        * ``idle`` and linked to a calendar event (event-born, or armed from
+          an event) -- the row is disabled here: ``enabled=0``,
+          ``state='cancelled'``, ``last_outcome='owner_cancelled'``, receipt
+          ``scheduled_recording.cancelled.owner``. Lane W1's tombstone column
+          (``owner_cancelled_at``) is stamped when the schema carries it, so
+          the next calendar refresh does not re-arm the event.
+
+        Refused by name when capture is already running (``recording`` --
+        the honest verb is the meeting's Stop, not Cancel) and for every
+        other state (a plain cron schedule in ``idle`` is disabled through
+        update, never "cancelled").
         """
         existing = self.db.scheduled_recordings.get(schedule_id)
         if existing is None:
             raise NotFound("scheduled_recording", schedule_id)
 
-        if existing.state != "arming":
+        if existing.state == "recording":
             raise ConflictError(
-                f"Schedule is not armed (state='{existing.state}')",
-                code="not_armed",
+                "Already recording; stop the meeting instead",
+                code="already_recording",
             )
 
-        # Call the conductor's cancel_armed seam
+        if existing.state == "arming":
+            return self._cancel_arming(existing, schedule_id)
+
+        if (
+            existing.state == "idle"
+            and existing.enabled
+            and existing.calendar_event_id
+        ):
+            return self._cancel_idle_event_recording(existing, schedule_id)
+
+        raise ConflictError(
+            f"Schedule is not armed (state='{existing.state}')",
+            code="not_armed",
+        )
+
+    def _cancel_arming(
+        self, existing: ScheduledRecording, schedule_id: str
+    ) -> dict[str, Any]:
+        """The 136 path: the conductor's countdown thread owns the transition."""
         from ..scheduled_recording_conductor import _conductor
 
         if _conductor is None:
@@ -466,3 +514,65 @@ class ScheduledRecordingService:
         result["receipt_id"] = receipt_id
         result["cancelled"] = True
         return result
+
+    def _cancel_idle_event_recording(
+        self, existing: ScheduledRecording, schedule_id: str
+    ) -> dict[str, Any]:
+        """HS-175 C2: the owner's cancel of an event-linked recording that has
+        not started its countdown yet. Disabled here, receipted, broadcast."""
+        now = time.time()
+        receipt_id = _write_receipt(
+            self.db, schedule_id, "succeeded", "scheduled_recording.cancelled.owner",
+            detail=(
+                f"Owner cancelled '{existing.title}' (id={schedule_id}, "
+                f"event={existing.calendar_event_id})"
+            ),
+        )
+        rec = self.db.scheduled_recordings.set_state(
+            schedule_id, "cancelled",
+            last_outcome="owner_cancelled",
+            last_receipt_id=receipt_id,
+            enabled=False,
+            next_fire_at=None,
+            armed_at=None,
+        )
+        self._stamp_owner_cancelled(schedule_id, now)
+
+        try:
+            from ..scheduled_recording_conductor import broadcast
+
+            broadcast("scheduled_recording.cancelled", {
+                "schedule_id": schedule_id,
+                "title": existing.title,
+                "receipt_id": receipt_id,
+                "at": datetime.now(tz=timezone.utc).isoformat(),
+            })
+        except Exception as exc:  # pragma: no cover - the face refetches anyway
+            log.debug("cancel broadcast skipped: %s", exc)
+
+        result = _schedule_dict(rec) if rec else {"id": schedule_id}
+        result["receipt_id"] = receipt_id
+        result["cancelled"] = True
+        return result
+
+    def _stamp_owner_cancelled(self, schedule_id: str, now: float) -> None:
+        """Stamp lane W1's tombstone column when the schema carries it.
+
+        The column (``owner_cancelled_at``) is W1's to add; this service
+        only fills it so the cancel stays final across calendar refreshes.
+        Absent column: nothing to stamp, nothing to fail.
+        """
+        try:
+            with self.db._connection() as conn:
+                cols = {
+                    str(r[1]) for r in conn.execute(
+                        "PRAGMA table_info(scheduled_recordings)"
+                    ).fetchall()
+                }
+                if "owner_cancelled_at" in cols:
+                    conn.execute(
+                        "UPDATE scheduled_recordings SET owner_cancelled_at=? WHERE id=?",
+                        (now, str(schedule_id)),
+                    )
+        except Exception as exc:
+            log.warning("owner_cancelled_at stamp failed for %s: %s", schedule_id, exc)

@@ -116,7 +116,17 @@ def test_door_get_dispatches_the_real_door_service(db: Database) -> None:
     is_error, projection = _call("door.get")
 
     assert is_error is False
-    assert set(projection) == {"board", "upcoming", "counts", "calendar_configured"}
+    assert set(projection) == {"board", "upcoming", "counts", "calendar_configured", "week"}
+    # HS-175-02 (door.week) + counsel C8/C9: the WEEK strip rides the
+    # aggregate with the local week's bounds; days are absent (never a
+    # zero-dot strip) until a calendar source is connected.
+    week = projection["week"]
+    assert set(week) == {"days", "total", "has_calendar", "starts_at", "ends_at"}
+    assert week["has_calendar"] == projection["calendar_configured"]
+    assert len(week["days"]) == (7 if week["has_calendar"] else 0)
+    assert week["total"] == sum(d["count"] for d in week["days"])
+    assert all(set(d) == {"date", "dow", "count"} for d in week["days"])
+    assert week["starts_at"] < week["ends_at"]
     assert projection["board"]["now"][0]["target_ref"] == "action_item:door-mcp-action"
     assert projection["board"]["active"][0]["source"] == "thought"
     assert projection["upcoming"][0]["source"] == "scheduled_recording"

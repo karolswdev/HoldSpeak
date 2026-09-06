@@ -205,14 +205,15 @@ def _open_surface(page: Any, token: str, action: str, scope: str | None = None) 
     }}""")
     page.reload(wait_until="load")
     page.wait_for_timeout(500)
+    # Counsel C12: never click "Continue later" — dismissing the first-value
+    # chair is a WRITE (it persists the dismissal). If the chair is in its
+    # first-value state the walk reports it and shoots it as found.
     try:
         chair = page.locator(".chair")
         if chair.count() > 0:
             chair.wait_for(timeout=2000)
             if chair.evaluate("el => el.classList.contains('chair-first-value')"):
-                btn = page.get_by_role("button", name="Continue later", exact=True)
-                if btn.count() > 0:
-                    btn.click()
+                print("        note: first-value chair present (not dismissed; a walk writes nothing)")
     except Exception:
         pass
     page.wait_for_timeout(1500)
@@ -463,7 +464,7 @@ def _step_arrival(page: Any, out_dir: Path, w: int, token: str,
     #   data-testid="arrival-no-calendar"   -- NO CALENDAR state
     #   data-testid="arrival-arming"        -- ARMED countdown row
     #   data-testid="arrival-cancel-armed"  -- Cancel button on armed row
-    #   data-testid="arrival-meetings"      -- meetings section container
+    #   data-testid="arrival-this-week"     -- the calendar THIS WEEK section (the recorded-meetings ledger keeps arrival-meetings)
     #   data-testid="arrival-meeting-row"   -- each meeting row
     #   data-testid="arrival-meeting-badge" -- badge on meeting row
     #   data-testid="arrival-run-intel"     -- Run intelligence verb
@@ -499,8 +500,11 @@ def _step_arrival(page: Any, out_dir: Path, w: int, token: str,
             if (totalEl) weekMeetingsLabel = totalEl.textContent.trim();
         }
 
-        /* Meetings section: data-testid="arrival-meetings" */
-        const meetingsSection = body.querySelector('[data-testid="arrival-meetings"]');
+        /* The calendar THIS WEEK section: data-testid="arrival-this-week"
+           (B10: the recorded-meetings ledger keeps arrival-meetings; a desk
+           with no calendar shows only that ledger, reported as recorded rows). */
+        const meetingsSection = body.querySelector('[data-testid="arrival-this-week"]')
+            || body.querySelector('[data-testid="arrival-meetings"]');
         const meetingRows = meetingsSection
             ? meetingsSection.querySelectorAll('[data-testid="arrival-meeting-row"]')
             : [];
@@ -712,7 +716,21 @@ def _step_settings_meetings(page: Any, out_dir: Path, w: int, token: str,
     """
     face = "settings-calendar"
 
-    _open_surface(page, token, "open-settings", "meetings")
+    # The desk registers "configure-settings" (the Settings hub); the
+    # Meetings module opens from the hub row's Open verb (the path the
+    # 172 rig proved), not from an "open-settings" key, which no opener
+    # answers.
+    _open_surface(page, token, "configure-settings")
+    try:
+        page.locator(".prefs-hub-headline").wait_for(timeout=10_000)
+        meetings_row = page.locator(
+            ".surface-ledger-row",
+            has=page.locator(".surface-ledger-primary", has_text="Meetings"),
+        ).first
+        meetings_row.locator(".btn", has_text="Open").click()
+        page.locator("[data-testid='meetings-auto-display']").wait_for(timeout=8_000)
+    except Exception as exc:  # the leg reports what it saw; never a fake pass
+        print(f"        settings->meetings did not open: {exc.__class__.__name__}")
     _settle(page)
     page.wait_for_timeout(2000)
     _settle(page)

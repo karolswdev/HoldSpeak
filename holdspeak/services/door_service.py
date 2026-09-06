@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import asdict
-from datetime import datetime, time, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone, tzinfo
 from typing import TYPE_CHECKING, Any, Callable
 
 from ..config.integrations import validate_calendar_subscription
@@ -28,6 +28,7 @@ class DoorService:
         clock: Callable[[], datetime] | None = None,
         config_loader: Callable[[], Any] | None = None,
         people_service: PeopleService | None = None,
+        local_tz: tzinfo | None = None,
     ) -> None:
         self._follow_through_service = follow_through_service
         self._refinement_thought_service = refinement_thought_service
@@ -37,6 +38,9 @@ class DoorService:
         self._clock = clock or (lambda: datetime.now().astimezone())
         self._config_loader = config_loader
         self._people_service = people_service
+        # HS-175 C8: the desk's clock. The hub's local zone by default
+        # (``datetime.now().astimezone()``); injectable for the -06:00 tests.
+        self._local_tz = local_tz
 
     def add_item(
         self,
@@ -331,6 +335,9 @@ class DoorService:
                         ))
                         if recording.next_fire_at else None
                     ),
+                    # HS-175 C2: the face withholds Cancel while capture runs
+                    # (the honest verb is the meeting's Stop).
+                    "state": recording.state,
                 }
                 # HS-147-02 ruling: a linked schedule whose event row is on
                 # the rail would render the same intent twice — the event row
@@ -443,28 +450,89 @@ class DoorService:
         except Exception:
             return {}
 
+    def _to_local(self, value: datetime) -> datetime:
+        """Convert one instant to the desk's local wall clock (HS-175 C8).
+
+        Per instant, never a fixed offset: ``astimezone()`` with no argument
+        asks the system zone for THAT instant, so a week that crosses a DST
+        edge keeps every event on its true local day (counsel re-read,
+        condition 4). An injected ``local_tz`` (the tests) is used the same
+        way -- a ``ZoneInfo`` resolves per instant too.
+        """
+        if self._local_tz is not None:
+            return value.astimezone(self._local_tz)
+        return value.astimezone()
+
+    def _local_midnight(self, day: date) -> datetime:
+        """Local 00:00 of a calendar day as an aware datetime, built from the
+        naive wall clock so the offset is the one in force ON that day."""
+        naive = datetime.combine(day, time.min)
+        if self._local_tz is not None:
+            return naive.replace(tzinfo=self._local_tz)
+        return naive.astimezone()
+
+    def _local_zone(self) -> tzinfo:
+        """The desk's local timezone as of now (HS-175 C8); only for callers
+        that need a tzinfo -- the week arithmetic goes through ``_to_local`` /
+        ``_local_midnight`` so it survives a DST edge."""
+        if self._local_tz is not None:
+            return self._local_tz
+        return datetime.now().astimezone().tzinfo or timezone.utc
+
+    def _local_week_bounds(self, now: datetime) -> tuple[datetime, datetime]:
+        """Monday 00:00 and next Monday 00:00 of the CURRENT LOCAL week, as
+        aware local datetimes. The strip, the THIS WEEK section and any
+        other "this week" reader on the arrival share this boundary."""
+        local_now = self._to_local(now)
+        monday = local_now.date() - timedelta(days=local_now.weekday())
+        return self._local_midnight(monday), self._local_midnight(monday + timedelta(days=7))
+
+    @staticmethod
+    def _parse_iso(value: str) -> datetime | None:
+        try:
+            parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except (TypeError, ValueError):
+            return None
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed
+
     def _week_strip(self, now: datetime, has_calendar: bool) -> dict[str, Any]:
         """HS-175-02: build the WEEK strip data for the Door.
 
-        Returns {days: [{date, dow, count}], total, has_calendar} for the
-        current week (Mon-Sun).  Absent when no calendar source is connected.
+        Returns {days: [{date, dow, count}], total, has_calendar, starts_at,
+        ends_at} for the current LOCAL week (Mon-Sun; HS-175 C8 -- a Monday
+        20:00 meeting at -06:00 is a MON dot, never a TUE one). ``starts_at``
+        / ``ends_at`` are the week's bounds as UTC instants (ends_at is the
+        exclusive next-Monday-00:00 local) so the face can bound its
+        THIS WEEK section to the same week the strip draws (C9). Days are
+        absent when no calendar source is connected; the bounds always ride.
         """
+        monday_start, sunday_end = self._local_week_bounds(now)
+        start_utc = monday_start.astimezone(timezone.utc).isoformat()
+        end_utc = sunday_end.astimezone(timezone.utc).isoformat()
         if not has_calendar:
-            return {"days": [], "total": 0, "has_calendar": False}
-        # Compute Monday 00:00 UTC and Sunday 23:59 UTC of the current week.
-        days_since_monday = now.weekday()  # 0=Mon
-        monday = now - timedelta(days=days_since_monday)
-        monday_start = monday.replace(hour=0, minute=0, second=0, microsecond=0)
-        sunday_end = monday_start + timedelta(days=7)
-        start_iso = self._utc_iso(monday_start)
-        end_iso = self._utc_iso(sunday_end)
-        counts = self._calendar_events.count_per_day(start_iso, end_iso)
+            return {
+                "days": [], "total": 0, "has_calendar": False,
+                "starts_at": start_utc, "ends_at": end_utc,
+            }
+        # Bucket by LOCAL date in Python: the repository's count_per_day
+        # groups on the stored UTC date, which is the wrong day west of UTC
+        # for any evening meeting.
+        counts: dict[str, int] = {}
+        for event in self._calendar_events.list_in_range(start_utc, end_utc):
+            parsed = self._parse_iso(event.starts_at)
+            if parsed is None:
+                continue
+            local_date = self._to_local(parsed).strftime("%Y-%m-%d")
+            counts[local_date] = counts.get(local_date, 0) + 1
         dow_names = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
         days: list[dict[str, Any]] = []
         total = 0
         for i in range(7):
-            day = monday_start + timedelta(days=i)
-            date_str = day.strftime("%Y-%m-%d")
+            # Calendar-day arithmetic (not 24h steps): a DST edge inside the
+            # week must not shift a day's date.
+            date_str = (monday_start.date() + timedelta(days=i)).strftime("%Y-%m-%d")
             count = counts.get(date_str, 0)
             total += count
             days.append({
@@ -472,7 +540,10 @@ class DoorService:
                 "dow": dow_names[i],
                 "count": count,
             })
-        return {"days": days, "total": total, "has_calendar": True}
+        return {
+            "days": days, "total": total, "has_calendar": True,
+            "starts_at": start_utc, "ends_at": end_utc,
+        }
 
     @staticmethod
     def _scheduled_recording_item(
@@ -546,6 +617,7 @@ class DoorService:
                 item["armed"] = {
                     "recording_id": armed_info["recording_id"],
                     "arms_at": armed_info["arms_at"],
+                    "state": armed_info.get("state", "idle"),
                 }
         # HS-149-03/04: person_label + person_relationship_id projected
         # only when present — the armed_schedule_id only-when-present analogy.

@@ -46,8 +46,9 @@ these cannot be built to canon.
 - [ ] No prose in the artboards (Article VII.1; UX-CANON.md rule A.3).
 - [ ] Every artboard uses at least three type steps (UX-CANON.md rule
       C).
-- [ ] The event-born recording artboard shows the recording as ARMED,
-      not started (Article IV).
+- [ ] The event-born recording artboard shows the recording as ARMED
+      with its arm time (`ARMS HH:MM`); it records at the event like
+      every scheduled recording (ruling B11).
 
 ## Test plan
 

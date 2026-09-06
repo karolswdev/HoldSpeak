@@ -356,6 +356,90 @@ def snapshot_dir() -> Path:
     return Path.home() / ".local" / "share" / "holdspeak" / SNAPSHOT_DIR_NAME
 
 
+def is_generated_ics(path: Any) -> bool:
+    """True when ``path`` is a file INSIDE the snapshot directory -- the
+    only files this service ever created and may delete."""
+    try:
+        candidate = Path(str(path or "")).expanduser().resolve()
+        root = snapshot_dir().resolve()
+    except Exception:
+        return False
+    if not str(path or "").strip():
+        return False
+    try:
+        candidate.relative_to(root)
+    except ValueError:
+        return False
+    return candidate.suffix.lower() == ".ics"
+
+
+def delete_generated_ics(path: Any, *, db: Any = None) -> bool:
+    """HS-175 counsel C4 (the Remove half): delete the ICS the Snapshot verb
+    generated when its CalendarSource is removed, receipted
+    (``calendar.source.removed`` with the path).
+
+    Custody: only a file inside ``snapshot_dir()`` is ever deleted -- an
+    owner's own ICS path (a file source outside the directory) is never
+    touched.  Returns True when a file was deleted.  Never raises.
+    """
+    if not is_generated_ics(path):
+        return False
+    target = Path(str(path)).expanduser().resolve()
+    if not target.is_file():
+        return False
+    try:
+        target.unlink()
+    except OSError as exc:
+        log.warning("snapshot ICS removal failed for %s: %s", target, exc)
+        return False
+    _write_snapshot_receipt(
+        db, kind="calendar.source.removed", path=str(target),
+    )
+    log.info("snapshot ICS removed with its source: %s", target)
+    return True
+
+
+def _write_snapshot_receipt(db: Any, *, kind: str, path: str) -> None:
+    """Kernel receipt for a snapshot file effect (Article V:2, XI.2).
+
+    Mirrors HeartbeatService._write_receipt; never raises.
+    """
+    import time as _time
+
+    try:
+        if db is None:
+            from ..db import get_database
+            db = get_database()
+        receipt_id = f"snap_rcpt_{uuid.uuid4().hex[:12]}"
+        operation_id = f"snap_op_{uuid.uuid4().hex[:12]}"
+        idem_key = f"{kind}:{path}:{uuid.uuid4().hex[:8]}"
+        now = _time.time()
+        outcome = json.dumps({"kind": kind, "path": path}, separators=(",", ":"))
+        with db._connection() as conn:
+            conn.execute(
+                """INSERT INTO kernel_operations
+                   (operation_id, request_id, idempotency_key, name, version,
+                    principal_kind, principal_identity, target_ref, placement,
+                    envelope_sha256, policy_version, authority_basis,
+                    state, revision, native_id, created_at, updated_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,?)""",
+                (
+                    operation_id, idem_key, idem_key, kind, 1,
+                    "owner", "settings-write", f"calendar_source_file:{path}",
+                    "local", "", "", "owner-remove", "succeeded",
+                    operation_id, now, now,
+                ),
+            )
+            conn.execute(
+                """INSERT INTO kernel_receipts
+                   (receipt_id, operation_id, state, outcome, result_ref, created_at)
+                   VALUES (?,?,?,?,?,?)""",
+                (receipt_id, operation_id, "succeeded", outcome, f"calendar_source_file:{path}", now),
+            )
+    except Exception as exc:
+        log.warning("snapshot receipt write failed (%s %s): %s", kind, path, exc)
+
+
 def write_ics_atomic(source_id: str, ics_bytes: bytes) -> Path:
     """Write .ics atomically (temp + rename) to the snapshot directory."""
     directory = snapshot_dir()
@@ -514,28 +598,8 @@ def extract_via_router(
         # --- Routed path: assignment found, dispatch through the controller ---
         route_plan = admitted.get("route_plan", {})
         entries = route_plan.get("entries", ())
-        boundary_rank = {"local": 0, "mesh": 1, "private_network": 2, "cloud": 3}
-        boundaries = [str(e.get("boundary", "")) for e in entries]
-        widest = max(boundaries, key=lambda b: boundary_rank.get(b, 0)) if boundaries else "local"
-        egress: dict[str, Any] = {"scope": widest}
-        if widest in {"cloud", "private_network"}:
-            for entry in entries:
-                if str(entry.get("boundary", "")) == widest:
-                    dep_id = str(entry.get("deployment_revision_id", ""))
-                    if dep_id:
-                        try:
-                            from ..db import get_database
-                            with get_database()._connection() as conn:
-                                row = conn.execute(
-                                    "SELECT endpoint FROM deployment_revisions WHERE id=?",
-                                    (dep_id,),
-                                ).fetchone()
-                                if row:
-                                    from urllib.parse import urlparse
-                                    egress["host"] = urlparse(str(row["endpoint"])).hostname or ""
-                        except Exception:
-                            pass
-                    break
+        # C10: the same resolution the face read before the upload.
+        egress: dict[str, Any] = _egress_from_route_entries(entries)
 
         adapter = VisionPromptAdapter()
         routed = adoption.execute(
@@ -565,36 +629,20 @@ def extract_via_router(
 
     runner = broker.inference_runner
     adapter = VisionPromptAdapter()
+    # C10: egress is known the moment the revision is captured -- BEFORE
+    # the image leaves -- and is returned on failure too (counsel H2-1:
+    # a cloud dispatch that failed used to return egress None after the
+    # bytes had already been sent).
+    egress: dict[str, Any] | None = None
     try:
         from ..db import get_database
         db = get_database()
         # Pre-filter to vision-capable profiles BEFORE dispatching
-        # (HS-147-05): the profile list already knows which targets can
-        # handle multi-part image content.  When none qualify, the named
-        # refusal fires with zero inference dispatches.
-        from ..inference_targets import target_from_profile
-
-        # HS-175 N4: prefer local/LAN vision-capable profiles over cloud
-        # so a cloud model is only selected when it is the only option.
+        # (HS-147-05) and rank local/LAN before cloud (HS-175 N4) -- the
+        # ONE ranking ``resolve_snapshot_egress`` reads for the face.
         # Constitution Art. III + UX-CANON A.9: egress where it happens.
-        _BOUNDARY_RANK = {
-            "same_device": 0, "paired_device": 1,
-            "private_network": 2, "external_service": 3,
-        }
-        target = None
-        candidates: list[tuple[int, Any]] = []
-        for profile in db.profiles.list():
-            if profile.deleted:
-                continue
-            if not _vision_capable(profile, db):
-                continue
-            candidate = target_from_profile(profile, db)
-            if candidate.ready:
-                rank = _BOUNDARY_RANK.get(candidate.boundary, 99)
-                candidates.append((rank, candidate))
-        candidates.sort(key=lambda pair: pair[0])
-        if candidates:
-            target = candidates[0][1]
+        targets = _rank_vision_targets(db)
+        target = targets[0] if targets else None
         if target is None:
             return {
                 "output": json.dumps({
@@ -604,6 +652,11 @@ def extract_via_router(
                 "egress": None,
             }
         revision = capture_deployment_revision(db, target)
+        egress = _egress_for_scope(
+            _TARGET_BOUNDARY_SCOPE.get(revision.boundary, "cloud"),
+            revision.endpoint or "",
+            getattr(revision, "node", "") or "",
+        )
         captured_result: list[dict[str, Any]] = []
 
         def publish_capture(output: Any) -> str:
@@ -632,24 +685,17 @@ def extract_via_router(
                 "error": "no_vision_model_assigned",
                 "events": [],
             }),
-            "egress": None,
+            # The revision was captured (and the image may have left):
+            # the egress truth rides the refusal.  None only when no
+            # target was ever resolved.
+            "egress": egress,
         }
 
     if outcome.outcome == "succeeded" and captured_result:
         raw_output = str(captured_result[0].get("output", ""))
-        # HS-175 N4: derive scope from the revision boundary (the truth)
-        # and record the host for non-local boundaries, mirroring the
-        # routed path (lines 521-537).
-        _BOUNDARY_SCOPE = {
-            "same_device": "local", "paired_device": "mesh",
-            "private_network": "private_network",
-            "external_service": "cloud",
-        }
-        scope = _BOUNDARY_SCOPE.get(revision.boundary, "cloud")
-        egress: dict[str, Any] = {"scope": scope}
-        if scope in {"cloud", "private_network"}:
-            from urllib.parse import urlparse
-            egress["host"] = urlparse(revision.endpoint or "").hostname or ""
+        # HS-175 N4: scope from the revision boundary (the truth), host
+        # for every non-local boundary -- the same helper the routed path
+        # and the face use.
         return {"output": raw_output, "egress": egress}
 
     return {
@@ -657,5 +703,142 @@ def extract_via_router(
             "error": "no_vision_model_assigned",
             "events": [],
         }),
-        "egress": None,
+        "egress": egress,
     }
+
+
+# ── HS-175 counsel C10: ONE egress resolution, read before the upload ──
+#
+# The dispatch below and the Settings face's chip beside ``Snapshot`` read
+# the SAME ranking: the routed assignment's route plan when one exists
+# (boundaries ``local < mesh < private_network < cloud``), else the direct
+# dispatch's vision-capable profile ranking (``same_device < paired_device
+# < private_network < external_service``).  Scope ``local`` carries no
+# host; every other scope names the host bytes leave for (a paired
+# device names its endpoint host or node).
+
+_ROUTE_BOUNDARY_RANK = {"local": 0, "mesh": 1, "private_network": 2, "cloud": 3}
+_TARGET_BOUNDARY_RANK = {
+    "same_device": 0, "paired_device": 1,
+    "private_network": 2, "external_service": 3,
+}
+_TARGET_BOUNDARY_SCOPE = {
+    "same_device": "local", "paired_device": "mesh",
+    "private_network": "private_network",
+    "external_service": "cloud",
+}
+SNAPSHOT_CAPABILITY_ID = "calendar.snapshot_extract"
+
+
+def _egress_for_scope(scope: str, endpoint: str = "", node: str = "") -> dict[str, Any]:
+    """``{"scope", "host"?}`` -- the host for every non-local scope."""
+    from urllib.parse import urlparse
+
+    egress: dict[str, Any] = {"scope": scope}
+    if scope != "local":
+        host = ""
+        try:
+            host = urlparse(endpoint or "").hostname or ""
+        except Exception:
+            host = ""
+        host = host or (node or "")
+        egress["host"] = host
+    return egress
+
+
+def _egress_from_route_entries(entries: Any, db: Any = None) -> dict[str, Any]:
+    """Egress truth from a route plan's entries (the routed path)."""
+    boundaries = [str(e.get("boundary", "")) for e in entries]
+    widest = (
+        max(boundaries, key=lambda b: _ROUTE_BOUNDARY_RANK.get(b, 0))
+        if boundaries else "local"
+    )
+    if widest == "local":
+        return {"scope": "local"}
+    endpoint, node = "", ""
+    for entry in entries:
+        if str(entry.get("boundary", "")) != widest:
+            continue
+        dep_id = str(entry.get("deployment_revision_id", ""))
+        if dep_id:
+            try:
+                if db is None:
+                    from ..db import get_database
+                    db = get_database()
+                with db._connection() as conn:
+                    row = conn.execute(
+                        "SELECT endpoint, node FROM deployment_revisions WHERE id=?",
+                        (dep_id,),
+                    ).fetchone()
+                    if row:
+                        endpoint = str(row["endpoint"] or "")
+                        node = str(row["node"] or "")
+            except Exception:
+                pass
+        break
+    return _egress_for_scope(widest, endpoint, node)
+
+
+def _rank_vision_targets(db: Any) -> list[Any]:
+    """Ready, vision-capable targets, nearest boundary first (direct path).
+
+    HS-147-05 pre-filter + HS-175 N4 ranking: local/LAN before cloud so a
+    cloud model is only selected when it is the only option.
+    """
+    from ..inference_targets import target_from_profile
+
+    candidates: list[tuple[int, Any]] = []
+    for profile in db.profiles.list():
+        if profile.deleted:
+            continue
+        if not _vision_capable(profile, db):
+            continue
+        candidate = target_from_profile(profile, db)
+        if candidate.ready:
+            rank = _TARGET_BOUNDARY_RANK.get(candidate.boundary, 99)
+            candidates.append((rank, candidate))
+    candidates.sort(key=lambda pair: pair[0])
+    return [candidate for _rank, candidate in candidates]
+
+
+def resolve_snapshot_egress(db: Any = None) -> dict[str, Any] | None:
+    """Read-only: where the NEXT Snapshot upload's image would go.
+
+    Returns ``{"scope": "local"}`` / ``{"scope": ..., "host": ...}`` from the
+    same resolution ``extract_via_router`` dispatches through, or ``None``
+    when no vision model is resolvable (the upload would refuse by name,
+    ``no_vision_model_assigned``).  No admission, no execution, no write.
+    """
+    # Routed path: the Phase 143 assignment's route plan (pure resolution).
+    try:
+        broker = _service()
+        plans = getattr(broker.inference_adoption_service, "plans", None)
+        if plans is not None:
+            from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
+
+            plan = plans.resolve_route_plan(
+                ROUTE_PLANNING_AUTHORITY, capability_id=SNAPSHOT_CAPABILITY_ID,
+            )
+            entries = plan.get("entries") or ()
+            if entries:
+                return _egress_from_route_entries(entries, db)
+    except Exception as exc:
+        log.info("Snapshot egress: routed resolution unavailable (%s)", exc)
+
+    # Direct path: the vision-capable profile ranking.
+    try:
+        if db is None:
+            from ..db import get_database
+            db = get_database()
+        targets = _rank_vision_targets(db)
+        if targets:
+            target = targets[0]
+            deployment = getattr(target, "deployment", None)
+            return _egress_for_scope(
+                _TARGET_BOUNDARY_SCOPE.get(target.boundary, "cloud"),
+                getattr(deployment, "endpoint", "") if deployment else "",
+                getattr(deployment, "node", "") if deployment else "",
+            )
+    except Exception as exc:
+        log.info("Snapshot egress: direct resolution unavailable (%s)", exc)
+    return None

@@ -465,3 +465,129 @@ class TestCalendarEventProjectsRepo:
         index = db.calendar_event_projects.build_event_project_index()
         assert "evt-1" in index
         assert index["evt-1"] == ("proj-1", "Alpha")
+
+
+# -- HS-175 counsel-on-built: C5 / C6(a) / C6(c) ----------------------------
+#
+# C5  DELETE /link is durable: the suppression outlives the next refresh
+#     and a time change; a manual link clears it.
+# C6a the Watch-query branch is gone -- no "no such column" warning per Room.
+# C6c a manual link follows its event across a time change (rebind by uid).
+
+_FMT = "%Y%m%dT%H%M%SZ"
+
+
+def _seed_room(db: Database, pid: str, name: str) -> None:
+    with db._connection() as conn:
+        conn.execute("INSERT INTO projects (id, name) VALUES (?, ?)", (pid, name))
+
+
+def _timed_ics(title: str, start: datetime, *, uid: str = "test-1") -> bytes:
+    return _make_ics(
+        uid=uid, title=title,
+        start=start.strftime(_FMT), end=(start + timedelta(hours=1)).strftime(_FMT),
+    )
+
+
+class TestUnlinkIsDurable:
+    def test_unlink_survives_the_next_refresh(self, db: Database, ics_file: Path) -> None:
+        _seed_room(db, "proj-1", "Q4 Platform")
+        conductor = _make_conductor(db, str(ics_file))
+        conductor.refresh()
+        event_id = db.calendar_events.list_all()[0].id
+        assert [l.project_id for l in db.calendar_event_projects.list_for_event(event_id)] == ["proj-1"]
+
+        assert db.calendar_event_projects.unlink(event_id, "proj-1") == 1
+        assert db.calendar_event_projects.is_suppressed(event_id, "proj-1")
+
+        conductor.refresh()  # the matcher would re-link by title without C5
+
+        assert db.calendar_event_projects.list_for_event(event_id) == []
+        assert event_id not in db.calendar_event_projects.build_event_project_index()
+
+    def test_unlink_all_survives_and_a_manual_link_clears_it(self, db: Database, ics_file: Path) -> None:
+        _seed_room(db, "proj-1", "Q4 Platform")
+        conductor = _make_conductor(db, str(ics_file))
+        conductor.refresh()
+        event_id = db.calendar_events.list_all()[0].id
+
+        assert db.calendar_event_projects.unlink_event(event_id) == 1
+        conductor.refresh()
+        assert db.calendar_event_projects.list_for_event(event_id) == []
+
+        # The owner's newer word: link it by hand -> the suppression is cleared.
+        db.calendar_event_projects.link(event_id, "proj-1", "manual")
+        assert not db.calendar_event_projects.is_suppressed(event_id, "proj-1")
+        conductor.refresh()
+        links = db.calendar_event_projects.list_for_event(event_id)
+        assert [(l.project_id, l.match_source) for l in links] == [("proj-1", "manual")]
+
+    def test_unlink_survives_a_time_change(self, db: Database, tmp_path: Path) -> None:
+        base = datetime.now(timezone.utc).replace(microsecond=0) + timedelta(hours=2)
+        ics = tmp_path / "moving.ics"
+        ics.write_bytes(_timed_ics("Q4 Platform Standup", base))
+        _seed_room(db, "proj-1", "Q4 Platform")
+        conductor = _make_conductor(db, str(ics))
+        conductor.refresh()
+        old_id = db.calendar_events.list_all()[0].id
+        db.calendar_event_projects.unlink(old_id, "proj-1")
+
+        ics.write_bytes(_timed_ics("Q4 Platform Standup", base + timedelta(hours=1)))
+        conductor.refresh()
+
+        new_id = db.calendar_events.list_all()[0].id
+        assert new_id != old_id, "the projection id regenerated on the time change"
+        assert db.calendar_event_projects.list_for_event(new_id) == []
+        assert db.calendar_event_projects.is_suppressed(new_id, "proj-1")
+
+
+class TestNoWatchQueryWarning:
+    def test_refresh_logs_no_broken_watch_query(self, db: Database, ics_file: Path, caplog) -> None:
+        """C6(a): the branch that selected a column that does not exist is gone."""
+        import logging
+
+        _seed_room(db, "proj-1", "Q4 Platform")
+        conductor = _make_conductor(db, str(ics_file))
+        with caplog.at_level(logging.WARNING, logger="holdspeak.calendar_ingest_conductor"):
+            conductor.refresh()
+        assert "watch query load failed" not in caplog.text
+        assert "no such column" not in caplog.text
+        # and the title match still links
+        assert len(db.calendar_event_projects.list_for_project("proj-1")) == 1
+
+
+class TestManualLinkFollowsTimeChange:
+    def test_manual_link_rebinds_by_uid(self, db: Database, tmp_path: Path) -> None:
+        base = datetime.now(timezone.utc).replace(microsecond=0) + timedelta(hours=2)
+        ics = tmp_path / "vendor.ics"
+        ics.write_bytes(_timed_ics("Vendor call", base, uid="vendor-1"))
+        _seed_room(db, "proj-a", "Alpha Room")
+        conductor = _make_conductor(db, str(ics))
+        conductor.refresh()
+        old = db.calendar_events.list_all()[0]
+        db.calendar_event_projects.link(old.id, "proj-a", "manual")
+
+        ics.write_bytes(_timed_ics("Vendor call", base + timedelta(hours=1), uid="vendor-1"))
+        conductor.refresh()
+
+        new = db.calendar_events.list_all()[0]
+        assert new.id != old.id
+        links = db.calendar_event_projects.list_for_event(new.id)
+        assert [(l.project_id, l.match_source) for l in links] == [("proj-a", "manual")]
+        # No orphan row survives against the dead id.
+        assert [l.calendar_event_id for l in db.calendar_event_projects.list_for_project("proj-a")] == [new.id]
+
+    def test_manual_link_dropped_when_uid_leaves(self, db: Database, tmp_path: Path) -> None:
+        base = datetime.now(timezone.utc).replace(microsecond=0) + timedelta(hours=2)
+        ics = tmp_path / "vendor.ics"
+        ics.write_bytes(_timed_ics("Vendor call", base, uid="vendor-1"))
+        _seed_room(db, "proj-a", "Alpha Room")
+        conductor = _make_conductor(db, str(ics))
+        conductor.refresh()
+        old = db.calendar_events.list_all()[0]
+        db.calendar_event_projects.link(old.id, "proj-a", "manual")
+
+        ics.write_bytes(_timed_ics("Other call", base, uid="other-9"))
+        conductor.refresh()
+
+        assert db.calendar_event_projects.list_for_project("proj-a") == []
