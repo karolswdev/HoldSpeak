@@ -1,343 +1,197 @@
-# HoldSpeak Getting Started
+# Getting Started
 
-<p align="center">
-  <img src="assets/pixellab/hold-to-talk-microphone.png" alt="Pixel art microphone with hold-to-talk waves" width="128">
-</p>
+Install HoldSpeak and keep your first sentence as text.
+Then configure models for Threads, Interview, and other AI work.
 
-This guide starts with one useful loop: open HoldSpeak, **Dictate one sentence**,
-edit it, then **Copy** or **Keep as Note**. Your first completion furnishes the
-Desk automatically. No extra setup is required before that first value.
+## Requirements
 
-## 1. Install
+- Python 3.10 or later.
+- A microphone and permission to use it.
+- A supported transcription backend: MLX Whisper on Apple Silicon, or faster-whisper on Linux.
+- For a source installation: Git, `uv`, npm, and Node.js 22.12 or later.
 
-The latest published release is `0.4.0`:
+The transcription backend can download model files on first use.
+A text model is a separate requirement for AI work.
 
-```bash
+On macOS, grant microphone access to the process that starts HoldSpeak.
+Global hotkeys and text insertion can also require Accessibility and Input Monitoring permissions.
+If PortAudio is missing, install it with `brew install portaudio`.
+
+On Debian or Ubuntu, install the system audio dependencies:
+
+```sh
+sudo apt-get install portaudio19-dev ffmpeg xclip pulseaudio-utils
+```
+
+Linux packages and desktop permissions differ by distribution.
+Wayland can restrict global hotkeys and direct text insertion.
+
+## Install from source
+
+This path provides the features documented on `main`.
+The Python build hook installs the Web dependencies and builds the Web app.
+
+1. Clone the repository.
+
+   ```sh
+   git clone https://github.com/karolswdev/HoldSpeak.git
+   cd HoldSpeak
+   ```
+
+2. Create a virtual environment.
+
+   ```sh
+   uv venv
+   ```
+
+3. Activate the environment.
+
+   ```sh
+   source .venv/bin/activate
+   ```
+
+4. Install HoldSpeak with the applicable command.
+
+   ```sh
+   # Apple Silicon
+   uv pip install -e .
+
+   # Linux
+   uv pip install -e '.[linux]'
+   ```
+
+Run only the command for your platform.
+Keep this environment active for the commands in this guide.
+
+## Install a published package
+
+A published package can differ from these documents.
+Use this path when you want a release instead of a source checkout.
+
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
 python -m pip install holdspeak
 ```
 
-This guide tracks `main`, which includes unreleased work after `0.4.0`. For
-exact parity with the screens and features described below, install from a
-checkout. Building the bundled Web app requires npm and a Vite-compatible
-Node.js release (20.19+ or 22.12+):
+On Linux, replace the last command with `python -m pip install 'holdspeak[linux]'`.
+A prebuilt wheel includes the Web app. A source package requires npm to build it.
 
-```bash
-uv pip install -e .
-```
+## Start HoldSpeak
 
-Linux users should install system audio dependencies first:
+1. Start the runtime.
 
-```bash
-sudo apt-get install portaudio19-dev ffmpeg xclip pulseaudio-utils
-uv pip install -e '.[linux]'
-```
+   ```sh
+   holdspeak
+   ```
 
-If you want meeting intelligence or local llama.cpp meeting analysis:
+2. Open the URL printed in the terminal.
 
-```bash
-uv pip install -e '.[meeting]'
-```
+The default listener uses loopback (`127.0.0.1`).
+Use the printed URL because the port and access parameters can differ.
+See [Security & Privacy](SECURITY.md) before you enable remote access.
 
-## 2. Optional diagnostics
+## Keep your first sentence
 
-Run:
+1. Select **Dictate one sentence** on the Desk.
+2. Grant browser microphone access if requested.
+3. Dictate a short sentence.
+4. Edit the transcript if necessary.
+5. Select **Copy** or **Keep as Note**.
 
-```bash
-holdspeak doctor
-```
+The first completion creates six drawers: Inbox, Personal, Work, Meetings, Decisions, and Reference.
+It also creates a Start here Note and the **Everyday context** prompts.
+These prompts contain questions and examples. They contain no inferred personal facts.
 
-Use this when first capture needs repair; it is not a first-value prerequisite.
-Fix anything marked as failing before debugging higher-level features.
-The most important checks are microphone access, transcription backend,
-hotkey support, text insertion support, web runtime, and optional LLM
-runtime status. `doctor` also reports the database schema and config state,
-so you know it is healthy before and after an upgrade.
+Everyday context starts unused.
+Attach it when you want a model to use it.
+You can also choose an explicit default for future Thoughts.
+See [Develop a thought](USER_GUIDE.md#develop-a-thought) for those controls.
 
-Later, when you upgrade HoldSpeak, you can snapshot your data first with
-`holdspeak backup` and put a snapshot back with `holdspeak restore`. Upgrades
-are safe by default; see [`RELEASING.md`](RELEASING.md) for what happens to your
-data on a version change.
+## Find your work
 
-## 3. Start HoldSpeak
+The **arrival** shows items that need you, unfinished Thoughts, a brief, and recent Meetings.
+Use **Floor** to open the spatial Desk.
+Use the **Desk** menu to create records and the **Go** menu to open tools.
+On phones, use the compact **Go** menu.
 
-Run:
-
-```bash
-holdspeak
-```
-
-This starts the local web runtime on loopback (`127.0.0.1`). On a fresh install
-the terminal points you at the Desk and your first words:
-
-```text
-HoldSpeak web runtime is running at: http://127.0.0.1:PORT
-  → Welcome! Say your first words on the Desk: open http://127.0.0.1:PORT/
-```
-
-## 4. Your first sentence and furnished Desk
-
-Choose **Dictate one sentence**, edit the text, then choose **Copy** or
-**Keep as Note**. The first completion automatically furnishes six drawers:
-**Inbox, Personal, Work, Meetings, Decisions,** and **Reference**. It also adds
-a **Start here** note and five editable prompts collected in **Everyday
-context**: About me, Current priorities, How I like help, People & vocabulary,
-and Meeting preferences. They contain questions and examples, not invented facts
-about you.
-
-Everyday context is never sent to AI automatically. Attach it in Ask, choose it
-as an Agent's Context, or attach it from a developing Thought only when you want
-it used. A new Thought says **AI context None**; its compact Attach picker puts
-Everyday context first so the explicit choice still takes one interaction. To
-reuse the complete attached set on later Thoughts created or adopted on this
-hub, choose **Use these by default** in that picker. This future-only default is
-empty until you set it, never changes existing Thoughts, never syncs, and never
-starts AI. **Remove from this Thought** and **Stop using by default** are
-deliberately separate actions.
-
-Open a developing Thought from the Door's **Active** column to enter its
-Thought Workbench. The Note remains a full editable document; the Interview
-asks one focused question at a time. Use **Add & ask next** for the fast
-explicit loop, **Add to Note** to stop after the current answer, and **Finish
-Thought** when the Note is ready. Each turn names its intended boundary and
-records where it actually ran. No model call happens merely because the
-Workbench was opened.
-
-## 5. The Door, then the Floor
-
-After your first sentence, a returning user lands on the **Chair Door**
-(there is no wizard). Its server-derived board shows **Overdue, Now, Waiting,
-Unassigned,** and **Active**, followed by one upcoming timeline. The **Floor**
-remains the spatial world for your meetings, notes, knowledge bases, and
-agents. Tap an object to open it in place, drag it onto a zone to file it,
-press the orb to record, and ask an agent from the rail: its answer lands on
-the Floor as an artifact you can open, trace (`via` the agent that made it),
-and file. Every input takes speech: hold the mic, talk, release (the hub's own
-local Whisper transcribes; the boundary badge names any configured egress). If
-something later needs attention, the **Setup window** (deep link `/setup`) is
-the calm health surface, and the egress badge in the Desk's corner always
-shows what can leave your machine.
-
-The web surface carries the Chair Door and the Floor. The menu (top left) and
-the tool shelf open Dictation, Meetings, Studio, Settings, and the rest as
-floating windows you can drag, resize, snap to an edge, minimize to the dock,
-or maximize. Nothing navigates away from the Desk.
-
-Old route addresses still work as deep links; each lands on the Desk with
-the matching window open:
-
-| Deep link | Opens the window |
+| Address | Destination |
 | --- | --- |
-| `/welcome` | A compatibility route to the same first-words atom the Desk shows |
-| `/` | The Chair Door after first value: the board and upcoming rail. Use the Floor control for the spatial world (record, create, open, file, run). |
-| `/dictation` | Speak: the TALK key and its Aim row, the journal, learning, pre-briefing. An optional preview mode (Settings, Voice) shows each dictation on a card first: Type it commits, Discard drops it. |
-| `/history` | Meetings: capture or import, the archive, aftercare |
-| `/studio` | Studio: the advanced tier (Workbench, Cadence, Commands, and more) |
-| `/settings` | Settings (sectioned and searchable) |
-| `/setup` | Setup and health: readiness plus the single next step |
+| `/` | The Desk, including first capture on a new installation |
+| `/dictation` | Speak |
+| `/history` | Meetings |
+| `/studio` | Studio |
+| `/settings` | Settings |
+| `/setup` | Setup diagnostics and recovery |
 
-## 6. Voice typing beyond your first sentence
+These addresses open the corresponding surface within the Desk.
+See [The Desk](WEB_DESK.md) for windows, objects, and navigation.
 
-The flagship act, on the global hotkey:
+## Configure AI work
 
-1. Start HoldSpeak with `holdspeak`.
-2. Click into a text field in another app.
-3. Hold the configured hotkey.
-4. Speak.
-5. Release the hotkey.
+1. Open **Settings > Models**.
+2. Review the engines listed by the Concierge.
+3. Add an endpoint or download a supported model if no suitable engine exists.
+4. Check the host and engine proposed for each capability group.
+5. Select **Use these** when the required groups are ready.
 
-Default hotkey:
+Use **Adjust** when an individual capability needs a different assignment.
+A cloud **Check** can make a paid request. Its control shows the cost indicator.
+See [Models](MODELS.md) for setup requirements and readiness failures.
 
-- macOS: Right Option
-- Linux: Right Alt
+## Start an Interview
 
-If global hotkeys or synthetic typing are blocked, keep the HoldSpeak window
-focused and use the focused hold-to-talk fallback.
+1. Select **Desk > New Thread**.
+2. Select the **Interview** mode.
+3. Describe one outcome you want from HoldSpeak.
+4. Select **Send**.
 
-The same act has a face on the Desk. Open **Speak** (deep link `/dictation`)
-and it delivers for real through the same route, pipeline, journal, and
-kernel warrant as the hotkey:
+For example: “Help me prepare a weekly architecture decision review.”
+The model can ask questions, inspect permitted records, and save context or suggestions.
+Use **Section** to revisit a topic.
+See [Interview](INTERVIEW.md) for saved context, manual drafts, and current limits.
 
-- **Aim** says where a released **TALK** sends the words: `FOCUSED APP`
-  types into the app you were in, `AGENT` delivers into a coder session that
-  is waiting, and `THIS FIELD` just fills the well below. The pick is
-  remembered.
-- Aimed at `AGENT` it refuses when no session is awaiting (`NO AGENT
-  AWAITING`) rather than free-typing into whatever happens to be focused.
-  Other refusals read the same way: `NO FOCUSED APP`, `NO TYPING DRIVER`,
-  `KERNEL REFUSED`.
-- The receipt reports release-to-landed latency in milliseconds.
-- **REHEARSE** is the explicit dry run. It previews the pipeline and delivers
-  nothing, and it is never what a plain release does.
+## Dictate into another app
 
-### The open mic
+1. Place the cursor in a text field.
+2. Hold Right Option on macOS or Right Alt on Linux.
+3. Speak.
+4. Release the key.
 
-**OPEN MIC** is the latch next to TALK, for when you do not want to hold
-anything:
+These are the default hotkeys. Settings can specify a different key.
+The active Control mode and preview setting determine whether HoldSpeak types immediately or shows a preview.
+See [Voice typing](USER_GUIDE.md#voice-typing) for punctuation, clipboard insertion, and wake-word input.
 
-- **One grant.** The browser is asked for the microphone once and the grant is
-  kept. Between utterances the session suspends (the audio context suspends
-  and the tracks are disabled, so nothing is captured) rather than asking
-  again. A pause longer than 15 seconds releases the device on its own.
-- **Utterances land the same way.** A voice-activity detector on this machine
-  decides where each utterance starts and ends (energy with hysteresis and a
-  700 ms hangover, 300 ms of pre-roll so the first phoneme survives). Each one
-  goes through the same transcription route, the same Aim, and the same
-  delivery contract as a held release, so an ambient utterance and a held one
-  are indistinguishable downstream. Speech shorter than 350 ms is a cough, not
-  words: it is dropped. An empty transcript is dropped silently, without
-  spending a delivery, a journal row, or a receipt.
-- **Holding wins.** TALK, the global hotkey, and any mic on the Desk preempt
-  the open mic: while a hold is live the ambient path is gated off and its
-  in-flight utterance is discarded. One floor, one owner, the same as the
-  physical key.
-- **The lamp does not lie.** The Desk chrome carries a mic lamp that reads
-  `Mic idle`, `Mic open`, `Mic speech`, or `Mic held` from every room. It is
-  absent only when the device is genuinely released, so its presence is the
-  honest signal that audio is live. Pressing OPEN MIC again stops the tracks
-  for real; it does not mute them.
-- **The floor is shared with the rest of the machine.** The browser claims the
-  same one-at-a-time audio floor the hotkey, the meeting recorder, and the
-  wake listener use, on a lease it heartbeats. If a meeting holds it, the claim
-  is refused with the owner named (`FLOOR HELD MEETING`) and the device never
-  opens. If a meeting takes it mid-session, the mic goes down first and the
-  room tells you who took it. The lease means a closed tab cannot wedge your
-  hotkey.
+## Add optional capabilities
 
-A browser that cannot capture audio shows OPEN MIC disabled with the reason on
-it, rather than hiding it. Serving the hub over plain HTTP to another machine
-is the usual cause: browsers withhold the microphone outside a secure origin,
-so reach it over localhost or HTTPS.
+From an active source environment, install only the extras you need:
 
-> **Tip: see what the copilot is doing without the dashboard.** Turn on **desktop
-> presence** in **Settings** (or set `presence.enabled` in your config) to get an
-> ambient, native surface (a floating HUD on macOS and X11, a tray glyph plus
-> notification everywhere). It shows whether it's listening, transcribing, or typing
-> while you dictate into another app, and it never takes keyboard focus. For a
-> headless launch you can force it on with `HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak`.
-> See [Desktop Presence](DICTATION_PIPELINE_GUIDE.md#11-desktop-presence-ambient-on-desktop-status).
-
-## 7. Use Punctuation Commands
-
-Say punctuation naturally:
-
-| Say | Inserts |
+| Capability | Command |
 | --- | --- |
-| `period` or `full stop` | `.` |
-| `comma` | `,` |
-| `question mark` | `?` |
-| `exclamation mark` | `!` |
-| `new line` | line break |
-| `new paragraph` | blank line |
+| Meeting analysis and optional meeting dependencies | `uv pip install -e '.[meeting]'` |
+| Local GGUF text runtime | `uv pip install -e '.[dictation-llama]'` |
+| MLX text runtime on Apple Silicon | `uv pip install -e '.[dictation-mlx]'` |
+| OpenAI-compatible dictation runtime | `uv pip install -e '.[dictation-openai]'` |
 
-You can add your own spoken symbols, and pin transcription to your
-language, under **Settings, Voice typing**. The
-[User Guide](USER_GUIDE.md) covers both.
-
-Example:
-
-```text
-hello comma can you review this question mark
-```
-
-becomes:
-
-```text
-Hello, can you review this?
-```
-
-## 8. Use Clipboard Insertion
-
-Say `clipboard` inside a dictated phrase when you want HoldSpeak to splice in
-the current clipboard text. The word `clipboard` is removed from the output and
-replaced with the clipboard contents.
-
-Example:
-
-```text
-Taking a look at this clipboard could you refactor it?
-```
-
-If the clipboard contains a code block, that code is inserted into the same
-dictated request before HoldSpeak types or pastes it.
-
-## 9. Set Up A Project Root
-
-Open:
-
-```text
-/dictation
-```
-
-Use the **Project root** bar to select the repository you are actively working
-in. This lets HoldSpeak find project blocks, project knowledge, `.hs/` context,
-and agent-hook state.
-
-Good project markers include:
-
-- `.git/`
-- `pyproject.toml`
-- `package.json`
-- `.holdspeak/`
-- `.hs/`
-
-## 10. Repair or deploy later
-
-Automatic furnishing is the ordinary first-run path. If you need to repair a
-Desk, `holdspeak seed` creates only starter objects HoldSpeak has never seen,
-preserving edits, filing, attachments, and deletions. To deliberately restore
-the furnished defaults, use the destructive, confirmed **Settings, Desk →
-Reset to seed** action.
-
-For model-backed work or headless deployment, open **Settings > Models > Model
-Library**. Add a local GGUF, preset, or compatible endpoint, then choose the
-ordered model list for each relevant job in **Assignments**. A
-`HOLDSPEAK_PROFILE_<ID>_KEY` environment variable remains the headless key
-fallback. See [Models (bring your own)](MODELS.md) and [Models and
-assignments](INFERENCE_TARGETS.md) for those optional contracts.
-
-## 11. Configure model-backed rewriting later
-
-The dictation pipeline is already part of HoldSpeak; model-backed rewriting is
-a later configuration, not a requirement for your first sentence. When ready,
-continue with:
-
-- [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md)
-- [User Guide](USER_GUIDE.md)
-
-## 12. Where To Go Next
-
-Once hold-to-talk feels natural, the rest is one setting away each:
-
-- **Hands-free**: [the wake word](USER_GUIDE.md#the-wake-word) listens for a
-  phrase and previews the result before anything is typed.
-- **Your language**: [the spoken language setting](USER_GUIDE.md#speak-your-language) pins any of
-  Whisper's 99 languages, and [the spoken-symbol dictionary](USER_GUIDE.md#punctuation)
-  types your own vocabulary.
-- **Spoken actions**: [voice commands](VOICE_COMMANDS.md) map a keyword to a
-  real action.
-- **Meetings**: [the Meeting Mode Guide](MEETING_MODE_GUIDE.md) covers live
-  capture, importing recordings or transcripts you already have, and the
-  aftercare that closes the loop.
-- **From another device**: an iPad [companion](USER_GUIDE.md#companions) drives
-  both modes over the hub's local API: dictate into your desk, read a meeting
-  back with its artifacts and sources, and approve a proposal.
+The package form uses `holdspeak[extra]` in place of `.[extra]` and omits `-e`.
+See [Meeting mode](MEETING_MODE_GUIDE.md) for system audio setup.
+See [Project Rooms](PROJECT_ROOMS.md) for source-provider requirements.
 
 ## Troubleshooting
 
-| Symptom | Likely cause | First fix |
-| --- | --- | --- |
-| Hotkey does nothing | OS blocked global hooks | Run `holdspeak doctor`; try focused fallback |
-| Text does not appear | Synthetic typing blocked | Try clipboard/manual paste fallback |
-| Transcription is unavailable | Missing backend/model | Run `holdspeak doctor` |
-| Web UI does not open | Browser auto-open disabled or blocked | Visit the printed local URL manually |
-| Project is wrong | Started from another cwd | Set Project root in the Dictation window |
+| Problem | Action |
+| --- | --- |
+| Installation cannot build the Web app | Check `node --version` and `npm --version`. Install the required Node version, then repeat the installation. |
+| Capture cannot start | Check browser and operating-system microphone permissions. Run `holdspeak doctor`. |
+| Transcription fails | Read the reported backend or model error. Install the platform extra if it is missing. |
+| The hotkey works but text does not appear | Check desktop permissions and the preview setting. On Wayland, try clipboard paste. |
+| A Thread cannot run | Open **Settings > Models**. Repair the named assignment or engine. |
+| A documented control is absent | Compare your installed version with `main`. Check the guide for that feature. |
+| You need to restore data | Read [Release and recovery](RELEASING.md) before you run `holdspeak restore`. |
 
 ## See also
 
-- [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md): once basic voice typing
-  works, turn on the project-aware copilot.
-- [Meeting Mode Guide](MEETING_MODE_GUIDE.md): meeting-specific setup and capture.
-- [Models (bring your own)](MODELS.md): pick and point at an LLM.
-- [Models and assignments](INFERENCE_TARGETS.md): availability, job selection,
-  frozen plans, and secret custody.
-- [Security & Privacy](SECURITY.md): what's stored and what can leave your machine.
+- [User Guide](USER_GUIDE.md): daily tasks and detailed controls.
+- [Interview](INTERVIEW.md): repeatable context discovery and suggestions.
+- [Models](MODELS.md): engine availability and capability assignments.
+- [Control modes](AUTHORITY.md): approval rules and action limits.

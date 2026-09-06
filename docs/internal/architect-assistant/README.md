@@ -2,6 +2,11 @@
 
 Status: target specification with an implemented first manual Interview increment. Version 0.2, 2026-09-05. See [delivery status and evidence](DELIVERY_STATUS.md) for implemented behavior and remaining work.
 
+For daily use, read the [Interview user guide](../../INTERVIEW.md),
+[architecture work recipes](../../ARCHITECTURE_WORK.md), and
+[automation boundaries](../../AUTOMATION.md). This package retains the target
+requirements and implementation evidence.
+
 HoldSpeak shall help a Senior Software Architect preserve context, make and recover decisions, follow through on commitments, and direct agent work during an organizational transformation. Success means useful work completed and time recovered across an ordinary working week.
 
 The primary conversational entry is a repeatable interview: explore goals, Projects, concerns, Cadences, People, Decisions, or delegation; receive contextual LLM suggestions; and turn a chosen suggestion into a tested supported setup. Revisit any section as work changes. Intelligent conversation guides discovery; deterministic state, existing service contracts, and actual tool results govern execution.

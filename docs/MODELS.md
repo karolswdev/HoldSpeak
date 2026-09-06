@@ -1,168 +1,130 @@
-# Models: bring your own
+# Models
 
-HoldSpeak uses models you choose. **Model Library** is where you make a model
-available. **Assignments** is where you choose the compatible ordered model list
-for a kind of work. This guide gets you set up. Read the internal
-[Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md)
-when you need the execution mechanics.
+Choose the engines that HoldSpeak uses for each capability.
+The **Concierge** combines engine discovery and model assignments in one window.
 
-> **Local-first.** Your model material and connection details stay on your hub.
-> Model material leaves only for the model endpoint you choose. Read
-> [Security & Privacy](SECURITY.md) for the complete egress boundary.
+## Configure an assignment set
 
-## Start here
+1. Open **Settings > Models**.
+2. Review the engines under **FOUND**.
+3. Add an engine or download a supported preset if necessary.
+4. Review the proposed engine for each group under **THE SET**.
+5. Select **Use these** when the set is ready.
 
-1. Open **Settings, Models**.
-2. In **Model Library**, add a model from the catalog, add a model file, connect
-   a provider, or connect a paired device.
-3. Check its readiness. A model that is present is not necessarily ready to run.
-4. Open **Assignments** and choose the compatible model list for the work you
-   want to run. Use **Use default** when the inherited choice is the right one.
+Each engine row identifies its host and current state.
+A file on disk or a saved credential does not prove that the engine can run.
+The set can include different engines for different kinds of work.
 
-Adding or connecting a model does not change an Assignment. Choosing or
-clearing an Assignment does not alter the Model Library. Keep those two actions
-separate when you repair setup.
+## Add or check an engine
 
-## Model Library: make models available
+Use **Add an engine...** for a keyless compatible endpoint.
+Enter its base URL in the endpoint field.
+Select **Check** to inspect it.
 
-The Model Library is the owner surface for availability. It can start a
-catalog-pinned model acquisition, adopt a detected or uploaded model file,
-connect a hosted provider, define an OpenAI-compatible endpoint, or connect an
-existing paired device. A provider key is submitted through a separate
-write-only field. The Library shows whether a required key is present, never its
-value.
+A catalog preset shows **Download** and its file size when the model is absent.
+Selecting **Download** starts acquisition through the Model Library service.
+Dependent assignments remain **WAITING** until the model is ready.
 
-You can use three practical sources:
+Cloud rows indicate whether a key is set.
+Their **Check** control shows `1 TOKEN · $` before a paid probe.
+The Concierge requires that explicit action for a paid cloud check.
+Normal model work can also incur provider charges.
 
-- **Local GGUF.** Install the `dictation-llama` extra when you want the local
-  runtime, then add a supported GGUF model to the Library. HoldSpeak detects
-  valid local artifacts and reports runtime readiness rather than treating a
-  filename as proof that a model will run.
-- **MLX on Apple Silicon.** Install the `dictation-mlx` extra for MLX text
-  support. Model Library can detect MLX safetensors artifacts. Today they remain
-  unavailable for Thoughts, even when the artifact is present, and stay useful
-  only on the paths that support them.
-- **A provider or another device.** Connect a hosted provider, define an
-  OpenAI-compatible endpoint, or connect a paired device. Install
-  `dictation-openai` when the dictation path needs an OpenAI-compatible
-  endpoint. A keyless self-hosted endpoint needs no key.
+The current Concierge URL field does not collect a provider key.
+For a keyed provider, use the owner Model Library API with its separate write-only secret field.
+The [Model Library contract](MCP_SIDECAR.md#model-library) describes the underlying owner operations.
+The [API surface](API_SURFACE.md) lists their HTTP routes.
 
-For a provider draft, enter its label, model identity, and required connection
-information in the Library. The Library creates the public model record,
-private deployment material, binding, and current readiness observation as one
-owner action. It reports an unavailable runtime honestly. For example, a stored
-key does not make an unsupported provider runtime ready.
+For headless provisioning, `HOLDSPEAK_PROFILE_<ID>_KEY` remains an environment fallback for the identified model profile.
+Do not place credentials in a Thread, Note, or shared model record.
+A cloud row showing **KEY NOT SET** requires credential setup before a paid check can succeed.
 
-### Readiness is current, not a promise
+## Understand readiness
 
-Use **Check** or **Try again** after changing a local runtime, model file,
-provider, key, endpoint, or paired machine. Readiness belongs to the exact
-bound deployment revision. It can report an unavailable artifact, missing
-credential, unreachable endpoint, unavailable runtime, or offline device.
-Fix the named issue in Model Library, then check again.
+| State | Meaning |
+| --- | --- |
+| **READY** | The engine passed the applicable readiness check. |
+| **CHECKING** | A check is in progress. |
+| **WAITING** | A download or prerequisite has not completed. |
+| **KEY NOT SET** | The cloud engine needs a configured key. |
+| **UNREACHABLE** | The engine did not respond as required. |
+| **OFF** | You explicitly disabled a capability group. |
 
-Availability is not routing. A model can stay in your Library while you choose
-another model list in Assignments. Removing or revising a model that is assigned
-may require you to repair the dependent Assignment first.
+**Use these** requires every group to be ready or explicitly off.
+A successful check establishes current availability. It does not guarantee future availability or model quality.
 
-## Assignments: choose where work runs
+## Adjust individual capabilities
 
-Assignments is the owner surface for selecting models for registered HoldSpeak
-jobs. Choose a compatible ordered model list of one to four models. The list is
-saved as a whole. HoldSpeak does not combine part of your new list with an
-inherited one or silently remove an incompatible entry.
+Select **Adjust** below the proposed set to open the capability table.
+Each row shows its group, assignment, and engine host.
+Use an individual assignment when the group choice does not suit that capability.
 
-You can set a model list for a capability group, an individual capability, or an
-eligible saved item. More specific scope wins. **Use default**
-clears the current row and reveals the next complete compatible model list. The
-editor previews compatibility before it saves. It can retain a valid choice
-that is temporarily not ready, then name the repair when work starts.
+The service resolves the applicable assignment when work starts.
+Changes to the model catalog or assignments affect later work.
+They do not move a run that has already started.
 
-You do not choose a model at the point of use. Saved work and meetings ask for
-their capability. HoldSpeak resolves the applicable Assignment and freezes the
-resulting route at admission. Later Library or Assignment edits affect later
-work, not a run already in progress.
+## Model Library and assignments
 
-## Provider and runtime notes
+**Model Library** names the underlying availability service.
+It records models, deployment information, and readiness observations.
+An **assignment** selects the compatible model list for a capability or eligible saved item.
+These are separate service contracts beneath the Concierge.
 
-HoldSpeak does not require a particular model family. Select a model that fits
-your hardware and the capability's requirements. Structured output, tool use,
-context size, supported modalities, runtime availability, and boundary are
-checked against the capability before a model list can execute.
+The current **Settings > Models** and assignment entry points open the Concierge.
+Older instructions that begin with separate Library and Assignments screens describe an earlier interface.
+Use the [MCP reference](MCP_SIDECAR.md) or [API surface](API_SURFACE.md) for programmatic access to those services.
 
-For local work, install only the optional runtime you use:
+The assignment service supports complete ordered lists of one to four compatible models.
+More specific assignment scope takes precedence over a group default.
+A missing or incompatible assignment produces a named failure when work starts.
 
-```bash
-uv pip install -e '.[dictation-llama]'   # local GGUF runtime
-uv pip install -e '.[dictation-mlx]'     # MLX text support on Apple Silicon
-uv pip install -e '.[dictation-openai]'  # OpenAI-compatible dictation path
-```
+## Local runtimes and endpoints
 
-For a headless provider key, `HOLDSPEAK_PROFILE_<ID>_KEY` remains a fallback.
-Use the Model Library for the ordinary owner workflow. It keeps secret material
-out of model records, Library projections, receipts, and error messages.
+Install the optional runtime that your chosen capability needs.
+From an active source environment:
 
-## Structured output for meeting intelligence
+| Runtime | Command |
+| --- | --- |
+| GGUF through llama.cpp | `uv pip install -e '.[dictation-llama]'` |
+| MLX text models on Apple Silicon | `uv pip install -e '.[dictation-mlx]'` |
+| OpenAI-compatible dictation endpoint | `uv pip install -e '.[dictation-openai]'` |
+| Optional meeting analysis dependencies | `uv pip install -e '.[meeting]'` |
 
-Meeting intelligence sends a request-level `response_format` with a JSON Schema
-derived from the one `INTEL_SCHEMA` constant in `holdspeak/intel/parsing.py`.
-The schema shape is:
+For a package installation, use the equivalent `holdspeak[extra]` package.
+See [Getting Started](GETTING_STARTED.md) for environment setup.
 
-```json
-{
-  "topics": ["<short topic>"],
-  "action_items": [
-    {
-      "task": "<task>",
-      "owner": "<person's name as spoken>|Me|Remote|null",
-      "due": "<date or null>"
-    }
-  ],
-  "summary": "<short summary>"
-}
-```
+Capability requirements include supported input types, tool use, structured output, and context size.
+A model that works for writing can still be unsuitable for Interview or meeting analysis.
+An available MLX artifact also requires a capability path that supports its runtime.
 
-`owner` is a literal person name as spoken in the transcript, or one of two
-reserved tokens: `Me` (the speaker or leader) and `Remote` (the counterpart).
-`null` means the transcript did not name an owner. Every other string is a
-literal name the model heard. `Me` and `Remote` are the only reserved tokens.
+The Concierge proposes local speech recognition.
+Other groups can use a local engine, LAN endpoint, or selected cloud service.
+Check each host before you apply the set.
+Model requests can send source context to that host.
 
-The prompt stringifies `INTEL_SCHEMA`, the `response_format` wraps
-`INTEL_JSON_SCHEMA` (the formal JSON Schema derived from it), and the semantic
-adapter references the same constant. If the endpoint returns a 400 naming
-`response_format` or `json_schema`, the dispatch treats the rejection as a
-dialect mismatch (like the `max_completion_tokens` compatibility pattern),
-records the endpoint's dialect, and raises a named signal for a second admitted
-child that omits `response_format`. The fallback is never a silent retry: the
-runner admits one physical request per child, and the prompt's "Return ONLY a
-single valid JSON object" instruction plus the `_extract_json` line-recovery
-heuristic remain the safety net.
+## Meeting output compatibility
 
-### The schema-pinned-server gotcha
+Meeting intelligence expects structured fields for topics, action items, and a summary.
+An endpoint must support the applicable request and response format.
+A server-wide schema setting can conflict with the requested meeting schema.
 
-A llama.cpp server launched with a server-level `--json-schema` flag pins every
-response to that schema regardless of what the request asks for. A prompt-level
-JSON plea or a request-level `response_format` override is silently swallowed,
-and the response conforms to the pinned schema instead. The product now sends
-request-level structured output, which overrides the server pin cleanly on
-llama.cpp builds that support it. If you run a llama.cpp server with
-`--json-schema`, verify that the model responds to the product's schema and not
-the server pin by checking the shape of the response (it should contain
-`topics`, `action_items`, and `summary`, not the pinned shape).
+For field definitions and compatibility behavior, see the [meeting output schema](internal/MEETING_OUTPUT_SCHEMA.md).
+Use the returned error and Receipt when you diagnose a failed request.
 
-## When a model will not run
+## Troubleshooting
 
-| What you see | What to do |
-|---|---|
-| A model is listed but not ready | Open Model Library, read the readiness reason, fix it, then check again. |
-| An Assignment needs attention | Choose a compatible, enabled model in Assignments or clear it with **Use default**. |
-| A local artifact is detected but unavailable | Install the required runtime and verify the artifact and runtime again. |
-| An endpoint is unavailable | Check the endpoint, required key, and network reachability, then run **Check**. |
-| A capability cannot use your model | Use a model whose declared modalities, context, structured output, tools, and boundary meet that capability. |
+| Problem | Action |
+| --- | --- |
+| No engine is available | Add a compatible endpoint or download a supported preset. |
+| A local model remains unavailable | Check the model file, optional runtime, and capability requirements. |
+| An endpoint is unreachable | Check its address, required credential, and network path. Repeat **Check**. |
+| An assignment cannot run | Use **Adjust** to select a compatible engine for that capability. |
+| **Use these** remains disabled | Resolve each waiting group or explicitly set an unneeded group to off. |
+| Tool results are unreliable | Review the sources and model output. A readiness check does not evaluate recommendation quality. |
 
 ## See also
 
-- [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md): capability, routing, freeze, execution, and receipt mechanics.
-- [Security & Privacy](SECURITY.md): local custody and egress posture.
-- [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md): where a configured dictation model is used.
-- [Meeting Mode Guide](MEETING_MODE_GUIDE.md): where a configured meeting model is used.
+- [Getting Started](GETTING_STARTED.md): install the required environment.
+- [Interview](INTERVIEW.md): tool-based conversation and current quality limits.
+- [Security & Privacy](SECURITY.md): model data and credential boundaries.
+- [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md): service routing and admission.

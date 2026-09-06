@@ -126,12 +126,14 @@ Config file shape:
 ```
 
 The endpoint and model are not dictation config fields. Add the endpoint once
-in **Settings > Models > Model Library** and select it for **Writing &
-dictation** in **Assignments**; assigning it also selects the
+in **Settings > Models** and select it for **Writing &
+dictation** in the Concierge set. Apply the set with **Use these**.
+The assignment also selects the
 `openai_compatible` backend. See
 [MODELS.md](./MODELS.md).
 
-Set the model profile's key in Model Library. For a headless hub,
+For keyed providers, use the owner Model Library API. See [Models](MODELS.md).
+For a headless hub,
 `HOLDSPEAK_PROFILE_<ID>_KEY` remains the fallback. Do not put API keys in
 `.hs/` files.
 

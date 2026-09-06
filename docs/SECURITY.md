@@ -1,13 +1,28 @@
 # HoldSpeak Security & Privacy Posture
 
 **Status:** living document.
-**Last updated:** 2026-08-29 (YOLO default posture, actuators on, People MCP
-default write; hard boundary unchanged).
+**Last updated:** 2026-09-05 (Interview context and retention clarification).
 
 This document is the threat model for HoldSpeak: what data it holds, where that
 data lives, what can leave the machine, and the decisions behind its at-rest
 posture. If code and this document disagree, that is a bug in one of them;
 file it.
+
+## Interview context and model work
+
+Interview facts and suggestions belong to a saved Thread on the hub.
+A stated fact includes a source quote. An inference has an explicit inferred classification.
+A model turn can send permitted context to its assigned model endpoint.
+Review the run boundary and Receipt when the execution host matters.
+
+Removing a fact also removes its dependent suggestions.
+It does not erase earlier Thread messages, separate kept outputs, or backups.
+Use the relevant record and retention controls for those copies.
+
+Interview's People section opens the protected People surface and omits the Thread composer.
+Enter confidential relationship material through that surface.
+Enter credentials through the configured credential controls.
+The [Interview guide](INTERVIEW.md) describes the complete current workflow.
 
 ## Kernel boundary: cooperating code, not a sandbox
 
@@ -454,8 +469,8 @@ machine except via the connector CLIs above (entity IDs only).
 
 ## 5. Secrets handling
 
-- **Cloud API key**: Set, replace, or remove it on the model profile in
-  **Settings > Models > Model Library**.
+- **Cloud API key**: Use the owner Model Library secret API for the identified model profile.
+  The current Concierge URL field does not collect a key. See [Models](MODELS.md).
   The value travels only through an owner-only secret write/delete subresource,
   never a general model-management resource, sync, DTOs, the database, read
   responses, logs, or receipts. The hub stores it locally in owner-only `0600` custody; reads report
