@@ -29,7 +29,11 @@ import { egressFor } from "../../../desk/surface/egress";
 import type { UpdateController } from "./useUpdateController";
 import type { ProjectUpdate, UpdateClaim } from "./model";
 import {
+  claimAcceptanceToken,
   claimChipTitle,
+  claimKindToken,
+  claimSupportToken,
+  claimUnknownToken,
   generatorLabel,
   humanFallbackReason,
   lifecycleLabel,
@@ -83,12 +87,16 @@ function SectionSourceRow({
         uniqueRefs.push({
           ref,
           title: derived ?? refChipLabel(ref),
-          verified: claim.verified,
+          // HS-200-06: a claim carrying the C2 axes states its support
+          // once, inline; the legacy marker stays for records without.
+          verified: claim.verified || claim.hasAxes,
         });
       }
     }
   }
-  const unverifiedNoRef = claims.filter((c) => !c.verified && c.refs.length === 0);
+  const unverifiedNoRef = claims.filter(
+    (c) => !c.verified && !c.hasAxes && c.refs.length === 0,
+  );
 
   if (uniqueRefs.length === 0 && unverifiedNoRef.length === 0) return null;
 
@@ -127,6 +135,43 @@ function SectionSourceRow({
   );
 }
 
+/* ── HS-200-06 (C2): the three axes on one claim, honestly ── */
+
+function ClaimAxes({ claim }: { claim: UpdateClaim }) {
+  if (!claim.hasAxes) return null;
+  const support = claimSupportToken(claim);
+  const acceptance = claimAcceptanceToken(claim);
+  return (
+    <span className="update-claim-axes" data-testid="update-claim-axes">
+      <span
+        className="surface-token"
+        data-chip
+        data-testid="update-claim-kind"
+        data-kind={claim.kind}
+      >
+        {claimKindToken(claim.kind)}
+      </span>
+      <span data-testid="update-claim-support" data-support={claim.support}>
+        <StateChip state={support.state} label={support.label} />
+      </span>
+      <span
+        data-testid="update-claim-acceptance"
+        data-acceptance={claim.acceptance}
+      >
+        <StateChip state={acceptance.state} label={acceptance.label} />
+      </span>
+      {claim.unknowns.map((unknown) => (
+        <span
+          key={`${unknown.type}:${unknown.value}`}
+          data-testid="update-claim-unknown"
+        >
+          <StateChip state="warning" label={claimUnknownToken(unknown)} />
+        </span>
+      ))}
+    </span>
+  );
+}
+
 /* ── HS-173-02: Inline claims view — each sentence with its chip(s) ── */
 
 function InlineClaimsView({
@@ -161,11 +206,12 @@ function InlineClaimsView({
               </button>
             );
           })}
-          {!claim.verified ? (
+          {!claim.verified && !claim.hasAxes ? (
             <span data-testid="update-claim-unverified">
               <StateChip state="failure" label="UNVERIFIED" />
             </span>
           ) : null}
+          <ClaimAxes claim={claim} />
         </div>
       ))}
     </div>

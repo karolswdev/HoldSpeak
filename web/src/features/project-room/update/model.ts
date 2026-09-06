@@ -5,7 +5,45 @@
 
 /* ── Wire update shape (from project_updates table rows) ── */
 
+import type { ChipState } from "../../../desk/surface";
+
 export type UpdateLifecycle = "draft" | "published" | "superseded";
+
+/* ── HS-200-06 (C2): kind, support and acceptance are three
+      INDEPENDENT axes. A citation buys source linkage only. ── */
+
+export type ClaimKind =
+  | "observation"
+  | "inference"
+  | "proposal"
+  | "decision"
+  | "execution_result"
+  | "outcome_measure";
+
+export type ClaimSupport =
+  | "unknown"
+  | "source_linked"
+  | "supported"
+  | "disputed";
+
+export type ClaimAcceptance =
+  | "unreviewed"
+  | "accepted"
+  | "rejected"
+  | "superseded";
+
+export type ClaimSupportRecord = {
+  method: string;
+  sourceVersion: string;
+  sourceRefs: string[];
+  fields: string[];
+  reviewerRef: string | null;
+  checkedAt: string | null;
+  invalidatedAt: string | null;
+  invalidationReason: string | null;
+};
+
+export type ClaimUnknown = { type: string; value: string };
 
 export type UpdateClaim = {
   spanId: string;
@@ -13,6 +51,17 @@ export type UpdateClaim = {
   refs: string[];
   section: string;
   verified: boolean;
+  /** True when the record carries the C2 axes (everything the service
+   *  serves does; a bare fixture may not). */
+  hasAxes: boolean;
+  kind: ClaimKind;
+  support: ClaimSupport;
+  acceptance: ClaimAcceptance;
+  /** Set when the record was mapped from a citation-only `verified`
+   *  row written before HS-200-06. */
+  supportMappingVersion: string | null;
+  supportRecord: ClaimSupportRecord | null;
+  unknowns: ClaimUnknown[];
 };
 
 export type ProjectUpdate = {
@@ -34,7 +83,33 @@ export type ProjectUpdate = {
   publishedAt: string | null;
 };
 
+function decodeSupportRecord(raw: unknown): ClaimSupportRecord | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  return {
+    method: String(r.method ?? ""),
+    sourceVersion: String(r.source_version ?? ""),
+    sourceRefs: Array.isArray(r.source_refs)
+      ? (r.source_refs as unknown[]).map(String)
+      : [],
+    fields: Array.isArray(r.fields) ? (r.fields as unknown[]).map(String) : [],
+    reviewerRef: r.reviewer_ref != null ? String(r.reviewer_ref) : null,
+    checkedAt: r.checked_at != null ? String(r.checked_at) : null,
+    invalidatedAt: r.invalidated_at != null ? String(r.invalidated_at) : null,
+    invalidationReason:
+      r.invalidation_reason != null ? String(r.invalidation_reason) : null,
+  };
+}
+
+function decodeUnknowns(raw: unknown): ClaimUnknown[] {
+  if (!Array.isArray(raw)) return [];
+  return (raw as unknown[])
+    .filter((u): u is Record<string, unknown> => !!u && typeof u === "object")
+    .map((u) => ({ type: String(u.type ?? ""), value: String(u.value ?? "") }));
+}
+
 export function decodeClaim(raw: Record<string, unknown>): UpdateClaim {
+  const hasAxes = typeof raw.support === "string";
   return {
     spanId: String(raw.span_id ?? ""),
     text: String(raw.text ?? ""),
@@ -45,7 +120,80 @@ export function decodeClaim(raw: Record<string, unknown>): UpdateClaim {
     // Deterministic claims omit verified (defaulting to true);
     // only model MARKED claims set verified:false explicitly.
     verified: raw.verified !== false,
+    hasAxes,
+    kind: (typeof raw.kind === "string"
+      ? raw.kind
+      : "observation") as ClaimKind,
+    support: (hasAxes ? raw.support : "unknown") as ClaimSupport,
+    acceptance: (typeof raw.acceptance === "string"
+      ? raw.acceptance
+      : "unreviewed") as ClaimAcceptance,
+    supportMappingVersion:
+      raw.support_mapping_version != null
+        ? String(raw.support_mapping_version)
+        : null,
+    supportRecord: decodeSupportRecord(raw.support_record),
+    unknowns: decodeUnknowns(raw.unknowns),
   };
+}
+
+/* ── Claim axis tokens (HS-200-06) ── */
+
+const KIND_TOKENS: Record<string, string> = {
+  observation: "OBSERVATION",
+  inference: "INFERENCE",
+  proposal: "PROPOSAL",
+  decision: "DECISION",
+  execution_result: "EXECUTION RESULT",
+  outcome_measure: "OUTCOME MEASURE",
+};
+
+/** The lead emblem: what the sentence asserts. */
+export function claimKindToken(kind: string): string {
+  return KIND_TOKENS[kind] ?? kind.replace(/_/g, " ").toUpperCase();
+}
+
+export type ClaimToken = { label: string; state: ChipState };
+
+/** What the evidence establishes -- with the honest history suffix:
+ *  MIGRATED for a record mapped from a citation-only row, EDITED when
+ *  the sentence changed after it was supported. */
+export function claimSupportToken(claim: UpdateClaim): ClaimToken {
+  if (claim.support === "supported") {
+    return { label: "SUPPORTED", state: "success" };
+  }
+  if (claim.support === "disputed") {
+    return { label: "DISPUTED", state: "failure" };
+  }
+  if (claim.support === "source_linked") {
+    if (claim.supportRecord?.invalidatedAt) {
+      return { label: "LINKED · EDITED", state: "warning" };
+    }
+    if (claim.supportMappingVersion) {
+      return { label: "LINKED · MIGRATED", state: "idle" };
+    }
+    return { label: "LINKED", state: "idle" };
+  }
+  return { label: "UNSUPPORTED", state: "warning" };
+}
+
+/** Applicable domain or reviewer judgment. Never inferred from a score. */
+export function claimAcceptanceToken(claim: UpdateClaim): ClaimToken {
+  if (claim.acceptance === "accepted") {
+    return { label: "ACCEPTED", state: "success" };
+  }
+  if (claim.acceptance === "rejected") {
+    return { label: "REJECTED", state: "failure" };
+  }
+  if (claim.acceptance === "superseded") {
+    return { label: "SUPERSEDED", state: "warning" };
+  }
+  return { label: "UNREVIEWED", state: "idle" };
+}
+
+/** A typed unknown the cited source cannot carry: "NAME · Priya". */
+export function claimUnknownToken(unknown: ClaimUnknown): string {
+  return `${unknown.type.toUpperCase()} · ${unknown.value}`;
 }
 
 export function decodeUpdate(raw: Record<string, unknown>): ProjectUpdate {
@@ -199,6 +347,8 @@ export function refChipLabel(ref: string): string {
 const JIRA_KEY_RE = /^[a-zA-Z]+-\d+$/;
 const PR_REF_RE = /^pr-(\d+)$/i;
 const MEETING_DATE_RE = /^(\d{4})-?(\d{2})-?(\d{2})/;
+// An opaque record id: a prefix, an underscore, then a long hash.
+const OPAQUE_ID_RE = /^[a-zA-Z]+_[0-9a-fA-F]{8,}$|^[0-9a-fA-F]{12,}$/;
 
 /** Short identity label for a ref, matching the board grammar:
  *  `PR #612`, `KAN-7`, `MTG 09-05`. One chip per ref. */
@@ -223,6 +373,14 @@ export function refIdentityLabel(ref: string): string {
 
   // Jira-key refs: uppercase (KAN-7)
   if (JIRA_KEY_RE.test(id)) return id.toUpperCase();
+
+  // HS-200-06: a record id is not an identity. An opaque id (the
+  // hashed ids real Projects carry) shows its kind word, never the
+  // raw hash -- 162's no-raw-ids law.
+  if (OPAQUE_ID_RE.test(id)) {
+    const kindWord = REF_PREFIX_LABELS[prefix];
+    return (kindWord ?? prefix).toUpperCase();
+  }
 
   // Fallback: uppercase the id
   return id.toUpperCase();

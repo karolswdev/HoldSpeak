@@ -1,6 +1,6 @@
 # Phase 200: The Working Practice
 
-**Last updated:** 2026-09-06 — HS-200-01–04 DONE (the baseline; runtime identity + the owner lock + restore; the release checks; first value cold + the real task probe + four repair states + return-to-task); HS-200-05 physical voice and custody in progress (its physical beats are his walk).
+**Last updated:** 2026-09-06 — HS-200-01–04 DONE (the baseline; runtime identity + the owner lock + restore; the release checks; first value cold + the real task probe + four repair states + return-to-task); HS-200-05 physical voice and custody in progress (its physical beats are his walk); HS-200-06 DONE (claim kind, support and acceptance separated; a citation buys source linkage only; old citation-only records migrated conservatively and readable as LINKED · MIGRATED).
 **Status:** planning. Forty stories defined; zero implementation stories completed.
 **Product owner:** Karol.
 **Delivery owner:** unassigned until implementation starts.
@@ -43,7 +43,7 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-03 | Make release checks isolated and actionable | done | [story-03](story-03-ci-isolation-and-release-contract.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-200-04 | Make first value and model readiness work cold | done | [story-04](story-04-first-value-and-model-readiness.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-200-05 | Prove physical voice capture, correction, and custody | in-progress | [story-05](story-05-physical-voice-and-custody.md) | — |
-| HS-200-06 | Separate citation, factual support, and acceptance | backlog | [story-06](story-06-claim-support-semantics.md) | — |
+| HS-200-06 | Separate citation, factual support, and acceptance | done | [story-06](story-06-claim-support-semantics.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-200-07 | Make incomplete attention coverage explicit | backlog | [story-07](story-07-coverage-and-partial-results.md) | — |
 | HS-200-08 | Establish repeatable live-model quality evaluation | backlog | [story-08](story-08-semantic-evaluation-harness.md) | — |
 | HS-200-09 | Design the daily Project workflow on existing surfaces | backlog | [story-09](story-09-daily-workflow-design.md) | — |
@@ -105,6 +105,11 @@ stories 02/03 (the build ledger, the backend density guard on
 web_runtime.py, a dash in a doc, the ask v1 contract hash, one-path
 cardinality, the two phase-143 censuses) — a fence lane is paying them —
 and one setup error (test_loop_detail_404_then_ok) to classify.
+Serial re-run (`6e3c8e34`, no lane editing): 46 of 47 green — every 175/176
+rig and the hs14x/15x set were xdist/CPU casualties; the one failure is
+hs153's guardrail row mounting deny then flipping to allow, the product
+defect ledgered to HS-200-09 (fails identically on main). The cadence-routes
+setup error did not recur serially (the fixture race, BACKLOG AI).
 
 2026-09-06 (evening): HS-200-03 DONE — the CI ledger
 (assets/ci-ledger-2026-09-06.md: 35 CI + 12 local identities reproduced,

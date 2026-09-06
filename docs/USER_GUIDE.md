@@ -780,11 +780,44 @@ since the last published update through the claim schema. If you assigned a
 model to the project update capability, the model rewrites the inventory into
 stakeholder-readable prose. Every factual sentence carries its claim ref as an
 inline chip (click to open the source). Sentences the model added beyond the
-inventory are marked **UNVERIFIED**. The model's display name and host appear in
-the footer (for example `Llama 3.3 70B, 192.168.1.43, LAN`).
+inventory are marked **UNVERIFIED** in the body. The model's display name and
+host appear in the footer (for example `Llama 3.3 70B, 192.168.1.43, LAN`).
 
 When no model is assigned or the model fails, the update falls back to the
 deterministic body (no unverified markers, no egress).
+
+### What a claim state means
+
+Every claim states three separate things, each as its own token beside the
+sentence. They are independent: a citation says nothing about acceptance, and
+acceptance says nothing about evidence.
+
+**What the sentence asserts** is the lead token: `OBSERVATION` (a recorded
+status read off a source), `INFERENCE` (prose written over that record),
+`PROPOSAL`, `DECISION`, `EXECUTION RESULT`, or `OUTCOME MEASURE`.
+
+**What the evidence establishes:**
+
+| Token | Meaning |
+|---|---|
+| `SUPPORTED` | The value was read from the named source version by a field mapping, or a person attested it. The record names which. |
+| `LINKED` | The sentence cites a real source and nothing more. A valid citation never makes an invented sentence true. |
+| `LINKED · MIGRATED` | A record written before claim states existed. Its citation was kept; nobody reviewed it. |
+| `LINKED · EDITED` | The sentence was edited after it was supported, so its support was withdrawn. The old record is kept with the reason. |
+| `UNSUPPORTED` | No source at all. |
+| `DISPUTED` | Someone disagrees with the claim. |
+
+**Who judged it:** `UNREVIEWED`, `ACCEPTED`, `REJECTED`, or `SUPERSEDED`. Only
+you move this token. No model score can accept a claim.
+
+A name, a deadline, or a number that the cited source does not carry appears
+beside the sentence as its own token (for example `NAME · Priya` or
+`NUMBER · 95%`). The sentence keeps its citation; the figure stays an open
+question until a source carries it.
+
+Editing a supported sentence withdraws its support until it is checked again.
+Nothing is deleted: the old support record keeps its source version, its
+method, and the time it was withdrawn.
 
 Four verbs on the update: **Save** persists the edit without publishing.
 **Regenerate** rebuilds the draft from the current inventory (deterministic).
