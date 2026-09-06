@@ -14,7 +14,7 @@ learning loop that has never been trained gets its first real data.
 
 ## Status
 
-**ACTIVE 3/8.** 01 the design DONE on his word; 04 the voice law DONE; 02 the first correction DONE (the `text` kind, schema 76, the routes, the teach row to its five boards); 03 the journal stream built and shot (flips next); 05 next.
+**ACTIVE 4/8.** 01 the design DONE on his word; 04 the voice law DONE; 02 the first correction DONE; 03 the journal stream DONE (the live push proven end to end, the FilterTokens species promoted); 05 in progress (the Learned wing, Review, the well's mic, the full loop).
 
 **Depends on:** Phase 170 merged (the Speak face is rebuilt in 170's
 Great Pass; the correction flow and journal stream build on that
@@ -117,7 +117,7 @@ so the "postgress" Tuesday needs the `text` kind this phase adds.)
 | --- | --- | --- | --- | --- |
 | HS-176-01 | The design (the correction flow, the journal stream, the MicButton census on the canvas) | done | [story-01-the-design](./story-01-the-design.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-176-02 | The first correction (teach, persist, apply to the next match; learning digest > 0) | done | [story-02-the-first-correction](./story-02-the-first-correction.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-176-03 | The journal as a stream (live feed, filterable, searchable; the voice-typing act visible) | in-progress | [story-03-the-journal-stream](./story-03-the-journal-stream.md) | -- |
+| HS-176-03 | The journal as a stream (live feed, filterable, searchable; the voice-typing act visible) | done | [story-03-the-journal-stream](./story-03-the-journal-stream.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-176-04 | The voice law (MicButton on every text input across the desk; the census gap closed) | done | [story-04-the-voice-law](./story-04-the-voice-law.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-176-05 | The desk answering the hand (the full loop: speak, land, judge, teach, apply) | backlog | [story-05-the-desk-answering-the-hand](./story-05-the-desk-answering-the-hand.md) | -- |
 | HS-176-06 | The walk (his desk: correction taught, journal streaming, MicButton everywhere, the loop) | backlog | [story-06-the-walk](./story-06-the-walk.md) | -- |
@@ -126,7 +126,18 @@ so the "postgress" Tuesday needs the `text` kind this phase adds.)
 
 ## Where we are
 
-ACTIVE 3/8 (2026-09-06). Story 02 DONE: the `text` correction kind
+ACTIVE 4/8 (2026-09-06). Story 03 DONE: the Journal wing as a stream
+(the bus frame prepended live, deduped; the row grammar with one fixed
+APPLIED/TAUGHT slot; day bands as tokens; the opened row keeps Replay ·
+Copy · Delete with its preview as tokens; the four filter tokens as the
+new library species FilterTokens promoted from the Room's composition
+and documented in contract.md; search over final_text; scroll-to-load
+with `before`; no caption count; NOTHING SPOKEN / NOTHING MATCHES;
+Clear withheld on the quiet state), shot at 1440 + 393
+(assets/story-03-shots/); the rig proves record → broadcast → /ws →
+RuntimeBus → prepend without a reload. Build rulings: older entries are
+reached by scrolling DOWN (newest-first list); the empty token is
+SurfaceState's plain label (species geometry). Story 02 DONE: the `text` correction kind
 (exact-phrase, punctuation-stripped, whole-word bounded, first-letter
 case kept) applied at the seam inside Pipeline.run before the stage
 loop; `corrections_applied` on the run and the journal row (schema 76,
