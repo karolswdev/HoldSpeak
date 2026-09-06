@@ -271,8 +271,21 @@ def build_setup_status(
 
     overall = _overall(sections)
     ready = overall == "ready"
+
+    # HS-200-02 (C1): the compact loaded-runtime identity and its repair
+    # tokens. Ordinary surface — no database path, no pid; those live on
+    # /api/system/identity. A read here never blocks or raises a page load.
+    try:
+        from .runtime_identity import identity_report
+
+        identity = identity_report(detailed=False)
+    except Exception as exc:  # pragma: no cover - never block a page load
+        log.warning(f"setup_status: runtime identity read failed ({exc})")
+        identity = {"identity": {}, "repair": [], "owns_database": None}
+
     return {
         "version": __version__,
+        "runtime_identity": identity,
         "overall": overall,
         "first_run": first_run,
         "arrival_required": first_run and onboarding["disposition"] is None,

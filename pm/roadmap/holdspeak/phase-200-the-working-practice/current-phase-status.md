@@ -1,6 +1,6 @@
 # Phase 200: The Working Practice
 
-**Last updated:** 2026-09-06 — HS-200-01 DONE (the attested baseline, the 69-obligation map, the CI ledger, the inherited obligations placed; the pilot Project is the owner's question); HS-200-02 next.
+**Last updated:** 2026-09-06 — HS-200-01 and HS-200-02 DONE (the baseline; runtime identity captured once, the database owner lock, STALE BUNDLE · TWO RUNTIMES · SCHEMA AHEAD/BEHIND, backup → upgrade → restore rehearsed on a copy); HS-200-03 the release checks in progress.
 **Status:** planning. Forty stories defined; zero implementation stories completed.
 **Product owner:** Karol.
 **Delivery owner:** unassigned until implementation starts.
@@ -39,8 +39,8 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-200-01 | Establish the integration baseline and obligation map | done | [story-01](story-01-baseline-and-obligation-map.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-200-02 | Expose loaded runtime identity and prove restore | backlog | [story-02](story-02-runtime-identity-and-restore.md) | — |
-| HS-200-03 | Make release checks isolated and actionable | backlog | [story-03](story-03-ci-isolation-and-release-contract.md) | — |
+| HS-200-02 | Expose loaded runtime identity and prove restore | done | [story-02](story-02-runtime-identity-and-restore.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-200-03 | Make release checks isolated and actionable | in-progress | [story-03](story-03-ci-isolation-and-release-contract.md) | — |
 | HS-200-04 | Make first value and model readiness work cold | backlog | [story-04](story-04-first-value-and-model-readiness.md) | — |
 | HS-200-05 | Prove physical voice capture, correction, and custody | backlog | [story-05](story-05-physical-voice-and-custody.md) | — |
 | HS-200-06 | Separate citation, factual support, and acceptance | backlog | [story-06](story-06-claim-support-semantics.md) | — |
@@ -81,7 +81,18 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 
 ## Where we are
 
-2026-09-06: HS-200-01 DONE on `feat/phase-200-g0`. The baseline
+2026-09-06 (later): HS-200-02 DONE — holdspeak/runtime_identity.py
+(backend version + revision, process start, frontend build id stamped
+by Vite, an opaque database id, schema 76, a config digest; captured
+once at start; GET /api/system/identity for diagnostics, a public
+block on setup/status), holdspeak/runtime_lock.py (a flock beside the
+database; a second hub refuses to start by name; an escape hatch runs
+with the sweeps off), the three diagnoses as tokens on Settings →
+System's RUNTIME rows (no chip when healthy), backup → the 75→76
+upgrade → restore → reopen proven on a copy (the People store and the
+Keychain named outside the backup). His running hub predates the lock
+(no lock held until his next restart). Inherited: `npm run bundle:gate`
+fails on desk CSS 307 KB > 300 KB (HS-200-03). Earlier: HS-200-01 DONE on `feat/phase-200-g0`. The baseline
 (BASELINE.md + assets/baseline-2026-09-06.md): main `bea4176c`, schema 76,
 two hubs found running against one database (the stale one stopped; the
 instance guard is HS-200-02's first requirement), the engine profile with

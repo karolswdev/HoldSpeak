@@ -187,6 +187,9 @@ class WebRuntime(
         self.mir_override_intents: list[str] = []
         self.last_route_preview: Optional[dict[str, object]] = None
         self.runtime_url: Optional[str] = None
+        # HS-200-02: does THIS process own the database owner lock? Only the
+        # owner runs the scheduled sweeps (C1).
+        self.owns_database: bool = False
 
         self.hotkey_listener: Optional[HotkeyListener] = None
         self.recorder: Optional[AudioRecorder] = None
@@ -455,8 +458,86 @@ class WebRuntime(
         _ = sig, frame
         self.runtime_stop_event.set()
 
+    def _claim_database(self) -> None:
+        """Take the database owner lock, or refuse to be a second hub (HS-200-02).
+
+        C1 forbids two processes silently owning the same scheduled work; C10
+        forbids introducing a multi-writer SQLite arrangement at all. So the
+        second hub refuses to start. ``HOLDSPEAK_ALLOW_UNOWNED_DB=1`` starts
+        anyway with the sweeps OFF and a TWO RUNTIMES repair state on the Desk.
+        """
+        from .db import core as db_core
+        from .runtime_lock import allow_unowned, claim_database, refusal_message
+
+        db_path = Path(db_core.DEFAULT_DB_PATH).expanduser()
+        started = self.runtime_started_at.isoformat()
+        lock = claim_database(db_path, process_start=started)
+        self.owns_database = lock.held
+        if lock.held:
+            return
+        message = refusal_message(db_path, lock.owner())
+        if allow_unowned():
+            log.warning(f"Starting without database ownership.\n{message}")
+            print(message, file=sys.stderr)
+            print("HOLDSPEAK_ALLOW_UNOWNED_DB is set: starting with scheduled work OFF.", file=sys.stderr)
+            return
+        print(message, file=sys.stderr)
+        log.error("Refusing to start: another hub owns this database.")
+        raise SystemExit(1)
+
+    def _note_serving_port(self) -> None:
+        """Record the served port on the owner claim (HS-200-02).
+
+        The port only exists after ``server.start()``. A refused sibling reads
+        this to name the hub already serving. It is a note, never a gate: a
+        failure here must not touch the boot.
+        """
+        if not self.owns_database:
+            return
+        try:
+            from .runtime_lock import current_lock
+
+            lock = current_lock()
+            if lock is None:
+                return
+            lock.acquire(
+                port=getattr(self.server, "port", None),
+                host=getattr(self.server, "host", None),
+                process_start=self.runtime_started_at.isoformat(),
+            )
+        except Exception as exc:  # pragma: no cover - the claim already stands
+            log.debug(f"Could not record the serving port on the owner claim: {exc}")
+
+    def _start_scheduled_work(self) -> None:
+        """Start the sweeps — in the database's owner process only (HS-200-02).
+
+        The Cadence Engine tick is OFF BY DEFAULT (CAD-1-04) and starts only
+        when the user has opted in; the heartbeat is always-on (HS-171-02).
+        Both are now gated on ownership: C1 forbids two processes silently
+        owning the same scheduled work, so a hub that lost the claim runs
+        neither, and says so.
+        """
+        if not self.owns_database:
+            log.warning("Scheduled work is OFF: this hub does not own the database.")
+            return
+        if self._cadence_enabled():
+            self.cadence_thread = threading.Thread(
+                target=self._cadence_loop,
+                name="HoldSpeakCadenceEngine",
+                daemon=True,
+            )
+            self.cadence_thread.start()
+        self._start_heartbeat_thread()  # HS-171-02
+
     def run(self) -> None:
         """Start the web server + capture stack and keep it alive until stop."""
+        # HS-200-02: freeze what this process loaded BEFORE anything serves it,
+        # so a later checkout cannot change what an already running hub reports.
+        from .runtime_identity import capture_runtime_identity
+
+        capture_runtime_identity(started_at=self.runtime_started_at)
+        self._claim_database()
+
         try:
             self.server = MeetingWebServer(
                 WebRuntimeCallbacks(
@@ -518,23 +599,15 @@ class WebRuntime(
             log.error(f"Failed to start web mode: {exc}", exc_info=True)
             raise SystemExit(1) from exc
 
+        self._note_serving_port()
+
         self.plugin_queue_thread = threading.Thread(
             target=self._deferred_plugin_queue_loop,
             name="HoldSpeakMirPluginQueue",
             daemon=True,
         )
         self.plugin_queue_thread.start()
-        # The Cadence Engine tick — OFF BY DEFAULT (CAD-1-04). The thread starts only
-        # when the user has opted in; otherwise the runtime is byte-identical to a
-        # build without cadence.
-        if self._cadence_enabled():
-            self.cadence_thread = threading.Thread(
-                target=self._cadence_loop,
-                name="HoldSpeakCadenceEngine",
-                daemon=True,
-            )
-            self.cadence_thread.start()
-        self._start_heartbeat_thread()  # HS-171-02
+        self._start_scheduled_work()
         self._warm_transcriber_in_background()
 
         try:
@@ -628,6 +701,14 @@ class WebRuntime(
                 self.plugin_queue_thread.join(timeout=2.0)
             if self.cadence_thread is not None:
                 self.cadence_thread.join(timeout=2.0)
+            # HS-200-02: hand the database back. flock releases on exit anyway;
+            # this makes the ordinary stop leave no claim behind at all.
+            try:
+                from .runtime_lock import release_database
+
+                release_database()
+            except Exception as exc:  # pragma: no cover - shutdown is best effort
+                log.debug(f"Database owner lock release failed: {exc}")
 
 
 def run_web_runtime(

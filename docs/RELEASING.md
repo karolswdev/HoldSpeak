@@ -71,7 +71,66 @@ holdspeak restore <backup-file> # restore that backup
 
 Restore snapshots your current database before it overwrites it, so a restore can
 never be the step that loses data. If you restore the wrong file, the state you
-were in is still saved.
+were in is still saved. A restore that cannot complete, because the file is
+missing, truncated, or is not a HoldSpeak database, stops before it writes
+anything and leaves your current database exactly as it was.
+
+### What the backup covers, and what it does not
+
+`holdspeak backup` snapshots one file: the main HoldSpeak database. Everything
+that lives in it comes back with it, including your meetings and their
+attached artifacts.
+
+Two stores sit outside that file on purpose, and neither is inside the backup:
+
+- **The People store** (`people.v1.sqlite3`). Confidential People payloads live
+  in their own encrypted database with their own keys. Back it up separately if
+  you keep People material, and expect its keys to be required to read it.
+- **The Keychain.** Credentials are held by the operating system, not by any
+  file you can copy. Reconnect the affected accounts after a restore.
+
+Rehearse a restore on a copy before you run one for real. Copy your database to
+a scratch directory, restore the backup over the copy, open it, and confirm the
+records you care about are there.
+
+## Which parts are running
+
+A new checkout does not change a running hub. The hub loads its code and its web
+bundle at start and keeps serving those until you restart it, so it is possible
+to read a fresh checkout while an older process serves an older bundle over your
+database.
+
+Settings then System reports what the running hub actually loaded: the backend
+version and revision, the bundle the process started with, the bundle the page
+you are looking at was built from, the schema version, an opaque database
+identity, and the process start. The RAW fold under it carries the diagnostics
+detail, including the database path and the process id.
+
+When something does not line up, that block flies a token:
+
+- `STALE BUNDLE`. The web bundle on disk is not the one this process started
+  with, or no bundle has been built. Restart the hub, or build the bundle with
+  `npm --prefix web run build`.
+- `TWO RUNTIMES`. Another hub owns this database. Only one hub runs the
+  scheduled sweeps.
+- `SCHEMA AHEAD` or `SCHEMA BEHIND`. The database and this build disagree about
+  the schema version. Run the build that matches, or restore a backup.
+
+### One hub owns the database
+
+Starting a second `holdspeak web` against a database that another hub already
+holds refuses, and prints which process holds it, on which port, and since when.
+This is deliberate: two processes writing one SQLite file, both running the
+scheduled sweeps, is the arrangement that silently duplicates scheduled work.
+Stop the other hub, or open the one already running.
+
+The claim is an operating system lock on a file next to your database
+(`holdspeak.db.owner.lock`), so it releases when the process exits for any
+reason. A crashed hub leaves nothing to clean up.
+
+For a diagnosis session, `HOLDSPEAK_ALLOW_UNOWNED_DB=1` starts anyway with the
+scheduled sweeps off and `TWO RUNTIMES` flying on the Desk. It is not a daily
+setting.
 
 ## What doctor tells you
 
