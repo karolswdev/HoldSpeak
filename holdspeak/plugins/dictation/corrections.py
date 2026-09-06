@@ -30,23 +30,63 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from holdspeak.db.corrections import DictationCorrectionRepository
 
 #: Kinds of correction the store accepts.
-CORRECTION_KINDS = ("intent", "target")
+#:
+#: HS-176-02 (ruling R1) adds ``"text"`` — a WORDS correction, not a routing
+#: one. Its ``key`` is the phrase **as heard** (stored punctuation-stripped and
+#: lowercased) and its ``value`` the phrase **as said**. It never uses Jaccard:
+#: `apply_text_corrections` below is its one deterministic matcher, applied at
+#: the transcript seam inside `DictationPipeline.run`.
+CORRECTION_KINDS = ("intent", "target", "text")
+#: The routing kinds — the only ones `best_match_in` (Jaccard) serves.
+ROUTING_CORRECTION_KINDS = ("intent", "target")
 DEFAULT_CAP = 20
 _GIST_MAX = 200
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
+#: Characters stripped from either edge of a stored `text` key/value (N3).
+_EDGE_PUNCT = " \t\r\n\"'`.,;:!?()[]{}<>…-—–"
 
 
 @dataclass(frozen=True)
 class Correction:
     """One user correction. `key` is the context gist, `value` the fix."""
 
-    kind: str          # "intent" | "target"
-    key: str           # gist of the utterance the correction applies to
-    value: str         # corrected block id ("intent") or target profile ("target")
+    kind: str          # "intent" | "target" | "text"
+    key: str           # gist of the utterance ("intent"/"target"); heard phrase ("text")
+    value: str         # corrected block id / target profile / the said phrase
     sequence: int      # monotonic insertion order (newest = highest)
+    # HS-176-02: the durable `dictation_corrections.id` when this correction came
+    # from (or was written through to) the repository; None for a ring-only
+    # store (a bare server / a test), which has no stable id to address. It is
+    # what `corrections_applied` records when this rule fires.
+    correction_id: int | None = None
 
     def to_dict(self) -> dict[str, object]:
         return {"kind": self.kind, "key": self.key, "value": self.value}
+
+
+@dataclass(frozen=True)
+class RecordOutcome:
+    """What `CorrectionStore.record` did, and — when it refused — why.
+
+    HS-176-02 (rulings R4 + R7). `record` used to return a bare `bool`, which
+    could neither name the refusal (`REFUSED · ONE WORD` / `REFUSED · SECRET`)
+    nor hand the caller the stored row id, so the journal route guessed the id
+    from `list_for_display()[0]`. This object carries both and stays
+    **truthy/falsy compatible**: `bool(outcome)` is exactly the old return, so
+    both existing callers (`web/routes/dictation/pipeline.py:996` and `:1154`,
+    which each wrap it in `bool(...)`) keep working unchanged.
+
+    `correction_id` is the durable row id, or None when the store has no
+    repository (a ring-only store has no id to link) or the write-through
+    failed — never a fabricated id.
+    """
+
+    stored: bool
+    correction_id: int | None = None
+    refusal: str | None = None  # "kind" | "empty" | "secret" | "one_word"
+
+    def __bool__(self) -> bool:
+        return bool(self.stored)
 
 
 def _gist(text: str) -> str:
@@ -94,6 +134,135 @@ def best_match_in(
     return None
 
 
+# ── HS-176-02: the `text` kind's deterministic matcher ────────────────────
+# Exact-phrase, NOT Jaccard. `best_match_in` above is untouched and keeps
+# serving `intent` / `target` only.
+
+
+def normalize_text_key(phrase: str) -> str:
+    """A `text` correction's stored KEY: collapsed, edge-stripped, lowercased.
+
+    N3: `Utterance.raw_text` is post-`TextProcessor` on the capture path, so
+    spoken punctuation is already attached to the tokens (`postgress,` not
+    `postgress` + `,`). Stripping the span's edges before storing keeps the key
+    `postgress`, and the boundary rule in `_phrase_pattern` then fires it
+    inside `postgress,` and `postgress.` alike.
+    """
+    return " ".join(str(phrase or "").split()).strip(_EDGE_PUNCT).lower()
+
+
+def normalize_text_value(phrase: str) -> str:
+    """A `text` correction's stored VALUE: collapsed and edge-stripped, case kept."""
+    return " ".join(str(phrase or "").split()).strip(_EDGE_PUNCT)
+
+
+def _phrase_pattern(key: str) -> "re.Pattern[str] | None":
+    """Case-insensitive, whitespace-tolerant pattern for one stored key.
+
+    The key's tokens are joined by `\\s+` so a rule taught from a single-spaced
+    phrase still fires across a newline or a double space. Word boundaries are
+    checked by the caller (`isalnum()` on the neighbouring characters), not by
+    `\\b`, so the rule is unicode-honest and edge-of-string safe.
+    """
+    parts = [re.escape(part) for part in str(key or "").split()]
+    if not parts:
+        return None
+    return re.compile(r"\s+".join(parts), re.IGNORECASE)
+
+
+def _bounded(text: str, start: int, end: int) -> bool:
+    """True when [start, end) is bounded by a non-alphanumeric or a string edge.
+
+    This is the rule the design names: `postgress` fires inside `postgress,`
+    and `postgress.` and at either end of the string, and never inside
+    `postgressive`.
+    """
+    if start > 0 and text[start - 1].isalnum():
+        return False
+    if end < len(text) and text[end].isalnum():
+        return False
+    return True
+
+
+def _preserve_first_letter(matched: str, value: str) -> str:
+    """Case-preserving on the FIRST letter only (the design's rule)."""
+    if matched and value and matched[0].isupper():
+        return value[0].upper() + value[1:]
+    return value
+
+
+def apply_text_corrections(
+    text: str,
+    corrections: "list[Correction] | None",
+) -> tuple[str, tuple[int, ...]]:
+    """Apply every stored `text` rule to `text`; return (new_text, applied ids).
+
+    HS-176-02 (ruling R1). Deterministic and exact-phrase:
+
+    - whitespace-normalized comparison (the key's tokens match across any run
+      of whitespace);
+    - matching is case-insensitive (the key is stored lowercased);
+    - the boundary is non-alphanumeric-or-string-edge;
+    - replace is case-preserving on the FIRST letter only;
+    - **all** matching rules apply, longest key first (the 175 R1
+      longest-wins precedent), recency breaking a length tie;
+    - a rule is applied to the text as the previous rules left it.
+
+    The returned ids are the durable `dictation_corrections.id` of the rules
+    that actually changed the text. A rule with no durable id (a ring-only
+    store) still fires — it simply contributes no id, because there is no row
+    for the journal to name. No id is ever fabricated.
+    """
+    source = str(text or "")
+    if not source or not corrections:
+        return source, ()
+
+    rules = [
+        c
+        for c in corrections
+        if getattr(c, "kind", "") == "text"
+        and normalize_text_key(getattr(c, "key", ""))
+        and normalize_text_value(getattr(c, "value", ""))
+    ]
+    if not rules:
+        return source, ()
+
+    ordered = sorted(
+        rules,
+        key=lambda c: (len(normalize_text_key(c.key)), int(getattr(c, "sequence", 0) or 0)),
+        reverse=True,
+    )
+
+    applied: list[int] = []
+    current = source
+    for rule in ordered:
+        pattern = _phrase_pattern(normalize_text_key(rule.key))
+        if pattern is None:
+            continue
+        value = normalize_text_value(rule.value)
+        out: list[str] = []
+        cursor = 0
+        fired = False
+        for match in pattern.finditer(current):
+            if match.start() < cursor:  # overlapping match already consumed
+                continue
+            if not _bounded(current, match.start(), match.end()):
+                continue
+            out.append(current[cursor : match.start()])
+            out.append(_preserve_first_letter(match.group(0), value))
+            cursor = match.end()
+            fired = True
+        if not fired:
+            continue
+        out.append(current[cursor:])
+        current = "".join(out)
+        rule_id = getattr(rule, "correction_id", None)
+        if rule_id is not None and int(rule_id) not in applied:
+            applied.append(int(rule_id))
+
+    return current, tuple(applied)
+
+
 class CorrectionStore:
     """Bounded, thread-safe ring of recent corrections (one per session).
 
@@ -139,30 +308,76 @@ class CorrectionStore:
                         key=record.gist,
                         value=record.value,
                         sequence=self._seq,
+                        correction_id=getattr(record, "id", None),
                     )
                 )
 
-    def record(self, kind: str, key: str, value: str) -> bool:
-        """Store a correction. Returns False (no-op) if invalid or secret-like."""
+    def record(self, kind: str, key: str, value: str) -> RecordOutcome:
+        """Store a correction; return a `RecordOutcome` (falsy when refused).
+
+        HS-176-02. The return was a bare `bool` through Phase 175; it is now a
+        `RecordOutcome` that is **truthy exactly when the old bool was True**,
+        and additionally carries the stored row id (so the journal route can
+        link `correction_id` instead of guessing it from the newest row) and
+        the refusal's name.
+
+        Refusals, all of them silent no-ops that write nothing:
+        `"kind"` (unknown kind), `"empty"` (blank gist or value), `"secret"`
+        (the shared `looks_like_secret` check on either side), and
+        `"one_word"` — a one-token gist on a **routing** kind, which can only
+        reach Jaccard 0.5 against an utterance of at most two tokens and so
+        cannot fire on a sentence (ruling R7). It is enforced here, in the
+        store, so both HTTP routes and the MCP surface inherit it. The `text`
+        kind is exact-phrase and a one-word key is legal for it.
+        """
         kind = str(kind or "").strip()
-        gist = _gist(key)
-        value = str(value or "").strip()
-        if kind not in CORRECTION_KINDS or not gist or not value:
-            return False
+        if kind == "text":
+            gist = normalize_text_key(_gist(key))
+            value = normalize_text_value(value)
+        else:
+            gist = _gist(key)
+            value = str(value or "").strip()
+        if kind not in CORRECTION_KINDS:
+            return RecordOutcome(False, refusal="kind")
+        if not gist or not value:
+            return RecordOutcome(False, refusal="empty")
         if looks_like_secret(gist) or looks_like_secret(value):
-            return False
+            return RecordOutcome(False, refusal="secret")
+        if kind in ROUTING_CORRECTION_KINDS and len(_TOKEN_RE.findall(gist.lower())) < 2:
+            return RecordOutcome(False, refusal="one_word")
         with self._lock:
             self._seq += 1
-            self._items.append(Correction(kind=kind, key=gist, value=value, sequence=self._seq))
+            sequence = self._seq
+            self._items.append(
+                Correction(kind=kind, key=gist, value=value, sequence=sequence)
+            )
         # Write through to the durable store after the in-memory append (the
         # ring is the nudge path; persistence is best-effort durability and must
         # never fail a record the live path already accepted).
+        correction_id: int | None = None
         if self._repository is not None:
             try:
-                self._repository.record_correction(kind=kind, gist=gist, value=value)
+                stored = self._repository.record_correction(
+                    kind=kind, gist=gist, value=value
+                )
+                correction_id = int(getattr(stored, "id", None) or 0) or None
             except Exception:  # pragma: no cover - durability must never block typing
-                pass
-        return True
+                correction_id = None
+            if correction_id is not None:
+                # Re-stamp the ring entry with the durable id so a rule that
+                # fires can name itself in the journal's `corrections_applied`.
+                with self._lock:
+                    for index, item in enumerate(self._items):
+                        if item.sequence == sequence:
+                            self._items[index] = Correction(
+                                kind=item.kind,
+                                key=item.key,
+                                value=item.value,
+                                sequence=item.sequence,
+                                correction_id=correction_id,
+                            )
+                            break
+        return RecordOutcome(True, correction_id=correction_id)
 
     def snapshot(self) -> list[Correction]:
         """A copy of every stored correction, oldest-first."""

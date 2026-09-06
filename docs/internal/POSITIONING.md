@@ -177,12 +177,55 @@ left column is the name; do not alternate with the synonyms.
 | agents (tailored personas you author) | "bots", "assistants" |
 | coders (live coding sessions awaiting you) | "agents" for this concept, "companions" (the word is retired: an agent is a persona you author; a coder is a live Claude or Codex session) |
 | the iPad app | "the companion", "the companion app" |
+| Interview (repeatable Thread mode) | "the onboarding wizard" for the entire capability; distinguish the Thought Workbench Interview pane |
+| Places (Floor environment picker) | "desktop themes" for this surface |
+| Settle in (temporary quiet Desk view) | "saved focus layout" |
 | Threads (multi-turn desk conversations) | "chat", "chat app", "PersonaChat" |
 | Automations (the watch/reaction surface) | "event triggers", "webhooks", "watches" (except the Project-scoped Watches of Project Rooms) |
 | Watches (Project-scoped) | "event triggers", "monitors", "subscriptions" |
 | Resourceful (overnight bounded maintenance) | "maintenance mode", "idle work", "overnight tasks" |
+| the Concierge (Settings, Models) | "the door", "the packs", "model setup wizard" |
+| the arrival (the desk's home screen) | "the Chair Door", "the board", "the dashboard" |
+| Speak (the voice-typing window) | "DictationCore", "the cockpit", "the voice panel" |
+| Meetings (the meetings window) | "HistoryCore", "the history page" |
+| needs you (the cross-project headline) | "pending items", "action required", "to-do" |
+| the Heartbeat (the unattended sweep) | "the pulse", "the poller", "background sync" |
+| the sweep (one Heartbeat evaluation pass) | "the tick", "the poll", "the check" |
+| Rhythm (the Settings module for the Heartbeat) | "cadence settings", "heartbeat config" |
+| the shade (the system pull-down) | "the tray", "the notification panel", "the dropdown" |
+| Run intelligence (the verb on an OFF meeting) | "process", "analyze", "run AI" |
+| a proposal (an extracted decision or action item awaiting Confirm) | "suggestion", "recommendation", "finding" |
+| Confirm (the verb that commits a proposal) | "accept", "approve", "apply" |
+| the loop (capture to confirmed decision) | "the pipeline", "the workflow", "the auto-intel flow" |
+| a suggested source (a repo or issue key mentioned in a transcript) | "a recommendation", "a detected source", "an inferred source" |
+| the 1:1 card (the People Prep lens before a meeting) | "the person card", "the prep card", "the contact card" |
+| People in the Room (the PEOPLE section in a project Room) | "room contacts", "project members", "room people section" |
+| the steward's hand (the steward's bounded external actions) | "steward actions", "the hand", "steward effects" |
+| a reviewer nudge (a proposed comment on a waiting PR) | "a ping", "a reminder", "a review request", "a poke" |
+| the health rows (the Room's HEALTH signal section) | "the health dashboard", "the health panel", "the status board" |
+| the drafted update (the model-rewritten weekly update) | "the AI update", "the generated update", "the smart update" |
+| Reach (remote access over Streamable HTTP) | "remote mode", "the remote transport", "the listener" |
+| a scoped credential (palette + TTL, shown once) | "an API key", "an access token", "a remote token" |
+| the REMOTE badge (the fourth egress state) | "the remote chip", "the network badge", "the external badge" |
+| the overnight runner (the .43 client script) | "the cron job", "the scheduled runner", "the background agent" |
+| the Confluence connector (blog posts + pages by ID) | "the wiki connector", "the Confluence integration", "the Confluence plugin" |
+| the clock (the calendar on the desk) | "the calendar view", "the schedule", "the planner" |
+| the WEEK strip (the arrival's day-token row) | "the week bar", "the calendar bar", "the day pills" |
+| an event-born recording (auto-created from a calendar event) | "a calendar recording", "an auto-recording", "a scheduled capture" |
+| the meeting watch (the Room's meeting Watch source) | "the meeting tracker", "the meeting monitor", "the meeting feed" |
+| the weekly brief (the full-week summary in Rhythm) | "the week report", "the weekly digest", "the week-in-review" |
+| the Speak wings (Speak, Journal, Blocks, Learned) | "tabs", "panels", "sections" |
+| a text correction (a heard phrase paired with the said phrase) | "a spelling fix", "a vocabulary entry", "a find and replace" |
+| a routing correction (an intent or target correction) | "a route fix", "a redirect", "a reroute" |
+| the Learned wing (the correction memory on the face) | "the Memory tab", "the corrections table" |
+| APPLIED (the chip where a stored rule fired on a run) | "corrected", "learned", "fixed", "nudged" |
 
 ## Voice rules (the editing standard for every user-facing doc)
+
+The controlled-English policy is [DOCS_STYLE.md](DOCS_STYLE.md), using
+ASD-STE100 Issue 9 as its language reference. The rules below continue to
+govern product voice and names. [DOCS_TERMINOLOGY.md](DOCS_TERMINOLOGY.md)
+records the domain terms used with that policy.
 
 - **The humanizer standard applies** (the vendored skill): no AI-vocab
   (delve, seamless, leverage, robust, comprehensive, supercharge…), no

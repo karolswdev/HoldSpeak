@@ -37,6 +37,18 @@ class MeetingConfig:
     intel_temperature: float = 0.2
     intel_summary_model: Optional[str] = None  # Falls back to realtime if None
     intel_deferred_enabled: bool = True  # Queue intel when no suitable local model is available
+    # HS-172-02: auto-intel trigger after capture stops.
+    # "off" = manual only (existing behaviour);
+    # "room_linked" = auto-enqueue for meetings linked to a Room (default);
+    # "every" = auto-enqueue for every meeting with a transcript.
+    intelligence_auto: str = "room_linked"
+    # HS-175-03: auto-record calendar events with a meeting URL.
+    # "off" = no auto-creation (default; Article IV: armed is his act);
+    # "all_calendar" = arm every calendar event with a meeting_url;
+    # "room_linked" = arm only events linked to a Room via calendar_event_projects.
+    auto_record: str = "off"
+    # HS-175-03: lead time before starts_at when the recording arms (minutes).
+    auto_record_lead_minutes: int = 5
     # HS-139-01: intel_queue_poll_seconds deleted — dead setting (never
     # threaded to IntelQueue; queue uses hardcoded 120.0 default).
     intel_retry_base_seconds: int = 30  # Initial deferred-intel retry delay
@@ -140,6 +152,22 @@ class MeetingConfig:
     similarity_threshold: float = 0.75  # Cosine similarity for speaker matching
 
     def __post_init__(self) -> None:
+        # HS-172-02: normalize and validate intelligence_auto.
+        _auto = str(self.intelligence_auto or "room_linked").strip().lower()
+        if _auto not in ("off", "room_linked", "every"):
+            raise ValueError(
+                f"intelligence_auto must be off, room_linked, or every; got {_auto!r}"
+            )
+        self.intelligence_auto = _auto
+        # HS-175-03: normalize and validate auto_record.
+        _ar = str(self.auto_record or "off").strip().lower()
+        if _ar not in ("off", "all_calendar", "room_linked"):
+            raise ValueError(
+                f"auto_record must be off, all_calendar, or room_linked; got {_ar!r}"
+            )
+        self.auto_record = _ar
+        # HS-175-03: lead time must be a positive integer.
+        self.auto_record_lead_minutes = max(1, int(self.auto_record_lead_minutes))
         # HS-112-01: one pointer sentinel -- None means hub default.
         self.intel_profile_id = (
             str(self.intel_profile_id or "").strip() or None

@@ -48,6 +48,21 @@ def build_intel_router(ctx: WebContext) -> APIRouter:
     async def api_retry_intel_job(meeting_id: str, request: Request) -> Any:
         try: return JSONResponse(_svc(ctx).retry_job(_principal(request), meeting_id))
         except Exception as exc: return _error(exc, "Failed to retry intel job")
+    @router.post("/api/meetings/{meeting_id}/intelligence/run")
+    async def api_run_meeting_intelligence(meeting_id: str, request: Request) -> Any:
+        """HS-170-04: enqueue a fresh intelligence job for a meeting.
+
+        The face's Run intelligence verb. Returns {jobId, state, host}.
+        409 with plainReason when the meeting has no transcript.
+        """
+        try:
+            result = _svc(ctx).run_intelligence(_principal(request), meeting_id)
+            return JSONResponse(result)
+        except ConflictError as exc:
+            return JSONResponse({"plainReason": str(exc)}, status_code=409)
+        except Exception as exc:
+            return _error(exc, "Failed to run Meeting intelligence")
+
     @router.get("/api/meetings/{meeting_id}/intel-recovery")
     async def api_get_meeting_intel_recovery(meeting_id: str, request: Request) -> Any:
         try: return JSONResponse(_svc(ctx).get_recovery(_principal(request), meeting_id))

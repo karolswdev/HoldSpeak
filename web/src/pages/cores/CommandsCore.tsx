@@ -1,9 +1,4 @@
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
-// HS-95-04 — the Commands surface's core: the flat page's whole capability
-// without the flat chrome (see ActivityCore for the pattern rules).
-// HS-98-07 — re-crafted native: the editor left its modal for an
-// in-surface section; delete is an inline two-step. Wire calls
-// unchanged.
 import { useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
@@ -12,6 +7,7 @@ import {
   GadgetRow,
   StringGadget,
 } from "../../desk/surface/gadgets";
+import { countToken } from "../../desk/surface";
 import { apiFetch, readableError } from "../../lib/api";
 import { withRevision } from "../../lib/settingsWrite";
 import { openSurfaceOr } from "../../desk/shell";
@@ -140,13 +136,13 @@ export function CommandsCore({ hero }: CoreProps) {
   );
   return (
     <>
-      {renderHeroSlot(hero, verbs, `${items.length} ${items.length === 1 ? "command" : "commands"}`)}
+      {renderHeroSlot(hero, verbs, countToken(items.length, "COMMAND"))}
       {message ? (
         message.error ? (
           <SurfaceState error={message.text} />
         ) : (
           <p className="surface-receipt-line" data-tone="ok" role="status">
-            ✓ {message.text}
+            {message.text}
           </p>
         )
       ) : null}
@@ -161,7 +157,7 @@ export function CommandsCore({ hero }: CoreProps) {
               <SurfaceState
                 empty
                 emptyLabel="No voice commands"
-                emptyGlyph="❝"
+                emptyGlyph="○"
                 actionLabel="Add command"
                 onAction={() => setEditing({ index: -1, macro: blank() })}
               />
@@ -285,7 +281,7 @@ export function CommandsCore({ hero }: CoreProps) {
             </GadgetGroup>
             {editing.macro.action.kind === "shell" ? (
               <p className="surface-receipt-line" data-tone="warn">
-                ⚠ RUNS CODE ON THIS MACHINE WHEN THE KEYWORD MATCHES
+                RUNS CODE ON THIS MACHINE WHEN THE KEYWORD MATCHES
               </p>
             ) : null}
             <div className="surface-actions">

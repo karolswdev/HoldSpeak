@@ -2,7 +2,7 @@
  * decide optimistic/reconcile, hydrate from parts) and ThreadPullout
  * tool row rendering (decision box, elicitation form, keyboard reach). */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { act, render, screen, fireEvent } from "@testing-library/react";
 import {
   useThreadStore,
   type ThreadMessage,
@@ -386,6 +386,56 @@ describe("ThreadStore tool row reducers", () => {
 // ── Pullout rendering tests ────────────────────────────────────────
 
 describe("ThreadPullout tool rows", () => {
+  it.each([false, true])("preserves the reader's disclosure choice throughout a turn: open=%s", (opened) => {
+    seedStore([makeMsg({ streaming: true, completedAt: null, parts: [] })]);
+    const tool: ToolRow = {
+      callId: "activity", messageId: "msg-1", name: "desk.list",
+      toolClass: "evidence_read", argsHead: "{}", state: "pending", decisionRequired: false,
+    };
+    useThreadStore.setState({ toolRows: { "t-1": { activity: tool } } });
+    renderPullout();
+    const disclosure = screen.getByTestId("tool-activity");
+    expect(screen.getByTestId("tool-row")).not.toBeVisible();
+    expect(disclosure).toHaveTextContent("Working…");
+    if (opened) fireEvent.click(disclosure.querySelector("summary")!);
+    for (const state of ["running", "receipted"] as const) {
+      act(() => useThreadStore.setState({ toolRows: { "t-1": { activity: { ...tool, state } } } }));
+      expect(disclosure.hasAttribute("open")).toBe(opened);
+      if (opened) expect(screen.getByTestId("tool-row")).toBeVisible();
+      else expect(screen.getByTestId("tool-row")).not.toBeVisible();
+    }
+    // A tool can finish while the model is still composing its answer.
+    expect(disclosure).not.toHaveTextContent("Working…");
+    act(() => useThreadStore.setState((s) => ({
+      threads: { "t-1": { ...s.threads["t-1"], messages: [makeMsg()] } },
+    })));
+    expect(screen.getByText("Hello")).toBeVisible();
+    expect(disclosure.hasAttribute("open")).toBe(opened);
+  });
+
+  it("keeps requests for input and failures visible alongside collapsed routine work", () => {
+    seedStore([makeMsg({ streaming: true, completedAt: null, parts: [] })]);
+    const base: ToolRow = {
+      callId: "routine", messageId: "msg-1", name: "desk.list",
+      toolClass: "evidence_read", argsHead: "{}", state: "receipted", decisionRequired: false,
+    };
+    useThreadStore.setState({ toolRows: { "t-1": {
+      routine: base,
+      approval: { ...base, callId: "approval", state: "awaiting_decision", decisionRequired: true },
+      question: { ...base, callId: "question", state: "elicitation", elicitation: {
+        type: "object", prompt: "Choose the project", properties: { name: { type: "string" } },
+      } },
+      failed: { ...base, callId: "failed", state: "failed", error: "tool_timeout" },
+      denied: { ...base, callId: "denied", state: "denied", error: "tool_denied" },
+    } } });
+    renderPullout();
+    expect(screen.getByTestId("tool-activity").hasAttribute("open")).toBe(false);
+    expect(screen.getByTestId("allow-once")).toBeVisible();
+    expect(screen.getByTestId("elicitation-form")).toBeVisible();
+    expect(screen.getByText("tool_timeout")).toBeVisible();
+    expect(screen.getByText("tool_denied")).toBeVisible();
+  });
+
   it("renders a decision box with Allow once / Allow always / Deny", () => {
     seedStore([makeMsg()]);
     // Seed a tool row in awaiting_decision
@@ -1164,11 +1214,11 @@ describe("HS-153-03 decision box defaultDecision", () => {
 
     const denyBtn = screen.queryByTestId("deny");
     expect(denyBtn).toBeTruthy();
-    expect(denyBtn!.classList.contains("is-primary")).toBe(true);
+    expect(denyBtn!.classList.contains("btn--primary")).toBe(true);
 
     const allowBtn = screen.queryByTestId("allow-once");
     expect(allowBtn).toBeTruthy();
-    expect(allowBtn!.classList.contains("is-primary")).toBe(false);
+    expect(allowBtn!.classList.contains("btn--primary")).toBe(false);
   });
 
   it("Allow-once button is primary when defaultDecision is allow (default)", () => {
@@ -1198,11 +1248,11 @@ describe("HS-153-03 decision box defaultDecision", () => {
 
     const allowBtn = screen.queryByTestId("allow-once");
     expect(allowBtn).toBeTruthy();
-    expect(allowBtn!.classList.contains("is-primary")).toBe(true);
+    expect(allowBtn!.classList.contains("btn--primary")).toBe(true);
 
     const denyBtn = screen.queryByTestId("deny");
     expect(denyBtn).toBeTruthy();
-    expect(denyBtn!.classList.contains("is-primary")).toBe(false);
+    expect(denyBtn!.classList.contains("btn--primary")).toBe(false);
   });
 
   it("Allow-once is primary when no defaultDecision is set", () => {
@@ -1228,6 +1278,6 @@ describe("HS-153-03 decision box defaultDecision", () => {
 
     const allowBtn = screen.queryByTestId("allow-once");
     expect(allowBtn).toBeTruthy();
-    expect(allowBtn!.classList.contains("is-primary")).toBe(true);
+    expect(allowBtn!.classList.contains("btn--primary")).toBe(true);
   });
 });

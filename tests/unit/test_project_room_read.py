@@ -37,8 +37,11 @@ OWNER = Principal(PrincipalKind.OWNER, "room-read-test")
 REQUIRED_SECTIONS = {
     "project", "items", "meetings", "resources", "changes",
     "review", "sources", "updates", "steward",
+    # HS-169-04: the four questions
+    "needsYou", "health", "sinceRead", "decisions", "commitments", "target",
+    "receipts",  # HS-174: the Room's RECEIPTS section (remote receipts wear REMOTE · host)
 }
-TOP_LEVEL_KEYS = {"project_id", "revision", "observed_at"} | REQUIRED_SECTIONS
+TOP_LEVEL_KEYS = {"project_id", "revision", "observed_at", "nextCheckAt"} | REQUIRED_SECTIONS
 
 
 # ── Fixtures ─────────────────────────────────────────────────────────────
@@ -253,11 +256,12 @@ class TestAbsentMarkers:
         result = svc.room(OWNER, proj["id"])
         assert result["review"] == self.EXPECTED_SHAPE
 
-    def test_sources_absent(self, rig) -> None:
+    def test_sources_live(self, rig) -> None:
+        """HS-169-04: sources is now a live section, not absent."""
         _db, svc = rig
         proj = _create(svc)
         result = svc.room(OWNER, proj["id"])
-        assert result["sources"] == self.EXPECTED_SHAPE
+        assert result["sources"]["state"] == "ok"
 
     def test_updates_absent(self, rig) -> None:
         _db, svc = rig
@@ -272,11 +276,11 @@ class TestAbsentMarkers:
         assert result["steward"] == self.EXPECTED_SHAPE
 
     def test_absent_markers_grep_proof(self, rig) -> None:
-        """No empty-faked review/steward/update/sources payloads (Art VI)."""
+        """Remaining absent sections (Art VI). sources graduated HS-169-04."""
         _db, svc = rig
         proj = _create(svc)
         result = svc.room(OWNER, proj["id"])
-        for section_name in ("review", "sources", "updates", "steward"):
+        for section_name in ("review", "updates", "steward"):
             section = result[section_name]
             assert section["state"] == "absent"
             assert "reason" in section
@@ -527,7 +531,8 @@ class TestRouteIntegration:
         proj = client.post("/api/projects", json={"name": "Absent Test"}).json()["project"]
         resp = client.get(f"/api/projects/{proj['id']}/room")
         body = resp.json()
-        for section_name in ("review", "sources", "updates", "steward"):
+        # HS-169-04: sources graduated to live; only these remain absent
+        for section_name in ("review", "updates", "steward"):
             assert body[section_name] == {"state": "absent", "reason": "not_yet_built"}
 
     def test_room_route_has_revision(self, rig, client) -> None:

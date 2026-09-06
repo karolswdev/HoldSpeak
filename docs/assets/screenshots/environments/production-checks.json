@@ -1,0 +1,10 @@
+{
+  "bundle": "production",
+  "backend": "isolated HTTP fixtures",
+  "pixiSelection": true,
+  "settingsLiveSelection": true,
+  "selectedPreviewsLoaded": true,
+  "originalWorldsIncluded": true,
+  "phoneOverflow": false,
+  "errors": []
+}

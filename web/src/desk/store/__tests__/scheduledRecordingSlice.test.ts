@@ -6,7 +6,24 @@ import { createScheduledRecordingSlice } from "../scheduledRecordingSlice";
 import type { DeskState } from "../types";
 
 const apiFetchMock = vi.hoisted(() => vi.fn());
-vi.mock("../../../lib/api", () => ({ apiFetch: apiFetchMock }));
+const FakeApiError = vi.hoisted(
+  () =>
+    class FakeApiError extends Error {
+      readonly status: number;
+      readonly payload: unknown;
+      constructor(status: number, message: string, payload: unknown) {
+        super(message);
+        this.name = "ApiError";
+        this.status = status;
+        this.payload = payload;
+      }
+    },
+);
+vi.mock("../../../lib/api", () => ({
+  apiFetch: apiFetchMock,
+  ApiError: FakeApiError,
+  readableError: (err: unknown) => (err instanceof Error ? err.message : "Request failed. Retry the action."),
+}));
 
 // ---------------------------------------------------------------------------
 // minimal slice harness (same pattern as the existing store tests)
@@ -159,6 +176,59 @@ describe("scheduledRecordingSlice", () => {
 
       const result = await state.armEventRecording("event-bad");
       expect(result).toBe(false);
+    });
+  });
+
+  describe("cancelArmedSchedule (HS-175 C2)", () => {
+    it("returns ok and reloads schedules on success", async () => {
+      apiFetchMock.mockImplementation((path: string, opts?: { method?: string }) => {
+        if (path === "/api/scheduled-recordings/rec-1/cancel" && opts?.method === "POST") {
+          return Promise.resolve({ success: true, cancelled: true });
+        }
+        if (path === "/api/scheduled-recordings") {
+          return Promise.resolve({ success: true, schedules: [] });
+        }
+        return Promise.resolve({});
+      });
+      const { state } = makeSlice();
+      const result = await state.cancelArmedSchedule("rec-1");
+      expect(result).toEqual({ ok: true });
+      expect(apiFetchMock).toHaveBeenCalledWith("/api/scheduled-recordings/rec-1/cancel", {
+        method: "POST",
+      });
+      expect(apiFetchMock).toHaveBeenCalledWith("/api/scheduled-recordings");
+    });
+
+    it("names the hub's refusal (reason + code) instead of swallowing it", async () => {
+      apiFetchMock.mockImplementation(() =>
+        Promise.reject(
+          new FakeApiError(409, "Already recording; stop the meeting instead", {
+            success: false,
+            error: "Already recording; stop the meeting instead",
+            code: "already_recording",
+          }),
+        ),
+      );
+      const { state } = makeSlice();
+      const result = await state.cancelArmedSchedule("rec-2");
+      expect(result).toEqual({
+        ok: false,
+        reason: "Already recording; stop the meeting instead",
+        code: "already_recording",
+        status: 409,
+      });
+    });
+
+    it("names an unreachable hub with a plain reason", async () => {
+      apiFetchMock.mockImplementation(() => Promise.reject(new Error("Failed to fetch")));
+      const { state } = makeSlice();
+      const result = await state.cancelArmedSchedule("rec-3");
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.code).toBe("unreachable");
+        expect(result.reason).toBe("Failed to fetch");
+        expect(result.status).toBe(0);
+      }
     });
   });
 

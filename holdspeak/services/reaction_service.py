@@ -69,10 +69,25 @@ def _normalize_entity(connector_id: str, entity: Any) -> dict[str, Any]:
     elif connector_id == "jira":
         common.update({
             "status": str(entity.get("status") or "").lower(),
+            "status_category": str(entity.get("status_category") or "").lower(),
             "assignee": str(entity.get("assignee") or "").strip(),
             "priority": str(entity.get("priority") or "").lower(),
             "resolution": str(entity.get("resolution") or "").lower(),
             "due_at": str(entity.get("due_at") or entity.get("dueDate") or ""),
+            "issue_type": str(entity.get("issue_type") or "").strip(),
+            "labels": entity.get("labels", []) if isinstance(entity.get("labels"), list) else [],
+            "project_key": str(entity.get("project_key") or "").strip(),
+            "status_changed_at": str(entity.get("status_changed_at") or "").strip(),
+        })
+    elif connector_id == "meeting":
+        # HS-175-04: meeting-specific fields for token computation.
+        common.update({
+            "entity_type": "meeting",
+            "date": str(entity.get("date") or ""),
+            "participants": entity.get("participants", 0),
+            "decisions_count": entity.get("decisions_count", 0),
+            "commitments_count": entity.get("commitments_count", 0),
+            "intel_status": str(entity.get("intel_status") or "off"),
         })
     return common
 
@@ -111,7 +126,11 @@ def _event(event_type: str, before: dict[str, Any],
         "entity_ref": entity["id"],
         "source_revision": revision,
         "facts": {"entity_title": entity.get("title", ""), "url": entity.get("url", ""),
-                  "changed": changed},
+                  "changed": changed,
+                  # HS-166-03: carry the current entity so snapshot-level
+                  # comparisons (due_within_days, overdue, inactive_for,
+                  # older_than, newer_than) can read field values.
+                  "current": dict(entity)},
     }
 
 
@@ -147,10 +166,21 @@ def diff_snapshots(connector_id: str, before: dict[str, Any],
                 if previous.get(field) != current.get(field):
                     events.append(_event(kind, previous, current,
                                          {field: [previous.get(field), current.get(field)]}))
+        elif connector_id == "meeting":
+            # HS-175-04: meeting-specific transitions.
+            for field, kind in (
+                ("decisions_count", "meeting.decisions_changed"),
+                ("commitments_count", "meeting.commitments_changed"),
+                ("intel_status", "meeting.intel_status_changed"),
+            ):
+                if previous.get(field) != current.get(field):
+                    events.append(_event(kind, previous, current,
+                                         {field: [previous.get(field), current.get(field)]}))
         else:
             for field, kind in (
                 ("assignee", "jira.issue.assigned"),
                 ("status", "jira.issue.status_changed"),
+                ("status_category", "jira.issue.category_changed"),
                 ("priority", "jira.issue.priority_changed"),
                 ("due_at", "jira.issue.due_changed"),
             ):
@@ -320,8 +350,13 @@ class ReactionService:
         if current.tzinfo is None:
             current = current.replace(tzinfo=timezone.utc)
         outcomes: list[dict[str, Any]] = []
-        for watch in self._repo.list_watches():
-            if not watch["enabled"]:
+        # HS-168 legacy-side watch guard: the repo query excludes
+        # paused/retired watches and watches on archived projects at
+        # the SQL level (list_enabled_legacy_watches).  The Python
+        # _GRADUATED_STATES belt below stays as defense-in-depth.
+        _GRADUATED_STATES = {"active", "tested", "paused", "retired"}
+        for watch in self._repo.list_enabled_legacy_watches():
+            if watch.get("state", "") in _GRADUATED_STATES:
                 continue
             try:
                 cadence = int(

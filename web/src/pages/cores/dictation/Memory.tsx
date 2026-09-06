@@ -1,23 +1,15 @@
-/* HS-111-02 — correction memory is a machine table: KIND | GIST |
-   VALUE | REACH, the arming per row. REACH is the wire's `similar`
-   count — what makes the memory legible as equipment. */
-import { Button } from "../../../components/signal/Signal";
-import { apiFetch } from "../../../lib/api";
+/* HS-111-02 — the Configure door's learning panel.
+   HS-176-05 — the corrections TABLE moved out of the door and became the
+   `Learned` wing (settled design D2(c)): "the only path to what the
+   pipeline learned is the gear" was the defect, and a wing is the fix.
+   `Learned.tsx` owns the rows, the labels, the real `N APPLIED` count and
+   the `Forget` verb; this panel keeps what the wing does not carry —
+   the LEARNING DIGEST (the windowed week token line, whose
+   `reach_for_gist` reach appears on no ledger face, ruling R3). */
 import { asRows, useResource } from "../../pageSupport";
-import type {
-  DictationCorrectionsResponse,
-  DictationLearningDigestResponse,
-} from "../core-types";
-import { presentValue } from "../../../desk/surface/format";
-import {
-  ConfirmVerb,
-  SurfaceFacts,
-  SurfaceState,
-} from "../../../desk/surface/Surface";
-import {
-  GadgetGroup,
-  GadgetTable,
-} from "../../../desk/surface/gadgets";
+import type { DictationLearningDigestResponse } from "../core-types";
+import { SurfaceFacts, SurfaceState } from "../../../desk/surface/Surface";
+import { GadgetGroup } from "../../../desk/surface/gadgets";
 
 /* HS-111-02 — the digest is a fact token row, never a sentence:
    WEEK · TAUGHT n · CORRECTED n · REACHED n (empty: WEEK · —). */
@@ -29,7 +21,7 @@ function LearningDigestFacts({ digest }: { digest: DictationLearningDigestRespon
   const topBlocks = asRows(digest, ["by_block"]).slice(0, 3);
   if (!made && !corrected) {
     // The empty week is an honest zero token, never a sentence.
-    return <p className="speak-token-line">WEEK · TAUGHT 0</p>;
+    return <p className="speak-token-line">WEEK · NO CORRECTIONS</p>;
   }
   return (
     <>
@@ -58,54 +50,16 @@ function LearningDigestFacts({ digest }: { digest: DictationLearningDigestRespon
 }
 
 export function Memory() {
-  const resource = useResource<DictationCorrectionsResponse>("/api/dictation/corrections", {});
   const digest = useResource<DictationLearningDigestResponse>("/api/dictation/learning-digest", {});
-  const rows = asRows(resource.data, ["items", "corrections"]);
-  const remove = async (row: Record<string, unknown>) => {
-    await apiFetch(
-      `/api/dictation/corrections/${encodeURIComponent(String(row.id))}`,
-      { method: "DELETE" },
-    );
-    await resource.reload();
-  };
   return (
-    <>
-      <GadgetGroup label="Correction memory">
-        <SurfaceState
-          loading={resource.loading}
-          error={resource.error}
-          empty={!rows.length}
-          emptyLabel="Nothing learned yet"
-          emptyGlyph="◈"
-          onRetry={() => void resource.reload()}
-        >
-          <GadgetTable
-            head={["Kind", "Gist", "Value", "Reach"]}
-            rows={rows.map((row) => [
-              String(row.kind ?? "—"),
-              String(row.gist ?? "—"),
-              presentValue(row.value ?? row.replacement) || "—",
-              presentValue(row.similar) || "—",
-            ])}
-            verbs={(index) => (
-              <ConfirmVerb
-                label="×"
-                confirmLabel="Forget?"
-                onConfirm={() => void remove(rows[index])}
-              />
-            )}
-          />
-        </SurfaceState>
-      </GadgetGroup>
-      <GadgetGroup label="Learning digest">
-        <SurfaceState
-          loading={digest.loading}
-          error={digest.error}
-          onRetry={() => void digest.reload()}
-        >
-          <LearningDigestFacts digest={digest.data} />
-        </SurfaceState>
-      </GadgetGroup>
-    </>
+    <GadgetGroup label="Learning digest">
+      <SurfaceState
+        loading={digest.loading}
+        error={digest.error}
+        onRetry={() => void digest.reload()}
+      >
+        <LearningDigestFacts digest={digest.data} />
+      </SurfaceState>
+    </GadgetGroup>
   );
 }

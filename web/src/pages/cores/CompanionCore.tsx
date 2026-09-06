@@ -1,14 +1,6 @@
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
-// HS-95-08 — the ONE roster of agents and coder sessions (reconciled
-// surfaces — no duplicate chat/list). HS-100-09 — Agents (thesis §1.3):
-// the application opens on WHO NEEDS YOU — blocked sessions first with
-// their question and an Answer verb one step from the pane.
-// HS-111-04 — the crew board (audit §3.1): ONE SurfaceLedger, two
-// bands — SESSIONS (blocked-first, lamp + state token, the question as
-// an open-in-place aerogel receipt) and CREW (lamp, mono handle, role
-// token). Wings collapse to Roster | Delivery; the connection facts
-// are tokens behind the gear door, never a prose accordion.
 import { useMemo, useState } from "react";
+import { countLabel } from "../../desk/surface";
 import { openCoderSession, openPersona } from "../../desk/shell";
 import type {
   CoreProps,
@@ -139,7 +131,7 @@ export function CompanionCore({ hero }: CoreProps) {
       ) : null}
       <SurfaceLedger
         cols="crew"
-        count={`CREW ${recipeRows.length} · SESSIONS ${allSessions.length} · BLOCKED ${blocked.length}`}
+        count={[countLabel("CREW", recipeRows.length), countLabel("SESSIONS", allSessions.length), countLabel("BLOCKED", blocked.length)].filter(Boolean).join(" · ")}
       >
         <h4 className="surface-ledger-band">Sessions</h4>
         {allSessions.length ? (

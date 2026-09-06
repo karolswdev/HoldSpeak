@@ -1,5 +1,6 @@
 import "./inline-editor.css";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import type { EditorView } from "@codemirror/view";
 import { runAsk } from "../ask";
 import { AI_VERBS, type EditorAIVerb } from "../editorAI";
@@ -171,23 +172,23 @@ export function EditorAIBar({
     <div className="desk-editor-ai-bar" style={positionStyle} role="toolbar" aria-label="Selection AI">
       <div className="desk-editor-ai-bar-verbs">
         {(Object.keys(AI_VERBS) as EditorAIVerb[]).map((verb) => (
-          <button
+          <Button
             key={verb}
-            type="button"
-            className="desk-chip quiet"
+            dense
+            variant="ghost"
             disabled={pending || disabled}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => void run(verb)}
           >
             {pending ? "Working…" : AI_VERBS[verb].label}
-          </button>
+          </Button>
         ))}
         <ContextualAssignment
           label="Thought"
           capabilityId="thought.interview"
           scope={{ kind: "capability", capability_id: "thought.interview" }}
         />
-        <button type="button" className="desk-chip quiet" onClick={dismiss} aria-label="Dismiss AI controls">×</button>
+        <Button dense variant="ghost" onClick={dismiss} aria-label="Dismiss AI controls">Dismiss</Button>
       </div>
       {receipt ? (
         <span role="status" className="desk-editor-ai-bar-error">{receipt.text}</span>

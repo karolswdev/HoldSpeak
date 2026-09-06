@@ -85,7 +85,7 @@ export function AssignmentModelChooser({
           <StateChip state={chip.state} label={chip.label} />
         </span>
         <span className="assignment-candidate-added" aria-hidden="true">
-          {added ? "✓ In the chain" : "Add to the chain"}
+          {added ? "In the chain" : "Add to the chain"}
         </span>
       </button>;
     })}

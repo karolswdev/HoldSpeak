@@ -36,3 +36,52 @@
 .people-alias-add { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 .people-alias-add .gadget-string { flex: 1; min-width: 0; }
 @container surface (max-width: 559.9px) { .people-new, .people-agenda-add, .people-context-add, .people-project-link, .people-delegate, .people-satisfy { align-items: stretch; flex-wrap: wrap; } .people-new .gadget-string, .people-agenda-add .gadget-pad, .people-context-add .gadget-pad, .people-project-link > :first-child, .people-delegate > :first-child, .people-satisfy > :first-child { flex-basis: 100%; } .people-history-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* HS-172-05 — People split: the card takes the full window below 900px.
+   Above 900px both list and detail show side-by-side; below, the
+   detail (with Back) owns the window. Overrides the global 560px
+   SurfaceSplit breakpoint for the People surface only. */
+@container surface (min-width: 560px) and (max-width: 899.9px) {
+  .people-surface .surface-split-open { grid-template-columns: minmax(0, 1fr); }
+  .people-surface .surface-split-open .surface-split-main { display: none; }
+}
+
+/* HS-172-05 — Prep enrichment: summary rows + display step + footer. */
+.people-prep-enriched { display: flex; flex-direction: column; gap: 16px; }
+.people-prep-display { font: 650 26px/1.15 var(--font-display, 'Space Grotesk', 'Inter', system-ui, sans-serif); color: var(--text); }
+.people-prep-summary { display: flex; flex-direction: column; }
+.people-prep-row { border-top: 1px solid var(--border); }
+.people-prep-row-main { display: flex; align-items: center; gap: 8px; padding: 10px 0; flex-wrap: wrap; }
+.people-prep-row-primary { font: 600 15px/1.4 var(--font-sans, 'Inter', system-ui, sans-serif); color: var(--text); white-space: nowrap; text-transform: uppercase; min-width: 0; }
+.people-prep-row-tokens { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.people-prep-token { font: 600 10px/1 var(--font-mono, 'JetBrains Mono', monospace); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); white-space: nowrap; }
+.people-prep-token[data-warning] { color: var(--warning, #fbbf24); }
+.people-prep-token-muted { color: var(--text-muted); }
+.people-prep-row-spacer { flex: 1; min-width: 8px; }
+/* The Open verb must never clip or be pushed out of the row. */
+.people-prep-row-main > .btn { flex-shrink: 0; }
+.people-prep-receipt { font: 600 10px/1 var(--font-mono, 'JetBrains Mono', monospace); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+
+/* HS-172-05 — Now wing caption tokens (same grammar as Room proposal captions). */
+.people-now-caption {
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  color: var(--text-faint, var(--text-muted));
+  white-space: nowrap;
+}
+.people-now-caption-warning { color: var(--warning, #fbbf24); }
+
+/* HS-172-05 — 393: tokens wrap below primary, Open trailing. */
+@container surface (max-width: 559.9px) {
+  .people-prep-row-main { flex-wrap: wrap; }
+  .people-prep-row-primary { font-size: 14px; }
+}
+
+/* HS-172-05 — Now wing rows carry no lead slot, so at the narrow
+   container the primary takes the whole line and cells + Open fall under
+   (the HS-168-04 lead-beside-text rule has nothing to protect here). */
+@container surface (max-width: 559.9px) {
+  .people-surface .surface-ledger-row[data-wrap] .surface-ledger-primary {
+    flex: 1 1 100%;
+  }
+}

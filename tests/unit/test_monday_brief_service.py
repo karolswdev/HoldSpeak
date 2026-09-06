@@ -83,6 +83,7 @@ def test_generate_creates_empty_brief(tmp_path):
     assert brief.period_start == "2026-07-31T17:00:00"
     assert brief.period_end == now.isoformat()
     assert brief.sections == {
+        "this_week": [],
         "changed": [],
         "broke": [],
         "waiting": [],
@@ -151,12 +152,11 @@ def test_collect_changes_excludes_read_only_operations(tmp_path):
             method=method,
         )
 
-    assert (
-        service._collect_changes(
-            "2026-08-01T00:00:00+00:00", "2026-08-02T00:00:00+00:00"
-        )
-        == []
+    items, ledger = service._collect_changes(
+        "2026-08-01T00:00:00+00:00", "2026-08-02T00:00:00+00:00"
     )
+    assert items == []
+    assert ledger.operations == 0
 
 
 def test_collect_changes_collapses_a_correlated_retry(tmp_path):
@@ -169,20 +169,20 @@ def test_collect_changes_collapses_a_correlated_retry(tmp_path):
             service,
             event_id=event_id,
             timestamp=timestamp,
-            service_name="WorkflowService",
+            service_name="SequenceWorkflowService",
             method="run_workflow",
             correlation_id="run-1",
             args_summary='{"workflow_id":"weekly"}',
             error=error,
         )
 
-    changes = service._collect_changes(
+    items, _ledger = service._collect_changes(
         "2026-08-01T00:00:00+00:00", "2026-08-02T00:00:00+00:00"
     )
 
-    assert len(changes) == 1
-    assert changes[0].text == "WorkflowService.run_workflow"
-    assert changes[0].source_ref == "pipeline:run-1"
+    assert len(items) == 1
+    assert items[0].text == "SequenceWorkflowService.run_workflow"
+    assert items[0].source_ref == "pipeline:run-1"
 
 
 def test_collect_changes_collapses_an_uncorrelated_failed_retry(tmp_path):
@@ -201,12 +201,12 @@ def test_collect_changes_collapses_an_uncorrelated_failed_retry(tmp_path):
             error=error,
         )
 
-    changes = service._collect_changes(
+    items, _ledger = service._collect_changes(
         "2026-08-01T00:00:00+00:00", "2026-08-02T00:00:00+00:00"
     )
 
-    assert len(changes) == 1
-    assert changes[0].source_ref == "pipeline-event:failed"
+    assert len(items) == 1
+    assert items[0].source_ref == "pipeline-event:failed"
 
 
 def test_collect_changes_excludes_events_outside_the_window(tmp_path):
@@ -219,23 +219,21 @@ def test_collect_changes_excludes_events_outside_the_window(tmp_path):
         method="update_note",
     )
 
-    assert (
-        service._collect_changes(
-            "2026-08-01T00:00:00+00:00", "2026-08-02T00:00:00+00:00"
-        )
-        == []
+    items, ledger = service._collect_changes(
+        "2026-08-01T00:00:00+00:00", "2026-08-02T00:00:00+00:00"
     )
+    assert items == []
+    assert ledger.operations == 0
 
 
 def test_collect_changes_returns_no_items_for_an_empty_window(tmp_path):
     service = MondayBriefService(Database(tmp_path / "brief.db"))
 
-    assert (
-        service._collect_changes(
-            "2026-08-01T00:00:00+00:00", "2026-08-02T00:00:00+00:00"
-        )
-        == []
+    items, ledger = service._collect_changes(
+        "2026-08-01T00:00:00+00:00", "2026-08-02T00:00:00+00:00"
     )
+    assert items == []
+    assert ledger.operations == 0
 
 
 def _brief_item(section, item_id, *, priority=0):
@@ -286,7 +284,7 @@ def test_compose_empty_brief_has_honest_headline(tmp_path):
     headline, sections = service._compose({})
 
     assert headline == "Nothing material changed."
-    assert sections == {"changed": [], "broke": [], "waiting": [], "decisions": []}
+    assert sections == {"this_week": [], "changed": [], "broke": [], "waiting": [], "decisions": []}
     brief = service.generate(None, now=datetime.datetime(2026, 8, 3, 9, 30))
     assert brief.headline == "Nothing material changed."
     assert brief.is_empty is True

@@ -332,6 +332,20 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
         "urlopen",
         1,
     ): "loopback gate protocol transport outside census egress scope",
+    # HS-171-02/05: local desktop notification dispatch (osascript).
+    # Not an effect — a local-only notification, never egress.
+    (
+        "holdspeak/desktop_notify.py",
+        "_notify_macos",
+        "run",
+        1,
+    ): "local osascript notification dispatch, no egress",
+    (
+        "holdspeak/desktop_presence_cocoa.py",
+        "_cocoa_notify",
+        "run",
+        1,
+    ): "local osascript notification dispatch in Cocoa child, no egress",
 }
 
 # Phase 108 emptied the transitional debt register. These exact statements are
@@ -373,11 +387,29 @@ _MIGRATED_CALLS: dict[tuple[str, str, str, int], str] = {
         1,
     ): "mandatory authenticated owner read",
     (
+        "holdspeak/services/watch_sources.py",
+        "GitHubWatchSource._snapshot_branch_ci",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",
+    (
         "holdspeak/services/github_provider.py",
         "GitHubProviderAdapter._run_gh",
         "run_read_subprocess",
         1,
     ): "mandatory authenticated owner read",
+    (
+        "holdspeak/services/jira_provider.py",
+        "JiraProviderAdapter._run_acli",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",  # HS-166: acli, the gh twin
+    (
+        "holdspeak/services/confluence_provider.py",
+        "ConfluenceProviderAdapter._run_acli",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",  # HS-174: acli confluence, the jira twin
     (
         "holdspeak/missioncontrol_bridge.py",
         "_default_runner",

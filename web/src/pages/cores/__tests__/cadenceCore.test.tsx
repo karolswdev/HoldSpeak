@@ -80,3 +80,73 @@ describe("CadenceCore reply", () => {
     expect((pad as HTMLTextAreaElement).value).toBe("Use SQLite.");
   });
 });
+
+/* ── HS-174-08: Runs on row — caption only when remote ── */
+
+describe("CadenceCore Runs on", () => {
+  it("shows the Runs on row with THIS DEVICE by default", async () => {
+    // Stub all fetches with sensible defaults
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url.includes("/api/settings/heartbeat"))
+        return json({
+          sweep_every_minutes: 15,
+          quiet_hours: { start: 22, end: 8 },
+          notify: "edge",
+          muted_projects: [],
+          last_sweep_at: null,
+          next_sweep_at: null,
+          runs_on: null,
+          last_remote_run_at: null,
+        });
+      if (url.includes("/api/brief/latest")) return json(null);
+      if (url.includes("/api/projects")) return json({ projects: [] });
+      if (url.includes("/api/cadence/status")) return json({ enabled: true });
+      if (url.includes("/api/cadence/loops")) return json({ loops: [] });
+      if (url.includes("/api/cadence/history")) return json({ nudges: [] });
+      return json({});
+    }));
+
+    render(<CadenceCore />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("rhythm-runs-on-row")).toBeTruthy();
+    });
+
+    // Caption SHOULD NOT appear when runs_on is local/null
+    expect(screen.queryByTestId("rhythm-runs-on-caption")).toBeNull();
+  });
+
+  it("shows WHILE THIS MAC IS AWAKE caption when remote host selected", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url.includes("/api/settings/heartbeat"))
+        return json({
+          sweep_every_minutes: 15,
+          quiet_hours: { start: 22, end: 8 },
+          notify: "edge",
+          muted_projects: [],
+          last_sweep_at: null,
+          next_sweep_at: null,
+          runs_on: "192.168.1.43",
+          last_remote_run_at: "2026-09-05T05:40:00Z",
+        });
+      if (url.includes("/api/brief/latest")) return json(null);
+      if (url.includes("/api/projects")) return json({ projects: [] });
+      if (url.includes("/api/cadence/status")) return json({ enabled: true });
+      if (url.includes("/api/cadence/loops")) return json({ loops: [] });
+      if (url.includes("/api/cadence/history")) return json({ nudges: [] });
+      return json({});
+    }));
+
+    render(<CadenceCore />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("rhythm-runs-on-caption")).toBeTruthy();
+    });
+
+    expect(screen.getByTestId("rhythm-runs-on-caption").textContent).toBe(
+      "WHILE THIS MAC IS AWAKE",
+    );
+  });
+});

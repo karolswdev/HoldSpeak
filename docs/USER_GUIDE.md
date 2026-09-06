@@ -1,31 +1,29 @@
 # HoldSpeak User Guide
 
-Start with one useful loop: open HoldSpeak, **Dictate one sentence**, edit it,
-then **Copy** or **Keep as Note**. The first completion furnishes the Desk
-automatically with Inbox, Personal, Work, Meetings, Decisions, and Reference;
-a Start here note; and editable prompts in **Everyday context**. Its shipped
-default is unused: explicitly attach it for one Thought, or explicitly make an
-attached set the default for future local Thoughts. No extra setup is required
-for this first value.
+Use this guide as a reference for daily work on the Desk.
+For installation and first capture, read [Getting Started](GETTING_STARTED.md).
 
-HoldSpeak is one local copilot with two modes, and this guide is the day-to-day
-map of both:
+HoldSpeak connects voice typing, Meetings, saved records, Threads, and supported automation.
+The [documentation index](README.md) groups the guides by task.
+These documents describe `main`, which can differ from your installed release.
 
-- **Dictate:** hold a hotkey, speak, and insert useful text into the active app. With the dictation pipeline on, HoldSpeak uses project context and recent Claude/Codex state to rewrite rough speech into better prompts, and the dictation journal records every run so corrections teach it.
-- **Meet:** record conversations (or import recordings and transcripts), transcribe them, and extract topics, actions, summaries, and reviewable artifacts, with meeting aftercare showing what is still open when it ends.
-
-HoldSpeak is private by default. Audio capture, transcription, project context, and session metadata are stored locally unless you explicitly configure a cloud or OpenAI-compatible endpoint.
+Configured models, connectors, remote clients, and outbound actions have separate data boundaries.
+See [Security & Privacy](SECURITY.md) for the full contract.
+The default Control mode is **YOLO**. Read [Control modes](AUTHORITY.md) before configuring external effects.
 
 ## Start Here
 
-Use these guides when you are ready for more than the first sentence:
-
-| Goal | Guide |
+| Task | Guide |
 | --- | --- |
-| Install HoldSpeak and take the first-sentence loop | [Getting Started](GETTING_STARTED.md) |
-| Configure the project-aware dictation pipeline | [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md) |
-| Record and review meetings | [Meeting Mode Guide](MEETING_MODE_GUIDE.md) |
-| Configure local/LAN dictation models | `/docs/dictation-runtime` in the local web UI |
+| Install and capture a sentence | [Getting Started](GETTING_STARTED.md) |
+| Describe goals and receive suggestions | [Interview](INTERVIEW.md) |
+| Prepare a decision review or manual agent brief | [Architecture work recipes](ARCHITECTURE_WORK.md) |
+| Choose an automation path | [Automation](AUTOMATION.md) |
+| Configure model engines | [Models](MODELS.md) |
+| Record or review a meeting | [Meeting mode](MEETING_MODE_GUIDE.md) |
+| Configure coding dictation | [Dictation pipeline](DICTATION_PIPELINE_GUIDE.md) |
+| Use Desk windows and objects | [The Desk](WEB_DESK.md) |
+| Select an environment | [Places](ENVIRONMENTS.md) |
 
 ## Product Map
 
@@ -36,14 +34,20 @@ Use these guides when you are ready for more than the first sentence:
 | Project facts | Keeps a `kb:` map in `.holdspeak/project.yaml`; exact values stamped into dictation verbatim, no LLM | `/dictation` -> Project Facts |
 | Project context | Keeps repo-local `.hs/` files that guide intelligent rewrites (optional LLM stage) | `/dictation` -> Project Context |
 | Automation hooks | Lets Claude Code and Codex report current cwd/session state to HoldSpeak | `/dictation` -> Hooks |
-| Meeting mode | Captures microphone plus optional system audio | Dashboard, `holdspeak meeting` command |
-| Meeting intelligence | Produces transcript, topics, summaries, actions, artifacts | Dashboard and `/history` |
+| Meeting mode | Captures microphone plus optional system audio | Meetings, `holdspeak meeting` command |
+| Meeting intelligence | Produces transcript, topics, summaries, actions, artifacts; **Run intelligence** on any meeting that never ran | Meetings |
 | iPad app | Drives both modes from another device over the hub's HTTP API: dictate into the desk, read a meeting back with its artifacts and sources, approve a proposal, browse the archive | [Companions](#companions) |
 | AIPI-Lite companion | Portable ESPHome device for meeting controls, status, and spoken replies to waiting Claude/Codex sessions | [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md), `/companion` |
-| Threads | Multi-turn streamed conversations grounded on desk material with `@`-refs, receipts, and search | The Desk, **Continue in thread** on any object |
-| Models | Pick a recommended pack (Light, Balanced, Full) or set up manually with Model Library and Assignments; the topology map shows this Mac and every connected node | Settings, Models |
+| Threads | Saved conversations with sources, model replies, and applicable tools | **Desk > New Thread** or **Continue in thread** on a supported object |
+| Interview | Repeatable sections, saved context, and contextual suggestions | The **Interview** Thread mode |
+| Places | Floor environments, favorites, and Settle in | The dock or **Go > Change places** |
+| Connections | See each external tool's readiness (GitHub, Jira, Calendar, Models), run Recheck, and follow the recovery command when a tool is not connected | Settings, Connections |
+| Models | The Concierge detects engines, proposes one assignment set, and applies with **Use these**; choose **Adjust** for individual capability assignments | Settings, Models |
 
 ## Develop a thought
+
+The Interview pane described here refines one Note.
+The separate [Interview Thread mode](INTERVIEW.md) develops working context across repeatable sections.
 
 Keep a rough sentence as a Note, then choose **Develop this thought**. HoldSpeak
 preserves the original bytes and opens a dedicated Thought Workbench. Its Note
@@ -111,27 +115,9 @@ or remove the selection explicitly.
 
 ## Install And Start
 
-Install from this checkout:
-
-```bash
-uv pip install -e .
-```
-
-If first capture needs repair, run diagnostics:
-
-```bash
-holdspeak doctor
-```
-
-Start the local web runtime:
-
-```bash
-holdspeak
-```
-
-By default, the web server binds to loopback only (`127.0.0.1`). The browser
-opens on the first-sentence surface before the broader Desk, meeting, and
-advanced dictation controls.
+Follow [Getting Started](GETTING_STARTED.md) for platform dependencies, environment setup, and the first capture.
+Start `holdspeak` from the installed environment.
+Open the URL printed by the runtime.
 
 ## Voice Typing
 
@@ -273,6 +259,161 @@ def total(items):
 could you refactor it?
 ```
 
+## Speak
+
+Speak is the voice-typing window on the Desk. It shows one loop: talk, see
+it land, judge it, teach it once, then watch the teaching apply.
+
+Speak has four wings, **SPEAK**, **JOURNAL**, **BLOCKS**, and **LEARNED**,
+plus a gear that opens **Configure dictation**.
+
+### The Speak wing
+
+**The transport** at the top carries the **Talk** button (the one primary)
+and the **Open** latch. **LEVEL** shows audio input while you talk. **Talk**
+is the one mic on this face, so the utterance well below carries none.
+
+**The utterance well** shows what you said as it lands. You can also type
+text into the well and press **Ctrl+Enter** (or **Cmd+Enter**) to land it.
+With **DRY RUN** on, the run previews and types nothing. **LANDS IN** is one
+line naming the target and its last latency, for example
+`Claude Code · 41 MS`. The **FOCUSED APP** picker sits at its right.
+
+When a result lands, the **RESULT** section shows the final text with **OK**
+and **Wrong**. **OK** acknowledges the result and writes nothing.
+
+**DICTATION** is one row naming the transcription model and its host (`THIS
+DEVICE` or a LAN address). When unset, it reads **NOT SET** with a **Choose**
+verb that opens the Concierge as its own window (titled **Models**).
+
+**Details** (folded by default) shows the pipeline state register, the
+latency budget, and the raw trace.
+
+The footer carries the host chip (`THIS DEVICE`), the journal count
+(`9 TODAY`), and the **Review** and **Export** verbs. **Review** switches to
+the Journal wing. **Export** downloads the journal as a Markdown file.
+
+### Teach a correction
+
+**Wrong** unfolds the teach row in place. **FIELD** cycles three kinds of
+correction.
+
+| FIELD | What you teach | What it changes |
+| --- | --- | --- |
+| **TEXT** | a phrase as HoldSpeak heard it, and the same phrase as you said it | the words of every later dictation that carries the heard phrase |
+| **INTENT** | the block that this kind of utterance belongs to | the routing of a later similar utterance |
+| **TARGET** | the delivery target that this kind of utterance belongs to | the routing of a later similar utterance |
+
+**TEXT** is the default. It fills one field, **What you said**, with the raw
+transcript. Correct the wrong words, then select **Teach**. HoldSpeak
+compares what it heard with what you wrote. One differing span becomes a
+rule for those words. More than one differing span becomes a rule for the
+whole phrase.
+
+**INTENT** and **TARGET** do not take free text. They offer the real list.
+The target list holds six entries: **Claude Code**, **Codex CLI**,
+**Terminal shell**, **Browser**, **Editor**, and **Chat**. The intent list
+holds your loaded blocks under their descriptions.
+
+![The teach row on a wrong result. FIELD reads TEXT and the field holds the raw transcript.](assets/speak-loop/speak-teach-row-1440.png)
+
+The receipt replaces the teach row and clears after five seconds.
+
+| Receipt | Meaning |
+| --- | --- |
+| `TAUGHT` with `heard → said`, or with the target label | The correction is stored. |
+| `NO CHANGE` | You edited nothing, so nothing was stored. |
+| `REFUSED · SECRET` | The text has the shape of a key or a token. Nothing was written. |
+| `REFUSED · ONE WORD` | A gist of one word cannot route an utterance. This applies to **INTENT** and **TARGET** only. |
+| `REFUSED · EMPTY`, `REFUSED · KIND` | The request carried no phrase, or a kind the store does not hold. |
+
+![The TAUGHT receipt reading queue for to Q4.](assets/speak-loop/speak-taught-1440.png)
+
+A text correction is exact. It ignores case, repeated whitespace, and
+punctuation at the edges of the phrase. It fires only where the phrase is
+not inside a longer word, so a rule for `queue` does not fire inside
+`queues`. When the heard occurrence starts with a capital letter, the
+replacement keeps it. Longer rules apply before shorter ones, every matching
+rule applies, and each rule sees the text the previous rules left. A text
+rule fires on every dictation source, and it is applied before the routing
+and rewrite stages read the words.
+
+A routing correction is approximate. It matches a later utterance by token
+overlap above 0.5, then it nudges the intent router or the delivery target.
+
+### The APPLIED chip
+
+When one or more stored rules changed this run, the **RESULT** line shows
+**APPLIED**. Select it to open the panel that names each rule that fired. A
+text rule shows `HEARD` and `SAID`. A routing rule shows `WHEN` and `ROUTE`.
+Both carry the kind as a token. The chip is absent when nothing fired, and
+it carries no count.
+
+![APPLIED on the RESULT row, with its panel open on HEARD and SAID.](assets/speak-loop/speak-applied-1440.png)
+
+### The Journal wing
+
+The Journal wing is a live stream of every dictation this device ran. A run
+is pushed to the top of the stream as soon as it is journaled, with no
+reload.
+
+Above the stream, **search** filters the loaded rows by transcript and by
+final text. **Clear** deletes the whole journal, and it is withheld while
+the journal is empty. Four tokens filter by source: **ALL**, **DICTATION**,
+**BROWSER**, and **HOTKEY**. **ALL** is the default.
+
+Each row carries the time, the transcript, `LANDED IN <target>`, `N MS`, and
+a source badge (`DICTATION`, `DRY RUN`, `BROWSER`, or `HOTKEY`). One slot
+holds `APPLIED` when a stored rule fired on that run, or `TAUGHT` when you
+taught from that row.
+
+![The Journal wing with its source filters, a day band, and five rows.](assets/speak-loop/journal-stream-1440.png)
+
+Open a row to edit its transcript in place and to use **Replay**, **Copy**,
+and **Delete**. **Replay** runs the stored transcript through the current
+pipeline and shows the result under `REPLAY · PREVIEW`. It types nothing and
+writes no new row. `NO TEXT` appears when the replay produced none. **Copy
+result** copies the preview.
+
+![An opened journal row with its transcript, Replay, Copy, and Delete.](assets/speak-loop/journal-row-open-1440.png)
+
+The stream holds 50 rows. Scroll to the end of the list to load 50 older
+rows. `NOTHING SPOKEN` means the journal is empty. `NOTHING MATCHES` means
+your filter or your search matched nothing.
+
+### The Learned wing
+
+The Learned wing lists what the desk knows. Each row carries the kind
+(`TEXT`, `INTENT`, or `TARGET`) in the lead slot, then the key, an arrow,
+and the value. A routing value renders its label, never a raw identifier.
+
+`N APPLIED` counts the journal rows where that rule fired, and it is absent
+at zero. It counts the retained journal, so it can fall as old rows age out.
+
+**Forget** removes one correction after a one step confirm. `NOTHING
+LEARNED` is the empty state.
+
+![The Learned wing with one text rule, 1 APPLIED, and Forget.](assets/speak-loop/learned-1440.png)
+
+The gear opens **Configure dictation**. Its **Learning digest** panel reads
+`WEEK · TAUGHT 4 · CORRECTED 2 · REACHED 1`, or `WEEK · NO CORRECTIONS` when
+you taught nothing this week.
+
+### Corrections, the journal, and your voice
+
+Corrections are on. `dictation.pipeline.corrections_enabled` defaults to
+`true`, and the settings service does not write that key, so the loop needs
+no setup.
+
+Corrections and journal rows are stored in the HoldSpeak database on this
+device. The journal keeps the most recent 500 entries and prunes older ones
+on every write. A transcript with the shape of a key or a token is redacted
+before the row is stored, and a correction with that shape is refused.
+
+Every text input on the Desk takes your voice. A mic is a toggle: select it
+once to start, and select it once to stop. On the Speak face, **Talk** is
+the one mic authority, so the utterance well shows none.
+
 ## The Dictation Pipeline For Coding Assistants
 
 HoldSpeak can do more than transcription. With the dictation pipeline enabled, it can transform a rough spoken thought into a useful prompt for Claude, Codex, a terminal, a browser, or another target.
@@ -325,11 +466,13 @@ Use `openai_compatible` when the model is served somewhere else:
 - LiteLLM
 - OpenAI or another hosted compatible API
 
-The one path: add the endpoint once under **Settings > Models > Model Library**,
-then choose it for **Writing & dictation** under **Assignments**.
+The one path: add the endpoint once under **Settings > Models**,
+then select it for **Writing & dictation** in the Concierge set.
+Select **Use these** to apply the set.
 Assigning a model is itself the "run it there" instruction, so the
-dictation backend follows. Set
-or replace its key on the model profile in Model Library; the environment variable
+dictation backend follows.
+For keyed providers, use the owner Model Library API described in [Models](MODELS.md).
+The environment variable
 `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless fallback.
 
 The old `dictation.runtime.openai_compatible_*` fields no longer configure
@@ -458,40 +601,337 @@ Start HoldSpeak:
 holdspeak
 ```
 
-Use the web dashboard to start and stop meetings. During a meeting, HoldSpeak can show:
+Open **Meetings** to start and stop meetings. The headline tells you when a
+meeting needs intelligence, or says `Nothing needs you` when all are handled.
 
-- Live transcript.
-- Speaker labels.
-- Bookmarks.
-- Topics.
-- Action items.
-- Summaries.
-- Intelligence queue status.
+During a meeting HoldSpeak shows the live transcript with speaker labels,
+bookmarks, topics, action items, summaries, and the intelligence queue.
 
-After a meeting, open:
+After a meeting, its row in the Meetings stream shows one of these states:
 
-```text
-/history
-```
+| State | Meaning | Verb |
+|---|---|---|
+| **SAVED** | Intelligence ran and results are stored. | **Open** |
+| **OFF** | Has a transcript but intelligence never ran. | **Run intelligence** |
+| **RAN** | Auto-run completed; duration and model host shown (`RAN, 41 S, host`). | **Open** |
+| **RUNNING** | Intelligence is running now. | |
+| **NEEDS YOU** | Open items need your attention (count shown). | **Open** |
+| **NO TRANSCRIPT** | No transcript available yet. | |
+| **FAILED** | Intelligence failed (the reason is named). | **Retry** |
+| **REC** | Recording now. | |
 
-Use History to search meetings, review action items, edit accepted actions, inspect generated artifacts, and export local handoff files.
+Choose **Run intelligence** on any **OFF** meeting to process its transcript
+through the configured plugins. The detail view shows the outcomes, the
+transcript, and aftercare when a channel is configured.
 
-## The Door
+## The loop closes
 
-The Chair Door follows your first sentence. Its board puts work in five
-meaning-based columns: **Overdue, Now, Waiting, Unassigned,** and **Active**.
-The board is server-derived. A card action appears only when the aggregate
-names a lawful verb; choosing it invokes that verb and returns its Receipt in
-flow. Moving or completing a card is not a cosmetic board-position edit.
+The loop is what happens after a meeting ends: intelligence extracts decisions
+and action items, and you decide what to keep. Nothing fires by itself. Every
+extracted item arrives as a proposal; **Confirm** commits it through the kernel.
 
-The Door's **Upcoming** rail is one chronological timeline. **EVENT** rows
-come from your calendar sources; each carries a **Record this** button that
-arms the event for recording with one tap. **SCHEDULED RECORDING** rows name
-a recording the hub will start. A schedule is not an invitation. The rail
-can be empty or contain only schedules. Meetings keeps live and recent
-meetings.
+### The auto-run setting
 
-At phone width, the compact **Go** menu opens applications.
+The auto-run setting controls when meeting intelligence runs. Open
+**Settings, Meetings**. The **Intelligence** row carries a CycleGadget with
+three positions and the model's host chip:
+
+| Position | Behavior |
+|---|---|
+| **OFF** | Intelligence never runs automatically. Use **Run intelligence** on individual meetings. |
+| **AFTER ROOM MEETINGS** (default) | Intelligence runs automatically after every meeting linked to a Room. The Room link is the consent act. |
+| **AFTER EVERY MEETING** | Intelligence runs automatically after every meeting, linked or not. |
+
+The model host chip on the row names where intelligence runs (for example
+`THIS DEVICE` or `192.168.1.43, LAN`). When no model is assigned, the chip
+reads **NO MODEL** and auto-run jobs queue with a named failure.
+
+### Proposals in the Room and on the arrival
+
+After intelligence completes, extracted decisions and action items appear as
+proposals in the Room's **NEEDS YOU** section and on the arrival. Each proposal
+row shows:
+
+- A prefix naming the kind: `Decide:` for a decision, `Confirm:` for an action item (for example `Decide: adopt PostgreSQL 17 for the data layer`).
+- A provenance token naming the meeting and the segment timestamp.
+- The speaker label, when known.
+- The model host chip at the point of extraction.
+
+Three verbs on a Room proposal row:
+
+| Verb | What it does |
+|---|---|
+| **Confirm** | Writes the decision record and the commitment through the kernel. The proposal moves to **DECISIONS & COMMITMENTS**. |
+| **Edit** | Unfolds an inline editor: the extracted text, the owner, and the due date are editable. **Save & confirm** commits the edited version. The original extraction stays as provenance. |
+| **Dismiss** | Declines the proposal with a receipt. No record is created. |
+
+On the arrival, each proposal row carries **Confirm** and **Open** (Open lands
+in the Room scrolled to that proposal).
+
+When all proposals are confirmed or dismissed, the **NEEDS YOU** section shows
+only Watch items (or is absent when nothing needs you).
+
+### The meeting detail after a run
+
+The meeting row in the stream gains a state token after an auto-run:
+`RAN, 41 S, 192.168.1.43, LAN` (a success chip, the wall-clock duration, and
+the model's host). A failed run reads `FAILED` with the reason named. The
+detail view's **NEEDS YOU** section lists the proposals scoped to that meeting,
+with **Confirm** and **Dismiss**.
+
+### The 1:1 card
+
+Before a 1:1, the person's card in the People Prep lens carries what waits on
+them from your project Watches:
+
+- **PRS WAITING**: PRs where this person is a requested reviewer, with the days
+  since the request and the repo reference. Each row has an **Open** verb.
+- **OPEN ASSIGNMENTS**: Jira issues assigned to this person, with the issue key
+  and status. Each row has an **Open** verb.
+- **COMMITMENTS**: the existing section, with an **OVERDUE** count when any
+  commitment is past due.
+- **LAST MEETING**: the existing section, with the open-items count from the
+  most recent meeting.
+
+The summary line on the People ledger row reads the first two actionable facts
+(for example `2 PRs waiting 3+ days, 1 overdue`). When no Watch data matches
+and no commitments are overdue, the summary is absent. The People boundary
+applies: a name never leaves the encrypted People store. The resolver matches
+owner aliases and display names inside the boundary at read time, and only
+opaque references cross into the Watch projection.
+
+### Suggested sources
+
+When a meeting transcript mentions a repository (`owner/repo`) or an issue key
+that matches a connected provider, the Room's **SOURCES** section shows a
+suggested source row: `SUGGESTED, karolswdev/holdspeak, from Standup` with
+**Add** and **Dismiss**. **Add** creates a Watch source on the Room. **Dismiss**
+hides the suggestion; the same reference will not be suggested again for this
+Room. A suggestion for a reference that already has a Watch source is suppressed.
+
+## The steward's hand
+
+The steward can draft a weekly project update and
+propose a reviewer nudge. Both are opt-in, receipted, and visible before they
+act.
+
+### The drafted update
+
+When the steward runs (unattended or via **Run now**), it collects every delta
+since the last published update through the claim schema. If you assigned a
+model to the project update capability, the model rewrites the inventory into
+stakeholder-readable prose. Every factual sentence carries its claim ref as an
+inline chip (click to open the source). Sentences the model added beyond the
+inventory are marked **UNVERIFIED**. The model's display name and host appear in
+the footer (for example `Llama 3.3 70B, 192.168.1.43, LAN`).
+
+When no model is assigned or the model fails, the update falls back to the
+deterministic body (no unverified markers, no egress).
+
+Four verbs on the update: **Save** persists the edit without publishing.
+**Regenerate** rebuilds the draft from the current inventory (deterministic).
+**Copy** copies the Markdown to the clipboard. **Publish** publishes through the
+project revision law.
+
+### The health rows
+
+The Room's **HEALTH** section appears between the
+headline chips and the **NEEDS YOU** section. It is present when at least one
+source has entities and absent when none do. The section caption carries a
+`CHECKED <age>` token showing the snapshot age (for example `CHECKED 5m ago`
+or `CHECKED 2h ago`).
+
+Each row is one signal with data:
+
+| Row | Present when | Cells | Green state |
+|---|---|---|---|
+| **REVIEW WAIT** | At least one open PR carries a review request | `3 D MEDIAN`, `3 WAITING` (days since the PR was created, not since the review was requested) | Real numbers (no "zero" row) |
+| **ISSUE AGING** | Jira entities exist | `4 > 14 D` (count of issues older than the threshold, default 14 days) | `CLEAR` |
+| **CI** | Branch CI entities exist | `2 FLAKY` (alternating pass/fail branches), `QUEUE 3` (open PRs with passing CI not yet merged); absent tokens for zero values | `PASSING` |
+| **RELEASE** | Any of the above has data | The composite: `READY` when all green, or a summary naming the worst signal | `READY` |
+
+The lead chip on each row is green, amber, or red. The color reflects the
+worst value for that signal. Absent rows mean no data, not all green (all green
+shows the section with green indicators).
+
+What the system can and cannot know: review wait is days since the PR was
+created (`createdAt`), not since the review was requested. GitHub does not
+expose the review-request timestamp in the `gh pr list` fields the Watch
+collects. The face says WAIT, never LATENCY.
+
+### The reviewer nudge
+
+A reviewer nudge is a proposed GitHub comment on a PR
+where a reviewer's median wait exceeds the threshold. It is the first external
+write the steward can perform.
+
+**Arming.** Open the steward policy on the project. The **Reviewer nudge** row
+carries a check gadget and an egress badge reading `GITHUB.COM`. Checked means
+the steward may propose a nudge during its next run. Unchecked (the default)
+means nudges are never proposed for this project. This is the first gate.
+
+**The card.** When the steward proposes a nudge, a NEEDS YOU row appears for the
+reviewer: the name, the median wait, the count, and a **Nudge** verb. Pressing
+**Nudge** unfolds the card inline (no modal):
+
+- The reviewer's name.
+- The PR number and title, linked.
+- The proposed comment text, editable in place. The default template:
+  `This PR has been waiting for review for N days. Flagged by HoldSpeak.`
+  No personal name in the text. The per-project default template is editable in
+  the steward policy; every individual nudge is still editable before Send.
+- The host badge: `GITHUB.COM`.
+- **Send** posts the comment from your own `gh` identity. **Dismiss** closes
+  the card with no write.
+
+This is the second gate: you approve each nudge individually.
+
+**The receipt.** After Send, the card becomes a receipt row:
+`SENT, Ania Kowalska, #612, 18:02, GITHUB.COM`. The receipt persists in the
+service event ledger with the comment URL, PR number, reviewer name, timestamp,
+and approval principal. No Undo (a posted comment cannot be retracted by
+HoldSpeak).
+
+**The 7-day cooldown.** After a nudge is sent or dismissed for a PR and
+reviewer, the steward will not propose the same nudge again for 7 days. While
+cooling, the bottleneck row reads `NUDGED 3 D AGO` instead of offering the
+Nudge verb.
+
+**Dismiss.** Dismissing a nudge card closes it with no write. The 7-day
+cooldown still applies, so the steward will not re-propose the same nudge
+until the cooldown expires.
+
+## Reach
+
+Reach lets a second machine on your tailnet trigger the hub's sweep and the
+steward's drafter remotely, so the work runs overnight while you are away from
+the desk. The hub speaks Streamable HTTP; a scoped credential controls what the
+caller may do; every remote call is receipted. No relay, no cloud proxy: the
+two machines talk directly on the tailnet.
+
+### Turning remote access on
+
+Open **Settings, System**. The hub row gains a `REMOTE OFF` token. Toggle it
+to `REMOTE ON`; the row shows the tailnet address the hub listens on (for
+example `100.64.0.2:8765`). The listener is off by
+default. No traffic is accepted on the remote path until you turn it on.
+
+### Issuing a credential
+
+Below the toggle, a `CREDENTIALS` section appears (absent when remote is off).
+Choose **Issue credential**. A well opens in-world with three fields:
+
+| Field | Options | Default |
+|---|---|---|
+| **Name** | Any label you will recognize (for example `sweep-runner`) | (required) |
+| **Palette** | `PROJECT` / `SWEEP` / `DESK` / `ALL` | `PROJECT` |
+| **TTL** | `12 H` / `24 H` / `7 D` / `30 D` | `12 H` |
+
+The palette controls which tool families the credential
+may call. `PROJECT` restricts to project tools only. `ALL` grants the full
+non-owner tool set. The TTL caps the credential's lifetime at 30 days.
+
+Press **Issue**. The well shows the token once: `TOKEN SHOWN ONCE -- COPY IT
+NOW`. Copy it. The plaintext is never shown again; the hub stores a hash.
+
+Each credential row in the ledger shows its name, palette, expiry, and last-used
+age. The section caption reads `N CREDENTIALS` (total
+including expired) and `N ACTIVE` (non-expired only). Both are absent at zero.
+**Revoke** on any row invalidates the credential immediately.
+
+Credentials are in-memory. A hub restart clears them;
+re-issue after a restart.
+
+### What a remote caller can and cannot do
+
+A remote credential derives an `AGENT` principal, never `OWNER`. The owner's
+web token is refused on a non-loopback request. The caller may invoke only the
+tool families named in its palette; calls outside the palette return a capability
+error. `X-Forwarded-For` is never read for principal
+derivation on any route.
+
+Every remote tool call writes a receipt carrying `origin: remote` and the
+caller's identity label. The receipt rows in the shade and the Room's pipeline
+observer wear the `REMOTE` badge with the caller's tailnet IP (for example
+`REMOTE · 192.168.1.43`).
+
+### The overnight runner
+
+A headless machine on the tailnet (the `.43` box, for example) runs a client
+script that connects to the hub's Streamable HTTP endpoint with a scoped
+credential. The script calls `cadence_run_now` (one sweep tick) and
+`project_run_steward` for each active Room (the steward's drafter). The
+receipts land on the Mac's desk.
+
+The Mac must stay awake while the runner operates: on AC power with "Prevent
+automatic sleeping when the display is off" enabled in System Settings, or
+`caffeinate -s` in a terminal. The hub does not prevent sleep.
+
+See [Reach Runner](REACH_RUNNER.md) for the install guide and the transcript
+shape.
+
+### Rhythm's `Runs on` row
+
+Open **Settings, Rhythm**. Below the sweep cadence row, the `Runs on` row
+carries a picker: `THIS DEVICE` or a configured remote host (for example
+`192.168.1.43`). When a remote host is selected, a caption reads
+`WHILE THIS MAC IS AWAKE`. `Run now` stays on the
+sweep row (one verb, once); the `Runs on` row has no trailing verb.
+
+### Confluence on the Door
+
+Confluence joins GitHub and Jira on the Door. The
+source row shows the Confluence emblem, the site host (for example
+`karolswdev.atlassian.net`), and the connection state. Default watch templates:
+`RECENT BLOGS` (on by default) and `PAGES BY ID` (off by default).
+
+The Confluence connector uses the same `acli` CLI and the same `(site, email)`
+identity as Jira. Connection, recheck, and discovery follow the switch-and-verify
+law: each `(site, email)` combination is one connection row in **Settings,
+Connections**.
+
+**Honest limit:** V0 watches blog posts via `blog list` and pages by known ID
+via `page view --id`. Full-space page search is not available until the CLI
+supports `page list`. The Door defaults name what works today, not what might
+work later. No Confluence REST API call is ever made;
+the CLI holds the credentials.
+
+### Receipt rows
+
+Remote operations appear in the shade's pipeline observer and each Room's
+observer pane. Each receipt from a remote caller carries a `REMOTE` badge
+naming the caller's tailnet IP. Steward runs triggered remotely read
+`STEWARD RUN · draft · REMOTE · 192.168.1.43`. Local operations continue to
+read `THIS DEVICE`.
+
+## The Arrival
+
+The arrival is the desk's home screen. Its headline tells you the one fact
+that matters: how many items need you across your active projects, or
+`Nothing needs you` when none do. Under the headline, one line names your
+next scheduled recording or calendar event when one exists.
+
+**NEEDS YOU** lists the items across all project rooms (source, the thing,
+why, **Open**). Each row carries its project token when more than one room
+contributes. When nothing needs you the section is absent.
+
+**THOUGHTS** lists unfinished thoughts. The first carries **Continue**;
+others show their state (**Ready for you**, **Needs attention**). Empty:
+absent.
+
+**BRIEF** shows waiting items with **Ack** / **Defer**. When no brief
+exists, one line reads `No brief yet` with a **Generate** verb. Empty: absent.
+
+**MEETINGS** lists the last three meetings as stream rows (date, title,
+duration, state). States: **SAVED** (intelligence ran), **OFF** with **Run
+intelligence** (has a transcript, never ran), **REC** (recording now),
+**NO TRANSCRIPT**. Empty: absent.
+
+Agents live in their own window in the dock, not on the arrival.
+
+The capture bar at the foot carries **Talk**, **Develop a thought**, and
+**Record meeting**. At phone width, the compact **Go** menu opens
+applications.
 
 ### Calendars
 
@@ -507,25 +947,26 @@ Two doors lead to the same place:
 1. **From the Door.** When no source is connected the rail reads
    **No calendar connected.** and offers a **Connect calendar** button. It opens
    **Settings, Meetings, Calendar**.
-2. **From Settings directly.** Open **Settings, Meetings, Calendar**. The
-   **Sources** table starts empty.
+2. **From Settings directly.** Open **Settings, Meetings**. The **CALENDAR**
+   section starts with only the **Connect calendar** row.
 
-Choose **+ ADD SOURCE**. A row appears with three fields: **LABEL**, **URL**,
-and **ON** (the enable toggle). Set **URL** to a local ICS file path or an
-HTTPS URL. Set **LABEL** to a short name you will recognize on the rail (for
-example "Work" or "Personal"). **ON** enables the source.
+Choose **Add** on the **Connect calendar** row. A well unfolds under it with
+one field (**Calendar URL or file path**, with a mic) and **Cancel** /
+**Save**. Paste a local ICS file path or an HTTPS URL and choose **Save**.
+The source's row appears above, labeled by the host (for an HTTPS source)
+or the file name; **Edit** reopens the same well pre-filled.
 
-A per-source egress chip appears below the table for every HTTPS source,
-stating the host the hub fetches. A local file source has no egress chip
-because nothing leaves the machine. See
+Every HTTPS source row carries an egress chip naming the host the hub
+fetches. A file source row reads `THIS DEVICE` because nothing leaves the
+machine. See
 [Security & Privacy](SECURITY.md#4-egress-points-everywhere-data-can-leave-the-machine)
 for the wire posture.
 
 #### Adding a second source
 
-Choose **+ ADD SOURCE** again. Each source gets its own row in the table.
-Sources refresh independently: a broken source keeps its last good events on the
-rail while every healthy source refreshes normally.
+Choose **Add** again. Each source gets its own row. Sources refresh
+independently: a broken source keeps its last good events on the rail
+while every healthy source refreshes normally.
 
 #### What the rail shows
 
@@ -549,10 +990,11 @@ A source that fails to refresh (network error, timeout, malformed feed) retains
 its last good projection. The failure is a named receipt; healthy sources are
 never touched by a failed source.
 
-The refresh cadence is boot plus every 15 minutes. Disabling a source (clearing
-**ON**) removes its events from the rail at the next refresh tick. Removing a
-source (choosing **REMOVE?** on its row) does the same. Re-enabling a disabled
-source refetches it on the next tick.
+The refresh cadence is boot plus every 15 minutes. Disabling a source
+(**Disable** on its row) removes its events from the rail at the next refresh
+tick. Removing a source (**Remove** on its row, then **Remove** on the confirm
+that opens under it) does the same. Re-enabling a disabled source
+(**Enable**) refetches it on the next tick.
 
 #### Importing from a calendar screenshot
 
@@ -561,8 +1003,8 @@ feed, you can import a week by screenshot.
 
 1. Take a screenshot of the week view in your calendar app. PNG, JPEG, and
    WebP are accepted; up to three screenshots of the same week can be merged.
-2. In **Settings, Meetings, Calendar**, choose **IMPORT SCREENSHOT** (or drop
-   the screenshot onto the Desk glass).
+2. In **Settings, Meetings**, choose **Snapshot** on the **Connect calendar**
+   row (or drop the screenshot onto the Desk glass).
 3. The hub sends the image to the vision model assigned to the
    `calendar.snapshot_extract` capability. If no vision model is assigned, the
    import is refused with a named receipt. The egress badge on the extraction
@@ -628,7 +1070,7 @@ source and a linked event has changed:
 A recording that has already started capturing is never touched by a feed
 refresh. Only idle armed recordings participate in reconciliation.
 
-An event imported via **IMPORT SCREENSHOT** is armable in exactly the same
+An event imported via **Snapshot** is armable in exactly the same
 way. Re-importing the same week preserves the link as described above.
 
 When a schedule is linked to a calendar event, it does not appear as a
@@ -636,70 +1078,543 @@ separate **SCHEDULED RECORDING** row while the event row is on the rail. The
 event row wears the **ARMED** chip instead. The schedule row reappears only
 if the event leaves the projection.
 
-## Models
+## Connect your tools
 
-Open **Settings, Models**. The surface opens on the door when any assignment
-group is unconfigured, and on the health strip once everything is wired.
+Open **Settings, Connections**. The tile shows one card per tool with its
+readiness state and one verb.
 
-### The packs
+![Settings Connections on a cold desk: four tool cards with their state chips](assets/connections/connections-cold.png)
 
-The door recommends up to three packs: **Light**, **Balanced**, and **Full**.
-Each pack covers all seven assignment groups (Thoughts & notes, Chat practice,
-Writing & dictation, Speech recognition, Meetings, Agents & tools, Background)
-plus speech and TTS. What the recommendation considers:
+Four tools appear:
 
-- Your hardware (memory, Apple Silicon, GPU).
-- Models already downloaded on this machine.
-- Endpoints you have connected (your own servers, paired devices).
-- Credentials already present (cloud providers).
+| Tool | Emblem | State chip | Provenance | Command |
+|---|---|---|---|---|
+| **GitHub** | `GH` | `Connected`, `Sign in`, `gh missing`, `Unreachable`, `Off` | `gh` | `gh auth login` |
+| **Jira** | `J` (or site initial) | `Connected`, `Sign in`, `acli missing`, `Not set up` | `acli` | `acli jira auth login --site <site> --email <email> --token` |
+| **Calendar** | calendar outline | `Connected`, `Not set up` | `local` | (opens Settings, Meetings) |
+| **Models** | `M` | `Assigned`, `Unassigned` | `local` | (opens Settings, Models) |
 
-A pack that cannot be completed is not offered. The door never asks for an API
-key on this path.
+State chips render in uppercase via CSS; the label in the code and in
+this table is as-authored (e.g. `Sign in`).
 
-### One confirmation
+**GitHub.** When the `gh` CLI is authenticated, the card reads
+`Connected` with the logged-in account name and a quiet `Recheck`
+verb. When signed out or expired, the card reads `Sign in` and the
+fold opens with the recovery command (`gh auth login`) in a code well
+with `Copy`. When `gh` is not on PATH, the chip reads `gh missing`.
+When the probe times out or the network fails, the chip reads
+`Unreachable` with the error in the chip title. Every `Recheck`
+contacts `github.com` from this device; the egress chip names it.
 
-Pick a pack and choose **Set up**. The desk downloads what is missing, connects
-what is reachable, and wires every assignment. Each step renders as a live plan
-with its status (queued, running, done, failed). A failed step names the
-problem; choose **Resume** to retry from the failure.
+![Settings Connections with a real GitHub account connected](assets/connections/connections-connected.png)
 
-### The health strip
+**Jira.** Each Jira connection is one (site, email) pair. With zero
+connections, the card shows `Not set up` and fields for site and email
+to add the first account. With one or more connections, each row shows
+its site, email, state, and the `acli` provenance chip naming the
+site. The recovery command is
+`acli jira auth login --site <site> --email <email> --token`.
+Every `Recheck` contacts `<site>.atlassian.net` from this device.
+HoldSpeak never stores Jira credentials; `acli` holds the token on
+this machine.
 
-When the plan finishes, the door collapses to a one-line health strip. Green
-means every group is wired and ready. A warning names the first group that needs
-attention and offers **Fix it** (which opens the advanced layer focused on that
-group). Choose **Change** on the strip to reload the recommendation.
+![Settings Connections with the Sign in fold open showing the recovery command](assets/connections/connections-sign-in.png)
 
-### Advanced: the topology map
+**Calendar** and **Models** are link cards. Calendar opens **Settings,
+Meetings** (the calendar source setup from the Door). Models opens
+**Settings, Models** (the pack door and topology map). Neither card
+rechecks an external host.
 
-Below the health strip (or below the pack cards before setup), the **Advanced**
-disclosure opens on the topology map: this Mac as the home node, every connected
-endpoint as a separate node, and the seven job groups as flows between them.
+**The receipt.** After any `Recheck`, the tile footer shows the time
+of the last check and the egress host contacted.
 
-- **Select a node** to see its models and the jobs it serves. The inspector
-  shows runtime, models served, and the base URL.
-- **Re-point a flow.** Click a job row in the inspector and the candidates
-  appear as a radio group. Pick one, confirm, and the assignment saves.
-- **Add a node.** The panel opens the existing connect grammar: define an
-  endpoint (label, base URL, optional key) or connect a hosted provider. The
-  new node appears on the map once connected.
+**No hosted relay.** `gh` and `acli` hold credentials on this machine.
+HoldSpeak stores no token and contacts no relay; each `Recheck` runs
+the CLI's own probe from this device to the named host.
 
-The **Table** toggle above the map switches to the full Model Library and
-Assignments view, the same surface documented in
-[Models (bring your own)](MODELS.md). Switch back to **Map** at any time.
+### The wire
 
-### Model Library and Assignments (table view)
+`GET /api/connections` returns one entry per tool with `state`,
+`account`, `next_action`, `recovery_hint`, `error_detail`,
+`last_checked_at`, and `egress_host`. `POST
+/api/connections/{provider}/recheck` rechecks one provider and returns
+its refreshed entry. The MCP twins are `connection.list` and
+`connection.recheck`.
 
-Model Library is where you make a model available: add from the catalog, add a
-model file, connect a provider, define an OpenAI-compatible endpoint, or connect
-a paired device. Check readiness after any change.
+## New Project
 
-Assignments is where you choose the compatible ordered model list for each kind
-of work. Choose a group, pick one to four models in priority order, and save.
-**Use default** clears a row and reveals the inherited choice.
+Select **Desk > New Project**. The screen has three parts: the
+outcome line, the **SOURCES** section, and the footer.
 
-Adding a model does not change an Assignment. Changing an Assignment does not
-alter the Library. The full reference is [Models (bring your own)](MODELS.md).
+![New Project with nothing typed and both sources unpicked](assets/project-rooms/new-project-empty.png)
+
+### The outcome line
+
+Type what you are delivering. The placeholder reads `What are you
+delivering?`. A mic button at the right edge accepts voice input. This
+text becomes the project's name (first 80 characters) and its outcome.
+A caption under the input reads `THIS BECOMES THE PROJECT'S NAME`.
+
+### Sources
+
+Each connected tool (GitHub, Jira) appears as one row in the
+**SOURCES** section. The section label carries a count of sources that
+have a scope picked (e.g. `SOURCES 2`).
+
+![New Project with both sources scoped and live counts visible](assets/project-rooms/new-project-live.png)
+
+**A connected row** shows: the provider emblem (`GH` or `J`), a scope
+picker trigger (the picked name or `Choose a repository` /
+`Choose a project`), default Watch toggles as tokens, the live count
+once it arrives, an egress chip naming the host, and an `Adjust`
+button.
+
+**Default Watch toggles.** GitHub: `OPEN PRS` (on), `CI` (on). Jira:
+`OVERDUE` (on), `DUE 7 DAYS` (on), `BLOCKED` (off). Each toggle
+controls whether that Watch is created with the project. The toggles
+are `CheckGadget` tokens: pressed means on.
+
+**The count is the check.** Picking a scope immediately fetches the
+count for every enabled Watch. While the fetch runs, the row reads
+`CHECKING`. When the count arrives, the row displays it in secondary
+text (e.g. `12 open PRs, CI green`). If the fetch fails, the row
+reads `CAN'T CHECK` with the reason in plain words. There is no
+separate test step.
+
+**A not-connected row** shows the emblem, the provider name, a state
+chip (`SIGN IN` or `NOT SET UP`), and a primary `Connect` button. The
+button opens **Settings, Connections**. When you return from
+Connections, the row re-reads the connection state and becomes a
+picker row if the tool is now connected.
+
+![New Project on a cold desk where both providers need connection](assets/project-rooms/new-project-cold.png)
+
+### The picker
+
+Click the scope trigger on a connected row to open the picker. It
+unfolds under the row with a search input (`Search repositories` for
+GitHub, `Search projects` for Jira) and cards listing available
+scopes. A repository or project that another project already watches
+shows a token `ALSO WATCHED BY <project>`. Pick one to collapse the
+picker and start the count fetch. `Show more` loads additional results.
+
+![The GitHub picker open with repository cards](assets/project-rooms/new-project-picker.png)
+
+### Adjust
+
+Click `Adjust` on a connected row to open the disclosure under the
+row. For GitHub: `BASE BRANCH` (default `main`), `LABELS`, and a
+`DRAFTS` toggle. For Jira: `ISSUE TYPES` and `JQL` (optional). This
+is where Watch population settings live. Click `Adjust` again to
+close it.
+
+![The Adjust disclosure open for GitHub showing base branch and label fields](assets/project-rooms/new-project-adjust.png)
+
+### Footer and creation
+
+The footer receipt shows the live totals: `2 SOURCES · 4 WATCHES` when
+sources are picked, or `NO SOURCES · BLANK PROJECT` when none are.
+`Cancel` closes the window. `Create Project` is enabled when the
+outcome line has text. Creating with zero sources is allowed (the
+receipt names this as a blank project). Create builds the project, its
+Watches, and fetches the first counts, then opens the Room.
+
+## Project Room
+
+A project opens as a Room. The title bar carries the project name. Two
+wings: **ROOM** and **HISTORY**. The ROOM wing answers four questions
+in order: what needs me now, what am I watching, what changed since I
+last looked, and what did we decide and what do I owe people. An ask
+well sits at the foot.
+
+![The Room with three items in Needs You, live sources, and a decision](assets/project-rooms/room-needs-you.png)
+
+### The head
+
+The headline at display scale reads `3 need you` (in accent) when
+items need attention, or `Nothing needs you` (muted) when none do.
+Below the headline, chips show the project's health:
+
+- **Health.** A state chip reads `ON TRACK` (success) or `AT RISK`
+  (danger). AT RISK triggers when any of: overdue Jira entities > 0,
+  CI failing on the base branch, or a review waiting on the owner > 3
+  days. The reason token names the first true input.
+- **Target.** When the project has a target date: `TARGET OCT 15 · 41
+  DAYS`. A passed target reads `OVERDUE BY 3 DAYS` in danger tone.
+- **Checked.** `CHECKED 3 MIN AGO` names when sources last ran.
+- **Draft update.** One primary button in the head opens the update
+  posture.
+
+The outcome line appears in the head only when the title bar cannot
+show it whole (long name or narrow viewport).
+
+### Needs you
+
+The **NEEDS YOU** section lists items that require your attention. Each
+row shows a source emblem, the item's title, a WHY token naming the
+reason and age (e.g. `WAITING ON YOUR REVIEW · 3 DAYS`, `OVERDUE · 2
+DAYS`, `DECISION PENDING`), and a verb: `Open` for items with a URL,
+`Decide` for pending proposals.
+
+What feeds this section: review requests assigned to you, CI status on
+the base branch (a failing CI reads `CI failing on main`), overdue
+Jira entities, and pending review proposals.
+
+When empty, the section reads `Nothing needs you` with the next check
+time.
+
+### Sources
+
+The **SOURCES** section shows one row per Watch. Each row shows the
+source emblem, the scope name, live count tokens (zero counts are
+omitted), a `checked` time, the egress chip naming the host, and a
+`Pause` or `Resume` verb.
+
+A Watch in `CAN'T CHECK` state shows the reason in plain words and a
+`Remove` verb. A `SUGGESTED` row (from meeting facts) sits last with
+an `Add` verb, offered but never applied automatically.
+
+The `Steward` button opens the steward's automation settings.
+
+### Since you looked
+
+The **SINCE YOU LOOKED** section uses the server-side read marker. The
+caption reads `SINCE YOU LOOKED` when a prior read exists, or
+`SINCE CREATED` for a brand-new project. The last-read time appears as
+a token (e.g. `WED 09:21`).
+
+Changes are grouped by source with a group heading (e.g. `GitHub · 2
+opened · 1 merged`) and entry rows in phrases (e.g. `#618 opened by
+mira · 2 h ago`). Opening the Room moves the read marker.
+
+When empty: `Nothing since HH:MM` or `Created just now`.
+
+### Decisions and commitments
+
+The **DECISIONS & COMMITMENTS** section is hidden when empty. When
+present, rows read `Decided · <text> · <time>` (from decision records)
+or `You owe · <text> · by <time>` (from commitments). Each row carries
+an `Open` verb.
+
+These come from meetings linked to the project. When no meeting is
+linked, the section is hidden.
+
+### The ask well
+
+At the foot of the Room: an input reading `Ask this project…` with a
+mic button. The model's egress chip sits at the right edge: `MODEL ·
+192.168.1.43` when a model is assigned, or `MODEL · NOT SET` with a
+`Choose` link to Settings, Models when no model is assigned. Answers
+appear as an aerogel inset above the well with grounding citations.
+
+![The Room with nothing needing attention, sources live, and the ask well at the foot](assets/project-rooms/room-quiet.png)
+
+### Footer
+
+On the ROOM wing, the footer receipt reads `READ HH:MM · NEXT CHECK
+HH:MM`. On the HISTORY wing, the receipt reads `N TODAY · M THIS WEEK`.
+A `Refresh` verb reloads the room data and resets the read marker.
+
+### History
+
+The **HISTORY** wing shows a dated stream of project events. A filter
+bar lets you narrow by source: `ALL`, `GITHUB`, `JIRA`, `ROOM`. A
+search input with mic narrows entries by text. Each day group shows its
+entries in phrases with timestamps.
+
+![The History wing with a dated stream of project events](assets/project-rooms/room-history.png)
+
+## Settings
+
+Settings is the one configuration window. Its headline states the most
+important thing that needs your attention: `No default model` when an engine
+is missing, or `All set` when everything is configured.
+
+Each module is a row with its name, its state tokens, and **Open**:
+
+| Row | State tokens |
+|---|---|
+| **MODELS** | `NO DEFAULT` when unset; `N GROUPS SET · N ENGINES` when configured |
+| **CONNECTIONS** | `N CONNECTED` (absent at zero) |
+| **VOICE** | `LIVE` + the current target name |
+| **MEETINGS** | `INTELLIGENCE ON` or `INTELLIGENCE OFF` |
+| **WALLPAPER** | The selected place |
+| **RHYTHM** | `EVERY 15 MIN . NEXT hh:mm` when the sweep runs; `NO LOOPS` at zero |
+| **SOUNDS & PRESENCE** | `ON` or `OFF` |
+| **SYSTEM** | `THIS DEVICE` + `MESH ON` or `MESH OFF` |
+
+The **POSTURE** row carries a cycle control for the security posture
+(`YOLO`, `Normal`, `Secure`), stated once. The footer carries `THIS DEVICE`
+and a receipt (`WRITTEN hh:mm`). Choose a row to open its module.
+
+## Rhythm
+
+Open **Settings, Rhythm**. The Rhythm module controls the Heartbeat: the
+unattended sweep that evaluates project Watches and refreshes the
+needs-you aggregate on a cadence.
+
+![Rhythm: the sweep, the brief and notify rows](assets/heartbeat/rhythm-1440.png)
+
+### The sweep row
+
+The **Sweep** row controls the sweep interval with a cycle control
+(`EVERY 5 MIN`, `EVERY 15 MIN`, `EVERY 30 MIN`, `EVERY 60 MIN`;
+default `EVERY 15 MIN`). **Run now** triggers one immediate sweep
+(allowed during quiet hours). Fact tokens below the row read
+`QUIET hh:mm-hh:mm`, `NEXT hh:mm`, `LAST hh:mm`, and after a sweep
+`N ROOMS` and `N MS`. During quiet hours a `HELD . QUIET UNTIL hh:mm`
+chip replaces the fact tokens.
+
+### The Monday brief row
+
+The **Monday brief** row shows a fixed `DAILY hh:mm` token (the hour
+is quiet hours end; this is not a setting). The brief regenerates once a
+day after quiet hours close. Fact tokens read `NEXT MON hh:mm` and
+`LAST <date>`. **Generate now** triggers immediate regeneration;
+disabled while generating (a `GENERATING` chip replaces the verb).
+
+### Notifications
+
+The **Notify** row carries two cycle controls:
+
+| Control | Options |
+|---|---|
+| **Mode** | `OFF`, `ON THE EDGE` (the default), `EVERY SWEEP` |
+| **Content** | `COUNT ONLY` (the default), `ROOM NAMES` |
+
+`ON THE EDGE` fires when the needs-you count crosses from 0 to
+positive, or when it increases since the last notification. `EVERY
+SWEEP` fires after every sweep that finds items. `COUNT ONLY` limits
+the body to the count (`3 need you across 2 projects`); `ROOM NAMES`
+adds the first WHY per project (at most three lines). During quiet
+hours a `HELD` chip appears on the row.
+
+### Per-Room mute
+
+Each project Room carries a mute toggle. A muted Room is excluded from
+the notification count and the dock badge count. Muted Rooms still
+appear in the shade's **PROJECTS** section, dimmed, with a `MUTED`
+token, and do not count toward the section caption.
+
+### The shade's PROJECTS section
+
+The shade lists one row per Room that has needs-you items: the project
+glyph, the project name, a count token, the first WHY, and an **Open**
+verb. The section caption reads `PROJECTS` with the aggregate count
+(`N NEED YOU`). The dock badge carries the same number. When the
+aggregate is zero, the section is absent.
+
+![The shade's PROJECTS section, one Room muted](assets/heartbeat/shade-projects-1440.png)
+
+![The dock badge carries the same count](assets/heartbeat/dock-badge-1440.png)
+
+### PROJECTS in the command deck
+
+Type a project name in the command deck (Cmd+K). Up to 10 Rooms appear
+as verb entries (sorted by needs-you count, then name), each with the
+project kind glyph, the project name, and a trailing count badge (zero
+badges omitted). Selecting a Room opens it. Additional Rooms are
+reachable through the Projects surface.
+
+![PROJECTS in the command deck](assets/heartbeat/command-deck-projects-1440.png)
+
+## The clock
+
+The clock is the calendar on the desk. Connect a calendar and the
+arrival gains a temporal signal: what is coming, what is armed, and
+which meetings belong to your Rooms.
+
+### Connecting a calendar
+
+Open **Settings, Meetings**. The **CALENDAR** section shows one ledger
+row per source: a state dot (idle when the source is disabled), the
+source label, `ICS` or `SNAPSHOT`, the egress chip naming the host for
+an HTTPS source (a file source carries no chip: nothing leaves the
+machine), `N EVENTS`, and `LAST READ HH:MM` (your local clock) after the
+first refresh. Each row carries the verbs
+**Edit**, **Disable** (or **Enable**), and **Remove**; Remove arms a
+one-step confirm under the row (`REMOVE <LABEL>`, **Remove** /
+**Cancel**).
+
+The **Connect calendar** row carries **Add** and **Snapshot**. **Add**
+unfolds one well under the row: paste an ICS URL (an Outlook or Google
+ICS export link) or a local file path, with a mic on the field and
+**Cancel** / **Save**. **Edit** reuses the same well, pre-filled, under
+the source row. The conductor refreshes every 15 minutes. **Snapshot**
+is the vision adapter: it extracts events from a calendar screenshot
+via the assigned vision model (local/LAN profiles preferred; the host
+is recorded on the egress); confirmed events become a file source
+ingested through the same pipeline.
+
+![Settings Meetings: calendar sources and auto-record](assets/calendar-clock/settings-calendar-1440.png)
+
+### The WEEK strip
+
+Below the arrival's headline, the WEEK strip shows five to seven day
+tokens (`MON` through `SUN`; weekend days appear only when they carry
+meetings). Each day carries one dot per meeting on that day (maximum
+four dots; five or more shows the count with a plus, `5+` style).
+Today's token is accented.
+Below the dots: `N MEETINGS THIS WEEK`.
+
+The strip is absent when no calendar source is connected or when the
+week has zero events.
+
+![The WEEK strip on the arrival](assets/calendar-clock/arrival-week-1440.png)
+
+### Event rows
+
+Each upcoming calendar event on the arrival shows the event title,
+time (`HH:MM`), the calendar source label, and (when the event matches
+a Room) `ROOM` followed by the Room name. When the event has an armed
+recording, the row carries `ARMS HH:MM` and a **Cancel** verb that
+disarms the recording without affecting the calendar event.
+
+Orphan armed recordings (event-born recordings whose calendar event
+has left the projection) render as a separate `ARMED` row with the
+original event title and source label.
+
+### Auto-record
+
+Open **Settings, Meetings**. The **Auto-record** row carries a cycle
+control with three states:
+
+| State | What it does |
+|---|---|
+| `OFF` (default) | No event-born recordings are created |
+| `ARM ROOM MEETINGS ONLY` | Arms recordings for events matching a Room |
+| `ARM ALL CALENDAR MEETINGS` | Arms recordings for every event with a meeting URL |
+
+When enabled, the conductor creates an idle recording for each
+matching calendar event. The recording arms at `starts_at` minus five
+minutes and, like every scheduled recording, records at the event
+(the toggle is your standing consent to record; OFF by default).
+**Cancel** on the row stops it for good: a cancelled row is never
+re-armed by a later refresh. A `5 MIN BEFORE` token
+appears beside the toggle; when `ARM ROOM MEETINGS ONLY` is active, an
+`N MATCHED THIS WEEK` token follows. When a calendar event moves, the
+recording's arm time moves with it. When an event disappears from the
+ICS feed, the recording is cancelled with a receipt.
+
+### The Room's meeting watch
+
+In the Room's **SOURCES** section, a meeting watch row sits alongside
+GitHub and Jira: `MTG` emblem, `MEETINGS`, `N THIS WEEK`, `NEXT DAY
+HH:MM`, and the Watch verbs (**Pause**, **Resume**, **Retire**). The
+row is absent when no meetings link to the Room. The meeting watch
+feeds into the Room's SINCE YOU LOOKED delta: a new intelligence run
+or a new commitment from a linked meeting appears as a change.
+
+![Room SOURCES with a meeting watch row](assets/calendar-clock/room-sources-meetings-1440.png)
+
+### The weekly brief
+
+When a calendar is connected, the Rhythm module's brief row reads
+`Weekly brief` with its true cadence `DAILY HH:MM`: the brief
+regenerates every morning and reads the whole week ahead (it remains
+`Monday brief` without a calendar). The lookback window is unchanged
+(preceding business-day close to now). A separate `compute_lookahead`
+covers now to Sunday 23:59.
+
+The brief's `THIS WEEK` section uses a full-week window (Monday 00:00
+to Sunday 23:59) and carries:
+
+- meetings count, armed recordings count, next event title and time.
+- commitments due this week, with the first item and its day.
+- new decisions from meetings since the last brief.
+
+The `changed`, `broke`, `waiting`, and `decisions` sections use the
+unchanged lookback window. All sections are absent when they have zero
+items (the brief still runs its existing non-calendar collectors).
+
+![The weekly brief with THIS WEEK items](assets/calendar-clock/brief-week-1440.png)
+
+## Models: the Concierge
+
+Open **Settings, Models**. The Concierge is one screen that answers three
+questions: what engines exist, what should each capability use, and is
+everything ready.
+
+### What you see
+
+The headline states the found count (`5 engines found`) or `No engine yet`.
+Under it, a chip row names your hardware (`THIS MAC · M-series · 36 GB`) and
+the last check time.
+
+**FOUND** lists every detected engine as a ledger row. Each row shows:
+
+- A kind token: **LAN**, **THIS MAC**, or **CLOUD**.
+- The engine name (`Qwen3.6 35B`, `Whisper base`, `OpenRouter`).
+- Latency when probed (`41 MS`), file size for local engines (`26.5 GB`),
+  runtime (`MLX`, `LLAMA.CPP`), **KEY SET** / **KEY NOT SET** for cloud.
+- The host chip (`192.168.1.43 · LAN`, `THIS DEVICE`, `openrouter.ai`).
+- State: `READY` or `UNREACHABLE`.
+
+A catalog preset not yet on disk is a row too, with **Download** and its file
+size. `Add an engine...` at the bottom opens a field for a base URL and
+**Check** to probe it.
+
+Cloud rows carry a **Check** verb with the cost chip `1 TOKEN · $`. That is
+the only way a cloud key is ever probed against the paid endpoint; no paid
+probe happens without your explicit verb.
+
+**THE SET** proposes one engine per capability group: Thoughts & notes, Chat,
+Writing & dictation, Speech recognition, Meetings, Agents & tools, Background.
+Each row carries a picker control (the stroke-chevron gadget) with the
+proposed engine, its latency token, its host chip, and a state token:
+
+| State | Meaning |
+|---|---|
+| **READY** | The engine responded to a probe. |
+| **CHECKING** | A probe is running. |
+| **WAITING** | Depends on a download or check that has not finished. |
+| **KEY NOT SET** | A cloud engine with no key configured. |
+| **OFF** | You set this group to `None` explicitly. |
+
+The proposal rule: Speech recognition uses a local Whisper engine only (never
+LAN or cloud). Writing & dictation picks the smallest reachable low-latency
+engine. Every other group picks the strongest reachable LAN engine. Cloud
+appears only when you pick it in the picker.
+
+**Use these** (the one primary verb) writes the whole set in one step. It is
+disabled until every group is **READY** or explicitly **OFF**.
+
+### Adjust
+
+Choose **Adjust** (the ghost verb by the set's caption) and the full
+capability table unfolds under the set rows. Every capability row shows its
+group, its explicit override, and its engine's host chip. This is the
+per-capability control for fine-grained assignments. The set rows stay
+visible above.
+
+### Cloud Check
+
+A cloud engine row's **Check** verb is the only path that sends a paid token.
+The cost chip (`1 TOKEN · $`) is visible before you press it. The probe
+returns the latency and confirms reachability. No cloud probe runs without
+this explicit verb.
+
+### Download
+
+A catalog preset in the FOUND list that is not on disk shows **Download**
+with its file size. Choosing it starts the download; the row shows a
+progress token (`received / total`, with the received part absent at zero).
+Dependent set rows stay **WAITING** and **Use these** stays disabled until
+the file is **READY**.
+
+### The footer
+
+The receipt reads `7 GROUPS · 3 ENGINES` (or `NO ENGINE · SET UP NOTHING`
+when nothing is found). **Cancel** appears when the set has unsaved changes.
+
+### First open on a cold machine
+
+The headline reads `No engine yet`. The FOUND section lists catalog presets
+as **Download** rows and the `Add an engine...` entry. **Use these** is
+disabled. One path forward: download a preset or add an engine, then apply.
+
+The full reference for model files, endpoints, and providers is
+[Models (bring your own)](MODELS.md).
 
 ## People
 
@@ -846,179 +1761,178 @@ sidecar and the dev sidecar exist, doctor warns: "BOTH WORLDS EXIST."
 
 ## Threads
 
-A Thread is a multi-turn conversation that lives on the Desk as a first-class
-object. Unlike the old one-shot Ask loop, a Thread persists in the hub's
-SQLite, streams token by token, and can be grounded on desk material through
-`@`-references.
+A Thread is a saved conversation on the hub.
+It contains your sent messages, model replies, source references, and tool results.
+Use a Thread when you want to continue work across multiple turns.
 
 ### Start a Thread
 
-Open a new Thread from the Desk menu or choose **Continue in thread** on any
-desk object (a meeting, a note, a person, a decision). The object becomes a
-frozen reference: its content at the moment you ask is what the model sees.
+1. Select **Desk > New Thread**.
+2. Select a mode if the task requires one.
+3. Enter your request.
+4. Select **Send**.
+
+You can also select **Continue in thread** on a supported Desk object.
+That object becomes a source reference for the conversation.
+The hub resolves the referenced content for the turn.
 
 ### The composer
 
-The Thread composer sits at the foot of the pullout. Type or tap the mic
-(click-to-toggle, never hold-to-talk). `@` opens the reference picker:
-meetings, notes, artifacts, decisions, and people by title. Each picked
-reference appears as a chip above the field. Enter sends, Shift+Enter inserts
-a newline, Esc stops a running turn. The Send button flips to Stop while the
-model is streaming.
+Type your request or use the click-to-toggle microphone control.
+Use `@` to attach supported records such as Meetings, Notes, Artifacts, and decisions.
+Each attachment appears as a chip above the field.
+
+**Enter** sends the request. **Shift+Enter** inserts a new line.
+The Send control becomes Stop during generation.
+Your prompt appears immediately while the request starts.
+A failed send retains the text for correction or retry.
+
+Chair/Floor changes preserve the open Thread and its current draft.
+An unsent composer draft has no durable-save guarantee across a reload.
+Sent messages are separate from that temporary draft state.
 
 ### Streaming, receipts, and egress
 
-Each assistant turn streams over the WebSocket bus. One egress badge and one
-receipt appear per turn. The badge names where the turn ran (this device, a
-private endpoint, or an external service). A turn that errors shows its
-failure in flow, never overlapping the UI. A turn whose stream stalls
-(no update for 10 s) renders as CRASHED with a Retry verb.
+Replies stream into the conversation.
+The turn's boundary and Receipt identify where it ran and the reported result.
+A failure appears with the affected turn.
+
+Routine tool calls remain collapsed under **Actions**, including before the final answer arrives.
+Open **Actions** when you want to inspect them.
+An explicit choice to open the details remains in effect as the turn updates.
+Approval requests, tool questions, failures, and denials remain visible outside the routine group.
 
 ### Branch, keep, and search
 
-Edit a past user message or regenerate an assistant reply to create a branch.
-The pullout shows siblings as `< n/m >`. Keep any reply as a Note or Artifact
-with its provenance recorded. Desk Memory searches Threads alongside Meetings,
-Artifacts, Notes, Decisions and Decision Records, Actions, Project items,
-Workbench items/results, and Cadence loops through the same `memory.search`
-contract. Opening it outside a Project searches the whole Desk; opening it from
-a Project keeps the query inside that Project.
+Editing a past user message or regenerating a reply creates a conversation branch.
+The branch controls let you inspect sibling branches.
+Keep a useful reply as a separate Note or Artifact with its provenance.
+Desk search includes saved Threads.
+Desk memory searches saved Threads with Meetings, Notes, Artifacts, Decisions, Actions, Project items, Workbench results, and Cadence loops.
+See [Relationship-aware memory](RELATIONSHIP_AWARE_MEMORY.md) for the retrieval contract.
 
 ### People boundary
 
-When a Thread references a People record, those parts are marked sensitive.
-If the thread's model assignment resolves to a cloud endpoint, the assembler
-redacts sensitive content before it reaches the provider.
+People source parts have a sensitive classification.
+The context assembler redacts those parts before a cloud model turn.
+The People tools expose only the permitted shared-intent data for the authenticated caller.
+See [People security](PEOPLE_SECURITY.md) for the complete confidentiality boundary.
+
+In Interview's **People** section, use **Open People** for relationship work.
+That section omits the Thread composer.
 
 ### The Thread has hands
 
-During a turn the model may call the desk's own tools. Each call
-renders as a tool row: name, class glyph, arguments head, state.
+A model can request tools exposed by the current mode.
+The Thread tool gate checks the tool class, Control mode, and any recorded tool policy.
+The called service also applies its own operation rules.
 
-In yolo mode every call executes immediately and the row shows DONE
-with a receipt short-id. In safe mode, effect tools are held. Three
-verbs appear:
+Without an explicit per-tool policy:
 
-- **Allow once.** Executes this call. No policy row written.
-- **Allow always.** Writes a per-thread policy row so future calls
-  to the same tool auto-admit. No "Never" is offered.
-- **Deny.** Refuses this call only. No row written.
+| Control mode | Tool admission |
+| --- | --- |
+| **Secure** | Evidence reads proceed. Candidate builders and effect proposals wait for a decision. |
+| **Normal** | Evidence reads and candidate builders proceed. Effect proposals wait for a decision. |
+| **YOLO** | Classified, offered tools can proceed through the Thread gate. Service-level authority checks still apply. |
 
-A tool may ask a question mid-call (elicitation). The row renders a
-JSON-Schema form: string, number, boolean, and enum fields. Submit
-sends the answer; Decline refuses.
+A held call offers these controls:
 
-Results from `people.*` tools carry a PEOPLE badge. These parts are
-marked sensitive and never leave the machine on a cloud turn.
+- **Allow once** admits this call.
+- **Allow always** records a policy for this tool in this Thread.
+- **Deny** refuses this call.
 
-Every receipted row carries a collapsed **RAW** fold with the full
-JSON payload. A TRUNCATED tag appears when the result exceeded the
-32 KB byte cap.
+A recorded per-tool policy takes precedence at the Thread gate.
+It does not bypass destination, credential, or permission checks in the service.
+See [Control modes](AUTHORITY.md) for central operation policy.
 
-`thread.set_status` writes the status line shown under the thread
-title in the pullout head.
+A tool can also request structured input during a call.
+Submit the requested values or decline the question.
+The tool result includes execution state and available Receipt information.
+The collapsed raw-result view exposes the returned payload, subject to the tool result size limit.
 
 ### Modes
 
-Bind a mode to steer the thread's tool palette and system prompt. Four
-built-in modes ship as seeds:
+Modes select a system instruction and a tool set for the Thread.
+The built-in modes include:
 
-| Mode | Tools |
-|---|---|
-| **Desk** | Evidence reads, candidate builder (no effects) |
-| **Chase** | Desk + People effects, follow-through, `door.add_item` |
-| **Draft** | No tools (writing model only) |
-| **Plan** | `thought.*` reads, `door.get`, `memory.search`, `decision_record.*` reads |
+| Mode | Purpose |
+| --- | --- |
+| **Desk** | Read Desk evidence and prepare candidates. |
+| **Chase** | Use broader Desk and People operations for follow-through. |
+| **Draft** | Write without tools. |
+| **Plan** | Read Thoughts, decisions, and relevant Desk context. |
+| **Project** | Use the Project-oriented mode and its existing MCP path. |
+| **Interview** | Revisit sections, save working context, and develop suggestions. |
 
-Mode tabs render above the composer. Click a tab to bind; click the
-active tab to unbind. A mode change applies from the next turn.
+Select a mode above the composer.
+A mode change applies to the next turn.
+Selecting the active mode again removes that binding.
+For Interview's sections, suggestion controls, and limits, read [Interview](INTERVIEW.md).
 
 ### Saved prompts
 
-A prompt is a Note tagged `prompt`. `/prompt <name>` inserts the note
-body at the caret. Seed prompts ship with the desk (Weekly update,
-1:1 prep).
+A saved prompt is a Note tagged `prompt`.
+Use `/prompt <name>` to insert its text into the composer.
+Review the inserted text before you send it.
 
 ### Guardrails
 
-A guardrail is a Note tagged `guardrail` with a YAML front matter
-block (instruction, trigger tools, N messages). Two seeds ship:
-`effect-guard` (flags an effect touching a person's ledger without a
-named source) and `egress-guard` (flags cloud egress of a `people.*`
-read).
-
-Guardrails are enabled per mode. The guardrail assignment runs once
-per tool-requesting pass, before the per-call admission. It returns
-violations and warnings rendered as a row above the pending-tool
-box. It never auto-denies; in safe mode a violation flips the decision
-box default to Deny. `/guardrail <name>` toggles a guardrail on the
-thread's mode.
+A guardrail is a Note tagged `guardrail` with configuration in its front matter.
+Guardrails can review tool-requesting passes and display violations or warnings.
+They do not automatically deny every flagged request.
+The normal tool and operation gates remain responsible for execution authority.
 
 ### Annotations
 
-Select text in any assistant part to open an in-flow popover (comment
-field with mic). Save adds an annotation chip above the composer.
-Chips are draft parts on a pending user message; Send promotes them
-with the next turn as a prefix ("The owner annotated: ..."). Chips
-survive a reload.
+Select text in an assistant reply to add a comment.
+Saved annotation chips become part of the next message when you send it.
+These saved annotations can survive reload independently of the unsent text draft.
 
 ### Compaction
 
-`/compact` summarises earlier turns into a cut marker. The assembler
-includes only the summary and what follows. A cut marker row renders
-in the pullout with a RAW fold showing the summary text. Earlier
-messages fold behind a toggle.
+Use `/compact` to summarize earlier turns into a cut marker.
+Later model context includes that summary and subsequent messages.
+Earlier messages remain behind the conversation's history control.
+Review the summary when the omitted detail matters to your task.
 
 ### Todo
 
-`/todo <text>` writes an action item to the Door with
-`source_type='thread'`. The Door card shows a "from a thread" chip
-that opens the thread pullout.
+Use `/todo <text>` to create an action item from the Thread.
+The item retains a source reference to the conversation.
+An action item does not configure an automation.
 
 ### Slash commands
 
-`/` at the start of a line opens the verb palette. Mid-line `/` types
-a literal slash.
+Enter `/` at the start of a line to open the command palette.
 
 | Command | Action |
-|---|---|
-| `/mode <name>` | Bind or switch the thread's mode |
-| `/prompt <name>` | Insert a saved prompt at the caret |
-| `/tools` | List the mode's tool palette |
+| --- | --- |
+| `/mode <name>` | Select a Thread mode |
+| `/prompt <name>` | Insert a saved prompt |
+| `/tools` | List the mode's tools |
 | `/guardrail <name>` | Toggle a guardrail on the mode |
-| `/todo <text>` | Write an action item to the Door |
-| `/compact` | Summarise earlier turns behind a cut |
+| `/todo <text>` | Create an action item |
+| `/compact` | Summarize earlier turns |
 | `/keep` | Keep the last reply as a Note |
 | `/fork` | Branch the conversation |
-| `/stop` | Stop a running turn |
-| `/new` | Start a new thread |
+| `/stop` | Stop generation |
+| `/new` | Create a Thread |
 
 ### The Call
 
-Start a call on any thread to hear every reply and talk back hands-free.
-The call chip in the thread head shows four states: OFF, LISTENING,
-THINKING, SPEAKING. Click the chip in any non-OFF state to stop (TTS
-stops, mic closes, call ends). A fresh thread is always OFF.
+Call mode combines spoken replies with microphone input for the Thread.
+A new Thread starts with Call off.
+The Call control reports listening, thinking, or speaking while active.
+Select the active control to stop the call.
 
-Every assistant turn shows a speaker glyph. Click the glyph to replay
-the turn through the voice. In call mode, speech starts at sentence
-boundaries while the reply is still streaming (auto-speak). Barge-in
-(speak or click) stops TTS immediately and returns to LISTENING.
+The reply's speaker control can replay an answer.
+Browser speech synthesis is the default voice path.
+The optional `tts` extra supplies server voices through kokoro-onnx.
+Voice availability depends on the configured path and runtime.
 
-**Default voice.** The browser's Web Speech API (`speechSynthesis`):
-zero dependencies, zero egress, instant.
-
-**Server voice.** Install the optional extra for kokoro-onnx voices:
-
-```
-pip install holdspeak[tts]
-```
-
-The `phonemizer` and `espeak-ng` dependencies are GPL-3.0. When
-enabled, Settings shows the server voice block. When absent, the
-route answers 404 and the client stays on the browser voice. If the
-server voice's first chunk exceeds 2 s, that utterance falls back to
-the browser voice (R4).
+The server voice dependencies include GPL-3.0 components.
+See the package and Settings voice information when you enable that extra.
+Call hardware and voice quality require validation on the actual device.
 
 ## Schedule A Recording
 
@@ -1030,7 +1944,7 @@ path a manual recording uses; no browser needs to be open.
 
 Use any of four paths:
 
-1. **The Chair Door.** In **Upcoming**, choose **Schedule recording**. The
+1. **The arrival.** Select **Schedule** in the capture bar. The
    in-world schedule window lets you name the recording, choose **Once** or
    **Recurring**, and set a duration (default 60 minutes).
 2. **From a calendar event.** Tap **Record this** on any event in the
@@ -1077,8 +1991,8 @@ Local-first behavior:
 Cloud or homelab behavior:
 
 - If you set `meeting.intel_provider` to `cloud` (or `auto`, which can fall back to it), meeting text may be sent to the model endpoint you picked for analysis.
-- The one path: add the endpoint once under **Settings > Models > Model Library**,
-  then choose it for **Meetings** under **Assignments**. The
+- The one path: add the endpoint once under **Settings > Models**,
+  then select it for **Meetings** in the Concierge set and apply **Use these**. The
   `intel_cloud_*` fields are legacy migration inputs and do not configure runs.
 - Use `holdspeak doctor` from the same shell environment to verify endpoint, model, TLS, DNS, and authentication; its placement line names the model each pipeline resolves to.
 
@@ -1533,7 +2447,7 @@ Sensitive files:
 
 - Do not place secrets in `.hs/`.
 - Use `.hs/ignore` to document paths and topics that should not be injected.
-- Set model-profile keys in **Model Library**; use environment variables
+- Set model-profile keys in the configured credential controls; use environment variables
   when provisioning a headless hub.
 
 ## Troubleshooting
@@ -1570,7 +2484,9 @@ Common issues:
 ## See also
 
 - [README](../README.md): install, platform notes, configuration reference.
-- [Getting Started](GETTING_STARTED.md): first-run setup and basic voice typing.
+- [Getting Started](GETTING_STARTED.md): first capture and installation.
+- [Interview](INTERVIEW.md): saved context, suggestions, and manual drafts.
+- [Automation](AUTOMATION.md): triggers, tools, and execution limits.
 - [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md): dictation pipeline, project context, output-target override, OpenAI-compatible endpoints, and automation hooks.
 - [Dictation runtime setup](../web/src/pages/cores/RuntimeDocsCore.tsx): source for the local Web runtime setup page.
 - [Meeting Mode Guide](MEETING_MODE_GUIDE.md): meeting-specific setup and troubleshooting.

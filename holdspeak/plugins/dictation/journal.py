@@ -17,6 +17,7 @@ a journal row never carries a secret.
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Optional
 
 from holdspeak.project_doc_suggestions import looks_like_secret
@@ -90,6 +91,67 @@ def _target_name(target_profile: Any) -> Optional[str]:
     return None
 
 
+def _correction_ids(run: object, target_profile: Any) -> list[int]:
+    """The correction ids that fired on this run, deduplicated, in order.
+
+    Two sources (HS-176-02, ruling R2):
+
+    - `run.corrections_applied` — the `text` rules applied at the pipeline's
+      transcript seam plus the intent nudge's rule. Read with `getattr` because
+      `passthrough_run` above fakes a run with a `SimpleNamespace` that has no
+      such attribute (C5 note).
+    - the target profile's own `details["correction_id"]`, stamped by
+      `target_profile.apply_target_correction` when a `target` rule redirected
+      the landing. `_target_name` drops everything but the id, so this is the
+      only place the fact survives.
+    """
+    ids: list[int] = []
+    for raw in getattr(run, "corrections_applied", ()) or ():
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if value not in ids:
+            ids.append(value)
+    details = getattr(target_profile, "details", None)
+    if isinstance(target_profile, dict):
+        details = target_profile.get("details")
+    if isinstance(details, dict) and details.get("correction_id") is not None:
+        try:
+            value = int(details["correction_id"])
+        except (TypeError, ValueError):
+            value = None  # type: ignore[assignment]
+        if value is not None and value not in ids:
+            ids.append(value)
+    return ids
+
+
+def _frame_from_row(row: Any) -> dict[str, Any]:
+    """The `dictation.journal.entry` bus frame, built from the STORED row.
+
+    Redaction is by construction: `record` secret-filters the transcript and
+    the final text *before* the repository call, and this frame reads the row
+    the repository returned — so a redacted field cannot be bypassed here.
+
+    `taught_from` is the existing `corrected` column under its true name ("he
+    taught FROM this row"); `corrections_applied` is the opposite fact (ruling
+    R5). `created_at` rides along because the Journal wing's lead slot is the
+    time — a live-pushed row has no other source for it.
+    """
+    return {
+        "id": int(getattr(row, "id", 0) or 0),
+        "created_at": getattr(row, "created_at", None),
+        "source": getattr(row, "source", None),
+        "transcript": getattr(row, "transcript", "") or "",
+        "final_text": getattr(row, "final_text", "") or "",
+        "total_ms": float(getattr(row, "total_ms", 0.0) or 0.0),
+        "corrections_applied": [int(x) for x in (getattr(row, "corrections_applied", []) or [])],
+        "taught_from": bool(getattr(row, "corrected", False)),
+        "intent_tag": getattr(row, "block_id", None),
+        "target_profile": getattr(row, "target_profile", None),
+    }
+
+
 class DictationJournalRecorder:
     """Writes one journal row per pipeline run, best-effort, secret-filtered.
 
@@ -100,9 +162,19 @@ class DictationJournalRecorder:
     """
 
     def __init__(
-        self, repository: "Optional[DictationJournalRepository]" = None
+        self,
+        repository: "Optional[DictationJournalRepository]" = None,
+        *,
+        broadcast: "Optional[Callable[[str, dict[str, Any]], None]]" = None,
     ) -> None:
         self._repository = repository
+        # HS-176-02: the live-frame handle (`WebServer.broadcast`, wired at
+        # `web_server.py`). It reads its event loop at call time, no-ops without
+        # one, and hands off with `run_coroutine_threadsafe`, so it can neither
+        # block nor raise into the dictation thread. A recorder built WITHOUT it
+        # is byte-identical to the Phase 45 recorder: every bare server and
+        # every test broadcasts nothing.
+        self._broadcast = broadcast
 
     @property
     def repository(self) -> "Optional[DictationJournalRepository]":
@@ -134,7 +206,7 @@ class DictationJournalRecorder:
         try:
             intent = getattr(run, "intent", None)
             stage_ms, rewrite_pass_ms = extract_stage_ms(run)
-            return self._repository.record(
+            stored = self._repository.record(
                 source=str(source),
                 transcript=filter_secret(transcript),
                 final_text=filter_secret(getattr(run, "final_text", "") or ""),
@@ -151,7 +223,24 @@ class DictationJournalRecorder:
                     else None
                 ),
                 warnings=list(getattr(run, "warnings", []) or []),
+                corrections_applied=_correction_ids(run, target_profile),
                 retention=retention,
             )
         except Exception:  # pragma: no cover - journaling must never break typing
             return None
+        self._emit(stored)
+        return stored
+
+    def _emit(self, row: Any) -> None:
+        """Push one `dictation.journal.entry` frame for a stored row.
+
+        Best-effort and side-channel like the write itself: a broadcast failure
+        can never reach the dictation path. A recorder with no callable emits
+        nothing.
+        """
+        if self._broadcast is None or row is None:
+            return
+        try:
+            self._broadcast("dictation.journal.entry", _frame_from_row(row))
+        except Exception:  # pragma: no cover - a frame must never break typing
+            return

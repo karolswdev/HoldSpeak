@@ -47,21 +47,54 @@ class DictationService:
         cursor: int | None = None,
         source: str | None = None,
     ) -> dict[str, Any]:
-        clean_source = source if source in {"dictation", "dry_run", "browser", "hotkey"} else None
-        records = (
-            self._journal.recent(limit=limit, source=clean_source)
-            if self._journal is not None
-            else []
-        )
-        if cursor is not None:
-            records = [record for record in records if record.id < cursor]
+        from ..plugins.dictation.journal import VALID_SOURCES
+
+        clean_source = source if source in VALID_SOURCES else None
+        records: list[Any] = []
+        if self._journal is not None:
+            if cursor is None:
+                records = self._journal.recent(limit=limit, source=clean_source)
+            else:
+                # HS-176-03: `before` is a PAGE cursor, so it has to bound the
+                # query, not the page it produced — filtering the newest `limit`
+                # rows after the fact returns nothing once the cursor is older
+                # than the first page. Prefer the repository's own `before`;
+                # fall back to an unbounded read + slice while it lands.
+                try:
+                    records = self._journal.recent(
+                        limit=limit, source=clean_source, before=cursor
+                    )
+                except TypeError:
+                    records = [
+                        record
+                        for record in self._journal.recent(source=clean_source)
+                        if record.id < cursor
+                    ][: max(0, int(limit))]
         cfg = Config.load().dictation.pipeline
         return {
             "enabled": bool(getattr(cfg, "journal_enabled", True)),
             "retention": int(getattr(cfg, "journal_retention", 500)),
             "count": self._journal.count() if self._journal is not None else 0,
+            # HS-176 counsel C4: the Speak footer's `N TODAY` token. `count` is
+            # the all-time RETAINED total and stays what it is (Export and the
+            # journal's own trust statement read it); `today` is the count the
+            # token actually claims — rows on the local calendar day.
+            # `getattr` because a bare/legacy repository double may not carry
+            # the method; absent-as-zero, never an error into a journal read.
+            "today": self._count_today(),
             "items": [self._entry(record) for record in records],
         }
+
+    def _count_today(self) -> int:
+        if self._journal is None:
+            return 0
+        counter = getattr(self._journal, "count_today", None)
+        if not callable(counter):
+            return 0
+        try:
+            return int(counter())
+        except Exception:
+            return 0
 
     def get_entry(self, principal: Principal, entry_id: int) -> dict[str, Any]:
         entry = self._journal.get(entry_id) if self._journal is not None else None
@@ -178,4 +211,13 @@ class DictationService:
             "warnings": record.warnings,
             "corrected": record.corrected,
             "correction_id": record.correction_id,
+            # HS-176-02 (R5): the two stored facts, split and both named.
+            # `taught_from` is the existing `corrected` column under its true
+            # meaning — "he taught FROM this row"; `corrections_applied` is the
+            # new per-run fact — "these stored rules fired ON this row". The
+            # `getattr` keeps a record shape that predates the column working.
+            "taught_from": bool(record.corrected),
+            "corrections_applied": [
+                int(x) for x in (getattr(record, "corrections_applied", None) or [])
+            ],
         }

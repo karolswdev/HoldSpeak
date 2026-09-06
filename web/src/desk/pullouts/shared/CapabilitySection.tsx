@@ -194,7 +194,7 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
           Assignments
         </button>
       </div>
-      {runWarning && <p className="desk-run-warning">{"⚠"} {runWarning}</p>}
+      {runWarning && <span className="desk-run-warning"><span aria-hidden="true">{String.fromCodePoint(0x26A0)}</span> {runWarning}</span>}
       {runOut && (
         <div className="surface-aerogel">
           <Material>{runOut}</Material>

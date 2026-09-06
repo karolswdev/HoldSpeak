@@ -1,9 +1,8 @@
-// HS-135-04 — CatalogRail consuming-surface test: LedgerFilterBar
-// hides below SPARSE_THRESHOLD, shows at/above it.
+// HS-170-04 — CatalogRail tests: the stream renders meetings,
+// shows empty state, and uses the new prop interface.
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CatalogRail } from "../CatalogRail";
-import { SPARSE_THRESHOLD } from "../../../../desk/surface/sparse";
 
 function baseProps(rowCount: number) {
   const meetingRows = Array.from({ length: rowCount }, (_, i) => ({
@@ -13,56 +12,51 @@ function baseProps(rowCount: number) {
     segment_count: 2,
     duration_seconds: 300,
     capture_status: "done",
+    transcriptWords: 100,
   }));
   return {
     meetingRows,
     meetings: { loading: false, error: "", reload: vi.fn(async () => ({})) },
-    facets: { data: {} },
     selected: null,
     setSelected: vi.fn(),
-    query: "",
-    setQuery: vi.fn(),
-    filterTokens: [],
-    removeFilterToken: vi.fn(),
-    clearFilter: vi.fn(),
-    filterActive: false,
-    filterTotal: rowCount,
-    filtersOpen: false,
-    setFiltersOpen: vi.fn(),
-    dateFrom: "",
-    setDateFrom: vi.fn(),
-    dateTo: "",
-    setDateTo: vi.fn(),
-    speaker: "",
-    setSpeaker: vi.fn(),
-    tag: "",
-    setTag: vi.fn(),
-    openActions: false,
-    setOpenActions: vi.fn(),
-    needing: 0,
+    onRunIntelligence: vi.fn(),
+    runningId: null,
+    runHost: null,
   };
 }
 
-describe("CatalogRail sparse behavior (L10)", () => {
-  it("hides filter bar when meetings < SPARSE_THRESHOLD", () => {
-    render(<CatalogRail {...baseProps(1)} />);
-    // The meeting row renders.
+describe("CatalogRail stream (HS-170-04)", () => {
+  it("renders meeting rows with titles", () => {
+    render(<CatalogRail {...baseProps(3)} />);
     expect(screen.getByText("Meeting 0")).toBeInTheDocument();
-    // Filter bar does not render.
-    expect(screen.queryByPlaceholderText("Filter...")).toBeNull();
-    // The acceptance counsel ruled the Filters disclosure IS filter
-    // chrome under L10 -- below the threshold it hides with the bar.
-    expect(screen.queryByText("Filters")).not.toBeInTheDocument();
+    expect(screen.getByText("Meeting 1")).toBeInTheDocument();
+    expect(screen.getByText("Meeting 2")).toBeInTheDocument();
   });
 
-  it("shows filter bar when meetings >= SPARSE_THRESHOLD", () => {
-    render(<CatalogRail {...baseProps(SPARSE_THRESHOLD)} />);
-    expect(screen.getByPlaceholderText("Filter...")).toBeInTheDocument();
-  });
-
-  it("shows empty well when there are zero meetings", () => {
+  it("shows empty state when there are zero meetings", () => {
     render(<CatalogRail {...baseProps(0)} />);
-    expect(screen.getByText("Nothing here yet")).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText("Filter...")).toBeNull();
+    expect(screen.getByText("No meetings yet")).toBeInTheDocument();
+  });
+
+  it("renders NO TRANSCRIPT token when transcriptWords is null", () => {
+    const rows = [{
+      id: "m-no-transcript",
+      title: "Vendor call",
+      started_at: "2026-08-26T10:00:00Z",
+      duration_seconds: 720,
+      capture_status: "finalized",
+      intel_status: "disabled",
+      transcriptWords: null,
+    }];
+    render(<CatalogRail
+      meetingRows={rows}
+      meetings={{ loading: false, error: "", reload: vi.fn(async () => ({})) }}
+      selected={null}
+      setSelected={vi.fn()}
+      onRunIntelligence={vi.fn()}
+      runningId={null}
+      runHost={null}
+    />);
+    expect(screen.getByText("NO TRANSCRIPT")).toBeInTheDocument();
   });
 });

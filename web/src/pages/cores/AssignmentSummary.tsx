@@ -1,8 +1,5 @@
-/**
- * The small server-fact summary reused by the overview now and contextual
- * owner surfaces later. It owns no assignment state; Change only opens the
- * common editor supplied by its host.
- */
+import { Button } from "../../components/signal/Signal";
+
 export function AssignmentSummary({
   label,
   effective,
@@ -16,6 +13,6 @@ export function AssignmentSummary({
 }) {
   return <article className="capability-assignment-row" data-issue={repair ? "true" : undefined}>
     <div><strong>{label}</strong><span>{effective}</span></div>
-    <div><button type="button" onClick={(event) => onChange(event.currentTarget)}>{repair ?? "Change"}</button></div>
+    <div><Button dense variant="ghost" onClick={(event) => onChange(event.currentTarget as HTMLButtonElement)}>{repair ?? "Change"}</Button></div>
   </article>;
 }

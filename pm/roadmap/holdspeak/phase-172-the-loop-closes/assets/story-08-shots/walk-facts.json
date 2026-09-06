@@ -1,0 +1,531 @@
+{
+  "generated_at": "2026-09-05T10:01:10.761135",
+  "hub_host": "127.0.0.1:56116",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "width": 393,
+      "height": 852
+    }
+  ],
+  "shots": [
+    {
+      "face": "people-prep",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-08-shots/walk-people-prep-1440.png"
+    },
+    {
+      "face": "room",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-08-shots/walk-room-1440.png"
+    },
+    {
+      "face": "meeting-detail",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-08-shots/walk-meeting-1440.png"
+    },
+    {
+      "face": "arrival",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-08-shots/walk-arrival-1440.png"
+    },
+    {
+      "face": "settings-meetings",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-08-shots/walk-settings-meetings-1440.png"
+    },
+    {
+      "face": "room",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-08-shots/walk-room-393.png"
+    },
+    {
+      "face": "meeting-detail",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-08-shots/walk-meeting-393.png"
+    },
+    {
+      "face": "arrival",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-08-shots/walk-arrival-393.png"
+    },
+    {
+      "face": "settings-meetings",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-08-shots/walk-settings-meetings-393.png"
+    }
+  ],
+  "facts": [
+    {
+      "face": "intel-settings",
+      "field": "hub_meetings_host",
+      "expected": "(resolved model host or null)",
+      "observed": "api.openai.com",
+      "verdict": "DATA",
+      "why": "from GET /api/settings/hub"
+    },
+    {
+      "face": "intel-settings",
+      "field": "hub_meetings_auto",
+      "expected": "room_linked / every / off",
+      "observed": "room_linked",
+      "verdict": "DATA",
+      "why": "from GET /api/settings/hub"
+    },
+    {
+      "face": "intel-settings",
+      "field": "hub_meetings_intelligence",
+      "expected": "true / false",
+      "observed": "True",
+      "verdict": "DATA",
+      "why": "from GET /api/settings/hub"
+    },
+    {
+      "face": "intel-settings",
+      "field": "raw_intel_profile_id",
+      "expected": "(profile id or empty)",
+      "observed": "legacy-intel",
+      "verdict": "DATA",
+      "why": "from GET /api/settings -> meeting.intel_profile_id"
+    },
+    {
+      "face": "intel-settings",
+      "field": "raw_intelligence_auto",
+      "expected": "room_linked / every / off",
+      "observed": "room_linked",
+      "verdict": "DATA",
+      "why": "from GET /api/settings -> meeting.intelligence_auto"
+    },
+    {
+      "face": "meeting-intel",
+      "field": "target_meeting",
+      "expected": "Already titled",
+      "observed": "Already titled (id=meeting-...)",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meeting-intel",
+      "field": "proposals_count",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meeting-intel",
+      "field": "intel_run",
+      "expected": "SKIPPED",
+      "observed": "SKIPPED: not LAN: api.openai.com (host=api.openai.com)",
+      "verdict": "DATA",
+      "why": "host guard denied: not LAN: api.openai.com"
+    },
+    {
+      "face": "people",
+      "field": "relationship_count",
+      "expected": "(varies)",
+      "observed": "1",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "people",
+      "field": "watch_summary:prs_waiting",
+      "expected": "(count)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "PRs waiting on <person>"
+    },
+    {
+      "face": "people",
+      "field": "watch_summary:open_assignments",
+      "expected": "(count)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "open assignments for <person>"
+    },
+    {
+      "face": "people",
+      "field": "watch_summary:open_commitments",
+      "expected": "(count)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "open commitments for <person>"
+    },
+    {
+      "face": "people",
+      "field": "prep_display",
+      "expected": "(person name[:2]***)",
+      "observed": "Je***",
+      "verdict": "DATA",
+      "why": "prep display (truncated for privacy)"
+    },
+    {
+      "face": "people",
+      "field": "prep_prs_row",
+      "expected": "(present if prs > 0)",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "PRS WAITING row"
+    },
+    {
+      "face": "people",
+      "field": "prep_assignments_row",
+      "expected": "(present if assigns > 0)",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "ASSIGNMENTS OPEN row"
+    },
+    {
+      "face": "people",
+      "field": "prep_receipt",
+      "expected": "PREPARED HH:MM",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "prep footer"
+    },
+    {
+      "face": "room",
+      "field": "project_name",
+      "expected": "(owner's project)",
+      "observed": "Complete delivery of governance framework for EverDriven Software Architecture",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "room",
+      "field": "headline",
+      "expected": "(N need you or Nothing needs you)",
+      "observed": "Nothing needs you",
+      "verdict": "MATCH",
+      "why": "substring"
+    },
+    {
+      "face": "room",
+      "field": "proposal_rows",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "room",
+      "field": "decision_rows",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "room",
+      "field": "suggested_source_rows",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "room",
+      "field": "source_rows",
+      "expected": "(varies)",
+      "observed": "2",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "room",
+      "field": "people_section",
+      "expected": "PEOPLE N",
+      "observed": "",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meeting-detail",
+      "field": "detail_title",
+      "expected": "(meeting title[:12])",
+      "observed": "Already titl",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meeting-detail",
+      "field": "detail_facts",
+      "expected": "DATE . N MIN . RAN . N S . host . LAN",
+      "observed": "AUG 22\u00b71 MIN\u00b7INTELLIGENCE QUEUED\u00b7Migrated intel endpoint \u00b7 CLOUD",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meeting-detail",
+      "field": "ran_chip",
+      "expected": "true",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "no RAN chip"
+    },
+    {
+      "face": "meeting-detail",
+      "field": "egress_chip",
+      "expected": "(host . LAN or THIS DEVICE)",
+      "observed": "Migrated intel endpoint \u00b7 CLOUD",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meeting-detail",
+      "field": "needs_you_caption",
+      "expected": "NEEDS YOU N",
+      "observed": "NEEDS YOU",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meeting-detail",
+      "field": "needs_you_rows",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "arrival",
+      "field": "headline",
+      "expected": "(N need you or Nothing needs you)",
+      "observed": "Nothing needs you",
+      "verdict": "MATCH",
+      "why": "substring"
+    },
+    {
+      "face": "arrival",
+      "field": "proposal_rows",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "arrival",
+      "field": "meeting_rows",
+      "expected": "(varies)",
+      "observed": "3",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "arrival",
+      "field": "meetings_has_RAN",
+      "expected": "true",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "no RAN chip"
+    },
+    {
+      "face": "arrival",
+      "field": "sections_present",
+      "expected": "(varies by desk state)",
+      "observed": "meetings",
+      "verdict": "DATA",
+      "why": "real desk state"
+    },
+    {
+      "face": "settings-meetings",
+      "field": "display_headline",
+      "expected": "After every meeting / After room meetings / Off",
+      "observed": "After room meetings",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "settings-meetings",
+      "field": "intelligence_cycle",
+      "expected": "AFTER EVERY MEETING / ROOM-LINKED ONLY / OFF",
+      "observed": "AFTER ROOM MEETINGS",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "settings-meetings",
+      "field": "intelligence_egress",
+      "expected": "(host . LAN or THIS DEVICE)",
+      "observed": "\u2192 192.168.1.43:8081",
+      "verdict": "DATA",
+      "why": "intel model host chip"
+    },
+    {
+      "face": "room",
+      "field": "project_name",
+      "expected": "(owner's project)",
+      "observed": "Complete delivery of governance framework for EverDriven Software Architecture",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "room",
+      "field": "headline",
+      "expected": "(N need you or Nothing needs you)",
+      "observed": "Nothing needs you",
+      "verdict": "MATCH",
+      "why": "substring"
+    },
+    {
+      "face": "room",
+      "field": "proposal_rows",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "room",
+      "field": "decision_rows",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "room",
+      "field": "suggested_source_rows",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "room",
+      "field": "source_rows",
+      "expected": "(varies)",
+      "observed": "2",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "room",
+      "field": "people_section",
+      "expected": "PEOPLE N",
+      "observed": "",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meeting-detail",
+      "field": "detail_title",
+      "expected": "(meeting title[:12])",
+      "observed": "Already titl",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meeting-detail",
+      "field": "detail_facts",
+      "expected": "DATE . N MIN . RAN . N S . host . LAN",
+      "observed": "AUG 22\u00b71 MIN\u00b7INTELLIGENCE QUEUED\u00b7Migrated intel endpoint \u00b7 CLOUD",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meeting-detail",
+      "field": "ran_chip",
+      "expected": "true",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "no RAN chip"
+    },
+    {
+      "face": "meeting-detail",
+      "field": "egress_chip",
+      "expected": "(host . LAN or THIS DEVICE)",
+      "observed": "Migrated intel endpoint \u00b7 CLOUD",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meeting-detail",
+      "field": "needs_you_caption",
+      "expected": "NEEDS YOU N",
+      "observed": "NEEDS YOU",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meeting-detail",
+      "field": "needs_you_rows",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "arrival",
+      "field": "headline",
+      "expected": "(N need you or Nothing needs you)",
+      "observed": "Nothing needs you",
+      "verdict": "MATCH",
+      "why": "substring"
+    },
+    {
+      "face": "arrival",
+      "field": "proposal_rows",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "arrival",
+      "field": "meeting_rows",
+      "expected": "(varies)",
+      "observed": "3",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "arrival",
+      "field": "meetings_has_RAN",
+      "expected": "true",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "no RAN chip"
+    },
+    {
+      "face": "arrival",
+      "field": "sections_present",
+      "expected": "(varies by desk state)",
+      "observed": "meetings",
+      "verdict": "DATA",
+      "why": "real desk state"
+    },
+    {
+      "face": "settings-meetings",
+      "field": "display_headline",
+      "expected": "After every meeting / After room meetings / Off",
+      "observed": "After room meetings",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "settings-meetings",
+      "field": "intelligence_cycle",
+      "expected": "AFTER EVERY MEETING / ROOM-LINKED ONLY / OFF",
+      "observed": "AFTER ROOM MEETINGS",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "settings-meetings",
+      "field": "intelligence_egress",
+      "expected": "(host . LAN or THIS DEVICE)",
+      "observed": "\u2192 192.168.1.43:8081",
+      "verdict": "DATA",
+      "why": "intel model host chip"
+    }
+  ],
+  "errors": [],
+  "surprises": [],
+  "defects": [],
+  "intel_receipt": {}
+}

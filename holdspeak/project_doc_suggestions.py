@@ -232,13 +232,59 @@ def _bounded(text: str, limit: int) -> str:
     return text[-limit:]
 
 
+# --- the secret shapes (HS-176 counsel C3) ---------------------------------
+#
+# `REFUSED · SECRET` has to be TRUE, not decorative: a `text` correction's
+# value is stored in plaintext, shown on the Learned wing, and typed into every
+# future matching utterance. The old check knew one credential shape
+# (`sk-` + 16 lowercase alphanumerics), so the ratified board's own example
+# `sk-live-4f2a9c` sailed through — the hyphen ended the run at four
+# characters. It now knows the common issued-token prefixes.
+#
+# Deliberately conservative in the other direction: every prefix must sit on a
+# TOKEN BOUNDARY (nothing alphanumeric or `_` immediately before it) and be
+# followed by a run of at least six token characters, so ordinary prose
+# ("risk-averse", "Ask Marta", "the Alaska vendor") never trips it.
+
+# The words a human writes around a secret; case is not load-bearing.
+_SECRET_WORDS_RE = re.compile(
+    r"(api[_-]?key"
+    r"|secret[_-]?key"
+    r"|access[_-]?token"
+    r"|bearer\s+[a-z0-9._~+/-]{16,}"
+    r"|-----begin[a-z ]*private key)",
+    re.IGNORECASE,
+)
+
+# A run of token characters long enough to be an issued credential, never a word.
+_SECRET_RUN = r"[A-Za-z0-9_-]{6,}"
+
+# Prefixes whose case is not load-bearing: OpenAI (`sk-`, and with it
+# `sk-live-` / `sk-proj-` / `sk-ant-`), GitHub, Slack, GitLab.
+_SECRET_PREFIX_RE = re.compile(
+    r"(?<![A-Za-z0-9_])(?:"
+    r"sk-"
+    r"|gh[pousr]_"
+    r"|github_pat_"
+    r"|xox[abeprs]-"
+    r"|glpat-"
+    r")" + _SECRET_RUN,
+    re.IGNORECASE,
+)
+
+# Prefixes that are fixed-case in the wild. Matched case-sensitively so the
+# ordinary words that share their letters ("Akia", "aiza") cannot trip.
+_SECRET_PREFIX_CASED_RE = re.compile(
+    r"(?<![A-Za-z0-9_])(?:AKIA|AIza)" + _SECRET_RUN
+)
+
+
 def _looks_secret(text: str) -> bool:
+    value = str(text or "")
     return bool(
-        re.search(
-            r"(api[_-]?key|secret[_-]?key|access[_-]?token|bearer\s+[a-z0-9._~+/-]{16,}|sk-[a-z0-9]{16,})",
-            text,
-            flags=re.IGNORECASE,
-        )
+        _SECRET_WORDS_RE.search(value)
+        or _SECRET_PREFIX_RE.search(value)
+        or _SECRET_PREFIX_CASED_RE.search(value)
     )
 
 

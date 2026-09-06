@@ -126,12 +126,14 @@ Config file shape:
 ```
 
 The endpoint and model are not dictation config fields. Add the endpoint once
-in **Settings > Models > Model Library** and select it for **Writing &
-dictation** in **Assignments**; assigning it also selects the
+in **Settings > Models** and select it for **Writing &
+dictation** in the Concierge set. Apply the set with **Use these**.
+The assignment also selects the
 `openai_compatible` backend. See
 [MODELS.md](./MODELS.md).
 
-Set the model profile's key in Model Library. For a headless hub,
+For keyed providers, use the owner Model Library API. See [Models](MODELS.md).
+For a headless hub,
 `HOLDSPEAK_PROFILE_<ID>_KEY` remains the fallback. Do not put API keys in
 `.hs/` files.
 
@@ -424,7 +426,7 @@ confidence threshold.](assets/cockpit/copilot-depth.png)
 | Control (Runtime → Copilot depth) | Knob (`dictation.pipeline`) | Default | What it does |
 | --- | --- | --- | --- |
 | **Rewrite passes** (segmented 1-5) | `rewrite_passes` | `1` | Project-rewriter passes (draft → critique → refine). `1` is single-pass. Extra passes are skipped if they would breach `max_total_latency_ms`. |
-| **Learn from my corrections** | `corrections_enabled` | `true` | Always on. Consult the **correction memory** when routing: a correction you made earlier nudges a similar later utterance. |
+| **Learn from my corrections** | `corrections_enabled` | `true` | Always on. Consult the **correction memory** on every run. A `text` correction rewrites the transcript before the stages read it. An `intent` or `target` correction nudges the routing of a similar later utterance. |
 | **Infer the target when unsure** (toggle) | `target_detect_llm_enabled` | `false` | When window/app detection is unsure, ask the LLM to infer the **output target** from your words. A manual override always wins. |
 | **Ask the model below confidence** (slider) | `target_detect_llm_below` | `0.8` | The heuristic-confidence threshold below which the LLM fallback fires. |
 
@@ -436,15 +438,18 @@ then critiques and tightens its own draft. A failed or over-budget refine pass
 falls open to the best draft so far, so enabling it never makes output worse
 than single-pass.
 
-**Correction memory.** When a correction is recorded (from the live runtime, or
-added by hand in the Memory tab), a later similar utterance is nudged toward it.
-The memory is **DB-backed and persists across restarts**: corrections you make
-survive a relaunch (a bounded in-memory ring stays the fast nudge path; the
-SQLite store is durability). Corrections are gist-only: gists are truncated and
-secret-looking text is rejected before anything is stored. Curate it in the UI:
+**Correction memory.** The store holds three kinds. A `text` correction pairs a
+phrase as heard with the same phrase as you said it, and it rewrites the
+transcript inside `Pipeline.run` before the stage loop. An `intent` or a
+`target` correction pairs a gist with a block or a delivery target, and it
+nudges a later similar utterance. The memory is **DB-backed and persists across
+restarts**: corrections you make survive a relaunch (a bounded in-memory ring
+stays the fast nudge path; the SQLite store is durability). Secret-looking text
+is rejected before anything is stored, and a routing gist of one word is
+refused. Curate it on the **Learned** wing of Speak:
 
 ```
-/dictation -> Memory
+/dictation -> Learned
 ```
 
 ![The Memory tab: "What the copilot has learned" lists the persistent
@@ -713,7 +718,7 @@ section walks them in order:
 4. **See it.** The "What HoldSpeak learned" digest shows the honest count.
 5. **Replay.** Re-run a past utterance and watch the routing change.
 
-Open it from the **Journal** tab on `/dictation`.
+Open it from the **Journal** wing of Speak (`/dictation`).
 
 ![The dictation Journal: a said → typed timeline. Each entry shows a source chip
 (Spoken / Dry-run), the routed block + target, a timestamp, the transcript and
@@ -825,11 +830,18 @@ active app from a background click.
 
 The learning is real, local, and bounded. Be clear-eyed about what it is:
 
-- **It is token overlap, not a model that retrains.** A correction matches a new
-  utterance by Jaccard similarity (the fraction of words they share) above a
-  threshold. The "learned from N similar" count everywhere in the UI is that same
-  measure, run over your journal. There is no hidden training and no embedding
-  model, which is also why the count is honest and easy to reason about.
+- **Routing is token overlap, not a model that retrains.** An `intent` or
+  `target` correction matches a new utterance by Jaccard similarity (the
+  fraction of words they share) above a threshold. There is no hidden training
+  and no embedding model.
+- **A text correction is exact, not approximate.** It matches its stored phrase
+  ignoring case, repeated whitespace, and edge punctuation, and only where the
+  phrase is not inside a longer word. It has no similarity threshold, so it
+  fires on every dictation source that carries the phrase.
+- **`N APPLIED` counts firings, not similar rows.** The Learned wing reads the
+  correction ids stored on each journal row, so the number is what the rule
+  actually changed. It counts the retained journal, so it can fall as old rows
+  age out.
 - **Always on for routing.** Correction memory is always enabled. A correction
   nudges routing from the moment you make it.
 - **It is local.** Corrections and the journal live on your machine, gist-only

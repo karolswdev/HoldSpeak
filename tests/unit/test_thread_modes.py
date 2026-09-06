@@ -39,19 +39,19 @@ def db(tmp_path: Path) -> Database:
 class TestSeedModes:
     def test_seed_modes_creates_four(self, db: Database) -> None:
         created = seed_modes(db)
-        assert created == 4
+        assert created == 6
         modes = db.recipes.list_by_kind("mode")
-        assert len(modes) == 4
+        assert len(modes) == 6
         names = {m.name for m in modes}
-        assert names == {"Desk", "Chase", "Draft", "Plan"}
+        assert names == {"Desk", "Chase", "Draft", "Plan", "Project", "Interview"}
 
     def test_seed_modes_idempotent(self, db: Database) -> None:
         first = seed_modes(db)
-        assert first == 4
+        assert first == 6
         second = seed_modes(db)
         assert second == 0
         # Still exactly 4
-        assert len(db.recipes.list_by_kind("mode")) == 4
+        assert len(db.recipes.list_by_kind("mode")) == 6
 
     def test_seed_modes_does_not_resurrect_deleted(self, db: Database) -> None:
         seed_modes(db)
@@ -60,7 +60,7 @@ class TestSeedModes:
         created = seed_modes(db)
         assert created == 0
         live = [m for m in db.recipes.list_by_kind("mode") if not m.deleted]
-        assert len(live) == 3
+        assert len(live) == 5
 
     def test_seed_modes_have_kind_mode(self, db: Database) -> None:
         seed_modes(db)
@@ -74,8 +74,7 @@ class TestSeedModes:
             "hs-seed-mode-desk",
             "hs-seed-mode-chase",
             "hs-seed-mode-draft",
-            "hs-seed-mode-plan",
-        }
+            "hs-seed-mode-plan", "hs-seed-mode-project", "hs-seed-mode-interview"}
 
 
 # ---------------------------------------------------------------------------
@@ -89,7 +88,7 @@ class TestKindFilter:
         db.recipes.upsert(recipe_id="test-ordinary", name="Ordinary")
         modes = db.recipes.list_by_kind("mode")
         assert all(m.kind == "mode" for m in modes)
-        assert len(modes) == 4
+        assert len(modes) == 6
 
     def test_list_by_kind_empty_returns_ordinary(self, db: Database) -> None:
         seed_modes(db)
@@ -111,11 +110,17 @@ class TestKindFilter:
 
 class TestAllowLists:
     def test_desk_size(self) -> None:
-        assert len(_DESK_TOOLS) == 55
+        # HS-168-02: + connection.list / connection.recheck (evidence_read).
+        # HS-170: + concierge.detect/propose/probe, desk.needs_you, settings.hub.
+        # HS-171: + heartbeat.status (evidence_read).
+        assert len(_DESK_TOOLS) == 66  # HS-172 + HS-173: meeting.proposals, project.suggested_sources, steward.nudges
 
     def test_chase_size(self) -> None:
         # Chase includes door.add_item which is a forward reference
-        assert len(_CHASE_TOOLS) == 61
+        # HS-168-02: + connection.list / connection.recheck (evidence_read).
+        # HS-170: + concierge.detect/propose/probe, desk.needs_you, settings.hub.
+        # HS-171: + heartbeat.status (evidence_read).
+        assert len(_CHASE_TOOLS) == 72  # HS-172 + HS-173: meeting.proposals, project.suggested_sources, steward.nudges
 
     def test_draft_empty(self) -> None:
         assert len(_DRAFT_TOOLS) == 0
@@ -308,11 +313,11 @@ class TestSeedOnFreshDatabase:
         seed_modes runs on Database() + reconcile-time ensure."""
         fresh = Database(tmp_path / "fresh.db")
         created = seed_modes(fresh)
-        assert created == 4
+        assert created == 6
         modes = fresh.recipes.list_by_kind("mode")
-        assert len(modes) == 4
+        assert len(modes) == 6
         names = {m.name for m in modes}
-        assert names == {"Desk", "Chase", "Draft", "Plan"}
+        assert names == {"Desk", "Chase", "Draft", "Plan", "Project", "Interview"}
         # Verify kind and avatar
         for m in modes:
             assert m.kind == "mode"

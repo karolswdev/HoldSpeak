@@ -52,6 +52,16 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to get project room")
 
+    @router.post("/api/projects/{project_id}/room/read")
+    async def api_mark_room_read(project_id: str, request: Request) -> Any:
+        """HS-169-04: set the per-project read marker to now."""
+        try:
+            return JSONResponse(service.mark_room_read(principal(request), project_id))
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to mark room read")
+
     @router.get("/api/projects")
     async def api_list_projects(request: Request, include_archived: bool = False) -> Any:
         try:
@@ -364,5 +374,172 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             log.error(f"Failed to transition item: {exc}")
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+
+    # ── HS-170-04 / HS-171-03: desk needs-you aggregate (cached) ────────
+
+    from ...services.needs_you_aggregate import NeedsYouCache, build_aggregate
+
+    # The owner principal for background rebuilds (the cache builder runs
+    # outside a request context).
+    _owner_principal = UNAUTHENTICATED  # will be replaced on first request
+
+    def _build_needs_you() -> dict:
+        door = ctx.door_service
+        door_upcoming = getattr(door, "_upcoming", None) if door else None
+        aggregate = build_aggregate(
+            list_projects=service.list_projects,
+            room=service.room,
+            principal=_owner_principal,
+            door_upcoming=door_upcoming,
+        )
+        # M1 (counsel): apply the mute list from heartbeat settings so
+        # the route's count matches the notification edge count (one count
+        # everywhere).  Muted items get ``muted: true`` and are excluded
+        # from ``count`` but included in ``mutedCount``.
+        try:
+            from ...services.heartbeat_service import HeartbeatService
+            from ...db import get_database
+            hb = HeartbeatService(get_database())
+            muted_ids = set(hb.get_settings().get("muted_projects", []))
+        except Exception:
+            muted_ids = set()
+        if muted_ids:
+            unmuted = []
+            muted_count = 0
+            for item in aggregate.get("items", []):
+                if item.get("projectId") in muted_ids:
+                    item["muted"] = True
+                    muted_count += 1
+                else:
+                    item["muted"] = False
+                    unmuted.append(item)
+            aggregate["count"] = len(unmuted)
+            aggregate["mutedCount"] = muted_count
+            # One count everywhere: "across M projects" counts only Rooms
+            # that still contribute (counsel C2).
+            aggregate["projects"] = sorted(
+                {str(i.get("projectId")) for i in unmuted if i.get("projectId")}
+            )
+        return aggregate
+
+    def _get_db():
+        from ...db import get_database
+        return get_database()
+
+    _needs_you_cache = NeedsYouCache(
+        _build_needs_you, max_age_s=900.0, db_factory=_get_db,
+    )
+
+    # Expose the cache on the context so the cadence tick can invalidate it.
+    ctx._needs_you_cache = _needs_you_cache  # type: ignore[attr-defined]
+
+    @router.get("/api/desk/needs-you")
+    async def api_desk_needs_you(request: Request, fresh: str | None = None) -> Any:
+        """HS-171-03: cached needs-you aggregate.
+
+        Reads from the in-memory cache; ``?fresh=1`` forces a rebuild.
+        Response includes ``computedAt``, ``stale``, ``sweepId``.
+        """
+        try:
+            nonlocal _owner_principal
+            _owner_principal = principal(request)
+            force = fresh == "1"
+            data = _needs_you_cache.get(force=force)
+            return JSONResponse(data)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to build desk needs-you")
+
+    # ── HS-172-06: suggested sources ────────────────────────────────
+
+    @router.get("/api/projects/{project_id}/suggested-sources")
+    async def api_suggested_sources(project_id: str, request: Request) -> Any:
+        """List pending suggested sources for a Room."""
+        try:
+            service.get_project(principal(request), project_id)
+            from ...services.suggested_source_service import SuggestedSourceService
+            sug = SuggestedSourceService(service._db)
+            rows = sug.list_suggestions(project_id, status="pending")
+            return JSONResponse({"suggestions": rows})
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to list suggested sources")
+
+    @router.post("/api/projects/{project_id}/suggested-sources/{ref}/add")
+    async def api_add_suggested_source(project_id: str, ref: str, request: Request) -> Any:
+        """Accept a suggested source -- creates a Watch source via the existing path."""
+        try:
+            p = principal(request)
+            service.get_project(p, project_id)
+            from ...services.suggested_source_service import SuggestedSourceService
+            sug = SuggestedSourceService(service._db)
+
+            # Find the suggestion by reference.
+            with service._db._connection() as conn:
+                row = conn.execute(
+                    "SELECT * FROM source_suggestions WHERE project_id=? AND reference=? AND status='pending'",
+                    (project_id, ref),
+                ).fetchone()
+            if row is None:
+                return JSONResponse({"error": "Suggestion not found or already resolved"}, status_code=404)
+
+            suggestion = dict(row)
+            # Accept: mark as accepted and create the source.
+            sug.accept_suggestion(suggestion["id"])
+
+            # Create the Watch source through add_resource.
+            resource_ref = f"{suggestion['provider']}:{suggestion['reference']}"
+            try:
+                result = service.add_resource(
+                    p, project_id, resource_ref,
+                    {"relationship": "source", "provider": suggestion["provider"]},
+                )
+            except Exception:
+                # Resource add failed but suggestion is already accepted -- still report.
+                result = {"resource_ref": resource_ref, "state": "accepted_no_watch"}
+
+            return JSONResponse({"suggestion": suggestion, "resource": result})
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to add suggested source")
+
+    @router.post("/api/projects/{project_id}/suggested-sources/{ref}/dismiss")
+    async def api_dismiss_suggested_source(project_id: str, ref: str, request: Request) -> Any:
+        """Dismiss a suggested source -- never suggest again for this Room."""
+        try:
+            service.get_project(principal(request), project_id)
+            from ...services.suggested_source_service import SuggestedSourceService
+            sug = SuggestedSourceService(service._db)
+
+            with service._db._connection() as conn:
+                row = conn.execute(
+                    "SELECT * FROM source_suggestions WHERE project_id=? AND reference=? AND status='pending'",
+                    (project_id, ref),
+                ).fetchone()
+            if row is None:
+                return JSONResponse({"error": "Suggestion not found or already resolved"}, status_code=404)
+
+            suggestion = sug.dismiss_suggestion(dict(row)["id"])
+            return JSONResponse({"suggestion": suggestion})
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to dismiss suggested source")
+
+    # ── HS-172-07: Room people ──────────────────────────────────────
+
+    @router.get("/api/projects/{project_id}/people")
+    async def api_project_people(project_id: str, request: Request) -> Any:
+        """Resolved people from a Room's Watch entities (read-only)."""
+        try:
+            from ...services.room_people_service import room_people
+            people_svc = ctx.people_service
+            result = room_people(service, people_svc, project_id)
+            return JSONResponse({"people": result})
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to get project people")
 
     return router

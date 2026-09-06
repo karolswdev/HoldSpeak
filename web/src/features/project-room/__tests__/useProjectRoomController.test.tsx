@@ -60,7 +60,14 @@ function roomResponse() {
     resources: { state: "ok", count: 0, latest: null },
     changes: { state: "ok", recent: [] },
     review: { state: "absent", reason: "not_yet_built" },
-    sources: { state: "absent", reason: "not_yet_built" },
+    // HS-169-04: the four questions
+    needsYou: { state: "ok", items: [], count: 0 },
+    sources: { state: "ok", items: [], count: 0 },
+    health: { state: "ok", assessment: "on_track", reason: null, inputs: { overdue: 0, ciFailing: false, reviewWaitingDays: null, targetPassed: false } },
+    sinceRead: { state: "ok", readAt: null, groups: [] },
+    decisions: { state: "ok", items: [] },
+    commitments: { state: "ok", items: [] },
+    target: { state: "absent", reason: "none" },
     updates: { state: "absent", reason: "not_yet_built" },
     steward: { state: "absent", reason: "not_yet_built" },
   };
@@ -76,6 +83,7 @@ function detailResponse(url: string) {
 
 function response(url: string) {
   if (url.includes("/room")) return roomResponse();
+  if (url.includes("/nudges")) return { nudges: [] };
   return detailResponse(url);
 }
 
@@ -105,7 +113,9 @@ describe("useProjectRoomController — loadStatus discrimination", () => {
     await waitFor(() => expect(result.current.loadStatus).toBe("ready" satisfies LoadStatus));
     expect(result.current.error).toBe("");
     expect(result.current.projectName).toBe("Test project");
-    expect(result.current.readAt).toBeGreaterThan(0);
+    // HS-169-03: readAt is now a string (ISO) or null from the wire.
+    // When sinceRead is absent on the wire, readAt stays null.
+    expect(result.current.readAt).toBeNull();
   });
 
   it("transitions to ready with error on a failed load", async () => {
@@ -117,9 +127,10 @@ describe("useProjectRoomController — loadStatus discrimination", () => {
 
   it("exposes view and setView from the wings", async () => {
     const { result } = renderHook(() => useProjectRoomController("project:p1", "Test"));
-    expect(result.current.view).toBe("timeline");
-    act(() => result.current.setView("decisions"));
-    expect(result.current.view).toBe("decisions");
+    // HS-169-03 SELECTOR EDIT: wings changed from timeline/decisions/search/ask to room/history
+    expect(result.current.view).toBe("room");
+    act(() => result.current.setView("history"));
+    expect(result.current.view).toBe("history");
   });
 });
 
@@ -152,14 +163,19 @@ describe("useProjectRoomController — /room first render (HS-158-05)", () => {
     const { result } = renderHook(() => useProjectRoomController("project:p1", "Test"));
     await waitFor(() => expect(result.current.detailStatus).toBe("ready"));
 
-    // After everything completes, we should have /room + 4 detail calls = 5 total
-    expect(apiFetchMock).toHaveBeenCalledTimes(5);
+    // After everything completes: /room + 4 detail + 3 HS-172/173 calls = 8 total
+    // HS-172-03/06: proposals (proposed) + suggested-sources
+    // HS-173-04: nudges (proposed)
+    expect(apiFetchMock).toHaveBeenCalledTimes(8);
     const urls = apiFetchMock.mock.calls.map((c: unknown[]) => c[0] as string);
     expect(urls).toContainEqual(expect.stringContaining("/room"));
     expect(urls).toContainEqual(expect.stringContaining("/meetings"));
     expect(urls).toContainEqual(expect.stringContaining("/decisions"));
     expect(urls).toContainEqual(expect.stringContaining("/artifacts"));
     expect(urls).toContainEqual(expect.stringContaining("/since-last-meeting"));
+    expect(urls).toContainEqual(expect.stringContaining("/proposals"));
+    expect(urls).toContainEqual(expect.stringContaining("/suggested-sources"));
+    expect(urls).toContainEqual(expect.stringContaining("/nudges"));
   });
 
   it("initial paint is ready before detail fetches complete", async () => {

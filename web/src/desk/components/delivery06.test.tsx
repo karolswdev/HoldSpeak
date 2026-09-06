@@ -104,7 +104,7 @@ describe("DeliveryDossierWindow captured runs", () => {
     expect(screen.getByText("NO COMMAND RECORDED")).toBeTruthy();
     expect(screen.getByText("uv run pytest -q")).toBeTruthy();
     expect(screen.getByText("EXIT 1")).toBeTruthy();
-    expect(screen.getByText("RUNS 1✓ 1✕")).toBeTruthy();
+    expect(screen.getByText("RUNS 1 PASS 1 FAIL")).toBeTruthy();
     useDeliveryDossier.setState({ dossier: null });
   });
 });

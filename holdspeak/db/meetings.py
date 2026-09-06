@@ -628,7 +628,11 @@ class MeetingRepository(BaseRepository):
                 SELECT m.*,
                     (SELECT COUNT(*) FROM segments WHERE meeting_id = m.id) as segment_count,
                     (SELECT COUNT(*) FROM action_items WHERE meeting_id = m.id) as action_count,
-                    (SELECT GROUP_CONCAT(tag) FROM meeting_tags WHERE meeting_id = m.id) as tags
+                    (SELECT GROUP_CONCAT(tag) FROM meeting_tags WHERE meeting_id = m.id) as tags,
+                    (SELECT COALESCE(SUM(LENGTH(TRIM(text)) - LENGTH(REPLACE(TRIM(text), ' ', '')) + 1), 0)
+                     FROM segments WHERE meeting_id = m.id AND TRIM(text) != '') as transcript_words,
+                    (SELECT COUNT(*) FROM follow_through_proposals
+                     WHERE meeting_id = m.id AND state = 'proposed') as needs_you_count
                 FROM meetings m
                 WHERE 1=1
             """
@@ -683,6 +687,10 @@ class MeetingRepository(BaseRepository):
                     capture_checkpoint_seconds=float(r["capture_checkpoint_seconds"] or 0.0),
                     provenance=r["provenance"] or "desktop",
                     calendar_event_id=r["calendar_event_id"] if r["calendar_event_id"] else None,
+                    transcript_words=int(r["transcript_words"]) if r["segment_count"] and r["transcript_words"] else None,
+                    needs_you_count=int(r["needs_you_count"]) if r["needs_you_count"] else 0,
+                    intel_requested_at=datetime.fromisoformat(r["intel_requested_at"]) if r["intel_requested_at"] else None,
+                    intel_completed_at=datetime.fromisoformat(r["intel_completed_at"]) if r["intel_completed_at"] else None,
                 )
                 for r in conn.execute(query, params)
             ]

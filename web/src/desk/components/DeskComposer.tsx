@@ -1,4 +1,6 @@
 import "./session-pullout.css";
+import { Button } from "../../components/signal/Signal";
+import { StringGadget, PadGadget } from "../surface";
 import { MicButton } from "./MicButton";
 
 interface DeskComposerProps {
@@ -31,19 +33,17 @@ export function DeskComposer({
   micDraftScope,
 }: DeskComposerProps) {
   const input = multiline ? (
-    <textarea
-      aria-label={placeholder || actionLabel}
+    <PadGadget
+      label={placeholder || actionLabel}
       value={value}
-      placeholder={placeholder}
       rows={rows}
-      onChange={(event) => onChange(event.target.value)}
+      onChange={onChange}
     />
   ) : (
-    <input
-      aria-label={placeholder || actionLabel}
+    <StringGadget
+      label={placeholder || actionLabel}
       value={value}
-      placeholder={placeholder}
-      onChange={(event) => onChange(event.target.value)}
+      onChange={onChange}
     />
   );
 
@@ -51,14 +51,13 @@ export function DeskComposer({
     <div className={["desk-chat-composer", className].filter(Boolean).join(" ")}>
       {input}
       <MicButton draftScope={micDraftScope} onText={onChange} />
-      <button
-        type="button"
-        className="desk-chip"
+      <Button
+        dense
         disabled={actionDisabled || actionBusy}
         onClick={onAction}
       >
         {actionBusy ? `${actionLabel}…` : actionLabel}
-      </button>
+      </Button>
     </div>
   );
 }

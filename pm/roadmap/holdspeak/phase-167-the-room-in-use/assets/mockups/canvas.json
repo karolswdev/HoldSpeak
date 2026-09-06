@@ -1,0 +1,200 @@
+{
+ "artboards": [
+  {
+   "file": "Main.dc.html",
+   "x": 0,
+   "y": 0,
+   "w": 640,
+   "h": 539,
+   "title": "Room \u00b7 1440"
+  },
+  {
+   "file": "RoomPhone.dc.html",
+   "x": 0,
+   "y": 1500,
+   "w": 393,
+   "h": 759,
+   "title": "Room \u00b7 393"
+  },
+  {
+   "file": "Interview.dc.html",
+   "x": 760,
+   "y": 0,
+   "w": 640,
+   "h": 425,
+   "title": "Interview \u00b7 1440"
+  },
+  {
+   "file": "InterviewPhone.dc.html",
+   "x": 760,
+   "y": 1500,
+   "w": 393,
+   "h": 549,
+   "title": "Interview \u00b7 393"
+  },
+  {
+   "file": "Activation.dc.html",
+   "x": 1520,
+   "y": 0,
+   "w": 640,
+   "h": 400,
+   "title": "Activation \u00b7 1440"
+  },
+  {
+   "file": "ActivationPhone.dc.html",
+   "x": 1520,
+   "y": 1500,
+   "w": 393,
+   "h": 472,
+   "title": "Activation \u00b7 393"
+  },
+  {
+   "file": "GitHubWizard.dc.html",
+   "x": 2280,
+   "y": 0,
+   "w": 640,
+   "h": 947,
+   "title": "GitHubWizard \u00b7 1440"
+  },
+  {
+   "file": "GitHubWizardPhone.dc.html",
+   "x": 2280,
+   "y": 1500,
+   "w": 393,
+   "h": 879,
+   "title": "GitHubWizard \u00b7 393"
+  },
+  {
+   "file": "Review.dc.html",
+   "x": 3040,
+   "y": 0,
+   "w": 640,
+   "h": 811,
+   "title": "Review \u00b7 1440"
+  },
+  {
+   "file": "ReviewPhone.dc.html",
+   "x": 3040,
+   "y": 1500,
+   "w": 393,
+   "h": 958,
+   "title": "Review \u00b7 393"
+  },
+  {
+   "file": "Update.dc.html",
+   "x": 3800,
+   "y": 0,
+   "w": 640,
+   "h": 1035,
+   "title": "Update \u00b7 1440"
+  },
+  {
+   "file": "UpdatePhone.dc.html",
+   "x": 3800,
+   "y": 1500,
+   "w": 393,
+   "h": 1141,
+   "title": "Update \u00b7 393"
+  },
+  {
+   "file": "Steward.dc.html",
+   "x": 4560,
+   "y": 0,
+   "w": 640,
+   "h": 941,
+   "title": "Steward \u00b7 1440"
+  },
+  {
+   "file": "StewardPhone.dc.html",
+   "x": 4560,
+   "y": 1500,
+   "w": 393,
+   "h": 1022,
+   "title": "Steward \u00b7 393"
+  },
+  {
+   "file": "JiraWizard.dc.html",
+   "x": 5320,
+   "y": 0,
+   "w": 640,
+   "h": 656,
+   "title": "JiraWizard \u00b7 1440"
+  },
+  {
+   "file": "JiraWizardPhone.dc.html",
+   "x": 5320,
+   "y": 1500,
+   "w": 393,
+   "h": 747,
+   "title": "JiraWizard \u00b7 393"
+  }
+ ],
+ "annotations": [
+  {
+   "id": "face-room",
+   "x": 0,
+   "y": -150,
+   "w": 640,
+   "text": "D1 \u00b7 The Room\none identity band \u00b7 FOCUS ledger \u00b7 THE WEEK stream \u00b7 four wings kept"
+  },
+  {
+   "id": "face-interview",
+   "x": 760,
+   "y": -150,
+   "w": 640,
+   "text": "D2 \u00b7 The interview\na plan, a well, a brief that fills in"
+  },
+  {
+   "id": "face-activation",
+   "x": 1520,
+   "y": -150,
+   "w": 640,
+   "text": "D4 \u00b7 The activation review\nwhat will run \u00b7 the brief \u00b7 the baseline lit"
+  },
+  {
+   "id": "face-githubwizard",
+   "x": 2280,
+   "y": -150,
+   "w": 640,
+   "text": "D3 \u00b7 The GitHub wizard\nJira parity: cards, gadget sheet, a plan that lights, no wall of hashes"
+  },
+  {
+   "id": "face-review",
+   "x": 3040,
+   "y": -150,
+   "w": 640,
+   "text": "D5 \u00b7 Review posture\nfull-width queue \u00b7 the row expands in flow \u00b7 CURRENT | PROPOSED"
+  },
+  {
+   "id": "face-update",
+   "x": 3800,
+   "y": -150,
+   "w": 640,
+   "text": "D6 \u00b7 Update posture\ndrafts ledger \u00b7 editor with citation rows \u00b7 sources \u00b7 three honest verbs"
+  },
+  {
+   "id": "face-steward",
+   "x": 4560,
+   "y": -150,
+   "w": 640,
+   "text": "D7 \u00b7 Steward posture\nthe run as a plan with counts + receipts \u00b7 runs \u00b7 the policy sheet"
+  },
+  {
+   "id": "face-jirawizard",
+   "x": 5320,
+   "y": -150,
+   "w": 640,
+   "text": "D8 \u00b7 The Jira wizard\nthe reference (166), unchanged"
+  },
+  {
+   "id": "how-to-read",
+   "x": -560,
+   "y": -150,
+   "w": 480,
+   "text": "THE ROOM IN USE \u2014 Phase 167, story 01\nEight faces, two widths each. Top row = the desk window at 1440 (640 wide); bottom row = the 393 glass.\nOne grammar: identity band \u00b7 ledger rows (lead \u00b7 primary \u00b7 time \u00b7 cells \u00b7 trailing) \u00b7 chips for state/source/egress \u00b7 ProgressPlan for anything that runs \u00b7 ScrollHint \u00b7 the 36px footer.\nNo sentence the user did not write. Read left to right: the Room, then the setup path, then the three postures, then the Jira reference.\nYour word closes story 01; nothing is built before it."
+  }
+ ],
+ "launch": {
+  "view": "canvas"
+ }
+}

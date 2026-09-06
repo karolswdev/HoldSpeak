@@ -445,6 +445,10 @@ class MeetingGlueMixin:
                 project_result = self._associate_meeting_with_projects(meeting_id)
                 save_payload["projects_associated"] = int(project_result.get("projects_associated") or 0)
                 save_payload["project_association_error"] = project_result.get("error")
+                # HS-172-02: auto-intel trigger after project association.
+                auto_intel = self._maybe_auto_enqueue_intel(meeting_id, session)
+                save_payload["auto_intel_enqueued"] = auto_intel.get("enqueued", False)
+                save_payload["auto_intel_error"] = auto_intel.get("error")
         except Exception as exc:
             save_error = str(exc)
             log.error(f"Failed to save meeting from web runtime: {exc}")

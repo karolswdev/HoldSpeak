@@ -1,152 +1,598 @@
-/* HS-158-05 — Project Room orientation band and focus block.
-   Signal tokens only; no raw colors or z-index.
-   Container-driven layout: @container surface (560px canon breakpoint). */
+/* HS-169-03 — the Room rebuilt to the ratified canvas.
+   Two wings: ROOM · HISTORY. Four questions. Ask well at the foot.
+   All sizing via the component token scale (surface.css). */
 
-.project-room-orientation {
-  padding: 8px var(--desk-surface-row-pad-x, 14px);
-}
-
-.project-room-name {
-  margin: 0 0 4px;
-  font-size: var(--desk-surface-heading-size, 15px);
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-/* ── Band label symmetry: PURPOSE and OUTCOME both get micro-eyebrows ── */
-.project-room-eyebrow {
-  display: block;
-  margin-bottom: 1px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: var(--letter-spacing-eyebrow);
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.project-room-purpose {
-  margin: 4px 0 2px;
-}
-.project-room-purpose p {
-  margin: 0;
-  font-size: var(--desk-surface-body-size, 13px);
-  color: var(--text-muted);
-  line-height: 1.4;
-}
-
-.project-room-outcome {
-  margin: 4px 0 2px;
-}
-.project-room-outcome p {
-  margin: 0;
-  font-size: var(--desk-surface-body-size, 13px);
-  color: var(--text-muted);
-  line-height: 1.4;
-}
-
-/* ── Token row: identity left, meta right ── */
-.project-room-facts {
+/* ── room body ── */
+.room-body {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 10px;
-  margin-top: 6px;
-}
-.project-room-facts-identity {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 10px;
-  align-items: center;
-}
-.project-room-facts-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 10px;
-  align-items: center;
-  margin-left: auto;
-}
-.project-room-facts-meta .surface-token {
-  color: var(--text-faint);
-  font-weight: 500;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 var(--desk-surface-row-pad-x, 14px);
+  /* Bottom padding so the last row clears the sticky ask well.
+     The well ~52px + padding + gap. Use a generous value. */
+  padding-bottom: 96px;
 }
 
-/* ── Focus group labels: count as a chip, not appended text ── */
-.project-room-focus-group {
-  margin-bottom: 4px;
+/* ── moment 3: first-paint rise ── */
+.room-section-rise {
+  animation: surface-rise-in var(--duration-medium) var(--ease-quart) both;
 }
-.project-room-focus-label {
-  display: inline-flex;
-  align-items: center;
+@media (prefers-reduced-motion: reduce) {
+  .room-section-rise { animation: none; }
+}
+
+/* ── the head ── */
+.room-head {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
 }
-.project-room-count-chip {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-faint);
-  min-width: 16px;
-  text-align: center;
-}
-
-/* ── De-inputted date tokens ── */
-.project-room-date-token {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-muted);
+.room-head-name-measure {
+  position: absolute;
+  visibility: hidden;
   white-space: nowrap;
-  /* No border, no box-shadow — deliberately NOT an input affordance */
+  pointer-events: none;
+  overflow: hidden;
 }
-.project-room-date-glyph {
-  font-size: 12px;
-  opacity: 0.6;
+.room-headline { margin: 0; }
+.room-headline[data-accent] { color: var(--accent, #a86e4a); }
+.room-headline:not([data-accent]) { color: var(--text-muted); }
+.room-head-outcome { margin: 0; color: var(--text-primary); }
+.room-head-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+}
+.room-head-trailing { margin-left: auto; }
+
+/* ── chip helper ── */
+.room-chip-faint { color: var(--text-faint); }
+
+/* ── empty states ── */
+.room-empty-line {
+  margin: 0;
+  padding: 8px 0;
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+.room-empty-state {
+  display: flex; align-items: center; justify-content: center; min-height: 200px;
+}
+.room-loading, .room-error {
+  display: flex; align-items: center; justify-content: center; min-height: 200px;
 }
 
+/* ── Condition 6: primary text uses the sans face ── */
+.surface-ledger[data-cols="room"] .surface-primary,
+.room-head-outcome.surface-primary,
+.room-since-group-head.surface-primary {
+  font-family: var(--font-sans, Inter, sans-serif);
+}
+
+/* ── Desk memory: the trusted FTS marker grammar ── */
 .project-memory-highlight {
   padding: 0 2px;
   background: var(--accent-tint);
   color: var(--text);
 }
-
-/* ── Right rail sections ── */
-.project-room-rail-section {
-  padding: 4px 0;
+.project-memory-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
 }
-.project-room-rail-label {
+
+/* One row grammar at both widths: in a narrow window the row's facts fall
+   under the name instead of squeezing it to an ellipsis (UX-CANON D). */
+@container surface (max-width: 540px) {
+  .desk-memory-body .surface-row-open,
+  .desk-memory-body .surface-row-main {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .desk-memory-body .surface-row-text {
+    flex: 1 0 100%;
+  }
+  .desk-memory-body .project-memory-meta {
+    flex-wrap: wrap;
+  }
+}
+
+/* ── needs you — WHY token ── */
+.room-why-token { font-weight: 600; }
+
+/* ── sources — two-line grammar ──
+   LINE 2 sits inside the ledger-open slot, always visible.
+   Force the row open to show LINE 2 for room rows. */
+.surface-ledger[data-cols="room"] .surface-ledger-row .surface-ledger-open {
+  display: block;
+}
+/* Condition 5: scope + tokens inline, left-aligned after the scope. */
+.room-source-primary {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.room-source-tok {
+  flex: none;
+}
+/* LINE 2: starts at the scope's left edge.
+   The surface-ledger-open default has padding-left: 68px (for the 52px time column).
+   The room cols use a 16px lead, so override to ~32px (16px lead + ~16px gap) to
+   align LINE 2 with the scope. */
+.surface-ledger[data-cols="room"] .surface-ledger-open {
+  padding-left: 26px;
+}
+.room-source-line2 {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 4px;
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+  padding: 2px 0 0;
+  margin-left: 0;
 }
-.project-room-rail-value {
-  font-size: var(--desk-surface-body-size, 13px);
+.room-source-reason {
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
   color: var(--text-muted);
-  line-height: 1.4;
 }
-.project-room-rail-absent {
-  font-size: var(--desk-surface-body-size, 13px);
+.room-source-checked {
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+}
+
+/* ── since you looked ── */
+.room-since-group { margin-bottom: 8px; }
+.room-since-group-head { margin: 0 0 2px; }
+.room-since-entries { list-style: none; margin: 0; padding: 0 0 0 16px; }
+.room-since-entry {
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  padding: 1px 0;
+}
+.room-since-time { color: var(--text-faint); }
+
+/* ── HS-172-03: proposal rows ── */
+.room-proposal-prefix {
+  font-weight: 600;
+  color: var(--accent, #a86e4a);
+}
+.room-proposal-text {
+  word-break: break-word;
+}
+.room-proposal-caption {
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+/* Speaker token is uppercase per F8 but separated from the provenance */
+.room-proposal-speaker {
+  text-transform: uppercase;
+}
+.room-proposal-verbs {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  flex: none;
+}
+
+/* ── HS-172-03: proposal edit well ── */
+.room-proposal-edit-row {
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface-2, #1c1f27);
+}
+.room-proposal-edit-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px 4px;
+}
+.room-proposal-edit-well {
+  padding: 4px 12px 12px 26px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.room-proposal-edit-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.room-proposal-edit-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+}
+.room-proposal-edit-label-text {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  min-width: 50px;
+}
+.room-proposal-was-caption {
+  margin: 0;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+.room-proposal-edit-verbs {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+/* ── HS-172-03: confirmed proposal in D&C ── */
+.room-confirmed-token {
+  color: var(--success, #4ade80);
+  font-weight: 600;
+}
+.room-was-token {
   color: var(--text-faint);
   font-style: italic;
 }
-.project-room-change-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 2px 0;
-  font-size: var(--desk-surface-body-size, 13px);
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--border-subtle, var(--border));
-}
-.project-room-change-row:last-child {
-  border-bottom: none;
+
+/* ── HS-172-06: suggested source verbs ── */
+.room-suggestion-verbs {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  flex: none;
 }
 
+/* ── decisions & commitments ── */
+.room-dc-verb { font-weight: 600; color: var(--text-primary); }
+
+/* ── ask well (the artboard's shape) ── */
+.room-ask-section {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.room-ask-well {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--surface-2, #1c1f27);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+}
+.room-ask-input {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+  font-family: var(--font-sans, Inter, sans-serif);
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+}
+.room-ask-input::placeholder { color: var(--text-faint); }
+.room-ask-model-chip {
+  display: inline-flex; align-items: center; gap: 4px; flex: none;
+}
+/* Condition 8: idle/muted tone for the NOT SET egress chip */
+.room-egress-idle.gadget-chip-egress {
+  color: var(--text-muted);
+}
+.room-ask-submit-hidden {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0,0,0,0); border: 0;
+  padding: 0; margin: -1px;
+}
+.room-ask-error {
+  margin: 0;
+  font-size: var(--desk-surface-detail-size);
+  color: var(--danger, #f87171);
+}
+
+/* ── Condition 7: ask well sticky at the foot at ALL widths ── */
+.room-ask-container {
+  position: sticky;
+  bottom: 0;
+  z-index: var(--desk-z-local);
+  background: var(--surface-1, #15171d);
+  padding-bottom: 8px;
+}
+
+/* ── moment 4: new needs-you row accent fade ── */
+@keyframes room-needs-you-accent {
+  from { background: var(--accent-tint-faint); }
+  to   { background: transparent; }
+}
+.room-needs-you-new { animation: room-needs-you-accent 1.2s ease-out; }
+
+/* ── history wing ── */
+.room-history { padding: 0 var(--desk-surface-row-pad-x, 14px); }
+.room-history-controls {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+/* Condition 1+7: filter tokens via library Button with flat styling override.
+   Active = filled dark, no accent, no bevel. */
+.room-history-filters { display: inline-flex; gap: 0; }
+.room-filter-token.btn {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 3px 10px;
+  box-shadow: none;
+  min-height: unset;
+}
+.room-filter-token.btn:first-child { border-radius: 2px 0 0 2px; }
+.room-filter-token.btn:last-child  { border-radius: 0 2px 2px 0; }
+.room-filter-token.btn + .room-filter-token.btn { border-left: none; }
+.room-filter-token.btn:hover { background: var(--surface-2, #1c1f27); }
+.room-filter-token.btn[data-filter-active] {
+  background: var(--surface-2, #1c1f27);
+  color: var(--text-primary, #f2f3f5);
+}
+.room-history-search {
+  display: flex; align-items: center; gap: 4px; flex: 1; min-width: 120px;
+}
+.room-history-search input {
+  flex: 1;
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+  background: var(--surface-2, #1c1f27);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text-primary);
+  padding: 4px 8px;
+}
+
+/* ── Conditions 3+4+9: 393 / narrow stacking ── */
+@container surface (max-width: 559px) {
+  /* Head chips stack */
+  .room-head-chips {
+    flex-direction: column; align-items: flex-start;
+  }
+  .room-head-trailing {
+    margin-left: 0; width: 100%;
+  }
+  .room-head-trailing .btn,
+  .room-head-trailing .signal-button {
+    width: 100%;
+  }
+
+  /* Condition 3: needs-you title spans the row; WHY token moves under */
+  .surface-ledger[data-cols="room"] .surface-ledger-line {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .surface-ledger[data-cols="room"] .surface-ledger-primary {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  /* Condition 4 (round 5): WHY token and cells left-aligned under the title.
+     Override the surface library's margin-left: 78px narrow rule.
+     The lead column is ~26px (16px + gap); the token aligns with the title. */
+  .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-primary ~ :not(.surface-ledger-trailing) {
+    margin-left: 26px;
+  }
+  .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-primary ~ * + :not(.surface-ledger-trailing) {
+    margin-left: 0;
+  }
+  .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-cell,
+  .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-token,
+  .surface-ledger[data-cols="room"] .surface-ledger-line > .room-why-token {
+    flex: 0 0 auto;
+    margin-top: 2px;
+  }
+  .surface-ledger[data-cols="room"] .surface-ledger-trailing {
+    flex: 0 0 auto;
+    margin-top: 2px;
+    margin-left: auto;
+  }
+
+  /* Condition 4: source LINE 2 must not overlap LINE 1 */
+  .room-source-line2 {
+    flex-wrap: wrap;
+  }
+
+  /* Condition 3: 393 ask well stacks: input+mic full-width, MODEL chip below */
+  .room-ask-well {
+    flex-wrap: wrap;
+  }
+  .room-ask-input {
+    flex: 1 1 60%;
+    min-width: 0;
+  }
+  .room-ask-model-chip {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  /* HS-172-03: proposal verbs stack under caption at 393 */
+  .room-proposal-verbs {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .room-suggestion-verbs {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  /* Condition 9: history head stacks at 393 */
+  .room-history .surface-stream-head {
+    flex-wrap: wrap;
+  }
+  .room-history .surface-stream-head .surface-display {
+    flex: 0 0 100%;
+    white-space: nowrap;
+  }
+  .room-history .room-history-controls {
+    flex: 0 0 100%;
+  }
+}
+
+/* ── HS-172-07: People section ── */
+.room-people-primary {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.room-people-tok {
+  flex: none;
+}
+.room-people-overdue {
+  color: var(--desk-warning, #fbbf24);
+}
+.room-people-sep {
+  color: var(--text-faint);
+  flex: none;
+}
+
+/* ── HS-173: HEALTH section ── */
+.room-health-label {
+  font-weight: 600;
+}
+
+/* ── HS-173-04: bottleneck row verbs ── */
+.room-bottleneck-verbs {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  flex: none;
+}
+.room-nudge-cooldown {
+  color: var(--accent, #a86e4a);
+  font-weight: 600;
+}
+
+/* ── HS-173-04: nudge card ── */
+.room-nudge-card-row {
+  list-style: none;
+  padding: 0 var(--desk-surface-row-pad-x, 14px) 0 26px;
+}
+.room-nudge-card-who {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.room-nudge-card-pr {
+  margin-bottom: 6px;
+}
+.room-nudge-pr-link {
+  color: var(--accent, #a86e4a);
+  text-decoration: none;
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+}
+.room-nudge-pr-link:hover {
+  text-decoration: underline;
+}
+.room-nudge-pr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+.room-nudge-pr-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.room-nudge-card-text {
+  margin-bottom: 8px;
+}
+.room-nudge-card-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.room-nudge-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.room-nudge-card-verbs {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* HS-173-04: receipt row — display name as stored, not mono caps */
+.room-nudge-receipt-name {
+  font-family: var(--font-sans, Inter, sans-serif);
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+}
+
+/* ── HS-173: 393 stacking for health + nudge ── */
+@container surface (max-width: 559px) {
+  /* HS-173: HEALTH rows keep lead dot on the same line as the primary
+     (board RoomHealthPhone.png); only cells fall under. Override the
+     room cols' flex: 1 1 100% on the primary — match its specificity. */
+  .surface-ledger[data-cols="room"] .room-health-rows .surface-ledger-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .surface-ledger[data-cols="room"] .room-health-rows .surface-ledger-primary {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .surface-ledger[data-cols="room"] .room-health-rows .surface-ledger-line > .surface-ledger-primary ~ .surface-token {
+    flex: 0 0 100%;
+    margin-left: 26px;
+    margin-top: 2px;
+  }
+  .room-nudge-card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .room-nudge-card-verbs {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .room-bottleneck-verbs {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+  }
+}
+
+/* ── legacy ── */
 .project-room-degraded {
   padding: 4px var(--desk-surface-row-pad-x, 14px);
   margin: 0;
+}
+.room-change-row {
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+}
+.room-change-time {
+  margin-left: var(--space-2);
+  color: var(--text-faint);
 }

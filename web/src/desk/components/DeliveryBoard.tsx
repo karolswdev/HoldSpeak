@@ -38,17 +38,25 @@ import {
 } from "../surface/Surface";
 import {
   CycleGadget,
+  EgressChip,
   GadgetGroup,
   GadgetRow,
   StringGadget,
   TransportKey,
 } from "../surface/gadgets";
+import { countLabel } from "../surface";
 import { withRevision } from "../../lib/settingsWrite";
 import {
   DeskWindowFrame,
   announceLauncher,
   retractLauncher,
 } from "./DeskWindow";
+import { MicButton } from "./MicButton";
+
+// Glyph constants — keep dingbat codepoints off JSX source lines.
+const GLYPH_WARN = String.fromCodePoint(0x26A0);
+const GLYPH_CHECK = String.fromCodePoint(0x2713);
+const GLYPH_CLOSE = String.fromCodePoint(0x2715);
 
 function stateTone(state: string): "warn" | "danger" | undefined {
   if (state === "waiting") return "warn";
@@ -77,7 +85,7 @@ function FreshnessChip({ source }: { source: DeliverySource }) {
       <span className={"desk-dlv-fresh is-" + recovery.state}>
         {recovery.state}
       </span>
-      <span className="quiet desk-dlv-hint">{recovery.hint}</span>
+      <span className="quiet surface-token">{recovery.state.toUpperCase()}</span>
       <button
         type="button"
         className="desk-chip quiet"
@@ -184,9 +192,9 @@ function LaunchComposer({ sources }: { sources: DeliverySource[] }) {
 
   if (!site) {
     return (
-      <p className="desk-dlv-hint">
-        <span className="surface-token">✕ NO LIVE SOURCE TO LAUNCH ON</span>
-      </p>
+      <div>
+        <span className="surface-token" data-tone="danger"><span aria-hidden="true">{GLYPH_CLOSE}</span> NO LIVE SOURCE</span>
+      </div>
     );
   }
 
@@ -223,6 +231,7 @@ function LaunchComposer({ sources }: { sources: DeliverySource[] }) {
         </GadgetRow>
         <GadgetRow label="STORY">
           <StringGadget label="Story id" value={storyId} onChange={setStoryId} />
+          <MicButton draftScope="delivery-story" onText={(t: string) => setStoryId(t.trim())} />
         </GadgetRow>
         <GadgetRow label="LABEL">
           <StringGadget
@@ -249,7 +258,7 @@ function LaunchComposer({ sources }: { sources: DeliverySource[] }) {
         <span className="surface-token">BINDS ATTEMPT</span>
       </p>
       {launchState === "failed" ? (
-        <span className="desk-arm-refusal">✕ {launchDetail}</span>
+        <span className="desk-arm-refusal"><span aria-hidden="true">{GLYPH_CLOSE}</span> {launchDetail}</span>
       ) : null}
     </div>
   );
@@ -329,7 +338,7 @@ function CompanionRepoConfig() {
       {refusal ? (
         <div className="prefs-egress-line">
           <span className="gadget-fact" data-tone="danger" role="alert">
-            ⚠ REFUSED · {refusal}
+            <span aria-hidden="true">{GLYPH_WARN}</span> REFUSED {refusal}
           </span>
         </div>
       ) : null}
@@ -396,15 +405,18 @@ export function DeliveryBoard() {
       title={<span className="desk-mc-title">▤ Delivery</span>}
       entrance={false}
       actions={
-        <Button
-          dense
-          variant="ghost"
-          aria-label="Refresh"
-          title="Refresh from hub"
-          onClick={() => void useDelivery.getState().refresh()}
-        >
-          ↻
-        </Button>
+        <>
+          <EgressChip label="Hub" scope="cloud" />
+          <Button
+            dense
+            variant="ghost"
+            aria-label="Refresh"
+            title="Refresh from hub"
+            onClick={() => void useDelivery.getState().refresh()}
+          >
+            ↻
+          </Button>
+        </>
       }
       open={open}
       onClose={() => setOpen(false)}
@@ -438,7 +450,7 @@ export function DeliveryBoard() {
                   </button>
                 ) : null}
                 {p.warnings > 0 ? (
-                  <span className="desk-mc-warn">⚠ {p.warnings}</span>
+                  <span className="desk-mc-warn"><span aria-hidden="true">{GLYPH_WARN}</span> {p.warnings}</span>
                 ) : null}
               </div>
               <div className="desk-dlv-stories">
@@ -466,7 +478,7 @@ export function DeliveryBoard() {
                       </button>
                       {s.evidenceExists ? (
                         <span className="desk-dlv-evidence" title="has evidence">
-                          ✓
+                          <span aria-hidden="true">{GLYPH_CHECK}</span>
                         </span>
                       ) : null}
                     </span>
@@ -479,7 +491,7 @@ export function DeliveryBoard() {
 
       {active.length > 0 ? (
         <section className="desk-dlv-active">
-          <SurfaceLedger cols="facts" count={`WORK ${active.length}`}>
+          <SurfaceLedger cols="facts" count={countLabel("WORK", active.length)}>
             <ul className="surface-ledger-rows">
               {active.map((a) => (
                 <AttemptLedgerRow
@@ -496,7 +508,7 @@ export function DeliveryBoard() {
 
       {looseTargets.length > 0 ? (
         <section className="desk-dlv-sessions">
-          <SurfaceLedger cols="facts" count={`SESSIONS ${looseTargets.length}`}>
+          <SurfaceLedger cols="facts" count={countLabel("SESSIONS", looseTargets.length)}>
             <ul className="surface-ledger-rows">
               {looseTargets.map((t) => (
                 <SurfaceLedgerRow
@@ -544,7 +556,7 @@ export function DeliveryBoard() {
       <SurfaceFooter
         receipt={
           <span className="surface-footer-receipt-line" role="status">
-            {`SOURCES ${sources.length} · WORK ${active.length}` +
+            {`${countLabel("SOURCES", sources.length)} · ${countLabel("WORK", active.length)}` +
               (updatedAt ? ` · READ ${clockToken(updatedAt)}` : "")}
           </span>
         }

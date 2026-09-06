@@ -353,7 +353,7 @@ export function FirstWords({
     <section className="desk-first-words" aria-labelledby="first-words-title">
       <span className="surface-eyebrow">Voice typing</span>
       <Heading id="first-words-title">Dictate one sentence</Heading>
-      <p>Click to speak. Your words stay editable here before you use them.</p>
+      <p>Tap to speak, edit here, then use</p>
       <button
         type="button"
         className={`desk-first-talk is-${state}`}
@@ -410,7 +410,6 @@ export function FirstWords({
         label="Your dictated text"
         rows={4}
         value={text}
-        mic={false}
         onChange={(next) => {
           setText(next);
           if (!draftEdited.current) {
@@ -458,7 +457,8 @@ export function FirstWords({
             className="btn btn--secondary"
             onClick={() => {
               void tracker.current?.event("setup_selected");
-              openSurfaceOr("configure-setup", "/setup");
+              // HS-169-03 N-1: open the one-screen Door, not the old setup wizard.
+              openSurfaceOr("project-setup", "/");
             }}
           >
             Setup

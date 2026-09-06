@@ -1,0 +1,235 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;650;700&amp;family=Space+Grotesk:wght@600;650;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+    a { color: #a86e4a; } a:hover { color: #bc8058; }
+    @keyframes surface-chip-pulse { from { opacity: 1 } to { opacity: .4 } }
+  </style>
+</helmet>
+<div style="width: 640px; border: 1px solid #363b50; border-radius: 2px; background: #15171d; box-shadow: inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40), inset 0 0 0 1px #2a2e3e; display: flex; flex-direction: column;">
+
+  <!-- ═══ TITLE BAR ═══ -->
+  <div style="height: 40px; padding: 0 12px; display: flex; align-items: center; gap: 10px; background: #242833; border-radius: 1px 1px 0 0; flex-shrink: 0;">
+    <!-- Gems -->
+    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+      <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="#ff5f57"></circle></svg>
+      <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="#febc2e"></circle></svg>
+      <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="#28c840"></circle></svg>
+    </div>
+    <!-- Title -->
+    <span style="font: 700 17px 'Space Grotesk', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #f2f3f5; white-space: nowrap;">HoldSpeak 167</span>
+    <!-- Wings -->
+    <div style="display: flex; align-items: center; margin-inline: auto;">
+      <span style="border: 1px solid #2a2e3e; border-radius: 2px; background: rgba(255,255,255,0.035); color: #9ba2b0; font: 600 10px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 12px;">TIMELINE</span>
+      <span style="border: 1px solid #2a2e3e; border-radius: 2px; background: rgba(255,255,255,0.035); color: #9ba2b0; font: 600 10px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 12px; margin-left: -1px;">DECISIONS</span>
+      <span style="border: 1px solid #2a2e3e; border-radius: 2px; background: rgba(255,255,255,0.035); color: #9ba2b0; font: 600 10px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 12px; margin-left: -1px;">SEARCH</span>
+      <span style="border: 1px solid #2a2e3e; border-radius: 2px; background: rgba(255,255,255,0.035); color: #9ba2b0; font: 600 10px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 12px; margin-left: -1px;">ASK</span>
+    </div>
+  </div>
+
+  <!-- ═══ BODY ═══ -->
+  <div style="flex: 1; overflow: auto; padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 18px;">
+
+    <!-- ── SurfaceIdentity (compact) ── -->
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <span style="font: 600 15px/1.4 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #f2f3f5;">HoldSpeak 167 — The Room in Use</span>
+      <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+        <!-- StateChip Active -->
+        <span style="display: inline-flex; align-items: center; gap: 5px; min-height: 18px; padding: 0 8px; border: 1px solid #2a2e3e; border-radius: 0; background: rgba(0,0,0,0.28); box-shadow: inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font: 600 10px/1 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #34d399; white-space: nowrap;"><span style="flex: none; font-size: 11px; line-height: 1;">✓</span> ACTIVE</span>
+        <!-- StateChip Review -->
+        <span style="display: inline-flex; align-items: center; gap: 5px; min-height: 18px; padding: 0 8px; border: 1px solid #2a2e3e; border-radius: 0; background: rgba(0,0,0,0.28); box-shadow: inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font: 600 10px/1 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #a86e4a; white-space: nowrap;"><span style="flex: none; font-size: 11px; line-height: 1;">●</span> REVIEW</span>
+        <!-- Token REV 9 -->
+        <span style="display: inline-flex; align-items: center; min-height: 18px; padding: 0 8px; border: 1px solid #2a2e3e; border-radius: 0; background: rgba(0,0,0,0.28); box-shadow: inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font: 600 10px/1 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #9ba2b0; white-space: nowrap;">REV 9</span>
+        <!-- humanTime -->
+        <span style="font: 600 10px/1 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; color: #767e8d;">just now</span>
+      </div>
+      <span style="font: 12px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; color: #9ba2b0;">Ship Project Rooms the owner will use on a Tuesday</span>
+    </div>
+
+    <!-- ── Posture strip (SurfaceVerbs) ── -->
+    <div style="margin: 0 -14px; padding: 8px 14px; display: flex; align-items: center; gap: 8px; background: #15171d; border-bottom: 1px solid #2a2e3e;">
+      <!-- Status slot -->
+      <span style="display: inline-flex; align-items: center; gap: 5px; min-height: 18px; padding: 0 8px; border: 1px solid #2a2e3e; border-radius: 0; background: rgba(0,0,0,0.28); box-shadow: inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font: 600 10px/1 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #34d399; white-space: nowrap;"><span style="flex: none; font-size: 11px; line-height: 1;">✓</span> RUN 12</span>
+      <!-- Actions slot -->
+      <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+        <!-- Review (active) + count -->
+        <span style="display: inline-flex; align-items: center; gap: 6px; border: 1px solid #2a2e3e; border-radius: 2px; background: rgba(0,0,0,0.28); box-shadow: inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); color: #f2f3f5; font: 600 10px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 12px;">REVIEW <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 2px; background: rgba(255,255,255,0.07); font-size: 10px; font-weight: 700; color: #f2f3f5;">3</span></span>
+        <!-- Updates -->
+        <span style="border: 1px solid #2a2e3e; border-radius: 2px; background: rgba(255,255,255,0.035); color: #9ba2b0; font: 600 10px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 12px;">UPDATES</span>
+        <!-- Steward -->
+        <span style="border: 1px solid #2a2e3e; border-radius: 2px; background: rgba(255,255,255,0.035); color: #9ba2b0; font: 600 10px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 12px;">STEWARD</span>
+      </div>
+    </div>
+
+    <!-- ═══ QUEUE LEDGER ═══ -->
+
+    <!-- ── Section: RISK ATTENTION 2 ── -->
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <div style="display: flex; align-items: baseline; gap: 8px; border-top: 1px solid rgba(255,255,255,0.035); padding-top: 8px;">
+        <h3 style="margin: 0; font: 600 10px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; color: #9ba2b0;">RISK ATTENTION</h3>
+        <span style="font: 600 10px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.06em; color: #9ba2b0;">2</span>
+      </div>
+
+      <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px;">
+        <!-- Row 1 EXPANDED -->
+        <li style="border-radius: 2px;">
+          <!-- Row line (open) -->
+          <div style="display: grid; grid-template-columns: max-content minmax(0,1fr) max-content 52px max-content; align-items: center; gap: 0 10px; width: 100%; min-height: 26px; padding: 2px 6px; border: 0; border-radius: 0; background: rgba(0,0,0,0.28); box-shadow: inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); text-align: left; font: 12px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; color: #f2f3f5;">
+            <!-- Lead: severity icon -->
+            <span style="flex: none; font-size: 12px; color: #fbbf24; text-align: center; width: 20px;">▲</span>
+            <!-- Primary -->
+            <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Eight faces drift requires resolution</span>
+            <!-- Cell: ProvenanceChip -->
+            <span style="display: inline-flex; align-items: center; min-height: 18px; padding: 0 8px; border: 1px solid #2a2e3e; border-radius: 0; background: rgba(0,0,0,0.28); box-shadow: inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font: 600 10px/1 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #9ba2b0; white-space: nowrap;">STEWARD</span>
+            <!-- Time -->
+            <span style="color: #767e8d; font-variant-numeric: tabular-nums; white-space: nowrap;">2 min</span>
+            <!-- Trailing chevron (rotated = open) -->
+            <span style="color: #9ba2b0; font-size: 11px; transform: rotate(90deg); display: inline-block;">▸</span>
+          </div>
+          <!-- Expanded detail -->
+          <div style="padding: 8px 10px 10px 68px; background: rgba(0,0,0,0.28); box-shadow: inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); display: flex; flex-direction: column; gap: 8px;">
+            <!-- Chips -->
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <span style="display: inline-flex; align-items: center; gap: 5px; min-height: 18px; padding: 0 8px; border: 1px solid #2a2e3e; border-radius: 0; background: rgba(0,0,0,0.28); box-shadow: inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font: 600 10px/1 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #fbbf24; white-space: nowrap;"><span style="flex: none; font-size: 11px; line-height: 1;">⚠</span> MATERIALITY HIGH</span>
+              <span style="display: inline-flex; align-items: center; gap: 5px; min-height: 18px; padding: 0 8px; border: 1px solid #2a2e3e; border-radius: 0; background: rgba(0,0,0,0.28); box-shadow: inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font: 600 10px/1 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #9ba2b0; white-space: nowrap;"><span style="flex: none; font-size: 11px; line-height: 1;">○</span> KIND RISK ATTENTION</span>
+            </div>
+            <!-- SurfaceColumns: 2 columns (CURRENT | PROPOSED) -->
+            <div style="display: grid; gap: 18px; align-items: start; grid-template-columns: repeat(2, minmax(0, 1fr));">
+              <!-- CURRENT -->
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font: 600 10px 'JetBrains Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; color: #9ba2b0;">CURRENT</span>
+                <dl style="margin: 0; display: grid; grid-template-columns: minmax(96px, max-content) minmax(0,1fr); gap: 3px 14px; font-size: 12px; font-family: 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; color: #f2f3f5;">
+                  <dt style="color: #9ba2b0;">Text</dt>
+                  <dd style="margin: 0; overflow-wrap: anywhere;">Design mockups may diverge from the surface library</dd>
+                  <dt style="color: #9ba2b0;">Owner</dt>
+                  <dd style="margin: 0; color: #767e8d;">--</dd>
+                  <dt style="color: #9ba2b0;">Due</dt>
+                  <dd style="margin: 0;">2026-09-15</dd>
+                  <dt style="color: #9ba2b0;">Lane</dt>
+                  <dd style="margin: 0;">open</dd>
+                </dl>
+              </div>
+              <!-- PROPOSED -->
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font: 600 10px 'JetBrains Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; color: #9ba2b0;">PROPOSED</span>
+                <dl style="margin: 0; display: grid; grid-template-columns: minmax(96px, max-content) minmax(0,1fr); gap: 3px 14px; font-size: 12px; font-family: 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; color: #f2f3f5;">
+                  <dt style="color: #9ba2b0;">Text</dt>
+                  <dd style="margin: 0; overflow-wrap: anywhere; color: #a86e4a;">Eight faces drift requires resolution</dd>
+                  <dt style="color: #9ba2b0;">Owner</dt>
+                  <dd style="margin: 0; color: #a86e4a;">karol</dd>
+                  <dt style="color: #9ba2b0;">Due</dt>
+                  <dd style="margin: 0; color: #a86e4a;">2026-09-10</dd>
+                  <dt style="color: #9ba2b0;">Lane</dt>
+                  <dd style="margin: 0; color: #a86e4a;">at_risk</dd>
+                </dl>
+              </div>
+            </div>
+            <!-- Quiet id token -->
+            <span style="font: 10px 'JetBrains Mono', monospace; color: #767e8d; letter-spacing: 0.06em;">ai-delta-003</span>
+            <!-- Verbs -->
+            <div style="display: flex; gap: 4px; align-items: center;">
+              <button style="min-height: 28px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 4px 12px; border: 1px solid #a86e4a; border-radius: 0; background: #a86e4a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 1px 2px rgba(0,0,0,0.3); color: #f2f3f5; font: 600 12px/1 'JetBrains Mono', monospace; cursor: pointer;">Accept</button>
+              <button style="min-height: 28px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 4px 12px; border: 1px solid transparent; border-radius: 0; background: transparent; color: #f2f3f5; font: 600 12px/1 'JetBrains Mono', monospace; cursor: pointer;">Edit</button>
+              <button style="min-height: 28px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 4px 12px; border: 1px solid transparent; border-radius: 0; background: transparent; color: #f2f3f5; font: 600 12px/1 'JetBrains Mono', monospace; cursor: pointer;">Defer</button>
+              <button style="min-height: 28px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 4px 12px; border: 1px solid transparent; border-radius: 0; background: transparent; color: #f2f3f5; font: 600 12px/1 'JetBrains Mono', monospace; cursor: pointer;">Dismiss</button>
+            </div>
+          </div>
+        </li>
+
+        <!-- Row 2 COLLAPSED -->
+        <li style="border-radius: 2px;">
+          <div style="display: grid; grid-template-columns: max-content minmax(0,1fr) max-content 52px max-content; align-items: center; gap: 0 10px; width: 100%; min-height: 26px; padding: 2px 6px; border: 0; border-radius: 0; background: none; text-align: left; font: 12px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; color: #f2f3f5; cursor: pointer;">
+            <span style="flex: none; font-size: 12px; color: #fbbf24; text-align: center; width: 20px;">▲</span>
+            <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Owner's Tuesday verdict pending</span>
+            <span style="display: inline-flex; align-items: center; min-height: 18px; padding: 0 8px; border: 1px solid #2a2e3e; border-radius: 0; background: rgba(0,0,0,0.28); box-shadow: inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font: 600 10px/1 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #9ba2b0; white-space: nowrap;">STEWARD</span>
+            <span style="color: #767e8d; font-variant-numeric: tabular-nums; white-space: nowrap;">5 min</span>
+            <span style="color: #9ba2b0; font-size: 11px;">▸</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- ── Section: REVIEW FLAGS 1 ── -->
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <div style="display: flex; align-items: baseline; gap: 8px; border-top: 1px solid rgba(255,255,255,0.035); padding-top: 8px;">
+        <h3 style="margin: 0; font: 600 10px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; color: #9ba2b0;">REVIEW FLAGS</h3>
+        <span style="font: 600 10px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.06em; color: #9ba2b0;">1</span>
+      </div>
+      <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px;">
+        <li style="border-radius: 2px;">
+          <div style="display: grid; grid-template-columns: max-content minmax(0,1fr) max-content 52px max-content; align-items: center; gap: 0 10px; width: 100%; min-height: 26px; padding: 2px 6px; border: 0; border-radius: 0; background: none; text-align: left; font: 12px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; color: #f2f3f5; cursor: pointer;">
+            <span style="flex: none; font-size: 12px; color: #9ba2b0; text-align: center; width: 20px;">○</span>
+            <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Adopt surface library tokens</span>
+            <span style="display: inline-flex; align-items: center; gap: 5px; min-height: 18px; padding: 0 8px; border: 1px solid #2a2e3e; border-radius: 0; background: rgba(0,0,0,0.28); box-shadow: inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font: 600 10px/1 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #9ba2b0; white-space: nowrap;"><span style="flex: none; font-size: 11px; line-height: 1;">○</span> MEDIUM</span>
+            <span style="color: #767e8d; font-variant-numeric: tabular-nums; white-space: nowrap;">13 min</span>
+            <span style="color: #9ba2b0; font-size: 11px;">▸</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- ── Section: OBSERVATIONS 3 ── -->
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <div style="display: flex; align-items: baseline; gap: 8px; border-top: 1px solid rgba(255,255,255,0.035); padding-top: 8px;">
+        <h3 style="margin: 0; font: 600 10px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; color: #9ba2b0;">OBSERVATIONS</h3>
+        <span style="font: 600 10px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.06em; color: #9ba2b0;">3</span>
+      </div>
+      <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px;">
+        <li style="border-radius: 2px;">
+          <div style="display: grid; grid-template-columns: max-content minmax(0,1fr) max-content 52px max-content; align-items: center; gap: 0 10px; width: 100%; min-height: 26px; padding: 2px 6px; border: 0; border-radius: 0; background: none; text-align: left; font: 12px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; color: #f2f3f5; cursor: pointer;">
+            <span style="flex: none; font-size: 12px; color: #9ba2b0; text-align: center; width: 20px;">○</span>
+            <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Phase 167 merged target confirmed</span>
+            <span style="display: inline-flex; align-items: center; min-height: 18px; padding: 0 8px; border: 1px solid #2a2e3e; border-radius: 0; background: rgba(0,0,0,0.28); box-shadow: inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font: 600 10px/1 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #9ba2b0; white-space: nowrap;">STEWARD</span>
+            <span style="color: #767e8d; font-variant-numeric: tabular-nums; white-space: nowrap;">just now</span>
+            <span style="color: #9ba2b0; font-size: 11px;">▸</span>
+          </div>
+        </li>
+        <li style="border-radius: 2px;">
+          <div style="display: grid; grid-template-columns: max-content minmax(0,1fr) max-content 52px max-content; align-items: center; gap: 0 10px; width: 100%; min-height: 26px; padding: 2px 6px; border: 0; border-radius: 0; background: none; text-align: left; font: 12px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; color: #f2f3f5; cursor: pointer;">
+            <span style="flex: none; font-size: 12px; color: #9ba2b0; text-align: center; width: 20px;">○</span>
+            <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">PR activity watch baseline established</span>
+            <span style="display: inline-flex; align-items: center; min-height: 18px; padding: 0 8px; border: 1px solid #2a2e3e; border-radius: 0; background: rgba(0,0,0,0.28); box-shadow: inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font: 600 10px/1 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #9ba2b0; white-space: nowrap;">STEWARD</span>
+            <span style="color: #767e8d; font-variant-numeric: tabular-nums; white-space: nowrap;">2 min</span>
+            <span style="color: #9ba2b0; font-size: 11px;">▸</span>
+          </div>
+        </li>
+        <li style="border-radius: 2px;">
+          <div style="display: grid; grid-template-columns: max-content minmax(0,1fr) max-content 52px max-content; align-items: center; gap: 0 10px; width: 100%; min-height: 26px; padding: 2px 6px; border: 0; border-radius: 0; background: none; text-align: left; font: 12px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; color: #f2f3f5; cursor: pointer;">
+            <span style="flex: none; font-size: 12px; color: #9ba2b0; text-align: center; width: 20px;">○</span>
+            <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Jira sync running on schedule</span>
+            <span style="display: inline-flex; align-items: center; min-height: 18px; padding: 0 8px; border: 1px solid #2a2e3e; border-radius: 0; background: rgba(0,0,0,0.28); box-shadow: inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font: 600 10px/1 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #9ba2b0; white-space: nowrap;">STEWARD</span>
+            <span style="color: #767e8d; font-variant-numeric: tabular-nums; white-space: nowrap;">5 min</span>
+            <span style="color: #9ba2b0; font-size: 11px;">▸</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer style="height: 36px; padding: 0 8px; background: #1c1f27; border-top: 1px solid #2a2e3e; box-shadow: inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); flex-shrink: 0;">
+    <div style="display: grid; grid-template-columns: max-content minmax(0,1fr) max-content; align-items: center; height: 100%; gap: 6px;">
+      <!-- Egress slot (empty) -->
+      <span></span>
+      <!-- Receipt slot -->
+      <span style="display: flex; justify-content: center; align-items: center; min-width: 0; font: 600 10px 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; color: #9ba2b0;">3 LEFT · 2 ACCEPTED · 1 DISMISSED</span>
+      <!-- Verbs slot -->
+      <div style="display: flex; justify-content: flex-end; align-items: center; gap: 4px;">
+        <button style="min-height: 28px; display: inline-flex; align-items: center; justify-content: center; padding: 4px 12px; border: 1px solid transparent; border-radius: 0; background: transparent; color: #f2f3f5; font: 600 12px/1 'JetBrains Mono', monospace; cursor: pointer;">Close</button>
+      </div>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+</body>
+</html>

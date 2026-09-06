@@ -27,6 +27,72 @@ def _service(ctx: WebContext) -> SettingsService:
     return ctx.settings_service
 
 
+def _resolve_meetings_host(config: Any) -> str | None:
+    """HS-172-02: resolve the meetings group's assigned model host.
+
+    Returns the HOST the run egresses to, never a profile label:
+    - LAN endpoint: its ip/hostname (``192.168.1.43``)
+    - This device: ``local``
+    - Cloud provider: the provider's API host (``api.openai.com``)
+    - Mesh: the node name
+    - No assignment: None
+    """
+    try:
+        profile_id = config.meeting.intel_profile_id
+        if not profile_id:
+            return None
+        from ....intel.providers import resolve_meeting_placement, endpoint_host
+        placement = resolve_meeting_placement(config.meeting)
+        if not placement.profile_id:
+            return None
+        return _placement_host(placement)
+    except Exception:
+        return None
+
+
+def _placement_host(placement: Any) -> str:
+    """Derive the egress host from a MeetingPlacement.
+
+    Uses ``endpoint_host(base_url)`` for the bare hostname (the same
+    source the Concierge's engine_display_name and the Speak resolver
+    use), falling back to the boundary for local runs.
+    """
+    from ....intel.providers import endpoint_host
+    if placement.node:
+        return str(placement.node)
+    host = endpoint_host(placement.base_url)
+    return host if host else (placement.boundary or "local")
+
+
+def _calendar_sources_snapshot() -> dict[str, str]:
+    """{source id: url} of the calendar sources on disk right now."""
+    try:
+        from ....config import Config
+
+        return {s.id: str(s.url or "") for s in Config.load().calendar.sources}
+    except Exception:
+        return {}
+
+
+def remove_generated_ics_for_removed_sources(
+    before: dict[str, str], after: dict[str, str],
+) -> list[str]:
+    """HS-175 counsel C4 (the Remove half): a calendar source removed by
+    this settings write whose URL is an ICS the Snapshot verb generated
+    takes its file with it (receipted).  Only files inside the snapshot
+    directory are ever deleted; an owner's own file path is never touched.
+    Returns the paths deleted."""
+    from ....services.calendar_snapshot_service import delete_generated_ics
+
+    removed: list[str] = []
+    for source_id, url in before.items():
+        if source_id in after:
+            continue
+        if delete_generated_ics(url):
+            removed.append(url)
+    return removed
+
+
 def build_settings_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
@@ -49,7 +115,15 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
     @router.put("/api/settings")
     async def api_update_settings(payload: dict[str, Any], request: Request) -> Any:
         try:
-            return JSONResponse(_service(ctx).update_settings(_principal(request), payload))
+            touches_sources = isinstance(payload.get("calendar"), dict) and "sources" in payload["calendar"]
+            before = _calendar_sources_snapshot() if touches_sources else {}
+            result = _service(ctx).update_settings(_principal(request), payload)
+            if touches_sources and isinstance(result, dict) and result.get("success", True):
+                try:
+                    remove_generated_ics_for_removed_sources(before, _calendar_sources_snapshot())
+                except Exception as exc:  # the write stands; the file cleanup is logged
+                    log.warning("snapshot ICS cleanup after settings write failed: %s", exc)
+            return JSONResponse(result)
         except ConflictError as exc:
             # HS-130-07: a stale partial-tree write. Reject with 409 and hand
             # back the current revision so the client can reload + reconcile.
@@ -66,6 +140,200 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             log.error("Failed to update settings: %s", exc)
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+
+    @router.get("/api/settings/hub")
+    async def api_settings_hub(request: Request) -> Any:
+        """HS-170-04: settings hub row facts.
+
+        One read returning the seven module rows' state tokens from existing
+        services. Counts are integers; the face applies the zero law.
+        """
+        try:
+            from ....config import Config
+            from ....services.model_library_service import ModelLibraryApplicationService
+            from ....services.inference_assignment_service import InferenceAssignmentService
+
+            config = Config.load()
+            p = _principal(request)
+
+            # Models: engines from the model library summary, groups from
+            # the assignments summary.
+            engines = 0
+            groups_set = 0
+            default_set = False
+            if ctx.model_library_service is not None:
+                try:
+                    lib = ctx.model_library_service.get_library(p)
+                    summary = lib.get("summary", {})
+                    engines = summary.get("ready_count", 0)
+                except Exception:
+                    pass
+            if ctx.inference_assignment_service is not None:
+                try:
+                    asn = ctx.inference_assignment_service.assignment_summary(p)
+                    rows = asn.get("rows", [])
+                    for row in rows:
+                        if row.get("id") == "global":
+                            default_set = row.get("status") == "assigned"
+                        elif row.get("status") == "assigned":
+                            groups_set += 1
+                except Exception:
+                    pass
+
+            # Connections: count provider connections.
+            connected = 0
+            try:
+                from ....db import get_database
+                conns = get_database().automations.list_provider_connections()
+                connected = len(conns)
+            except Exception:
+                pass
+
+            # Voice: pipeline live + target.
+            voice_live = config.dictation.pipeline.enabled
+            voice_target = config.dictation.pipeline.target_profile_override or "auto"
+
+            # Meetings: intelligence enabled.
+            intel_on = config.meeting.intel_enabled
+
+            # Rhythm: count active cadence loops + heartbeat sweep state.
+            loops = 0
+            if ctx.cadence_service is not None:
+                try:
+                    loop_list = ctx.cadence_service.list_loops(p)
+                    loops = len(loop_list.get("loops", []))
+                except Exception:
+                    pass
+
+            # HS-171-02: heartbeat sweep rhythm mirror.
+            heartbeat_rhythm: dict[str, Any] = {"loops": loops}
+            try:
+                from ....services.heartbeat_service import HeartbeatService
+                hb = HeartbeatService(get_database())
+                heartbeat_rhythm = hb.hub_rhythm()
+            except Exception:
+                heartbeat_rhythm["sweepEveryMinutes"] = 15
+                heartbeat_rhythm["nextSweepAt"] = None
+                heartbeat_rhythm["lastSweepAt"] = None
+                heartbeat_rhythm["quiet"] = {"start": 22, "end": 8, "held": False}
+
+            # Sounds.
+            sounds_on = config.ui.desk_sounds
+
+            # System.
+            mesh_on = bool(getattr(config.mesh, "device_name", ""))
+
+            # Posture.
+            posture = config.control_mode
+
+            # writtenAt: the settings file's last write.
+            written_at = None
+            try:
+                from ....config import CONFIG_FILE
+                import os
+                if CONFIG_FILE.exists():
+                    written_at = os.path.getmtime(CONFIG_FILE)
+            except Exception:
+                pass
+
+            # HS-172-02: most recent completed intel run for the receipt.
+            last_run_at: str | None = None
+            last_run_s: int | None = None
+            try:
+                with get_database()._connection() as _conn:
+                    _row = _conn.execute(
+                        "SELECT intel_completed_at, intel_requested_at "
+                        "FROM meetings "
+                        "WHERE intel_status = 'complete' AND intel_completed_at IS NOT NULL "
+                        "ORDER BY intel_completed_at DESC LIMIT 1"
+                    ).fetchone()
+                    if _row and _row["intel_completed_at"]:
+                        last_run_at = _row["intel_completed_at"]
+                        if _row["intel_requested_at"]:
+                            from datetime import datetime as _dt
+                            _req = _dt.fromisoformat(_row["intel_requested_at"])
+                            _comp = _dt.fromisoformat(_row["intel_completed_at"])
+                            last_run_s = max(0, int((_comp - _req).total_seconds()))
+            except Exception:
+                pass
+
+            return JSONResponse({
+                "models": {
+                    "engines": engines,
+                    "groupsSet": groups_set,
+                    "defaultSet": default_set,
+                },
+                "connections": {"connected": connected},
+                "voice": {"live": voice_live, "target": voice_target},
+                "meetings": {
+                    "intelligence": intel_on,
+                    "auto": config.meeting.intelligence_auto,
+                    "auto_record": config.meeting.auto_record,
+                    "host": _resolve_meetings_host(config),
+                    "lastRunAt": last_run_at,
+                    "lastRunS": last_run_s,
+                },
+                "rhythm": heartbeat_rhythm,
+                "sounds": {"on": sounds_on},
+                "system": {
+                    "host": "THIS DEVICE",
+                    "mesh": mesh_on,
+                    "remote": bool(
+                        getattr(request.app.state, "_remote_settings", None)
+                        and getattr(request.app.state, "_remote_settings", {}).get("enabled", False)
+                    ),
+                },
+                "posture": posture,
+                "writtenAt": written_at,
+            })
+        except Exception as exc:
+            return error_500(exc, log, "Failed to load settings hub")
+
+    # ── HS-171-02: heartbeat settings + run-now ─────────────────────────
+
+    @router.get("/api/settings/heartbeat")
+    async def api_heartbeat_get(request: Request) -> Any:
+        """HS-171-02: read heartbeat sweep settings."""
+        try:
+            from ....db import get_database
+            from ....services.heartbeat_service import HeartbeatService
+
+            hb = HeartbeatService(get_database())
+            return JSONResponse(hb.get_settings())
+        except Exception as exc:
+            return error_500(exc, log, "Failed to load heartbeat settings")
+
+    @router.put("/api/settings/heartbeat")
+    async def api_heartbeat_put(payload: dict[str, Any], request: Request) -> Any:
+        """HS-171-02: update heartbeat sweep settings."""
+        try:
+            from ....db import get_database
+            from ....services.heartbeat_service import HeartbeatService
+
+            hb = HeartbeatService(get_database())
+            result = hb.update_settings(payload)
+            return JSONResponse(result)
+        except ValidationError as exc:
+            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to update heartbeat settings")
+
+    @router.post("/api/settings/heartbeat/run-now")
+    async def api_heartbeat_run_now(request: Request) -> Any:
+        """HS-171-02: run one sweep out of band (owner only)."""
+        try:
+            from ....db import get_database, get_observer
+            from ....services.heartbeat_service import HeartbeatService
+            from ....services.watch_service import WatchService
+
+            db = get_database()
+            obs = get_observer()
+            ws = WatchService(db, observer=obs)
+            hb = HeartbeatService(db, observer=obs, watch_service=ws)
+            receipt = hb.run_sweep(_principal(request))
+            return JSONResponse(receipt)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to run heartbeat sweep")
 
     register_settings_secret_routes(router, ctx)
     return router

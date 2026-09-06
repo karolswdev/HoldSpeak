@@ -1,0 +1,13 @@
+{
+  "total_seconds": 1.84,
+  "segments": {
+    "desk_seed": 0.13,
+    "set_policy": 0.0,
+    "tick1": 0.02,
+    "tick2": 0.02,
+    "open_room": 1.62,
+    "enter_steward": 0.05
+  },
+  "bar": "none (Gate A has no performance bar; measured honestly)",
+  "viewport": 1440
+}

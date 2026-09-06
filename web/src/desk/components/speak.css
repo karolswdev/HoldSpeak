@@ -1,192 +1,258 @@
-/* ————— HS-111-02 — Speak: the OS's dictation deck (audit §3.1).
-   Instrument strip, state register, etched readout cells, the
-   utterance well, the receipt, the footer bar. ————— */
+/* ————— HS-170-04 — Speak: one screen — talk, see it land, teach.
+   Transport row, utterance well, LANDS IN, RESULT, ENGINE,
+   > Details (fold), footer. The old cockpit register strip lives
+   behind the Details fold. ————— */
+
+/* ── The face ── */
 .desk-next .speak-face {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 18px;
   padding-top: 6px;
-  /* room for the sticky footer bar — the run row never slides under it */
   padding-bottom: 34px;
   min-height: 100%;
   flex: 1;
 }
-/* The instrument strip: one full-width sunken panel. Never
-   flex-compressed when the face overflows — the well scrolls, the
-   instruments do not. */
-.desk-next .speak-strip {
+
+/* ── 1. Transport row ── */
+.desk-next .speak-transport {
   flex: none;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 12px;
+  gap: 10px;
+}
+.desk-next .speak-transport-spacer {
+  flex: 1;
+}
+/* Fix 1: Talk is the PRIMARY verb — accent-filled at rest, not etched.
+   The first transport key in the row is always the MicButton Talk key. */
+.desk-next .speak-transport > .desk-mic.gadget-transport-key {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-on-accent);
+  box-shadow: inset 0 1px 0 var(--bevel-light-strong),
+              0 1px 2px var(--etch-dark),
+              inset 1px 1px 0 var(--bevel-light),
+              inset -1px -1px 0 var(--bevel-dark-soft);
+}
+.desk-next .speak-transport > .desk-mic.gadget-transport-key .gadget-transport-glyph svg {
+  stroke: var(--text-on-accent);
+}
+.desk-next .speak-transport > .desk-mic.gadget-transport-key:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 85%, white);
+}
+
+/* ── 2. Utterance well ── */
+.desk-next .speak-well {
+  display: flex;
+  flex: none;
   min-height: 64px;
-  padding: 7px 9px;
-  border: 1px solid var(--border);
-  background: var(--desk-window-well);
-  box-shadow: var(--desk-window-etch);
-  font-family: var(--font-mono);
 }
-/* The state register: STATE + the three axis tokens, active inverted. */
-.desk-next .speak-register {
+.desk-next .speak-well .gadget-pad {
+  flex: 1;
+}
+.desk-next .speak-well textarea {
+  flex: 1;
+  min-height: 48px;
+  height: auto;
+  resize: none;
+  font: var(--desk-type-primary-size, 15px) / 1.4 var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-weight: 600;
+}
+.desk-next .speak-well textarea::placeholder {
+  font-weight: 400;
+}
+
+/* ── 3. LANDS IN row ── */
+.desk-next .speak-lands-in {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+}
+.desk-next .speak-lands-in-caption {
+  font: 600 11px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.desk-next .speak-lands-in-dot {
+  font: 600 11px / 1 var(--font-mono);
+  color: var(--text-faint);
+}
+.desk-next .speak-lands-in-target {
+  font: 600 var(--desk-type-primary-size, 15px) / 1 var(--font-sans, 'Inter', system-ui, sans-serif);
+  color: var(--text);
+  white-space: nowrap;
+}
+.desk-next .speak-lands-in-latency {
+  font: 600 12px / 1 var(--font-mono);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── 4. RESULT row ── */
+.desk-next .speak-result {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.desk-next .speak-result-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.desk-next .speak-result-text {
+  flex: 1;
+  min-width: 0;
+  font: 600 var(--desk-type-primary-size, 15px) / 1.4 var(--font-sans, 'Inter', system-ui, sans-serif);
+  color: var(--text);
+}
+/* The teach row: unfolds in place, never a modal */
+.desk-next .speak-teach {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--border-faint, rgba(255, 255, 255, 0.035));
+}
+
+/* ── 5. ENGINE row ── */
+.desk-next .speak-engine {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+.desk-next .speak-engine-caption {
+  font: 600 11px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.desk-next .speak-engine-dot {
+  font: 600 11px / 1 var(--font-mono);
+  color: var(--text-faint);
+}
+.desk-next .speak-engine-name {
+  font: 600 var(--desk-type-primary-size, 15px) / 1 var(--font-sans, 'Inter', system-ui, sans-serif);
+  color: var(--text);
+  white-space: nowrap;
+}
+.desk-next .speak-engine-name[data-muted] {
+  color: var(--text-muted);
+}
+.desk-next .speak-engine-checking {
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* ── 6. Details (fold) content ── */
+.desk-next .speak-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0 4px;
+}
+.desk-next .speak-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 24px;
+}
+.desk-next .speak-detail-label {
+  min-width: 60px;
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.desk-next .speak-detail-value {
+  font: 500 11px / 1.2 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+  white-space: nowrap;
+}
+.desk-next .speak-detail-state {
   display: inline-flex;
-  align-items: stretch;
-  border: 1px solid var(--border);
-  background: var(--surface-1);
-  box-shadow: var(--desk-window-etch);
+  gap: 0;
 }
-.desk-next .speak-register-axis,
-.desk-next .speak-register-token {
+.desk-next .speak-detail-state-token {
   display: inline-flex;
   align-items: center;
   padding: 3px 7px;
   font: 600 10px / 1 var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-.desk-next .speak-register-axis {
   color: var(--text-faint);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
 }
-.desk-next .speak-register-token {
-  color: var(--text-faint);
-}
-.desk-next .speak-register-token[data-active] {
+.desk-next .speak-detail-state-token[data-active] {
   background: var(--accent);
   color: var(--text-on-accent);
 }
-/* Etched readout cells: the patch panel on the face. */
-.desk-next .speak-cells {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-left: auto;
-  min-width: 0;
+
+/* Fix 5: footer trailing inset — Export must not touch the resize grip. */
+.desk-next .speak-footer .surface-footer-verbs {
+  padding-right: 8px;
 }
-.desk-next .speak-cell {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 3px 8px 4px;
-  border: 1px solid var(--border);
-  background: var(--surface-1);
-  box-shadow: var(--desk-window-etch);
-  min-width: 0;
+
+/* 393 footer: one line — chip · receipt (truncated) · verbs trailing. */
+@container surface (max-width: 420px) {
+  .desk-next .speak-footer {
+    grid-template-columns: max-content minmax(0, 1fr) max-content;
+    grid-template-areas: "egress receipt verbs";
+    row-gap: 0;
+  }
+  .desk-next .speak-footer .surface-footer-receipt {
+    height: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
 }
-.desk-next .speak-cell-label {
-  font: 600 9px / 1 var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  white-space: nowrap;
+
+/* ── 393: phone stacking ── */
+@container surface (max-width: 500px) {
+  .desk-next .speak-transport {
+    order: 99;
+    position: sticky;
+    bottom: 0;
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+    background: var(--desk-window-bg, var(--surface-1));
+    z-index: var(--desk-z-local);
+  }
+  .desk-next .speak-lands-in {
+    flex-wrap: wrap;
+  }
+  .desk-next .speak-result-line {
+    flex-wrap: wrap;
+  }
+  .desk-next .speak-teach {
+    flex-wrap: wrap;
+  }
+  .desk-next .speak-engine {
+    flex-wrap: wrap;
+  }
 }
-.desk-next .speak-cell-value {
-  font: 500 11px / 1.2 var(--font-mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 18ch;
-}
-/* HS-112-02 — the aim row: one gadget sheet under the strip naming
-   where a released TALK sends the words. Never flex-compressed. */
-.desk-next .speak-aim {
-  flex: none;
-}
-.desk-next .speak-aim .gadget-group {
-  margin: 0;
-}
-/* The utterance well fills; the face never shows a void. */
-.desk-next .speak-well {
-  display: flex;
-  flex: 1;
-  min-height: 110px;
-}
-.desk-next .speak-well textarea {
-  flex: 1;
-  min-height: 110px;
-  height: auto;
-  resize: none;
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  line-height: 1.6;
-}
-.desk-next .speak-run-row {
-  flex: none;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.desk-next .speak-grounding {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  flex: 1;
-  min-width: 180px;
-  max-width: 380px;
-}
-.desk-next .speak-grounding-label {
-  font: 600 10px / 1 var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  white-space: nowrap;
-}
-/* The result receipt: FINAL_TEXT readout, fact tokens, verdict verbs
-   on the rule line, the WRONG sheet extending in place. */
-.desk-next .speak-result {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background: var(--desk-window-well);
-  box-shadow: var(--desk-window-etch);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-detail-size);
-}
-.desk-next .speak-result-facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
-  font: 500 10px / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-.desk-next .speak-result-verdict {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-  box-shadow: 0 -1px 0 var(--etch-dark);
-}
-.desk-next .speak-correct {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-  box-shadow: 0 -1px 0 var(--etch-dark);
-}
-/* Token fact lines (delivery facts, digest, warnings). */
-.desk-next .speak-token-line {
-  margin: 0;
-  font: 500 11px / 1.5 var(--font-mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text);
-  overflow-wrap: anywhere;
-}
-.desk-next .speak-token-line[data-tone="warn"] {
-  color: var(--warn);
-  text-transform: none;
-}
-/* Nudge ledger rows behind the door. */
+
+/* ── Keep the nudge row and blocks styles (used by gear door wings) ── */
 .desk-next .speak-nudge-row {
   display: flex;
   align-items: center;
@@ -210,18 +276,176 @@
 .desk-next .speak-nudge-row .surface-row-verbs {
   margin-left: auto;
 }
-/* Blocks wing: the tile NAME is machine material — mono. */
 .desk-next .speak-blocks .surface-tile-name {
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
 }
-/* HS-111-02 — the gear door is ONE gadget sheet on the window
-   material, full width (no well box, no settings mile chrome). */
+/* Token fact lines (used by Readiness and DictationSections). */
+.desk-next .speak-token-line {
+  margin: 0;
+  font: 500 11px / 1.5 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.desk-next .speak-token-line[data-tone="warn"] {
+  color: var(--warn);
+  text-transform: none;
+}
+/* The gear door. */
 .desk-next .surface-door {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
+/* ————— HS-176-02 — the teach loop on the RESULT row —————
+   The FIELD caption, the APPLIED chip and its unfolding well, and the
+   token receipt that replaces the teach row. Tokens, verbs, counts —
+   no sentence anywhere. */
+
+/* The verdict pair is ONE species in two states: the selected verdict
+   takes the pressed frame, never a second button species. */
+.desk-next .speak-result-line .btn[data-verdict-active] {
+  border-color: var(--border);
+  background: var(--desk-window-well, rgba(0, 0, 0, 0.28));
+  box-shadow: inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light);
+  color: var(--text);
+}
+
+/* APPLIED — a chip that is also a verb (rule A.1: the library Button). */
+.desk-next .speak-result-line .btn.speak-applied-chip {
+  min-height: 18px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--desk-window-well, rgba(0, 0, 0, 0.28));
+  box-shadow: inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light);
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ok);
+  flex: none;
+}
+
+/* The rules that fired, unfolded in-world beneath the RESULT line. */
+.desk-next .speak-applied-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 2px 0 0 18px;
+  padding: 10px 12px;
+  background: var(--desk-window-well, var(--surface-1));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light);
+}
+.desk-next .speak-applied-rule {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.desk-next .speak-applied-rule + .speak-applied-rule {
+  padding-top: 8px;
+  border-top: 1px solid var(--border-faint, rgba(255, 255, 255, 0.035));
+}
+.desk-next .speak-applied-fact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.desk-next .speak-applied-caption {
+  font: 600 11px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.desk-next .speak-applied-heard,
+.desk-next .speak-applied-said {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 12px / 1 var(--font-mono);
+}
+.desk-next .speak-applied-heard {
+  color: var(--text-muted);
+}
+.desk-next .speak-applied-said {
+  color: var(--text);
+}
+
+/* FIELD and its cycle are one object: at 393 they take the first line
+   whole, so the value control and `Teach` share the second (the board's
+   phone composition). */
+.desk-next .speak-teach-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+/* The FIELD caption leads the teach row. */
+.desk-next .speak-teach-caption {
+  font: 600 11px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+/* The value well fills the row and WRAPS — it never truncates the text
+   he is being asked to edit. */
+.desk-next .speak-teach .gadget-pad {
+  flex: 1;
+  min-width: 0;
+}
+.desk-next .speak-teach .gadget-pad textarea {
+  /* The desk floors every textarea at two control heights (global.css:
+     `.desk-next textarea`), which is right for a pad you compose in and
+     wrong for a one-line value you EDIT: the board draws this well at a
+     single control height at 1440 and lets it grow at 393. The floor is
+     lowered HERE only, and `autoGrow` sizes the rest. */
+  min-height: var(--desk-control-h);
+  padding: 5px 26px 5px 8px;
+  overflow-wrap: anywhere;
+}
+
+/* The receipt takes the teach row's place: a token, and the pair or
+   the label beside it. It fades; it never becomes a sentence. */
+.desk-next .speak-receipt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--border-faint, rgba(255, 255, 255, 0.035));
+}
+.desk-next .speak-receipt-tail {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 12px / 1 var(--font-mono);
+  color: var(--text-muted);
+}
+
+@container surface (max-width: 500px) {
+  .desk-next .speak-receipt {
+    flex-wrap: wrap;
+  }
+  .desk-next .speak-teach-field {
+    flex-basis: 100%;
+  }
+  /* The well wraps to as many lines as it needs; `Teach` stays at the
+     trailing edge, level with the first line. */
+  .desk-next .speak-teach {
+    align-items: flex-start;
+  }
+  .desk-next .speak-teach-field {
+    align-items: center;
+  }
+}

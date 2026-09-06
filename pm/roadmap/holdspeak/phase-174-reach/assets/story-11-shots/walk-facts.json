@@ -1,0 +1,382 @@
+{
+  "generated_at": "2026-09-05T15:51:34.404746",
+  "hub_host": "127.0.0.1:64020",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "width": 393,
+      "height": 852
+    }
+  ],
+  "shots": [
+    {
+      "face": "settings-system",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-174-reach/assets/story-11-shots/walk-remote-1440.png"
+    },
+    {
+      "face": "shade-receipts",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-174-reach/assets/story-11-shots/walk-shade-receipts-1440.png"
+    },
+    {
+      "face": "rhythm",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-174-reach/assets/story-11-shots/walk-rhythm-1440.png"
+    },
+    {
+      "face": "door",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-174-reach/assets/story-11-shots/walk-door-1440.png"
+    },
+    {
+      "face": "settings-system",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-174-reach/assets/story-11-shots/walk-remote-393.png"
+    },
+    {
+      "face": "shade-receipts",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-174-reach/assets/story-11-shots/walk-shade-receipts-393.png"
+    },
+    {
+      "face": "rhythm",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-174-reach/assets/story-11-shots/walk-rhythm-393.png"
+    },
+    {
+      "face": "door",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-174-reach/assets/story-11-shots/walk-door-393.png"
+    }
+  ],
+  "facts": [
+    {
+      "face": "remote-api",
+      "field": "remote_enabled",
+      "expected": "(OFF is the expected default)",
+      "observed": "OFF",
+      "verdict": "DATA",
+      "why": "Streamable HTTP transport state"
+    },
+    {
+      "face": "remote-api",
+      "field": "active_count",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "active credential count"
+    },
+    {
+      "face": "remote-api",
+      "field": "total_count",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "total credential count"
+    },
+    {
+      "face": "remote-api",
+      "field": "probe_exists",
+      "expected": "false",
+      "observed": "False",
+      "verdict": "MATCH",
+      "why": "walk-174-probe credential pre-existing check"
+    },
+    {
+      "face": "remote-api",
+      "field": "hub_host",
+      "expected": "(THIS DEVICE or hostname)",
+      "observed": "THIS DEVICE",
+      "verdict": "DATA",
+      "why": "hub host identity"
+    },
+    {
+      "face": "remote-api",
+      "field": "hub_mesh",
+      "expected": "(bool)",
+      "observed": "MESH OFF",
+      "verdict": "DATA",
+      "why": "mesh state from hub"
+    },
+    {
+      "face": "credential-probe",
+      "field": "probe_skipped",
+      "expected": "(skip when remote OFF or probe exists)",
+      "observed": "credential probe: remote OFF",
+      "verdict": "DATA",
+      "why": "write guard denied the credential probe"
+    },
+    {
+      "face": "credential-probe",
+      "field": "remote_state",
+      "expected": "OFF (expected default)",
+      "observed": "REMOTE OFF",
+      "verdict": "MATCH",
+      "why": "remote listener is OFF; zero writes is the expected outcome"
+    },
+    {
+      "face": "settings-system",
+      "field": "hub_row_remote_cell",
+      "expected": "REMOTE OFF",
+      "observed": "REMOTE OFF",
+      "verdict": "DATA",
+      "why": "REMOTE cell on the hub row"
+    },
+    {
+      "face": "settings-system",
+      "field": "streamable_http_state",
+      "expected": "OFF",
+      "observed": "OFF",
+      "verdict": "DATA",
+      "why": "Streamable HTTP toggle row"
+    },
+    {
+      "face": "settings-system",
+      "field": "credential_count_token",
+      "expected": "(absent at zero, N CREDENTIALS when >0)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "credentials count token"
+    },
+    {
+      "face": "settings-system",
+      "field": "active_count_token",
+      "expected": "(absent at zero, N ACTIVE when >0)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "active credentials count"
+    },
+    {
+      "face": "settings-system",
+      "field": "issue_credential_absent_when_off",
+      "expected": "true (absent when OFF)",
+      "observed": "True",
+      "verdict": "MATCH",
+      "why": "Issue credential button should be absent when remote is OFF"
+    },
+    {
+      "face": "shade-receipts",
+      "field": "finished_rows",
+      "expected": "(varies)",
+      "observed": "4",
+      "verdict": "DATA",
+      "why": "Finished rows in the shade"
+    },
+    {
+      "face": "shade-receipts",
+      "field": "remote_chips_in_finished",
+      "expected": "(none expected -- no overnight run yet)",
+      "observed": "[]",
+      "verdict": "DATA",
+      "why": "REMOTE . <ip> badges in Finished rows"
+    },
+    {
+      "face": "shade-receipts",
+      "field": "chip_with_time_inside",
+      "expected": "false (no chip should carry a time inside)",
+      "observed": "False",
+      "verdict": "MATCH",
+      "why": "defect check: chip carrying a time"
+    },
+    {
+      "face": "rhythm",
+      "field": "runs_on_value",
+      "expected": "THIS DEVICE",
+      "observed": "THIS DEVICE",
+      "verdict": "MATCH",
+      "why": "Runs on host (expected THIS DEVICE on the owner's desk)"
+    },
+    {
+      "face": "rhythm",
+      "field": "run_now_count",
+      "expected": "1 (once, on the sweep row)",
+      "observed": "1",
+      "verdict": "MATCH",
+      "why": "Run now verb count (counsel C3: one verb, once)"
+    },
+    {
+      "face": "rhythm",
+      "field": "awake_caption_present",
+      "expected": "false (caption absent when local)",
+      "observed": "False",
+      "verdict": "MATCH",
+      "why": "WHILE THIS MAC IS AWAKE caption (absent when Runs on = THIS DEVICE)"
+    },
+    {
+      "face": "door",
+      "field": "confluence_row_state",
+      "expected": "(NOT INSTALLED / SIGN IN / SIGNED IN AS)",
+      "observed": "CConfluence\u25cbNOT SET UPConnect",
+      "verdict": "DATA",
+      "why": "Confluence source row connection state"
+    },
+    {
+      "face": "door",
+      "field": "confluence_defaults",
+      "expected": "['RECENT BLOGS', 'PAGES BY ID']",
+      "observed": "[]",
+      "verdict": "DATA",
+      "why": "Confluence default watch labels"
+    },
+    {
+      "face": "door",
+      "field": "github_row_present",
+      "expected": "true (provider listed in connections)",
+      "observed": "True",
+      "verdict": "MATCH",
+      "why": "github row presence (provider in connections API)"
+    },
+    {
+      "face": "door",
+      "field": "jira_row_present",
+      "expected": "true (provider listed in connections)",
+      "observed": "True",
+      "verdict": "MATCH",
+      "why": "jira row presence (provider in connections API)"
+    },
+    {
+      "face": "door",
+      "field": "confluence_row_present",
+      "expected": "true (provider listed in connections)",
+      "observed": "True",
+      "verdict": "MATCH",
+      "why": "confluence row presence (provider in connections API)"
+    },
+    {
+      "face": "settings-system",
+      "field": "hub_row_remote_cell",
+      "expected": "REMOTE OFF",
+      "observed": "REMOTE OFF",
+      "verdict": "DATA",
+      "why": "REMOTE cell on the hub row"
+    },
+    {
+      "face": "settings-system",
+      "field": "streamable_http_state",
+      "expected": "OFF",
+      "observed": "OFF",
+      "verdict": "DATA",
+      "why": "Streamable HTTP toggle row"
+    },
+    {
+      "face": "settings-system",
+      "field": "credential_count_token",
+      "expected": "(absent at zero, N CREDENTIALS when >0)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "credentials count token"
+    },
+    {
+      "face": "settings-system",
+      "field": "active_count_token",
+      "expected": "(absent at zero, N ACTIVE when >0)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "active credentials count"
+    },
+    {
+      "face": "settings-system",
+      "field": "issue_credential_absent_when_off",
+      "expected": "true (absent when OFF)",
+      "observed": "True",
+      "verdict": "MATCH",
+      "why": "Issue credential button should be absent when remote is OFF"
+    },
+    {
+      "face": "shade-receipts",
+      "field": "finished_rows",
+      "expected": "(varies)",
+      "observed": "4",
+      "verdict": "DATA",
+      "why": "Finished rows in the shade"
+    },
+    {
+      "face": "shade-receipts",
+      "field": "remote_chips_in_finished",
+      "expected": "(none expected -- no overnight run yet)",
+      "observed": "[]",
+      "verdict": "DATA",
+      "why": "REMOTE . <ip> badges in Finished rows"
+    },
+    {
+      "face": "shade-receipts",
+      "field": "chip_with_time_inside",
+      "expected": "false (no chip should carry a time inside)",
+      "observed": "False",
+      "verdict": "MATCH",
+      "why": "defect check: chip carrying a time"
+    },
+    {
+      "face": "rhythm",
+      "field": "runs_on_value",
+      "expected": "THIS DEVICE",
+      "observed": "THIS DEVICE",
+      "verdict": "MATCH",
+      "why": "Runs on host (expected THIS DEVICE on the owner's desk)"
+    },
+    {
+      "face": "rhythm",
+      "field": "run_now_count",
+      "expected": "1 (once, on the sweep row)",
+      "observed": "1",
+      "verdict": "MATCH",
+      "why": "Run now verb count (counsel C3: one verb, once)"
+    },
+    {
+      "face": "rhythm",
+      "field": "awake_caption_present",
+      "expected": "false (caption absent when local)",
+      "observed": "False",
+      "verdict": "MATCH",
+      "why": "WHILE THIS MAC IS AWAKE caption (absent when Runs on = THIS DEVICE)"
+    },
+    {
+      "face": "door",
+      "field": "confluence_row_state",
+      "expected": "(NOT INSTALLED / SIGN IN / SIGNED IN AS)",
+      "observed": "CConfluence\u25cbNOT SET UPConnect",
+      "verdict": "DATA",
+      "why": "Confluence source row connection state"
+    },
+    {
+      "face": "door",
+      "field": "confluence_defaults",
+      "expected": "['RECENT BLOGS', 'PAGES BY ID']",
+      "observed": "[]",
+      "verdict": "DATA",
+      "why": "Confluence default watch labels"
+    },
+    {
+      "face": "door",
+      "field": "github_row_present",
+      "expected": "true (provider listed in connections)",
+      "observed": "True",
+      "verdict": "MATCH",
+      "why": "github row presence (provider in connections API)"
+    },
+    {
+      "face": "door",
+      "field": "jira_row_present",
+      "expected": "true (provider listed in connections)",
+      "observed": "True",
+      "verdict": "MATCH",
+      "why": "jira row presence (provider in connections API)"
+    },
+    {
+      "face": "door",
+      "field": "confluence_row_present",
+      "expected": "true (provider listed in connections)",
+      "observed": "True",
+      "verdict": "MATCH",
+      "why": "confluence row presence (provider in connections API)"
+    }
+  ],
+  "errors": [],
+  "surprises": [],
+  "defects": [],
+  "write_receipts": []
+}

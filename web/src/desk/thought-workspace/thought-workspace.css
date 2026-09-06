@@ -237,6 +237,19 @@
   color: var(--text);
 }
 
+/* HS-176-04 — the tag field and its own mic share one row (voice law). */
+.desk-next .thought-document-tags-well {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.desk-next .thought-document-tags-well .desk-mic {
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+
 .desk-next .thought-document-foot {
   flex: none;
   min-height: 30px;

@@ -5,16 +5,71 @@
 // filters, receipt detail) stays one verb away.
 import "./attention.css";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import { apiFetch, type JsonRecord } from "../../lib/api";
 import { gateAge, useGate } from "../gate";
 import { useProjections } from "../projections";
 import { humanTime } from "../surface/format";
-import { StringGadget } from "../surface/gadgets";
+import { countToken } from "../surface/count";
+import { EgressChip, StringGadget } from "../surface/gadgets";
+import { egressForEvent, receiptLabel } from "../surface/egress";
 import { SurfaceState } from "../surface/Surface";
 import { humanizeWireValue } from "../../lib/productLanguage";
-import { openPrimitive, openSurfaceWhenReady } from "../shell";
+import { MicButton } from "./MicButton";
+import { openPrimitive, openSurfaceOr, openSurfaceWhenReady } from "../shell";
 
 type Correction = Record<string, unknown>;
+
+// ── HS-171-04: needs-you aggregate wire shape ───────────────────────
+type NeedsYouItem = {
+  projectId: string;
+  projectName: string;
+  ref: string;
+  title: string;
+  why: string;
+  ageToken?: string;
+  source?: string;
+  verbHref?: string;
+  severity?: string;
+  muted?: boolean;
+};
+
+type NeedsYouAggregate = {
+  count: number;
+  mutedCount?: number;
+  projects: string[];
+  items: NeedsYouItem[];
+  next?: { label: string; at: string } | null;
+  computedAt?: string;
+  stale?: boolean;
+  sweepId?: string | null;
+};
+
+/** Group items by projectId, returning one entry per Room with items. */
+function groupByRoom(items: NeedsYouItem[]): {
+  projectId: string;
+  projectName: string;
+  items: NeedsYouItem[];
+  muted: boolean;
+}[] {
+  const map = new Map<string, { projectName: string; items: NeedsYouItem[]; muted: boolean }>();
+  for (const item of items) {
+    const existing = map.get(item.projectId);
+    if (existing) {
+      existing.items.push(item);
+    } else {
+      map.set(item.projectId, {
+        projectName: item.projectName,
+        items: [item],
+        muted: Boolean(item.muted),
+      });
+    }
+  }
+  // Non-muted first, then muted; within each group, preserve item order.
+  return Array.from(map.entries())
+    .map(([projectId, v]) => ({ projectId, ...v }))
+    .sort((a, b) => (a.muted === b.muted ? 0 : a.muted ? 1 : -1));
+}
 
 export function SystemShade({
   open,
@@ -28,6 +83,8 @@ export function SystemShade({
   const store = useProjections();
   const gate = useGate();
   const [corrections, setCorrections] = useState<Correction[] | null>(null);
+  const [needsYou, setNeedsYou] = useState<NeedsYouAggregate | null>(null);
+  const [brief, setBrief] = useState<{ itemCount: number; date: string; hasThisWeek: boolean } | null>(null);
   const [denyingId, setDenyingId] = useState<string | null>(null);
   const [denyReason, setDenyReason] = useState("");
   const panel = useRef<HTMLDivElement>(null);
@@ -56,7 +113,39 @@ export function SystemShade({
         setCorrections(rows as Correction[]);
       })
       .catch(() => setCorrections([]));
+    // HS-171-04: fetch needs-you aggregate (initial; polling below)
+    void apiFetch<NeedsYouAggregate>("/api/desk/needs-you")
+      .then((data) => setNeedsYou(data))
+      .catch(() => setNeedsYou(null));
+    // HS-171-04: fetch brief latest for the shade row
+    void apiFetch<Record<string, unknown> | null>("/api/brief/latest")
+      .then((data) => {
+        if (!data || data.is_empty) { setBrief(null); return; }
+        const sections = (data.sections ?? {}) as Record<string, unknown[]>;
+        const itemCount = Object.values(sections).flat().length;
+        const thisWeekItems = Array.isArray(sections.this_week) ? sections.this_week : [];
+        const genAt = String(data.generated_at ?? "");
+        const d = genAt ? new Date(genAt) : null;
+        const date = d && !isNaN(d.getTime())
+          ? d.toLocaleDateString("en-US", { month: "short", day: "2-digit" }).toUpperCase()
+          : "";
+        setBrief(itemCount > 0 ? { itemCount, date, hasThisWeek: thisWeekItems.length > 0 } : null);
+      })
+      .catch(() => setBrief(null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  // HS-171-04: poll the needs-you aggregate while the shade is open;
+  // stop when closed. The endpoint is cached server-side so the
+  // interval is cheap. 5 000 ms keeps the shade fresh without hammering.
+  useEffect(() => {
+    if (!open) return;
+    const timer = window.setInterval(() => {
+      void apiFetch<NeedsYouAggregate>("/api/desk/needs-you")
+        .then((data) => setNeedsYou(data))
+        .catch(() => {});
+    }, 5000);
+    return () => window.clearInterval(timer);
   }, [open]);
 
   useEffect(() => {
@@ -79,6 +168,7 @@ export function SystemShade({
 
   if (!open) return null;
 
+  const needsAttentionCount = Number(store.counts.needs_attention || 0);
   const needs = store.projections
     .filter((row) => row.attention_state === "needs_attention")
     .slice(0, 4);
@@ -101,8 +191,9 @@ export function SystemShade({
     <div className="desk-shade" ref={panel} role="group" aria-label="Missed">
       <div className="desk-shade-head">
         <span className="desk-shade-title">Missed</span>
-        <button
-          type="button"
+        <Button
+          dense
+          variant="ghost"
           className="desk-shade-memory"
           onClick={() => {
             onClose();
@@ -110,85 +201,104 @@ export function SystemShade({
           }}
         >
           Desk memory
-        </button>
+        </Button>
       </div>
 
-      <section className="desk-shade-group" aria-label="Needs you">
-        <h4>
-          Needs you <b>· {(store.counts.needs_attention || 0) + gate.held.length}</b>
-        </h4>
-        {gate.held.map((proposal) => (
-          <div className="desk-shade-item desk-gate-item" key={proposal.id}>
-            <span className="desk-shade-glyph" aria-hidden="true">
-              ⊘
-            </span>
-            <div className="desk-shade-what">
-              <strong>
-                {humanizeWireValue(String(proposal.tool))} held
-              </strong>
-              <small>waiting {gateAge(proposal)}</small>
-              {denyingId === proposal.id ? (
-                <span className="desk-shade-do">
-                  <StringGadget
-                    label="Deny reason"
-                    placeholder="Reason for the agent, one line"
-                    value={denyReason}
-                    autoFocus
-                    onChange={setDenyReason}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
+      <ShadeProjects
+        needsYou={needsYou}
+        onClose={onClose}
+      />
+
+      <ShadeBrief
+        brief={brief}
+        onClose={onClose}
+      />
+
+      <ShadePeople
+        needsYou={needsYou}
+        onClose={onClose}
+        open={open}
+      />
+
+      {/* HS-171-04: sections with zero items are ABSENT (A.8). When
+          every section is empty the shade shows one muted line. */}
+      {(needsAttentionCount + gate.held.length) > 0 ? (
+        <section className="desk-shade-group" aria-label="Needs you">
+          <h4>
+            Needs you <b>&middot; {needsAttentionCount + gate.held.length}</b>
+          </h4>
+          {gate.held.map((proposal) => (
+            <div className="desk-shade-item desk-gate-item" key={proposal.id}>
+              <span className="desk-shade-glyph" aria-hidden="true">
+                ⊘
+              </span>
+              <div className="desk-shade-what">
+                <strong>
+                  {humanizeWireValue(String(proposal.tool))} held
+                </strong>
+                <small>waiting {gateAge(proposal)}</small>
+                {denyingId === proposal.id ? (
+                  <span className="desk-shade-do">
+                    <StringGadget
+                      label="Deny reason"
+                      placeholder="Reason for the agent, one line"
+                      value={denyReason}
+                      autoFocus
+                      onChange={setDenyReason}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          void gate.decide(proposal.id, "denied", denyReason);
+                          setDenyingId(null);
+                          setDenyReason("");
+                        }
+                        if (event.key === "Escape") setDenyingId(null);
+                      }}
+                    />
+                    <MicButton draftScope="shade-deny" onText={(t: string) => setDenyReason(t)} />
+                    <Button
+                      dense
+                      variant="ghost"
+                      onClick={() => {
                         void gate.decide(proposal.id, "denied", denyReason);
                         setDenyingId(null);
                         setDenyReason("");
-                      }
-                      if (event.key === "Escape") setDenyingId(null);
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="desk-chip quiet"
-                    onClick={() => {
-                      void gate.decide(proposal.id, "denied", denyReason);
-                      setDenyingId(null);
-                      setDenyReason("");
-                    }}
-                  >
-                    Send deny
-                  </button>
-                  <button
-                    type="button"
-                    className="desk-chip quiet"
-                    onClick={() => setDenyingId(null)}
-                  >
-                    Back
-                  </button>
-                </span>
-              ) : (
-                <span className="desk-shade-do">
-                  <button
-                    type="button"
-                    className="desk-chip is-primary"
-                    onClick={() => void gate.decide(proposal.id, "approved")}
-                  >
-                    Approve
-                  </button>
-                  <button
-                    type="button"
-                    className="desk-chip quiet"
-                    onClick={() => {
-                      setDenyingId(proposal.id);
-                      setDenyReason("");
-                    }}
-                  >
-                    Deny
-                  </button>
-                </span>
-              )}
+                      }}
+                    >
+                      Send deny
+                    </Button>
+                    <Button
+                      dense
+                      variant="ghost"
+                      onClick={() => setDenyingId(null)}
+                    >
+                      Back
+                    </Button>
+                  </span>
+                ) : (
+                  <span className="desk-shade-do">
+                    <Button
+                      dense
+                      variant="primary"
+                      onClick={() => void gate.decide(proposal.id, "approved")}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      dense
+                      variant="ghost"
+                      onClick={() => {
+                        setDenyingId(proposal.id);
+                        setDenyReason("");
+                      }}
+                    >
+                      Deny
+                    </Button>
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-        {needs.length ? (
-          needs.map((row) => (
+          ))}
+          {needs.map((row) => (
             <div className="desk-shade-item" key={row.id}>
               <span className="desk-shade-glyph" aria-hidden="true">
                 ◎
@@ -196,68 +306,76 @@ export function SystemShade({
               <div className="desk-shade-what">
                 <strong>{row.title}</strong>
                 <small>
-                  {row.subject_label} · {humanTime(row.timestamp)}
+                  {row.subject_label} &middot; {humanTime(row.timestamp)}
                 </small>
                 <span className="desk-shade-do">
-                  <button type="button" onClick={() => openSource(row)}>
+                  <Button dense variant="ghost" onClick={() => openSource(row)}>
                     Open
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    dense
+                    variant="ghost"
                     onClick={() => void store.present(row.id, "acknowledge")}
                   >
                     Acknowledge
-                  </button>
-                  <button
-                    type="button"
-                    className="is-quiet"
+                  </Button>
+                  <Button
+                    dense
+                    variant="ghost"
                     onClick={() => void store.present(row.id, "dismiss")}
                   >
                     Dismiss
-                  </button>
+                  </Button>
                 </span>
               </div>
             </div>
-          ))
-        ) : gate.held.length ? null : (
-          <SurfaceState empty emptyLabel="Clear" />
-        )}
-      </section>
+          ))}
+        </section>
+      ) : null}
 
-      <section className="desk-shade-group" aria-label="Finished">
-        <h4>
-          Finished <b>· {store.counts.receipts || 0}</b>
-        </h4>
-        {finished.length ? (
-          finished.map((row) => (
+      {finished.length > 0 ? (
+        <section className="desk-shade-group" aria-label="Finished">
+          <h4>
+            Finished {finished.length > 0 ? <b>&middot; {finished.length}</b> : null}
+          </h4>
+          {finished.map((row) => {
+            // HS-174-04: derive egress from origin + caller (tolerant: fields may be absent)
+            const egress = egressForEvent({ origin: row.origin, caller: row.caller });
+            // Pipeline projections carry raw service.method titles; map them to human grammar.
+            const isPipeline = row.source_kind === "pipeline_event" || row.id.startsWith("pipeline:");
+            const displayTitle = isPipeline ? receiptLabel({ title: row.title }) : row.title;
+            return (
             <div className="desk-shade-item" key={row.id}>
               <span className="desk-shade-glyph" aria-hidden="true">
                 ✦
               </span>
               <div className="desk-shade-what">
-                <strong>{row.title}</strong>
+                <strong>{displayTitle}</strong>
                 <small>
-                  {row.outcome || row.subject_label} · {humanTime(row.timestamp)}
+                  {row.outcome || row.subject_label}
+                  {egress.label ? (
+                    <> <EgressChip label={egress.label} scope={egress.scope} data-testid="shade-finished-egress" /></>
+                  ) : null}
+                  {" "}&middot; {humanTime(row.timestamp)}
                 </small>
                 <span className="desk-shade-do">
-                  <button type="button" onClick={() => openSource(row)}>
+                  <Button dense variant="ghost" onClick={() => openSource(row)}>
                     Open
-                  </button>
+                  </Button>
                 </span>
               </div>
             </div>
-          ))
-        ) : (
-          <SurfaceState empty emptyLabel="No receipts" />
-        )}
-      </section>
+            );
+          })}
+        </section>
+      ) : null}
 
-      <section className="desk-shade-group" aria-label="Learned">
-        <h4>
-          Learned <b>· {(corrections ?? []).length}</b>
-        </h4>
-        {learned.length ? (
-          learned.map((row, index) => {
+      {learned.length > 0 ? (
+        <section className="desk-shade-group" aria-label="Learned">
+          <h4>
+            Learned {learned.length > 0 ? <b>&middot; {learned.length}</b> : null}
+          </h4>
+          {learned.map((row, index) => {
             const gist = row.gist
               ? String(row.gist)
               : row.kind
@@ -275,11 +393,339 @@ export function SystemShade({
                 </div>
               </div>
             );
-          })
-        ) : (
-          <SurfaceState empty emptyLabel="No corrections" />
-        )}
-      </section>
+          })}
+        </section>
+      ) : null}
+
+      {/* When EVERY section is empty: one muted caption. */}
+      {!needsYou?.items?.length && !brief && !(needsAttentionCount + gate.held.length) && !finished.length && !learned.length ? (
+        <p className="desk-shade-quiet">Nothing missed</p>
+      ) : null}
     </div>
+  );
+}
+
+
+// ── HS-171-04: PROJECTS section in the shade ─────────────────────────
+//
+// FIRST section, above Needs you. ABSENT when no Room has items (A.8).
+// One row per Room with items; muted Rooms dimmed with a MUTED token
+// and excluded from the caption count.
+
+/** The severity tone for the count chip on a Room row. */
+function roomTone(items: NeedsYouItem[]): "warn" | undefined {
+  return items.some((i) => i.severity === "danger") ? "warn" : undefined;
+}
+
+function ShadeProjects({
+  needsYou,
+  onClose,
+}: {
+  needsYou: NeedsYouAggregate | null;
+  onClose: () => void;
+}) {
+  const rooms = needsYou ? groupByRoom(needsYou.items) : [];
+  // Absent when no Room has items.
+  if (rooms.length === 0) return null;
+
+  // The caption count excludes muted Rooms.
+  const activeItems = rooms
+    .filter((r) => !r.muted)
+    .reduce((n, r) => n + r.items.length, 0);
+  const captionCount = countToken(activeItems, "NEEDS YOU", "NEED YOU");
+
+  return (
+    <section
+      className="desk-shade-group"
+      aria-label="Projects"
+      data-testid="shade-projects"
+    >
+      <h4>
+        Projects{captionCount ? <b> &middot; {captionCount}</b> : null}
+      </h4>
+
+      {rooms.map((room) => {
+        const roomCount = countToken(
+          room.muted ? 0 : room.items.length,
+          "NEEDS YOU", "NEED YOU",
+        );
+        const firstWhy = room.items[0]?.why || "";
+        return (
+          <div
+            className={`desk-shade-item${room.muted ? " is-muted" : ""}`}
+            key={room.projectId}
+            data-testid="shade-project-row"
+          >
+            <span className="desk-shade-glyph" aria-hidden="true">
+              {"|}"}
+            </span>
+            <div className="desk-shade-what">
+              <strong>{room.projectName}</strong>
+              <small>
+                {room.muted ? (
+                  <span className="desk-shade-project-tokens">
+                    <span
+                      className="surface-token"
+                      data-chip
+                      data-tone="muted"
+                    >
+                      MUTED
+                    </span>
+                  </span>
+                ) : (
+                  <span className="desk-shade-project-tokens">
+                    {roomCount ? (
+                      <span
+                        className="surface-token"
+                        data-chip
+                        data-tone={roomTone(room.items)}
+                      >
+                        {roomCount}
+                      </span>
+                    ) : null}
+                    {firstWhy ? (
+                      <span className="desk-shade-why">
+                        {firstWhy.length > 40 ? firstWhy.slice(0, 40) : firstWhy}
+                      </span>
+                    ) : null}
+                  </span>
+                )}
+              </small>
+              <span className="desk-shade-do">
+                <Button
+                  dense
+                  variant="ghost"
+                  onClick={() => {
+                    onClose();
+                    openSurfaceOr("project-room", "/projects", room.projectId);
+                  }}
+                >
+                  Open
+                </Button>
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+// ── HS-171-04: BRIEF section — its own section below PROJECTS ────────
+//
+// Absent when no brief exists (A.8). Per ShadeProjectsQuiet board:
+// caption `BRIEF` with one row `Monday brief . N THINGS . <date> . Open`.
+
+function ShadeBrief({
+  brief,
+  onClose,
+}: {
+  brief: { itemCount: number; date: string; hasThisWeek: boolean } | null;
+  onClose: () => void;
+}) {
+  if (!brief) return null;
+
+  return (
+    <section
+      className="desk-shade-group"
+      aria-label="Brief"
+      data-testid="shade-brief"
+    >
+      <h4>Brief</h4>
+      <div className="desk-shade-item" data-testid="shade-brief-row">
+        <span className="desk-shade-glyph" aria-hidden="true">
+          {"="}
+        </span>
+        <div className="desk-shade-what">
+          <strong>{brief.hasThisWeek ? "Weekly brief" : "Monday brief"}</strong>
+          <small>
+            <span className="desk-shade-project-tokens">
+              <span className="surface-token" data-chip>
+                {countToken(brief.itemCount, "THING") ?? ""}
+              </span>
+              {brief.date ? (
+                <span className="desk-shade-why">{brief.date}</span>
+              ) : null}
+            </span>
+          </small>
+          <span className="desk-shade-do">
+            <Button
+              dense
+              variant="ghost"
+              onClick={() => {
+                onClose();
+                openSurfaceOr("open-intelligence", "/");
+              }}
+            >
+              Open
+            </Button>
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+// ── HS-172-07: PEOPLE lane in the shade ──────────────────────────────
+//
+// Board: ShadePeople (393). Caption `PEOPLE . <ROOM NAME UPPER>` for
+// each Room that has resolved people. Rows: display name + terse tokens
+// (`N PRS WAITING N OVERDUE`) + Open. Absent when no people.
+// Reads the Room people endpoint; polls every 60 s while open.
+
+type ShadePerson = {
+  relationship_id: string;
+  display_name: string;
+  prs_waiting?: number;
+  assignments_open?: number;
+  assignments_overdue?: number;
+};
+
+type ShadeRoomPeople = {
+  projectId: string;
+  projectName: string;
+  people: ShadePerson[];
+};
+
+function monogramShade(displayName: string): string {
+  const words = displayName.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+function ShadePeople({
+  needsYou,
+  onClose,
+  open: shadeOpen,
+}: {
+  needsYou: NeedsYouAggregate | null;
+  onClose: () => void;
+  open: boolean;
+}) {
+  const [roomPeople, setRoomPeople] = useState<ShadeRoomPeople[]>([]);
+
+  // Derive distinct Room ids from the needs-you aggregate
+  const roomIds = needsYou
+    ? groupByRoom(needsYou.items)
+        .filter((r) => !r.muted)
+        .map((r) => ({ id: r.projectId, name: r.projectName }))
+    : [];
+
+  useEffect(() => {
+    if (!shadeOpen || roomIds.length === 0) {
+      setRoomPeople([]);
+      return;
+    }
+    let cancelled = false;
+    const fetchAll = () => {
+      Promise.all(
+        roomIds.map((room) =>
+          apiFetch<{ people: ShadePerson[] }>(
+            `/api/projects/${encodeURIComponent(room.id)}/people`,
+          )
+            .then((data) => ({
+              projectId: room.id,
+              projectName: room.name,
+              people: data.people || [],
+            }))
+            .catch(() => ({
+              projectId: room.id,
+              projectName: room.name,
+              people: [] as ShadePerson[],
+            })),
+        ),
+      ).then((results) => {
+        if (!cancelled) {
+          setRoomPeople(results.filter((r) => r.people.length > 0));
+        }
+      });
+    };
+    fetchAll();
+    // Poll every 60 s
+    const timer = window.setInterval(fetchAll, 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shadeOpen, roomIds.map((r) => r.id).join(",")]);
+
+  // Absent when no people
+  if (roomPeople.length === 0) return null;
+
+  return (
+    <>
+      {roomPeople.map((room) => (
+        <section
+          className="desk-shade-group"
+          aria-label={`People ${room.projectName}`}
+          data-testid="shade-people"
+          key={`people-${room.projectId}`}
+        >
+          <h4>
+            People <b>&middot; {room.projectName.toUpperCase()}</b>
+          </h4>
+          {room.people.map((person) => {
+            const mono = monogramShade(person.display_name);
+            const prs = person.prs_waiting
+              ? countToken(person.prs_waiting, "PR WAITING", "PRS WAITING")
+              : null;
+            const overdue = person.assignments_overdue
+              ? countToken(person.assignments_overdue, "OVERDUE")
+              : null;
+            return (
+              <div
+                className="desk-shade-item"
+                key={person.relationship_id}
+                data-testid="shade-people-row"
+              >
+                <span className="desk-shade-glyph desk-shade-monogram" aria-hidden="true">
+                  {mono}
+                </span>
+                <div className="desk-shade-what">
+                  <strong>{person.display_name}</strong>
+                  <small>
+                    <span className="desk-shade-project-tokens">
+                      {prs ? (
+                        <span className="surface-token" data-chip>
+                          {prs}
+                        </span>
+                      ) : null}
+                      {overdue ? (
+                        <span
+                          className="surface-token"
+                          data-chip
+                          data-tone="warn"
+                        >
+                          {overdue}
+                        </span>
+                      ) : null}
+                    </span>
+                  </small>
+                  <span className="desk-shade-do">
+                    <Button
+                      dense
+                      variant="ghost"
+                      onClick={() => {
+                        onClose();
+                        openSurfaceOr(
+                          "open-people",
+                          "/",
+                          `people:${person.relationship_id}`,
+                        );
+                      }}
+                    >
+                      Open
+                    </Button>
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      ))}
+    </>
   );
 }

@@ -8,6 +8,8 @@
  * reconcile on reconnect. */
 import { create } from "zustand";
 import { apiFetch } from "../lib/api";
+import type { InterviewState } from "./interview";
+import { clearThreadComposerDraft } from "./threadComposerDrafts";
 
 // ── wire types (snake_case from the hub) ──────────────────────────────
 
@@ -19,6 +21,7 @@ export interface ThreadMode {
 }
 
 export interface ThreadWire {
+  interview?: InterviewState;
   id: string;
   title: string;
   recipe_id: string | null;
@@ -87,6 +90,8 @@ export interface ThreadRefWire {
 // ── app-side types (camelCase) ────────────────────────────────────────
 
 export interface ThreadMessage {
+  /** Local echo until the hub acknowledges this submission. */
+  pending?: boolean;
   id: string;
   threadId: string;
   parentId: string | null;
@@ -325,6 +330,7 @@ export async function getThread(id: string): Promise<ThreadDetail> {
   // messages, siblings, refs arrays mixed in.  Extract the thread wire
   // from the root (not a nested "thread" key).
   const thread: ThreadWire = {
+    ...(d.interview ? { interview: d.interview as InterviewState } : {}),
     id: String(d.id ?? id),
     title: String(d.title ?? "Thread"),
     recipe_id: d.recipe_id != null ? String(d.recipe_id) : null,
@@ -606,6 +612,8 @@ export interface ThreadStoreState {
 }
 
 export interface ThreadStoreActions {
+  /** Show the owner's words immediately, then bind them to the hub's IDs. */
+  submitTurn(threadId: string, body: { text: string; refs?: Array<{ ref_kind: string; ref_id: string }> }): Promise<TurnResult>;
   /** Load a thread detail from the API, merging into the store. */
   loadThread(id: string): Promise<void>;
   /** Apply a thread_turn_started frame. */
@@ -642,6 +650,15 @@ export interface ThreadStoreActions {
   applyGuardrail(payload: ThreadGuardrailPayload): void;
 }
 
+const threadLoadVersions = new Map<string, number>();
+// Only identifies local echoes in this store; works on LAN HTTP origins too.
+let nextPendingMessageId = 0;
+function nextThreadLoadVersion(id: string): number {
+  const version = (threadLoadVersions.get(id) ?? 0) + 1;
+  threadLoadVersions.set(id, version);
+  return version;
+}
+
 export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set, get) => ({
   threads: {},
   buffers: {},
@@ -652,12 +669,75 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
   guardrailRows: {},
   draftAnnotations: {},
 
+  async submitTurn(threadId, body) {
+    const detail = get().threads[threadId];
+    if (!detail) throw new Error("Load the conversation before sending");
+    const localId = `pending-${++nextPendingMessageId}`;
+    const now = new Date().toISOString();
+    const prompt: ThreadMessage = {
+      id: localId, threadId, parentId: detail.messages.at(-1)?.id ?? null,
+      role: "user", pending: true, streaming: false,
+      operationId: null, receiptId: null, egressScope: null, egressHost: null,
+      modelId: null, statsJson: null, errorJson: null,
+      createdAt: now, updatedAt: now, completedAt: null, abortedAt: null,
+      parts: [{ id: `${localId}-text`, messageId: localId, ordinal: 0, kind: "text", text: body.text, sensitive: false }],
+    };
+    nextThreadLoadVersion(threadId);
+    set((s) => ({
+      threads: { ...s.threads, [threadId]: { ...detail, messages: [...detail.messages, prompt] } },
+      loading: { ...s.loading, [threadId]: false },
+    }));
+    try {
+      const result = await sendTurn(threadId, body);
+      nextThreadLoadVersion(threadId);
+      set((s) => {
+        const current = s.threads[threadId];
+        if (!current) return {};
+        const messages = current.messages.filter((m) => m.id !== localId);
+        if (!messages.some((m) => m.id === result.user_message_id)) {
+          const index = messages.findIndex((m) => m.id === result.assistant_message_id);
+          messages.splice(index < 0 ? messages.length : index, 0, {
+            ...prompt, id: result.user_message_id, pending: false,
+            parts: prompt.parts.map((p) => ({ ...p, id: `${result.user_message_id}-text`, messageId: result.user_message_id })),
+          });
+        }
+        return { threads: { ...s.threads, [threadId]: { ...current, messages } } };
+      });
+      // HTTP acknowledgement also establishes the assistant row if its start
+      // frame was lost. Never wait for a socket event to show an accepted turn.
+      get().applyTurnStarted({
+        thread_id: threadId, user_message_id: result.user_message_id,
+        message_id: result.assistant_message_id, model_id: "", egress: null,
+      });
+      void get().loadThread(threadId);
+      return result;
+    } catch (error) {
+      set((s) => {
+        const current = s.threads[threadId];
+        if (!current) return {};
+        return { threads: {
+          ...s.threads,
+          [threadId]: { ...current, messages: current.messages.filter((m) => m.id !== localId) },
+        } };
+      });
+      // Admission can fail after capture; recover any saved message. The
+      // composer retains the submitted draft when the request is unconfirmed.
+      void get().loadThread(threadId);
+      throw error;
+    }
+  },
+
   async loadThread(id) {
+    const version = nextThreadLoadVersion(id);
     set((s) => ({ loading: { ...s.loading, [id]: true } }));
     try {
       const detail = await getThread(id);
+      if (threadLoadVersions.get(id) !== version) return;
       set((s) => ({
-        threads: { ...s.threads, [id]: detail },
+        threads: { ...s.threads, [id]: {
+          ...detail,
+          messages: [...detail.messages, ...(s.threads[id]?.messages.filter((m) => m.pending) ?? [])],
+        } },
         loading: { ...s.loading, [id]: false },
         // HS-153-04: hydrate draft annotations from server response.
         draftAnnotations: {
@@ -668,21 +748,22 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
       // HS-152-04: hydrate tool rows from persisted parts
       get().hydrateToolRows(id);
     } catch {
+      if (threadLoadVersions.get(id) !== version) return;
       set((s) => ({ loading: { ...s.loading, [id]: false } }));
     }
   },
 
   applyTurnStarted(payload) {
-    const { thread_id, message_id, model_id, egress } = payload;
+    const { thread_id, message_id, user_message_id, model_id, egress } = payload;
     const detail = get().threads[thread_id];
     if (!detail) return;
     // Create a new streaming message stub if not already present.
     const existing = detail.messages.find((m) => m.id === message_id);
-    if (existing) return;
+    if (existing && (!existing.streaming || get().buffers[message_id])) return;
     const stub: ThreadMessage = {
       id: message_id,
       threadId: thread_id,
-      parentId: null,
+      parentId: user_message_id,
       role: "assistant",
       streaming: true,
       operationId: null,
@@ -703,7 +784,7 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
         ...s.threads,
         [thread_id]: {
           ...detail,
-          messages: [...detail.messages, stub],
+          messages: existing ? detail.messages : [...detail.messages, stub],
         },
       },
       buffers: {
@@ -758,6 +839,8 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
     }
     const messages = detail.messages.map((m) => {
       if (m.id !== message_id) return m;
+      const savedText = m.parts.filter((p) => p.kind === "text").map((p) => p.text).join("");
+      const bufferedText = finalParts.filter((p) => p.kind === "text").map((p) => p.text).join("");
       return {
         ...m,
         streaming: false,
@@ -778,7 +861,9 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
             }
           : m.errorJson,
         statsJson: stats ? { prompt_tokens: stats.prompt_tokens, completion_tokens: stats.completion_tokens } : m.statsJson,
-        parts: finalParts.length > 0 ? finalParts : m.parts,
+        // A late start frame may leave only the tail of the answer in the
+        // buffer. Keep the saved snapshot until the final GET recovers it.
+        parts: finalParts.length > 0 && bufferedText.startsWith(savedText) ? finalParts : m.parts,
       };
     });
     // Clean up buffer.
@@ -802,6 +887,7 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
   },
 
   removeThread(id) {
+    clearThreadComposerDraft(id);
     set((s) => {
       const threads = { ...s.threads };
       delete threads[id];

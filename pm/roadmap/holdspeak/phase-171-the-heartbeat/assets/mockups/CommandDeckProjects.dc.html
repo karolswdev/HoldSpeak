@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;650;700&amp;family=Space+Grotesk:wght@600;650;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+  </style>
+</helmet>
+
+<!-- PROJECTS lists at most 10 Rooms by needs-you count then name -->
+<!-- ═══ COMMAND DECK (Cmd+K) — with PROJECTS group, 1440 ═══ -->
+<!-- The deck is 400px wide, positioned at top-right. Dense 26px
+     mono ledger rows in section bands. The PROJECTS group carries
+     one verb per active Room with the needs-you count badge. -->
+<div style="width:400px; padding:8px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; color:#f2f3f5;">
+
+  <!-- ─── Search bar ─── -->
+  <div style="margin-bottom:8px;">
+    <div style="display:flex; align-items:center; height:32px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#15171d; color:#767e8d; font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;">
+      <span style="color:#767e8d;">platform</span><span style="display:inline-block; width:1px; height:14px; background:#a86e4a; margin-left:1px; animation:blink 1s step-end infinite;"></span>
+    </div>
+  </div>
+
+  <!-- ─── PROJECTS band (new) ─── -->
+  <span style="display:block; margin:8px 0 2px; color:#9ba2b0; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase;">PROJECTS</span>
+
+  <!-- Row 1: Q4 Platform — 2 NEED YOU (selected/highlighted) -->
+  <button type="button" style="display:flex; align-items:center; gap:8px; width:100%; height:26px; padding:0 8px; border:0; border-radius:0; background:#a86e4a; color:#f2f3f5; font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; text-align:left; cursor:pointer;">
+    <span style="width:16px; flex:none; text-align:center; color:#f2f3f5;">&#9635;</span>
+    <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Open Q4 Platform</span>
+    <!-- Badge: needs-you count as trailing chip -->
+    <span style="display:inline-flex; align-items:center; min-height:16px; padding:0 6px; border-radius:0; background:rgba(255,255,255,0.18); color:#f2f3f5; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; white-space:nowrap;">2 NEED YOU</span>
+    <span style="flex:none; color:#f2f3f5; font:10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em;">PROJECT</span>
+  </button>
+
+  <!-- Row 2: Governance — 1 NEEDS YOU (unselected) -->
+  <button type="button" style="display:flex; align-items:center; gap:8px; width:100%; height:26px; padding:0 8px; border:0; border-radius:0; background:transparent; color:#f2f3f5; font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; text-align:left; cursor:pointer;">
+    <span style="width:16px; flex:none; text-align:center; color:#767e8d;">&#9635;</span>
+    <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Open Governance</span>
+    <span style="display:inline-flex; align-items:center; min-height:16px; padding:0 6px; border-radius:0; background:rgba(42,46,62,0.5); color:#fbbf24; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; white-space:nowrap;">1 NEEDS YOU</span>
+    <span style="flex:none; color:#767e8d; font:10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em;">PROJECT</span>
+  </button>
+
+  <!-- Row 3: Data Platform — no badge (zero = omitted) -->
+  <button type="button" style="display:flex; align-items:center; gap:8px; width:100%; height:26px; padding:0 8px; border:0; border-radius:0; background:transparent; color:#f2f3f5; font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; text-align:left; cursor:pointer;">
+    <span style="width:16px; flex:none; text-align:center; color:#767e8d;">&#9635;</span>
+    <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Open Data Platform</span>
+    <span style="flex:none; color:#767e8d; font:10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em;">PROJECT</span>
+  </button>
+
+  <!-- ─── VERBS band (existing) ─── -->
+  <span style="display:block; margin:8px 0 2px; color:#9ba2b0; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase;">VERBS</span>
+
+  <button type="button" style="display:flex; align-items:center; gap:8px; width:100%; height:26px; padding:0 8px; border:0; border-radius:0; background:transparent; color:#f2f3f5; font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; text-align:left; cursor:pointer;">
+    <span style="width:16px; flex:none; text-align:center; color:#767e8d;">&#9654;</span>
+    <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">New Project</span>
+    <span style="flex:none; color:#767e8d; font:10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em;">VERB</span>
+  </button>
+
+  <!-- ─── PROGRAMS band (existing) ─── -->
+  <span style="display:block; margin:8px 0 2px; color:#9ba2b0; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase;">PROGRAMS</span>
+
+  <button type="button" style="display:flex; align-items:center; gap:8px; width:100%; height:26px; padding:0 8px; border:0; border-radius:0; background:transparent; color:#f2f3f5; font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; text-align:left; cursor:pointer;">
+    <span style="width:16px; flex:none; text-align:center; color:#767e8d;">&#9633;</span>
+    <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Intelligence</span>
+    <span style="flex:none; color:#767e8d; font:10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em;">GO</span>
+    <kbd style="flex:none; border:0; padding:0; background:none; color:#9ba2b0; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;">&#8984;3</kbd>
+  </button>
+
+  <button type="button" style="display:flex; align-items:center; gap:8px; width:100%; height:26px; padding:0 8px; border:0; border-radius:0; background:transparent; color:#f2f3f5; font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; text-align:left; cursor:pointer;">
+    <span style="width:16px; flex:none; text-align:center; color:#767e8d;">&#9633;</span>
+    <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Settings</span>
+    <span style="flex:none; color:#767e8d; font:10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em;">GO</span>
+    <kbd style="flex:none; border:0; padding:0; background:none; color:#9ba2b0; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;">&#8984;4</kbd>
+  </button>
+
+</div>
+</x-dc>
+</body>
+</html>

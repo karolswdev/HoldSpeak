@@ -1,0 +1,173 @@
+{
+  "artboards": [
+    {
+      "file": "SpeakWrong.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 660,
+      "title": "Speak · Wrong · FIELD TEXT, the well pre-filled · 1440"
+    },
+    {
+      "file": "SpeakLoopPhone.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 393,
+      "h": 700,
+      "title": "Speak · teach row at TEXT · 393"
+    },
+    {
+      "file": "SpeakWrongRoute.dc.html",
+      "x": 2080,
+      "y": 0,
+      "w": 1440,
+      "h": 772,
+      "title": "Speak · FIELD TARGET, the pick open over the enum · 1440"
+    },
+    {
+      "file": "SpeakLearned.dc.html",
+      "x": 3640,
+      "y": 0,
+      "w": 1440,
+      "h": 660,
+      "title": "Speak · TAUGHT · queue for → Q4 · 1440"
+    },
+    {
+      "file": "SpeakRefused.dc.html",
+      "x": 5200,
+      "y": 0,
+      "w": 1440,
+      "h": 660,
+      "title": "Speak · REFUSED · SECRET, nothing written · 1440"
+    },
+    {
+      "file": "SpeakApplied.dc.html",
+      "x": 6760,
+      "y": 0,
+      "w": 1440,
+      "h": 660,
+      "title": "Speak · APPLIED, the text rule disclosed · 1440"
+    },
+    {
+      "file": "SpeakAppliedRoute.dc.html",
+      "x": 8320,
+      "y": 0,
+      "w": 1440,
+      "h": 660,
+      "title": "Speak · APPLIED, the routing rule disclosed · 1440"
+    },
+    {
+      "file": "JournalStream.dc.html",
+      "x": 0,
+      "y": 1000,
+      "w": 1440,
+      "h": 716,
+      "title": "Journal · the stream, filter ALL · 1440"
+    },
+    {
+      "file": "JournalStreamPhone.dc.html",
+      "x": 1560,
+      "y": 1000,
+      "w": 393,
+      "h": 600,
+      "title": "Journal · the stream · 393"
+    },
+    {
+      "file": "JournalRowOpen.dc.html",
+      "x": 2080,
+      "y": 1000,
+      "w": 1440,
+      "h": 716,
+      "title": "Journal · one row open, its verbs kept · 1440"
+    },
+    {
+      "file": "JournalFiltered.dc.html",
+      "x": 3640,
+      "y": 1000,
+      "w": 1440,
+      "h": 556,
+      "title": "Journal · filtered to DICTATION · 1440"
+    },
+    {
+      "file": "JournalQuiet.dc.html",
+      "x": 5200,
+      "y": 1000,
+      "w": 1440,
+      "h": 556,
+      "title": "Journal · NOTHING SPOKEN · 1440"
+    },
+    {
+      "file": "Learned.dc.html",
+      "x": 0,
+      "y": 1920,
+      "w": 1440,
+      "h": 456,
+      "title": "Learned · the rules wing, TEXT · INTENT · TARGET · 1440"
+    },
+    {
+      "file": "LearnedPhone.dc.html",
+      "x": 1560,
+      "y": 1920,
+      "w": 393,
+      "h": 400,
+      "title": "Learned · the rules wing · 393"
+    },
+    {
+      "file": "LearnedQuiet.dc.html",
+      "x": 2080,
+      "y": 1920,
+      "w": 1440,
+      "h": 496,
+      "title": "Learned · NOTHING LEARNED · 1440"
+    },
+    {
+      "file": "MicPlacement.dc.html",
+      "x": 0,
+      "y": 2620,
+      "w": 1440,
+      "h": 1180,
+      "title": "The voice law · mic per species + the 17 sites · 1440"
+    },
+    {
+      "file": "MicPlacementPhone.dc.html",
+      "x": 1560,
+      "y": 2620,
+      "w": 393,
+      "h": 2064,
+      "title": "The voice law · specimens stacked · 393"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "phase-176-row-1",
+      "x": 0,
+      "y": -200,
+      "w": 940,
+      "text": "Phase 176 The Speak Loop — redrawn to the rulings on counsel's bounce and its re-read. Row 1, the teach loop. FIELD cycles TEXT · INTENT · TARGET. TEXT is the default and the Tuesday case: ONE StringGadget with its mic, pre-filled with the landed text, which he edits to what he said; the receipt names the differing span — TAUGHT · queue for → Q4. INTENT and TARGET are a PICK over the real enum, unfolded in-world, never a free-text well — that was counsel's P0. The TARGET pick lists SIX options, each printed exactly as the wire's label map has it (target_profile.py:280-288 — Claude Code, Codex CLI, Terminal shell, Browser, Editor, Chat); `auto` is not in that map and is gone. A refused teach is named: REFUSED · SECRET · nothing written. The next utterance carries APPLIED with the rule disclosed — a text rule reads HEARD queue for / SAID Q4 / TEXT, a routing rule reads WHEN <gist> / ROUTE Delivery / MATCH 0.50 / INTENT; the two shapes are the last two boards of this row. One word, one meaning: the wing is LEARNED, the receipt is TAUGHT, the fired chip is APPLIED. The utterance well carries no mic — Talk is this face's one mic authority."
+    },
+    {
+      "id": "phase-176-row-2",
+      "x": 0,
+      "y": 820,
+      "w": 940,
+      "text": "Row 2 — the Journal wing as a stream. The filter row is library Buttons (the active one primary dense, the rest ghost dense), never a chip bar with × removers. The wing caption carries NO count: the footer's N TODAY is the one count on the face. One row grammar at both widths — time lead 52px · transcript primary · LANDED IN <target> (the wire's label, uppercased) · MS · the mark · source token trailing. One slot, two facts, never both: the 14:19 row he taught FROM carries a muted TAUGHT; the 14:22 row a rule fired on carries a success APPLIED; every other row leaves the slot empty without moving its neighbours. An opened row keeps its verbs — EditInPlace on the transcript, then Replay · Copy · Delete (the 175 law; counsel C11). Quiet reads the token NOTHING SPOKEN, with the filters still there."
+    },
+    {
+      "id": "phase-176-row-3",
+      "x": 0,
+      "y": 1760,
+      "w": 940,
+      "text": "Row 3 — the Learned wing. No caption at all: the tab is the name and the rows are the count (the footer's N TODAY stays). The 52px lead slot carries the rule kind as the emblem: TEXT · INTENT · TARGET. A text rule reads queue for → Q4; a routing rule reads its gist → the wire's label for the picked enum member (Delivery, Terminal shell). N APPLIED counts real firings and is absent at zero (the TARGET row proves it). Empty, the wing says NOTHING LEARNED."
+    },
+    {
+      "id": "phase-176-row-4",
+      "x": 0,
+      "y": 2440,
+      "w": 940,
+      "text": "Row 4 — the voice law, drawn from assets/mic-census-176.md (recomputed on main @7a47904e). The head is a token line, not a sentence: 17 SITES · NEED THE MIC · CLICK TO TOGGLE · NEVER PRESS AND HOLD. Four specimens at true size: StringGadget (mic trailing inside), PadGadget (mic in the corner), EditInPlace in edit mode (mic trailing), a raw input with the square MicButton beside it. Then the 17 sites 176-04 actually fixes: 8 uncovered raw elements and 9 mic={false} opt-outs to restore, each named by site, kind and file; the 23 allowlisted controls are counted by reason, not listed as work."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

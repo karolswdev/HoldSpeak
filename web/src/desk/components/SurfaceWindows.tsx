@@ -59,7 +59,7 @@ const SURFACES: SurfaceRow[] = SURFACE_APPLICATIONS.map((application) => ({
  * shelf's Integrations entry is the Settings window scoped to
  * integrations). */
 const FIRST_VALUE_RECOVERY_SURFACES = SURFACES.filter(
-  (row) => row.key === "configure-setup",
+  (row) => row.key === "project-setup",
 );
 
 export function SurfaceWindows({

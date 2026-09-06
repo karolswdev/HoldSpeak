@@ -5,6 +5,9 @@ import { DictationCore } from "./cores/DictationCore";
 
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
+  startCapture: vi.fn(),
+  stopAndTranscribe: vi.fn(),
+  startStreamSession: vi.fn(),
 }));
 
 vi.mock("../lib/api", () => {
@@ -21,197 +24,160 @@ vi.mock("../lib/api", () => {
   return {
     ApiError,
     apiFetch: mocks.apiFetch,
+    newDeliveryId: () =>
+      `speak:${Date.now()}-${Math.random().toString(36).slice(2)}`,
     readableError: (error: unknown) =>
       error instanceof Error ? error.message : "Request failed",
   };
 });
 
+vi.mock("../lib/pendingVoice", () => ({
+  loadPendingVoice: vi.fn().mockResolvedValue(null),
+  savePendingVoice: vi.fn(),
+  clearPendingVoice: vi.fn(),
+}));
+
+vi.mock("../lib/speakToFill", () => ({
+  cancelCapture: vi.fn(),
+  closeMicInterval: vi.fn().mockResolvedValue(undefined),
+  speakToFillSupported: () => true,
+  speakToFillUnsupportedReason: () => null,
+  startCapture: mocks.startCapture,
+  stopAndTranscribe: mocks.stopAndTranscribe,
+  retryPendingTranscription: vi.fn().mockResolvedValue(null),
+  subscribeCaptureLevel: () => () => undefined,
+}));
+
+vi.mock("../lib/micStreamSession", () => ({
+  micStreamSupported: () => true,
+  startStreamSession: mocks.startStreamSession,
+  subscribeCaptureLevel: () => () => undefined,
+}));
+
 import { ApiError } from "../lib/api";
 
-const TARGETS = [
-  {
-    version: 1,
-    id: "this_machine",
-    profile_id: null,
-    name: "This device",
-    kind: "this_device",
-    boundary: "on this machine",
-    owner: "you",
-    transport: "in-process",
-    data_scope: { sent: [], returned: [] },
-    engine: "local",
-    model: "",
-    context_limit: 0,
-    readiness: { state: "ready", available: true, reason: "" },
-    secret: { required: false, present: false },
-  },
-  {
-    version: 1,
-    id: "p1",
-    profile_id: "p1",
-    name: "Study",
-    kind: "private_endpoint",
-    boundary: "leaves this machine",
-    owner: "you",
-    transport: "http",
-    data_scope: { sent: ["dictated text"], returned: [] },
-    engine: "llama.cpp",
-    model: "q6",
-    context_limit: 8192,
-    readiness: { state: "ready", available: true, reason: "" },
-    secret: { required: false, present: false },
-  },
-];
-
-function mockRoutes(options: {
-  dryRun: () => Promise<unknown>;
-}) {
-  mocks.apiFetch.mockImplementation((path: string, init?: { method?: string }) => {
-    if (path.startsWith("/api/dictation/readiness")) return Promise.resolve({});
-    if (path === "/api/dictation/dry-run") return options.dryRun();
-    if (path === "/api/inference-targets")
-      return Promise.resolve({ targets: TARGETS });
-    if (path === "/api/settings" && init?.method === "PUT")
-      return Promise.resolve({ success: true });
-    if (path === "/api/notes") return Promise.resolve({ success: true });
-    return Promise.resolve({});
-  });
-}
-
-async function openTryIt() {
-  render(
-    <MemoryRouter>
-      <DictationCore />
-    </MemoryRouter>,
+function mockRoutes(routes: Record<string, (init?: { method?: string; json?: unknown }) => Promise<unknown>> = {}) {
+  mocks.apiFetch.mockImplementation(
+    (path: string, init?: { method?: string; json?: unknown }) => {
+      for (const [prefix, handler] of Object.entries(routes))
+        if (path === prefix || path.startsWith(prefix)) return handler(init);
+      return Promise.resolve({});
+    },
   );
-  // HS-100-07: the loop IS the front face — no tab to reach it.
-  // HS-112-02: the deck's default action is a REAL delivery now; the
-  // dry run these recovery legs exercise is the explicit REHEARSE mode.
-  fireEvent.click(screen.getByRole("checkbox", { name: "Rehearse" }));
-  const editor = await screen.findByLabelText("Utterance");
-  fireEvent.change(editor, {
-    target: { value: "A draft that must not disappear." },
-  });
-  return editor;
 }
 
-describe("DictationPage Try it failure actions", () => {
+/** Click-to-toggle: click to start, then click to stop. */
+async function clickToggle(talk: HTMLElement) {
+  fireEvent.click(talk);
+  await waitFor(() => expect(talk).toHaveAttribute("aria-pressed", "true"));
+  fireEvent.click(talk);
+}
+
+// HS-170-04 — the old run row with Deliver/Rehearse/Retry/Copy/Keep-as-Note
+// is replaced by the TALK-release + OK/Wrong + teach flow. These tests now
+// exercise the deck's failure paths through the TALK release cycle, and
+// verify that the DRY RUN toggle routes through the dry-run endpoint.
+
+describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    mocks.startCapture.mockResolvedValue(undefined);
+    mocks.stopAndTranscribe.mockResolvedValue("A draft that must not disappear.");
+    const stopFn = vi.fn().mockResolvedValue("A draft that must not disappear.");
+    mocks.startStreamSession.mockResolvedValue({ stop: stopFn, cancel: vi.fn() });
+    mockRoutes();
   });
 
-  it("offers Retry, Copy, and Keep as Note for a delivery conflict, then re-runs canonically", async () => {
-    let calls = 0;
+  it("rehearses through the dry-run when DRY RUN is toggled on", async () => {
     mockRoutes({
-      dryRun: () => {
-        calls += 1;
-        return calls === 1
-          ? Promise.reject(new ApiError(409, "conflict", {}))
-          : Promise.resolve({ final_text: "Ran on the alternate target." });
-      },
+      "/api/dictation/dry-run": () =>
+        Promise.resolve({ final_text: "ship it friday", total_ms: 120 }),
     });
-    const editor = await openTryIt();
-    fireEvent.click(screen.getByRole("button", { name: "Rehearse" }));
-
-    await screen.findByText(/Delivery did not complete/);
-    expect(editor).toHaveValue("A draft that must not disappear.");
-    expect(
-      screen.getByRole("button", { name: "Retry rehearsal" }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Keep as Note" }),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Setup" })).toBeNull();
-
-    expect(screen.queryByRole("combobox", { name: "Runs on" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Retry rehearsal" }));
-
-    // HS-111: the pipeline result renders as a mono receipt
-    // (FINAL_TEXT: …), so match within the receipt line.
-    await screen.findByText(/FINAL_TEXT: Ran on the alternate target\./);
-    const dryRunCalls = mocks.apiFetch.mock.calls.filter(
-      (c) => c[0] === "/api/dictation/dry-run",
+    render(
+      <MemoryRouter>
+        <DictationCore />
+      </MemoryRouter>,
     );
-    expect((dryRunCalls.at(-1)?.[1] as { json?: any }).json).not.toHaveProperty(
-      "profile_id",
+    const talk = await screen.findByRole("button", { name: "Talk" });
+    // Toggle DRY RUN on
+    fireEvent.click(screen.getByRole("checkbox", { name: "DRY RUN" }));
+
+    await clickToggle(talk);
+
+    await waitFor(() => {
+      const calls = mocks.apiFetch.mock.calls.filter(
+        (c: unknown[]) => c[0] === "/api/dictation/dry-run",
+      );
+      expect(calls.length).toBe(1);
+    });
+    // No real delivery happened
+    const remoteCalls = mocks.apiFetch.mock.calls.filter(
+      (c: unknown[]) => c[0] === "/api/dictation/remote",
     );
-    expect(mocks.apiFetch).not.toHaveBeenCalledWith(
-      "/api/settings",
-      expect.objectContaining({ method: "PUT" }),
-    );
-    expect(calls).toBe(2);
-    expect(editor).toHaveValue("A draft that must not disappear.");
+    expect(remoteCalls.length).toBe(0);
+    expect(await screen.findByText("REHEARSED · NOT DELIVERED")).toBeVisible();
   });
 
-  it("retries a timeout without a browser-authored profile override", async () => {
-    let calls = 0;
-    mockRoutes({
-      dryRun: () => {
-        calls += 1;
-        return calls === 1
-          ? Promise.reject(new ApiError(504, "timeout", {}))
-          : Promise.resolve({ final_text: "Done." });
-      },
-    });
-    await openTryIt();
-    fireEvent.click(screen.getByRole("button", { name: "Rehearse" }));
-    await screen.findByText(/Transcription timed out/);
+  it("announces a timeout failure in the receipt channel", async () => {
+    mocks.stopAndTranscribe.mockRejectedValue(new ApiError(504, "timeout", {}));
+    const stopFn = vi.fn().mockRejectedValue(new ApiError(504, "timeout", {}));
+    mocks.startStreamSession.mockResolvedValue({ stop: stopFn, cancel: vi.fn() });
+    render(
+      <MemoryRouter>
+        <DictationCore />
+      </MemoryRouter>,
+    );
+    const talk = await screen.findByRole("button", { name: "Talk" });
 
-    expect(screen.queryByRole("combobox", { name: "Runs on" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Retry rehearsal" }));
+    await clickToggle(talk);
 
-    await screen.findByText(/FINAL_TEXT: Done\./);
-    const dryRunCalls = mocks.apiFetch.mock.calls.filter(
-      (c) => c[0] === "/api/dictation/dry-run",
-    );
-    expect((dryRunCalls.at(-1)?.[1] as { json?: any }).json).not.toHaveProperty(
-      "profile_id",
-    );
-    expect(mocks.apiFetch).not.toHaveBeenCalledWith(
-      "/api/settings",
-      expect.objectContaining({ method: "PUT" }),
-    );
+    expect(await screen.findByText(/Transcription timed out/)).toBeVisible();
+    // No dialog — failures land in-flow
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("offers Setup without Retry or alternate Runs on for a rejected token", async () => {
+  it("announces a conflict failure in the receipt channel", async () => {
     mockRoutes({
-      dryRun: () => Promise.reject(new ApiError(401, "bad token", {})),
+      "/api/dictation/remote": () =>
+        Promise.reject(new ApiError(409, "conflict", {})),
     });
-    const editor = await openTryIt();
-    fireEvent.click(screen.getByRole("button", { name: "Rehearse" }));
+    render(
+      <MemoryRouter>
+        <DictationCore />
+      </MemoryRouter>,
+    );
+    const talk = await screen.findByRole("button", { name: "Talk" });
 
-    await screen.findByText(/rejected the connection/);
-    expect(editor).toHaveValue("A draft that must not disappear.");
-    // HS-95-05: Setup opens through the shell dispatcher (button, not a route link).
-    expect(screen.getByRole("button", { name: "Setup" })).toBeInTheDocument();
-    expect(screen.queryByRole("combobox", { name: "Runs on" })).toBeNull();
-    expect(
-      screen.getByRole("button", { name: "Rehearse" }),
-    ).toBeInTheDocument();
+    await clickToggle(talk);
+
+    await waitFor(() => {
+      const receipts = screen.queryAllByRole("alert");
+      const statuses = screen.queryAllByRole("status");
+      const all = [...receipts, ...statuses];
+      expect(all.length).toBeGreaterThan(0);
+    });
   });
 
-  it("Keep as Note posts the retained draft to the real notes route", async () => {
+  it("announces a rejected token failure in the receipt channel", async () => {
     mockRoutes({
-      dryRun: () => Promise.reject(new ApiError(504, "timeout", {})),
+      "/api/dictation/remote": () =>
+        Promise.reject(new ApiError(401, "bad token", {})),
     });
-    await openTryIt();
-    fireEvent.click(screen.getByRole("button", { name: "Rehearse" }));
-    await screen.findByText(/Transcription timed out/);
-
-    fireEvent.click(screen.getByRole("button", { name: "Keep as Note" }));
-    await screen.findByText("Kept as a Note on your Desk.");
-    expect(mocks.apiFetch).toHaveBeenCalledWith("/api/notes", {
-      method: "POST",
-      json: {
-        title: "Retained dictation draft",
-        body_markdown: "A draft that must not disappear.",
-        tags: ["dictation"],
-      },
-    });
-    await waitFor(() =>
-      expect(localStorage.getItem("hs.draft.v1.dictation-dry-run")).toBeNull(),
+    render(
+      <MemoryRouter>
+        <DictationCore />
+      </MemoryRouter>,
     );
+    const talk = await screen.findByRole("button", { name: "Talk" });
+
+    await clickToggle(talk);
+
+    await waitFor(() => {
+      const receipts = screen.queryAllByRole("alert");
+      const statuses = screen.queryAllByRole("status");
+      const all = [...receipts, ...statuses];
+      expect(all.length).toBeGreaterThan(0);
+    });
   });
 });

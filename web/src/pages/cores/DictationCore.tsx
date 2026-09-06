@@ -1,16 +1,7 @@
 // HS-95-05 — the Dictation surface's core, hosted anywhere.
-// HS-98-02 — re-crafted native on the window material.
-// HS-100-07 — Speak: the application opens ON the job (speak, see it
-// land, judge it, teach it — trace B's loop is the entire front face);
-// Journal and Blocks are the wings; Memory/Knowledge/Runtime/Hooks/
-// Nudges and full readiness fold behind the one gear door
-// (APPLICATION_LAYER_THESIS.md §1.1). Wire calls and verbs unchanged.
-// HS-111-02 — the OS's dictation deck (audit §3): the cockpit is an
-// instrument strip (TALK transport key, LED level meter, STATE
-// register, etched readout cells); the Journal is a machine ledger
-// (SurfaceLedger); the gear door is ONE gadget sheet; and every toast
-// banner died into the footer receipt bar (the Prefs pattern).
-// HS-117-08 — decomposed: sub-components live under dictation/.
+// HS-170-04 — rebuilt to the settled artboards: one screen (talk, see
+// it land, teach); the old cockpit strip folds behind > Details; the
+// footer carries EgressChip THIS DEVICE + receipt + Review/Export.
 import "../../desk/components/speak.css";
 import { useCallback, useMemo, useState } from "react";
 import { apiFetch } from "../../lib/api";
@@ -18,12 +9,17 @@ import { download } from "./history";
 import type { CoreProps, DictationJournalResponse } from "./core-types";
 import { useCoreWings } from "./core-hooks";
 import { renderHeroSlot } from "./core-layout";
+import { Button } from "../../components/signal/Signal";
+import { EgressChip } from "../../desk/surface/gadgets";
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
+import { countToken } from "../../desk/surface";
+import { useResource } from "../pageSupport";
 import {
   SpeakFace,
   Journal,
+  Learned,
   Blocks,
   Readiness,
-  ReadinessFooter,
   Memory,
   Knowledge,
   Runtime,
@@ -33,11 +29,18 @@ import {
   type Receipt,
   type ReceiptTone,
 } from "./dictation";
+/* HS-176-05 — the fourth wing. Imported from its module rather than the
+   dictation barrel: `index.ts` belongs to story 03's lane in this branch. */
 
+/* HS-176-05 — four wings, always present (settled design D2(c)): SPEAK ·
+   JOURNAL · BLOCKS · LEARNED. `useCoreWings` takes the array, so a fourth
+   wing needs no shape change. The corrections table moved OUT of the
+   Configure door and became `Learned`; the door keeps the digest. */
 const WINGS = [
   { id: "speak", label: "Speak" },
   { id: "journal", label: "Journal" },
   { id: "blocks", label: "Blocks" },
+  { id: "learned", label: "Learned" },
 ];
 
 /* HS-100-07 — the one door: everything that is configuration
@@ -63,6 +66,17 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
   const announce = useCallback((text: string, tone: ReceiptTone = "ok") => {
     setReceipt(text ? { text, tone } : null);
   }, []);
+
+  // Journal counts for the footer receipt (all-time `count`, today's `today`)
+  const journalResource = useResource<DictationJournalResponse>(
+    "/api/dictation/journal?limit=1",
+    {},
+  );
+  /* HS-176 counsel C4 — the token says TODAY, so it counts TODAY. `count` is
+     the all-time RETAINED total (what Export sizes its fetch by, below); the
+     footer reads `today`, the rows recorded on the local calendar day. */
+  const journalToday = Number(journalResource.data?.today ?? 0);
+
   const exportJournal = async () => {
     try {
       const overview = await apiFetch<DictationJournalResponse>(
@@ -102,10 +116,26 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
         speak: <SpeakFace />,
         journal: <Journal />,
         blocks: <Blocks />,
+        learned: <Learned />,
         configure: <Configure />,
       })[active],
     [active],
   );
+
+  // Receipt slot for the footer
+  const receiptSlot = receipt ? (
+    <span
+      className="surface-footer-readiness"
+      data-tone={receipt.tone === "warn" ? "warn" : undefined}
+      role={receipt.tone === "warn" ? "alert" : "status"}
+    >
+      {receipt.text}
+    </span>
+  ) : null;
+
+  // Journal count as a token (null at zero per UX-CANON A8)
+  const journalToken = countToken(journalToday, "TODAY", "TODAY");
+
   return (
     <>
       {renderHeroSlot(hero, null)}
@@ -117,19 +147,43 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
       <ReceiptContext.Provider value={announce}>
         {current}
       </ReceiptContext.Provider>
-      {/* HS-129-05 — Speak publishes one frame-owned foot: pipeline state,
-          the landing receipt, Review, and Export share the same slots. */}
-      <ReadinessFooter
-        onOpenDoor={() => wings.setDoorOpen(true)}
-        receipt={receipt}
-        exportVerb={
-          <button
-            type="button"
-            className="desk-chip"
-            onClick={() => void exportJournal()}
-          >
-            Export
-          </button>
+      {/* HS-170-04 — the footer: EgressChip THIS DEVICE · receipt ·
+          Review (ghost) · Export (ghost). */}
+      <SurfaceFooter
+        className="speak-footer"
+        egress={<EgressChip label="THIS DEVICE" />}
+        receipt={
+          receiptSlot || (journalToken ? (
+            <span className="surface-footer-readiness" role="status">
+              {journalToken}
+            </span>
+          ) : null)
+        }
+        verbs={
+          <>
+            {/* HS-176-05 (design D2(b).9) — `Review` reviews: it crosses to
+                the Journal wing, where the utterances are. It opened the
+                Configure DOOR until now, which is the gear's job and still
+                is. The verb is kept, not retired (a working verb is never
+                dropped). */}
+            <Button
+              dense
+              variant="ghost"
+              onClick={() => {
+                wings.setDoorOpen(false);
+                wings.setView("journal");
+              }}
+            >
+              Review
+            </Button>
+            <Button
+              dense
+              variant="ghost"
+              onClick={() => void exportJournal()}
+            >
+              Export
+            </Button>
+          </>
         }
       />
     </>

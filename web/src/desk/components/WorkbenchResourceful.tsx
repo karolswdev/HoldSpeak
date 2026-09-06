@@ -60,6 +60,11 @@ export function WorkbenchResourceful({
 
   if (!policy || !settings) return <SurfaceState loading />;
 
+  const idleMin = settings.idle_after_minutes;
+  const cdHours = settings.cooldown_hours;
+  const nightlyTarget = settings.nightly_target;
+  const lastFiredAt = policy.last_fired_at;
+
   const commit = (enabled: boolean) => write(
     enabled ? "ENABLE RESOURCEFULNESS" : "PAUSE RESOURCEFULNESS",
     async () => {
@@ -78,9 +83,9 @@ export function WorkbenchResourceful({
         WHEN IDLE · ONE BOUNDED IMPROVEMENT FROM LOCAL DATA
       </p>
       <div className="wb-resourceful-contract" role="status">
-        <span className="desk-chip">{settings.idle_after_minutes} MIN IDLE</span>
-        <span className="desk-chip">{settings.cooldown_hours}H COOLDOWN</span>
-        <span className="desk-chip">TARGET {settings.nightly_target} / NIGHT</span>
+        <span className="desk-chip">{idleMin} MIN IDLE</span>
+        <span className="desk-chip">{cdHours}H COOLDOWN</span>
+        <span className="desk-chip">TARGET {nightlyTarget} / NIGHT</span>
         <span className="desk-chip">
           {settings.night_only
             ? `${String(settings.night_start_hour).padStart(2, "0")}:00–${String(settings.night_end_hour).padStart(2, "0")}:00`
@@ -214,8 +219,8 @@ export function WorkbenchResourceful({
           ? `READY WHEN IDLE · ${policy.nightly_count}/${policy.nightly_target} THIS NIGHT`
           : "PAUSED · NO RESOURCEFUL WORK WILL START"}
       </p>
-      {policy.last_fired_at ? (
-        <p className="wb-automation-last">Last resourceful work {humanTime(policy.last_fired_at)}</p>
+      {lastFiredAt ? (
+        <span className="wb-automation-last surface-token">LAST RUN {humanTime(lastFiredAt)}</span>
       ) : null}
       {policy.last_error ? <SurfaceState error={policy.last_error} /> : null}
     </div>

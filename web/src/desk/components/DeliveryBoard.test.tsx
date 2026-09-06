@@ -88,7 +88,7 @@ describe("CompanionRepoConfig (HS-139-03)", () => {
     });
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "REFUSED · Settings changed elsewhere. Reload before saving.",
+      /REFUSED.*Settings changed elsewhere/,
     );
     expect(screen.getByLabelText("GitHub repo")).toHaveValue("owner/current");
 

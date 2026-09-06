@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
+Routes: 668 (plus static mounts). iOS-consumed: 89. Web-consumed: 510.
 
 ## device_audio_ws
 
@@ -153,12 +153,43 @@ Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
 | POST | `/api/cadence/run-now` | web |
 | GET | `/api/cadence/status` | web |
 
+## web.routes.calendar_events
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/calendar/events` | web |
+| DELETE | `/api/calendar/events/{event_id}/link` | web |
+| POST | `/api/calendar/events/{event_id}/link` | web |
+
 ## web.routes.calendar_snapshot
 
 | Method | Path | Consumers |
 |---|---|---|
 | POST | `/api/calendar/snapshot` | web |
 | POST | `/api/calendar/snapshot/confirm` | web |
+
+## web.routes.calendar_sources
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/calendar/sources` | web |
+
+## web.routes.concierge
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/concierge/apply` | web |
+| GET | `/api/concierge/detect` | web |
+| POST | `/api/concierge/download` | web |
+| POST | `/api/concierge/probe` | web |
+| POST | `/api/concierge/propose` | web |
+
+## web.routes.connections
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/connections` | web |
+| POST | `/api/connections/{provider}/recheck` | web |
 
 ## web.routes.constitutional
 
@@ -393,6 +424,16 @@ Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
 | POST | `/api/inference/assignments/preview-use-default` | web |
 | POST | `/api/inference/assignments/set` | web |
 
+## web.routes.mcp_http
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/mcp` | server only |
+| GET | `/api/settings/remote` | web |
+| PUT | `/api/settings/remote` | web |
+| POST | `/api/settings/remote/credentials` | web |
+| DELETE | `/api/settings/remote/credentials/{credential_id}` | web |
+
 ## web.routes.meeting_import
 
 | Method | Path | Consumers |
@@ -431,7 +472,7 @@ Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
 | DELETE | `/api/meetings/{meeting_id}` | ios, web |
 | GET | `/api/meetings/{meeting_id}` | ios, web |
 | PUT | `/api/meetings/{meeting_id}` | ios, web |
-| POST | `/api/meetings/{meeting_id}/capture/recover` | web |
+| POST | `/api/meetings/{meeting_id}/capture/recover` | server only |
 | GET | `/api/meetings/{meeting_id}/export` | web |
 | GET | `/api/meetings/{meeting_id}/sync-conflicts` | web |
 | POST | `/api/meetings/{meeting_id}/sync-conflicts/{conflict_id}/resolve` | web |
@@ -455,6 +496,7 @@ Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
 | GET | `/api/meetings/{meeting_id}/intel-recovery` | web |
 | POST | `/api/meetings/{meeting_id}/intel-recovery/retry` | web |
 | POST | `/api/meetings/{meeting_id}/intel-recovery/skip` | web |
+| POST | `/api/meetings/{meeting_id}/intelligence/run` | web |
 
 ## web.routes.meetings.live
 
@@ -578,6 +620,7 @@ Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
 | POST | `/api/people/relationships/{relationship_id}/projects/{project_id}` | web |
 | POST | `/api/people/relationships/{relationship_id}/requests` | web |
 | POST | `/api/people/requests/{request_id}/accept` | web |
+| POST | `/api/people/resolve` | web |
 | POST | `/api/people/setup` | web |
 
 ## web.routes.primitives.ask
@@ -765,6 +808,13 @@ Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
 | PUT | `/api/workflows/{workflow_id}` | web |
 | POST | `/api/workflows/{workflow_id}/run` | ios, web |
 
+## web.routes.project_door
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/projects/door` | web |
+| POST | `/api/projects/door/count` | web |
+
 ## web.routes.project_reviews
 
 | Method | Path | Consumers |
@@ -785,11 +835,23 @@ Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
 | POST | `/api/project-setups/{session_id}/answers` | server only |
 | POST | `/api/project-setups/{session_id}/finalize` | server only |
 | POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/clarify` | server only |
+| POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-jira-scope` | server only |
 | POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-scope` | server only |
 | POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/deselect` | server only |
 | POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/select` | server only |
 | POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/test` | server only |
 | POST | `/api/project-setups/{session_id}/suggest` | server only |
+
+## web.routes.project_updates
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/projects/{project_id}/updates` | web |
+| POST | `/api/projects/{project_id}/updates/draft` | web |
+| PUT | `/api/updates/{update_id}` | web |
+| GET | `/api/updates/{update_id}/markdown` | web |
+| POST | `/api/updates/{update_id}/publish` | web |
+| POST | `/api/updates/{update_id}/regenerate` | web |
 
 ## web.routes.projections
 
@@ -802,6 +864,7 @@ Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
 
 | Method | Path | Consumers |
 |---|---|---|
+| GET | `/api/desk/needs-you` | web |
 | GET | `/api/desk/relationships/{resource_ref:path}` | web |
 | GET | `/api/meetings/{meeting_id}/projects` | server only |
 | GET | `/api/projects` | web |
@@ -819,23 +882,47 @@ Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
 | GET | `/api/projects/{project_id}/meetings` | web |
 | DELETE | `/api/projects/{project_id}/meetings/{meeting_id}` | server only |
 | POST | `/api/projects/{project_id}/meetings/{meeting_id}` | server only |
+| GET | `/api/projects/{project_id}/people` | web |
 | GET | `/api/projects/{project_id}/resources` | web |
 | DELETE | `/api/projects/{project_id}/resources/{resource_ref:path}` | server only |
 | PUT | `/api/projects/{project_id}/resources/{resource_ref:path}` | server only |
 | POST | `/api/projects/{project_id}/restore` | server only |
 | GET | `/api/projects/{project_id}/room` | web |
+| POST | `/api/projects/{project_id}/room/read` | web |
 | GET | `/api/projects/{project_id}/since-last-meeting` | web |
+| GET | `/api/projects/{project_id}/suggested-sources` | web |
+| POST | `/api/projects/{project_id}/suggested-sources/{ref}/add` | web |
+| POST | `/api/projects/{project_id}/suggested-sources/{ref}/dismiss` | web |
 | GET | `/api/projects/{project_id}/summary` | server only |
+
+## web.routes.proposals
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/meetings/{meeting_id}/follow-through-proposals` | web |
+| GET | `/api/projects/{project_id}/proposals` | web |
+| POST | `/api/proposals/{proposal_id}/confirm` | web |
+| POST | `/api/proposals/{proposal_id}/dismiss` | web |
 
 ## web.routes.providers
 
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/providers` | web |
+| GET | `/api/providers/confluence/connections` | server only |
+| POST | `/api/providers/confluence/connections/{ref}/recheck` | server only |
+| GET | `/api/providers/confluence/discover` | server only |
+| POST | `/api/providers/confluence/validate` | server only |
 | GET | `/api/providers/github/connection` | server only |
 | POST | `/api/providers/github/connection/recheck` | server only |
 | GET | `/api/providers/github/discover` | server only |
 | POST | `/api/providers/github/validate-repo` | server only |
+| GET | `/api/providers/jira/connections` | web |
+| POST | `/api/providers/jira/connections` | web |
+| POST | `/api/providers/jira/connections/{ref}/recheck` | server only |
+| GET | `/api/providers/jira/discover` | server only |
+| POST | `/api/providers/jira/search` | server only |
+| POST | `/api/providers/jira/validate-scope` | server only |
 | POST | `/api/watches/{watch_id}/evaluate` | server only |
 
 ## web.routes.repositories
@@ -891,6 +978,21 @@ Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
 | GET | `/api/setup/runtime-options` | web |
 | POST | `/api/setup/runtime-test` | web |
 | GET | `/api/setup/status` | ios, web |
+
+## web.routes.steward
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/nudges/{step_id}/dismiss` | web |
+| POST | `/api/nudges/{step_id}/send` | web |
+| GET | `/api/projects/{project_id}/nudges` | web |
+| GET | `/api/projects/{project_id}/steward/policy` | web |
+| PUT | `/api/projects/{project_id}/steward/policy` | web |
+| GET | `/api/projects/{project_id}/steward/runs` | web |
+| POST | `/api/projects/{project_id}/steward/runs` | web |
+| GET | `/api/steward/runs/{run_id}` | web |
+| POST | `/api/steward/runs/{run_id}/stop` | web |
+| POST | `/api/steward/trigger` | web |
 
 ## web.routes.sync
 
@@ -986,6 +1088,10 @@ Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
 |---|---|---|
 | GET | `/api/settings` | ios, web |
 | PUT | `/api/settings` | ios, web |
+| GET | `/api/settings/heartbeat` | web |
+| PUT | `/api/settings/heartbeat` | web |
+| POST | `/api/settings/heartbeat/run-now` | web |
+| GET | `/api/settings/hub` | web |
 
 ## web.routes.system.settings_secrets
 
@@ -1035,6 +1141,7 @@ Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
 | POST | `/api/threads/{thread_id}/branch` | web |
 | POST | `/api/threads/{thread_id}/compact` | web |
 | POST | `/api/threads/{thread_id}/decide` | web |
+| POST | `/api/threads/{thread_id}/interview` | web |
 | POST | `/api/threads/{thread_id}/keep` | web |
 | POST | `/api/threads/{thread_id}/regenerate` | web |
 | POST | `/api/threads/{thread_id}/todo` | web |
@@ -1052,13 +1159,13 @@ Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/projects/{project_id}/watches` | server only |
+| GET | `/api/projects/{project_id}/watches` | web |
 | GET | `/api/watches` | server only |
 | GET | `/api/watches/{watch_id}` | web |
 | PATCH | `/api/watches/{watch_id}` | web |
 | POST | `/api/watches/{watch_id}/baseline` | server only |
-| POST | `/api/watches/{watch_id}/pause` | server only |
-| POST | `/api/watches/{watch_id}/resume` | server only |
-| POST | `/api/watches/{watch_id}/retire` | server only |
+| POST | `/api/watches/{watch_id}/pause` | web |
+| POST | `/api/watches/{watch_id}/resume` | web |
+| POST | `/api/watches/{watch_id}/retire` | web |
 | PUT | `/api/watches/{watch_id}/rules` | server only |
 | POST | `/api/watches/{watch_id}/test` | server only |

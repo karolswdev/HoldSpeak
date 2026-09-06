@@ -36,14 +36,16 @@ export function StateChip({
   state,
   label,
   icon,
+  className,
 }: {
   state: ChipState;
   label?: string;
   icon?: string;
+  className?: string;
 }) {
   return (
     <span
-      className="surface-state-chip"
+      className={className ? `surface-state-chip ${className}` : "surface-state-chip"}
       data-state={state}
       role="status"
       aria-label={label ?? DEFAULT_LABELS[state]}

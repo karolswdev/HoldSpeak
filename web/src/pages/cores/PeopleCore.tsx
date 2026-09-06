@@ -5,16 +5,20 @@ import type { CoreProps } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { openSurfaceOr } from "../../desk/shell";
-import { CycleGadget, PadGadget, StringGadget } from "../../desk/surface/gadgets";
+import { CycleGadget, EgressChip, PadGadget, StringGadget } from "../../desk/surface/gadgets";
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import {
   ConfirmVerb,
   SurfaceColumns,
+  SurfaceLedger,
+  SurfaceLedgerRow,
   SurfaceRow,
   SurfaceRows,
   SurfaceSection,
   SurfaceSplit,
   SurfaceState,
 } from "../../desk/surface/Surface";
+import { countToken } from "../../desk/surface";
 import { renderHeroSlot } from "./core-layout";
 import "./people.css";
 
@@ -57,14 +61,20 @@ type ExecutionItem = { id: string; workbench_id: string; status: string; result?
 type BriefActionItem = { id: string; task: string; owner: string | null; due: string | null };
 type BriefDecision = { id: string; decision_text: string; rationale: string | null; lifecycle: string };
 type BriefMeeting = { meeting_id: string; title: string | null; started_at: string; open_action_items: BriefActionItem[]; decisions: BriefDecision[] };
+type WatchPR = { title: string; repo: string; pr_number: number; days_waiting: number; url: string; room_id: string; room_name: string };
+type WatchAssignment = { summary: string; key: string; status: string; url: string; overdue: boolean; room_id: string; room_name: string };
+type WatchSummary = { prs_waiting: WatchPR[]; oldest_waiting_days: number; open_assignments: WatchAssignment[] };
+type BriefLastMeeting = { meeting_id: string; title: string | null; item_count: number; open_count: number };
 type OneOnOneBrief = {
   relationship_id: string;
   display_name: string | null;
-  open_commitments: Array<{ id: string; body: string; visibility: Visibility; state?: string }>;
+  open_commitments: Array<{ id: string; body: string; visibility: Visibility; state?: string; due?: string | null }>;
   agenda_items: Array<{ id: string; body: string; visibility: Visibility; state: string }>;
   grounding_note_count: number;
   linked_meetings: BriefMeeting[];
   unlinked_meeting_count: number;
+  watch_summary?: WatchSummary;
+  last_meeting?: BriefLastMeeting | null;
 };
 type RelationshipDetail = Relationship & {
   commitments?: Commitment[];
@@ -212,7 +222,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
       {error ? <span className="sr-only">{error}</span> : null}
     </div>;
   }
-  return <>
+  return <div className="people-surface">
     {renderHeroSlot(hero, verbs, facts())}
     {error ? <SurfaceState error={error} onRetry={() => void load()} /> : null}
     <SurfaceSplit
@@ -220,7 +230,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
       main={<Roster relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} newKind={newKind} setNewKind={setNewKind} busy={busy} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} />}
       detail={selected ? <RelationshipPane relationship={selected} initialLens={requestedLens} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={() => { setSelectedId(null); setDetail(null); }} /> : undefined}
     />
-  </>;
+  </div>;
 }
 
 function Roster({ relationships, selectedId, newName, setNewName, newKind, setNewKind, busy, onCreate, onSelect }: {
@@ -229,7 +239,7 @@ function Roster({ relationships, selectedId, newName, setNewName, newKind, setNe
   const ordered = useMemo(() => [...relationships].sort((a, b) => (Number(b.manager_commitment_count ?? 0) - Number(a.manager_commitment_count ?? 0)) || a.display_name.localeCompare(b.display_name)), [relationships]);
   return <SurfaceSection label="Relationships">
     <div className="people-new">
-      <StringGadget mic={false} label="New relationship" value={newName} onChange={setNewName} placeholder="Name" inputProps={{ id: "people-new-relationship" }} onKeyDown={(event) => { if (event.key === "Enter") onCreate(); }} />
+      <StringGadget label="New relationship" value={newName} onChange={setNewName} placeholder="Name" inputProps={{ id: "people-new-relationship" }} onKeyDown={(event) => { if (event.key === "Enter") onCreate(); }} />
       <CycleGadget label="Relationship" value={newKind} onChange={(value) => setNewKind(value as RelationshipKind)} options={[{ value: "direct_report", label: "Direct report" }, { value: "peer", label: "Peer" }, { value: "extended", label: "Extended" }]} />
       <Button dense disabled={!newName.trim() || busy} loading={busy} onClick={onCreate}>Add</Button>
     </div>
@@ -237,9 +247,14 @@ function Roster({ relationships, selectedId, newName, setNewName, newKind, setNe
   </SurfaceSection>;
 }
 
+/** HS-172-05: concern focus for Now wing opened from Prep summary rows. */
+type NowConcern = "prs" | "assignments" | "commitments" | null;
+
 function RelationshipPane({ relationship, initialLens, onRefresh, onProtectedFailure, onArchived, onBack }: { relationship: RelationshipDetail; initialLens?: Lens | null; onRefresh(): void; onProtectedFailure(cause: unknown): void; onArchived(): void; onBack(): void }) {
   const [lens, setLens] = useState<Lens>(initialLens || "now");
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
+  const [nowConcern, setNowConcern] = useState<NowConcern>(null);
+  const [prepBrief, setPrepBrief] = useState<OneOnOneBrief | null>(null);
   useEffect(() => {
     void apiFetch<{ upcoming?: UpcomingEvent[] }>("/api/door")
       .then((door) => {
@@ -254,14 +269,23 @@ function RelationshipPane({ relationship, initialLens, onRefresh, onProtectedFai
   const linkedKeys = new Set(links.map((l) => `${l.uid}:${l.source_id}`));
   const nextLinked = upcomingEvents.find((ev) => linkedKeys.has(`${ev.uid}:${ev.source_id}`));
   const nextLabel = nextLinked ? shortWhen(nextLinked.starts_at) : null;
+  const openConcern = useCallback((concern: NowConcern, brief: OneOnOneBrief) => {
+    setPrepBrief(brief);
+    setNowConcern(concern);
+    setLens("now");
+  }, []);
+  const switchLens = useCallback((id: Lens) => {
+    setLens(id);
+    if (id !== "now") setNowConcern(null);
+  }, []);
   return <div className="people-detail">
     <div className="people-detail-head"><Button dense variant="ghost" onClick={onBack}>Back</Button><strong>{relationship.display_name}</strong></div>
     {nextLabel ? <div className="people-next-header" data-testid="people-next-1on1">NEXT 1:1 &middot; {nextLabel}</div> : null}
     <div className="people-lenses" role="tablist" aria-label={`${relationship.display_name} lenses`}>
-      {([['now', 'Now'], ['prep', 'Prep'], ['one-on-ones', '1:1s'], ['context', 'Context'], ['history', 'History'], ['info', 'Info']] as const).map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={lens === id} onClick={() => setLens(id)}>{label}</button>)}
+      {([['now', 'Now'], ['prep', 'Prep'], ['one-on-ones', '1:1s'], ['context', 'Context'], ['history', 'History'], ['info', 'Info']] as const).map(([id, label]) => <Button key={id} dense variant="ghost" role="tab" aria-selected={lens === id} onClick={() => switchLens(id)}>{label}</Button>)}
     </div>
-    {lens === "now" ? <NowLens relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} /> : null}
-    {lens === "prep" ? <PrepLens relationship={relationship} onProtectedFailure={onProtectedFailure} /> : null}
+    {lens === "now" ? <NowLens relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} concern={nowConcern} prepBrief={prepBrief} /> : null}
+    {lens === "prep" ? <PrepLens relationship={relationship} onProtectedFailure={onProtectedFailure} onOpenConcern={openConcern} /> : null}
     {lens === "one-on-ones" ? <OneOnOnes relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} /> : null}
     {lens === "context" ? <ContextLens relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} /> : null}
     {lens === "history" ? <HistoryLens relationship={relationship} /> : null}
@@ -284,11 +308,34 @@ function shortWhen(isoDate: string): string {
   } catch { return ""; }
 }
 
-/** HS-149-04: the Prep lens -- read-time brief rendered in house grammar. */
-function PrepLens({ relationship, onProtectedFailure }: { relationship: RelationshipDetail; onProtectedFailure(cause: unknown): void }) {
+/** HS-172-05: build the `N PRS WAITING ON {name}` summary label.
+ * If the name will not fit at 393, falls back to `N PRS WAITING`. */
+export function prsSummaryLabel(count: number, displayName: string): string {
+  const label = `${count} ${count === 1 ? "PR" : "PRS"} WAITING ON ${displayName.toUpperCase()}`;
+  if (label.length > 30) return `${count} ${count === 1 ? "PR" : "PRS"} WAITING`;
+  return label;
+}
+
+/** HS-172-05: cap inline reference tokens at three, then `+N`. */
+export function capTokens(items: string[], max: number = 3): string {
+  if (items.length === 0) return "";
+  const shown = items.slice(0, max);
+  const rest = items.length - max;
+  const parts = shown.join(" · ");
+  return rest > 0 ? `${parts} +${rest}` : parts;
+}
+
+/** HS-149-04 / HS-172-05: the Prep lens -- the 1:1 brief enrichment.
+ * Display step = the person's name. Summary rows (absent at zero).
+ * AGENDA section. Footer THIS DEVICE + PREPARED hh:mm. */
+function PrepLens({ relationship, onProtectedFailure, onOpenConcern }: { relationship: RelationshipDetail; onProtectedFailure(cause: unknown): void; onOpenConcern(concern: NowConcern, brief: OneOnOneBrief): void }) {
   const [brief, setBrief] = useState<OneOnOneBrief | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [preparedAt] = useState(() => {
+    const now = new Date();
+    return now.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
+  });
   useEffect(() => {
     setLoading(true); setError("");
     void apiFetch<{ brief: OneOnOneBrief }>(`/api/people/relationships/${encodeURIComponent(relationship.id)}/brief`)
@@ -306,21 +353,105 @@ function PrepLens({ relationship, onProtectedFailure }: { relationship: Relation
   if (loading) return <SurfaceState loading />;
   if (error) return <SurfaceState error={error} data-testid="prep-locked" />;
   if (!brief) return <SurfaceState empty emptyLabel="Brief unavailable" />;
-  return <div data-testid="people-prep-lens">
-    <SurfaceSection label="You owe" data-testid="prep-you-owe">
-      {brief.open_commitments.length ? <SurfaceRows>{brief.open_commitments.map((item) => <SurfaceRow key={item.id} title={item.body} meta={item.visibility === "leader_private" ? "Leader private" : undefined} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No open commitments" />}
-    </SurfaceSection>
-    <SurfaceSection label="Their agenda" data-testid="prep-their-agenda">
-      {brief.agenda_items.length ? <SurfaceRows>{brief.agenda_items.map((item) => <SurfaceRow key={item.id} title={item.body} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No agenda items" />}
-    </SurfaceSection>
-    {brief.grounding_note_count > 0 ? <div className="people-prep-notes" data-testid="prep-grounding-count">{brief.grounding_note_count} grounding note{brief.grounding_note_count !== 1 ? "s" : ""}</div> : null}
-    <SurfaceSection label="Last 1:1s" data-testid="prep-last-meetings">
-      {brief.linked_meetings.length ? <SurfaceRows>{brief.linked_meetings.map((meeting) => <SurfaceRow key={meeting.meeting_id} title={meeting.title || "Untitled meeting"} detail={new Date(meeting.started_at).toLocaleDateString()} meta={meeting.open_action_items.length ? `${meeting.open_action_items.length} open` : undefined}>
-        {meeting.open_action_items.length ? <ul className="people-prep-actions" data-testid="prep-meeting-actions">{meeting.open_action_items.map((action) => <li key={action.id}>{action.task}{action.owner ? ` (${action.owner})` : ""}{action.due ? ` due ${action.due}` : ""}</li>)}</ul> : null}
-        {meeting.decisions.length ? <ul className="people-prep-decisions" data-testid="prep-meeting-decisions">{meeting.decisions.map((decision) => <li key={decision.id}>{decision.decision_text}</li>)}</ul> : null}
-      </SurfaceRow>)}</SurfaceRows> : <SurfaceState empty emptyLabel="No linked meetings" />}
-    </SurfaceSection>
-    {brief.unlinked_meeting_count > 0 ? <div className="people-prep-unlinked" data-testid="prep-unlinked-count">{brief.unlinked_meeting_count} unlinked meeting{brief.unlinked_meeting_count !== 1 ? "s" : ""} in this window</div> : null}
+
+  const ws = brief.watch_summary;
+  const prCount = ws?.prs_waiting?.length ?? 0;
+  const assignCount = ws?.open_assignments?.length ?? 0;
+  const overdueCommitments = brief.open_commitments.filter((c) => {
+    if (!c.due) return false;
+    try { return new Date(c.due) < new Date(); } catch { return false; }
+  });
+  const overdueCount = overdueCommitments.length;
+  const lm = brief.last_meeting;
+  const displayName = brief.display_name ?? relationship.display_name;
+  const agendaCount = brief.agenda_items.length;
+
+  // PR reference tokens: cap at 3 then +N
+  const prNumbers = (ws?.prs_waiting ?? []).map((pr) => `#${pr.pr_number}`);
+  const prTokenStr = capTokens(prNumbers);
+
+  // Assignment keys
+  const assignKeys = (ws?.open_assignments ?? []).map((a) => a.key).filter(Boolean);
+  const assignTokenStr = capTokens(assignKeys);
+  const anyOverdueAssignment = (ws?.open_assignments ?? []).some((a) => a.overdue);
+
+  return <div data-testid="people-prep-lens" className="people-prep-enriched">
+    {/* Display step: person's name */}
+    <div className="people-prep-display" data-testid="prep-display-name">{displayName}</div>
+
+    {/* Summary rows (each absent at zero -- UX-CANON A.8) */}
+    <div className="people-prep-summary" data-testid="prep-summary-rows">
+      {prCount > 0 ? (
+        <div className="people-prep-row" data-testid="prep-prs-row">
+          <div className="people-prep-row-main">
+            <span className="people-prep-row-primary" data-testid="prep-prs-label">{prsSummaryLabel(prCount, displayName)}</span>
+            <span className="people-prep-row-tokens">
+              {ws?.oldest_waiting_days ? <span className="people-prep-token" data-warning={ws.oldest_waiting_days >= 3 || undefined} data-testid="prep-prs-days">{ws.oldest_waiting_days}+ DAYS</span> : null}
+              {prTokenStr ? <span className="people-prep-token people-prep-token-muted" data-testid="prep-prs-numbers">{prTokenStr}</span> : null}
+            </span>
+            <span className="people-prep-row-spacer" />
+            <Button dense variant="ghost" onClick={() => onOpenConcern("prs", brief)} data-testid="prep-prs-open">Open</Button>
+          </div>
+        </div>
+      ) : null}
+
+      {assignCount > 0 ? (
+        <div className="people-prep-row" data-testid="prep-assignments-row">
+          <div className="people-prep-row-main">
+            <span className="people-prep-row-primary" data-testid="prep-assignments-label">{assignCount} {assignCount === 1 ? "ASSIGNMENT" : "ASSIGNMENTS"} OPEN</span>
+            <span className="people-prep-row-tokens">
+              {assignTokenStr ? <span className="people-prep-token people-prep-token-muted" data-testid="prep-assignments-keys">{assignTokenStr}</span> : null}
+              {anyOverdueAssignment ? <span className="people-prep-token" data-warning="true" data-testid="prep-assignments-overdue">OVERDUE</span> : null}
+            </span>
+            <span className="people-prep-row-spacer" />
+            <Button dense variant="ghost" onClick={() => onOpenConcern("assignments", brief)} data-testid="prep-assignments-open">Open</Button>
+          </div>
+        </div>
+      ) : null}
+
+      {overdueCount > 0 ? (
+        <div className="people-prep-row" data-testid="prep-commitments-row">
+          <div className="people-prep-row-main">
+            <span className="people-prep-row-primary" data-testid="prep-commitments-label">{overdueCount} {overdueCount === 1 ? "COMMITMENT" : "COMMITMENTS"} OVERDUE</span>
+            <span className="people-prep-row-tokens">
+              {overdueCommitments[0] ? <span className="people-prep-token people-prep-token-muted">{overdueCommitments[0].body.length > 30 ? overdueCommitments[0].body.slice(0, 30) : overdueCommitments[0].body}</span> : null}
+              {overdueCommitments[0]?.due ? <span className="people-prep-token" data-warning="true">BY {new Date(overdueCommitments[0].due).toLocaleDateString(undefined, { weekday: "short" }).toUpperCase()}</span> : null}
+            </span>
+            <span className="people-prep-row-spacer" />
+            <Button dense variant="ghost" onClick={() => onOpenConcern("commitments", brief)} data-testid="prep-commitments-open">Open</Button>
+          </div>
+        </div>
+      ) : null}
+
+      {lm && lm.item_count > 0 ? (
+        <div className="people-prep-row" data-testid="prep-meeting-row">
+          <div className="people-prep-row-main">
+            <span className="people-prep-row-primary">LAST MEETING</span>
+            <span className="people-prep-row-tokens">
+              <span className="people-prep-token people-prep-token-muted" data-testid="prep-meeting-items">{lm.item_count} {lm.item_count === 1 ? "ITEM" : "ITEMS"}</span>
+              {lm.open_count > 0 ? <span className="people-prep-token people-prep-token-muted" data-testid="prep-meeting-open-count">{lm.open_count} OPEN</span> : null}
+            </span>
+            <span className="people-prep-row-spacer" />
+            <Button dense variant="ghost" onClick={() => openSurfaceOr("review-meetings", "/history", lm.meeting_id)} data-testid="prep-meeting-open">Open</Button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+
+    {/* AGENDA section (unchanged from existing) */}
+    {agendaCount > 0 ? (
+      <div data-testid="prep-agenda">
+        <SurfaceSection label={`Agenda ${agendaCount}`}>
+          <SurfaceRows>{brief.agenda_items.map((item) => <SurfaceRow key={item.id} title={item.body} />)}</SurfaceRows>
+        </SurfaceSection>
+      </div>
+    ) : null}
+
+    {/* Footer: THIS DEVICE + PREPARED hh:mm */}
+    <SurfaceFooter
+      egress={<EgressChip label="THIS DEVICE" scope="local" />}
+      receipt={<span className="people-prep-receipt" data-testid="prep-receipt">PREPARED {preparedAt}</span>}
+    />
   </div>;
 }
 
@@ -434,7 +565,7 @@ function OwnerAliasSection({ relationship, onRefresh, onProtectedFailure }: { re
       verbs={<ConfirmVerb label="Remove" confirmLabel="Remove?" busy={busy} onConfirm={() => void removeAlias(alias)} />}
     />)}</SurfaceRows> : null}
     <div className="people-alias-add" data-testid="people-alias-add">
-      <StringGadget mic={false} label="Owner alias" value={newAlias} onChange={setNewAlias} placeholder="Owner string" onKeyDown={(event: React.KeyboardEvent) => { if (event.key === "Enter") void addAlias(); }} />
+      <StringGadget label="Owner alias" value={newAlias} onChange={setNewAlias} placeholder="Owner string" onKeyDown={(event: React.KeyboardEvent) => { if (event.key === "Enter") void addAlias(); }} />
       <Button dense disabled={!newAlias.trim() || busy} onClick={() => void addAlias()}>Add</Button>
     </div>
   </SurfaceSection></div>;
@@ -451,7 +582,7 @@ function ContextLens({ relationship, onRefresh, onProtectedFailure, upcomingEven
     <CalendarLinkSection relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} />
     <OwnerAliasSection relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} />
     <SurfaceSection label="Projects"><div className="people-project-link"><CycleGadget label="Project" value={projectId} onChange={setProjectId} options={projects.map((project) => ({ value: project.id, label: project.name }))} /><Button dense disabled={!projectId || relationship.project_refs?.includes(projectId)} onClick={() => void linkProject()}>Link</Button></div>{linkedProjects.length ? <SurfaceRows>{linkedProjects.map((project) => <SurfaceRow key={project.id} title={project.name} detail={project.description} onOpen={() => openSurfaceOr("open-project-memory", "/project-memory", `project:${project.id}`)} verbs={<Button dense variant="ghost" onClick={() => void unlinkProject(project.id)}>Unlink</Button>} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No linked projects" />}</SurfaceSection>
-    <SurfaceSection label="Grounding notes"><div className="people-context-add"><StringGadget mic={false} label="Topic" value={topic} onChange={setTopic} placeholder="Topic (optional)" /><PadGadget mic={false} label="Grounding note" value={body} onChange={setBody} placeholder="Context worth remembering" rows={3} /><CycleGadget label="Visibility" value={visibility} onChange={(value) => setVisibility(value as Visibility)} options={[{ value: "leader_private", label: "Leader private" }, { value: "shared_intent", label: "Shared" }]} /><Button dense disabled={!body.trim() || busy} onClick={() => void add()}>Add note</Button></div>{!(relationship.notes ?? []).length ? <SurfaceState empty emptyLabel="No grounding notes" /> : <SurfaceRows>{(relationship.notes ?? []).map((note) => <SurfaceRow key={note.id} title={note.topic || note.body} detail={note.topic ? note.body : undefined} meta={note.visibility === "leader_private" ? "Leader private" : "Shared"} />)}</SurfaceRows>}</SurfaceSection>
+    <SurfaceSection label="Grounding notes"><div className="people-context-add"><StringGadget label="Topic" value={topic} onChange={setTopic} placeholder="Topic (optional)" /><PadGadget label="Grounding note" value={body} onChange={setBody} placeholder="Context worth remembering" rows={3} /><CycleGadget label="Visibility" value={visibility} onChange={(value) => setVisibility(value as Visibility)} options={[{ value: "leader_private", label: "Leader private" }, { value: "shared_intent", label: "Shared" }]} /><Button dense disabled={!body.trim() || busy} onClick={() => void add()}>Add note</Button></div>{!(relationship.notes ?? []).length ? <SurfaceState empty emptyLabel="No grounding notes" /> : <SurfaceRows>{(relationship.notes ?? []).map((note) => <SurfaceRow key={note.id} title={note.topic || note.body} detail={note.topic ? note.body : undefined} meta={note.visibility === "leader_private" ? "Leader private" : "Shared"} />)}</SurfaceRows>}</SurfaceSection>
   </>;
 }
 
@@ -462,13 +593,88 @@ function relationshipLabel(kind?: string): string {
   return "Relationship";
 }
 
-function NowLens({ relationship, onRefresh, onProtectedFailure }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void }) {
+function NowLens({ relationship, onRefresh, onProtectedFailure, concern, prepBrief }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; concern?: NowConcern; prepBrief?: OneOnOneBrief | null }) {
   const [request, setRequest] = useState(""); const [busy, setBusy] = useState(false); const [selectedCommitment, setSelectedCommitment] = useState<Commitment | null>(null);
   const createRequest = async () => { if (!request.trim()) return; setBusy(true); try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/requests`, { method: "POST", json: { body: request.trim(), visibility: "shared_intent", source: { kind: "manual" } } }); setRequest(""); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
   const accept = async (id: string) => { try { await apiFetch(`/api/people/requests/${encodeURIComponent(id)}/accept`, { method: "POST", json: {} }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
+
+  // HS-172-05: when opened from a Prep summary row, show per-entity detail rows.
+  // SurfaceLedgerRow with wrap: titles wrap to two lines, repo token below.
+  if (concern && prepBrief) {
+    const ws = prepBrief.watch_summary;
+    const prTotal = ws?.prs_waiting?.length ?? 0;
+    const assignTotal = ws?.open_assignments?.length ?? 0;
+    const overdueList = prepBrief.open_commitments.filter((c) => { if (!c.due) return false; try { return new Date(c.due) < new Date(); } catch { return false; } });
+    const overdueTotal = overdueList.length;
+    return <div data-testid="people-now-concern">
+      {concern === "prs" && ws && prTotal > 0 ? (
+        <div data-testid="now-prs-detail">
+        <SurfaceLedger count={`PRS WAITING ${prTotal}`} cols="room">
+          {ws.prs_waiting.map((pr) => (
+            <SurfaceLedgerRow
+              key={`pr-${pr.pr_number}`}
+              primary={<span className="surface-primary">{`#${pr.pr_number} · ${pr.title}`}</span>}
+              wrap
+              cells={
+                <span className="people-now-caption">
+                  <span className={pr.days_waiting >= 3 ? "people-now-caption-warning" : ""}>{pr.days_waiting} {pr.days_waiting === 1 ? "DAY" : "DAYS"}</span>
+                  {pr.repo ? <> · <span>{pr.repo.toUpperCase()}</span></> : null}
+                </span>
+              }
+              trailing={pr.url ? <Button dense variant="ghost" onClick={() => window.open(pr.url, "_blank", "noopener")}>Open</Button> : undefined}
+              expands={false}
+            />
+          ))}
+        </SurfaceLedger>
+        </div>
+      ) : null}
+      {concern === "assignments" && ws && assignTotal > 0 ? (
+        <div data-testid="now-assignments-detail">
+        <SurfaceLedger count={`ASSIGNMENTS OPEN ${assignTotal}`} cols="room">
+          {ws.open_assignments.map((a) => (
+            <SurfaceLedgerRow
+              key={a.key}
+              primary={<span className="surface-primary">{`${a.key} · ${a.summary}`}</span>}
+              wrap
+              cells={
+                <span className="people-now-caption">
+                  <span>{a.status.toUpperCase()}</span>
+                  {a.overdue ? <> · <span className="people-now-caption-warning">OVERDUE</span></> : null}
+                </span>
+              }
+              trailing={a.url ? <Button dense variant="ghost" onClick={() => window.open(a.url, "_blank", "noopener")}>Open</Button> : undefined}
+              expands={false}
+            />
+          ))}
+        </SurfaceLedger>
+        </div>
+      ) : null}
+      {concern === "commitments" && overdueTotal > 0 ? (
+        <div data-testid="now-commitments-detail">
+        <SurfaceLedger count={`COMMITMENTS OVERDUE ${overdueTotal}`} cols="room">
+          {overdueList.map((c) => (
+            <SurfaceLedgerRow
+              key={c.id}
+              primary={<span className="surface-primary">{c.body}</span>}
+              wrap
+              cells={
+                <span className="people-now-caption">
+                  {c.due ? <span className="people-now-caption-warning">BY {new Date(c.due).toLocaleDateString(undefined, { weekday: "short" }).toUpperCase()}</span> : null}
+                  {c.due ? " · " : ""}<span className="people-now-caption-warning">OVERDUE</span>
+                </span>
+              }
+              expands={false}
+            />
+          ))}
+        </SurfaceLedger>
+        </div>
+      ) : null}
+    </div>;
+  }
+
   return <SurfaceColumns main={<>
     <SurfaceSection label="You owe"><SurfaceRows>{(relationship.commitments ?? []).length ? (relationship.commitments ?? []).map((item) => <SurfaceRow key={item.id} selected={selectedCommitment?.id === item.id} title={item.body} detail={item.due ?? undefined} meta={item.execution_links?.length ? "Workbench linked" : "Open"} onOpen={() => setSelectedCommitment(item)} />) : <SurfaceState empty emptyLabel="No commitments" />}</SurfaceRows>{selectedCommitment ? <CommitmentInspector commitment={selectedCommitment} onClose={() => setSelectedCommitment(null)} onRefresh={() => { onRefresh(); setSelectedCommitment(null); }} onProtectedFailure={onProtectedFailure} /> : null}</SurfaceSection>
-    <SurfaceSection label="Open requests"><div className="people-new"><StringGadget mic={false} label="Request" value={request} onChange={setRequest} placeholder="Request" /><Button dense disabled={!request.trim() || busy} onClick={() => void createRequest()}>Add</Button></div><SurfaceRows>{(relationship.requests ?? []).filter((item) => item.state === "requested").map((item) => <SurfaceRow key={item.id} title={item.body} verbs={<Button dense onClick={() => void accept(item.id)}>Accept</Button>} />)}</SurfaceRows></SurfaceSection>
+    <SurfaceSection label="Open requests"><div className="people-new"><StringGadget label="Request" value={request} onChange={setRequest} placeholder="Request" /><Button dense disabled={!request.trim() || busy} onClick={() => void createRequest()}>Add</Button></div><SurfaceRows>{(relationship.requests ?? []).filter((item) => item.state === "requested").map((item) => <SurfaceRow key={item.id} title={item.body} verbs={<Button dense onClick={() => void accept(item.id)}>Accept</Button>} />)}</SurfaceRows></SurfaceSection>
   </>} side={<SurfaceSection label="Next 1:1"><SurfaceState empty={!relationship.next_one_on_one} emptyLabel="No 1:1 planned">{relationship.next_one_on_one}</SurfaceState></SurfaceSection>} />;
 }
 
@@ -487,7 +693,7 @@ function CommitmentInspector({ commitment, onClose, onRefresh, onProtectedFailur
   const send = async () => { if (!workbenchId) return; setBusy(true); try { await apiFetch(`/api/people/commitments/${encodeURIComponent(commitment.id)}/workbench`, { method: "POST", json: { workbench_id: workbenchId } }); await load(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
   const satisfy = async () => { setBusy(true); try { await apiFetch(`/api/people/commitments/${encodeURIComponent(commitment.id)}/satisfy`, { method: "POST", json: { rationale: rationale.trim() } }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
   const linked = items[0];
-  return <div className="people-commitment-inspector"><div className="people-inspector-head"><strong>Commitment</strong><Button dense variant="ghost" onClick={onClose}>Close</Button></div><div className="people-commitment-body">{commitment.body}</div>{linked ? <SurfaceRows><SurfaceRow title={linked.result ? "Output ready" : "Workbench item"} detail={linked.result || `Status: ${linked.status}`} meta={linked.status} onOpen={() => openSurfaceOr("open-workbenches", "/workbenches", `workbench:${linked.workbench_id}`)} /></SurfaceRows> : <div className="people-delegate"><CycleGadget label="Workbench" value={workbenchId} onChange={setWorkbenchId} options={workbenches.map((workbench) => ({ value: workbench.id, label: workbench.name }))} /><Button dense disabled={!workbenchId || busy} onClick={() => void send()}>Send to Workbench</Button><span className="egress-badge is-cloud" title="Workbench model">Workbench model</span></div>}<div className="people-satisfy"><StringGadget mic={false} label="Satisfaction note" value={rationale} onChange={setRationale} placeholder="What fulfilled the commitment?" /><Button dense variant="primary" disabled={busy} onClick={() => void satisfy()}>Mark satisfied</Button></div></div>;
+  return <div className="people-commitment-inspector"><div className="people-inspector-head"><strong>Commitment</strong><Button dense variant="ghost" onClick={onClose}>Close</Button></div><div className="people-commitment-body">{commitment.body}</div>{linked ? <SurfaceRows><SurfaceRow title={linked.result ? "Output ready" : "Workbench item"} detail={linked.result || `Status: ${linked.status}`} meta={linked.status} onOpen={() => openSurfaceOr("open-workbenches", "/workbenches", `workbench:${linked.workbench_id}`)} /></SurfaceRows> : <div className="people-delegate"><CycleGadget label="Workbench" value={workbenchId} onChange={setWorkbenchId} options={workbenches.map((workbench) => ({ value: workbench.id, label: workbench.name }))} /><Button dense disabled={!workbenchId || busy} onClick={() => void send()}>Send to Workbench</Button><span className="egress-badge is-cloud" title="Workbench model">Workbench model</span></div>}<div className="people-satisfy"><StringGadget label="Satisfaction note" value={rationale} onChange={setRationale} placeholder="What fulfilled the commitment?" /><Button dense variant="primary" disabled={busy} onClick={() => void satisfy()}>Mark satisfied</Button></div></div>;
 }
 
 function HistoryLens({ relationship }: { relationship: RelationshipDetail }) {
@@ -495,7 +701,8 @@ function HistoryLens({ relationship }: { relationship: RelationshipDetail }) {
   const satisfied = commitments.filter((item) => item.state === "done").length;
   const evidence = commitments.filter((item) => item.history?.some((event) => Boolean(event.evidence?.length))).length;
   const events = commitments.flatMap((item) => (item.history ?? []).map((event) => ({ ...event, commitment: item.body }))).sort((a, b) => String(b.at).localeCompare(String(a.at)));
-  return <><SurfaceSection label="Follow-through"><dl className="people-history-facts"><div><dt>Accepted</dt><dd>{commitments.length}</dd></div><div><dt>Satisfied</dt><dd>{satisfied}</dd></div><div><dt>Open</dt><dd>{commitments.filter((item) => item.state === "open").length}</dd></div><div><dt>With evidence</dt><dd>{evidence}</dd></div></dl></SurfaceSection><SurfaceSection label="Timeline">{events.length ? <SurfaceRows>{events.map((event, index) => <SurfaceRow key={`${event.at}-${index}`} title={event.commitment} detail={`${event.event}${event.rationale ? ` · ${event.rationale}` : ""}`} meta={event.at ? new Date(event.at).toLocaleDateString() : undefined} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No history" />}</SurfaceSection></>;
+  const open = commitments.filter((item) => item.state === "open").length;
+  return <><SurfaceSection label="Follow-through"><dl className="people-history-facts"><div><dt>Accepted</dt><dd>{countToken(commitments.length, "COMMITMENT") ?? "—"}</dd></div><div><dt>Satisfied</dt><dd>{countToken(satisfied, "DONE") ?? "—"}</dd></div><div><dt>Open</dt><dd>{countToken(open, "OPEN") ?? "—"}</dd></div><div><dt>With evidence</dt><dd>{countToken(evidence, "EVIDENCED") ?? "—"}</dd></div></dl></SurfaceSection><SurfaceSection label="Timeline">{events.length ? <SurfaceRows>{events.map((event, index) => <SurfaceRow key={`${event.at}-${index}`} title={event.commitment} detail={`${event.event}${event.rationale ? ` · ${event.rationale}` : ""}`} meta={event.at ? new Date(event.at).toLocaleDateString() : undefined} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No history" />}</SurfaceSection></>;
 }
 
 function OneOnOnes({ relationship, onRefresh, onProtectedFailure }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void }) {
@@ -503,7 +710,7 @@ function OneOnOnes({ relationship, onRefresh, onProtectedFailure }: { relationsh
   const session = relationship.sessions?.[0];
   const add = async () => { if (!draft.trim()) return; setBusy(true); try { const active = session ?? (await apiFetch<{ one_on_one: Session }>(`/api/people/relationships/${encodeURIComponent(relationship.id)}/one-on-ones`, { method: "POST", json: { visibility } })).one_on_one; await apiFetch(`/api/people/one-on-ones/${encodeURIComponent(active.id)}/agenda`, { method: "POST", json: { body: draft.trim(), visibility, state: "open", source: { kind: "manual" } } }); setDraft(""); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
   const roll = async (item: AgendaItem) => { if (!session) return; try { await apiFetch(`/api/people/one-on-ones/${encodeURIComponent(session.id)}/agenda`, { method: "POST", json: { body: item.body, visibility: item.visibility, state: "open", rolled_from_id: item.id, source: { kind: "manual" } } }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
-  return <SurfaceSection label="1:1s"><div className="people-agenda-add"><PadGadget mic={false} label="Agenda item" value={draft} onChange={setDraft} placeholder="Agenda item" rows={2} /><CycleGadget label="Visibility" value={visibility} onChange={(value) => setVisibility(value as Visibility)} options={[{ value: "shared_intent", label: "Shared" }, { value: "leader_private", label: "Leader private" }]} /><Button dense disabled={!draft.trim() || busy} onClick={() => void add()}>Add</Button></div>{!session ? <SurfaceState empty emptyLabel="No 1:1s" /> : <SurfaceRows>{(session.agenda ?? []).map((item) => <SurfaceRow key={item.id} title={item.body} detail={item.visibility === "leader_private" ? "Leader private" : "Shared"} meta={item.state} verbs={<Button dense variant="ghost" onClick={() => void roll(item)}>Roll forward</Button>} />)}</SurfaceRows>}</SurfaceSection>;
+  return <SurfaceSection label="1:1s"><div className="people-agenda-add"><PadGadget label="Agenda item" value={draft} onChange={setDraft} placeholder="Agenda item" rows={2} /><CycleGadget label="Visibility" value={visibility} onChange={(value) => setVisibility(value as Visibility)} options={[{ value: "shared_intent", label: "Shared" }, { value: "leader_private", label: "Leader private" }]} /><Button dense disabled={!draft.trim() || busy} onClick={() => void add()}>Add</Button></div>{!session ? <SurfaceState empty emptyLabel="No 1:1s" /> : <SurfaceRows>{(session.agenda ?? []).map((item) => <SurfaceRow key={item.id} title={item.body} detail={item.visibility === "leader_private" ? "Leader private" : "Shared"} meta={item.state} verbs={<Button dense variant="ghost" onClick={() => void roll(item)}>Roll forward</Button>} />)}</SurfaceRows>}</SurfaceSection>;
 }
 
 function InfoLens({ relationship, onProtectedFailure, onArchived }: { relationship: RelationshipDetail; onProtectedFailure(cause: unknown): void; onArchived(): void }) {

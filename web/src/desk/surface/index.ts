@@ -2,6 +2,7 @@
 
 export {
   SurfaceVerbs,
+  SurfaceIdentity,
   SurfaceSection,
   SurfaceRows,
   SurfaceRow,
@@ -30,6 +31,10 @@ export {
   SurfaceBay,
   EditInPlace,
   ConfirmVerb,
+  ScrollHint,
+  useScrollHint,
+  computeScrollHint,
+  type ScrollHintState,
 } from "./Surface";
 
 export {
@@ -86,6 +91,8 @@ export { FootSlotContext } from "./foot";
 export { TitleSlotContext, useWindowTitle } from "./title";
 export { SPARSE_THRESHOLD } from "./sparse";
 
+export { FilterTokens, type FilterTokenOption } from "./FilterTokens";
+
 export {
   LedgerFilterBar,
   useLedgerFilter,
@@ -117,3 +124,5 @@ export {
   type GraphFlow,
   type TopologySurfaceProps,
 } from "./graph/TopologySurface";
+
+export { countToken, countLabel } from "./count";

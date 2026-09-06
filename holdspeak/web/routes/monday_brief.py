@@ -5,6 +5,7 @@ observed service returns -- the MondayBrief dataclass NEVER carries it.
 """
 from __future__ import annotations
 
+import datetime
 from dataclasses import asdict
 from typing import Any
 
@@ -15,6 +16,45 @@ from ...principals import UNAUTHENTICATED
 from ...services.monday_brief_service import MondayBriefService
 from ...services.person_overlay import compose_person_overlay
 from ..context import WebContext
+
+
+_MONTHS = [
+    "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+    "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
+]
+
+
+def _period_label(brief_dict: dict[str, Any]) -> str | None:
+    generated_at = brief_dict.get("generated_at", "")
+    if not generated_at:
+        return None
+    try:
+        gen_dt = datetime.datetime.fromisoformat(
+            str(generated_at).replace("Z", "+00:00")
+        )
+        days_since_monday = gen_dt.weekday()
+        monday = gen_dt - datetime.timedelta(days=days_since_monday)
+        mon_month = _MONTHS[monday.month - 1]
+        gen_month = _MONTHS[gen_dt.month - 1]
+        if monday.month == gen_dt.month:
+            return f"{mon_month} {monday.day:02d} – {gen_dt.day:02d}"
+        return f"{mon_month} {monday.day:02d} – {gen_month} {gen_dt.day:02d}"
+    except (ValueError, TypeError):
+        return None
+
+
+def _generated_label(brief_dict: dict[str, Any]) -> str | None:
+    generated_at = brief_dict.get("generated_at", "")
+    if not generated_at:
+        return None
+    try:
+        dt = datetime.datetime.fromisoformat(
+            str(generated_at).replace("Z", "+00:00")
+        )
+        month = _MONTHS[dt.month - 1]
+        return f"GENERATED {month} {dt.day:02d} {dt.hour:02d}:{dt.minute:02d}"
+    except (ValueError, TypeError):
+        return None
 
 
 def _compose_overlay(brief_dict: dict[str, Any], service: MondayBriefService, request: Request) -> dict[str, Any]:
@@ -63,11 +103,15 @@ def build_monday_brief_router(ctx: WebContext) -> APIRouter:
         if brief is None:
             return None
         result = asdict(brief)
+        result["period_label"] = _period_label(result)
+        result["generated_label"] = _generated_label(result)
         return _compose_overlay(result, service, request)
 
     @router.post("/generate")
     async def generate(request: Request) -> dict[str, Any]:
         result = asdict(service.generate(principal(request)))
+        result["period_label"] = _period_label(result)
+        result["generated_label"] = _generated_label(result)
         return _compose_overlay(result, service, request)
 
     # HS-132-08 -- brief triage is a durable owner verb, not React state.

@@ -136,7 +136,7 @@ class TestDataclassShapePin:
             period_start="2026-08-25T17:00:00",
             period_end="2026-08-26T09:00:00",
             headline="Nothing.",
-            sections={"changed": [], "broke": [], "waiting": [], "decisions": []},
+            sections={"this_week": [], "changed": [], "broke": [], "waiting": [], "decisions": []},
             generated_at="2026-08-26T09:00:00",
         )
         d = asdict(brief)

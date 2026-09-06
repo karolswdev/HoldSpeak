@@ -1,13 +1,28 @@
 # HoldSpeak Security & Privacy Posture
 
 **Status:** living document.
-**Last updated:** 2026-08-29 (YOLO default posture, actuators on, People MCP
-default write; hard boundary unchanged).
+**Last updated:** 2026-09-05 (Interview context and retention clarification).
 
 This document is the threat model for HoldSpeak: what data it holds, where that
 data lives, what can leave the machine, and the decisions behind its at-rest
 posture. If code and this document disagree, that is a bug in one of them;
 file it.
+
+## Interview context and model work
+
+Interview facts and suggestions belong to a saved Thread on the hub.
+A stated fact includes a source quote. An inference has an explicit inferred classification.
+A model turn can send permitted context to its assigned model endpoint.
+Review the run boundary and Receipt when the execution host matters.
+
+Removing a fact also removes its dependent suggestions.
+It does not erase earlier Thread messages, separate kept outputs, or backups.
+Use the relevant record and retention controls for those copies.
+
+Interview's People section opens the protected People surface and omits the Thread composer.
+Enter confidential relationship material through that surface.
+Enter credentials through the configured credential controls.
+The [Interview guide](INTERVIEW.md) describes the complete current workflow.
 
 ## Kernel boundary: cooperating code, not a sandbox
 
@@ -219,6 +234,84 @@ from MCP projections. The owner can set `HOLDSPEAK_MCP_PEOPLE_ACCESS=off` or
 policy refusal matrix) does not loosen regardless of the access mode.
 See [People security boundary](PEOPLE_SECURITY.md).
 
+**The People resolver boundary.** Meeting intelligence can match extracted
+owner names and speaker labels to People relationships so the 1:1 brief
+shows Watch data (PRs waiting, open assignments). The resolver
+(`people_service.resolve_relationship_by_watch_identity`) runs the match
+inside the encrypted People store, in memory, at read time. Only an opaque
+relationship id crosses into the Watch projection; no alias string, display
+name, or relationship detail appears in plaintext outside the People store.
+Intelligence runs on the model's assigned host, named at the point of
+decision by the egress chip.
+
+**The reviewer nudge boundary.** The reviewer nudge is
+the steward's first external write. The only subprocess it may run is
+`gh pr comment` (the `GITHUB_PR_COMMENT_MANIFEST` at
+`github_pr_actuator.py:18` permits exactly one argv prefix:
+`("gh", "pr", "comment")`). Two independent gates block execution: the
+policy eligibility gate (the `github_comment` effect kind must be explicitly
+added to the project's `eligible_effect_kinds_json`; the default is empty)
+and the per-nudge approval gate (the owner presses Send on the nudge card
+after reading the exact comment text and the `GITHUB.COM` host badge). Either
+gate alone is sufficient to prevent the write.
+
+The comment posts from the owner's own authenticated `gh` CLI identity.
+No People data leaves the machine: the reviewer's display name stays inside
+the People store read (the resolver boundary above applies); the reviewer's
+GitHub login is what GitHub already knows. The nudge text carries no personal
+name by default (`Flagged by HoldSpeak.`, not `on behalf of [owner]`);
+the template is editable per project and per nudge.
+
+The receipt persists in the service event ledger: the comment URL, PR number,
+reviewer name, timestamp, host (`github.com`), and approval principal. Refusal
+and failure are also receipted with a named reason. No Undo: a posted comment
+cannot be retracted by HoldSpeak.
+
+The model drafter's egress: when the steward drafts a project update using a
+model, the prompt and the model output transit to the host named by the
+deployment revision (for example `192.168.1.43` on the LAN, or a configured
+cloud endpoint). The model's display name and host appear in the update
+footer's egress chip. The deterministic fallback has no egress.
+
+**The remote boundary.** The Streamable HTTP listener
+(`POST /api/mcp`) is opt-in and off by default. When enabled, it accepts
+connections on the tailnet address only. An `OWNER` principal is never derived
+from a non-loopback request on this route; the owner's web token presented from
+a remote address returns 403. `X-Forwarded-For` is never read for principal
+derivation on any route.
+
+Scoped credentials carry a palette (which tool families the caller may invoke)
+and a TTL (capped at 30 days). The hub stores `sha256(token)` at rest and
+compares hashes in constant time. The plaintext exists only in the issue
+response, shown once. Credentials are in-memory; a hub restart clears them and
+the owner re-issues. Every remote tool call writes a receipt with `origin:
+remote`, the caller's identity label, and the caller's tailnet IP. The receipt
+persists in the kernel journal.
+
+No relay: the two machines speak directly on the tailnet. No cloud proxy, no
+intermediate server. The `.43` runner triggers the hub's sweep and drafter; it
+does not perform inference itself (the hub calls the `.43` model through the
+existing inference runner, and the response returns to the hub).
+
+**The Confluence connector's boundary.** The connector
+uses the `acli` CLI with a read-only allowlist (`auth status`, `auth switch`,
+`space list`, `space view`, `page view`, `blog list`, `blog view`). No
+Confluence REST API call is ever made; the CLI holds the credentials. The
+`(site, email)` identity and switch-and-verify pattern are the same as Jira.
+
+**The calendar boundary.** The only egress in the calendar pipeline is
+the ICS fetch for HTTPS sources (`calendar_ingest_conductor.py`); the
+host is named on the Settings row's egress chip. No OAuth flow, no API
+key, no calendar-side credential is stored or managed. File sources
+cause zero network egress. The snapshot adapter runs the assigned vision
+model (the model assignment determines the host; the extraction receipt
+names it; local/LAN profiles are preferred). Arming a recording is the
+owner's standing consent per Room or all calendar meetings; armed never
+means started (Article IV). The meeting watch reads the local database
+only (meetings, meeting_projects, segments, decision_records,
+decision_commitments, intel_job_attempts); zero egress, zero model
+invocation.
+
 **Residual risk:** if the machine is compromised at the file level and full-disk
 encryption is off, transcripts, voice embeddings, and the activity ledger are
 readable. We accept this for the local-first, single-user model and **recommend
@@ -357,7 +450,7 @@ adds implementation detail but is not a second product inventory.
 |---|---|---|---|
 | **Configured remote model endpoint** (`kernel/inference_runner.py` → reviewed endpoint adapter) | An admitted attempt whose frozen **Runs on** revision names an off-machine OpenAI-compatible endpoint | The model input selected for that attempt (prompt, context, or transcript/dictated text as applicable) and endpoint/model request metadata; never raw audio or embeddings | You deliberately author and assign the destination. Each physical attempt gets its own admitted child and receipt; local destinations never take this crossing, and fallback is a separately frozen attempt. |
 | **Calendar ICS sources** (`calendar_ingest_conductor.py`) | Owner configures one or more ICS sources (each a file path or HTTPS URL) in Settings, Meetings, Calendar. Each enabled source refreshes independently at boot and every 15 minutes. | For each HTTPS source: one bounded ICS fetch to that source's URL per refresh tick. No credentials, caller-supplied headers, cookies, proxy configuration, or redirect follow-up (10 s timeout, 5 MiB cap). Per-source egress chips in Settings state the host. File sources cause zero network egress. | HTTPS only; redirects refuse. Each source's egress chip is the visible truth. |
-| **Calendar snapshot extraction** (`services/calendar_snapshot_service.py`) | Owner imports a calendar screenshot via **IMPORT SCREENSHOT** or a Desk glass drop. | The screenshot image is sent to the vision model assigned to `calendar.snapshot_extract`. Where that assignment routes determines the egress: a local model means nothing leaves; a cloud endpoint means the image reaches that host, stated by the extraction result's egress badge. The generated `.ics` is a local file source and causes zero network egress. | Assignment-gated: no vision assignment means a named refusal, not a silent skip. The generated `.ics` passes through the same bounded parser as every ICS source (5 MiB, 14-day horizon, 128 occurrences per master event). |
+| **Calendar snapshot extraction** (`services/calendar_snapshot_service.py`) | Owner imports a calendar screenshot via **Snapshot** (Settings, Meetings, the Connect calendar row) or a Desk glass drop. | The screenshot image is sent to the vision model assigned to `calendar.snapshot_extract`. Where that assignment routes determines the egress: a local model means nothing leaves; a cloud endpoint means the image reaches that host, stated by the extraction result's egress badge. The generated `.ics` is a local file source and causes zero network egress. | Assignment-gated: no vision assignment means a named refusal, not a silent skip. The generated `.ics` passes through the same bounded parser as every ICS source (5 MiB, 14-day horizon, 128 occurrences per master event). |
 | **Deferred-intel failure webhook** (`intel_queue.py`, the `urlopen` send) | User configures `intel_retry_failure_webhook_url` | Queue statistics only (counts, rates), **no transcript** | Opt-in (URL must be set). |
 | **Wake-model download** (`wake_word.py`, first enable) | `wake_word.enabled` flipped on with models absent | Nothing leaves: an inbound fetch of the detection models (~7 MB) from the openWakeWord GitHub releases, once, cached locally | Opt-in (the feature is off by default); stated in the settings copy. Detection itself runs locally and no audio ever egresses. |
 | **Send to Slack** (`slack_export.py` → the gated webhook connector) | User configures `meeting.slack_webhook_url`; under YOLO posture (the default) the send auto-executes at propose time; under Normal/Secure, per-action authorization or an exact bounded grant is required | The meeting digest or follow-up draft, exactly as previewed on the proposal (plain text; no transcript, no audio) | The URL must be set (consent for exactly its host; the connector refuses any other host before egress). Under YOLO, execution is immediate with a receipt; under Normal/Secure, every send requires authority. The webhook URL is treated as a credential: never in proposals, broadcasts, or API responses. |
@@ -373,6 +466,14 @@ adds implementation detail but is not a second product inventory.
 | **Browser mic capture** (`lib/speakToFill` → `POST /api/dictation/transcribe`) | The owner holds a mic or the Speak room's TALK key in the browser, **or** an open-mic session segments an utterance (`lib/openMic` posts through the same encoder and route) | Nothing leaves the machine: the WAV is posted to the hub on the same origin the page was served from, the hub's own local Whisper transcribes it, and the audio is never persisted (16 MB cap) | No egress point, held or continuous. Off-loopback the origin is the hub itself, token-gated like every other route; the audio never reaches a third party. Segmentation is decided in the browser (`lib/vad`, energy plus hangover, no model and no network), so continuous listening posts one WAV per detected utterance rather than a stream. |
 | **Paired dictation delivery** (`POST /api/dictation/remote`) | The owner releases the native dictation control, releases TALK in the Speak room, or explicitly sends a preview/recovery draft | Finalized text plus an opaque delivery id to the named desktop; raw audio never crosses | Direct LAN/Tailscale peer, bearer-token gated off-loopback. The hub claims the id before delivery and caches the terminal Receipt; reconnecting with the same request returns that Receipt without typing twice. A different payload under the same id is refused. |
 
+**Notifications** (`desktop_notify.py`) stay on this machine. macOS banners
+post through `osascript` (the system's notification center); Linux banners post
+through libnotify. The body contains the needs-you count only by default
+(`3 need you across 2 projects`). Room names are included only when the
+owner enables the content opt-in setting. Quiet hours (default 22:00 to
+08:00) suppress notifications entirely. No notification payload leaves
+the machine; there is no remote push channel.
+
 Browser history reads (`activity_*`) make **no network calls**; they are
 read-only against local SQLite snapshots. The activity ledger never leaves the
 machine except via the connector CLIs above (entity IDs only).
@@ -381,8 +482,8 @@ machine except via the connector CLIs above (entity IDs only).
 
 ## 5. Secrets handling
 
-- **Cloud API key**: Set, replace, or remove it on the model profile in
-  **Settings > Models > Model Library**.
+- **Cloud API key**: Use the owner Model Library secret API for the identified model profile.
+  The current Concierge URL field does not collect a key. See [Models](MODELS.md).
   The value travels only through an owner-only secret write/delete subresource,
   never a general model-management resource, sync, DTOs, the database, read
   responses, logs, or receipts. The hub stores it locally in owner-only `0600` custody; reads report

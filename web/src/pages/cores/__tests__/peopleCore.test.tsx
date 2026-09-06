@@ -58,7 +58,10 @@ describe("PeopleCore encrypted local plane", () => {
     expect(await screen.findByRole("button", { name: /Platform/ })).toBeTruthy();
     expect(screen.getByText("Prefers written context")).toBeTruthy();
     expect(screen.getByLabelText("Grounding note")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /^Speak / })).toBeNull();
+    // HS-176-04 — the voice law (Article IV.1): People's wells carry the
+    // mic like every other text input.  This assertion used to require the
+    // opposite; the seven mic={false} opt-outs it guarded are gone.
+    expect(screen.getAllByRole("button", { name: /^Speak / }).length).toBeGreaterThan(0);
   });
 
   it("opens a commitment execution inspector and relationship history", async () => {
@@ -271,7 +274,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
 });
 
 describe("PeopleCore HS-149-04 Prep lens", () => {
-  it("renders the Prep tab and brief sections", async () => {
+  it("renders the Prep tab with display step and agenda", async () => {
     stub({
       "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted" }),
       "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Ewa", relationship_kind: "direct_report" }] }),
@@ -286,21 +289,21 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
           { meeting_id: "m1", title: "Last 1:1", started_at: "2026-08-01T10:00:00", open_action_items: [{ id: "ai1", task: "Review docs", owner: "Ewa", due: null }], decisions: [{ id: "d1", decision_text: "Approved RFC", rationale: null, lifecycle: "active" }] },
         ],
         unlinked_meeting_count: 3,
+        last_meeting: { meeting_id: "m1", title: "Last 1:1", item_count: 2, open_count: 1 },
       } }),
       "/api/door": () => json({ upcoming: [] }),
     });
     render(<PeopleCore scope="people:r1" />);
     await waitFor(() => expect(screen.getByRole("tab", { name: "Prep" })).toBeTruthy());
     fireEvent.click(screen.getByRole("tab", { name: "Prep" }));
-    // Sections render
+    // HS-172-05: display step + summary rows + agenda
     expect(await screen.findByTestId("people-prep-lens")).toBeTruthy();
-    expect(screen.getByText("Ship the feature")).toBeTruthy();
+    expect(screen.getByTestId("prep-display-name")).toHaveTextContent("Ewa");
     expect(screen.getByText("Discuss roadmap")).toBeTruthy();
-    expect(screen.getByTestId("prep-grounding-count")).toHaveTextContent("2 grounding notes");
-    expect(screen.getByText("Last 1:1")).toBeTruthy();
-    expect(screen.getByText("Review docs (Ewa)")).toBeTruthy();
-    expect(screen.getByText("Approved RFC")).toBeTruthy();
-    expect(screen.getByTestId("prep-unlinked-count")).toHaveTextContent("3 unlinked meetings in this window");
+    // LAST MEETING summary row
+    expect(screen.getByTestId("prep-meeting-row")).toBeTruthy();
+    // Footer
+    expect(screen.getByText("THIS DEVICE")).toBeTruthy();
   });
 
   it("renders Owner aliases section on the Context lens with add and two-beat remove", async () => {

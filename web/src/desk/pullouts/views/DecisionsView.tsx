@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
+import { Button } from "../../../components/signal/Signal";
 import { qualifiedRef } from "../../api";
 import { useDesk } from "../../store";
 import { SurfaceLedger, SurfaceLedgerRow, SurfaceState } from "../../surface/Surface";
+import { countLabel } from "../../surface/count";
+import { MicButton } from "../../surface";
 import { StringGadget } from "../../surface/gadgets";
 
 type ReceiptSource = {
@@ -161,20 +164,22 @@ export function DecisionsView({
           onChange={setQuery}
           placeholder="Search decisions"
         />
+        <MicButton onText={setQuery} />
       </div>
       <div className="receipts-search-actions">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          dense
           className={`receipts-why-filter${whyOnly ? " is-active" : ""}`}
           aria-pressed={whyOnly}
           onClick={() => setWhyOnly((value) => !value)}
         >
           WHY ONLY
-        </button>
+        </Button>
         {whyOnly ? <span>GOVERNING DECISIONS</span> : <span>ALL DECISIONS</span>}
       </div>
       {error ? <SurfaceState error={error} /> : null}
-      <SurfaceLedger cols="facts" count={`DECISIONS ${visibleResults.length}`}>
+      <SurfaceLedger cols="facts" count={countLabel("DECISIONS", visibleResults.length)}>
         {loading ? (
           <SurfaceState loading />
         ) : visibleResults.length ? (
@@ -231,15 +236,18 @@ function ReceiptDetail({
   if (!receipt) return <SurfaceState error={error || "Decision unavailable."} />;
 
   const provenance = receipt.sources?.find((source) => source.source_type === "segment");
+  const decisionText = receipt.decision_text;
+  const predecessorId = receipt.predecessor_id;
+  const successorId = receipt.successor_id;
   return (
     <article className="receipt-detail">
-      <button type="button" className="receipt-back" onClick={onBack}>← RESULTS</button>
+      <Button variant="ghost" dense className="receipt-back" onClick={onBack}>← RESULTS</Button>
       <header className="receipt-detail-head">
         <span className="receipts-id">D-{shortId(receipt.id)}</span>
         <span className="surface-token" data-tone={receiptStatus(receipt) === "superseded" ? "muted" : "ok"}>
           {receiptStatus(receipt).toUpperCase()}
         </span>
-        <h3>{receipt.decision_text}</h3>
+        <h3>{decisionText}</h3>
       </header>
       <dl className="receipt-fields">
         <ReceiptField label="Rationale" value={receipt.rationale} />
@@ -256,38 +264,42 @@ function ReceiptDetail({
           </blockquote>
         ) : <p className="quiet">No meeting-segment quote retained.</p>}
         {provenance?.meeting_id || receipt.sources?.some((source) => source.source_type === "meeting") ? (
-          <button type="button" className="receipt-go" onClick={() => onOpenSource(provenance ?? receipt.sources!.find((source) => source.source_type === "meeting")!)}>
+          <Button variant="ghost" dense className="receipt-go" onClick={() => onOpenSource(provenance ?? receipt.sources!.find((source) => source.source_type === "meeting")!)}>
             [GO]
-          </button>
+          </Button>
         ) : null}
       </section>
       <section className="receipt-work" aria-label="Affected work">
         <h4>AFFECTED WORK</h4>
         {receipt.work?.length ? receipt.work.map((work) => (
-          <button key={work.id} type="button" className="receipt-work-chip" onClick={() => onOpenWork(work)}>
+          <Button key={work.id} variant="ghost" dense className="receipt-work-chip" onClick={() => onOpenWork(work)}>
             {work.work_type}: {work.work_ref}
-          </button>
+          </Button>
         )) : <p className="quiet">No affected work linked.</p>}
       </section>
       <section className="receipt-chain" aria-label="Supersession history">
         <h4>SUPERSESSION</h4>
         <div>
-          {receipt.predecessor_id ? <button type="button" onClick={() => onOpenReceipt(receipt.predecessor_id!)}>← D-{shortId(receipt.predecessor_id)}</button> : <span>← ORIGIN</span>}
+          {predecessorId ? <Button variant="ghost" dense onClick={() => onOpenReceipt(predecessorId!)}>← D-{shortId(predecessorId)}</Button> : <span>← ORIGIN</span>}
           <strong>THIS</strong>
-          {receipt.successor_id ? <button type="button" onClick={() => onOpenReceipt(receipt.successor_id!)}>D-{shortId(receipt.successor_id)} →</button> : <span>CURRENT →</span>}
+          {successorId ? <Button variant="ghost" dense onClick={() => onOpenReceipt(successorId!)}>D-{shortId(successorId)} →</Button> : <span>CURRENT →</span>}
         </div>
       </section>
       <section className="receipt-revisions" aria-label="Revision timeline">
         <h4>REVISIONS</h4>
         {receipt.revisions?.length ? (
           <ol>
-            {receipt.revisions.map((revision) => (
-              <li key={revision.id}>
-                <time dateTime={revision.created_at}>{humanDate(revision.created_at)}</time>
-                <span>{revision.field_name}</span>
-                <span>{revision.old_value || "—"} → {revision.new_value || "—"}</span>
-              </li>
-            ))}
+            {receipt.revisions.map((revision) => {
+              const revDate = revision.created_at;
+              const fieldName = revision.field_name.replace(/_/g, " ");
+              const oldVal = revision.old_value;
+              const newVal = revision.new_value;
+              return <li key={revision.id}>
+                <time dateTime={revDate}>{humanDate(revDate)}</time>
+                <span>{fieldName}</span>
+                <span>{oldVal || "—"} → {newVal || "—"}</span>
+              </li>;
+            })}
           </ol>
         ) : <p className="quiet">No revisions recorded.</p>}
       </section>

@@ -22,7 +22,11 @@ const brief = {
   id: "brief-1",
   headline: "One decision needs your attention.",
   is_empty: false,
+  period_label: "SEP 01 – 05",
+  generated_label: "GENERATED SEP 04 08:00",
+  period_start: "2026-09-04T17:00:00",
   sections: {
+    this_week: [],
     changed: [{
       id: "brief-item-1",
       section: "changed",
@@ -96,17 +100,17 @@ describe("HS-128-10 Desk Intelligence walk", () => {
     expect(screen.getByRole("button", { name: "Brief" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Follow-through" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("button", { name: "Decisions" })).toHaveAttribute("aria-pressed", "false");
-    expect(await screen.findByText(brief.headline)).toBeInTheDocument();
+    // HS-175: the brief face shows the period label, not the headline sentence.
+    expect(await screen.findByText(brief.period_label!)).toBeInTheDocument();
   });
 
-  it("renders the Brief headline and its operating groups", async () => {
+  it("renders the Brief period and its lookback items as flat rows", async () => {
     render(<IntelligencePullout object={object} onClose={() => {}} />);
 
-    expect(await screen.findByText(brief.headline)).toBeInTheDocument();
-    expect(screen.getByText("Changed")).toBeInTheDocument();
-    expect(screen.getByText("Broke")).toBeInTheDocument();
-    expect(screen.getByText("Waiting")).toBeInTheDocument();
-    expect(screen.getByText("Your Decisions")).toBeInTheDocument();
+    // HS-175: period label replaces the headline; lookback items are flat
+    // rows with kind tokens, not fold groups (Changed/Broke/Waiting/Decisions).
+    expect(await screen.findByText(brief.period_label!)).toBeInTheDocument();
+    expect(screen.getByText("SINCE FRIDAY")).toBeInTheDocument();
     expect(screen.getByText("Desk Intelligence is ready.")).toBeInTheDocument();
   });
 
@@ -150,13 +154,15 @@ describe("HS-128-10 Desk Intelligence walk", () => {
 
   it("HS-129-03 keeps a large Brief in the scrollable body under the card cap", async () => {
     apiFetch.mockImplementation((path: string) =>
-      path === "/api/brief/latest" ? Promise.resolve(largeBrief) : Promise.resolve([]),
+      path === "/api/brief/latest" ? Promise.resolve({ ...largeBrief, period_label: "SEP 01 – 05", period_start: "2026-09-01T17:00:00" }) : Promise.resolve([]),
     );
     const { container } = render(<IntelligencePullout object={object} onClose={() => {}} />);
 
-    expect(await screen.findByText(largeBrief.headline)).toBeInTheDocument();
+    // HS-175: the period label replaces the headline; lookback items are flat sf-rows.
+    expect(await screen.findByText("SEP 01 – 05")).toBeInTheDocument();
     expect(container.querySelector(".desk-pullout-body.intelligence-pullout")).toBeInTheDocument();
-    expect(container.querySelectorAll(".intelligence-brief-rows .surface-ledger-row")).toHaveLength(193);
+    // HS-175: flat rows use .intelligence-brief-sf-row instead of .surface-ledger-row inside folds.
+    expect(container.querySelectorAll("[data-testid='brief-sf-row']")).toHaveLength(193);
     expect(windowChromeCss).toContain(".desk-next .desk-window.is-floating:not(.is-card)");
     expect(windowChromeCss).toContain("max-height: none;");
   });
@@ -164,16 +170,18 @@ describe("HS-128-10 Desk Intelligence walk", () => {
   it("HS-129-03 hides BACK until a cross-link drill and returns to Brief", async () => {
     render(<IntelligencePullout object={object} onClose={() => {}} />);
 
-    expect(screen.queryByRole("button", { name: "← BACK" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "BACK" })).not.toBeInTheDocument();
     fireEvent(window, new CustomEvent(INTELLIGENCE_NAVIGATE, { detail: { view: "brief" } }));
-    expect(screen.queryByRole("button", { name: "← BACK" })).not.toBeInTheDocument();
-    await screen.findByText(brief.headline);
-    fireEvent.click(screen.getByRole("button", { name: "Changed: Desk Intelligence is ready." }));
+    expect(screen.queryByRole("button", { name: "BACK" })).not.toBeInTheDocument();
+    // HS-175: the period label replaces the headline; the lookback item's
+    // primary is "Desk Intelligence is ready." -- click it to drill.
+    await screen.findByText(brief.period_label!);
+    fireEvent.click(screen.getByText("Desk Intelligence is ready."));
 
     expect(await screen.findByText(board.now[0].text)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "← BACK" }));
+    fireEvent.click(screen.getByRole("button", { name: "BACK" }));
 
-    expect(await screen.findByText(brief.headline)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "← BACK" })).not.toBeInTheDocument();
+    expect(await screen.findByText(brief.period_label!)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "BACK" })).not.toBeInTheDocument();
   });
 });

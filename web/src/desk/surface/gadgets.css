@@ -152,6 +152,59 @@
   opacity: 0.55;
 }
 
+/* ── CheckGadget token variant (HS-169-02): bordered mono-uppercase
+   token with ✓ glyph.  ON = success-tinted sunken bevel;
+   OFF = faint raised bevel. ── */
+.gadget-check-token {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  overflow: hidden; /* clip the hidden input so it cannot intercept sibling clicks */
+}
+.gadget-check-token input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+  pointer-events: none; /* label handles clicks; input must not intercept siblings */
+}
+.gadget-check-token-face {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--border, #2a2e3e);
+  border-radius: 2px;
+  font: 600 11px/1 "JetBrains Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  user-select: none;
+}
+.gadget-check-token.is-on .gadget-check-token-face {
+  color: var(--ok, #34d399);
+  border-color: color-mix(in srgb, var(--ok, #34d399) 40%, transparent);
+  box-shadow:
+    inset 1px 1px 0 var(--etch-dark),
+    inset -1px -1px 0 var(--border-subtle);
+}
+.gadget-check-token.is-off .gadget-check-token-face {
+  color: var(--text-faint, #767e8d);
+  border-color: var(--border, #2a2e3e);
+  box-shadow:
+    inset 1px 1px 0 var(--p-color-wash-08),
+    inset -1px -1px 0 var(--bevel-dark-soft);
+}
+.gadget-check-token input:focus-visible + .gadget-check-token-face {
+  border-color: var(--accent);
+}
+.gadget-check-token input:disabled + .gadget-check-token-face {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* ── CycleGadget: a real <select> wearing the cycle-gadget face ── */
 .gadget-cycle {
   position: relative;
@@ -800,6 +853,13 @@
 .gadget-chip-egress[data-scope="mixed"],
 .gadget-chip-egress[data-scope="cloud"] {
   color: var(--accent);
+}
+/* HS-174-04 — the REMOTE badge: accent outline (stroke not fill),
+   never the warning tone.  A fourth egress token --egress-remote. */
+.gadget-chip-egress[data-scope="remote"] {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: transparent;
 }
 button.gadget-chip-egress {
   cursor: pointer;

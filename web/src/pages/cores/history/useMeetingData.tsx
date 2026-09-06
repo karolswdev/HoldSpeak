@@ -1,5 +1,5 @@
-// HS-117-09 — extracted from MeetingDetail: the 6 parallel API
-// fetches and derived row arrays.
+// HS-172 — extracted from MeetingDetail: the parallel API fetches and
+// derived row arrays. Now also fetches follow-through proposals.
 import { useEffect, useState } from "react";
 import type {
   MeetingDetailResponse,
@@ -23,6 +23,21 @@ import {
   proposalStatusLabel,
 } from "../../../lib/productLanguage";
 
+/** HS-172: a follow-through proposal from the wire. */
+interface FollowThroughProposal {
+  id: string;
+  meeting_id: string;
+  project_id?: string | null;
+  kind: "decision" | "action";
+  text: string;
+  owner_hint?: string | null;
+  due_hint?: string | null;
+  speaker_label?: string | null;
+  model_host?: string | null;
+  state: "proposed" | "confirmed" | "dismissed";
+  created_at: string;
+}
+
 export interface MeetingData {
   detail: Record<string, unknown> | null;
   setDetail: (detail: Record<string, unknown> | null) => void;
@@ -42,17 +57,19 @@ export interface MeetingData {
     decision: "approved" | "rejected",
   ) => Promise<void>;
   proposeSlack: (what: "digest" | "followup") => Promise<void>;
-  /** Derived: has any outcomes at all. */
   hasOutcomes: boolean;
-  /** Derived: intelligence is disabled. */
   intelOff: boolean;
-  /** Derived: capture is in a bad state. */
+  /** The raw intel state string for QUEUED/FAILED verb display. */
+  intelState: string;
   captureBad: boolean;
-  /** The needs-you table rows. */
   needsRows: NeedsRow[];
   needsCount: number;
   startedAt: unknown;
   durationS: number;
+  /** HS-172: follow-through proposals for this meeting. */
+  ftProposals: FollowThroughProposal[];
+  confirmProposal: (id: string) => Promise<void>;
+  dismissProposal: (id: string) => Promise<void>;
 }
 
 export function useMeetingData(
@@ -66,6 +83,7 @@ export function useMeetingData(
   const [timeline, setTimeline] = useState<Record<string, unknown>>({});
   const [proposals, setProposals] = useState<Record<string, unknown>>({});
   const [authority, setAuthority] = useState<Record<string, unknown>>({});
+  const [ftProposals, setFtProposals] = useState<FollowThroughProposal[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -93,11 +111,13 @@ export function useMeetingData(
       apiFetch<AuthorityPolicyResponse>("/api/authority/policy")
         .then(setAuthority)
         .catch(() => setAuthority({})),
+      apiFetch<{ proposals: FollowThroughProposal[] }>(
+        `/api/meetings/${encodeURIComponent(id)}/follow-through-proposals`,
+      )
+        .then((res) => setFtProposals(res.proposals ?? []))
+        .catch(() => setFtProposals([])),
     ]).catch((reason) => setError(readableError(reason)));
   }, [id, meeting]);
-  // HS-132-03 — `actuator_result` was broadcast to nobody. A proposal
-  // decided or executed anywhere else (the ambient card, a device, mission
-  // control) now lands on THIS open meeting without a refetch.
   const { subscribe } = useRuntimeBus();
   useEffect(
     () =>
@@ -137,7 +157,7 @@ export function useMeetingData(
         text: decision === "approved" ? "APPROVED" : "REJECTED",
       });
     } catch (reason) {
-      onReceipt({ text: `⚠ REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
     } finally {
       setBusy(false);
     }
@@ -156,11 +176,43 @@ export function useMeetingData(
         text: what === "digest" ? "PROPOSED DIGEST" : "PROPOSED FOLLOW-UP",
       });
     } catch (reason) {
-      onReceipt({ text: `⚠ REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
     } finally {
       setBusy(false);
     }
   };
+
+  // HS-172: confirm/dismiss follow-through proposals.
+  const confirmProposal = async (proposalId: string) => {
+    setBusy(true);
+    try {
+      await apiFetch(`/api/proposals/${encodeURIComponent(proposalId)}/confirm`, {
+        method: "POST",
+      });
+      setFtProposals((prev) => prev.filter((p) => p.id !== proposalId));
+      onReceipt({ text: "CONFIRMED" });
+    } catch (reason) {
+      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const dismissProposal = async (proposalId: string) => {
+    setBusy(true);
+    try {
+      await apiFetch(`/api/proposals/${encodeURIComponent(proposalId)}/dismiss`, {
+        method: "POST",
+      });
+      setFtProposals((prev) => prev.filter((p) => p.id !== proposalId));
+      onReceipt({ text: "DISMISSED" });
+    } catch (reason) {
+      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const segments = asRows(detail, ["segments", "transcript"]);
   const artifactRows = asRows(artifacts, ["artifacts", "items"]);
   const actionRows = asRows(aftercare, ["action_items", "actions", "items"]);
@@ -172,93 +224,132 @@ export function useMeetingData(
   const startedAt = detail?.started_at ?? meeting?.started_at;
   const durationS = Number(detail?.duration_seconds ?? meeting?.duration_seconds ?? 0);
   const intelStatus = detail?.intel_status;
-  const intelOff =
-    (typeof intelStatus === "object" && intelStatus !== null
+  const intelState =
+    typeof intelStatus === "object" && intelStatus !== null
       ? String((intelStatus as Record<string, unknown>).state ?? "")
-      : String(intelStatus ?? "")) === "disabled";
+      : String(intelStatus ?? "");
+  const intelOff = intelState === "disabled";
   const hasOutcomes =
-    proposalRows.length > 0 || openActions.length > 0 || settledActions.length > 0;
+    proposalRows.length > 0 || openActions.length > 0 || settledActions.length > 0 || ftProposals.length > 0;
   const captureBad =
     Boolean(detail?.capture_status) && detail?.capture_status !== "finalized";
 
-  /* The needs-you table: undecided proposals lead, open action items
-     follow — pending receipts, one dense table (audit §3.2.3). */
+  // HS-172: follow-through proposals (proposed state) become the NEEDS YOU rows.
+  const pendingFt = ftProposals.filter((p) => p.state === "proposed");
+  // Legacy actuator proposals.
   const undecided = proposalRows.filter(
     (row) =>
       row.status === "proposed" &&
       (row.policy_snapshot as Record<string, unknown> | undefined)?.outcome !== "refused",
   ).length;
-  const needsCount = undecided + openActions.length;
-  const needsRows: NeedsRow[] =
-    [
-      ...proposalRows.map((row) => {
-        const policy = (row.policy_snapshot ?? {}) as Record<string, unknown>;
-        const operation = (row.operation ?? {}) as Record<string, unknown>;
-        const refused = policy.outcome === "refused";
-        const effect = String(operation.effect_class ?? row.action ?? "");
-        const destination = String(operation.destination ?? row.target ?? "");
-        const facts = [
-          effect ? `EFFECT: ${effectClassLabel(effect)}` : null,
-          destination ? `DEST: ${humanizeWireValue(destination)}` : null,
-          `BASIS: ${authorityBasisLabel(
-            String(policy.authority_basis ?? "per_action_required"),
-          )}`,
-        ]
-          .filter((fact): fact is string => Boolean(fact))
-          .join(" · ")
-          .toUpperCase();
-        const commitment = row.commitment as Record<string, unknown> | undefined;
-        return {
-          cells: [
-            <span key="what" title={presentValue(row.preview ?? row.body ?? "")}>
-              {String(row.title ?? row.kind ?? "Proposed action")}
-            </span>,
-            <span key="facts" title={facts}>
-              {facts}
-            </span>,
-          ] as ReactNode[],
-          verbs:
-            row.status === "proposed" && !refused ? (
-              <>
-                <Button
-                  dense
-                  loading={busy}
-                  title={String(commitment?.approve ?? "")}
-                  onClick={() => void decide(row, "approved")}
-                >
-                  Approve
-                </Button>
-                <Button
-                  dense
-                  variant="ghost"
-                  title={String(commitment?.reject ?? "")}
-                  onClick={() => void decide(row, "rejected")}
-                >
-                  Reject
-                </Button>
-              </>
-            ) : (
-              <span
-                className="surface-token"
-                data-tone={refused ? "danger" : undefined}
-              >
-                {refused
-                  ? "REFUSED"
-                  : proposalStatusLabel(String(row.status ?? "")).toUpperCase()}
-              </span>
-            ),
-        };
-      }),
-      ...openActions.map((row) => ({
+  const needsCount = pendingFt.length + undecided + openActions.length;
+
+  const needsRows: NeedsRow[] = [
+    // HS-172: follow-through proposals with Decide:/Confirm: prefix.
+    ...pendingFt.map((prop): NeedsRow => {
+      const prefix = prop.kind === "decision" ? "Decide:" : "Confirm:";
+      const dueText = prop.due_hint ? ` · by ${prop.due_hint}` : "";
+      return {
         cells: [
-          <span key="what">{String(row.text ?? row.title ?? "Action item")}</span>,
-          <span key="facts">
-            {presentValue(row.owner) ? `OWNER: ${presentValue(row.owner)}`.toUpperCase() : ""}
+          <span key="what" data-proposal>
+            <span className="meetings-proposal-prefix">{prefix}</span>
+            {" "}
+            {prop.text}{dueText}
           </span>,
         ] as ReactNode[],
-        verbs: <span className="surface-token" data-tone="warn">OPEN</span> as ReactNode,
-      })),
-    ];
+        verbs: (
+          <>
+            <Button
+              dense
+              variant="primary"
+              loading={busy}
+              onClick={() => void confirmProposal(prop.id)}
+              data-testid="proposal-confirm-btn"
+            >
+              Confirm
+            </Button>
+            <Button
+              dense
+              variant="ghost"
+              loading={busy}
+              onClick={() => void dismissProposal(prop.id)}
+              data-testid="proposal-dismiss-btn"
+            >
+              Dismiss
+            </Button>
+          </>
+        ),
+      };
+    }),
+    // Legacy actuator proposals (from the old aftercare/proposals pipeline).
+    ...proposalRows.map((row) => {
+      const policy = (row.policy_snapshot ?? {}) as Record<string, unknown>;
+      const operation = (row.operation ?? {}) as Record<string, unknown>;
+      const refused = policy.outcome === "refused";
+      const effect = String(operation.effect_class ?? row.action ?? "");
+      const destination = String(operation.destination ?? row.target ?? "");
+      const facts = [
+        effect ? `EFFECT: ${effectClassLabel(effect)}` : null,
+        destination ? `DEST: ${humanizeWireValue(destination)}` : null,
+        `BASIS: ${authorityBasisLabel(
+          String(policy.authority_basis ?? "per_action_required"),
+        )}`,
+      ]
+        .filter((fact): fact is string => Boolean(fact))
+        .join(" · ")
+        .toUpperCase();
+      const commitment = row.commitment as Record<string, unknown> | undefined;
+      return {
+        cells: [
+          <span key="what" title={presentValue(row.preview ?? row.body ?? "")}>
+            {String(row.title ?? row.preview ?? row.kind ?? "Proposed action")}
+          </span>,
+          <span key="facts" title={facts}>
+            {facts}
+          </span>,
+        ] as ReactNode[],
+        verbs:
+          row.status === "proposed" && !refused ? (
+            <>
+              <Button
+                dense
+                loading={busy}
+                title={String(commitment?.approve ?? "")}
+                onClick={() => void decide(row, "approved")}
+              >
+                Decide
+              </Button>
+              <Button
+                dense
+                variant="ghost"
+                title={String(commitment?.reject ?? "")}
+                onClick={() => void decide(row, "rejected")}
+              >
+                Dismiss
+              </Button>
+            </>
+          ) : (
+            <span
+              className="surface-token"
+              data-tone={refused ? "danger" : undefined}
+            >
+              {refused
+                ? "REFUSED"
+                : proposalStatusLabel(String(row.status ?? "")).toUpperCase()}
+            </span>
+          ),
+      };
+    }),
+    ...openActions.map((row) => ({
+      cells: [
+        <span key="what">{String(row.text ?? row.title ?? "Action item")}</span>,
+        <span key="facts">
+          {presentValue(row.owner) ? `OWNER: ${presentValue(row.owner)}`.toUpperCase() : ""}
+        </span>,
+      ] as ReactNode[],
+      verbs: <span className="surface-token" data-tone="warn">OPEN</span> as ReactNode,
+    })),
+  ];
 
   return {
     detail,
@@ -278,10 +369,14 @@ export function useMeetingData(
     proposeSlack,
     hasOutcomes,
     intelOff,
+    intelState,
     captureBad,
     needsRows,
     needsCount,
     startedAt,
     durationS,
+    ftProposals,
+    confirmProposal,
+    dismissProposal,
   };
 }

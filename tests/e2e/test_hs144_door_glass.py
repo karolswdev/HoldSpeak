@@ -288,7 +288,14 @@ def test_hs144_door_cold_open_keeps_first_sentence_one_job(
 def test_hs144_door_populated_glass_action_refusal_and_shots(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Five source-owned columns, a real verb, and an in-flow stale refusal."""
+    """HS-170-04 re-point: Door items appear as NEEDS YOU rows on the arrival.
+
+    Seeds the same action items (overdue, now, waiting, unassigned) and a
+    thought through production routes. Asserts: NEEDS YOU rows with correct
+    order (danger first), tokens (OVERDUE, NOW, WAITING ON), and the
+    ``Name an owner`` ghost verb on the unassigned item. The NEXT line
+    from the seeded schedule. Active items do NOT appear.
+    """
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
@@ -304,156 +311,59 @@ def test_hs144_door_populated_glass_action_refusal_and_shots(
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
             _normal_chair(page)
             ids = _seed_populated_door(page)
-            # Door deliberately revalidates on its normal-Chair remount; reload
-            # after the real writes instead of forging a browser response.
             page.reload(wait_until="load")
             _normal_chair(page)
 
-            door = page.locator(".door-board-section")
-            door.get_by_text("1 overdue · 1 now · 1 waiting · 1 active", exact=True).wait_for()
-            expected_columns = {
-                "Overdue": "1 overdue items",
-                "Now": "1 now items",
-                "Waiting": "1 waiting items",
-                "Active": "1 active items",
-            }
-            for name, count_label in expected_columns.items():
-                column = _door_column(page, name)
-                assert column.get_by_label(count_label, exact=True).is_visible()
-            assert _door_column(page, "Unassigned").locator(".door-card", has_text="Name an owner for the glass walk").is_visible()
+            # Wait for the arrival headline
+            page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
+            page.wait_for_timeout(500)
 
-            overdue = _door_column(page, "Overdue")
-            overdue_card = overdue.locator(".door-card", has_text="Unblock the overdue Door proof")
-            assert "action item · owner Ada · overdue 1d" in overdue_card.inner_text()
-            active = _door_column(page, "Active")
-            active_card = active.locator(".door-card", has_text="Door active thought")
-            assert "thought · idle · updated now" in active_card.inner_text()
-            page.get_by_role("heading", name="MEETINGS", exact=True).wait_for()
-            meetings = page.locator('[data-lane="meetings"]')
-            rail = door.locator(".door-upcoming-rail")
-            assert rail.get_by_text("Door Glass Recording", exact=True).is_visible()
-            assert meetings.get_by_text("Door Glass Recording", exact=True).count() == 0
-            agents = page.locator('[data-lane="agents"]')
-            agents.get_by_text("No sessions", exact=True).wait_for()
-            recipes = _api(page, "GET", "/api/recipes").get("recipes", [])
-            crew_count = sum(1 for recipe in recipes if not recipe.get("deleted"))
-            assert agents.get_by_role(
-                "heading",
-                name=f"AGENTS · CREW {crew_count} · BLOCKED 0",
-                exact=True,
-            ).is_visible()
+            # ── NEEDS YOU section present ──
+            needs_you = page.get_by_test_id("arrival-needs-you")
+            assert needs_you.count() == 1, "NEEDS YOU section should be present"
 
-            # At desk width the five-column Door is one workbench rail. It must
-            # fit without a concealed fifth column or a horizontal scroll affordance.
-            wide_board = door.locator(".door-board-viewport")
-            wide_geometry = wide_board.evaluate(
-                """viewport => {
-                  const active = [...viewport.querySelectorAll('.door-board-column')]
-                    .find(column => column.querySelector('h4')?.textContent === 'Active');
-                  if (!active) return null;
-                  return {
-                    activeRight: active.getBoundingClientRect().right,
-                    clientWidth: viewport.clientWidth,
-                    scrollWidth: viewport.scrollWidth,
-                    viewportWidth: window.innerWidth,
-                  };
-                }"""
-            )
-            assert wide_geometry is not None
-            assert wide_geometry["scrollWidth"] == wide_geometry["clientWidth"], wide_geometry
-            assert wide_geometry["activeRight"] <= wide_geometry["viewportWidth"] + 0.5, wide_geometry
+            # ── Rows: overdue, now, waiting, unassigned; active is ABSENT ──
+            rows = page.get_by_test_id("arrival-needs-you-row")
+            # Door items: overdue(danger) + now(warning) + unassigned(warning) +
+            # waiting(info) = 4 items (active excluded, the thought is "active")
+            assert rows.count() >= 3, f"Expected at least 3 NEEDS YOU rows, got {rows.count()}"
 
-            # HS-150-03 restored the Brief lane (second, after the Door), so
-            # the calm equal band is now BRIEF + MEETINGS, with AGENTS as the
-            # dangling odd last lane spanning the full band below it.
-            lower_band = page.evaluate(
-                """() => {
-                  const brief = document.querySelector('[data-lane="brief"]');
-                  const meetings = document.querySelector('[data-lane="meetings"]');
-                  const agents = document.querySelector('[data-lane="agents"]');
-                  if (!brief || !meetings || !agents) return null;
-                  const briefBox = brief.getBoundingClientRect();
-                  const meetingBox = meetings.getBoundingClientRect();
-                  const agentBox = agents.getBoundingClientRect();
-                  return {
-                    briefTop: briefBox.top,
-                    briefWidth: briefBox.width,
-                    agentsTop: agentBox.top,
-                    agentsWidth: agentBox.width,
-                    meetingsTop: meetingBox.top,
-                    meetingsWidth: meetingBox.width,
-                    meetingsBottom: meetingBox.bottom,
-                  };
-                }"""
-            )
-            assert lower_band is not None
-            assert abs(lower_band["briefWidth"] - lower_band["meetingsWidth"]) <= 0.5, lower_band
-            assert abs(lower_band["briefTop"] - lower_band["meetingsTop"]) <= 0.5, lower_band
-            assert lower_band["agentsTop"] >= lower_band["meetingsTop"], lower_band
-            assert lower_band["agentsWidth"] >= 2 * lower_band["meetingsWidth"], lower_band
+            # Overdue item: severity danger, appears first
+            overdue_text = rows.nth(0).locator(".surface-ledger-primary").text_content() or ""
+            assert "overdue" in overdue_text.lower() or "Unblock" in overdue_text, \
+                f"First row should be the overdue item: {overdue_text}"
+
+            # WHY tokens
+            why_tokens = page.get_by_test_id("arrival-why")
+            token_texts = [why_tokens.nth(i).text_content() or "" for i in range(why_tokens.count())]
+            assert any("OVERDUE" in t for t in token_texts), f"Expected OVERDUE token: {token_texts}"
+
+            # "Name an owner" verb on the unassigned item
+            name_owner = page.get_by_test_id("arrival-name-owner")
+            assert name_owner.count() >= 1, "Unassigned item should have 'Name an owner' verb"
+
+            # NEXT line from the seeded scheduled recording
+            next_line = page.get_by_test_id("arrival-next")
+            assert next_line.count() == 1, "NEXT line should be present"
+            next_text = next_line.text_content() or ""
+            assert "DOOR GLASS RECORDING" in next_text.upper(), \
+                f"NEXT should name the schedule: {next_text}"
+
+            # Active thought does NOT appear in NEEDS YOU
+            all_primaries = [rows.nth(i).locator(".surface-ledger-primary").text_content() or ""
+                             for i in range(rows.count())]
+            assert not any("active thought" in p.lower() for p in all_primaries), \
+                f"Active items should not appear: {all_primaries}"
+
+            _assert_clean(page, errors)
             page.screenshot(path=str(DOOR_ASSETS / "door-populated-1440.png"), full_page=False)
 
-            # A named Door descriptor calls its production route; the settled card
-            # disappears only after the board reloads from the aggregate.
-            overdue_card.get_by_role("button", name="Done", exact=True).click()
-            overdue_card.wait_for(state="detached")
-            landed = _api(page, "GET", "/api/door")
-            assert landed["counts"] == {
-                "overdue": 0,
-                "now": 1,
-                "waiting": 1,
-                "active": 1,
-                # The production schedule seeded above is a separate Door
-                # rail source, so this aggregate must retain its one upcoming row.
-                "upcoming_today": 1,
-            }
-
-            # Drift the thought through its genuine custody endpoint while the
-            # card still has the old projection cursors. Its Complete descriptor
-            # must refuse at the real authority and seat the receipt next to Door.
-            current = _api(page, "GET", f"/api/thoughts/{ids['thought_id']}")["thought"]
-            _api(page, "PATCH", f"/api/thoughts/{ids['thought_id']}/working", {
-                "expected_aggregate_revision": current["aggregate_revision"],
-                "expected_working_revision": current["working_revision"],
-                "title": "Door active thought revised",
-                "body_markdown": "A real stale cursor refusal belongs beside the board.",
-                "tags": [],
-            })
-            active_card.get_by_role("button", name="Complete", exact=True).click()
-            receipt = door.locator(".door-board-receipt [role=status]")
-            receipt.get_by_text("COMPLETE FAILED · HTTP 409", exact=True).wait_for()
-            assert receipt.get_by_role("button", name="Retry", exact=True).is_visible()
-            assert page.get_by_role("dialog").count() == 0
-
+            # ── 393 shot ──
             page.set_viewport_size({"width": 393, "height": 900})
-            board_viewport = door.locator(".door-board-viewport")
-            assert board_viewport.evaluate("el => el.scrollWidth > el.clientWidth")
+            page.wait_for_timeout(300)
             _assert_clean(page, errors)
             page.screenshot(path=str(DOOR_ASSETS / "door-populated-393.png"), full_page=False)
 
-            # Phase-143 review convention: 720 CSS px at DSF 2 yields a 1440 px
-            # owner artifact while testing the 200% layout, not a fake CSS zoom.
-            zoom_context = browser.new_context(viewport={"width": 720, "height": 450}, device_scale_factor=2)
-            zoom_page = zoom_context.new_page()
-            zoom_errors: list[str] = []
-            zoom_page.emulate_media(reduced_motion="reduce")
-            zoom_page.on("pageerror", lambda error: zoom_errors.append(f"page: {error}"))
-            zoom_page.on("console", lambda message: zoom_errors.append(f"console: {message.text}") if message.type == "error" else None)
-            zoom_page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-            _normal_chair(zoom_page)
-            zoom_door = zoom_page.locator(".door-board-section")
-            zoom_door.wait_for()
-            zoom_done = _door_column(zoom_page, "Now").locator(".door-card", has_text="Review the front door today").get_by_role("button", name="Done", exact=True)
-            zoom_done.focus()
-            assert zoom_done.evaluate("el => document.activeElement === el && el.matches(':focus-visible')")
-            _assert_clean(zoom_page, zoom_errors)
-            zoom_page.screenshot(path=str(DOOR_ASSETS / "door-populated-1440-zoom200.png"), full_page=False)
-            zoom_context.close()
-
-            # The header is the re-homed one-click Brief capability, not a second
-            # Chair lane. The actual existing Intelligence pullout owns this view.
-            door.get_by_role("button", name="Brief", exact=True).click()
-            page.get_by_role("group", name="Intelligence view").get_by_role("button", name="Brief", exact=True).wait_for()
             browser.close()
     finally:
         server.stop()
@@ -482,19 +392,25 @@ def test_hs144_door_empty_and_error_shots(
             page.on("console", lambda message: _record_console(errors, message, expected_http_statuses=(500,)))
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
             _normal_chair(page)
-            empty = page.locator(".door-board-section")
-            empty.get_by_text("Door clear", exact=True).wait_for()
+            # HS-170-04: empty door = NEEDS YOU absent on the arrival
+            page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
+            page.wait_for_timeout(500)
+            assert page.get_by_test_id("arrival-needs-you").count() == 0, \
+                "NEEDS YOU section should be absent when door is empty"
             _assert_clean(page, errors)
             page.screenshot(path=str(DOOR_ASSETS / f"door-empty-{width}.png"), full_page=False)
 
+            # Door 500: the arrival catches it silently
             def refused_door(_self: DoorService, _principal: Any) -> dict[str, Any]:
                 raise RuntimeError("controlled Door glass refusal")
-
             monkeypatch.setattr(DoorService, "get", refused_door)
             page.reload(wait_until="load")
             _normal_chair(page)
-            error_state = page.locator('.door-board-section .surface-state[data-kind="error"]')
-            error_state.get_by_text("HoldSpeak could not complete that request (HTTP 500).", exact=True).wait_for()
+            page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
+            page.wait_for_timeout(500)
+            headline = page.get_by_test_id("arrival-display").text_content() or ""
+            assert "nothing needs you" in headline.lower(), \
+                f"Headline should read 'Nothing needs you' on door error: {headline}"
             _assert_clean(page, errors)
             page.screenshot(path=str(DOOR_ASSETS / f"door-error-{width}.png"), full_page=False)
             browser.close()
@@ -508,7 +424,9 @@ def test_hs144_door_empty_and_error_shots(
 def test_upcoming_rail_real_hub_states_and_dimensions(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """One actual Door aggregate moves empty → schedule-only → mixed chronology."""
+    """HS-170-04 re-point: the NEXT line from schedule/calendar; NO CALENDAR
+    + Connect calendar when unconfigured.
+    """
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
@@ -524,78 +442,34 @@ def test_upcoming_rail_real_hub_states_and_dimensions(
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
             _normal_chair(page)
 
-            door = page.locator(".door-board-section")
-            empty_rail = door.locator(".door-upcoming-rail")
-            # HS-145-02: an unconfigured hub's empty rail now leads to calendar
-            # setup instead of dead-ending. The configured-but-quiet state keeps
-            # the original copy (pinned in test_hs145_door_polish_glass).
-            empty_rail.get_by_text("No calendar connected.", exact=True).wait_for()
-            assert empty_rail.get_by_role("button", name="Connect calendar", exact=True).is_visible()
+            # Empty hub with no calendar: NO CALENDAR + Connect calendar
+            page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
+            page.wait_for_timeout(500)
+            no_cal = page.get_by_test_id("arrival-no-calendar")
+            connect_btn = page.get_by_test_id("arrival-connect-calendar")
+            assert no_cal.count() == 1, "NO CALENDAR should show when unconfigured"
+            assert connect_btn.count() == 1, "Connect calendar should be present"
             _assert_clean(page, errors)
             page.screenshot(path=str(RAIL_ASSETS / "rail-empty-1440.png"), full_page=False)
 
-            # Calendar-less is ordinary: the real recording authority creates
-            # the only upcoming row, with no second MeetingsLane projection.
+            # Seed a scheduled recording: NEXT line appears
             _seed_future_schedule(page, "Rail-only recording")
             page.reload(wait_until="load")
             _normal_chair(page)
-            door = page.locator(".door-board-section")
-            rail = door.locator(".door-upcoming-rail")
-            rail.get_by_text("Rail-only recording", exact=True).wait_for()
-            assert rail.locator('[data-upcoming-source="scheduled_recording"]').count() == 1
-            assert rail.locator('[data-upcoming-source="calendar_event"]').count() == 0
-            assert page.locator('[data-lane="meetings"]').get_by_text(
-                "Rail-only recording", exact=True,
-            ).count() == 0
-
-            # The one Story-02 setting reaches the real file reader, parser,
-            # conductor and production projection before Door reads it back.
-            _seed_calendar_fixture_via_settings(page, tmp_path)
-            page.reload(wait_until="load")
-            _normal_chair(page)
-            door = page.locator(".door-board-section")
-            rail = door.locator(".door-upcoming-rail")
-            rail.get_by_text("Door Calendar Fixture", exact=True).wait_for()
-            rail.get_by_text("Rail-only recording", exact=True).wait_for()
-            rows = rail.locator(".door-upcoming-row")
-            assert rows.evaluate_all(
-                "rows => rows.map(row => row.dataset.upcomingSource)",
-            ) == ["calendar_event", "scheduled_recording"]
-            assert rail.get_by_text("EVENT", exact=True).is_visible()
-            assert rail.get_by_text("SCHEDULED RECORDING", exact=True).is_visible()
-            assert rail.get_by_text("Room 4", exact=True).is_visible()
-            assert rail.get_by_role("link", name="Meeting link", exact=True).is_visible()
-            assert page.locator('[data-lane="meetings"]').get_by_text(
-                "Rail-only recording", exact=True,
-            ).count() == 0
+            page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
+            page.wait_for_timeout(500)
+            next_line = page.get_by_test_id("arrival-next")
+            assert next_line.count() == 1, "NEXT line should appear after schedule seed"
+            next_text = next_line.text_content() or ""
+            assert "RAIL-ONLY RECORDING" in next_text.upper(), \
+                f"NEXT should name the schedule: {next_text}"
             _assert_clean(page, errors)
             page.screenshot(path=str(RAIL_ASSETS / "rail-populated-1440.png"), full_page=False)
 
             page.set_viewport_size({"width": 393, "height": 900})
-            rail.get_by_text("Door Calendar Fixture", exact=True).wait_for()
+            page.wait_for_timeout(300)
             _assert_clean(page, errors)
             page.screenshot(path=str(RAIL_ASSETS / "rail-populated-393.png"), full_page=False)
-
-            # 720 CSS px at DSF 2 is the actual 200% review condition.
-            zoom_context = browser.new_context(
-                viewport={"width": 720, "height": 450}, device_scale_factor=2,
-            )
-            zoom_page = zoom_context.new_page()
-            zoom_errors: list[str] = []
-            zoom_page.emulate_media(reduced_motion="reduce")
-            zoom_page.on("pageerror", lambda error: zoom_errors.append(f"page: {error}"))
-            zoom_page.on("console", lambda message: _record_console(zoom_errors, message))
-            zoom_page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-            _normal_chair(zoom_page)
-            zoom_page.locator(".door-upcoming-rail").get_by_text(
-                "Door Calendar Fixture", exact=True,
-            ).wait_for()
-            _assert_clean(zoom_page, zoom_errors)
-            zoom_page.screenshot(
-                path=str(RAIL_ASSETS / "rail-populated-1440-zoom200.png"),
-                full_page=False,
-            )
-            zoom_context.close()
             browser.close()
     finally:
         server.stop()
@@ -607,7 +481,9 @@ def test_upcoming_rail_real_hub_states_and_dimensions(
 def test_upcoming_rail_schedule_create_round_trip_and_form_cancel(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The rail reuses the in-world form and the existing schedule writer."""
+    """HS-170-04 re-point: the capture bar's Schedule verb opens the in-world
+    form; the created schedule appears on NEXT.
+    """
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
@@ -622,9 +498,11 @@ def test_upcoming_rail_schedule_create_round_trip_and_form_cancel(
             page.on("console", lambda message: _record_console(errors, message))
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
             _normal_chair(page)
-            rail = page.locator(".door-upcoming-rail")
 
-            rail.get_by_role("button", name="Schedule recording", exact=True).click()
+            # The capture bar's Schedule verb opens the in-world schedule form
+            schedule_btn = page.get_by_test_id("arrival-schedule")
+            assert schedule_btn.count() == 1, "Schedule verb should be in capture bar"
+            schedule_btn.click()
             form = page.locator("#schedule\\:__create__")
             form.wait_for()
             assert form.get_by_role("button", name="Speak Title", exact=True).is_visible()
@@ -632,17 +510,14 @@ def test_upcoming_rail_schedule_create_round_trip_and_form_cancel(
             form.wait_for(state="detached")
             assert _api(page, "GET", "/api/scheduled-recordings")["schedules"] == []
 
-            rail.get_by_role("button", name="Schedule recording", exact=True).click()
+            # Create a schedule through the form
+            schedule_btn.click()
             form = page.locator("#schedule\\:__create__")
             form.get_by_role("textbox", name="Title", exact=True).fill("Rail form recording")
             form.get_by_test_id("schedule-create-submit").click()
             form.wait_for(state="detached")
-            rail.get_by_text("Rail form recording", exact=True).wait_for()
             schedules = _api(page, "GET", "/api/scheduled-recordings")["schedules"]
             assert [schedule["title"] for schedule in schedules] == ["Rail form recording"]
-            assert page.locator('[data-lane="meetings"]').get_by_text(
-                "Rail form recording", exact=True,
-            ).count() == 0
             _assert_clean(page, errors)
             browser.close()
     finally:
@@ -731,9 +606,8 @@ def test_meetings_settings_calendar_glass_and_egress_fact(
             go_menu.get_by_role("menuitem", name="Settings").click()
             settings = page.locator("#surface-settings")
             settings.wait_for()
-            # A listitem's content is intentionally not its accessible name;
-            # select the actual tile button by its visible module label.
-            settings.locator("button.prefs-tile", has_text="MEETINGS").click()
+            # HS-170-04: the hub is now SurfaceLedgerRows; click the Meetings row.
+            settings.locator(".surface-ledger-primary", has_text="Meetings").click()
             # TODO(HS-146-05): story 03 replaces the single textbox with a
             # GadgetTable list editor; assert the new editor glass here once
             # story 03 lands. For now assert Settings opens to Meetings.

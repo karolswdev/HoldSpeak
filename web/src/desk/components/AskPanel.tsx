@@ -340,13 +340,12 @@ export function AskPanel() {
               }
               verbs={
                 <>
-                  <button
-                    type="button"
-                    className="desk-chip"
+                  <Button
+                    dense
                     onClick={() => void copy(result.output)}
                   >
                     Copy
-                  </button>
+                  </Button>
                   <Button
                     dense
                     variant="ghost"
@@ -556,17 +555,17 @@ export function AskBar() {
           ? "1 selected"
           : `${selectedIds.length} selected`}
       </span>
-      <button type="button" className="desk-chip" onClick={openAsk}>
-        ✦ Ask AI
-      </button>
-      <button
-        type="button"
-        className="desk-chip quiet"
+      <Button dense onClick={openAsk}>
+        <span aria-hidden="true">✦</span> Ask AI
+      </Button>
+      <Button
+        dense
+        variant="ghost"
         onClick={clearSelection}
         aria-label="Clear selection"
       >
-        ✕
-      </button>
+        <span aria-hidden="true">✕</span>
+      </Button>
     </div>
   );
 }

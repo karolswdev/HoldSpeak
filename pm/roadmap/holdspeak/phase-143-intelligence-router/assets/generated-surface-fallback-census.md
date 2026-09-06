@@ -9,6 +9,14 @@ Story 143-07 adds `holdspeak/services/ask_service.py` as the controller-winner
 application-projection owner; `_routed_projection` decorates an already elected
 physical result and never selects or advances a route.
 
+Story 162-03 adds `holdspeak/services/project_update_service.py` as a
+classified backend surface: `_resolve_for_capability` is the private
+capability-assignment resolver for `project.update_draft` deployment
+revision lookup (reviewed 162-03); model failure falls back to the
+deterministic drafter with a typed reason and an honest generator
+record — the fallback branch fails closed to lawful deterministic
+output, never to unrouted inference.
+
 ## Classification rule
 
 Each surface/family below has **exactly one Phase 143 story** as its migration
@@ -90,6 +98,7 @@ story that owns their migration.
 | 143-11 | `holdspeak/mcp/{tools,resources}.py`, `holdspeak/mcp/families/{ask,inference,sequence,settings}.py`, `holdspeak/services/{recipe_service,sync_service,workbench_service}.py` |
 | 143-12 | `holdspeak/services/model_library_service.py`, `holdspeak/services/inference_acquisition_service.py`, `holdspeak/services/inference_setup_service.py`, `holdspeak/web/routes/primitives/profiles.py` (private-target side-door refusal) |
 | 156-04 | `holdspeak/services/front_door_service.py` (pack preset selection, profile extraction from receipt, group assignment composition; not assignment authority) |
+| 175-07 | `holdspeak/services/calendar_snapshot_service.py` (egress host read off the admitted route plan for the snapshot receipt; vision-capable profile ordering by boundary, local first, for the direct-dispatch fallback, receipted with its host; not route selection) |
 
 ## Guarded web routing consumers
 
@@ -107,6 +116,9 @@ first category may participate in a future assignment migration.
 | display-transport | `web/src/desk/api.ts`, `web/src/desk/components/Pullout.tsx`, `web/src/desk/detail-types.ts`, `web/src/desk/infoContract.ts`, `web/src/desk/store/types.ts`, `web/src/lib/primitives.ts`, `web/src/pages/cores/core-types.ts` | 143-11 / 143-10 display contracts; no browser placement writer remains |
 | display-transport | `web/src/pages/cores/ModelLibraryCore.tsx`, `web/src/pages/cores/modelLibrary.ts` | 143-12 availability transport; selection never writes an assignment pointer |
 | display-transport | `web/src/pages/cores/TopologyMapView.tsx` | 156-04 topology graph reads profile_id for node display; never writes an assignment pointer |
+| display-transport | `web/src/features/project-room/ProjectRoomCore.tsx` | 169-07 project room reads assignment state for display; never writes a placement pointer |
+| display-transport | `web/src/features/concierge/api.ts` | 170-03 concierge engine type carries profileId for display; never writes an assignment pointer |
+| display-transport | `web/src/pages/cores/dictation/SpeakFace.tsx` | 170-04 speak face reads profileId for engine resolution display; never writes a placement pointer |
 | unrelated | `web/src/desk/components/DeliveryBoard.tsx`, `web/src/desk/deliveryFactory.ts` | 143-01 |
 
 Adding another production routing consumer—or a private selector/recovery
@@ -119,3 +131,33 @@ The same test scans every Swift `case .fallbackOnDevice`,
 now exactly zero; a synthetic rogue runner proves any reintroduced client-owned
 fallback branch or retry loop fails closed. Legacy strings may exist only as
 non-executing wire raw values.
+
+## Story 163-07 addendum (Phase 163, The Steward's Hand)
+
+Story 163-07 adds `holdspeak/services/project_steward_service.py` as a
+guarded backend surface. Its one private recovery helper,
+`_apply_effect_with_retry`, is a bounded effect retry WITHIN one steward
+run: attempts are capped by the per-project policy's `max_retries`
+(STW-008), the durable stop request is checked between attempts
+(STW-003, counsel M-1), and exhaustion marks the step failed with an
+honest error record. It never selects a model, route, or provider -- all
+inference the steward touches flows through the already-admitted 160/162
+verbs. Classified in `BACKEND_PRIVATE_DECISIONS` with review tag
+`163-07`.
+
+## Story 172-02 addendum (Phase 172, The Loop Closes)
+
+Story 172-02 adds `holdspeak/web/routes/system/settings.py` as a
+guarded backend surface. Two private helpers record the model host at
+settings read time:
+
+- `_resolve_meetings_host`: reads the meetings group's assigned
+  `intel_profile_id`, calls `resolve_meeting_placement` to derive a
+  `MeetingPlacement`, and returns the egress host for display. It
+  never selects or assigns a model -- it projects the already-resolved
+  placement for the settings UI.
+- `_placement_host`: extracts the bare hostname from a resolved
+  `MeetingPlacement` via `endpoint_host`. Pure derivation, no route
+  selection.
+
+Classified in `BACKEND_PRIVATE_DECISIONS` with review tag `172-02`.

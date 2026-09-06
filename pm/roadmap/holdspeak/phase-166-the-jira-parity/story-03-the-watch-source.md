@@ -1,0 +1,114 @@
+# HS-166-03 - The JiraWatchSource, the five templates, the candidates, the fetcher rider
+
+- **Project:** holdspeak
+- **Phase:** 166
+- **Status:** done
+- **Depends on:** HS-166-02
+- **Unblocks:** HS-166-04, HS-166-05
+- **Owner:** unassigned
+
+## Problem
+
+services/watch_sources.py:102-108 is the single gate: every
+connector but gh raises `connector_snapshot_adapter_unavailable`
+("pushed snapshots but no local query adapter yet"). The Jira diff
+(reaction_service.py:150-161: assigned/status_changed/
+priority_changed/due_changed/resolved) is complete and starving.
+No watch.jira.* template exists; the interview builds candidates
+only for GitHub (project_setup_service.py:748).
+
+## Scope
+
+- **In:** `JiraWatchSource(runner)` in watch_sources.py registered
+  under `connector_id == "jira"` — compiles a WatchSpec@1 subject
+  (`kind: issue`; `scope: {connection_ref, projects[],
+  issue_types[]}`; `query: {status_categories[], priorities[],
+  assignees[], labels[], components[], sprint, jql}`) to ONE JQL,
+  fetches via the 02 search, emits entities in the shape
+  `_normalize_entity(jira)` already consumes (status, assignee,
+  priority, resolution, due_at) + key/summary/url/issue_type/
+  status_category/updated_at. `holdspeak/jira_templates.py` — the
+  github_templates.py twin: `watch.jira.blockers`,
+  `.delivery_flow`, `.due_risk`, `.scope_intake`,
+  `.transformation` with §8.2's V0 conditions. New comparisons
+  (`entered_state`, `due_within_days`, `overdue`, `inactive_for`)
+  land in watch_validation + the evaluator ONCE, provider-agnostic.
+  `_jira_candidates` beside `_github_candidates` (candidates only
+  for a CONNECTED connection; needs-scope: site + project filled in
+  clarify — PROV-011). `test_watch` gains the §8.1-style display
+  block for jira (connection = site+email, projects, normalized
+  JQL, entity count, five representative issues, matched
+  conditions, supported transitions, observation time, duration,
+  typed error/partial). Baseline/evaluate/evaluate_due/effects:
+  ZERO FORK — proven, not asserted. RIDERS PAID: (a) the sidecar
+  fetcher seam — project.py:719 `_watch_service()` composes the
+  same snapshot_fetcher kwargs as web_server.py:334 (one
+  provider-injection shape serving gh AND jira); (b) the
+  legacy-side watch guard — reaction_service.refresh_due_watches
+  skips graduated rows (state in active/tested/paused/retired).
+- **Out:** the face (04), live proof (05).
+
+## Charter ruling — the search field cap (recorded 2026-09-03)
+
+acli's `workitem search --fields` refuses duedate/resolution/
+updated/created (see the phase record's Recorded truths). The
+source therefore fetches by ONE JQL search (JQL-able conditions
+pushed into the query: `statusCategory != Done`, `due <= Nd`,
+`resolution is not EMPTY`, `status = "<blocked>"`) and enriches
+each entity with ONE `workitem view KEY --fields
+duedate,resolution,updated,statuscategorychangedate --json`, capped
+by the watch limit; the test block reports `calls: 1 + N`. Issue
+types are ENUMERATED from `project view` (not derived); statuses
+come from `status.statusCategory` on the population, labeled
+`observed`.
+
+## Acceptance criteria
+
+- [x] A jira watch tests, baselines, and evaluates through the unchanged WatchService path: same source_revision dedup, `jira.issue.status_changed` reaching `_match_and_record_effects`, one effect idem key — under test with a recorded transition.
+- [x] Five templates compile and validate; the new comparisons are evaluated in one place with tests beside them; the interview proposes jira candidates only when a connection is connected.
+- [x] Both riders paid under test (sidecar fetcher injected; legacy refresh skips graduated rows).
+
+## Test plan
+
+- **Unit:** tests/unit/test_watch_sources.py (jira), tests/unit/test_jira_templates.py, tests/unit/test_watch_service.py (jira leg), tests/unit/test_watch_legacy_compat.py (the guard), tests/unit/test_project_mcp_driver.py (the fetcher seam).
+
+## Trace record (orchestrator round, 2026-09-03)
+
+- ZERO FORK, proven: JiraWatchSource registered at the single gate
+  (watch_sources.py) and calling the adapter's `search(enrich=True)`
+  under `_with_account`; baseline/evaluate_core/dedup/effects
+  untouched. Provider-specific siblings only where gh already had
+  one (source, transition kinds, conditions summary, display block +
+  error twin, templates module, candidates, clarify, finalize
+  flattening, the two mapping tables) — each named in the build
+  report against its gh mirror.
+- The ONE matcher paid the inherited lie: `older_than`/`newer_than`
+  returned False unconditionally (delivery_drift never matched);
+  now six snapshot-level comparisons read the transition's
+  `facts.current` (additive key on `_event`; DEL-007 consumers read
+  only event_type/changed — checked) with a monkeypatchable clock.
+- Riders paid: (a) `default_snapshot_fetcher(github_runner,
+  jira_adapter)` is the ONE injection helper used by web_server AND
+  the MCP sidecar's `_watch_service()`/`_setup_service()`; (b)
+  `refresh_due_watches` skips graduated rows (both directions under
+  test).
+- The 02 finding honored: `jira.issue.category_changed` added
+  additively; templates condition completion on status_category,
+  never a synthesized resolution.
+- LIVE PROOF (the owner's site, delivery_flow template on KAN):
+  test passed with the jira display block (site · email, projects,
+  compiled JQL, calls 1+N, representative issues); baseline
+  established; evaluate no-change → 0 transitions; ONE harness
+  transition (KAN-2 In Progress → Done, declared, reverted after) →
+  3 transitions (status_changed + category_changed + …) and exactly
+  ONE `project.observe` effect with an idempotency key; unchanged
+  re-evaluation → 0 transitions, zero new effects.
+- Storage note (ledgered, not a defect): `facts.current` enlarges
+  each observation's fact_json by one entity dict.
+- Evidence note: the first captured run ends in a KeyError from
+  the PROOF SCRIPT's final assertion (`transition_count` vs the real
+  outcome key `transitions`) after every live check had already
+  printed true and the harness revert had landed; the second
+  captured run is the same walk with the assertion corrected and
+  the wrapper under `pipefail`. Nothing in the product changed
+  between them.

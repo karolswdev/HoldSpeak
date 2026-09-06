@@ -5,7 +5,9 @@ exactly once, appends a project_changes row and a ServiceEventLedger event
 in the same transaction (DOM-003, DOM-004, API-004).  Optional
 expected_revision / command_id enforce optimistic concurrency (API-001)
 and idempotent replay (API-002, DOM-010).  Absent params = legacy behavior
-(API-006).
+(API-006).  HS-173-08 / 158 S-1: the four legacy-wrapping methods
+(add/remove_resource, associate/disassociate_meeting) folded from three
+separate transactions into one atomic transaction each.
 
 HS-158-03: item commands under the revision law (create/update/transition/
 list).  Items are Project-OWNED records (SS5.3), not citizens (SS3.2).
@@ -13,19 +15,21 @@ changed_refs carries ``project:<id>``; the item id rides in the result
 payload.  Event kind is ``project.updated`` (SS10 has no item event kind).
 """
 from __future__ import annotations
+
+import logging
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import hashlib
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 from ..db.core import Database
 from ..db.relationships import qualified_ref
 from ..logging_config import get_logger
 from ..meeting_aftercare import compute_project_since_last_meeting
-from ..principals import Principal
+from ..principals import Principal, PrincipalKind
 from ..project_contracts import (
     CommandResultEnvelope,
     ProjectError,
@@ -44,6 +48,77 @@ from .service_event_ledger import ServiceEventLedger
 _log = get_logger("services.project_service")
 
 
+# ── HS-175 counsel C8: the hub's local week, one helper ──────────────
+#
+# Calendar events are stored UTC (``YYYY-MM-DDTHH:MM:SSZ``); the owner's
+# week is his local week.  Every "this week" read in this service and the
+# calendar sources route goes through this helper so the Monday boundary
+# is the hub's local Monday (``datetime.now().astimezone()``), consistent
+# with the arrival's strip.
+
+
+def local_now(now: datetime | None = None) -> datetime:
+    """The hub's local, tz-aware now (or ``now`` made aware in local tz)."""
+    if now is None:
+        return datetime.now().astimezone()
+    if now.tzinfo is None:
+        return now.astimezone()
+    return now
+
+
+def localize(wall: datetime) -> datetime:
+    """A naive LOCAL wall-clock -> aware, with THAT instant's offset.
+
+    Counsel re-read condition 4 (DST): ``datetime.now().astimezone()`` yields
+    a FIXED offset; arithmetic in it crosses a DST edge an hour off.  A
+    naive value's ``.astimezone()`` consults the system zone's rules for the
+    instant itself, so every bound carries its own true offset.
+    """
+    return wall.replace(tzinfo=None).astimezone()
+
+
+def local_week_bounds(now: datetime | None = None) -> tuple[datetime, datetime]:
+    """(local Monday 00:00, next local Monday 00:00) as aware datetimes,
+    each localized per instant (DST-safe)."""
+    current = local_now(now)
+    wall = current.replace(tzinfo=None)
+    monday_wall = (wall - timedelta(days=wall.weekday())).replace(
+        hour=0, minute=0, second=0, microsecond=0,
+    )
+    return localize(monday_wall), localize(monday_wall + timedelta(days=7))
+
+
+def utc_z(value: datetime) -> str:
+    """Aware datetime -> the stored calendar_events form ``...Z``."""
+    return (
+        value.astimezone(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
+
+
+def aware_iso(value: Any) -> str | None:
+    """Normalize a stored timestamp to an offset-carrying ISO string.
+
+    SQLite's ``datetime('now')`` writes naive UTC (``YYYY-MM-DD HH:MM:SS``);
+    the browser's ``new Date()`` would read that as LOCAL time and print
+    the wrong clock (counsel H4-1: ``CHECKED 23:47`` beside ``READ 17:48``).
+    A naive value is UTC here by construction; an aware value passes
+    through.  ``None``/empty stays ``None``.
+    """
+    if value is None or value == "":
+        return None
+    text = str(value).strip()
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return text
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.isoformat(timespec="seconds")
+
+
 # ── M-1 finalize mapping tables (HS-161-07 counsel) ─────────────────
 #
 # _PROVIDER_TO_CONNECTOR: the watch table's connector_id is "gh", not
@@ -53,10 +128,15 @@ _log = get_logger("services.project_service")
 # ("pull_request"), but GitHubWatchSource.snapshot demands the plural
 # wire form ("pull_requests").  The mapping lives here rather than in
 # the spec so the spec vocabulary stays domain-level.
-_PROVIDER_TO_CONNECTOR: dict[str, str] = {"github": "gh"}
+_PROVIDER_TO_CONNECTOR: dict[str, str] = {
+    "github": "gh", "jira": "jira", "meeting": "meeting",
+}
 
 _SUBJECT_TO_QUERY_KIND: dict[str, str] = {
     "pull_request": "pull_requests",
+    "issue": "issues",
+    "branch_ci": "branch_ci",  # HS-169-04: CI on the base branch
+    "meeting": "meetings",  # HS-175-04: meeting watch adapter
 }
 
 
@@ -165,6 +245,27 @@ ROOM_CHANGES_CAP: int = 10
 
 # Absent-section marker for domains not yet built (Art VI, NFR-006).
 _ABSENT_SECTION: dict[str, str] = {"state": "absent", "reason": "not_yet_built"}
+
+
+def _format_age(iso_str: str, now: datetime) -> str:
+    """Format an ISO timestamp as a human-readable age token."""
+    if not iso_str:
+        return ""
+    try:
+        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00").rstrip("Z"))
+        delta = now - dt.replace(tzinfo=None)
+        days = delta.days
+        if days > 0:
+            return f"{days} DAYS"
+        hours = delta.seconds // 3600
+        if hours > 0:
+            return f"{hours} HOURS"
+        minutes = delta.seconds // 60
+        if minutes > 0:
+            return f"{minutes} MIN AGO"
+        return "JUST NOW"
+    except (ValueError, TypeError):
+        return ""
 
 
 def _request_hash(payload: dict[str, Any]) -> str:
@@ -309,10 +410,25 @@ class ProjectService:
         # observed_at: derived from project.updated_at for full determinism
         observed_at = project.updated_at.isoformat()
 
+        # HS-169-04: the four questions' wire data
+        target_at = (room_fields or {}).get("target_at")
+        room_read_at = (room_fields or {}).get("room_read_at")
+
+        # HS-169-04: build sources first so nextCheckAt can be hoisted
+        sources_section = self._room_section(
+            "sources", lambda: self._read_room_sources(project_id))
+        # Top-level nextCheckAt: from sources section when ok
+        next_check_at = (
+            sources_section.get("nextCheckAt")
+            if sources_section.get("state") == "ok"
+            else None
+        )
+
         return {
             "project_id": project_id,
             "revision": revision,
             "observed_at": observed_at,
+            "nextCheckAt": next_check_at,
             "project": orientation,
             "items": self._room_section(
                 "items", lambda: self._read_room_items(project_id)),
@@ -329,9 +445,25 @@ class ProjectService:
                 if self._delta_service is not None
                 else dict(_ABSENT_SECTION)
             ),
-            "sources": dict(_ABSENT_SECTION),
+            # HS-169-04: the four questions (additive)
+            "needsYou": self._room_section(
+                "needsYou", lambda: self._read_room_needs_you(project_id)),
+            "sources": sources_section,
+            "health": self._room_section(
+                "health", lambda: self._read_room_health(project_id, target_at)),
+            "sinceRead": self._room_section(
+                "sinceRead", lambda: self._read_room_since_read(project_id, room_read_at)),
+            "decisions": self._room_section(
+                "decisions", lambda: self._read_room_decisions(project_id)),
+            "commitments": self._room_section(
+                "commitments", lambda: self._read_room_commitments(project_id)),
+            "target": self._room_section(
+                "target", lambda: self._read_room_target(target_at)),
             "updates": dict(_ABSENT_SECTION),
             "steward": dict(_ABSENT_SECTION),
+            # HS-174-04: pipeline receipts scoped to this project.
+            "receipts": self._room_section(
+                "receipts", lambda: self._read_room_receipts(project_id)),
         }
 
     # ── room sub-readers (fault-isolated) ────────────────────────────
@@ -447,6 +579,1197 @@ class ProjectService:
             "pending_count": pending_count,
             "open_review_id": open_review_id,
         }
+
+    # ── HS-169-04 room sub-readers (the four questions) ──────────────
+
+    @staticmethod
+    def _entities(snapshot: Any) -> list[dict[str, Any]]:
+        """Extract entity list from a watch snapshot.
+
+        The persisted snapshot is ``{"schema":1, "entities": {"526": {...}}}``
+        (a dict keyed by entity ID, written by normalize_snapshot).  Some
+        paths may pass the raw list from GitHubWatchSource.snapshot().
+        Returns a flat list either way.
+        """
+        if isinstance(snapshot, list):
+            return snapshot
+        if isinstance(snapshot, dict):
+            entities = snapshot.get("entities")
+            if isinstance(entities, dict):
+                return list(entities.values())
+            if isinstance(entities, list):
+                return entities
+        return []
+
+    # Severity ordering for needsYou rows
+    _SEVERITY_ORDER = {"danger": 0, "warning": 1, "info": 2}
+
+    # Change-kind phrases: raw snake_case kind -> human phrase.
+    # The guard test asserts no raw kind (underscored) leaks into a phrase.
+    _CHANGE_KIND_PHRASES: dict[str, str] = {
+        "project.created": "created",
+        "project.updated": "updated",
+        "project.archived": "archived",
+        "project.restored": "restored",
+        "project.resource.linked": "resource linked",
+        "project.resource.unlinked": "resource unlinked",
+        "watch.created": "watch created",
+        "watch.snapshot": "snapshot refreshed",
+        "watch.evaluated": "watch evaluated",
+        "watch.error": "watch error",
+        "item.created": "item added",
+        "item.updated": "item updated",
+        "item.transitioned": "item transitioned",
+        "meeting.linked": "meeting linked",
+        "meeting.unlinked": "meeting unlinked",
+        "review.opened": "review opened",
+        "review.accepted": "review accepted",
+        "update.drafted": "update drafted",
+        "update.published": "update published",
+        "steward.ran": "steward ran",
+    }
+
+    # Plain-reason mapping for Watch errors (HS-169-04 D4 SOURCES)
+    _PLAIN_REASON_PATTERNS: list[tuple[str, str]] = [
+        ("JQL parse error", "Jira rejected the query"),
+        ("The value '", "Jira rejected the query"),
+        ("does not exist for the field", "Jira rejected the query"),
+        ("no local query adapter", "No local adapter for meeting activity yet"),
+        ("lock timeout", "acli is busy"),
+        ("connector_snapshot_adapter_unavailable", "No local adapter for meeting activity yet"),
+    ]
+
+    @staticmethod
+    def _plain_reason(error: str | None) -> str | None:
+        """Map a raw Watch error to plain words (ONCE in the service)."""
+        if not error:
+            return None
+        lower = error.lower()
+        for pattern, plain in ProjectService._PLAIN_REASON_PATTERNS:
+            if pattern.lower() in lower:
+                return plain
+        # First line of the error, no stack
+        return error.split("\n")[0][:200]
+
+    def _read_room_needs_you(self, project_id: str) -> dict[str, Any]:
+        """NEEDS YOU: items derived from Watch snapshots + Delta review."""
+        watches = self._db.automations.list_project_watches(project_id)
+        needs: list[dict[str, Any]] = []
+        now = datetime.now()
+
+        for watch in watches:
+            connector_id = watch.get("connector_id", "")
+            snapshot = watch.get("snapshot")
+            if not snapshot:
+                continue
+            entities = self._entities(snapshot)
+            query_kind = watch.get("query_kind", "")
+
+            if connector_id == "gh" and query_kind == "pull_requests":
+                # PRs whose review_requests name the owner or review_decision = changes_requested.
+                # Also: a PR with failing checks that the owner authored or
+                # is asked to review gets a CHECKS FAILING row (the base-branch
+                # CI row is the branch_ci kind; PR-level failing checks are a
+                # needs-you row ONLY when the PR is the owner's or awaits their
+                # review -- otherwise it is a source token only).
+                owner_login = self._get_github_owner_login()
+                for entity in entities:
+                    # Handle both raw (reviewRequests) and normalized (review_requests) field names
+                    review_requests = entity.get("review_requests") or entity.get("reviewRequests") or []
+                    review_decision = (
+                        entity.get("review_decision") or entity.get("reviewDecision") or ""
+                    ).lower()
+                    updated_at_str = entity.get("updated_at") or entity.get("updatedAt") or ""
+                    entity_id = entity.get("id") or entity.get("number") or ""
+                    entity_title = entity.get("title") or ""
+                    checks = str(entity.get("checks") or "").lower()
+
+                    waiting_on_owner = (
+                        (owner_login and owner_login.lower() in [r.lower() for r in review_requests])
+                        or review_decision == "changes_requested"
+                    )
+                    if waiting_on_owner:
+                        age_str = _format_age(updated_at_str, now)
+                        # PR-level failing checks on a PR awaiting the owner's review
+                        if checks == "failing":
+                            needs.append({
+                                "source": "github",
+                                "title": f"#{entity_id} {entity_title}".strip(),
+                                "why": f"CHECKS FAILING · {age_str}" if age_str else "CHECKS FAILING",
+                                "since": updated_at_str,
+                                "url": entity.get("url"),
+                                "verb": "open",
+                                "severity": "danger",
+                            })
+                        else:
+                            needs.append({
+                                "source": "github",
+                                "title": f"#{entity_id} {entity_title}".strip(),
+                                "why": f"WAITING ON YOUR REVIEW · {age_str}" if age_str else "WAITING ON YOUR REVIEW",
+                                "since": updated_at_str,
+                                "url": entity.get("url"),
+                                "verb": "open",
+                                "severity": "warning",
+                            })
+
+            elif connector_id == "gh" and query_kind == "branch_ci":
+                # CI on the base branch
+                for entity in entities:
+                    conclusion = str(entity.get("conclusion") or "").lower()
+                    if conclusion in ("failure", "timed_out", "cancelled"):
+                        base_branch = entity.get("branch") or "main"
+                        needs.append({
+                            "source": "github",
+                            "title": f"CI failing on {base_branch}",
+                            "why": "CI RED",
+                            "since": entity.get("updated_at") or "",
+                            "url": entity.get("url"),
+                            "verb": "open",
+                            "severity": "danger",
+                        })
+
+            elif connector_id == "jira" and query_kind == "issues":
+                # Jira entities from an OVERDUE-kind watch
+                query = watch.get("query") or {}
+                # An overdue watch has due_within_days in its query or its template is due_risk
+                for entity in entities:
+                    due_at = entity.get("due_at") or entity.get("dueDate")
+                    if not due_at:
+                        continue
+                    try:
+                        due_dt = datetime.fromisoformat(str(due_at).replace("Z", "+00:00").split("T")[0])
+                        overdue_days = (now.replace(tzinfo=None) - due_dt.replace(tzinfo=None)).days
+                    except (ValueError, TypeError):
+                        continue
+                    if overdue_days > 0:
+                        jira_id = entity.get("key") or entity.get("id") or ""
+                        jira_title = entity.get("summary") or entity.get("title") or ""
+                        needs.append({
+                            "source": "jira",
+                            "title": f"{jira_id} {jira_title}".strip(),
+                            "why": f"OVERDUE · {overdue_days} DAYS",
+                            "since": due_at,
+                            "url": entity.get("url"),
+                            "verb": "open",
+                            "severity": "danger",
+                        })
+
+        # Delta proposals pending
+        if self._delta_service is not None:
+            try:
+                review_data = self._read_room_review(project_id)
+                pending = review_data.get("pending_count", 0)
+                if pending > 0:
+                    needs.append({
+                        "source": "delta",
+                        "title": f"{pending} proposals waiting",
+                        "why": "DECISION PENDING",
+                        "since": "",
+                        "url": None,
+                        "verb": "decide",
+                        "severity": "info",
+                    })
+            except Exception:
+                pass
+
+        # HS-172-03: follow-through proposals (intel-extracted decisions/actions).
+        try:
+            proposals = self._db.proposals.list_proposals(
+                project_id=project_id, state="proposed",
+            )
+            for prop in proposals:
+                # Resolve meeting title for provenance.
+                meeting_title = ""
+                try:
+                    mtg = self._db.meetings.get_meeting(prop.meeting_id)
+                    meeting_title = (mtg.title or "") if mtg else ""
+                except Exception:
+                    pass
+                why_parts = ["PROPOSED"]
+                if meeting_title:
+                    why_parts.append(meeting_title)
+                needs.append({
+                    "source": "proposal",
+                    "kind": "proposal",
+                    "title": prop.text,
+                    "why": " · ".join(why_parts),
+                    "since": prop.created_at,
+                    "url": None,
+                    "verb": "confirm",
+                    "verbHref": f"/api/proposals/{prop.id}/confirm",
+                    "severity": "info",
+                    "proposal_id": prop.id,
+                    "proposal_kind": prop.kind,
+                    "host": prop.model_host,
+                    "speaker_label": prop.speaker_label,
+                    "due_hint": prop.due_hint,
+                    "owner_hint": prop.owner_hint,
+                    "original_text": prop.original_text,
+                    "meeting_title": meeting_title,
+                    "created_at": prop.created_at,
+                })
+        except Exception:
+            pass
+
+        # HS-173: review bottleneck items (resolved reviewers whose median
+        # exceeds the threshold get a NEEDS YOU row).
+        try:
+            from holdspeak.services.room_health_service import review_wait as _review_wait
+            from datetime import timezone as _tz
+            now_utc = datetime.now(_tz.utc)
+
+            # Gather all PR entities from watches (already iterated above)
+            all_pr_entities: list[dict[str, Any]] = []
+            for watch in watches:
+                cid = watch.get("connector_id", "")
+                qk = watch.get("query_kind", "")
+                snap = watch.get("snapshot")
+                if cid == "gh" and qk == "pull_requests" and snap:
+                    all_pr_entities.extend(self._entities(snap))
+
+            if all_pr_entities:
+                review_signal = _review_wait(all_pr_entities, now_utc)
+                bottleneck_people = self._resolve_review_people(
+                    project_id, review_signal.get("per_reviewer", []))
+                for person in bottleneck_people:
+                    median_d = person.get("median_days", 0)
+                    pr_count = person.get("count", 0)
+                    display = person.get("display_name", "")
+                    needs.append({
+                        "source": "github",
+                        "kind": "review_bottleneck",
+                        "title": display,
+                        "why": f"REVIEW BOTTLENECK · {median_d} D MEDIAN · {pr_count} PRS WAITING",
+                        "since": "",
+                        "url": None,
+                        "verb": "nudge",
+                        "severity": "warning",
+                        "relationship_id": person.get("relationship_id"),
+                        "median_days": median_d,
+                        "count": pr_count,
+                    })
+        except Exception:
+            pass
+
+        # Sort: danger > warning > info, then by age (oldest first = most urgent)
+        needs.sort(key=lambda r: (
+            self._SEVERITY_ORDER.get(r.get("severity", "info"), 2),
+            r.get("since") or "",
+        ))
+
+        return {"items": needs, "count": len(needs)}
+
+    def _get_github_owner_login(self) -> str | None:
+        """Get the GitHub owner login from the connection service."""
+        try:
+            with self._db._connection() as conn:
+                row = conn.execute(
+                    "SELECT external_connection_ref FROM watch_provider_connections "
+                    "WHERE provider_id = 'github' AND state != '' "
+                    "ORDER BY last_connected_at DESC LIMIT 1"
+                ).fetchone()
+                if row and row["external_connection_ref"]:
+                    return row["external_connection_ref"]
+        except Exception:
+            pass
+        return None
+
+    # State severity for merging: cant_check > paused > live
+    _STATE_SEVERITY = {"cant_check": 0, "paused": 1, "live": 2}
+
+    # Template order for merged source tokens (the artboard's row order)
+    _TOKEN_ORDER_PREFIXES = [
+        "OPEN PRS", "WAITING ON YOU", "CHECKS FAILING",
+        "CI RED", "CI GREEN",
+        "OVERDUE", "DUE THIS WEEK", "BLOCKED",
+        "CLEAR",
+    ]
+
+    @staticmethod
+    def _token_sort_key(token: str) -> int:
+        """Sort key for template order. Known prefixes first; unknown last."""
+        for i, prefix in enumerate(ProjectService._TOKEN_ORDER_PREFIXES):
+            if token.endswith(prefix) or token == prefix:
+                return i
+        return len(ProjectService._TOKEN_ORDER_PREFIXES)
+
+    def _meeting_calendar_tokens(
+        self, project_id: str, *, now: datetime | None = None,
+    ) -> list[str]:
+        """``N THIS WEEK`` and ``NEXT DAY HH:MM`` from the Room's linked
+        calendar events (HS-175 counsel C8/C9c).
+
+        Inline query over ``calendar_event_projects`` joined to
+        ``calendar_events`` (stored UTC ``...Z``); the week is the hub's
+        local week and the NEXT clock is local.  A suppressed link (a
+        durable Unlink, if present) does not count.
+        """
+        tokens: list[str] = []
+        current = local_now(now)
+        monday, next_monday = local_week_bounds(current)
+        week_start, week_end = utc_z(monday), utc_z(next_monday)
+        now_z = utc_z(current)
+        try:
+            with self._db._connection() as conn:
+                week_row = conn.execute(
+                    """SELECT COUNT(DISTINCT ce.id) AS cnt
+                       FROM calendar_event_projects cep
+                       JOIN calendar_events ce ON ce.id = cep.calendar_event_id
+                       WHERE cep.project_id = ?
+                         AND cep.match_source != 'suppressed'
+                         AND ce.starts_at >= ? AND ce.starts_at < ?""",
+                    (project_id, week_start, week_end),
+                ).fetchone()
+                next_row = conn.execute(
+                    """SELECT ce.starts_at
+                       FROM calendar_event_projects cep
+                       JOIN calendar_events ce ON ce.id = cep.calendar_event_id
+                       WHERE cep.project_id = ?
+                         AND cep.match_source != 'suppressed'
+                         AND ce.starts_at > ?
+                       ORDER BY ce.starts_at ASC LIMIT 1""",
+                    (project_id, now_z),
+                ).fetchone()
+        except Exception as exc:  # pragma: no cover - a missing table on an old DB
+            _log.warning("meeting calendar tokens failed for %s: %s", project_id, exc)
+            return tokens
+        this_week = int(week_row["cnt"]) if week_row else 0
+        if this_week:
+            tokens.append(f"{this_week} THIS WEEK")
+        if next_row and next_row["starts_at"]:
+            try:
+                next_dt = datetime.fromisoformat(
+                    str(next_row["starts_at"]).replace("Z", "+00:00")
+                )
+                if next_dt.tzinfo is None:
+                    next_dt = next_dt.replace(tzinfo=timezone.utc)
+                # Per-instant local conversion (DST-safe), never now's offset.
+                local_next = next_dt.astimezone()
+                tokens.append(
+                    f"NEXT {local_next.strftime('%a').upper()} {local_next.strftime('%H:%M')}"
+                )
+            except (ValueError, TypeError):
+                pass
+        return tokens
+
+    def _read_room_sources(self, project_id: str) -> dict[str, Any]:
+        """SOURCES: ONE item per (provider, scope), merged from all watches."""
+        watches = self._db.automations.list_project_watches(project_id)
+        # Intermediate: per-watch data, keyed by (provider, scope) for grouping
+        groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
+
+        for watch in watches:
+            # HS-175 counsel C7: a retired Watch is not a source row (the
+            # owner said no); folding it into the live row hid Retire.
+            if str(watch.get("state") or "") == "retired":
+                continue
+            connector_id = watch.get("connector_id", "")
+            query = watch.get("query") or {}
+            snapshot = watch.get("snapshot")
+            entities = self._entities(snapshot)
+            last_error = watch.get("last_error")
+            enabled = watch.get("enabled", True)
+            watch_state = str(watch.get("state") or "")
+            query_kind = watch.get("query_kind", "")
+
+            # Provider label
+            provider = "github" if connector_id == "gh" else connector_id
+
+            # Scope
+            scope = query.get("repository") or ""
+            if connector_id == "jira":
+                projects = query.get("projects") or []
+                scope = " + ".join(projects) if projects else query.get("connection_ref", "")
+            elif connector_id == "meeting":
+                scope = "MEETINGS"
+
+            # Host (egress)
+            host = "github.com" if connector_id == "gh" else ""
+            if connector_id == "jira":
+                ref = query.get("connection_ref", "")
+                # connection_ref may be "site.atlassian.net|email" -- host is before |
+                site = ref.split("|")[0] if "|" in ref else ref
+                host = site.split("//")[-1].split("/")[0] if "//" in site else site
+
+            # State -- HS-175 counsel C7(b): Pause writes ``state='paused'``
+            # (watch_service.pause_watch) and leaves ``enabled`` alone, so the
+            # row reads ``state`` first; a disabled watch is paused too.
+            if watch_state == "paused" or not enabled:
+                w_state = "paused"
+            elif last_error:
+                w_state = "cant_check"
+            else:
+                w_state = "live"
+
+            # Count tokens (zero-count omitted)
+            tokens: list[str] = []
+            if connector_id == "gh" and query_kind == "pull_requests":
+                open_count = sum(1 for e in entities if str(e.get("state", "")).lower() == "open")
+                if open_count:
+                    tokens.append(f"{open_count} OPEN PRS")
+                owner_login = self._get_github_owner_login()
+                if owner_login:
+                    waiting = sum(
+                        1 for e in entities
+                        if owner_login.lower() in [
+                            r.lower() for r in (
+                                e.get("review_requests") or e.get("reviewRequests") or []
+                            )
+                        ]
+                    )
+                    if waiting:
+                        tokens.append(f"{waiting} WAITING ON YOU")
+                # PR-level checks failing (source token, not a needsYou row
+                # unless the PR is the owner's or awaits their review)
+                checks_failing = sum(
+                    1 for e in entities
+                    if str(e.get("checks") or "").lower() == "failing"
+                )
+                if checks_failing:
+                    tokens.append(f"{checks_failing} CHECKS FAILING")
+            elif connector_id == "gh" and query_kind == "branch_ci":
+                for entity in entities:
+                    conclusion = str(entity.get("conclusion") or "").lower()
+                    if conclusion in ("failure", "timed_out", "cancelled"):
+                        tokens.append("CI RED")
+                    elif conclusion == "success":
+                        tokens.append("CI GREEN")
+            elif connector_id == "jira" and query_kind == "issues":
+                overdue_count = 0
+                due_soon_count = 0
+                for entity in entities:
+                    due_at = entity.get("due_at") or entity.get("dueDate")
+                    if not due_at:
+                        continue
+                    try:
+                        due_dt = datetime.fromisoformat(str(due_at).replace("Z", "+00:00").split("T")[0])
+                        days = (datetime.now().replace(tzinfo=None) - due_dt.replace(tzinfo=None)).days
+                    except (ValueError, TypeError):
+                        continue
+                    if days > 0:
+                        overdue_count += 1
+                    elif days >= -7:
+                        due_soon_count += 1
+                if overdue_count:
+                    tokens.append(f"{overdue_count} OVERDUE")
+                if due_soon_count:
+                    tokens.append(f"{due_soon_count} DUE THIS WEEK")
+            # HS-175-04: meeting watch tokens.
+            # HS-175 counsel C9(c)/C8: the Watch's entities are RECORDED
+            # meetings (started_at in the past) -- they can never yield a
+            # future NEXT.  Both tokens read the Room's linked CALENDAR
+            # events (calendar_event_projects x calendar_events) in the
+            # hub's local week:  ``N THIS WEEK`` = linked events whose
+            # starts_at falls in [local Monday, next local Monday);
+            # ``NEXT DAY HH:MM`` = the first linked event after now, in
+            # local time.  Both absent at zero (A.8).
+            elif connector_id == "meeting" and query_kind == "meetings":
+                tokens.extend(self._meeting_calendar_tokens(project_id))
+
+            plain_reason = self._plain_reason(last_error)
+
+            # Unknown connectors with no local adapter
+            _KNOWN_CONNECTORS = {"gh", "jira", "confluence", "meeting"}
+            if connector_id not in _KNOWN_CONNECTORS:
+                if not last_error:
+                    plain_reason = "No local adapter for this source yet"
+                    w_state = "cant_check"
+
+            entry = {
+                "watchId": watch.get("id"),
+                "provider": provider,
+                "scope": scope,
+                "tokens": tokens,
+                # C8: SQLite's naive-UTC stamps leave here with an offset so
+                # the face prints the viewer's local clock.
+                "checkedAt": aware_iso(watch.get("last_success_at")),
+                "nextCheckAt": aware_iso(watch.get("next_evaluation_at")),
+                "host": host,
+                "state": w_state,
+                "plainReason": plain_reason,
+                "suggested": False,
+            }
+            groups.setdefault((provider, scope), []).append(entry)
+
+        # Merge groups: one source item per (provider, scope)
+        sources: list[dict[str, Any]] = []
+        for (_provider, _scope), items in groups.items():
+            if len(items) == 1:
+                merged = dict(items[0])
+                merged["watchIds"] = [merged["watchId"]]
+            else:
+                # Merge tokens: collect, dedupe by exact label, sort to template order
+                all_tokens: list[str] = []
+                seen_tokens: set[str] = set()
+                for item in items:
+                    for tok in item["tokens"]:
+                        if tok not in seen_tokens:
+                            all_tokens.append(tok)
+                            seen_tokens.add(tok)
+                all_tokens.sort(key=self._token_sort_key)
+
+                # checkedAt: latest non-null
+                checked_vals = [i["checkedAt"] for i in items if i["checkedAt"]]
+                merged_checked = max(checked_vals) if checked_vals else None
+
+                # nextCheckAt: soonest non-null
+                next_vals = [i["nextCheckAt"] for i in items if i["nextCheckAt"]]
+                merged_next = min(next_vals) if next_vals else None
+
+                # state: worst (cant_check > paused > live)
+                merged_state = min(
+                    (i["state"] for i in items),
+                    key=lambda s: self._STATE_SEVERITY.get(s, 2),
+                )
+
+                # plainReason: first non-null
+                merged_reason = next(
+                    (i["plainReason"] for i in items if i["plainReason"]),
+                    None,
+                )
+
+                merged = {
+                    "watchId": items[0]["watchId"],
+                    "watchIds": [i["watchId"] for i in items],
+                    "provider": items[0]["provider"],
+                    "scope": items[0]["scope"],
+                    "tokens": all_tokens,
+                    "checkedAt": merged_checked,
+                    "nextCheckAt": merged_next,
+                    "host": items[0]["host"],
+                    "state": merged_state,
+                    "plainReason": merged_reason,
+                    "suggested": False,
+                }
+
+            # CLEAR: a live source with no tokens after merging
+            if not merged["tokens"] and merged["state"] == "live" and _provider in ("github", "jira"):
+                merged["tokens"] = ["CLEAR"]
+
+            sources.append(merged)
+
+        # Top-level nextCheckAt: soonest non-null over live sources
+        live_next = [
+            s["nextCheckAt"] for s in sources
+            if s["state"] == "live" and s["nextCheckAt"]
+        ]
+        next_check_at = min(live_next) if live_next else None
+
+        return {"items": sources, "count": len(sources), "nextCheckAt": next_check_at}
+
+    def _read_room_health(self, project_id: str, target_at: str | None) -> dict[str, Any]:
+        """HEALTH: AT RISK / ON TRACK derivation + HS-173 health signals."""
+        from holdspeak.services.room_health_service import (
+            ci_health as _ci_health,
+            issue_aging as _issue_aging,
+            merge_queue_depth as _merge_queue_depth,
+            readiness as _readiness,
+            review_wait as _review_wait,
+        )
+        from holdspeak.services.room_people_service import room_people as _room_people
+
+        watches = self._db.automations.list_project_watches(project_id)
+        now = datetime.now()
+
+        overdue_count = 0
+        ci_failing = False
+        review_waiting_days: int | None = None
+
+        # HS-173: collect entities by kind for health derivations
+        pr_entities: list[dict[str, Any]] = []
+        jira_entities: list[dict[str, Any]] = []
+        ci_entities: list[dict[str, Any]] = []
+        newest_snapshot_at: str | None = None
+
+        for watch in watches:
+            connector_id = watch.get("connector_id", "")
+            query_kind = watch.get("query_kind", "")
+            snapshot = watch.get("snapshot")
+            entities = self._entities(snapshot)
+
+            # Track newest snapshot timestamp for checked_at
+            updated_at = watch.get("updated_at") or ""
+            if updated_at and (newest_snapshot_at is None or updated_at > newest_snapshot_at):
+                newest_snapshot_at = updated_at
+
+            if connector_id == "jira" and query_kind == "issues":
+                jira_entities.extend(entities)
+                for entity in entities:
+                    due_at = entity.get("due_at") or entity.get("dueDate")
+                    if not due_at:
+                        continue
+                    try:
+                        due_dt = datetime.fromisoformat(str(due_at).replace("Z", "+00:00").split("T")[0])
+                        days = (now.replace(tzinfo=None) - due_dt.replace(tzinfo=None)).days
+                    except (ValueError, TypeError):
+                        continue
+                    if days > 0:
+                        overdue_count += 1
+
+            elif connector_id == "gh" and query_kind == "branch_ci":
+                ci_entities.extend(entities)
+                for entity in entities:
+                    conclusion = str(entity.get("conclusion") or "").lower()
+                    if conclusion in ("failure", "timed_out", "cancelled"):
+                        ci_failing = True
+
+            elif connector_id == "gh" and query_kind == "pull_requests":
+                pr_entities.extend(entities)
+                owner_login = self._get_github_owner_login()
+                for entity in entities:
+                    review_requests = entity.get("review_requests") or entity.get("reviewRequests") or []
+                    if owner_login and owner_login.lower() in [r.lower() for r in review_requests]:
+                        updated_at_str = entity.get("updated_at") or entity.get("updatedAt") or ""
+                        if updated_at_str:
+                            try:
+                                updated_dt = datetime.fromisoformat(
+                                    updated_at_str.replace("Z", "+00:00").rstrip("Z")
+                                )
+                                age_days = (now - updated_dt.replace(tzinfo=None)).days
+                                if review_waiting_days is None or age_days > review_waiting_days:
+                                    review_waiting_days = age_days
+                            except (ValueError, TypeError):
+                                pass
+
+        # Target passed
+        target_passed = False
+        if target_at:
+            try:
+                target_dt = datetime.fromisoformat(target_at.split("T")[0])
+                target_passed = now.replace(tzinfo=None) > target_dt.replace(tzinfo=None)
+            except (ValueError, TypeError):
+                pass
+
+        # AT RISK when ANY of the inputs is true
+        at_risk = (
+            overdue_count > 0
+            or ci_failing
+            or (review_waiting_days is not None and review_waiting_days > 3)
+            or target_passed
+        )
+
+        # Reason: first true input in order
+        reason: str | None = None
+        if overdue_count > 0:
+            reason = f"{overdue_count} OVERDUE"
+        elif ci_failing:
+            reason = "CI RED"
+        elif review_waiting_days is not None and review_waiting_days > 3:
+            reason = f"REVIEW WAITING {review_waiting_days} DAYS"
+        elif target_passed:
+            reason = "TARGET PASSED"
+
+        # ── HS-173: health signal derivations ────────────────────────
+        from datetime import timezone as _tz
+        now_utc = datetime.now(_tz.utc)
+
+        review_signal = _review_wait(pr_entities, now_utc)
+        issue_signal = _issue_aging(jira_entities, now_utc)
+
+        # CI history: try the latest steward run's OBSERVE step first,
+        # fall back to the branch_ci snapshot entities.
+        ci_history = self._load_ci_history(project_id) or ci_entities
+        queue_depth = _merge_queue_depth(pr_entities)
+        ci_signal = _ci_health(ci_history, queue=queue_depth)
+
+        # Overdue commitments from follow-through
+        ft_overdue = 0
+        try:
+            ft_overdue = self._count_overdue_commitments(project_id)
+        except Exception:
+            pass
+
+        # Blocker count: issues with priority blocker/critical or labels
+        # containing "blocker"
+        blocker_count = 0
+        for entity in jira_entities:
+            priority = str(entity.get("priority") or "").lower()
+            labels = entity.get("labels") or []
+            status = str(entity.get("status") or "").lower()
+            if status in ("done", "closed"):
+                continue
+            if priority in ("blocker", "critical") or any(
+                "blocker" in str(lbl).lower() for lbl in labels
+            ):
+                blocker_count += 1
+
+        release_signal = _readiness(
+            review_signal=review_signal,
+            ci_signal=ci_signal,
+            blocker_count=blocker_count,
+            overdue_count=ft_overdue,
+        )
+
+        # HS-173: resolve reviewers to people for the bottleneck rows
+        people: list[dict[str, Any]] = []
+        try:
+            people = self._resolve_review_people(
+                project_id, review_signal.get("per_reviewer", []))
+        except Exception:
+            pass
+
+        # HS-173-04: enrich people rows with nudge state
+        try:
+            self._enrich_people_with_nudge_state(project_id, people, pr_entities)
+        except Exception:
+            pass
+
+        return {
+            "assessment": "at_risk" if at_risk else "on_track",
+            "reason": reason,
+            "inputs": {
+                "overdue": overdue_count,
+                "ciFailing": ci_failing,
+                "reviewWaitingDays": review_waiting_days,
+                "targetPassed": target_passed,
+            },
+            # HS-173: structured health signals
+            "signals": {
+                "review_wait": review_signal,
+                "issue_aging": issue_signal,
+                "ci": ci_signal,
+                "release": release_signal,
+            },
+            "checked_at": newest_snapshot_at,
+            "merge_queue_depth": queue_depth,
+            "people": people,
+        }
+
+    def _load_ci_history(self, project_id: str) -> list[dict[str, Any]] | None:
+        """Load CI history from the latest completed steward run's OBSERVE step.
+
+        Returns a list of CI run dicts, or None when no history is available.
+        The steward's OBSERVE phase persists ci_history on the step's
+        observed_state_json (HS-173).
+        """
+        try:
+            runs = self._db.steward_runs.list_runs(
+                project_id, state="completed", limit=1)
+            if not runs:
+                return None
+            run_id = runs[0]["id"]
+            steps = self._db.steward_steps.list_steps(
+                run_id, phase="observe", limit=1)
+            if not steps:
+                return None
+            observed_raw = steps[0].get("observed_state_json") or "{}"
+            if isinstance(observed_raw, str):
+                observed = json.loads(observed_raw)
+            else:
+                observed = observed_raw
+            history = observed.get("ci_history")
+            if isinstance(history, list) and history:
+                return history
+        except Exception:
+            pass
+        return None
+
+    def _count_overdue_commitments(self, project_id: str) -> int:
+        """Count overdue commitments for a project from decision_commitments."""
+        from datetime import date as _date
+        today = _date.today()
+        try:
+            with self._db._connection() as conn:
+                row = conn.execute(
+                    "SELECT COUNT(*) as cnt FROM decision_commitments c "
+                    "JOIN decision_records dr ON dr.source_id = c.decision_id "
+                    "JOIN project_meetings pm ON pm.meeting_id = dr.source_meeting_id "
+                    "WHERE pm.project_id = ? "
+                    "AND c.status NOT IN ('completed', 'dismissed', 'done') "
+                    "AND c.due_at IS NOT NULL AND c.due_at < ?",
+                    (project_id, today.isoformat()),
+                ).fetchone()
+                return int(row["cnt"]) if row else 0
+        except Exception:
+            return 0
+
+    def _resolve_review_people(
+        self,
+        project_id: str,
+        per_reviewer: list[dict[str, Any]],
+        threshold_days: float = 2.0,
+    ) -> list[dict[str, Any]]:
+        """Resolve reviewer logins to People relationships for bottleneck rows.
+
+        Only RESOLVED reviewers whose median exceeds the threshold appear.
+        Unresolved reviewers are counted in overall median but get no row
+        (no raw login on the face).
+        """
+        people_svc = getattr(self, "_people_service", None)
+        if people_svc is None:
+            # Try to construct from the DB if available
+            try:
+                from holdspeak.services.people_service import PeopleService
+                people_svc = PeopleService(self._db)
+            except Exception:
+                return []
+
+        result: list[dict[str, Any]] = []
+        for reviewer in per_reviewer:
+            login = reviewer.get("login", "")
+            median_days = reviewer.get("median_days", 0.0)
+            count = reviewer.get("count", 0)
+            if median_days < threshold_days:
+                continue
+            try:
+                resolved = people_svc.resolve_relationship_by_watch_identity(login)
+                if not resolved or resolved.get("state") != "ready":
+                    continue
+                relationship = resolved.get("relationship")
+                if not relationship:
+                    continue
+                rel_id = relationship.get("id")
+                display_name = relationship.get("display_name") or ""
+                if not rel_id or not display_name:
+                    continue
+                result.append({
+                    "relationship_id": rel_id,
+                    "display_name": display_name,
+                    "login": login,
+                    "median_days": median_days,
+                    "count": count,
+                })
+            except Exception:
+                logging.getLogger(__name__).debug("review people: resolver skipped one reviewer", exc_info=True)
+                continue
+        return result
+
+    def _enrich_people_with_nudge_state(
+        self,
+        project_id: str,
+        people: list[dict[str, Any]],
+        pr_entities: list[dict[str, Any]],
+    ) -> None:
+        """HS-173-04: add nudge={step_id, state, sent_at?} to each person row."""
+        if not people:
+            return
+        # Build a map of login -> latest nudge step for this project.
+        prefix = f"nudge:{project_id}:"
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM steward_steps "
+                "WHERE effect_kind = 'github_comment' "
+                "AND idempotency_key LIKE ? "
+                "ORDER BY created_at DESC LIMIT 500",
+                (prefix + "%",),
+            ).fetchall()
+
+        # Group by reviewer login, keep the most recent per login.
+        nudge_by_login: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            step = dict(row)
+            idem_key = step.get("idempotency_key", "")
+            # nudge:{project_id}:{repo}:{pr_number}:{login}
+            parts = idem_key.split(":")
+            if len(parts) >= 5:
+                login = parts[-1]
+            else:
+                continue
+            if login not in nudge_by_login:
+                nudge_by_login[login] = {
+                    "step_id": step["id"],
+                    "state": step["state"],
+                    "sent_at": step.get("completed_at") if step["state"] == "sent" else None,
+                }
+
+        for person in people:
+            login = (person.get("login") or "").lower()
+            if login in nudge_by_login:
+                person["nudge"] = nudge_by_login[login]
+
+    def _read_room_since_read(self, project_id: str, room_read_at: str | None) -> dict[str, Any]:
+        """SINCE YOU LOOKED: changes grouped by source in phrases."""
+        if room_read_at:
+            # Get changes since the read marker via revision lookup
+            with self._db._connection() as conn:
+                # Find the revision at or after room_read_at
+                row = conn.execute(
+                    "SELECT MIN(project_revision) as min_rev FROM project_changes "
+                    "WHERE project_id = ? AND created_at > ?",
+                    (project_id, room_read_at),
+                ).fetchone()
+                min_rev = row["min_rev"] if row and row["min_rev"] else None
+            if min_rev is not None:
+                changes = self._db.projects.list_project_changes(
+                    project_id, since_revision=min_rev, limit=100,
+                )
+            else:
+                changes = []
+        else:
+            changes = []
+
+        # Group changes by source and map kinds to phrases
+        groups: dict[str, list[dict[str, Any]]] = {}
+        for change in changes:
+            kind = change.get("change_kind", "")
+            # Determine source label from kind
+            if kind.startswith("watch.") or kind.startswith("github."):
+                source_label = "GitHub"
+            elif kind.startswith("jira."):
+                source_label = "Jira"
+            else:
+                source_label = "Room"
+
+            phrase = self._CHANGE_KIND_PHRASES.get(kind, kind.replace("_", " ").replace(".", " "))
+            summary = change.get("summary_json")
+            detail = ""
+            if summary:
+                try:
+                    s = json.loads(summary) if isinstance(summary, str) else summary
+                    if isinstance(s, dict):
+                        if s.get("action"):
+                            detail = f" · {s['action']}"
+                        elif s.get("name"):
+                            detail = f" · {s['name']}"
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+            entry = {
+                "phrase": f"{phrase}{detail}",
+                "at": change.get("created_at", ""),
+                "url": None,
+            }
+            groups.setdefault(source_label, []).append(entry)
+
+        # Build summary per group
+        result_groups: list[dict[str, Any]] = []
+        for source_label, entries in groups.items():
+            # Build a short summary like "2 updated · 1 linked"
+            kind_counts: dict[str, int] = {}
+            for e in entries:
+                verb = e["phrase"].split(" · ")[0] if " · " in e["phrase"] else e["phrase"]
+                kind_counts[verb] = kind_counts.get(verb, 0) + 1
+            summary_parts = [f"{count} {verb}" for verb, count in kind_counts.items()]
+            result_groups.append({
+                "source": source_label,
+                "summary": " · ".join(summary_parts),
+                "entries": entries,
+            })
+
+        return {
+            "readAt": room_read_at,
+            "groups": result_groups,
+        }
+
+    def _read_room_decisions(self, project_id: str) -> dict[str, Any]:
+        """DECISIONS: records whose source meeting is linked to this project.
+
+        HS-172-03: LEFT JOINs confirmed proposals so the face can render
+        proposal provenance (source, meeting_title, confirmed_at, was).
+        """
+        # Find meetings linked to this project
+        with self._db._connection() as conn:
+            meeting_rows = conn.execute(
+                "SELECT meeting_id FROM meeting_projects WHERE project_id = ?",
+                (project_id,),
+            ).fetchall()
+            meeting_ids = [r["meeting_id"] for r in meeting_rows]
+            if not meeting_ids:
+                return {"items": []}
+
+            # Find decision records sourced from those meetings,
+            # LEFT JOIN confirmed proposals on decision_record_id.
+            placeholders = ",".join("?" * len(meeting_ids))
+            decision_rows = conn.execute(
+                f"""SELECT DISTINCT r.id, r.decision_text, r.created_at, r.lifecycle,
+                           p.id AS proposal_id,
+                           p.meeting_id AS proposal_meeting_id,
+                           p.kind AS proposal_kind,
+                           p.original_text AS proposal_original_text,
+                           p.owner_hint AS proposal_owner_hint,
+                           p.due_hint AS proposal_due_hint,
+                           p.text AS proposal_confirmed_text,
+                           p.decided_at AS proposal_confirmed_at,
+                           p.model_host AS proposal_model_host,
+                           p.commitment_id AS proposal_commitment_id,
+                           r.owner AS record_owner,
+                           dc.due_at AS commitment_due_at,
+                           dc.owner AS commitment_owner
+                    FROM decision_records r
+                    JOIN decision_record_sources s ON s.record_id = r.id
+                    LEFT JOIN follow_through_proposals p
+                         ON p.decision_record_id = r.id
+                        AND p.state = 'confirmed'
+                    LEFT JOIN decision_commitments dc
+                         ON dc.id = p.commitment_id
+                    WHERE s.source_type = 'meeting'
+                      AND s.source_ref IN ({placeholders})
+                      AND r.deleted = 0
+                    ORDER BY r.created_at DESC""",
+                meeting_ids,
+            ).fetchall()
+
+            # Resolve meeting titles for proposal provenance.
+            mtg_titles: dict[str, str] = {}
+            for mid in meeting_ids:
+                try:
+                    mtg = conn.execute(
+                        "SELECT title FROM meetings WHERE id = ?", (mid,)
+                    ).fetchone()
+                    if mtg and mtg["title"]:
+                        mtg_titles[mid] = mtg["title"]
+                except Exception:
+                    pass
+
+        items = []
+        seen_record_ids: set[str] = set()
+        for row in decision_rows:
+            rid = row["id"]
+            if rid in seen_record_ids:
+                continue
+            seen_record_ids.add(rid)
+
+            item: dict[str, Any] = {
+                "id": rid,
+                "text": row["decision_text"],
+                "at": row["created_at"],
+                "url": None,
+            }
+
+            # HS-172-03: proposal provenance fields.
+            proposal_id = row["proposal_id"] if "proposal_id" in row.keys() else None
+            if proposal_id:
+                prop_meeting_id = row["proposal_meeting_id"] or ""
+                item["proposal_id"] = proposal_id
+                item["source"] = "meeting"
+                item["meeting_title"] = mtg_titles.get(prop_meeting_id, "")
+                item["confirmed_at"] = row["proposal_confirmed_at"]
+                item["commitment_id"] = row["proposal_commitment_id"]
+
+                # Build "was" dict: only fields the owner changed.
+                was: dict[str, str] = {}
+                orig_text = row["proposal_original_text"] or ""
+                conf_text = row["proposal_confirmed_text"] or ""
+                if orig_text and conf_text and orig_text != conf_text:
+                    was["text"] = orig_text
+                orig_owner = row["proposal_owner_hint"] or ""
+                conf_owner = row["commitment_owner"] or row["record_owner"] or ""
+                if orig_owner and conf_owner and orig_owner != conf_owner:
+                    was["owner"] = orig_owner
+                orig_due = row["proposal_due_hint"] or ""
+                conf_due = row["commitment_due_at"] or ""
+                if orig_due and conf_due and orig_due != conf_due:
+                    was["due"] = orig_due
+                if was:
+                    item["was"] = was
+
+            items.append(item)
+        return {"items": items}
+
+    def _read_room_commitments(self, project_id: str) -> dict[str, Any]:
+        """COMMITMENTS: via their decision (whose source meeting is linked).
+
+        HS-172-03: joins through decision_records.source_id to reach
+        decision_commitments.decision_id (which references decisions.id,
+        not decision_records.id).
+        """
+        # Get the decision record IDs first.
+        decisions_data = self._read_room_decisions(project_id)
+        record_ids = [d["id"] for d in decisions_data.get("items", [])]
+        if not record_ids:
+            return {"items": []}
+
+        with self._db._connection() as conn:
+            # Map decision_records.id -> decision_records.source_id (= decisions.id)
+            placeholders = ",".join("?" * len(record_ids))
+            source_rows = conn.execute(
+                f"SELECT id, source_id FROM decision_records WHERE id IN ({placeholders})",
+                record_ids,
+            ).fetchall()
+            decision_ids = [str(r["source_id"]) for r in source_rows if r["source_id"]]
+            if not decision_ids:
+                return {"items": []}
+
+            placeholders2 = ",".join("?" * len(decision_ids))
+            commitment_rows = conn.execute(
+                f"""SELECT c.id, c.owner, c.due_at, c.status,
+                           ai.task AS text
+                    FROM decision_commitments c
+                    LEFT JOIN action_items ai ON ai.id = c.action_item_id
+                    WHERE c.decision_id IN ({placeholders2})
+                      AND c.status != 'completed'
+                    ORDER BY c.due_at ASC NULLS LAST, c.created_at ASC""",
+                decision_ids,
+            ).fetchall()
+
+        items = []
+        for row in commitment_rows:
+            items.append({
+                "id": row["id"],
+                "text": row["text"] or "",
+                "dueAt": row["due_at"],
+                "owner": row["owner"],
+            })
+        return {"items": items}
+
+    @staticmethod
+    def _read_room_target(target_at: str | None) -> dict[str, Any]:
+        """TARGET: days left and passed flag."""
+        if not target_at:
+            return {"targetAt": None, "daysLeft": None, "passed": False}
+        try:
+            target_dt = datetime.fromisoformat(target_at.split("T")[0])
+            now = datetime.now()
+            delta = (target_dt.replace(tzinfo=None) - now.replace(tzinfo=None)).days
+            return {
+                "targetAt": target_at,
+                "daysLeft": delta if delta >= 0 else None,
+                "passed": delta < 0,
+            }
+        except (ValueError, TypeError):
+            return {"targetAt": target_at, "daysLeft": None, "passed": False}
+
+    def _read_room_receipts(self, project_id: str) -> dict[str, Any]:
+        """HS-174-04: pipeline receipts scoped to this project (last 10).
+
+        Searches pipeline_events where the project_id appears in
+        args_summary.  Each receipt carries origin/caller so the face can
+        show the REMOTE badge.  Returns ``{items: [...]}``; empty list
+        when none.
+        """
+        _LIMIT = 10
+        # Scoping is a substring match on args_summary (counsel-on-built
+        # 174, condition 3).  Project ids are ``proj-<12 hex>``, so a
+        # collision needs one id to be a substring of another summary's
+        # id -- improbable, not impossible.  The exact form is
+        # ``json_extract(args_summary, '$.project_id') = ?``; V0 keeps
+        # LIKE because summaries are not guaranteed to be JSON objects.
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                "SELECT event_id, timestamp, service, method, "
+                "       origin, caller, caller_identity, "
+                "       result_summary, error "
+                "FROM pipeline_events "
+                "WHERE args_summary LIKE ? "
+                "ORDER BY timestamp DESC LIMIT ?",
+                (f"%{project_id}%", _LIMIT),
+            ).fetchall()
+        items = []
+        for row in rows:
+            origin_val = str(row["origin"]) if row["origin"] and row["origin"] != "local" else None
+            caller_val = str(row["caller"]) if row["caller"] else None
+            items.append({
+                "id": str(row["event_id"]),
+                "op": str(row["method"]),
+                "label": f"{row['service']}.{row['method']}",
+                "title": f"{row['service']}.{row['method']}",
+                "outcome": "error" if row["error"] else "ok",
+                "origin": origin_val,
+                "caller": caller_val,
+                "identity": str(row["caller_identity"]) if row["caller_identity"] else None,
+                "at": row["timestamp"],
+                "timestamp": row["timestamp"],
+            })
+        return {"items": items}
+
+    # ── read marker (HS-169-04) ─────────────────────────────────────
+
+    def mark_room_read(self, principal: Principal, project_id: str) -> dict[str, Any]:
+        """Set the per-project read marker to now."""
+        self._require_project(project_id)
+        now_iso = datetime.now().isoformat()
+        self._db.projects.set_room_read_at(project_id, now_iso)
+        return {"readAt": now_iso}
 
     # ── writes (graduated to revision law) ───────────────────────────
 
@@ -629,6 +1952,17 @@ class ProjectService:
                 repos = scope.get("repositories", [])
                 if repos:
                     query_filters["repository"] = repos[0]
+                # HS-166-03: flatten jira scope into the stored query
+                # the way repos[0] is flattened for gh.
+                jira_connection_ref = scope.get("connection_ref") or spec.get("provider", {}).get("connection_ref")
+                if jira_connection_ref:
+                    query_filters["connection_ref"] = jira_connection_ref
+                jira_projects = scope.get("projects", [])
+                if jira_projects:
+                    query_filters["projects"] = list(jira_projects)
+                jira_issue_types = scope.get("issue_types", [])
+                if jira_issue_types:
+                    query_filters["issue_types"] = list(jira_issue_types)
                 query: dict[str, Any] = query_filters
                 trigger = spec.get("trigger") or CADENCE_PRESETS.get("normal", {})
                 mode = spec.get("mode", "yolo")
@@ -1105,6 +2439,20 @@ class ProjectService:
                 ),
             )
 
+            # HS-167 M-2: pause active/tested watches bound to this
+            # project and disable unattended policy — in the SAME
+            # transaction — so an archived project never evaluates.
+            from holdspeak.db.automations import AutomationRepository as _WatchRepo
+            _WatchRepo.pause_project_watches_in_txn(conn, project_id, now_iso)
+
+            policy = self._db.steward_policies.get_policy_for_project_in_transaction(
+                conn, project_id,
+            )
+            if policy and policy.get("unattended_enabled"):
+                self._db.steward_policies.update_policy_in_transaction(
+                    conn, policy["id"], unattended_enabled=0,
+                )
+
             self._ledger.append_in_transaction(
                 conn, principal,
                 event_type="project.archived",
@@ -1137,6 +2485,9 @@ class ProjectService:
 
         If the project is not archived, returns a no_change result
         (API-002's honest reply).
+
+        Watches paused by archive_project are NOT auto-resumed here —
+        the owner resumes deliberately after restoring.
         """
         project = self._require_project(project_id)
 
@@ -1255,6 +2606,12 @@ class ProjectService:
         now_iso = datetime.now().isoformat()
         project_ref = format_ref("project", project_id)
 
+        # HS-173-08 / 158 S-1: single transaction for revision bump +
+        # resource upsert + change row + event + command.
+        relation = str(body.get("relationship") or "member").strip().lower()
+        if relation not in {"member", "source", "output", "related"}:
+            raise ValueError(f"unknown project relationship: {relation}")
+
         with self._db._connection() as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
@@ -1273,14 +2630,25 @@ class ProjectService:
                 (new_revision, now_iso, project_id),
             )
 
-        # The upsert through the repo layer (its own connection/transaction)
-        row = self._db.project_relationships.upsert(
-            project_id=project_id, resource_ref=ref_str,
-            relationship=str(body.get("relationship") or "member"),
-            source="manual", confidence=1.0,
-        )
+            # Inline the resource upsert (was repo layer's own transaction).
+            prior = conn.execute(
+                "SELECT created_at FROM project_resources "
+                "WHERE project_id=? AND resource_ref=?",
+                (project_id, ref_str),
+            ).fetchone()
+            conn.execute(
+                """INSERT INTO project_resources
+                   (project_id, resource_ref, relationship, source, confidence,
+                    created_at, last_modified, deleted)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+                   ON CONFLICT(project_id, resource_ref) DO UPDATE SET
+                     relationship=excluded.relationship, source=excluded.source,
+                     confidence=excluded.confidence, last_modified=excluded.last_modified,
+                     deleted=excluded.deleted""",
+                (project_id, ref_str, relation, "manual", 1.0,
+                 prior[0] if prior else now_iso, now_iso),
+            )
 
-        with self._db._connection() as conn:
             change_id = generate_pchg_id(
                 project_id=project_id,
                 project_revision=new_revision,
@@ -1326,7 +2694,11 @@ class ProjectService:
                 req_hash, envelope,
             )
 
-        result = row.to_dict()
+        # Read the committed row through the repo layer (read-only).
+        row = self._db.project_relationships.get(
+            project_id, ref_str, include_deleted=True,
+        )
+        result = row.to_dict()  # type: ignore[union-attr]
         result.update(_envelope_to_dict(envelope))
         return result
 
@@ -1349,6 +2721,8 @@ class ProjectService:
         now_iso = datetime.now().isoformat()
         project_ref = format_ref("project", project_id)
 
+        # HS-173-08 / 158 S-1: single transaction for revision bump +
+        # resource soft-delete + change row + event + command.
         with self._db._connection() as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
@@ -1367,9 +2741,14 @@ class ProjectService:
                 (new_revision, now_iso, project_id),
             )
 
-        deleted = self._db.project_relationships.delete(project_id, ref_str)
+            # Inline the resource soft-delete (was repo layer's own transaction).
+            cur = conn.execute(
+                "UPDATE project_resources SET deleted=1, last_modified=? "
+                "WHERE project_id=? AND resource_ref=? AND deleted=0",
+                (now_iso, project_id, ref_str),
+            )
+            deleted = bool(cur.rowcount)
 
-        with self._db._connection() as conn:
             change_id = generate_pchg_id(
                 project_id=project_id,
                 project_revision=new_revision,
@@ -1446,6 +2825,11 @@ class ProjectService:
         project_ref = format_ref("project", project_id)
         meeting_ref = format_ref("meeting", meeting_id)
 
+        # HS-173-08 / 158 S-1: single transaction for revision bump +
+        # meeting association + change row + event + command.
+        mid = str(meeting_id).strip()
+        pid = str(project_id).strip()
+
         with self._db._connection() as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
@@ -1464,13 +2848,29 @@ class ProjectService:
                 (new_revision, now_iso, project_id),
             )
 
-        # The legacy repo layer does its own connection
-        self._db.projects.associate_meeting_project(
-            meeting_id=meeting_id, project_id=project_id,
-            source="manual", confidence=1.0,
-        )
+            # Inline meeting association (was repo layer's own transaction).
+            conn.execute(
+                """INSERT INTO meeting_projects
+                   (meeting_id, project_id, source, confidence, detected_at)
+                   VALUES (?, ?, ?, ?, ?)
+                   ON CONFLICT(meeting_id, project_id) DO UPDATE SET
+                     source = excluded.source,
+                     confidence = MAX(meeting_projects.confidence, excluded.confidence),
+                     detected_at = excluded.detected_at""",
+                (mid, pid, "manual", 1.0, now_iso),
+            )
+            conn.execute(
+                """INSERT INTO project_resources
+                   (project_id, resource_ref, relationship, source, confidence,
+                    created_at, last_modified, deleted)
+                   VALUES (?, ?, 'member', ?, ?, ?, ?, 0)
+                   ON CONFLICT(project_id, resource_ref) DO UPDATE SET
+                     source=excluded.source,
+                     confidence=MAX(project_resources.confidence, excluded.confidence),
+                     last_modified=excluded.last_modified, deleted=0""",
+                (pid, f"meeting:{mid}", "manual", 1.0, now_iso, now_iso),
+            )
 
-        with self._db._connection() as conn:
             change_id = generate_pchg_id(
                 project_id=project_id,
                 project_revision=new_revision,
@@ -1521,6 +2921,13 @@ class ProjectService:
                 req_hash, envelope,
             )
 
+        # HS-175-04: ensure the Room's meeting Watch exists after link
+        try:
+            from holdspeak.services.watch_service import ensure_meeting_watch
+            ensure_meeting_watch(self._db, project_id, why="meeting linked")
+        except Exception:
+            _log.warning("ensure_meeting_watch failed for project %s", project_id)
+
         return True
 
     def disassociate_meeting(
@@ -1548,6 +2955,11 @@ class ProjectService:
         project_ref = format_ref("project", project_id)
         meeting_ref = format_ref("meeting", meeting_id)
 
+        # HS-173-08 / 158 S-1: single transaction for revision bump +
+        # meeting disassociation + change row + event + command.
+        mid = str(meeting_id).strip()
+        pid = str(project_id).strip()
+
         with self._db._connection() as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
@@ -1566,11 +2978,18 @@ class ProjectService:
                 (new_revision, now_iso, project_id),
             )
 
-        self._db.projects.disassociate_meeting_project(
-            meeting_id=meeting_id, project_id=project_id,
-        )
+            # Inline meeting disassociation (was repo layer's own transaction).
+            conn.execute(
+                "DELETE FROM meeting_projects "
+                "WHERE meeting_id = ? AND project_id = ?",
+                (mid, pid),
+            )
+            conn.execute(
+                "UPDATE project_resources SET deleted=1, last_modified=? "
+                "WHERE project_id=? AND resource_ref=?",
+                (now_iso, pid, f"meeting:{mid}"),
+            )
 
-        with self._db._connection() as conn:
             change_id = generate_pchg_id(
                 project_id=project_id,
                 project_revision=new_revision,

@@ -1,0 +1,555 @@
+{
+  "generated_at": "2026-09-05T14:01:48.742695",
+  "hub_host": "127.0.0.1:55902",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "width": 393,
+      "height": 852
+    }
+  ],
+  "shots": [
+    {
+      "face": "room-health",
+      "width": 1440,
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/3fae8da5-7481-4a73-96fb-73a18c1482cd/scratchpad/wt173/pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-06-shots/walk-room-health-1440.png"
+    },
+    {
+      "face": "update-editor",
+      "width": 1440,
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/3fae8da5-7481-4a73-96fb-73a18c1482cd/scratchpad/wt173/pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-06-shots/walk-update-1440.png"
+    },
+    {
+      "face": "steward-posture",
+      "width": 1440,
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/3fae8da5-7481-4a73-96fb-73a18c1482cd/scratchpad/wt173/pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-06-shots/walk-steward-policy-1440.png"
+    },
+    {
+      "face": "room-health",
+      "width": 393,
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/3fae8da5-7481-4a73-96fb-73a18c1482cd/scratchpad/wt173/pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-06-shots/walk-room-health-393.png"
+    },
+    {
+      "face": "update-editor",
+      "width": 393,
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/3fae8da5-7481-4a73-96fb-73a18c1482cd/scratchpad/wt173/pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-06-shots/walk-update-393.png"
+    },
+    {
+      "face": "steward-posture",
+      "width": 393,
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/3fae8da5-7481-4a73-96fb-73a18c1482cd/scratchpad/wt173/pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-06-shots/walk-steward-policy-393.png"
+    }
+  ],
+  "facts": [
+    {
+      "face": "steward-policy-api",
+      "field": "project_name",
+      "expected": "(owner's project)",
+      "observed": "Complete del",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "steward-policy-api",
+      "field": "eligible_effect_kinds",
+      "expected": "(list, github_comment expected absent)",
+      "observed": "[]",
+      "verdict": "DATA",
+      "why": "from steward policy"
+    },
+    {
+      "face": "steward-policy-api",
+      "field": "github_comment_enabled",
+      "expected": "false",
+      "observed": "False",
+      "verdict": "MATCH",
+      "why": "github_comment absent as expected"
+    },
+    {
+      "face": "room-health-api",
+      "field": "health:review_wait",
+      "expected": "(absent when no data)",
+      "observed": "absent",
+      "verdict": "DATA",
+      "why": "signal not present in health payload"
+    },
+    {
+      "face": "room-health-api",
+      "field": "health:issue_aging:tone",
+      "expected": "(green/amber/red or absent)",
+      "observed": "green",
+      "verdict": "DATA",
+      "why": "from Room health payload"
+    },
+    {
+      "face": "room-health-api",
+      "field": "health:issue_aging:summary",
+      "expected": "(signal summary)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "from Room health payload"
+    },
+    {
+      "face": "room-health-api",
+      "field": "health:ci",
+      "expected": "(absent when no data)",
+      "observed": "absent",
+      "verdict": "DATA",
+      "why": "signal not present in health payload"
+    },
+    {
+      "face": "room-health-api",
+      "field": "health:release",
+      "expected": "(absent when no data)",
+      "observed": "absent",
+      "verdict": "DATA",
+      "why": "signal not present in health payload"
+    },
+    {
+      "face": "room-health-api",
+      "field": "health:assessment",
+      "expected": "(at_risk or on_track)",
+      "observed": "on_track",
+      "verdict": "DATA",
+      "why": "from Room health payload"
+    },
+    {
+      "face": "room-health",
+      "field": "health_section_present",
+      "expected": "(true when signals have data, false when no data)",
+      "observed": "True",
+      "verdict": "DATA",
+      "why": "HEALTH section on Room face"
+    },
+    {
+      "face": "room-health",
+      "field": "health_row:review_wait",
+      "expected": "(absent when no data for this signal)",
+      "observed": "absent",
+      "verdict": "DATA",
+      "why": "HEALTH row not rendered"
+    },
+    {
+      "face": "room-health",
+      "field": "health_row:issue_aging",
+      "expected": "(tone . primary . cells with data tokens)",
+      "observed": "tone=--- . ISSUE AGING . CLEAR",
+      "verdict": "DATA",
+      "why": "HEALTH row on Room face"
+    },
+    {
+      "face": "room-health",
+      "field": "health_row:ci",
+      "expected": "(absent when no data for this signal)",
+      "observed": "absent",
+      "verdict": "DATA",
+      "why": "HEALTH row not rendered"
+    },
+    {
+      "face": "room-health",
+      "field": "health_row:release",
+      "expected": "(absent when no data for this signal)",
+      "observed": "absent",
+      "verdict": "DATA",
+      "why": "HEALTH row not rendered"
+    },
+    {
+      "face": "room-health",
+      "field": "bottleneck_rows",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "bottleneck rows in NEEDS YOU section"
+    },
+    {
+      "face": "room-health",
+      "field": "needs_you_rows",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "generic NEEDS YOU rows in Room"
+    },
+    {
+      "face": "room-health",
+      "field": "nudge_verb_present",
+      "expected": "false (github_comment not eligible)",
+      "observed": "present=False (count=0)",
+      "verdict": "DATA",
+      "why": "Nudge verb on reviewer-bottleneck NEEDS YOU rows"
+    },
+    {
+      "face": "update-editor",
+      "field": "latest_update_status",
+      "expected": "(draft or published)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "latest update state"
+    },
+    {
+      "face": "update-editor",
+      "field": "latest_update_generator",
+      "expected": "(deterministic or model label)",
+      "observed": "deterministic",
+      "verdict": "DATA",
+      "why": "who generated the update"
+    },
+    {
+      "face": "update-editor",
+      "field": "generator_token",
+      "expected": "(deterministic or model label)",
+      "observed": "Deterministic",
+      "verdict": "DATA",
+      "why": "generator token on update face"
+    },
+    {
+      "face": "update-editor",
+      "field": "claim_chip_count",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "claim chips in update body"
+    },
+    {
+      "face": "update-editor",
+      "field": "unverified_count",
+      "expected": "(varies, 0 for deterministic)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "UNVERIFIED markers in update body"
+    },
+    {
+      "face": "update-editor",
+      "field": "host_chip",
+      "expected": "(model host or absent for deterministic)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "EgressChip on update card"
+    },
+    {
+      "face": "update-editor",
+      "field": "host_chip_present",
+      "expected": "(true when model, false when deterministic)",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "EgressChip presence"
+    },
+    {
+      "face": "update-editor",
+      "field": "model_token",
+      "expected": "(model name when model-generated, empty for deterministic)",
+      "observed": "",
+      "verdict": "DATA",
+      "why": "model name token in footer"
+    },
+    {
+      "face": "steward-posture",
+      "field": "effects_row_count",
+      "expected": "(6 kinds including github_comment)",
+      "observed": "6",
+      "verdict": "DATA",
+      "why": "Effects CheckGadget rows in steward posture"
+    },
+    {
+      "face": "steward-posture",
+      "field": "effect_row:0",
+      "expected": "(label . checked . egress chip if external)",
+      "observed": "Refreshed sources . checked=False . egress=None",
+      "verdict": "DATA",
+      "why": "effect kind row"
+    },
+    {
+      "face": "steward-posture",
+      "field": "effect_row:1",
+      "expected": "(label . checked . egress chip if external)",
+      "observed": "Created proposals . checked=False . egress=None",
+      "verdict": "DATA",
+      "why": "effect kind row"
+    },
+    {
+      "face": "steward-posture",
+      "field": "effect_row:2",
+      "expected": "(label . checked . egress chip if external)",
+      "observed": "Applied proposal effects . checked=False . egress=None",
+      "verdict": "DATA",
+      "why": "effect kind row"
+    },
+    {
+      "face": "steward-posture",
+      "field": "effect_row:3",
+      "expected": "(label . checked . egress chip if external)",
+      "observed": "Drafted update . checked=False . egress=model",
+      "verdict": "DATA",
+      "why": "effect kind row"
+    },
+    {
+      "face": "steward-posture",
+      "field": "effect_row:4",
+      "expected": "(label . checked . egress chip if external)",
+      "observed": "Door item created . checked=False . egress=None",
+      "verdict": "DATA",
+      "why": "effect kind row"
+    },
+    {
+      "face": "steward-posture",
+      "field": "effect_row:5",
+      "expected": "(label . checked . egress chip if external)",
+      "observed": "Reviewer nudge . checked=False . egress=GITHUB.COM",
+      "verdict": "DATA",
+      "why": "effect kind row"
+    },
+    {
+      "face": "steward-posture",
+      "field": "per_nudge_approval",
+      "expected": "true",
+      "observed": "True",
+      "verdict": "MATCH",
+      "why": "PER-NUDGE APPROVAL token present"
+    },
+    {
+      "face": "steward-posture",
+      "field": "nudge_template_visible",
+      "expected": "(true when github_comment checked, false otherwise)",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "Nudge text row visibility"
+    },
+    {
+      "face": "steward-posture",
+      "field": "reviewer_nudge_checked",
+      "expected": "false (github_comment not enabled by default)",
+      "observed": "False",
+      "verdict": "MATCH",
+      "why": "Reviewer nudge CheckGadget state"
+    },
+    {
+      "face": "steward-posture",
+      "field": "reviewer_nudge_egress_chip",
+      "expected": "GITHUB.COM",
+      "observed": "GITHUB.COM",
+      "verdict": "MATCH",
+      "why": "EgressChip on Reviewer nudge row (Article III: egress where egress happens)"
+    },
+    {
+      "face": "room-health",
+      "field": "health_section_present",
+      "expected": "(true when signals have data, false when no data)",
+      "observed": "True",
+      "verdict": "DATA",
+      "why": "HEALTH section on Room face"
+    },
+    {
+      "face": "room-health",
+      "field": "health_row:review_wait",
+      "expected": "(absent when no data for this signal)",
+      "observed": "absent",
+      "verdict": "DATA",
+      "why": "HEALTH row not rendered"
+    },
+    {
+      "face": "room-health",
+      "field": "health_row:issue_aging",
+      "expected": "(tone . primary . cells with data tokens)",
+      "observed": "tone=--- . ISSUE AGING . CLEAR",
+      "verdict": "DATA",
+      "why": "HEALTH row on Room face"
+    },
+    {
+      "face": "room-health",
+      "field": "health_row:ci",
+      "expected": "(absent when no data for this signal)",
+      "observed": "absent",
+      "verdict": "DATA",
+      "why": "HEALTH row not rendered"
+    },
+    {
+      "face": "room-health",
+      "field": "health_row:release",
+      "expected": "(absent when no data for this signal)",
+      "observed": "absent",
+      "verdict": "DATA",
+      "why": "HEALTH row not rendered"
+    },
+    {
+      "face": "room-health",
+      "field": "bottleneck_rows",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "bottleneck rows in NEEDS YOU section"
+    },
+    {
+      "face": "room-health",
+      "field": "needs_you_rows",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "generic NEEDS YOU rows in Room"
+    },
+    {
+      "face": "room-health",
+      "field": "nudge_verb_present",
+      "expected": "false (github_comment not eligible)",
+      "observed": "present=False (count=0)",
+      "verdict": "DATA",
+      "why": "Nudge verb on reviewer-bottleneck NEEDS YOU rows"
+    },
+    {
+      "face": "update-editor",
+      "field": "latest_update_status",
+      "expected": "(draft or published)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "latest update state"
+    },
+    {
+      "face": "update-editor",
+      "field": "latest_update_generator",
+      "expected": "(deterministic or model label)",
+      "observed": "deterministic",
+      "verdict": "DATA",
+      "why": "who generated the update"
+    },
+    {
+      "face": "update-editor",
+      "field": "generator_token",
+      "expected": "(deterministic or model label)",
+      "observed": "Deterministic",
+      "verdict": "DATA",
+      "why": "generator token on update face"
+    },
+    {
+      "face": "update-editor",
+      "field": "claim_chip_count",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "claim chips in update body"
+    },
+    {
+      "face": "update-editor",
+      "field": "unverified_count",
+      "expected": "(varies, 0 for deterministic)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "UNVERIFIED markers in update body"
+    },
+    {
+      "face": "update-editor",
+      "field": "host_chip",
+      "expected": "(model host or absent for deterministic)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "EgressChip on update card"
+    },
+    {
+      "face": "update-editor",
+      "field": "host_chip_present",
+      "expected": "(true when model, false when deterministic)",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "EgressChip presence"
+    },
+    {
+      "face": "update-editor",
+      "field": "model_token",
+      "expected": "(model name when model-generated, empty for deterministic)",
+      "observed": "",
+      "verdict": "DATA",
+      "why": "model name token in footer"
+    },
+    {
+      "face": "steward-posture",
+      "field": "effects_row_count",
+      "expected": "(6 kinds including github_comment)",
+      "observed": "6",
+      "verdict": "DATA",
+      "why": "Effects CheckGadget rows in steward posture"
+    },
+    {
+      "face": "steward-posture",
+      "field": "effect_row:0",
+      "expected": "(label . checked . egress chip if external)",
+      "observed": "Refreshed sources . checked=False . egress=None",
+      "verdict": "DATA",
+      "why": "effect kind row"
+    },
+    {
+      "face": "steward-posture",
+      "field": "effect_row:1",
+      "expected": "(label . checked . egress chip if external)",
+      "observed": "Created proposals . checked=False . egress=None",
+      "verdict": "DATA",
+      "why": "effect kind row"
+    },
+    {
+      "face": "steward-posture",
+      "field": "effect_row:2",
+      "expected": "(label . checked . egress chip if external)",
+      "observed": "Applied proposal effects . checked=False . egress=None",
+      "verdict": "DATA",
+      "why": "effect kind row"
+    },
+    {
+      "face": "steward-posture",
+      "field": "effect_row:3",
+      "expected": "(label . checked . egress chip if external)",
+      "observed": "Drafted update . checked=False . egress=model",
+      "verdict": "DATA",
+      "why": "effect kind row"
+    },
+    {
+      "face": "steward-posture",
+      "field": "effect_row:4",
+      "expected": "(label . checked . egress chip if external)",
+      "observed": "Door item created . checked=False . egress=None",
+      "verdict": "DATA",
+      "why": "effect kind row"
+    },
+    {
+      "face": "steward-posture",
+      "field": "effect_row:5",
+      "expected": "(label . checked . egress chip if external)",
+      "observed": "Reviewer nudge . checked=False . egress=GITHUB.COM",
+      "verdict": "DATA",
+      "why": "effect kind row"
+    },
+    {
+      "face": "steward-posture",
+      "field": "per_nudge_approval",
+      "expected": "true",
+      "observed": "True",
+      "verdict": "MATCH",
+      "why": "PER-NUDGE APPROVAL token present"
+    },
+    {
+      "face": "steward-posture",
+      "field": "nudge_template_visible",
+      "expected": "(true when github_comment checked, false otherwise)",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "Nudge text row visibility"
+    },
+    {
+      "face": "steward-posture",
+      "field": "reviewer_nudge_checked",
+      "expected": "false (github_comment not enabled by default)",
+      "observed": "False",
+      "verdict": "MATCH",
+      "why": "Reviewer nudge CheckGadget state"
+    },
+    {
+      "face": "steward-posture",
+      "field": "reviewer_nudge_egress_chip",
+      "expected": "GITHUB.COM",
+      "observed": "GITHUB.COM",
+      "verdict": "MATCH",
+      "why": "EgressChip on Reviewer nudge row (Article III: egress where egress happens)"
+    }
+  ],
+  "errors": [],
+  "surprises": [],
+  "defects": []
+}

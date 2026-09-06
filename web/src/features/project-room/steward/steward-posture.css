@@ -1,0 +1,196 @@
+/* HS-167-05 R4 -- Steward posture layout.
+   Feature CSS lays out, never restyles (D10). */
+
+.steward-posture {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  position: relative;
+}
+
+/* ── Vertical scroll-hint ── */
+.steward-posture::before,
+.steward-posture::after {
+  content: "";
+  position: sticky;
+  left: 0;
+  right: 0;
+  height: 28px;
+  display: none;
+  pointer-events: none;
+  z-index: var(--desk-z-local, 1);
+  flex-shrink: 0;
+}
+.steward-posture::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--surface-1, var(--bg-primary)), transparent);
+  margin-bottom: -28px;
+}
+.steward-posture::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--surface-1, var(--bg-primary)), transparent);
+  margin-top: -28px;
+}
+.steward-posture[data-scroll-hint="bottom"]::after,
+.steward-posture[data-scroll-hint="both"]::before,
+.steward-posture[data-scroll-hint="both"]::after,
+.steward-posture[data-scroll-hint="top"]::before {
+  display: block;
+}
+
+/* ── Run detail ── */
+
+.steward-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.steward-detail-band {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.steward-phase-label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* ── History list rows ── */
+
+.steward-list-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-surface-gap, 2px);
+  min-width: 0;
+  width: 100%;
+}
+
+.steward-list-primary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+.steward-list-time {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+.steward-list-secondary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.steward-list-chevron {
+  color: var(--text-faint);
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0.35;
+  transition: opacity var(--duration-short, 120ms);
+}
+
+.surface-ledger-line:hover .steward-list-chevron,
+.surface-ledger-line:focus-visible .steward-list-chevron {
+  opacity: 1;
+}
+
+.surface-ledger-primary:has(.steward-list-row) {
+  white-space: normal;
+  overflow: visible;
+}
+
+/* ── Receipt refs (wrapping chip row) ── */
+
+.steward-receipt-refs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.steward-receipt-ref {
+  cursor: pointer;
+  font-size: var(--text-xs);
+}
+
+/* ── Policy ── */
+
+.steward-policy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.steward-policy-effects {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.steward-policy-effect-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.steward-policy-effect-row .gadget-chip-egress {
+  flex-shrink: 0;
+}
+
+/* ── HS-173-04: nudge approval token ── */
+
+.steward-policy-nudge-approval {
+  padding-top: 2px;
+}
+
+/* ── R4: grant tokens — separate chips, 6px gap ── */
+
+.steward-grant-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+/* ── R4: cadence stepper natural width ── */
+
+.steward-cadence-stepper {
+  max-width: 140px;
+  display: inline-block;
+}
+
+/* ── R4: circuit glyph lead ── */
+
+.steward-circuit-glyph {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1;
+  text-align: center;
+  width: 20px;
+  flex-shrink: 0;
+  color: var(--text-muted, #9ba2b0);
+}
+
+/* ── Provenance chip in run list ── */
+
+.steward-provenance-chip {
+  font-size: var(--text-xs);
+  flex-shrink: 0;
+}
+
+/* ── Consequential stop styling ── */
+
+.steward-stop-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}

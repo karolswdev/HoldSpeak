@@ -29,6 +29,7 @@ import { useDesk } from "../store";
 import { apiFetch } from "../../lib/api";
 import { KIND_GLYPH } from "../tools";
 import { SurfaceRows, SurfaceRow } from "../surface/Surface";
+import { useThreadComposerDraft } from "../threadComposerDrafts";
 
 // ── ref chip (the attachment) ───────────────────────────────────────
 
@@ -86,7 +87,7 @@ export const THREAD_SLASH_COMMANDS: SlashCommand[] = [
   { id: "new", verbId: "thread.new", label: "New thread", glyph: "◬" },
   { id: "mode", verbId: "thread.mode", label: "Switch mode", glyph: "◎", hasArg: true },
   { id: "prompt", verbId: "thread.prompt", label: "Insert prompt", glyph: "▤", hasArg: true },
-  { id: "tools", verbId: "thread.tools", label: "Show tools", glyph: "⚙" },
+  { id: "tools", verbId: "thread.tools", label: "Show tools", glyph: String.fromCodePoint(0x2699) },
   { id: "todo", verbId: "thread.todo", label: "Add todo", glyph: "◻", hasArg: true },
   { id: "compact", verbId: "thread.compact", label: "Compact thread", glyph: "⊟" },
   { id: "guardrail", verbId: "thread.guardrail", label: "Toggle guardrail", glyph: "⊘", hasArg: true },
@@ -334,7 +335,7 @@ export interface ThreadComposerProps {
   /** The thread id — needed by /compact and /todo verbs (HS-153-05). */
   threadId: string;
   /** Send a turn with text + refs. */
-  onSend: (text: string, refs: Array<{ ref_kind: string; ref_id: string }>) => void;
+  onSend: (text: string, refs: Array<{ ref_kind: string; ref_id: string }>) => void | boolean | Promise<void | boolean>;
   /** Abort the running turn. */
   onStop: () => void;
   /** Keep the latest assistant message. */
@@ -375,9 +376,7 @@ export function ThreadComposer({
   disabled,
 }: ThreadComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [draft, setDraft] = useState("");
-  const [chips, setChips] = useState<RefChip[]>([]);
-  const [sending, setSending] = useState(false);
+  const { draft, setDraft, chips, setChips, sending, setSending } = useThreadComposerDraft(threadId);
 
   // autocomplete state
   const [acOpen, setAcOpen] = useState(false);
@@ -791,10 +790,18 @@ export function ThreadComposer({
       ref_kind: c.ref.kind,
       ref_id: c.ref.id,
     }));
-    setDraft("");
-    setChips([]);
-    onSend(text, refs);
-    setSending(false);
+    try {
+      const accepted = await onSend(text, refs);
+      if (accepted !== false) {
+        setDraft("");
+        setChips([]);
+      }
+    } catch {
+      // Keep the owner's words available after an unconfirmed send.
+    } finally {
+      setSending(false);
+      textareaRef.current?.focus();
+    }
   }, [draft, sending, chips, onSend, executeSlashCommand]);
 
   const handleKeyDown = useCallback(
@@ -956,6 +963,7 @@ export function ThreadComposer({
       </div>
 
       {/* Input row: textarea + mic + send/stop */}
+      {/* UX-CANON: needs redesign (HS-170-04) — raw textarea */}
       <div className="thread-composer-row">
         <textarea
           ref={textareaRef}
@@ -1061,6 +1069,22 @@ export function InlineEditor({
         data-testid="inline-editor-input"
       />
       <div className="thread-inline-editor-actions">
+        {/* HS-176-04 — the voice law (Article IV.1).  The mousedown guard
+            keeps focus in the textarea: its onBlur cancels the edit, so a
+            plain click would dismiss the editor before the mic toggled. */}
+        <span
+          className="thread-inline-editor-mic"
+          onMouseDown={(event) => event.preventDefault()}
+        >
+          <MicButton
+            label="Speak message"
+            onText={(spoken) =>
+              setText((current) =>
+                current && !/\s$/.test(current) ? `${current} ${spoken}` : current + spoken,
+              )
+            }
+          />
+        </span>
         <button
           type="button"
           className="desk-chip"

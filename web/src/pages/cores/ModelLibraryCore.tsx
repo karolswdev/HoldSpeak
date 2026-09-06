@@ -10,10 +10,12 @@ import {
 import { Button } from "../../components/signal/Signal";
 import { readableError, newDeliveryId } from "../../lib/api";
 import {
+  CycleGadget,
   EgressChip,
   FoldGadget,
   StringGadget,
 } from "../../desk/surface/gadgets";
+import { countToken } from "../../desk/surface";
 import {
   SurfaceFacts,
   SurfaceSplit,
@@ -355,10 +357,10 @@ export function ModelLibraryCore() {
 
   const addChoices = (
     <div className="model-library-add-choices">
-      <button type="button" onClick={chooseCatalog}>Download from catalog</button>
-      <button type="button" onClick={() => setFace("hosted")}>Connect hosted model</button>
-      <button type="button" onClick={() => setFace("endpoint")}>Define endpoint</button>
-      <button type="button" onClick={() => setFace("file")}>Use model file</button>
+      <Button variant="ghost" onClick={chooseCatalog}>Download from catalog</Button>
+      <Button variant="ghost" onClick={() => setFace("hosted")}>Connect hosted model</Button>
+      <Button variant="ghost" onClick={() => setFace("endpoint")}>Define endpoint</Button>
+      <Button variant="ghost" onClick={() => setFace("file")}>Use model file</Button>
     </div>
   );
 
@@ -366,38 +368,38 @@ export function ModelLibraryCore() {
     <section ref={addFaceRef} tabIndex={-1} className="model-library-add" aria-label="Add model">
       <header>
         <h2>Add model</h2>
-        <button type="button" className="model-library-back" onClick={leaveAdd}>Back</button>
+        <Button variant="ghost" dense className="model-library-back" onClick={leaveAdd}>Back</Button>
       </header>
       {addChoices}
     </section>
   ) : face === "hosted" ? (
     <section ref={addFaceRef} tabIndex={-1} className="model-library-add" aria-label="Connect hosted model">
-      <header><h2>Connect hosted model</h2><button type="button" className="model-library-back" onClick={leaveAdd}>Back</button></header>
+      <header><h2>Connect hosted model</h2><Button variant="ghost" dense className="model-library-back" onClick={leaveAdd}>Back</Button></header>
       <div className="model-library-form">
         <EgressChip label="Egress" scope="cloud" title="Provider request leaves this hub." />
         <StringGadget label="Provider name" value={hosted.label} onChange={(label) => setHosted((current) => ({ ...current, label }))} placeholder="Provider model" />
         <StringGadget label="Model" value={hosted.model} onChange={(model) => setHosted((current) => ({ ...current, model }))} placeholder="Model" />
-        <label className="model-library-select"><span>Provider</span><select aria-label="Hosted provider" value={hosted.family} onChange={(event) => setHosted((current) => ({ ...current, family: event.target.value as typeof hosted.family }))}><option value="openrouter">OpenRouter</option><option value="anthropic">Anthropic</option></select></label>
-        <label className="model-library-secret"><span>Provider key</span><input ref={secretRef} type="password" autoComplete="new-password" aria-label="Provider key" /></label>
+        <CycleGadget label="Hosted provider" value={hosted.family} options={[{ value: "openrouter", label: "OpenRouter" }, { value: "anthropic", label: "Anthropic" }]} onChange={(v) => setHosted((current) => ({ ...current, family: v as typeof hosted.family }))} />
+        <input ref={secretRef} type="password" autoComplete="new-password" aria-label="Provider key" />
         <Button variant="primary" loading={busy} disabled={busy} onClick={() => void connectHosted()}>Connect</Button>
       </div>
     </section>
   ) : face === "endpoint" ? (
     <section ref={addFaceRef} tabIndex={-1} className="model-library-add" aria-label="Define endpoint">
-      <header><h2>Define endpoint</h2><button type="button" className="model-library-back" onClick={leaveAdd}>Back</button></header>
+      <header><h2>Define endpoint</h2><Button variant="ghost" dense className="model-library-back" onClick={leaveAdd}>Back</Button></header>
       <div className="model-library-form">
         <EgressChip label="Egress" scope="cloud" title="Provider request leaves this hub." />
         <StringGadget label="Provider name" value={endpoint.label} onChange={(label) => setEndpoint((current) => ({ ...current, label }))} placeholder="Provider model" />
         <StringGadget label="Endpoint" value={endpoint.url} onChange={(url) => setEndpoint((current) => ({ ...current, url }))} placeholder="https://…/v1" />
         <StringGadget label="Model" value={endpoint.model} onChange={(model) => setEndpoint((current) => ({ ...current, model }))} placeholder="Model" />
-        <label className="model-library-select"><span>Provider</span><select aria-label="Endpoint provider" value={endpoint.family} onChange={(event) => setEndpoint((current) => ({ ...current, family: event.target.value as typeof endpoint.family }))}><option value="openai_compatible">OpenAI-compatible</option><option value="private_endpoint">Private endpoint</option><option value="future_backend">Future backend</option></select></label>
-        <label className="model-library-secret"><span>Provider key</span><input ref={secretRef} type="password" autoComplete="new-password" aria-label="Provider key" /></label>
+        <CycleGadget label="Endpoint provider" value={endpoint.family} options={[{ value: "openai_compatible", label: "OpenAI-compatible" }, { value: "private_endpoint", label: "Private endpoint" }, { value: "future_backend", label: "Future backend" }]} onChange={(v) => setEndpoint((current) => ({ ...current, family: v as typeof endpoint.family }))} />
+        <input ref={secretRef} type="password" autoComplete="new-password" aria-label="Provider key" />
         <Button variant="primary" loading={busy} disabled={busy} onClick={() => void submitEndpoint()}>Add model</Button>
       </div>
     </section>
   ) : face === "file" ? (
     <section ref={addFaceRef} tabIndex={-1} className="model-library-add" aria-label="Use model file">
-      <header><h2>Use model file</h2><button type="button" className="model-library-back" onClick={leaveAdd}>Back</button></header>
+      <header><h2>Use model file</h2><Button variant="ghost" dense className="model-library-back" onClick={leaveAdd}>Back</Button></header>
       <div className="model-library-form">
         <label className="model-library-file"><span>Model file</span><input type="file" accept=".gguf,.mlx" aria-label="Model file" onChange={(event) => setFile(event.target.files?.[0] ?? null)} /></label>
         <Button variant="primary" loading={busy} disabled={busy || !file} onClick={() => void submitFile()}>Add to library</Button>
@@ -408,7 +410,7 @@ export function ModelLibraryCore() {
   return (
     <div className="model-library" onKeyDown={onSurfaceKeyDown}>
       <SurfaceVerbs status={summary ? <span className="model-library-summary" data-state={summary.state} role="status">{summary.label}</span> : null}>
-        {face === "inventory" && allRows.length ? <button ref={addTriggerRef} type="button" className="model-library-add-trigger" onClick={(event) => openChoices(event.currentTarget)}>+ Add model</button> : null}
+        {face === "inventory" && allRows.length ? <Button ref={addTriggerRef} variant="ghost" dense className="model-library-add-trigger" onClick={(event) => openChoices(event.currentTarget as HTMLButtonElement)}>+ Add model</Button> : null}
       </SurfaceVerbs>
       {receipt ? <div className="model-library-receipt" role="status">{receipt}</div> : null}
       {actionError ? <SurfaceState error={actionError} /> : null}
@@ -418,11 +420,11 @@ export function ModelLibraryCore() {
           main={
             <section className="model-library-inventory" aria-labelledby="model-library-title">
               <header className="model-library-title">
-                <div><h2 id="model-library-title">Model Library</h2><span>{allRows.length} models</span></div>
+                <div><h2 id="model-library-title">Model Library</h2>{countToken(allRows.length, "MODEL") ? <span>{countToken(allRows.length, "MODEL")}</span> : null}</div>
                 {summary ? <span className="model-library-status" data-state={summary.state}>{summary.label}</span> : null}
               </header>
               <div className="model-library-tabs" role="tablist" aria-label="Model source">
-                {SOURCES.map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={source === value} onClick={() => setSource(value)}>{label} <span>{sourceCount(allRows, value)}</span></button>)}
+                {SOURCES.map(([value, label]) => <Button key={value} variant="ghost" dense role="tab" aria-selected={source === value} onClick={() => setSource(value)}>{label} <span>{sourceCount(allRows, value)}</span></Button>)}
               </div>
               {visibleRows.length ? (
                 <div className="model-library-rows" role="radiogroup" aria-label="Model Library" onKeyDown={moveSelection}>

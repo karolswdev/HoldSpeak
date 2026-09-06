@@ -1,0 +1,292 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;650;700&amp;family=Space+Grotesk:wght@600;650;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+    a { color: #a86e4a; } a:hover { color: #bc8058; }
+    @keyframes surface-chip-pulse { from { opacity: 1 } to { opacity: .4 } }
+  </style>
+</helmet>
+<!-- Root: 640 x ~1080 -->
+<div style="width:640px;border:1px solid #363b50;border-radius:2px;background:#15171d;box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14),inset -1px -1px 0 rgba(0,0,0,0.40),inset 0 0 0 1px #2a2e3e;display:flex;flex-direction:column;">
+
+  <!-- ══ TITLE BAR ══ -->
+  <div style="height:40px;padding:0 12px;display:flex;align-items:center;gap:10px;background:#242833;border-radius:1px 1px 0 0;flex-shrink:0;">
+    <!-- Gems -->
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+      <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="#ff5f57"></circle></svg>
+      <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="#febc2e"></circle></svg>
+      <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="#28c840"></circle></svg>
+    </div>
+    <!-- Title -->
+    <span style="font:700 17px/1 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#f2f3f5;white-space:nowrap;">HoldSpeak 167</span>
+    <!-- Wings -->
+    <div style="display:flex;align-items:center;margin-inline:auto;">
+      <span style="border:1px solid #2a2e3e;border-radius:2px;background:rgba(255,255,255,0.035);color:#9ba2b0;font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;padding:4px 12px;cursor:pointer;">TIMELINE</span>
+      <span style="border:1px solid #2a2e3e;border-radius:2px;background:rgba(255,255,255,0.035);color:#9ba2b0;font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;padding:4px 12px;margin-left:-1px;cursor:pointer;">DECISIONS</span>
+      <span style="border:1px solid #2a2e3e;border-radius:2px;background:rgba(255,255,255,0.035);color:#9ba2b0;font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;padding:4px 12px;margin-left:-1px;cursor:pointer;">SEARCH</span>
+      <span style="border:1px solid #2a2e3e;border-radius:2px;background:rgba(255,255,255,0.035);color:#9ba2b0;font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;padding:4px 12px;margin-left:-1px;cursor:pointer;">ASK</span>
+    </div>
+  </div>
+
+  <!-- ══ BODY ══ -->
+  <div style="flex:1;overflow:auto;padding:12px 14px 14px;display:flex;flex-direction:column;gap:18px;">
+
+    <!-- ── SurfaceIdentity (compact) ── -->
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#f2f3f5;">HoldSpeak 167 — The Room in Use</span>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+        <!-- StateChip Active -->
+        <span style="display:inline-flex;align-items:center;gap:5px;min-height:18px;padding:0 8px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;color:#34d399;"><span style="flex:none;font-size:11px;line-height:1;">✓</span> Active</span>
+        <!-- StateChip Steward -->
+        <span style="display:inline-flex;align-items:center;gap:5px;min-height:18px;padding:0 8px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;color:#a86e4a;"><span style="flex:none;font-size:11px;line-height:1;">●</span> Steward</span>
+        <!-- Token REV 9 -->
+        <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#767e8d;">REV 9</span>
+        <!-- Time -->
+        <span style="font:10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;color:#767e8d;font-variant-numeric:tabular-nums;">just now</span>
+      </div>
+      <span style="font:12px/1.35 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#9ba2b0;">Ship Project Rooms the owner will use on a Tuesday</span>
+    </div>
+
+    <!-- ── Posture strip (SurfaceVerbs) ── -->
+    <div style="margin:0 -14px;padding:8px 14px;display:flex;align-items:center;gap:8px;background:#15171d;border-bottom:1px solid #2a2e3e;">
+      <!-- Status: StateChip Run 12 success -->
+      <span style="display:inline-flex;align-items:center;gap:5px;min-height:18px;padding:0 8px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;color:#34d399;"><span style="flex:none;font-size:11px;line-height:1;">✓</span> Run 12</span>
+      <!-- Actions -->
+      <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+        <!-- Review (quiet) -->
+        <span style="border:1px solid #2a2e3e;border-radius:2px;background:rgba(255,255,255,0.035);color:#9ba2b0;font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;padding:4px 12px;cursor:pointer;">Review</span>
+        <!-- Updates (quiet) -->
+        <span style="border:1px solid #2a2e3e;border-radius:2px;background:rgba(255,255,255,0.035);color:#9ba2b0;font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;padding:4px 12px;cursor:pointer;">Updates</span>
+        <!-- Steward (active/lit) -->
+        <span style="border:1px solid #2a2e3e;border-radius:2px;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);color:#f2f3f5;font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;padding:4px 12px;cursor:pointer;">Steward</span>
+      </div>
+    </div>
+
+    <!-- ── THE RUN — ProgressPlan ── -->
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <!-- Section label -->
+      <div style="display:flex;align-items:baseline;gap:8px;padding-bottom:4px;">
+        <h3 style="margin:0;font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#9ba2b0;">THE RUN</h3>
+      </div>
+      <!-- Step 1: Observe -->
+      <div style="display:flex;align-items:center;gap:6px;min-height:24px;padding:2px 6px;font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;">
+        <span style="width:14px;text-align:center;font-size:11px;line-height:1;color:#34d399;">✓</span>
+        <span style="flex:1;font-weight:500;">Observe</span>
+        <span style="font-size:10px;color:#767e8d;font-variant-numeric:tabular-nums;letter-spacing:0.04em;">2 sources · 3 calls · 0.9s</span>
+        <!-- receipt chip -->
+        <span style="display:inline-flex;align-items:center;min-height:14px;padding:0 6px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 9px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#34d399;">✓</span>
+      </div>
+      <!-- Step 2: Compare -->
+      <div style="display:flex;align-items:center;gap:6px;min-height:24px;padding:2px 6px;font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;">
+        <span style="width:14px;text-align:center;font-size:11px;line-height:1;color:#34d399;">✓</span>
+        <span style="flex:1;font-weight:500;">Compare</span>
+        <span style="display:inline-flex;align-items:center;min-height:14px;padding:0 6px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 9px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#34d399;">✓</span>
+      </div>
+      <!-- Step 3: Propose -->
+      <div style="display:flex;align-items:center;gap:6px;min-height:24px;padding:2px 6px;font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;">
+        <span style="width:14px;text-align:center;font-size:11px;line-height:1;color:#34d399;">✓</span>
+        <span style="flex:1;font-weight:500;">Propose</span>
+        <span style="font-size:10px;color:#767e8d;font-variant-numeric:tabular-nums;letter-spacing:0.04em;">3</span>
+        <span style="display:inline-flex;align-items:center;min-height:14px;padding:0 6px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 9px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#34d399;">✓</span>
+      </div>
+      <!-- Step 4: Act -->
+      <div style="display:flex;align-items:center;gap:6px;min-height:24px;padding:2px 6px;font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;">
+        <span style="width:14px;text-align:center;font-size:11px;line-height:1;color:#34d399;">✓</span>
+        <span style="flex:1;font-weight:500;">Act</span>
+        <span style="font-size:10px;color:#767e8d;font-variant-numeric:tabular-nums;letter-spacing:0.04em;">2 effects</span>
+        <span style="display:inline-flex;align-items:center;min-height:14px;padding:0 6px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 9px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#34d399;">✓</span>
+        <!-- ProvenanceChip gh -->
+        <span style="display:inline-flex;align-items:center;min-height:14px;padding:0 6px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 9px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#9ba2b0;">gh</span>
+        <!-- ProvenanceChip acli -->
+        <span style="display:inline-flex;align-items:center;min-height:14px;padding:0 6px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 9px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#9ba2b0;">acli</span>
+      </div>
+      <!-- Step 5: Verify -->
+      <div style="display:flex;align-items:center;gap:6px;min-height:24px;padding:2px 6px;font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;">
+        <span style="width:14px;text-align:center;font-size:11px;line-height:1;color:#34d399;">✓</span>
+        <span style="flex:1;font-weight:500;">Verify</span>
+        <span style="display:inline-flex;align-items:center;min-height:14px;padding:0 6px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 9px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#34d399;">✓</span>
+      </div>
+      <!-- Step 6: Record -->
+      <div style="display:flex;align-items:center;gap:6px;min-height:24px;padding:2px 6px;font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;">
+        <span style="width:14px;text-align:center;font-size:11px;line-height:1;color:#34d399;">✓</span>
+        <span style="flex:1;font-weight:500;">Record</span>
+        <!-- Receipt -->
+        <span style="display:inline-flex;align-items:center;gap:5px;font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#9ba2b0;"><span style="width:6px;height:6px;flex:none;background:#34d399;display:inline-block;"></span> Receipt</span>
+      </div>
+    </div>
+
+    <!-- ── RUNS ledger ── -->
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <!-- Section head -->
+      <div style="display:flex;align-items:baseline;gap:8px;border-top:1px solid rgba(255,255,255,0.035);padding-top:8px;">
+        <h3 style="margin:0;font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#9ba2b0;">RUNS</h3>
+      </div>
+      <!-- Row 1: Run 12 -->
+      <div style="display:grid;grid-template-columns:max-content minmax(0,1fr) max-content 52px max-content;align-items:center;gap:0 10px;width:100%;min-height:26px;padding:2px 6px;border:0;border-radius:0;background:none;text-align:left;font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;cursor:pointer;">
+        <!-- Lead: StateChip success -->
+        <span style="display:inline-flex;align-items:center;gap:5px;min-height:18px;padding:0 8px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;color:#34d399;"><span style="flex:none;font-size:11px;line-height:1;">✓</span></span>
+        <!-- Primary -->
+        <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Run 12 · manual</span>
+        <!-- Cells -->
+        <span style="color:#9ba2b0;font-size:11px;white-space:nowrap;">2 effects · 1 door item</span>
+        <!-- Time -->
+        <span style="color:#767e8d;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;">13:28</span>
+        <!-- Trailing -->
+        <span style="color:#767e8d;font-size:11px;">▸</span>
+      </div>
+      <!-- Row 2: Run 11 -->
+      <div style="display:grid;grid-template-columns:max-content minmax(0,1fr) max-content 52px max-content;align-items:center;gap:0 10px;width:100%;min-height:26px;padding:2px 6px;border:0;border-radius:0;background:none;text-align:left;font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;cursor:pointer;">
+        <span style="display:inline-flex;align-items:center;gap:5px;min-height:18px;padding:0 8px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;color:#34d399;"><span style="flex:none;font-size:11px;line-height:1;">✓</span></span>
+        <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Run 11 · scheduled</span>
+        <span style="color:#9ba2b0;font-size:11px;white-space:nowrap;">0 effects</span>
+        <span style="color:#767e8d;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;">12:28</span>
+        <span style="color:#767e8d;font-size:11px;">▸</span>
+      </div>
+    </div>
+
+    <!-- ── POLICY — GadgetGroup ── -->
+    <div style="display:flex;flex-direction:column;margin-bottom:0;">
+      <!-- GadgetGroup label with engraved rule -->
+      <h4 style="margin:0 0 8px;font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#9ba2b0;display:flex;align-items:center;gap:8px;">POLICY<span style="flex:1;height:2px;background:linear-gradient(rgba(0,0,0,0.30) 50%,rgba(255,255,255,0.07) 50%);"></span></h4>
+
+      <!-- GadgetRow: Unattended (toggle) -->
+      <div style="display:grid;grid-template-columns:minmax(96px,200px) minmax(0,1fr);align-items:center;gap:2px 10px;min-height:26px;padding:2px 6px;">
+        <span style="font:500 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;">Unattended</span>
+        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+          <span style="width:16px;height:16px;display:grid;place-items:center;border:1px solid #2a2e3e;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);">
+            <svg width="12" height="12" viewBox="0 0 16 16"><path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="#a86e4a" stroke-width="2" fill="none" stroke-linecap="square"></path></svg>
+          </span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#34d399;">ON</span>
+        </label>
+      </div>
+
+      <!-- GadgetRow: Every — Stepper -->
+      <div style="display:grid;grid-template-columns:minmax(96px,200px) minmax(0,1fr);align-items:center;gap:2px 10px;min-height:26px;padding:2px 6px;">
+        <span style="font:500 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;">Every</span>
+        <span style="display:flex;align-items:stretch;min-height:22px;border:1px solid #2a2e3e;background:#15171d;box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);max-width:120px;">
+          <span style="flex:1;padding:1px 6px;font:400 12px/1.35 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;display:flex;align-items:center;">60</span>
+          <span style="font:10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#9ba2b0;padding:0 5px;display:flex;align-items:center;">min</span>
+          <span style="width:14px;flex:none;display:flex;flex-direction:column;box-shadow:inset 1px 0 0 #2a2e3e;">
+            <span style="flex:1;display:grid;place-items:center;background:#1c1f27;box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14),inset -1px -1px 0 rgba(0,0,0,0.40);color:#9ba2b0;font-size:6px;cursor:pointer;">▲</span>
+            <span style="flex:1;display:grid;place-items:center;background:#1c1f27;box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14),inset -1px -1px 0 rgba(0,0,0,0.40);color:#9ba2b0;font-size:6px;border-top:1px solid #2a2e3e;cursor:pointer;">▼</span>
+          </span>
+        </span>
+      </div>
+
+      <!-- Sub-label: EFFECTS -->
+      <div style="padding:6px 6px 2px;">
+        <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#9ba2b0;">EFFECTS</span>
+      </div>
+
+      <!-- Effect: Create items (checked) -->
+      <div style="display:grid;grid-template-columns:minmax(96px,200px) minmax(0,1fr);align-items:center;gap:2px 10px;min-height:26px;padding:2px 6px;">
+        <span style="font:500 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;">Create items</span>
+        <span style="width:16px;height:16px;display:grid;place-items:center;border:1px solid #2a2e3e;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);">
+          <svg width="12" height="12" viewBox="0 0 16 16"><path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="#a86e4a" stroke-width="2" fill="none" stroke-linecap="square"></path></svg>
+        </span>
+      </div>
+      <!-- Effect: Update items (checked) -->
+      <div style="display:grid;grid-template-columns:minmax(96px,200px) minmax(0,1fr);align-items:center;gap:2px 10px;min-height:26px;padding:2px 6px;">
+        <span style="font:500 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;">Update items</span>
+        <span style="width:16px;height:16px;display:grid;place-items:center;border:1px solid #2a2e3e;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);">
+          <svg width="12" height="12" viewBox="0 0 16 16"><path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="#a86e4a" stroke-width="2" fill="none" stroke-linecap="square"></path></svg>
+        </span>
+      </div>
+      <!-- Effect: Draft update (checked) -->
+      <div style="display:grid;grid-template-columns:minmax(96px,200px) minmax(0,1fr);align-items:center;gap:2px 10px;min-height:26px;padding:2px 6px;">
+        <span style="font:500 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;">Draft update</span>
+        <span style="width:16px;height:16px;display:grid;place-items:center;border:1px solid #2a2e3e;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);">
+          <svg width="12" height="12" viewBox="0 0 16 16"><path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="#a86e4a" stroke-width="2" fill="none" stroke-linecap="square"></path></svg>
+        </span>
+      </div>
+      <!-- Effect: Door item (checked) -->
+      <div style="display:grid;grid-template-columns:minmax(96px,200px) minmax(0,1fr);align-items:center;gap:2px 10px;min-height:26px;padding:2px 6px;">
+        <span style="font:500 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;">Door item</span>
+        <span style="width:16px;height:16px;display:grid;place-items:center;border:1px solid #2a2e3e;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);">
+          <svg width="12" height="12" viewBox="0 0 16 16"><path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="#a86e4a" stroke-width="2" fill="none" stroke-linecap="square"></path></svg>
+        </span>
+      </div>
+
+      <!-- GadgetRow: Max actions -->
+      <div style="display:grid;grid-template-columns:minmax(96px,200px) minmax(0,1fr);align-items:center;gap:2px 10px;min-height:26px;padding:2px 6px;">
+        <span style="font:500 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;">Max actions</span>
+        <span style="display:flex;align-items:stretch;min-height:22px;border:1px solid #2a2e3e;background:#15171d;box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);max-width:80px;">
+          <span style="flex:1;padding:1px 6px;font:400 12px/1.35 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;display:flex;align-items:center;">5</span>
+          <span style="width:14px;flex:none;display:flex;flex-direction:column;box-shadow:inset 1px 0 0 #2a2e3e;">
+            <span style="flex:1;display:grid;place-items:center;background:#1c1f27;box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14),inset -1px -1px 0 rgba(0,0,0,0.40);color:#9ba2b0;font-size:6px;cursor:pointer;">▲</span>
+            <span style="flex:1;display:grid;place-items:center;background:#1c1f27;box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14),inset -1px -1px 0 rgba(0,0,0,0.40);color:#9ba2b0;font-size:6px;border-top:1px solid #2a2e3e;cursor:pointer;">▼</span>
+          </span>
+        </span>
+      </div>
+
+      <!-- GadgetRow: Retries -->
+      <div style="display:grid;grid-template-columns:minmax(96px,200px) minmax(0,1fr);align-items:center;gap:2px 10px;min-height:26px;padding:2px 6px;">
+        <span style="font:500 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;">Retries</span>
+        <span style="display:flex;align-items:stretch;min-height:22px;border:1px solid #2a2e3e;background:#15171d;box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);max-width:80px;">
+          <span style="flex:1;padding:1px 6px;font:400 12px/1.35 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;display:flex;align-items:center;">2</span>
+          <span style="width:14px;flex:none;display:flex;flex-direction:column;box-shadow:inset 1px 0 0 #2a2e3e;">
+            <span style="flex:1;display:grid;place-items:center;background:#1c1f27;box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14),inset -1px -1px 0 rgba(0,0,0,0.40);color:#9ba2b0;font-size:6px;cursor:pointer;">▲</span>
+            <span style="flex:1;display:grid;place-items:center;background:#1c1f27;box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14),inset -1px -1px 0 rgba(0,0,0,0.40);color:#9ba2b0;font-size:6px;border-top:1px solid #2a2e3e;cursor:pointer;">▼</span>
+          </span>
+        </span>
+      </div>
+
+      <!-- GadgetRow: Cooldown -->
+      <div style="display:grid;grid-template-columns:minmax(96px,200px) minmax(0,1fr);align-items:center;gap:2px 10px;min-height:26px;padding:2px 6px;">
+        <span style="font:500 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;">Cooldown</span>
+        <span style="display:flex;align-items:stretch;min-height:22px;border:1px solid #2a2e3e;background:#15171d;box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);max-width:120px;">
+          <span style="flex:1;padding:1px 6px;font:400 12px/1.35 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#f2f3f5;display:flex;align-items:center;">300</span>
+          <span style="font:10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;color:#9ba2b0;padding:0 5px;display:flex;align-items:center;">s</span>
+          <span style="width:14px;flex:none;display:flex;flex-direction:column;box-shadow:inset 1px 0 0 #2a2e3e;">
+            <span style="flex:1;display:grid;place-items:center;background:#1c1f27;box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14),inset -1px -1px 0 rgba(0,0,0,0.40);color:#9ba2b0;font-size:6px;cursor:pointer;">▲</span>
+            <span style="flex:1;display:grid;place-items:center;background:#1c1f27;box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14),inset -1px -1px 0 rgba(0,0,0,0.40);color:#9ba2b0;font-size:6px;border-top:1px solid #2a2e3e;cursor:pointer;">▼</span>
+          </span>
+        </span>
+      </div>
+
+      <!-- Grant tokens row -->
+      <div style="display:flex;flex-wrap:wrap;gap:4px;padding:8px 6px 0;">
+        <span style="display:inline-flex;align-items:center;min-height:18px;padding:0 8px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#9ba2b0;">WHILE ENABLED</span>
+        <span style="display:inline-flex;align-items:center;min-height:18px;padding:0 8px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#9ba2b0;">every 60 min</span>
+        <span style="display:inline-flex;align-items:center;min-height:18px;padding:0 8px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#9ba2b0;">create items</span>
+        <span style="display:inline-flex;align-items:center;min-height:18px;padding:0 8px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#9ba2b0;">update items</span>
+        <span style="display:inline-flex;align-items:center;min-height:18px;padding:0 8px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#9ba2b0;">max 5 / run</span>
+      </div>
+    </div>
+
+  </div><!-- /body -->
+
+  <!-- ══ FOOTER ══ -->
+  <footer style="height:36px;padding:0 8px;background:#1c1f27;border-top:1px solid #2a2e3e;box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14),inset -1px -1px 0 rgba(0,0,0,0.40);flex-shrink:0;">
+    <div style="display:grid;grid-template-columns:max-content minmax(0,1fr) max-content;align-items:center;height:100%;gap:6px;">
+      <!-- Egress -->
+      <div style="display:flex;gap:4px;max-width:200px;overflow:hidden;">
+        <span style="display:inline-flex;align-items:center;min-height:18px;padding:0 8px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);color:#34d399;font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;">github.com</span>
+        <span style="display:inline-flex;align-items:center;min-height:18px;padding:0 8px;border:1px solid #2a2e3e;border-radius:0;background:rgba(0,0,0,0.28);box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30),inset -1px -1px 0 rgba(255,255,255,0.07);color:#34d399;font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;">karolsaneapple.atlassian.net</span>
+      </div>
+      <!-- Receipt -->
+      <div style="display:flex;justify-content:center;align-items:center;min-width:0;">
+        <span style="display:inline-flex;align-items:center;gap:5px;font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:#9ba2b0;"><span style="width:6px;height:6px;flex:none;background:#34d399;display:inline-block;"></span> Last run 13:28</span>
+      </div>
+      <!-- Verbs -->
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:4px;">
+        <!-- Stop (ghost) -->
+        <button style="min-height:28px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:4px 12px;border:1px solid transparent;border-radius:0;background:transparent;color:#f2f3f5;font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;cursor:pointer;">Stop</button>
+        <!-- Run now (primary) -->
+        <button style="min-height:28px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:4px 12px;border:1px solid #a86e4a;border-radius:0;background:#a86e4a;color:#f2f3f5;font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;box-shadow:inset 0 1px 0 rgba(255,255,255,0.22),0 1px 2px rgba(0,0,0,0.3);cursor:pointer;">Run now</button>
+      </div>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+</body>
+</html>

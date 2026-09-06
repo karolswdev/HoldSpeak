@@ -161,6 +161,32 @@ class CalendarEventRepository(BaseRepository):
             ).fetchall()
         return [_row_to_model(row) for row in rows]
 
+    def list_in_range(self, start_iso: str, end_iso: str) -> list[CalendarEvent]:
+        """Return events whose starts_at falls within [start_iso, end_iso)."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT * FROM calendar_events
+                   WHERE starts_at >= ? AND starts_at < ?
+                   ORDER BY starts_at, id""",
+                (str(start_iso), str(end_iso)),
+            ).fetchall()
+        return [_row_to_model(row) for row in rows]
+
+    def count_per_day(self, start_iso: str, end_iso: str) -> dict[str, int]:
+        """Count events per calendar day (date string -> count) in range.
+
+        HS-175-02: drives the WEEK strip day-dot counts.
+        """
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT SUBSTR(starts_at, 1, 10) AS day, COUNT(*) AS cnt
+                   FROM calendar_events
+                   WHERE starts_at >= ? AND starts_at < ?
+                   GROUP BY day""",
+                (str(start_iso), str(end_iso)),
+            ).fetchall()
+        return {str(r["day"]): int(r["cnt"]) for r in rows}
+
     def list_all(self) -> list[CalendarEvent]:
         """Small read helper for projection integrity tests and conductor checks."""
         with self._connection() as conn:

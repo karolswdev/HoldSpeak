@@ -1,6 +1,7 @@
 // Barrel — re-exports every dictation sub-component.
 export { SpeakFace } from "./SpeakFace";
 export { Journal } from "./Journal";
+export { Learned } from "./Learned";
 export { Blocks } from "./Blocks";
 export { Knowledge } from "./Knowledge";
 export { Memory } from "./Memory";

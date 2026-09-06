@@ -436,6 +436,7 @@ Census-derived; each ships at 1440 AND 393, real content, looked at:
 - `runs-on` — Runs on as a switchboard (worst innard 3)
 - `shade` — the system shade, open over the desk
 - `drag` — one drag-through-the-glass moment, mid-flight
+- `phase-169 The Streamlined Door` — `pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/settled-design-streamlined-door.md`; canvas https://claude.ai/code/artifact/aa41070b-9a9e-4946-824c-29f2578c8383 — the one-screen door; the Room as four questions
 
 ## Adding a surface (styling rules)
 

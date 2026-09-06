@@ -48,6 +48,12 @@ class MeetingSummary:
     capture_checkpoint_seconds: float = 0.0
     provenance: str = "desktop"
     calendar_event_id: Optional[str] = None
+    transcript_words: Optional[int] = None  # HS-170-04: None when no transcript, never 0
+    needs_you_count: int = 0  # HS-172: proposed follow-through proposals count
+    # HS-172-02: intel timing for the RAN chip.
+    intel_requested_at: Optional[datetime] = None
+    intel_completed_at: Optional[datetime] = None
+    intel_model_host: Optional[str] = None
 
 
 @dataclass
@@ -992,6 +998,9 @@ class DictationJournalRecord:
     rewrite_pass_ms: list[float] = field(default_factory=list)
     confidence: Optional[float] = None
     warnings: list[str] = field(default_factory=list)
+    # HS-176-02 (ruling R5): the correction ids that FIRED on this row. The
+    # opposite fact from `corrected`, which means "he taught FROM this row".
+    corrections_applied: list[int] = field(default_factory=list)
     corrected: bool = False
     correction_id: Optional[int] = None
 

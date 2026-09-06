@@ -62,6 +62,7 @@ CODE_QUERY_INVALID = "query_invalid"
 
 # Connection states (SRS SS6)
 STATE_CONNECTED = "connected"
+STATE_DISCONNECTED = "disconnected"
 STATE_OWNER_ACTION_REQUIRED = "owner_action_required"
 STATE_UNAVAILABLE = "unavailable"
 STATE_DEGRADED = "degraded"
@@ -155,6 +156,24 @@ class GitHubProviderAdapter:
             errors="replace",
             timeout=timeout,
         )
+
+    # ── Readiness (cheap, no probe) ────────────────────────────────
+
+    def readiness(self, principal: Principal) -> dict[str, Any]:
+        """Provider-level readiness from persisted row + which only.
+
+        NEVER runs ``gh`` -- reads the DB row written by
+        ``connection_status``.  One-liner parity with
+        ``JiraProviderAdapter.readiness``.
+        """
+        if self._runner is None and shutil.which("gh") is None:
+            return {"state": "unavailable", "connections": 0, "connected": 0}
+        if self._db is None:
+            return {"state": "partial", "connections": 0, "connected": 0}
+        row = self._db.automations.get_provider_connection(self._connection_id())
+        if row and row.get("state") == STATE_CONNECTED:
+            return {"state": "connected", "connections": 1, "connected": 1}
+        return {"state": "partial", "connections": 1 if row else 0, "connected": 0}
 
     # ── Connection status (PROV-003, PROV-004) ───────────────────────
 

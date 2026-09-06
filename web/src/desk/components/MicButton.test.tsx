@@ -241,6 +241,103 @@ describe("MicButton pipeline declaration (HS-132-04)", () => {
   });
 });
 
+/* HS-176 C1 (the SPOKEN half) — the run's facts ride the `final` frame.
+
+   The spoken leg is the one that runs the pipeline and writes the journal row;
+   the delivery that follows sends `raw: true` and computes nothing. Unless the
+   transport carries `raw_text`, `corrections_applied` and `journal_id` out of
+   the frame, the Speak face has no APPLIED chip, pre-fills its TEXT teach from
+   the LANDED text, and teaches on the corrections fallback. */
+describe("MicButton carries the spoken run's facts (HS-176 C1)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    support.supported = true;
+    support.reason = null;
+    mocks.loadPendingVoice.mockResolvedValue(null);
+  });
+
+  const streamingFinal = (frame: Record<string, unknown>, text: string) =>
+    mocks.startStreamSession.mockImplementation(
+      async (onEvent: (event: unknown) => void) => ({
+        stop: vi.fn().mockImplementation(async () => {
+          onEvent(frame);
+          return text;
+        }),
+        cancel: vi.fn(),
+      }),
+    );
+
+  it("hands the three facts to onText beside the landed text", async () => {
+    streamingFinal(
+      {
+        type: "final",
+        text: "PostgreSQL needs a bump",
+        raw_text: "postgress needs a bump",
+        corrections_applied: [5],
+        journal_id: 41,
+      },
+      "PostgreSQL needs a bump",
+    );
+    const onText = vi.fn();
+    render(<MicButton variant="transport" onText={onText} />);
+    const mic = screen.getByRole("button", { name: "Speak" });
+
+    fireEvent.click(mic);
+    await waitFor(() => expect(mic.className).toContain("is-listening"));
+    fireEvent.click(mic);
+
+    await waitFor(() => expect(onText).toHaveBeenCalledTimes(1));
+    expect(onText).toHaveBeenCalledWith("PostgreSQL needs a bump", {
+      raw_text: "postgress needs a bump",
+      corrections_applied: [5],
+      journal_id: 41,
+    });
+  });
+
+  it("passes nothing when the frame carried no facts", async () => {
+    streamingFinal({ type: "final", text: "a note tag" }, "a note tag");
+    const onText = vi.fn();
+    render(<MicButton variant="transport" onText={onText} />);
+    const mic = screen.getByRole("button", { name: "Speak" });
+
+    fireEvent.click(mic);
+    await waitFor(() => expect(mic.className).toContain("is-listening"));
+    fireEvent.click(mic);
+
+    // exactly the one-argument call every caller has always seen
+    await waitFor(() => expect(onText).toHaveBeenCalledWith("a note tag"));
+  });
+
+  it("never carries one utterance's facts into the next", async () => {
+    streamingFinal(
+      {
+        type: "final",
+        text: "PostgreSQL needs a bump",
+        raw_text: "postgress needs a bump",
+        corrections_applied: [5],
+        journal_id: 41,
+      },
+      "PostgreSQL needs a bump",
+    );
+    const onText = vi.fn();
+    render(<MicButton variant="transport" onText={onText} />);
+    const mic = screen.getByRole("button", { name: "Speak" });
+
+    fireEvent.click(mic);
+    await waitFor(() => expect(mic.className).toContain("is-listening"));
+    fireEvent.click(mic);
+    await waitFor(() => expect(onText).toHaveBeenCalledTimes(1));
+
+    streamingFinal({ type: "final", text: "ship it friday" }, "ship it friday");
+    fireEvent.click(mic);
+    await waitFor(() => expect(mic.className).toContain("is-listening"));
+    fireEvent.click(mic);
+
+    await waitFor(() => expect(onText).toHaveBeenCalledTimes(2));
+    expect(onText).toHaveBeenLastCalledWith("ship it friday");
+  });
+});
+
 /* HS-132-05 — the streaming mic is honest.
    Every server refusal reaches the user BY NAME; the empty final that follows
    an error is never re-labelled "no words"; and when the session retained the

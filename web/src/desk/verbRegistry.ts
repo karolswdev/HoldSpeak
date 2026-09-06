@@ -18,6 +18,7 @@ import { DESK_TOOLS, KIND_GLYPH } from "./tools";
 import { applicationForAction } from "./applications";
 import { primitiveCan } from "../lib/primitives";
 import { usePalette, useShortcutSheet } from "./chromeState";
+import { useSettleState } from "./settleState";
 import {
   closeFrontWindow,
   focusOrRestoreApp,
@@ -239,6 +240,18 @@ export const VERBS: Verb[] = [
     run: () => openSurfaceOr("project-setup", "/"),
   },
   // ── Desk: the floor verbs ───────────────────────────────────────────
+  {
+    id: "desk.settle",
+    label: () => useSettleState.getState().settled ? "Back to Desk" : "Settle in",
+    menu: "desk",
+    scope: "floor",
+    group: "view",
+    key: "⌘⇧F",
+    glyph: "◌",
+    keywords: ["focus", "quiet", "zen", "chrome", "settle"],
+    ghost: never,
+    run: () => useSettleState.getState().toggle(),
+  },
   {
     id: "desk.toggle-view",
     label: () => (currentView() === "list" ? "Spatial view" : "List view"),

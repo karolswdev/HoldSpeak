@@ -308,12 +308,107 @@ class RoutingGlueMixin:
                         confidence=max_score,
                     )
                     associated += 1
+                    # HS-175-04: ensure the Room's meeting Watch exists
+                    try:
+                        from holdspeak.services.watch_service import ensure_meeting_watch
+                        ensure_meeting_watch(db, pid, why="meeting linked")
+                    except Exception as mw_exc:
+                        log.warning("ensure_meeting_watch failed for %s: %s", pid, mw_exc)
 
             return {"projects_associated": associated, "error": None}
         except Exception as exc:
             message = str(exc)
             log.error(f"Failed to associate meeting {clean_meeting_id} with projects: {message}")
             return {"projects_associated": 0, "error": message}
+
+    def _maybe_auto_enqueue_intel(
+        self, meeting_id: str, session: object
+    ) -> dict[str, object]:
+        """HS-172-02: auto-enqueue intelligence after capture stops.
+
+        Runs AFTER ``_associate_meeting_with_projects`` so meeting_projects
+        is populated.  Respects the ``intelligence_auto`` setting.
+        """
+        try:
+            from ..config import Config
+            from ..db import get_database
+            from ..services.service_event_ledger import ServiceEventLedger
+            from ..services.observer import current_correlation_id
+            from ..principals import Principal, PrincipalKind
+            _auto_intel_principal = Principal(PrincipalKind.OWNER, "auto-intel")
+
+            cfg = Config.load().meeting
+            auto = str(cfg.intelligence_auto or "room_linked").strip().lower()
+            if auto == "off":
+                return {"enqueued": False, "reason": "auto_intel_off"}
+
+            db = get_database()
+
+            # Check the meeting has segments (a transcript).
+            meeting = db.meetings.get_meeting(meeting_id)
+            if meeting is None or not meeting.segments:
+                return {"enqueued": False, "reason": "no_transcript"}
+
+            # Check Room linkage when mode is room_linked.
+            if auto == "room_linked":
+                projects = db.projects.get_meeting_projects(meeting_id)
+                if not projects:
+                    return {"enqueued": False, "reason": "not_room_linked"}
+
+            # Check for existing intel job (dedup by transcript hash).
+            existing_job = db.intel.get_intel_job(meeting_id)
+            if existing_job is not None:
+                return {"enqueued": False, "reason": "job_exists"}
+
+            # Enqueue the intel job.
+            transcript_hash = meeting.transcript_hash()
+            db.intel.enqueue_intel_job(
+                meeting_id,
+                transcript_hash=transcript_hash,
+                reason="auto-intel: Room-linked" if auto == "room_linked" else "auto-intel: every meeting",
+            )
+
+            # Resolve the host at the point of decision (Article III).
+            # The value is the HOST the run egresses to, never a label.
+            try:
+                from ..intel.providers import resolve_meeting_placement, endpoint_host
+                placement = resolve_meeting_placement(cfg)
+                if placement.node:
+                    host = str(placement.node)
+                else:
+                    _h = endpoint_host(placement.base_url)
+                    host = _h if _h else (placement.boundary or "local")
+            except Exception:
+                host = "local"
+
+            # HS-172-02: record the host on the job row.
+            db.intel.set_intel_job_model_host(meeting_id, host)
+
+            with db._connection() as conn:
+                ServiceEventLedger(db).append_in_transaction(
+                    conn, _auto_intel_principal,
+                    event_type="meeting.auto_intel_enqueued",
+                    producer="MeetingGlue",
+                    subject_ref=f"meeting:{meeting_id}",
+                    source_revision="",
+                    facts={
+                        "meeting_id": meeting_id,
+                        "auto_mode": auto,
+                        "host": host,
+                    },
+                    refs=[f"meeting:{meeting_id}"],
+                    correlation_id=current_correlation_id(),
+                    causation_id=f"meeting:{meeting_id}",
+                )
+
+            log.info(
+                "HS-172-02: auto-enqueued intel for meeting %s (mode=%s, host=%s)",
+                meeting_id, auto, host,
+            )
+            return {"enqueued": True, "host": host, "error": None}
+        except Exception as exc:
+            log.error("Failed to auto-enqueue intel for %s: %s", meeting_id, exc)
+            return {"enqueued": False, "error": str(exc)}
 
     def _on_get_intent_controls(self) -> dict[str, object]:
         return self._mir_controls_payload()

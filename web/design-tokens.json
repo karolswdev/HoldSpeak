@@ -805,6 +805,26 @@
         "name": "--wash-2",
         "value": "{primitive.color.wash.05}",
         "doc": "hover-weight white wash"
+      },
+      {
+        "name": "--bevel-light-strong",
+        "value": "rgba(255, 255, 255, 0.22)",
+        "doc": "Raised voice and chair control highlight; preserves the existing material."
+      },
+      {
+        "name": "--bevel-light-hover",
+        "value": "rgba(255, 255, 255, 0.18)",
+        "doc": "Hovered chrome control highlight."
+      },
+      {
+        "name": "--bevel-dark-soft",
+        "value": "rgba(0, 0, 0, 0.20)",
+        "doc": "Soft inner bevel for controls and gadgets."
+      },
+      {
+        "name": "--accent-tint-faint",
+        "value": "rgba(168, 110, 74, 0.08)",
+        "doc": "Faint accent wash for project controls."
       }
     ]
   },
@@ -942,6 +962,26 @@
         "name": "--desk-z-stage",
         "value": "-1",
         "doc": "the fixed atmosphere behind the document"
+      },
+      {
+        "name": "--desk-atmosphere-sky-grade",
+        "value": "rgba(5, 14, 25, 0.12)",
+        "doc": "shared atmosphere skyline depth grade"
+      },
+      {
+        "name": "--desk-atmosphere-edge",
+        "value": "rgba(2, 6, 12, 0.28)",
+        "doc": "shared atmosphere focus vignette"
+      },
+      {
+        "name": "--desk-atmosphere-garden-sky",
+        "value": "#06100d",
+        "doc": "Lantern Garden canopy grade"
+      },
+      {
+        "name": "--desk-atmosphere-garden-edge",
+        "value": "#020706",
+        "doc": "Lantern Garden outer shade"
       },
       {
         "name": "--desk-z-dock-under",

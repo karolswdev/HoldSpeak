@@ -1,0 +1,111 @@
+{
+  "artboards": [
+    {
+      "file": "SettingsSystemRemoteOff.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 642,
+      "h": 339,
+      "title": "Settings · System · REMOTE OFF · 640"
+    },
+    {
+      "file": "SettingsSystemRemoteOn.dc.html",
+      "x": 760,
+      "y": 0,
+      "w": 642,
+      "h": 498,
+      "title": "Settings · System · REMOTE ON · 2 credentials · 640"
+    },
+    {
+      "file": "SettingsSystemIssueWell.dc.html",
+      "x": 1520,
+      "y": 0,
+      "w": 642,
+      "h": 614,
+      "title": "Settings · System · Issue well open · 640"
+    },
+    {
+      "file": "SettingsSystemTokenOnce.dc.html",
+      "x": 2280,
+      "y": 0,
+      "w": 642,
+      "h": 545,
+      "title": "Settings · System · Token shown once · 640"
+    },
+    {
+      "file": "SettingsSystemRemotePhone.dc.html",
+      "x": 3040,
+      "y": 0,
+      "w": 395,
+      "h": 549,
+      "title": "Settings · System · REMOTE ON · 393"
+    },
+    {
+      "file": "ShadeRemoteReceipts.dc.html",
+      "x": 0,
+      "y": 1300,
+      "w": 382,
+      "h": 500,
+      "title": "Shade · REMOTE receipts · 393"
+    },
+    {
+      "file": "RoomReceiptsRemote.dc.html",
+      "x": 760,
+      "y": 1300,
+      "w": 642,
+      "h": 480,
+      "title": "Room · REMOTE receipts · 640"
+    },
+    {
+      "file": "RoomSourcesConfluence.dc.html",
+      "x": 1520,
+      "y": 1300,
+      "w": 642,
+      "h": 480,
+      "title": "Room · SOURCES with Confluence · 640"
+    },
+    {
+      "file": "RhythmRunsOn.dc.html",
+      "x": 2280,
+      "y": 1300,
+      "w": 642,
+      "h": 442,
+      "title": "Rhythm · Runs on · 640"
+    },
+    {
+      "file": "DoorConfluence.dc.html",
+      "x": 0,
+      "y": 2600,
+      "w": 642,
+      "h": 640,
+      "title": "Door · three sources with Confluence · 640"
+    },
+    {
+      "file": "ReachPhone.dc.html",
+      "x": 760,
+      "y": 2600,
+      "w": 395,
+      "h": 395,
+      "title": "Phone · Confluence + Runs on · 393"
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  },
+  "annotations": [
+    {
+      "id": "phase-174-row-1",
+      "x": 0,
+      "y": -140,
+      "w": 760,
+      "text": "Phase 174 Reach. Row 1: Settings → System's REMOTE ACCESS (Streamable HTTP off by default; scoped credentials with a palette and a TTL; the token shown once). Counsel RATIFY-W-C owed; your word gates the merge."
+    },
+    {
+      "id": "phase-174-row-2",
+      "x": 0,
+      "y": 1160,
+      "w": 760,
+      "text": "Rows 2–3: every remote receipt wears REMOTE with the caller's address; the Door's third connector (Confluence, your word owed: blogs and pages by ID, the CLI cannot list pages); Rhythm's Runs on row for the .43 box."
+    }
+  ]
+}

@@ -81,12 +81,32 @@ export function CheckGadget({
   checked,
   onChange,
   disabled,
+  variant,
 }: {
   label: string;
   checked: boolean;
   onChange(next: boolean): void;
   disabled?: boolean;
+  /** "token" renders a bordered mono-uppercase token with ✓ glyph
+   *  (HS-169-02 Door toggles). Default is the checkbox square. */
+  variant?: "default" | "token";
 }) {
+  if (variant === "token") {
+    return (
+      <label className={`gadget-check-token ${checked ? "is-on" : "is-off"}`}>
+        <input
+          type="checkbox"
+          aria-label={label}
+          checked={checked}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.checked)}
+        />
+        <span className="gadget-check-token-face" aria-hidden="true">
+          {checked ? `✓ ${label}` : label}
+        </span>
+      </label>
+    );
+  }
   return (
     <label className="gadget-check">
       <input
@@ -725,9 +745,10 @@ export function EgressChip({
   /** HS-111-04 — an off-device reply names its honest boundary; the
    * default stays the on-device promise. */
   title?: string;
-  /** HS-111-07 — scope color variant (local = ok, mixed/cloud = accent);
+  /** HS-111-07 + HS-174-04 — scope color variant (local = ok,
+   * mixed/cloud = accent, remote = accent outline stroke);
    * unset keeps the on-device tone. */
-  scope?: "local" | "mixed" | "cloud";
+  scope?: "local" | "mixed" | "cloud" | "remote";
   className?: string;
   ariaLabel?: string;
   /** HS-111-07 — the chrome badge is this SAME species with a click

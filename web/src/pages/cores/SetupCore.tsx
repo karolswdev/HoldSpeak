@@ -122,7 +122,7 @@ export function SetupCore({ hero }: CoreProps) {
                     data-tone="ok"
                     role="status"
                   >
-                    ✓ {testResult.detail}
+                    {testResult.detail}
                   </p>
                 ) : (
                   <SurfaceState

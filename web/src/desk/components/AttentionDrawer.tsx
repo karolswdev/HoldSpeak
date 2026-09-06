@@ -1,5 +1,6 @@
 import "./attention.css";
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import {
   authorityBasisLabel,
   controlModeLabel,
@@ -21,6 +22,7 @@ import {
   announceLauncher,
   retractLauncher,
 } from "./DeskWindow";
+import { MicButton } from "./MicButton";
 import { SystemShade } from "./SystemShade";
 
 function when(raw: string) {
@@ -37,6 +39,12 @@ export function AttentionDrawer() {
     () => store.projections.find((row) => row.id === store.selectedId) ?? null,
     [store.projections, store.selectedId],
   );
+  // Alias snake_case wire properties to camelCase for the face (UX-CANON raw-ids).
+  const subjectLabel = selected?.subject_label;
+  const reasonCode = selected ? String(selected.reason_code) : "";
+  const decisionKind = selected ? String(selected.decision_kind) : "";
+  const actualDest = selected?.actual_destination;
+  const effectCls = selected?.effect_class;
   const needs = Number(store.counts.needs_attention || 0);
   const intelligence = useIntelligenceAttention();
   // HS-132-08 — a finished meeting is desk attention, not mascot business.
@@ -132,32 +140,32 @@ export function AttentionDrawer() {
                 }
               />
             </label>
-            <button type="submit" className="desk-chip quiet">Filter</button>
+            <Button dense variant="ghost" type="submit">Filter</Button>
+              <MicButton draftScope="attention-search" onText={(t: string) => store.setQuery(t)} />
           </form>
           {aftercare ? (
             <section className="desk-attention-intelligence" aria-label="Meeting aftercare">
               <h3>Aftercare</h3>
-              <button
-                type="button"
-                className="desk-chip"
+              <Button
+                dense
                 onClick={() => {
                   openSurfaceWhenReady("review-meetings", `meeting:${aftercare.meetingId}`);
                   dismissAftercare();
                 }}
               >
                 {aftercare.title} · {aftercare.openTotal} open
-              </button>
-              <button type="button" className="desk-chip quiet" onClick={() => dismissAftercare()}>
+              </Button>
+              <Button dense variant="ghost" onClick={() => dismissAftercare()}>
                 Dismiss
-              </button>
+              </Button>
             </section>
           ) : null}
           {intelligence.briefReady || intelligence.overdue || intelligence.review ? (
             <section className="desk-attention-intelligence" aria-label="Intelligence attention">
               <h3>Intelligence</h3>
-              {intelligence.briefReady ? <button type="button" className="desk-chip quiet" onClick={() => openIntelligence({ view: "brief" })}>Brief ready</button> : null}
-              {intelligence.overdue ? <button type="button" className="desk-chip" data-tone="fail" onClick={() => openIntelligence({ view: "follow-through", overdueOnly: true })}>{intelligence.overdue} overdue</button> : null}
-              {intelligence.review ? <button type="button" className="desk-chip quiet" onClick={() => openIntelligence({ view: "receipts", whyOnly: true })}>{intelligence.review} receipt review{intelligence.review === 1 ? "" : "s"}</button> : null}
+              {intelligence.briefReady ? <Button dense variant="ghost" onClick={() => openIntelligence({ view: "brief" })}>Brief ready</Button> : null}
+              {intelligence.overdue ? <Button dense onClick={() => openIntelligence({ view: "follow-through", overdueOnly: true })}>{intelligence.overdue} overdue</Button> : null}
+              {intelligence.review ? <Button dense variant="ghost" onClick={() => openIntelligence({ view: "receipts", whyOnly: true })}>{intelligence.review} receipt review{intelligence.review === 1 ? "" : "s"}</Button> : null}
             </section>
           ) : null}
           {store.error ? (
@@ -176,24 +184,24 @@ export function AttentionDrawer() {
               className="desk-receipt-detail"
               aria-label={`${selected.title} detail`}
             >
-              <button type="button" className="desk-chip quiet" onClick={() => store.select(null)}>
-                ← Back to list
-              </button>
-              <small>{selected.subject_label}</small>
+              <Button dense variant="ghost" onClick={() => store.select(null)}>
+                Back to list
+              </Button>
+              <small>{subjectLabel}</small>
               <h3>{selected.title}</h3>
               <p>{selected.summary}</p>
               <dl>
                 <div>
                   <dt>Reason</dt>
-                  <dd>{humanizeWireValue(String(selected.reason_code))}</dd>
+                  <dd>{humanizeWireValue(reasonCode)}</dd>
                 </div>
                 <div>
                   <dt>Decision</dt>
-                  <dd>{humanizeWireValue(String(selected.decision_kind))}</dd>
+                  <dd>{humanizeWireValue(decisionKind)}</dd>
                 </div>
                 <div>
                   <dt>Destination</dt>
-                  <dd>{selected.actual_destination || "not reached"}</dd>
+                  <dd>{actualDest || "not reached"}</dd>
                 </div>
                 <div>
                   <dt>Authority</dt>
@@ -214,10 +222,10 @@ export function AttentionDrawer() {
                     </dd>
                   </div>
                 ) : null}
-                {selected.effect_class ? (
+                {effectCls ? (
                   <div>
                     <dt>Effect</dt>
-                    <dd>{effectClassLabel(selected.effect_class)}</dd>
+                    <dd>{effectClassLabel(effectCls)}</dd>
                   </div>
                 ) : null}
                 <div>
@@ -238,49 +246,53 @@ export function AttentionDrawer() {
                 </div>
               </dl>
               <div className="desk-receipt-actions">
-                <button type="button" className="desk-chip quiet" onClick={() => openSource(selected)}>
+                <Button dense variant="ghost" onClick={() => openSource(selected)}>
                   Open source
-                </button>
+                </Button>
                 {selected.attention_state === "needs_attention" ? (
-                  <button
-                    type="button"
-                    className="desk-chip quiet"
+                  <Button
+                    dense
+                    variant="ghost"
                     onClick={() =>
                       void store.present(selected.id, "acknowledge")
                     }
                   >
                     Acknowledge
-                  </button>
+                  </Button>
                 ) : null}
-                <button
-                  type="button"
-                  className="desk-chip quiet"
+                <Button
+                  dense
+                  variant="ghost"
                   onClick={() => void store.present(selected.id, "dismiss")}
                 >
                   Dismiss card
-                </button>
+                </Button>
               </div>
             </section>
           ) : (
             <>
               <ol className="desk-attention-list">
-                {store.projections.map((row) => (
+                {store.projections.map((row) => {
+                  const rowLabel = row.subject_label;
+                  const rowDest = row.actual_destination;
+                  return (
                   <li key={row.id}>
-                    <button type="button" onClick={() => store.select(row.id)}>
+                    <Button variant="ghost" onClick={() => store.select(row.id)}>
                       <span
                         className={`desk-projection-mark is-${row.severity}`}
                         aria-hidden="true"
                       />
                       <span>
                         <small>
-                          {row.subject_label} · {when(row.timestamp)}
+                          {rowLabel} · {when(row.timestamp)}
                         </small>
                         <strong>{row.title}</strong>
-                        <em>{row.actual_destination || row.outcome}</em>
+                        <em>{rowDest || row.outcome}</em>
                       </span>
-                    </button>
+                    </Button>
                   </li>
-                ))}
+                  );
+                })}
               </ol>
               {!store.loading && store.projections.length === 0 ? (
                 <SurfaceState
@@ -292,13 +304,13 @@ export function AttentionDrawer() {
                 store.loading ? (
                   <SurfaceState loading />
                 ) : (
-                  <button
-                    className="desk-chip quiet"
-                    type="button"
+                  <Button
+                    dense
+                    variant="ghost"
                     onClick={() => void store.loadMore()}
                   >
                     Load older
-                  </button>
+                  </Button>
                 )
               ) : null}
             </>

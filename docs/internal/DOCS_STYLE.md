@@ -1,168 +1,139 @@
-# HoldSpeak docs style guide
+# Documentation writing standard
 
-HoldSpeak's live guides were written across many releases and can drift in tone
-and shape.
-This is the **floor** they should all clear — a shared voice and a standard page
-skeleton — so the set reads as one product, not an anthology. It is a floor, not
-a cage: reference docs keep their depth; a doc may add sections, just not skip the
-spine.
+Use this policy for new and revised HoldSpeak documentation.
+It combines controlled English with source checks, task-oriented structure, and maintained navigation.
 
-Companion to [`DOC_AUDIT_2026-08.md`](./DOC_AUDIT_2026-08.md) (accuracy) — this
-one is **voice + structure + navigation**.
+## Language standard
 
-## Voice
+The language reference is **ASD-STE100 Simplified Technical English, Issue 9, 2025-01-15**.
+Use the [official ASD standard](https://www.asd-ste100.org/assets/files/ASD-STE100_ISSUE9.pdf) for exact rules and dictionary meanings.
+The request named ASD-DTE100. This refresh provisionally interprets that name as ASD-STE100.
+The [September review](DOC_AUDIT_2026-09.md) records this assumption and the verification limits.
 
-- **Direct and second-person.** "Hold your hotkey, speak, release." Address the
-  reader as *you*; HoldSpeak is *it*. Prefer the imperative for steps.
-- **Confident, not breathless.** State what it does plainly. No marketing
-  superlatives in the guides (the README carries the pitch; guides carry the
-  truth).
-- **Honest over hype.** Pre-release is pre-release; off-by-default is stated as
-  such; "100% local" only where literally true (the model endpoint you point at is
-  yours). If a claim isn't true today, don't write it — file it. Canon wins over a
-  drifted doc; every claim is grounded in live code.
-- **Active and tight.** Cut hedging and repetition. One idea per sentence; one job
-  per paragraph.
-- **Terms, consistently:** *dictation* (not "voice typing" mid-guide once you've
-  introduced it), *meeting mode*, *the dictation pipeline*, *intel* for LLM meeting
-  extraction, *actuator* for the propose→approve→execute kind, *desktop presence*
-  for the ambient HUD, and *project knowledge* for the whole capability of
-  teaching the copilot about a repo. Project knowledge has two parts. *Project
-  facts* (UI tab **Project Facts**, formerly "Project KB") is the
-  `.holdspeak/project.yaml` `kb:` map: exact values the `kb-enricher` stage stamps
-  into block templates verbatim via `{project.kb.*}` placeholders, no LLM.
-  *Project context* (UI tab **Project Context**) is the **separate** `.hs/`
-  Markdown files: background the optional `project-rewriter` LLM stage reads. The
-  two are distinct and easily confused, so gloss them on first use and never use
-  one to mean the other (facts are stamped in verbatim; context guides a rewrite).
-  The on-disk names (`.holdspeak/project.yaml`, `.hs/`, `kb-enricher`,
-  `project-rewriter`, `{project.kb.*}`) are unchanged; "facts" and "context" are
-  the user-facing names. Code identifiers in `backticks`.
+Apply these language controls:
 
-## Product-tense, not roadmap vocabulary (guard-enforced)
+| Rule group | Editorial check |
+| --- | --- |
+| 1 | Check vocabulary, word function, and meaning. Register necessary domain terms separately. Use American spelling. |
+| 2 | Limit noun clusters. Identify longer technical names clearly. |
+| 3 | Prefer direct verbs and active constructions. Check tense and verb form. |
+| 4 | Keep sentences explicit. Expand contractions. |
+| 5 | Limit procedural sentences to 20 words. Give one instruction per sentence. Put prerequisites before actions. |
+| 6 | Limit descriptive sentences to 25 words and paragraphs to six sentences. Keep one topic per paragraph. |
+| 7 | State a relevant hazard, required action, and consequence when a safety instruction is necessary. |
+| 8 | Check punctuation and the standard's word-count rules. Avoid semicolons. |
+| 9 | Rewrite unsuitable constructions. Check meaning and terminology in context. |
 
-User-facing docs describe the product as it is, not the project's build history. A
-reader installing HoldSpeak has never heard of a "phase" and does not know what
-`HS-17-05` means, so the guides never carry the internal roadmap or process
-vocabulary.
+A word-count tool cannot establish dictionary compliance, permitted meaning, or technical accuracy.
+The [official download guidance](https://www.asd-ste100.org/STE_downloads.html) also distinguishes AI assistance from verified compliance.
+Do not label a document certified or fully compliant without the required substantive review.
+Do not copy the standard or its full dictionary into this repository.
 
-**Banned in user-facing docs** (the root README and `docs/*.md`):
+## Product terms and labels
 
-- Phase tags: `Phase 14`, `phase-37`, "the next phase".
-- Story ids: `HS-17-05`, `HS-25-03`.
-- Process words: `PMO`, "closeout", "the current roadmap", "evidence snapshot".
-- Phase-relative tense. Rewrite "Phase 11 shipped the connector contract" as
-  "HoldSpeak's connector contract is ...", and "Phase 15 will add TLS" as "TLS is
-  future work".
+Use the [terminology register](DOCS_TERMINOLOGY.md) for domain nouns and verbs.
+Use the [public glossary](../GLOSSARY.md) for reader-facing definitions.
+The [canonical-name table](POSITIONING.md#canonical-feature-names) owns product names.
 
-**Kept** (these are product, not roadmap):
+Preserve exact UI labels in bold and exact code identifiers in backticks.
+For example, **Keep idea** records a suggestion choice. Keep on a reply saves a separate output.
+Explain that difference instead of using one vague verb for both.
 
-- Product nouns: `actuator`, `connector`, `artifact_generator`, the dictation
-  pipeline.
-- Named architecture specs: `MIR-01`, `DIR-01`, `WFS-01`. They are spec names, not
-  phase tags.
+Do not replace an API field or command to make it sound simpler.
+Explain the identifier in ordinary prose instead.
+Use **Interview mode** for the repeatable Thread capability and **Interview pane** for Thought refinement when the distinction matters.
 
-**Exempt corpus.** This rule is for what a user reads. The internal record keeps its
-phase/story vocabulary by design and is never scrubbed or scanned: `docs/internal/`
-(including this guide, which is why it can list the banned tokens above),
-`docs/evidence/`, `docs/assets/`, and `pm/roadmap/`.
+## Describe the available product
 
-**Enforced.** A case-insensitive guard in `tests/unit/test_doc_drift_guard.py`
-(`test_no_user_facing_doc_leaks_roadmap_vocabulary`) fails the build when a
-user-facing doc carries a numbered or tagged leak. It catches the high-signal tags;
-bare process-speak with no number ("a separate phase") is on you and the reviewer to
-keep out.
+A public guide describes implemented behavior.
+A target requirement belongs in a specification with a status and an acceptance method.
+Implementation, successful execution, model quality, and owner acceptance are different claims.
+State a limitation next to the capability it qualifies.
 
-## The standard page skeleton
+For each procedural change, inspect the control or command in the current source.
+For a permission claim, inspect the operation policy and applicable tests.
+For a saved-state claim, identify which store owns the state and which events preserve it.
+For an automation claim, identify its actual trigger, executor, authority, and result record.
 
-Every user-facing guide clears this spine, in this order:
+Use specific data boundaries.
+Configured models, connectors, remote clients, and outbound actions can each transfer data.
+Do not use a blanket assurance that only a model endpoint can receive data.
+Link [Security & Privacy](../SECURITY.md) for the full contract.
 
-1. **Title** (`# …`) + an optional pixellab graphic.
-2. **Lede** — one or two sentences: *what this does* and *why you'd read it*. No
-   throat-clearing. Link the prerequisite doc if there is one ("read [Getting
-   Started] first").
-3. **Quickstart / TL;DR** — the shortest path to a working result (a command
-   block, a numbered list, or a "see it work" pointer).
-4. **Reference** — the depth: configuration, options, the contract. Sectioned with
-   `##`/`###`; a long doc may open with a table of contents.
-5. **Troubleshooting** — a symptom → cause → fix table where the surface has common
-   failure modes.
-6. **`## The voice guard (POSITIONING.md is the canon)
+## Organize a user guide
 
-User-facing prose follows the voice rules in
-[`POSITIONING.md`](./POSITIONING.md), and three of them are enforced by
-`tests/unit/test_doc_drift_guard.py` over the same corpus as the vocabulary
-guard (root README + non-recursive `docs/*.md`, fenced code blocks exempt):
+This structure is a HoldSpeak documentation convention.
+ASD-STE100 supplies the language rules, not the product's information architecture.
 
-- **No em/en dashes in prose.** Use a period, comma, colon, or parentheses.
-  A doc line that quotes a real UI string containing a dash must match the
-  UI verbatim and be added to the guard's `_VERBATIM_UI_QUOTES` allowlist.
-- **No AI-vocabulary tells** (delve, seamless, the verb leverage,
-  supercharge, effortless, game-changing, cutting-edge, "is a testament",
-  the "it's not just X" tic). Compounds and plain logical uses
-  ("highest-leverage", "every meeting, not just the visible page") stay
-  legal; the patterns are tuned for zero false positives on the corpus.
-- **Canonical feature names only.** One name per surface, declared in the
-  POSITIONING.md table; the guard bans the drift-prone synonyms (e.g.
-  "voice macros" for voice commands). New surfaces add a canon row in the
-  phase that ships them.
+1. State the task and result below one level-one title.
+2. State the prerequisites that affect the task.
+3. Give the shortest complete procedure.
+4. Describe the expected result and how to inspect it.
+5. Explain persistence, permissions, or limits when they affect use.
+6. Add a problem/action table for common failures.
+7. End with **See also** and a small set of useful links.
 
-## See also`** — 2–4 cross-links, each with a short value prop (see below).
+Use numbered steps for actions and tables for parallel comparisons.
+Keep examples clearly distinguishable from actual user records.
+Use explicit placeholders for unprovided IDs, names, dates, and requirements.
+A screenshot must represent the described interface and have useful alternative text.
+Remove a misleading screenshot from the current guide instead of treating it as evidence of current behavior.
 
-Reference/developer docs (Plugin Authoring, Connector Development, Device
-Protocol) keep their own deep structure but still carry a one-line lede and a
-`## See also` footer.
+## Organize a specification or technical reference
 
-## The privacy / local-first callout
+A specification identifies its status, scope, requirement IDs, acceptance criteria, and verification evidence.
+Keep target behavior distinct from implemented behavior.
+The [Interview package](architect-assistant/README.md) is an example of that separation.
 
-When a doc touches what's stored or what can leave the machine, state it inline
-with a blockquote, in the same shape everywhere:
+Technical references can use schema tables, examples, and architecture diagrams.
+Generated API and MCP inventories retain their machine-generated regions.
+Change their source or generator and regenerate the output when a contract changes.
+Do not hand-edit a generated roster to make a test pass.
 
-> **Local-first.** <what stays local>. Nothing leaves your machine except the
-> model endpoint you point at (local or LAN is fine).
+Historical evidence retains its original observations and dates.
+Move it with a provenance note when it obstructs a public task guide.
+Do not rewrite an old result to imply that a new test ran.
 
-The authoritative version is [`SECURITY.md`](../SECURITY.md); guides summarize and
-link, not re-derive.
+## Links and formatting
 
-## Cross-links & anchors (what the link-check enforces)
+Use relative repository links and existing heading anchors.
+Use direct external links for authoritative standards and external documentation.
+Use **See also** as the footer heading.
+Separate a link from its description with a colon.
 
-- **Relative links only** between docs (`FILE.md`, `./FILE.md`,
-  `../README.md`) — never an absolute repository path. A sibling bare filename
-  and its `./` form are both valid. The dangling-link guard
-  (`tests/unit/test_doc_drift_guard.py`) fails the build on a path that doesn't
-  resolve.
-- **Anchors** follow GitHub's slugger: lowercase, punctuation `().,&` stripped,
-  spaces → hyphens. A heading like `## 11. Desktop Presence (ambient, on-desktop
-  status)` slugs to `#11-desktop-presence-ambient-on-desktop-status` (the
-  parenthetical *words* stay). Verify a deep link against the actual heading — do
-  not hand-guess a shorter slug.
-- **`## See also` footer** — the standard footer. Use that exact heading (not
-  "Related Docs" / "Where to go next"). Each line: a link + an em-dash + a
-  one-line value prop:
-  ```markdown
-  ## See also
+Use periods, commas, colons, or parentheses in public prose.
+The repository also disallows em and en dashes in that prose.
+A literal UI string can retain its exact punctuation under the existing narrow guard exception.
 
-  - [The doc audit](DOC_AUDIT_2026-06.md) — accuracy + the canonical facts.
-  - [The plugin RFC](PLAN_ARCHITECT_PLUGIN_SYSTEM.md) — design rationale.
-  ```
+Keep headings in order, code fences closed, and tables aligned by column count.
+Keep Markdown examples separate from executable commands.
+Never include real credentials or private data in an example.
 
-  Targets are relative to the *linking* doc: a sibling in the same folder is a
-  bare `FILE.md` (as above — both siblings of this style guide); a guide in
-  `docs/` reaches `internal/` as `internal/FILE.md`, and `internal/` reaches a
-  guide as `../FILE.md`.
+## Review and maintain
 
-## The index is a map, not a list
+Every behavior change must update its user procedure and relevant reference in the same PR.
+Add new public guides to the documentation index.
+Update glossary entries when product terminology changes.
+Repair links to a changed heading in the same change.
 
-`docs/README.md` groups guides by **journey** (Start here · Dictate · Meet ·
-Extend · Operate & Trust), each entry a one-line value prop scannable in seconds.
-Keep its journeys and names in lockstep with the README's "Where to go next"
-table — same journeys, same names.
+The [contributor guide](../../CONTRIBUTING.md) gives the check commands.
+The navigation checker checks public guides, their local links, and Markdown heading targets.
+The existing drift guards check product terms, counts, generated contracts, and other repository rules.
+Neither check replaces the language review above.
+
+Before submitting a documentation PR, record:
+
+- The current implementation sources used to verify procedures.
+- The language and terminology review performed.
+- The exact checks and their results.
+- Any unverified behavior or remaining language review.
+
+The [September review](DOC_AUDIT_2026-09.md) separates fully rewritten entry guides from retained detailed references.
+It does not claim that every historical document has passed a complete STE review.
 
 ## See also
 
-- [`DOC_AUDIT_2026-08.md`](./DOC_AUDIT_2026-08.md) — the current accuracy audit + canonical
-  facts the guides are measured against.
-- [`../README.md`](../README.md) — the public entry; the index map mirrors its
-  "Where to go next" table.
-- [`../../CONTRIBUTING.md`](../../CONTRIBUTING.md) — dev setup, the test command,
-  and the commit-contract workflow.
+- [Terminology register](DOCS_TERMINOLOGY.md): domain terms and editorial decisions.
+- [Public glossary](../GLOSSARY.md): definitions for users.
+- [Contributing](../../CONTRIBUTING.md): validation and commit workflow.
+- [September documentation review](DOC_AUDIT_2026-09.md): scope and verification record.

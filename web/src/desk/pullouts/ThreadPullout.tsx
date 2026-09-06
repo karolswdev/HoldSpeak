@@ -1,3 +1,4 @@
+import { countLabel } from "../surface";
 /** HS-151-05 — Thread pullout content: head (in-place title, egress lamp,
  * status line, token meter), body (user/assistant rows with StreamingMaterial,
  * reasoning folded behind RAW, error row in-flow, CRASHED + Retry, sibling
@@ -9,7 +10,7 @@ import {
   SurfaceRow,
 } from "../surface/Surface";
 import { Material } from "../surface/Material";
-import { intelBadge } from "../chair/lanes/MeetingsLane";
+import { intelBadge } from "../chair/intelBadge";
 import { LampGadget } from "../surface/gadgets";
 import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
 import { boundaryEgressLamp, egressScopeLamp, type EgressLamp } from "../inferenceEgress";
@@ -27,7 +28,6 @@ import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import {
   useThreadStore,
   isCrashed,
-  sendTurn,
   abortThread,
   patchThread,
   keepMessage,
@@ -54,7 +54,9 @@ import {
 import { useDesk } from "../store";
 import { ThreadComposer, InlineEditor } from "../components/ThreadComposer";
 import { MicButton } from "../components/MicButton";
+import { Button } from "../../components/signal/Signal";
 import { ModeTabs } from "../components/ModeTabs";
+import { InterviewPanel } from "../components/InterviewPanel";
 import { CallChip } from "../components/CallChip";
 import { SpeakerGlyph } from "../components/SpeakerGlyph";
 import {
@@ -175,6 +177,7 @@ function ElicitationForm({
               </label>
             )}
             {enumVals ? (
+              // UX-CANON: needs redesign (HS-170-04)
               <select
                 className="thread-elicitation-select"
                 value={String(values[key] ?? "")}
@@ -187,6 +190,7 @@ function ElicitationForm({
               </select>
             ) : type === "boolean" ? (
               <label className="thread-elicitation-boolean">
+                {/* UX-CANON: needs redesign (HS-170-04) */}
                 <input
                   type="checkbox"
                   checked={Boolean(values[key])}
@@ -195,6 +199,7 @@ function ElicitationForm({
                 <span className="thread-elicitation-label">{label}{isReq ? " *" : ""}</span>
               </label>
             ) : type === "number" || type === "integer" ? (
+              // UX-CANON: needs redesign (HS-170-04)
               <input
                 type="number"
                 className="thread-elicitation-input"
@@ -202,33 +207,41 @@ function ElicitationForm({
                 onChange={(e) => handleChange(key, Number(e.target.value))}
               />
             ) : (
-              <input
-                type="text"
-                className="thread-elicitation-input"
-                value={String(values[key] ?? "")}
-                onChange={(e) => handleChange(key, e.target.value)}
-              />
+              // HS-176-04 — the voice law: a free-text answer carries the mic.
+              <span className="thread-elicitation-well">
+                <input
+                  type="text"
+                  className="thread-elicitation-input"
+                  aria-label={label}
+                  value={String(values[key] ?? "")}
+                  onChange={(e) => handleChange(key, e.target.value)}
+                />
+                <MicButton
+                  label={`Speak ${label}`}
+                  onText={(spoken) => handleChange(key, spoken)}
+                />
+              </span>
             )}
           </div>
         );
       })}
       <div className="thread-tool-decision-actions">
-        <button
-          type="button"
-          className="desk-chip is-primary"
+        <Button
+          variant="primary"
+          dense
           onClick={() => onSubmit(values)}
           data-testid="elicitation-submit"
         >
           Submit
-        </button>
-        <button
-          type="button"
-          className="desk-chip quiet"
+        </Button>
+        <Button
+          variant="ghost"
+          dense
           onClick={onDecline}
           data-testid="elicitation-decline"
         >
           Decline
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -528,7 +541,7 @@ function GuardrailRowView({ row }: { row: GuardrailRow }) {
       data-testid="guardrail-row"
     >
       <div className="thread-guardrail-head">
-        <span className="thread-guardrail-glyph">{hasViolations ? "⛔" : "⚠"}</span>
+        <span className="thread-guardrail-glyph">{hasViolations ? "X" : "!"}</span>
         <span className="thread-guardrail-label">
           {hasViolations ? "Guardrail violation" : "Guardrail warning"}
         </span>
@@ -626,32 +639,32 @@ function ToolRowView({
       {row.state === "awaiting_decision" && (
         <div className="thread-tool-decision-box" data-testid="decision-box" data-default-decision={row.defaultDecision || "allow"}>
           <div className="thread-tool-decision-actions">
-            <button
-              type="button"
-              className={`desk-chip ${row.defaultDecision === "deny" ? "quiet" : "is-primary"}`}
+            <Button
+              variant={row.defaultDecision === "deny" ? "ghost" : "primary"}
+              dense
               onClick={() => onDecide(row.callId, "approve")}
               data-testid="allow-once"
               autoFocus={row.defaultDecision !== "deny"}
             >
               Allow once
-            </button>
-            <button
-              type="button"
-              className="desk-chip quiet"
+            </Button>
+            <Button
+              variant="ghost"
+              dense
               onClick={() => onDecide(row.callId, "approve", { always: true })}
               data-testid="allow-always"
             >
               Allow always
-            </button>
-            <button
-              type="button"
-              className={`desk-chip ${row.defaultDecision === "deny" ? "is-primary" : "quiet"}`}
+            </Button>
+            <Button
+              variant={row.defaultDecision === "deny" ? "primary" : "ghost"}
+              dense
               onClick={() => onDecide(row.callId, "deny")}
               data-testid="deny"
               autoFocus={row.defaultDecision === "deny"}
             >
               Deny
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -727,6 +740,7 @@ function AnnotationPopover({
         {quoteHead}
       </div>
       <div className="thread-annotation-input-row">
+        {/* UX-CANON: needs redesign (HS-170-04) */}
         <input
           ref={inputRef}
           type="text"
@@ -748,23 +762,23 @@ function AnnotationPopover({
         />
       </div>
       <div className="thread-annotation-actions">
-        <button
-          type="button"
-          className="desk-chip is-primary"
+        <Button
+          variant="primary"
+          dense
           data-testid="annotation-save"
           disabled={!comment.trim()}
           onClick={() => onSave(comment.trim())}
         >
           Save
-        </button>
-        <button
-          type="button"
-          className="desk-chip quiet"
+        </Button>
+        <Button
+          variant="ghost"
+          dense
           data-testid="annotation-cancel"
           onClick={onCancel}
         >
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -788,15 +802,16 @@ function AnnotationChips({
         return (
           <span key={a.id} className="thread-annotation-chip" data-testid="annotation-chip">
             <span className="thread-annotation-chip-text">{head}</span>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              dense
               className="thread-annotation-chip-remove"
               data-testid="annotation-chip-remove"
               aria-label="Remove annotation"
               onClick={() => onRemove(a.id)}
             >
               x
-            </button>
+            </Button>
           </span>
         );
       })}
@@ -920,13 +935,14 @@ function ThreadMessageList({
     <div className="thread-messages">
       {beforeCut.length > 0 && (
         <div className="thread-earlier-fold" data-testid="earlier-messages-fold">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            dense
             className="thread-earlier-toggle"
             onClick={() => setEarlierExpanded(!earlierExpanded)}
           >
             {earlierExpanded ? "Hide" : `${beforeCut.length} earlier message${beforeCut.length !== 1 ? "s" : ""}`}
-          </button>
+          </Button>
           {earlierExpanded && (
             <div className="thread-earlier-messages">
               {beforeCut.map(renderMsg)}
@@ -978,9 +994,8 @@ function MessageRow({
   const isDone = !msg.streaming && !hasError && !crashed;
 
   // Assemble the display text: from buffer if streaming, from parts if done.
-  const displayText = isStreaming
-    ? bufferText
-    : msg.parts.filter((p) => p.kind === "text").map((p) => p.text).join("");
+  const savedText = msg.parts.filter((p) => p.kind === "text").map((p) => p.text).join("");
+  const displayText = isStreaming && bufferText.startsWith(savedText) ? bufferText : savedText;
   const reasoningText = msg.parts
     .filter((p) => p.kind === "reasoning")
     .map((p) => p.text)
@@ -991,12 +1006,19 @@ function MessageRow({
   const receiptShort = msg.receiptId && msg.receiptId.length > 4
     ? msg.receiptId.slice(-4)
     : msg.receiptId || null;
+  const routineTools = toolRows?.filter((row) =>
+    row.state === "pending" || row.state === "running" || row.state === "receipted",
+  ) ?? [];
+  const attentionTools = toolRows?.filter((row) =>
+    row.state !== "pending" && row.state !== "running" && row.state !== "receipted",
+  ) ?? [];
+  const toolsWorking = routineTools.some((row) => row.state !== "receipted");
 
   if (msg.role === "user") {
     const userText = msg.parts.map((p) => p.text).join("") || "";
     return (
       <div className="thread-row thread-row-user" data-message-id={msg.id}>
-        <div className="thread-row-label">YOU</div>
+        <div className="thread-row-label">YOU{msg.pending && <span> · Sending…</span>}</div>
         {editing ? (
           <InlineEditor
             initialText={userText}
@@ -1010,8 +1032,8 @@ function MessageRow({
         ) : (
           <div
             className="thread-row-body thread-row-body-editable"
-            onClick={() => setEditing(true)}
-            title="Click to edit and resend"
+            onClick={msg.pending ? undefined : () => setEditing(true)}
+            title={msg.pending ? undefined : "Click to edit and resend"}
           >
             {userText || "(empty)"}
           </div>
@@ -1041,7 +1063,7 @@ function MessageRow({
           {msg.modelId || "ASSISTANT"}
         </span>
         {receiptShort && (
-          <span className="thread-row-receipt" title={msg.receiptId ?? undefined}>
+          <span className="thread-row-receipt">
             {"receipt ····"}{receiptShort}
           </span>
         )}
@@ -1053,13 +1075,13 @@ function MessageRow({
       {crashed && (
         <div className="thread-row-crashed-body">
           <span className="thread-crash-label">CRASHED</span>
-          <button
-            type="button"
-            className="desk-chip is-primary"
+          <Button
+            variant="primary"
+            dense
             onClick={() => onRetry(msg.id)}
           >
             Retry
-          </button>
+          </Button>
         </div>
       )}
 
@@ -1095,17 +1117,21 @@ function MessageRow({
       {/* HS-153-03: guardrail row (before tool rows) */}
       {guardrailRow && <GuardrailRowView row={guardrailRow} />}
 
-      {/* HS-152-04: tool rows */}
-      {toolRows && toolRows.length > 0 && (
+      {/* Routine activity stays folded throughout the turn. Native details
+          preserves the reader's choice to inspect it as results arrive. */}
+      {routineTools.length > 0 && (
+        <details className="thread-raw-fold" data-testid="tool-activity">
+          <summary className="thread-raw-toggle">
+            {countLabel("Actions ·", routineTools.length)}{toolsWorking && " · Working…"}
+          </summary>
+          <div className="thread-tool-rows">
+            {routineTools.map((row) => <ToolRowView key={row.callId} row={row} threadId={threadId} onDecide={onDecide} />)}
+          </div>
+        </details>
+      )}
+      {attentionTools.length > 0 && (
         <div className="thread-tool-rows">
-          {toolRows.map((row) => (
-            <ToolRowView
-              key={row.callId}
-              row={row}
-              threadId={threadId}
-              onDecide={onDecide}
-            />
-          ))}
+          {attentionTools.map((row) => <ToolRowView key={row.callId} row={row} threadId={threadId} onDecide={onDecide} />)}
         </div>
       )}
 
@@ -1122,27 +1148,27 @@ function MessageRow({
         />
         {isDone && !editing && (
           <>
-            <button
-              type="button"
-              className="desk-chip quiet"
+            <Button
+              variant="ghost"
+              dense
               onClick={() => onKeep(msg.id, "note")}
             >
               Keep as note
-            </button>
-            <button
-              type="button"
-              className="desk-chip quiet"
+            </Button>
+            <Button
+              variant="ghost"
+              dense
               onClick={() => onKeep(msg.id, "artifact")}
             >
               Keep as artifact
-            </button>
-            <button
-              type="button"
-              className="desk-chip quiet"
+            </Button>
+            <Button
+              variant="ghost"
+              dense
               onClick={() => setEditing(true)}
             >
               Fork here
-            </button>
+            </Button>
           </>
         )}
         {editing && (
@@ -1199,6 +1225,7 @@ function ThreadPulloutInner({
   const [restoreFocus, setRestoreFocus] = useState(false);
 
   const bodyRef = useRef<HTMLDivElement>(null);
+  const followTail = useRef(true);
 
   // Load thread on mount
   useEffect(() => {
@@ -1207,10 +1234,10 @@ function ThreadPulloutInner({
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
-    if (bodyRef.current) {
+    if (bodyRef.current && followTail.current) {
       bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
     }
-  }, [detail?.messages.length, buffers, threadToolRows]);
+  }, [detail?.messages, buffers, threadToolRows]);
 
   // Subscribe to bus frames for this thread
   useEffect(() => {
@@ -1305,14 +1332,17 @@ function ThreadPulloutInner({
   }, [titleDraft, initialTitle, threadId, attempt]);
 
   const handleSend = useCallback(
-    (text: string, refs: Array<{ ref_kind: string; ref_id: string }>) => {
+    async (text: string, refs: Array<{ ref_kind: string; ref_id: string }>) => {
+      followTail.current = true;
       // HS-153-04: clear draft annotations optimistically on send (they are promoted server-side).
       useThreadStore.setState((s) => ({
         draftAnnotations: { ...s.draftAnnotations, [threadId]: [] },
       }));
-      void attempt("send turn", () =>
-        sendTurn(threadId, { text, refs: refs.length > 0 ? refs : undefined }),
+      const result = await attempt("send turn", () =>
+        useThreadStore.getState().submitTurn(threadId, { text, refs: refs.length > 0 ? refs : undefined }),
+        { retry: false },
       );
+      return result.ok;
     },
     [threadId, attempt],
   );
@@ -1373,6 +1403,21 @@ function ThreadPulloutInner({
   }, []);
 
   const isStreaming = detail?.messages.some((m) => m.streaming) ?? false;
+  const hasPendingSend = detail?.messages.some((m) => m.pending) ?? false;
+
+  // Recover missed start/delta/done frames while a local turn is active.
+  // Read-only reconciliation never resubmits the owner's message.
+  useEffect(() => {
+    if (!isStreaming && !hasPendingSend) return;
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const refresh = async () => {
+      if (!useThreadStore.getState().loading[threadId]) await loadThread(threadId);
+      if (!stopped) timer = setTimeout(refresh, 1500);
+    };
+    timer = setTimeout(refresh, 1500);
+    return () => { stopped = true; clearTimeout(timer); };
+  }, [threadId, isStreaming, hasPendingSend, loadThread]);
 
   // HS-154-04: sync auto-speak active state with call_mode.
   const callMode = detail?.thread?.call_mode ?? 0;
@@ -1584,25 +1629,44 @@ function ThreadPulloutInner({
 
   return (
     <>
-      <div className="desk-pullout-body desk-surface-body thread-pullout-body" ref={bodyCallbackRef}>
+      <div className="desk-pullout-body desk-surface-body thread-pullout-body" ref={bodyCallbackRef}
+        onScroll={(event) => {
+          const body = event.currentTarget;
+          followTail.current = body.scrollHeight - body.scrollTop - body.clientHeight < 40;
+        }}>
         {/* Head: title, egress, status, token meter */}
         <div className="thread-head">
           {editingTitle ? (
-            <input
-              ref={titleRef}
-              className="thread-title-input"
-              value={titleDraft}
-              onChange={(e) => setTitleDraft(e.target.value)}
-              onBlur={commitTitle}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void commitTitle();
-                if (e.key === "Escape") {
-                  setTitleDraft(initialTitle);
-                  setEditingTitle(false);
-                }
+            // HS-176-04 — the voice law: the title is spoken or typed.
+            // The mousedown guard keeps focus in the field: its onBlur
+            // commits and closes the editor.
+            <span
+              className="thread-title-well"
+              onMouseDown={(event) => {
+                if (event.target !== titleRef.current) event.preventDefault();
               }}
-              autoFocus
-            />
+            >
+              <input
+                ref={titleRef}
+                className="thread-title-input"
+                aria-label="Thread title"
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={commitTitle}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void commitTitle();
+                  if (e.key === "Escape") {
+                    setTitleDraft(initialTitle);
+                    setEditingTitle(false);
+                  }
+                }}
+                autoFocus
+              />
+              <MicButton
+                label="Speak thread title"
+                onText={(spoken) => setTitleDraft(spoken)}
+              />
+            </span>
           ) : (
             <button
               type="button"
@@ -1704,6 +1768,13 @@ function ThreadPulloutInner({
           SurfaceFooter, which is a 36px bar). The composer needs its
           full height to render the textarea + mic + Send/Stop. */}
       <div className="thread-foot">
+        {detail.thread.interview && <InterviewPanel
+          key={threadId}
+          state={detail.thread.interview}
+          disabled={isStreaming}
+          reload={() => loadThread(threadId)}
+          onTry={(text) => handleSend(text, [])}
+        />}
         <ModeTabs
           activeMode={detail.thread?.mode ?? null}
           onSelect={(recipeId) => void setMode(threadId, recipeId)}
@@ -1715,7 +1786,7 @@ function ThreadPulloutInner({
           annotations={draftAnnotations}
           onRemove={handleAnnotationRemove}
         />
-        <ThreadComposer
+        {detail.thread.interview?.section !== "people" && <ThreadComposer
           threadId={threadId}
           onSend={handleSend}
           onStop={handleStop}
@@ -1734,7 +1805,7 @@ function ThreadPulloutInner({
           streaming={isStreaming}
           lastAssistantId={lastAssistant?.id ?? null}
           restoreFocus={restoreFocus}
-        />
+        />}
       </div>
     </>
   );

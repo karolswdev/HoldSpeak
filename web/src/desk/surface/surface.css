@@ -295,6 +295,13 @@
   font-size: var(--desk-surface-detail-size);
 }
 
+/* HS-167-05: dense variant — 4-column grid so metrics sit on one row at 640. */
+.surface-metrics[data-dense] {
+  display: grid;
+  grid-template-columns: repeat(4, max-content);
+  gap: 6px 18px;
+}
+
 /* Rule 4 — fact rows: de-snaked keys, meaningless values omitted. */
 .surface-facts {
   margin: 0;
@@ -563,6 +570,25 @@
   color: var(--ok);
 }
 
+/* HS-167-05: chip variant — the atlas geometry for token rows. */
+.surface-token[data-chip] {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--border, #2a2e3e);
+  border-radius: 0;
+  background: var(--desk-window-well, rgba(0,0,0,0.28));
+  box-shadow: var(--desk-window-etch, inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light));
+  font: 600 10px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted, #9ba2b0);
+}
+.surface-token[data-chip][data-tone="warn"] { color: var(--warn); }
+.surface-token[data-chip][data-tone="danger"] { color: var(--danger); }
+.surface-token[data-chip][data-tone="ok"] { color: var(--ok); }
+
 /* A quiet in-flow verb cluster (result ratings, recovery actions). */
 .surface-actions {
   display: flex;
@@ -758,6 +784,17 @@ button.surface-edit-in-place:hover {
 .desk-surface-body .transcript-list p {
   margin: 0;
   min-width: 0;
+}
+/* HS-170-04 — speaker token in the transcript well. */
+.desk-surface-body .transcript-list .transcript-speaker {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  min-width: 5ch;
 }
 
 /* A float over a canvas (the workbench inspector): the one window
@@ -1086,6 +1123,16 @@ button.surface-edit-in-place:hover {
   margin-top: 2px;
   color: var(--text-muted);
   font-size: var(--desk-surface-detail-size);
+}
+
+/* HS-167-05: dense variant — 12px mono primary, 11px cells for Room rail. */
+.surface-stream-entry[data-dense] .surface-stream-said {
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+.surface-stream-entry[data-dense] .surface-stream-meta {
+  font-size: 11px;
 }
 .surface-stream-verbs {
   margin-left: auto;
@@ -2074,6 +2121,97 @@ button.surface-edit-in-place:hover {
   flex-direction: column;
   gap: 10px;
 }
+/* HS-170-04: the hub face — SurfaceLedgerRows with state tokens,
+   ONE display headline, the posture row, and the footer receipt.
+   The hub template (data-cols="hub") is a flex row: name at primary,
+   inline tokens, trailing Open right-aligned at a fixed X.  At 393
+   tokens fall under the name; Open stays on the name line.  */
+.prefs-hub {
+  gap: 0;
+  padding: 0;
+}
+.prefs-hub-headline {
+  padding: 16px 12px 12px;
+}
+.prefs-hub-headline[data-warning] {
+  color: var(--warn);
+}
+.prefs-hub-headline:not([data-warning]) {
+  color: var(--text-muted);
+}
+.prefs-hub .surface-ledger-head {
+  display: none;
+}
+.prefs-hub .prefs-rule {
+  margin-top: 8px;
+}
+/* The hub ledger template. */
+.surface-ledger[data-cols="hub"] .surface-ledger-line {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+.surface-ledger[data-cols="hub"] .surface-ledger-row:first-child .surface-ledger-line {
+  border-top: none;
+}
+.surface-ledger[data-cols="hub"] .surface-ledger-primary {
+  flex: none;
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+  line-height: var(--desk-type-primary-lh);
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: unset;
+}
+.surface-ledger[data-cols="hub"] .surface-state-chip,
+.surface-ledger[data-cols="hub"] .surface-token {
+  flex: none;
+  white-space: nowrap;
+}
+.surface-ledger[data-cols="hub"] .surface-ledger-trailing {
+  flex: none;
+  margin-left: auto;
+}
+/* 393: tokens under the name, Open on the name line. */
+/* 393: name + Open on line 1, tokens on line 2.
+   Flex-wrap + order: primary and trailing (order 0) fill line 1;
+   a 100%-basis pseudo forces a line break; tokens (order 1) flow
+   inline on line 2.  Row gap is 0 so the pseudo break adds nothing. */
+@container surface (max-width: 559.9px) {
+  .surface-ledger[data-cols="hub"] .surface-ledger-line {
+    flex-wrap: wrap;
+    gap: 0 10px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  .surface-ledger[data-cols="hub"] .surface-ledger-primary {
+    flex: 1 0 0;
+    min-width: 0;
+    order: 0;
+  }
+  .surface-ledger[data-cols="hub"] .surface-ledger-trailing {
+    order: 0;
+    margin-left: auto;
+  }
+  /* Force a line break after trailing. */
+  .surface-ledger[data-cols="hub"] .surface-ledger-line::after {
+    content: "";
+    flex-basis: 100%;
+    height: 0;
+    order: 0;
+  }
+  /* Tokens flow inline on line 2. */
+  .surface-ledger[data-cols="hub"] .surface-ledger-line > .surface-state-chip,
+  .surface-ledger[data-cols="hub"] .surface-ledger-line > .surface-token {
+    order: 1;
+    margin-top: 2px;
+  }
+}
 .prefs-filter {
   max-width: none;
 }
@@ -2204,15 +2342,14 @@ button.surface-edit-in-place:hover {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 26px;
-  padding: 0 6px;
+  min-height: 52px;
+  padding: 0 12px;
 }
 .prefs-posture-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: var(--letter-spacing-label-wide);
-  color: var(--text-muted);
+  flex: 1;
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+  line-height: var(--desk-type-primary-lh);
 }
 /* HS-139-07: .prefs-precedence removed from the face — the chain is now
    a title attribute on the POSTURE line. CSS kept as a no-op comment
@@ -2222,6 +2359,139 @@ button.surface-edit-in-place:hover {
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+.prefs-wallpaper-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 6px;
+}
+.prefs-wallpaper-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface-2);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-light),
+    inset -1px -1px 0 var(--bevel-dark);
+}
+.prefs-wallpaper-choice {
+  position: relative;
+  min-width: 0;
+}
+.prefs-wallpaper-choice > .prefs-wallpaper-card {
+  width: 100%;
+  height: 100%;
+}
+.prefs-wallpaper-favorite {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  min-width: 36px;
+  min-height: 36px;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+.prefs-wallpaper-favorite[aria-pressed="true"] {
+  color: var(--accent);
+}
+.prefs-wallpaper-card:hover,
+.prefs-wallpaper-card:focus-visible {
+  border-color: var(--accent);
+  background: var(--surface-3);
+}
+.prefs-wallpaper-card[data-selected] {
+  border-color: var(--accent);
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-light),
+    inset -1px -1px 0 var(--bevel-dark),
+    0 0 0 1px var(--accent-tint),
+    0 3px 12px var(--accent-glow);
+}
+.prefs-wallpaper-preview {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 8 / 5;
+  border: 1px solid var(--etch-dark);
+  background: var(--bg);
+}
+.prefs-wallpaper-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.prefs-wallpaper-preview-quiet {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 6px;
+  background:
+    radial-gradient(circle at 50% 42%, var(--surface-3), transparent 48%),
+    var(--bg);
+}
+.prefs-wallpaper-preview-quiet span {
+  display: block;
+  width: 52px;
+  height: 1px;
+  background: var(--border-subtle);
+}
+.prefs-wallpaper-preview-quiet span:nth-child(2) {
+  width: 34px;
+  margin-inline: auto;
+  background: var(--accent-tint);
+}
+.prefs-wallpaper-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.prefs-wallpaper-copy strong,
+.prefs-wallpaper-state,
+.prefs-wallpaper-fact {
+  font-family: var(--font-mono);
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+}
+.prefs-wallpaper-copy strong {
+  font-size: 11px;
+}
+.prefs-wallpaper-copy > span {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.35;
+  text-transform: none;
+}
+.prefs-wallpaper-state {
+  justify-self: end;
+  color: var(--text-muted);
+  font-size: 9px;
+}
+.prefs-wallpaper-card[data-selected] .prefs-wallpaper-state {
+  color: var(--accent);
+}
+.prefs-wallpaper-fact {
+  margin: 0;
+  padding: 4px 6px 8px;
+  color: var(--text-muted);
+  font-size: 9px;
+}
+@container surface (max-width: 419px) {
+  .prefs-wallpaper-grid {
+    grid-template-columns: 1fr;
+  }
 }
 /* "Config lives elsewhere" fact bodies (Delivery, empty System). */
 .prefs-elsewhere {
@@ -3084,4 +3354,542 @@ button.surface-edit-in-place:hover {
   flex-wrap: wrap;
   gap: 6px;
   padding: 2px 0;
+}
+/* HS-175-03: CALENDAR section primaries stay on ONE line at wide
+   widths even when data-wrap is set (the design says single-line
+   at 1440; at 393 the container query stacks chips underneath). */
+.prefs-calendar-section .surface-ledger-row[data-wrap] .surface-ledger-primary {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* The CALENDAR rows carry no time token: four columns (lead · primary ·
+   cells · verbs) so the trailing verbs never land in the 6ch time slot
+   and spill left over the cells (seen at 1440, 2026-09-05). */
+.prefs-calendar-section .surface-ledger-line,
+.prefs-calendar-section .surface-ledger-line[data-has-trailing] {
+  grid-template-columns: 52px minmax(0, 1fr) max-content max-content;
+}
+
+/* ── HS-174-02/03: Remote Access credential token + issue well ── */
+.prefs-token-once {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.prefs-token-value {
+  flex: 1;
+  min-width: 0;
+  font: 400 12px / 1.4 var(--font-mono);
+  color: var(--text);
+  word-break: break-all;
+}
+.prefs-token-caption {
+  display: block;
+  font: 600 11px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding-top: 4px;
+}
+.prefs-token-caption[data-tone="warning"] {
+  color: var(--warning);
+}
+.prefs-issue-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 4px 0;
+}
+.prefs-issue-start {
+  display: flex;
+  justify-content: flex-start;
+  padding: 4px 0;
+}
+.prefs-hub-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 0 8px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   HS-167-03 — SurfaceIdentity: the project orientation band.
+   Name (the Primary type step), chip row, purpose, outcome.
+   ══════════════════════════════════════════════════════════════════════ */
+.surface-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 var(--desk-surface-row-pad-x) var(--space-2);
+}
+.surface-identity-name {
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+  line-height: var(--desk-type-primary-lh);
+  color: var(--text);
+  min-width: 0;
+}
+.surface-identity-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.surface-identity-trailing {
+  margin-left: auto;
+}
+.surface-identity-purpose {
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-body-size);
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+.surface-identity-outcome {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+.surface-identity-outcome-mark {
+  flex: none;
+  color: var(--text-muted);
+}
+
+/* HS-167-03 — SurfaceVerbs active verb styling.
+   A verb with aria-current="true" inside the verb bar renders as
+   the etched lit state (sunken well). */
+.surface-verbs-actions [aria-current="true"] {
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+  color: var(--text);
+}
+/* HS-167-03 — count chip inside a verb button. */
+.surface-verb-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  background: var(--wash-1);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text);
+}
+
+/* HS-167-03 — SurfaceLedgerRow trailing slot: a quiet verb or chevron
+   right-aligned after cells, its own grid slot. */
+.surface-ledger-trailing {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--text-faint);
+  font-size: var(--desk-surface-label-size);
+}
+/* Extend the default grid to include the trailing column. */
+.surface-ledger-line[data-has-trailing] {
+  grid-template-columns: 52px minmax(0, 1fr) max-content 6ch max-content max-content;
+}
+
+/* HS-167-04 — the "room" ledger template (the Project Room's grammar:
+   time · lead · primary · cells · trailing). A FLEX row, never the
+   fixed 6ch grid the meetings ledger uses — a date token in the cells
+   overprinted its neighbour there. Cells sit in a gapped run after the
+   primary; trailing hugs the right edge; at the narrow container the
+   primary takes the whole line and the cells fall under it. */
+.surface-ledger[data-cols="room"] .surface-ledger-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+.surface-ledger[data-cols="room"] .surface-ledger-time {
+  flex: 0 0 52px;
+}
+.surface-ledger[data-cols="room"] .surface-ledger-lead {
+  flex: none;
+  width: 16px;
+  text-align: center;
+}
+.surface-ledger[data-cols="room"] .surface-ledger-primary {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.surface-ledger[data-cols="room"] .surface-ledger-cell,
+.surface-ledger[data-cols="room"] .surface-token,
+.surface-ledger[data-cols="room"] .surface-state-chip,
+.surface-ledger[data-cols="room"] .surface-provenance-chip {
+  flex: none;
+  white-space: nowrap;
+}
+.surface-ledger[data-cols="room"] .surface-ledger-trailing {
+  flex: none;
+  margin-left: auto;
+}
+@container surface (max-width: 559.9px) {
+  .surface-ledger[data-cols="room"] .surface-ledger-primary {
+    flex-basis: calc(100% - 52px - 16px - 20px);
+  }
+  .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-primary ~ :not(.surface-ledger-trailing) {
+    margin-left: 78px;
+  }
+  .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-primary ~ * + :not(.surface-ledger-trailing) {
+    margin-left: 0;
+  }
+}
+
+/* HS-167-03 — SurfaceLedgerRow wrap: primary wraps instead of
+   ellipsizing; cells fall under at the narrow container. */
+.surface-ledger-row[data-wrap] .surface-ledger-primary {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+@container surface (max-width: 559.9px) {
+  .surface-ledger-row[data-wrap] .surface-ledger-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  /* HS-168-04: lead + primary stay on ONE line; only cells/trailing wrap under.
+     The old `flex: 1 1 100%` forced the primary onto its own line, splitting
+     the checkmark lead from the answer text (the owner's bounce). */
+  .surface-ledger-row[data-wrap] .surface-ledger-primary {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: normal;
+  }
+  /* Trailing slot right-aligned, wraps under on its own line. */
+  .surface-ledger-row[data-wrap] .surface-ledger-line[data-has-trailing]
+    .surface-ledger-trailing {
+    margin-left: auto;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   HS-167-03 — ScrollHint: gradient edge fades for scrolling wells.
+   ONE species, axis prop (x or y).
+   ══════════════════════════════════════════════════════════════════════ */
+.surface-scroll-hint {
+  position: relative;
+}
+/* Horizontal (axis=x) — absolute pseudo-elements on the wrapper. */
+.surface-scroll-hint[data-axis="x"]::before,
+.surface-scroll-hint[data-axis="x"]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  display: none;
+  pointer-events: none;
+  z-index: var(--desk-z-local);
+}
+.surface-scroll-hint[data-axis="x"]::before {
+  left: 0;
+  background: linear-gradient(to right, var(--surface-1), transparent);
+}
+.surface-scroll-hint[data-axis="x"]::after {
+  right: 0;
+  background: linear-gradient(to left, var(--surface-1), transparent);
+}
+.surface-scroll-hint[data-axis="x"][data-scroll-hint="right"]::after,
+.surface-scroll-hint[data-axis="x"][data-scroll-hint="both"]::before,
+.surface-scroll-hint[data-axis="x"][data-scroll-hint="both"]::after,
+.surface-scroll-hint[data-axis="x"][data-scroll-hint="left"]::before {
+  display: block;
+}
+/* Vertical (axis=y) — sticky pseudo-elements within the flow. */
+.surface-scroll-hint[data-axis="y"]::before,
+.surface-scroll-hint[data-axis="y"]::after {
+  content: "";
+  position: sticky;
+  left: 0;
+  right: 0;
+  height: 28px;
+  display: none;
+  pointer-events: none;
+  z-index: var(--desk-z-local);
+  flex-shrink: 0;
+}
+.surface-scroll-hint[data-axis="y"]::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--surface-1), transparent);
+  margin-bottom: -28px;
+}
+.surface-scroll-hint[data-axis="y"]::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--surface-1), transparent);
+  margin-top: -28px;
+}
+.surface-scroll-hint[data-axis="y"][data-scroll-hint="bottom"]::after,
+.surface-scroll-hint[data-axis="y"][data-scroll-hint="both"]::before,
+.surface-scroll-hint[data-axis="y"][data-scroll-hint="both"]::after,
+.surface-scroll-hint[data-axis="y"][data-scroll-hint="top"]::before {
+  display: block;
+}
+
+/* ═══ HS-170-04 — MEETINGS FACE ═══════════════════════════════════ */
+
+/* The display headline (ONE per face). */
+.meetings-headline {
+  padding: 0 0 4px;
+}
+.meetings-headline .surface-display {
+  color: var(--text-muted);
+}
+.meetings-headline[data-accent] .surface-display {
+  color: var(--accent);
+}
+
+/* Head verbs row. */
+.meetings-head-verbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 0 0 8px;
+}
+
+/* The stream: the flat list of meeting rows. */
+.meetings-stream-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+/* A stream row: body left, verb right. */
+.meetings-stream-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.meetings-stream-row[data-selected] {
+  background: var(--desk-window-etch);
+  border-radius: 2px;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+/* The body is a clickable div (role="button"), not a <button>. */
+.meetings-stream-row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  cursor: pointer;
+  align-items: flex-start;
+  color: inherit;
+  font: inherit;
+}
+.meetings-stream-row-body:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Title at primary type step. */
+.meetings-stream-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Token line: SEP 04 · 30 MIN · 1,204 WORDS · OFF */
+.meetings-stream-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.meetings-stream-fact {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+/* Middle dot separator between tokens (U+00B7). */
+.meetings-stream-dot {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dimmed);
+  margin: 0 0.5ch;
+}
+.meetings-stream-no-transcript {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dimmed);
+  white-space: nowrap;
+}
+
+/* State token tones. */
+.meetings-stream-tokens [data-tone="success"] {
+  color: var(--success);
+}
+.meetings-stream-tokens [data-tone="warn"] {
+  color: var(--warning);
+}
+.meetings-stream-tokens [data-tone="danger"] {
+  color: var(--danger);
+}
+.meetings-stream-tokens [data-tone="accent"] {
+  color: var(--accent);
+}
+
+/* Row verb slot. */
+.meetings-stream-row-verb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Compact fact line: hidden in full mode, shown in narrowed mode. */
+.meetings-stream-compact-facts {
+  display: none;
+}
+
+/* The narrowed list in SurfaceSplit. */
+.meetings-stream[data-narrowed] .meetings-stream-tokens {
+  display: none;
+}
+.meetings-stream[data-narrowed] .meetings-stream-row-verb {
+  display: none;
+}
+.meetings-stream[data-narrowed] .meetings-stream-row {
+  padding: 6px 0;
+}
+.meetings-stream[data-narrowed] .meetings-stream-title {
+  font-size: 13px;
+}
+.meetings-stream[data-narrowed] .meetings-stream-compact-facts {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.meetings-stream[data-narrowed] .meetings-stream-row-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* HS-170-04 — detail head (display title + facts) */
+.meetings-detail-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 0 10px;
+}
+.meetings-detail-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.meetings-detail-facts [data-tone="success"] { color: var(--success); }
+.meetings-detail-facts [data-tone="warn"] { color: var(--warning); }
+.meetings-detail-facts [data-tone="danger"] { color: var(--danger); }
+
+/* HS-170-04 — NEEDS YOU section in detail */
+.meetings-detail-needs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 0;
+}
+.meetings-detail-needs-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.meetings-detail-needs-head .surface-caption {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.meetings-detail-outcomes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.meetings-detail-outcome-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.meetings-detail-outcome-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.meetings-detail-outcome-verb {
+  flex-shrink: 0;
+}
+
+/* HS-172 — proposal prefix accent in meeting detail */
+.meetings-proposal-prefix {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* HS-172 — 393 responsive: proposal rows stack verbs under text */
+@container surface (max-width: 559.9px) {
+  .meetings-detail-outcome-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .meetings-detail-outcome-verb {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+}
+
+/* HS-170-04 — 393 responsive layout */
+@container surface (max-width: 559.9px) {
+  .meetings-head-verbs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .meetings-stream-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .meetings-stream-row-verb {
+    justify-content: flex-end;
+  }
 }

@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 69  # informational; 68→69: observations, evidence links, proposals, reviews (HS-160-01)
+SCHEMA_VERSION = 76  # informational; 74→75: calendar_event_link_suppressions (HS-175 counsel C5); 75→76: dictation_journal.corrections_applied (HS-176-02)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -150,6 +150,7 @@ CREATE TABLE IF NOT EXISTS intel_jobs (
     executor_lease_token TEXT,
     executor_lease_epoch INTEGER NOT NULL DEFAULT 0,
     executor_lease_expires_at REAL,
+    model_host TEXT,
     requested_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     attempts INTEGER NOT NULL DEFAULT 0,
@@ -559,6 +560,8 @@ CREATE TABLE IF NOT EXISTS projects (
     revision INTEGER NOT NULL DEFAULT 0,
     last_review_id TEXT,
     last_review_at TEXT,
+    -- HS-169-04: per-project read marker for the Room's "since you looked".
+    room_read_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -833,6 +836,9 @@ ON remote_dictation_deliveries(updated_at DESC);
 -- + final text are secret-filtered before insert and the table is retention-
 -- capped (prune-on-insert to a last-N bound). `corrected` / `correction_id` are
 -- set by HS-45-03 when a user fixes an entry in the moment.
+-- HS-176-02 (ruling R5) splits the two facts: `corrected` keeps its meaning
+-- ("he taught FROM this row"), and `corrections_applied` is a JSON array of
+-- the correction ids that FIRED ON this row.
 CREATE TABLE IF NOT EXISTS dictation_journal (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -849,7 +855,8 @@ CREATE TABLE IF NOT EXISTS dictation_journal (
     confidence REAL,
     warnings TEXT NOT NULL DEFAULT '[]',
     corrected INTEGER NOT NULL DEFAULT 0,
-    correction_id INTEGER
+    correction_id INTEGER,
+    corrections_applied TEXT NOT NULL DEFAULT '[]'
 );
 
 CREATE INDEX IF NOT EXISTS idx_dictation_journal_recent
@@ -2240,7 +2247,13 @@ CREATE TABLE IF NOT EXISTS pipeline_events (
     error_code TEXT,
     duration_ms REAL NOT NULL DEFAULT 0,
     correlation_id TEXT NOT NULL DEFAULT '',
-    is_async INTEGER NOT NULL DEFAULT 0
+    is_async INTEGER NOT NULL DEFAULT 0,
+    -- HS-174: origin of the call (local stdio/in-process vs remote HTTP).
+    origin TEXT NOT NULL DEFAULT 'local',
+    -- HS-174: caller address for remote calls (e.g. tailnet IP).
+    caller TEXT NOT NULL DEFAULT '',
+    -- HS-174: credential identity label for remote calls.
+    caller_identity TEXT NOT NULL DEFAULT ''
 );
 
 CREATE INDEX IF NOT EXISTS idx_pipeline_events_timestamp
@@ -2320,7 +2333,12 @@ CREATE TABLE IF NOT EXISTS connector_watches (
     test_result_json TEXT,
     last_test_at TEXT,
     next_evaluation_at TEXT,
-    last_evaluated_at TEXT
+    last_evaluated_at TEXT,
+    -- HS-164-01: unattended bookkeeping (cadence + circuit).
+    evaluation_cadence_minutes INTEGER NOT NULL DEFAULT 60,
+    circuit_state TEXT NOT NULL DEFAULT 'closed',
+    circuit_failure_streak INTEGER NOT NULL DEFAULT 0,
+    circuit_opened_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_connector_watches_connector
     ON connector_watches(connector_id, enabled);
@@ -3470,7 +3488,17 @@ CREATE TABLE IF NOT EXISTS scheduled_recordings (
     delegation_receipt_id TEXT NOT NULL DEFAULT '',
     calendar_event_id TEXT NOT NULL DEFAULT '',
     calendar_uid TEXT NOT NULL DEFAULT '',
-    calendar_source_id TEXT NOT NULL DEFAULT ''
+    calendar_source_id TEXT NOT NULL DEFAULT '',
+    born_from TEXT NOT NULL DEFAULT '',
+    -- HS-175 counsel C3: the owner's cancel is final.  Stamped (epoch) by
+    -- the owner's Cancel; with (calendar_source_id, calendar_uid) it is the
+    -- tombstone the calendar refresh honours.  Additive, nullable.
+    owner_cancelled_at REAL,
+    -- HS-175 counsel re-read (1): the tombstone is keyed by OCCURRENCE --
+    -- (calendar_source_id, calendar_uid, calendar_starts_at) -- so Cancel
+    -- on one standup of a series means "this one", never the series.
+    -- The event's starts_at exactly as projected (the parser's UTC string).
+    calendar_starts_at TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_scheduled_recordings_enabled
 ON scheduled_recordings(enabled, next_fire_at) WHERE enabled=1;
@@ -3499,6 +3527,24 @@ CREATE INDEX IF NOT EXISTS idx_calendar_events_upcoming
 ON calendar_events(starts_at, id);
 
 -- HS-151-01: The thread ledger — persistent desk conversations.
+-- Interview control state composes Threads; citizen records retain their owners.
+CREATE TABLE IF NOT EXISTS interview_sessions (
+    thread_id TEXT PRIMARY KEY REFERENCES threads(id) ON DELETE CASCADE,
+    revision INTEGER NOT NULL CHECK (revision >= 1),
+    state_json TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS interview_events (
+    thread_id TEXT NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
+    command_id TEXT NOT NULL,
+    request_digest TEXT NOT NULL,
+    revision INTEGER NOT NULL,
+    event_kind TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (thread_id, command_id),
+    UNIQUE (thread_id, revision)
+);
+
 CREATE TABLE IF NOT EXISTS threads (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL DEFAULT '',
@@ -3517,6 +3563,14 @@ CREATE TABLE IF NOT EXISTS threads (
 );
 CREATE INDEX IF NOT EXISTS idx_threads_updated
 ON threads(updated_at);
+
+CREATE TRIGGER IF NOT EXISTS interview_thread_deleted
+AFTER UPDATE OF deleted_at ON threads
+WHEN NEW.deleted_at IS NOT NULL
+BEGIN
+    DELETE FROM interview_sessions WHERE thread_id=NEW.id;
+    DELETE FROM interview_events WHERE thread_id=NEW.id;
+END;
 
 CREATE TABLE IF NOT EXISTS thread_messages (
     id TEXT PRIMARY KEY,
@@ -3742,6 +3796,7 @@ CREATE TABLE IF NOT EXISTS watch_evaluations (
     completed_at TEXT,
     error_code TEXT,
     error_detail TEXT,
+    metadata_json TEXT NOT NULL DEFAULT '{}',
     UNIQUE(watch_id, watch_revision, source_revision)
 );
 CREATE INDEX IF NOT EXISTS idx_watch_evaluations_watch
@@ -3868,4 +3923,193 @@ CREATE TABLE IF NOT EXISTS project_reviews (
 );
 CREATE INDEX IF NOT EXISTS idx_project_reviews_status
     ON project_reviews(project_id, status);
+
+-- HS-162-01: Project updates (§8, UPD-004).
+-- A draft pins the project_revision and source_manifest it was built over.
+-- Publishing sets lifecycle='published' + published_at; published rows are
+-- IMMUTABLE (the repo layer refuses any write).  Regeneration creates a new
+-- draft (draft_revision+1) that supersedes the previous unaccepted draft.
+CREATE TABLE IF NOT EXISTS project_updates (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    project_revision INTEGER NOT NULL,
+    review_id TEXT,
+    lifecycle TEXT NOT NULL DEFAULT 'draft',
+    draft_revision INTEGER NOT NULL DEFAULT 1,
+    body_md TEXT NOT NULL DEFAULT '',
+    claims_json TEXT NOT NULL DEFAULT '{}',
+    source_manifest_json TEXT NOT NULL DEFAULT '{}',
+    generator TEXT NOT NULL DEFAULT 'deterministic',
+    generator_host TEXT,
+    generator_model TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    published_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_project_updates_project
+    ON project_updates(project_id, lifecycle);
+CREATE INDEX IF NOT EXISTS idx_project_updates_review
+    ON project_updates(project_id, review_id);
+
+-- HS-163-01: Steward policy — per-Project: eligible effect kinds, YOLO flags,
+-- bounds (retry counts, per-run action caps, cooldowns per STW-008).
+CREATE TABLE IF NOT EXISTS steward_policies (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    eligible_effect_kinds_json TEXT NOT NULL DEFAULT '[]',
+    yolo_flags_json TEXT NOT NULL DEFAULT '{}',
+    max_retries INTEGER NOT NULL DEFAULT 3,
+    max_actions_per_run INTEGER NOT NULL DEFAULT 10,
+    cooldown_seconds INTEGER NOT NULL DEFAULT 0,
+    bounds_json TEXT NOT NULL DEFAULT '{}',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    -- HS-164-01: explicit per-project unattended opt-in (default OFF).
+    unattended_enabled INTEGER NOT NULL DEFAULT 0,
+    -- HS-173-04: per-project nudge comment template ({days} placeholder).
+    nudge_template TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_steward_policies_project
+    ON steward_policies(project_id);
+
+-- HS-163-01: Steward runs — the durable run record (STW-001).
+-- state: queued|running|stopping|completed|failed|interrupted.
+-- phase: observe|compare|propose|act|verify|record.
+-- STW-002: partial unique index enforces at most one active run per project.
+CREATE TABLE IF NOT EXISTS steward_runs (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    policy_id TEXT REFERENCES steward_policies(id),
+    state TEXT NOT NULL DEFAULT 'queued',
+    phase TEXT NOT NULL DEFAULT 'observe',
+    requested_by TEXT NOT NULL DEFAULT '',
+    stop_requested_at TEXT,
+    watermark TEXT NOT NULL DEFAULT '',
+    summary_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    started_at TEXT,
+    completed_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_steward_runs_project
+    ON steward_runs(project_id, state);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_steward_runs_one_active_per_project
+    ON steward_runs(project_id)
+    WHERE state IN ('queued', 'running', 'stopping');
+
+-- HS-163-01: Steward steps — the STW-005 reconciliation substrate.
+-- Each step in a run: phase, seq, effect kind, idempotency_key for dedup,
+-- expected/observed state JSON for verification (STW-004), receipts, errors.
+CREATE TABLE IF NOT EXISTS steward_steps (
+    id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL REFERENCES steward_runs(id) ON DELETE CASCADE,
+    phase TEXT NOT NULL DEFAULT '',
+    seq INTEGER NOT NULL DEFAULT 0,
+    state TEXT NOT NULL DEFAULT 'pending',
+    effect_kind TEXT NOT NULL DEFAULT '',
+    idempotency_key TEXT NOT NULL DEFAULT '',
+    expected_state_json TEXT NOT NULL DEFAULT '{}',
+    observed_state_json TEXT NOT NULL DEFAULT '{}',
+    receipt_json TEXT NOT NULL DEFAULT '{}',
+    error_json TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    completed_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_steward_steps_run
+    ON steward_steps(run_id, phase, seq);
+CREATE INDEX IF NOT EXISTS idx_steward_steps_idempotency
+    ON steward_steps(idempotency_key);
+
+-- HS-163-01: Steward command records — replay substrate.
+-- Each command that triggered or drove a steward action.
+CREATE TABLE IF NOT EXISTS steward_commands (
+    id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL REFERENCES steward_runs(id) ON DELETE CASCADE,
+    step_id TEXT REFERENCES steward_steps(id),
+    command_kind TEXT NOT NULL DEFAULT '',
+    payload_json TEXT NOT NULL DEFAULT '{}',
+    result_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_steward_commands_run
+    ON steward_commands(run_id);
+
+-- HS-172-06: Suggested sources — transcript-derived source proposals for Rooms.
+-- Each row is a suggestion (pending / accepted / dismissed); dismissed
+-- suggestions never recur for the same (project_id, reference) pair.
+CREATE TABLE IF NOT EXISTS source_suggestions (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    meeting_id TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    reference TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_source_suggestions_project
+    ON source_suggestions(project_id, status);
+CREATE INDEX IF NOT EXISTS idx_source_suggestions_dedup
+    ON source_suggestions(project_id, reference);
+
+-- HS-172-03: Follow-through proposals — intel-extracted decisions and action
+-- items that arrive as PROPOSALS in NEEDS YOU.  Lifecycle: proposed ->
+-- confirmed | dismissed.  Confirmed proposals create real decision_records /
+-- action_items through the kernel; dismissed ones disappear.  Dedup by
+-- (meeting_id, fingerprint) so a re-run never duplicates.
+CREATE TABLE IF NOT EXISTS follow_through_proposals (
+    id TEXT PRIMARY KEY,
+    meeting_id TEXT NOT NULL,
+    project_id TEXT,
+    kind TEXT NOT NULL CHECK (kind IN ('decision', 'action')),
+    text TEXT NOT NULL,
+    owner_hint TEXT,
+    due_hint TEXT,
+    source_artifact_id TEXT,
+    source_plugin TEXT NOT NULL,
+    segment_timestamp REAL,
+    speaker_label TEXT,
+    model_host TEXT,
+    fingerprint TEXT NOT NULL,
+    state TEXT NOT NULL DEFAULT 'proposed'
+        CHECK (state IN ('proposed', 'confirmed', 'dismissed')),
+    original_text TEXT,
+    decision_record_id TEXT,
+    commitment_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    decided_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_ftp_meeting
+    ON follow_through_proposals(meeting_id, state);
+CREATE INDEX IF NOT EXISTS idx_ftp_project
+    ON follow_through_proposals(project_id, state);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ftp_dedup
+    ON follow_through_proposals(meeting_id, fingerprint)
+    WHERE state = 'proposed';
+
+-- HS-175-02: Calendar event to Room (project) matcher join table.
+CREATE TABLE IF NOT EXISTS calendar_event_projects (
+    calendar_event_id TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    match_source TEXT NOT NULL DEFAULT 'title'
+        CHECK (match_source IN ('title', 'attendee', 'manual')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (calendar_event_id, project_id)
+);
+CREATE INDEX IF NOT EXISTS idx_cep_project
+    ON calendar_event_projects(project_id);
+
+-- HS-175 counsel C5: a durable Unlink.  The owner's unlink of an
+-- (event, Room) pair is keyed by the event's (source, uid) rather than
+-- its projection id, so it survives both the matcher's re-run and the
+-- projection id regenerating when the event's time changes.  A manual
+-- link clears it.  Additive; never rebuilt.
+CREATE TABLE IF NOT EXISTS calendar_event_link_suppressions (
+    calendar_source_id TEXT NOT NULL,
+    calendar_uid TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (calendar_source_id, calendar_uid, project_id)
+);
 """

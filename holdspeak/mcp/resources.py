@@ -325,6 +325,36 @@ _RESOURCE_TEMPLATES = [
         "description": "Owner-only exact contract for one registered intelligence capability.",
         "mimeType": _JSON_MIME,
     },
+    {
+        "uriTemplate": "holdspeak://projects/{project_id}",
+        "name": "Project identity",
+        "description": "One project identity and room fields.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uriTemplate": "holdspeak://projects/{project_id}/room",
+        "name": "Project room",
+        "description": "Coherent room projection for one project.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uriTemplate": "holdspeak://projects/{project_id}/delta",
+        "name": "Project delta",
+        "description": "Current delta window or honest empty state for one project.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uriTemplate": "holdspeak://projects/{project_id}/updates/{update_id}",
+        "name": "Project update",
+        "description": "One project update by identifier.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uriTemplate": "holdspeak://projects/{project_id}/steward/runs/{run_id}",
+        "name": "Steward run",
+        "description": "Pollable steward run state with phase and steps.",
+        "mimeType": _JSON_MIME,
+    },
 ]
 
 _PRIMITIVE_KIND_ALIASES = {
@@ -356,6 +386,15 @@ _INFERENCE_ACQUISITION_PATTERN = re.compile(
 )
 _INFERENCE_CAPABILITY_PATTERN = re.compile(
     r"^holdspeak://inference/capabilities/([^/]+)$"
+)
+_PROJECT_DETAIL_PATTERN = re.compile(r"^holdspeak://projects/([^/]+)$")
+_PROJECT_ROOM_PATTERN = re.compile(r"^holdspeak://projects/([^/]+)/room$")
+_PROJECT_DELTA_PATTERN = re.compile(r"^holdspeak://projects/([^/]+)/delta$")
+_PROJECT_UPDATE_PATTERN = re.compile(
+    r"^holdspeak://projects/([^/]+)/updates/([^/]+)$"
+)
+_PROJECT_STEWARD_RUN_PATTERN = re.compile(
+    r"^holdspeak://projects/([^/]+)/steward/runs/([^/]+)$"
 )
 
 
@@ -536,5 +575,57 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
         return _contents(uri, _JSON_MIME, value)
     if match := _PEOPLE_RELATIONSHIP_PATTERN.fullmatch(uri):
         value = people_family.get_relationship(principal, match.group(1))
+        return _contents(uri, _JSON_MIME, value)
+    # ── Project Room resources (SS11.2) ──────────────────────────────
+    if match := _PROJECT_STEWARD_RUN_PATTERN.fullmatch(uri):
+        # Must precede _PROJECT_DETAIL_PATTERN (longer path wins).
+        _project_id, run_id = match.group(1), match.group(2)
+        db = get_database()
+        run = db.steward_runs.get_run(run_id)
+        if run is None:
+            raise ServiceError(
+                "steward_run_not_found",
+                f"Unknown steward run: {run_id}",
+                context={"status": 404},
+            )
+        steps = db.steward_steps.list_steps(run_id)
+        from holdspeak.web.routes.steward import _serialize_run, _serialize_steps
+        return _contents(uri, _JSON_MIME, {
+            "run": _serialize_run(run),
+            "steps": _serialize_steps(steps),
+        })
+    if match := _PROJECT_UPDATE_PATTERN.fullmatch(uri):
+        _project_id, update_id = match.group(1), match.group(2)
+        from holdspeak.services.project_update_service import ProjectUpdateService
+        svc = ProjectUpdateService(get_database())
+        value = svc.get_update(principal, update_id)
+        return _contents(uri, _JSON_MIME, value)
+    if match := _PROJECT_ROOM_PATTERN.fullmatch(uri):
+        from holdspeak.services.project_service import ProjectService
+        value = ProjectService(get_database()).room(principal, match.group(1))
+        return _contents(uri, _JSON_MIME, value)
+    if match := _PROJECT_DELTA_PATTERN.fullmatch(uri):
+        project_id = match.group(1)
+        from holdspeak.services.project_service import ProjectService as _PS
+        from holdspeak.services.project_delta_service import ProjectDeltaService
+        db = get_database()
+        ps = _PS(db)
+        ps._require_project(project_id)
+        # collector=None is safe: _find_open_review and _load_frozen_window
+        # are read-only queries that do not use the collector.
+        delta_svc = ProjectDeltaService(db, collector=None)
+        open_review = delta_svc._find_open_review(project_id)
+        if open_review is not None:
+            window = delta_svc._load_frozen_window(open_review)
+            return _contents(uri, _JSON_MIME, window)
+        room_fields = db.projects.get_project_room_fields(project_id)
+        last_accepted_at = (room_fields or {}).get("last_review_at")
+        return _contents(uri, _JSON_MIME, {
+            "open_review": None,
+            "last_accepted_at": last_accepted_at,
+        })
+    if match := _PROJECT_DETAIL_PATTERN.fullmatch(uri):
+        from holdspeak.services.project_service import ProjectService
+        value = ProjectService(get_database()).get_project(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     raise ResourceError(f"Unknown resource: {uri}")

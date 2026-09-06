@@ -51,7 +51,7 @@ export function Knowledge() {
       announce(`Written ${clockNow()}`);
       await kb.reload();
     } catch (error) {
-      announce(`⚠ ${readableError(error)}`, "warn");
+      announce(readableError(error), "warn");
     }
   };
   const setFact = (key: string, value: string) =>
@@ -64,7 +64,7 @@ export function Knowledge() {
   const addFact = () => {
     const key = draftKey.trim();
     if (!key || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) {
-      announce("⚠ Refused · key format A-Z _ 0-9, letter first", "warn");
+      announce("REFUSED · key format A-Z _ 0-9, letter first", "warn");
       return;
     }
     void putKb({ ...kbFacts, [key]: draftValue.trim() });
@@ -82,7 +82,7 @@ export function Knowledge() {
       announce(`Written ${clockNow()}`);
       await hs.reload();
     } catch (error) {
-      announce(`⚠ ${readableError(error)}`, "warn");
+      announce(readableError(error), "warn");
     }
   };
   return (

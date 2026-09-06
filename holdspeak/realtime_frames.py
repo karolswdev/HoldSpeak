@@ -47,6 +47,12 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
     "bookmark",                 # a moment was named mid-meeting
     "capture_recovery",         # capture degraded and wants a choice
     "device_health",            # an attached device's battery/RSSI moved
+    "dictation.journal.entry",  # one dictation journal row was stored (HS-176-02)
+                                # payload: {id, created_at, source, transcript,
+                                #           final_text, total_ms, corrections_applied,
+                                #           taught_from, intent_tag, target_profile}
+                                # audience: the owner's own desk sockets — the runtime
+                                #           bus has no other subscriber
     "dictation_preview",        # dictation is held for preview
     "duration",                 # the live meeting clock
     "intel_complete",           # a meeting intelligence window landed

@@ -277,6 +277,63 @@ TOOLS.extend([
         ["meeting_id", "format"],
     ),
     _mcp_tool(
+        "meeting.run_intelligence",
+        "Enqueue a fresh intelligence job for a meeting that has a transcript but never ran intelligence. Returns {jobId, state, host}. Refuses 409 when the meeting has no transcript.",
+        {"meeting_id": {"type": "string", "description": "Meeting identifier."}},
+        ["meeting_id"],
+    ),
+    _mcp_tool(
+        "meeting.proposals",
+        "List follow-through proposals extracted from a meeting's intelligence run. Each proposal is a decision or action item waiting for Confirm or Drop.",
+        {
+            "meeting_id": {"type": "string", "description": "Meeting identifier."},
+            "state": {"type": "string", "enum": ["proposed", "confirmed", "dismissed"], "description": "Optional state filter."},
+        },
+        ["meeting_id"],
+    ),
+    _mcp_tool(
+        "proposal.confirm",
+        "Confirm a follow-through proposal, writing the decision record or action item through the kernel. Optionally amend text, owner, or due before confirming.",
+        {
+            "proposal_id": {"type": "string", "description": "Proposal identifier."},
+            "text": {"type": "string", "description": "Amended text (optional; original kept when omitted)."},
+            "owner": {"type": "string", "description": "Accountable owner (optional)."},
+            "due": {"type": "string", "description": "ISO-8601 due date (optional)."},
+        },
+        ["proposal_id"],
+    ),
+    _mcp_tool(
+        "proposal.dismiss",
+        "Dismiss a follow-through proposal without creating any record.",
+        {"proposal_id": {"type": "string", "description": "Proposal identifier."}},
+        ["proposal_id"],
+    ),
+    # HS-173-04: Reviewer nudge tools
+    _mcp_tool(
+        "steward.nudges",
+        "List reviewer nudge proposals for a project, optionally filtered by state (proposed, sent, dismissed).",
+        {
+            "project_id": {"type": "string", "description": "Project identifier."},
+            "state": {"type": "string", "enum": ["proposed", "sent", "dismissed"], "description": "Optional state filter."},
+        },
+        ["project_id"],
+    ),
+    _mcp_tool(
+        "nudge.send",
+        "Send a reviewer nudge: post the comment to GitHub via gh pr comment. The text is the exact comment posted.",
+        {
+            "step_id": {"type": "string", "description": "Nudge step identifier."},
+            "text": {"type": "string", "description": "The comment text to post (required, non-empty)."},
+        },
+        ["step_id", "text"],
+    ),
+    _mcp_tool(
+        "nudge.dismiss",
+        "Dismiss a proposed reviewer nudge without posting. A 7-day cooldown starts.",
+        {"step_id": {"type": "string", "description": "Nudge step identifier."}},
+        ["step_id"],
+    ),
+    _mcp_tool(
         "dictation.list",
         "Read the retained dictation journal, optionally paged and filtered by source.",
         {
@@ -292,6 +349,8 @@ TOOLS.extend([
         ["entry_id"],
     ),
     _mcp_tool("desk.snapshot", "Read one coherent snapshot of the durable HoldSpeak desk.", {}),
+    _mcp_tool("desk.needs_you", "Aggregate needs-you items across all active project rooms. Returns {count, projects, items, next}.", {}),
+    _mcp_tool("settings.hub", "Read the settings hub row facts: module state tokens for the settings truth table.", {}),
     _mcp_tool(
         "decision_record.list", "List durable decision records, newest first.",
         {"limit": {"type": "integer", "minimum": 1, "maximum": 500}, "offset": {"type": "integer", "minimum": 0}},
@@ -694,6 +753,129 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         return dictation.get_entry(principal, entry_id)
     if name == "desk.snapshot":
         return desk.snapshot(principal)
+    if name == "desk.needs_you":
+        from holdspeak.services.project_service import ProjectService
+        project_service = ProjectService(db, observer=obs)
+        projects = project_service.list_projects(principal, {"include_archived": False})
+        _sev = {"danger": 0, "warning": 1, "info": 2}
+        items: list[dict] = []
+        project_ids: set[str] = set()
+        for proj in projects:
+            pid = proj.get("id") or ""
+            if not pid:
+                continue
+            try:
+                room = project_service.room(principal, pid)
+            except Exception:
+                continue
+            needs = room.get("needsYou", {})
+            if needs.get("state") != "ok":
+                continue
+            for item in (needs.get("items") or []):
+                items.append({"projectId": pid, "projectName": proj.get("name") or proj.get("title") or "", "ref": item.get("title", ""), "title": item.get("title", ""), "why": item.get("why", ""), "ageToken": item.get("since", ""), "source": item.get("source", ""), "verbHref": item.get("url"), "severity": item.get("severity", "info")})
+                project_ids.add(pid)
+        items.sort(key=lambda r: (_sev.get(r.get("severity", "info"), 2), r.get("ageToken") or ""))
+        return {"count": len(items), "projects": sorted(project_ids), "items": items, "next": None}
+    if name == "settings.hub":
+        from holdspeak.config import Config, CONFIG_FILE
+        from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+        config = Config.load()
+        engines = 0; groups_set = 0; default_set = False
+        try:
+            from holdspeak.services.model_library_service import ModelLibraryApplicationService
+            from holdspeak.services.inference_setup_service import InferenceSetupApplicationService
+            setup = InferenceSetupApplicationService(db)
+            lib = ModelLibraryApplicationService(db, setup_service=setup)
+            lib_data = lib.get_library(principal)
+            engines = lib_data.get("summary", {}).get("ready_count", 0)
+        except Exception:
+            pass
+        try:
+            from holdspeak.kernel.runtime import _configure
+            broker = _configure(db)
+            asn_svc = InferenceAssignmentService(db, registry=broker.inference_capability_registry)
+            asn = asn_svc.assignment_summary(principal)
+            for row in asn.get("rows", []):
+                if row.get("id") == "global":
+                    default_set = row.get("status") == "assigned"
+                elif row.get("status") == "assigned":
+                    groups_set += 1
+        except Exception:
+            pass
+        connected = 0
+        try:
+            connected = len(db.automations.list_provider_connections())
+        except Exception:
+            pass
+        loops = 0
+        try:
+            loops = len(db.cadence.list_loops())
+        except Exception:
+            pass
+        import os
+        written_at = None
+        try:
+            if CONFIG_FILE.exists():
+                written_at = os.path.getmtime(CONFIG_FILE)
+        except Exception:
+            pass
+        # HS-171-02: heartbeat rhythm mirror.
+        heartbeat_rhythm: dict = {"loops": loops}
+        try:
+            from holdspeak.services.heartbeat_service import HeartbeatService
+            hb = HeartbeatService(db)
+            heartbeat_rhythm = hb.hub_rhythm()
+        except Exception:
+            heartbeat_rhythm["sweepEveryMinutes"] = 15
+            heartbeat_rhythm["nextSweepAt"] = None
+            heartbeat_rhythm["lastSweepAt"] = None
+            heartbeat_rhythm["quiet"] = {"start": 22, "end": 8, "held": False}
+        meetings_host = None
+        try:
+            if config.meeting.intel_profile_id:
+                from holdspeak.intel.providers import resolve_meeting_placement as _rmp, endpoint_host as _eh
+                _pl = _rmp(config.meeting)
+                if _pl.profile_id:
+                    if _pl.node:
+                        meetings_host = str(_pl.node)
+                    else:
+                        _h = _eh(_pl.base_url)
+                        meetings_host = _h if _h else (_pl.boundary or "local")
+        except Exception:
+            pass
+        return {"models": {"engines": engines, "groupsSet": groups_set, "defaultSet": default_set}, "connections": {"connected": connected}, "voice": {"live": config.dictation.pipeline.enabled, "target": config.dictation.pipeline.target_profile_override or "auto"}, "meetings": {"intelligence": config.meeting.intel_enabled, "auto": config.meeting.intelligence_auto, "host": meetings_host}, "rhythm": heartbeat_rhythm, "sounds": {"on": config.ui.desk_sounds}, "system": {"host": "THIS DEVICE", "mesh": bool(getattr(config.mesh, "device_name", ""))}, "posture": config.control_mode, "writtenAt": written_at}
+    if name == "meeting.run_intelligence":
+        from holdspeak.services.meeting_intel_service import MeetingIntelService as _MIS
+        intel_svc = _MIS(db, observer=obs)
+        return intel_svc.run_intelligence(principal, str(args.get("meeting_id") or ""))
+    if name == "meeting.proposals":
+        from holdspeak.services.proposal_bridge_service import ProposalBridgeService as _PBS
+        pbs = _PBS(db)
+        return {"proposals": pbs.list_meeting_proposals(str(args.get("meeting_id") or ""), state=args.get("state"))}
+    if name == "proposal.confirm":
+        from holdspeak.services.proposal_bridge_service import ProposalBridgeService as _PBS2
+        pbs = _PBS2(db)
+        return pbs.confirm_proposal(principal, str(args.get("proposal_id") or ""), text=args.get("text"), owner=args.get("owner"), due=args.get("due"))
+    if name == "proposal.dismiss":
+        from holdspeak.services.proposal_bridge_service import ProposalBridgeService as _PBS3
+        pbs = _PBS3(db)
+        return pbs.dismiss_proposal(principal, str(args.get("proposal_id") or ""))
+    # HS-173-04: reviewer nudge MCP twins
+    if name == "steward.nudges":
+        from holdspeak.services.project_steward_service import ProjectStewardService as _PSS
+        from unittest.mock import MagicMock
+        svc = _PSS(db, MagicMock(), MagicMock())
+        return {"nudges": svc.list_nudges(str(args.get("project_id") or ""), state=args.get("state"))}
+    if name == "nudge.send":
+        from holdspeak.services.project_steward_service import ProjectStewardService as _PSS2
+        from unittest.mock import MagicMock
+        svc = _PSS2(db, MagicMock(), MagicMock())
+        return svc.send_nudge(principal, str(args.get("step_id") or ""), str(args.get("text") or ""))
+    if name == "nudge.dismiss":
+        from holdspeak.services.project_steward_service import ProjectStewardService as _PSS3
+        from unittest.mock import MagicMock
+        svc = _PSS3(db, MagicMock(), MagicMock())
+        return svc.dismiss_nudge(principal, str(args.get("step_id") or ""))
     if name == "decision_record.list":
         allowed = ("limit", "offset")
         return records.list_records(principal, **{key: args[key] for key in allowed if key in args})
@@ -816,3 +998,29 @@ def _dispatch_verb(args: dict[str, Any], principal: Principal, primitives: Primi
     if handler is None:
         raise ToolError(f"Verb is not allowlisted for MCP: {verb_id}")
     return handler(verb_args)
+
+
+# ── MCP-007: Palette scoping ────────────────────────────────────────
+# The same species as thread_modes.palette_for (allow-list intersected
+# with a registry), applied at the MCP layer.  A palette is a
+# frozenset[str] of tool names.  tools_for_palette filters the
+# catalogue; dispatch_for_palette rejects names outside the palette.
+
+
+def tools_for_palette(palette: frozenset[str]) -> list[dict[str, Any]]:
+    """Return only the tools whose names are in *palette*."""
+    return [t for t in TOOLS if t["name"] in palette]
+
+
+def dispatch_for_palette(
+    name: str,
+    arguments: dict[str, Any] | None,
+    principal: Principal,
+    palette: frozenset[str],
+) -> Any:
+    """Dispatch scoped by *palette* -- typed refusal for tools outside it."""
+    if name not in palette:
+        raise ToolError(
+            f"Tool {name!r} is not in the configured palette"
+        )
+    return dispatch(name, arguments, principal)

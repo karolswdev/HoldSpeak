@@ -2,7 +2,8 @@
  * Send/Stop, mic never sends, two-stage slash completion, R3 line-start rule,
  * completeSlash pure function, verb registry mapping. */
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { act, render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { useThreadComposerDrafts } from "../threadComposerDrafts";
 import {
   ThreadComposer,
   InlineEditor,
@@ -110,6 +111,11 @@ vi.mock("../surface/Surface", () => ({
 }));
 
 // ── helpers ────────────────────────────────────────────────────────
+
+beforeEach(() => {
+  useThreadComposerDrafts.setState({ drafts: {} });
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: vi.fn() });
+});
 
 function renderComposer(overrides: Partial<ThreadComposerProps> = {}) {
   const props: ThreadComposerProps = {
@@ -380,12 +386,65 @@ describe("ThreadComposer", () => {
     expect(screen.getByTestId("composer-send")).toBeInTheDocument();
   });
 
+  it("retains unsent text and references across window remounts, separately for each Thread", () => {
+    const first = renderComposer();
+    const input = screen.getByTestId("composer-input");
+    fireEvent.change(input, { target: { value: "@De" } });
+    fireEvent.click(screen.getByTestId("surface-row-Design notes"));
+    fireEvent.change(input, { target: { value: "My draft before changing rooms" } });
+    first.unmount();
+    const other = renderComposer({ threadId: "t-2" });
+    expect(screen.getByTestId("composer-input")).toHaveValue("");
+    expect(screen.queryByTestId("ref-chip-note")).not.toBeInTheDocument();
+    other.unmount();
+    renderComposer();
+    expect(screen.getByTestId("composer-input")).toHaveValue("My draft before changing rooms");
+    expect(screen.getByTestId("ref-chip-note")).toHaveTextContent("Design notes");
+  });
+
+  it.each([true, false])("settles an in-flight send after the window remounts: accepted=%s", async (accepted) => {
+    let finish!: (accepted: boolean) => void;
+    const onSend = vi.fn(() => new Promise<boolean>((resolve) => { finish = resolve; }));
+    const first = renderComposer({ onSend });
+    fireEvent.change(screen.getByTestId("composer-input"), { target: { value: "Keep this across rooms" } });
+    fireEvent.click(screen.getByTestId("composer-send"));
+    first.unmount();
+    renderComposer({ onSend });
+    expect(screen.getByTestId("composer-input")).toHaveValue("Keep this across rooms");
+    expect(screen.getByTestId("composer-send")).toBeDisabled();
+    expect(onSend).toHaveBeenCalledOnce();
+    await act(async () => finish(accepted));
+    expect(screen.getByTestId("composer-input")).toHaveValue(accepted ? "" : "Keep this across rooms");
+    expect(screen.getByTestId("composer-input")).not.toBeDisabled();
+  });
+
   it("Enter sends the message", () => {
     const { props } = renderComposer();
     const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
     fireEvent.change(input, { target: { value: "hello world" } });
     fireEvent.keyDown(input, { key: "Enter", shiftKey: false });
     expect(props.onSend).toHaveBeenCalledWith("hello world", []);
+  });
+
+  it("keeps the draft until the hub accepts it and blocks duplicate sends", async () => {
+    let finish!: (accepted: boolean) => void;
+    renderComposer({ onSend: vi.fn(() => new Promise<boolean>((resolve) => { finish = resolve; })) });
+    const input = screen.getByTestId("composer-input");
+    fireEvent.change(input, { target: { value: "Remember my exact words" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(input).toHaveValue("Remember my exact words");
+    expect(screen.getByTestId("composer-send")).toBeDisabled();
+    await act(async () => finish(true));
+    expect(input).toHaveValue("");
+  });
+
+  it.each([false, new Error("Connection lost")])("preserves the draft after an unconfirmed send: %s", async (failure) => {
+    renderComposer({ onSend: vi.fn(async () => { if (failure instanceof Error) throw failure; return failure; }) });
+    const input = screen.getByTestId("composer-input");
+    fireEvent.change(input, { target: { value: "Do not lose this prompt" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    await waitFor(() => expect(screen.getByTestId("composer-send")).not.toBeDisabled());
+    expect(input).toHaveValue("Do not lose this prompt");
   });
 
   it("Shift+Enter does NOT send (inserts newline)", () => {

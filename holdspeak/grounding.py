@@ -25,6 +25,19 @@ GROUNDING_MAX_REFS = 16
 GROUNDING_TRANSCRIPT_CAP = 12_000
 GROUNDING_EXPANDS = ("summary", "full")
 
+
+def _memory_repo(db: object):
+    """The relationship-aware index, when this handle carries one.
+
+    A database handle opened before the memory indexes existed (and the
+    narrow doubles some callers pass) has no ``memory`` repository. Recall
+    is an enrichment, never a precondition: without the repository the pass
+    is a no-op and the caller keeps the evidence it already resolved.
+    """
+
+    return getattr(db, "memory", None)
+
+
 # The steer's own budget (HS-87-04): a hydrated steer must fit what a
 # TUI agent can take in one paste. Shown in the composer; over-cap
 # refuses at compose time.
@@ -173,8 +186,10 @@ def hydrate_refs_detailed(
         for raw_ref in qualified_refs or []
     )
     has_explicit_sources = bool(meeting_ids or artifact_ids or qualified_refs)
+    memory = _memory_repo(db)
     if (
         include_memory
+        and memory is not None
         and query
         and str(query).strip()
         and not has_project_ref
@@ -185,7 +200,7 @@ def hydrate_refs_detailed(
             for ref in (exclude_refs or [])
             if str(ref).strip()
         }
-        search = db.memory.search(
+        search = memory.search(
             str(query),
             limit=GROUNDING_MAX_REFS + len(excluded),
             exclude_refs=excluded,
@@ -437,8 +452,11 @@ def _hydrate_qualified(
         project = db.projects.get_project(resource_id)
         if project is None:
             return [], [ref]
-        if query and str(query).strip():
-            search = db.memory.search(
+        memory = _memory_repo(db)
+        # No index on this handle: fall through to the relationship listing
+        # below, which is the honest recency answer rather than an error.
+        if memory is not None and query and str(query).strip():
+            search = memory.search(
                 str(query),
                 project_id=resource_id,
                 limit=GROUNDING_MAX_REFS,

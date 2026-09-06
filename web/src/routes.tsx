@@ -39,7 +39,7 @@ export interface DemotedRoute {
 }
 
 export const DEMOTED_ROUTES: DemotedRoute[] = [
-  { path: "/setup", surface: "configure-setup" },
+  { path: "/setup", surface: "project-setup" },
   { path: "/dictation", surface: "dictate" },
   { path: "/live", surface: "record-live" },
   {

@@ -1,0 +1,383 @@
+/* HS-169-02 — The streamlined Door: one-screen project creation. */
+
+.door-root {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 4px 0 0;
+}
+
+/* ── 1. Outcome well ── */
+
+.door-outcome-well {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.door-outcome-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-well, #1c1f27);
+  border-radius: 2px;
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-light),
+    inset -1px -1px 0 var(--bevel-dark);
+  padding: 0 12px;
+  min-height: 44px;
+}
+
+.door-outcome-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font: 600 15px/1.3 Inter, system-ui, sans-serif;
+  color: var(--text, #f2f3f5);
+  padding: 10px 0;
+  outline: none;
+  min-width: 0;
+}
+
+.door-outcome-input::placeholder {
+  color: var(--faint, #767e8d);
+  font-weight: 400;
+}
+
+.door-outcome-caption {
+  font: 600 11px/1 "JetBrains Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--faint, #767e8d);
+  padding-left: 2px;
+}
+
+/* ── 2. SOURCES section ── */
+
+.door-sources-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.door-section-label {
+  font: 600 11px/1 "JetBrains Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted, #9ba2b0);
+  padding-left: 2px;
+}
+
+.door-sources-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Fix 2: Boxed rows (the Door's rows are controls — counsel N2) ── */
+
+.door-sources-list .surface-ledger-row {
+  background: var(--desk-window-well, #1c1f27);
+  border: 1px solid var(--border, #2a2e3e);
+  border-radius: 2px;
+  padding: 10px 12px;
+}
+
+.door-sources-list .surface-ledger-line {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  grid-template-columns: unset !important;
+  padding: 0;
+}
+
+.door-sources-list .surface-ledger-lead {
+  flex: 0 0 28px;
+  text-align: center;
+}
+
+.door-sources-list .surface-ledger-primary {
+  flex: 0 0 auto;
+  min-width: 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.door-sources-list .surface-ledger-trailing {
+  flex: none;
+  margin-left: auto;
+}
+
+/* The open well sits inside the boxed row. */
+.door-sources-list .surface-ledger-open {
+  padding: 4px 0 0;
+}
+
+/* ── Lead emblem ── */
+
+.door-lead {
+  font: 600 12px/1 "JetBrains Mono", monospace;
+  color: var(--text, #f2f3f5);
+}
+
+/* ── Provider name (cold rows) ── */
+
+.door-provider-name {
+  font: 600 13px/1.3 Inter, system-ui, sans-serif;
+  color: var(--text, #f2f3f5);
+}
+
+/* ── Scope trigger (connected rows) ── */
+
+.door-scope-trigger {
+  font: 600 13px/1.3 Inter, system-ui, sans-serif !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 4px;
+}
+
+.door-chevron {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: var(--muted, #9ba2b0);
+}
+
+/* ── Row cells: display:contents so children participate in the
+   row's flex layout (toggles on line 1, count on line 2). ── */
+
+.door-row-cells {
+  display: contents;
+}
+
+/* The count line wraps to line 2 (its min-width > remaining line-1
+   space).  flex-grow fills leftward so the trailing egress + Adjust
+   sit right-aligned on the same line (artboard D3). */
+.door-count-line {
+  flex: 1 0 300px;
+  margin-left: 38px;
+  font: 400 12px/1.3 "JetBrains Mono", monospace;
+  color: var(--muted, #9ba2b0);
+}
+
+/* CHECKING and CAN'T CHECK chips also wrap to line 2. */
+.door-row-status {
+  flex: 1 0 300px;
+  margin-left: 38px;
+}
+
+.door-count-reason {
+  color: var(--faint, #767e8d);
+}
+
+/* ── Row trailing: egress + adjust ── */
+
+.door-row-trailing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.door-adjust-btn {
+  font: 600 12px/1 "JetBrains Mono", monospace !important;
+}
+
+/* ── Fix 1: narrow (393) four-line grammar ── */
+
+@container surface (max-width: 559.9px) {
+  /* Line 1: trigger alone (takes the full row after the lead). */
+  .door-sources-list .surface-ledger-primary {
+    flex: 1 1 calc(100% - 44px);
+    min-width: 0;
+  }
+  /* Lines 2+3: cells become a proper flex container on their own
+     row so tokens never leak into the trigger's hit area. */
+  .door-row-cells {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    flex-basis: 100%;
+  }
+  .door-count-line {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+  .door-row-status {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+  /* Line 4: trailing wraps to its own row. */
+  .door-sources-list .surface-ledger-trailing {
+    flex-basis: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* ── Picker well ── */
+
+.door-picker-well {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0 8px;
+  animation: surface-rise-in var(--duration-medium, 200ms) var(--ease-quart, cubic-bezier(0.25, 1, 0.5, 1)) both;
+}
+
+.door-picker-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.door-picker-card {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left !important;
+  padding: 8px 10px !important;
+  border-radius: 2px;
+}
+
+.door-picker-card:hover {
+  background: var(--wash-1, rgba(255, 255, 255, 0.04));
+}
+
+.door-picker-card-emblem {
+  font: 600 12px/1 "JetBrains Mono", monospace;
+  color: var(--muted, #9ba2b0);
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.door-picker-card-label {
+  font: 600 13px/1.3 Inter, system-ui, sans-serif;
+  color: var(--text, #f2f3f5);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.door-picker-card-detail {
+  font: 400 12px/1 "JetBrains Mono", monospace;
+  color: var(--faint, #767e8d);
+  flex-shrink: 0;
+}
+
+.door-picker-card-known {
+  font: 600 10px/1 "JetBrains Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent, #a86e4a);
+  background: var(--accent-tint);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.door-picker-more {
+  align-self: flex-start;
+  font: 400 12px/1 "JetBrains Mono", monospace !important;
+  color: var(--muted, #9ba2b0) !important;
+}
+
+/* ── Adjust well ── */
+
+.door-adjust-well {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 12px 0 8px;
+  animation: surface-rise-in var(--duration-medium, 200ms) var(--ease-quart, cubic-bezier(0.25, 1, 0.5, 1)) both;
+}
+
+.door-adjust-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.door-adjust-label {
+  font: 600 11px/1 "JetBrains Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted, #9ba2b0);
+}
+
+.door-adjust-check-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.door-adjust-check-label {
+  font: 600 11px/1 "JetBrains Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted, #9ba2b0);
+}
+
+/* ── Receipt left-aligned: the Door has no footer egress, so collapse
+   the egress column entirely and left-align the receipt. ── */
+
+.desk-next .surface-footer-layout.door-footer {
+  grid-template-columns: minmax(0, 1fr) max-content;
+  grid-template-areas: "receipt verbs";
+}
+.desk-next .door-footer .surface-footer-egress {
+  display: none;
+}
+.desk-next .door-footer .surface-footer-receipt {
+  justify-content: flex-start;
+  grid-area: receipt;
+}
+.desk-next .door-footer .surface-footer-verbs {
+  grid-area: verbs;
+}
+/* At the narrow footer breakpoint, the receipt sits under the verbs;
+   left-align it there too. */
+@container surface (max-width: 420px) {
+  .desk-next .surface-footer-layout.door-footer {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-areas: "receipt verbs";
+  }
+}
+
+/* ── Footer receipt ── */
+
+.door-receipt {
+  font: 600 11px/1 "JetBrains Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted, #9ba2b0);
+}
+
+/* ── Error ── */
+
+.door-error {
+  font: 400 12px/1.3 "JetBrains Mono", monospace;
+  color: var(--danger, #f87171);
+  padding: 4px 2px;
+}
+
+/* ── Reduced motion ── */
+
+@media (prefers-reduced-motion: reduce) {
+  .door-picker-well,
+  .door-adjust-well {
+    animation: none;
+  }
+}

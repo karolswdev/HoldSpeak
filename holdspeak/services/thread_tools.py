@@ -80,6 +80,14 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "follow_through.board":            ("evidence_read",     False),
     "follow_through.complete":         ("effect_proposal",   False),
     "follow_through.commit_decision":  ("effect_proposal",   False),
+    # --- HS-172-03: proposals ---
+    "meeting.proposals":       ("evidence_read",     False),
+    "proposal.confirm":        ("effect_proposal",   False),
+    "proposal.dismiss":        ("effect_proposal",   False),
+    # --- reviewer nudge (HS-173-04) ---
+    "steward.nudges":          ("evidence_read",     False),
+    "nudge.send":              ("effect_proposal",   False),
+    "nudge.dismiss":           ("effect_proposal",   False),
     # --- monday brief ---
     "monday_brief.get":       ("evidence_read",     False),
     "monday_brief.generate":  ("candidate_builder", False),
@@ -97,6 +105,15 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     # --- settings family ---
     "settings.get":    ("evidence_read",     False),
     "settings.update": ("effect_proposal",   False),
+    "settings.hub":    ("evidence_read",     False),
+    # --- HS-170: the Concierge + the four faces' reads ---
+    "concierge.detect":   ("evidence_read",   False),
+    "concierge.propose":  ("evidence_read",   False),
+    "concierge.probe":    ("evidence_read",   False),
+    "concierge.apply":    ("effect_proposal", False),
+    "concierge.download": ("effect_proposal", False),
+    "desk.needs_you":     ("evidence_read",   False),
+    "meeting.run_intelligence": ("effect_proposal", False),
     # --- coder family ---
     "coder.list":   ("evidence_read",     False),
     "coder.get":    ("evidence_read",     False),
@@ -137,6 +154,7 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "people.calendar.unlink":      ("effect_proposal",   True),
     "people.owner_alias.link":     ("effect_proposal",   True),
     "people.owner_alias.unlink":   ("effect_proposal",   True),
+    "people.resolve":              ("evidence_read",     True),   # HS-172-04
     # --- plugin_job ---
     "plugin_job.list":    ("evidence_read",     False),
     "plugin_job.summary": ("evidence_read",     False),
@@ -194,6 +212,77 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "door.add_item": ("effect_proposal", False),  # HS-153-05: thread todo → Door
     # --- thread family (HS-152-05) ---
     "thread.set_status": ("effect_proposal", False),
+    # --- project family (HS-165; MCP-only, in no thread palette) ---
+    "project.get": ("evidence_read", False),
+    "project.get_delta": ("evidence_read", False),
+    "project.get_room": ("evidence_read", False),
+    "project.get_steward_run": ("evidence_read", False),
+    "project.list": ("evidence_read", False),
+    "project.list_updates": ("evidence_read", False),
+    "project.setup.resume": ("evidence_read", False),
+    "project.watch.inspect": ("evidence_read", False),
+    "provider.github_connection": ("evidence_read", False),
+    "provider.github_discover": ("evidence_read", False),
+    "provider.github_validate_repo": ("evidence_read", False),
+    "provider.list": ("evidence_read", False),
+    # HS-166: the Jira provider family (reads) + the one row-creating verb.
+    "provider.jira_connections": ("evidence_read", False),
+    "provider.jira_connection": ("evidence_read", False),
+    "provider.jira_discover": ("evidence_read", False),
+    "provider.jira_search": ("evidence_read", False),
+    "provider.jira_validate_scope": ("evidence_read", False),
+    "provider.jira_add_connection": ("effect_proposal", False),
+    # HS-174: the Confluence provider family (reads only in V0).
+    "provider.confluence_connections": ("evidence_read", False),
+    "provider.confluence_discover": ("evidence_read", False),
+    "provider.confluence_validate_space": ("evidence_read", False),
+    "project.accept_review": ("effect_proposal", False),
+    "project.archive": ("effect_proposal", False),
+    "project.configure_steward": ("effect_proposal", False),
+    "project.create": ("effect_proposal", False),
+    "project.decide_proposal": ("effect_proposal", False),
+    "project.draft_update": ("effect_proposal", False),
+    "project.link": ("effect_proposal", False),
+    "project.open_review": ("effect_proposal", False),
+    "project.publish_update": ("effect_proposal", False),
+    "project.restore": ("effect_proposal", False),
+    "project.run_steward": ("effect_proposal", False),
+    "project.steward.trigger": ("effect_proposal", False),  # HS-167-02: desk-wide trigger, same class as run_steward
+    "project.setup.answer": ("effect_proposal", False),
+    "project.setup.finalize": ("effect_proposal", False),
+    "project.setup.clarify_jira_scope": ("effect_proposal", False),  # HS-166
+    "project.setup.start": ("effect_proposal", False),
+    "project.setup.suggest": ("effect_proposal", False),
+    "project.stop_steward": ("effect_proposal", False),
+    "project.unlink": ("effect_proposal", False),
+    "project.update": ("effect_proposal", False),
+    "project.update_draft": ("effect_proposal", False),
+    "project.watch.evaluate": ("effect_proposal", False),
+    "project.watch.pause": ("effect_proposal", False),
+    "project.watch.resume": ("effect_proposal", False),
+    "project.watch.retire": ("effect_proposal", False),
+    "project.watch.set_rules": ("effect_proposal", False),
+    "project.watch.test": ("effect_proposal", False),
+    # HS-172-06: suggested source tools
+    "project.suggested_sources":         ("evidence_read",     False),
+    "project.add_suggested_source":      ("effect_proposal",   False),
+    "project.dismiss_suggested_source":  ("effect_proposal",   False),
+    # HS-168-02: connection tools (reads only -- no state mutation)
+    "connection.list": ("evidence_read", False),
+    "connection.recheck": ("evidence_read", False),
+    # HS-171-02: heartbeat family
+    "heartbeat.status": ("evidence_read", False),
+    "heartbeat.run_now": ("effect_proposal", False),
+    "heartbeat.set": ("effect_proposal", False),
+    "heartbeat.notify_test": ("effect_proposal", False),
+    "project.setup.select_proposal": ("effect_proposal", False),
+    "project.setup.deselect_proposal": ("effect_proposal", False),
+    "project.setup.test_proposal": ("effect_proposal", False),
+    "project.setup.clarify_repo_scope": ("effect_proposal", False),
+    "interview.get": ("evidence_read", False),
+    "interview.record_fact": ("effect_proposal", False),
+    "interview.suggest": ("effect_proposal", False),
+    "interview.change_section": ("effect_proposal", False),
 }
 
 # Public accessors
@@ -416,6 +505,7 @@ class ThreadToolExecutor:
         control_mode_fn: Callable[[], str],
         broker: Optional[Any] = None,
         clock: Callable[[], float] = time.time,
+        allowed_names: frozenset[str] | None = None,
     ) -> None:
         self._db = db
         self._dispatch = dispatch_fn
@@ -423,6 +513,8 @@ class ThreadToolExecutor:
         self._control_mode_fn = control_mode_fn
         self._broker = broker
         self._clock = clock
+        self._allowed_names = allowed_names
+        self._parent_context: Any = None
         self._handles: dict[str, ToolCallHandle] = {}
         self._on_decided: Optional[Callable[[str], None]] = None
 
@@ -448,6 +540,8 @@ class ThreadToolExecutor:
         """
         call_id = str(call.get("id") or uuid.uuid4().hex[:16])
         name = str(call.get("name", ""))
+        if self._allowed_names is not None and name not in self._allowed_names:
+            raise ValueError(f"Tool outside the admitted palette: {name}")
         args = call.get("arguments", {}) or {}
         if isinstance(args, str):
             try:
@@ -487,9 +581,17 @@ class ThreadToolExecutor:
                 "placement": "node:thread-turn",
             }
             try:
-                result = self._broker.submit(request, self._principal)
+                if self._parent_context is not None:
+                    request["parent_operation_id"] = self._parent_context.operation_id
+                    result = self._broker.submit_trusted_child(request, self._principal, self._parent_context, planned_node="thread-turn")
+                    if result.get("state") not in {"awaiting_decision", "awaiting_execution"}:
+                        raise ValueError("Tool admission refused or requires reconciliation")
+                else:
+                    result = self._broker.submit(request, self._principal)
                 child_id = str(result.get("operation_id", ""))
-            except Exception:
+            except Exception as exc:
+                if self._parent_context is not None:
+                    raise ValueError(f"Tool admission failed: {exc}") from exc
                 child_id = f"child-{call_id}"
         else:
             child_id = f"child-{call_id}"
@@ -547,6 +649,9 @@ class ThreadToolExecutor:
         cap, honouring a {"elicit": {...}} return by holding the call, and a
         cancel threading.Event + 30 s deadline.
         """
+        if self._parent_context is not None:
+            return self._execute_receipted(handle)
+
         if handle.state == "denied":
             return ToolResult(
                 name=handle.name, kind="tool_denied", payload={"error": "tool_denied"},
@@ -634,6 +739,57 @@ class ThreadToolExecutor:
                 payload={"error": str(exc)},
                 bytes=0, receipt_id="", sensitive=handle.sensitive,
             )
+
+    def _execute_receipted(self, handle: ToolCallHandle) -> ToolResult:
+        """Interview tools execute under a claimed child of the live tool turn.
+
+        A refused/replayed/expired claim never reaches domain dispatch. Terminal
+        IDs come from the kernel journal, not a generated presentation receipt.
+        """
+        node = Principal(PrincipalKind.NODE, "thread-turn")
+        claimed = False
+        receipt_id = ""
+        try:
+            operation = self._broker.store.operation(handle.kernel_child_id)
+            if not operation:
+                raise ValueError("Tool operation missing")
+            if handle.state == "denied":
+                if operation["state"] == "awaiting_decision":
+                    result = self._broker.decide(handle.kernel_child_id, "reject", operation["revision"], self._principal)
+                    receipt_id = str((result.get("receipt") or {}).get("receipt_id", ""))
+                return ToolResult(handle.name, "tool_denied", {"error": "tool_denied"}, 0, receipt_id, handle.sensitive)
+            if handle.state != "admitted":
+                raise ValueError(f"Tool is not admitted: {handle.state}")
+            if operation["state"] == "awaiting_decision":
+                self._broker.decide(handle.kernel_child_id, "approve", operation["revision"], self._principal)
+            claim = self._broker.claim(node, handle.call_id)
+            if not any(item.get("operation_id") == handle.kernel_child_id for item in claim.get("operations", [])):
+                raise ValueError("Tool claim refused or already consumed; reconcile before retry")
+            claimed = True
+            if handle._cancel and handle._cancel.is_set():
+                receipt = self._broker.receipt(handle.kernel_child_id, "cancelled", f"thread:{handle.thread_id}", node)
+                return ToolResult(handle.name, "cancelled", None, 0, str(receipt.get("receipt_id", "")), handle.sensitive)
+            handle.state = "executing"
+            result = self._dispatch(handle.name, dict(handle.args), self._principal)
+            failed = isinstance(result, dict) and ("error" in result or "elicit" in result)
+            receipt = self._broker.receipt(handle.kernel_child_id, "failed" if failed else "succeeded", f"thread:{handle.thread_id}", node)
+            receipt_id = str(receipt.get("receipt_id", ""))
+            handle.state = "completed"
+            handle.receipt_id = receipt_id
+            size = len(json.dumps(result, default=str).encode())
+            return ToolResult(handle.name, "error" if failed else derive_result_kind(handle.name, handle.args), result, min(size, TOOL_RESULT_BYTE_CAP), receipt_id, handle.sensitive, truncated=size > TOOL_RESULT_BYTE_CAP, original_bytes=size)
+        except Exception as exc:
+            if claimed:
+                try:
+                    receipt = self._broker.receipt(handle.kernel_child_id, "failed", f"thread:{handle.thread_id}", node)
+                    receipt_id = str(receipt.get("receipt_id", ""))
+                except Exception:
+                    # A lost acknowledgement is visible and never a second effect.
+                    pass
+            handle.state = "completed"
+            return ToolResult(handle.name, "tool_execution_failed", {"error": str(exc)}, 0, receipt_id, handle.sensitive)
+        finally:
+            self._broker.parent_run_controller.end_child_dispatch(self._parent_context.operation_id)
 
     def cancel(self, handle: ToolCallHandle) -> None:
         """Signal cancellation for an in-flight call."""

@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;650;700&amp;family=Space+Grotesk:wght@600;650;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+    a { color: #a86e4a; } a:hover { color: #bc8058; }
+  </style>
+</helmet>
+
+<!-- Room after nudge Send: the receipt row replaces the card (640) -->
+<div style="width:640px; border:1px solid #363b50; border-radius:2px; background:#15171d; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40), inset 0 0 0 1px #2a2e3e; display:flex; flex-direction:column;">
+
+  <!-- TITLE BAR -->
+  <div style="height:40px; padding:0 12px; display:flex; align-items:center; gap:10px; background:#242833; border-radius:1px 1px 0 0; flex-shrink:0;">
+    <div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
+      <span style="width:12px; height:12px; border-radius:2px; background:#f87171; display:block;"></span>
+      <span style="width:12px; height:12px; border-radius:2px; background:#fbbf24; display:block;"></span>
+      <span style="width:12px; height:12px; border-radius:2px; background:#34d399; display:block;"></span>
+    </div>
+    <span style="flex:1; min-width:0; font:700 14px/1 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Ship the Q4 platform on schedule with zero incidents</span>
+    <div style="display:flex; align-items:center; flex-shrink:0;">
+      <span style="padding:4px 12px; border:1px solid #2a2e3e; border-radius:2px; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#f2f3f5; cursor:pointer; white-space:nowrap;">Room</span>
+      <span style="margin-left:-1px; padding:4px 12px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; cursor:pointer; white-space:nowrap;">History</span>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div style="flex:1; padding:16px 20px 14px; display:flex; flex-direction:column; gap:20px;">
+
+    <!-- HEAD -->
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="font:650 26px/1.15 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#a86e4a;">2 need you</div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px; flex:1; min-width:0;">
+          <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; white-space:nowrap; color:#f87171;"><span style="flex:none; font-size:11px; line-height:1;">&#9679;</span>AT RISK</span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">3 OVERDUE</span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&middot;</span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap;">CHECKED 3 MIN AGO</span>
+        </div>
+        <button type="button" style="flex-shrink:0; min-height:28px; padding:4px 12px; border:1px solid #a86e4a; border-radius:0; background:#a86e4a; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; box-shadow:inset 0 1px 0 rgba(255,255,255,0.22), 0 1px 2px rgba(0,0,0,0.3); cursor:pointer;">Draft update</button>
+      </div>
+    </div>
+
+    <!-- NEEDS YOU 1 -->
+    <div style="display:flex; flex-direction:column;">
+      <div style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; margin-bottom:6px;">NEEDS YOU <span style="color:#f2f3f5;">2</span></div>
+
+      <!-- Receipt row: SENT (replaces the nudge card) -->
+      <div style="display:grid; grid-template-columns:52px 1fr; gap:0 8px; padding:8px 0; border-top:1px solid #2a2e3e;">
+        <span style="padding-top:2px; text-align:center;">
+          <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; white-space:nowrap; color:#34d399;"><span style="flex:none; font-size:11px; line-height:1;">&#9679;</span></span>
+        </span>
+        <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+          <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">SENT</span>
+          <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">Ania Kowalska</span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&middot;</span>
+          <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">#612</span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&middot;</span>
+          <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">18:02</span>
+          <span style="flex:1;"></span>
+          <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap; flex-shrink:0;">GITHUB.COM</span>
+        </div>
+      </div>
+
+      <!-- Bottleneck row: Ania Kowalska in cooldown (NUDGED JUST NOW, no Nudge verb, Open only) -->
+      <div style="display:grid; grid-template-columns:52px 1fr; gap:0 8px; padding:8px 0; border-top:1px solid #2a2e3e;">
+        <span style="padding-top:2px; text-align:center; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d;">AK</span>
+        <div style="display:flex; flex-direction:column; gap:4px; min-width:0;">
+          <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+            <span style="flex:1; min-width:0; font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Ania Kowalska</span>
+            <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#34d399; white-space:nowrap; flex-shrink:0;">NUDGED JUST NOW</span>
+            <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Open</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">REVIEW BOTTLENECK</span>
+            <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&middot;</span>
+            <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">3 D MEDIAN</span>
+            <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&middot;</span>
+            <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">3 PRS WAITING</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ASK -->
+    <div style="display:flex; align-items:center; gap:8px; padding:10px 12px; background:#1c1f27; border:1px solid #2a2e3e; border-radius:2px; box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07);">
+      <span style="flex:1; font:15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#767e8d;">Ask this project&#8230;</span>
+      <span style="width:24px; height:24px; display:flex; align-items:center; justify-content:center; border:1px solid #2a2e3e; border-radius:0; box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); cursor:pointer; flex-shrink:0;">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="1" width="6" height="10" rx="3"></rect><path d="M3 8a5 5 0 0010 0"></path><line x1="8" y1="13" x2="8" y2="15"></line></svg>
+      </span>
+      <span style="display:inline-flex; align-items:center; gap:0; min-height:18px; padding:0 0 0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap; flex-shrink:0;">MODEL<span style="display:inline-flex; align-items:center; padding:0 4px; min-height:14px; background:rgba(168,110,74,0.12); border:1px solid rgba(255,255,255,0.06); font-size:9px; letter-spacing:0.06em; color:#a86e4a; margin-left:6px;">192.168.1.43 &middot; LAN</span></span>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer style="height:36px; padding:0 12px; background:#1c1f27; border-top:1px solid #2a2e3e; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); flex-shrink:0;">
+    <div style="display:flex; align-items:center; justify-content:space-between; height:100%; gap:8px;">
+      <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d;">READ 09:21 &middot; NEXT CHECK 09:35</span>
+      <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#9ba2b0; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Refresh</button>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+</body>
+</html>

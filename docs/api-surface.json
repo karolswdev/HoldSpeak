@@ -810,6 +810,36 @@
       ]
     },
     {
+      "path": "/api/calendar/events",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.calendar_events",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/calendar/events/{event_id}/link",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.calendar_events",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/calendar/events/{event_id}/link",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.calendar_events",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/calendar/snapshot",
       "methods": [
         "POST"
@@ -825,6 +855,16 @@
         "POST"
       ],
       "module": "web.routes.calendar_snapshot",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/calendar/sources",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.calendar_sources",
       "consumers": [
         "web"
       ]
@@ -1168,6 +1208,76 @@
       "module": "web.routes.system.voice",
       "consumers": [
         "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/concierge/apply",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.concierge",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/concierge/detect",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.concierge",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/concierge/download",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.concierge",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/concierge/probe",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.concierge",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/concierge/propose",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.concierge",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/connections",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.connections",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/connections/{provider}/recheck",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.connections",
+      "consumers": [
         "web"
       ]
     },
@@ -1784,6 +1894,16 @@
       "module": "web.routes.desk_actuators",
       "consumers": [
         "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/desk/needs-you",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
         "web"
       ]
     },
@@ -3021,6 +3141,14 @@
       ]
     },
     {
+      "path": "/api/mcp",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.mcp_http",
+      "consumers": []
+    },
+    {
       "path": "/api/meeting",
       "methods": [
         "PATCH"
@@ -3155,9 +3283,7 @@
         "POST"
       ],
       "module": "web.routes.meetings.crud",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/meetings/{meeting_id}/export",
@@ -3175,6 +3301,16 @@
         "POST"
       ],
       "module": "web.routes.meetings.aftercare",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/meetings/{meeting_id}/follow-through-proposals",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.proposals",
       "consumers": [
         "web"
       ]
@@ -3209,6 +3345,16 @@
     },
     {
       "path": "/api/meetings/{meeting_id}/intel-recovery/skip",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.intel",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/meetings/{meeting_id}/intelligence/run",
       "methods": [
         "POST"
       ],
@@ -3575,6 +3721,26 @@
       ]
     },
     {
+      "path": "/api/nudges/{step_id}/dismiss",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.steward",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/nudges/{step_id}/send",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.steward",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/people/commitments/{commitment_id}/execution",
       "methods": [
         "GET"
@@ -3815,6 +3981,16 @@
       ]
     },
     {
+      "path": "/api/people/resolve",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/people/setup",
       "methods": [
         "POST"
@@ -3979,6 +4155,14 @@
       "consumers": []
     },
     {
+      "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-jira-scope",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_setup",
+      "consumers": []
+    },
+    {
       "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-scope",
       "methods": [
         "POST"
@@ -4034,6 +4218,26 @@
         "POST"
       ],
       "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/door",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_door",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/door/count",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_door",
       "consumers": [
         "web"
       ]
@@ -4163,6 +4367,36 @@
       "consumers": []
     },
     {
+      "path": "/api/projects/{project_id}/nudges",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.steward",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/people",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/proposals",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.proposals",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/projects/{project_id}/resources",
       "methods": [
         "GET"
@@ -4245,9 +4479,89 @@
       ]
     },
     {
+      "path": "/api/projects/{project_id}/room/read",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/projects/{project_id}/since-last-meeting",
       "methods": [
         "GET"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/steward/policy",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.steward",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/steward/policy",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.steward",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/steward/runs",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.steward",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/steward/runs",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.steward",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/suggested-sources",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/suggested-sources/{ref}/add",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/suggested-sources/{ref}/dismiss",
+      "methods": [
+        "POST"
       ],
       "module": "web.routes.projects",
       "consumers": [
@@ -4263,12 +4577,54 @@
       "consumers": []
     },
     {
+      "path": "/api/projects/{project_id}/updates",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.project_updates",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/updates/draft",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_updates",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/projects/{project_id}/watches",
       "methods": [
         "GET"
       ],
       "module": "web.routes.watches",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/proposals/{proposal_id}/confirm",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.proposals",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/proposals/{proposal_id}/dismiss",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.proposals",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/providers",
@@ -4279,6 +4635,38 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/providers/confluence/connections",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/confluence/connections/{ref}/recheck",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/confluence/discover",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/confluence/validate",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
     },
     {
       "path": "/api/providers/github/connection",
@@ -4306,6 +4694,58 @@
     },
     {
       "path": "/api/providers/github/validate-repo",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/jira/connections",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.providers",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/providers/jira/connections",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/providers/jira/connections/{ref}/recheck",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/jira/discover",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/jira/search",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/jira/validate-scope",
       "methods": [
         "POST"
       ],
@@ -4627,6 +5067,86 @@
       ]
     },
     {
+      "path": "/api/settings/heartbeat",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.settings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/heartbeat",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.system.settings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/heartbeat/run-now",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.settings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/hub",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.settings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/remote",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.mcp_http",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/remote",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.mcp_http",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/remote/credentials",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.mcp_http",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/remote/credentials/{credential_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.mcp_http",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/settings/secrets/{secret_id}",
       "methods": [
         "DELETE"
@@ -4823,6 +5343,36 @@
         "GET"
       ],
       "module": "web.routes.core",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/steward/runs/{run_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.steward",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/steward/runs/{run_id}/stop",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.steward",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/steward/trigger",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.steward",
       "consumers": [
         "web"
       ]
@@ -5178,6 +5728,16 @@
       ]
     },
     {
+      "path": "/api/threads/{thread_id}/interview",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.threads",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/threads/{thread_id}/keep",
       "methods": [
         "POST"
@@ -5248,6 +5808,46 @@
       ]
     },
     {
+      "path": "/api/updates/{update_id}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.project_updates",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/updates/{update_id}/markdown",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.project_updates",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/updates/{update_id}/publish",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_updates",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/updates/{update_id}/regenerate",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_updates",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/watches",
       "methods": [
         "GET"
@@ -5297,7 +5897,9 @@
         "POST"
       ],
       "module": "web.routes.watches",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/watches/{watch_id}/resume",
@@ -5305,7 +5907,9 @@
         "POST"
       ],
       "module": "web.routes.watches",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/watches/{watch_id}/retire",
@@ -5313,7 +5917,9 @@
         "POST"
       ],
       "module": "web.routes.watches",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/watches/{watch_id}/rules",

@@ -4,10 +4,11 @@
 import { useCallback, useMemo, useState } from "react";
 import { apiFetch, readableError } from "../../lib/api";
 import {
+  CycleGadget,
   GadgetTable,
   StringGadget,
-  GadgetGroup,
 } from "../../desk/surface/gadgets";
+import { countLabel } from "../../desk/surface";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { SurfaceSection } from "../../desk/surface/Surface";
 import { Button } from "../../components/signal/Signal";
@@ -192,7 +193,7 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
         ) : null}
       </SurfaceSection>
 
-      <SurfaceSection label={`Events (${phase.events.length})`}>
+      <SurfaceSection label={countLabel("EVENTS", phase.events.length)}>
         <GadgetTable
           head={["TITLE", "DAY", "START", "END", "LOCATION"]}
           deleteLabel="REMOVE?"
@@ -205,18 +206,16 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
               value={event.title}
               onChange={(next) => updateEvent(index, { title: next })}
             />,
-            <select
+            <CycleGadget
               key="weekday"
-              aria-label={`Event ${index + 1} weekday`}
+              label={`Event ${index + 1} weekday`}
               value={event.weekday}
-              onChange={(e) => updateEvent(index, { weekday: e.target.value })}
-            >
-              {WEEKDAYS.map((d) => (
-                <option key={d} value={d}>
-                  {d.charAt(0).toUpperCase() + d.slice(1, 3)}
-                </option>
-              ))}
-            </select>,
+              options={WEEKDAYS.map((d) => ({
+                value: d,
+                label: d.charAt(0).toUpperCase() + d.slice(1, 3),
+              }))}
+              onChange={(next) => updateEvent(index, { weekday: next })}
+            />,
             <StringGadget
               key="start"
               label={`Event ${index + 1} start`}

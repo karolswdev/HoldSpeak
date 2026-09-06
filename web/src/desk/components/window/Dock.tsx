@@ -1,10 +1,12 @@
 // Dock — the application launcher + running window toolbar.
 // Extracted from DeskWindow.tsx (HS-117-04).
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useCallback, type ReactNode } from "react";
+import { apiFetch } from "../../../lib/api";
 import { useIntelligenceAttention } from "../../intelligenceAttention";
 import { openIntelligence } from "../../intelligenceNavigation";
 import { DOCK_SPRITES, SYSTEM } from "../../systemSprites";
 import { useDesk } from "../../store";
+import { useSettleState } from "../../settleState";
 import { useChairState } from "../../chairState";
 import { useShortcutSheet } from "../../chromeState";
 import { useKeymap } from "../../keymap";
@@ -16,6 +18,7 @@ import { toggleExpose } from "./Expose";
 import { VerbGlyph } from "./VerbGlyph";
 import { ShortcutSheet } from "./ShortcutSheet";
 import { DOCK_APPLICATIONS } from "../../applications";
+import { RoomActions } from "./RoomActions";
 
 /** HS-100-11 — the dock IS the launcher: the four applications ride it
  * always (running mark when their window is open); drawers and tools
@@ -46,9 +49,24 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const chairSurface = useChairState((s) => s.surface);
   const toggleSurface = useChairState((s) => s.toggle);
   const intelligenceAttention = useIntelligenceAttention();
-  const intelligenceBadge = intelligenceAttention.overdue
-    ? String(intelligenceAttention.overdue)
-    : intelligenceAttention.briefReady ? "•" : null;
+  // HS-171-04: dock badge = needs-you count (muted excluded).
+  const [needsYouCount, setNeedsYouCount] = useState(0);
+  const refreshNeedsYou = useCallback(() => {
+    void apiFetch<{ count?: number }>("/api/desk/needs-you")
+      .then((data) => setNeedsYouCount(Number(data?.count) || 0))
+      .catch(() => {});
+  }, []);
+  useEffect(() => { refreshNeedsYou(); }, [refreshNeedsYou]);
+  // Refresh the dock badge on the same interval as the shade poll.
+  useEffect(() => {
+    const timer = window.setInterval(refreshNeedsYou, 60_000);
+    return () => window.clearInterval(timer);
+  }, [refreshNeedsYou]);
+  const intelligenceBadge = needsYouCount > 0
+    ? String(needsYouCount)
+    : intelligenceAttention.overdue
+      ? String(intelligenceAttention.overdue)
+      : intelligenceAttention.briefReady ? "•" : null;
   // HS-99-04 — the dock chip menu (one menu vocabulary).
   const [chipMenu, setChipMenu] = useState<{
     id: string;
@@ -58,6 +76,10 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
     minimized: boolean;
     close: () => void;
   } | null>(null);
+  const settled = useSettleState((s) => s.settled);
+  useEffect(() => {
+    if (settled) setChipMenu(null);
+  }, [settled]);
   useEffect(() => {
     if (!chipMenu) return;
     const close = () => setChipMenu(null);
@@ -200,6 +222,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           </button>
         );
       })}
+      <RoomActions />
       {center}
       {windows.some((w) => !DOCK_APP_IDS.has(w.id)) ? (
         <span className="desk-dock-sep" aria-hidden="true" />
@@ -276,7 +299,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           </button>
         </>
       ) : null}
-      {chipMenu ? (
+      {!settled && chipMenu ? (
         <WorkMenu
           className="desk-dock-menu"
           label={`${chipMenu.label} dock menu`}

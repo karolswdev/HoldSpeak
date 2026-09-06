@@ -33,6 +33,9 @@ COMPARISONS: frozenset[str] = frozenset({
     "changed", "changed_from", "changed_to",
     "greater_than", "less_than", "older_than", "newer_than",
     "contains",
+    # HS-166-03: snapshot-level comparisons (read the transition's
+    # current entity, not only the changed dict).  Provider-agnostic.
+    "entered_state", "due_within_days", "overdue", "inactive_for",
 })
 
 # Keys allowed in a logical (operator) node.
@@ -187,7 +190,7 @@ def validate_condition(
 
         # "value" is required for comparisons that need it.
         # exists/missing/changed do not require a value.
-        no_value_comparisons = {"exists", "missing", "changed"}
+        no_value_comparisons = {"exists", "missing", "changed", "overdue"}
         if comp not in no_value_comparisons and "value" not in node:
             errors.append(WatchValidationError(
                 _path, f"comparison {comp!r} requires a 'value'",

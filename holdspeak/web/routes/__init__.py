@@ -14,7 +14,9 @@ from .activity import build_activity_router
 from .automations import build_automations_router
 from .authority import build_authority_router
 from .cadence import build_cadence_router
+from .calendar_events import build_calendar_events_router
 from .calendar_snapshot import build_calendar_snapshot_router
+from .calendar_sources import build_calendar_sources_router
 from .decisions import build_decisions_router
 from .desk_actuators import build_desk_actuators_router
 from .desk_seed import build_desk_seed_router
@@ -28,6 +30,7 @@ from .delivery_terminal import build_delivery_terminal_router
 from .delivery_factory import build_delivery_factory_router
 from .dictation import build_dictation_router
 from .door import build_door_router
+from .concierge import build_concierge_router
 from .front_door import build_front_door_router
 from .follow_through import build_follow_through_router
 from .people import build_people_router
@@ -54,16 +57,24 @@ from .system import build_system_router
 from .threads import build_threads_router
 from .tts import build_tts_router
 from .project_reviews import build_project_reviews_router
+from .project_door import build_project_door_router
 from .project_setup import build_project_setup_router
+from .project_updates import build_project_updates_router
 from .providers import build_providers_router
+from .connections import build_connections_router
+from .steward import build_steward_router
+from .proposals import build_proposal_router
 from .watches import build_watches_router
+from .mcp_http import build_mcp_http_router
 
 __all__ = [
     "build_activity_router",
     "build_automations_router",
     "build_authority_router",
     "build_cadence_router",
+    "build_calendar_events_router",
     "build_calendar_snapshot_router",
+    "build_calendar_sources_router",
     "build_decisions_router",
     "build_desk_actuators_router",
     "build_desk_seed_router",
@@ -77,6 +88,7 @@ __all__ = [
     "build_delivery_factory_router",
     "build_dictation_router",
     "build_door_router",
+    "build_concierge_router",
     "build_front_door_router",
     "build_follow_through_router",
     "build_people_router",
@@ -103,7 +115,13 @@ __all__ = [
     "build_threads_router",
     "build_tts_router",
     "build_project_reviews_router",
+    "build_project_door_router",
     "build_project_setup_router",
+    "build_project_updates_router",
     "build_providers_router",
+    "build_connections_router",
+    "build_steward_router",
+    "build_proposal_router",
     "build_watches_router",
+    "build_mcp_http_router",
 ]

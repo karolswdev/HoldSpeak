@@ -47,6 +47,22 @@ export type SurfaceApplication = DeskApplication & {
 
 export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
+    action: "change-places",
+    windowId: "surface-places",
+    label: "Change places",
+    description: "Environments, favorites, atmosphere, wallpaper, and room sound.",
+    glyph: "▧",
+    href: "/",
+    group: "tool",
+    shortcut: "⌘⇧P",
+    surface: {
+      eyebrow: "Places to think",
+      minW: 600,
+      defaultH: 620,
+      load: () => import("../pages/cores/ChangePlacesCore").then((module) => ({ default: module.ChangePlacesCore })),
+    },
+  },
+  {
     action: "open-intelligence",
     windowId: "intelligence:desk",
     label: "Intelligence",
@@ -70,6 +86,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     surface: {
       eyebrow: "Daily cockpit",
       minW: 560,
+      defaultH: 560,
       load: () =>
         import("../pages/cores/DictationCore").then((module) => ({
           default: module.DictationCore,
@@ -140,13 +157,14 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     aliases: [
       { key: "configure-integrations", scope: "integration:destinations" },
       { key: "configure-integration" },
-      { key: "configure-runs-on", scope: "models" },
+      // PARKED (HS-170-03): configure-runs-on now opens the Concierge window directly.
+      // { key: "configure-runs-on", scope: "models" },
       { key: "read-runtime-docs", scope: "guide" },
     ],
     surface: {
       eyebrow: "Configuration",
       minW: 560,
-      defaultH: 760,
+      defaultH: 600,
       load: () =>
         import("../pages/cores/SettingsCore").then((module) => ({
           default: module.SettingsCore,
@@ -172,36 +190,27 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "configure-cadence",
     windowId: "surface-cadence",
-    label: "Cadence",
-    description: "Configure scheduled background work.",
+    label: "Rhythm",
+    description: "Sweep, brief, and notification cadence.",
     glyph: "◷",
     href: "/cadence",
     group: "tool",
     surface: {
       eyebrow: "Follow-through",
       minW: 520,
+      defaultH: 520,
       load: () =>
         import("../pages/cores/CadenceCore").then((module) => ({
           default: module.CadenceCore,
         })),
     },
   },
-  {
-    action: "configure-setup",
-    windowId: "surface-setup",
-    label: "Setup",
-    description: "Configure the first arrival.",
-    glyph: "✓",
-    href: "/setup",
-    surface: {
-      eyebrow: "Arrival",
-      minW: 520,
-      load: () =>
-        import("../pages/cores/SetupCore").then((module) => ({
-          default: module.SetupCore,
-        })),
-    },
-  },
+  // PARKED (HS-170-02): configure-setup retired by Phase 169; project-setup replaced it.
+  // {
+  //   action: "configure-setup",
+  //   windowId: "surface-setup",
+  //   ...
+  // },
   {
     action: "open-constitutional-context",
     windowId: "surface-constitutional-context",
@@ -280,27 +289,46 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     group: "tool",
     surface: {
       eyebrow: "Long memory",
-      minW: 640,
+      minW: 800,
       load: () =>
         import("../pages/cores/ProjectMemoryCore").then((module) => ({
           default: module.ProjectMemoryCore,
         })),
     },
   },
-  // HS-159-05: project-setup surface (the interview)
+  // HS-169-02: the streamlined Door (replaces the setup interview)
+  // HS-170-03: the Concierge — the Models surface (replaces ModelLibraryCore + CapabilityAssignmentsCore)
+  {
+    action: "open-concierge",
+    windowId: "surface-concierge",
+    label: "Models",
+    description: "Engines found, the proposed set, Use these.",
+    glyph: "▣",
+    href: "/models",
+    surface: {
+      eyebrow: "Models",
+      minW: 560,
+      defaultH: 760,
+      load: () =>
+        import("../features/concierge/ConciergeCore").then((module) => ({
+          default: module.ConciergeCore,
+        })),
+    },
+  },
   {
     action: "project-setup",
     windowId: "surface-project-setup",
     label: "New Project",
-    description: "Create a Project through the guided interview.",
+    description: "Create a Project in one screen.",
     glyph: "▣",
     href: "/",
     surface: {
       eyebrow: "Setup",
       minW: 560,
+      defaultH: 580,
       load: () =>
-        import("../features/project-room/setup/SetupRoot").then((module) => ({
-          default: module.SetupCore,
+        import("../features/project-room/door/DoorCore").then((module) => ({
+          default: module.DoorCore,
         })),
     },
   },
@@ -371,20 +399,20 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
         })),
     },
   },
+  // HS-170-03: configure-runs-on now opens the Concierge window.
   {
     action: "configure-runs-on",
-    windowId: "surface-settings",
-    label: "Runs on",
-    description: "Configure model and runtime destinations.",
+    windowId: "surface-concierge",
+    label: "Models",
+    description: "Engines found, the proposed set, Use these.",
     glyph: "▣",
-    href: "/profiles",
+    href: "/models",
     group: "tool",
-    subjectRef: "models",
   },
   {
     action: "configure-integrations",
     windowId: "surface-settings",
-    label: "Integrations",
+    label: "Connections",
     description: "Configure connected destinations and credentials.",
     glyph: "↗",
     href: "/settings",

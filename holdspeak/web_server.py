@@ -199,6 +199,7 @@ class MeetingWebServer:
         dictation_corrections_repository: Optional[Any] = None,
         dictation_journal_repository: Optional[Any] = None,
         gh_runner: Optional[Any] = None,
+        acli_runner: Optional[Any] = None,
     ) -> None:
         if _IMPORT_ERROR is not None:
             raise RuntimeError(
@@ -214,6 +215,7 @@ class MeetingWebServer:
         # and WatchService snapshot_fetcher so the booted hub uses canned
         # responses instead of real subprocess calls.
         self._gh_runner = gh_runner
+        self._acli_runner = acli_runner
         # HS-39-02: one session-scoped dictation correction store, shared by the
         # dictation routes (record/read) and the live runtime (consult).
         # HS-40-02: when the live runtime injects a repository the store is
@@ -237,8 +239,13 @@ class MeetingWebServer:
         # dictation stays byte-identical (no DB touched).
         from .plugins.dictation.journal import DictationJournalRecorder
 
+        # HS-176-02: the recorder also pushes one `dictation.journal.entry`
+        # frame per stored row over the existing runtime bus. `self.broadcast`
+        # resolves its event loop at call time and no-ops without one, so
+        # binding it here is safe before the server starts.
         self.dictation_journal = DictationJournalRecorder(
-            repository=dictation_journal_repository
+            repository=dictation_journal_repository,
+            broadcast=self.broadcast,
         )
         self.on_bookmark = callbacks.on_bookmark
         self.on_stop = callbacks.on_stop
@@ -332,24 +339,35 @@ class MeetingWebServer:
         self.app = self._create_app()
 
     def _gh_watch_service_kwargs(self) -> dict[str, Any]:
-        """HS-161-06: extra kwargs for WatchService when a fixture runner is
-        active.  Returns ``{"snapshot_fetcher": <fn>}`` or ``{}``."""
-        if self._gh_runner is None:
-            return {}
-        from .services.watch_sources import fetch_watch_snapshot as _base_fetch
-        _runner = self._gh_runner
-        def _fixture_fetcher(
-            principal: Any,
-            *,
-            connector_id: str,
-            query_kind: str,
-            query: dict[str, Any],
-        ) -> list[dict[str, Any]]:
-            return _base_fetch(
-                principal, connector_id=connector_id, query_kind=query_kind,
-                query=query, github_runner=_runner,
+        """HS-161-06 / HS-166-03 rider-a: extra kwargs for WatchService.
+        Uses default_snapshot_fetcher so gh AND jira share the same
+        injection shape.  HS-166-04: pass the composed Jira adapter
+        (with runner) so test/evaluate on a Jira Watch reaches the
+        fixture runner, not a lazy db-only adapter."""
+        from .db import get_database
+        from .services.jira_provider import JiraProviderAdapter
+        from .services.watch_sources import default_snapshot_fetcher
+        jira = JiraProviderAdapter(
+            db=get_database(), runner=self._acli_runner,
+        ) if self._acli_runner else None
+        fetcher = default_snapshot_fetcher(
+            github_runner=self._gh_runner,
+            jira_adapter=jira,
+        )
+        return {"snapshot_fetcher": fetcher}
+
+    def _build_confluence_adapter(self) -> Any:
+        """HS-174-07: build the Confluence adapter if acli runner is available."""
+        if not self._acli_runner:
+            return None
+        try:
+            from .db import get_database
+            from .services.confluence_provider import ConfluenceProviderAdapter
+            return ConfluenceProviderAdapter(
+                db=get_database(), runner=self._acli_runner,
             )
-        return {"snapshot_fetcher": _fixture_fetcher}
+        except Exception:
+            return None
 
     @property
     def url(self) -> Optional[str]:
@@ -648,13 +666,16 @@ class MeetingWebServer:
         from .services.inference_assignment_service import InferenceAssignmentService
         from .services.inference_capability_service import InferenceCapabilityApplicationService
         from .services.profile_key_service import ProfileKeyService
+        from .services.connections_service import ConnectionsService
         from .db import get_database, get_observer
         from .web.routes import (
             build_activity_router,
             build_automations_router,
             build_authority_router,
             build_cadence_router,
+            build_calendar_events_router,
             build_calendar_snapshot_router,
+            build_calendar_sources_router,
             build_core_router,
             build_decisions_router,
             build_delivery_router,
@@ -666,8 +687,10 @@ class MeetingWebServer:
             build_delivery_factory_router,
             build_dictation_router,
             build_door_router,
+            build_concierge_router,
             build_front_door_router,
             build_follow_through_router,
+            build_proposal_router,
             build_people_router,
             build_desk_actuators_router,
             build_desk_seed_router,
@@ -694,9 +717,14 @@ class MeetingWebServer:
             build_threads_router,
             build_tts_router,
             build_project_reviews_router,
+            build_project_door_router,
             build_project_setup_router,
+            build_project_updates_router,
             build_providers_router,
+            build_connections_router,
+            build_steward_router,
             build_watches_router,
+            build_mcp_http_router,
         )
 
         from .services.meeting_aftercare_service import MeetingAftercareService
@@ -707,9 +735,13 @@ class MeetingWebServer:
         from .services.reaction_service import ReactionService
         from .services.watch_service import WatchService
         from .services.github_provider import GitHubProviderAdapter
+        from .services.jira_provider import JiraProviderAdapter
+        from .services.project_door_service import ProjectDoorService
         from .services.project_setup_service import ProjectSetupService
         from .services.project_evidence_collector import ProjectEvidenceCollector
         from .services.project_delta_service import ProjectDeltaService
+        from .services.project_update_service import ProjectUpdateService
+        from .services.project_steward_service import ProjectStewardService
         from .services.refinement_coordinator import RefinementCoordinator
         from .services.refinement_application_service import RefinementApplicationService
 
@@ -800,6 +832,7 @@ class MeetingWebServer:
             RefinementThoughtService(get_database()),
             get_database().scheduled_recordings,
             get_database().calendar_events,
+            db=get_database(),
             config_loader=Config.load,
             people_service=people_service,
         )
@@ -857,10 +890,10 @@ class MeetingWebServer:
             on_update_meeting=self.on_update_meeting,
             on_set_title=self.on_set_title,
             on_set_tags=self.on_set_tags,
-            project_service=ProjectService(
+            project_service=(_project_service := ProjectService(
                 get_database(), observer=obs,
                 delta_service=_project_delta_service,
-            ),
+            )),
             projection_service=ProjectionService(get_database(), observer=obs),
             authority_service=AuthorityService(get_database(), observer=obs),
             credential_service=CredentialService(
@@ -898,6 +931,20 @@ class MeetingWebServer:
             github_provider=GitHubProviderAdapter(
                 db=get_database(), runner=self._gh_runner,
             ),
+            jira_provider=JiraProviderAdapter(
+                db=get_database(), runner=self._acli_runner,
+            ),
+            connections_service=ConnectionsService(
+                github_adapter=GitHubProviderAdapter(
+                    db=get_database(), runner=self._gh_runner,
+                ),
+                jira_adapter=JiraProviderAdapter(
+                    db=get_database(), runner=self._acli_runner,
+                ),
+                confluence_adapter=self._build_confluence_adapter(),
+                config_loader=Config.load,
+                inference_assignment_service=inference_assignment_service,
+            ),
             project_setup_service=ProjectSetupService(
                 get_database(),
                 project_service=ProjectService(get_database(), observer=obs),
@@ -908,9 +955,47 @@ class MeetingWebServer:
                 github_adapter=GitHubProviderAdapter(
                     db=get_database(), runner=self._gh_runner,
                 ),
+                jira_adapter=JiraProviderAdapter(
+                    db=get_database(), runner=self._acli_runner,
+                ),
+                connections_service=ConnectionsService(
+                    github_adapter=GitHubProviderAdapter(
+                        db=get_database(), runner=self._gh_runner,
+                    ),
+                    jira_adapter=JiraProviderAdapter(
+                        db=get_database(), runner=self._acli_runner,
+                    ),
+                    config_loader=Config.load,
+                    inference_assignment_service=inference_assignment_service,
+                ),
+            ),
+            project_door_service=ProjectDoorService(
+                project_service=ProjectService(get_database(), observer=obs),
+                watch_service=WatchService(
+                    get_database(), observer=obs,
+                    **self._gh_watch_service_kwargs(),
+                ),
+                gh_runner=self._gh_runner,
+                jira_adapter=JiraProviderAdapter(
+                    db=get_database(), runner=self._acli_runner,
+                ),
             ),
             project_evidence_collector=ProjectEvidenceCollector(get_database()),
             project_delta_service=_project_delta_service,
+            project_update_service=(_project_update_service := ProjectUpdateService(
+                get_database(),
+                project_service=_project_service,
+                delta_service=_project_delta_service,
+                broker=broker,
+            )),
+            project_steward_service=ProjectStewardService(
+                get_database(),
+                ProjectEvidenceCollector(get_database()),
+                _project_delta_service,
+                update_service=_project_update_service,
+                project_service=_project_service,
+                door_service=door_service,
+            ),
             refinement_coordinator=refinement_coordinator,
             refinement_service=refinement_service,
             settings_service=SettingsService(
@@ -951,6 +1036,11 @@ class MeetingWebServer:
             web_host=self.host,
             web_auth_token=self.auth_token,
         )
+        # HS-166-05: wire the project_service into the delta service
+        # (mutual composition: delta needs project for create_item in
+        # decide_proposal, project needs delta for room review section).
+        _project_delta_service.attach_project_service(_project_service)
+
         from .web.routes.actuator_shared import DeskActuatorLifecycle
         web_ctx.actuator_service = ActuatorProposalService(
             get_database(), config_provider=lambda: Config.load(path=__import__("holdspeak.config", fromlist=["CONFIG_FILE"]).CONFIG_FILE),
@@ -960,9 +1050,13 @@ class MeetingWebServer:
         app.include_router(build_core_router(web_ctx))
         app.include_router(build_authority_router(web_ctx))
         app.include_router(build_cadence_router(web_ctx))
+        app.include_router(build_calendar_events_router(web_ctx))
         app.include_router(build_calendar_snapshot_router(web_ctx))
+        app.include_router(build_calendar_sources_router(web_ctx))
         app.include_router(build_follow_through_router(web_ctx))
+        app.include_router(build_proposal_router(web_ctx))
         app.include_router(build_door_router(web_ctx))
+        app.include_router(build_concierge_router(web_ctx))
         app.include_router(build_front_door_router(web_ctx))
         app.include_router(build_people_router(web_ctx))
         app.include_router(build_automations_router(web_ctx))
@@ -1051,9 +1145,14 @@ class MeetingWebServer:
         app.include_router(build_threads_router(web_ctx))
         app.include_router(build_tts_router(web_ctx))
         app.include_router(build_project_reviews_router(web_ctx))
+        app.include_router(build_project_door_router(web_ctx))
         app.include_router(build_project_setup_router(web_ctx))
+        app.include_router(build_project_updates_router(web_ctx))
         app.include_router(build_providers_router(web_ctx))
+        app.include_router(build_connections_router(web_ctx))
+        app.include_router(build_steward_router(web_ctx))
         app.include_router(build_watches_router(web_ctx))
+        app.include_router(build_mcp_http_router(web_ctx))
 
         @app.on_event("startup")
         async def _startup() -> None:
@@ -1089,9 +1188,34 @@ class MeetingWebServer:
                     log.info(f"Seeded {seeded} built-in skills")
             except Exception as e:
                 log.debug(f"skill seeding skipped: {e}")
+            # HS-163-02 STW-009: mark abandoned steward runs interrupted.
             try:
-                from .workbench_conductor import start_conductor, set_broadcast
+                from .db import get_database as _get_db
+                from .services.project_evidence_collector import ProjectEvidenceCollector
+                from .services.project_delta_service import ProjectDeltaService
+                from .services.project_steward_service import ProjectStewardService
+                _sdb = _get_db()
+                _steward = ProjectStewardService(
+                    _sdb,
+                    ProjectEvidenceCollector(_sdb),
+                    ProjectDeltaService(_sdb, ProjectEvidenceCollector(_sdb)),
+                )
+                recovered = _steward.recover_on_startup()
+                if recovered:
+                    log.info(f"Steward recovery: {len(recovered)} run(s) marked interrupted")
+            except Exception as e:
+                log.error(f"steward startup recovery failed: {e}")
+            try:
+                from .workbench_conductor import (
+                    start_conductor,
+                    set_broadcast,
+                    set_scheduler_services,
+                )
                 set_broadcast(lambda t, d: self.broadcast(t, d))
+                set_scheduler_services(
+                    web_ctx.watch_service,
+                    web_ctx.project_steward_service,
+                )
                 start_conductor()
             except Exception as e:
                 log.error(f"workbench conductor startup failed: {e}")

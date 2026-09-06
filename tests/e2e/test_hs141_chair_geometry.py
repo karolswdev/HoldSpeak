@@ -1,8 +1,11 @@
 """Real-browser geometry proof for the Chair working band.
 
-The walk uses a fresh home and the production onboarding and Thought HTTP
-paths.  It protects the normal Chair's primary capture surface from the fixed
-system bar and dock at wide, phone, and short-phone viewport geometries.
+HS-170-04 RE-POINT: the arrival replaces the Chair hero/lanes. The capture
+surface is now the arrival-capture-bar (Talk, Develop a thought, Record
+meeting, Schedule). The thought-entry test-id, More capture options, Open
+advanced capture, and the door-board-column are all parked. The geometry
+assertion checks the arrival's capture bar stays inside the chrome, and a
+real Thought appears in the THOUGHTS section.
 """
 from __future__ import annotations
 
@@ -51,23 +54,26 @@ def _assert_clean(page: Any, errors: list[str]) -> None:
 
 
 def _assert_working_band(page: Any) -> None:
+    """HS-170-04 re-point: the arrival's capture bar replaces the thought-entry
+    as the interactive bottom element that must stay above the dock.
+    """
     geometry = page.evaluate(
         """() => {
           const chair = document.querySelector('.chair:not(.chair-first-value)');
-          const entry = document.querySelector('[data-testid="thought-entry"]');
+          const bar = document.querySelector('[data-testid="arrival-capture-bar"]');
           const menubar = document.querySelector('.desk-menubar');
           const dock = document.querySelector('.desk-dock');
-          if (!chair || !entry || !menubar || !dock) return null;
+          if (!chair || !bar || !menubar || !dock) return null;
           const c = chair.getBoundingClientRect();
-          const e = entry.getBoundingClientRect();
+          const b = bar.getBoundingClientRect();
           const m = menubar.getBoundingClientRect();
           const d = dock.getBoundingClientRect();
           const style = getComputedStyle(document.documentElement);
           return {
             chairTop: c.top,
             chairBottom: c.bottom,
-            entryTop: e.top,
-            entryBottom: e.bottom,
+            barTop: b.top,
+            barBottom: b.bottom,
             menubarBottom: m.bottom,
             dockTop: d.top,
             viewportHeight: innerHeight,
@@ -80,12 +86,12 @@ def _assert_working_band(page: Any) -> None:
     assert geometry["workTop"] == 54
     assert geometry["workBottom"] == 52
     assert geometry["chairTop"] >= geometry["workTop"] - 0.5, geometry
-    assert geometry["entryTop"] >= max(geometry["workTop"], geometry["menubarBottom"]), geometry
+    assert geometry["barTop"] >= max(geometry["workTop"], geometry["menubarBottom"]), geometry
     # The Chair box ends at the canonical work-band boundary. The Dock has a
     # decorative raised edge above that token, so collision is judged on the
     # interactive capture surface rather than the transparent Chair box.
     assert geometry["chairBottom"] <= geometry["viewportHeight"] - geometry["workBottom"] + 0.5, geometry
-    assert geometry["entryBottom"] <= geometry["dockTop"], geometry
+    assert geometry["barBottom"] <= geometry["dockTop"], geometry
 
 
 def _assert_hit(page: Any, name: str) -> None:
@@ -140,22 +146,23 @@ def test_normal_chair_stays_inside_chrome_at_all_owner_widths(
             # Leave first value through the real owner action. This applies the
             # ordinary seed and reveals the normal Chair without test fixtures.
             page.get_by_role("button", name="Continue later", exact=True).click()
-            page.get_by_role("button", name="Develop a thought", exact=True).wait_for()
+            # HS-170-04: the arrival's capture bar carries Develop a thought.
+            page.get_by_test_id("arrival-capture-bar").wait_for()
 
             for width, height, label in VIEWPORTS:
                 page.set_viewport_size({"width": width, "height": height})
                 page.reload(wait_until="load")
-                page.get_by_role("button", name="Develop a thought", exact=True).wait_for()
+                page.get_by_test_id("arrival-capture-bar").wait_for()
                 _assert_working_band(page)
+                # HS-170-04: the capture bar's verbs replace "More capture options".
                 _assert_hit(page, "Develop a thought")
-                _assert_hit(page, "More capture options")
+                _assert_hit(page, "Record meeting")
                 _assert_clean(page, errors)
                 ASSETS.mkdir(parents=True, exist_ok=True)
                 page.screenshot(path=str(ASSETS / f"chair-working-band-empty-{label}.png"), full_page=False)
 
-            # A real unfinished Thought appears once in the Door active column.
-            # HS-144-03 retired ChairHome's duplicate Finish thoughts slot; this
-            # remains a real HTTP-created aggregate, not a forged projection row.
+            # A real unfinished Thought now appears in the arrival's THOUGHTS
+            # section, not the parked Door board's Active column.
             _api(page, "POST", "/api/thoughts", {
                 "request_id": str(uuid.uuid4()),
                 "raw_text": "Keep the Chair capture surface clear of global chrome.",
@@ -170,28 +177,21 @@ def test_normal_chair_stays_inside_chrome_at_all_owner_widths(
             for width, height, label in VIEWPORTS:
                 page.set_viewport_size({"width": width, "height": height})
                 page.reload(wait_until="load")
-                active_column = page.locator(".door-board-column", has=page.get_by_role("heading", name="Active", exact=True))
-                active_column.locator(".door-card", has_text="Chair geometry").wait_for()
-                assert page.get_by_role("heading", name="Finish thoughts", exact=True).count() == 0
-                assert page.locator(".finish-thoughts-row", has_text="Chair geometry").count() == 0
+                page.get_by_test_id("arrival-capture-bar").wait_for()
+                # HS-170-04: the thought shows in the THOUGHTS section.
+                thoughts = page.get_by_test_id("arrival-thoughts")
+                thoughts.wait_for(timeout=10_000)
+                thought_row = page.get_by_test_id("arrival-thought-row").filter(has_text="Chair geometry")
+                thought_row.wait_for(timeout=10_000)
+                # The parked door board columns are absent.
+                assert page.locator(".door-board-column").count() == 0
                 _assert_working_band(page)
-                for name in ("Develop a thought", "More capture options"):
-                    _assert_hit(page, name)
+                _assert_hit(page, "Develop a thought")
+                _assert_hit(page, "Record meeting")
 
-                page.get_by_role("button", name="More capture options", exact=True).click()
-                _assert_hit(page, "Open advanced capture")
-                page.get_by_role("button", name="More capture options", exact=True).click()
-                active_card = active_column.locator(".door-card", has_text="Chair geometry")
-                active_card.scroll_into_view_if_needed()
-                assert active_card.evaluate(
-                    """el => {
-                      const r = el.getBoundingClientRect();
-                      const dock = document.querySelector('.desk-dock')?.getBoundingClientRect();
-                      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-                      return r.left >= 0 && r.right <= innerWidth && r.top >= 0 &&
-                        (!dock || r.bottom <= dock.top) && !!hit && (hit === el || el.contains(hit));
-                    }"""
-                )
+                # HS-170-04: the Schedule verb on the capture bar replaces the
+                # retired "Open advanced capture".
+                _assert_hit(page, "Schedule")
                 _assert_clean(page, errors)
                 page.screenshot(path=str(ASSETS / f"chair-working-band-populated-{label}.png"), full_page=False)
             browser.close()

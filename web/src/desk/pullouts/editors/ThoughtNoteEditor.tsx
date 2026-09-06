@@ -1,4 +1,5 @@
 import { forwardRef, useImperativeHandle } from "react";
+import { Button } from "../../../components/signal/Signal";
 import { DeskEditor } from "../../components/DeskEditor";
 import { StringGadget } from "../../surface/gadgets";
 import type { Thought } from "../../thoughts";
@@ -20,6 +21,6 @@ export const ThoughtNoteEditor = forwardRef<ThoughtNoteEditorHandle, {
     <StringGadget label="Title" value={writer.draft.title} onChange={(title) => writer.edit({ title })} />
     <DeskEditor value={writer.draft.body} placeholder="Write" autoFocus onChange={(body) => writer.edit({ body })} />
     <StringGadget label="Tags" value={writer.draft.tags} onChange={(tags) => writer.edit({ tags })} />
-    {writer.message ? <p role="status" className="surface-receipt-line">{writer.message} {writer.message.includes("Retry save") ? <button type="button" className="desk-chip quiet" onClick={writer.retry}>Retry save</button> : null}</p> : null}
+    {writer.message ? <span role="status" className="surface-receipt-line">{writer.message} {writer.message.includes("Retry save") ? <Button dense variant="ghost" onClick={writer.retry}>Retry save</Button> : null}</span> : null}
   </>;
 });

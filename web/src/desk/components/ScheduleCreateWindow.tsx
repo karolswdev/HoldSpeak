@@ -18,6 +18,7 @@ import {
   CycleGadget,
 } from "../surface/gadgets";
 import { Button } from "../../components/signal/Signal";
+import { MicButton } from "./MicButton";
 
 /** Build a cron expression from a JS Date for one-shot mode. */
 function dateToCron(d: Date): string {
@@ -143,6 +144,7 @@ function ScheduleCreateForm({
               placeholder="Scheduled recording"
               autoFocus
             />
+            <MicButton draftScope="schedule-title" onText={setTitle} />
           </GadgetRow>
           <GadgetRow label="Mode">
             <CycleGadget

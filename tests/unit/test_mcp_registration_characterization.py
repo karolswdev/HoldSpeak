@@ -28,12 +28,12 @@ class TestFamilyModuleList:
         """The reactions family (Watch/Reaction tools) is in FAMILIES."""
         assert "reactions" in self._family_names()
 
-    def test_no_project_family_exists_yet(self):
-        """No ``project`` family exists — the starting fact P6 builds on."""
-        assert "project" not in self._family_names()
-        # Also verify it cannot be imported from the families package.
-        with pytest.raises(ImportError):
-            __import__("holdspeak.mcp.families.project", fromlist=["TOOLS"])
+    def test_project_family_registered(self):
+        """The ``project`` family exists as of HS-165 (this test began
+        life asserting its ABSENCE — the starting fact P6 built on)."""
+        assert "project" in self._family_names()
+        mod = __import__("holdspeak.mcp.families.project", fromlist=["TOOLS"])
+        assert isinstance(mod.TOOLS, list) and mod.TOOLS
 
     def test_every_family_exports_tools_and_dispatch(self):
         """Each registered family module exports TOOLS (list) and dispatch."""

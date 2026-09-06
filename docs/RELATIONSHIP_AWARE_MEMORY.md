@@ -66,7 +66,7 @@ HoldSpeak memory retrieves evidence in two bounded, local passes:
    Meeting or Thread instead of an isolated row.
 2. Up to 32 lexical parent objects seed one authoritative one-hop traversal.
    The traversal follows only relationships HoldSpeak already persisted:
-   Meeting–Artifact, Meeting–Decision, Decision–source, supersession, Decision
+   Meeting to Artifact, Meeting to Decision, Decision to source, supersession, Decision
    Record sources and affected work, Action source Meetings/commitments,
    Workbench grounding/results, Cadence evidence, and frozen Thread references.
    It can add at most two neighbours per lexical seed and 64 related parents
@@ -182,7 +182,7 @@ MCP:
 ```
 
 Both accept `query`, optional comma-separated `kind`, `project_id`, ISO-8601
-`time_from`/`time_to`, `limit` (1–500), and `offset`. Valid kinds are
+`time_from`/`time_to`, `limit` (1 to 500), and `offset`. Valid kinds are
 `decision`, `decision_record`, `desk_decision`, `artifact`, `meeting`, `note`,
 `thread`, `action`, `project_item`, `workbench_item`, and `cadence`.
 

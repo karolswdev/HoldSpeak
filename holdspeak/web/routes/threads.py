@@ -75,6 +75,22 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
 
     # ── Thread CRUD ─────────────────────────────────────────────────
 
+    @router.post("/api/threads/{thread_id}/interview")
+    async def api_interview_command(thread_id: str, request: Request) -> Any:
+        from ...services.interview_service import InterviewService
+        body = await _json_body(request)
+        if body is None or set(body) != {"command_id", "expected_revision", "event"}:
+            return JSONResponse({"error": "Expected command_id, expected_revision, and event"}, status_code=400)
+        # The direct controls edit local interview state; domain execution still
+        # goes through the existing conversation/tool and citizen services.
+        event = body["event"]
+        if not isinstance(event, dict) or event.get("kind") not in {"section", "remove_fact", "disposition", "status"}:
+            return JSONResponse({"error": "Unsupported interview control"}, status_code=400)
+        try:
+            return JSONResponse(InterviewService(_service()._db).command(_principal(request), thread_id, **body))
+        except ServiceError as exc:
+            return _error(exc)
+
     @router.post("/api/threads")
     async def api_create_thread(request: Request) -> Any:
         body = await _json_body(request)

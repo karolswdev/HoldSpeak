@@ -65,6 +65,23 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 
+    @router.post("/resolve")
+    async def resolve(request: Request, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
+        """HS-172-04: resolve a Watch identity to a People relationship id.
+
+        Returns only the relationship id -- never the name or alias
+        (Article III: nothing crosses the People boundary).
+        """
+        try:
+            identity = str(body.get("identity") or "").strip()
+            if not identity:
+                return {"relationship_id": None}
+            result = service.resolve_relationship_by_watch_identity(identity)
+            rel = result.get("relationship")
+            return {"relationship_id": rel.get("id") if rel else None}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+
     @router.post("/setup")
     async def setup(request: Request) -> dict[str, str]:
         try:

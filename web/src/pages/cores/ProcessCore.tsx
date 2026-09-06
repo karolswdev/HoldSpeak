@@ -1,10 +1,6 @@
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
-// HS-109-06 — the process window: a read-only fold over kernel read + events.
-// HS-111-06 — the process monitor face (audit §3.2): SurfaceLedger tables,
-// states as surface-tokens (StatusPill died), the zero face renders every
-// section head at 0 (an instrument panel, never a void). The wire —
-// processWindow.ts + processWindowReducer.ts — is byte-untouched.
 import { Fragment, useEffect } from "react";
+import { countLabel } from "../../desk/surface";
 import { useLaunchers } from "../../desk/components/DeskWindow";
 import { useProcessWindow } from "../../desk/processWindow";
 import type { ProcessRow } from "../../desk/processWindowReducer";
@@ -140,7 +136,7 @@ export function ProcessCore(_props: CoreProps) {
           ) : (
             <>
               <LampGadget label="WATCHING" on tone="ok" />
-              <span className="surface-token">{`RUNS ${total}`}</span>
+              <span className="surface-token">{countLabel("RUNS", total)}</span>
             </>
           )
         }
@@ -157,7 +153,7 @@ export function ProcessCore(_props: CoreProps) {
         store.sections.map((section) => (
           <SurfaceLedger
             key={section.id}
-            count={`${section.label.toUpperCase()} ${section.rows.length}`}
+            count={countLabel(section.label.toUpperCase(), section.rows.length)}
           >
             {section.rows.length ? (
               <ul className="surface-ledger-rows">
@@ -173,7 +169,7 @@ export function ProcessCore(_props: CoreProps) {
           <span className="surface-footer-receipt-line" role="status">
             {store.error
               ? `KERNEL UNREACHABLE · CURSOR ${store.cursor}`
-              : `KERNEL · CURSOR ${store.cursor} · RUNS ${total}`}
+              : `KERNEL · CURSOR ${store.cursor} · ${countLabel("RUNS", total)}`}
           </span>
         }
       />

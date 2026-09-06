@@ -116,8 +116,12 @@ def _seed_project(conn: sqlite3.Connection, project_id: str = "proj-1",
 class TestFreshSchema:
     """A fresh DB built from SCHEMA_SQL has every HS-160-01 shape."""
 
-    def test_schema_version_is_69(self) -> None:
-        assert SCHEMA_VERSION == 69
+    def test_schema_version_is_at_least_the_phase_floor(self) -> None:
+        """SCHEMA_VERSION is informational and additive-only (HS-137): this
+        phase was built at 73; later additive phases bump it (74 the
+        calendar_event_projects join, 75 calendar_event_link_suppressions).
+        The honest assertion is the floor, read from the real constant."""
+        assert SCHEMA_VERSION >= 73
 
     # -- project_observations (SS5.5) --
 

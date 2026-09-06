@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
+import { countToken } from "../surface";
 import { openIntelligence } from "../intelligenceNavigation";
 
 type ReceiptLink = { id: string; lifecycle?: string };
@@ -25,18 +27,20 @@ export function WhyControl({ workType, workRef }: { workType: string; workRef: s
     return () => { live = false; };
   }, [workRef, workType]);
 
-  if (!receiptIds?.length) return null;
+  const whyLabel = countToken(receiptIds?.length ?? 0, "WHY", "WHY");
+  if (!whyLabel) return null;
   return (
-    <button
-      type="button"
-      className="desk-chip quiet why-control"
-      aria-label={`Why: ${receiptIds.length} governing decision receipt${receiptIds.length === 1 ? "" : "s"}`}
+    <Button
+      dense
+      variant="ghost"
+      className="why-control"
+      aria-label={`${whyLabel} governing decision receipt${(receiptIds?.length ?? 0) === 1 ? "" : "s"}`}
       onClick={(event) => {
         event.stopPropagation();
         openIntelligence({ view: "receipts", receiptWorkRef: `${workType}:${workRef}`, whyOnly: true });
       }}
     >
-      WHY {receiptIds.length}
-    </button>
+      {whyLabel}
+    </Button>
   );
 }

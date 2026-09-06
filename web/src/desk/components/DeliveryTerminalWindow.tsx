@@ -1,3 +1,4 @@
+import { PadGadget } from "../surface/gadgets";
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 // The immutable-target terminal window (HS-94-08) — the Phase-93 session
 // pull-out, migrated onto the node-issued target. It subscribes by the
@@ -68,10 +69,10 @@ function KeyPalette() {
         ))}
       </TransportRow>
       {sendState === "sent" && (
-        <span className="desk-key-fate desk-steer-sent">✓ {sendDetail}</span>
+        <span className="desk-key-fate desk-steer-sent"><span aria-hidden="true">✓</span> {sendDetail}</span>
       )}
       {sendState === "refused" && (
-        <span className="desk-key-fate desk-arm-refusal">✕ {sendDetail}</span>
+        <span className="desk-key-fate desk-arm-refusal"><span aria-hidden="true">✕</span> {sendDetail}</span>
       )}
     </div>
   );
@@ -102,12 +103,11 @@ function SteerComposer() {
           draftScope={scope}
           onText={(t) => setText((prev) => (prev ? `${prev} ${t}` : t))}
         />
-        <textarea
-          className="desk-steer-input"
+        <PadGadget
+          label="Steer"
           value={text}
           rows={2}
-          placeholder="Steer"
-          onChange={(e) => setText(e.target.value)}
+          onChange={setText}
         />
         <TransportKey
           compact
@@ -139,7 +139,7 @@ function SteerComposer() {
         <span className="quiet">Recovered local steer draft.</span>
       ) : null}
       {sendState === "refused" && (
-        <span className="desk-arm-refusal">✕ {sendDetail}</span>
+        <span className="desk-arm-refusal"><span aria-hidden="true">✕</span> {sendDetail}</span>
       )}
       {sendState === "refused" && text.trim() ? (
         <TransportKey
@@ -151,7 +151,7 @@ function SteerComposer() {
         />
       ) : null}
       {sendState === "sent" && (
-        <span className="desk-steer-sent">✓ {sendDetail}</span>
+        <span className="desk-steer-sent"><span aria-hidden="true">✓</span> {sendDetail}</span>
       )}
     </div>
   );
@@ -223,7 +223,7 @@ export function DeliveryTerminalWindow() {
           changedAt={changedAt}
           absence={
             <>
-              ✕ {ABSENCE_LABEL[status] || status}
+              <span aria-hidden="true">✕</span> {ABSENCE_LABEL[status] || status}
               {detail ? ` · ${detail}` : ""}
             </>
           }

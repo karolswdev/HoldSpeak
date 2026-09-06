@@ -33,7 +33,11 @@ const brief = {
   headline: "One thing changed.",
   is_empty: false,
   shelf: {} as Record<string, string>,
+  period_label: "SEP 01 – 05",
+  generated_label: "GENERATED SEP 05 08:00",
+  period_start: "2026-09-04T17:00:00",
   sections: {
+    this_week: [] as unknown[],
     changed: [
       {
         id: "brief-item-1",
@@ -97,7 +101,7 @@ describe("HS-132-08 the board never announces a false all clear", () => {
 
   it("the audit probe: drilling to overdue then tabbing back shows every lane", async () => {
     render(<IntelligencePullout object={object} onClose={() => {}} />);
-    await screen.findByText(brief.headline);
+    await screen.findByText(brief.period_label!);
 
     drillToOverdue();
     await screen.findByRole("button", { name: "Clear filter OVERDUE ONLY" });
@@ -114,7 +118,7 @@ describe("HS-132-08 the board never announces a false all clear", () => {
 
   it("names the active drill filter and dismisses it in one click", async () => {
     render(<IntelligencePullout object={object} onClose={() => {}} />);
-    await screen.findByText(brief.headline);
+    await screen.findByText(brief.period_label!);
 
     drillToOverdue();
 
@@ -138,7 +142,7 @@ describe("HS-132-08 the board never announces a false all clear", () => {
 
   it("the filtered empty state offers the way back to every lane", async () => {
     render(<IntelligencePullout object={object} onClose={() => {}} />);
-    await screen.findByText(brief.headline);
+    await screen.findByText(brief.period_label!);
     drillToOverdue();
 
     fireEvent.click(await screen.findByRole("button", { name: "Show all lanes" }));
@@ -149,7 +153,7 @@ describe("HS-132-08 the board never announces a false all clear", () => {
   it("an empty board still says so, without the retired ALL CLEAR string", async () => {
     mockApi(emptyBoard);
     render(<IntelligencePullout object={object} onClose={() => {}} />);
-    await screen.findByText(brief.headline);
+    await screen.findByText(brief.period_label!);
 
     fireEvent.click(screen.getByRole("button", { name: "Follow-through" }));
 
@@ -172,7 +176,9 @@ describe("HS-132-08 brief triage is durable", () => {
     );
     render(<IntelligencePullout object={object} onClose={() => {}} />);
 
-    fireEvent.click(await screen.findByText(brief.sections.changed[0].text));
+    // HS-175: lookback item "Meeting recorded: Launch review" is split into
+    // kind "MEETING RECORDED" + primary "Launch review". Click the primary.
+    fireEvent.click(await screen.findByText("Launch review"));
     fireEvent.click(screen.getByRole("button", { name: "Acknowledge" }));
 
     await waitFor(() =>
@@ -209,7 +215,8 @@ describe("HS-132-08 brief triage is durable", () => {
     });
     render(<IntelligencePullout object={object} onClose={() => {}} />);
 
-    fireEvent.click(await screen.findByText(brief.sections.changed[0].text));
+    // HS-175: click the primary text (after the colon split).
+    fireEvent.click(await screen.findByText("Launch review"));
     fireEvent.click(screen.getByRole("button", { name: "Defer" }));
 
     expect(await screen.findByText(/DEFERRED FAILED/)).toBeInTheDocument();

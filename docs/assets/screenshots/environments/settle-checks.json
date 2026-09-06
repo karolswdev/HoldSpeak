@@ -1,0 +1,11 @@
+{
+  "bundle": "production",
+  "backend": "isolated HTTP fixtures",
+  "preservedWindow": true,
+  "preservedCaptureControl": true,
+  "captureReachableOverPhoneSheet": true,
+  "favoritesPersist": true,
+  "nativeShortcuts": true,
+  "escapeRestores": true,
+  "phoneOverflow": false
+}

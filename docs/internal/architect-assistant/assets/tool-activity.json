@@ -1,0 +1,19 @@
+{
+  "result": "pass",
+  "model": "scripted fixture; not live model quality",
+  "viewports": [
+    1440,
+    393
+  ],
+  "model_passes": 4,
+  "tool_activity": "collapsed before final answer; manual expansion preserved at completion",
+  "revisit": "same thread, section and fact retained",
+  "people": "handoff before composer input",
+  "screenshots": [
+    "tool-activity-before-answer.png",
+    "tool-activity-after-answer.png",
+    "interview-walk-1440.png",
+    "interview-walk-393.png",
+    "interview-walk-people-393.png"
+  ]
+}

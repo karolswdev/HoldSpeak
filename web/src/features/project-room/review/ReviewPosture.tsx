@@ -1,16 +1,7 @@
-// HS-160-06 — the review posture: a posture in Now, judged from the keyboard.
-// Wide (>=560px container): queue left, comparison right, four verbs.
-// Narrow: one card at a time, persistent footer verbs (SurfaceFooter).
-// No modal — WEB-IA-003.
-//
-// Beauty pass (HS-160-06 defects 1-7):
-//  1. Card anchor is plain-words, not machine speech.
-//  2. Queue rows show human text, not truncated kind strings.
-//  3. Nested objects render as compact key:value, never [object Object].
-//  4. Field keys are humanized; machine ids hidden in data-attrs.
-//  5. Verb bar coherent row; defer is a two-step (button arms, L immediate).
-//  6. Materiality is a temperature token (High/Medium/Low), not raw float.
-//  7. Position stated once (header only); footer carries disposition tally.
+// HS-167-05 -- the review posture recomposed on the surface library.
+// Full-width SurfaceLedger with expandable rows (D5). No ChoiceCardShell,
+// no hand-rolled comparison layout, no hand-rolled source chips.
+// Keyboard grammar UNCHANGED (j/k/a/e/l/x/z, layered Escape, Cmd+Enter).
 
 import { useCallback, useRef, useState, type KeyboardEvent } from "react";
 import { Button } from "../../../components/signal/Signal";
@@ -18,17 +9,22 @@ import {
   SurfaceFooter,
   SurfaceLedger,
   SurfaceLedgerRow,
+  SurfaceColumns,
+  SurfaceFacts,
   SurfaceSection,
   SurfaceState,
   SurfaceVerbs,
-  humanTime,
+  SurfaceCode,
+  StateChip,
+  ProvenanceChip,
   Disclosure,
-  ChoiceCardShell,
-  useRovingRows,
+  humanTime,
   MicButton,
+  countLabel,
+  type ChipState,
 } from "../../../desk/surface";
 import type { ReviewController } from "./useReviewController";
-import type { Proposal, ProposalGroup, ProposalKind } from "./model";
+import type { Proposal, ProposalKind } from "./model";
 import {
   kindLabel,
   proposalAnchor,
@@ -40,136 +36,37 @@ import {
 } from "./model";
 import "./review-posture.css";
 
-/* ── Proposal kind count chip ── */
+/* ── Severity: emblem + chip state ── */
 
-function KindCountChip({ kind, count }: { kind: ProposalKind; count: number }) {
-  return (
-    <span className="review-kind-group" data-testid="review-kind-group">
-      <span className="surface-token" data-testid="review-kind-label">
-        {kindLabel(kind)}
-      </span>
-      <span className="project-room-count-chip" data-testid="review-kind-count">
-        {count}
-      </span>
-    </span>
-  );
+const KIND_EMBLEMS: Record<string, string> = {
+  risk_attention: "▲",
+  review_flag: "◆",
+  observation_attention: "◉",
+  conflict: "⫘",
+  coverage_degraded: "⌁",
+};
+
+function severityEmblem(kind: ProposalKind): string {
+  return KIND_EMBLEMS[kind] ?? "●";
 }
 
-/* ── Comparison: current truth vs proposed patch ── */
-
-/** Render human-visible fields from a patch object (defects 3, 4). */
-function FieldRows({
-  patch,
-  editingPatch,
-  onEditField,
-}: {
-  patch: Record<string, unknown>;
-  editingPatch: Record<string, unknown> | null;
-  onEditField?: (key: string, value: string) => void;
-}) {
-  const fields = humanFields(editingPatch ?? patch);
-  const attrs = machineAttrs(patch);
-  return (
-    <div className="review-comparison-fields" {...attrs}>
-      {fields.map(({ key, label, value }) => (
-        <div key={key} className="review-field-row">
-          <span className="review-field-key">{label}</span>
-          {editingPatch && onEditField ? (
-            <input
-              className="review-field-input"
-              aria-label={`Edit ${label}`}
-              value={renderValue(value)}
-              onChange={(e) => onEditField(key, e.target.value)}
-            />
-          ) : (
-            <span className="review-field-value">{renderValue(value)}</span>
-          )}
-        </div>
-      ))}
-    </div>
-  );
+function severityChipState(level: string): ChipState {
+  if (level === "High") return "warning";
+  return "idle";
 }
 
-function PatchComparison({
-  proposal,
-  editingPatch,
-  onEditField,
-}: {
-  proposal: Proposal;
-  editingPatch: Record<string, unknown> | null;
-  onEditField?: (key: string, value: string) => void;
-}) {
-  const patch = proposal.patchJson;
-  const isRecordOnly =
-    proposal.proposalKind === "review_flag" ||
-    proposal.proposalKind === "observation_attention" ||
-    proposal.proposalKind === "coverage_degraded";
+/* ── Build display object for SurfaceFacts ── */
 
-  if (isRecordOnly) {
-    return (
-      <div className="review-comparison" data-testid="review-comparison">
-        <div className="review-comparison-side" data-testid="review-comparison-rationale">
-          <span className="review-comparison-label">Rationale</span>
-          <p className="review-comparison-value">{proposal.rationale}</p>
-        </div>
-        <div className="review-comparison-side" data-testid="review-comparison-evidence">
-          <span className="review-comparison-label">Evidence</span>
-          <FieldRows patch={patch} editingPatch={null} />
-        </div>
-      </div>
-    );
+function patchFactsObject(patch: Record<string, unknown>): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const { label, value } of humanFields(patch)) {
+    result[label] = renderValue(value);
   }
-
-  return (
-    <div className="review-comparison" data-testid="review-comparison">
-      <div className="review-comparison-side" data-testid="review-comparison-current">
-        <span className="review-comparison-label">Current</span>
-        <p className="review-comparison-value">{proposal.rationale}</p>
-      </div>
-      <div className="review-comparison-side" data-testid="review-comparison-proposed">
-        <span className="review-comparison-label">Proposed</span>
-        <FieldRows
-          patch={patch}
-          editingPatch={editingPatch}
-          onEditField={onEditField}
-        />
-      </div>
-    </div>
-  );
+  return result;
 }
 
-/* ── Source chips ── */
+/* ── Human text for a queue row ── */
 
-function SourceChips({ proposal }: { proposal: Proposal }) {
-  const ref = proposal.targetRef;
-  if (!ref) return null;
-  return (
-    <span className="review-source-chip" data-testid="review-source-chip" title={ref}>
-      {ref.split(":").pop() || ref}
-    </span>
-  );
-}
-
-/* ── Conflict both-sources (WEB-STA-006) ── */
-
-function ConflictSources({ proposal }: { proposal: Proposal }) {
-  if (proposal.proposalKind !== "conflict") return null;
-  const patch = proposal.patchJson;
-  const sources = patch.sources ?? patch.source_refs;
-  if (!Array.isArray(sources)) return null;
-  return (
-    <div className="review-conflict-sources" data-testid="review-conflict-sources">
-      <span className="review-comparison-label">Conflicting sources</span>
-      {(sources as string[]).map((src, i) => (
-        <span key={i} className="review-source-chip">{String(src)}</span>
-      ))}
-    </div>
-  );
-}
-
-/* ── Queue sidebar (wide layout) ── */
-
-/** Human text for a queue row: patch text / title / target name (defect 2). */
 function proposalRowText(proposal: Proposal): string {
   const patch = proposal.patchJson;
   return (
@@ -181,71 +78,245 @@ function proposalRowText(proposal: Proposal): string {
   );
 }
 
-function ReviewQueue({
-  ctrl,
+/* ── Source label for ProvenanceChip ── */
+
+function sourceLabel(proposal: Proposal): string | null {
+  if (proposal.producerKind) return proposal.producerKind;
+  const ref = proposal.targetRef;
+  if (!ref) return null;
+  const colon = ref.indexOf(":");
+  if (colon > 0) return ref.slice(0, colon).replace(/_/g, " ");
+  return null;
+}
+
+/* ── Edit fields (D5: each field carries MicButton) ── */
+
+function EditFields({
+  editingPatch,
+  onEditField,
 }: {
-  ctrl: ReviewController;
+  editingPatch: Record<string, unknown>;
+  onEditField: (key: string, value: string) => void;
 }) {
-  const rootRef = useRef<HTMLDivElement>(null);
-  useRovingRows(rootRef, { selector: ".surface-ledger-line" });
+  const fields = humanFields(editingPatch);
+  return (
+    <div className="review-edit-fields">
+      {fields.map(({ key, label, value }) => (
+        <div key={key} className="review-edit-row">
+          <label className="review-edit-label">{label}</label>
+          <span className="review-edit-input-wrap">
+            <input // UX-CANON: needs redesign (HS-170-04)
+              className="review-edit-input"
+              aria-label={`Edit ${label}`}
+              value={renderValue(value)}
+              onChange={(e) => onEditField(key, e.target.value)}
+            />
+            <MicButton
+              draftScope={`review-edit-${key}`}
+              onText={(text) => onEditField(key, text)}
+            />
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Expanded detail for a selected row (D5: inline in the ledger) ── */
+
+function ExpandedDetail({
+  proposal,
+  ctrl,
+  deferArmed,
+  onArmDefer,
+  onCancelDefer,
+  onConfirmDefer,
+}: {
+  proposal: Proposal;
+  ctrl: ReviewController;
+  deferArmed: boolean;
+  onArmDefer: () => void;
+  onCancelDefer: () => void;
+  onConfirmDefer: () => void;
+}) {
+  const patch = proposal.patchJson;
+  const anchor = proposalAnchor(proposal);
+  const matLevel = materialityLevel(proposal.materiality);
+  const attrs = machineAttrs(patch);
+
+  const isRecordOnly =
+    proposal.proposalKind === "review_flag" ||
+    proposal.proposalKind === "observation_attention" ||
+    proposal.proposalKind === "coverage_degraded";
+
+  const isConflict = proposal.proposalKind === "conflict";
+  const editing = ctrl.editingPatch != null;
+  const deciding = ctrl.decidingId != null;
+
+  // The PROPOSED side: SurfaceFacts or edit fields
+  const proposedContent = editing && ctrl.editingPatch ? (
+    <EditFields editingPatch={ctrl.editingPatch} onEditField={ctrl.updateEditField} />
+  ) : (
+    <SurfaceFacts value={patchFactsObject(patch)} />
+  );
 
   return (
-    <div className="review-queue" data-testid="review-queue" ref={rootRef}>
-      <SurfaceLedger
-        count={`PROPOSALS ${ctrl.openProposals.length}`}
-      >
-        <div role="listbox" aria-label="Review proposals">
-          {ctrl.groups.map((group) => (
-            <div key={group.kind} className="review-queue-group" role="group" aria-label={group.label}>
-              <KindCountChip kind={group.kind} count={group.count} />
-              <ul className="surface-ledger-rows">
-                {group.proposals
-                  .filter((p) => p.lifecycle === "open" && !ctrl.dispositions.has(p.id))
-                  .map((proposal) => {
-                    const globalIndex = ctrl.openProposals.indexOf(proposal);
-                    const isSelected = globalIndex === ctrl.selectedIndex;
-                    const rowText = proposalRowText(proposal);
-                    const matLevel = materialityLevel(proposal.materiality);
-                    const matTone = materialityTone(matLevel);
-                    return (
-                      <SurfaceLedgerRow
-                        key={proposal.id}
-                        data-testid="review-queue-item"
-                        primary={
-                          <span
-                            className="review-queue-row-text"
-                            data-selected={isSelected || undefined}
-                            aria-current={isSelected ? "true" : undefined}
-                            role="option"
-                            aria-selected={isSelected}
-                            aria-label={`${rowText}, ${kindLabel(proposal.proposalKind)}, ${globalIndex + 1} of ${ctrl.openProposals.length}`}
-                            data-kind={proposal.proposalKind}
-                            data-ref={proposal.targetRef}
-                          >
-                            {rowText}
-                          </span>
-                        }
-                        cells={
-                          <span
-                            className="surface-token review-queue-materiality"
-                            data-tone={matTone}
-                            data-materiality={proposal.materiality}
-                          >
-                            {matLevel}
-                          </span>
-                        }
-                        open={isSelected}
-                        onToggle={() => ctrl.selectByIndex(globalIndex)}
-                        lineLabel={`${rowText}, ${globalIndex + 1} of ${ctrl.openProposals.length}`}
-                        expands={false}
-                      />
-                    );
-                  })}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </SurfaceLedger>
+    <div className="review-expanded" data-testid="review-detail" {...attrs}>
+      {/* Headline + subject */}
+      <span className="review-detail-headline" data-testid="review-detail-headline">
+        {anchor.headline}
+      </span>
+      {anchor.subject ? (
+        <span className="review-detail-subject" data-testid="review-detail-subject">
+          {anchor.subject}
+        </span>
+      ) : null}
+
+      {/* Chips: Materiality + Kind */}
+      <span className="review-detail-chips">
+        <StateChip state={severityChipState(matLevel)} label={`Materiality ${matLevel}`} />
+        <StateChip state="idle" label={`Kind ${kindLabel(proposal.proposalKind)}`} />
+      </span>
+
+      {/* Comparison: CURRENT / PROPOSED */}
+      <div data-testid="review-comparison">
+        {isConflict ? (
+          /* D3/D5: conflict shows sources as ProvenanceChips, hashes in a Disclosure */
+          (() => {
+            const sources = patch.sources ?? patch.source_refs;
+            const sourceList = Array.isArray(sources) ? (sources as string[]) : [];
+            // Any hash-shaped values from the patch (not sources or source_refs)
+            const hashEntries = Object.entries(patch).filter(
+              ([k]) => k !== "sources" && k !== "source_refs",
+            );
+            return (
+              <div data-testid="review-conflict-sources">
+                <SurfaceSection label="CONFLICTING SOURCES">
+                  <span className="review-detail-chips">
+                    {sourceList.map((src, i) => (
+                      <ProvenanceChip key={i} source={String(src)} />
+                    ))}
+                  </span>
+                </SurfaceSection>
+                {hashEntries.length > 0 ? (
+                  <Disclosure label={countLabel("HASHES", hashEntries.length)}>
+                    <SurfaceCode>
+                      {hashEntries.map(([k, v]) => `${k}: ${renderValue(v)}`).join("\n")}
+                    </SurfaceCode>
+                  </Disclosure>
+                ) : null}
+              </div>
+            );
+          })()
+        ) : (
+          <SurfaceColumns
+            main={
+              <SurfaceSection label={isRecordOnly ? "RATIONALE" : "CURRENT"}>
+                <p className="review-rationale-text">{proposal.rationale}</p>
+              </SurfaceSection>
+            }
+            side={
+              <SurfaceSection label={isRecordOnly ? "EVIDENCE" : "PROPOSED"}>
+                {proposedContent}
+              </SurfaceSection>
+            }
+          />
+        )}
+      </div>
+
+      {/* Source chip (non-conflict) */}
+      {!isConflict && sourceLabel(proposal) ? (
+        <ProvenanceChip source={sourceLabel(proposal)!} />
+      ) : null}
+
+      {/* ID as quiet lowercase mono token inside the fold */}
+      <span className="review-detail-id">{proposal.id.toLowerCase()}</span>
+
+      {/* Verb bar (D5: inline in the expanded row) */}
+      <div className="review-verbs-inline" data-testid="review-verbs-inline">
+        <span className="review-verb-bar" data-testid="review-verb-bar" role="toolbar" aria-label="Review verbs">
+          {editing ? (
+            <Button
+              variant="primary"
+              loading={deciding}
+              disabled={isConflict}
+              onClick={() => {
+                if (ctrl.editingPatch) {
+                  void ctrl.editAcceptProposal(proposal.id, ctrl.editingPatch);
+                }
+              }}
+              aria-label={`Edit and accept ${proposal.title}`}
+            >
+              Save & accept
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              loading={deciding}
+              disabled={isConflict}
+              onClick={() => void ctrl.acceptProposal(proposal.id)}
+              aria-label={`Accept ${proposal.title}`}
+            >
+              Accept
+            </Button>
+          )}
+
+          {!editing ? (
+            <Button
+              disabled={isConflict || deciding}
+              onClick={ctrl.startEdit}
+              aria-label={`Edit ${proposal.title}`}
+            >
+              Edit
+            </Button>
+          ) : (
+            <Button onClick={ctrl.cancelEdit}>Cancel edit</Button>
+          )}
+
+          {deferArmed ? (
+            <span className="review-defer-group" data-testid="review-defer-armed">
+              <input // UX-CANON: needs redesign (HS-170-04)
+                type="date"
+                className="review-defer-date"
+                data-testid="review-defer-date"
+                aria-label="Defer until date"
+                value={ctrl.deferDate}
+                onChange={(e) => ctrl.setDeferDate(e.target.value)}
+                autoFocus
+              />
+              <Button
+                variant="primary"
+                loading={deciding}
+                onClick={onConfirmDefer}
+                aria-label="Confirm defer"
+                data-testid="review-defer-confirm"
+              >
+                Confirm
+              </Button>
+              <Button variant="ghost" onClick={onCancelDefer} aria-label="Cancel defer">
+                Cancel
+              </Button>
+            </span>
+          ) : (
+            <Button
+              loading={deciding}
+              onClick={onArmDefer}
+              aria-label={`Defer ${proposal.title}`}
+            >
+              Defer
+            </Button>
+          )}
+
+          <Button
+            variant="ghost"
+            loading={deciding}
+            onClick={() => void ctrl.dismissProposal(proposal.id)}
+            aria-label={`Dismiss ${proposal.title}`}
+          >
+            Dismiss
+          </Button>
+        </span>
+      </div>
     </div>
   );
 }
@@ -284,142 +355,11 @@ function DispositionSummary({ ctrl }: { ctrl: ReviewController }) {
             Review accepted{ctrl.acceptedAt ? ` at ${humanTime(ctrl.acceptedAt)}` : ""}
           </p>
         ) : null}
-        {/* Draft update slot: honestly absent (P3) */}
         <div className="review-draft-slot" data-testid="review-draft-slot" hidden>
           Draft update (P3)
         </div>
       </SurfaceSection>
     </div>
-  );
-}
-
-/* ── Verb bar (defect 5: coherent row, defer two-step) ── */
-
-function ReviewVerbBar({
-  ctrl,
-  dense,
-  deferArmed,
-  onArmDefer,
-  onCancelDefer,
-  onConfirmDefer,
-}: {
-  ctrl: ReviewController;
-  dense?: boolean;
-  deferArmed: boolean;
-  onArmDefer: () => void;
-  onCancelDefer: () => void;
-  onConfirmDefer: () => void;
-}) {
-  const p = ctrl.selectedProposal;
-  if (!p) return null;
-
-  const isConflict = p.proposalKind === "conflict";
-  const editing = ctrl.editingPatch != null;
-  const deciding = ctrl.decidingId != null;
-
-  return (
-    <span className="review-verb-bar" data-testid="review-verb-bar" role="toolbar" aria-label="Review verbs">
-      {/* Accept: disabled for conflicts (WEB-STA-006 / HANDLER_MAP refuse) */}
-      {editing ? (
-        <Button
-          dense={dense}
-          variant="primary"
-          loading={deciding}
-          disabled={isConflict}
-          onClick={() => {
-            if (ctrl.editingPatch) {
-              void ctrl.editAcceptProposal(p.id, ctrl.editingPatch);
-            }
-          }}
-          aria-label={`Edit and accept ${p.title}`}
-        >
-          Save & accept
-        </Button>
-      ) : (
-        <Button
-          dense={dense}
-          variant="primary"
-          loading={deciding}
-          disabled={isConflict}
-          onClick={() => void ctrl.acceptProposal(p.id)}
-          aria-label={`Accept ${p.title}`}
-        >
-          Accept
-        </Button>
-      )}
-
-      {/* Edit: toggle edit mode */}
-      {!editing ? (
-        <Button
-          dense={dense}
-          disabled={isConflict || deciding}
-          onClick={ctrl.startEdit}
-          aria-label={`Edit ${p.title}`}
-        >
-          Edit
-        </Button>
-      ) : (
-        <Button
-          dense={dense}
-          onClick={ctrl.cancelEdit}
-        >
-          Cancel edit
-        </Button>
-      )}
-
-      {/* Defer: two-step -- button arms, date+confirm appears inline */}
-      {deferArmed ? (
-        <span className="review-defer-group" data-testid="review-defer-armed">
-          <input
-            type="date"
-            className="review-defer-date"
-            data-testid="review-defer-date"
-            aria-label="Defer until date"
-            value={ctrl.deferDate}
-            onChange={(e) => ctrl.setDeferDate(e.target.value)}
-            autoFocus
-          />
-          <Button
-            dense={dense}
-            variant="primary"
-            loading={deciding}
-            onClick={onConfirmDefer}
-            aria-label="Confirm defer"
-            data-testid="review-defer-confirm"
-          >
-            Confirm
-          </Button>
-          <Button
-            dense={dense}
-            variant="ghost"
-            onClick={onCancelDefer}
-            aria-label="Cancel defer"
-          >
-            Cancel
-          </Button>
-        </span>
-      ) : (
-        <Button
-          dense={dense}
-          loading={deciding}
-          onClick={onArmDefer}
-          aria-label={`Defer ${p.title}`}
-        >
-          Defer
-        </Button>
-      )}
-
-      {/* Dismiss: no confirmation (WEB-DLT-006) */}
-      <Button
-        dense={dense}
-        variant="ghost"
-        loading={deciding}
-        onClick={() => void ctrl.dismissProposal(p.id)}
-        aria-label={`Dismiss ${p.title}`}
-      >
-        Dismiss
-      </Button>
-    </span>
   );
 }
 
@@ -550,8 +490,6 @@ export function ReviewPosture({ ctrl }: { ctrl: ReviewController }) {
           break;
         case "l":
         case "L":
-          // Keyboard L: immediate defer (glass-compat).
-          // The two-step is the button UX; L is the power-user shortcut.
           if (p) {
             e.preventDefault();
             void ctrl.deferProposal(p.id, ctrl.deferDate || undefined);
@@ -634,11 +572,8 @@ export function ReviewPosture({ ctrl }: { ctrl: ReviewController }) {
     );
   }
 
-  // ── Active review ──
+  // ── Active review: full-width SurfaceLedger with expandable rows ──
   const p = ctrl.selectedProposal;
-  const anchor = p ? proposalAnchor(p) : null;
-  const matLevel = p ? materialityLevel(p.materiality) : null;
-  const matTone = matLevel ? materialityTone(matLevel) : undefined;
 
   return (
     <div
@@ -656,14 +591,14 @@ export function ReviewPosture({ ctrl }: { ctrl: ReviewController }) {
           <span className="review-position" data-testid="review-position" role="status"
             aria-live="polite"
             aria-label={
-              p
+              p && ctrl.openProposals.length > 0
                 ? `Proposal ${ctrl.selectedIndex + 1} of ${ctrl.openProposals.length}, ${kindLabel(p.proposalKind)}`
                 : "No proposals"
             }
           >
             {ctrl.openProposals.length > 0
               ? `${ctrl.selectedIndex + 1} / ${ctrl.openProposals.length}`
-              : "0 proposals"}
+              : "No proposals"}
           </span>
         }
       >
@@ -692,67 +627,114 @@ export function ReviewPosture({ ctrl }: { ctrl: ReviewController }) {
         </div>
       ) : null}
 
-      {/* Wide: queue + comparison | Narrow: one card with footer verbs */}
-      <div className="review-body">
-        {/* Queue (left side on wide) */}
-        <ReviewQueue ctrl={ctrl} />
-
-        {/* Selected proposal detail (right side on wide) */}
-        {p && anchor ? (
-          <div className="review-detail" data-testid="review-detail">
-            <ChoiceCardShell
-              label={anchor.headline}
-              description={anchor.subject}
-              tier={p.proposalKind}
-              facts={[
-                { label: "Materiality", value: matLevel ?? "Low" },
-                { label: "Kind", value: kindLabel(p.proposalKind) },
-              ]}
-              data-materiality={p.materiality}
-              data-kind={p.proposalKind}
-              data-ref={p.targetRef}
-              selected
-            >
-              <PatchComparison
-                proposal={p}
-                editingPatch={ctrl.editingPatch}
-                onEditField={ctrl.updateEditField}
-              />
-              <SourceChips proposal={p} />
-              <ConflictSources proposal={p} />
-            </ChoiceCardShell>
-
-            {/* Verb bar (inline on wide) */}
-            <div className="review-verbs-inline" data-testid="review-verbs-inline">
-              <ReviewVerbBar
-                ctrl={ctrl}
-                deferArmed={deferArmed}
-                onArmDefer={armDefer}
-                onCancelDefer={cancelDefer}
-                onConfirmDefer={confirmDefer}
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="review-detail" data-testid="review-detail">
-            <SurfaceState empty emptyLabel="No proposals to review" emptyGlyph={"⊘"} />
-          </div>
-        )}
+      {/* D5: full-width SurfaceLedger, SurfaceSection per kind, expandable rows */}
+      <div data-testid="review-queue">
+      <SurfaceLedger count={countLabel("PROPOSALS", ctrl.openProposals.length)} cols="room">
+        <div role="listbox" aria-label="Review proposals">
+          {ctrl.groups.map((group) => {
+            const openInGroup = group.proposals.filter(
+              (gp) => gp.lifecycle === "open" && !ctrl.dispositions.has(gp.id),
+            );
+            if (openInGroup.length === 0) return null;
+            return (
+              <section key={group.kind} className="surface-section review-kind-section" data-testid="review-kind-group">
+                <header className="surface-section-head">
+                  <h3 data-testid="review-kind-label">{kindLabel(group.kind)}</h3>
+                  {openInGroup.length > 0 ? (
+                    <span data-testid="review-kind-count" className="surface-token">
+                      {openInGroup.length}
+                    </span>
+                  ) : null}
+                </header>
+                <ul className="surface-ledger-rows">
+                  {openInGroup.map((proposal) => {
+                    const globalIndex = ctrl.openProposals.indexOf(proposal);
+                    const isSelected = globalIndex === ctrl.selectedIndex;
+                    const rowText = proposalRowText(proposal);
+                    const matLevel = materialityLevel(proposal.materiality);
+                    const matTone = materialityTone(matLevel);
+                    return (
+                      <SurfaceLedgerRow
+                        key={proposal.id}
+                        data-testid="review-queue-item"
+                        wrap
+                        lead={
+                          <span
+                            className="review-severity-emblem"
+                            data-tone={matTone}
+                            aria-hidden="true"
+                          >
+                            {severityEmblem(proposal.proposalKind)}
+                          </span>
+                        }
+                        primary={
+                          <span
+                            className="review-queue-row-text"
+                            data-selected={isSelected || undefined}
+                            aria-current={isSelected ? "true" : undefined}
+                            role="option"
+                            aria-selected={isSelected}
+                            aria-label={ctrl.openProposals.length > 0 ? `${rowText}, ${kindLabel(proposal.proposalKind)}, ${globalIndex + 1} of ${ctrl.openProposals.length}` : `${rowText}, ${kindLabel(proposal.proposalKind)}`}
+                            data-kind={proposal.proposalKind}
+                            data-ref={proposal.targetRef}
+                          >
+                            {rowText}
+                          </span>
+                        }
+                        cells={
+                          <>
+                            <span
+                              className="surface-token review-queue-materiality"
+                              data-tone={matTone}
+                              data-materiality={proposal.materiality}
+                            >
+                              {matLevel}
+                            </span>
+                            {sourceLabel(proposal) ? (
+                              <ProvenanceChip source={sourceLabel(proposal)!} />
+                            ) : null}
+                          </>
+                        }
+                        time={humanTime(proposal.patchJson.due as string || "")}
+                        trailing={
+                          <span className="review-row-chevron" aria-hidden="true">
+                            {isSelected ? "▾" : "▸"}
+                          </span>
+                        }
+                        open={isSelected}
+                        onToggle={() => ctrl.selectByIndex(globalIndex)}
+                        lineLabel={ctrl.openProposals.length > 0 ? `${rowText}, ${globalIndex + 1} of ${ctrl.openProposals.length}` : rowText}
+                      >
+                        {/* D5: expanded detail inline in the ledger row */}
+                        <ExpandedDetail
+                          proposal={proposal}
+                          ctrl={ctrl}
+                          deferArmed={deferArmed}
+                          onArmDefer={armDefer}
+                          onCancelDefer={cancelDefer}
+                          onConfirmDefer={confirmDefer}
+                        />
+                      </SurfaceLedgerRow>
+                    );
+                  })}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
+      </SurfaceLedger>
       </div>
 
-      {/* Footer (narrow layout): disposition tally, not position (defect 7) */}
+      {ctrl.openProposals.length === 0 ? (
+        <SurfaceState empty emptyLabel="No proposals to review" emptyGlyph={"⊘"} />
+      ) : null}
+
+      {/* Footer: tally + Close (D5) */}
       <SurfaceFooter
         verbs={
-          <span className="review-verbs-footer">
-            <ReviewVerbBar
-              ctrl={ctrl}
-              dense
-              deferArmed={deferArmed}
-              onArmDefer={armDefer}
-              onCancelDefer={cancelDefer}
-              onConfirmDefer={confirmDefer}
-            />
-          </span>
+          <Button dense variant="ghost" onClick={ctrl.exitReview}>
+            Close
+          </Button>
         }
         receipt={
           <span className="surface-footer-receipt-line" data-testid="review-footer-tally" role="status">

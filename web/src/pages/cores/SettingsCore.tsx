@@ -4,7 +4,7 @@
 // window body; the footer status bar carries the receipt and the
 // refusals; every control is a gadget from the surface kit. The pane
 // roster is a code constant — the wire never mints a pane again.
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type {
   CoreProps,
   SecretState,
@@ -30,18 +30,33 @@ import {
   StringGadget,
   type CycleOption,
 } from "../../desk/surface/gadgets";
+import {
+  Receipt,
+  countToken,
+  StateChip,
+  SurfaceLedger,
+  SurfaceLedgerRow,
+  SurfaceWell,
+} from "../../desk/surface";
+import { SurfaceSection } from "../../desk/surface/Surface";
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
+import { egressFor } from "../../desk/surface/egress";
 import { openSurface } from "../../desk/shell";
 import { HotkeyCapture } from "./settingsBespoke";
 import { toggleSfx } from "../../lib/sfx";
-import { ModelsModule } from "./settingsModels";
+// PARKED (HS-170-03): ModelsModule retired — the Concierge is its own window now.
+// import { ModelsModule } from "./settingsModels";
 import { TtsSettingsBlock } from "./settingsTts";
-import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
-import { ContextualAssignment } from "./ContextualAssignment";
+// PARKED (HS-170-03): CapabilityAssignmentsCore — reached via Concierge Adjust.
+// import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
+import { WallpaperModule } from "./settingsWallpaper";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
+import { ConnectionsPane, type ConnectionsFoot } from "./connections";
 // HS-139-05: activateLauncher removed (Delivery tile absorbed).
 import {
   CADENCE_PRESSURE_OPTIONS,
+  INTELLIGENCE_AUTO_OPTIONS,
   LANGUAGE_OPTIONS,
   DeskModule,
   MIR_PROFILE_OPTIONS,
@@ -50,6 +65,8 @@ import {
   PrefsFace,
   PrefStatusBar,
   WAKE_ACTION_OPTIONS,
+  autoDisplayFact,
+  type SettingsHubWire,
 } from "./settingsPrefs";
 
 const SECRET_LABELS: Record<string, string> = {
@@ -118,6 +135,34 @@ export function projectPendingSettingsChanges(
   );
 }
 
+/** HS-175 counsel C8 -- the viewer's LOCAL clock (HH:MM) from an ISO
+ * instant (``...Z`` or an offset).  Naive strings parse as local, which
+ * is what a hub-local stamp means; an unparseable value prints nothing. */
+export function formatLocalClock(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** HS-175 counsel C10 -- the chip beside ``Snapshot``: the resolved
+ * vision host (LAN / cloud / paired device) or THIS DEVICE when the model
+ * runs here.  ``null`` when no vision model resolves (nothing can leave
+ * and the upload refuses by name) -- absence is the signal. */
+export function snapshotEgressChip(
+  egress: { scope?: string; host?: string | null } | null | undefined,
+): { label: string; scope: "local" | "cloud" | "mixed"; title: string } | null {
+  if (!egress || !egress.scope) return null;
+  if (egress.scope === "local") {
+    return { label: "THIS DEVICE", scope: "local", title: "The screenshot is read by a vision model on this device." };
+  }
+  const host = (egress.host || "").trim();
+  if (!host) return null;
+  const where = egress.scope === "cloud" ? "a cloud service" : egress.scope === "mesh" ? "a paired device" : "a device on your network";
+  return { label: host, scope: egress.scope === "cloud" ? "cloud" : "mixed", title: `The screenshot is sent to ${host} (${where}) for extraction.` };
+}
+
 /** Render one egress chip per source with off-device reach. */
 export function calendarSourceEgressChips(
   facts: CalendarSourceFact[] | undefined,
@@ -179,10 +224,373 @@ function title(key: string) {
     .join(" ");
 }
 
+/* ── HS-172: egress helper (shared) ── */
+// intelHostLabel / intelHostScope collapsed into egressFor (desk/surface/egress.ts).
+
 const SETTINGS_WINGS = [
   { id: "settings", label: "Settings" },
   { id: "guide", label: "Guide" },
 ];
+
+/* ── HS-174-02/03: Remote Access — the credential ledger + issue well ── */
+
+const PALETTE_OPTIONS: CycleOption[] = [
+  { value: "PROJECT" },
+  { value: "SWEEP" },
+  { value: "DESK" },
+  { value: "ALL" },
+];
+const TTL_OPTIONS: CycleOption[] = [
+  { value: "43200", label: "12 H" },
+  { value: "86400", label: "24 H" },
+  { value: "604800", label: "7 D" },
+  { value: "2592000", label: "30 D" },
+];
+type RemoteCredential = {
+  id: string;
+  identity: string;
+  /** Palette name (string like "PROJECT") or resolved tool list. */
+  palette: string | string[] | null;
+  /** Epoch seconds (converted from monotonic by the server). */
+  expires_at: number;
+  last_used_at: number | null;
+  /** Authoritative active flag from the server. */
+  active: boolean;
+};
+
+type RemoteWire = {
+  enabled: boolean;
+  bind_host: string | null;
+  port: number | null;
+  credentials: RemoteCredential[];
+  active_count: number;
+  total_count: number;
+};
+
+/** Format an epoch-seconds timestamp as `MMM D` (e.g. `SEP 12`). */
+function formatExpiry(epochSeconds: number): string {
+  const d = new Date(epochSeconds * 1000);
+  const months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  return `${months[d.getMonth()]} ${d.getDate()}`;
+}
+
+/** True when the credential has not expired (epoch seconds vs now). */
+function isActive(expiresAt: number): boolean {
+  return expiresAt * 1000 > Date.now();
+}
+
+/** Relative age string from epoch seconds (e.g. `2 H AGO`, `3 D AGO`). */
+function relativeAge(epochSeconds: number): string {
+  const seconds = Math.max(0, Math.floor((Date.now() - epochSeconds * 1000) / 1000));
+  if (seconds < 60) return `${seconds} S AGO`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} M AGO`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)} H AGO`;
+  return `${Math.floor(seconds / 86400)} D AGO`;
+}
+
+/** The palette label: the name when a string, or the first entry when a list. */
+function paletteLabel(palette: string | string[] | null): string {
+  if (!palette) return "ALL";
+  if (typeof palette === "string") return palette;
+  if (palette.length === 0) return "ALL";
+  return palette[0];
+}
+
+/** HS-174: the System module face — owns the display step + hub chips
+ *  so the REMOTE chip updates live when the toggle fires. */
+function SystemModule({
+  hubSystem,
+  deviceName,
+  deskModule,
+  rawWell,
+}: {
+  hubSystem: { host: string; mesh: boolean; remote?: boolean };
+  deviceName: ReactNode;
+  deskModule: ReactNode;
+  rawWell: ReactNode;
+}) {
+  const [remoteOn, setRemoteOn] = useState(hubSystem.remote ?? false);
+  return (
+    <>
+      <div className="surface-display" data-testid="system-display">
+        This device
+      </div>
+      <div className="prefs-hub-chips" data-testid="system-hub-chips">
+        <span className="surface-token" data-chip>{hubSystem.host}</span>
+        <span className="surface-token" data-chip>{hubSystem.mesh ? "MESH ON" : "MESH OFF"}</span>
+        {remoteOn
+          ? <StateChip state="success" label="REMOTE ON" />
+          : <span className="surface-token" data-chip>REMOTE OFF</span>}
+      </div>
+      <div className="prefs-rule" aria-hidden="true" />
+      <GadgetGroup label="Mesh">
+        {deviceName}
+      </GadgetGroup>
+      <RemoteAccessModule onEnabledChange={setRemoteOn} />
+      {deskModule}
+      {rawWell}
+    </>
+  );
+}
+
+export function RemoteAccessModule({
+  onEnabledChange,
+}: {
+  /** Report the live enabled state so the parent can update hub chips. */
+  onEnabledChange?: (enabled: boolean) => void;
+} = {}) {
+  const [wire, setWire] = useState<RemoteWire | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [issueOpen, setIssueOpen] = useState(false);
+  const [issueName, setIssueName] = useState("");
+  const [issuePalette, setIssuePalette] = useState("PROJECT");
+  const [issueTtl, setIssueTtl] = useState("43200");
+  const [issuing, setIssuing] = useState(false);
+  const [oneTimeToken, setOneTimeToken] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState<string | null>(null);
+  const [toggleBusy, setToggleBusy] = useState(false);
+
+  const fetchRemote = useCallback(async () => {
+    try {
+      const data = await apiFetch<RemoteWire>("/api/settings/remote");
+      setWire(data);
+      setError("");
+      onEnabledChange?.(data.enabled);
+    } catch (err) {
+      setError(readableError(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [onEnabledChange]);
+
+  useEffect(() => { void fetchRemote(); }, [fetchRemote]);
+
+  const toggleEnabled = async (next: string) => {
+    const enabled = next === "ON";
+    setToggleBusy(true);
+    try {
+      await apiFetch("/api/settings/remote", {
+        method: "PUT",
+        json: { enabled },
+      });
+      await fetchRemote();
+    } catch (err) {
+      setError(readableError(err));
+    } finally {
+      setToggleBusy(false);
+    }
+  };
+
+  const issueCredential = async () => {
+    if (!issueName.trim()) return;
+    setIssuing(true);
+    setError("");
+    try {
+      const result = await apiFetch<{
+        token: string;
+        id: string;
+        identity: string;
+        palette: string;
+        expires_at: number;
+      }>("/api/settings/remote/credentials", {
+        method: "POST",
+        json: {
+          identity: issueName.trim(),
+          palette: issuePalette,
+          ttl_seconds: Number(issueTtl),
+        },
+      });
+      setOneTimeToken(result.token);
+      setIssueOpen(false);
+      setIssueName("");
+      setIssuePalette("PROJECT");
+      setIssueTtl("43200");
+      await fetchRemote();
+    } catch (err) {
+      setError(readableError(err));
+    } finally {
+      setIssuing(false);
+    }
+  };
+
+  const revokeCredential = async (id: string) => {
+    setRevoking(id);
+    setError("");
+    try {
+      await apiFetch(`/api/settings/remote/credentials/${id}`, {
+        method: "DELETE",
+      });
+      await fetchRemote();
+    } catch (err) {
+      setError(readableError(err));
+    } finally {
+      setRevoking(null);
+    }
+  };
+
+  const copyToken = () => {
+    if (oneTimeToken) {
+      void navigator.clipboard.writeText(oneTimeToken);
+    }
+  };
+
+  if (loading) return null;
+
+  const enabled = wire?.enabled ?? false;
+  const credentials = wire?.credentials ?? [];
+  const activeCount = credentials.filter((c) => c.active).length;
+  const totalCount = credentials.length;
+  const addressToken = enabled && wire?.port
+    ? `${wire.bind_host || "0.0.0.0"}:${wire.port}`
+    : null;
+
+  return (
+    <GadgetGroup label="Remote access">
+      {/* The toggle row */}
+      <GadgetRow label="Streamable HTTP">
+        <CycleGadget
+          label="Remote transport"
+          value={enabled ? "ON" : "OFF"}
+          options={[{ value: "OFF" }, { value: "ON" }]}
+          disabled={toggleBusy}
+          onChange={toggleEnabled}
+        />
+        {enabled && addressToken ? (
+          <span className="gadget-fact" data-testid="remote-address">{addressToken}</span>
+        ) : null}
+        {enabled && totalCount > 0 ? (
+          <span className="surface-token" data-chip data-testid="remote-total-count">
+            {countToken(totalCount, "CREDENTIAL", "CREDENTIALS")}
+          </span>
+        ) : null}
+      </GadgetRow>
+
+      {/* Everything below only when ON */}
+      {enabled ? (
+        <>
+          {/* Credentials ledger */}
+          {credentials.length > 0 ? (
+            <SurfaceLedger
+              count={<>
+                CREDENTIALS
+                {activeCount > 0 ? (
+                  <> · <span className="surface-token" data-chip data-testid="remote-active-count">
+                    {countToken(activeCount, "ACTIVE", "ACTIVE")}
+                  </span></>
+                ) : null}
+              </>}
+              cols="room"
+            >
+              {credentials.map((cred) => (
+                  <SurfaceLedgerRow
+                    key={cred.id}
+                    lead={<StateChip state={cred.active ? "success" : "idle"} label="" icon="●" />}
+                    primary={cred.identity}
+                    expands={false}
+                    data-testid={`credential-row-${cred.id}`}
+                    cells={<>
+                      <span className="surface-token" data-chip>{paletteLabel(cred.palette)}</span>
+                      {cred.active ? (
+                        <span className="surface-token" data-chip>
+                          EXPIRES {formatExpiry(cred.expires_at)}
+                        </span>
+                      ) : (
+                        <StateChip state="warning" label="EXPIRED" />
+                      )}
+                      <span className="surface-token" data-chip data-muted>
+                        {cred.last_used_at ? `LAST USED ${relativeAge(cred.last_used_at)}` : "NEVER USED"}
+                      </span>
+                    </>}
+                    trailing={
+                      <Button
+                        variant="ghost"
+                        dense
+                        disabled={revoking === cred.id}
+                        onClick={() => void revokeCredential(cred.id)}
+                      >
+                        Revoke
+                      </Button>
+                    }
+                  />
+                ))}
+            </SurfaceLedger>
+          ) : null}
+
+          {/* One-time token display (after issue, before dismissal) */}
+          {oneTimeToken ? (
+            <SurfaceWell>
+              <div className="prefs-token-once">
+                <code className="prefs-token-value" data-testid="token-value">{oneTimeToken}</code>
+                <Button variant="ghost" dense onClick={copyToken} data-testid="token-copy">
+                  Copy
+                </Button>
+              </div>
+              <span className="prefs-token-caption" data-tone="warning">
+                TOKEN SHOWN ONCE — COPY IT NOW
+              </span>
+            </SurfaceWell>
+          ) : null}
+
+          {/* Issue credential verb + well */}
+          {issueOpen ? (
+            <SurfaceWell>
+              <GadgetRow label="Name">
+                <StringGadget
+                  label="Credential name"
+                  value={issueName}
+                  placeholder="e.g. sweep-runner"
+                  onChange={setIssueName}
+                  autoFocus
+                />
+              </GadgetRow>
+              <GadgetRow label="Palette">
+                <CycleGadget
+                  label="Palette"
+                  value={issuePalette}
+                  options={PALETTE_OPTIONS}
+                  onChange={setIssuePalette}
+                />
+              </GadgetRow>
+              <GadgetRow label="TTL">
+                <CycleGadget
+                  label="TTL"
+                  value={issueTtl}
+                  options={TTL_OPTIONS}
+                  onChange={setIssueTtl}
+                />
+              </GadgetRow>
+              <div className="prefs-issue-actions">
+                <Button variant="primary" disabled={issuing || !issueName.trim()} onClick={() => void issueCredential()} data-testid="issue-submit">
+                  Issue
+                </Button>
+                <Button variant="ghost" onClick={() => { setIssueOpen(false); setIssueName(""); }} data-testid="issue-cancel">
+                  Cancel
+                </Button>
+              </div>
+            </SurfaceWell>
+          ) : (
+            <div className="prefs-issue-start">
+              <Button
+                variant="ghost"
+                onClick={() => { setOneTimeToken(null); setIssueOpen(true); }}
+                data-testid="issue-credential-btn"
+              >
+                Issue credential
+              </Button>
+            </div>
+          )}
+        </>
+      ) : null}
+
+      {error ? (
+        <span className="gadget-fact" data-tone="danger" role="alert" data-testid="remote-error">
+          {error}
+        </span>
+      ) : null}
+    </GadgetGroup>
+  );
+}
 
 export function SettingsCore({ hero, scope }: CoreProps) {
   // HS-100-10 — the Runtime guide is the Guide wing (the standalone
@@ -200,7 +608,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
     scope && scope.startsWith("integration:")
       ? scope.slice("integration:".length)
       : null;
-  // HS-139-05: resolve aliases from the retired 14-tile roster to the new 7.
+  // HS-139-05: resolve aliases from the retired roster to its successor.
   const resolvedScope = scope ? (MODULE_ALIASES[scope] ?? scope) : scope;
   const scopedModule = PREF_MODULES.some(
     (module) => module.id === resolvedScope,
@@ -212,6 +620,18 @@ function SettingsFace({ hero, scope }: CoreProps) {
     "/api/authority/policy",
     {},
   );
+  // HS-170-04: the hub wire — one read for all seven module rows' state tokens.
+  const hub = useResource<SettingsHubWire>("/api/settings/hub", {
+    models: { engines: 0, groupsSet: 0, defaultSet: false },
+    connections: { connected: 0 },
+    voice: { live: false, target: "" },
+    meetings: { intelligence: false, auto: "off", host: "" },
+    rhythm: { loops: 0 },
+    sounds: { on: false },
+    system: { host: "THIS DEVICE", mesh: false, remote: false },
+    posture: "neutral",
+    writtenAt: null,
+  });
   // null = the drawer face; a module id = that module owns the body.
   const [moduleId, setModuleId] = useState<string | null>(
     integrationSubject ? "integrations" : scopedModule,
@@ -221,8 +641,38 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const [writtenAt, setWrittenAt] = useState("");
   const [refusal, setRefusal] = useState("");
   const [secretBusy, setSecretBusy] = useState("");
+  // HS-168-03: connections receipt for the integrations module footer.
+  const [connectionsFoot, setConnectionsFoot] = useState<ConnectionsFoot | null>(null);
+  const handleConnectionsFooter = useCallback((foot: ConnectionsFoot) => {
+    setConnectionsFoot(foot);
+  }, []);
   const [authorityBusy, setAuthorityBusy] = useState(false);
   const secrets = (resource.data._secrets ?? {}) as Record<string, SecretState>;
+
+  // HS-175-03: calendar sources facts for the CALENDAR section.
+  const [calSources, setCalSources] = useState<{
+    sources: Array<{
+      id: string; label: string; type: string; status: string;
+      host: string | null; event_count: number;
+      last_read: string | null; last_read_at?: string | null; egress: boolean;
+    }>;
+    auto_record: string;
+    auto_record_lead_minutes: number;
+    matched_this_week: number;
+    snapshot_egress?: { scope: string; host?: string | null } | null;
+  } | null>(null);
+  // The ONE connect well, two uses: "new" under the Connect row, or a
+  // source id under that source's row (pre-filled, Save rewrites its URL).
+  const [calWellFor, setCalWellFor] = useState<string | null>(null);
+  const [calWellValue, setCalWellValue] = useState("");
+  const [calWellError, setCalWellError] = useState("");
+  const [calWellSaving, setCalWellSaving] = useState(false);
+  // The in-world Remove confirm step (never a modal): the armed source id.
+  const [calRemoveFor, setCalRemoveFor] = useState<string | null>(null);
+  const loadCalSources = useCallback(() => {
+    void apiFetch<typeof calSources>("/api/calendar/sources").then(setCalSources);
+  }, []);
+  useEffect(() => { loadCalSources(); }, [loadCalSources]);
 
   /* HS-101 round 3 — the configuring archetype saves ON CHANGE
      (Article VII: no ceremony): every edit lands debounced. HS-111-01:
@@ -426,7 +876,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
     else if (scopedModule) setModuleId(scopedModule);
   }, [integrationSubject, scopedModule]);
 
-  // HS-139-05: deep-index and filter removed — 7 tiles all visible at once.
+  // HS-139-05: deep-index and filter removed — all tiles stay visible at once.
   const openModule = (id: string) => {
     setModuleId(id);
     setHighlight("");
@@ -622,7 +1072,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
               {check(
                 ["dictation", "macros", "enabled"],
                 "Voice commands",
-                `${macroItems.length} configured`,
+                countToken(macroItems.length, "CONFIGURED") ?? undefined,
               )}
             </GadgetGroup>
             <GadgetGroup label="Spoken symbols">
@@ -770,8 +1220,25 @@ function SettingsFace({ hero, scope }: CoreProps) {
             <TtsSettingsBlock />
           </>
         );
-      /* ── Meetings: pointer tile + calendar + actuators + RAW ── */
+      case "wallpaper":
+        return <WallpaperModule />;
+      /* ── Meetings: display fact + intel row + capture + calendar + actuators + RAW ── */
       case "meetings": {
+        const autoVal = String(val(["meeting", "intelligence_auto"]) ?? "room_linked");
+        const meetingsHub = (hub.data as Record<string, unknown>).meetings as Record<string, unknown> | undefined;
+        // HS-172: null host = no model assigned; real host = chip.
+        // The hub returns a host only when a model is actually assigned;
+        // until the wire fix lands, fall back to defaultSet as the signal.
+        const hubHost = meetingsHub?.host ? String(meetingsHub.host) : null;
+        const hasModel = Boolean(hubHost) && hubHost !== "THIS DEVICE"
+          ? true
+          : Boolean(hub.data.models?.defaultSet);
+        const intelHost = hasModel ? hubHost : null;
+        const lastRunAt = meetingsHub?.lastRunAt ? String(meetingsHub.lastRunAt) : null;
+        const lastRunS = meetingsHub?.lastRunS != null ? Number(meetingsHub.lastRunS) : null;
+        const lastRunReceipt = lastRunAt
+          ? `LAST RAN ${lastRunAt.slice(11, 16)}${lastRunS != null ? " · " + lastRunS + " S" : ""}`
+          : null;
         const sourcesPath: string[] = ["calendar", "sources"];
         const sources: Array<{
           id: string;
@@ -779,7 +1246,6 @@ function SettingsFace({ hero, scope }: CoreProps) {
           url: string;
           enabled: boolean;
         }> = (val(sourcesPath) as any[]) ?? [];
-        const egressChips = calendarSourceEgressChips(data._calendar_sources);
         const patchSource = (
           index: number,
           patch: Record<string, unknown>,
@@ -789,122 +1255,273 @@ function SettingsFace({ hero, scope }: CoreProps) {
           );
           update(sourcesPath, next);
         };
+        // HS-175-03: rows come from the settings sources (first paint
+        // carries them), the per-source egress fact from _calendar_sources,
+        // and counts / last-read / status from /api/calendar/sources.
+        const calFacts = new Map(
+          ((data._calendar_sources ?? []) as CalendarSourceFact[]).map((f) => [f.id ?? "", f]),
+        );
+        const calStats = new Map((calSources?.sources ?? []).map((s) => [s.id, s]));
+        const calSourceLabel = (entry: { label: string; url: string }, host: string | null) =>
+          entry.label || host || (entry.url.split(/[\\/]/).pop() ?? "") || "CALENDAR";
+        const openCalWell = (target: string, prefill: string) => {
+          setCalRemoveFor(null);
+          setCalWellFor(target);
+          setCalWellValue(prefill);
+          setCalWellError("");
+        };
+        const closeCalWell = () => {
+          setCalWellFor(null);
+          setCalWellValue("");
+          setCalWellError("");
+        };
+        const saveCalWell = async () => {
+          const url = calWellValue.trim();
+          if (!url || calWellFor === null) return;
+          setCalWellSaving(true);
+          setCalWellError("");
+          const nextSources =
+            calWellFor === "new"
+              ? [...sources, { id: crypto.randomUUID(), label: "", url, enabled: true }]
+              : sources.map((s) => (s.id === calWellFor ? { ...s, url } : s));
+          const ok = await commitMany([[sourcesPath, nextSources]]);
+          setCalWellSaving(false);
+          if (ok) {
+            closeCalWell();
+            setTimeout(loadCalSources, 300);
+          } else {
+            setCalWellError("REFUSED");
+          }
+        };
+        const calWell = (
+          <div className="prefs-calendar-well" data-testid="calendar-well">
+            <StringGadget
+              label="Calendar URL or file path"
+              value={calWellValue}
+              placeholder="Paste an ICS URL or a file path"
+              onChange={setCalWellValue}
+              mic
+            />
+            {calWellError ? <StateChip state="failure" label={refusal || calWellError} /> : null}
+            <div className="prefs-calendar-well-actions">
+              <Button variant="ghost" dense onClick={closeCalWell}>Cancel</Button>
+              <Button dense disabled={calWellSaving || !calWellValue.trim()} onClick={() => void saveCalWell()}>Save</Button>
+            </div>
+          </div>
+        );
         return (
           <>
-            <GadgetGroup label="Capture + export">
-              <div className="prefs-elsewhere">
-                <span className="prefs-elsewhere-fact">
-                  CONFIG LIVES ON MEETINGS
-                </span>
-              </div>
-            </GadgetGroup>
-            <GadgetGroup label="Calendar">
-              <GadgetRow wide label="Sources" highlight={hl(sourcesPath)}>
-                <div className="prefs-calendar-sources">
-                  <GadgetTable
-                    head={["LABEL", "URL", "ON"]}
-                    deleteLabel="REMOVE?"
-                    onDelete={(index) =>
-                      update(
-                        sourcesPath,
-                        sources.filter((_, row) => row !== index),
-                      )
-                    }
-                    onAdd={() =>
-                      update(sourcesPath, [
-                        ...sources,
-                        {
-                          id: crypto.randomUUID(),
-                          label: "",
-                          url: "",
-                          enabled: true,
-                        },
-                      ])
-                    }
-                    addLabel="+ ADD SOURCE"
-                    rowKey={(index) => sources[index]?.id ?? String(index)}
-                    rows={sources.map((entry, index) => [
-                      <StringGadget
-                        key="label"
-                        label={`Source ${index + 1} label`}
-                        value={entry.label ?? ""}
-                        placeholder="Work"
-                        onChange={(next) => patchSource(index, { label: next })}
-                      />,
-                      <StringGadget
-                        key="url"
-                        label={`Source ${index + 1} URL`}
-                        value={entry.url ?? ""}
-                        placeholder="ICS file or HTTPS URL"
-                        onChange={(next) => patchSource(index, { url: next })}
-                      />,
-                      <CheckGadget
-                        key="enabled"
-                        label={`Enable source ${index + 1}`}
-                        checked={entry.enabled ?? true}
-                        onChange={(next) =>
-                          patchSource(index, { enabled: next })
-                        }
-                      />,
-                    ])}
-                  />
-                  {egressChips.length > 0
-                    ? <div className="prefs-calendar-egress">
-                        {egressChips.map((chip) => (
-                          <EgressChip key={chip.id} {...chip} />
-                        ))}
-                      </div>
-                    : null}
-                  <Button
-                    dense
-                    onClick={() => {
-                      const input = document.createElement("input");
-                      input.type = "file";
-                      input.accept = ".png,.jpg,.jpeg,.webp";
-                      input.multiple = true;
-                      input.onchange = async () => {
-                        const files = input.files;
-                        if (!files?.length) return;
-                        const body = new FormData();
-                        for (let i = 0; i < Math.min(files.length, 3); i++) {
-                          body.append("files", files[i]);
-                        }
-                        try {
-                          const result = await apiFetch<Record<string, unknown>>(
-                            "/api/calendar/snapshot",
-                            { method: "POST", body },
-                          );
-                          openSurface(
-                            "review-calendar-snapshot",
-                            JSON.stringify(result),
-                          );
-                        } catch (error) {
-                          setRefusal(readableError(error));
-                        }
-                      };
-                      input.click();
-                    }}
-                  >
-                    IMPORT SCREENSHOT
+            <div className="surface-display" data-testid="meetings-auto-display">
+              {autoDisplayFact(autoVal)}
+            </div>
+            <div className="prefs-rule" aria-hidden="true" />
+            <GadgetRow label="Intelligence">
+              <CycleGadget
+                label="Auto-run intelligence"
+                value={autoVal}
+                options={INTELLIGENCE_AUTO_OPTIONS}
+                onChange={(next) => update(["meeting", "intelligence_auto"], next)}
+              />
+              {hasModel && intelHost ? (
+                <EgressChip
+                  label={egressFor(intelHost).label}
+                  scope={egressFor(intelHost).scope}
+                />
+              ) : !hasModel ? (
+                <>
+                  <StateChip state="warning" label="NO MODEL" data-testid="settings-no-model" />
+                  <Button variant="ghost" dense onClick={() => openSurface("open-concierge")} data-testid="settings-choose-model">
+                    Choose model
                   </Button>
-                </div>
+                </>
+              ) : null}
+              {lastRunReceipt ? (
+                <span className="gadget-fact" data-testid="settings-last-ran">{lastRunReceipt}</span>
+              ) : null}
+            </GadgetRow>
+            <div className="prefs-rule" aria-hidden="true" />
+            <GadgetGroup label="Capture + export">
+              <GadgetRow label="Mic device" fact="device name">
+                <StringGadget
+                  label="Mic device"
+                  value={String(val(["meeting", "mic_device"]) ?? "")}
+                  onChange={(next) => update(["meeting", "mic_device"], next || null)}
+                />
+              </GadgetRow>
+              <GadgetRow label="System audio" fact="device name">
+                <StringGadget
+                  label="System audio device"
+                  value={String(val(["meeting", "system_audio_device"]) ?? "")}
+                  onChange={(next) => update(["meeting", "system_audio_device"], next || null)}
+                />
+              </GadgetRow>
+              <GadgetRow label="Auto export">
+                <CheckGadget
+                  label="Auto export"
+                  checked={Boolean(val(["meeting", "auto_export"]))}
+                  onChange={(next) => update(["meeting", "auto_export"], next)}
+                />
+              </GadgetRow>
+              <GadgetRow label="Format">
+                <CycleGadget
+                  label="Export format"
+                  value={String(val(["meeting", "export_format"]) ?? "txt")}
+                  options={[
+                    { value: "txt", label: "TXT" },
+                    { value: "markdown", label: "MD" },
+                    { value: "json", label: "JSON" },
+                    { value: "srt", label: "SRT" },
+                  ]}
+                  onChange={(next) => update(["meeting", "export_format"], next)}
+                />
               </GadgetRow>
             </GadgetGroup>
+            {/* HS-175-03: CALENDAR section replaces the 146 Calendar GadgetGroup.
+                Source rows, the Connect calendar well, Auto-record, Snapshot. */}
+            <SurfaceSection label="CALENDAR" className="prefs-calendar-section">
+              <ul className="surface-rows prefs-calendar-sources">
+                {sources.map((entry, index) => {
+                  const fact = calFacts.get(entry.id);
+                  const stat = calStats.get(entry.id);
+                  const host = fact?.egress && fact.host ? String(fact.host) : null;
+                  const label = calSourceLabel(entry, host);
+                  const type = label.toUpperCase().endsWith("SNAPSHOT") ? "SNAPSHOT" : "ICS";
+                  const minutes = fact?.refresh_seconds ? Math.round(fact.refresh_seconds / 60) : 15;
+                  const state = (!entry.enabled ? "idle" : stat?.status ?? "idle") as "success" | "failure" | "idle";
+                  const editing = calWellFor === entry.id;
+                  const removing = calRemoveFor === entry.id;
+                  return (
+                    <SurfaceLedgerRow
+                      key={entry.id}
+                      data-testid={`calendar-source-${entry.id}`}
+                      wrap
+                      lead={<StateChip state={state} icon={"●"} label="" />}
+                      primary={<span data-muted={!entry.enabled || undefined} style={!entry.enabled ? { color: "var(--text-muted)" } : undefined}>{label}</span>}
+                      cells={
+                        <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                          <span className="surface-token" data-chip>{type}</span>
+                          {/* HS-175 counsel C9 (H2-2): egress where egress happens --
+                              the host on an HTTPS source; a file source carries NO
+                              chip (absence is the signal, never a reassurance). */}
+                          {host
+                            ? <EgressChip label={host} scope="cloud" title={`Fetches ${label} from ${host} every ${minutes} minutes. No credentials or headers are sent.`} />
+                            : null}
+                          {/* C9(b): COUNT(DISTINCT uid) counts events -- named so. */}
+                          {(() => { const ct = stat ? countToken(stat.event_count, "EVENT") : null; return ct ? <span className="surface-token" data-chip data-testid="calendar-source-events">{ct}</span> : null; })()}
+                          {/* C8: the viewer's local clock from the ISO instant. */}
+                          {(() => { const clock = formatLocalClock(stat?.last_read_at) ?? stat?.last_read ?? null; return clock ? <span className="surface-token" data-chip data-testid="calendar-source-last-read">LAST READ {clock}</span> : null; })()}
+                        </span>
+                      }
+                      trailing={
+                        <>
+                          {/* C10 (H8-2): Edit is withheld on a SNAPSHOT row -- its
+                              path is generated by the upload and rewritten by it. */}
+                          {type !== "SNAPSHOT" ? (
+                            <Button variant="ghost" dense data-testid="calendar-source-edit" onClick={(e) => { e.stopPropagation(); openCalWell(entry.id, entry.url); }}>Edit</Button>
+                          ) : null}
+                          <Button variant="ghost" dense data-testid="calendar-source-toggle" onClick={(e) => { e.stopPropagation(); patchSource(index, { enabled: !entry.enabled }); }}>{entry.enabled ? "Disable" : "Enable"}</Button>
+                          <Button variant="ghost" dense data-testid="calendar-source-remove" onClick={(e) => { e.stopPropagation(); closeCalWell(); setCalRemoveFor(entry.id); }}>Remove</Button>
+                        </>
+                      }
+                      open={editing || removing}
+                      onToggle={() => {
+                        if (type === "SNAPSHOT") { if (editing) closeCalWell(); return; }
+                        if (editing) closeCalWell(); else openCalWell(entry.id, entry.url);
+                      }}
+                    >
+                      {editing ? calWell : null}
+                      {removing ? (
+                        <div className="prefs-calendar-well" data-testid="calendar-remove-confirm">
+                          <span className="surface-token" data-chip data-tone="danger">REMOVE {label.toUpperCase()}</span>
+                          <div className="prefs-calendar-well-actions">
+                            <Button variant="danger" dense onClick={() => { setCalRemoveFor(null); update(sourcesPath, sources.filter((_, i) => i !== index)); }}>Remove</Button>
+                            <Button variant="ghost" dense onClick={() => setCalRemoveFor(null)}>Cancel</Button>
+                          </div>
+                        </div>
+                      ) : null}
+                    </SurfaceLedgerRow>
+                  );
+                })}
+                {/* Connect calendar row + the same in-world well (the "new" use) */}
+                <SurfaceLedgerRow
+                  data-testid="calendar-connect-row"
+                  lead={<span />}
+                  primary="Connect calendar"
+                  wrap
+                  trailing={
+                    calWellFor !== "new" ? (
+                      <>
+                        <Button variant="ghost" onClick={(e) => { e.stopPropagation(); openCalWell("new", ""); }} data-testid="calendar-add-btn">Add</Button>
+                        {/* HS-175 counsel C10: the vision model's egress on the face
+                            BEFORE the upload (Article III:2, A.9) -- read from the
+                            same resolution the dispatch uses. */}
+                        {(() => {
+                          const chip = snapshotEgressChip(calSources?.snapshot_egress);
+                          return chip ? (
+                            <span data-testid="calendar-snapshot-egress" style={{ display: "inline-flex", alignItems: "center" }}>
+                              <EgressChip label={chip.label} scope={chip.scope} title={chip.title} className="prefs-snapshot-egress" />
+                            </span>
+                          ) : null;
+                        })()}
+                        <Button variant="ghost" dense data-testid="calendar-snapshot-btn" onClick={(e) => {
+                          e.stopPropagation();
+                          const input = document.createElement("input");
+                          input.type = "file";
+                          input.accept = ".png,.jpg,.jpeg,.webp";
+                          input.multiple = true;
+                          input.onchange = async () => {
+                            const files = input.files;
+                            if (!files?.length) return;
+                            const fd = new FormData();
+                            for (let i = 0; i < Math.min(files.length, 3); i++) fd.append("files", files[i]);
+                            try {
+                              const result = await apiFetch<Record<string, unknown>>("/api/calendar/snapshot", { method: "POST", body: fd });
+                              openSurface("review-calendar-snapshot", JSON.stringify(result));
+                            } catch (error) { setRefusal(readableError(error)); }
+                          };
+                          input.click();
+                        }}>Snapshot</Button>
+                      </>
+                    ) : null
+                  }
+                  open={calWellFor === "new"}
+                  onToggle={() => (calWellFor === "new" ? closeCalWell() : openCalWell("new", ""))}
+                >
+                  {calWellFor === "new" ? calWell : null}
+                </SurfaceLedgerRow>
+                {/* Auto-record row */}
+                <SurfaceLedgerRow
+                  data-testid="settings-auto-record"
+                  lead={<span />}
+                  primary="Auto-record"
+                  wrap
+                  cells={
+                    <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                      <CycleGadget
+                        label="Auto-record mode"
+                        value={calSources?.auto_record ?? String(val(["meeting", "auto_record"]) ?? "off")}
+                        options={[
+                          { value: "all_calendar", label: "ARM ALL CALENDAR MEETINGS" },
+                          { value: "room_linked", label: "ARM ROOM MEETINGS ONLY" },
+                          { value: "off", label: "OFF" },
+                        ]}
+                        onChange={(next) => { update(["meeting", "auto_record"], next); setTimeout(loadCalSources, 900); }}
+                      />
+                      {(calSources?.auto_record ?? String(val(["meeting", "auto_record"]) ?? "off")) !== "off" ? (
+                        <span className="surface-token" data-chip data-tone="muted">{calSources?.auto_record_lead_minutes ?? 5} MIN BEFORE</span>
+                      ) : null}
+                      {(calSources?.auto_record ?? String(val(["meeting", "auto_record"]) ?? "off")) === "room_linked" ? (() => {
+                        const mt = calSources ? countToken(calSources.matched_this_week, "MATCHED THIS WEEK") : null;
+                        return mt ? <span className="surface-token" data-chip data-testid="matched-this-week">{mt}</span> : null;
+                      })() : null}
+                    </span>
+                  }
+                  expands={false}
+                />
+              </ul>
+            </SurfaceSection>
             <GadgetGroup label="Actuators">
               {check(["meeting", "allow_actuators"], "Allow actuators")}
-            </GadgetGroup>
-            <GadgetGroup label="Intelligence">
-              <div className="prefs-elsewhere">
-                <span className="prefs-elsewhere-fact">PLACEMENT LIVES IN ASSIGNMENTS</span>
-                <Button dense onClick={() => openModule("assignments")}>
-                  Open Assignments
-                </Button>
-                <ContextualAssignment
-                  label="Meetings"
-                  capabilityId="meeting.live_analysis"
-                  scope={{ kind: "group", group_id: "meetings" }}
-                />
-              </div>
             </GadgetGroup>
             {/* HS-139-04: all operator knobs fold behind one RAW well. */}
             <FoldGadget title="RAW" token="20">
@@ -1031,15 +1648,16 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </FoldGadget>
           </>
         );
-      /* ── Models: availability-only Model Library ── */
+      /* ── Models: PARKED (HS-170-03) — the Concierge is its own window now.
+         Opening models/assignments redirects to the Concierge surface. ── */
       case "models":
-        return (
-          <ModelsModule onRefuse={setRefusal} />
-        );
-      /* ── Assignments: bounded server-projected routing truth ── */
-      case "assignments":
-        return <CapabilityAssignmentsCore />;
-      /* ── Integrations: credentials + RAW ── */
+      case "assignments": {
+        import("../../desk/shell").then(({ openSurface }) => {
+          openSurface("open-concierge");
+        });
+        return null;
+      }
+      /* ── Connections: tools + credentials + RAW ── */
       case "integrations": {
         const RAW_SECRETS = new Set([
           "failure_webhook_url",
@@ -1066,6 +1684,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
         );
         return (
           <>
+            {/* HS-168-03: the Connections face above credentials + mesh. */}
+            <ConnectionsPane
+              onFooterUpdate={handleConnectionsFooter}
+              onOpenModule={openModule}
+            />
             <GadgetGroup label="Credentials">
               <div className="prefs-egress-line">
                 <EgressChip />
@@ -1082,26 +1705,22 @@ function SettingsFace({ hero, scope }: CoreProps) {
           </>
         );
       }
-      /* ── System: device name + desk reset + devices RAW ── */
+      /* ── System: display + device name + remote access + desk reset + devices RAW ── */
       case "system": {
         const device = (data.device ?? {}) as Record<string, unknown>;
         const deviceCount = Object.keys(device).length;
-        return (
-          <>
-            <GadgetGroup label="Mesh">
-              {str(["mesh", "device_name"], "Device name")}
-            </GadgetGroup>
-            <DeskModule />
-            {/* HS-139-04/05: device walker knobs fold behind RAW. */}
-            {deviceCount ? (
-              <FoldGadget title="RAW" token={String(deviceCount)}>
-                <GadgetGroup label="Device">
-                  {walkerRows(device, ["device"])}
-                </GadgetGroup>
-              </FoldGadget>
-            ) : null}
-          </>
-        );
+        return <SystemModule
+          hubSystem={hub.data.system}
+          deviceName={str(["mesh", "device_name"], "Device name")}
+          deskModule={<DeskModule />}
+          rawWell={deviceCount ? (
+            <FoldGadget title="RAW" token={String(deviceCount)}>
+              <GadgetGroup label="Device">
+                {walkerRows(device, ["device"])}
+              </GadgetGroup>
+            </FoldGadget>
+          ) : null}
+        />;
       }
       default:
         return null;
@@ -1128,7 +1747,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
         ) : (
           <PrefsFace
             onOpen={openModule}
-            posture={String(authority.data.control_mode ?? "neutral")}
+            hub={hub.data}
+            posture={String(hub.data.posture || authority.data.control_mode || "neutral")}
             postureBusy={authorityBusy || authority.loading}
             onPosture={(mode) => void setControlMode(mode)}
             precedence={
@@ -1139,17 +1759,37 @@ function SettingsFace({ hero, scope }: CoreProps) {
           />
         )}
       </SurfaceState>
-      <PrefStatusBar
-        onBack={
-          module
-            ? () => {
-                setModuleId(null);
-                setHighlight("");
-              }
-            : undefined
-        }
-        receipt={receipt}
-      />
+      {/* HS-168-03: connections module shows its own receipt footer. */}
+      {moduleId === "integrations" ? (
+        <SurfaceFooter verbs={<>
+          <EgressChip
+            label={connectionsFoot?.egressHost ? connectionsFoot.egressHost.toUpperCase() : undefined}
+            scope={connectionsFoot?.egressHost ? "cloud" : "local"}
+          />
+          {connectionsFoot?.checkedAt ? (
+            <Receipt status="ok" label="Checked" timestamp={connectionsFoot.checkedAt} />
+          ) : (
+            <span className="prefs-receipt">NOT CHECKED</span>
+          )}
+        </>} />
+      ) : (
+        <PrefStatusBar
+          onBack={
+            module
+              ? () => {
+                  setModuleId(null);
+                  setHighlight("");
+                }
+              : undefined
+          }
+          receipt={receipt}
+          hubWrittenAt={
+            hub.data.writtenAt != null
+              ? new Date(hub.data.writtenAt * 1000).toTimeString().slice(0, 5)
+              : null
+          }
+        />
+      )}
     </>
   );
 }

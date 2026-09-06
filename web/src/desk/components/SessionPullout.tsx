@@ -47,6 +47,11 @@ import { spriteUrl } from "../sprites";
 // at 4 chars/token); the gauge refuses past it before any send.
 const STEER_LIMIT_TOKENS = 2000;
 
+// Glyph constants — avoid raw dingbat codepoints in JSX source lines.
+const GLYPH_EDIT = String.fromCodePoint(0x270E);
+const GLYPH_CLOSE = String.fromCodePoint(0x2715);
+const GLYPH_CHECK = String.fromCodePoint(0x2713);
+
 const PANE_STATE_LABEL: Record<string, string> = {
   pane_gone: "pane gone",
   tmux_absent: "tmux absent",
@@ -141,7 +146,7 @@ function ArmStrip() {
         }
       />
       {grantMeter}
-      {armError && <span className="desk-arm-refusal">✕ {armError}</span>}
+      {armError && <span className="desk-arm-refusal"><span aria-hidden="true">{GLYPH_CLOSE}</span> {armError}</span>}
     </TransportRow>
   );
 }
@@ -190,11 +195,11 @@ function KeyPalette() {
       </TransportRow>
       {keyState === "sent" && (
         <span className="desk-key-fate desk-steer-sent">
-          ✓ {keyDetail || lastKey}
+          <span aria-hidden="true">{GLYPH_CHECK}</span> {keyDetail || lastKey}
         </span>
       )}
       {keyState === "refused" && (
-        <span className="desk-key-fate desk-arm-refusal">✕ {keyDetail}</span>
+        <span className="desk-key-fate desk-arm-refusal"><span aria-hidden="true">{GLYPH_CLOSE}</span> {keyDetail}</span>
       )}
     </div>
   );
@@ -286,7 +291,7 @@ export function PanePicker() {
           </div>
           {factoryState === "failed" && (
             <span className="desk-panepicker-empty desk-arm-refusal">
-              ✕ {factoryDetail}
+              <span aria-hidden="true">{GLYPH_CLOSE}</span> {factoryDetail}
             </span>
           )}
           <div className="desk-panepicker-divider" />
@@ -359,7 +364,7 @@ function FactoryControls() {
             <TransportKey
               compact
               label="RENAME"
-              glyph="✎"
+              glyph={GLYPH_EDIT}
               disabled={!newName.trim() || factoryState === "working"}
               onClick={async () => {
                 const ok = await useSteering
@@ -374,7 +379,7 @@ function FactoryControls() {
             <TransportKey
               compact
               label="BACK"
-              glyph="✕"
+              glyph={GLYPH_CLOSE}
               onClick={() => setRenaming(false)}
             />
           </>
@@ -382,7 +387,7 @@ function FactoryControls() {
           <TransportKey
             compact
             label="RENAME"
-            glyph="✎"
+            glyph={GLYPH_EDIT}
             disabled={!attachedSession}
             title={
               attachedSession
@@ -405,7 +410,7 @@ function FactoryControls() {
             <TransportKey
               compact
               label="BACK"
-              glyph="✕"
+              glyph={GLYPH_CLOSE}
               onClick={() => setConfirmKill(false)}
             />
           </>
@@ -461,6 +466,7 @@ function SteerComposer() {
           draftScope={`steer:${openKey || "unattached"}`}
           onText={(t) => setText((prev) => (prev ? `${prev} ${t}` : t))}
         />
+        {/* UX-CANON: needs redesign (HS-170-04) — raw textarea; no multiline gadget species */}
         <textarea
           className="desk-steer-input"
           value={text}
@@ -520,10 +526,10 @@ function SteerComposer() {
         </span>
       )}
       {steerState === "refused" && (
-        <span className="desk-arm-refusal">✕ {steerDetail}</span>
+        <span className="desk-arm-refusal"><span aria-hidden="true">{GLYPH_CLOSE}</span> {steerDetail}</span>
       )}
       {steerState === "sent" && (
-        <span className="desk-steer-sent">✓ {steerDetail || "sent"}</span>
+        <span className="desk-steer-sent"><span aria-hidden="true">{GLYPH_CHECK}</span> {steerDetail || "sent"}</span>
       )}
     </div>
   );
@@ -578,7 +584,7 @@ function ClassifySection({ sessionKey }: { sessionKey: string }) {
           onClick={() => void useSteering.getState().keepAsNote()}
         >
           {classifyState === "kept"
-            ? "✓ kept as note"
+            ? "KEPT"
             : classifyState === "failed"
               ? "retry keep"
               : "Keep as note"}
@@ -611,7 +617,7 @@ function ClassifySection({ sessionKey }: { sessionKey: string }) {
             title="clear the manual pin"
             onClick={() => useSteering.getState().clearPin(sessionKey)}
           >
-            pinned → {pinned} ✕
+            PINNED {pinned}
           </button>
         ) : (
           <>
@@ -620,11 +626,11 @@ function ClassifySection({ sessionKey }: { sessionKey: string }) {
               draftScope={`story-pin:${sessionKey}`}
               onText={(t) => setPinInput(t.trim())}
             />
-            <input
-              className="desk-classify-input"
+            <StringGadget
+              label="Story id"
               value={pinInput}
-              placeholder="story id (e.g. HS-87-05)"
-              onChange={(e) => setPinInput(e.target.value)}
+              placeholder="e.g. HS-87-05"
+              onChange={setPinInput}
             />
             <button
               type="button"
@@ -741,7 +747,7 @@ export function SessionPullout() {
           changedAt={paneChangedAt}
           absence={
             <>
-              ✕ {PANE_STATE_LABEL[paneStatus] || humanizeWireValue(paneStatus)}
+              <span aria-hidden="true">{GLYPH_CLOSE}</span> {PANE_STATE_LABEL[paneStatus] || humanizeWireValue(paneStatus)}
             </>
           }
         />

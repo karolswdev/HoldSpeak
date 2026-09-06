@@ -4,6 +4,11 @@ The retired Phase-141 picker assigned the Thoughts pointer.  This successor
 keeps its useful owner proof (server projection, one action seat, inert
 selection, and two working widths) on the replacement availability surface.
 The durable download/add walk remains in test_hs142_model_acquisition_glass.py.
+
+HS-170: RETIRED -- Settings -> Models module PARKED (HS-170-03); the Model
+Library is now the Concierge's FOUND section (web/src/features/concierge/
+ConciergeCore.tsx, own window open-concierge). Server projection, action
+seat, and radio selection live on the Concierge's engine rows + picker wells.
 """
 from __future__ import annotations
 
@@ -12,6 +17,12 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+
+pytest.skip(
+    "HS-170: Settings -> Models module PARKED (HS-170-03, settled-design-four-faces.md Face 3); "
+    "capability now at the Concierge (web/src/features/concierge/ConciergeCore.tsx, open-concierge window)",
+    allow_module_level=True,
+)
 
 pytest.importorskip("playwright.sync_api", reason="Model Library glass needs Playwright")
 pytest.importorskip("fastapi.testclient", reason="Model Library glass needs web dependencies")

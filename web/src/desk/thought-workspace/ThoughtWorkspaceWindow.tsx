@@ -21,6 +21,8 @@ import {
   type ThoughtWorkspaceProjection,
 } from "../thoughts";
 import type { WorldObject } from "../world";
+import { Button } from "../../components/signal/Signal";
+import { countToken, PadGadget } from "../surface";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { ThoughtContextPicker } from "../pullouts/ThoughtContextPicker";
 import { useThoughtNoteWriter } from "../pullouts/editors/useThoughtNoteWriter";
@@ -99,11 +101,11 @@ async function verifiedReveal(thought: Thought, effect?: ThoughtAppendEffect): P
 function Placement({ projection }: { projection: ThoughtWorkspaceProjection }) {
   const placement = projection.review?.placement;
   if (!placement) {
-    return projection.inference.intended_placement ? <p className="thought-placement intended">Will run on {projection.inference.intended_placement.target_name}</p> : null;
+    return projection.inference.intended_placement ? <span className="thought-placement intended surface-token">{projection.inference.intended_placement.target_name}</span> : null;
   }
-  if (placement.state === "unavailable") return <p className="thought-placement">Placement unavailable</p>;
+  if (placement.state === "unavailable") return <span className="thought-placement surface-token">Placement unavailable</span>;
   const location = placement.egress.scope === "local" ? "Local" : placement.egress.host || placement.egress.scope;
-  return <p className="thought-placement actual">Ran on {placement.actual_placement.target_name} · {location}</p>;
+  return <span className="thought-placement actual surface-token">{placement.actual_placement.target_name} · {location}</span>;
 }
 
 function UsedContext({ projection }: { projection: ThoughtWorkspaceProjection }) {
@@ -160,7 +162,10 @@ function WorkspaceReady({
   });
   const [revealRange, setRevealRange] = useState<{ start: number; end: number; focus?: boolean } | null>(null);
   const [inserted, setInserted] = useState(false);
-  const answerRef = useRef<HTMLTextAreaElement | null>(null);
+  /* HS-176-04 — the answer well is a PadGadget (the voice law): the ref
+     holds its <label> and the focus reaches the textarea inside it. */
+  const answerRef = useRef<HTMLLabelElement | null>(null);
+  const focusAnswer = () => answerRef.current?.querySelector("textarea")?.focus();
   const setupRef = useRef<HTMLButtonElement | null>(null);
   const contextRef = useRef<HTMLDivElement | null>(null);
   useLayoutEffect(() => {
@@ -283,7 +288,7 @@ function WorkspaceReady({
       setAnswer("");
       sessionStorage.removeItem(key);
     } else {
-      requestAnimationFrame(() => answerRef.current?.focus());
+      requestAnimationFrame(() => focusAnswer());
     }
   };
 
@@ -351,7 +356,7 @@ function WorkspaceReady({
     openSurfaceOr("configure-runs-on", "/settings", "models");
   };
   const invokePrimary = () => {
-    if (noteProxy) { setTab("interview"); requestAnimationFrame(() => answerRef.current?.focus()); return; }
+    if (noteProxy) { setTab("interview"); requestAnimationFrame(() => focusAnswer()); return; }
     if (setupProxy) { setTab("interview"); requestAnimationFrame(() => setupRef.current?.focus()); return; }
     switch (primaryKind) {
       case "refine": void ask(); break;
@@ -394,42 +399,42 @@ function WorkspaceReady({
     invokePrimary();
   }}>
     <nav className="thought-workspace-tabs" aria-label="Thought workspace panes">
-      <button type="button" aria-current={tab === "note" ? "page" : undefined} onClick={() => setTab("note")}>Note</button>
-      <button type="button" aria-current={tab === "interview" ? "page" : undefined} onClick={() => setTab("interview")}>Interview{currentQuestion ? " 1" : ""}</button>
+      <Button variant="ghost" dense aria-current={tab === "note" ? "page" : undefined} onClick={() => setTab("note")}>Note</Button>
+      <Button variant="ghost" dense aria-current={tab === "interview" ? "page" : undefined} onClick={() => setTab("interview")}>Interview{currentQuestion ? " 1" : ""}</Button>
     </nav>
     <div className="thought-workspace-main">
       <div className="thought-workspace-note-pane" hidden={narrow && tab !== "note"} aria-hidden={narrow && tab !== "note"} inert={narrow && tab !== "note"}>
         <ThoughtDocumentPane thoughtId={documentThought.id} draft={writer.draft} onEdit={(patch) => { setInserted(false); writer.edit(patch); }} disabled={busy || documentThought.state !== "working"} message={writer.message} onRetry={writer.retry} revealRange={revealRange} />
-        {inserted && !narrow ? <button type="button" className="thought-inserted-marker thought-inserted-marker-note" onClick={() => setRevealRange((value) => value ? { ...value, focus: true } : value)}>Added to Note</button> : null}
+        {inserted && !narrow ? <Button variant="ghost" dense className="thought-inserted-marker thought-inserted-marker-note" onClick={() => setRevealRange((value) => value ? { ...value, focus: true } : value)}>Added to Note</Button> : null}
         <div className="thought-document-foot"><span>{documentThought.filing_status === "filed" ? "Filed" : "Not in a drawer"}</span><span>{writer.saving ? "Saving…" : "Saved"}</span></div>
       </div>
       <section className="thought-interview" aria-label="Interview" hidden={narrow && tab !== "interview"} aria-hidden={narrow && tab !== "interview"} inert={narrow && tab !== "interview"}>
         <header><span>Interview</span></header>
         <div className="thought-interview-body">
           {projection.workspace_state === "idle" ? projection.inference.availability === "unavailable"
-            ? <div className="thought-interview-empty thought-interview-setup"><p className="thought-question-kicker">One quick setup</p><strong>AI needs a model</strong><p>Choose this device or another configured destination. Your Note stays here until you explicitly ask.</p><button ref={setupRef} type="button" className="btn btn--primary thought-setup-ai" disabled={busy} onClick={setupAI}>Set up AI</button><p className="thought-interview-run-hint">Opens Settings directly in Models. No setup maze.</p></div>
-            : <div className="thought-interview-empty"><p className="thought-question-kicker">Ready when you are</p><strong>Ask AI</strong><p>One click reads the saved Note and asks the most useful next question.</p><p className="thought-interview-run-hint">Run it with the <b>Ask AI</b> button below or <kbd>⌘↵</kbd>.</p><Placement projection={projection} /></div> : null}
-          {["reserved", "in_flight", "awaiting_projection"].includes(projection.workspace_state) ? <div role="status" className="thought-interview-working"><strong>Finding one useful question…</strong><p>Using saved Note v{projection.thought.working_revision}</p><p>Editing now will replace this question.</p></div> : null}
-          {currentQuestion ? <div className="thought-question"><p className="thought-question-kicker">One thing to sharpen</p><h2>{projection.review?.question}</h2>{projection.review?.reason ? <p>{projection.review.reason}</p> : null}<Placement projection={projection} /><UsedContext projection={projection} /><label><span>Your answer</span><textarea ref={answerRef} value={answer} onChange={(event) => setAnswer(event.target.value)} rows={5} /></label>{continuationReady ? <button type="button" className="thought-add-quiet" disabled={busy || !answer.trim()} onClick={() => void answerReview(false)}>Add to Note</button> : null}</div> : null}
-          {projection.workspace_state === "synthesis" && projection.review?.kind === "synthesis" ? <div className="thought-synthesis"><p className="thought-question-kicker">A draft from your Note</p><h2>{projection.review.title}</h2><div className="thought-synthesis-body">{projection.review.body_markdown}</div><Placement projection={projection} /><UsedContext projection={projection} /><button type="button" className="thought-add-quiet" disabled={busy} onClick={() => void reviewAction("reject")}>Reject</button></div> : null}
-          {projection.workspace_state === "stale" ? <div className="thought-interview-exception"><strong>{stale?.state === "missing" ? `${stale.title} is no longer available.` : `${stale?.title || "AI context"} changed.`}</strong><p>Repair AI context before asking another question.</p></div> : null}
-          {projection.workspace_state === "named_failure" ? <div className="thought-interview-exception"><strong>That question did not land.</strong><p>{projection.terminal_status?.message || "Your Note is unchanged. Try again or finish the Thought."}</p></div> : null}
-          {projection.workspace_state === "completed" ? <div className="thought-interview-empty"><strong>Thought finished</strong><p>The Note remains yours. Resume whenever there is more to work through.</p></div> : null}
-          {inserted && narrow ? <button type="button" className="thought-inserted-marker" onClick={() => { setTab("note"); setRevealRange((value) => value ? { ...value, focus: true } : value); }}>Added to Note · View</button> : null}
+            ? <div className="thought-interview-empty thought-interview-setup"><p className="thought-question-kicker">One quick setup</p><strong>AI needs a model</strong><span className="surface-token">Choose a model destination</span><Button ref={setupRef} variant="primary" className="thought-setup-ai" disabled={busy} onClick={setupAI}>Set up AI</Button><span className="thought-interview-run-hint surface-token">Opens Models settings</span></div>
+            : <div className="thought-interview-empty"><p className="thought-question-kicker">Ready when you are</p><strong>Ask AI</strong><span className="surface-token">Reads your Note, asks one question</span><span className="thought-interview-run-hint surface-token"><b>Ask AI</b> or <kbd>⌘↵</kbd></span><Placement projection={projection} /></div> : null}
+          {["reserved", "in_flight", "awaiting_projection"].includes(projection.workspace_state) ? <div role="status" className="thought-interview-working"><strong>Finding one useful question…</strong><span className="surface-token">Note v{projection.thought.working_revision}</span><p>Editing now will replace this question.</p></div> : null}
+          {currentQuestion ? <div className="thought-question"><p className="thought-question-kicker">One thing to sharpen</p><h2>{projection.review?.question}</h2>{projection.review?.reason ? <p>{projection.review.reason}</p> : null}<Placement projection={projection} /><UsedContext projection={projection} /><label ref={answerRef}><span>Your answer</span><PadGadget label="Your answer" value={answer} onChange={setAnswer} rows={5} /></label>{continuationReady ? <Button variant="ghost" dense className="thought-add-quiet" disabled={busy || !answer.trim()} onClick={() => void answerReview(false)}>Add to Note</Button> : null}</div> : null}
+          {projection.workspace_state === "synthesis" && projection.review?.kind === "synthesis" ? <div className="thought-synthesis"><p className="thought-question-kicker">A draft from your Note</p><h2>{projection.review.title}</h2><div className="thought-synthesis-body">{projection.review.body_markdown}</div><Placement projection={projection} /><UsedContext projection={projection} /><Button variant="ghost" dense className="thought-add-quiet" disabled={busy} onClick={() => void reviewAction("reject")}>Reject</Button></div> : null}
+          {projection.workspace_state === "stale" ? <div className="thought-interview-exception"><strong>{stale?.state === "missing" ? `${stale.title} is no longer available.` : `${stale?.title || "AI context"} changed.`}</strong><span className="surface-token">Repair context to continue</span></div> : null}
+          {projection.workspace_state === "named_failure" ? <div className="thought-interview-exception"><strong>That question did not land.</strong><span className="surface-token">{projection.terminal_status?.message || "Note unchanged. Try again or finish."}</span></div> : null}
+          {projection.workspace_state === "completed" ? <div className="thought-interview-empty"><strong>Thought finished</strong><span className="surface-token">Finished. Resume any time.</span></div> : null}
+          {inserted && narrow ? <Button variant="ghost" dense className="thought-inserted-marker" onClick={() => { setTab("note"); setRevealRange((value) => value ? { ...value, focus: true } : value); }}>Added to Note · View</Button> : null}
         </div>
       </section>
     </div>
     <div ref={contextRef} className="thought-workspace-context" tabIndex={-1} aria-label="AI context">
-      <span>AI context</span><div className="thought-workspace-context-items">{attachments.length ? attachments.map((attachment) => <span key={attachment.ref}>{attachment.title} · {attachment.leaf_count} note{attachment.leaf_count === 1 ? "" : "s"}{attachment.is_default ? <small>Default</small> : null}</span>) : <strong>None</strong>}</div>
-      <button type="button" className="desk-chip quiet" disabled={busy} onClick={() => void openPicker()}>Attach</button>
+      <span>AI context</span><div className="thought-workspace-context-items">{attachments.length ? attachments.map((attachment) => <span key={attachment.ref}>{attachment.title}{countToken(attachment.leaf_count, "NOTE") ? ` · ${countToken(attachment.leaf_count, "NOTE")}` : ""}{attachment.is_default ? <small>Default</small> : null}</span>) : <strong>None</strong>}</div>
+      <Button variant="ghost" dense disabled={busy} onClick={() => void openPicker()}>Attach</Button>
     </div>
     {contextReceipt ? <p className="thought-workspace-receipt" role="status">{contextReceipt.action === "attach" ? "Attached" : contextReceipt.action === "detach" ? "Removed" : "Updated"} {contextReceipt.title}</p> : null}
-    {defaultReceipt?.status === "applied" ? <p className="thought-workspace-receipt" role="status">Attached by default · {defaultReceipt.attachments.map((item) => item.title).join(" + ")}</p> : null}
-    {defaultReceipt?.status === "not_applied" ? <p className="thought-workspace-receipt" role="alert">Default AI context was not applied. {defaultReceipt.failure?.selections.map((item) => item.title).join(" + ") || "The saved set"} could not be attached; the whole set was skipped.</p> : null}
+    {defaultReceipt?.status === "applied" ? <p className="thought-workspace-receipt" role="status">Default · {defaultReceipt.attachments.map((item) => item.title).join(" + ")}</p> : null}
+    {defaultReceipt?.status === "not_applied" ? <p className="thought-workspace-receipt" role="alert">Default context skipped · {defaultReceipt.failure?.selections.map((item) => item.title).join(" + ") || "saved set"} unavailable</p> : null}
     {message ? <p className="thought-workspace-message" role="status">{message}</p> : null}
     <div className="thought-workspace-command">
-      {projection.workspace_state !== "completed" && primaryKind !== "complete" ? <button type="button" className="thought-finish" disabled={busy} onClick={() => void finish()}>Finish Thought</button> : <span />}
-      {primaryKind === "configure_ai" && !setupProxy ? <span aria-hidden="true" /> : <button type="button" className="btn btn--primary thought-state-primary" disabled={primaryDisabled} onClick={invokePrimary}>{busy ? "Working…" : noteProxy ? "Answer question" : primaryLabel}</button>}
+      {projection.workspace_state !== "completed" && primaryKind !== "complete" ? <Button variant="ghost" className="thought-finish" disabled={busy} onClick={() => void finish()}>Finish Thought</Button> : <span />}
+      {primaryKind === "configure_ai" && !setupProxy ? <span aria-hidden="true" /> : <Button variant="primary" className="thought-state-primary" disabled={primaryDisabled} onClick={invokePrimary}>{busy ? "Working…" : noteProxy ? "Answer question" : primaryLabel}</Button>}
     </div>
     {picker && pickerThought ? <ThoughtContextPicker thought={pickerThought} workspaceCursor={projection.workspace_cursor} anchor={contextRef.current} onApplied={(result) => { setDocumentThought(result.thought); setContextReceipt(result.receipt); if (result.workbench) install(result.workbench); else void reload(); }} onDefaultApplied={() => { setMessage("Default AI context updated for new Thoughts."); }} onClose={() => { restoreContextFocus.current = true; setPicker(false); setPickerThought(null); }} /> : null}
   </div>;
@@ -471,11 +476,11 @@ export function ThoughtWorkspaceWindow({
     open
     onClose={() => closeHandler.current()}
   >
-    {controller.opening ? <div className="thought-workspace-opening" aria-busy="true"><span>Opening Thought…</span></div> : controller.error || !controller.projection ? <div className="thought-workspace-opening" role="alert"><p>Could not open this Thought. The Note is unchanged.</p><button type="button" className="btn btn--primary" onClick={() => void controller.reload(true)}>Try again</button></div> : <>
+    {controller.opening ? <div className="thought-workspace-opening" aria-busy="true"><span>Opening Thought…</span></div> : controller.error || !controller.projection ? <div className="thought-workspace-opening" role="alert"><span className="surface-token">Could not open. Note unchanged.</span><Button variant="primary" onClick={() => void controller.reload(true)}>Try again</Button></div> : <>
       <div className="thought-workspace-preserved" inert={controller.restartDetected} aria-hidden={controller.restartDetected || undefined}>
         <WorkspaceReady key={thought.id} initialThought={thought} projection={controller.projection} install={controller.install} reload={controller.reload} onClose={onClose} registerClose={registerClose} />
       </div>
-      {controller.restartDetected ? <div className="thought-workspace-opening thought-workspace-restart" role="alert"><p>This hub restarted. Reload the Thought before continuing.</p><button type="button" className="btn btn--primary" onClick={() => void controller.reload(true)}>Reload Thought</button></div> : null}
+      {controller.restartDetected ? <div className="thought-workspace-opening thought-workspace-restart" role="alert"><span className="surface-token">Hub restarted. Reload to continue.</span><Button variant="primary" onClick={() => void controller.reload(true)}>Reload Thought</Button></div> : null}
     </>}
   </DeskWindowFrame>;
 }

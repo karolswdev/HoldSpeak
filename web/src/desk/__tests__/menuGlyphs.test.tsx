@@ -171,13 +171,15 @@ describe("variant matrix — root attribute gating (HS-148-02)", () => {
 });
 
 describe("Go menu grouping separator (HS-148-02)", () => {
-  it("Go menu entries have the 4/10 app/tool group split with a separator", () => {
+  it("Go menu entries have the 4/11 app/tool group split with a separator", () => {
     const goVerbs = menuVerbs("go");
     // First 4 should be "app" group, rest "tool" group.
     const appVerbs = goVerbs.filter((v) => v.group === "app");
     const toolVerbs = goVerbs.filter((v) => v.group === "tool");
     expect(appVerbs.length).toBe(4);
-    expect(toolVerbs.length).toBe(10);
+    expect(toolVerbs.length).toBe(11);
+    expect(toolVerbs.some((verb) => verb.id === "go.change-places")).toBe(true);
+    expect(toolVerbs.some((verb) => verb.id === "go.open-project-memory")).toBe(true);
     // Verify the order: first 4 are app, rest are tool.
     expect(goVerbs.slice(0, 4).every((v) => v.group === "app")).toBe(true);
     expect(goVerbs.slice(4).every((v) => v.group === "tool")).toBe(true);
@@ -274,6 +276,8 @@ describe("bound-key-set byte-identical proof (HS-148-02)", () => {
     const keys = VERBS.filter((v) => v.key).map((v) => [v.id, v.key]);
     expect(Object.fromEntries(keys)).toEqual({
       "desk.new-note": "⌘N",
+      "desk.settle": "⌘⇧F",
+      "go.change-places": "⌘⇧P",
       "desk.new-decision": "⌘⇧N",
       "desk.overview": "⌃↑",
       "object.rename": "F2",
