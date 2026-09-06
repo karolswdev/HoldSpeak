@@ -1059,6 +1059,7 @@ wanted on day one.
 - **HS-200-05 gap 2:** a pipeline-off hotkey row drops the target profile (`_journal_passthrough` in dictation_runner.py passes none; target detection runs only in the enabled branch).
 - **HS-200-05 gap 3:** desktop_typing.py classifies an adapter exception as `failed`, not `uncertain`; the route above parks the claim pending so nothing double types, but the kernel receipt misnames a genuinely unknown outcome.
 - **HS-200-05 walk question:** should an uncertain delivery stay "never automatic" or gain a one-tap `Send again`?
+- **HS-200-04 note (from the census fence):** holdspeak/services/route_probe.py wraps `preview_route` and `adoption.admit` in a bare `except Exception`; the refusal is always named (the class name as a backstop) but a genuine resolver bug reaches the face as UNREACHABLE with a Python class name for a reason. Narrow to the resolver's typed errors.
 - **HS-200-03 residual:** tests/integration/test_cadence_routes.py's fixture races the database singleton (reset then get as two steps); build the Database directly in the fixture.
 
 ## The model-era collapse (parked 2026-08-31, from the owner's question)

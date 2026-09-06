@@ -44,7 +44,7 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-04 | Make first value and model readiness work cold | done | [story-04](story-04-first-value-and-model-readiness.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-200-05 | Prove physical voice capture, correction, and custody | in-progress | [story-05](story-05-physical-voice-and-custody.md) | — |
 | HS-200-06 | Separate citation, factual support, and acceptance | done | [story-06](story-06-claim-support-semantics.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-200-07 | Make incomplete attention coverage explicit | backlog | [story-07](story-07-coverage-and-partial-results.md) | — |
+| HS-200-07 | Make incomplete attention coverage explicit | in-progress | [story-07](story-07-coverage-and-partial-results.md) | — |
 | HS-200-08 | Establish repeatable live-model quality evaluation | backlog | [story-08](story-08-semantic-evaluation-harness.md) | — |
 | HS-200-09 | Design the daily Project workflow on existing surfaces | backlog | [story-09](story-09-daily-workflow-design.md) | — |
 | HS-200-10 | Promote reusable working context into canonical records | backlog | [story-10](story-10-scoped-working-context.md) | — |
