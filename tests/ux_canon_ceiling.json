@@ -8,17 +8,11 @@
     "CadenceCore": {
       "A3-prose": 1
     },
-    "CalendarSnapshotReviewCore": {
-      "mic": 1
-    },
     "CapabilityAssignmentsCore": {
       "raw-ids": 1
     },
     "CapabilitySection": {
       "B": 1
-    },
-    "ChoiceCardGroup": {
-      "mic": 1
     },
     "CoderPullout": {
       "B": 1
@@ -56,9 +50,6 @@
     "KbEditor": {
       "C": 1
     },
-    "LedgerFilter": {
-      "mic": 1
-    },
     "LiveCore": {
       "A8": 1
     },
@@ -75,7 +66,6 @@
       "B": 1
     },
     "PeopleCore": {
-      "mic": 1,
       "raw-ids": 12
     },
     "PrReceiptsSection": {
@@ -106,8 +96,7 @@
       "B": 1
     },
     "SettingsCore": {
-      "A8": 2,
-      "mic": 1
+      "A8": 2
     },
     "StateChip": {
       "emoji": 3
@@ -152,9 +141,6 @@
     "TranscriptWell": {
       "A3-prose": 1
     },
-    "UtteranceWell": {
-      "mic": 1
-    },
     "WhyControl": {
       "A8": 1
     },
@@ -186,7 +172,7 @@
     "C": 4,
     "DS6": 0,
     "emoji": 21,
-    "mic": 6,
+    "mic": 0,
     "raw-ids": 16
   }
 }

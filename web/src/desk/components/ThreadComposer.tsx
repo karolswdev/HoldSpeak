@@ -1069,6 +1069,22 @@ export function InlineEditor({
         data-testid="inline-editor-input"
       />
       <div className="thread-inline-editor-actions">
+        {/* HS-176-04 — the voice law (Article IV.1).  The mousedown guard
+            keeps focus in the textarea: its onBlur cancels the edit, so a
+            plain click would dismiss the editor before the mic toggled. */}
+        <span
+          className="thread-inline-editor-mic"
+          onMouseDown={(event) => event.preventDefault()}
+        >
+          <MicButton
+            label="Speak message"
+            onText={(spoken) =>
+              setText((current) =>
+                current && !/\s$/.test(current) ? `${current} ${spoken}` : current + spoken,
+              )
+            }
+          />
+        </span>
         <button
           type="button"
           className="desk-chip"

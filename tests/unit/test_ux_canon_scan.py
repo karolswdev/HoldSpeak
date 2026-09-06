@@ -309,3 +309,219 @@ class TestA8SkipsImportsAndBooleans:
         violations = mod.scan_file("features/test/Foo.tsx", line, [line])
         a8 = [v for v in violations if v.rule == "A8"]
         assert len(a8) == 1
+
+
+# ---------------------------------------------------------------------------
+# The voice law, per element (HS-176-04, ruling R9)
+# ---------------------------------------------------------------------------
+
+class TestMicPerElement:
+    """Rule `mic` counts every dictatable element, not once per file."""
+
+    def _scan(self, rel: str, body: str):
+        mod = _load_scanner()
+        return [v for v in mod.scan_file(rel, body, body.splitlines())
+                if v.rule == "mic"]
+
+    def test_two_bare_inputs_are_two_violations(self):
+        body = (
+            'export function Face() {\n'
+            '  return <div>\n'
+            '    <input type="text" value={a} />\n'
+            '    <input value={b} />\n'
+            '  </div>;\n'
+            '}\n'
+        )
+        hits = self._scan("features/test/Face.tsx", body)
+        assert len(hits) == 2, [v.text for v in hits]
+        assert [v.line for v in hits] == [3, 4]
+
+    def test_textarea_is_matched(self):
+        """Defect (i): the old flag never matched <textarea."""
+        body = (
+            'export function Face() {\n'
+            '  return <textarea value={a} onChange={f} />;\n'
+            '}\n'
+        )
+        hits = self._scan("desk/components/Face.tsx", body)
+        assert len(hits) == 1
+        assert "<textarea>" in hits[0].text
+
+    def test_string_gadget_is_not_an_uncovered_input(self):
+        """Defect (ii): a StringGadget renders its own mic."""
+        body = (
+            'export function Face() {\n'
+            '  return <StringGadget label="Name" value={a} onChange={f} />;\n'
+            '}\n'
+        )
+        assert self._scan("desk/components/Face.tsx", body) == []
+
+    def test_mic_false_opt_out_is_a_violation(self):
+        body = (
+            'export function Face() {\n'
+            '  return <StringGadget label="Name" mic={false} value={a} onChange={f} />;\n'
+            '}\n'
+        )
+        hits = self._scan("desk/components/Face.tsx", body)
+        assert len(hits) == 1
+        assert "mic={false}" in hits[0].text
+
+    def test_mic_false_opt_out_across_lines_is_a_violation(self):
+        body = (
+            'export function Face() {\n'
+            '  return (\n'
+            '    <PadGadget\n'
+            '      label="Note"\n'
+            '      value={a}\n'
+            '      mic={false}\n'
+            '      onChange={f}\n'
+            '    />\n'
+            '  );\n'
+            '}\n'
+        )
+        hits = self._scan("desk/components/Face.tsx", body)
+        assert len(hits) == 1
+        assert hits[0].line == 3
+
+    def test_mic_button_in_the_same_component_covers(self):
+        body = (
+            'export function Face() {\n'
+            '  return <div>\n'
+            '    <input type="text" value={a} />\n'
+            '    <MicButton onText={f} />\n'
+            '  </div>;\n'
+            '}\n'
+        )
+        assert self._scan("desk/components/Face.tsx", body) == []
+
+    def test_mic_button_in_another_component_does_not_cover(self):
+        """Defect (iii): file scope hid a second component's bare input."""
+        body = (
+            'export function Composer() {\n'
+            '  return <div><textarea value={a} /><MicButton onText={f} /></div>;\n'
+            '}\n'
+            'export function InlineEditor() {\n'
+            '  return <textarea value={b} />;\n'
+            '}\n'
+        )
+        hits = self._scan("desk/components/Face.tsx", body)
+        assert len(hits) == 1
+        assert hits[0].line == 5
+
+    def test_non_text_types_are_not_candidates(self):
+        body = (
+            'export function Face() {\n'
+            '  return <div>\n'
+            '    <input type="checkbox" checked={a} />\n'
+            '    <input type="password" value={b} />\n'
+            '    <input type="file" onChange={f} />\n'
+            '    <input type="radio" name="g" />\n'
+            '    <input type="number" value={c} />\n'
+            '    <input type="range" value={d} />\n'
+            '    <input type="date" value={e} />\n'
+            '  </div>;\n'
+            '}\n'
+        )
+        assert self._scan("features/test/Face.tsx", body) == []
+
+    def test_search_and_email_are_candidates(self):
+        body = (
+            'export function Face() {\n'
+            '  return <div>\n'
+            '    <input type="search" value={a} />\n'
+            '    <input type="email" value={b} />\n'
+            '  </div>;\n'
+            '}\n'
+        )
+        assert len(self._scan("features/test/Face.tsx", body)) == 2
+
+    def test_closed_jsx_comment_does_not_hide_the_element(self):
+        """`{/* … */}<textarea>` is live code, not a comment."""
+        body = (
+            'export function Face() {\n'
+            '  return <label>{/* UX-CANON: needs redesign */}<textarea value={a} /></label>;\n'
+            '}\n'
+        )
+        assert len(self._scan("desk/components/Face.tsx", body)) == 1
+
+    def test_commented_out_element_is_skipped(self):
+        body = (
+            'export function Face() {\n'
+            '  // <input type="text" value={a} />\n'
+            '  return null;\n'
+            '}\n'
+        )
+        assert self._scan("desk/components/Face.tsx", body) == []
+
+    def test_rule_is_not_gated_on_face_classification(self):
+        """Defect (iv): a shared component outside the face dirs counts."""
+        body = (
+            'export function TextInput(props) {\n'
+            '  return <input className="hs-control" {...props} />;\n'
+            '}\n'
+        )
+        assert len(self._scan("components/widgets/TextInput.tsx", body)) == 1
+
+
+class TestMicAllowlist:
+    """The named allowlist is the census's ledger, with a reason each."""
+
+    def test_allowlisted_element_is_not_a_violation(self):
+        mod = _load_scanner()
+        body = (
+            'export function CronRow() {\n'
+            '  return <StringGadget label="Cron expression" mic={false} value={a} onChange={f} />;\n'
+            '}\n'
+        )
+        hits = [v for v in mod.scan_file(
+            "desk/components/ScheduleCreateWindow.tsx", body, body.splitlines())
+            if v.rule == "mic"]
+        assert hits == []
+
+    def test_the_allowlist_is_file_scoped(self):
+        """The same needle in another file is still a violation."""
+        mod = _load_scanner()
+        body = (
+            'export function CronRow() {\n'
+            '  return <StringGadget label="Cron expression" mic={false} value={a} onChange={f} />;\n'
+            '}\n'
+        )
+        hits = [v for v in mod.scan_file(
+            "desk/components/OtherWindow.tsx", body, body.splitlines())
+            if v.rule == "mic"]
+        assert len(hits) == 1
+
+    def test_r13_utterance_well_is_allowlisted_in_advance(self):
+        """HS-176-05 sets mic={false} on the Speak face's well (ruling R13)."""
+        mod = _load_scanner()
+        body = (
+            'export function SpeakFace() {\n'
+            '  return <PadGadget label="Utterance" mic={false} value={a} onChange={f} />;\n'
+            '}\n'
+        )
+        hits = [v for v in mod.scan_file(
+            "pages/cores/dictation/SpeakFace.tsx", body, body.splitlines())
+            if v.rule == "mic"]
+        assert hits == []
+
+    def test_every_entry_names_a_reason(self):
+        mod = _load_scanner()
+        for path, needle, reason in mod.MIC_ALLOWLIST:
+            assert path and needle and len(reason) > 10, (path, needle, reason)
+
+    def test_every_entry_still_matches_the_tree(self):
+        """A stale ledger entry is a lie: the file and needle must exist."""
+        mod = _load_scanner()
+        src = Path(__file__).resolve().parents[2] / "web" / "src"
+        stale = []
+        for path, needle, _reason in mod.MIC_ALLOWLIST:
+            target = src / path
+            if not target.is_file() or needle not in target.read_text(errors="replace"):
+                stale.append(f"{path} :: {needle}")
+        assert not stale, "stale allowlist entries:\n  " + "\n  ".join(stale)
+
+    def test_the_ledger_matches_the_census(self):
+        """23 census elements (19 raw + 4 opt-outs) + the R13 well = 24."""
+        mod = _load_scanner()
+        assert len(mod.MIC_ALLOWLIST) == 24
+        assert len({(p, n) for p, n, _ in mod.MIC_ALLOWLIST}) == 24

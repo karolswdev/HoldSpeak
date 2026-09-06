@@ -14,7 +14,7 @@ learning loop that has never been trained gets its first real data.
 
 ## Status
 
-**ACTIVE 1/8.** Story 01 (the design) DONE on his word; 02, 03, 04 in progress (wave 1, the wire).
+**ACTIVE 2/8.** 01 the design DONE on his word; 04 the voice law DONE (mic 17 → 0, ceiling 0, four orphans parked); 02 and 03 in progress (wire landed; faces building to the boards).
 
 **Depends on:** Phase 170 merged (the Speak face is rebuilt in 170's
 Great Pass; the correction flow and journal stream build on that
@@ -118,7 +118,7 @@ so the "postgress" Tuesday needs the `text` kind this phase adds.)
 | HS-176-01 | The design (the correction flow, the journal stream, the MicButton census on the canvas) | done | [story-01-the-design](./story-01-the-design.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-176-02 | The first correction (teach, persist, apply to the next match; learning digest > 0) | in-progress | [story-02-the-first-correction](./story-02-the-first-correction.md) | -- |
 | HS-176-03 | The journal as a stream (live feed, filterable, searchable; the voice-typing act visible) | in-progress | [story-03-the-journal-stream](./story-03-the-journal-stream.md) | -- |
-| HS-176-04 | The voice law (MicButton on every text input across the desk; the census gap closed) | in-progress | [story-04-the-voice-law](./story-04-the-voice-law.md) | -- |
+| HS-176-04 | The voice law (MicButton on every text input across the desk; the census gap closed) | done | [story-04-the-voice-law](./story-04-the-voice-law.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-176-05 | The desk answering the hand (the full loop: speak, land, judge, teach, apply) | backlog | [story-05-the-desk-answering-the-hand](./story-05-the-desk-answering-the-hand.md) | -- |
 | HS-176-06 | The walk (his desk: correction taught, journal streaming, MicButton everywhere, the loop) | backlog | [story-06-the-walk](./story-06-the-walk.md) | -- |
 | HS-176-07 | The docs (the Speak Loop in the guide; the correction flow in the architecture) | backlog | [story-07-the-docs](./story-07-the-docs.md) | -- |
@@ -126,7 +126,12 @@ so the "postgress" Tuesday needs the `text` kind this phase adds.)
 
 ## Where we are
 
-ACTIVE 1/8 (2026-09-06). Story 01 DONE: the settled design re-verified
+ACTIVE 2/8 (2026-09-06). Story 04 DONE: the scanner's `mic` rule made
+per-element and un-gated with a 24-entry reasoned allowlist (23 from
+the census + the utterance well pre-armed for story 05), the 8 raw
+sites and 9 opt-outs paid, ceiling `mic: 0`, rule B healed 34 → 32
+(locked at the close), the four 170 orphans parked under `_parked/`;
+web baseline zero branch-new. Story 01 DONE: the settled design re-verified
 against main, the mic census recomputed, seventeen boards at 1440 + 393
 under assets/mockups/ on the canvas
 (https://claude.ai/code/artifact/36f77f70-fb03-461d-a0dd-8b43c4682e63),

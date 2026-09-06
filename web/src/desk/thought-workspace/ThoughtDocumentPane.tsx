@@ -86,8 +86,10 @@ export function ThoughtDocumentPane({
       <div className="thought-document-tags" aria-label="Tags">
         {tags.map((tag) => <Button key={tag} variant="ghost" dense className="thought-tag" disabled={disabled} onClick={() => onEdit({ tags: tags.filter((item) => item !== tag).join(", ") })} aria-label={`Remove ${tag} tag`}>{tag}<span aria-hidden="true"> ×</span></Button>)}
         <Button variant="ghost" dense className="thought-tag-add" aria-expanded={tagsOpen} onClick={() => setTagsOpen((value) => !value)}>Add tag</Button>
-        {/* UX-CANON: needs redesign (HS-170-04) */}
-        {tagsOpen ? <input aria-label="Tag names" value={draft.tags} disabled={disabled} onChange={(event) => onEdit({ tags: event.target.value })} onBlur={() => setTagsOpen(false)} autoFocus /> : null}
+        {/* HS-176-04 — the voice law: the tag field carries its own mic
+            (the mic above belongs to the title).  The mousedown guard keeps
+            focus in the field: its onBlur closes the tag well. */}
+        {tagsOpen ? <span className="thought-document-tags-well" onMouseDown={(event) => { if ((event.target as HTMLElement).tagName !== "INPUT") event.preventDefault(); }}><input aria-label="Tag names" value={draft.tags} disabled={disabled} onChange={(event) => onEdit({ tags: event.target.value })} onBlur={() => setTagsOpen(false)} autoFocus /><MicButton label="Speak tag names" onText={(spoken) => onEdit({ tags: spoken })} /></span> : null}
         <Button ref={infoRef} variant="ghost" dense className="thought-tag-add" disabled={originalBusy} onClick={() => void showOriginal()}>Info</Button>
       </div>
       {message ? <span className="thought-save-truth" role="status">{message}</span> : null}

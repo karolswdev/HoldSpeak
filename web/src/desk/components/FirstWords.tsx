@@ -410,7 +410,6 @@ export function FirstWords({
         label="Your dictated text"
         rows={4}
         value={text}
-        mic={false}
         onChange={(next) => {
           setText(next);
           if (!draftEdited.current) {
