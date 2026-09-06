@@ -1,0 +1,234 @@
+{
+  "artboards": [
+    {
+      "file": "P1Ask.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Posture 1 - the ask, EMPTY, coverage above, SOURCES 4 as four - 1440"
+    },
+    {
+      "file": "P1Phone.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 393,
+      "h": 906,
+      "title": "Posture 1 - THE SAME FACE - 393"
+    },
+    {
+      "file": "P1Running.dc.html",
+      "x": 2073,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Posture 1 - RUNNING, Stop kept, ACTIONS off the primary line - 1440"
+    },
+    {
+      "file": "P1RouteUnset.dc.html",
+      "x": 3633,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Posture 1 - REFUSED, Prepare drawn disabled, coverage kept - 1440"
+    },
+    {
+      "file": "P2Arrival.dc.html",
+      "x": 0,
+      "y": 1266,
+      "w": 1440,
+      "h": 900,
+      "title": "Posture 2 - the TRUE TOTAL in the head, 5 OF 17 in the caption - 1440"
+    },
+    {
+      "file": "P2ArrivalPhone.dc.html",
+      "x": 1560,
+      "y": 1266,
+      "w": 393,
+      "h": 948,
+      "title": "Posture 2 - THE SAME FACE - 393"
+    },
+    {
+      "file": "P2ArrivalOne.dc.html",
+      "x": 2073,
+      "y": 1266,
+      "w": 1440,
+      "h": 900,
+      "title": "Posture 2 - HIS DESK: one Project, the token withheld - 1440"
+    },
+    {
+      "file": "P2ArrivalQuiet.dc.html",
+      "x": 3633,
+      "y": 1266,
+      "w": 1440,
+      "h": 900,
+      "title": "Posture 2 - the COMPLETE all-clear, no invented calendar fact - 1440"
+    },
+    {
+      "file": "P3Prepare.dc.html",
+      "x": 0,
+      "y": 2574,
+      "w": 1440,
+      "h": 1010,
+      "title": "Posture 3 - coverage above the ask, SOURCES 4, CARRIED FORWARD - 1440"
+    },
+    {
+      "file": "P3BriefPhone.dc.html",
+      "x": 1560,
+      "y": 2574,
+      "w": 393,
+      "h": 1085,
+      "title": "Posture 3 - THE SAME FACE - 393"
+    },
+    {
+      "file": "P3Brief.dc.html",
+      "x": 2073,
+      "y": 2574,
+      "w": 1440,
+      "h": 1130,
+      "title": "Posture 3 - the kept brief, claims on three axes, typed unknowns - 1440"
+    },
+    {
+      "file": "P3PrepareNoModel.dc.html",
+      "x": 3633,
+      "y": 2574,
+      "w": 1440,
+      "h": 1010,
+      "title": "Posture 3 - FAILED, the gap KEPT, Write it myself - 1440"
+    },
+    {
+      "file": "P4Processing.dc.html",
+      "x": 0,
+      "y": 4064,
+      "w": 1440,
+      "h": 900,
+      "title": "Posture 4 - transcript coverage, one job, attempt 2, ALREADY KEPT - 1440"
+    },
+    {
+      "file": "P4ReviewPhone.dc.html",
+      "x": 1560,
+      "y": 4064,
+      "w": 393,
+      "h": 998,
+      "title": "Posture 4 - THE SAME FACE - 393"
+    },
+    {
+      "file": "P4Review.dc.html",
+      "x": 2073,
+      "y": 4064,
+      "w": 1440,
+      "h": 1010,
+      "title": "Posture 4 - five proposals, spans, typed unknowns, one verb + MORE - 1440"
+    },
+    {
+      "file": "P5Recall.dc.html",
+      "x": 0,
+      "y": 5434,
+      "w": 1440,
+      "h": 900,
+      "title": "Posture 5 - CURRENT accented, SUPERSEDED beneath, OWED - 1440"
+    },
+    {
+      "file": "P5RecallPhone.dc.html",
+      "x": 1560,
+      "y": 5434,
+      "w": 393,
+      "h": 777,
+      "title": "Posture 5 - THE SAME FACE - 393"
+    },
+    {
+      "file": "P5RecallQuiet.dc.html",
+      "x": 2073,
+      "y": 5434,
+      "w": 1440,
+      "h": 900,
+      "title": "Posture 5 - Nothing matches, said once, filters kept - 1440"
+    },
+    {
+      "file": "P6Repair.dc.html",
+      "x": 0,
+      "y": 6694,
+      "w": 1440,
+      "h": 900,
+      "title": "Posture 6 - the REPAIRS wing, DRAFT NOT SAVED, STILL TRUE - 1440"
+    },
+    {
+      "file": "P6Phone.dc.html",
+      "x": 1560,
+      "y": 6694,
+      "w": 393,
+      "h": 762,
+      "title": "Posture 6 - THE SAME FACE - 393"
+    },
+    {
+      "file": "P6Resume.dc.html",
+      "x": 2073,
+      "y": 6694,
+      "w": 1440,
+      "h": 900,
+      "title": "Posture 6 - RESUMED, the six work states, THE RUNTIME - 1440"
+    },
+    {
+      "file": "Library.dc.html",
+      "x": 0,
+      "y": 7954,
+      "w": 1440,
+      "h": 1520,
+      "title": "The library - 24 species reused with true specimens, 6 owed - 1440"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "phase-200-09-row-1",
+      "x": 0,
+      "y": -200,
+      "w": 1000,
+      "text": "Posture 1 - the first architecture result. He picks a Project, names a purpose, picks ONE result. COVERAGE rides above the answer in EVERY state, refused included: a failed face may not clear a known gap by omission. SOURCES appears once and draws every source. The route is stated beside the verb that sends, with its EgressChip. Refused names the reason once, keeps the purpose, sends nothing, and DRAWS the primary disabled rather than merely announcing it. The 393 board is the same face: same coverage row, same four sources, same verbs."
+    },
+    {
+      "id": "phase-200-09-row-2",
+      "x": 0,
+      "y": 1066,
+      "w": 1000,
+      "text": "Posture 2 - returning to work. The display line carries the TRUE TOTAL (17 need you across 3 projects); the caption carries the cap (NEEDS YOU 5 OF 17); the remainder is a real count with a real verb. The ranking key is four classes with a tie-break - overdue, due today, no due date, waiting - and the five rows are drawn in exactly that order. A deduplicated obligation carries a 2 SOURCES disclosure. Coverage rides above the list, N being the count in state available. P2ArrivalOne is the arrival he actually has: one Project, the Project token withheld from every row."
+    },
+    {
+      "id": "phase-200-09-row-3",
+      "x": 0,
+      "y": 2374,
+      "w": 1000,
+      "text": "Posture 3 - preparation. The purpose is typed or spoken; no board invents a clock time beside a NO CALENDAR token. Per-source coverage is visible BEFORE the run, so he can repair first or accept the gap deliberately. The kept brief is a document surface: prose in the document, claims beneath it on three INDEPENDENT axes, unsupported values printed AND typed unsupported (DEADLINE 2026-12-31 - NO SOURCE), NOT READ naming the omission. A claim with no source shows NO SOURCE and Find support at BOTH widths, and the 393 board keeps the EgressChip and the model receipt because a model produced that face."
+    },
+    {
+      "id": "phase-200-09-row-4",
+      "x": 0,
+      "y": 3864,
+      "w": 1000,
+      "text": "Posture 4 - a meeting becomes reviewed outcomes. This is the posture that asks most of the wire: five D3 rows say MISSING for it alone - the claim axes on a proposal, the transcript span, the proposal-to-job link, the turns-read numerator, and confirm-invalidates-support. Story 12 is re-judged L because of them. On the face: transcript coverage above the answer, one verb per row (Confirm) with Edit, Dismiss and Open evidence behind MORE, unknowns kept as typed unknowns, and one filled primary on the face."
+    },
+    {
+      "id": "phase-200-09-row-5",
+      "x": 0,
+      "y": 5234,
+      "w": 1000,
+      "text": "Posture 5 - recall. One ref, one minute. CURRENT is the accented card with its rationale, its source, its Project and Carry into brief; SUPERSEDED sits beneath it, dimmed, naming its successor; OWED carries the commitment. No board draws a search-coverage token, because MemorySearchResult returns no per-Project readability - the design refuses to draw a coverage fraction the wire cannot produce, and says so. The miss says Nothing matches ONCE, keeps its filters, and withholds Clear."
+    },
+    {
+      "id": "phase-200-09-row-6",
+      "x": 0,
+      "y": 6494,
+      "w": 1000,
+      "text": "Posture 6 - recovery. Not the arrival re-composed: Desk memory's third wing, REPAIRS, beside SEARCH and UNFINISHED. Three failures, each naming its own provider, one failure class taking one verb. The unfinished ask keeps its purpose, its saved time and DRAFT NOT SAVED. STILL TRUE keeps the items last observed before the source failed, stamped with that observation. RESUMED draws the six work states the product must distinguish, each with its own honest verb, over THE RUNTIME identity line."
+    },
+    {
+      "id": "phase-200-09-row-7",
+      "x": 0,
+      "y": 7754,
+      "w": 1000,
+      "text": "The library - what this design composes from, and what it owes. Twenty-four species reused exactly as they are, each with a true specimen and its file; two of them (EditInPlace, ConfirmVerb) are in the library but NOT in contract.md, and canon B's documentation is owed. Six recurring elements are drawn twice or more across the six postures and belong in the library BEFORE stories 10-12 and 15 write a control: CoverageLedger, ClaimAxes, RepairRow, the SurfaceLedger cap-with-remainder, TaskResume and ProjectButton."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

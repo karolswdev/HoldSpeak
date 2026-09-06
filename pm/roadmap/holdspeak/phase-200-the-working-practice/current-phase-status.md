@@ -99,10 +99,14 @@ model drafter resolves its deployment revision by matching the profile id
 against the model column, so his profile falls back to the deterministic
 drafter silently — being fixed. HS-200-09: the design on the canvas
 (https://claude.ai/code/artifact/63eaae1a-eb59-4bcf-902d-0c70d3e0c275),
-counsel BOUNCED on four P0s (the 393 boards drift; the display line hides
-the total; the meeting review draws a vocabulary the wire lacks; coverage
-missing on four boards) with 17 conditions — being paid; his verdict is
-the exit. HS-200-07 DONE — the aggregate carries `coverage`
+counsel BOUNCED on four P0s (the 393 boards drift; the display line hid
+the total; the meeting review drew a vocabulary the wire lacks; coverage
+missing on four boards) with 17 conditions, then RATIFY-W-C with N1–N2 —
+all paid (22 boards; the one-Project arrival drawn for his desk; the
+ranking key names NOT RUN, the class his desk has; coverage is a token on
+faces that list their sources; five MISSING rows on the meeting seam,
+story 12 re-judged L; five shared components owed to the library). HIS
+VERDICT on the canvas is the exit; stories 10–15 wait on it. HS-200-07 DONE — the aggregate carries `coverage`
 (one record per expected Project/watch/meeting/commitment source: state
 available · stale · failed · forbidden · unavailable, observed_at, the
 repair token + verb, the reason) and `complete`; computedAt is the aggregate
