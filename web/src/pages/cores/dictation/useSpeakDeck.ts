@@ -17,6 +17,7 @@ import type {
   DictationReadinessResponse,
 } from "../core-types";
 import type { MicState } from "../../../desk/components/MicButton";
+import type { SpokenRunFacts } from "../../../lib/micStreamSession";
 import {
   subscribeMicPhase,
   micCaptureSupported,
@@ -273,7 +274,10 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
      exactly once. */
   const deliver = async (
     text: string,
-    { pipelined = false }: { pipelined?: boolean } = {},
+    {
+      pipelined = false,
+      facts,
+    }: { pipelined?: boolean; facts?: SpokenRunFacts } = {},
   ) => {
     const spoken = text.trim();
     if (!spoken) return;
@@ -298,7 +302,13 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
           ...(aim === "agent" ? { require_agent: true } : {}),
         },
       });
-      setResult(landed);
+      /* HS-176 C1 (the SPOKEN half) — a `raw: true` delivery runs no
+         pipeline, so its reply rightly carries no run facts. The facts came
+         off the streaming `final` frame from the leg that DID run the
+         pipeline; the deck merges them into the same `result` the typed
+         landing produces, so the APPLIED chip, the TEXT teach's pre-fill and
+         the journal correct route all read one shape. Never re-derived. */
+      setResult(facts ? { ...landed, ...facts } : landed);
       if (landed.delivered === false) {
         refuse("no_delivery_target");
         return;
@@ -328,11 +338,11 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
 
   /* The one gesture contract: hold, talk, release. What happens on
      release is the AIM's business, never a hidden default. */
-  const onReleased = (text: string) => {
+  const onReleased = (text: string, facts?: SpokenRunFacts) => {
     setUtterance(text);
     if (aim === "field" || !text.trim()) return;
     if (rehearse) void run(text);
-    else void deliver(text, { pipelined: true });
+    else void deliver(text, { pipelined: true, facts });
   };
 
   /* An ambient utterance travels the SAME road as a released TALK — the

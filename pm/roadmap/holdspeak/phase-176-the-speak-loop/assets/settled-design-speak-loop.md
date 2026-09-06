@@ -52,8 +52,11 @@ by Jaccard as they always have; the text kind does not.
 
 He switches to a Note editor. The text input has a MicButton. He clicks
 it once (toggle, not hold), dictates a sentence, the text lands in the
-Note. He returns to the Speak window; the Journal shows the Note
-utterance with source `BROWSER`.
+Note. A field mic runs no pipeline and writes no journal row (build
+ruling, F4): the text lands in the field only. Talk on the Speak face
+is what the Journal streams, with source `BROWSER` (the browser mic);
+the desktop hotkey journals `HOTKEY`; a typed remote delivery journals
+`DICTATION`.
 
 Every text input on the desk takes his voice. The mic is the OS, not a
 feature.
@@ -544,7 +547,8 @@ them, it does not wait on new work.
    live. The second carries `APPLIED`; the first carries `TAUGHT`.
 7. **The receipt outside Speak.** The Room's ask well, the Door's name
    field, a Note editor -- the MicButton is there. He dictates into the
-   ask well; the Journal shows it with source `BROWSER`.
+   ask well; the text lands in the field; no journal row is written (a
+   field mic runs no pipeline).
 
 **When `final_text == utterance`,** the RESULT line still renders the
 final text -- it is the *landed* fact, not a repeat of the draft; the

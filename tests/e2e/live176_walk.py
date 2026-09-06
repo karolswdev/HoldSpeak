@@ -593,8 +593,9 @@ Beat 2  A WRONG LANDING.  Say a sentence with a word the transcript gets
         for" for Q4).  Press `Wrong`.
         -> the product writes ONE journal row.
 
-Beat 3  TEACH -- FIELD = TEXT.  The teach row unfolds with the landed
-        text pre-filled.  Edit the ONE word.  Press `Teach`.
+Beat 3  TEACH -- FIELD = TEXT.  The teach row unfolds with the RAW
+        transcript pre-filled (heard, not landed).  Edit the ONE word.
+        Press `Teach`.
         Expect the receipt: TAUGHT - <heard> -> <said>.
         -> the product writes ONE correction row and flags `taught_from`
            on the row of beat 2.
@@ -606,17 +607,22 @@ Beat 4  THE SAME PHRASE AGAIN.  Say a sentence containing it.
 
 Beat 5  THE JOURNAL.  Cross to the Journal wing (the wing strip or
         `Review`).  Expect the newest row `APPLIED`, the beat-2 row
-        `TAUGHT`, the source badge DICTATION, day bands, and NO caption
-        count.  Do not press `Clear`.
+        `TAUGHT`, the source badge BROWSER (beats 1-4 were SPOKEN, and
+        the browser mic is the source; DICTATION is a TYPED delivery,
+        HOTKEY the desktop hotkey), day bands, and NO caption count.
+        The BROWSER filter shows them; DICTATION does not.  Do not press
+        `Clear`.
 
 Beat 6  THE MIC ON A ROOM.  Open a Room.  Click the MicButton on the
         ask well (click to TOGGLE, never press-and-hold).  Dictate a
         sentence; the text lands in the field.  DO NOT SUBMIT.
-        -> the product writes ONE journal row, source BROWSER.
+        -> the product writes NO journal row (a field mic runs no pipeline;
+           the text lands in the field only).
 
 Beat 7  THE MIC ON THE DOOR.  Open the Door.  Click the MicButton on the
         name/outcome field.  Dictate a project name.  DO NOT SUBMIT.
-        -> the product writes ONE journal row, source BROWSER.
+        -> the product writes NO journal row (a field mic runs no pipeline;
+           the text lands in the field only).
 
 Then return to the Speak window and confirm the Journal shows the beat-6
 and beat-7 utterances with source BROWSER.
@@ -664,7 +670,7 @@ def _collect_answers(answers_flag: str | None, report: WalkReport) -> dict:
             pass
 
     spoken_raw = _ask(
-        "How many utterances did you SPEAK (beats 1,2,4,6,7 -> normally 5)?",
+        "How many utterances did you SPEAK (beats 1,2,4 on the Speak face -> normally 3; beats 6,7 write none)?",
         _nth(0),
     )
     taught_raw = _ask(
@@ -1069,7 +1075,7 @@ def main() -> int:
         if args.attended and not fatal:
             answers = _collect_answers(args.answers, report)
             beats.append(Beat(
-                beat="beats 1,2,4,6,7: he spoke",
+                beat="beats 1,2,4: he spoke",
                 expected="(his count)",
                 observed=str(answers["utterances_spoken"]),
                 write="HIS HAND",

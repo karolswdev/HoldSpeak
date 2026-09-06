@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SpeakFace } from "../SpeakFace";
 import { ReceiptContext } from "../shared";
 
-const mocks = vi.hoisted(() => ({ apiFetch: vi.fn() }));
+const mocks = vi.hoisted(() => ({ apiFetch: vi.fn(), startStreamSession: vi.fn() }));
 
 vi.mock("../../../../lib/api", () => ({
   apiFetch: mocks.apiFetch,
@@ -28,7 +28,14 @@ vi.mock("../../../../lib/openMic", () => ({
 vi.mock("../../../../lib/speakToFill", () => ({
   speakToFillSupported: () => true,
   speakToFillUnsupportedReason: () => "",
-  retryPendingTranscription: vi.fn(),
+  /* nothing was retained: a click starts a real session rather than
+     replaying a pending capture. */
+  retryPendingTranscription: vi.fn(async () => null),
+  subscribeCaptureLevel: () => () => undefined,
+}));
+vi.mock("../../../../lib/micStreamSession", () => ({
+  micStreamSupported: () => true,
+  startStreamSession: mocks.startStreamSession,
   subscribeCaptureLevel: () => () => undefined,
 }));
 vi.mock("../../assignmentExperience", () => ({
@@ -360,6 +367,140 @@ describe("the DELIVERED run feeds the same loop (counsel C1)", () => {
     );
 
     await within(result).findByRole("status");
+    const taught = mocks.apiFetch.mock.calls.filter(
+      (c: unknown[]) => (c[1] as { method?: string })?.method === "POST"
+        && String(c[0]).includes("/api/dictation/corrections"),
+    );
+    expect(taught).toHaveLength(1);
+  });
+});
+
+
+/* HS-176 counsel C1 (the SPOKEN half) — the walk's own beat 1.
+
+   Pressing TALK and speaking is the path the owner actually takes. The
+   words are piped and journaled by the STREAM (`voice_stream.py`), and the
+   delivery that follows sends `raw: true`, so the delivery reply carries no
+   run facts and rightly invents none. The facts ride the `final` frame
+   instead: MicButton hands them to `onReleased`, and the deck merges them
+   into the same `result` the typed landing produces. R2: carried out of the
+   run that computed them, never re-derived from "the newest journal row". */
+describe("the SPOKEN run feeds the same loop (counsel C1)", () => {
+  /** Press TALK, speak, release — with the run's facts on the final frame. */
+  async function speak(frame: Record<string, unknown>) {
+    localStorage.setItem("holdspeak.speakAim", "focused");
+    /* the honest `raw: true` reply: delivered, with NO run facts in it. */
+    remoteReply = {
+      success: true,
+      delivered: true,
+      final_text: "Ship the Q4 platform on schedule",
+    };
+    mocks.startStreamSession.mockImplementation(
+      async (onEvent: (event: unknown) => void) => ({
+        stop: vi.fn().mockImplementation(async () => {
+          onEvent(frame);
+          return String(frame.text ?? "");
+        }),
+        cancel: vi.fn(),
+        retained: vi.fn().mockResolvedValue(false),
+      }),
+    );
+    announced = [];
+    render(
+      <ReceiptContext.Provider value={(text: string) => void announced.push(text)}>
+        <SpeakFace />
+      </ReceiptContext.Provider>,
+    );
+    const talk = await screen.findByRole("button", { name: "Talk" });
+    await userEvent.click(talk);
+    await waitFor(() => expect(talk).toHaveAttribute("aria-pressed", "true"));
+    await userEvent.click(talk);
+    await waitFor(() =>
+      expect(
+        mocks.apiFetch.mock.calls.filter((c: unknown[]) =>
+          String(c[0]).includes("/api/dictation/remote"),
+        ),
+      ).toHaveLength(1),
+    );
+    return await screen.findByRole("region", { name: "Pipeline result" });
+  }
+
+  const SPOKEN = {
+    type: "final",
+    text: "Ship the Q4 platform on schedule",
+    raw_text: "Ship the queue for platform on schedule",
+    corrections_applied: [3],
+    journal_id: 11,
+  };
+
+  it("delivers the piped words verbatim — one pipeline per utterance", async () => {
+    await speak(SPOKEN);
+    const [call] = mocks.apiFetch.mock.calls.filter((c: unknown[]) =>
+      String(c[0]).includes("/api/dictation/remote"),
+    );
+    const body = (call[1] as { json: Record<string, unknown> }).json;
+    expect(body.raw).toBe(true);
+    expect(body.text).toBe("Ship the Q4 platform on schedule");
+  });
+
+  it("renders the APPLIED chip from the frame's corrections_applied", async () => {
+    const result = await speak(SPOKEN);
+    const chip = await within(result).findByRole("button", {
+      name: "Corrections applied",
+    });
+    await userEvent.click(chip);
+    const body = await screen.findByRole("region", { name: "Corrections applied" });
+    expect(within(body).getByText("queue for")).toBeTruthy();
+    expect(within(body).getByText("Q4")).toBeTruthy();
+  });
+
+  it("pre-fills the TEXT teach well from the frame's raw transcript", async () => {
+    const result = await speak(SPOKEN);
+    await userEvent.click(within(result).getByRole("button", { name: "Wrong" }));
+    const teach = await screen.findByRole("group", { name: "Correct this result" });
+    const said = within(teach).getByLabelText("What you said") as HTMLTextAreaElement;
+    // the RAW transcript, not the LANDED text the delivery reply carried
+    expect(said.value).toBe("Ship the queue for platform on schedule");
+  });
+
+  it("teaches through the JOURNAL route the frame named", async () => {
+    const result = await speak(SPOKEN);
+    await userEvent.click(within(result).getByRole("button", { name: "Wrong" }));
+    const teach = await screen.findByRole("group", { name: "Correct this result" });
+    await userEvent.clear(within(teach).getByLabelText("What you said"));
+    await userEvent.type(
+      within(teach).getByLabelText("What you said"),
+      "Ship the Q4 platform on schedule",
+    );
+    await userEvent.click(
+      within(teach).getByRole("button", { name: "Teach correction" }),
+    );
+
+    const receipt = await within(result).findByRole("status");
+    expect(receipt.textContent).toContain("TAUGHT");
+    const taught = mocks.apiFetch.mock.calls.filter(
+      (c: unknown[]) => (c[1] as { method?: string })?.method === "POST"
+        && String(c[0]).includes("/api/dictation/journal/11/correct"),
+    );
+    expect(taught).toHaveLength(1);
+  });
+
+  it("a frame with no facts leaves the reply's own shape alone", async () => {
+    const result = await speak({
+      type: "final",
+      text: "Ship the Q4 platform on schedule",
+    });
+    // nothing fired, so no chip is drawn (A.8: no counter of zero)
+    expect(
+      within(result).queryByRole("button", { name: "Corrections applied" }),
+    ).toBeNull();
+    await userEvent.click(within(result).getByRole("button", { name: "Wrong" }));
+    const teach = await screen.findByRole("group", { name: "Correct this result" });
+    await userEvent.click(
+      within(teach).getByRole("button", { name: "Teach correction" }),
+    );
+    await within(result).findByRole("status");
+    // no `journal_id` to name -> the corrections fallback, as before
     const taught = mocks.apiFetch.mock.calls.filter(
       (c: unknown[]) => (c[1] as { method?: string })?.method === "POST"
         && String(c[0]).includes("/api/dictation/corrections"),

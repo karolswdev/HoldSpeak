@@ -44,7 +44,7 @@ roadmap files, they win. Memory (the Claude Code auto-memory, index
 | 173 | The Steward's Hand and Voice | MERGED #556 → `d416e08a` |
 | 174 | Reach | MERGED #557 → `8c994305` |
 | 175 | Calendar and the Clock | **COMPLETE 9/9 · MERGED #558 → `aa278604`** on his word; the R1 follow-up MERGED #564 → `7d897302`; his attended walk OWED |
-| 176 | The Speak Loop | **CHARTERED + ACTIVE 0/8** on `feat/the-speak-loop` (2026-09-06, the orchestrator's ruling on his deferral); design SETTLED against main, fifteen boards on the canvas `36f77f70-fb03-461d-a0dd-8b43c4682e63`, counsel's hunt paid; **his word on the canvas gates the build** |
+| 176 | The Speak Loop | **CLOSED 7/8** on `feat/the-speak-loop` (PR #566, out of draft; merge on his word); built on his word ("Let's follow your ruling"); the `text` correction kind, the Journal stream, the Learned wing, the voice law paid; counsel-on-built's bounce paid; the suite classified; **06 his attended walk OWED** (the hub from this branch is up on his desk, port in the scratchpad only) |
 | 177–179 | Thread at Work · Portfolio · Companion | scaffolds; not chartered |
 | 180 | The Proof | named in `THE-TUESDAY-ARC.md` §6; nothing drafted |
 
@@ -263,7 +263,7 @@ gh pr ready N ; gh pr view N --json mergeable,mergeStateStatus ; gh pr merge N -
    `.claude/agents/opus-worker.md` if it is missing (Opus, not Fable).
 2. Ask him nothing you can read. What is his: the attended walks
    (170–175), the queued "Already titled" job, 172–174's questions.
-3. The road CONTINUES (ruled 2026-09-06 on his deferral): 176 is chartered and on the canvas; the build starts on his word on the canvas —
+3. The road CONTINUES (ruled 2026-09-06 on his deferral): 176 is CLOSED 7/8 on PR #566 awaiting his word to merge and his attended walk; then 177 The Thread at Work is chartered on his word, canvas first —
    dictation as a daily tool (the correction taught once and kept; the
    journal as a stream; the voice law on every input; the desk answering
    the hand). Canvas first; counsel on the design; his word; then build
@@ -328,9 +328,30 @@ is recomputed on the tree it will build on, excluding tests, `_parked/`
 and library internals, and each `mic={false}` is a voice-law hole the
 raw-element count cannot see.
 
-**Owed to him.** His word on the 176 canvas (the build waits on it);
-the attended walks 170–175; the queued "Already titled" job; 172–174's
-questions.
+**The build, the same day.** His word: "Well. Let's follow your ruling,
+then. It's important we continue to make progress..." — read as the
+word to build to the design counsel ratified on his behalf, the merge
+on his word. Waves: wire (lane A the `text` kind + the Pipeline.run
+seam + schema 76 + the recorder's bus seam; lane B the routes; lane C
+the voice law), faces (02 the teach row, 03 the Journal stream, then 05
+the Learned wing + Review + one mic authority), counsel-on-built
+(BOUNCE: the real Talk path's reply dropped the three keys the loop
+needs — paid; the frame honours the filter; the secret guard widened to
+real token shapes; `N TODAY` counts today), docs, the CI-shape suite
+(26/10180, classified against a main worktree: 12 inherited, 7 moved
+fences paid, 7 rigs serial-green or inherited), the walk's read-only leg
+on his desk (six beats MATCH, zero writes; his DB 9/0/6 before and
+after; findings: his engine reads KEY NOT SET; an empty-transcript row).
+Commits: `9bbef950` 01 · `01a1a03b` 04 · `f45bb9c8` 02 · `3b39422e` 03 ·
+`e1067485` 05 · `5a0a29f5` 07 · `3a573eb4` the fixes · the close.
+Laws added to UX-CANON §D: one word one meaning; the species that has
+the value wins the face; a `mic={false}` is a hole; a rig never types
+into the focused window.
+
+**Owed to him.** His attended walk on 176 (beat 0: the engine key or a
+local engine; then the seven beats and the two walk questions); his word
+on the merge of #566; the attended walks 170–175; the queued "Already
+titled" job; 172–174's questions.
 
 ## Muad'Dib XV — 2026-09-05 late, 175 RESUMED on his word; the four faces BUILT
 

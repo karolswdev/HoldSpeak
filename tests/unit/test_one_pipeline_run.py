@@ -27,6 +27,7 @@ import asyncio
 import json
 import uuid
 from dataclasses import dataclass
+from types import SimpleNamespace
 from typing import Any
 
 import numpy as np
@@ -49,15 +50,20 @@ OWNER_TOKEN = "one-pipeline-owner-token"
 
 
 class _Journal:
-    """Stands in for the dictation journal recorder; counts rows, nothing else."""
+    """Stands in for the dictation journal recorder; counts rows, nothing else.
+
+    It returns the row it wrote (as the real recorder does), so HS-176 C1's
+    `journal_id` has a real value to carry.
+    """
 
     repository = None
 
     def __init__(self) -> None:
         self.rows: list[str] = []
 
-    def record(self, run: Any, *, source: str, **_kw: Any) -> None:
+    def record(self, run: Any, *, source: str, **_kw: Any) -> Any:
         self.rows.append(source)
+        return SimpleNamespace(id=100 + len(self.rows))
 
 
 class _FakeFence:
@@ -147,6 +153,10 @@ class _Socket:
 
     def finals(self) -> list[str]:
         return [event["text"] for event in self.sent if event.get("type") == "final"]
+
+    def final_frames(self) -> list[dict[str, Any]]:
+        """The `final` frames as sent — the whole shape, not just the text."""
+        return [event for event in self.sent if event.get("type") == "final"]
 
     def fired(self) -> list[dict[str, Any]]:
         return [
@@ -444,3 +454,69 @@ def test_a_typed_utterance_still_takes_its_one_pipeline_pass(monkeypatch):
     assert response.status_code == 200
     assert passes == ["ship it friday"]
     assert typed == [("[corrected] ship it friday", "focused")]
+
+
+# ── HS-176 C1 — the SPOKEN leg's `final` frame carries the run's facts ───────
+#
+# The Speak face's TALK key delivers `raw: true`, so the delivery reply runs no
+# pipeline and rightly reports no run facts. The leg that DID run the pipeline
+# is this socket, and it wrote the journal row. Counsel's re-read: unless this
+# frame carries `raw_text`, `corrections_applied` and `journal_id`, the spoken
+# Tuesday has no APPLIED chip, pre-fills the TEXT teach from the LANDED text,
+# and teaches on the corrections fallback instead of the journal route.
+#
+# R2: the facts are CARRIED out of the run that computed them. Nothing here
+# looks up "the newest journal row".
+
+
+def test_the_spoken_final_frame_carries_the_runs_three_facts(stream):
+    """`pipeline: true` -> the frame the browser reads has all three keys."""
+    run = stream({"type": "start", "pipeline": True})
+
+    frames = run.socket.final_frames()
+    assert len(frames) == 1
+    frame = frames[0]
+    assert frame["text"] == TRANSCRIPT
+    # the transcript AS HEARD (the string the `text` rules were applied to)
+    assert frame["raw_text"] == TRANSCRIPT
+    # the ids that fired: none, on the passthrough lane — but the key is there
+    assert frame["corrections_applied"] == []
+    # the row THIS run wrote, so `teach()` takes the journal correct route
+    assert frame["journal_id"] == 101
+    assert run.journal.rows == ["browser"]
+
+
+def test_the_spoken_facts_name_the_row_this_run_wrote(stream):
+    """Two utterances, two rows: each frame names its OWN row, never the newest."""
+    first = stream({"type": "start", "pipeline": True}, said="ship it friday")
+    second = stream({"type": "start", "pipeline": True}, said="ship it monday")
+
+    assert first.socket.final_frames()[0]["journal_id"] == 101
+    assert first.socket.final_frames()[0]["raw_text"] == "ship it friday"
+    # a fresh journal per socket in this rig; what is pinned is that each frame
+    # carries the id from its own publication rather than a read-time lookup.
+    assert second.socket.final_frames()[0]["journal_id"] == 101
+    assert second.socket.final_frames()[0]["raw_text"] == "ship it monday"
+
+
+def test_a_field_fills_final_frame_carries_no_run_facts(stream):
+    """A speak-to-fill runs no pipeline and writes no row: it invents nothing."""
+    run = stream({"type": "start", "pipeline": False})
+
+    frame = run.socket.final_frames()[0]
+    assert frame["text"] == TRANSCRIPT
+    assert "raw_text" not in frame
+    assert "corrections_applied" not in frame
+    assert "journal_id" not in frame
+    assert run.journal.rows == []
+
+
+def test_a_fired_macros_final_frame_carries_no_run_facts(stream):
+    """A command consumed the utterance: no pipeline, no row, no facts."""
+    run = stream({"type": "start", "pipeline": True}, macro=MACRO, said="standup")
+
+    frame = run.socket.final_frames()[0]
+    assert frame["text"] == ""
+    assert frame["fired"]["keyword"] == "standup"
+    assert "raw_text" not in frame
+    assert "journal_id" not in frame

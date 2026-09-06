@@ -1,6 +1,6 @@
 # Phase 176 - The Speak Loop
 
-**Last updated:** 2026-09-06 — CHARTERED and ACTIVE on the orchestrator's ruling after the owner deferred the road ("you decide"); branch `feat/the-speak-loop` off main `7a47904e`; story 01 the design in progress.
+**Last updated:** 2026-09-06 — CLOSED 7/8 on the gates (final-summary.md); story 06 his attended walk OPEN until his hand (the read-only leg on his desk green; the hub from this branch up for him); draft PR #566 out of draft on the close; merge on his word.
 
 ## Goal
 
@@ -14,7 +14,7 @@ learning loop that has never been trained gets its first real data.
 
 ## Status
 
-**ACTIVE 6/8.** 01, 02, 03, 04, 05 DONE; 07 the docs DONE (the guide's Speak section, the architecture's learning loop, the pipeline guide's truth audit, README, the glossary, POSITIONING's canonical names; six shots under docs/assets/speak-loop/). Counsel-on-built BOUNCED on one P0 (the remote route's keys) — fix lanes paying C1–C4; the walk runner drafted (tests/e2e/live176_walk.py); the suite in CI shape running; then 06 his walk and 08 the close.
+**CLOSED 7/8.** 01 the design, 02 the first correction, 03 the journal stream, 04 the voice law, 05 the desk answering the hand, 07 the docs, 08 the close DONE; counsel-on-built's bounce paid (C1–C4) and its re-read recorded; the suite in CI shape classified; 06 HIS ATTENDED WALK open until his hand (the runner's read-only leg on his desk: six beats MATCH, zero writes). Merge on his word.
 
 **Depends on:** Phase 170 merged (the Speak face is rebuilt in 170's
 Great Pass; the correction flow and journal stream build on that
@@ -122,11 +122,17 @@ so the "postgress" Tuesday needs the `text` kind this phase adds.)
 | HS-176-05 | The desk answering the hand (the full loop: speak, land, judge, teach, apply) | done | [story-05-the-desk-answering-the-hand](./story-05-the-desk-answering-the-hand.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-176-06 | The walk (his desk: correction taught, journal streaming, MicButton everywhere, the loop) | backlog | [story-06-the-walk](./story-06-the-walk.md) | -- |
 | HS-176-07 | The docs (the Speak Loop in the guide; the correction flow in the architecture) | done | [story-07-the-docs](./story-07-the-docs.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-176-08 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | in-progress | [story-08-the-close](./story-08-the-close.md) | -- |
+| HS-176-08 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | done | [story-08-the-close](./story-08-the-close.md) | [evidence-story-08](./evidence-story-08.md) |
 
 ## Where we are
 
-ACTIVE 6/8 (2026-09-06). Story 07 DONE: docs/USER_GUIDE.md `## Speak`
+CLOSED 7/8 (2026-09-06). Story 08 DONE: the gates (evidence-story-08.md:
+the 176 set 154 passed; ratchet at `mic: 0`; api surface 668, no manifest
+change; schema snapshot 76; web baseline 2336 passed, zero branch-new;
+the suite in CI shape classified — 12 inherited, 7 176-new paid, 7 rigs
+serial-green or inherited), counsel-on-built paid, final-summary.md,
+UX-CANON's new laws, the handover. Story 06 OPEN: his attended walk
+(beat 0: the engine reads KEY NOT SET). Story 07 DONE: docs/USER_GUIDE.md `## Speak`
 (the four wings, the teach loop and its five receipts, text vs routing
 corrections, the APPLIED chip, the Journal wing, the Learned wing,
 Review, `corrections_enabled` ON by default, retention and redaction,
@@ -334,6 +340,40 @@ extend it.
   allow) fail IDENTICALLY on the main worktree (INHERITED); hs175
   arrival's overflow test flipped (green on main, red once serially on
   the branch, green on the retry) — the rotating flaky rig family.
+- **2026-09-06 — counsel's re-read after the fixes: RATIFY-W-C; C1's
+  SPOKEN half NOT PAID, then paid.** The typed landing carried the three
+  keys; the spoken one (Talk → the voice stream → the `final` frame →
+  MicButton `onText` → `onReleased` → the raw remote send) still dropped
+  them at the `final` frame (voice_stream.py). RULED: carry the facts on
+  the `final` frame through the callback into the deck; never a
+  read-time newest-row lookup (R2). PAID in the close commit
+  (voice_stream.py's `final` frame, dictation_runner's publication
+  sink, MicButton's `onText` second argument, the deck's merge; 15 new
+  tests). Its finding paid too: a field mic writes NO journal row, so
+  the walk's beats 6 and 7 and the design's D0/D5 say so. N2: a spoken Speak-face utterance
+  journals as `browser` — RULED to keep it (the browser mic is the
+  source); the walk's beat 5 and the guide say BROWSER for Talk on the
+  Speak face, DICTATION for the desktop hotkey. C3's blast radius named:
+  the widened secret guard drives `filter_secret` (whole-field
+  redaction) and the project-doc suggestions product-wide.
+- **2026-09-06 — the walk's read-only leg on his desk.** A hub from
+  this branch booted on his real HOME (the final build on port 49353
+  after the spoken-landing fix; the URL and token only in the session
+  scratchpad); `tests/e2e/live176_walk.py`
+  read-only: six beats MATCH (corrections_enabled True; four wings;
+  the well mic-less with Talk; his nine real journal rows under ALL ·
+  DICTATION · BROWSER · HOTKEY with no caption count; NOTHING LEARNED;
+  Review crosses to the Journal), zero defects, zero writes by the
+  runner (Clear / Delete / Replay / Forget DENIED); his DB read-only
+  census before and after: journal 9/9, corrections 0/0, meetings 6/6;
+  the only change is the product's own additive `corrections_applied`
+  column on startup (schema 76). Two findings for his eye: the engine
+  reads `GPT 5 mini · API.OPENAI.COM · KEY NOT SET` (a cloud engine
+  without a key; Talk cannot land until beat 0 fixes it), and one Aug
+  21 row has an empty transcript (BACKLOG). The attended beats (talk,
+  the wrong landing, the teach, the same phrase again, the mic on a
+  Room and on the Door, the two walk questions) are HIS; the hub stays
+  up for them. Story 06 stays open until his hand.
 - **2026-09-06 — the walk's writes.** The walk on his desk writes what
   his own hand writes: the journal rows of his dictations, the
   retention prune, and the one correction he teaches; the runner seeds

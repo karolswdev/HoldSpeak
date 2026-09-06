@@ -56,8 +56,8 @@ def _runner_entrances() -> list[str]:
 # both require an intentional capability/owner review.
 EXPECTED_CALL_SITES = frozenset("""
 holdspeak/commands/dictation.py:166|_cmd_dry_run|build_pipeline|call
-holdspeak/dictation_runner.py:342|run_pipeline_corrections_only|build_pipeline|call
-holdspeak/dictation_runner.py:534|run_dictation_pipeline|build_pipeline|call
+holdspeak/dictation_runner.py:386|run_pipeline_corrections_only|build_pipeline|call
+holdspeak/dictation_runner.py:589|run_dictation_pipeline|build_pipeline|call
 holdspeak/inference_targets.py:655|local_pinned_meeting_intel|_local_pinned_engine|call
 holdspeak/inference_targets.py:678|_local_pinned_engine|MeetingIntel|call
 holdspeak/inference_targets.py:700|build_intel_for_revision|_engine_for_revision|call
@@ -437,8 +437,8 @@ holdspeak/kernel/prompt_adapter.py:71|StreamingPromptAdapter.dispatch|run_prompt
 """),
     _group(ProposedRoute("internal.speech.runtime_assembly", "speech_session", "InferenceRunner context-gated adapter"), """
 holdspeak/commands/dictation.py:166|_cmd_dry_run|build_pipeline|call
-holdspeak/dictation_runner.py:342|run_pipeline_corrections_only|build_pipeline|call
-holdspeak/dictation_runner.py:534|run_dictation_pipeline|build_pipeline|call
+holdspeak/dictation_runner.py:386|run_pipeline_corrections_only|build_pipeline|call
+holdspeak/dictation_runner.py:589|run_dictation_pipeline|build_pipeline|call
 holdspeak/plugins/dictation/assembly.py:336|_try_build_runtime|MeshRelayRuntime|call
 holdspeak/plugins/dictation/runtime.py:215|_default_factories._llama_factory|LlamaCppRuntime|call
 holdspeak/plugins/dictation/runtime.py:222|_default_factories._openai_factory|OpenAICompatibleRuntime|call

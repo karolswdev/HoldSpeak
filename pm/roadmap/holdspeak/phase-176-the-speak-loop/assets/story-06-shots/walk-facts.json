@@ -1,0 +1,348 @@
+{
+  "generated_at": "2026-09-06T10:36:34.400861",
+  "hub_host": "127.0.0.1:49353",
+  "attended": false,
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "width": 393,
+      "height": 852
+    }
+  ],
+  "census_before": {
+    "label": "before",
+    "journal_count": 9,
+    "journal_enabled": true,
+    "journal_retention": 500,
+    "corrections_size": 0,
+    "corrections_enabled": true,
+    "correction_keys": [],
+    "ready": true,
+    "runtime_status": "available",
+    "runtime_detail": "auto: fallback to llama_cpp",
+    "engine_backend": "auto",
+    "egress_boundary": "cloud",
+    "readiness_corrections_enabled": true,
+    "mic_total": 0
+  },
+  "census_after": {},
+  "beats": [
+    {
+      "beat": "beat 0: corrections_enabled",
+      "expected": "True (else the whole loop is a silent no-op)",
+      "observed": "True",
+      "write": "none",
+      "verdict": "MATCH"
+    },
+    {
+      "beat": "beat 0: engine readiness",
+      "expected": "(runtime available)",
+      "observed": "available / backend=auto / egress=cloud",
+      "write": "none",
+      "verdict": "DATA"
+    },
+    {
+      "beat": "R1 Speak (1440+393)",
+      "expected": "four wings; well mic-less; Talk present",
+      "observed": "8 facts, no bounce",
+      "write": "none",
+      "verdict": "MATCH"
+    },
+    {
+      "beat": "R2 Journal (1440+393)",
+      "expected": "his rows; ALL DICTATION BROWSER HOTKEY; no caption count",
+      "observed": "12 facts, no bounce",
+      "write": "DENIED (Clear / Delete / Replay)",
+      "verdict": "MATCH"
+    },
+    {
+      "beat": "R3 Learned (1440+393)",
+      "expected": "NOTHING LEARNED (rows listed read-only if present)",
+      "observed": "4 facts, no bounce",
+      "write": "DENIED (Forget)",
+      "verdict": "MATCH"
+    },
+    {
+      "beat": "R4 Review (1440+393)",
+      "expected": "crosses to the Journal wing; no Configure door",
+      "observed": "4 facts, no bounce",
+      "write": "none",
+      "verdict": "MATCH"
+    }
+  ],
+  "shots": [
+    {
+      "beat": "speak",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-06-shots/speak-1440.png"
+    },
+    {
+      "beat": "journal",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-06-shots/journal-1440.png"
+    },
+    {
+      "beat": "learned",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-06-shots/learned-1440.png"
+    },
+    {
+      "beat": "review",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-06-shots/review-1440.png"
+    },
+    {
+      "beat": "speak",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-06-shots/speak-393.png"
+    },
+    {
+      "beat": "journal",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-06-shots/journal-393.png"
+    },
+    {
+      "beat": "learned",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-06-shots/learned-393.png"
+    },
+    {
+      "beat": "review",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-06-shots/review-393.png"
+    }
+  ],
+  "facts": [
+    {
+      "face": "speak@1440",
+      "field": "wings",
+      "expected": "SPEAK JOURNAL BLOCKS LEARNED",
+      "observed": "SPEAK JOURNAL BLOCKS LEARNED",
+      "verdict": "MATCH",
+      "why": "the four wings of the Speak surface (design D2(c))"
+    },
+    {
+      "face": "speak@1440",
+      "field": "well_mic_count",
+      "expected": "0",
+      "observed": "0",
+      "verdict": "MATCH",
+      "why": "ONE mic authority (Article IV.3, ruling R13): the well carries none"
+    },
+    {
+      "face": "speak@1440",
+      "field": "talk",
+      "expected": "TALK",
+      "observed": "TALK",
+      "verdict": "MATCH",
+      "why": "the transport is this face's mic authority"
+    },
+    {
+      "face": "speak@1440",
+      "field": "footer",
+      "expected": "THIS DEVICE + Review + Export",
+      "observed": "THIS DEVICE Review Export",
+      "verdict": "DATA",
+      "why": "the Speak footer, as found"
+    },
+    {
+      "face": "journal@1440",
+      "field": "filter_tokens",
+      "expected": "ALL DICTATION BROWSER HOTKEY",
+      "observed": "ALL DICTATION BROWSER HOTKEY",
+      "verdict": "MATCH",
+      "why": "the four source filter tokens (ruling R6: present even when quiet)"
+    },
+    {
+      "face": "journal@1440",
+      "field": "rows",
+      "expected": "(his real journal rows)",
+      "observed": "9",
+      "verdict": "DATA",
+      "why": "rows rendered on his desk; the runner opens none"
+    },
+    {
+      "face": "journal@1440",
+      "field": "caption_count",
+      "expected": "(absent -- the footer's N TODAY is the one count)",
+      "observed": "(absent)",
+      "verdict": "MATCH",
+      "why": "ruling N5b / A.7: the wing carries no caption count"
+    },
+    {
+      "face": "journal@1440",
+      "field": "guard:clear_journal",
+      "expected": "DENIED",
+      "observed": "DENIED (never presses Clear)",
+      "verdict": "MATCH",
+      "why": "the runner writes nothing"
+    },
+    {
+      "face": "journal@1440",
+      "field": "guard:delete_journal_row",
+      "expected": "DENIED",
+      "observed": "DENIED (never opens or presses a row's Delete)",
+      "verdict": "MATCH",
+      "why": "the runner writes nothing"
+    },
+    {
+      "face": "journal@1440",
+      "field": "guard:replay_journal_row",
+      "expected": "DENIED",
+      "observed": "DENIED (never presses Replay)",
+      "verdict": "MATCH",
+      "why": "the runner writes nothing"
+    },
+    {
+      "face": "learned@1440",
+      "field": "empty_state",
+      "expected": "NOTHING LEARNED",
+      "observed": "NOTHING LEARNED",
+      "verdict": "MATCH",
+      "why": "his desk has taught nothing yet (the expected state before beat 3)"
+    },
+    {
+      "face": "learned@1440",
+      "field": "guard:forget_correction",
+      "expected": "DENIED",
+      "observed": "DENIED (never presses Forget)",
+      "verdict": "MATCH",
+      "why": "the runner writes nothing"
+    },
+    {
+      "face": "review@1440",
+      "field": "review_target",
+      "expected": "the JOURNAL wing (aria-selected=true)",
+      "observed": "true",
+      "verdict": "MATCH",
+      "why": "design D2(b).9: `Review` reviews; it no longer opens the Configure door"
+    },
+    {
+      "face": "review@1440",
+      "field": "configure_door",
+      "expected": "0",
+      "observed": "0",
+      "verdict": "MATCH",
+      "why": "the Configure door stays the gear's job"
+    },
+    {
+      "face": "speak@393",
+      "field": "wings",
+      "expected": "SPEAK JOURNAL BLOCKS LEARNED",
+      "observed": "SPEAK JOURNAL BLOCKS LEARNED",
+      "verdict": "MATCH",
+      "why": "the four wings of the Speak surface (design D2(c))"
+    },
+    {
+      "face": "speak@393",
+      "field": "well_mic_count",
+      "expected": "0",
+      "observed": "0",
+      "verdict": "MATCH",
+      "why": "ONE mic authority (Article IV.3, ruling R13): the well carries none"
+    },
+    {
+      "face": "speak@393",
+      "field": "talk",
+      "expected": "TALK",
+      "observed": "TALK",
+      "verdict": "MATCH",
+      "why": "the transport is this face's mic authority"
+    },
+    {
+      "face": "speak@393",
+      "field": "footer",
+      "expected": "THIS DEVICE + Review + Export",
+      "observed": "THIS DEVICE Review Export",
+      "verdict": "DATA",
+      "why": "the Speak footer, as found"
+    },
+    {
+      "face": "journal@393",
+      "field": "filter_tokens",
+      "expected": "ALL DICTATION BROWSER HOTKEY",
+      "observed": "ALL DICTATION BROWSER HOTKEY",
+      "verdict": "MATCH",
+      "why": "the four source filter tokens (ruling R6: present even when quiet)"
+    },
+    {
+      "face": "journal@393",
+      "field": "rows",
+      "expected": "(his real journal rows)",
+      "observed": "9",
+      "verdict": "DATA",
+      "why": "rows rendered on his desk; the runner opens none"
+    },
+    {
+      "face": "journal@393",
+      "field": "caption_count",
+      "expected": "(absent -- the footer's N TODAY is the one count)",
+      "observed": "(absent)",
+      "verdict": "MATCH",
+      "why": "ruling N5b / A.7: the wing carries no caption count"
+    },
+    {
+      "face": "journal@393",
+      "field": "guard:clear_journal",
+      "expected": "DENIED",
+      "observed": "DENIED (never presses Clear)",
+      "verdict": "MATCH",
+      "why": "the runner writes nothing"
+    },
+    {
+      "face": "journal@393",
+      "field": "guard:delete_journal_row",
+      "expected": "DENIED",
+      "observed": "DENIED (never opens or presses a row's Delete)",
+      "verdict": "MATCH",
+      "why": "the runner writes nothing"
+    },
+    {
+      "face": "journal@393",
+      "field": "guard:replay_journal_row",
+      "expected": "DENIED",
+      "observed": "DENIED (never presses Replay)",
+      "verdict": "MATCH",
+      "why": "the runner writes nothing"
+    },
+    {
+      "face": "learned@393",
+      "field": "empty_state",
+      "expected": "NOTHING LEARNED",
+      "observed": "NOTHING LEARNED",
+      "verdict": "MATCH",
+      "why": "his desk has taught nothing yet (the expected state before beat 3)"
+    },
+    {
+      "face": "learned@393",
+      "field": "guard:forget_correction",
+      "expected": "DENIED",
+      "observed": "DENIED (never presses Forget)",
+      "verdict": "MATCH",
+      "why": "the runner writes nothing"
+    },
+    {
+      "face": "review@393",
+      "field": "review_target",
+      "expected": "the JOURNAL wing (aria-selected=true)",
+      "observed": "true",
+      "verdict": "MATCH",
+      "why": "design D2(b).9: `Review` reviews; it no longer opens the Configure door"
+    },
+    {
+      "face": "review@393",
+      "field": "configure_door",
+      "expected": "0",
+      "observed": "0",
+      "verdict": "MATCH",
+      "why": "the Configure door stays the gear's job"
+    }
+  ],
+  "answers": {},
+  "errors": [],
+  "surprises": [],
+  "defects": []
+}
