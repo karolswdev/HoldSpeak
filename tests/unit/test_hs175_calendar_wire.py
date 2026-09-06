@@ -4,7 +4,8 @@ Tests:
 1. The sweep runs the calendar refresh once and receipts it (stub the fetch;
    a file source needs no network).
 2. No double refresh with the old thread gone.
-3. The matcher's title rule including the H3 negative (short names skip).
+3. The matcher's title rule as ruled R1 (2026-09-06): full-name phrase,
+   longest wins, a single generic word never links.
 4. The manual link overrides the matcher.
 5. `door.week` days/total.
 6. `upcoming` carries the room (project_id + project_name).
@@ -187,21 +188,84 @@ class TestTitleMatcher:
         assert len(links) >= 1
         assert links[0].match_source == "title"
 
-    def test_h3_short_name_never_matches(self, db: Database, ics_file: Path) -> None:
-        """H3: a Room name of <= 3 chars never auto-matches (false positive
-        risk). 'Q4' is too short to match 'Q4 Platform Standup'."""
+    def test_r1_short_one_word_name_links_when_its_whole_word_appears(
+        self, db: Database, ics_file: Path
+    ) -> None:
+        """R1 supersedes H3's >= 4-char floor: 'Q4' is a one-word Room name
+        that is NOT generic meeting vocabulary and appears whole in
+        'Q4 Platform Standup', so it links (the old rule refused it on
+        length alone)."""
         conductor = _make_conductor(db, str(ics_file))
-        with db._connection() as conn:
-            conn.execute(
-                "INSERT INTO projects (id, name) VALUES (?, ?)",
-                ("proj-short", "Q4"),
-            )
+        _seed_room(db, "proj-short", "Q4")
         conductor.refresh()
         links = db.calendar_event_projects.list_for_project("proj-short")
-        assert len(links) == 0, "short Room names must not auto-match"
+        assert [l.match_source for l in links] == ["title"]
+
+    def test_r1_generic_one_word_room_never_links(self, db: Database, tmp_path: Path) -> None:
+        """R1: counsel's false positive -- a Room named 'Design' must not
+        link a '401k enrollment design review' webinar."""
+        ics = tmp_path / "webinar.ics"
+        ics.write_bytes(_make_ics(title="401k enrollment design review"))
+        conductor = _make_conductor(db, str(ics))
+        _seed_room(db, "proj-design", "Design")
+        conductor.refresh()
+        assert db.calendar_event_projects.list_for_project("proj-design") == []
+
+    def test_r1_generic_stoplist_is_case_insensitive(self, db: Database, tmp_path: Path) -> None:
+        """R1: a Room named 'Sync' (any case) never links 'Payments sync'."""
+        ics = tmp_path / "payments.ics"
+        ics.write_bytes(_make_ics(title="Payments sync"))
+        conductor = _make_conductor(db, str(ics))
+        _seed_room(db, "proj-sync", "SYNC")
+        conductor.refresh()
+        assert db.calendar_event_projects.list_for_project("proj-sync") == []
+
+    def test_r1_non_generic_one_word_room_links(self, db: Database, tmp_path: Path) -> None:
+        """R1: 'Governance' is one word but not generic, so it links
+        'Governance sync'."""
+        ics = tmp_path / "gov.ics"
+        ics.write_bytes(_make_ics(title="Governance sync"))
+        conductor = _make_conductor(db, str(ics))
+        _seed_room(db, "proj-gov", "Governance")
+        conductor.refresh()
+        links = db.calendar_event_projects.list_for_project("proj-gov")
+        assert [l.match_source for l in links] == ["title"]
+
+    def test_r1_partial_phrase_never_links(self, db: Database, tmp_path: Path) -> None:
+        """R1: 'Q4 Platform' does NOT link 'Platform review' -- one word of a
+        multi-word Room name is not the Room's full name."""
+        ics = tmp_path / "partial.ics"
+        ics.write_bytes(_make_ics(title="Platform review"))
+        conductor = _make_conductor(db, str(ics))
+        _seed_room(db, "proj-1", "Q4 Platform")
+        conductor.refresh()
+        assert db.calendar_event_projects.list_for_project("proj-1") == []
+
+    def test_r1_phrase_match_is_punctuation_insensitive(self, db: Database, tmp_path: Path) -> None:
+        """R1: 'Q4 Platform' links 'q4-platform sync' (hyphen, lower case)."""
+        ics = tmp_path / "hyphen.ics"
+        ics.write_bytes(_make_ics(title="q4-platform sync"))
+        conductor = _make_conductor(db, str(ics))
+        _seed_room(db, "proj-1", "Q4 Platform")
+        conductor.refresh()
+        links = db.calendar_event_projects.list_for_project("proj-1")
+        assert [l.match_source for l in links] == ["title"]
+
+    def test_r1_whole_word_bounded(self, db: Database, tmp_path: Path) -> None:
+        """R1: whole-word bounded -- 'Platform' is not a phrase of
+        'Platforms roadmap', and 'Q4 Platform' is not one of 'Q4 Platforms'."""
+        ics = tmp_path / "plural.ics"
+        ics.write_bytes(_make_ics(title="Q4 Platforms roadmap"))
+        conductor = _make_conductor(db, str(ics))
+        _seed_room(db, "proj-plat", "Platform")
+        _seed_room(db, "proj-full", "Q4 Platform")
+        conductor.refresh()
+        assert db.calendar_event_projects.list_for_project("proj-plat") == []
+        assert db.calendar_event_projects.list_for_project("proj-full") == []
 
     def test_longest_match_wins(self, db: Database, tmp_path: Path) -> None:
-        """The matcher prefers the LONGEST matching Room name."""
+        """Two full names present ('Platform' and 'Q4 Platform' both appear
+        whole in 'Q4 Platform Architecture Review'): the LONGER wins."""
         ics = tmp_path / "cal2.ics"
         ics.write_bytes(_make_ics(title="Q4 Platform Architecture Review"))
         conductor = _make_conductor(db, str(ics))

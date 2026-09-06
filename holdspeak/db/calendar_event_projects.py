@@ -4,6 +4,12 @@ The matcher writes links after each calendar refresh; the Door reads them
 to project Room names onto upcoming event items.  Manual links are
 written by the link/unlink routes and survive matcher re-runs.
 
+Ruled R1 (2026-09-06, on the owner's deferral): a ``title`` link needs
+the Room's FULL name as a contiguous whole-word phrase of the event
+title, and a single generic word (``calendar_ingest_conductor.
+GENERIC_MEETING_WORDS``) never links.  ``Unlink`` stays the remedy for a
+wrong link; the suppression below is untouched by that ruling.
+
 HS-175 counsel C5 / C6(c):
 
 - An owner's ``unlink`` is durable.  It is recorded in
