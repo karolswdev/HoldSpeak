@@ -292,8 +292,15 @@ export function SpeakFace() {
 
       {/* 2. THE UTTERANCE WELL */}
       <div className="speak-well">
+        {/* HS-176-05 (ruling R13) — the well carries NO mic. `Talk` above is
+            this face's ONE mic authority (Article IV.3); the built well's
+            default-true mic was a 170 drift that drew a third mic beside
+            `Talk` and `Open mic`, and the boards draw it mic-less. The
+            census allowlist entry keys on `label="Utterance"`
+            (scripts/ux_canon_scan.py:214). */}
         <PadGadget
           label="Utterance"
+          mic={false}
           value={deck.utterance}
           onChange={deck.setUtterance}
           placeholder="Talk, or type here"

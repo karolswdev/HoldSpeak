@@ -204,14 +204,18 @@ def test_delete_without_repo_404s(test_client: TestClient, settings_path: Path) 
 
 def test_dictation_page_includes_memory_tab(test_client: TestClient) -> None:
     assert '<div id="root"></div>' in test_client.get("/dictation").text
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
-    # HS-100-07: correction memory lives behind the Speak door.
+    root = Path(__file__).resolve().parents[2]
+    source = (root / "web/src/pages/cores/DictationCore.tsx").read_text()
+    # HS-100-07: correction memory lived behind the Speak door.
+    # HS-176-05: the corrections TABLE moved OUT of the door and became the
+    # `Learned` wing (settled design D2(c)) — "the only path to what the
+    # pipeline learned is the gear" was the defect. The door keeps the
+    # learning digest, so `<Memory />` still stacks in it; the corrections
+    # wire moved with the table.
     assert "<Memory />" in source
-    # HS-132-12: HS-117-08 moved the section's wire calls into
-    # cores/dictation/Memory.tsx; the door still stacks it.
-    memory = (
-        Path(__file__).resolve().parents[2]
-        / "web/src/pages/cores/dictation/Memory.tsx"
-    ).read_text()
-    assert "/api/dictation/corrections" in memory
+    assert "<Learned />" in source
+    memory = (root / "web/src/pages/cores/dictation/Memory.tsx").read_text()
     assert "/api/dictation/learning-digest" in memory
+    assert "/api/dictation/corrections" not in memory
+    learned = (root / "web/src/pages/cores/dictation/Learned.tsx").read_text()
+    assert "/api/dictation/corrections" in learned

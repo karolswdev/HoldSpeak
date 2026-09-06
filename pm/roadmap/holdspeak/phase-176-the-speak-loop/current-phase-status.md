@@ -14,7 +14,7 @@ learning loop that has never been trained gets its first real data.
 
 ## Status
 
-**ACTIVE 4/8.** 01 the design DONE on his word; 04 the voice law DONE; 02 the first correction DONE; 03 the journal stream DONE (the live push proven end to end, the FilterTokens species promoted); 05 in progress (the Learned wing, Review, the well's mic, the full loop).
+**ACTIVE 5/8.** 01 the design DONE on his word; 02 the first correction, 03 the journal stream, 04 the voice law, 05 the desk answering the hand DONE (the Learned wing, Review → Journal, one mic authority, the loop in one session). Counsel-on-built reading; the walk runner drafting; then 07 docs, 06 his walk, the suite, 08 the close.
 
 **Depends on:** Phase 170 merged (the Speak face is rebuilt in 170's
 Great Pass; the correction flow and journal stream build on that
@@ -119,14 +119,24 @@ so the "postgress" Tuesday needs the `text` kind this phase adds.)
 | HS-176-02 | The first correction (teach, persist, apply to the next match; learning digest > 0) | done | [story-02-the-first-correction](./story-02-the-first-correction.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-176-03 | The journal as a stream (live feed, filterable, searchable; the voice-typing act visible) | done | [story-03-the-journal-stream](./story-03-the-journal-stream.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-176-04 | The voice law (MicButton on every text input across the desk; the census gap closed) | done | [story-04-the-voice-law](./story-04-the-voice-law.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-176-05 | The desk answering the hand (the full loop: speak, land, judge, teach, apply) | backlog | [story-05-the-desk-answering-the-hand](./story-05-the-desk-answering-the-hand.md) | -- |
+| HS-176-05 | The desk answering the hand (the full loop: speak, land, judge, teach, apply) | done | [story-05-the-desk-answering-the-hand](./story-05-the-desk-answering-the-hand.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-176-06 | The walk (his desk: correction taught, journal streaming, MicButton everywhere, the loop) | backlog | [story-06-the-walk](./story-06-the-walk.md) | -- |
 | HS-176-07 | The docs (the Speak Loop in the guide; the correction flow in the architecture) | backlog | [story-07-the-docs](./story-07-the-docs.md) | -- |
 | HS-176-08 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | backlog | [story-08-the-close](./story-08-the-close.md) | -- |
 
 ## Where we are
 
-ACTIVE 4/8 (2026-09-06). Story 03 DONE: the Journal wing as a stream
+ACTIVE 5/8 (2026-09-06). Story 05 DONE: the fourth wing LEARNED
+(TEXT | INTENT | TARGET emblem · key → label · N APPLIED absent at
+zero · Forget; NOTHING LEARNED; no caption count), `Review` → the
+Journal wing (and closes the door), the utterance well's mic off (Talk
+the sole mic; the allowlist needle kept), the Configure door's Memory
+panel now the digest only, the loop proven in one hub session without a
+restart (land → Wrong → teach → APPLIED → Journal TAUGHT+APPLIED →
+Learned 1 APPLIED → Forget → NOTHING LEARNED → Review), shot at 1440 +
+393 (assets/story-05-shots/). Build ruling: no search well on the
+Learned wing (the boards draw none; the design's D2(c).2 parenthetical
+was wrong). Story 03 DONE: the Journal wing as a stream
 (the bus frame prepended live, deduped; the row grammar with one fixed
 APPLIED/TAUGHT slot; day bands as tokens; the opened row keeps Replay ·
 Copy · Delete with its preview as tokens; the four filter tokens as the

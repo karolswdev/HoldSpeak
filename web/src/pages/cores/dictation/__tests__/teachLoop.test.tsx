@@ -10,7 +10,6 @@ import { act, render, renderHook, screen, waitFor } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useSpeakDeck } from "../useSpeakDeck";
-import { Memory } from "../Memory";
 
 const mocks = vi.hoisted(() => ({ apiFetch: vi.fn() }));
 
@@ -285,49 +284,11 @@ describe("the APPLIED chip reads the run's own stored fact (R2)", () => {
   });
 });
 
-describe("the Configure door's corrections list", () => {
-  it("renders the gist from `key`, a real APPLIED count, and the verb Forget", async () => {
-    wire({
-      "/api/dictation/corrections": {
-        items: [
-          { id: 3, kind: "text", key: "postgress", value: "PostgreSQL", applied: 2 },
-          { id: 4, kind: "target", key: "ship it", value: "claude_code", applied: 0 },
-        ],
-      },
-      "/api/dictation/learning-digest": { totals: {} },
-    });
-    render(<Memory />);
-    // The live defect: the route serves `key`, the face read `gist`.
-    expect(await screen.findByText("postgress")).toBeTruthy();
-    expect(screen.getByText("PostgreSQL")).toBeTruthy();
-    expect(screen.getByText("TEXT")).toBeTruthy();
-    // A real firing count — and no counter of zero (rule A.8).
-    expect(screen.getByText("2 APPLIED")).toBeTruthy();
-    expect(screen.queryByText("0 APPLIED")).toBeNull();
-    // The verb is the word, not the glyph.
-    expect(screen.getAllByRole("button", { name: "Forget" })).toHaveLength(2);
-    expect(screen.queryByRole("button", { name: "×" })).toBeNull();
-  });
-
-  it("Forget confirms in-world and deletes the row", async () => {
-    wire({
-      "/api/dictation/corrections": {
-        items: [{ id: 3, kind: "text", key: "postgress", value: "PostgreSQL", applied: 1 }],
-      },
-      "/api/dictation/learning-digest": { totals: {} },
-    });
-    render(<Memory />);
-    const forget = await screen.findByRole("button", { name: "Forget" });
-    await userEvent.click(forget);
-    await userEvent.click(await screen.findByRole("button", { name: "Forget?" }));
-    await waitFor(() =>
-      expect(
-        mocks.apiFetch.mock.calls.some(
-          (c: unknown[]) =>
-            String(c[0]) === "/api/dictation/corrections/3" &&
-            (c[1] as Post)?.method === "DELETE",
-        ),
-      ).toBe(true),
-    );
-  });
-});
+/* HS-176-05 — the Configure door's corrections list is RETIRED: the table
+   moved out of the door and became the `Learned` wing (settled design
+   D2(c)), because "the only path to what the pipeline learned is the gear"
+   was the defect. Every assertion this block made — the gist rendered from
+   `key`, the real `APPLIED` count, no counter of zero, `Forget` as the word
+   and not the `x` glyph, the in-world confirm and the DELETE — now runs
+   against the wing in `__tests__/learned.test.tsx`. The door keeps only the
+   learning digest, covered above. */

@@ -1,0 +1,139 @@
+/* HS-176-05 — the Learned wing's ledger geometry (the settled boards
+   `Learned` / `LearnedQuiet` / `LearnedPhone`).
+
+   The ONE row grammar at both widths (canon D, rule 1):
+     1440 — TEXT · key -> value · N APPLIED · Forget
+      393 — line 1: key
+            line 2: -> value
+            line 3: TEXT · N APPLIED ............... Forget
+
+   The `.learned-applied` slot holds its width whether or not the rule has
+   ever fired, so a row without a count never moves its neighbours (canon D:
+   "empty slots never move their neighbours"). */
+
+.speak-learned .surface-ledger-head {
+  display: block;
+  padding: 2px 4px 6px;
+}
+/* No caption count on this wing: the tab is the name, the rows are the
+   count, and the footer's `N TODAY` is the one count per face (ruling N5b,
+   UX-CANON A.7). */
+.speak-learned .surface-ledger-count {
+  display: none;
+}
+
+/* ── the row ─────────────────────────────────────────────────────── */
+
+.speak-learned .surface-ledger-line {
+  display: flex;
+  align-items: center;
+  gap: 0 10px;
+  min-height: 30px;
+  padding: 5px 6px;
+  border-top: 1px solid var(--wash-1);
+}
+/* The lead slot is the emblem, on the ledger's 52px column (canon B). */
+.speak-learned .surface-ledger-lead {
+  flex: 0 0 52px;
+  min-width: 0;
+}
+.speak-learned .learned-kind {
+  white-space: nowrap;
+}
+.speak-learned .surface-ledger-primary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-ui);
+  font-size: var(--desk-type-primary-size);
+  font-weight: 600;
+  color: var(--text);
+}
+.speak-learned .learned-cells {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.speak-learned .learned-arrow {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--desk-type-secondary-size);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.speak-learned .learned-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-ui);
+  font-size: var(--desk-type-primary-size);
+  font-weight: 600;
+  color: var(--text);
+}
+.speak-learned .surface-ledger-trailing {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+/* The board's fixed 96px count column, right-aligned, held open at zero. */
+.speak-learned .learned-applied {
+  flex: none;
+  min-width: 96px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.speak-learned .learned-forget {
+  flex: none;
+  display: inline-flex;
+}
+
+/* ── 393 (the desk's `surface` container, never a viewport media) ─── */
+
+@container surface (max-width: 559.9px) {
+  .speak-learned .surface-ledger-line {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .speak-learned .surface-ledger-primary {
+    order: 0;
+    flex: 1 0 100%;
+    white-space: normal;
+  }
+  .speak-learned .learned-cells {
+    order: 1;
+    flex: 1 0 100%;
+  }
+  .speak-learned .learned-value {
+    white-space: normal;
+  }
+  .speak-learned .surface-ledger-lead {
+    order: 2;
+    flex: 0 0 auto;
+  }
+  .speak-learned .surface-ledger-trailing {
+    order: 3;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  /* `TEXT · 1 APPLIED` reads as one meta line at 393 (the phone board), so
+     the count joins the emblem with the board's separator instead of
+     holding a right-aligned column of its own. */
+  .speak-learned .learned-applied {
+    min-width: 0;
+    text-align: left;
+  }
+  .speak-learned .learned-applied:not(:empty)::before {
+    content: "· ";
+    color: var(--text-muted);
+  }
+  .speak-learned .learned-forget {
+    margin-left: auto;
+  }
+}

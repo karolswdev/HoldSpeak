@@ -17,6 +17,7 @@ import { useResource } from "../pageSupport";
 import {
   SpeakFace,
   Journal,
+  Learned,
   Blocks,
   Readiness,
   Memory,
@@ -28,11 +29,18 @@ import {
   type Receipt,
   type ReceiptTone,
 } from "./dictation";
+/* HS-176-05 — the fourth wing. Imported from its module rather than the
+   dictation barrel: `index.ts` belongs to story 03's lane in this branch. */
 
+/* HS-176-05 — four wings, always present (settled design D2(c)): SPEAK ·
+   JOURNAL · BLOCKS · LEARNED. `useCoreWings` takes the array, so a fourth
+   wing needs no shape change. The corrections table moved OUT of the
+   Configure door and became `Learned`; the door keeps the digest. */
 const WINGS = [
   { id: "speak", label: "Speak" },
   { id: "journal", label: "Journal" },
   { id: "blocks", label: "Blocks" },
+  { id: "learned", label: "Learned" },
 ];
 
 /* HS-100-07 — the one door: everything that is configuration
@@ -105,6 +113,7 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
         speak: <SpeakFace />,
         journal: <Journal />,
         blocks: <Blocks />,
+        learned: <Learned />,
         configure: <Configure />,
       })[active],
     [active],
@@ -149,10 +158,18 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
         }
         verbs={
           <>
+            {/* HS-176-05 (design D2(b).9) — `Review` reviews: it crosses to
+                the Journal wing, where the utterances are. It opened the
+                Configure DOOR until now, which is the gear's job and still
+                is. The verb is kept, not retired (a working verb is never
+                dropped). */}
             <Button
               dense
               variant="ghost"
-              onClick={() => wings.setDoorOpen(true)}
+              onClick={() => {
+                wings.setDoorOpen(false);
+                wings.setView("journal");
+              }}
             >
               Review
             </Button>
