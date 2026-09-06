@@ -1,6 +1,6 @@
 # Phase 200: The Working Practice
 
-**Last updated:** 2026-09-05, roadmap creation.
+**Last updated:** 2026-09-06 — HS-200-01 DONE (the attested baseline, the 69-obligation map, the CI ledger, the inherited obligations placed; the pilot Project is the owner's question); HS-200-02 next.
 **Status:** planning. Forty stories defined; zero implementation stories completed.
 **Product owner:** Karol.
 **Delivery owner:** unassigned until implementation starts.
@@ -38,7 +38,7 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-200-01 | Establish the integration baseline and obligation map | ready | [story-01](story-01-baseline-and-obligation-map.md) | — |
+| HS-200-01 | Establish the integration baseline and obligation map | done | [story-01](story-01-baseline-and-obligation-map.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-200-02 | Expose loaded runtime identity and prove restore | backlog | [story-02](story-02-runtime-identity-and-restore.md) | — |
 | HS-200-03 | Make release checks isolated and actionable | backlog | [story-03](story-03-ci-isolation-and-release-contract.md) | — |
 | HS-200-04 | Make first value and model readiness work cold | backlog | [story-04](story-04-first-value-and-model-readiness.md) | — |
@@ -80,6 +80,15 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-40 | Close Phase 200 on outcomes and release evidence | backlog | [story-40](story-40-release-and-phase-close.md) | — |
 
 ## Where we are
+
+2026-09-06: HS-200-01 DONE on `feat/phase-200-g0`. The baseline
+(BASELINE.md + assets/baseline-2026-09-06.md): main `bea4176c`, schema 76,
+two hubs found running against one database (the stale one stopped; the
+instance guard is HS-200-02's first requirement), the engine profile with
+KEY NOT SET while two LAN destinations are ready, zero calendar sources,
+one active Project + nine archived from the 168/169 window (the pilot is
+the owner's question), 69 contract obligations mapped (36 exist, 22
+missing, 9 partial), 35 CI failure identities placed. Next: HS-200-02.
 
 The owner authorized this Phase 200 roadmap after requesting a major commitment to the recommended direction.
 The selected planning baseline is main `519afd4f`.
