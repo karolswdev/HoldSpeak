@@ -397,8 +397,10 @@ on the canvas.
      `×` glyph, calling `DELETE /api/dictation/corrections/{id}`
      (`pipeline.py:999-1007`).
 
-2. **Controls slot:** a search StringGadget (mic default true) over key
-   and value. (The boards draw it; D2(c) now specifies it.)
+2. **Controls slot:** none. No search well on the Learned wing: the
+   ratified boards (Learned, LearnedQuiet, LearnedPhone) draw none, and
+   the board wins over this text (build ruling, story 05; counsel-on-
+   built C14). The tab is the name, the rows are the count.
 
 3. **No caption count (N5b).** The Learned wing carries **no** count
    token on its SurfaceLedger caption. D1 rules that `N TODAY` is said

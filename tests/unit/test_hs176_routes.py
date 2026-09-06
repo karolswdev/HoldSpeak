@@ -498,3 +498,178 @@ def test_pipeline_off_run_serves_the_raw_transcript_and_no_applied_ids(
     assert body["raw_text"] == "postgress needs a bump"
     assert body["final_text"] == "postgress needs a bump"
     assert body["corrections_applied"] == []
+
+
+# ── C1: the DELIVERY reply carries the loop's three facts ──────────────────
+#
+# The deck reads `raw_text`, `corrections_applied` and `journal_id` off ONE
+# `result` object (`useSpeakDeck.ts:161, 166, 443`), and a released TALK goes
+# to `/api/dictation/remote`, not to the dry run. Until now that reply carried
+# only `success` / `final_text` / `delivered`, so on the ONLY path a Tuesday
+# utterance actually takes: the APPLIED chip was always blank, the TEXT teach
+# well pre-filled from the LANDED text, and `teach()` fell back to the
+# corrections route instead of the journal route that links the row.
+#
+# The delivery hook here is a STUB that records the text. A test never types
+# into the machine's focused window.
+
+
+def _delivering_client(database: Database) -> tuple[TestClient, list[str]]:
+    """A client whose delivery hook records instead of typing."""
+    typed: list[str] = []
+
+    def _stub(text: str, **_kwargs: object) -> dict[str, object]:
+        typed.append(text)
+        return {"typed": True, "target": "focused"}
+
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(
+            on_bookmark=MagicMock(),
+            on_stop=MagicMock(),
+            get_state=MagicMock(return_value={}),
+            on_remote_dictation=_stub,
+        ),
+        dictation_journal_repository=database.dictation_journal,
+        dictation_corrections_repository=database.dictation_corrections,
+    )
+    return TestClient(server.app), typed
+
+
+def test_remote_delivery_serves_the_three_loop_keys(
+    persistent_db: Database, settings_path: Path
+) -> None:
+    """C1: the same three keys the dry-run reply carries, from the same run."""
+    client, typed = _delivering_client(persistent_db)
+    body = client.post(
+        "/api/dictation/remote",
+        json={
+            "text": "postgress needs a bump",
+            "target_mode": "focused",
+            "delivery_id": "hs176-c1-one",
+        },
+    ).json()
+
+    assert body["success"] is True
+    assert body["delivered"] is True
+    assert typed == ["postgress needs a bump"]
+    # the three the face reads
+    assert body["raw_text"] == "postgress needs a bump"
+    assert body["corrections_applied"] == []
+    assert body["journal_id"] is not None
+
+
+def test_remote_delivery_journal_id_names_the_row_it_wrote(
+    persistent_db: Database, settings_path: Path
+) -> None:
+    """`journal_id` is the real row — `teach()` takes the journal route on it."""
+    client, _typed = _delivering_client(persistent_db)
+    body = client.post(
+        "/api/dictation/remote",
+        json={
+            "text": "ship it friday",
+            "target_mode": "focused",
+            "delivery_id": "hs176-c1-two",
+        },
+    ).json()
+
+    stored = persistent_db.dictation_journal.get(int(body["journal_id"]))
+    assert stored is not None
+    assert stored.transcript == "ship it friday"
+    # And the journal route it addresses answers, rather than 404ing.
+    taught = client.post(
+        f"/api/dictation/journal/{body['journal_id']}/correct",
+        json={"kind": "text", "heard": "ship it friday", "said": "ship it Friday"},
+    ).json()
+    assert taught["recorded"] is True
+
+
+def test_remote_verbatim_send_carries_no_run_facts(
+    persistent_db: Database, settings_path: Path
+) -> None:
+    """`raw: true` runs no pipeline, so it invents no run facts to report."""
+    client, typed = _delivering_client(persistent_db)
+    body = client.post(
+        "/api/dictation/remote",
+        json={
+            "text": "already piped once",
+            "target_mode": "focused",
+            "delivery_id": "hs176-c1-three",
+            "raw": True,
+        },
+    ).json()
+
+    assert body["delivered"] is True
+    assert typed == ["already piped once"]
+    assert "corrections_applied" not in body
+    assert "journal_id" not in body
+
+
+# ── C4: the footer's `N TODAY` counts TODAY ────────────────────────────────
+
+
+def test_journal_route_serves_today_beside_the_retained_count(
+    persistent_db: Database, settings_path: Path
+) -> None:
+    """C4: `count` stays the all-time retained total; `today` is the token's."""
+    repo = persistent_db.dictation_journal
+    repo.record(source="dictation", transcript="one", final_text="one")
+    repo.record(source="dictation", transcript="two", final_text="two")
+    # A row from a previous day: retained, but not today's.
+    with repo._connection() as conn:  # noqa: SLF001 - fixture-owned temp database
+        conn.execute(
+            "UPDATE dictation_journal SET created_at = ? WHERE transcript = ?",
+            ("2026-01-02T09:00:00", "one"),
+        )
+
+    body = _client(persistent_db).get("/api/dictation/journal?limit=1").json()
+    assert body["count"] == 2
+    assert body["today"] == 1
+
+
+def test_journal_route_serves_today_as_zero_on_an_empty_journal(
+    persistent_db: Database, settings_path: Path
+) -> None:
+    """Zero is served honestly; the FACE withholds the token at zero (A.8)."""
+    body = _client(persistent_db).get("/api/dictation/journal?limit=1").json()
+    assert body["count"] == 0
+    assert body["today"] == 0
+
+
+def test_remote_delivery_reports_the_rules_that_fired(
+    persistent_db: Database, settings_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """C1's point: a rule that FIRED on the delivered run reaches the face.
+
+    The run itself is stubbed at the ONE seam the route calls (the pipeline's
+    own firing is proven in `test_hs176_text_correction.py`); what is under
+    test here is that the route copies the run's stored facts into the
+    terminal body instead of dropping them.
+    """
+    import holdspeak.web.routes.dictation.pipeline as route_module
+
+    def _fake_run(text: str, *_args: object, **_kwargs: object) -> dict[str, object]:
+        return {
+            "final_text": "PostgreSQL needs a bump",
+            "raw_text": text,
+            "corrections_applied": [7, 12],
+            "journal_id": 41,
+            "stages": [],
+            "warnings": [],
+        }
+
+    monkeypatch.setattr(route_module, "_run_dictation_dry_run_text", _fake_run)
+    client, typed = _delivering_client(persistent_db)
+    body = client.post(
+        "/api/dictation/remote",
+        json={
+            "text": "postgress needs a bump",
+            "target_mode": "focused",
+            "delivery_id": "hs176-c1-four",
+        },
+    ).json()
+
+    assert body["final_text"] == "PostgreSQL needs a bump"
+    assert typed == ["PostgreSQL needs a bump"]
+    assert body["raw_text"] == "postgress needs a bump"
+    assert body["corrections_applied"] == [7, 12]
+    assert body["journal_id"] == 41

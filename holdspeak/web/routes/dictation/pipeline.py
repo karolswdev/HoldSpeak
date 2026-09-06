@@ -927,6 +927,14 @@ def build_pipeline_router(
             # "never admitted" from "admitted, then could not record its end".
             entry = None
             final_text = text
+            # HS-176 counsel C1: the run's own facts, kept so the terminal body
+            # can carry the SAME three keys the dry-run reply carries
+            # (`raw_text`, `corrections_applied`, `journal_id`). The deck reads
+            # all three off one `result` object (`useSpeakDeck.ts:161,166,443`),
+            # so a delivery that omitted them left the APPLIED chip blank, the
+            # TEXT teach well pre-filled from the LANDED text, and `teach()` on
+            # the corrections fallback instead of the journal route.
+            processed: Any = None
             try:
                 def _run_text(owned: Any) -> Any:
                     return _run_dictation_dry_run_text(
@@ -1017,6 +1025,16 @@ def build_pipeline_router(
             if refused is not None:
                 return refused
             body = {"success": True, "final_text": final_text, "delivered": delivered}
+            # C1: the loop's three facts, from the run that already computed
+            # them — never recomputed, never a read-time guess. Absent when the
+            # run produced no dict (a `raw: true` verbatim send returns above
+            # and never reaches here).
+            if isinstance(processed, dict):
+                body["raw_text"] = processed.get("raw_text", text)
+                body["corrections_applied"] = [
+                    int(x) for x in (processed.get("corrections_applied") or [])
+                ]
+                body["journal_id"] = processed.get("journal_id")
             if receipt is not None:
                 body["delivery"] = receipt
             if entry is not None and entry.indeterminate:
@@ -1257,6 +1275,9 @@ def build_pipeline_router(
                 "enabled": bool(getattr(cfg.pipeline, "journal_enabled", True)),
                 "retention": int(getattr(cfg.pipeline, "journal_retention", 500)),
                 "count": journal["count"],
+                # C4: the footer's token counts TODAY, so the route serves
+                # today. `count` (all-time retained) is untouched.
+                "today": journal.get("today", 0),
                 "items": journal["items"],
             }
         )

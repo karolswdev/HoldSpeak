@@ -525,3 +525,123 @@ def test_recent_pages_backwards_from_a_before_cursor(journal_repo):
     ]
     # Omitting it is byte-identical to the Phase 45 read.
     assert [r.id for r in journal_repo.recent(limit=5, source="dictation")] == ids[::-1]
+
+
+# ── C3: `REFUSED · SECRET` refuses the shapes it promises to ──────────────
+#
+# The ratified board's own example (`assets/mockups/SpeakRefused.dc.html`) is
+# `sk-live-4f2a9c`, and counsel reproduced that the guard let it through — the
+# old rule wanted `sk-` + 16 LOWERCASE ALPHANUMERICS, and the hyphen after
+# `live` ended the run at four. A `text` rule's value is stored in plaintext,
+# shown on the Learned wing, and typed into every future matching utterance,
+# so the shapes below are the ones a refusal has to know.
+
+SECRET_SHAPES = [
+    # the board's own example — the one that used to sail through
+    "sk-live-4f2a9c",
+    "sk-proj-Ab12Cd34Ef56",
+    "sk-ant-api03-abcdef123456",
+    "sk-abcdef0123456789abcd",
+    "AKIAIOSFODNN7EXAMPLE",
+    "ghp_16CharacterTokenHere",
+    "gho_abcdef1234567890",
+    "ghu_abcdef1234567890",
+    "github_pat_11ABCDEFG0abcdefghij",
+    "xoxb-123456789012-abcdefghijkl",
+    "xoxp-1234-5678-abcdefghijkl",
+    "glpat-ABCdef123456xyz",
+    "AIzaSyD-9x8QwErTyUiOpAsDfGhJkLzXcVbN",
+    "-----BEGIN RSA PRIVATE KEY-----",
+    # the shapes the check already knew, kept
+    "my api_key is in the vault",
+    "the access-token rotates weekly",
+    "authorization: bearer abcdefghijklmnopqrstuvwx",
+]
+
+# Ordinary sentences a Senior Architect really says on a Tuesday. Every one of
+# them brushes the new prefixes (`risk-`, `Ask`, `Alaska`, `Asia-`), and none
+# may be refused: a false SECRET silently eats a correction he meant to teach.
+ORDINARY_SENTENCES = [
+    "Ask Marta to take a risk-averse view of the Alaska vendor contract.",
+    "Asia-Pacific rollout starts next quarter; put it on the calendar.",
+    "postgress needs a version bump before Charter ships on Friday.",
+]
+
+
+@pytest.mark.parametrize("shape", SECRET_SHAPES)
+def test_every_credential_shape_is_refused(shape: str):
+    from holdspeak.project_doc_suggestions import looks_like_secret
+
+    assert looks_like_secret(shape) is True
+
+
+@pytest.mark.parametrize("sentence", ORDINARY_SENTENCES)
+def test_ordinary_speech_is_never_mistaken_for_a_secret(sentence: str):
+    from holdspeak.project_doc_suggestions import looks_like_secret
+
+    assert looks_like_secret(sentence) is False
+
+
+def test_the_boards_own_example_is_refused_by_the_correction_store():
+    """End to end on the caller that made counsel raise it: the teach path."""
+    store = CorrectionStore()
+    outcome = store.record("text", "my key is sk-live-4f2a9c", "safe words")
+    assert outcome.refusal == "secret"
+    assert store.record("text", "safe words", "sk-live-4f2a9c").refusal == "secret"
+    assert len(store) == 0
+
+
+def test_the_journal_redacts_a_row_carrying_the_boards_example():
+    """The other caller: a recorded row never carries the credential."""
+    from holdspeak.plugins.dictation.journal import _REDACTED, filter_secret
+
+    assert filter_secret("the key is sk-live-4f2a9c") == _REDACTED
+    assert filter_secret("postgress needs a bump") == "postgress needs a bump"
+
+
+# ── C4: the footer's `N TODAY` counts today ───────────────────────────────
+
+
+def test_count_today_counts_the_local_calendar_day(journal_repo):
+    """`count()` is the all-time retained total; `count_today()` is the token."""
+    from datetime import timedelta
+
+    journal_repo.record(source="dictation", transcript="now one", final_text="a")
+    journal_repo.record(source="hotkey", transcript="now two", final_text="b")
+    old = journal_repo.record(source="dictation", transcript="old", final_text="c")
+    yesterday = (datetime.now() - timedelta(days=1)).isoformat()
+    with journal_repo._connection() as conn:
+        conn.execute(
+            "UPDATE dictation_journal SET created_at = ? WHERE id = ?",
+            (yesterday, old.id),
+        )
+
+    assert journal_repo.count() == 3
+    assert journal_repo.count_today() == 2
+
+
+def test_count_today_is_zero_on_an_empty_journal(journal_repo):
+    assert journal_repo.count_today() == 0
+
+
+def test_count_today_reads_an_offset_row_in_local_time(journal_repo):
+    """A row carrying an explicit offset is converted before its day is taken."""
+    stored = journal_repo.record(source="dictation", transcript="x", final_text="x")
+    local_now = datetime.now().astimezone()
+    with journal_repo._connection() as conn:
+        conn.execute(
+            "UPDATE dictation_journal SET created_at = ? WHERE id = ?",
+            (local_now.astimezone(timezone.utc).isoformat(), stored.id),
+        )
+    # The same instant, written in UTC, is still TODAY where the desk is.
+    assert journal_repo.count_today() == 1
+
+
+def test_count_today_ignores_an_unparseable_stamp(journal_repo):
+    stored = journal_repo.record(source="dictation", transcript="x", final_text="x")
+    with journal_repo._connection() as conn:
+        conn.execute(
+            "UPDATE dictation_journal SET created_at = ? WHERE id = ?",
+            ("not a timestamp", stored.id),
+        )
+    assert journal_repo.count_today() == 0

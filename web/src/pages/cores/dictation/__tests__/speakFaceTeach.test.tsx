@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({ apiFetch: vi.fn() }));
 
 vi.mock("../../../../lib/api", () => ({
   apiFetch: mocks.apiFetch,
+  /* counsel C1 — the DELIVERY path mints one id per utterance. */
+  newDeliveryId: () => "speak:test-delivery-id",
   readableError: (e: unknown) => (e instanceof Error ? e.message : "failed"),
   ApiError: class ApiError extends Error {},
 }));
@@ -57,6 +59,9 @@ const RULES = [
 ];
 
 let landed: Record<string, unknown> = {};
+/* counsel C1 — the DELIVERY reply (`/api/dictation/remote`), which now
+   carries the same three loop keys the dry run does. */
+let remoteReply: Record<string, unknown> = {};
 let teachReply: Record<string, unknown> = { recorded: true };
 
 beforeEach(() => {
@@ -69,12 +74,15 @@ beforeEach(() => {
     journal_id: 7,
     corrections_applied: [],
   };
+  remoteReply = { success: true, delivered: true, final_text: "" };
   teachReply = { recorded: true, kind: "text", key: "queue for", value: "Q4" };
   mocks.apiFetch.mockImplementation(
     (url: string, init?: { method?: string }) => {
       const path = String(url);
       if (init?.method === "POST" && path.includes("dry-run"))
         return Promise.resolve(landed);
+      if (init?.method === "POST" && path.includes("/api/dictation/remote"))
+        return Promise.resolve(remoteReply);
       if (init?.method === "POST" && path.includes("correct"))
         return Promise.resolve(teachReply);
       if (path.startsWith("/api/dictation/readiness"))
@@ -239,5 +247,123 @@ describe("the APPLIED chip", () => {
     expect(within(body).getByText("Delivery")).toBeTruthy();
     expect(within(body).getByText("INTENT")).toBeTruthy();
     expect(body.textContent).not.toContain("delivery,");
+  });
+});
+
+/* HS-176 counsel C1 — the loop has to close on the path a Tuesday
+   utterance actually takes.
+
+   `land()` above aims at THIS FIELD, so it previews through
+   `/api/dictation/dry-run`. A real utterance is DELIVERED: aim FOCUSED
+   APP, `/api/dictation/remote`. The deck reads `raw_text`,
+   `corrections_applied` and `journal_id` off ONE `result` object
+   (`useSpeakDeck.ts:161, 166, 443`), so a delivery reply that omitted
+   them left the chip blank, the teach well pre-filled from the LANDED
+   text, and `teach()` on the corrections fallback. Same three keys, same
+   loop. */
+describe("the DELIVERED run feeds the same loop (counsel C1)", () => {
+  /** Land for real: aim FOCUSED APP, through `/api/dictation/remote`. */
+  async function deliver(reply: Record<string, unknown>) {
+    localStorage.setItem("holdspeak.speakAim", "focused");
+    remoteReply = reply;
+    announced = [];
+    render(
+      <ReceiptContext.Provider value={(text: string) => void announced.push(text)}>
+        <SpeakFace />
+      </ReceiptContext.Provider>,
+    );
+    const well = await screen.findByLabelText("Utterance");
+    await userEvent.click(well);
+    await userEvent.paste("Ship the queue for platform on schedule");
+    await userEvent.keyboard("{Control>}{Enter}{/Control}");
+    await waitFor(() =>
+      expect(
+        mocks.apiFetch.mock.calls.filter((c: unknown[]) =>
+          String(c[0]).includes("/api/dictation/remote"),
+        ),
+      ).toHaveLength(1),
+    );
+    return await screen.findByRole("region", { name: "Pipeline result" });
+  }
+
+  it("renders the APPLIED chip from a delivery reply's corrections_applied", async () => {
+    const result = await deliver({
+      success: true,
+      delivered: true,
+      final_text: "Ship the Q4 platform on schedule",
+      raw_text: "Ship the queue for platform on schedule",
+      corrections_applied: [3],
+      journal_id: 11,
+    });
+    const chip = await within(result).findByRole("button", {
+      name: "Corrections applied",
+    });
+    await userEvent.click(chip);
+    const body = await screen.findByRole("region", { name: "Corrections applied" });
+    expect(within(body).getByText("queue for")).toBeTruthy();
+    expect(within(body).getByText("Q4")).toBeTruthy();
+  });
+
+  it("pre-fills the TEXT teach well from the delivery's raw transcript", async () => {
+    const result = await deliver({
+      success: true,
+      delivered: true,
+      final_text: "Ship the Q4 platform on schedule",
+      raw_text: "Ship the queue for platform on schedule",
+      corrections_applied: [],
+      journal_id: 11,
+    });
+    await userEvent.click(within(result).getByRole("button", { name: "Wrong" }));
+    const teach = await screen.findByRole("group", { name: "Correct this result" });
+    const said = within(teach).getByLabelText("What you said") as HTMLTextAreaElement;
+    // the RAW transcript, not the LANDED text — the diff is heard vs said
+    expect(said.value).toBe("Ship the queue for platform on schedule");
+  });
+
+  it("teaches through the JOURNAL route when the delivery named its row", async () => {
+    const result = await deliver({
+      success: true,
+      delivered: true,
+      final_text: "Ship the Q4 platform on schedule",
+      raw_text: "Ship the queue for platform on schedule",
+      corrections_applied: [],
+      journal_id: 11,
+    });
+    await userEvent.click(within(result).getByRole("button", { name: "Wrong" }));
+    const teach = await screen.findByRole("group", { name: "Correct this result" });
+    await userEvent.click(
+      within(teach).getByRole("button", { name: "Teach correction" }),
+    );
+
+    await within(result).findByRole("status");
+    const taught = mocks.apiFetch.mock.calls.filter(
+      (c: unknown[]) => (c[1] as { method?: string })?.method === "POST"
+        && String(c[0]).includes("correct"),
+    );
+    expect(taught).toHaveLength(1);
+    expect(String(taught[0][0])).toBe("/api/dictation/journal/11/correct");
+  });
+
+  it("falls back to the corrections route when the delivery named no row", async () => {
+    const result = await deliver({
+      success: true,
+      delivered: true,
+      final_text: "Ship the Q4 platform on schedule",
+      raw_text: "Ship the queue for platform on schedule",
+      corrections_applied: [],
+      journal_id: null,
+    });
+    await userEvent.click(within(result).getByRole("button", { name: "Wrong" }));
+    const teach = await screen.findByRole("group", { name: "Correct this result" });
+    await userEvent.click(
+      within(teach).getByRole("button", { name: "Teach correction" }),
+    );
+
+    await within(result).findByRole("status");
+    const taught = mocks.apiFetch.mock.calls.filter(
+      (c: unknown[]) => (c[1] as { method?: string })?.method === "POST"
+        && String(c[0]).includes("/api/dictation/corrections"),
+    );
+    expect(taught).toHaveLength(1);
   });
 });

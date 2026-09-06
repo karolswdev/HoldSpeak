@@ -19,7 +19,13 @@
  *  6. No caption count — the footer's `N TODAY` is the one count per face
  *     (UX-CANON A.7). Two empty states, two true tokens: `NOTHING SPOKEN`
  *     (nothing ever spoken) vs `NOTHING MATCHES` (a filter/search miss).
- *  7. The opened row keeps EVERY verb (the 175 law, ruling R11): EditInPlace
+ *  7. The live frame obeys the wing's own claims (counsel C2/C15/C16): a
+ *     frame is prepended only when it matches the ACTIVE source filter — the
+ *     same equality the wire applies (`db/journal.py:155-157`) — the active
+ *     search is re-applied client-side over the prepended row, a frame that
+ *     races the initial read is buffered and merged (never lost, never
+ *     doubled), and a row whose search hit lives only in `final_text` says so.
+ *  8. The opened row keeps EVERY verb (the 175 law, ruling R11): EditInPlace
  *     over the transcript plus Replay · Copy · Delete, and the replay
  *     preview — whose two sentences become tokens (`REPLAY · PREVIEW`,
  *     `NO TEXT`), because keeping the verbs is the law and keeping the prose
@@ -122,6 +128,27 @@ export function journalDayLabel(date: Date | null, now?: Date): string {
     .toUpperCase();
 }
 
+/** The live frame's rule, IDENTICAL to the list's rule: the wire filters
+ *  `source = ?` on exact equality (`holdspeak/db/journal.py:155-157`), so ALL
+ *  (the empty value) takes every source — `dry_run` included — and any named
+ *  token takes only its own. A HOTKEY frame under a BROWSER filter is a lie
+ *  about what the wing is showing (counsel C2). */
+export function frameMatchesSource(row: Row, source: string): boolean {
+  if (!source) return true;
+  return String(row.source ?? "") === source;
+}
+
+/** True when the active search matched ONLY `final_text`. The row's primary is
+ *  the raw transcript, so without a mark a hit's visible text can lack the
+ *  needle (counsel C15). `needle` is already trimmed and lower-cased. */
+export function matchedFinalOnly(row: Row, needle: string): boolean {
+  if (!needle) return false;
+  if (String(row.transcript ?? "").toLowerCase().includes(needle)) return false;
+  return String(row.final_text ?? "")
+    .toLowerCase()
+    .includes(needle);
+}
+
 function appliedIds(row: Row): number[] {
   const raw = row.corrections_applied;
   if (!Array.isArray(raw)) return [];
@@ -138,6 +165,7 @@ function JournalRow({
   row,
   index,
   labels,
+  needle,
   openId,
   onToggle,
   replays,
@@ -148,6 +176,7 @@ function JournalRow({
   row: Row;
   index: number;
   labels: Record<string, string>;
+  needle: string;
   openId: string;
   onToggle: (id: string) => void;
   replays: Record<string, Row>;
@@ -174,7 +203,7 @@ function JournalRow({
       open={openId === id}
       onToggle={() => onToggle(id)}
       cells={
-        <span className="journal-cells">
+        <span className="journal-cells" data-searching={needle ? "true" : undefined}>
           <span className="surface-ledger-cell journal-landed">
             {landed ? `LANDED IN ${landed}` : ""}
           </span>
@@ -192,6 +221,15 @@ function JournalRow({
               <span className="surface-token" data-chip>
                 TAUGHT
               </span>
+            ) : null}
+            {/* The search's mark shares the SAME fixed slot, which widens for
+                every row while a search runs (`[data-searching]`), so it
+                never moves a neighbour and never costs the transcript a
+                pixel when no search is running. It is drawn only where the
+                hit lives in `final_text` alone — the row's visible text is
+                the raw transcript, which then lacks the needle (C15). */}
+            {matchedFinalOnly(row, needle) ? (
+              <span className="surface-token">IN FINAL</span>
             ) : null}
           </span>
         </span>
@@ -275,6 +313,16 @@ export function Journal() {
   const [replays, setReplays] = useState<Record<string, Row>>({});
   const paging = useRef(false);
   const moreRef = useRef<HTMLDivElement | null>(null);
+  /* The initial-read race (counsel C16). `load` ends with `setRows(items)`,
+     which REPLACES the array — so a frame that lands between the GET and its
+     resolution was prepended and then wiped. Every frame that arrives while a
+     read is in flight is therefore also buffered here and merged, newest
+     first and deduplicated by id, when that read resolves: never lost, never
+     doubled. `seq` makes a superseded read (a fast filter change) drop its
+     own result instead of clobbering the newer one. */
+  const pending = useRef<Row[]>([]);
+  const inFlight = useRef(false);
+  const loadSeq = useRef(0);
 
   /* The label source for `LANDED IN <label>` (ruling R12): readiness carries
      `target.overrides = [{id,label}]`. A failed read costs nothing — the id
@@ -303,20 +351,32 @@ export function Journal() {
   }, [readiness.data]);
 
   const load = useCallback(async () => {
+    const seq = (loadSeq.current += 1);
+    pending.current = [];
+    inFlight.current = true;
     setLoading(true);
     setError("");
     try {
       const payload = await apiFetch<DictationJournalResponse>(
         journalUrl(source),
       );
+      if (seq !== loadSeq.current) return;
       const items = asRows(payload, ["items"]);
-      setRows(items);
+      const seen = new Set(items.map((row) => String(row.id ?? "")));
+      const raced = pending.current.filter(
+        (row) => !seen.has(String(row.id ?? "")),
+      );
+      setRows(raced.length ? [...raced, ...items] : items);
       setTotal(Number(payload?.count ?? 0));
       setExhausted(items.length < JOURNAL_PAGE);
     } catch (reason) {
-      setError(readableError(reason));
+      if (seq === loadSeq.current) setError(readableError(reason));
     } finally {
-      setLoading(false);
+      if (seq === loadSeq.current) {
+        pending.current = [];
+        inFlight.current = false;
+        setLoading(false);
+      }
     }
   }, [source]);
 
@@ -326,7 +386,11 @@ export function Journal() {
 
   /* The push (design D3, "The bus seam"): one frame per stored row on the
      ONE runtime socket. Deduplicated by id, so a frame that races the
-     initial read can never double a row. */
+     initial read can never double a row — and gated on the ACTIVE source
+     filter, so the wing never shows a row the filter excludes (C2). The
+     ACTIVE SEARCH needs no gate here: `filtered` re-applies the needle over
+     every row, the prepended one included, so a frame that misses the search
+     is held out of the stream until the search clears. */
   useEffect(
     () =>
       subscribe("dictation.journal.entry", (frame) => {
@@ -334,13 +398,19 @@ export function Journal() {
         if (!entry || typeof entry !== "object") return;
         const id = String(entry.id ?? "");
         if (!id) return;
+        if (!frameMatchesSource(entry, source)) return;
+        if (inFlight.current)
+          pending.current = [
+            entry,
+            ...pending.current.filter((row) => String(row.id ?? "") !== id),
+          ];
         setRows((current) => {
           if (current.some((row) => String(row.id ?? "") === id))
             return current;
           return [entry, ...current];
         });
       }),
-    [subscribe],
+    [subscribe, source],
   );
 
   const loadOlder = useCallback(async () => {
@@ -378,8 +448,9 @@ export function Journal() {
     return () => observer.disconnect();
   }, [loadOlder]);
 
+  const needle = useMemo(() => query.trim().toLowerCase(), [query]);
+
   const filtered = useMemo(() => {
-    const needle = query.trim().toLowerCase();
     if (!needle) return rows;
     return rows.filter(
       (row) =>
@@ -390,7 +461,7 @@ export function Journal() {
           .toLowerCase()
           .includes(needle),
     );
-  }, [query, rows]);
+  }, [needle, rows]);
 
   const days = useMemo(() => {
     const groups: { label: string; rows: Row[] }[] = [];
@@ -483,6 +554,7 @@ export function Journal() {
                   row={row}
                   index={index}
                   labels={labels}
+                  needle={needle}
                   openId={openId}
                   onToggle={(id) => setOpenId(openId === id ? "" : id)}
                   replays={replays}

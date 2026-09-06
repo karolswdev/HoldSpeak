@@ -67,12 +67,15 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
     setReceipt(text ? { text, tone } : null);
   }, []);
 
-  // Journal count for the footer receipt
+  // Journal counts for the footer receipt (all-time `count`, today's `today`)
   const journalResource = useResource<DictationJournalResponse>(
     "/api/dictation/journal?limit=1",
     {},
   );
-  const journalCount = Number(journalResource.data?.count ?? 0);
+  /* HS-176 counsel C4 — the token says TODAY, so it counts TODAY. `count` is
+     the all-time RETAINED total (what Export sizes its fetch by, below); the
+     footer reads `today`, the rows recorded on the local calendar day. */
+  const journalToday = Number(journalResource.data?.today ?? 0);
 
   const exportJournal = async () => {
     try {
@@ -131,7 +134,7 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
   ) : null;
 
   // Journal count as a token (null at zero per UX-CANON A8)
-  const journalToken = countToken(journalCount, "TODAY", "TODAY");
+  const journalToken = countToken(journalToday, "TODAY", "TODAY");
 
   return (
     <>

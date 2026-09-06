@@ -75,8 +75,26 @@ class DictationService:
             "enabled": bool(getattr(cfg, "journal_enabled", True)),
             "retention": int(getattr(cfg, "journal_retention", 500)),
             "count": self._journal.count() if self._journal is not None else 0,
+            # HS-176 counsel C4: the Speak footer's `N TODAY` token. `count` is
+            # the all-time RETAINED total and stays what it is (Export and the
+            # journal's own trust statement read it); `today` is the count the
+            # token actually claims — rows on the local calendar day.
+            # `getattr` because a bare/legacy repository double may not carry
+            # the method; absent-as-zero, never an error into a journal read.
+            "today": self._count_today(),
             "items": [self._entry(record) for record in records],
         }
+
+    def _count_today(self) -> int:
+        if self._journal is None:
+            return 0
+        counter = getattr(self._journal, "count_today", None)
+        if not callable(counter):
+            return 0
+        try:
+            return int(counter())
+        except Exception:
+            return 0
 
     def get_entry(self, principal: Principal, entry_id: int) -> dict[str, Any]:
         entry = self._journal.get(entry_id) if self._journal is not None else None

@@ -3,7 +3,15 @@
 // and the `before=` page.
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Journal, journalDayLabel, journalUrl, landedLabel, sourceBadge } from "../Journal";
+import {
+  Journal,
+  frameMatchesSource,
+  journalDayLabel,
+  journalUrl,
+  landedLabel,
+  matchedFinalOnly,
+  sourceBadge,
+} from "../Journal";
 
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
@@ -271,6 +279,151 @@ describe("the Journal's live push", () => {
   });
 });
 
+describe("the Journal's live frame obeys the wing's own claims", () => {
+  it("drops a HOTKEY frame while the wing is filtered to BROWSER, and takes it under ALL (C2)", async () => {
+    wire((url) =>
+      url.includes("source=browser")
+        ? { count: 1, items: [row({ id: 9, source: "browser", transcript: "browser only" })] }
+        : { count: 1, items: [row({ id: 9, source: "browser", transcript: "browser only" })] },
+    );
+    render(<Journal />);
+    await screen.findByText("browser only");
+
+    fireEvent.click(screen.getByRole("button", { name: "BROWSER" }));
+    await waitFor(() =>
+      expect(journalUrls()).toContain("/api/dictation/journal?limit=50&source=browser"),
+    );
+
+    const hotkey = {
+      id: 10,
+      created_at: new Date().toISOString(),
+      source: "hotkey",
+      transcript: "spoken on the hotkey",
+      final_text: "spoken on the hotkey",
+      total_ms: 21,
+      corrections_applied: [],
+      taught_from: false,
+    };
+    // The filter is the face's one honest claim about what it is showing.
+    push(hotkey);
+    expect(screen.queryByText("spoken on the hotkey")).toBeNull();
+
+    // ALL takes every source, so the same frame lands.
+    fireEvent.click(screen.getByRole("button", { name: "ALL" }));
+    await waitFor(() =>
+      expect(journalUrls().filter((u) => u === "/api/dictation/journal?limit=50")).toHaveLength(2),
+    );
+    push(hotkey);
+    expect(await screen.findByText("spoken on the hotkey")).toBeInTheDocument();
+  });
+
+  it("holds a frame that misses the active search out of the stream, and shows one that hits", async () => {
+    wire(() => ({ count: 1, items: [row({ id: 9, transcript: "the platform review" })] }));
+    render(<Journal />);
+    await screen.findByText("the platform review");
+
+    fireEvent.change(screen.getByLabelText("Search the journal"), {
+      target: { value: "platform" },
+    });
+
+    push({
+      id: 11,
+      created_at: new Date().toISOString(),
+      source: "dictation",
+      transcript: "nothing to do with the needle",
+      final_text: "nothing to do with the needle",
+      corrections_applied: [],
+    });
+    expect(screen.queryByText("nothing to do with the needle")).toBeNull();
+
+    push({
+      id: 12,
+      created_at: new Date().toISOString(),
+      source: "dictation",
+      transcript: "the platform ships Friday",
+      final_text: "the platform ships Friday",
+      corrections_applied: [],
+    });
+    expect(await screen.findByText("the platform ships Friday")).toBeInTheDocument();
+
+    // Clearing the search reveals the held row — it was never dropped.
+    fireEvent.change(screen.getByLabelText("Search the journal"), { target: { value: "" } });
+    expect(await screen.findByText("nothing to do with the needle")).toBeInTheDocument();
+  });
+
+  it("keeps a frame that races the initial read — neither lost nor doubled (C16)", async () => {
+    // The read is held open; the frame lands while it is in flight, so the
+    // resolving `setRows(items)` would have wiped it.
+    let release: (value: unknown) => void = () => {};
+    const held = new Promise((resolve) => {
+      release = resolve;
+    });
+    mocks.apiFetch.mockImplementation((url: string) => {
+      if (url.startsWith("/api/dictation/readiness")) return Promise.resolve(READINESS);
+      if (url.startsWith("/api/dictation/journal"))
+        return held.then(() => ({ count: 1, items: [row({ id: 9, transcript: "already stored" })] }));
+      return Promise.resolve({});
+    });
+
+    const { container } = render(<Journal />);
+    const racing = {
+      id: 10,
+      created_at: new Date().toISOString(),
+      source: "dictation",
+      transcript: "spoken during the read",
+      final_text: "spoken during the read",
+      corrections_applied: [],
+    };
+    push(racing);
+    await act(async () => {
+      release(null);
+      await held;
+    });
+
+    expect(await screen.findByText("spoken during the read")).toBeInTheDocument();
+    expect(screen.getByText("already stored")).toBeInTheDocument();
+    const primaries = Array.from(
+      container.querySelectorAll(".surface-ledger-primary"),
+    ).map((n) => n.textContent);
+    expect(primaries).toEqual(["spoken during the read", "already stored"]);
+
+    // A frame whose row the read already carried is not doubled either.
+    push({ id: 9, source: "dictation", transcript: "already stored" });
+    expect(container.querySelectorAll(".surface-ledger-primary")).toHaveLength(2);
+  });
+
+  it("marks a row whose search hit lives only in final_text (C15)", async () => {
+    wire(() => ({
+      count: 2,
+      items: [
+        row({ id: 9, transcript: "postgress migration", final_text: "PostgreSQL migration" }),
+        row({ id: 8, transcript: "the PostgreSQL bump", final_text: "the PostgreSQL bump" }),
+      ],
+    }));
+    const { container } = render(<Journal />);
+    await screen.findByText("postgress migration");
+    // No search, no mark — and the shared slot keeps its idle width.
+    expect(screen.queryByText("IN FINAL")).toBeNull();
+    expect(
+      container.querySelectorAll('.journal-cells[data-searching="true"]'),
+    ).toHaveLength(0);
+
+    fireEvent.change(screen.getByLabelText("Search the journal"), {
+      target: { value: "PostgreSQL" },
+    });
+    // Every row's slot widens (so no row moves its neighbour); the token is
+    // drawn on the one whose visible transcript lacks the needle.
+    expect(
+      container.querySelectorAll('.journal-cells[data-searching="true"]'),
+    ).toHaveLength(2);
+    const marks = screen.getAllByText("IN FINAL");
+    expect(marks).toHaveLength(1);
+    expect(marks[0].closest(".surface-ledger-line")?.textContent).toContain(
+      "postgress migration",
+    );
+  });
+});
+
 describe("the Journal's scroll-to-load", () => {
   it("pages with before=<oldest id> and appends the older rows", async () => {
     const observers: Array<() => void> = [];
@@ -335,6 +488,25 @@ describe("the Journal's pure grammar", () => {
     expect(sourceBadge("dry_run")).toBe("DRY RUN");
     expect(sourceBadge("dictation")).toBe("DICTATION");
     expect(sourceBadge("")).toBe("");
+  });
+
+  it("gates the live frame on the active source filter, exactly as the wire does", () => {
+    expect(frameMatchesSource({ source: "hotkey" }, "")).toBe(true);
+    expect(frameMatchesSource({ source: "dry_run" }, "")).toBe(true);
+    expect(frameMatchesSource({ source: "hotkey" }, "browser")).toBe(false);
+    expect(frameMatchesSource({ source: "hotkey" }, "hotkey")).toBe(true);
+    // `dry_run` has no token of its own: it shows under ALL alone, which is
+    // the wire's own `source = ?` equality (holdspeak/db/journal.py:155-157).
+    expect(frameMatchesSource({ source: "dry_run" }, "dictation")).toBe(false);
+    expect(frameMatchesSource({}, "dictation")).toBe(false);
+  });
+
+  it("names a hit that lives only in final_text", () => {
+    const hidden = { transcript: "postgress migration", final_text: "PostgreSQL migration" };
+    expect(matchedFinalOnly(hidden, "postgresql")).toBe(true);
+    expect(matchedFinalOnly(hidden, "postgress")).toBe(false);
+    expect(matchedFinalOnly(hidden, "")).toBe(false);
+    expect(matchedFinalOnly({ transcript: "plain" }, "plain")).toBe(false);
   });
 
   it("bands the days TODAY / YESTERDAY / the date", () => {

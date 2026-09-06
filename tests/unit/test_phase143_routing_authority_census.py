@@ -123,7 +123,7 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/config/integrations.py:191:inference_target_id",
     "holdspeak/config/meeting.py:173:intel_profile_id",
     "holdspeak/config/meeting.py:172:intel_profile_id",
-    "holdspeak/db/models/__init__.py:1134:resolver_profile_id",
+    "holdspeak/db/models/__init__.py:1137:resolver_profile_id",
     "holdspeak/db/models/workbench.py:139:resolver_profile_id",
     "holdspeak/services/inference_setup_service.py:644:intel_profile_id",
     "holdspeak/services/inference_setup_service.py:649:inference_target_id",
@@ -145,7 +145,7 @@ PROFILE_ID_CLASSIFICATIONS = {
     **{site: "mutable assignment pointer" for site in {
         "holdspeak/config/core.py:145:profile_id", "holdspeak/config/core.py:176:profile_id",
         "holdspeak/config/integrations.py:269:profile_id", "holdspeak/config/model.py:80:profile_id",
-        "holdspeak/plugins/dictation/assembly.py:321:profile_id",
+        "holdspeak/plugins/dictation/assembly.py:327:profile_id",
         "holdspeak/services/settings_service.py:811:profile_id",
         "holdspeak/services/settings_service.py:883:profile_id",
         "holdspeak/services/sync_service.py:687:profile_id",
@@ -174,7 +174,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/services/inference_assignment_service.py:1788:profile_id",
     }},
     **{site: "migration source" for site in {
-        "holdspeak/db/models/__init__.py:1133:profile_id",
+        "holdspeak/db/models/__init__.py:1136:profile_id",
         "holdspeak/db/models/workbench.py:138:profile_id",
         "holdspeak/services/recipe_service.py:364:profile_id",
         "holdspeak/services/workbench_service.py:561:profile_id",

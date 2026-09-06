@@ -10,6 +10,11 @@ at 1440 and 393:
   `Replay` · `Copy` · `Delete`) — the 175 law, ruling R11.
 - **filtered** — tapping `DICTATION` narrows the stream through the route's
   `source` param and the token reads active.
+- **search-final** — a search hit that lives only in the corrected
+  `final_text` wears `IN FINAL`, in the mark slot every row widens while the
+  search runs (counsel C15).
+- **live filter** — a pushed row the ACTIVE filter excludes never appears
+  (counsel C2); crossing back to `ALL` loads it from the wire.
 - **quiet** — an empty journal reads the token `NOTHING SPOKEN`, the four
   filter tokens are still there (no sparse rule, ruling R6), and `Clear` is
   withheld (a verb that does nothing is a lie, UX-CANON A.11).
@@ -487,6 +492,184 @@ def test_journal_taught_row_wears_taught(tmp_path, monkeypatch):
                 ".speak-journal .surface-ledger-row", has_text=TAUGHT_TRANSCRIPT
             )
             assert "TAUGHT" in marked.inner_text(), marked.inner_text()
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+def test_journal_search_marks_a_final_text_only_hit(tmp_path, monkeypatch):
+    """Counsel C15: the row shows the TRANSCRIPT, so a hit that lives only in
+    `final_text` says so.
+
+    Two rows carry the needle: one in its visible transcript, one only in the
+    corrected `final_text` the row does not draw. The second wears
+    `MATCHED · FINAL`; the first does not — and the slot is on BOTH, so the
+    mark never moves its neighbours (canon D).
+    """
+    _ensure_build()
+    server, url = _boot_with_journal(tmp_path, monkeypatch)
+    errors: list[str] = []
+
+    def _record(transcript: str, final_text: str) -> None:
+        run = SimpleNamespace(
+            final_text=final_text,
+            stage_results=[],
+            total_elapsed_ms=29.0,
+            warnings=[],
+            intent=None,
+            short_circuited=True,
+            corrections_applied=[5] if final_text != transcript else [],
+        )
+        stored = server.dictation_journal.record(
+            run,
+            source="dictation",
+            transcript=transcript,
+            target_profile=SimpleNamespace(id="claude_code", details={}),
+        )
+        assert stored is not None, transcript
+
+    try:
+        _seed_journal(server)
+        # The real correction case: the transcript kept the misheard word, the
+        # final text carries the corrected one.
+        hidden = "postgress needs a bump before the cut-over"
+        _record(hidden, "PostgreSQL needs a bump before the cut-over")
+        visible = "The PostgreSQL bump is merged"
+        _record(visible, visible)
+
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page()
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            page.set_viewport_size({"width": 1440, "height": 900})
+            _init_desk(page, url)
+            _open_journal(page)
+
+            # No search, no mark — and the shared slot keeps its idle width.
+            assert page.locator(
+                '.speak-journal .journal-cells[data-searching="true"]'
+            ).count() == 0
+
+            page.get_by_role(
+                "textbox", name="Search the journal"
+            ).fill("PostgreSQL")
+            page.wait_for_function(
+                "() => document.querySelectorAll("
+                "'.speak-journal .surface-ledger-row').length === 2",
+                timeout=8000,
+            )
+            _settle(page)
+
+            # Every visible row's slot widens; the token marks the hidden hit.
+            assert page.locator(
+                '.speak-journal .journal-cells[data-searching="true"]'
+            ).count() == 2
+            marks = page.locator(
+                ".speak-journal .surface-token", has_text="IN FINAL"
+            )
+            assert marks.count() == 1, marks.count()
+            marked = page.locator(
+                ".speak-journal .surface-ledger-row", has_text="IN FINAL"
+            )
+            assert hidden in marked.inner_text(), marked.inner_text()
+            assert "PostgreSQL" not in marked.locator(
+                ".surface-ledger-primary"
+            ).inner_text()
+
+            _shot(page, "search-final", 1440)
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+def test_journal_live_frame_obeys_the_active_filter(tmp_path, monkeypatch):
+    """Counsel C2: a pushed row the ACTIVE filter excludes never appears.
+
+    Filtered to BROWSER, a HOTKEY utterance is recorded through the real
+    recorder and really is broadcast on the one socket — the wing must reject
+    it, because the filter is the face's one honest claim about what it is
+    showing. Ordering makes the negative deterministic: a BROWSER row is
+    recorded AFTER the hotkey one on the same socket, so once the browser row
+    has landed the hotkey frame has certainly been delivered and dropped.
+    Crossing back to ALL then loads it from the wire.
+    """
+    _ensure_build()
+    server, url = _boot_with_journal(tmp_path, monkeypatch)
+    errors: list[str] = []
+
+    def _record(text: str, source: str, target: str) -> None:
+        run = SimpleNamespace(
+            final_text=text,
+            stage_results=[],
+            total_elapsed_ms=31.0,
+            warnings=[],
+            intent=None,
+            short_circuited=True,
+            corrections_applied=[],
+        )
+        stored = server.dictation_journal.record(
+            run,
+            source=source,
+            transcript=text,
+            target_profile=SimpleNamespace(id=target, details={}),
+        )
+        assert stored is not None, source
+
+    try:
+        _seed_journal(server)
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page()
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            page.set_viewport_size({"width": 1440, "height": 900})
+            _init_desk(page, url)
+            _open_journal(page)
+
+            _filter_token(page, "BROWSER").click()
+            page.wait_for_function(
+                "() => document.querySelectorAll("
+                "'.speak-journal .surface-ledger-row').length === 1",
+                timeout=8000,
+            )
+
+            spoken_on_the_hotkey = "Tail the steward log on the hotkey"
+            typed_in_the_browser = "Draft the release note in the browser"
+            _record(spoken_on_the_hotkey, "hotkey", "terminal_shell")
+            _record(typed_in_the_browser, "browser", "claude_code")
+
+            # The later BROWSER frame lands; the earlier HOTKEY one must not.
+            page.locator(
+                ".speak-journal .surface-ledger-row", has_text=typed_in_the_browser
+            ).first.wait_for(timeout=8000)
+            _settle(page)
+            assert page.locator(
+                ".speak-journal .surface-ledger-row", has_text=spoken_on_the_hotkey
+            ).count() == 0
+            badges = page.locator(
+                ".speak-journal .surface-ledger-trailing"
+            ).all_inner_texts()
+            assert [b.strip() for b in badges] == ["BROWSER", "BROWSER"], badges
+
+            # ALL takes every source, so the held row is there on the wire.
+            _filter_token(page, "ALL").click()
+            page.locator(
+                ".speak-journal .surface-ledger-row", has_text=spoken_on_the_hotkey
+            ).first.wait_for(timeout=8000)
+            _settle(page)
+            assert page.locator(
+                ".speak-journal .surface-ledger-row", has_text=spoken_on_the_hotkey
+            ).count() == 1
+
             _assert_clean(page, errors)
             browser.close()
     finally:

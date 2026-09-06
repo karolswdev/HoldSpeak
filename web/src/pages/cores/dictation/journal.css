@@ -10,7 +10,9 @@
 
    The `.journal-mark` slot holds its width whether or not the row carries a
    token, so a row with neither never moves its neighbours (canon D: "empty
-   slots never move their neighbours"). */
+   slots never move their neighbours"). The search's `IN FINAL` mark shares that
+   one slot, which widens on every row while a search runs — so it too never
+   moves a neighbour, and costs the transcript nothing when idle. */
 
 .speak-journal .surface-ledger-head {
   display: block;
@@ -91,6 +93,12 @@
   flex: none;
   min-width: 72px;
 }
+/* While a search runs the same slot widens on EVERY row, so the search's
+   `IN FINAL` mark sits beside APPLIED/TAUGHT without moving a neighbour —
+   and costs the transcript nothing when no search is running. */
+.speak-journal .journal-cells[data-searching="true"] .journal-mark {
+  min-width: 128px;
+}
 .speak-journal .surface-ledger-trailing {
   flex: none;
   min-width: 76px;
@@ -144,6 +152,9 @@
   .speak-journal .journal-mark {
     min-width: 0;
     justify-content: flex-start;
+  }
+  .speak-journal .journal-cells[data-searching="true"] .journal-mark {
+    min-width: 0;
   }
   .speak-journal .surface-ledger-controls .gadget-string {
     width: auto;

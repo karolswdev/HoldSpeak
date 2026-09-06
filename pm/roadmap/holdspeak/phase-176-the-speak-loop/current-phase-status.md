@@ -122,7 +122,7 @@ so the "postgress" Tuesday needs the `text` kind this phase adds.)
 | HS-176-05 | The desk answering the hand (the full loop: speak, land, judge, teach, apply) | done | [story-05-the-desk-answering-the-hand](./story-05-the-desk-answering-the-hand.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-176-06 | The walk (his desk: correction taught, journal streaming, MicButton everywhere, the loop) | backlog | [story-06-the-walk](./story-06-the-walk.md) | -- |
 | HS-176-07 | The docs (the Speak Loop in the guide; the correction flow in the architecture) | done | [story-07-the-docs](./story-07-the-docs.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-176-08 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | backlog | [story-08-the-close](./story-08-the-close.md) | -- |
+| HS-176-08 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | in-progress | [story-08-the-close](./story-08-the-close.md) | -- |
 
 ## Where we are
 
@@ -312,6 +312,28 @@ extend it.
   board's own `sk-live-4f2a9c` was not refused). C4 (P1) the footer's
   `N TODAY` counts today's rows (local day), not the all-time retained
   count. C5–C16 (P2) parked to BACKLOG.md under "Phase 176 remainders".
+- **2026-09-06 — the suite in CI shape, classified.** Run once at
+  `5a0a29f5` with no product lane editing (`-n auto`, isolated HOME,
+  28 min): 26 failed, 10180 passed, 99 skipped, 1 error. Classified
+  against a main worktree at `7a47904e`: 12 INHERITED (they fail
+  identically on main: test_ask_grounding_claims ×2,
+  test_ask_runner_migration, test_desk_seed ×2, test_hs173_nudge_wire
+  template, test_kernel_effect_fence ×2 (the broker density fences),
+  test_product_copy (29 pre-existing offenders), test_project_mcp ×3);
+  7 176-NEW fences that moved (the realtime frame registry ×2 — the
+  new `dictation.journal.entry` frame; the journal replay fence; the
+  UAT honest-count test (`similar` → `applied`); the phase-143
+  inference/routing censuses ×3) — paid by the fence lane; 7 rigs to
+  re-run serially (xdist-only vs real): hs144 door, hs153 practice,
+  hs154 call, hs170 speak-unset, hs172 settings-meetings 393, hs175
+  arrival week strip (the 1 error is a setup error in the same rig
+  file, test_arrival_cancel_idle_event_born), hs176 loop 393.
+  Serial re-run (`5a0a29f5` + the fix lanes' working tree): hs154, hs170
+  speak-unset, hs172 393 and hs176 loop 393 GREEN (xdist-only); hs144
+  door deep-link (a console 404) and hs153 practice guardrail (deny vs
+  allow) fail IDENTICALLY on the main worktree (INHERITED); hs175
+  arrival's overflow test flipped (green on main, red once serially on
+  the branch, green on the retry) — the rotating flaky rig family.
 - **2026-09-06 — the walk's writes.** The walk on his desk writes what
   his own hand writes: the journal rows of his dictations, the
   retention prune, and the one correction he teaches; the runner seeds

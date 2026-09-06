@@ -238,6 +238,38 @@ class DictationJournalRepository(BaseRepository):
             ).fetchone()
         return int(row["n"]) if row is not None else 0
 
+    def count_today(self, *, now: Optional[datetime] = None) -> int:
+        """HS-176 counsel C4: rows recorded on the LOCAL calendar day.
+
+        The Speak footer's one surviving count says `N TODAY`; `count()` is the
+        all-time retained total, so the token was mislabelled. `created_at` is
+        written as a naive LOCAL wall clock (`datetime.now().isoformat()`), so
+        the day is read off that wall clock directly.
+
+        DST-safe by the 175 rule — the local day is resolved PER INSTANT
+        (`.astimezone()` with no argument consults the zone's rules for that
+        moment) rather than against one fixed offset — and an older or foreign
+        row that carries an explicit offset is converted to local before its
+        day is taken. An unparseable `created_at` is not counted.
+        """
+        reference = (now or datetime.now()).astimezone()
+        today = reference.date()
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT created_at FROM dictation_journal"
+            ).fetchall()
+        total = 0
+        for row in rows:
+            try:
+                stamp = datetime.fromisoformat(str(row["created_at"] or ""))
+            except (TypeError, ValueError):
+                continue
+            if stamp.tzinfo is not None:
+                stamp = stamp.astimezone()
+            if stamp.date() == today:
+                total += 1
+        return total
+
     def count_applied(self, correction_id: int) -> int:
         """HS-176-02 (ruling R3): journal rows where this correction FIRED.
 
