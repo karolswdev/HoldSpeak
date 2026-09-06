@@ -512,11 +512,39 @@ class TestMeetingTemplateRetired:
 # ── existing meeting watch plainReason ────────────────────────────────
 
 class TestMeetingWatchPlainReason:
-    """An existing meeting watch reports its plainReason."""
+    """The meeting connector's truth on the Room row.
 
-    def test_native_meeting_watch_reports_cant_check(self, db: Database) -> None:
+    HS-169 asserted the pre-175 truth ("No local adapter for meeting
+    activity yet" / CAN'T CHECK) for a ``native`` meeting watch.  HS-175-04
+    built the MeetingWatchSource (watch_sources.py) on connector ``meeting``:
+    a real meeting Watch renders the live MEETINGS row with no "no adapter"
+    reason.  A legacy ``native`` connector still has no adapter and says so
+    in the generic wording every unknown connector shares.
+    """
+
+    def test_meeting_watch_renders_live_meetings_row(self, db: Database) -> None:
+        """HS-175: the meeting connector is a real source -- live, no reason."""
         project_id = _seed_project(db)
-        _seed_watch(db, project_id, watch_id="w-mtg", connector_id="native",
+        _seed_watch(db, project_id, watch_id="w-mtg", connector_id="meeting",
+                    query_kind="meetings",
+                    query={"project_id": project_id},
+                    snapshot=[],
+                    last_error=None)
+
+        svc = ProjectService(db)
+        room = svc.room(OWNER, project_id)
+        sources = room["sources"]
+        assert sources["state"] == "ok"
+        mtg_sources = [s for s in sources["items"] if s["provider"] == "meeting"]
+        assert len(mtg_sources) == 1
+        assert mtg_sources[0]["scope"] == "MEETINGS"
+        assert mtg_sources[0]["state"] == "live"
+        assert mtg_sources[0]["plainReason"] is None
+
+    def test_legacy_native_connector_reports_cant_check(self, db: Database) -> None:
+        """A pre-175 ``native`` connector has no adapter: CAN'T CHECK, plain."""
+        project_id = _seed_project(db)
+        _seed_watch(db, project_id, watch_id="w-native", connector_id="native",
                     query_kind="meetings",
                     snapshot=[],
                     last_error=None)
@@ -525,10 +553,10 @@ class TestMeetingWatchPlainReason:
         room = svc.room(OWNER, project_id)
         sources = room["sources"]
         assert sources["state"] == "ok"
-        mtg_sources = [s for s in sources["items"] if s["provider"] == "native"]
-        assert len(mtg_sources) == 1
-        assert mtg_sources[0]["state"] == "cant_check"
-        assert mtg_sources[0]["plainReason"] == "No local adapter for meeting activity yet"
+        native = [s for s in sources["items"] if s["provider"] == "native"]
+        assert len(native) == 1
+        assert native[0]["state"] == "cant_check"
+        assert native[0]["plainReason"] == "No local adapter for this source yet"
 
 
 # ── branch_ci ─────────────────────────────────────────────────────────
@@ -745,7 +773,9 @@ class TestSources:
         svc = ProjectService(db)
         room = svc.room(OWNER, project_id)
         sources = room["sources"]
-        assert sources["items"][0]["nextCheckAt"] == next_eval
+        # HS-175 counsel C8: the stored stamp leaves with its offset (UTC).
+        from holdspeak.services.project_service import aware_iso
+        assert sources["items"][0]["nextCheckAt"] == aware_iso(next_eval)
 
     def test_room_top_level_next_check_at(self, db: Database) -> None:
         """Room top-level nextCheckAt = soonest non-null over live sources."""
@@ -772,7 +802,8 @@ class TestSources:
         svc = ProjectService(db)
         room = svc.room(OWNER, project_id)
         # Top-level is the soonest
-        assert room["nextCheckAt"] == "2026-09-04T10:35:00"
+        # HS-175 counsel C8: offset-carrying (the soonest, as UTC).
+        assert room["nextCheckAt"] == "2026-09-04T10:35:00+00:00"
 
     def test_room_next_check_at_null_when_no_watches(self, db: Database) -> None:
         """Room top-level nextCheckAt is null when no watches exist."""
@@ -825,8 +856,9 @@ class TestSources:
         assert "1 OPEN PRS" in item["tokens"]
         assert "CI GREEN" in item["tokens"]
 
-        # checkedAt is the latest
-        assert item["checkedAt"] == "2026-09-04T10:05:00"
+        # checkedAt is the latest -- HS-175 counsel C8: the stored naive-UTC
+        # stamp leaves with its offset so the face prints the viewer's clock.
+        assert item["checkedAt"] == "2026-09-04T10:05:00+00:00"
 
         # sources.count reflects the group count
         assert sources["count"] == 1

@@ -84,6 +84,8 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/sequence_workflow_service.py", "_route_target"): ("frozen route egress projection", "143-10"),
     ("holdspeak/services/support.py", "_norm_run_target"): ("workflow placement normalization", "143-10"),
     ("holdspeak/services/workbench_runner.py", "_route_target"): ("frozen route egress projection", "143-10"),
+    ("holdspeak/services/calendar_snapshot_service.py", "_egress_from_route_entries"): ("egress host read off the admitted route plan for the snapshot receipt; provenance, not route selection", "175-07"),
+    ("holdspeak/services/calendar_snapshot_service.py", "_rank_vision_targets"): ("vision-capable profile ordering by boundary (local first) for the direct-dispatch fallback; the pick is receipted with its host, never silent", "175-07"),
     ("holdspeak/services/front_door_service.py", "_collect_profile_from_done_item"): ("front-door plan profile identity extraction from receipt; not assignment authority", "156-04"),
     ("holdspeak/services/front_door_service.py", "_resolve_group_assignments"): ("front-door plan assignment composition from completed provisioning items", "156-04"),
     ("holdspeak/services/front_door_service.py", "_select_preset_for_tier"): ("front-door catalog preset selection for pack recommendation; not assignment authority", "156-04"),

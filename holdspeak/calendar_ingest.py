@@ -34,6 +34,8 @@ class CalendarEventCandidate:
     ends_at: str
     location: str | None
     meeting_url: str | None
+    # HS-175-02: additive ATTENDEE extraction (D4 H5).
+    attendees: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -178,6 +180,8 @@ def _parse_event(
     title = str(event.get("SUMMARY") or "").strip()
     location = _optional_text(event, "LOCATION")
     meeting_url = _optional_text(event, "URL")
+    # HS-175-02: additive ATTENDEE extraction (D4 H5).
+    attendees = _extract_attendees(event)
     output: list[CalendarEventCandidate] = []
     for occurrence in occurrences:
         utc_start = occurrence.astimezone(timezone.utc)
@@ -194,6 +198,7 @@ def _parse_event(
                 ends_at=_utc_iso(utc_end),
                 location=location,
                 meeting_url=meeting_url,
+                attendees=attendees,
             )
         )
     return output, recurrence_skips
@@ -348,6 +353,32 @@ def _require_aware_datetime(value: datetime, kind: str) -> datetime:
     if value.tzinfo is None:
         raise _EventProblem(f"calendar_event_skipped_invalid_{kind}")
     return value
+
+
+def _extract_attendees(event: Any) -> tuple[str, ...]:
+    """HS-175-02: extract ATTENDEE mailto: addresses from a VEVENT (D4 H5).
+
+    Pure, bounded, no network.  Returns a tuple of email addresses
+    (lowercase, stripped).  An event with no ATTENDEE properties
+    returns an empty tuple (the attendee match seam stays a no-op
+    until the caller has someone to match against).
+    """
+    try:
+        raw = event.get("ATTENDEE")
+    except Exception:
+        return ()
+    if raw is None:
+        return ()
+    values = raw if isinstance(raw, list) else [raw]
+    emails: list[str] = []
+    for v in values:
+        text = str(v).strip()
+        if text.lower().startswith("mailto:"):
+            text = text[7:]
+        text = text.strip().lower()
+        if text and "@" in text:
+            emails.append(text)
+    return tuple(dict.fromkeys(emails))  # deduplicate, preserve order
 
 
 def _optional_text(event: Any, name: str) -> str | None:

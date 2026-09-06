@@ -38,6 +38,7 @@ import {
   SurfaceLedgerRow,
   SurfaceWell,
 } from "../../desk/surface";
+import { SurfaceSection } from "../../desk/surface/Surface";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressFor } from "../../desk/surface/egress";
 import { openSurface } from "../../desk/shell";
@@ -132,6 +133,34 @@ export function projectPendingSettingsChanges(
     (draft, changes) => mergeSettingsChanges(draft, changes),
     base,
   );
+}
+
+/** HS-175 counsel C8 -- the viewer's LOCAL clock (HH:MM) from an ISO
+ * instant (``...Z`` or an offset).  Naive strings parse as local, which
+ * is what a hub-local stamp means; an unparseable value prints nothing. */
+export function formatLocalClock(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** HS-175 counsel C10 -- the chip beside ``Snapshot``: the resolved
+ * vision host (LAN / cloud / paired device) or THIS DEVICE when the model
+ * runs here.  ``null`` when no vision model resolves (nothing can leave
+ * and the upload refuses by name) -- absence is the signal. */
+export function snapshotEgressChip(
+  egress: { scope?: string; host?: string | null } | null | undefined,
+): { label: string; scope: "local" | "cloud" | "mixed"; title: string } | null {
+  if (!egress || !egress.scope) return null;
+  if (egress.scope === "local") {
+    return { label: "THIS DEVICE", scope: "local", title: "The screenshot is read by a vision model on this device." };
+  }
+  const host = (egress.host || "").trim();
+  if (!host) return null;
+  const where = egress.scope === "cloud" ? "a cloud service" : egress.scope === "mesh" ? "a paired device" : "a device on your network";
+  return { label: host, scope: egress.scope === "cloud" ? "cloud" : "mixed", title: `The screenshot is sent to ${host} (${where}) for extraction.` };
 }
 
 /** Render one egress chip per source with off-device reach. */
@@ -619,6 +648,31 @@ function SettingsFace({ hero, scope }: CoreProps) {
   }, []);
   const [authorityBusy, setAuthorityBusy] = useState(false);
   const secrets = (resource.data._secrets ?? {}) as Record<string, SecretState>;
+
+  // HS-175-03: calendar sources facts for the CALENDAR section.
+  const [calSources, setCalSources] = useState<{
+    sources: Array<{
+      id: string; label: string; type: string; status: string;
+      host: string | null; event_count: number;
+      last_read: string | null; last_read_at?: string | null; egress: boolean;
+    }>;
+    auto_record: string;
+    auto_record_lead_minutes: number;
+    matched_this_week: number;
+    snapshot_egress?: { scope: string; host?: string | null } | null;
+  } | null>(null);
+  // The ONE connect well, two uses: "new" under the Connect row, or a
+  // source id under that source's row (pre-filled, Save rewrites its URL).
+  const [calWellFor, setCalWellFor] = useState<string | null>(null);
+  const [calWellValue, setCalWellValue] = useState("");
+  const [calWellError, setCalWellError] = useState("");
+  const [calWellSaving, setCalWellSaving] = useState(false);
+  // The in-world Remove confirm step (never a modal): the armed source id.
+  const [calRemoveFor, setCalRemoveFor] = useState<string | null>(null);
+  const loadCalSources = useCallback(() => {
+    void apiFetch<typeof calSources>("/api/calendar/sources").then(setCalSources);
+  }, []);
+  useEffect(() => { loadCalSources(); }, [loadCalSources]);
 
   /* HS-101 round 3 — the configuring archetype saves ON CHANGE
      (Article VII: no ceremony): every edit lands debounced. HS-111-01:
@@ -1192,7 +1246,6 @@ function SettingsFace({ hero, scope }: CoreProps) {
           url: string;
           enabled: boolean;
         }> = (val(sourcesPath) as any[]) ?? [];
-        const egressChips = calendarSourceEgressChips(data._calendar_sources);
         const patchSource = (
           index: number,
           patch: Record<string, unknown>,
@@ -1202,6 +1255,60 @@ function SettingsFace({ hero, scope }: CoreProps) {
           );
           update(sourcesPath, next);
         };
+        // HS-175-03: rows come from the settings sources (first paint
+        // carries them), the per-source egress fact from _calendar_sources,
+        // and counts / last-read / status from /api/calendar/sources.
+        const calFacts = new Map(
+          ((data._calendar_sources ?? []) as CalendarSourceFact[]).map((f) => [f.id ?? "", f]),
+        );
+        const calStats = new Map((calSources?.sources ?? []).map((s) => [s.id, s]));
+        const calSourceLabel = (entry: { label: string; url: string }, host: string | null) =>
+          entry.label || host || (entry.url.split(/[\\/]/).pop() ?? "") || "CALENDAR";
+        const openCalWell = (target: string, prefill: string) => {
+          setCalRemoveFor(null);
+          setCalWellFor(target);
+          setCalWellValue(prefill);
+          setCalWellError("");
+        };
+        const closeCalWell = () => {
+          setCalWellFor(null);
+          setCalWellValue("");
+          setCalWellError("");
+        };
+        const saveCalWell = async () => {
+          const url = calWellValue.trim();
+          if (!url || calWellFor === null) return;
+          setCalWellSaving(true);
+          setCalWellError("");
+          const nextSources =
+            calWellFor === "new"
+              ? [...sources, { id: crypto.randomUUID(), label: "", url, enabled: true }]
+              : sources.map((s) => (s.id === calWellFor ? { ...s, url } : s));
+          const ok = await commitMany([[sourcesPath, nextSources]]);
+          setCalWellSaving(false);
+          if (ok) {
+            closeCalWell();
+            setTimeout(loadCalSources, 300);
+          } else {
+            setCalWellError("REFUSED");
+          }
+        };
+        const calWell = (
+          <div className="prefs-calendar-well" data-testid="calendar-well">
+            <StringGadget
+              label="Calendar URL or file path"
+              value={calWellValue}
+              placeholder="Paste an ICS URL or a file path"
+              onChange={setCalWellValue}
+              mic
+            />
+            {calWellError ? <StateChip state="failure" label={refusal || calWellError} /> : null}
+            <div className="prefs-calendar-well-actions">
+              <Button variant="ghost" dense onClick={closeCalWell}>Cancel</Button>
+              <Button dense disabled={calWellSaving || !calWellValue.trim()} onClick={() => void saveCalWell()}>Save</Button>
+            </div>
+          </div>
+        );
         return (
           <>
             <div className="surface-display" data-testid="meetings-auto-display">
@@ -1269,98 +1376,150 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 />
               </GadgetRow>
             </GadgetGroup>
-            <GadgetGroup label="Calendar">
-              <GadgetRow wide label="Sources" highlight={hl(sourcesPath)}>
-                <div className="prefs-calendar-sources">
-                  <GadgetTable
-                    head={["LABEL", "URL", "ON"]}
-                    deleteLabel="REMOVE?"
-                    onDelete={(index) =>
-                      update(
-                        sourcesPath,
-                        sources.filter((_, row) => row !== index),
-                      )
-                    }
-                    onAdd={() =>
-                      update(sourcesPath, [
-                        ...sources,
-                        {
-                          id: crypto.randomUUID(),
-                          label: "",
-                          url: "",
-                          enabled: true,
-                        },
-                      ])
-                    }
-                    addLabel="+ ADD SOURCE"
-                    rowKey={(index) => sources[index]?.id ?? String(index)}
-                    rows={sources.map((entry, index) => [
-                      <StringGadget
-                        key="label"
-                        label={`Source ${index + 1} label`}
-                        value={entry.label ?? ""}
-                        placeholder="Work"
-                        onChange={(next) => patchSource(index, { label: next })}
-                      />,
-                      <StringGadget
-                        key="url"
-                        label={`Source ${index + 1} URL`}
-                        value={entry.url ?? ""}
-                        placeholder="ICS file or HTTPS URL"
-                        onChange={(next) => patchSource(index, { url: next })}
-                      />,
-                      <CheckGadget
-                        key="enabled"
-                        label={`Enable source ${index + 1}`}
-                        checked={entry.enabled ?? true}
-                        onChange={(next) =>
-                          patchSource(index, { enabled: next })
-                        }
-                      />,
-                    ])}
-                  />
-                  {egressChips.length > 0
-                    ? <div className="prefs-calendar-egress">
-                        {egressChips.map((chip) => (
-                          <EgressChip key={chip.id} {...chip} />
-                        ))}
-                      </div>
-                    : null}
-                  <Button
-                    dense
-                    onClick={() => {
-                      const input = document.createElement("input");
-                      input.type = "file";
-                      input.accept = ".png,.jpg,.jpeg,.webp";
-                      input.multiple = true;
-                      input.onchange = async () => {
-                        const files = input.files;
-                        if (!files?.length) return;
-                        const body = new FormData();
-                        for (let i = 0; i < Math.min(files.length, 3); i++) {
-                          body.append("files", files[i]);
-                        }
-                        try {
-                          const result = await apiFetch<Record<string, unknown>>(
-                            "/api/calendar/snapshot",
-                            { method: "POST", body },
-                          );
-                          openSurface(
-                            "review-calendar-snapshot",
-                            JSON.stringify(result),
-                          );
-                        } catch (error) {
-                          setRefusal(readableError(error));
-                        }
-                      };
-                      input.click();
-                    }}
-                  >
-                    IMPORT SCREENSHOT
-                  </Button>
-                </div>
-              </GadgetRow>
-            </GadgetGroup>
+            {/* HS-175-03: CALENDAR section replaces the 146 Calendar GadgetGroup.
+                Source rows, the Connect calendar well, Auto-record, Snapshot. */}
+            <SurfaceSection label="CALENDAR" className="prefs-calendar-section">
+              <ul className="surface-rows prefs-calendar-sources">
+                {sources.map((entry, index) => {
+                  const fact = calFacts.get(entry.id);
+                  const stat = calStats.get(entry.id);
+                  const host = fact?.egress && fact.host ? String(fact.host) : null;
+                  const label = calSourceLabel(entry, host);
+                  const type = label.toUpperCase().endsWith("SNAPSHOT") ? "SNAPSHOT" : "ICS";
+                  const minutes = fact?.refresh_seconds ? Math.round(fact.refresh_seconds / 60) : 15;
+                  const state = (!entry.enabled ? "idle" : stat?.status ?? "idle") as "success" | "failure" | "idle";
+                  const editing = calWellFor === entry.id;
+                  const removing = calRemoveFor === entry.id;
+                  return (
+                    <SurfaceLedgerRow
+                      key={entry.id}
+                      data-testid={`calendar-source-${entry.id}`}
+                      wrap
+                      lead={<StateChip state={state} icon={"●"} label="" />}
+                      primary={<span data-muted={!entry.enabled || undefined} style={!entry.enabled ? { color: "var(--text-muted)" } : undefined}>{label}</span>}
+                      cells={
+                        <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                          <span className="surface-token" data-chip>{type}</span>
+                          {/* HS-175 counsel C9 (H2-2): egress where egress happens --
+                              the host on an HTTPS source; a file source carries NO
+                              chip (absence is the signal, never a reassurance). */}
+                          {host
+                            ? <EgressChip label={host} scope="cloud" title={`Fetches ${label} from ${host} every ${minutes} minutes. No credentials or headers are sent.`} />
+                            : null}
+                          {/* C9(b): COUNT(DISTINCT uid) counts events -- named so. */}
+                          {(() => { const ct = stat ? countToken(stat.event_count, "EVENT") : null; return ct ? <span className="surface-token" data-chip data-testid="calendar-source-events">{ct}</span> : null; })()}
+                          {/* C8: the viewer's local clock from the ISO instant. */}
+                          {(() => { const clock = formatLocalClock(stat?.last_read_at) ?? stat?.last_read ?? null; return clock ? <span className="surface-token" data-chip data-testid="calendar-source-last-read">LAST READ {clock}</span> : null; })()}
+                        </span>
+                      }
+                      trailing={
+                        <>
+                          {/* C10 (H8-2): Edit is withheld on a SNAPSHOT row -- its
+                              path is generated by the upload and rewritten by it. */}
+                          {type !== "SNAPSHOT" ? (
+                            <Button variant="ghost" dense data-testid="calendar-source-edit" onClick={(e) => { e.stopPropagation(); openCalWell(entry.id, entry.url); }}>Edit</Button>
+                          ) : null}
+                          <Button variant="ghost" dense data-testid="calendar-source-toggle" onClick={(e) => { e.stopPropagation(); patchSource(index, { enabled: !entry.enabled }); }}>{entry.enabled ? "Disable" : "Enable"}</Button>
+                          <Button variant="ghost" dense data-testid="calendar-source-remove" onClick={(e) => { e.stopPropagation(); closeCalWell(); setCalRemoveFor(entry.id); }}>Remove</Button>
+                        </>
+                      }
+                      open={editing || removing}
+                      onToggle={() => {
+                        if (type === "SNAPSHOT") { if (editing) closeCalWell(); return; }
+                        if (editing) closeCalWell(); else openCalWell(entry.id, entry.url);
+                      }}
+                    >
+                      {editing ? calWell : null}
+                      {removing ? (
+                        <div className="prefs-calendar-well" data-testid="calendar-remove-confirm">
+                          <span className="surface-token" data-chip data-tone="danger">REMOVE {label.toUpperCase()}</span>
+                          <div className="prefs-calendar-well-actions">
+                            <Button variant="danger" dense onClick={() => { setCalRemoveFor(null); update(sourcesPath, sources.filter((_, i) => i !== index)); }}>Remove</Button>
+                            <Button variant="ghost" dense onClick={() => setCalRemoveFor(null)}>Cancel</Button>
+                          </div>
+                        </div>
+                      ) : null}
+                    </SurfaceLedgerRow>
+                  );
+                })}
+                {/* Connect calendar row + the same in-world well (the "new" use) */}
+                <SurfaceLedgerRow
+                  data-testid="calendar-connect-row"
+                  lead={<span />}
+                  primary="Connect calendar"
+                  wrap
+                  trailing={
+                    calWellFor !== "new" ? (
+                      <>
+                        <Button variant="ghost" onClick={(e) => { e.stopPropagation(); openCalWell("new", ""); }} data-testid="calendar-add-btn">Add</Button>
+                        {/* HS-175 counsel C10: the vision model's egress on the face
+                            BEFORE the upload (Article III:2, A.9) -- read from the
+                            same resolution the dispatch uses. */}
+                        {(() => {
+                          const chip = snapshotEgressChip(calSources?.snapshot_egress);
+                          return chip ? (
+                            <span data-testid="calendar-snapshot-egress" style={{ display: "inline-flex", alignItems: "center" }}>
+                              <EgressChip label={chip.label} scope={chip.scope} title={chip.title} className="prefs-snapshot-egress" />
+                            </span>
+                          ) : null;
+                        })()}
+                        <Button variant="ghost" dense data-testid="calendar-snapshot-btn" onClick={(e) => {
+                          e.stopPropagation();
+                          const input = document.createElement("input");
+                          input.type = "file";
+                          input.accept = ".png,.jpg,.jpeg,.webp";
+                          input.multiple = true;
+                          input.onchange = async () => {
+                            const files = input.files;
+                            if (!files?.length) return;
+                            const fd = new FormData();
+                            for (let i = 0; i < Math.min(files.length, 3); i++) fd.append("files", files[i]);
+                            try {
+                              const result = await apiFetch<Record<string, unknown>>("/api/calendar/snapshot", { method: "POST", body: fd });
+                              openSurface("review-calendar-snapshot", JSON.stringify(result));
+                            } catch (error) { setRefusal(readableError(error)); }
+                          };
+                          input.click();
+                        }}>Snapshot</Button>
+                      </>
+                    ) : null
+                  }
+                  open={calWellFor === "new"}
+                  onToggle={() => (calWellFor === "new" ? closeCalWell() : openCalWell("new", ""))}
+                >
+                  {calWellFor === "new" ? calWell : null}
+                </SurfaceLedgerRow>
+                {/* Auto-record row */}
+                <SurfaceLedgerRow
+                  data-testid="settings-auto-record"
+                  lead={<span />}
+                  primary="Auto-record"
+                  wrap
+                  cells={
+                    <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                      <CycleGadget
+                        label="Auto-record mode"
+                        value={calSources?.auto_record ?? String(val(["meeting", "auto_record"]) ?? "off")}
+                        options={[
+                          { value: "all_calendar", label: "ARM ALL CALENDAR MEETINGS" },
+                          { value: "room_linked", label: "ARM ROOM MEETINGS ONLY" },
+                          { value: "off", label: "OFF" },
+                        ]}
+                        onChange={(next) => { update(["meeting", "auto_record"], next); setTimeout(loadCalSources, 900); }}
+                      />
+                      {(calSources?.auto_record ?? String(val(["meeting", "auto_record"]) ?? "off")) !== "off" ? (
+                        <span className="surface-token" data-chip data-tone="muted">{calSources?.auto_record_lead_minutes ?? 5} MIN BEFORE</span>
+                      ) : null}
+                      {(calSources?.auto_record ?? String(val(["meeting", "auto_record"]) ?? "off")) === "room_linked" ? (() => {
+                        const mt = calSources ? countToken(calSources.matched_this_week, "MATCHED THIS WEEK") : null;
+                        return mt ? <span className="surface-token" data-chip data-testid="matched-this-week">{mt}</span> : null;
+                      })() : null}
+                    </span>
+                  }
+                  expands={false}
+                />
+              </ul>
+            </SurfaceSection>
             <GadgetGroup label="Actuators">
               {check(["meeting", "allow_actuators"], "Allow actuators")}
             </GadgetGroup>

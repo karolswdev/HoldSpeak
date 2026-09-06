@@ -1,0 +1,447 @@
+{
+  "generated_at": "2026-09-05T18:00:31.575258",
+  "hub_host": "127.0.0.1:54644",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "width": 393,
+      "height": 852
+    }
+  ],
+  "shots": [
+    {
+      "face": "arrival",
+      "width": 1440,
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-06-shots/walk-arrival-1440.png"
+    },
+    {
+      "face": "settings-calendar",
+      "width": 1440,
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-06-shots/walk-settings-calendar-1440.png"
+    },
+    {
+      "face": "room-sources",
+      "width": 1440,
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-06-shots/walk-room-sources-1440.png"
+    },
+    {
+      "face": "rhythm-brief",
+      "width": 1440,
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-06-shots/walk-rhythm-brief-1440.png"
+    },
+    {
+      "face": "arrival",
+      "width": 393,
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-06-shots/walk-arrival-393.png"
+    },
+    {
+      "face": "settings-calendar",
+      "width": 393,
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-06-shots/walk-settings-calendar-393.png"
+    },
+    {
+      "face": "room-sources",
+      "width": 393,
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-06-shots/walk-room-sources-393.png"
+    },
+    {
+      "face": "rhythm-brief",
+      "width": 393,
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-06-shots/walk-rhythm-brief-393.png"
+    }
+  ],
+  "facts": [
+    {
+      "face": "door-api",
+      "field": "calendar_configured",
+      "expected": "(true when at least one source connected)",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "calendar adapter state"
+    },
+    {
+      "face": "door-api",
+      "field": "upcoming_count",
+      "expected": "(varies)",
+      "observed": "1",
+      "verdict": "DATA",
+      "why": "upcoming events + scheduled recordings"
+    },
+    {
+      "face": "door-api",
+      "field": "upcoming_has_room",
+      "expected": "(true when an event links to a Room)",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "event-to-Room link in upcoming"
+    },
+    {
+      "face": "door-api",
+      "field": "upcoming_has_armed",
+      "expected": "(true when an event auto-created a recording)",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "armed schedule in upcoming"
+    },
+    {
+      "face": "door-api",
+      "field": "week_days",
+      "expected": "7 (Mon-Sun strip)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "WEEK strip day count from door payload"
+    },
+    {
+      "face": "door-api",
+      "field": "week_total_dots",
+      "expected": "(matches N MEETINGS THIS WEEK)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "sum of dots across WEEK strip days"
+    },
+    {
+      "face": "door-api",
+      "field": "auto_record",
+      "expected": "(off / with_url / all)",
+      "observed": "off",
+      "verdict": "DATA",
+      "why": "meeting auto-record setting"
+    },
+    {
+      "face": "door-api",
+      "field": "cadence_status",
+      "expected": "200",
+      "observed": "404",
+      "verdict": "DATA",
+      "why": "GET /api/cadence returned HTTP 404"
+    },
+    {
+      "face": "arrival",
+      "field": "next_line",
+      "expected": "(NEXT <title> <time> -- from calendar or schedule)",
+      "observed": "NEXT \u00b7 SCHED",
+      "verdict": "DATA",
+      "why": "NEXT line on arrival (12-char prefix)"
+    },
+    {
+      "face": "arrival",
+      "field": "no_calendar_state",
+      "expected": "false (calendar should be configured)",
+      "observed": "False",
+      "verdict": "MATCH",
+      "why": "NO CALENDAR banner on arrival"
+    },
+    {
+      "face": "arrival",
+      "field": "week_strip_present",
+      "expected": "(true when calendar configured -- TODO face)",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "WEEK strip on arrival face"
+    },
+    {
+      "face": "arrival",
+      "field": "meeting_row_count",
+      "expected": "(varies)",
+      "observed": "3",
+      "verdict": "DATA",
+      "why": "meeting rows on arrival"
+    },
+    {
+      "face": "arrival",
+      "field": "meeting_rows_with_room",
+      "expected": "(varies, >0 when events are linked to Rooms)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "meeting rows carrying ROOM token"
+    },
+    {
+      "face": "arrival",
+      "field": "meeting_rows_with_arms",
+      "expected": "(varies, >0 when auto-record is on)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "meeting rows carrying ARMS token"
+    },
+    {
+      "face": "settings-calendar",
+      "field": "calendar_source_count",
+      "expected": "(>= 1 when calendar configured)",
+      "observed": "2",
+      "verdict": "DATA",
+      "why": "calendar source rows in Settings Meetings"
+    },
+    {
+      "face": "settings-calendar",
+      "field": "ics_source_count",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "ICS/HTTPS sources"
+    },
+    {
+      "face": "settings-calendar",
+      "field": "snapshot_source_count",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "SNAPSHOT sources"
+    },
+    {
+      "face": "settings-calendar",
+      "field": "auto_record_value",
+      "expected": "(OFF / WITH URL / ALL -- from Settings face)",
+      "observed": "Auto-record\u21bbARM ALL CALENDAR MEETINGSARM ROOM MEETINGS ONLYOFF",
+      "verdict": "DATA",
+      "why": "Auto-record CycleGadget value on face"
+    },
+    {
+      "face": "room-sources",
+      "field": "sources_section_present",
+      "expected": "true",
+      "observed": "True",
+      "verdict": "MATCH",
+      "why": "SOURCES section on Room face"
+    },
+    {
+      "face": "room-sources",
+      "field": "source_row_count",
+      "expected": "(varies)",
+      "observed": "2",
+      "verdict": "DATA",
+      "why": "source rows in SOURCES section"
+    },
+    {
+      "face": "room-sources",
+      "field": "source_row:0",
+      "expected": "(provider . scope . tokens)",
+      "observed": "github . karolswdev/HoldSpeak . 2 OPEN PRS . \u00b7 2 CHECKS FAILING",
+      "verdict": "DATA",
+      "why": "source row content"
+    },
+    {
+      "face": "room-sources",
+      "field": "source_row:1",
+      "expected": "(provider . scope . tokens)",
+      "observed": "unknown . KAN . 1 DUE THIS WEEK",
+      "verdict": "DATA",
+      "why": "source row content"
+    },
+    {
+      "face": "room-sources",
+      "field": "meetings_source_present",
+      "expected": "(true when meeting Watch adapter is registered)",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "MEETINGS source row in Room SOURCES"
+    },
+    {
+      "face": "rhythm-brief",
+      "field": "brief_row_label",
+      "expected": "(Monday brief or Weekly brief)",
+      "observed": "Monday brief",
+      "verdict": "DATA",
+      "why": "brief row primary label in Rhythm"
+    },
+    {
+      "face": "rhythm-brief",
+      "field": "brief_row_tokens",
+      "expected": "(DAILY HH:MM token)",
+      "observed": "DAILY 08:00",
+      "verdict": "DATA",
+      "why": "brief row tokens (cadence + time)"
+    },
+    {
+      "face": "rhythm-brief",
+      "field": "generate_now_present",
+      "expected": "true",
+      "observed": "True",
+      "verdict": "MATCH",
+      "why": "Generate now verb on brief row (present but never pressed)"
+    },
+    {
+      "face": "rhythm-brief",
+      "field": "generate_now_text",
+      "expected": "Generate now",
+      "observed": "Generate",
+      "verdict": "DATA",
+      "why": "Generate now verb label"
+    },
+    {
+      "face": "rhythm-brief",
+      "field": "brief_facts",
+      "expected": "(varies)",
+      "observed": "",
+      "verdict": "DATA",
+      "why": "brief facts section below the row"
+    },
+    {
+      "face": "arrival",
+      "field": "next_line",
+      "expected": "(NEXT <title> <time> -- from calendar or schedule)",
+      "observed": "NEXT \u00b7 SCHED",
+      "verdict": "DATA",
+      "why": "NEXT line on arrival (12-char prefix)"
+    },
+    {
+      "face": "arrival",
+      "field": "no_calendar_state",
+      "expected": "false (calendar should be configured)",
+      "observed": "False",
+      "verdict": "MATCH",
+      "why": "NO CALENDAR banner on arrival"
+    },
+    {
+      "face": "arrival",
+      "field": "week_strip_present",
+      "expected": "(true when calendar configured -- TODO face)",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "WEEK strip on arrival face"
+    },
+    {
+      "face": "arrival",
+      "field": "meeting_row_count",
+      "expected": "(varies)",
+      "observed": "3",
+      "verdict": "DATA",
+      "why": "meeting rows on arrival"
+    },
+    {
+      "face": "arrival",
+      "field": "meeting_rows_with_room",
+      "expected": "(varies, >0 when events are linked to Rooms)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "meeting rows carrying ROOM token"
+    },
+    {
+      "face": "arrival",
+      "field": "meeting_rows_with_arms",
+      "expected": "(varies, >0 when auto-record is on)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "meeting rows carrying ARMS token"
+    },
+    {
+      "face": "settings-calendar",
+      "field": "calendar_source_count",
+      "expected": "(>= 1 when calendar configured)",
+      "observed": "2",
+      "verdict": "DATA",
+      "why": "calendar source rows in Settings Meetings"
+    },
+    {
+      "face": "settings-calendar",
+      "field": "ics_source_count",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "ICS/HTTPS sources"
+    },
+    {
+      "face": "settings-calendar",
+      "field": "snapshot_source_count",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "SNAPSHOT sources"
+    },
+    {
+      "face": "settings-calendar",
+      "field": "auto_record_value",
+      "expected": "(OFF / WITH URL / ALL -- from Settings face)",
+      "observed": "Auto-record\u21bbARM ALL CALENDAR MEETINGSARM ROOM MEETINGS ONLYOFF",
+      "verdict": "DATA",
+      "why": "Auto-record CycleGadget value on face"
+    },
+    {
+      "face": "room-sources",
+      "field": "sources_section_present",
+      "expected": "true",
+      "observed": "True",
+      "verdict": "MATCH",
+      "why": "SOURCES section on Room face"
+    },
+    {
+      "face": "room-sources",
+      "field": "source_row_count",
+      "expected": "(varies)",
+      "observed": "2",
+      "verdict": "DATA",
+      "why": "source rows in SOURCES section"
+    },
+    {
+      "face": "room-sources",
+      "field": "source_row:0",
+      "expected": "(provider . scope . tokens)",
+      "observed": "github . karolswdev/HoldSpeak . 2 OPEN PRS . \u00b7 2 CHECKS FAILING",
+      "verdict": "DATA",
+      "why": "source row content"
+    },
+    {
+      "face": "room-sources",
+      "field": "source_row:1",
+      "expected": "(provider . scope . tokens)",
+      "observed": "unknown . KAN . 1 DUE THIS WEEK",
+      "verdict": "DATA",
+      "why": "source row content"
+    },
+    {
+      "face": "room-sources",
+      "field": "meetings_source_present",
+      "expected": "(true when meeting Watch adapter is registered)",
+      "observed": "False",
+      "verdict": "DATA",
+      "why": "MEETINGS source row in Room SOURCES"
+    },
+    {
+      "face": "rhythm-brief",
+      "field": "brief_row_label",
+      "expected": "(Monday brief or Weekly brief)",
+      "observed": "Monday brief",
+      "verdict": "DATA",
+      "why": "brief row primary label in Rhythm"
+    },
+    {
+      "face": "rhythm-brief",
+      "field": "brief_row_tokens",
+      "expected": "(DAILY HH:MM token)",
+      "observed": "DAILY 08:00",
+      "verdict": "DATA",
+      "why": "brief row tokens (cadence + time)"
+    },
+    {
+      "face": "rhythm-brief",
+      "field": "generate_now_present",
+      "expected": "true",
+      "observed": "True",
+      "verdict": "MATCH",
+      "why": "Generate now verb on brief row (present but never pressed)"
+    },
+    {
+      "face": "rhythm-brief",
+      "field": "generate_now_text",
+      "expected": "Generate now",
+      "observed": "Generate",
+      "verdict": "DATA",
+      "why": "Generate now verb label"
+    },
+    {
+      "face": "rhythm-brief",
+      "field": "brief_facts",
+      "expected": "(varies)",
+      "observed": "",
+      "verdict": "DATA",
+      "why": "brief facts section below the row"
+    }
+  ],
+  "errors": [],
+  "surprises": [],
+  "defects": [
+    "ARRIVAL: duplicate meeting rows (A.7) -- same title+badge seen twice: ['AUG 20Sprint']"
+  ]
+}

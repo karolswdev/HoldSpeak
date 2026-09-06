@@ -1022,16 +1022,21 @@ function SourcesSection({
             /* LINE 1: emblem . scope (primary) . [gap] . tokens left-aligned . [spacer] . verbs
                LINE 2: checked + host, starting at the scope's left edge.
                The tokens sit INSIDE the primary slot so they follow the scope
-               inline, not right-aligned as cells. */
+               inline, not right-aligned as cells.
+               HS-175-04: meeting rows use the same grammar — one grammar for
+               all source rows. CHECKED/NEVER chip replaces "checked N ago"
+               when no egress host (the meeting source is local-only). */
+            const isMeeting = src.provider === "meeting";
             return (
               <SurfaceLedgerRow
                 key={src.watchId}
                 lead={emblemFor(src.provider)}
+                data-testid={isMeeting ? "source-meeting-row" : undefined}
                 primary={
                   <span className="room-source-primary">
                     <span className="surface-primary" data-testid="source-scope">{src.scope}</span>
                     {src.tokens.map((tok, ti) => (
-                      <span key={ti} className="surface-token room-source-tok">
+                      <span key={ti} className="surface-token room-source-tok" data-testid={isMeeting ? "source-meeting-token" : undefined}>
                         {ti > 0 ? " · " : ""}{tok}
                       </span>
                     ))}
@@ -1049,16 +1054,34 @@ function SourcesSection({
                       if (src.state === "paused") void handleResume(src.watchIds);
                       else void handlePause(src.watchIds);
                     }}
+                    data-testid={isMeeting ? "source-meeting-verb" : undefined}
                   >
                     {src.state === "paused" ? "Resume" : "Pause"}
                   </Button>
                 }
               >
                 <div className="room-source-line2">
-                  {src.checkedAt ? (
-                    <span className="room-source-checked">checked {humanTime(src.checkedAt)}</span>
+                  {/* HS-175 counsel C7(b): a paused Watch SAYS so (idle chip)
+                      beside its Resume verb -- one grammar for MTG / GH / J. */}
+                  {src.state === "paused" ? (
+                    <span data-testid="source-paused"><StateChip state="idle" label="PAUSED" /></span>
                   ) : null}
-                  {src.host ? <EgressChip label={src.host} scope="cloud" title={src.host} /> : null}
+                  {isMeeting ? (
+                    <span data-testid="source-meeting-checked">
+                      {src.checkedAt ? (
+                        <StateChip state="success" label={`CHECKED ${formatTimeShort(src.checkedAt)}`} icon={"●"} />
+                      ) : (
+                        <StateChip state="idle" label="NEVER" />
+                      )}
+                    </span>
+                  ) : (
+                    <>
+                      {src.checkedAt ? (
+                        <span className="room-source-checked">checked {humanTime(src.checkedAt)}</span>
+                      ) : null}
+                      {src.host ? <EgressChip label={src.host} scope="cloud" title={src.host} /> : null}
+                    </>
+                  )}
                 </div>
               </SurfaceLedgerRow>
             );

@@ -83,11 +83,14 @@ class HeartbeatService:
         observer: PipelineObserver | None = None,
         watch_service: Any | None = None,
         notifier: Any | None = None,
+        calendar_conductor: Any | None = None,
     ) -> None:
         self._db = db
         self._observer = observer or NullObserver()
         self._watch_service = watch_service
         self._notifier = notifier  # injectable for tests; None = OS default
+        # HS-175-02: the calendar refresh rides the heartbeat sweep.
+        self._calendar_conductor = calendar_conductor
 
     # ── Settings ───────────────────────────────────────────────────────
 
@@ -318,6 +321,83 @@ class HeartbeatService:
                     log.error("heartbeat sweep evaluate_due failed: %s", exc)
                     errors.append({"error": str(exc)})
 
+        # HS-175-02: calendar refresh rides the heartbeat sweep.
+        # Own failure boundary: a conductor crash never breaks the loop.
+        calendar_refresh_receipt: dict[str, Any] | None = None
+        if not held and self._calendar_conductor is not None:
+            try:
+                applied = self._calendar_conductor.refresh()
+                calendar_refresh_receipt = {
+                    "kind": "calendar.refresh",
+                    "applied": applied,
+                }
+                # Per-source outcomes with host for HTTPS sources.
+                try:
+                    config = self._calendar_conductor._config_loader()
+                    source_outcomes: list[dict[str, str]] = []
+                    for src in config.calendar.sources:
+                        if src.enabled:
+                            url = str(src.url or "")
+                            entry: dict[str, str] = {"source_id": src.id}
+                            if url.lower().startswith("https://"):
+                                try:
+                                    from urllib.parse import urlparse
+                                    entry["host"] = urlparse(url).hostname or ""
+                                except Exception:
+                                    entry["host"] = ""
+                            source_outcomes.append(entry)
+                    if source_outcomes:
+                        calendar_refresh_receipt["sources"] = source_outcomes
+                except Exception:
+                    pass
+            except Exception as exc:
+                log.error("heartbeat sweep calendar refresh failed: %s", exc)
+                calendar_refresh_receipt = {
+                    "kind": "calendar.refresh",
+                    "applied": False,
+                    "error": str(exc),
+                }
+
+        # HS-175-04: backfill meeting Watches for Rooms that have linked
+        # meetings but no meeting Watch yet.  Idempotent (ensure_meeting_watch
+        # checks before creating).  Own failure boundary.
+        # HS-175 counsel C7(a): a Room with a meeting Watch in ANY state
+        # (retired included) is never backfilled -- Retire is the owner's
+        # word and the sweep does not take it back.
+        meeting_watch_backfill: dict[str, Any] | None = None
+        if not held:
+            try:
+                from holdspeak.services.watch_service import ensure_meeting_watch
+                with self._db._connection() as conn:
+                    rows = conn.execute(
+                        """SELECT DISTINCT mp.project_id
+                           FROM meeting_projects mp
+                           WHERE NOT EXISTS (
+                               SELECT 1 FROM connector_watches cw
+                               WHERE cw.project_id = mp.project_id
+                                 AND cw.connector_id = 'meeting'
+                           )""",
+                    ).fetchall()
+                created = 0
+                for row in rows:
+                    result = ensure_meeting_watch(
+                        self._db, str(row["project_id"]), why="backfill",
+                    )
+                    if result is not None:
+                        created += 1
+                if created > 0:
+                    meeting_watch_backfill = {
+                        "kind": "meeting_watch.backfill",
+                        "created": created,
+                    }
+            except Exception as exc:
+                log.error("heartbeat meeting watch backfill failed: %s", exc)
+                meeting_watch_backfill = {
+                    "kind": "meeting_watch.backfill",
+                    "created": 0,
+                    "error": str(exc),
+                }
+
         # M3: Refresh the aggregate cache via the canonical builder
         self.refresh_aggregate(principal, sweep_id=sweep_id)
 
@@ -343,6 +423,12 @@ class HeartbeatService:
             "errors": len(errors),
             "outcomes": _summarize_outcomes(outcomes),
         }
+        # HS-175-02: calendar refresh receipt rides along.
+        if calendar_refresh_receipt is not None:
+            receipt["calendar"] = calendar_refresh_receipt
+        # HS-175-04: meeting watch backfill receipt rides along.
+        if meeting_watch_backfill is not None:
+            receipt["meeting_watch_backfill"] = meeting_watch_backfill
 
         # Write kernel receipt (Article XI.2)
         self._write_receipt(receipt)

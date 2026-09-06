@@ -110,7 +110,17 @@ def test_get_door_returns_one_complete_aggregate_from_real_service(db: Database)
     response = _client(_service(db)).get("/api/door")
 
     assert response.status_code == 200
-    assert set(response.json()) == {"board", "upcoming", "counts", "calendar_configured"}
+    assert set(response.json()) == {"board", "upcoming", "counts", "calendar_configured", "week"}
+    # HS-175-02 (door.week) + counsel C8/C9: the WEEK strip rides the
+    # aggregate with the local week's bounds; days are absent (never a
+    # zero-dot strip) until a calendar source is connected.
+    week = response.json()["week"]
+    assert set(week) == {"days", "total", "has_calendar", "starts_at", "ends_at"}
+    assert week["has_calendar"] == response.json()["calendar_configured"]
+    assert len(week["days"]) == (7 if week["has_calendar"] else 0)
+    assert week["total"] == sum(d["count"] for d in week["days"])
+    assert all(set(d) == {"date", "dow", "count"} for d in week["days"])
+    assert week["starts_at"] < week["ends_at"]
     assert response.json()["board"]["now"][0]["target_ref"] == "action_item:route-action"
     assert response.json()["board"]["active"][0]["source"] == "thought"
     assert response.json()["upcoming"][0] == {

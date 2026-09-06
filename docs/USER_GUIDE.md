@@ -822,25 +822,26 @@ Two doors lead to the same place:
 1. **From the Door.** When no source is connected the rail reads
    **No calendar connected.** and offers a **Connect calendar** button. It opens
    **Settings, Meetings, Calendar**.
-2. **From Settings directly.** Open **Settings, Meetings, Calendar**. The
-   **Sources** table starts empty.
+2. **From Settings directly.** Open **Settings, Meetings**. The **CALENDAR**
+   section starts with only the **Connect calendar** row.
 
-Choose **+ ADD SOURCE**. A row appears with three fields: **LABEL**, **URL**,
-and **ON** (the enable toggle). Set **URL** to a local ICS file path or an
-HTTPS URL. Set **LABEL** to a short name you will recognize on the rail (for
-example "Work" or "Personal"). **ON** enables the source.
+Choose **Add** on the **Connect calendar** row. A well unfolds under it with
+one field (**Calendar URL or file path**, with a mic) and **Cancel** /
+**Save**. Paste a local ICS file path or an HTTPS URL and choose **Save**.
+The source's row appears above, labeled by the host (for an HTTPS source)
+or the file name; **Edit** reopens the same well pre-filled.
 
-A per-source egress chip appears below the table for every HTTPS source,
-stating the host the hub fetches. A local file source has no egress chip
-because nothing leaves the machine. See
+Every HTTPS source row carries an egress chip naming the host the hub
+fetches. A file source row reads `THIS DEVICE` because nothing leaves the
+machine. See
 [Security & Privacy](SECURITY.md#4-egress-points-everywhere-data-can-leave-the-machine)
 for the wire posture.
 
 #### Adding a second source
 
-Choose **+ ADD SOURCE** again. Each source gets its own row in the table.
-Sources refresh independently: a broken source keeps its last good events on the
-rail while every healthy source refreshes normally.
+Choose **Add** again. Each source gets its own row. Sources refresh
+independently: a broken source keeps its last good events on the rail
+while every healthy source refreshes normally.
 
 #### What the rail shows
 
@@ -864,10 +865,11 @@ A source that fails to refresh (network error, timeout, malformed feed) retains
 its last good projection. The failure is a named receipt; healthy sources are
 never touched by a failed source.
 
-The refresh cadence is boot plus every 15 minutes. Disabling a source (clearing
-**ON**) removes its events from the rail at the next refresh tick. Removing a
-source (choosing **REMOVE?** on its row) does the same. Re-enabling a disabled
-source refetches it on the next tick.
+The refresh cadence is boot plus every 15 minutes. Disabling a source
+(**Disable** on its row) removes its events from the rail at the next refresh
+tick. Removing a source (**Remove** on its row, then **Remove** on the confirm
+that opens under it) does the same. Re-enabling a disabled source
+(**Enable**) refetches it on the next tick.
 
 #### Importing from a calendar screenshot
 
@@ -876,8 +878,8 @@ feed, you can import a week by screenshot.
 
 1. Take a screenshot of the week view in your calendar app. PNG, JPEG, and
    WebP are accepted; up to three screenshots of the same week can be merged.
-2. In **Settings, Meetings, Calendar**, choose **IMPORT SCREENSHOT** (or drop
-   the screenshot onto the Desk glass).
+2. In **Settings, Meetings**, choose **Snapshot** on the **Connect calendar**
+   row (or drop the screenshot onto the Desk glass).
 3. The hub sends the image to the vision model assigned to the
    `calendar.snapshot_extract` capability. If no vision model is assigned, the
    import is refused with a named receipt. The egress badge on the extraction
@@ -943,7 +945,7 @@ source and a linked event has changed:
 A recording that has already started capturing is never touched by a feed
 refresh. Only idle armed recordings participate in reconciliation.
 
-An event imported via **IMPORT SCREENSHOT** is armable in exactly the same
+An event imported via **Snapshot** is armable in exactly the same
 way. Re-importing the same week preserves the link as described above.
 
 When a schedule is linked to a calendar event, it does not appear as a
@@ -1290,6 +1292,117 @@ badges omitted). Selecting a Room opens it. Additional Rooms are
 reachable through the Projects surface.
 
 ![PROJECTS in the command deck](assets/heartbeat/command-deck-projects-1440.png)
+
+## The clock
+
+The clock is the calendar on the desk. Connect a calendar and the
+arrival gains a temporal signal: what is coming, what is armed, and
+which meetings belong to your Rooms.
+
+### Connecting a calendar
+
+Open **Settings, Meetings**. The **CALENDAR** section shows one ledger
+row per source: a state dot (idle when the source is disabled), the
+source label, `ICS` or `SNAPSHOT`, the egress chip naming the host for
+an HTTPS source (a file source carries no chip: nothing leaves the
+machine), `N EVENTS`, and `LAST READ HH:MM` (your local clock) after the
+first refresh. Each row carries the verbs
+**Edit**, **Disable** (or **Enable**), and **Remove**; Remove arms a
+one-step confirm under the row (`REMOVE <LABEL>`, **Remove** /
+**Cancel**).
+
+The **Connect calendar** row carries **Add** and **Snapshot**. **Add**
+unfolds one well under the row: paste an ICS URL (an Outlook or Google
+ICS export link) or a local file path, with a mic on the field and
+**Cancel** / **Save**. **Edit** reuses the same well, pre-filled, under
+the source row. The conductor refreshes every 15 minutes. **Snapshot**
+is the vision adapter: it extracts events from a calendar screenshot
+via the assigned vision model (local/LAN profiles preferred; the host
+is recorded on the egress); confirmed events become a file source
+ingested through the same pipeline.
+
+![Settings Meetings: calendar sources and auto-record](assets/calendar-clock/settings-calendar-1440.png)
+
+### The WEEK strip
+
+Below the arrival's headline, the WEEK strip shows five to seven day
+tokens (`MON` through `SUN`; weekend days appear only when they carry
+meetings). Each day carries one dot per meeting on that day (maximum
+four dots; five or more shows the count with a plus, `5+` style).
+Today's token is accented.
+Below the dots: `N MEETINGS THIS WEEK`.
+
+The strip is absent when no calendar source is connected or when the
+week has zero events.
+
+![The WEEK strip on the arrival](assets/calendar-clock/arrival-week-1440.png)
+
+### Event rows
+
+Each upcoming calendar event on the arrival shows the event title,
+time (`HH:MM`), the calendar source label, and (when the event matches
+a Room) `ROOM` followed by the Room name. When the event has an armed
+recording, the row carries `ARMS HH:MM` and a **Cancel** verb that
+disarms the recording without affecting the calendar event.
+
+Orphan armed recordings (event-born recordings whose calendar event
+has left the projection) render as a separate `ARMED` row with the
+original event title and source label.
+
+### Auto-record
+
+Open **Settings, Meetings**. The **Auto-record** row carries a cycle
+control with three states:
+
+| State | What it does |
+|---|---|
+| `OFF` (default) | No event-born recordings are created |
+| `ARM ROOM MEETINGS ONLY` | Arms recordings for events matching a Room |
+| `ARM ALL CALENDAR MEETINGS` | Arms recordings for every event with a meeting URL |
+
+When enabled, the conductor creates an idle recording for each
+matching calendar event. The recording arms at `starts_at` minus five
+minutes and, like every scheduled recording, records at the event
+(the toggle is your standing consent to record; OFF by default).
+**Cancel** on the row stops it for good: a cancelled row is never
+re-armed by a later refresh. A `5 MIN BEFORE` token
+appears beside the toggle; when `ARM ROOM MEETINGS ONLY` is active, an
+`N MATCHED THIS WEEK` token follows. When a calendar event moves, the
+recording's arm time moves with it. When an event disappears from the
+ICS feed, the recording is cancelled with a receipt.
+
+### The Room's meeting watch
+
+In the Room's **SOURCES** section, a meeting watch row sits alongside
+GitHub and Jira: `MTG` emblem, `MEETINGS`, `N THIS WEEK`, `NEXT DAY
+HH:MM`, and the Watch verbs (**Pause**, **Resume**, **Retire**). The
+row is absent when no meetings link to the Room. The meeting watch
+feeds into the Room's SINCE YOU LOOKED delta: a new intelligence run
+or a new commitment from a linked meeting appears as a change.
+
+![Room SOURCES with a meeting watch row](assets/calendar-clock/room-sources-meetings-1440.png)
+
+### The weekly brief
+
+When a calendar is connected, the Rhythm module's brief row reads
+`Weekly brief` with its true cadence `DAILY HH:MM`: the brief
+regenerates every morning and reads the whole week ahead (it remains
+`Monday brief` without a calendar). The lookback window is unchanged
+(preceding business-day close to now). A separate `compute_lookahead`
+covers now to Sunday 23:59.
+
+The brief's `THIS WEEK` section uses a full-week window (Monday 00:00
+to Sunday 23:59) and carries:
+
+- meetings count, armed recordings count, next event title and time.
+- commitments due this week, with the first item and its day.
+- new decisions from meetings since the last brief.
+
+The `changed`, `broke`, `waiting`, and `decisions` sections use the
+unchanged lookback window. All sections are absent when they have zero
+items (the brief still runs its existing non-calendar collectors).
+
+![The weekly brief with THIS WEEK items](assets/calendar-clock/brief-week-1440.png)
 
 ## Models: the Concierge
 

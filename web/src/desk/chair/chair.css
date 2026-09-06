@@ -81,6 +81,159 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Week Strip (HS-175-02) ───────────────────────────────────────── */
+.arrival-week-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.arrival-week-days {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.arrival-week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.arrival-week-dots {
+  display: flex;
+  gap: 4px;
+  min-height: 6px;
+}
+
+.arrival-week-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+/* Today's day is accented (dots + label). */
+.arrival-week-day[data-today] .arrival-week-dot {
+  background: var(--accent);
+}
+
+.arrival-week-overflow {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.arrival-week-day[data-today] .arrival-week-overflow {
+  color: var(--accent);
+}
+
+.arrival-week-day-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.arrival-week-day[data-today] .arrival-week-day-label {
+  color: var(--accent);
+}
+
+.arrival-week-total {
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* ── Calendar event row tokens (HS-175-02) ────────────────────────── */
+.arrival-meeting-time {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.arrival-meeting-room {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0.7;
+}
+
+.arrival-meeting-source {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* HS-175 C5: the row's Unlink rides beside the ROOM token -- hidden at
+   rest on a fine pointer (the ledger's hover-verb grammar, opacity only
+   so it stays in the tree for focus); always visible for coarse pointers
+   and at the phone width. */
+.arrival-meeting-verbs {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--duration-short) var(--ease-quart);
+}
+.surface-ledger-row:hover .arrival-meeting-verbs,
+.surface-ledger-row:focus-within .arrival-meeting-verbs {
+  opacity: 1;
+}
+@media (pointer: coarse) {
+  .arrival-meeting-verbs {
+    opacity: 1;
+  }
+}
+
+/* ── Orphan armed recording row (HS-175-02) ───────────────────────── */
+.arrival-orphan-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.arrival-orphan-title {
+  font-family: var(--font-sans);
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+  line-height: var(--desk-type-primary-lh);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.arrival-orphan-from {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.arrival-orphan-spacer {
+  flex: 1;
+}
+
 /* ── No calendar (lost door 4) ────────────────────────────────────── */
 .arrival-no-calendar-token {
   color: var(--text-muted);
@@ -281,6 +434,27 @@
   .arrival-capture-bar {
     flex-wrap: wrap;
   }
+  /* HS-175 C5: Unlink is visible at the phone width (no hover there). */
+  .arrival-meeting-verbs {
+    opacity: 1;
+  }
+  /* HS-175-02: week strip scrolls horizontally at narrow width. */
+  .arrival-week-days {
+    overflow-x: auto;
+    gap: 16px;
+    padding-bottom: 2px;
+  }
+  .arrival-week-day {
+    flex-shrink: 0;
+  }
+  .arrival-week-dots {
+    gap: 3px;
+    min-height: 5px;
+  }
+  .arrival-week-dot {
+    width: 5px;
+    height: 5px;
+  }
 }
 
 /* Fallback viewport media for the shell (container query cannot reach
@@ -289,6 +463,10 @@
   .chair {
     padding: var(--space-3);
     gap: var(--space-4);
+  }
+  /* HS-175 C5: Unlink visible at the phone width (viewport fallback). */
+  .arrival-meeting-verbs {
+    opacity: 1;
   }
   .arrival-display {
     font-size: 22px;

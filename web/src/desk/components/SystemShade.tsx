@@ -84,7 +84,7 @@ export function SystemShade({
   const gate = useGate();
   const [corrections, setCorrections] = useState<Correction[] | null>(null);
   const [needsYou, setNeedsYou] = useState<NeedsYouAggregate | null>(null);
-  const [brief, setBrief] = useState<{ itemCount: number; date: string } | null>(null);
+  const [brief, setBrief] = useState<{ itemCount: number; date: string; hasThisWeek: boolean } | null>(null);
   const [denyingId, setDenyingId] = useState<string | null>(null);
   const [denyReason, setDenyReason] = useState("");
   const panel = useRef<HTMLDivElement>(null);
@@ -123,12 +123,13 @@ export function SystemShade({
         if (!data || data.is_empty) { setBrief(null); return; }
         const sections = (data.sections ?? {}) as Record<string, unknown[]>;
         const itemCount = Object.values(sections).flat().length;
+        const thisWeekItems = Array.isArray(sections.this_week) ? sections.this_week : [];
         const genAt = String(data.generated_at ?? "");
         const d = genAt ? new Date(genAt) : null;
         const date = d && !isNaN(d.getTime())
           ? d.toLocaleDateString("en-US", { month: "short", day: "2-digit" }).toUpperCase()
           : "";
-        setBrief(itemCount > 0 ? { itemCount, date } : null);
+        setBrief(itemCount > 0 ? { itemCount, date, hasThisWeek: thisWeekItems.length > 0 } : null);
       })
       .catch(() => setBrief(null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -519,7 +520,7 @@ function ShadeBrief({
   brief,
   onClose,
 }: {
-  brief: { itemCount: number; date: string } | null;
+  brief: { itemCount: number; date: string; hasThisWeek: boolean } | null;
   onClose: () => void;
 }) {
   if (!brief) return null;
@@ -536,7 +537,7 @@ function ShadeBrief({
           {"="}
         </span>
         <div className="desk-shade-what">
-          <strong>Monday brief</strong>
+          <strong>{brief.hasThisWeek ? "Weekly brief" : "Monday brief"}</strong>
           <small>
             <span className="desk-shade-project-tokens">
               <span className="surface-token" data-chip>

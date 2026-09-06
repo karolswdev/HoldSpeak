@@ -86,6 +86,13 @@ export interface ScheduledRecording {
   created_at: string;
 }
 
+/** HS-175 C2: the outcome of an owner's Cancel on a scheduled recording.
+ *  A refusal carries the hub's plain reason (never a stack) and its code
+ *  (`already_recording`, `not_armed`, ...) so the face can name it. */
+export type CancelArmedResult =
+  | { ok: true }
+  | { ok: false; reason: string; code: string; status: number };
+
 /** HS-136-03: arming countdown state broadcast by the conductor. */
 export interface ScheduledArmingState {
   scheduleId: string;
@@ -332,8 +339,9 @@ export interface DeskState {
   }): Promise<boolean>;
   /** HS-136-03: delete a scheduled recording. */
   deleteSchedule(id: string): Promise<void>;
-  /** HS-136-03: cancel an armed scheduled recording. */
-  cancelArmedSchedule(id: string): Promise<boolean>;
+  /** HS-136-03: cancel an armed scheduled recording. HS-175 C2: the
+   *  refusal is returned by name (plain reason + code), never swallowed. */
+  cancelArmedSchedule(id: string): Promise<CancelArmedResult>;
   /** HS-147-02: one-tap arm of a calendar event via POST {calendar_event_id}. */
   armEventRecording(eventId: string): Promise<boolean>;
   /** HS-136-03: apply a scheduled_recording broadcast event. */

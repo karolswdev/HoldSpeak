@@ -1,0 +1,180 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;650;700&amp;family=Space+Grotesk:wght@600;650;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+  </style>
+</helmet>
+
+<!-- Orphan armed recording: event outside the visible MEETINGS list, 1440x900 desk -->
+<div style="width:1440px; height:900px; background:#0e0f13; display:flex; flex-direction:column; overflow:hidden;">
+
+  <!-- MENU BAR -->
+  <div style="height:28px; padding:0 16px; display:flex; align-items:center; gap:16px; background:#1c1f27; border-bottom:1px solid #2a2e3e; flex-shrink:0;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5;">HoldSpeak</span>
+      <span style="font:13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">Desk</span>
+      <span style="font:13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">Object</span>
+      <span style="font:13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">Go</span>
+      <span style="font:13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">Window</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:6px; margin-left:12px;">
+      <span style="width:8px; height:8px; background:#34d399; border-radius:1px; flex-shrink:0;"></span>
+      <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.04em; color:#9ba2b0; text-transform:uppercase;">EXTERNAL REACH ENABLED</span>
+    </div>
+    <span style="flex:1;"></span>
+    <div style="display:flex; align-items:center; gap:16px;">
+      <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">Search &#8984;K</span>
+      <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">Mon, Sep 8 09:36 AM</span>
+    </div>
+  </div>
+
+  <!-- DESK CONTENT -->
+  <div style="flex:1; display:flex; justify-content:center; padding:0 40px; overflow:hidden;">
+    <div style="width:100%; max-width:800px; display:flex; flex-direction:column; padding:40px 0 20px;">
+
+      <!-- HEAD -->
+      <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px;">
+        <div style="font:650 26px/1.15 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#a86e4a;">2 need you across 1 project</div>
+        <div style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0;">NEXT &middot; STANDUP &middot; 10:00 &middot; ROOM &middot; Q4 PLATFORM</div>
+      </div>
+
+      <!-- WEEK STRIP -->
+      <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:20px;">
+        <div style="display:flex; align-items:flex-end; gap:20px;">
+          <!-- MON (today, accented, 2 dots) -->
+          <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+            <div style="display:flex; gap:4px;">
+              <span style="width:6px; height:6px; border-radius:50%; background:#a86e4a;"></span>
+              <span style="width:6px; height:6px; border-radius:50%; background:#a86e4a;"></span>
+            </div>
+            <span style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#a86e4a;" data-today>MON</span>
+          </div>
+          <!-- TUE -->
+          <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+            <div style="display:flex; gap:4px; height:6px;"></div>
+            <span style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d;">TUE</span>
+          </div>
+          <!-- WED -->
+          <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+            <div style="display:flex; gap:4px; height:6px;"></div>
+            <span style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d;">WED</span>
+          </div>
+          <!-- THU (1 dot) -->
+          <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+            <div style="display:flex; gap:4px;">
+              <span style="width:6px; height:6px; border-radius:50%; background:#767e8d;"></span>
+            </div>
+            <span style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d;">THU</span>
+          </div>
+          <!-- FRI -->
+          <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+            <div style="display:flex; gap:4px; height:6px;"></div>
+            <span style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d;">FRI</span>
+          </div>
+        </div>
+        <span style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">2 MEETINGS THIS WEEK</span>
+      </div>
+
+      <!-- NEEDS YOU 2 -->
+      <div style="display:flex; flex-direction:column; margin-bottom:20px;">
+        <div style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; margin-bottom:6px;">NEEDS YOU <span style="color:#f2f3f5;">2</span></div>
+
+        <!-- Watch row: PR review -->
+        <div style="display:grid; grid-template-columns:52px 1fr; gap:0 8px; padding:8px 0; border-top:1px solid #2a2e3e;">
+          <span style="padding-top:1px; text-align:center; font:700 15px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">GH</span>
+          <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+            <span style="flex:1; min-width:0; font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">#612 Rig settles animations before every shot</span>
+            <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap; flex-shrink:0;">WAITING ON YOUR REVIEW &middot; 3 DAYS</span>
+            <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap; flex-shrink:0; opacity:0.7;">Q4 PLATFORM</span>
+            <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Open</button>
+          </div>
+        </div>
+
+        <!-- Jira overdue -->
+        <div style="display:grid; grid-template-columns:52px 1fr; gap:0 8px; padding:8px 0; border-top:1px solid #2a2e3e;">
+          <span style="padding-top:1px; text-align:center; font:700 15px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">J</span>
+          <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+            <span style="flex:1; min-width:0; font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">KAN-7 Payments cut-over runbook</span>
+            <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#fbbf24; white-space:nowrap; flex-shrink:0;">OVERDUE &middot; 2 DAYS</span>
+            <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap; flex-shrink:0; opacity:0.7;">Q4 PLATFORM</span>
+            <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Open</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MEETINGS 2 (today's visible events only) -->
+      <div style="display:flex; flex-direction:column; margin-bottom:12px;">
+        <div style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; margin-bottom:6px;">MEETINGS <span style="color:#f2f3f5;">2</span></div>
+
+        <!-- Event row 1: Standup 10:00 with Room + ARMS + Cancel (on the event row) -->
+        <div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid #2a2e3e;">
+          <span style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap; flex-shrink:0;">10:00</span>
+          <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Standup</span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap; flex-shrink:0; opacity:0.7;">ROOM &middot; Q4 PLATFORM</span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap; flex-shrink:0;">WORK</span>
+          <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; white-space:nowrap; color:#34d399;"><span style="flex:none; font-size:11px; line-height:1;">&#9679;</span>ARMS 09:55</span>
+          <button type="button" style="min-height:24px; padding:2px 8px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Cancel</button>
+        </div>
+
+        <!-- Event row 2: Design review 14:00 with Room -->
+        <div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid #2a2e3e;">
+          <span style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap; flex-shrink:0;">14:00</span>
+          <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Design review</span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap; flex-shrink:0; opacity:0.7;">ROOM &middot; GOVERNANCE</span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap; flex-shrink:0;">WORK</span>
+        </div>
+      </div>
+
+      <!-- ORPHAN EVENT-BORN RECORDING: event outside visible list (Retro at 16:00 THU) -->
+      <div style="display:flex; flex-direction:column; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid #2a2e3e;">
+          <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">Retro</span>
+          <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; white-space:nowrap; color:#34d399;"><span style="flex:none; font-size:11px; line-height:1;">&#9679;</span>ARMED</span>
+          <span style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap; flex-shrink:0;">15:55</span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap; flex-shrink:0;">FROM &middot; Retro (WORK)</span>
+          <span style="flex:1;"></span>
+          <button type="button" style="min-height:24px; padding:2px 8px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Cancel</button>
+        </div>
+      </div>
+
+      <!-- SPACER -->
+      <div style="flex:1;"></div>
+
+      <!-- CAPTURE BAR -->
+      <div style="display:flex; align-items:center; gap:8px; padding:10px 12px; background:#1c1f27; border:1px solid #2a2e3e; border-radius:2px; box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07);">
+        <button type="button" style="display:inline-flex; align-items:center; gap:6px; min-height:28px; padding:4px 12px; border:1px solid #a86e4a; border-radius:0; background:#a86e4a; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; box-shadow:inset 0 1px 0 rgba(255,255,255,0.22), 0 1px 2px rgba(0,0,0,0.3); cursor:pointer; flex-shrink:0;">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#f2f3f5" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="1" width="6" height="10" rx="3"></rect><path d="M3 8a5 5 0 0010 0"></path><line x1="8" y1="13" x2="8" y2="15"></line></svg>
+          Talk
+        </button>
+        <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#9ba2b0; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Develop a thought</button>
+        <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#9ba2b0; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Record meeting</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DOCK -->
+  <div style="height:40px; padding:0 20px; display:flex; align-items:center; justify-content:center; gap:24px; background:#1c1f27; border-top:1px solid #2a2e3e; flex-shrink:0;">
+    <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; cursor:pointer;">Intelligence</span>
+    <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; cursor:pointer;">Speak</span>
+    <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; cursor:pointer;">Meetings</span>
+    <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; cursor:pointer;">Agents</span>
+    <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; cursor:pointer;">Settings</span>
+    <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; cursor:pointer;">Floor</span>
+    <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; cursor:pointer;">Desk memory</span>
+    <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; cursor:pointer;">Delivery</span>
+    <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; cursor:pointer;">Panes</span>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

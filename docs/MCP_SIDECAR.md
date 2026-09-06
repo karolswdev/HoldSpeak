@@ -160,6 +160,17 @@ the provider, the reference, and the meeting that mentioned it.
 source on the Room. `project.dismiss_suggested_source` hides the suggestion;
 the same reference will not recur for this Room.
 
+The graduated watch tools also cover the meeting watch: a
+`MeetingWatchSource` adapter (source type `"meeting"`) sits beside
+`GitHubWatchSource` and `JiraWatchSource`. It reads from the local
+database only (meetings, meeting_projects, segments, decision_records,
+decision_commitments, intel_job_attempts). The Room projection returned
+by `project.get_room` includes the meeting watch row in SOURCES when
+meetings are linked to the Room. No calendar-specific MCP tools exist;
+calendar sources are managed through the HTTP routes
+(`/api/calendar/events`, `/api/calendar/sources`,
+`/api/calendar/snapshot`).
+
 Five resource templates expose project data: `holdspeak://projects/{id}`,
 `.../room`, `.../delta`, `.../updates/{update_id}`, and
 `.../steward/runs/{run_id}`. Unknown ids refuse typed.

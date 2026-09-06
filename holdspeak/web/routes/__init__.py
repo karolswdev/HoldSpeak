@@ -14,7 +14,9 @@ from .activity import build_activity_router
 from .automations import build_automations_router
 from .authority import build_authority_router
 from .cadence import build_cadence_router
+from .calendar_events import build_calendar_events_router
 from .calendar_snapshot import build_calendar_snapshot_router
+from .calendar_sources import build_calendar_sources_router
 from .decisions import build_decisions_router
 from .desk_actuators import build_desk_actuators_router
 from .desk_seed import build_desk_seed_router
@@ -70,7 +72,9 @@ __all__ = [
     "build_automations_router",
     "build_authority_router",
     "build_cadence_router",
+    "build_calendar_events_router",
     "build_calendar_snapshot_router",
+    "build_calendar_sources_router",
     "build_decisions_router",
     "build_desk_actuators_router",
     "build_desk_seed_router",
