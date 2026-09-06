@@ -27,9 +27,19 @@ The calendar gave the desk its clock: the arrival's WEEK strip and `NEXT · <tit
 - A worker's `git stash` in the shared tree wiped ten files; recovered from the dangling stash commit. Law in `.claude/agents/opus-worker.md` and memory: no git verb that moves the tree; the orchestrator reads `git reflog` before every verification run; rigs re-shoot other phases' assets — restore before staging.
 - Earlier walks (167/168) left seed meetings in the owner's real database; the 175 runner found them read-only. His rows; listed for his sitting.
 
-## Owed to the owner (his sitting)
+## The seven questions — RULED (2026-09-06, on the owner's deferral: "The decision is deferred to you")
 
-1. Auto-link vs suggestion-only (a Room named `Design` links a 401k webinar; Unlink is the remedy). 2. The toggle: consent to record at the event (built) or arm-and-wait. 3. Cancel on a recurring meeting: this one (built) or the series. 4. Remove means gone (built). 5. Whose clock: the hub's local (built). 6. The arrival's `THIS WEEK` caption vs the board's MEETINGS (B10). 7. The two `Sprint Review` seed rows are his to delete. Then: his attended walk (06), the close (09), #558 out of draft, merge on his word.
+| # | Question | Ruling |
+|---|---|---|
+| R1 | Auto-link vs suggestion-only | Auto-link stays (open throttle), tightened: a Room's FULL name must appear as a phrase; a one-word Room name links only if it is not a generic meeting word (design, review, standup, sync, …). Unlink stays the remedy. Shipped as a follow-up on main. |
+| R2 | The toggle: record at the event, or arm-and-wait | Record at the event, like every scheduled recording; OFF by default. A recording that waits for a hand is not a scheduled recording. |
+| R3 | Cancel on a recurring meeting | This occurrence. A series cancel is a later verb, if ever asked. |
+| R4 | Remove means gone | Yes — the source, its events, its armed recordings, a snapshot's generated file. |
+| R5 | Whose clock | The hub's local clock, per instant. |
+| R6 | `THIS WEEK` vs the board's MEETINGS | `THIS WEEK` stays; the recorded-meetings ledger owns MEETINGS. |
+| R7 | The two `Sprint Review` seed rows in his database | Deleted through the product's own meeting delete (receipted) after a read-only census confirmed they are the only walk seeds. |
+
+His attended walks (170–175) stay owed.
 
 ## Parked (BACKLOG.md)
 

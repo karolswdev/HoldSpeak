@@ -393,6 +393,8 @@ calendar ingest refresh:
    strings). Case-insensitive substring match. Example: event "Q4
    Platform Standup" matches Room "Q4 Platform" because the Room name
    is a substring of the event title.
+   Ruled R1 (2026-09-06, on the owner's deferral): full-name phrase; a
+   single generic word never links.
 2. **Attendee match:** when the ICS carries attendee data (the existing
    parser extracts `location` and `meeting_url` but NOT attendees
    today -- this is a GAP; see D4 H3), compare attendee email/names
@@ -598,6 +600,9 @@ positive links the event to the wrong Room. Hunt:
   files a recording under the wrong Room; it never loses the
   recording. His word can flip V0 to suggestion-only (question 1 in
   the walk).
+- **Ruled R1 (2026-09-06, on the owner's deferral): full-name phrase; a
+  single generic word never links** (the ">= 4-character whole-word"
+  rule above is superseded; `calendar_ingest_conductor.room_name_matches_title`).
 
 ### H4: A week strip with a counter of zero
 

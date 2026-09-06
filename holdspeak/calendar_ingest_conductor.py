@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import re
 import threading
 import time
 import urllib.error
@@ -37,6 +38,58 @@ from .logging_config import get_logger
 
 
 log = get_logger("calendar_ingest_conductor")
+
+
+# Ruled R1 (2026-09-06, on the owner's deferral): a ONE-WORD Room name
+# never auto-links a calendar event when that word is generic meeting
+# vocabulary.  Counsel showed a Room named "Design" linking a "401k
+# enrollment design review" webinar; a lone generic word is no signal.
+# Compared case-insensitively against the stripped Room name.  Multi-word
+# Room names are not subject to this list (their full phrase is the signal).
+GENERIC_MEETING_WORDS: frozenset[str] = frozenset({
+    "design", "review", "standup", "sync", "planning", "meeting", "weekly",
+    "daily", "update", "status", "call", "check", "chat", "notes", "general",
+    "misc", "team", "project", "retro", "demo", "office", "hours", "lunch",
+    "interview", "onboarding", "training", "workshop", "all-hands", "1:1",
+})
+
+_WORD_RE = re.compile(r"[a-z0-9]+")
+
+
+def _phrase_tokens(text: str) -> tuple[str, ...]:
+    """Lower-case word tokens; any punctuation run is a word boundary.
+
+    ``"q4-platform sync"`` and ``"Q4 Platform: Sync"`` both tokenize to
+    ``("q4", "platform", "sync")``, which is what makes the phrase match
+    whole-word bounded and punctuation-insensitive.
+    """
+    return tuple(_WORD_RE.findall(text.lower()))
+
+
+def room_name_matches_title(room_name: str, event_title: str) -> bool:
+    """Ruled R1 (2026-09-06): does this Room name auto-link this event title?
+
+    (1) The Room's FULL name must appear in the title as a contiguous
+        phrase -- case-insensitive, whole-word bounded, punctuation-
+        insensitive.  "Q4 Platform" matches "Q4 Platform Standup" and
+        "q4-platform sync"; it does NOT match "Platform review".
+    (2) A ONE-WORD Room name links only if the word is not in
+        ``GENERIC_MEETING_WORDS``.
+
+    Manual links and the durable Unlink suppression are not this function's
+    concern: it only says whether the matcher may propose a title link.
+    """
+    name = (room_name or "").strip()
+    if not name:
+        return False
+    if not any(ch.isspace() for ch in name) and name.lower() in GENERIC_MEETING_WORDS:
+        return False
+    needle = _phrase_tokens(name)
+    if not needle:
+        return False
+    haystack = _phrase_tokens(event_title or "")
+    n = len(needle)
+    return any(haystack[i:i + n] == needle for i in range(len(haystack) - n + 1))
 
 
 @dataclass(frozen=True)
@@ -278,9 +331,14 @@ class CalendarIngestConductor:
     def _run_event_room_matcher(self) -> None:
         """HS-175-02: match calendar events to Rooms by title.
 
-        H3 (counsel): a title match requires the Room name (>= 4 chars) as a
-        whole-word substring of the event title; one-word Room names of <= 3
-        chars never auto-match (too high false-positive risk).
+        Ruled R1 (2026-09-06, on the owner's deferral): a title match
+        requires the Room's FULL name as a contiguous whole-word phrase of
+        the event title (case- and punctuation-insensitive), and a ONE-WORD
+        Room name never links when it is generic meeting vocabulary
+        (``GENERIC_MEETING_WORDS``); see ``room_name_matches_title``.  The
+        longest Room name still wins when several full names appear.  This
+        supersedes H3's ">= 4-char whole-word substring" rule, under which
+        a Room named "Design" linked a "401k enrollment design review".
 
         Manual links are preserved (they override the matcher), and a pair
         the owner unlinked is never re-linked (C5, the suppression table).
@@ -294,8 +352,6 @@ class CalendarIngestConductor:
         whole-word contain), so it warned on every refresh per Room and
         could never match.  Dropped honestly rather than "fixed".
         """
-        import re
-
         db = self._get_db()
         events = db.calendar_events.list_all()
         if not events:
@@ -324,17 +380,11 @@ class CalendarIngestConductor:
             title = (event.title or "").strip()
             if not title:
                 continue
-            title_lower = title.lower()
             best_match: tuple[str, int] | None = None  # (project_id, match_length)
             for pid, candidate, _kind in room_candidates:
                 candidate_stripped = candidate.strip()
-                if len(candidate_stripped) < 4:
-                    # H3: skip short names (too high false-positive risk).
-                    continue
-                candidate_lower = candidate_stripped.lower()
-                # Whole-word substring match.
-                pattern = r'\b' + re.escape(candidate_lower) + r'\b'
-                if re.search(pattern, title_lower):
+                # R1: full-name phrase; a lone generic word never links.
+                if room_name_matches_title(candidate_stripped, title):
                     # Prefer the LONGEST matching Room name.
                     if best_match is None or len(candidate_stripped) > best_match[1]:
                         best_match = (pid, len(candidate_stripped))
