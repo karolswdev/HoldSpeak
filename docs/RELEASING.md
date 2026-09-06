@@ -148,10 +148,10 @@ Run `doctor` after an upgrade if you want confirmation that everything lines up.
 
 There are three levels, and they answer different questions.
 
-**The critical journeys** are the release gate. Four journeys — the
+**The critical journeys** are the release gate. Four journeys (the
 installation can say what it is, it can be backed up and restored, a cold
 install reaches a kept sentence with no model, and a Project reaches its first
-result — run the real services with only the external adapters substituted.
+result) run the real services with only the external adapters substituted.
 They need no model, no microphone, no network and no macOS, and they run in
 seconds:
 
