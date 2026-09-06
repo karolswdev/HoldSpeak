@@ -209,6 +209,16 @@ left column is the name; do not alternate with the synonyms.
 | the REMOTE badge (the fourth egress state) | "the remote chip", "the network badge", "the external badge" |
 | the overnight runner (the .43 client script) | "the cron job", "the scheduled runner", "the background agent" |
 | the Confluence connector (blog posts + pages by ID) | "the wiki connector", "the Confluence integration", "the Confluence plugin" |
+| the clock (the calendar on the desk) | "the calendar view", "the schedule", "the planner" |
+| the WEEK strip (the arrival's day-token row) | "the week bar", "the calendar bar", "the day pills" |
+| an event-born recording (auto-created from a calendar event) | "a calendar recording", "an auto-recording", "a scheduled capture" |
+| the meeting watch (the Room's meeting Watch source) | "the meeting tracker", "the meeting monitor", "the meeting feed" |
+| the weekly brief (the full-week summary in Rhythm) | "the week report", "the weekly digest", "the week-in-review" |
+| the Speak wings (Speak, Journal, Blocks, Learned) | "tabs", "panels", "sections" |
+| a text correction (a heard phrase paired with the said phrase) | "a spelling fix", "a vocabulary entry", "a find and replace" |
+| a routing correction (an intent or target correction) | "a route fix", "a redirect", "a reroute" |
+| the Learned wing (the correction memory on the face) | "the Memory tab", "the corrections table" |
+| APPLIED (the chip where a stored rule fired on a run) | "corrected", "learned", "fixed", "nudged" |
 
 ## Voice rules (the editing standard for every user-facing doc)
 

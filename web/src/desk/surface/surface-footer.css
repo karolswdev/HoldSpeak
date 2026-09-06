@@ -267,6 +267,20 @@
 .desk-next .ledger-filter-well:focus-within {
   box-shadow: var(--desk-window-etch), inset 0 0 0 1px var(--accent);
 }
+/* HS-176-04 — the voice law's mic trails inside the filter well, sized to
+   the 22px rail (the desk default is 34px). */
+.desk-next .ledger-filter-well .desk-mic {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  background: transparent;
+  font-size: 11px;
+}
+.desk-next .ledger-filter-well .desk-mic img {
+  width: 12px;
+  height: 12px;
+}
 .desk-next .ledger-filter-count {
   flex: none;
   font-family: var(--font-mono);

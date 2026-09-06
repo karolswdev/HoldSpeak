@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 73  # informational; 72→73: follow_through_proposals (HS-172-03)
+SCHEMA_VERSION = 76  # informational; 74→75: calendar_event_link_suppressions (HS-175 counsel C5); 75→76: dictation_journal.corrections_applied (HS-176-02)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -836,6 +836,9 @@ ON remote_dictation_deliveries(updated_at DESC);
 -- + final text are secret-filtered before insert and the table is retention-
 -- capped (prune-on-insert to a last-N bound). `corrected` / `correction_id` are
 -- set by HS-45-03 when a user fixes an entry in the moment.
+-- HS-176-02 (ruling R5) splits the two facts: `corrected` keeps its meaning
+-- ("he taught FROM this row"), and `corrections_applied` is a JSON array of
+-- the correction ids that FIRED ON this row.
 CREATE TABLE IF NOT EXISTS dictation_journal (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -852,7 +855,8 @@ CREATE TABLE IF NOT EXISTS dictation_journal (
     confidence REAL,
     warnings TEXT NOT NULL DEFAULT '[]',
     corrected INTEGER NOT NULL DEFAULT 0,
-    correction_id INTEGER
+    correction_id INTEGER,
+    corrections_applied TEXT NOT NULL DEFAULT '[]'
 );
 
 CREATE INDEX IF NOT EXISTS idx_dictation_journal_recent
@@ -3484,7 +3488,17 @@ CREATE TABLE IF NOT EXISTS scheduled_recordings (
     delegation_receipt_id TEXT NOT NULL DEFAULT '',
     calendar_event_id TEXT NOT NULL DEFAULT '',
     calendar_uid TEXT NOT NULL DEFAULT '',
-    calendar_source_id TEXT NOT NULL DEFAULT ''
+    calendar_source_id TEXT NOT NULL DEFAULT '',
+    born_from TEXT NOT NULL DEFAULT '',
+    -- HS-175 counsel C3: the owner's cancel is final.  Stamped (epoch) by
+    -- the owner's Cancel; with (calendar_source_id, calendar_uid) it is the
+    -- tombstone the calendar refresh honours.  Additive, nullable.
+    owner_cancelled_at REAL,
+    -- HS-175 counsel re-read (1): the tombstone is keyed by OCCURRENCE --
+    -- (calendar_source_id, calendar_uid, calendar_starts_at) -- so Cancel
+    -- on one standup of a series means "this one", never the series.
+    -- The event's starts_at exactly as projected (the parser's UTC string).
+    calendar_starts_at TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_scheduled_recordings_enabled
 ON scheduled_recordings(enabled, next_fire_at) WHERE enabled=1;
@@ -4073,4 +4087,29 @@ CREATE INDEX IF NOT EXISTS idx_ftp_project
 CREATE UNIQUE INDEX IF NOT EXISTS idx_ftp_dedup
     ON follow_through_proposals(meeting_id, fingerprint)
     WHERE state = 'proposed';
+
+-- HS-175-02: Calendar event to Room (project) matcher join table.
+CREATE TABLE IF NOT EXISTS calendar_event_projects (
+    calendar_event_id TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    match_source TEXT NOT NULL DEFAULT 'title'
+        CHECK (match_source IN ('title', 'attendee', 'manual')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (calendar_event_id, project_id)
+);
+CREATE INDEX IF NOT EXISTS idx_cep_project
+    ON calendar_event_projects(project_id);
+
+-- HS-175 counsel C5: a durable Unlink.  The owner's unlink of an
+-- (event, Room) pair is keyed by the event's (source, uid) rather than
+-- its projection id, so it survives both the matcher's re-run and the
+-- projection id regenerating when the event's time changes.  A manual
+-- link clears it.  Additive; never rebuilt.
+CREATE TABLE IF NOT EXISTS calendar_event_link_suppressions (
+    calendar_source_id TEXT NOT NULL,
+    calendar_uid TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (calendar_source_id, calendar_uid, project_id)
+);
 """

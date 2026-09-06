@@ -23,6 +23,9 @@ from ...context import WebContext
 from ._helpers import (
     _block_summary,
     _open_text_entry,
+    diff_text_correction,
+    record_correction,
+    teach_refusal_reason,
     _resolve_blocks_target,
     _resolve_project_context,
     _run_cancellable_entry,
@@ -32,6 +35,120 @@ from ._helpers import (
 )
 
 log = get_logger("web.routes.dictation")
+
+
+#: HS-176-02 (R12/N1): the order the six target-override ids are offered in.
+#: `auto` is NOT a member — it is meaningless as a correction and `_profile`
+#: raises `KeyError` on it inside the live typing path.
+_TARGET_OVERRIDE_ORDER = (
+    "claude_code",
+    "codex_cli",
+    "terminal_shell",
+    "browser",
+    "editor",
+    "chat",
+)
+
+
+def _target_override_options() -> list[dict[str, str]]:
+    """The `target` correction's `[{id, label}]` pick list — six ids, no `auto`.
+
+    The labels come from `_profile`'s own map (`target_profile.py:280-288`), the
+    ONE source, so the face prints `Terminal shell` verbatim and no design-owned
+    label table can drift from it (C12 note).
+    """
+    from ....target_profile import TARGET_PROFILE_OVERRIDE_OPTIONS, _profile
+
+    offered = [pid for pid in _TARGET_OVERRIDE_ORDER if pid in TARGET_PROFILE_OVERRIDE_OPTIONS]
+    # Anything the option set grows later is still offered (never `auto`).
+    offered += sorted(
+        TARGET_PROFILE_OVERRIDE_OPTIONS - set(_TARGET_OVERRIDE_ORDER) - {"auto"}
+    )
+    options: list[dict[str, str]] = []
+    for pid in offered:
+        try:
+            label = _profile(pid, 0.0, "readiness", {}, details={}).label
+        except Exception:  # pragma: no cover - the belt N1 pays in target_profile
+            label = pid
+        options.append({"id": pid, "label": str(label)})
+    return options
+
+
+def _teach(
+    store: Any,
+    kind: str,
+    *,
+    key: Optional[str] = None,
+    value: Optional[str] = None,
+    heard: Optional[str] = None,
+    said: Optional[str] = None,
+) -> dict[str, Any]:
+    """Run the ruled teach for one correction kind. Writes AT MOST one row.
+
+    HS-176-02 (R4). The ONE place both teach routes go through, so the refusal
+    vocabulary and the stored-id linkage cannot drift between them. A refusal
+    writes nothing and carries a named `reason`; an acceptance carries the
+    stored row's `id`, `kind`, `key` and `value`.
+    """
+    if kind == "text":
+        outcome = diff_text_correction(heard or "", said or "")
+        rule = outcome["rule"]
+        if rule is None:
+            # `no_change` (heard == said) and `empty` write NOTHING — no
+            # correction row, no `taught_from` flag, no id linkage.
+            return {
+                "recorded": False,
+                "id": None,
+                "kind": kind,
+                "key": None,
+                "value": None,
+                "reason": str(outcome["reason"]),
+            }
+        key = str(rule["key"])
+        value = str(rule["value"])
+
+    clean_key = " ".join(str(key or "").split())
+    clean_value = str(value or "").strip()
+    recorded, correction_id, refusal = record_correction(
+        store, kind, clean_key, clean_value
+    )
+    if not recorded:
+        return {
+            "recorded": False,
+            "id": None,
+            "kind": kind,
+            "key": None,
+            "value": None,
+            # The store names its own refusal (`secret` / `one_word` / …); the
+            # mirror only covers a store that predates that contract.
+            "reason": refusal or teach_refusal_reason(kind, clean_key, clean_value),
+        }
+    return {
+        "recorded": True,
+        "id": correction_id,
+        "kind": kind,
+        "key": clean_key,
+        "value": clean_value,
+        "reason": None,
+    }
+
+
+def _teach_response(store: Any, kind: str, **kwargs: Any) -> Any:
+    """`_teach` as the fallback route's body: `recorded` + `size` + the facts."""
+    result = _teach(store, kind, **kwargs)
+    body: dict[str, Any] = {"recorded": bool(result["recorded"]), "size": len(store)}
+    if result["recorded"]:
+        body.update(
+            {
+                "id": result["id"],
+                "kind": result["kind"],
+                "key": result["key"],
+                "value": result["value"],
+            }
+        )
+    else:
+        body["reason"] = result["reason"]
+    return JSONResponse(body)
 
 
 def _log_detached_delivery(task: Any) -> None:
@@ -205,6 +322,13 @@ def build_pipeline_router(
                 {},
                 cfg.pipeline.target_profile_override,
             ).to_dict()
+        # HS-176-02 (R12/N1): the label source for a `target` correction. The
+        # face renders labels; the wire carries ids. SIX ids —
+        # `TARGET_PROFILE_OVERRIDE_OPTIONS` minus `auto`, which is meaningless
+        # as a correction and raises `KeyError` inside `_profile` on the live
+        # typing path. The labels are read from `_profile`'s own map, so there
+        # is no second, drifting label table (C12 note).
+        target_payload["overrides"] = _target_override_options()
         agent_hooks_payload: dict[str, Any] = {}
         for agent in ("claude", "codex"):
             latest = get_recent_agent_session(agent=agent, max_age_seconds=7 * 24 * 60 * 60)
@@ -803,6 +927,14 @@ def build_pipeline_router(
             # "never admitted" from "admitted, then could not record its end".
             entry = None
             final_text = text
+            # HS-176 counsel C1: the run's own facts, kept so the terminal body
+            # can carry the SAME three keys the dry-run reply carries
+            # (`raw_text`, `corrections_applied`, `journal_id`). The deck reads
+            # all three off one `result` object (`useSpeakDeck.ts:161,166,443`),
+            # so a delivery that omitted them left the APPLIED chip blank, the
+            # TEXT teach well pre-filled from the LANDED text, and `teach()` on
+            # the corrections fallback instead of the journal route.
+            processed: Any = None
             try:
                 def _run_text(owned: Any) -> Any:
                     return _run_dictation_dry_run_text(
@@ -893,6 +1025,16 @@ def build_pipeline_router(
             if refused is not None:
                 return refused
             body = {"success": True, "final_text": final_text, "delivered": delivered}
+            # C1: the loop's three facts, from the run that already computed
+            # them — never recomputed, never a read-time guess. Absent when the
+            # run produced no dict (a `raw: true` verbatim send returns above
+            # and never reaches here).
+            if isinstance(processed, dict):
+                body["raw_text"] = processed.get("raw_text", text)
+                body["corrections_applied"] = [
+                    int(x) for x in (processed.get("corrections_applied") or [])
+                ]
+                body["journal_id"] = processed.get("journal_id")
             if receipt is not None:
                 body["delivery"] = receipt
             if entry is not None and entry.indeterminate:
@@ -917,18 +1059,29 @@ def build_pipeline_router(
     @router.get("/api/dictation/corrections")
     async def api_dictation_corrections_list() -> Any:
         from ....config import Config
-        from ....dictation_learning import reach_for_gist
         from ....plugins.dictation.corrections import CORRECTION_KINDS
 
         store = ctx.corrections
         cfg = Config.load().dictation
         items = store.list_for_display() if store is not None else []
-        # HS-48-02: each correction's real reach over the journal (the same
-        # Jaccard count the digest reports), so the Memory list shows how far
-        # each thing it learned actually carries.
-        transcripts = _journal_transcripts()
+        # HS-176-02 (R3): `applied` is a REAL count — the number of retained
+        # journal rows whose stored `corrections_applied` names this rule, i.e.
+        # the times it actually fired. It replaces HS-48-02's `similar`
+        # (`reach_for_gist`), which counted *similar transcripts* — including
+        # the teaching utterance itself, so a brand-new correction read
+        # `1 APPLIED` meaning zero applications. `reach_for_gist` stays in the
+        # learning digest and appears on no face.
+        #
+        # C3 note: this counts the RETAINED journal, so it can go DOWN as rows
+        # age out (the recorder prunes to `journal_retention`, default 500).
+        counts = _applied_counts()
         for item in items:
-            item["similar"] = reach_for_gist(str(item.get("key") or ""), transcripts)
+            try:
+                correction_id = int(item.get("id"))  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                item["applied"] = 0
+                continue
+            item["applied"] = int(counts.get(correction_id, 0))
         return JSONResponse(
             {
                 "enabled": bool(getattr(cfg.pipeline, "corrections_enabled", False)),
@@ -977,6 +1130,23 @@ def build_pipeline_router(
 
     @router.post("/api/dictation/corrections")
     async def api_dictation_corrections_record(payload: dict[str, Any]) -> Any:
+        """Teach one correction (the fallback route — no journal row to attach).
+
+        Request:
+        - routing kinds (`intent` / `target`): ``{"kind", "text", "value"}`` —
+          `text` is the gist the rule applies to, `value` the block id / target
+          profile id. Unchanged since HS-39-02.
+        - the `text` kind (HS-176-02): ``{"kind": "text", "heard", "said"}`` —
+          what the mic heard and what he said. `text` is accepted as an alias
+          for `heard` and `value` for `said`, so the existing shape still works.
+          The server runs the word-level diff (`diff_text_correction`) and
+          stores the rule the diff yields; the face sends no key/value.
+
+        Response: ``{"recorded", "size"}`` always, plus the stored
+        ``{"id", "kind", "key", "value"}`` when something was written, or a
+        named ``"reason"`` when nothing was (R4: `recorded` is the ONE key the
+        face reads on both teach routes).
+        """
         from ....plugins.dictation.corrections import CORRECTION_KINDS
 
         store = ctx.corrections
@@ -985,16 +1155,29 @@ def build_pipeline_router(
         kind = payload.get("kind") if isinstance(payload, dict) else None
         text = payload.get("text") if isinstance(payload, dict) else None
         value = payload.get("value") if isinstance(payload, dict) else None
+        heard = payload.get("heard") if isinstance(payload, dict) else None
+        said = payload.get("said") if isinstance(payload, dict) else None
         if kind not in CORRECTION_KINDS:
             return JSONResponse(
                 {"error": f"kind must be one of {list(CORRECTION_KINDS)}"}, status_code=400
             )
+        if kind == "text":
+            heard = heard if isinstance(heard, str) else text
+            said = said if isinstance(said, str) else value
+            if not isinstance(heard, str) or not heard.strip():
+                return JSONResponse(
+                    {"error": "heard must be a non-empty string"}, status_code=400
+                )
+            if not isinstance(said, str) or not said.strip():
+                return JSONResponse(
+                    {"error": "said must be a non-empty string"}, status_code=400
+                )
+            return _teach_response(store, "text", heard=heard, said=said)
         if not isinstance(text, str) or not text.strip():
             return JSONResponse({"error": "text must be a non-empty string"}, status_code=400)
         if not isinstance(value, str) or not value.strip():
             return JSONResponse({"error": "value must be a non-empty string"}, status_code=400)
-        recorded = store.record(kind, text, value)
-        return JSONResponse({"recorded": bool(recorded), "size": len(store)})
+        return _teach_response(store, kind, key=text, value=value)
 
     @router.delete("/api/dictation/corrections/{correction_id}")
     async def api_dictation_corrections_delete(correction_id: int) -> Any:
@@ -1026,55 +1209,76 @@ def build_pipeline_router(
         repo = _journal_repo()
         return [r.transcript for r in repo.recent()] if repo is not None else []
 
+    def _applied_counts() -> dict[int, int]:
+        """How many RETAINED journal rows each correction actually fired on.
+
+        HS-176-02 (R3). ONE pass over the retained journal, computed once for the
+        whole corrections list — cheaper than a per-correction query and honest
+        about what it counts: rows whose stored `corrections_applied` names the
+        id. The teaching utterance is never one of them (it was never re-run).
+        A bare server, or a repository that predates the column, yields {}.
+        """
+        repo = _journal_repo()
+        if repo is None:
+            return {}
+        counts: dict[int, int] = {}
+        try:
+            for record in repo.recent():
+                for raw_id in getattr(record, "corrections_applied", None) or []:
+                    try:
+                        correction_id = int(raw_id)
+                    except (TypeError, ValueError):
+                        continue
+                    counts[correction_id] = counts.get(correction_id, 0) + 1
+        except Exception:  # pragma: no cover - a read must never fail the list
+            return {}
+        return counts
+
     def _dictation_service() -> DictationService:
         return dictation_service
 
     @router.get("/api/dictation/journal")
     async def api_dictation_journal_list(
-        request: Request, limit: int = 200, source: Optional[str] = None
+        request: Request,
+        limit: int = 200,
+        source: Optional[str] = None,
+        before: Optional[int] = None,
     ) -> Any:
         """List journal entries newest-first (HS-45-02).
 
         Reports the toggle + retention from config so the UI can show the
         local-only trust statement. With no durable repo (a bare server) the
         list is empty — never an error.
+
+        HS-176-03: `source` accepts every source the recorder writes
+        (`VALID_SOURCES` — `dictation` / `dry_run` / `browser` / `hotkey`); the
+        old clamp silently dropped `browser` and `hotkey` into "no filter".
+        `before=<id>` is the scroll-to-load cursor: entries older than that id.
+
+        R2: the row no longer carries `learning` / `best_correction_signal` — a
+        read-time "would match" computed over the whole journal, which painted
+        rows recorded BEFORE the correction existed. What fired on a row is a
+        stored per-run fact (`corrections_applied`), served by the serializer.
         """
         from ....config import Config
-        from ....dictation_learning import best_correction_signal, reach_by_gist_map
+        from ....plugins.dictation.journal import VALID_SOURCES
 
         cfg = Config.load().dictation
         journal = _dictation_service().list_journal(
             getattr(request.state, "principal", None),
             limit=limit,
-            source=source if source in ("dictation", "dry_run") else None,
+            source=source if source in VALID_SOURCES else None,
+            cursor=before,
         )
-        items = journal["items"]
-        # HS-48-02: a per-entry "learned from N similar" signal — the correction
-        # the live router would apply to this utterance, and its reach. Gated on
-        # `corrections_enabled`: a None snapshot means the router nudges nothing,
-        # so we claim nothing. Reach is over the whole journal, precomputed once.
-        store = ctx.corrections
-        snapshot = (
-            store.snapshot()
-            if store is not None and bool(getattr(cfg.pipeline, "corrections_enabled", False))
-            else None
-        )
-        if snapshot:
-            transcripts = _journal_transcripts()
-            reach_map = reach_by_gist_map(snapshot, transcripts)
-            for item in items:
-                item["learning"] = best_correction_signal(
-                    str(item.get("transcript") or ""), snapshot, reach_map
-                )
-        else:
-            for item in items:
-                item["learning"] = None
         return JSONResponse(
             {
                 "enabled": bool(getattr(cfg.pipeline, "journal_enabled", True)),
                 "retention": int(getattr(cfg.pipeline, "journal_retention", 500)),
                 "count": journal["count"],
-                "items": items,
+                # C4: the footer's token counts TODAY, so the route serves
+                # today. `count` (all-time retained) is untouched.
+                "today": journal.get("today", 0),
+                "items": journal["items"],
             }
         )
 
@@ -1124,10 +1328,27 @@ def build_pipeline_router(
         """HS-45-03: correct a journaled run in the moment — and teach.
 
         Records a correction (reusing the Phase-40 `CorrectionStore`, so future
-        routing is nudged) keyed on the entry's own transcript, then flips the
-        journal entry's `corrected` flag and links the correction. The teach
-        path is gist-only + secret-filtered by the store, exactly like the
-        Memory tab.
+        routing is nudged), then flips the journal entry's `corrected` flag and
+        links the correction. The store secret-filters every teach.
+
+        Request:
+        - routing kinds (`intent` / `target`): ``{"kind", "value"}`` — the rule
+          is keyed on the entry's own transcript, `value` is the block id /
+          target profile id. Unchanged since HS-45-03.
+        - the `text` kind (HS-176-02): ``{"kind": "text", "heard", "said"}`` —
+          `heard` defaults to the entry's stored transcript, and `value` is
+          accepted as an alias for `said`. The server runs the word-level diff.
+
+        HS-176-02 (R4), four wire fixes:
+        1. `recorded` is the key BOTH teach routes answer with (`taught` stays
+           as its long-standing mirror on this route only).
+        2. `mark_corrected` moved INSIDE `if recorded` — a refused teach no
+           longer flips `corrected` on the row.
+        3. the linked `correction_id` is the id `record()` returned, not the
+           newest correction in the store (which, on a refusal, was somebody
+           else's rule entirely).
+        4. a refusal carries a named `reason` (`secret` / `one_word` /
+           `no_change` / …) so the face can say `REFUSED · SECRET` truthfully.
         """
         from ....plugins.dictation.corrections import CORRECTION_KINDS
 
@@ -1139,37 +1360,47 @@ def build_pipeline_router(
             return JSONResponse({"error": "correction store unavailable"}, status_code=503)
         kind = payload.get("kind") if isinstance(payload, dict) else None
         value = payload.get("value") if isinstance(payload, dict) else None
+        heard = payload.get("heard") if isinstance(payload, dict) else None
+        said = payload.get("said") if isinstance(payload, dict) else None
         if kind not in CORRECTION_KINDS:
             return JSONResponse(
                 {"error": f"kind must be one of {list(CORRECTION_KINDS)}"}, status_code=400
             )
-        if not isinstance(value, str) or not value.strip():
+        if kind == "text":
+            said = said if isinstance(said, str) else value
+            if not isinstance(said, str) or not said.strip():
+                return JSONResponse(
+                    {"error": "said must be a non-empty string"}, status_code=400
+                )
+        elif not isinstance(value, str) or not value.strip():
             return JSONResponse({"error": "value must be a non-empty string"}, status_code=400)
         entry = repo.get(entry_id)
         if entry is None:
             return JSONResponse({"error": "entry not found"}, status_code=404)
-        # Teach from the entry's own transcript (the gist the correction applies
-        # to). The store secret-filters + dedups; a secret-like transcript is a
-        # no-op teach but the entry is still flagged corrected.
-        recorded = store.record(kind, entry.transcript, value)
-        correction_id = None
-        try:
-            items = store.list_for_display()
-            if items and items[0].get("id") is not None:
-                correction_id = int(items[0]["id"])
-        except Exception:  # pragma: no cover - id linkage is best-effort
-            correction_id = None
-        repo.mark_corrected(entry_id, correction_id=correction_id)
-        # HS-48-02: the honest coverage this teach now has — how many journal
-        # utterances the correction reaches (the same Jaccard count the digest
-        # uses). Only meaningful when something was actually taught; `enabled`
-        # lets the UI say "now nudges N" vs "will nudge N once corrections are on"
-        # without ever overclaiming.
+        if kind == "text":
+            result = _teach(
+                store,
+                "text",
+                heard=(heard if isinstance(heard, str) and heard.strip() else entry.transcript),
+                said=said,
+            )
+        else:
+            result = _teach(store, kind, key=entry.transcript, value=value)
+        recorded = bool(result["recorded"])
+        correction_id = result["id"]
+        if recorded:
+            repo.mark_corrected(entry_id, correction_id=correction_id)
+        # HS-48-02: the honest coverage a ROUTING teach now has — how many
+        # journal utterances the correction reaches (the same Jaccard count the
+        # digest uses). A `text` rule is exact-phrase and has no Jaccard reach,
+        # so its `similar` is 0 rather than a borrowed number (R3/R7).
         from ....config import Config
         from ....dictation_learning import reach_for_gist
 
         similar = (
-            reach_for_gist(entry.transcript, _journal_transcripts()) if recorded else 0
+            reach_for_gist(entry.transcript, _journal_transcripts())
+            if recorded and kind != "text"
+            else 0
         )
         cfg = Config.load().dictation
         corrections_enabled = bool(getattr(cfg.pipeline, "corrections_enabled", False))
@@ -1184,21 +1415,29 @@ def build_pipeline_router(
                 {
                     "kind": kind,
                     "gist": gist[:120] + ("…" if len(gist) > 120 else ""),
-                    "value": str(value).strip(),
+                    "value": str(result["value"] or "").strip(),
                     "similar": int(similar),
                     "enabled": corrections_enabled,
                 },
             )
-        return JSONResponse(
-            {
-                "corrected": True,
-                "taught": bool(recorded),
-                "correction_id": correction_id,
-                "size": len(store),
-                "similar": similar,
-                "enabled": corrections_enabled,
-            }
-        )
+        body: dict[str, Any] = {
+            # `corrected` now says what actually happened to the ROW: a refused
+            # teach flips nothing, so it cannot claim True (R4).
+            "corrected": recorded,
+            "recorded": recorded,
+            "taught": recorded,  # the long-standing mirror; `recorded` is canon
+            "correction_id": correction_id,
+            "size": len(store),
+            "similar": similar,
+            "enabled": corrections_enabled,
+        }
+        if recorded:
+            body.update(
+                {"id": correction_id, "kind": result["kind"], "key": result["key"], "value": result["value"]}
+            )
+        else:
+            body["reason"] = result["reason"]
+        return JSONResponse(body)
 
     @router.post("/api/dictation/journal/{entry_id}/replay")
     async def api_dictation_journal_replay(request: Request, entry_id: int) -> Any:
@@ -1318,4 +1557,12 @@ def _journal_to_dict(record: Any) -> dict[str, Any]:
         "warnings": record.warnings,
         "corrected": record.corrected,
         "correction_id": record.correction_id,
+        # HS-176-02 (R5): the two stored facts, split and both named.
+        # `taught_from` is the existing `corrected` column under its true
+        # meaning — "he taught FROM this row"; `corrections_applied` is the new
+        # per-run fact — "these stored rules fired ON this row".
+        "taught_from": bool(record.corrected),
+        "corrections_applied": [
+            int(x) for x in (getattr(record, "corrections_applied", None) or [])
+        ],
     }

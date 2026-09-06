@@ -58,7 +58,10 @@ describe("PeopleCore encrypted local plane", () => {
     expect(await screen.findByRole("button", { name: /Platform/ })).toBeTruthy();
     expect(screen.getByText("Prefers written context")).toBeTruthy();
     expect(screen.getByLabelText("Grounding note")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /^Speak / })).toBeNull();
+    // HS-176-04 — the voice law (Article IV.1): People's wells carry the
+    // mic like every other text input.  This assertion used to require the
+    // opposite; the seven mic={false} opt-outs it guarded are gone.
+    expect(screen.getAllByRole("button", { name: /^Speak / }).length).toBeGreaterThan(0);
   });
 
   it("opens a commitment execution inspector and relationship history", async () => {

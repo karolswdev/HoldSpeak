@@ -83,6 +83,7 @@ def test_generate_creates_empty_brief(tmp_path):
     assert brief.period_start == "2026-07-31T17:00:00"
     assert brief.period_end == now.isoformat()
     assert brief.sections == {
+        "this_week": [],
         "changed": [],
         "broke": [],
         "waiting": [],
@@ -283,7 +284,7 @@ def test_compose_empty_brief_has_honest_headline(tmp_path):
     headline, sections = service._compose({})
 
     assert headline == "Nothing material changed."
-    assert sections == {"changed": [], "broke": [], "waiting": [], "decisions": []}
+    assert sections == {"this_week": [], "changed": [], "broke": [], "waiting": [], "decisions": []}
     brief = service.generate(None, now=datetime.datetime(2026, 8, 3, 9, 30))
     assert brief.headline == "Nothing material changed."
     assert brief.is_empty is True

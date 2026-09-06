@@ -262,32 +262,157 @@ could you refactor it?
 ## Speak
 
 Speak is the voice-typing window on the Desk. It shows one loop: talk, see
-it land, teach once.
+it land, judge it, teach it once, then watch the teaching apply.
+
+Speak has four wings, **SPEAK**, **JOURNAL**, **BLOCKS**, and **LEARNED**,
+plus a gear that opens **Configure dictation**.
+
+### The Speak wing
 
 **The transport** at the top carries the **Talk** button (the one primary)
-and the **Open** latch. The level meter shows audio input while you talk.
+and the **Open** latch. **LEVEL** shows audio input while you talk. **Talk**
+is the one mic on this face, so the utterance well below carries none.
 
 **The utterance well** shows what you said as it lands. You can also type
-text into the well and press **Ctrl+Enter** to land it (dry run when
-**DRY RUN** is on). **LANDS IN** is one line naming the target and its
-last latency (e.g. `Claude Code · 41 MS`). The **FOCUSED APP** picker
-sits at its right; the **DRY RUN** toggle previews without typing.
+text into the well and press **Ctrl+Enter** (or **Cmd+Enter**) to land it.
+With **DRY RUN** on, the run previews and types nothing. **LANDS IN** is one
+line naming the target and its last latency, for example
+`Claude Code · 41 MS`. The **FOCUSED APP** picker sits at its right.
 
-When a result lands, the **RESULT** section shows the final text. **OK**
-accepts it. **Wrong** unfolds the teach row in place: pick the field,
-type the correction with the mic, and choose **Teach**.
+When a result lands, the **RESULT** section shows the final text with **OK**
+and **Wrong**. **OK** acknowledges the result and writes nothing.
 
-**ENGINE** is one row naming the dictation model and its host (`THIS
-DEVICE` or a LAN address). When unset, its state reads **NOT SET** with a
-**Choose** verb that opens the Concierge as its own window (titled
-**Models**).
+**DICTATION** is one row naming the transcription model and its host (`THIS
+DEVICE` or a LAN address). When unset, it reads **NOT SET** with a **Choose**
+verb that opens the Concierge as its own window (titled **Models**).
 
 **Details** (folded by default) shows the pipeline state register, the
 latency budget, and the raw trace.
 
 The footer carries the host chip (`THIS DEVICE`), the journal count
-(`9 TODAY`), and the **Review** and **Export** verbs. The wings are Speak,
-Journal, and Blocks; Journal is a stream of past utterances.
+(`9 TODAY`), and the **Review** and **Export** verbs. **Review** switches to
+the Journal wing. **Export** downloads the journal as a Markdown file.
+
+### Teach a correction
+
+**Wrong** unfolds the teach row in place. **FIELD** cycles three kinds of
+correction.
+
+| FIELD | What you teach | What it changes |
+| --- | --- | --- |
+| **TEXT** | a phrase as HoldSpeak heard it, and the same phrase as you said it | the words of every later dictation that carries the heard phrase |
+| **INTENT** | the block that this kind of utterance belongs to | the routing of a later similar utterance |
+| **TARGET** | the delivery target that this kind of utterance belongs to | the routing of a later similar utterance |
+
+**TEXT** is the default. It fills one field, **What you said**, with the raw
+transcript. Correct the wrong words, then select **Teach**. HoldSpeak
+compares what it heard with what you wrote. One differing span becomes a
+rule for those words. More than one differing span becomes a rule for the
+whole phrase.
+
+**INTENT** and **TARGET** do not take free text. They offer the real list.
+The target list holds six entries: **Claude Code**, **Codex CLI**,
+**Terminal shell**, **Browser**, **Editor**, and **Chat**. The intent list
+holds your loaded blocks under their descriptions.
+
+![The teach row on a wrong result. FIELD reads TEXT and the field holds the raw transcript.](assets/speak-loop/speak-teach-row-1440.png)
+
+The receipt replaces the teach row and clears after five seconds.
+
+| Receipt | Meaning |
+| --- | --- |
+| `TAUGHT` with `heard → said`, or with the target label | The correction is stored. |
+| `NO CHANGE` | You edited nothing, so nothing was stored. |
+| `REFUSED · SECRET` | The text has the shape of a key or a token. Nothing was written. |
+| `REFUSED · ONE WORD` | A gist of one word cannot route an utterance. This applies to **INTENT** and **TARGET** only. |
+| `REFUSED · EMPTY`, `REFUSED · KIND` | The request carried no phrase, or a kind the store does not hold. |
+
+![The TAUGHT receipt reading queue for to Q4.](assets/speak-loop/speak-taught-1440.png)
+
+A text correction is exact. It ignores case, repeated whitespace, and
+punctuation at the edges of the phrase. It fires only where the phrase is
+not inside a longer word, so a rule for `queue` does not fire inside
+`queues`. When the heard occurrence starts with a capital letter, the
+replacement keeps it. Longer rules apply before shorter ones, every matching
+rule applies, and each rule sees the text the previous rules left. A text
+rule fires on every dictation source, and it is applied before the routing
+and rewrite stages read the words.
+
+A routing correction is approximate. It matches a later utterance by token
+overlap above 0.5, then it nudges the intent router or the delivery target.
+
+### The APPLIED chip
+
+When one or more stored rules changed this run, the **RESULT** line shows
+**APPLIED**. Select it to open the panel that names each rule that fired. A
+text rule shows `HEARD` and `SAID`. A routing rule shows `WHEN` and `ROUTE`.
+Both carry the kind as a token. The chip is absent when nothing fired, and
+it carries no count.
+
+![APPLIED on the RESULT row, with its panel open on HEARD and SAID.](assets/speak-loop/speak-applied-1440.png)
+
+### The Journal wing
+
+The Journal wing is a live stream of every dictation this device ran. A run
+is pushed to the top of the stream as soon as it is journaled, with no
+reload.
+
+Above the stream, **search** filters the loaded rows by transcript and by
+final text. **Clear** deletes the whole journal, and it is withheld while
+the journal is empty. Four tokens filter by source: **ALL**, **DICTATION**,
+**BROWSER**, and **HOTKEY**. **ALL** is the default.
+
+Each row carries the time, the transcript, `LANDED IN <target>`, `N MS`, and
+a source badge (`DICTATION`, `DRY RUN`, `BROWSER`, or `HOTKEY`). One slot
+holds `APPLIED` when a stored rule fired on that run, or `TAUGHT` when you
+taught from that row.
+
+![The Journal wing with its source filters, a day band, and five rows.](assets/speak-loop/journal-stream-1440.png)
+
+Open a row to edit its transcript in place and to use **Replay**, **Copy**,
+and **Delete**. **Replay** runs the stored transcript through the current
+pipeline and shows the result under `REPLAY · PREVIEW`. It types nothing and
+writes no new row. `NO TEXT` appears when the replay produced none. **Copy
+result** copies the preview.
+
+![An opened journal row with its transcript, Replay, Copy, and Delete.](assets/speak-loop/journal-row-open-1440.png)
+
+The stream holds 50 rows. Scroll to the end of the list to load 50 older
+rows. `NOTHING SPOKEN` means the journal is empty. `NOTHING MATCHES` means
+your filter or your search matched nothing.
+
+### The Learned wing
+
+The Learned wing lists what the desk knows. Each row carries the kind
+(`TEXT`, `INTENT`, or `TARGET`) in the lead slot, then the key, an arrow,
+and the value. A routing value renders its label, never a raw identifier.
+
+`N APPLIED` counts the journal rows where that rule fired, and it is absent
+at zero. It counts the retained journal, so it can fall as old rows age out.
+
+**Forget** removes one correction after a one step confirm. `NOTHING
+LEARNED` is the empty state.
+
+![The Learned wing with one text rule, 1 APPLIED, and Forget.](assets/speak-loop/learned-1440.png)
+
+The gear opens **Configure dictation**. Its **Learning digest** panel reads
+`WEEK · TAUGHT 4 · CORRECTED 2 · REACHED 1`, or `WEEK · NO CORRECTIONS` when
+you taught nothing this week.
+
+### Corrections, the journal, and your voice
+
+Corrections are on. `dictation.pipeline.corrections_enabled` defaults to
+`true`, and the settings service does not write that key, so the loop needs
+no setup.
+
+Corrections and journal rows are stored in the HoldSpeak database on this
+device. The journal keeps the most recent 500 entries and prunes older ones
+on every write. A transcript with the shape of a key or a token is redacted
+before the row is stored, and a correction with that shape is refused.
+
+Every text input on the Desk takes your voice. A mic is a toggle: select it
+once to start, and select it once to stop. On the Speak face, **Talk** is
+the one mic authority, so the utterance well shows none.
 
 ## The Dictation Pipeline For Coding Assistants
 
@@ -822,25 +947,26 @@ Two doors lead to the same place:
 1. **From the Door.** When no source is connected the rail reads
    **No calendar connected.** and offers a **Connect calendar** button. It opens
    **Settings, Meetings, Calendar**.
-2. **From Settings directly.** Open **Settings, Meetings, Calendar**. The
-   **Sources** table starts empty.
+2. **From Settings directly.** Open **Settings, Meetings**. The **CALENDAR**
+   section starts with only the **Connect calendar** row.
 
-Choose **+ ADD SOURCE**. A row appears with three fields: **LABEL**, **URL**,
-and **ON** (the enable toggle). Set **URL** to a local ICS file path or an
-HTTPS URL. Set **LABEL** to a short name you will recognize on the rail (for
-example "Work" or "Personal"). **ON** enables the source.
+Choose **Add** on the **Connect calendar** row. A well unfolds under it with
+one field (**Calendar URL or file path**, with a mic) and **Cancel** /
+**Save**. Paste a local ICS file path or an HTTPS URL and choose **Save**.
+The source's row appears above, labeled by the host (for an HTTPS source)
+or the file name; **Edit** reopens the same well pre-filled.
 
-A per-source egress chip appears below the table for every HTTPS source,
-stating the host the hub fetches. A local file source has no egress chip
-because nothing leaves the machine. See
+Every HTTPS source row carries an egress chip naming the host the hub
+fetches. A file source row reads `THIS DEVICE` because nothing leaves the
+machine. See
 [Security & Privacy](SECURITY.md#4-egress-points-everywhere-data-can-leave-the-machine)
 for the wire posture.
 
 #### Adding a second source
 
-Choose **+ ADD SOURCE** again. Each source gets its own row in the table.
-Sources refresh independently: a broken source keeps its last good events on the
-rail while every healthy source refreshes normally.
+Choose **Add** again. Each source gets its own row. Sources refresh
+independently: a broken source keeps its last good events on the rail
+while every healthy source refreshes normally.
 
 #### What the rail shows
 
@@ -864,10 +990,11 @@ A source that fails to refresh (network error, timeout, malformed feed) retains
 its last good projection. The failure is a named receipt; healthy sources are
 never touched by a failed source.
 
-The refresh cadence is boot plus every 15 minutes. Disabling a source (clearing
-**ON**) removes its events from the rail at the next refresh tick. Removing a
-source (choosing **REMOVE?** on its row) does the same. Re-enabling a disabled
-source refetches it on the next tick.
+The refresh cadence is boot plus every 15 minutes. Disabling a source
+(**Disable** on its row) removes its events from the rail at the next refresh
+tick. Removing a source (**Remove** on its row, then **Remove** on the confirm
+that opens under it) does the same. Re-enabling a disabled source
+(**Enable**) refetches it on the next tick.
 
 #### Importing from a calendar screenshot
 
@@ -876,8 +1003,8 @@ feed, you can import a week by screenshot.
 
 1. Take a screenshot of the week view in your calendar app. PNG, JPEG, and
    WebP are accepted; up to three screenshots of the same week can be merged.
-2. In **Settings, Meetings, Calendar**, choose **IMPORT SCREENSHOT** (or drop
-   the screenshot onto the Desk glass).
+2. In **Settings, Meetings**, choose **Snapshot** on the **Connect calendar**
+   row (or drop the screenshot onto the Desk glass).
 3. The hub sends the image to the vision model assigned to the
    `calendar.snapshot_extract` capability. If no vision model is assigned, the
    import is refused with a named receipt. The egress badge on the extraction
@@ -943,7 +1070,7 @@ source and a linked event has changed:
 A recording that has already started capturing is never touched by a feed
 refresh. Only idle armed recordings participate in reconciliation.
 
-An event imported via **IMPORT SCREENSHOT** is armable in exactly the same
+An event imported via **Snapshot** is armable in exactly the same
 way. Re-importing the same week preserves the link as described above.
 
 When a schedule is linked to a calendar event, it does not appear as a
@@ -1290,6 +1417,117 @@ badges omitted). Selecting a Room opens it. Additional Rooms are
 reachable through the Projects surface.
 
 ![PROJECTS in the command deck](assets/heartbeat/command-deck-projects-1440.png)
+
+## The clock
+
+The clock is the calendar on the desk. Connect a calendar and the
+arrival gains a temporal signal: what is coming, what is armed, and
+which meetings belong to your Rooms.
+
+### Connecting a calendar
+
+Open **Settings, Meetings**. The **CALENDAR** section shows one ledger
+row per source: a state dot (idle when the source is disabled), the
+source label, `ICS` or `SNAPSHOT`, the egress chip naming the host for
+an HTTPS source (a file source carries no chip: nothing leaves the
+machine), `N EVENTS`, and `LAST READ HH:MM` (your local clock) after the
+first refresh. Each row carries the verbs
+**Edit**, **Disable** (or **Enable**), and **Remove**; Remove arms a
+one-step confirm under the row (`REMOVE <LABEL>`, **Remove** /
+**Cancel**).
+
+The **Connect calendar** row carries **Add** and **Snapshot**. **Add**
+unfolds one well under the row: paste an ICS URL (an Outlook or Google
+ICS export link) or a local file path, with a mic on the field and
+**Cancel** / **Save**. **Edit** reuses the same well, pre-filled, under
+the source row. The conductor refreshes every 15 minutes. **Snapshot**
+is the vision adapter: it extracts events from a calendar screenshot
+via the assigned vision model (local/LAN profiles preferred; the host
+is recorded on the egress); confirmed events become a file source
+ingested through the same pipeline.
+
+![Settings Meetings: calendar sources and auto-record](assets/calendar-clock/settings-calendar-1440.png)
+
+### The WEEK strip
+
+Below the arrival's headline, the WEEK strip shows five to seven day
+tokens (`MON` through `SUN`; weekend days appear only when they carry
+meetings). Each day carries one dot per meeting on that day (maximum
+four dots; five or more shows the count with a plus, `5+` style).
+Today's token is accented.
+Below the dots: `N MEETINGS THIS WEEK`.
+
+The strip is absent when no calendar source is connected or when the
+week has zero events.
+
+![The WEEK strip on the arrival](assets/calendar-clock/arrival-week-1440.png)
+
+### Event rows
+
+Each upcoming calendar event on the arrival shows the event title,
+time (`HH:MM`), the calendar source label, and (when the event matches
+a Room) `ROOM` followed by the Room name. When the event has an armed
+recording, the row carries `ARMS HH:MM` and a **Cancel** verb that
+disarms the recording without affecting the calendar event.
+
+Orphan armed recordings (event-born recordings whose calendar event
+has left the projection) render as a separate `ARMED` row with the
+original event title and source label.
+
+### Auto-record
+
+Open **Settings, Meetings**. The **Auto-record** row carries a cycle
+control with three states:
+
+| State | What it does |
+|---|---|
+| `OFF` (default) | No event-born recordings are created |
+| `ARM ROOM MEETINGS ONLY` | Arms recordings for events matching a Room |
+| `ARM ALL CALENDAR MEETINGS` | Arms recordings for every event with a meeting URL |
+
+When enabled, the conductor creates an idle recording for each
+matching calendar event. The recording arms at `starts_at` minus five
+minutes and, like every scheduled recording, records at the event
+(the toggle is your standing consent to record; OFF by default).
+**Cancel** on the row stops it for good: a cancelled row is never
+re-armed by a later refresh. A `5 MIN BEFORE` token
+appears beside the toggle; when `ARM ROOM MEETINGS ONLY` is active, an
+`N MATCHED THIS WEEK` token follows. When a calendar event moves, the
+recording's arm time moves with it. When an event disappears from the
+ICS feed, the recording is cancelled with a receipt.
+
+### The Room's meeting watch
+
+In the Room's **SOURCES** section, a meeting watch row sits alongside
+GitHub and Jira: `MTG` emblem, `MEETINGS`, `N THIS WEEK`, `NEXT DAY
+HH:MM`, and the Watch verbs (**Pause**, **Resume**, **Retire**). The
+row is absent when no meetings link to the Room. The meeting watch
+feeds into the Room's SINCE YOU LOOKED delta: a new intelligence run
+or a new commitment from a linked meeting appears as a change.
+
+![Room SOURCES with a meeting watch row](assets/calendar-clock/room-sources-meetings-1440.png)
+
+### The weekly brief
+
+When a calendar is connected, the Rhythm module's brief row reads
+`Weekly brief` with its true cadence `DAILY HH:MM`: the brief
+regenerates every morning and reads the whole week ahead (it remains
+`Monday brief` without a calendar). The lookback window is unchanged
+(preceding business-day close to now). A separate `compute_lookahead`
+covers now to Sunday 23:59.
+
+The brief's `THIS WEEK` section uses a full-week window (Monday 00:00
+to Sunday 23:59) and carries:
+
+- meetings count, armed recordings count, next event title and time.
+- commitments due this week, with the first item and its day.
+- new decisions from meetings since the last brief.
+
+The `changed`, `broke`, `waiting`, and `decisions` sections use the
+unchanged lookback window. All sections are absent when they have zero
+items (the brief still runs its existing non-calendar collectors).
+
+![The weekly brief with THIS WEEK items](assets/calendar-clock/brief-week-1440.png)
 
 ## Models: the Concierge
 

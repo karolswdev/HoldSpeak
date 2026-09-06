@@ -3355,6 +3355,21 @@ button.surface-edit-in-place:hover {
   gap: 6px;
   padding: 2px 0;
 }
+/* HS-175-03: CALENDAR section primaries stay on ONE line at wide
+   widths even when data-wrap is set (the design says single-line
+   at 1440; at 393 the container query stacks chips underneath). */
+.prefs-calendar-section .surface-ledger-row[data-wrap] .surface-ledger-primary {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* The CALENDAR rows carry no time token: four columns (lead · primary ·
+   cells · verbs) so the trailing verbs never land in the 6ch time slot
+   and spill left over the cells (seen at 1440, 2026-09-05). */
+.prefs-calendar-section .surface-ledger-line,
+.prefs-calendar-section .surface-ledger-line[data-has-trailing] {
+  grid-template-columns: 52px minmax(0, 1fr) max-content max-content;
+}
 
 /* ── HS-174-02/03: Remote Access credential token + issue well ── */
 .prefs-token-once {

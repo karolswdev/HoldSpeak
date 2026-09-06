@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 664 (plus static mounts). iOS-consumed: 89. Web-consumed: 506.
+Routes: 668 (plus static mounts). iOS-consumed: 89. Web-consumed: 510.
 
 ## device_audio_ws
 
@@ -153,12 +153,26 @@ Routes: 664 (plus static mounts). iOS-consumed: 89. Web-consumed: 506.
 | POST | `/api/cadence/run-now` | web |
 | GET | `/api/cadence/status` | web |
 
+## web.routes.calendar_events
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/calendar/events` | web |
+| DELETE | `/api/calendar/events/{event_id}/link` | web |
+| POST | `/api/calendar/events/{event_id}/link` | web |
+
 ## web.routes.calendar_snapshot
 
 | Method | Path | Consumers |
 |---|---|---|
 | POST | `/api/calendar/snapshot` | web |
 | POST | `/api/calendar/snapshot/confirm` | web |
+
+## web.routes.calendar_sources
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/calendar/sources` | web |
 
 ## web.routes.concierge
 

@@ -5,8 +5,8 @@ import {
   CycleGadget,
   GadgetGroup,
   GadgetRow,
-} from "../../../desk/surface/gadgets";
-import { AIM_FACT, AIM_OPTIONS } from "./shared";
+} from "../../../../desk/surface/gadgets";
+import { AIM_FACT, AIM_OPTIONS } from "../shared";
 
 export function AimRow({
   aim,

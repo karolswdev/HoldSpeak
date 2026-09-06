@@ -26,6 +26,7 @@ import {
   SurfaceSection,
   StateChip,
   countLabel,
+  countToken,
 } from "../../desk/surface";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressForEvent } from "../../desk/surface/egress";
@@ -71,7 +72,12 @@ type BriefLatest = {
   id?: string;
   generated_at?: string;
   items?: unknown[];
+  sections?: Record<string, Array<{ text: string; source_ref?: string }>>;
 } | null;
+
+type DoorProjection = {
+  calendar_configured?: boolean;
+};
 
 type ProjectItem = {
   id: string;
@@ -126,6 +132,32 @@ function fmtDate(iso: string | null | undefined): string | null {
   }
 }
 
+/** HS-175 counsel C9(a): the Rhythm summary line, honest at one and zero.
+ * `1 MEETING · 1 ARMED · 1 WATCH ITEM · 1 COMMITMENT DUE`; null when no
+ * part counts (A.8). */
+export function briefSummaryLine(
+  items: Array<{ source_ref?: string | null; text?: string | null }> | undefined,
+): string | null {
+  if (!items || items.length === 0) return null;
+  let meetings = 0, armed = 0, watch = 0, due = 0;
+  const lead = (text: string) => { const m = text.match(/^(\d+)\s+/); return m ? parseInt(m[1], 10) : 0; };
+  for (const item of items) {
+    const ref = item.source_ref ?? "";
+    const text = item.text ?? "";
+    if (ref === "calendar:week") meetings += lead(text);
+    else if (ref === "calendar:armed") armed += lead(text);
+    else if (ref === "meeting_watch:commitments_due") due += lead(text);
+    else if (ref === "meeting_watch:decisions") watch += lead(text);
+  }
+  const parts = [
+    countToken(meetings, "MEETING"),
+    countToken(armed, "ARMED", "ARMED"),
+    countToken(watch, "WATCH ITEM"),
+    countToken(due, "COMMITMENT DUE", "COMMITMENTS DUE"),
+  ].filter((p): p is string => Boolean(p));
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
 /** Format epoch seconds as HH:MM. */
 function fmtEpoch(epoch: number | null | undefined): string | null {
   if (epoch == null) return null;
@@ -146,6 +178,7 @@ export function CadenceCore({ hero }: CoreProps) {
     next_sweep_at: null,
   });
   const briefRes = useResource<BriefLatest>("/api/brief/latest", null);
+  const doorRes = useResource<DoorProjection>("/api/door", {});
   const projectsRes = useResource<{ projects: ProjectItem[] }>("/api/projects", { projects: [] });
 
   // ── Existing cadence loop + nudge resources (kept for the NOW N section) ──
@@ -261,6 +294,12 @@ export function CadenceCore({ hero }: CoreProps) {
   // Brief info
   const brief = briefRes.data;
   const briefDate = brief?.generated_at ? fmtDate(brief.generated_at) : null;
+  const calendarConfigured = doorRes.data?.calendar_configured ?? false;
+
+  // HS-175: brief summary line from this_week section items.
+  // Counsel C9(a) / H10-3: every part through countToken (singular at one,
+  // absent at zero) and ARMED named as ARMED, not folded into WATCH ITEMS.
+  const briefSummary = briefSummaryLine(brief?.sections?.this_week);
 
   return (
     <>
@@ -406,11 +445,11 @@ export function CadenceCore({ hero }: CoreProps) {
       </div>
       </div>{/* /rhythm-section runs-on */}
 
-      {/* ── MONDAY BRIEF row ───────────────────────────────────── */}
+      {/* ── WEEKLY / MONDAY BRIEF row (HS-175) ─────────────────── */}
       <div className="rhythm-section">
       <SurfaceLedger count="" cols="hub">
         <SurfaceLedgerRow
-          primary="Monday brief"
+          primary={calendarConfigured ? "Weekly brief" : "Monday brief"}
           expands={false}
           data-testid="rhythm-brief-row"
           trailing={
@@ -421,40 +460,41 @@ export function CadenceCore({ hero }: CoreProps) {
               onClick={() => void generateBrief()}
               data-testid="rhythm-generate-now"
             >
-              Generate now
+              Generate
             </Button>
           }
           cells={
             <>
-              {/* Brief cadence is fixed daily -- a token, not a gadget.
-                  The brief regenerates once/day after quiet hours close
-                  (runtime/cadence.py::_maybe_regenerate_brief). */}
-              <span className="surface-token" data-chip>DAILY {fmtHour(settings.quiet_hours.end)}</span>
+              {/* HS-175 counsel C9(a) / H4-0: the brief regenerates once a
+                  DAY after quiet hours close (runtime/cadence.py
+                  _maybe_regenerate_brief); no weekly cadence exists, so the
+                  token says DAILY on both rows.  The row's name stays
+                  "Weekly brief" -- it is the week-window brief. */}
+              <span className="surface-token" data-chip data-muted data-testid="rhythm-brief-cadence">
+                {`DAILY ${fmtHour(settings.quiet_hours.end)}`}
+              </span>
+              <span data-testid="rhythm-brief-last">
+                {briefDate ? (
+                  <StateChip state="success" label={`LAST ${briefDate}`} />
+                ) : (
+                  <StateChip state="idle" label="NEVER" />
+                )}
+              </span>
             </>
           }
         />
       </SurfaceLedger>
 
-      {/* Brief fact tokens */}
+      {/* HS-175: brief summary line -- absent when all zero (A.8) */}
       <div className="rhythm-facts" data-testid="rhythm-brief-facts">
         {generating ? (
           <StateChip state="active" label="GENERATING" />
         ) : null}
-        {!generating && (
-          <>
-            <span className="surface-token" data-chip data-muted>
-              NEXT MON {fmtHour(settings.quiet_hours.end)}
-            </span>
-            {briefDate ? (
-              <>
-                <span className="surface-token" data-chip data-muted>{"·"}</span>
-                <span className="surface-token" data-chip data-muted>
-                  LAST {briefDate}
-                </span>
-              </>
-            ) : null}
-          </>
-        )}
+        {!generating && briefSummary ? (
+          <span className="surface-token" data-chip data-muted data-testid="rhythm-brief-summary">
+            {briefSummary}
+          </span>
+        ) : null}
       </div>
       </div>{/* /rhythm-section brief */}
 

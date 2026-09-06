@@ -810,6 +810,36 @@
       ]
     },
     {
+      "path": "/api/calendar/events",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.calendar_events",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/calendar/events/{event_id}/link",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.calendar_events",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/calendar/events/{event_id}/link",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.calendar_events",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/calendar/snapshot",
       "methods": [
         "POST"
@@ -825,6 +855,16 @@
         "POST"
       ],
       "module": "web.routes.calendar_snapshot",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/calendar/sources",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.calendar_sources",
       "consumers": [
         "web"
       ]

@@ -591,7 +591,8 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
 .desk-next .thought-context-search {
   min-height: 42px;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  /* HS-176-04 — glyph · field · mic (the voice law, Article IV.1). */
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
   margin-top: 12px;

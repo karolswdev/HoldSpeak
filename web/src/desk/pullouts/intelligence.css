@@ -308,6 +308,17 @@
   color: var(--text);
 }
 
+/* HS-175: override the pullout-body section grid that would center children.
+   The parent rule (.desk-next .desk-pullout-body section) applies display:grid
+   with default place-items which centers children by their intrinsic width.
+   Force flex column + stretch so every child shares one left gutter. */
+.desk-next .desk-pullout-body .intelligence-view.intelligence-brief {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+}
+
 /* HS-129-03 — a real brief headline is material, never a clipped title. */
 .intelligence-brief-headline {
   width: 100%;
@@ -415,6 +426,159 @@
 
 .intelligence-brief-shelf-state {
   color: var(--text-muted);
+}
+
+/* HS-175: one left gutter -- every child left-aligned. */
+.intelligence-brief-period,
+.intelligence-brief-generated,
+.intelligence-brief-section,
+.intelligence-brief-section-caption,
+.intelligence-brief-tw-row,
+.intelligence-brief-sf-row,
+.intelligence-brief-person-sections,
+.intelligence-brief-person-unavailable {
+  text-align: left;
+}
+
+/* HS-175: period label (display step -- the one display fact). */
+.intelligence-brief-period {
+  margin: 0 0 var(--space-1);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  font-weight: 650;
+  line-height: 1.15;
+}
+
+/* HS-175: generated timestamp (caption step). */
+.intelligence-brief-generated {
+  margin: 0 0 var(--space-3);
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* HS-175: section wrapper. */
+.intelligence-brief-section {
+  margin: 0 0 var(--space-3);
+}
+
+/* HS-175: section caption (caption step 11 mono uppercase). */
+.intelligence-brief-section-caption {
+  margin: 0 0 var(--space-1);
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* HS-175: THIS WEEK composed rows. */
+.intelligence-brief-tw-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.intelligence-brief-tw-primary {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.intelligence-brief-tw-token {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.intelligence-brief-tw-due {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.intelligence-brief-tw-due-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.intelligence-brief-tw-due-detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.intelligence-brief-tw-detail-text {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* HS-175: flat rows (SINCE FRIDAY + people). */
+.intelligence-brief-flat {
+  display: flex;
+  flex-direction: column;
+}
+
+/* HS-175: SINCE FRIDAY individual row. */
+.intelligence-brief-sf-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.intelligence-brief-sf-kind {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+
+.intelligence-brief-sf-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.intelligence-brief-sf-primary {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.intelligence-brief-sf-detail {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* HS-175: people unavailable as StateChip token. */
+.intelligence-brief-person-unavailable {
+  padding: 4px 0;
 }
 
 .intelligence-brief-none {

@@ -133,8 +133,12 @@ def _make_repo(tmp_path: Path):
 class TestFreshSchema:
     """A fresh DB built from SCHEMA_SQL has the HS-162-01 shape."""
 
-    def test_schema_version_is_73(self) -> None:
-        assert SCHEMA_VERSION == 73
+    def test_schema_version_is_at_least_the_phase_floor(self) -> None:
+        """SCHEMA_VERSION is informational and additive-only (HS-137): this
+        phase was built at 73; later additive phases bump it (74 the
+        calendar_event_projects join, 75 calendar_event_link_suppressions).
+        The honest assertion is the floor, read from the real constant."""
+        assert SCHEMA_VERSION >= 73
 
     def test_updates_table_exists(self, tmp_path: Path) -> None:
         conn = sqlite3.connect(str(tmp_path / "fresh.db"))

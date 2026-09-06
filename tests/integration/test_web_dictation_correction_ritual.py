@@ -21,9 +21,14 @@ from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 _REPO = Path(__file__).resolve().parents[2]
 _DECK_DIR = _REPO / "web/src/pages/cores/dictation"
-# HS-132-12: HS-117-08 decomposed the cockpit — the ritual itself lives in
+# HS-132-12: HS-117-08 decomposed the cockpit — the ritual lived in
 # dictation/ResultPanel.tsx and the wire it posts to in dictation/useSpeakDeck.ts.
-_RITUAL = _DECK_DIR / "ResultPanel.tsx"
+# HS-176-04: 170 rebuilt the Speak face and left ResultPanel.tsx an orphan
+# (not in the barrel, zero importers); it is parked under _parked/ (owner
+# ruling: never delete).  The RESULT row and its teach path live in
+# dictation/SpeakFace.tsx now, so this fence MOVES with the behaviour it
+# pins rather than losing an assertion.
+_RITUAL = _DECK_DIR / "SpeakFace.tsx"
 _DECK_WIRE = _DECK_DIR / "useSpeakDeck.ts"
 
 
@@ -83,6 +88,78 @@ def test_ritual_component_is_shipped() -> None:
         assert marker in ritual, marker
     wire = _wire_source()
     assert "/api/dictation/journal/" in wire and "/correct" in wire
+    # HS-176-02: the fallback route is the one a run with no journal_id
+    # takes (journal off, no repository, unknown source) — it is not dead
+    # code and it is not allowed to quietly disappear.
+    assert "/api/dictation/corrections" in wire
+
+
+def test_teach_row_offers_the_three_correction_kinds() -> None:
+    """HS-176-02: FIELD cycles TEXT · INTENT · TARGET, TEXT the default.
+
+    The 170 row took FREE TEXT for kinds whose value must be a member of
+    a closed set, so nothing the owner typed ever fired. The kinds are a
+    pick now, and the words mistake — his actual Tuesday — has a field.
+    """
+    fields = (_DECK_DIR / "shared.ts").read_text()
+    assert "CORRECTION_FIELDS" in fields
+    for token in ('"TEXT"', '"INTENT"', '"TARGET"'):
+        assert token in fields, token
+    wire = _wire_source()
+    # TEXT is the default: the Tuesday mistake is a words mistake.
+    assert 'useState("text")' in wire
+    ritual = _ritual_source()
+    assert "FIELD" in ritual
+    # the routing kinds are a PICK over the real enum, never a typed id
+    assert "correctionOptions" in ritual and "correctionOptions" in wire
+    # the label sources: the readiness overrides and the loaded blocks
+    assert "overrides" in wire
+    assert "/api/dictation/blocks" in wire
+
+
+def test_teach_receipts_are_tokens_not_a_sentence() -> None:
+    """HS-176-02 (rule A.3): the receipt is a token pair, never prose.
+
+    The retired line is `useSpeakDeck.ts`'s "Taught · reaches similar
+    dictations" — a sentence on the footer. What replaces it names what
+    was stored, or names the refusal.
+    """
+    wire = _wire_source()
+    shared = (_DECK_DIR / "shared.ts").read_text()
+    assert "reaches similar dictations" not in wire
+    assert '"TAUGHT"' in wire
+    for token in ("NO CHANGE", "REFUSED · SECRET", "REFUSED · ONE WORD"):
+        assert token in shared, token
+    # R4: `recorded` is the key both routes answer with; `taught` is the
+    # journal route's long-standing mirror. The face reads either.
+    assert "reply.recorded ?? reply.taught" in wire
+    # rule A.7 — one word, one meaning: LEARNED is never a receipt.
+    assert "LEARNED" not in wire and "LEARNED" not in _ritual_source()
+    # A.7 again — the name is said ONCE per face: the outcome lives in
+    # the RESULT row's receipt and is never mirrored into the footer, so
+    # `teach()` announces nothing at all.
+    teach_body = wire.split("const teach = async () => {", 1)[1].split(
+        "\n  };", 1
+    )[0]
+    assert "announce(" not in teach_body, teach_body
+
+
+def test_applied_chip_reads_the_stored_fact_only() -> None:
+    """HS-176-02 (R2/Article VI): the chip is a per-run stored fact.
+
+    `learning` / `best_correction_signal` is a READ-TIME "would match"
+    over the whole journal — it paints rows recorded before the
+    correction existed. The chip and its well render from the run's own
+    `corrections_applied` ids, resolved against the store.
+    """
+    wire = _wire_source()
+    ritual = _ritual_source()
+    assert "corrections_applied" in wire
+    assert "best_correction_signal" not in wire and "learning" not in wire
+    assert "APPLIED" in ritual
+    # N2 — the TEXT well pre-fills from the RAW transcript, because that
+    # is the string the rule is applied to (pipeline.py:98).
+    assert "raw_text" in wire
 
 
 def test_ritual_is_wired_into_dry_run_result() -> None:
@@ -97,10 +174,22 @@ def test_ritual_is_focus_safe() -> None:
 
 
 def test_ritual_uses_shared_react_controls() -> None:
-    # HS-111-08: the Disclosure species retired; FoldGadget is the ONE
-    # disclosure the shared kit provides.
+    # HS-111-08: no bespoke control species — the ritual composes the kit.
+    # HS-176-04: on the rebuilt face the teach row is disclosed by the
+    # verdict itself (a conditional role="group" region), not by the kit's
+    # FoldGadget, so the FoldGadget marker is replaced by the species the
+    # row actually composes.  The intent is unchanged: shared kit only,
+    # no raw control and no bespoke disclosure.
+    # HS-176-02: the TEXT well is the kit's PadGadget, not StringGadget.
+    # The value he EDITS must WRAP rather than truncate (design P2 / the
+    # phone board) and an `<input>` cannot wrap, so the row composes the
+    # kit's one textarea face at a single grown row. Same intent, same
+    # kit, one species swapped for the one that can hold the sentence.
     ritual = _ritual_source()
-    assert "<Button" in ritual and "<FoldGadget" in ritual
+    for species in ("<Button", "<CycleGadget", "<PadGadget"):
+        assert species in ritual, species
+    for bespoke in ("<button", "<details", "<summary"):
+        assert bespoke not in ritual, bespoke
     assert "dangerouslySetInnerHTML" not in _dictation_script()
 
 

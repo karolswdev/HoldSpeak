@@ -22,7 +22,7 @@ import {
 } from "../thoughts";
 import type { WorldObject } from "../world";
 import { Button } from "../../components/signal/Signal";
-import { countToken } from "../surface";
+import { countToken, PadGadget } from "../surface";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { ThoughtContextPicker } from "../pullouts/ThoughtContextPicker";
 import { useThoughtNoteWriter } from "../pullouts/editors/useThoughtNoteWriter";
@@ -162,7 +162,10 @@ function WorkspaceReady({
   });
   const [revealRange, setRevealRange] = useState<{ start: number; end: number; focus?: boolean } | null>(null);
   const [inserted, setInserted] = useState(false);
-  const answerRef = useRef<HTMLTextAreaElement | null>(null);
+  /* HS-176-04 — the answer well is a PadGadget (the voice law): the ref
+     holds its <label> and the focus reaches the textarea inside it. */
+  const answerRef = useRef<HTMLLabelElement | null>(null);
+  const focusAnswer = () => answerRef.current?.querySelector("textarea")?.focus();
   const setupRef = useRef<HTMLButtonElement | null>(null);
   const contextRef = useRef<HTMLDivElement | null>(null);
   useLayoutEffect(() => {
@@ -285,7 +288,7 @@ function WorkspaceReady({
       setAnswer("");
       sessionStorage.removeItem(key);
     } else {
-      requestAnimationFrame(() => answerRef.current?.focus());
+      requestAnimationFrame(() => focusAnswer());
     }
   };
 
@@ -353,7 +356,7 @@ function WorkspaceReady({
     openSurfaceOr("configure-runs-on", "/settings", "models");
   };
   const invokePrimary = () => {
-    if (noteProxy) { setTab("interview"); requestAnimationFrame(() => answerRef.current?.focus()); return; }
+    if (noteProxy) { setTab("interview"); requestAnimationFrame(() => focusAnswer()); return; }
     if (setupProxy) { setTab("interview"); requestAnimationFrame(() => setupRef.current?.focus()); return; }
     switch (primaryKind) {
       case "refine": void ask(); break;
@@ -412,7 +415,7 @@ function WorkspaceReady({
             ? <div className="thought-interview-empty thought-interview-setup"><p className="thought-question-kicker">One quick setup</p><strong>AI needs a model</strong><span className="surface-token">Choose a model destination</span><Button ref={setupRef} variant="primary" className="thought-setup-ai" disabled={busy} onClick={setupAI}>Set up AI</Button><span className="thought-interview-run-hint surface-token">Opens Models settings</span></div>
             : <div className="thought-interview-empty"><p className="thought-question-kicker">Ready when you are</p><strong>Ask AI</strong><span className="surface-token">Reads your Note, asks one question</span><span className="thought-interview-run-hint surface-token"><b>Ask AI</b> or <kbd>⌘↵</kbd></span><Placement projection={projection} /></div> : null}
           {["reserved", "in_flight", "awaiting_projection"].includes(projection.workspace_state) ? <div role="status" className="thought-interview-working"><strong>Finding one useful question…</strong><span className="surface-token">Note v{projection.thought.working_revision}</span><p>Editing now will replace this question.</p></div> : null}
-          {currentQuestion ? <div className="thought-question"><p className="thought-question-kicker">One thing to sharpen</p><h2>{projection.review?.question}</h2>{projection.review?.reason ? <p>{projection.review.reason}</p> : null}<Placement projection={projection} /><UsedContext projection={projection} /><label><span>Your answer</span>{/* UX-CANON: needs redesign (HS-170-04) */}<textarea ref={answerRef} value={answer} onChange={(event) => setAnswer(event.target.value)} rows={5} /></label>{continuationReady ? <Button variant="ghost" dense className="thought-add-quiet" disabled={busy || !answer.trim()} onClick={() => void answerReview(false)}>Add to Note</Button> : null}</div> : null}
+          {currentQuestion ? <div className="thought-question"><p className="thought-question-kicker">One thing to sharpen</p><h2>{projection.review?.question}</h2>{projection.review?.reason ? <p>{projection.review.reason}</p> : null}<Placement projection={projection} /><UsedContext projection={projection} /><label ref={answerRef}><span>Your answer</span><PadGadget label="Your answer" value={answer} onChange={setAnswer} rows={5} /></label>{continuationReady ? <Button variant="ghost" dense className="thought-add-quiet" disabled={busy || !answer.trim()} onClick={() => void answerReview(false)}>Add to Note</Button> : null}</div> : null}
           {projection.workspace_state === "synthesis" && projection.review?.kind === "synthesis" ? <div className="thought-synthesis"><p className="thought-question-kicker">A draft from your Note</p><h2>{projection.review.title}</h2><div className="thought-synthesis-body">{projection.review.body_markdown}</div><Placement projection={projection} /><UsedContext projection={projection} /><Button variant="ghost" dense className="thought-add-quiet" disabled={busy} onClick={() => void reviewAction("reject")}>Reject</Button></div> : null}
           {projection.workspace_state === "stale" ? <div className="thought-interview-exception"><strong>{stale?.state === "missing" ? `${stale.title} is no longer available.` : `${stale?.title || "AI context"} changed.`}</strong><span className="surface-token">Repair context to continue</span></div> : null}
           {projection.workspace_state === "named_failure" ? <div className="thought-interview-exception"><strong>That question did not land.</strong><span className="surface-token">{projection.terminal_status?.message || "Note unchanged. Try again or finish."}</span></div> : null}

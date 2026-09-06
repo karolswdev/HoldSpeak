@@ -207,13 +207,20 @@ function ElicitationForm({
                 onChange={(e) => handleChange(key, Number(e.target.value))}
               />
             ) : (
-              // UX-CANON: needs redesign (HS-170-04)
-              <input
-                type="text"
-                className="thread-elicitation-input"
-                value={String(values[key] ?? "")}
-                onChange={(e) => handleChange(key, e.target.value)}
-              />
+              // HS-176-04 — the voice law: a free-text answer carries the mic.
+              <span className="thread-elicitation-well">
+                <input
+                  type="text"
+                  className="thread-elicitation-input"
+                  aria-label={label}
+                  value={String(values[key] ?? "")}
+                  onChange={(e) => handleChange(key, e.target.value)}
+                />
+                <MicButton
+                  label={`Speak ${label}`}
+                  onText={(spoken) => handleChange(key, spoken)}
+                />
+              </span>
             )}
           </div>
         );
@@ -1630,22 +1637,36 @@ function ThreadPulloutInner({
         {/* Head: title, egress, status, token meter */}
         <div className="thread-head">
           {editingTitle ? (
-            // UX-CANON: needs redesign (HS-170-04)
-            <input
-              ref={titleRef}
-              className="thread-title-input"
-              value={titleDraft}
-              onChange={(e) => setTitleDraft(e.target.value)}
-              onBlur={commitTitle}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void commitTitle();
-                if (e.key === "Escape") {
-                  setTitleDraft(initialTitle);
-                  setEditingTitle(false);
-                }
+            // HS-176-04 — the voice law: the title is spoken or typed.
+            // The mousedown guard keeps focus in the field: its onBlur
+            // commits and closes the editor.
+            <span
+              className="thread-title-well"
+              onMouseDown={(event) => {
+                if (event.target !== titleRef.current) event.preventDefault();
               }}
-              autoFocus
-            />
+            >
+              <input
+                ref={titleRef}
+                className="thread-title-input"
+                aria-label="Thread title"
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={commitTitle}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void commitTitle();
+                  if (e.key === "Escape") {
+                    setTitleDraft(initialTitle);
+                    setEditingTitle(false);
+                  }
+                }}
+                autoFocus
+              />
+              <MicButton
+                label="Speak thread title"
+                onText={(spoken) => setTitleDraft(spoken)}
+              />
+            </span>
           ) : (
             <button
               type="button"

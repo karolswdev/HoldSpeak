@@ -3,9 +3,17 @@ description: >
   Record one dictation correction through the product's own route, so the
   "learned from N" digest has a KNOWN count to check honestly against — the
   honest-by-construction pillar. Fully local.
+
+  HS-176-02 (ruling R7): a one-token gist on a ROUTING kind (`intent` /
+  `target`) is now refused in `CorrectionStore.record` — it can only reach
+  Jaccard 0.5 against an utterance of at most two tokens, so it could never
+  fire on a sentence. "teh" -> "the" was always a WORDS correction wearing an
+  intent kind; 176 gives it its own `text` kind, so the recipe teaches the same
+  two words under the kind that is true of them. The route takes `text` as the
+  alias for `heard` and `value` for `said`, so the action shape is unchanged.
 deck: golden-local
 requires: []
 actions:
-  - teach_correction: {kind: intent, text: teh, value: the}
+  - teach_correction: {kind: text, text: teh, value: the}
 probe:
   - learning_digest_min: 1

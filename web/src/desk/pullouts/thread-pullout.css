@@ -60,6 +60,42 @@
   min-height: 20px;
 }
 
+/* HS-176-04 — the voice law: the title well holds the field and its mic. */
+.thread-title-well {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.thread-title-well .thread-title-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.desk-next .thread-title-well .desk-mic,
+.desk-next .thread-elicitation-well .desk-mic {
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+
+/* HS-176-04 — a free-text elicitation answer and its mic share one row. */
+.thread-elicitation-well {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.thread-elicitation-well .thread-elicitation-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.desk-next .thread-inline-editor-mic .desk-mic {
+  width: 24px;
+  height: 24px;
+}
+
 .thread-head-instruments {
   display: flex;
   align-items: center;

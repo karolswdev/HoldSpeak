@@ -15,6 +15,11 @@ Arrival's, the Heartbeat's, the Loop Closes', and the Steward's grammar
 (Phases 169--173) are the ratified precedent.
 
 
+> **ON THE CANVAS (2026-09-05)** — twelve boards published at
+> https://claude.ai/code/artifact/113102aa-7bc9-4508-a334-79e22d542155 ;
+> counsel reading; faces build to the ratified boards under the standing
+> goal; **his word gates the merge** (stacked on 174 #557).
+
 ## D0 -- the Tuesday moment
 
 Monday 07:55. The arrival reads:
@@ -41,7 +46,7 @@ Next: Standup at 10:00 (recording armed)." In the Room, SOURCES shows
 |---|---|---|
 | The calendar is read where it lives | Constitution Article III | The 146 adapter reads ICS from a local file path or an HTTPS URL the owner pasted (integrations.py:18-26); no OAuth flow, no API key, no calendar leaves the machine; the snapshot adapter (calendar_snapshot_service.py) extracts from screenshots via vision -- local model |
 | Reading a calendar is free | Constitution Article V:5 | Calendar ingest is a read (parsing ICS bytes, writing to the local `calendar_events` table); no egress, no model invocation, no effect; exempt from admission |
-| Arming a recording is his standing consent per event or per Room | Constitution Article V:1 | The owner enables `ARM RECORDINGS . FOR ROOM MEETINGS` on a Room or `ARM ALL CALENDAR MEETINGS` in Settings; that toggle IS the consent act; each auto-created recording is armed, never started (Article IV) |
+| Arming a recording is his standing consent per event or per Room | Constitution Article V:1 | The owner enables `ARM RECORDINGS . FOR ROOM MEETINGS` on a Room or `ARM ALL CALENDAR MEETINGS` in Settings; that toggle IS the consent act to RECORD; each auto-created recording arms at `starts_at − lead` and records at the event like every scheduled recording (ruling B11; OFF by default) |
 | No counters of zero | UX-CANON.md rule A.8 | The WEEK strip is absent when no calendar is connected; the meeting watch row is absent when no meetings are linked; the MEETINGS count in SOURCES carries no zero; the brief's WEEK section is absent when calendar_events is empty |
 | Every verb the library Button | UX-CANON.md rule A.1 | `Connect calendar` on the arrival, `Cancel` on the armed recording, `Add` / `Dismiss` on suggested meetings, `Generate` on the brief -- all library Button |
 | The NEXT line said once | UX-CANON.md rule A.7 | The arrival's NEXT carries the event title, time, and Room token; the Room header does not repeat the same event; the Room's SOURCES says `NEXT THU 14:00` (a different event) |
@@ -286,23 +291,25 @@ The brief gains two new subsections within its item list:
    - Absent when no calendar events and no commitments in the week
      (rule A.8).
 
-2. `LAST WEEK` / `SINCE FRIDAY` (what happened -- the existing items
-   from the day-windowed brief, now covering the full week):
+2. `SINCE FRIDAY` (what happened -- the existing items from the
+   existing lookback window, UNCHANGED; counsel's condition 2 ruled the
+   brief a two-window design):
    - The existing collectors (Watch changes, pipeline events, breakage,
-     meetings) widen to the week window.
+     meetings) keep today's window (Monday looks back to Friday 17:00,
+     other days to the preceding business day).
    - Each item carries its existing shape: `text`, `detail`,
      `source_ref`, `priority`.
 
-**The window change** (monday_brief_service.py:134-153):
+**The window ruling** (monday_brief_service.py:134-153):
 
-- `compute_window()` today: period_start = preceding business day at
-  17:00; period_end = now. Monday looks back 3 days (to Friday 17:00);
-  weekdays look back 1 day (monday_brief_service.py:140-147).
-- `compute_window()` with 175: period_start = Monday 00:00 of the
-  current week; period_end = Sunday 23:59 (or now, whichever is
-  earlier). The lookback is fixed at Monday 00:00 regardless of the
-  current day; the look-ahead extends to Sunday 23:59 for the "what's
-  coming" half.
+- `compute_window()` is UNCHANGED: period_start = preceding business
+  day at 17:00; period_end = now. Monday looks back 3 days (to Friday
+  17:00); weekdays look back 1 day (monday_brief_service.py:140-147).
+  The "what happened" half and its `SINCE FRIDAY` label keep it.
+- 175 ADDS a second, forward window for the "what's coming" half:
+  `now` to Sunday 23:59 local of the current ISO week. Only the
+  calendar-event, armed-recording and commitments-due collectors read
+  it. The two halves never overlap.
 - When no calendar is connected: the brief falls back to the existing
   day-windowed behaviour (the calendar collectors produce zero items;
   the existing collectors still run with the widened window; no harm
@@ -332,13 +339,15 @@ provenance chips.
 ### The calendar adapter's read cadence (the heartbeat's sweep)
 
 **Seam:** `calendar_ingest_conductor.py:146+` -- the conductor's
-`refresh_all()` method runs on the heartbeat's cadence tick (from 171).
+`refresh()` method (calendar_ingest_conductor.py:175; counsel's
+condition 3 corrected the name) runs on the heartbeat's cadence tick
+(from 171).
 Today it runs on its own standalone schedule via
 `start_calendar_ingest_conductor` (calendar_ingest_conductor.py:602).
 
 **What 175 changes:** the conductor's refresh hooks into the heartbeat's
 sweep cadence (the 171 design's `_cadence_loop` at web_runtime.py:529).
-Each cadence tick calls the conductor's `refresh_all()` as one of its
+Each cadence tick calls the conductor's `refresh()` as one of its
 sweep steps. The conductor's standalone thread (its own sleep loop) is
 replaced by the cadence-driven tick.
 
@@ -384,6 +393,8 @@ calendar ingest refresh:
    strings). Case-insensitive substring match. Example: event "Q4
    Platform Standup" matches Room "Q4 Platform" because the Room name
    is a substring of the event title.
+   Ruled R1 (2026-09-06, on the owner's deferral): full-name phrase; a
+   single generic word never links.
 2. **Attendee match:** when the ICS carries attendee data (the existing
    parser extracts `location` and `meeting_url` but NOT attendees
    today -- this is a GAP; see D4 H3), compare attendee email/names
@@ -424,7 +435,8 @@ new step:
      (the lead time). The recording's `title` inherits the event title.
    - The recording is created with `enabled=True`, `state="idle"`.
      The existing `scheduled_recording_conductor.py` arms it when
-     `next_fire_at` arrives (Article IV: armed, not started).
+     `next_fire_at` arrives and records at the event, like every
+     scheduled recording (ruling B11; the toggle is the consent).
 2. For events that disappear from the ICS (no longer in the projection):
    - The linked recording is disarmed (`enabled=False`,
      `state="cancelled"`, `last_outcome="calendar_event_removed"`).
@@ -475,24 +487,14 @@ Article III satisfied.
 
 **Seam:** `monday_brief_service.py:134-153` -- `compute_window()`.
 
-**What 175 changes:**
-
-```python
-def compute_window(self, now=None):
-    period_end = now or datetime.datetime.now()
-    # Monday 00:00 of the current week
-    days_since_monday = period_end.weekday()  # 0=Mon
-    monday = (period_end - timedelta(days=days_since_monday)).date()
-    period_start = datetime.datetime.combine(
-        monday, datetime.time(0, 0), tzinfo=period_end.tzinfo
-    )
-    return period_start, period_end
-```
+**What 175 changes:** nothing in `compute_window()`. A new
+`compute_week_ahead(now)` returns `(now, sunday_23_59_local)`; the
+brief's forward half reads it.
 
 The look-ahead (for "what's coming") reads calendar_events where
 `starts_at > now AND starts_at <= sunday_23_59`. The look-back (for
-"what happened") reads the existing collectors from `period_start`
-(Monday 00:00) to `now`. The two halves compose into the brief's
+"what happened") reads the existing collectors over the existing
+`compute_window()` (unchanged). The two halves compose into the brief's
 sections without overlap.
 
 **New collectors:**
@@ -521,7 +523,7 @@ sections without overlap.
 | CalendarConfig | holdspeak/config/integrations.py:34 | Multi-source container |
 | validate_calendar_subscription | holdspeak/config/integrations.py:60 | Validates file path or HTTPS URL |
 | calendar_ingest.parse_calendar_bytes | holdspeak/calendar_ingest.py:57 | Pure ICS parser (no IO) |
-| CalendarIngestConductor.refresh_all | holdspeak/calendar_ingest_conductor.py:146+ | Periodic refresh of all sources |
+| CalendarIngestConductor.refresh | holdspeak/calendar_ingest_conductor.py:175 | Refresh of all sources, now driven by the sweep |
 | CalendarEventRepository.replace_projection | holdspeak/db/calendar_events.py:65 | Atomic replace-on-success |
 | CalendarEventRepository.list_upcoming | holdspeak/db/calendar_events.py:153 | Events after now, sorted by starts_at |
 | calendar_events table | holdspeak/db/schema.py:3490 | id, uid, title, starts_at, ends_at, location, meeting_url, source_id, source_label |
@@ -589,6 +591,18 @@ positive links the event to the wrong Room. Hunt:
   safer V0: no auto-link, only suggestions. The owner manually links.
   The brief's question: is auto-linking worth the false-positive risk,
   or should V0 be suggestion-only?
+- **Ruled (counsel's condition 4, the orchestrator under the open
+  throttle):** V0 AUTO-LINKS by title with the >= 4-character
+  whole-word rule and prefers the longest Room name; every link is a
+  receipt (`match_source=title`), the Room's MEETINGS row and the
+  arrival's event row wear the link, and `Unlink` on either face
+  removes it (`DELETE /api/calendar/events/{id}/link`). A wrong link
+  files a recording under the wrong Room; it never loses the
+  recording. His word can flip V0 to suggestion-only (question 1 in
+  the walk).
+- **Ruled R1 (2026-09-06, on the owner's deferral): full-name phrase; a
+  single generic word never links** (the ">= 4-character whole-word"
+  rule above is superseded; `calendar_ingest_conductor.room_name_matches_title`).
 
 ### H4: A week strip with a counter of zero
 
@@ -638,8 +652,8 @@ calendar:
    meeting's entity with decisions from the last intel run (from 172).
 6. **The week brief.** The brief in the shade (or Rhythm > Generate)
    shows the WEEK frame: meetings count, armed recordings, Watch
-   changes, commitments due. The window covers Monday-to-now, not
-   yesterday-to-now.
+   changes, commitments due. The backward window is the existing one;
+   the forward window runs to Sunday.
 7. **His word.** Stopwatch per face. Screenshots at both widths. His
    verdict recorded verbatim.
 
@@ -658,3 +672,48 @@ calendar:
 | 08 The docs | S | Screenshots + architecture diagrams |
 | 09 The close | S | Suite, baseline, canon ratchet, counsel, PR |
 | **Total** | **M** | The calendar ingest and scheduled recording machinery already exist; 175 connects them to the desk and the Room |
+
+
+## Addendum -- counsel on the design (2026-09-05): RATIFY-W-C, five conditions
+
+| # | Condition | Ruling | Paid where |
+|---|---|---|---|
+| 1 | ArrivalArmedOrphan: strip `3 MEETINGS THIS WEEK` vs section `MEETINGS 2` | The strip and the section count ONE set: the week's calendar events. The orphan armed recording is a recording, not an event; it sits in its own row grammar below the section and is never counted as a meeting. | Board: strip now reads `2 MEETINGS THIS WEEK` |
+| 2 | Brief window: D3 snippet said Monday 00:00; the board says SINCE FRIDAY | Two-window design. `compute_window()` UNCHANGED (the SINCE FRIDAY half); a new forward window `now -> Sunday 23:59` feeds THIS WEEK. | D2(e), D3 rewritten above; wire lane 04/05 briefed |
+| 3 | `refresh_all` does not exist | Corrected to `refresh` (calendar_ingest_conductor.py:175). | D3 and the wire summary |
+| 4 | Auto-link vs suggestion-only unsettled | V0 auto-links (>= 4-char whole word, longest Room name wins), every link a receipt, `Unlink` on both faces, nothing lost on a wrong link. His word may flip it. | H3 above; story 03 AC |
+| 5 | `ARM ROOM MEETINGS ONLY` consent is blind | The toggle row carries the matched fact `N MATCHED THIS WEEK` (absent at zero per A.8) so the rule's reach is on the same face. | The three Settings boards |
+
+P2s: P2-1 (the same event in two sources arms twice) is named in the
+risk table as accepted for V0 -- Cancel is one verb; P2-2 the snapshot
+model assignment gets a fence test in the hygiene lane (local-or-named);
+P2-3 NEXT vs the first row is headline-vs-detail, kept; P2-4 the Well
+board's missing Auto export row is a mockup simplification -- the build
+keeps the full Settings layout and unfolds the well inline.
+
+Counsel's three questions for the owner ride in the walk (story 06):
+auto-link vs suggestion-only; the two-window brief; a confirmation step
+before an auto-linked event arms.
+
+
+## Addendum 2 -- build rulings (2026-09-05, the faces)
+
+| # | Question raised by the build | Ruling |
+|---|---|---|
+| B1 | Past events in the current week: the strip's `count_per_day` counts Mon-Sun including events already past; the MEETINGS section lists only what is still coming. On a Thursday the two differ. | Two honest facts, kept. The strip counts the WEEK'S SHAPE (dots == `N MEETINGS THIS WEEK`, always). The MEETINGS section counts ITS ROWS (what is still coming). The only strip defect is dots != total. |
+| B2 | The Room's MEETINGS row: the wire registered the MeetingWatchSource but nothing creates a meeting Watch on a Room. A synthetic row (NEVER, no verbs, no SINCE YOU LOOKED) was proposed. | Rejected as hollow. The row is a REAL Watch: created idempotently when a meeting is linked to a Room (routing_glue + the manual link path) and backfilled once by the heartbeat sweep for Rooms that already have linked meetings; both receipted. CHECKED comes from the sweep; Pause/Resume are real; the entity's `updated_at` feeds SINCE YOU LOOKED. |
+| B3 | The orphan armed row's provenance printed `FROM · RETRO ()` when the event had left the upcoming projection. | The source label resolves from the event by id (any event, not only upcoming), then from the recording's `calendar_source_id`, else the token prints without parentheses. |
+| B4 | The NEXT line's Room token was proposed as backlog. | Not backlog: `NEXT · STANDUP · 10:00 · ROOM · Q4 PLATFORM` is the board; the arrival composes it from the next calendar event's `project_name`. |
+| B5 | The brief's forward items landed in the `changed` section (closed vocabulary). | `this_week` is added to the section vocabulary additively and ordered first; the four existing sections keep their order. |
+| B6 | The snapshot adapter's direct-dispatch fallback could pick a cloud vision model and record no host (P2-2). | Paid: local/LAN vision profiles are preferred; a non-local pick records the host on the egress from the revision's endpoint (fence: tests/unit/test_hs175_snapshot_model_fence.py). |
+| B7 | The design pointed the Settings CALENDAR section at MeetingsConfig.tsx (the Meetings window's gear panel). The ratified board is the Settings → Meetings module the hub row opens (SettingsCore `case "meetings"`), which already carried a 146-era Calendar group. | The board wins: the CALENDAR section lives in SettingsCore's meetings case and REPLACES the 146-era group (the calendar said once, one grammar). The gear panel stays as it was. The existing `Snapshot` verb (the vision adapter's entry) is kept beside `Add` — a working verb is never dropped; counsel-on-built rules its final place. |
+| B8 | The brief face's SINCE FRIDAY half was built as the 171 fold groups with `00` counters, on the claim that "unchanged window" meant "unchanged face". | Condition 2 kept the WINDOW unchanged, not the face. The ratified board shows flat rows (kind token · primary · detail · emblem chip); counters of zero are a bounce on their own. Behaviours the 132/129 tests protect (per-item triage, drill filters, BACK, the card cap) survive the grammar change. |
+| B9 | D2(c) said "no verb on existing sources; editing is the existing Settings path" — but B7 retired that path. The old group's tests named what it could do: disable, edit the URL, remove (with confirmation), add, and surface the snapshot upload's refusal in the status bar. | The verbs move onto the new rows in the ledger's hover-verb grammar: `Disable` / `Enable`, `Edit` (unfolds the same connect well under the row, pre-filled), `Remove` with a one-step in-world confirm. All write through the existing sources wire; the snapshot refusal keeps reaching the status bar. A face that replaces another never loses a working verb. |
+| B10 | The arrival already carries a MEETINGS section (the recorded meetings, 172's grammar); the board captioned the calendar section MEETINGS too, so a desk with a calendar would say the caption twice over two row grammars. Seen on the owner's desk walk (no calendar: only the recorded section showed). | The calendar section is captioned `THIS WEEK` (the strip's `N MEETINGS THIS WEEK` and the brief's THIS WEEK already name it); the recorded-meetings section keeps MEETINGS. Carried to the owner as a board deviation. |
+| B11 | Counsel-on-built (assets/counsel-on-built-175.md) BOUNCED on C1: the scheduled-recording conductor STARTS capture at the event, while D1/D3, story 03 and the guide said "armed, never started". | Ruled by the orchestrator under the open throttle and the 136 law (a scheduled recording records at its time): an event-born recording behaves exactly like a cron scheduled recording — it arms at `starts_at − lead` and records at the event. The Auto-record toggle (OFF by default) is the owner's standing consent to RECORD those meetings; `Cancel` must work for the row's whole visible life and be final across refreshes. The copy is corrected. Carried to the owner: "is the toggle consent to start capture at −5 min, or to arm and wait for Record?" — his word flips it. C2–C11 are defects and are paid; C12's runner note paid (no `Continue later` click). |
+| B12 | Counsel C2/C3: the arrival's Cancel refused every state but `arming`, and a cancelled event-born row was re-armed by the next refresh. | Cancel is lawful for an `idle` event-born row (disabled, `cancelled`, `owner_cancelled`, receipt `scheduled_recording.cancelled.owner`) and for `arming` (the 136 path); on a `recording` row Cancel is withheld and the honest verb is the meeting's Stop, the refusal named on the row (`CAN'T CANCEL · <reason>`). The cancelled row IS the tombstone, keyed `(calendar_source_id, calendar_uid)`; the conductor skips it with one receipt. `event_removed` and source-gone cancellations are not tombstones — the toggle's consent stands if the event returns. |
+| B13 | Counsel C4/C5: Remove/Disable left recordings armed and the last source never pruned; the API unlink was undone by the next refresh. | `refresh()` prunes unlisted and disabled sources BEFORE the zero-sources return (projection deleted, links dropped, idle recordings cancelled with `calendar_source_removed` / `_disabled` receipts). Unlink is durable through an additive `calendar_event_link_suppressions` table honoured by `replace_auto_links`; a manual link clears it. Schema 75; the canonical snapshot regenerated. |
+| B14 | Counsel C6: the matcher's Watch-query branch selected a column that does not exist and warned every refresh; `room_linked` needed two refreshes; manual links orphaned on a time change. | The Watch-query branch is dropped (title match is the V0); the matcher runs before per-source auto-create; manual links rebind by `(source_id, uid)`. Counsel's R1 (a Room named `Design` links a 401k webinar) still reproduces BY DESIGN under the ≥4-char whole-word rule — that is the owner's question 1; Unlink is the remedy until his word. |
+| B15 | Counsel C8/C9 (the arrival): the strip bucketed UTC days; THIS WEEK showed the 14-day projection; overflow read `{n}+`. | The week and its buckets are the hub's LOCAL Mon–Sun (`door.week.starts_at/ends_at` ride the payload); the THIS WEEK section is bounded by `week.ends_at` while NEXT still reads the projection; overflow reads exactly `5+`. |
+| B16 | Counsel re-read (assets/counsel-on-built-175-reread.md, RATIFY-W-C): the owner-cancel tombstone keyed by `(source, uid)` made Cancel on one occurrence of a recurring meeting refuse the whole series while its armed siblings stayed armed. | Cancel means THIS ONE: the tombstone is keyed by occurrence `(source, uid, starts_at)`; siblings untouched. "This one or the series?" is carried to the owner. Every arm writes its own create receipt (the discriminator carries the schedule id). Delete on an event-born row behaves as Cancel and never removes the tombstone. |
+| B17 | Counsel re-read: the local zone came from `datetime.now().astimezone()`, a fixed offset, so on the DST edge the week bound lands an hour off and a dot shifts a day. | Per-instant local conversion everywhere the week is computed (the door's strip, the Room's week, the Settings matched count); a DST-edge test at America/Denver 2026-11-01 pins it. |

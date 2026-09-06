@@ -102,3 +102,48 @@ export function refusalCode(reason: unknown): string {
 }
 
 export { newDeliveryId };
+
+/* ── HS-176-02 — the teach loop's vocabulary ──────────────────────────
+   FIELD is a three-way cycle. TEXT is the default: the Tuesday mistake
+   is a WORDS mistake ("postgress" for PostgreSQL), and the routing
+   kinds are a pick over the real enum, never free text. The tokens are
+   uppercase because the face's caption step is 11 mono uppercase. */
+export const CORRECTION_FIELDS = [
+  { value: "text", label: "TEXT" },
+  { value: "intent", label: "INTENT" },
+  { value: "target", label: "TARGET" },
+];
+
+/** One teach outcome, as tokens. Never a sentence (rule A.3). */
+export type TeachReceipt = {
+  token: string;
+  tone?: "ok" | "danger";
+  tail?: string;
+};
+
+/* The store's own refusal names (`corrections.py`) rendered as the
+   receipt the owner reads. `no_change` wrote nothing and is not a
+   refusal — it is the honest "you changed nothing". */
+export const TEACH_REFUSALS: Record<string, TeachReceipt> = {
+  no_change: { token: "NO CHANGE" },
+  secret: { token: "REFUSED · SECRET", tone: "danger", tail: "nothing written" },
+  one_word: { token: "REFUSED · ONE WORD", tone: "danger", tail: "nothing written" },
+  empty: { token: "REFUSED · EMPTY", tone: "danger", tail: "nothing written" },
+  kind: { token: "REFUSED · KIND", tone: "danger", tail: "nothing written" },
+};
+
+/** A named refusal, or the reason verbatim as a token — never swallowed. */
+export function teachReceiptFor(reason: string): TeachReceipt {
+  const known = TEACH_REFUSALS[reason];
+  if (known) return known;
+  const named = reason.trim()
+    ? `REFUSED · ${reason.replace(/_/g, " ").toUpperCase()}`
+    : "REFUSED";
+  return { token: named, tone: "danger", tail: "nothing written" };
+}
+
+/** The receipt's spans are truncated at 40 characters (the design's cap). */
+export function truncateSpan(text: string, cap = 40): string {
+  const clean = text.trim();
+  return clean.length > cap ? `${clean.slice(0, cap)}…` : clean;
+}

@@ -19,8 +19,10 @@ Capitalized product names identify specific records, modes, or controls.
 | Concierge | The model setup window opened through Settings > Models. |
 | connector | A component that obtains context from a configured source. Its permissions and data boundary depend on that source. |
 | Control mode | The Secure, Normal, or YOLO policy preset for future operations. |
+| correction | A stored dictation rule. A text correction rewrites a heard phrase in the transcript. A routing correction nudges the block or the delivery target of a similar utterance. |
 | decision record | A durable record of a decision and its available rationale. It does not establish organizational acceptance by itself. |
 | Desk | The product's operating surface for records and tools. |
+| dictation journal | One row per dictation run on this device, with the transcript, the delivered text, the route, the latency, and the corrections that fired. |
 | dictation pipeline | The stages that route or transform dictated text before delivery. |
 | egress | Transfer of data outside the current machine or applicable execution boundary. |
 | engine | A detected or configured model runtime, endpoint, or model option shown by the Concierge. |
@@ -32,6 +34,7 @@ Capitalized product names identify specific records, modes, or controls.
 | hub | The HoldSpeak runtime and data host that the Web app or a paired device uses. |
 | inference | A model execution that produces a result from input. |
 | Interview | The Thread mode for repeatable context and suggestions. The Thought Workbench also has a separate Interview pane. |
+| Learned | The Speak wing that lists stored corrections and their applied counts. |
 | MCP | Model Context Protocol. Clients use it to discover and call exposed tools and read resources. |
 | Model Library | The service that records model availability, deployment information, and readiness. |
 | Note | An editable text record. |

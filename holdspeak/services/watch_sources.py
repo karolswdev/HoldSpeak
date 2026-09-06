@@ -400,6 +400,162 @@ def drain_fetch_meta() -> dict[str, Any]:
     return meta
 
 
+# ── MeetingWatchSource (HS-175-04) ─────────────────────────────────
+
+
+class MeetingWatchSource:
+    """Snapshot adapter for local meeting Watch entities.
+
+    HS-175-04.  Reads from the local DB only (meetings, meeting_projects,
+    intel_job_attempts, decision_records, decision_commitments).  Zero
+    egress -- Article III satisfied.
+
+    query_kind: ``"meetings"``
+    query: ``{"project_id": "..."}``
+    """
+
+    def __init__(self, *, db: Any = None) -> None:
+        self._db = db
+
+    def snapshot(self, principal: Principal, *, query_kind: str,
+                 query: dict[str, Any]) -> list[dict[str, Any]]:
+        if query_kind != "meetings":
+            raise ValidationError("Meeting Watches support meetings")
+
+        project_id = str(query.get("project_id") or "").strip()
+        if not project_id:
+            raise ValidationError(
+                "Meeting Watch requires project_id in the query"
+            )
+
+        db = self._db
+        if db is None:
+            from holdspeak.db import get_database
+            db = get_database()
+
+        with db._connection() as conn:
+            # 1. Find meetings linked to this project
+            meeting_rows = conn.execute(
+                "SELECT meeting_id FROM meeting_projects WHERE project_id = ?",
+                (project_id,),
+            ).fetchall()
+            if not meeting_rows:
+                return []
+
+            meeting_ids = [str(r["meeting_id"]) for r in meeting_rows]
+            placeholders = ",".join("?" * len(meeting_ids))
+
+            # 2. Load meeting data
+            meetings = conn.execute(
+                f"""SELECT id, title, started_at, ended_at,
+                           intel_status, intel_completed_at
+                    FROM meetings
+                    WHERE id IN ({placeholders})
+                    ORDER BY started_at DESC""",
+                meeting_ids,
+            ).fetchall()
+
+            # 3. Count participants (speakers) per meeting
+            participant_counts: dict[str, int] = {}
+            for mid in meeting_ids:
+                row = conn.execute(
+                    "SELECT COUNT(DISTINCT speaker) AS cnt FROM segments WHERE meeting_id = ?",
+                    (mid,),
+                ).fetchone()
+                participant_counts[mid] = int(row["cnt"]) if row and row["cnt"] else 0
+
+            # 4. Count decisions per meeting (via decision_record_sources)
+            decisions_counts: dict[str, int] = {}
+            for mid in meeting_ids:
+                row = conn.execute(
+                    """SELECT COUNT(DISTINCT s.record_id) AS cnt
+                       FROM decision_record_sources s
+                       JOIN decision_records r ON r.id = s.record_id
+                       WHERE s.source_type = 'meeting' AND s.source_ref = ?
+                         AND r.deleted = 0""",
+                    (mid,),
+                ).fetchone()
+                decisions_counts[mid] = int(row["cnt"]) if row and row["cnt"] else 0
+
+            # 5. Count commitments per meeting (via decisions)
+            commitments_counts: dict[str, int] = {}
+            for mid in meeting_ids:
+                row = conn.execute(
+                    """SELECT COUNT(DISTINCT dc.id) AS cnt
+                       FROM decision_commitments dc
+                       JOIN decision_records r ON dc.decision_id = r.source_id
+                       JOIN decision_record_sources s ON s.record_id = r.id
+                       WHERE s.source_type = 'meeting' AND s.source_ref = ?
+                         AND r.deleted = 0""",
+                    (mid,),
+                ).fetchone()
+                commitments_counts[mid] = int(row["cnt"]) if row and row["cnt"] else 0
+
+            # 6. Latest intel run timestamp per meeting
+            intel_timestamps: dict[str, str] = {}
+            for mid in meeting_ids:
+                row = conn.execute(
+                    """SELECT MAX(created_at) AS latest
+                       FROM intel_job_attempts
+                       WHERE meeting_id = ? AND outcome = 'success'""",
+                    (mid,),
+                ).fetchone()
+                if row and row["latest"]:
+                    intel_timestamps[mid] = str(row["latest"])
+
+            # 7. Latest commitment updated_at per meeting
+            commitment_timestamps: dict[str, str] = {}
+            for mid in meeting_ids:
+                row = conn.execute(
+                    """SELECT MAX(dc.updated_at) AS latest
+                       FROM decision_commitments dc
+                       JOIN decision_records r ON dc.decision_id = r.source_id
+                       JOIN decision_record_sources s ON s.record_id = r.id
+                       WHERE s.source_type = 'meeting' AND s.source_ref = ?
+                         AND r.deleted = 0""",
+                    (mid,),
+                ).fetchone()
+                if row and row["latest"]:
+                    commitment_timestamps[mid] = str(row["latest"])
+
+        # Build entities
+        entities: list[dict[str, Any]] = []
+        for meeting in meetings:
+            mid = str(meeting["id"])
+            started_at = str(meeting["started_at"] or "")
+            intel_status_raw = str(meeting["intel_status"] or "disabled")
+
+            # Map intel_status to the brief vocabulary
+            if intel_status_raw in ("completed", "success"):
+                intel_status = "ran"
+            elif intel_status_raw in ("failed", "error"):
+                intel_status = "failed"
+            else:
+                intel_status = "off"
+
+            # updated_at = max(intel run, commitment change, started_at)
+            candidates = [started_at]
+            if mid in intel_timestamps:
+                candidates.append(intel_timestamps[mid])
+            if mid in commitment_timestamps:
+                candidates.append(commitment_timestamps[mid])
+            updated_at = max(c for c in candidates if c) if candidates else started_at
+
+            entities.append({
+                "id": mid,
+                "entity_type": "meeting",
+                "title": str(meeting["title"] or "Untitled meeting"),
+                "date": started_at,
+                "participants": participant_counts.get(mid, 0),
+                "decisions_count": decisions_counts.get(mid, 0),
+                "commitments_count": commitments_counts.get(mid, 0),
+                "intel_status": intel_status,
+                "updated_at": updated_at,
+            })
+
+        return entities
+
+
 # ── Snapshot fetcher factory (rider-a: one shape for all callers) ───
 
 
@@ -493,12 +649,14 @@ def default_snapshot_fetcher(
     github_runner: Runner | None = None,
     jira_adapter: Any | None = None,
     confluence_adapter: Any | None = None,
+    meeting_db: Any | None = None,
 ) -> Callable[..., list[dict[str, Any]]]:
     """Build the canonical snapshot_fetcher callable.
 
-    HS-166-03 rider-a / HS-174-07: ONE helper that web_server's
+    HS-166-03 rider-a / HS-174-07 / HS-175-04: ONE helper that web_server's
     _gh_watch_service_kwargs AND project.py's _watch_service() both use,
-    ensuring the same provider injection shape for gh, jira, AND confluence.
+    ensuring the same provider injection shape for gh, jira, confluence,
+    AND meeting.
     """
     def _fetcher(
         principal: Principal,
@@ -515,6 +673,7 @@ def default_snapshot_fetcher(
             github_runner=github_runner,
             jira_adapter=jira_adapter,
             confluence_adapter=confluence_adapter,
+            meeting_db=meeting_db,
         )
     return _fetcher
 
@@ -523,7 +682,8 @@ def fetch_watch_snapshot(principal: Principal, *, connector_id: str,
                          query_kind: str, query: dict[str, Any],
                          github_runner: Runner | None = None,
                          jira_adapter: Any | None = None,
-                         confluence_adapter: Any | None = None) -> list[dict[str, Any]]:
+                         confluence_adapter: Any | None = None,
+                         meeting_db: Any | None = None) -> list[dict[str, Any]]:
     if connector_id == "gh":
         return GitHubWatchSource(runner=github_runner).snapshot(
             principal, query_kind=query_kind, query=query,
@@ -534,6 +694,10 @@ def fetch_watch_snapshot(principal: Principal, *, connector_id: str,
         )
     if connector_id == "confluence":
         return ConfluenceWatchSource(adapter=confluence_adapter).snapshot(
+            principal, query_kind=query_kind, query=query,
+        )
+    if connector_id == "meeting":
+        return MeetingWatchSource(db=meeting_db).snapshot(
             principal, query_kind=query_kind, query=query,
         )
     raise ServiceError(

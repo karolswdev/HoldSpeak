@@ -347,7 +347,6 @@ function ConfigPanel({
             value={agentSearch}
             onChange={setAgentSearch}
             placeholder="SEARCH AGENTS"
-            mic={false}
           />
         </div>
         <SurfaceRows>

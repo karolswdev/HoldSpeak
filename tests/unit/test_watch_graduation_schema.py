@@ -113,8 +113,12 @@ def _find_real_db() -> Optional[Path]:
 class TestFreshSchema:
     """A fresh DB built from SCHEMA_SQL has every HS-159-01 shape."""
 
-    def test_schema_version_is_73(self) -> None:
-        assert SCHEMA_VERSION == 73
+    def test_schema_version_is_at_least_the_phase_floor(self) -> None:
+        """SCHEMA_VERSION is informational and additive-only (HS-137): this
+        phase was built at 73; later additive phases bump it (74 the
+        calendar_event_projects join, 75 calendar_event_link_suppressions).
+        The honest assertion is the floor, read from the real constant."""
+        assert SCHEMA_VERSION >= 73
 
     def test_connector_watches_has_graduation_columns(self, tmp_path: Path) -> None:
         conn = sqlite3.connect(str(tmp_path / "fresh.db"))

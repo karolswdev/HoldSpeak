@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 175
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-175-02
 - **Unblocks:** HS-175-06
 - **Owner:** unassigned
@@ -32,11 +32,13 @@ arm a recording.
     recordings (keyed by `calendar_uid` + `calendar_source_id`).
   - The recording row on the desk shows provenance: "From: Standup
     (Outlook)" with the calendar source chip.
-  - Article IV: the recording is ARMED, not started. The owner starts
-    it (or it starts if the existing auto-start setting is enabled).
+  - The recording arms at `starts_at − lead` and records at the event
+    like every scheduled recording; the Auto-record toggle (OFF by
+    default) is the owner's standing consent (ruling B11); Cancel is
+    final across refreshes.
 - Out:
-  - Auto-starting the recording at event time (the conductor arms it;
-    starting is Article IV's domain).
+  - An arm-and-wait mode (the built behaviour records at the event like
+    every scheduled recording — ruling B11; his word may flip it).
   - Creating calendar events from the desk (write-back).
   - Recordings for events without a meeting_url (those are not
     meetings).
@@ -44,8 +46,8 @@ arm a recording.
 ## Acceptance criteria
 
 - [ ] A calendar event with a meeting_url auto-creates an armed
-      ScheduledRecording linked via calendar_event_id (Article IV:
-      armed, not started).
+      ScheduledRecording linked via calendar_event_id (arms at
+      −lead, records at the event; the toggle is the consent — B11).
 - [ ] The recording inherits the event's title and time; the
       conductor arms at starts_at, disarms at ends_at.
 - [ ] Override and cancel work without affecting the calendar event.

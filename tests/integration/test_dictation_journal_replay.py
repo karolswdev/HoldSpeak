@@ -181,5 +181,13 @@ def test_journal_card_has_replay_action(persistent_db: Database) -> None:
         / "web/src/pages/cores/dictation/Journal.tsx"
     ).read_text()
     assert "/replay" in source and "replayResult" in source
-    assert "Replay — preview only" in source and "Copy result" in source
+    # HS-176-03 rebuilt the wing as a stream: the opened row now carries the
+    # three library-Button verbs (Replay · Copy · Delete) and the old
+    # "Replay — preview only" label moved into the result block's
+    # "REPLAY · PREVIEW" marker. The fence's intent is unchanged: a Replay
+    # verb exists, it posts to the replay route, and the result is
+    # preview-only and copyable.
+    assert "onReplay(row)" in source and ">\n          Replay\n" in source
+    assert "/api/dictation/journal/${encodeURIComponent(String(row.id))}/replay" in source
+    assert "REPLAY · PREVIEW" in source and "Copy result" in source
     assert "navigator.clipboard.writeText" in source

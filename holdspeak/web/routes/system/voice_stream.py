@@ -322,6 +322,13 @@ def build_voice_stream_router(
                         }
                     )
                     return
+                # HS-176 C1 (the SPOKEN half): the sink the pipeline writes its
+                # own three loop facts into. The spoken leg is the one that runs
+                # the pipeline and writes the journal row, so it is the only
+                # place these facts exist; the delivery that follows sends
+                # `raw: true` and rightly invents nothing. R2 forbids a
+                # read-time "newest journal row" lookup — they are CARRIED.
+                run_facts: dict[str, Any] = {}
                 try:
                     from ....dictation_runner import process_transcript
                     # HS-131-09: the final pass's classify/rewrite are children of
@@ -334,6 +341,7 @@ def build_voice_stream_router(
                         config=config_snapshot,
                         server=_resolve_server(ctx),
                         admission=interval.session.provider(),
+                        facts=run_facts,
                     )
                     final_text = corrected
                 except SpeechSessionRefused as exc:
@@ -359,7 +367,19 @@ def build_voice_stream_router(
                 except Exception as exc:
                     log.warning(f"Pipeline processing failed, returning raw: {exc}")
 
-                await websocket.send_json({"type": "final", "text": final_text})
+                # The `final` frame carries the run's own facts beside the
+                # landed text: the APPLIED chip, the TEXT teach's pre-fill and
+                # the journal correct route all read them off this one frame. A
+                # run that published nothing leaves `run_facts` empty and the
+                # frame keeps its old shape — nothing is invented.
+                final_frame: dict[str, Any] = {"type": "final", "text": final_text}
+                if run_facts:
+                    final_frame["raw_text"] = str(run_facts.get("raw_text") or "")
+                    final_frame["corrections_applied"] = list(
+                        run_facts.get("corrections_applied") or []
+                    )
+                    final_frame["journal_id"] = run_facts.get("journal_id")
+                await websocket.send_json(final_frame)
             else:
                 await websocket.send_json({"type": "final", "text": ""})
 

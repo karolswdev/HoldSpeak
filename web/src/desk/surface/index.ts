@@ -91,6 +91,8 @@ export { FootSlotContext } from "./foot";
 export { TitleSlotContext, useWindowTitle } from "./title";
 export { SPARSE_THRESHOLD } from "./sparse";
 
+export { FilterTokens, type FilterTokenOption } from "./FilterTokens";
+
 export {
   LedgerFilterBar,
   useLedgerFilter,

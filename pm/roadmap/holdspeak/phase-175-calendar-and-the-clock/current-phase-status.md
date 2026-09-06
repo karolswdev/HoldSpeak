@@ -1,6 +1,6 @@
 # Phase 175 - Calendar and the Clock
 
-**Last updated:** 2026-09-05.
+**Last updated:** 2026-09-06 — COMPLETE 9/9, PR #558 merged on his word.
 
 ## Goal
 
@@ -14,7 +14,11 @@ column.
 
 ## Status
 
-**PLANNED 0/9.**
+**COMPLETE 9/9 (2026-09-06) — merged on the owner's word ("You got my word for a merge."); his attended walk owed. PR #558 → main.**
+
+**Where we are (2026-09-05, late — the faces).** Resumed on his word ("I think you could continue working out 175 no?"). Four Fedaykin face lanes built to the ratified boards in one tree with strict file ownership, each shot beside its board at 1440 + 393 and bounced until it matched: (a) the arrival's WEEK strip, NEXT with the Room token, the MEETINGS section, the orphan armed row (`story-02-shots/`); (b) Settings → Meetings' CALENDAR section on the module the hub row opens — source rows, the in-world connect well with a mic, `Snapshot`, Auto-record with `5 MIN BEFORE` and `N MATCHED THIS WEEK`; the 146-era Calendar group retired so the calendar is said once, its verbs (`Edit` · `Disable`/`Enable` · `Remove` with an in-world confirm) carried onto the new rows because a face that replaces another never loses a working verb (`story-03-shots/`); (c) the Room's real meeting Watch — created when a meeting links, backfilled once by the sweep, evaluated by the sweep, feeding SINCE YOU LOOKED (`story-04-shots/`); (d) Rhythm's Weekly brief row and the brief's THIS WEEK / SINCE FRIDAY at one gutter, `this_week` added to the section vocabulary (`story-05-shots/`). Rulings from the build are in the design's Addendum 2 (B1–B9). One scar: a lane ran `git stash` in the shared tree to measure a before-count and dropped it; ten files reverted to HEAD and were recovered from the dangling stash commit via `git fsck`; the no-tree-git-verbs law is now in `.claude/agents/opus-worker.md`. Hygiene: the census (`assets/hygiene-census-175.md`), the P2-2 snapshot-model fence PAID (local/LAN preferred, host recorded), the tz-aware lookahead default, the logged Watch-query load; four items parked in BACKLOG.md. The canonical schema snapshot regenerated (the 02 wire's join table + index + `born_from`). 08 the docs paid (thirteen markers verified against the shipped tree; the 173 drafter diagram's `PAR` alias renamed so the mermaid guard renders). The runner's walk on his desk (06, read-only, every write denied; `assets/story-06-shots/`, evidence captured with the token redacted): no calendar connected, auto-record OFF, one upcoming scheduled recording; the arrival, Settings → Meetings' CALENDAR (Connect calendar · Add · Snapshot; Auto-record OFF), a real Room's SOURCES (GH · Jira; no linked meetings so no MEETINGS row), and Rhythm (`Monday brief · DAILY 08:00 · LAST AUG 19`) all read honestly at both widths. Found on his desk, not ours to touch: two `Sprint Review · AUG 20` meetings are seed rows earlier walks (167/168) left in his real database (`m-glass-167-walk`, `m-168-walk-001`) — his to delete; the queued `Already titled` job (172) still his to Skip; the recorded-meetings row prints `0 MIN` (172's face, a counter of zero — backlog). The runner's Settings leg was re-pointed to the hub's real path (`configure-settings` → the Meetings row's Open). Counsel-on-built (assets/counsel-on-built-175.md): BOUNCE on twelve conditions, six reproduced. C1 ruled B11 (an event-born recording records at the event like every scheduled recording; the toggle is consent to record; carried to the owner). C2–C11 PAID across three fix lanes (W1 the conductor + the brief wire; W2 the arrival + the recording Cancel; W3 Settings/Room/Rhythm/the snapshot egress) — rulings B12–B15. Counsel's re-read (assets/counsel-on-built-175-reread.md): RATIFY-WITH-CONDITIONS, ten of twelve paid, six conditions riding — (1) Cancel means THIS occurrence of a recurring meeting (tombstone keyed by `(source, uid, starts_at)`), (2) every arm has its own create receipt, (3) Delete on an event-born row behaves as Cancel and never removes the tombstone, (4) per-instant local time on the DST edge (the door's strip, the Room's week, the Settings matched count), (5) the copy matches B11 and B11 is a suite test that runs both conductors, (6) the owner's attended walk — 1–5 PAID (rulings B16–B17), 6 is his. Schema 75 (`owner_cancelled_at`, `calendar_starts_at`, `calendar_event_link_suppressions`); api-surface 667 with the unlink route's consumer; the walk runner follows `arrival-this-week`. Counsel's P2 ledger parked in BACKLOG.md. Then his attended walk, 07's flip, the close (09), #558 out of draft.
+
+Earlier (2026-09-05 21:45): 01 the design ratified by counsel (RATIFY-W-C; five conditions paid in the design addendum; canvas republished). 02–05 the wire landed with tests.
 
 **Depends on:** Phase 171 merged (the cadence row drives the brief's
 recurrence and the scheduled-recording conductor's ticks).
@@ -75,8 +79,10 @@ has only GitHubWatchSource:58 and JiraWatchSource:294).
     sufficient; push-based sync is a future phase).
   - Integration with external calendar APIs beyond ICS (Google
     Calendar API, Exchange API; the owner's calendar exports ICS).
-  - Recording auto-start (the recording is armed, the owner starts it;
-    Article IV: voice arms, it does not fire).
+  - A separate arm-and-wait mode: an event-born recording behaves like
+    every scheduled recording — it arms at −lead and records at the
+    event; the Auto-record toggle (OFF by default) is the consent
+    (ruling B11; the owner's word may flip it to arm-and-wait).
 
 ## Exit criteria (evidence required)
 
@@ -102,18 +108,26 @@ has only GitHubWatchSource:58 and JiraWatchSource:294).
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-175-01 | The design (the calendar week, the event-born recording, the meeting Watch entity on the canvas) | backlog | [story-01-the-design](./story-01-the-design.md) | -- |
-| HS-175-02 | Calendar events on the desk (the week view, the next seam, events as material) | backlog | [story-02-calendar-events-on-the-desk](./story-02-calendar-events-on-the-desk.md) | -- |
-| HS-175-03 | Event-born scheduled recordings (auto-create from calendar events with meeting URLs) | backlog | [story-03-event-born-recordings](./story-03-event-born-recordings.md) | -- |
-| HS-175-04 | The meeting Watch adapter (MeetingWatchSource: meetings as Watch entities in a Room) | backlog | [story-04-the-meeting-watch-adapter](./story-04-the-meeting-watch-adapter.md) | -- |
-| HS-175-05 | The week brief (Monday brief window widened to the calendar week; calendar + meeting collectors) | backlog | [story-05-the-week-brief](./story-05-the-week-brief.md) | -- |
-| HS-175-06 | The walk (his desk: the event-born recording, the week brief, the meeting Watch entity) | backlog | [story-06-the-walk](./story-06-the-walk.md) | -- |
-| HS-175-07 | The hygiene lane (items from THE-TUESDAY-ARC.md section 4 that this phase's tree touches) | backlog | [story-07-the-hygiene-lane](./story-07-the-hygiene-lane.md) | -- |
-| HS-175-08 | The docs (the calendar in the architecture; the week brief in the guide) | backlog | [story-08-the-docs](./story-08-the-docs.md) | -- |
-| HS-175-09 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | backlog | [story-09-the-close](./story-09-the-close.md) | -- |
+| HS-175-01 | The design (the calendar week, the event-born recording, the meeting Watch entity on the canvas) | done | [story-01-the-design](./story-01-the-design.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-175-02 | Calendar events on the desk (the week view, the next seam, events as material) | done | [story-02-calendar-events-on-the-desk](./story-02-calendar-events-on-the-desk.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-175-03 | Event-born scheduled recordings (auto-create from calendar events with meeting URLs) | done | [story-03-event-born-recordings](./story-03-event-born-recordings.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-175-04 | The meeting Watch adapter (MeetingWatchSource: meetings as Watch entities in a Room) | done | [story-04-the-meeting-watch-adapter](./story-04-the-meeting-watch-adapter.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-175-05 | The week brief (Monday brief window widened to the calendar week; calendar + meeting collectors) | done | [story-05-the-week-brief](./story-05-the-week-brief.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-175-06 | The walk (his desk: the event-born recording, the week brief, the meeting Watch entity) | done | [story-06-the-walk](./story-06-the-walk.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-175-07 | The hygiene lane (items from THE-TUESDAY-ARC.md section 4 that this phase's tree touches) | done | [story-07-the-hygiene-lane](./story-07-the-hygiene-lane.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-175-08 | The docs (the calendar in the architecture; the week brief in the guide) | done | [story-08-the-docs](./story-08-the-docs.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-175-09 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | done | [story-09-the-close](./story-09-the-close.md) | [evidence-story-09](./evidence-story-09.md) |
 
 ## Where we are
 
+**2026-09-05 21:20 — ACTIVATED, STACKED.** Under the standing goal the
+faces build to counsel-ratified boards and his word gates the MERGE.
+Twelve boards for D2 (a)–(e) on the canvas
+(https://claude.ai/code/artifact/113102aa-7bc9-4508-a334-79e22d542155),
+counsel reading; the wire lanes (02 · 03 · 04/05), the docs (08) and the
+runner (06) drafting in this worktree. Merge order stays his: #553 → #554 → #555 → #556 → #557 → 175's.
+
+Earlier: 
 PLANNED. Waiting for Phase 171 to merge (the cadence row drives the
 brief's recurrence and the conductor's ticks).
 
@@ -155,7 +169,7 @@ full implementation.
 | Risk | Likelihood | Mitigation | Stop signal |
 | --- | --- | --- | --- |
 | ICS refresh latency | Low | The conductor's periodic refresh (15 min default) is sufficient; the calendar is not real-time; stale-for-one-tick is acceptable | Stale event > 2 ticks observed; the owner misses a meeting that changed |
-| Event-born recording false positives | Medium | Only events with a meeting URL auto-create recordings; the owner can cancel any armed recording; the recording is ARMED, not started (Article IV) | > 50% of auto-created recordings are for non-meeting events |
+| Event-born recording false positives | Medium | Only events with a meeting URL auto-create recordings; the owner can cancel any armed recording; the toggle is OFF by default and is the consent to record; Cancel is final across refreshes (ruling B11) | > 50% of auto-created recordings are for non-meeting events |
 | MeetingWatchSource entity shape mismatch | Low | Meetings have title, date, participants, decisions, commitments; the entity shape maps to the existing Watch entity grammar (title, status, assignee, updated_at) | The Watch entity shape cannot express meeting semantics without a schema change |
 
 ## Decisions made (this phase)

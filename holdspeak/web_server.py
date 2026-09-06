@@ -239,8 +239,13 @@ class MeetingWebServer:
         # dictation stays byte-identical (no DB touched).
         from .plugins.dictation.journal import DictationJournalRecorder
 
+        # HS-176-02: the recorder also pushes one `dictation.journal.entry`
+        # frame per stored row over the existing runtime bus. `self.broadcast`
+        # resolves its event loop at call time and no-ops without one, so
+        # binding it here is safe before the server starts.
         self.dictation_journal = DictationJournalRecorder(
-            repository=dictation_journal_repository
+            repository=dictation_journal_repository,
+            broadcast=self.broadcast,
         )
         self.on_bookmark = callbacks.on_bookmark
         self.on_stop = callbacks.on_stop
@@ -668,7 +673,9 @@ class MeetingWebServer:
             build_automations_router,
             build_authority_router,
             build_cadence_router,
+            build_calendar_events_router,
             build_calendar_snapshot_router,
+            build_calendar_sources_router,
             build_core_router,
             build_decisions_router,
             build_delivery_router,
@@ -1043,7 +1050,9 @@ class MeetingWebServer:
         app.include_router(build_core_router(web_ctx))
         app.include_router(build_authority_router(web_ctx))
         app.include_router(build_cadence_router(web_ctx))
+        app.include_router(build_calendar_events_router(web_ctx))
         app.include_router(build_calendar_snapshot_router(web_ctx))
+        app.include_router(build_calendar_sources_router(web_ctx))
         app.include_router(build_follow_through_router(web_ctx))
         app.include_router(build_proposal_router(web_ctx))
         app.include_router(build_door_router(web_ctx))

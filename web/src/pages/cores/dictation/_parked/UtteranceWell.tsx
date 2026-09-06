@@ -1,7 +1,7 @@
 // The durable-draft textarea with the deliver/rehearse button row.
-import { Button } from "../../../components/signal/Signal";
-import { openSurfaceOr } from "../../../desk/shell";
-import { PadGadget, StringGadget } from "../../../desk/surface/gadgets";
+import { Button } from "../../../../components/signal/Signal";
+import { openSurfaceOr } from "../../../../desk/shell";
+import { PadGadget, StringGadget } from "../../../../desk/surface/gadgets";
 
 export function UtteranceWell({
   utterance,

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { MicButton } from "./controls/MicButton";
 import { SPARSE_THRESHOLD } from "./sparse";
 import "./surface-footer.css";
 
@@ -112,10 +113,14 @@ export function LedgerFilterBar({
           <input
             type="text"
             className="ledger-filter-query"
+            aria-label="Filter"
             placeholder="Filter..."
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
           />
+          {/* HS-176-04 — the voice law: every text input can be spoken
+              into (Article IV.1).  Click to toggle, never hold. */}
+          <MicButton label="Speak Filter" onText={(text) => onQueryChange(text)} />
         </div>
         <span className="ledger-filter-count">
           {isActive ? `${matchCount}/${total}` : String(total)}

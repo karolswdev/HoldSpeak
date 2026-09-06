@@ -205,21 +205,40 @@ def _publishable(text: str, admission: Any, stage: str) -> str:
     )
 
 
+def _run_correction_ids(value: Any) -> list[int]:
+    """A clean ``list[int]`` of correction ids from whatever the run carries.
+
+    HS-176 C1 (spoken half): the same coercion the dry-run helper does, kept
+    here so the runner never imports a web route.
+    """
+    ids: list[int] = []
+    for item in (value or []):
+        try:
+            ids.append(int(item))
+        except (TypeError, ValueError):  # pragma: no cover - defensive
+            continue
+    return ids
+
+
 def _journal_passthrough(
     text: str,
     *,
     server: Any,
     pipeline_cfg: Any,
     source: str,
-) -> None:
-    """Journal a pipeline-off dictation (F-07). Best-effort, never raises."""
+) -> Any:
+    """Journal a pipeline-off dictation (F-07). Best-effort, never raises.
+
+    Returns the stored record (or ``None``) so the caller can carry its id
+    as a run fact — the same value the dry-run path returns to the face.
+    """
     try:
         journal = getattr(server, "dictation_journal", None)
         if journal is None:
-            return
+            return None
         from holdspeak.plugins.dictation.journal import passthrough_run
 
-        journal.record(
+        return journal.record(
             passthrough_run(text),
             source=source,
             transcript=text,
@@ -228,6 +247,7 @@ def _journal_passthrough(
         )
     except Exception as exc:  # journaling must never break typing
         log.debug(f"Passthrough journal write failed: {exc}")
+    return None
 
 
 async def process_transcript(
@@ -239,6 +259,7 @@ async def process_transcript(
     server: Any = None,
     agent_reply_session: Any | None = None,
     admission: Any = None,
+    facts: dict[str, Any] | None = None,
 ) -> str:
     """Run the transcript-processing stages (corrections, learning, journaling).
 
@@ -255,6 +276,14 @@ async def process_transcript(
 
     Returns the pipeline-processed text, or ``raw_text`` unchanged on any
     error or when the pipeline is disabled.
+
+    HS-176 C1 (the SPOKEN half): pass a dict as ``facts`` and this run's own
+    three loop facts are written into it — ``raw_text`` (the transcript as
+    heard, before the rewrite pass), ``corrections_applied`` (the ids that
+    actually fired) and ``journal_id`` (the row this run wrote). They are
+    carried out of the run that computed them, never re-derived at read time
+    (R2 forbids a "newest journal row" lookup). The return value is unchanged,
+    so every existing caller is untouched.
     """
     if config is None or server is None:
         return raw_text
@@ -271,6 +300,7 @@ async def process_transcript(
         skip_target_detection=skip_target_detection,
         agent_reply_session=agent_reply_session,
         admission=admission,
+        facts=facts,
     )
 
 
@@ -285,6 +315,7 @@ def run_pipeline_corrections_only(
     journal_source: str = "dictation",
     skip_target_detection: bool = False,
     admission: Any = None,
+    facts: dict[str, Any] | None = None,
 ) -> str:
     """Run the dictation pipeline -- corrections and learning only when
     ``skip_target_detection`` is True, full pipeline otherwise.
@@ -292,6 +323,12 @@ def run_pipeline_corrections_only(
     HS-118-08: the browser path must skip target detection (the browser IS
     the target). The hotkey path still runs the full pipeline with target
     detection, activity context, and agent session support.
+
+    HS-176 C1: ``facts`` is an optional sink. When given, the publication that
+    writes the journal row also writes ``raw_text`` / ``corrections_applied``
+    / ``journal_id`` into it, so a caller (the browser stream) can forward the
+    run's own facts. A run that publishes nothing (fenced, refused, failed)
+    writes nothing into the sink.
     """
     dictation_cfg = getattr(config, "dictation", None)
     pipeline_cfg = getattr(dictation_cfg, "pipeline", None)
@@ -300,12 +337,19 @@ def run_pipeline_corrections_only(
         # followed by these two writes let cancellation land in between them.
         def _publish_disabled() -> str:
             if pipeline_cfg is not None:
-                _journal_passthrough(
+                recorded = _journal_passthrough(
                     text,
                     server=server,
                     pipeline_cfg=pipeline_cfg,
                     source=journal_source,
                 )
+                if facts is not None:
+                    # Pipeline off: nothing was corrected, so the heard text IS
+                    # the landed text and no rule fired. The row still exists,
+                    # so a teach can still take the journal route.
+                    facts["raw_text"] = text
+                    facts["corrections_applied"] = []
+                    facts["journal_id"] = getattr(recorded, "id", None)
             return text
 
         return str(
@@ -418,8 +462,9 @@ def run_pipeline_corrections_only(
 
         def _publish_run() -> str:
             journal = getattr(server, "dictation_journal", None)
+            recorded = None
             if journal is not None:
-                journal.record(
+                recorded = journal.record(
                     run,
                     source=journal_source,
                     transcript=text,
@@ -428,6 +473,16 @@ def run_pipeline_corrections_only(
                     enabled=bool(getattr(pipeline_cfg, "journal_enabled", True)),
                     retention=int(getattr(pipeline_cfg, "journal_retention", 500)),
                 )
+            if facts is not None:
+                # HS-176 C1 (spoken half): the three loop facts leave the run
+                # that computed them, inside the SAME publication that wrote
+                # the row. `raw_text` is the transcript as heard (what the
+                # `text` rules were applied to), never the landed text.
+                facts["raw_text"] = text
+                facts["corrections_applied"] = _run_correction_ids(
+                    getattr(run, "corrections_applied", None)
+                )
+                facts["journal_id"] = getattr(recorded, "id", None)
             return run.final_text
 
         return str(
