@@ -1,0 +1,50 @@
+{
+  "id": "MX-08",
+  "corpus_version": "1",
+  "category": "meeting",
+  "split": "held_out",
+  "title": "The spoken summary overstates a recorded status",
+  "tags": [
+    "misleading_narrative",
+    "stale_source"
+  ],
+  "material": {
+    "meeting": "Delta migration weekly",
+    "records": [
+      {
+        "ref": "job:migration-run-114",
+        "title": "Migration run 114",
+        "version": "rev-1",
+        "text": "Status: scheduled. No run has started."
+      }
+    ],
+    "segments": [
+      {
+        "speaker": "Karol",
+        "text": "The migration completed last night, we are done."
+      },
+      {
+        "speaker": "Priya",
+        "text": "Not quite. Run 114 is only scheduled, it has not started."
+      },
+      {
+        "speaker": "Karol",
+        "text": "Understood, it is scheduled, not complete."
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "correction_honoured",
+      "params": {
+        "field": "migration_status",
+        "superseded": [
+          "completed",
+          "complete",
+          "done"
+        ],
+        "current": "scheduled"
+      }
+    }
+  ]
+}

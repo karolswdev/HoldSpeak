@@ -1,0 +1,38 @@
+{
+  "id": "IV-03",
+  "corpus_version": "1",
+  "category": "interview",
+  "split": "train",
+  "title": "No source carries a deadline",
+  "tags": [
+    "no_source",
+    "missing_date"
+  ],
+  "material": {
+    "project": "Northwind billing rewrite",
+    "prior_turns": [
+      {
+        "role": "owner",
+        "text": "We are rewriting the billing service. No dates are agreed yet."
+      }
+    ],
+    "prompt": "Draft the rollout outline. If a date is not in the material, leave it unfilled.",
+    "sources": [
+      {
+        "ref": "note:northwind-scope",
+        "title": "Billing rewrite scope note",
+        "version": "rev-3",
+        "text": "Scope: invoicing, dunning, tax table refresh. Two engineers assigned. No schedule agreed."
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "absent_source_unknown",
+      "params": {
+        "field": "deadline",
+        "reason": "no source carries a date"
+      }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "id": "UP-08",
+  "corpus_version": "1",
+  "category": "update",
+  "split": "held_out",
+  "title": "The update wants an owner the sources leave ambiguous",
+  "tags": [
+    "ambiguous_identity",
+    "missing_owner"
+  ],
+  "material": {
+    "project": "Delta migration",
+    "window": "2026-04-01..2026-04-07",
+    "sources": [
+      {
+        "ref": "note:weekly-checkin",
+        "title": "Weekly check in",
+        "version": "rev-5",
+        "text": "Alex will run the rollback rehearsal."
+      },
+      {
+        "ref": "people:directory",
+        "title": "Team directory",
+        "version": "rev-9",
+        "text": "Alex Moreau, platform engineer. Alex Whitfield, release manager."
+      }
+    ],
+    "requested_sections": [
+      "next"
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "typed_unknown_field",
+      "params": {
+        "field": "rehearsal_owner",
+        "reason": "two directory entries match the first name in the check in",
+        "alternatives": [
+          "Alex Moreau",
+          "Alex Whitfield"
+        ]
+      }
+    }
+  ]
+}

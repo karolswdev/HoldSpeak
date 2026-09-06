@@ -1,0 +1,52 @@
+{
+  "id": "UP-03",
+  "corpus_version": "1",
+  "category": "update",
+  "split": "held_out",
+  "title": "A superseded decision must not be restated as current",
+  "tags": [
+    "stale_source"
+  ],
+  "material": {
+    "project": "Delta migration",
+    "window": "2026-04-01..2026-04-07",
+    "prior_decisions": [
+      {
+        "id": "DEC-11",
+        "text": "Use MySQL for the Delta migration target store.",
+        "recorded_at": "2026-01-12",
+        "state": "superseded",
+        "superseded_by": "DEC-19"
+      },
+      {
+        "id": "DEC-19",
+        "text": "Use PostgreSQL for the Delta migration target store.",
+        "recorded_at": "2026-02-20",
+        "state": "accepted"
+      }
+    ],
+    "sources": [
+      {
+        "ref": "decision:DEC-19",
+        "title": "Target store decision",
+        "version": "rev-1",
+        "text": "PostgreSQL is the target store. Replaces the January MySQL decision."
+      }
+    ],
+    "requested_sections": [
+      "decisions"
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "stale_decision_superseded",
+      "params": {
+        "decision_id": "DEC-11",
+        "stale_keywords": [
+          "mysql"
+        ],
+        "current_decision_id": "DEC-19"
+      }
+    }
+  ]
+}

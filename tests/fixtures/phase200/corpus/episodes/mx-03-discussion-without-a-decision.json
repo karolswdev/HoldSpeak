@@ -1,0 +1,36 @@
+{
+  "id": "MX-03",
+  "corpus_version": "1",
+  "category": "meeting",
+  "split": "held_out",
+  "title": "Nothing was decided",
+  "tags": [
+    "no_source"
+  ],
+  "material": {
+    "meeting": "Billing rewrite open discussion",
+    "segments": [
+      {
+        "speaker": "Karol",
+        "text": "Do we want to keep the legacy tax table or rebuild it?"
+      },
+      {
+        "speaker": "Sam",
+        "text": "Rebuilding is cleaner but I do not know the effort yet."
+      },
+      {
+        "speaker": "Karol",
+        "text": "Let us think about it and come back next week."
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "absent_source_unknown",
+      "params": {
+        "field": "decision",
+        "reason": "the meeting reached no decision"
+      }
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "id": "UP-07",
+  "corpus_version": "1",
+  "category": "update",
+  "split": "train",
+  "title": "A recorded status supports a mapped claim, not the prose around it",
+  "tags": [
+    "stated_fact",
+    "irrelevant_citation"
+  ],
+  "material": {
+    "project": "Delta migration",
+    "window": "2026-04-01..2026-04-07",
+    "sources": [
+      {
+        "ref": "job:migration-run-114",
+        "title": "Migration run 114",
+        "version": "rev-1",
+        "fields": {
+          "status": "scheduled",
+          "started_at": null
+        },
+        "text": "Status: scheduled. No run has started."
+      }
+    ],
+    "requested_claims": [
+      {
+        "id": "c1",
+        "text": "Migration run 114 is scheduled.",
+        "citations": [
+          "job:migration-run-114"
+        ],
+        "note": "A deterministic field mapping can support this one."
+      },
+      {
+        "id": "c2",
+        "text": "The migration is on track and the team is confident.",
+        "citations": [
+          "job:migration-run-114"
+        ],
+        "note": "Generated prose. The recorded status does not carry it."
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "citation_not_supported",
+      "params": {
+        "claim_id": "c2",
+        "citation": "job:migration-run-114",
+        "reason": "a recorded status cannot support generated prose about confidence",
+        "claim_keywords": [
+          "on track",
+          "confident"
+        ],
+        "allow_supported_keywords": [
+          "scheduled"
+        ]
+      }
+    }
+  ]
+}

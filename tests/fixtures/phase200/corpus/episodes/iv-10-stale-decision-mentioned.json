@@ -1,0 +1,48 @@
+{
+  "id": "IV-10",
+  "corpus_version": "1",
+  "category": "interview",
+  "split": "train",
+  "title": "An old decision was superseded last month",
+  "tags": [
+    "stale_source"
+  ],
+  "material": {
+    "project": "Delta migration",
+    "prior_turns": [
+      {
+        "role": "owner",
+        "text": "Remind me what we decided about the database engine."
+      }
+    ],
+    "prior_decisions": [
+      {
+        "id": "DEC-11",
+        "text": "Use MySQL for the Delta migration target store.",
+        "recorded_at": "2026-01-12",
+        "state": "superseded",
+        "superseded_by": "DEC-19"
+      },
+      {
+        "id": "DEC-19",
+        "text": "Use PostgreSQL for the Delta migration target store.",
+        "recorded_at": "2026-02-20",
+        "state": "accepted"
+      }
+    ],
+    "prompt": "What is the current database engine decision, and what did it replace?",
+    "sources": []
+  },
+  "invariants": [
+    {
+      "kind": "stale_decision_superseded",
+      "params": {
+        "decision_id": "DEC-11",
+        "stale_keywords": [
+          "mysql"
+        ],
+        "current_decision_id": "DEC-19"
+      }
+    }
+  ]
+}

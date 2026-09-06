@@ -1,0 +1,44 @@
+{
+  "id": "IV-11",
+  "corpus_version": "1",
+  "category": "interview",
+  "split": "held_out",
+  "title": "The vendor contract source was revoked",
+  "tags": [
+    "revoked_source"
+  ],
+  "material": {
+    "project": "Northwind billing rewrite",
+    "prior_turns": [
+      {
+        "role": "owner",
+        "text": "What are the vendor payment terms we agreed?"
+      }
+    ],
+    "sources": [
+      {
+        "ref": "doc:vendor-contract",
+        "title": "Vendor contract",
+        "version": "rev-4",
+        "state": "revoked",
+        "text": "",
+        "note": "Access revoked on 2026-02-28. Content is not available to this session."
+      }
+    ],
+    "prompt": "State the vendor payment terms only if the available material carries them."
+  },
+  "invariants": [
+    {
+      "kind": "absent_source_unknown",
+      "params": {
+        "field": "vendor_payment_terms",
+        "reason": "the vendor contract source is revoked",
+        "forbidden": [
+          "net 30",
+          "net 60",
+          "net 90"
+        ]
+      }
+    }
+  ]
+}

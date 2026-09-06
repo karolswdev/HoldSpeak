@@ -1,0 +1,92 @@
+{
+  "id": "IV-08",
+  "corpus_version": "1",
+  "category": "interview",
+  "split": "held_out",
+  "title": "The answer sits deep in a long conversation",
+  "tags": [
+    "long_context",
+    "repeated_question"
+  ],
+  "material": {
+    "project": "Northwind billing rewrite",
+    "prior_turns": [
+      {
+        "role": "owner",
+        "text": "The rewrite covers invoicing, dunning and the tax table."
+      },
+      {
+        "role": "assistant",
+        "text": "Understood."
+      },
+      {
+        "role": "owner",
+        "text": "The staging environment is shared with the reporting team."
+      },
+      {
+        "role": "assistant",
+        "text": "Understood."
+      },
+      {
+        "role": "owner",
+        "text": "The rollback plan is a database snapshot taken before each release."
+      },
+      {
+        "role": "assistant",
+        "text": "Understood."
+      },
+      {
+        "role": "owner",
+        "text": "Our compliance reviewer is Priya Raman."
+      },
+      {
+        "role": "assistant",
+        "text": "Understood."
+      },
+      {
+        "role": "owner",
+        "text": "We deploy on Wednesdays and never in the last week of a quarter."
+      },
+      {
+        "role": "assistant",
+        "text": "Understood."
+      },
+      {
+        "role": "owner",
+        "text": "The rollback plan is a database snapshot; I said that already."
+      }
+    ],
+    "answered_questions": [
+      {
+        "text": "What is the rollback plan?",
+        "keywords": [
+          "rollback"
+        ]
+      }
+    ],
+    "prompt": "Give me the outline of what you know and ask only for what is genuinely missing.",
+    "sources": []
+  },
+  "invariants": [
+    {
+      "kind": "question_not_repeated",
+      "params": {
+        "answered": [
+          {
+            "text": "What is the rollback plan?",
+            "keywords": [
+              "rollback"
+            ]
+          },
+          {
+            "text": "Who is the compliance reviewer?",
+            "keywords": [
+              "compliance",
+              "review"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

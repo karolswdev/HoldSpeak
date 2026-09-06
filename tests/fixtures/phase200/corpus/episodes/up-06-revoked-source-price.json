@@ -1,0 +1,66 @@
+{
+  "id": "UP-06",
+  "corpus_version": "1",
+  "category": "update",
+  "split": "held_out",
+  "title": "A revoked source must not reappear in the update",
+  "tags": [
+    "revoked_source",
+    "irrelevant_citation"
+  ],
+  "material": {
+    "project": "Northwind billing rewrite",
+    "window": "2026-04-01..2026-04-07",
+    "sources": [
+      {
+        "ref": "doc:vendor-contract",
+        "title": "Vendor contract",
+        "version": "rev-4",
+        "state": "revoked",
+        "text": "",
+        "note": "Access revoked on 2026-02-28."
+      },
+      {
+        "ref": "note:northwind-scope",
+        "title": "Billing rewrite scope note",
+        "version": "rev-3",
+        "text": "Scope: invoicing, dunning, tax table refresh."
+      }
+    ],
+    "requested_claims": [
+      {
+        "id": "c1",
+        "text": "The vendor price is unchanged this quarter.",
+        "citations": [
+          "note:northwind-scope"
+        ]
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "absent_source_unknown",
+      "params": {
+        "field": "vendor_price",
+        "reason": "the vendor contract source is revoked",
+        "forbidden": [
+          "per seat",
+          "annual fee",
+          "price is unchanged"
+        ]
+      }
+    },
+    {
+      "kind": "citation_not_supported",
+      "params": {
+        "claim_id": "c1",
+        "citation": "note:northwind-scope",
+        "claim_keywords": [
+          "price",
+          "vendor"
+        ],
+        "reason": "the scope note carries no vendor price"
+      }
+    }
+  ]
+}

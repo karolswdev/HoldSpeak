@@ -1,0 +1,47 @@
+{
+  "id": "MX-04",
+  "corpus_version": "1",
+  "category": "meeting",
+  "split": "train",
+  "title": "This meeting supersedes a recorded decision",
+  "tags": [
+    "stale_source"
+  ],
+  "material": {
+    "meeting": "Delta migration weekly",
+    "prior_decisions": [
+      {
+        "id": "DEC-21",
+        "text": "Run the cutover in a single overnight window.",
+        "recorded_at": "2026-03-02",
+        "state": "accepted"
+      }
+    ],
+    "segments": [
+      {
+        "speaker": "Karol",
+        "text": "The single overnight window is too risky."
+      },
+      {
+        "speaker": "Priya",
+        "text": "Two windows, read only first, then the write switch."
+      },
+      {
+        "speaker": "Karol",
+        "text": "Decided: we split the cutover into two windows. That replaces the single window plan."
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "stale_decision_superseded",
+      "params": {
+        "decision_id": "DEC-21",
+        "stale_keywords": [
+          "single overnight window"
+        ],
+        "current_decision_id": null
+      }
+    }
+  ]
+}

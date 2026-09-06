@@ -1,0 +1,32 @@
+{
+  "id": "MX-11",
+  "corpus_version": "1",
+  "category": "meeting",
+  "split": "train",
+  "title": "An action item names no owner",
+  "tags": [
+    "missing_owner"
+  ],
+  "material": {
+    "meeting": "Billing rewrite standup",
+    "segments": [
+      {
+        "speaker": "Karol",
+        "text": "Someone has to refresh the tax table before the release."
+      },
+      {
+        "speaker": "Sam",
+        "text": "Agreed, it has to happen."
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "typed_unknown_field",
+      "params": {
+        "field": "action_owner",
+        "reason": "no owner was named for the action"
+      }
+    }
+  ]
+}

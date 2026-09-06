@@ -176,6 +176,38 @@ HOME_REAL=$HOME; HOME=$(mktemp -d) \
 **The hardware lane** (`-m metal --run-metal`) needs a real microphone, model
 and keyboard, and is never run in CI.
 
+### Evaluate a model route
+
+Tests answer whether the code behaves. They cannot answer whether a model is
+good enough to trust with real work, because a passing fixture says nothing
+about what a live model writes. That question has its own harness: a versioned
+corpus of 33 synthetic episodes across Interview, meeting extraction, and
+grounded update work, deterministic invariant checks over the outputs, and a
+runner that drives every episode through the real product path with one
+selected route.
+
+```sh
+uv run python scripts/phase200_eval.py run \
+    --endpoint http://192.168.1.43:8080/v1 \
+    --model qwen2.5-32b-instruct \
+    --report .tmp/phase200-eval.json --raw .tmp/phase200-eval-raw.json
+```
+
+It exits 0 when no episode has a critical factual failure, and 1 when one has.
+A critical failure is an invented value, a violated correction, a restated
+superseded decision, or an irrelevant citation sold as support. It fails the
+run however many episodes passed, and it requires a person to inspect the
+source before the run means anything. The report names the model, the resolved
+route, the build, each episode's context hash, the failures by kind, the claim
+support judgments, the latency, and the review effort the result still owes.
+
+The run is isolated. It uses a temporary home, a temporary database per
+episode, and synthetic material only. It never reads or writes your data.
+
+The protocol, the report's fields, the reviewer's rubric, and what this harness
+does not establish are in
+[the scoring protocol](internal/architect-assistant/proof/SCORING.md).
+
 ### Why the isolated home is not optional
 
 `holdspeak` resolves its database and configuration from your home directory,

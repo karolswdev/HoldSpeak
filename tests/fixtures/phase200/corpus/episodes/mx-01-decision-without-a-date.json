@@ -1,0 +1,41 @@
+{
+  "id": "MX-01",
+  "corpus_version": "1",
+  "category": "meeting",
+  "split": "train",
+  "title": "A decision is taken and no date is spoken",
+  "tags": [
+    "stated_fact",
+    "missing_date"
+  ],
+  "material": {
+    "meeting": "Delta migration weekly",
+    "segments": [
+      {
+        "speaker": "Karol",
+        "text": "We need to settle the target store this week."
+      },
+      {
+        "speaker": "Priya",
+        "text": "PostgreSQL handles our partitioning better."
+      },
+      {
+        "speaker": "Karol",
+        "text": "Agreed, we go with PostgreSQL. Priya owns the migration script."
+      },
+      {
+        "speaker": "Priya",
+        "text": "I will start it."
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "absent_source_unknown",
+      "params": {
+        "field": "due_date",
+        "reason": "no date was spoken in the meeting"
+      }
+    }
+  ]
+}

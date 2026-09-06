@@ -1,0 +1,486 @@
+{
+  "corpus_version": "1",
+  "split_rule": "Each episode's split was assigned when the episode was authored (HS-200-08, corpus version 1), before any prompt or recipe change was measured against it. Held-out episodes are acceptance evidence: a tuning step that reaches for one raises HeldOutEpisodeError (tests/fixtures/phase200/checks.py, read_for_tuning). Every category keeps at least one third held out. Real failures may be added as train regression cases; the held-out set is only ever extended, never rewritten to match a result.",
+  "episode_count": 33,
+  "counts": {
+    "interview": {
+      "total": 11,
+      "train": 7,
+      "held_out": 4
+    },
+    "meeting": {
+      "total": 11,
+      "train": 7,
+      "held_out": 4
+    },
+    "update": {
+      "total": 11,
+      "train": 7,
+      "held_out": 4
+    }
+  },
+  "held_out_ids": [
+    "IV-04",
+    "IV-06",
+    "IV-08",
+    "IV-11",
+    "MX-03",
+    "MX-06",
+    "MX-08",
+    "MX-10",
+    "UP-03",
+    "UP-06",
+    "UP-08",
+    "UP-11"
+  ],
+  "episodes": [
+    {
+      "id": "IV-01",
+      "category": "interview",
+      "split": "train",
+      "title": "The owner corrects the review date",
+      "tags": [
+        "correction",
+        "stated_fact"
+      ],
+      "invariants": [
+        "correction_honoured"
+      ],
+      "material_sha256": "76e15b41bf8d460d4648e983674bad490823f9ca4815c1e449966e3313033c22"
+    },
+    {
+      "id": "IV-02",
+      "category": "interview",
+      "split": "train",
+      "title": "The project owner was already stated",
+      "tags": [
+        "repeated_question"
+      ],
+      "invariants": [
+        "question_not_repeated"
+      ],
+      "material_sha256": "3b7b88a361dfc0e993ad8e08ef70d837a68907929efca00ff80901a2d6dccea3"
+    },
+    {
+      "id": "IV-03",
+      "category": "interview",
+      "split": "train",
+      "title": "No source carries a deadline",
+      "tags": [
+        "no_source",
+        "missing_date"
+      ],
+      "invariants": [
+        "absent_source_unknown"
+      ],
+      "material_sha256": "0289b98480b6f39249bb6941506f8dbe7dfce1990126bec95ea544f1f760b239"
+    },
+    {
+      "id": "IV-04",
+      "category": "interview",
+      "split": "held_out",
+      "title": "Two people share a first name",
+      "tags": [
+        "ambiguous_identity",
+        "missing_owner"
+      ],
+      "invariants": [
+        "typed_unknown_field"
+      ],
+      "material_sha256": "879b88a0f90ff0ee209de539457f06b344212680bab1a1fafa52ebce27f964db"
+    },
+    {
+      "id": "IV-05",
+      "category": "interview",
+      "split": "train",
+      "title": "A dismissed suggestion returns under new wording",
+      "tags": [
+        "dismissed_suggestion",
+        "repeated_suggestion"
+      ],
+      "invariants": [
+        "question_not_repeated"
+      ],
+      "material_sha256": "71bea26895d6411ee157a099be5e732bc2d0775705deae5df9de098dce01b0bf"
+    },
+    {
+      "id": "IV-06",
+      "category": "interview",
+      "split": "held_out",
+      "title": "The owner corrects a stated team count",
+      "tags": [
+        "correction",
+        "contradictory_source"
+      ],
+      "invariants": [
+        "correction_honoured"
+      ],
+      "material_sha256": "a81d7c9c207ee7501065cef152cd0eccb8c1dd3d4e44f168b00ffd070dbee5aa"
+    },
+    {
+      "id": "IV-07",
+      "category": "interview",
+      "split": "train",
+      "title": "The calendar source is unavailable",
+      "tags": [
+        "unavailable_tools",
+        "no_source"
+      ],
+      "invariants": [
+        "absent_source_unknown"
+      ],
+      "material_sha256": "40c141d8bc3668408e28928e3a2e185b6ebe240dbf813071f7c9dfd1892f8a57"
+    },
+    {
+      "id": "IV-08",
+      "category": "interview",
+      "split": "held_out",
+      "title": "The answer sits deep in a long conversation",
+      "tags": [
+        "long_context",
+        "repeated_question"
+      ],
+      "invariants": [
+        "question_not_repeated"
+      ],
+      "material_sha256": "fdaa7193c3d80b85c6f44e4af032ae7db62c932be21b5a36d87d96a10082b4be"
+    },
+    {
+      "id": "IV-09",
+      "category": "interview",
+      "split": "train",
+      "title": "The source carries headcount but no budget",
+      "tags": [
+        "partial_source"
+      ],
+      "invariants": [
+        "absent_source_unknown"
+      ],
+      "material_sha256": "326b2943f40a43ab8ae47bd00b85724bc6c5e59bf22ab0e9efe5c89b21e25050"
+    },
+    {
+      "id": "IV-10",
+      "category": "interview",
+      "split": "train",
+      "title": "An old decision was superseded last month",
+      "tags": [
+        "stale_source"
+      ],
+      "invariants": [
+        "stale_decision_superseded"
+      ],
+      "material_sha256": "fb2549d0fd746cc1903a77665df53532705443b9714fbcf476e8a820c67d6343"
+    },
+    {
+      "id": "IV-11",
+      "category": "interview",
+      "split": "held_out",
+      "title": "The vendor contract source was revoked",
+      "tags": [
+        "revoked_source"
+      ],
+      "invariants": [
+        "absent_source_unknown"
+      ],
+      "material_sha256": "5534fda13959fbe6ce8deaa46e1fc09101043c53dfc58669f35b9e660456b356"
+    },
+    {
+      "id": "MX-01",
+      "category": "meeting",
+      "split": "train",
+      "title": "A decision is taken and no date is spoken",
+      "tags": [
+        "stated_fact",
+        "missing_date"
+      ],
+      "invariants": [
+        "absent_source_unknown"
+      ],
+      "material_sha256": "bff7d9246968b796401fb374be2e3ee059537a68da4290478d983b6f04cab826"
+    },
+    {
+      "id": "MX-02",
+      "category": "meeting",
+      "split": "train",
+      "title": "A speaker corrects the cutover date",
+      "tags": [
+        "correction"
+      ],
+      "invariants": [
+        "correction_honoured"
+      ],
+      "material_sha256": "d02caff74355486a07d31269442a03b33f0b1f4e566ca4cc7d72d438b17d5265"
+    },
+    {
+      "id": "MX-03",
+      "category": "meeting",
+      "split": "held_out",
+      "title": "Nothing was decided",
+      "tags": [
+        "no_source"
+      ],
+      "invariants": [
+        "absent_source_unknown"
+      ],
+      "material_sha256": "49b497a15115f34fdb2ee8bcf9ded260c44ee75b8ce06099bbc447b615fd509a"
+    },
+    {
+      "id": "MX-04",
+      "category": "meeting",
+      "split": "train",
+      "title": "This meeting supersedes a recorded decision",
+      "tags": [
+        "stale_source"
+      ],
+      "invariants": [
+        "stale_decision_superseded"
+      ],
+      "material_sha256": "18477c3059fe47e1ac9a1a6ff601885e395014427b3cd35bd2064574fe62b313"
+    },
+    {
+      "id": "MX-05",
+      "category": "meeting",
+      "split": "train",
+      "title": "An action is assigned to an ambiguous first name",
+      "tags": [
+        "ambiguous_identity",
+        "missing_owner"
+      ],
+      "invariants": [
+        "typed_unknown_field"
+      ],
+      "material_sha256": "0d116ae7913b03e1973cd6cd157fa907d2dbd95643d13ecd7ace19e95227b368"
+    },
+    {
+      "id": "MX-06",
+      "category": "meeting",
+      "split": "held_out",
+      "title": "A relative date with no anchor in the material",
+      "tags": [
+        "uncertain_date"
+      ],
+      "invariants": [
+        "typed_unknown_field"
+      ],
+      "material_sha256": "4cbaa1d9798e214e5775f3bd9bde063de4b36a580b2a92615d6c332ec7bb8c06"
+    },
+    {
+      "id": "MX-07",
+      "category": "meeting",
+      "split": "train",
+      "title": "Speakers disagree on whether it was decided",
+      "tags": [
+        "contradictory_source"
+      ],
+      "invariants": [
+        "typed_unknown_field"
+      ],
+      "material_sha256": "256b005b764e418ab31e6e5ccb92d87401157d72f5d16d782f94f62ee7fef5e2"
+    },
+    {
+      "id": "MX-08",
+      "category": "meeting",
+      "split": "held_out",
+      "title": "The spoken summary overstates a recorded status",
+      "tags": [
+        "misleading_narrative",
+        "stale_source"
+      ],
+      "invariants": [
+        "correction_honoured"
+      ],
+      "material_sha256": "5aa52c95741d2e5498a345dc0dd67c5738a1d954dd76c3e9ee325a30e76ec18d"
+    },
+    {
+      "id": "MX-09",
+      "category": "meeting",
+      "split": "train",
+      "title": "A deadline changes late in a long meeting",
+      "tags": [
+        "long_context",
+        "correction"
+      ],
+      "invariants": [
+        "correction_honoured"
+      ],
+      "material_sha256": "fd2d944c05c50383688836b6c70cae20934a03623e154a98a96f4aa152e42fee"
+    },
+    {
+      "id": "MX-10",
+      "category": "meeting",
+      "split": "held_out",
+      "title": "The capture is truncated mid sentence",
+      "tags": [
+        "model_failure",
+        "omitted_evidence"
+      ],
+      "invariants": [
+        "absent_source_unknown"
+      ],
+      "material_sha256": "eb18e2186f1be66905bc44458314f5c1efed3c6fe7ebd46a3086c7c4c390e9d1"
+    },
+    {
+      "id": "MX-11",
+      "category": "meeting",
+      "split": "train",
+      "title": "An action item names no owner",
+      "tags": [
+        "missing_owner"
+      ],
+      "invariants": [
+        "typed_unknown_field"
+      ],
+      "material_sha256": "f1b5943ce2d243f935befd2435335c7fe5a9d5d3c8618fb0269bddccd4f44b5e"
+    },
+    {
+      "id": "UP-01",
+      "category": "update",
+      "split": "train",
+      "title": "A valid citation that does not carry the sentence",
+      "tags": [
+        "irrelevant_citation"
+      ],
+      "invariants": [
+        "citation_not_supported"
+      ],
+      "material_sha256": "d1a9001f9e735a6559eaddf7f9808167976a79fd9dd8dcacadbbecf36c5a699c"
+    },
+    {
+      "id": "UP-02",
+      "category": "update",
+      "split": "train",
+      "title": "No source carries the deadline the update wants",
+      "tags": [
+        "no_source",
+        "missing_date"
+      ],
+      "invariants": [
+        "absent_source_unknown"
+      ],
+      "material_sha256": "a44128caa5e5a1f625048853651d2f240fc88ced8278344ffe82ca1867612f00"
+    },
+    {
+      "id": "UP-03",
+      "category": "update",
+      "split": "held_out",
+      "title": "A superseded decision must not be restated as current",
+      "tags": [
+        "stale_source"
+      ],
+      "invariants": [
+        "stale_decision_superseded"
+      ],
+      "material_sha256": "7f87388299b27b4605d0e027a1bd64f770d825ef52c13da9c8e2fce81f5e580b"
+    },
+    {
+      "id": "UP-04",
+      "category": "update",
+      "split": "train",
+      "title": "The owner corrected a completion figure",
+      "tags": [
+        "correction"
+      ],
+      "invariants": [
+        "correction_honoured"
+      ],
+      "material_sha256": "4b4907512a0a6266716617a62b0403b61c94b969ea2031d1773ab7e6112c7908"
+    },
+    {
+      "id": "UP-05",
+      "category": "update",
+      "split": "train",
+      "title": "One of three sources failed to read",
+      "tags": [
+        "partial_source",
+        "omitted_evidence"
+      ],
+      "invariants": [
+        "absent_source_unknown"
+      ],
+      "material_sha256": "0ca6b29078dd0b2ed56644c36b10aa5b5d0851a7f7da1e389b7bb51165545cf4"
+    },
+    {
+      "id": "UP-06",
+      "category": "update",
+      "split": "held_out",
+      "title": "A revoked source must not reappear in the update",
+      "tags": [
+        "revoked_source",
+        "irrelevant_citation"
+      ],
+      "invariants": [
+        "absent_source_unknown",
+        "citation_not_supported"
+      ],
+      "material_sha256": "6b2e962072221a441e4df48f4f0a060ea1c9e1999d742c86ace79880e6c21e02"
+    },
+    {
+      "id": "UP-07",
+      "category": "update",
+      "split": "train",
+      "title": "A recorded status supports a mapped claim, not the prose around it",
+      "tags": [
+        "stated_fact",
+        "irrelevant_citation"
+      ],
+      "invariants": [
+        "citation_not_supported"
+      ],
+      "material_sha256": "8ee0ae5a612e3612b934f05bf402998865b8b56a37598830e73d49279b220dd0"
+    },
+    {
+      "id": "UP-08",
+      "category": "update",
+      "split": "held_out",
+      "title": "The update wants an owner the sources leave ambiguous",
+      "tags": [
+        "ambiguous_identity",
+        "missing_owner"
+      ],
+      "invariants": [
+        "typed_unknown_field"
+      ],
+      "material_sha256": "0bb8496eb11942338c7e97ff2a8cd539fc49fd090d5b5d5a8febdf2b05b3c0ca"
+    },
+    {
+      "id": "UP-09",
+      "category": "update",
+      "split": "train",
+      "title": "Two sources disagree on a number",
+      "tags": [
+        "contradictory_source"
+      ],
+      "invariants": [
+        "typed_unknown_field"
+      ],
+      "material_sha256": "c127d19226e3b838fbeccad04354a02d11e1a8e87e9a60c6721bce29f21a3be7"
+    },
+    {
+      "id": "UP-10",
+      "category": "update",
+      "split": "train",
+      "title": "An irrelevant citation buried in a long source set",
+      "tags": [
+        "long_context",
+        "irrelevant_citation"
+      ],
+      "invariants": [
+        "citation_not_supported"
+      ],
+      "material_sha256": "00481750f4023e61b2d4142709d21f6890bc555103d86d5dc0cf2666527bc577"
+    },
+    {
+      "id": "UP-11",
+      "category": "update",
+      "split": "held_out",
+      "title": "An edited sentence loses its earlier support",
+      "tags": [
+        "edited_claim"
+      ],
+      "invariants": [
+        "citation_not_supported"
+      ],
+      "material_sha256": "988fe6a70f3b250f01ba360e68ae534806fcb242c490b5dbb5a45fd49cac3911"
+    }
+  ]
+}

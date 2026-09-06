@@ -1,0 +1,40 @@
+{
+  "id": "UP-02",
+  "corpus_version": "1",
+  "category": "update",
+  "split": "train",
+  "title": "No source carries the deadline the update wants",
+  "tags": [
+    "no_source",
+    "missing_date"
+  ],
+  "material": {
+    "project": "Northwind billing rewrite",
+    "window": "2026-04-01..2026-04-07",
+    "sources": [
+      {
+        "ref": "note:northwind-scope",
+        "title": "Billing rewrite scope note",
+        "version": "rev-3",
+        "text": "Scope: invoicing, dunning, tax table refresh. Two engineers assigned. No schedule agreed."
+      }
+    ],
+    "requested_sections": [
+      "progress",
+      "next"
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "absent_source_unknown",
+      "params": {
+        "field": "deadline",
+        "reason": "no source carries a schedule",
+        "forbidden": [
+          "2026-05",
+          "2026-06"
+        ]
+      }
+    }
+  ]
+}

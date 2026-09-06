@@ -1,0 +1,33 @@
+{
+  "id": "MX-06",
+  "corpus_version": "1",
+  "category": "meeting",
+  "split": "held_out",
+  "title": "A relative date with no anchor in the material",
+  "tags": [
+    "uncertain_date"
+  ],
+  "material": {
+    "meeting": "Billing rewrite standup",
+    "segments": [
+      {
+        "speaker": "Sam",
+        "text": "I will have the tax table spike done by next Thursday."
+      },
+      {
+        "speaker": "Karol",
+        "text": "Good."
+      }
+    ],
+    "note": "The material carries no meeting date, so no calendar date can be derived."
+  },
+  "invariants": [
+    {
+      "kind": "typed_unknown_field",
+      "params": {
+        "field": "due_date",
+        "reason": "the relative date has no anchor date in the material"
+      }
+    }
+  ]
+}

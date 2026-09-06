@@ -1,6 +1,6 @@
 # Phase 200: The Working Practice
 
-**Last updated:** 2026-09-06 — G0: 01–04 DONE, 05's automatable half proved (its physical beats are his walk); G1: 06 claim support DONE, 07 attention coverage DONE (a coverage record per expected source; an empty partial result never reads as an all-clear on the arrival, the shade, the deck or the brief; the MCP needs-you surface no longer skips a failed Room); 08 the evaluation harness in progress.
+**Last updated:** 2026-09-06 — G0: 01–04 DONE, 05's automatable half proved; G1: 06, 07, 08 DONE (the 33-episode corpus with held-out separation, six deterministic invariants, the live runner whose real result is the owner's); 09 the daily workflow design on the canvas, counsel's bounce being paid, his verdict owed.
 **Status:** planning. Forty stories defined; zero implementation stories completed.
 **Product owner:** Karol.
 **Delivery owner:** unassigned until implementation starts.
@@ -45,8 +45,8 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-05 | Prove physical voice capture, correction, and custody | in-progress | [story-05](story-05-physical-voice-and-custody.md) | — |
 | HS-200-06 | Separate citation, factual support, and acceptance | done | [story-06](story-06-claim-support-semantics.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-200-07 | Make incomplete attention coverage explicit | done | [story-07](story-07-coverage-and-partial-results.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-200-08 | Establish repeatable live-model quality evaluation | in-progress | [story-08](story-08-semantic-evaluation-harness.md) | — |
-| HS-200-09 | Design the daily Project workflow on existing surfaces | backlog | [story-09](story-09-daily-workflow-design.md) | — |
+| HS-200-08 | Establish repeatable live-model quality evaluation | done | [story-08](story-08-semantic-evaluation-harness.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-200-09 | Design the daily Project workflow on existing surfaces | in-progress | [story-09](story-09-daily-workflow-design.md) | — |
 | HS-200-10 | Promote reusable working context into canonical records | backlog | [story-10](story-10-scoped-working-context.md) | — |
 | HS-200-11 | Produce a useful Project preparation brief | backlog | [story-11](story-11-project-preparation.md) | — |
 | HS-200-12 | Connect a real meeting to reviewed outcomes | backlog | [story-12](story-12-meeting-to-reviewed-outcomes.md) | — |
@@ -81,7 +81,28 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 
 ## Where we are
 
-2026-09-06 (late night): HS-200-07 DONE — the aggregate carries `coverage`
+2026-09-07 (small hours): HS-200-08 DONE — tests/fixtures/phase200/corpus/
+(33 episodes: 11 Interview · 11 meeting extraction · 11 grounded update;
+12 held out, assigned at authoring before any prompt change, never read by
+a tuning step — reading one raises), checks.py (six invariants; the
+critical kinds live in the module, not the episode files, so a corpus
+file cannot downgrade an invented value; a critical failure fails the run
+regardless of any score), scripts/phase200_eval.py (real product paths:
+the Interview's ThreadService, the meeting plugin chain, the model update
+drafter; the report names engine · model · route plan/boundary/host · the
+build id · per-episode material hash, invariants, latency · support
+judgments · review effort; LLM judging off by default and never gating),
+SCORING.md (the six-question source-inspection rubric). Proven only with
+a canned local stub (33 episodes, 0 critical); the LIVE run against the
+LAN engine is the owner's command in SCORING.md. A defect found: the
+model drafter resolves its deployment revision by matching the profile id
+against the model column, so his profile falls back to the deterministic
+drafter silently — being fixed. HS-200-09: the design on the canvas
+(https://claude.ai/code/artifact/63eaae1a-eb59-4bcf-902d-0c70d3e0c275),
+counsel BOUNCED on four P0s (the 393 boards drift; the display line hides
+the total; the meeting review draws a vocabulary the wire lacks; coverage
+missing on four boards) with 17 conditions — being paid; his verdict is
+the exit. HS-200-07 DONE — the aggregate carries `coverage`
 (one record per expected Project/watch/meeting/commitment source: state
 available · stale · failed · forbidden · unavailable, observed_at, the
 repair token + verb, the reason) and `complete`; computedAt is the aggregate

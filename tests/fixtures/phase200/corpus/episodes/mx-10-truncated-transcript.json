@@ -1,0 +1,34 @@
+{
+  "id": "MX-10",
+  "corpus_version": "1",
+  "category": "meeting",
+  "split": "held_out",
+  "title": "The capture is truncated mid sentence",
+  "tags": [
+    "model_failure",
+    "omitted_evidence"
+  ],
+  "material": {
+    "meeting": "Delta migration weekly (partial capture)",
+    "segments": [
+      {
+        "speaker": "Karol",
+        "text": "About the target store, I think we should"
+      }
+    ],
+    "note": "Capture stopped; the rest of the meeting is missing."
+  },
+  "invariants": [
+    {
+      "kind": "absent_source_unknown",
+      "params": {
+        "field": "decision",
+        "reason": "the capture is truncated before any decision",
+        "forbidden": [
+          "postgresql",
+          "mysql"
+        ]
+      }
+    }
+  ]
+}
