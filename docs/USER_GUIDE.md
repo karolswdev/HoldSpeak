@@ -414,6 +414,64 @@ Every text input on the Desk takes your voice. A mic is a toggle: select it
 once to start, and select it once to stop. On the Speak face, **Talk** is
 the one mic authority, so the utterance well shows none.
 
+### Who owns the microphone
+
+One machine has one microphone, and HoldSpeak treats it as one floor with one
+owner. The hotkey, a meeting recording, the wake listener and the browser mic
+all claim the same floor, so two of them can never record at once.
+
+Open **Details** on the Speak face to see the `Mic` row. It reads one word:
+`CLOSED` (the device is released, not muted), `SUSPENDED` (the grant is kept
+and nothing is captured), `OPEN`, `SEGMENTING`, or `HELD` (a push to talk hold
+owns the floor).
+
+If another source already has the floor when you press **Talk**, the face says
+so by name rather than failing quietly, for example `FLOOR HELD MEETING`. If
+the floor is taken away while you are speaking, capture stops at once with
+`AUDIO FLOOR LOST` and the session closes; press the mic again to start a new
+one.
+
+### When capture goes wrong
+
+Every capture that does not finish is named, and your typed words stay in the
+well where you can retry, copy them, or keep them as a note.
+
+| What happened | What you see | What happens to the words |
+|---|---|---|
+| Microphone access is blocked in the browser or the operating system | `PERMISSION DENIED` | Nothing is captured. Your draft stays editable. |
+| You said nothing | No speech was detected | No journal row is written. This is not an error. |
+| The speech engine failed | `TRANSCRIPTION FAILED` | No journal row is written. Retry, or type instead. |
+| Another source took the microphone mid sentence | `AUDIO FLOOR LOST` | The half sentence is discarded rather than delivered from a session that was already told it was over. Your draft stays editable. |
+| The session closed on you (inactivity, the thirty minute ceiling, a cancel) | `MIC INTERVAL CLOSED` | Your draft stays editable. Click the mic again to continue. |
+| The tab or the connection dropped after you had spoken | nothing, the page is gone | The words already captured are still transcribed and kept, so you find them on the **Journal** wing. |
+
+### When a delivery outcome is unknown
+
+Typing into another application is a real effect, and HoldSpeak will not repeat
+one it cannot prove did not happen. If the typing adapter fails after the text
+may already have landed, the delivery is parked as `OUTCOME UNKNOWN` and the
+words stay in the well. Sending the same delivery again reads that parked
+outcome instead of typing a second time, so a retry can never double type. To
+deliver after an unknown outcome, send the words yourself.
+
+### What survives a restart
+
+Journal rows and corrections live in the database on this device, not in the
+running process. Stop HoldSpeak and start it again on the same data root and
+you get back:
+
+- every kept journal row, with its source, its transcript and the rules that
+  fired on it;
+- every correction you taught, with its `N APPLIED` count unchanged;
+- a rule that still fires: the next utterance containing the phrase is
+  rewritten exactly as it was before the restart.
+
+`N APPLIED` counts the kept journal rows in which the rule actually changed the
+words. Teaching a rule does not count as an application, and neither does
+**Replay**: a replay re runs a stored transcript through the current pipeline
+as a preview, so you can watch the rule take effect, but it writes no journal
+row and moves no count.
+
 ## The Dictation Pipeline For Coding Assistants
 
 HoldSpeak can do more than transcription. With the dictation pipeline enabled, it can transform a rough spoken thought into a useful prompt for Claude, Codex, a terminal, a browser, or another target.

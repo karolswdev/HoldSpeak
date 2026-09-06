@@ -1053,6 +1053,14 @@ wanted on day one.
 - **#526 footer receipt says the face's name twice:** the Desk memory face's footer reads `DESK MEMORY · RELATIONSHIP-AWARE` under a title bar that already says Desk memory (UX-CANON A.7). Kept at merge because it names the retrieval contract and the branch's test pins the string; rename the receipt to the contract alone on the next touch.
 - **#526 Continuity charter parked as Phase 190** (renumbered from a colliding 162): 0/14, HS-190-01 blocked on owner ratification; not on the road (Phase 200 is).
 
+### AI. Phase 200 G0 remainders (parked 2026-09-06 from HS-200-05's proof)
+
+- **HS-200-05 gap 1:** the dictation journal row carries no delivery outcome; the delivery receipt lives in the kernel (desktop_typing.py's operation_id / state / target_ref) and nothing links the two. Closing it is a schema move (an operation_id column) after story 02 baked schema 76 into the runtime identity. Destination: a G1 story or a G0 addendum on his word.
+- **HS-200-05 gap 2:** a pipeline-off hotkey row drops the target profile (`_journal_passthrough` in dictation_runner.py passes none; target detection runs only in the enabled branch).
+- **HS-200-05 gap 3:** desktop_typing.py classifies an adapter exception as `failed`, not `uncertain`; the route above parks the claim pending so nothing double types, but the kernel receipt misnames a genuinely unknown outcome.
+- **HS-200-05 walk question:** should an uncertain delivery stay "never automatic" or gain a one-tap `Send again`?
+- **HS-200-03 residual:** tests/integration/test_cadence_routes.py's fixture races the database singleton (reset then get as two steps); build the Database directly in the fixture.
+
 ## The model-era collapse (parked 2026-08-31, from the owner's question)
 
 The #511 revolution collapsed the WEB platform's parallel authorities;
