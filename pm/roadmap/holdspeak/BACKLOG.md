@@ -1048,6 +1048,11 @@ wanted on day one.
 - **HS-176 counsel re-read C3 note:** the widened secret guard (`_looks_secret`) drives the journal's whole-field redaction and the project-doc suggestions product-wide; zero false positives on fifteen architect sentences, but name it if a redaction surprises him.
 - **HS-176 docs:** `docs/DICTATION_PIPELINE_GUIDE.md` §12 still describes the retired `/dictation` tabbed page and its Memory tab shots; a full rewrite is its own story. Two stale code comments: useSpeakDeck.ts calls the TEXT well "one StringGadget" (it is a PadGadget); DictationCore.tsx says Learned is imported outside the barrel (it is exported there).
 
+### AH. PR #526 relationship-aware memory — merged 2026-09-06 with two notes
+
+- **#526 footer receipt says the face's name twice:** the Desk memory face's footer reads `DESK MEMORY · RELATIONSHIP-AWARE` under a title bar that already says Desk memory (UX-CANON A.7). Kept at merge because it names the retrieval contract and the branch's test pins the string; rename the receipt to the contract alone on the next touch.
+- **#526 Continuity charter parked as Phase 190** (renumbered from a colliding 162): 0/14, HS-190-01 blocked on owner ratification; not on the road (Phase 200 is).
+
 ## The model-era collapse (parked 2026-08-31, from the owner's question)
 
 The #511 revolution collapsed the WEB platform's parallel authorities;
