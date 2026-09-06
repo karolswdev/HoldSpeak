@@ -55,15 +55,18 @@ from holdspeak.principals import Principal, PrincipalKind
 
 OWNER = Principal(PrincipalKind.OWNER, "phase200-eval")
 
-#: The profile the evaluation route is defined as.  It is named after the
-#: model on purpose: ``ProjectUpdateService._resolve_for_capability`` finds a
-#: deployment revision with ``deployment_revisions.model = <profile id>``
-#: (project_update_service.py:952), so a profile whose id differs from the
-#: endpoint's model id resolves nothing and the model drafter silently falls
-#: back to the deterministic one.  The harness names the profile after the
-#: model so a model run is actually a model run; the report records the
-#: generator each episode came back with either way.
-EVAL_PROFILE_PREFIX = "phase200-eval"
+#: The profile id the evaluation route is defined as.  It is deliberately NOT
+#: the model id.  It used to be: ``_resolve_for_capability`` matched
+#: ``deployment_revisions.model`` against the assigned PROFILE id, so only a
+#: profile named after its model resolved at all, and every other one fell
+#: back to the deterministic drafter with a log line.  HS-200-08 resolves the
+#: deployment through the route plan the Ask path uses, so the harness now
+#: runs the shape a real desk has (profile id != model id) and a model run is
+#: a model run; the report records the generator each episode came back with.
+EVAL_PROFILE_ID = "phase200-eval-route"
+
+#: Kept as the legacy alias for the id above.
+EVAL_PROFILE_PREFIX = EVAL_PROFILE_ID
 
 #: Capabilities that resolve by their own assignment key, not the global one.
 CAPABILITY_ASSIGNMENTS: tuple[str, ...] = ("project.update_draft",)
@@ -227,9 +230,8 @@ class EvaluationHub:
 
     @property
     def profile_id(self) -> str:
-        """The route profile's id: the model id, sanitised (see EVAL_PROFILE_PREFIX)."""
-        raw = (self.model or "canned").strip().lower()
-        return re.sub(r"[^a-z0-9._-]+", "-", raw).strip("-") or EVAL_PROFILE_PREFIX
+        """The route profile's id -- never the model id (see EVAL_PROFILE_ID)."""
+        return EVAL_PROFILE_ID
 
     # -- route -------------------------------------------------------
 

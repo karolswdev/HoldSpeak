@@ -76,6 +76,39 @@ _log = get_logger("services.project_update_service")
 # ── Capability identity (HS-162-03) ──────────────────────────────────
 PROJECT_UPDATE_CAPABILITY = "project.update_draft"
 
+# ── The named fallback receipt (HS-200-08) ───────────────────────────
+#
+# A model draft that falls back to the deterministic drafter used to say so
+# in a log line only, so the face showed an ordinary deterministic draft and
+# nobody could tell a chosen deterministic draft from a failed model one.
+# The reason now travels WITH the row: it is encoded on the stored generator
+# and projected back out on read as ``fallback_reason`` (the code the face
+# already decodes) plus ``fallback_receipt`` (the token it can show).
+FALLBACK_GENERATOR_PREFIX = "deterministic:"
+
+FALLBACK_ROUTE_UNRESOLVED = "route_unresolved"
+FALLBACK_MODEL_UNAVAILABLE = "model_unavailable"
+FALLBACK_NO_OUTPUT = "no_output"
+FALLBACK_UNPARSEABLE_OUTPUT = "unparseable_output"
+
+FALLBACK_RECEIPT_TOKENS: dict[str, str] = {
+    FALLBACK_ROUTE_UNRESOLVED: "DETERMINISTIC · ROUTE UNRESOLVED",
+    FALLBACK_MODEL_UNAVAILABLE: "DETERMINISTIC · MODEL UNAVAILABLE",
+    FALLBACK_NO_OUTPUT: "DETERMINISTIC · NO OUTPUT",
+    FALLBACK_UNPARSEABLE_OUTPUT: "DETERMINISTIC · OUTPUT UNUSABLE",
+}
+
+
+def fallback_receipt_token(code: str | None) -> str | None:
+    """The token the face shows for one fallback reason code."""
+    if not code:
+        return None
+    known = FALLBACK_RECEIPT_TOKENS.get(code)
+    if known:
+        return known
+    return "DETERMINISTIC · " + code.replace("_", " ").upper()
+
+
 # ── Marker for unverified model claims (UPD-002) ────────────────────
 UNVERIFIED_MARKER = "**[UNVERIFIED]**"
 
@@ -919,15 +952,139 @@ def _parse_model_output(
     return sections, claims
 
 
+def _route_plan_deployment(broker: Any, capability_id: str) -> tuple[str, str, str]:
+    """The authoritative resolution: profile -> plan -> frozen leg (HS-200-08).
+
+    This is the SAME resolver the Ask path runs (``route_probe.preview_route``
+    reads exactly this plan): the capability's assignment is planned, and the
+    first frozen leg NAMES its deployment revision.  Returns
+    ``(deployment_revision_id, assignment_id, profile_id)``, or empty strings
+    when this broker carries no planner or the plan does not resolve.
+    """
+    plans = getattr(getattr(broker, "inference_adoption_service", None), "plans", None)
+    if plans is None:
+        return "", "", ""
+    try:
+        from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
+
+        plan = plans.resolve_route_plan(
+            ROUTE_PLANNING_AUTHORITY, capability_id=capability_id,
+        )
+    except Exception as exc:  # planner refusals are a fallback, never a crash
+        _log.warning(
+            "Route plan for %s did not resolve: %s", capability_id, exc,
+        )
+        return "", "", ""
+    entries = [e for e in (plan.get("entries") or ()) if e]
+    if not entries:
+        return "", "", ""
+    leg = min(entries, key=lambda e: int(e.get("ordinal") or 0))
+    revision_id = str(leg.get("deployment_revision_id") or "")
+    assignment_id = str((plan.get("source") or {}).get("assignment_id") or "")
+    profile_id = str(leg.get("profile_id") or "")
+    if not revision_id:
+        return "", "", ""
+    # The plan resolves purely (it rolls its snapshot back), so a legacy leg's
+    # content-addressed revision may never have been persisted.  The runner
+    # refuses a revision it cannot read, so capture it the way Ask does.
+    db = getattr(broker, "database", None)
+    if db is not None and db.deployment_revisions.get(revision_id) is None:
+        captured = _captured_deployment_revision(db, profile_id)
+        if not captured:
+            return "", "", ""
+        if captured != revision_id:
+            _log.warning(
+                "Frozen leg named %s; captured %s for profile %s.",
+                revision_id, captured, profile_id,
+            )
+        revision_id = captured
+    return revision_id, assignment_id, profile_id
+
+
+def _bound_deployment_revision(db: Any, profile_id: str) -> str:
+    """The deployment revision the profile's live binding head points at.
+
+    The second resolver, for a broker with no planner wired.  It reads the
+    binding the planner itself reads (``model_profile_binding_heads`` ->
+    ``model_profile_binding_revisions.deployment_revision_id``), never the
+    ``deployment_revisions.model`` column.
+    """
+    if not profile_id:
+        return ""
+    with db._connection() as conn:
+        row = conn.execute(
+            """SELECT b.deployment_revision_id AS rev
+                 FROM model_profile_binding_heads h
+                 JOIN model_profile_binding_revisions b
+                   ON b.binding_id=h.binding_id AND b.revision=h.revision
+                WHERE h.profile_id=?""",
+            (profile_id,),
+        ).fetchone()
+        if row is None:
+            return ""
+        revision_id = str(row["rev"] or "")
+        if not revision_id:
+            return ""
+        exists = conn.execute(
+            "SELECT 1 FROM deployment_revisions WHERE id=?", (revision_id,),
+        ).fetchone()
+    return revision_id if exists is not None else ""
+
+
+def _captured_deployment_revision(db: Any, profile_id: str) -> str:
+    """Capture (and persist) the profile's deployment exactly as Ask does.
+
+    The last resolver: a version-1 profile has no binding row, so the Ask
+    path's ``capture_deployment_revision`` is what freezes its deployment.
+    """
+    if not profile_id:
+        return ""
+    try:
+        from ..deployment_revisions import capture_deployment_revision
+        from ..inference_targets import resolve_inference_target
+
+        target = resolve_inference_target(db, profile_id.removeprefix("legacy-"))
+        if getattr(target, "deployment", None) is None:
+            return ""
+        return str(capture_deployment_revision(db, target).id)
+    except Exception as exc:
+        _log.warning(
+            "Could not capture a deployment for profile %s: %s",
+            profile_id, exc,
+        )
+        return ""
+
+
 def _resolve_for_capability(
-    db: Any,
+    broker: Any,
     capability_id: str,
-) -> tuple[str, str]:
+) -> tuple[str, str, str]:
     """Resolve the deployment revision and assignment ID for a capability.
 
-    Returns ``(deployment_revision_id, assignment_id)``.
-    Raises ``RuntimeError`` if no assignment exists.
+    Returns ``(deployment_revision_id, assignment_id, profile_id)`` -- the
+    profile is the one the route actually resolved through, so provenance
+    never has to guess it back out of the revision's ``model`` column.
+    Raises ``RuntimeError`` when no route resolves.
+
+    HS-200-08: this used to run
+    ``SELECT id FROM deployment_revisions WHERE model=?`` with the ASSIGNED
+    PROFILE ID.  A captured revision's ``model`` column holds the real model
+    id, so every profile whose id differs from its model id (the owner's own
+    "Migrated intel endpoint", for one) resolved NOTHING and the model
+    drafter silently fell back to the deterministic one.  A profile id is
+    never string-matched against a model column again: resolution goes
+    profile -> plan -> frozen leg -> deployment revision, the same path the
+    Ask verb takes.
     """
+    db = getattr(broker, "database", broker)
+
+    # The planner first: it owns assignment inheritance (a capability with no
+    # scoped assignment of its own still resolves through the global one), so
+    # asking it first is what makes a real desk's route the drafter's route.
+    planned_revision, planned_assignment, planned_profile = (
+        _route_plan_deployment(broker, capability_id)
+    )
+
     key = f"capability:{capability_id}"
     with db._connection() as conn:
         head = conn.execute(
@@ -935,29 +1092,39 @@ def _resolve_for_capability(
             "WHERE assignment_key=? AND cleared=0",
             (key,),
         ).fetchone()
-        if head is None:
-            raise RuntimeError(f"No assignment for {capability_id}")
-        assignment_id = str(head["assignment_id"])
-        entry = conn.execute(
-            "SELECT profile_id FROM inference_assignments "
-            "WHERE assignment_id=? AND assignment_revision=? "
-            "ORDER BY ordinal LIMIT 1",
-            (assignment_id, head["revision"]),
-        ).fetchone()
-        if entry is None:
-            raise RuntimeError(
-                f"No entries in assignment for {capability_id}"
-            )
-        profile_id = entry["profile_id"]
-        rev = conn.execute(
-            "SELECT id FROM deployment_revisions WHERE model=? LIMIT 1",
-            (profile_id,),
-        ).fetchone()
-        if rev is None:
-            raise RuntimeError(
-                f"No deployment revision for profile {profile_id}"
-            )
-        return str(rev["id"]), assignment_id
+        entry = None
+        if head is not None:
+            entry = conn.execute(
+                "SELECT profile_id FROM inference_assignments "
+                "WHERE assignment_id=? AND assignment_revision=? "
+                "ORDER BY ordinal LIMIT 1",
+                (str(head["assignment_id"]), head["revision"]),
+            ).fetchone()
+    assignment_id = str(head["assignment_id"]) if head is not None else ""
+    profile_id = str(entry["profile_id"] or "") if entry is not None else ""
+
+    if planned_revision:
+        return (
+            planned_revision,
+            (planned_assignment or assignment_id),
+            (planned_profile or profile_id),
+        )
+    if head is None:
+        raise RuntimeError(f"No assignment for {capability_id}")
+    if entry is None:
+        raise RuntimeError(f"No entries in assignment for {capability_id}")
+
+    bound = _bound_deployment_revision(db, profile_id)
+    if bound:
+        return bound, assignment_id, profile_id
+
+    captured = _captured_deployment_revision(db, profile_id)
+    if captured:
+        return captured, assignment_id, profile_id
+
+    raise RuntimeError(
+        f"No deployment revision resolves for profile {profile_id}"
+    )
 
 
 # ── Generator provenance (HS-173-02) ─────────────────────────────────
@@ -965,6 +1132,7 @@ def _resolve_for_capability(
 def _resolve_generator_provenance(
     db: Any,
     deployment_rev_id: str,
+    profile_id: str = "",
 ) -> tuple[str, str]:
     """Derive generator host and model display name from a deployment revision.
 
@@ -989,7 +1157,12 @@ def _resolve_generator_provenance(
             host = rev.boundary or "local"
 
     # Model display name: look up the profile for its name and model fields.
-    profile = db.profiles.get(rev.model)
+    # HS-200-08: the profile the ROUTE resolved through is the truth.  The
+    # revision's ``model`` column holds the real model id, so looking a
+    # profile up by it only ever worked for a profile named after its model.
+    profile = db.profiles.get(profile_id) if profile_id else None
+    if profile is None:
+        profile = db.profiles.get(rev.model)
     if profile is not None:
         display, quant = engine_display_name(
             profile_name=profile.name or profile.id,
@@ -1096,13 +1269,26 @@ class ProjectUpdateService:
 
         Records written before HS-200-06 keep their stored bytes; the
         conservative mapping is applied here, on the way out.
+
+        HS-200-08: a fallback draft stores its reason on the generator
+        (``deterministic:<code>``).  It is split back out here so
+        ``generator`` stays the two values every caller already knows and
+        the reason travels as ``fallback_reason`` + ``fallback_receipt``.
         """
         if not row:
             return row
         out = dict(row)
+        generator = str(out.get("generator") or "deterministic")
+        reason: str | None = None
+        if generator.startswith(FALLBACK_GENERATOR_PREFIX):
+            reason = generator[len(FALLBACK_GENERATOR_PREFIX):] or None
+            generator = "deterministic"
+            out["generator"] = generator
+        out["fallback_reason"] = reason
+        out["fallback_receipt"] = fallback_receipt_token(reason)
         out["claims_json"] = migrate_claims_json(
             out.get("claims_json") or "",
-            generator=str(out.get("generator") or "deterministic"),
+            generator=generator,
         )
         return out
 
@@ -1128,24 +1314,26 @@ class ProjectUpdateService:
 
         broker = self._broker
         if broker is None:
-            raise _ModelDraftFailed("no_broker")
+            raise _ModelDraftFailed("no_broker", FALLBACK_MODEL_UNAVAILABLE)
 
         runner = broker.inference_runner
 
         # Resolve deployment revision for the update-draft capability.
         try:
-            deployment_rev_id, assignment_id = _resolve_for_capability(
-                broker.database, PROJECT_UPDATE_CAPABILITY,
+            deployment_rev_id, assignment_id, route_profile_id = (
+                _resolve_for_capability(broker, PROJECT_UPDATE_CAPABILITY)
             )
         except RuntimeError as exc:
-            raise _ModelDraftFailed(f"no_assignment: {exc}") from exc
+            raise _ModelDraftFailed(
+                f"route_unresolved: {exc}", FALLBACK_ROUTE_UNRESOLVED,
+            ) from exc
 
         # HS-173-02: derive generator provenance from the deployment revision.
         gen_host: str | None = None
         gen_model: str | None = None
         try:
             gen_host, gen_model = _resolve_generator_provenance(
-                broker.database, deployment_rev_id,
+                broker.database, deployment_rev_id, route_profile_id,
             )
         except Exception:
             pass  # Provenance is best-effort; never fails the draft.
@@ -1185,7 +1373,9 @@ class ProjectUpdateService:
                     request, CanonicalPromptAdapter(), publish=_capture,
                 )
         except Exception as exc:
-            raise _ModelDraftFailed(f"runner_error: {exc}") from exc
+            raise _ModelDraftFailed(
+                f"runner_error: {exc}", FALLBACK_MODEL_UNAVAILABLE,
+            ) from exc
 
         # Extract raw output -- try direct result first, then captured.
         raw: str | None = None
@@ -1198,12 +1388,14 @@ class ProjectUpdateService:
                 raw = str(adapter_result["output"])
 
         if raw is None:
-            raise _ModelDraftFailed("no_output")
+            raise _ModelDraftFailed("no_output", FALLBACK_NO_OUTPUT)
 
         # Parse and constrain to the claim schema.
         parsed = _parse_model_output(raw, inventory_refs, inventory_texts)
         if parsed is None:
-            raise _ModelDraftFailed("unparseable_output")
+            raise _ModelDraftFailed(
+                "unparseable_output", FALLBACK_UNPARSEABLE_OUTPUT,
+            )
 
         model_sections, model_claims = parsed
         body_md = _assemble_body(model_sections)
@@ -1328,7 +1520,9 @@ class ProjectUpdateService:
                 )
                 body_md = det_body_md
                 claims_json = det_claims_json
-                actual_generator = "deterministic"
+                # HS-200-08: the fallback NAMES its reason on the row, so the
+                # face shows a token instead of a log line nobody reads.
+                actual_generator = FALLBACK_GENERATOR_PREFIX + exc.code
                 actual_host = None
                 actual_model = None
         else:
@@ -1934,8 +2128,13 @@ def _envelope_to_dict(env: CommandResultEnvelope) -> dict[str, Any]:
 
 
 class _ModelDraftFailed(Exception):
-    """Internal signal: the model drafting path failed; fall back."""
+    """Internal signal: the model drafting path failed; fall back.
 
-    def __init__(self, reason: str) -> None:
+    ``code`` is the typed reason the draft's receipt NAMES (HS-200-08);
+    ``reason`` stays the full human detail for the log.
+    """
+
+    def __init__(self, reason: str, code: str = FALLBACK_MODEL_UNAVAILABLE) -> None:
         self.reason = reason
+        self.code = code
         super().__init__(reason)
