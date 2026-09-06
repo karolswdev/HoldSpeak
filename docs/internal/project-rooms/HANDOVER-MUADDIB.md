@@ -31,7 +31,7 @@ roadmap files, they win.
 | 172 | The Loop Closes | COMPLETE · **MERGED** PR #555 → `0c17425e` | `…/phase-172-the-loop-closes/` |
 | 173 | The Steward's Hand and Voice | COMPLETE · **MERGED** PR #556 → `d416e08a` | `…/phase-173-the-stewards-hand-and-voice/` |
 | 174 | Reach | COMPLETE 11/11 · **MERGED** PR #557 → `8c994305` (2026-09-05 22:05) | `…/phase-174-reach/` |
-| 175 | Calendar and the Clock | 7/9 · faces BUILT, counsel paid (re-read RATIFY-W-C), docs + hygiene DONE · c98ccf2f · draft PR **#558**, base main · OPEN: 06 his attended walk, 09 the close | `…/phase-175-calendar-and-the-clock/`, branch `feat/calendar-clock` (the main working tree) |
+| 175 | Calendar and the Clock | COMPLETE 9/9 · PR **#558** → main on his word (2026-09-06; his attended walk owed; seven questions in final-summary.md) | `…/phase-175-calendar-and-the-clock/` |
 | 176–179 | Speak Loop · Thread at Work · Portfolio · Companion | story scaffolds drafted, NOT chartered, no design | `…/phase-176…` to `…/phase-179…` |
 | 180 | The Proof | named in the arc, nothing drafted | `pm/roadmap/holdspeak/THE-TUESDAY-ARC.md` §6 |
 
@@ -272,7 +272,7 @@ in zsh exits 4 with nothing run.
 
 1. Read this section, then `git log --oneline -30 main`, then
    `pm/roadmap/holdspeak/README.md` and the 174/175 status files.
-2. Check PR #558 (175, draft on main, at c98ccf2f). Main holds 170–174. 175 is 7/9: put the seven questions in the status file / final-summary.md in front of him, walk it with him (06), then the close (09), #558 out of draft, merge on his word.
+2. Main holds 170–175. Put 175's seven questions (final-summary.md §Owed) in front of him at his sitting, with his attended walks (170–175) still owed. If the road continues: charter 176 The Speak Loop on his word (scaffold in pm/roadmap/holdspeak/phase-176-…), design on the canvas first.
 3. Ask him nothing you can read; put the §4 questions in front of him
    once, in one list, when he sits.
 4. If the road continues: 175's faces first, to the ratified boards,
@@ -344,6 +344,12 @@ Delete behaves as Cancel; per-instant local time on the DST edge; the
 B11 hand-off proven by a test that runs both conductors), the sixth is
 his walk. Seven questions ride to him (see the status file and the
 re-read). Schema 75; api-surface 667.
+
+**The close (2026-09-06).** His word: "You got my word for a merge."
+06 flipped on his word with the runner's read-only walk as the desk proof
+(his attended walk owed); 09 closed on the gates; final-summary.md; PR
+#558 out of draft and merged with a merge commit. Seven questions ride
+to his sitting.
 
 **Gates at this commit.** Unit set 247 passed (-n auto, isolated HOME);
 web baseline zero branch-new; ratchet green (A8 healed to 24); the 175

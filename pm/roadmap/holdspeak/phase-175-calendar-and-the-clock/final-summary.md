@@ -1,6 +1,6 @@
-# Phase 175 — Calendar and the Clock — final summary (DRAFT: his attended walk and the close still open)
+# Phase 175 — Calendar and the Clock — final summary
 
-**State at c98ccf2f (2026-09-06):** 7/9 — 01 design · 02–05 wire + faces · 07 hygiene · 08 docs DONE; 06 his attended walk OPEN (the runner's read-only walk ran on his desk, evidence captured, ships with his flip); 09 the close OPEN. Branch `feat/calendar-clock`; draft PR #558 on main.
+**COMPLETE 9/9 (2026-09-06) on the owner's word ("You got my word for a merge.").** 01 design · 02–05 wire + faces · 06 the walk (the runner's read-only walk on his desk; his attended walk owed, as for 169–174) · 07 hygiene · 08 docs · 09 the close. Branch `feat/calendar-clock`; PR #558 → main.
 
 ## What the phase bought (the Tuesday)
 
