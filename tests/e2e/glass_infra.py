@@ -15,6 +15,92 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[2]
 
+# ── pinned_desk_zone: keep "now" away from the local week's edge ──
+#
+# HS-200-03 follow-through. Several rigs seed calendar events relative to
+# "now" and then assert they land inside the CURRENT Mon-Sun week the hub
+# computes (`DoorService._local_week_bounds`,
+# holdspeak/services/door_service.py:482, and
+# `_iso_week_range_local`, holdspeak/web/routes/calendar_sources.py). That
+# is a true statement about the product only while "now" is far enough
+# from the local week's edge. The macOS runner (UTC) ran them late on a
+# Sunday: the seeded events fell into next week and nine rigs failed on
+# counts. The product is right; the rig's clock was the accident.
+#
+# So a rig pins the DESK's zone -- the process TZ, which is what
+# `datetime.now().astimezone()` in the hub reads and what the browser
+# inherits -- to a fixed-offset zone in which "now" is far from both week
+# edges. Offsets span 26 hours while the bad band is a few hours wide, so
+# such a zone always exists: sweeping every instant of a week, the best
+# available zone always leaves at least 13 hours on BOTH sides of "now"
+# inside its local week.
+
+from contextlib import contextmanager
+from datetime import datetime, timedelta, timezone
+
+DESK_ZONE_OFFSETS = range(-12, 15)  # UTC-12 .. UTC+14
+
+
+def zone_name(offset_hours: int) -> str:
+    """The IANA name for a whole-hour fixed offset.
+
+    `Etc/GMT+6` is UTC-06:00 (POSIX sign inversion); Python's TZ handling
+    and Chromium read the name identically, and no Etc/GMT zone has DST.
+    """
+    if offset_hours == 0:
+        return "UTC"
+    return f"Etc/GMT{'+' if offset_hours < 0 else '-'}{abs(offset_hours)}"
+
+
+def week_room_hours(offset_hours: int, utc_now: datetime) -> float:
+    """Hours of the local Mon-Sun week on the tighter side of ``utc_now``."""
+    local = utc_now + timedelta(hours=offset_hours)
+    monday = (local - timedelta(days=local.weekday())).replace(
+        hour=0, minute=0, second=0, microsecond=0,
+    )
+    before = (local - monday).total_seconds() / 3600
+    after = (monday + timedelta(days=7) - local).total_seconds() / 3600
+    return min(before, after)
+
+
+def lawful_desk_zone(utc_now: datetime | None = None) -> str:
+    """The fixed-offset zone leaving the most room on both week edges."""
+    now = utc_now or datetime.now(tz=timezone.utc)
+    best = max(DESK_ZONE_OFFSETS, key=lambda off: week_room_hours(off, now))
+    return zone_name(best)
+
+
+@contextmanager
+def pinned_desk_zone():
+    """Run the block with the desk's local zone pinned away from the edge."""
+    import time as _time
+
+    previous = os.environ.get("TZ")
+    os.environ["TZ"] = lawful_desk_zone()
+    _time.tzset()
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("TZ", None)
+        else:
+            os.environ["TZ"] = previous
+        _time.tzset()
+
+
+def local_week_bounds_now() -> tuple[datetime, datetime]:
+    """Monday 00:00 and next Monday 00:00 of the CURRENT LOCAL week.
+
+    The hub runs in this process's zone, so a rig that reads this reads the
+    same week the product draws.
+    """
+    local_now = datetime.now().astimezone()
+    monday = (local_now - timedelta(days=local_now.weekday())).replace(
+        hour=0, minute=0, second=0, microsecond=0,
+    )
+    return monday, monday + timedelta(days=7)
+
+
 # ── _ensure_build: the 163 stale-bundle law, honestly ──
 #
 # A rig that trusts an existing bundle shoots stale pixels with fresh

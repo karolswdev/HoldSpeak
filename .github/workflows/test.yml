@@ -185,6 +185,12 @@ jobs:
       # Several real-hub fixtures isolate HOME. Keep browser discovery
       # independent from that application-data sandbox.
       PLAYWRIGHT_BROWSERS_PATH: /tmp/holdspeak-playwright-browsers
+      # HS-200-03 follow-through: the same law for the mermaid guard's
+      # browser. `tests/e2e/test_mermaid_renders.py` renders through
+      # mermaid-cli, which is a puppeteer program; puppeteer's default
+      # cache is `$HOME/.cache/puppeteer`, which an isolated HOME hides.
+      # Pin it outside HOME so the pre-warm step below and the test agree.
+      PUPPETEER_CACHE_DIR: /tmp/holdspeak-puppeteer
 
     steps:
       - name: Checkout code
@@ -221,17 +227,37 @@ jobs:
       - name: Install Playwright Chromium
         run: uv run --extra test playwright install chromium
 
+      - name: Pre-warm the mermaid renderer
+        # HS-200-03 follow-through. Without this the mermaid guard fell back
+        # to `npx --yes @mermaid-js/mermaid-cli`, which downloads the CLI and
+        # a Chromium into the throwaway HOME on every single render; the
+        # 300s pytest-timeout killed the test (and, with it, the whole E2E
+        # run's report) on run 34059711954. Installing it once here puts
+        # `mmdc` on PATH and the browser in PUPPETEER_CACHE_DIR, both of
+        # which survive an isolated HOME.
+        run: |
+          npm install -g @mermaid-js/mermaid-cli
+          mmdc --version
+
       - name: Gate the live runtime bus
         env:
           HOLDSPEAK_REQUIRE_LIVE_BUS: "1"
         run: |
-          HOME=$(mktemp -d) uv run --extra test python -m pytest tests/e2e/test_live_bus.py -v
+          HOME_REAL=$HOME
+          HOME=$(mktemp -d) npm_config_cache=$HOME_REAL/.npm uv run --extra test python -m pytest tests/e2e/test_live_bus.py -v
 
       - name: Run E2E tests with coverage
         run: |
           # Mock-based e2e (excluding metal hardware tests). The live-bus file
           # ran above as a mandatory no-skip browser gate.
-          HOME=$(mktemp -d) uv run --extra test python -m pytest tests/e2e/ -v -m "e2e and not metal" --ignore=tests/e2e/test_live_bus.py --cov=holdspeak --cov-report=xml --cov-report=term-missing
+          #
+          # HOME is isolated so no rig can touch an installation, but the
+          # caches the browsers live in are carried across explicitly:
+          # PLAYWRIGHT_BROWSERS_PATH and PUPPETEER_CACHE_DIR (job env, both
+          # outside HOME) and the warm npm cache. This mirrors the local
+          # invocation documented in CLAUDE.md.
+          HOME_REAL=$HOME
+          HOME=$(mktemp -d) npm_config_cache=$HOME_REAL/.npm uv run --extra test python -m pytest tests/e2e/ -v -m "e2e and not metal" --ignore=tests/e2e/test_live_bus.py --cov=holdspeak --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

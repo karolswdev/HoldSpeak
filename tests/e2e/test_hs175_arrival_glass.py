@@ -51,6 +51,8 @@ from .glass_infra import (
     _normal_chair,
     _ensure_build,
     _settle,
+    local_week_bounds_now,
+    pinned_desk_zone,
     REPO,
 )
 
@@ -58,6 +60,27 @@ pytest.importorskip("playwright.sync_api", reason="Arrival glass needs Playwrigh
 
 SHOTS = REPO / "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-02-shots"
 TOKEN = "hs175-arrival"
+
+
+# ── The desk's zone: pinned away from the week edge ─────────────
+#
+# HS-200-03 follow-through. Every scenario below seeds calendar events at
+# `now - 1h .. now + 5h` and asserts they land inside the CURRENT Mon-Sun
+# week the hub computes. The runner (macOS, UTC) ran this family late on a
+# Sunday: two of the three events fell into next week, and the seven
+# arrival tests failed on counts (`Expected 3 meetings, got 1`).
+# Reproduced locally with `TZ=UTC` at 22:02 UTC on Sunday 2026-09-06;
+# green in the owner's `America/Denver` at 16:02 the same instant. The
+# product is right; the rig's clock was the accident. See
+# `glass_infra.pinned_desk_zone` for the law and its guarantee (13+ hours
+# of local week on both sides of now).
+
+
+@pytest.fixture(autouse=True)
+def _pinned_desk_zone():
+    """Pin the desk's local zone for every test in this module."""
+    with pinned_desk_zone():
+        yield
 
 
 # ── Seed helpers ───────────────────────────────────────────────
@@ -215,13 +238,10 @@ def _seed_week_strip(home: Path) -> None:
             " datetime('now'), datetime('now'), datetime('now'))",
         )
 
-        # All events must be in the FUTURE so list_upcoming finds them.
-        # Anchor to tomorrow 08:00 UTC: always future, always within
-        # the same Mon-Sun week (unless today is Sunday -- handled by
-        # softening the today-accent assertion below).
-        # now + 1h: always future, and inside this Mon-Sun UTC week except
-        # during the last hour of Sunday UTC (the one unavoidable hole;
-        # "tomorrow 08:00" fell into next week on Sunday -- seen live).
+        # All events must be in the FUTURE so list_upcoming finds them,
+        # and inside the hub's current LOCAL Mon-Sun week so the strip
+        # counts them. `_pinned_desk_zone` guarantees at least 13 hours of
+        # week on either side of now, so now + 1h .. now + 5h always fits.
         anchor = now + timedelta(hours=1)
 
         # Event 1: Standup, armed, linked to Q4 Platform
@@ -267,7 +287,6 @@ def _seed_orphan(home: Path) -> None:
 
     db = get_database()
     now = datetime.now(tz=timezone.utc)
-    today = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     ics_path = _create_ics_file(home, [])
     _write_calendar_config(home, ics_path)
@@ -275,10 +294,8 @@ def _seed_orphan(home: Path) -> None:
     with db._connection() as conn:
         _seed_project(conn, "proj-q4", "Q4 Platform")
 
-        # Anchor to tomorrow 08:00 UTC (always future).
-        # now + 1h: always future, and inside this Mon-Sun UTC week except
-        # during the last hour of Sunday UTC (the one unavoidable hole;
-        # "tomorrow 08:00" fell into next week on Sunday -- seen live).
+        # Always future, and inside the hub's current LOCAL Mon-Sun week
+        # (`_pinned_desk_zone` keeps now away from both week edges).
         anchor = now + timedelta(hours=1)
 
         # Event 1: Standup, armed, linked
@@ -306,9 +323,11 @@ def _seed_orphan(home: Path) -> None:
         )
 
         # Orphan: armed recording for "Retro" whose event is BEFORE this
-        # week's Monday (not in the upcoming projection AND not in count_per_day).
-        days_since_monday = now.weekday()  # 0=Mon
-        past_event_start = today - timedelta(days=days_since_monday + 1)
+        # week's LOCAL Monday (not in the upcoming projection AND not in
+        # the strip's count). The week the hub draws is the local one, so
+        # the rig reads the same bound rather than a UTC weekday.
+        local_monday, _ = local_week_bounds_now()
+        past_event_start = (local_monday - timedelta(days=1)).astimezone(timezone.utc)
         _seed_calendar_event(
             conn, "ev-retro-past", "Retro",
             past_event_start.isoformat(),
@@ -339,8 +358,8 @@ def _seed_past_future_mix(home: Path) -> None:
     _write_calendar_config(home, ics_path)
 
     with db._connection() as conn:
-        # Past event: now - 1h (genuinely past; still inside this Mon-Sun
-        # week except the first hour of Monday UTC).
+        # Past event: now - 1h (genuinely past, and inside the hub's local
+        # Mon-Sun week -- `_pinned_desk_zone` keeps 13+ hours behind now).
         past_start = now - timedelta(hours=1)
         past_end = past_start + timedelta(minutes=30)
         _seed_calendar_event(
@@ -372,23 +391,13 @@ def _seed_no_calendar(home: Path) -> None:
     pass
 
 
-def _local_week_bounds() -> tuple[datetime, datetime]:
-    """Monday 00:00 and next Monday 00:00 of the CURRENT LOCAL week -- the
-    hub runs in this process's zone, so the rig's week is the hub's week."""
-    local_now = datetime.now().astimezone()
-    monday = (local_now - timedelta(days=local_now.weekday())).replace(
-        hour=0, minute=0, second=0, microsecond=0,
-    )
-    return monday, monday + timedelta(days=7)
-
-
 def _seed_next_week_event(home: Path) -> str:
     """One event next Monday 10:00 LOCAL on top of the week-strip scenario.
     Returns its title."""
     from holdspeak.db import get_database
 
     _seed_week_strip(home)
-    _, next_monday = _local_week_bounds()
+    _, next_monday = local_week_bounds_now()
     starts = (next_monday + timedelta(hours=10)).astimezone(timezone.utc)
     db = get_database()
     with db._connection() as conn:
@@ -507,11 +516,12 @@ class TestArrivalWeekStrip:
 
             # ── Today accented ──
             # MON-FRI always show in the strip, so today is accented when
-            # it is a weekday.  SAT/SUN only appear when they carry events;
-            # the anchor seeds events on tomorrow, so today's weekend day
-            # may be absent.  The assertion is soft on weekends.
+            # it is a weekday.  SAT/SUN only appear when they carry events,
+            # and the anchor may seed them onto the next day, so today's
+            # weekend day may be absent.  The assertion is soft on weekends,
+            # and the weekday it reads is the DESK's, never UTC's.
             today_days = page.locator("[data-today]")
-            is_weekday = datetime.now(tz=timezone.utc).weekday() < 5
+            is_weekday = datetime.now().astimezone().weekday() < 5
             if is_weekday:
                 assert today_days.count() >= 1, (
                     f"No today-accented day at {width} (weekday)"

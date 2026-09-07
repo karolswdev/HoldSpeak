@@ -415,10 +415,16 @@ def test_call_chip_glass(hub: dict) -> None:
                 f"{url}/?token={TOKEN}&open=thread:{thread_id}",
                 wait_until="load",
             )
-            page.wait_for_timeout(3000)
-
-            # The call chip should be visible in the head
+            # HS-200-03 follow-through: wait for the chip, do not sleep at it.
+            # A fixed 3s was enough locally and not on a loaded runner (seen
+            # 2026-09-06 in a full serial e2e pass: "Call chip not found in
+            # thread head at 1440", green three times alone). The assertion
+            # is unchanged; only the waiting is honest.
             chip = page.locator("[data-testid='call-chip']")
+            try:
+                chip.first.wait_for(timeout=15_000)
+            except Exception:
+                pass
             assert chip.count() >= 1, (
                 f"Call chip not found in thread head at {width}"
             )
@@ -446,10 +452,12 @@ def test_call_chip_glass(hub: dict) -> None:
                 f"{url}/?token={TOKEN}&open=thread:{thread_id}",
                 wait_until="load",
             )
-            page.wait_for_timeout(3000)
-
             # Verify call_mode persisted on reload
             chip = page.locator("[data-testid='call-chip']")
+            try:
+                chip.first.wait_for(timeout=15_000)
+            except Exception:
+                pass
             assert chip.count() >= 1, (
                 f"Call chip not found after reload at {width}"
             )

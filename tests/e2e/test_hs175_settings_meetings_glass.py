@@ -26,6 +26,8 @@ from .glass_infra import (
     _assert_clean,
     _ensure_build,
     _settle,
+    local_week_bounds_now,
+    pinned_desk_zone,
     REPO,
 )
 
@@ -35,20 +37,44 @@ SHOTS = REPO / "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/sto
 TOKEN = "hs175-settings-calendar"
 
 
+@pytest.fixture(autouse=True)
+def _pinned_desk_zone():
+    """Pin the desk's local zone for every test in this module.
+
+    HS-200-03 follow-through: MATCHED THIS WEEK is counted over the hub's
+    LOCAL week (`_iso_week_range_local`,
+    holdspeak/web/routes/calendar_sources.py:102). Late on a Sunday the
+    seeded event fell into next week and the chip vanished -- reproduced
+    with `TZ=UTC` at 23:18 UTC on Sunday 2026-09-06, green at the same
+    instant under `Etc/GMT-14`. See `glass_infra.pinned_desk_zone`.
+    """
+    with pinned_desk_zone():
+        yield
+
+
 def _this_week_event_time() -> tuple[str, str]:
-    """Return (starts_at, ends_at) for an event inside the current ISO week."""
-    now = datetime.now(timezone.utc)
-    # Move to the next weekday within this week (or today if still room).
-    monday = now - timedelta(days=now.weekday())
-    # Pick Wednesday of this week (always within the ISO week).
-    wed = monday + timedelta(days=2)
-    starts = wed.replace(hour=10, minute=0, second=0, microsecond=0)
-    # If Wednesday is already past, use tomorrow (still within the week for most days).
-    if starts < now:
-        starts = now + timedelta(hours=1)
-        starts = starts.replace(minute=0, second=0, microsecond=0)
+    """(starts_at, ends_at) for an event inside the hub's current LOCAL week.
+
+    The week the product counts is the LOCAL one, so the rig reads the same
+    bound instead of a UTC weekday. Wednesday 10:00 local when that is still
+    ahead, otherwise the next whole hour -- which `_pinned_desk_zone`
+    guarantees is still inside this week.
+    """
+    now = datetime.now().astimezone()
+    monday, next_monday = local_week_bounds_now()
+    starts = monday + timedelta(days=2, hours=10)
+    if starts <= now:
+        starts = (now + timedelta(hours=1)).replace(
+            minute=0, second=0, microsecond=0,
+        )
+    assert monday <= starts < next_monday, (
+        f"seeded event {starts} is outside the local week "
+        f"[{monday}, {next_monday})"
+    )
     ends = starts + timedelta(hours=1)
-    fmt = lambda dt: dt.isoformat(timespec="seconds").replace("+00:00", "Z")
+    fmt = lambda dt: dt.astimezone(timezone.utc).isoformat(
+        timespec="seconds"
+    ).replace("+00:00", "Z")
     return fmt(starts), fmt(ends)
 
 

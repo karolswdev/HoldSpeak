@@ -7,9 +7,16 @@ with the offending file, block index, and the renderer's error.
 
 mmdc needs a browser (it renders to SVG via headless Chromium), so this
 skips cleanly where mmdc or its browser is unavailable, exactly like the
-route pre-flight. CI has no browser; the green evidence run is local:
+route pre-flight.
 
     uv run pytest -q tests/e2e/test_mermaid_renders.py
+
+HS-200-03 follow-through: the E2E job now pre-installs `@mermaid-js/mermaid-cli`
+and pins PUPPETEER_CACHE_DIR outside HOME (.github/workflows/test.yml), so
+this guard is real on the macOS runner too. Before that, an isolated HOME
+hid puppeteer's browser cache and every render re-downloaded the CLI through
+`npx`; the 300s per-test timeout killed the test and aborted the whole E2E
+report (run 34059711954).
 
 GitHub is the canonical renderer for these blocks; this guard is the
 mechanical backstop so a typo cannot land an unrenderable diagram.
@@ -91,6 +98,10 @@ def test_docs_have_at_least_one_mermaid_block() -> None:
 
 
 @pytest.mark.e2e
+# One `mmdc` process per block, each booting a headless Chromium: roughly two
+# dozen renders. That is honestly slower than the suite-wide 300s default on a
+# shared runner, so the cost is declared rather than hidden behind a skip.
+@pytest.mark.timeout(600)
 def test_every_mermaid_block_renders() -> None:
     cmd = _mmdc()
     if cmd is None:
