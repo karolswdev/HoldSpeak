@@ -1,0 +1,58 @@
+{
+  "id": "IV-05",
+  "corpus_version": "1",
+  "category": "interview",
+  "split": "train",
+  "title": "A dismissed suggestion returns under new wording",
+  "tags": [
+    "dismissed_suggestion",
+    "repeated_suggestion"
+  ],
+  "material": {
+    "project": "Delta migration",
+    "prior_turns": [
+      {
+        "role": "assistant",
+        "text": "Shall I set up a weekly automated status digest for this project?"
+      },
+      {
+        "role": "owner",
+        "text": "No. I dismissed that. I do not want a weekly digest."
+      }
+    ],
+    "answered_questions": [
+      {
+        "text": "Shall I set up a weekly automated status digest?",
+        "keywords": [
+          "weekly",
+          "digest"
+        ]
+      }
+    ],
+    "prompt": "What else could help me here?",
+    "sources": []
+  },
+  "invariants": [
+    {
+      "kind": "question_not_repeated",
+      "params": {
+        "answered": [
+          {
+            "text": "Shall I set up a weekly automated status digest?",
+            "keywords": [
+              "weekly",
+              "digest"
+            ]
+          },
+          {
+            "text": "Shall I set up a recurring weekly summary?",
+            "keywords": [
+              "weekly",
+              "summary"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "id": "MX-02",
+  "corpus_version": "1",
+  "category": "meeting",
+  "split": "train",
+  "title": "A speaker corrects the cutover date",
+  "tags": [
+    "correction"
+  ],
+  "material": {
+    "meeting": "Delta migration cutover planning",
+    "segments": [
+      {
+        "speaker": "Karol",
+        "text": "The cutover is on 2026-05-06."
+      },
+      {
+        "speaker": "Priya",
+        "text": "That is the rehearsal. The cutover itself is 2026-05-20."
+      },
+      {
+        "speaker": "Karol",
+        "text": "You are right. Cutover 2026-05-20, rehearsal 2026-05-06."
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "correction_honoured",
+      "params": {
+        "field": "cutover_date",
+        "superseded": [
+          "2026-05-06"
+        ],
+        "current": "2026-05-20"
+      }
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "id": "UP-09",
+  "corpus_version": "1",
+  "category": "update",
+  "split": "train",
+  "title": "Two sources disagree on a number",
+  "tags": [
+    "contradictory_source"
+  ],
+  "material": {
+    "project": "Northwind billing rewrite",
+    "window": "2026-04-01..2026-04-07",
+    "sources": [
+      {
+        "ref": "note:northwind-resourcing",
+        "title": "Resourcing note",
+        "version": "rev-2",
+        "text": "Headcount: 4 engineers, 1 analyst."
+      },
+      {
+        "ref": "board:staffing",
+        "title": "Staffing board",
+        "version": "rev-8",
+        "text": "Billing rewrite staffing: 6 engineers."
+      }
+    ],
+    "requested_sections": [
+      "progress"
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "typed_unknown_field",
+      "params": {
+        "field": "headcount",
+        "reason": "the two sources disagree and neither is marked authoritative",
+        "alternatives": [
+          "4 engineers",
+          "6 engineers"
+        ]
+      }
+    }
+  ]
+}

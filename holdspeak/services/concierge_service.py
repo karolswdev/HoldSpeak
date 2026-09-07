@@ -402,6 +402,10 @@ def detect(
                 "state": STATE_READY if key_set else STATE_NOT_SET,
                 "keySet": key_set,
                 "profileId": profile.id,
+                # HS-200-04: the probe needs the endpoint it is meant to reach.
+                # Without it `probe()` fell through to its local-file branch and
+                # answered "No probe target available" for every endpoint row.
+                "baseUrl": base,
             })
         else:
             # LAN or local endpoint — resolve name via /v1/models
@@ -439,6 +443,7 @@ def detect(
                 "host": host,
                 "state": STATE_READY,
                 "profileId": profile.id,
+                "baseUrl": base,
             })
 
     # 2. Paired devices (mesh nodes)
@@ -810,6 +815,261 @@ def probe(
         "latencyMs": None,
         "plainReason": "No probe target available",
     }
+
+
+# ---- Repair states (HS-200-04) ----------------------------------------------
+#
+# The setup verdict says `needs_attention`; that word repairs nothing.  Four
+# named states, each with ONE verb that opens an existing control:
+#
+#   MODEL FILE MISSING   Download    -> the Model Library acquisition
+#   ENDPOINT UNREACHABLE Check       -> the endpoint editor (Add an engine...)
+#   TOOL INCOMPATIBLE    Choose      -> the group's engine picker
+#   CREDENTIAL EXPIRED   Connections -> the Connections door
+#
+# Every row is derived from an ASSIGNED route or a real source connection: a
+# repair the product will actually hit, never a warning about something nothing
+# uses.  No prose, no second doctor, no new persistence.
+
+REPAIR_MODEL_FILE_MISSING = "MODEL FILE MISSING"
+REPAIR_ENDPOINT_UNREACHABLE = "ENDPOINT UNREACHABLE"
+REPAIR_TOOL_INCOMPATIBLE = "TOOL INCOMPATIBLE"
+REPAIR_CREDENTIAL_EXPIRED = "CREDENTIAL EXPIRED"
+
+# One verb per state.  The face renders the verb as the library Button and
+# routes on `control`; it never decides the policy.
+_REPAIR_VERBS: dict[str, tuple[str, str]] = {
+    REPAIR_MODEL_FILE_MISSING: ("Download", "model_library"),
+    REPAIR_ENDPOINT_UNREACHABLE: ("Check", "endpoint_editor"),
+    REPAIR_TOOL_INCOMPATIBLE: ("Choose", "engine_picker"),
+    REPAIR_CREDENTIAL_EXPIRED: ("Connections", "connections"),
+}
+
+# The order the rows are shown in: the states that block work outright first.
+_REPAIR_ORDER = (
+    REPAIR_CREDENTIAL_EXPIRED,
+    REPAIR_ENDPOINT_UNREACHABLE,
+    REPAIR_MODEL_FILE_MISSING,
+    REPAIR_TOOL_INCOMPATIBLE,
+)
+
+# A source connection in one of these states needs the owner's credential.
+_SOURCE_NEEDS_OWNER = frozenset({"owner_action_required", "disconnected", "revoked"})
+
+_GROUP_LABELS: dict[str, str] = dict(ASSIGNMENT_GROUPS)
+
+
+def _repair_row(
+    token: str,
+    *,
+    subject: str,
+    host: str,
+    scope: str,
+    groups: list[str],
+    engine_id: str = "",
+    preset_id: str = "",
+    base_url: str = "",
+    detail: str = "",
+) -> dict[str, Any]:
+    verb, control = _REPAIR_VERBS[token]
+    return {
+        "id": f"{token.lower().replace(' ', '-')}:{subject}",
+        "token": token,
+        "subject": subject,
+        "host": host,
+        "scope": scope,
+        "groups": groups,
+        "groupLabels": [_GROUP_LABELS.get(g, g) for g in groups],
+        "verb": verb,
+        "control": control,
+        "engineId": engine_id,
+        "presetId": preset_id,
+        "baseUrl": base_url,
+        "detail": detail,
+    }
+
+
+def _assigned_entries(
+    assignment_service: Any, principal: Any
+) -> list[tuple[str, dict[str, Any], list[dict[str, Any]]]]:
+    """(group_id, first entry, blocking issues) for every assigned group.
+
+    Reads the existing seven-row owner roster; it never re-derives assignment
+    precedence here.
+    """
+    try:
+        summary = assignment_service.assignment_summary(principal)
+    except Exception as exc:  # pragma: no cover - a roster read never blocks the face
+        log.warning(f"concierge repairs: assignment summary unavailable ({exc})")
+        return []
+    out: list[tuple[str, dict[str, Any], list[dict[str, Any]]]] = []
+    for row in summary.get("rows") or []:
+        group_id = str(row.get("id") or "")
+        if group_id in ("", "global"):
+            continue
+        projection = row.get("assignment")
+        if not isinstance(projection, dict):
+            continue
+        entries = [e for e in (projection.get("entries") or []) if isinstance(e, dict)]
+        if not entries:
+            continue
+        blocking = [
+            issue
+            for issue in (projection.get("issues") or [])
+            if isinstance(issue, dict) and issue.get("severity") == "blocking"
+        ]
+        out.append((group_id, entries[0], blocking))
+    return out
+
+
+def repairs(
+    *,
+    db: Any,
+    assignment_service: Any = None,
+    principal: Any = None,
+    http_get: Optional[Callable[..., tuple[int, bytes]]] = None,
+    timeout_seconds: float = 1.5,
+) -> list[dict[str, Any]]:
+    """The named repair states for the routes this product will actually use.
+
+    Deduped by (state, subject): one engine that four groups share is one row
+    naming the four groups, not four rows.
+    """
+    from ..inference_targets import _profile_key_present, local_model_file_present
+    from ..setup_runtime import discover_endpoint_models
+
+    found: dict[tuple[str, str], dict[str, Any]] = {}
+
+    def _add(row: dict[str, Any]) -> None:
+        key = (row["token"], row["subject"])
+        existing = found.get(key)
+        if existing is None:
+            found[key] = row
+            return
+        for group in row["groups"]:
+            if group not in existing["groups"]:
+                existing["groups"].append(group)
+                existing["groupLabels"].append(_GROUP_LABELS.get(group, group))
+
+    # Endpoint reachability is read at most once per endpoint, for assigned
+    # routes only.  A bounded read, never a scan.
+    reachable: dict[str, bool] = {}
+
+    def _reachable(base_url: str) -> bool:
+        if base_url not in reachable:
+            try:
+                result = discover_endpoint_models(
+                    base_url, timeout_seconds=timeout_seconds, http_get=http_get
+                )
+                reachable[base_url] = bool(result.get("ok"))
+            except Exception:
+                reachable[base_url] = False
+        return reachable[base_url]
+
+    if assignment_service is not None and principal is not None:
+        for group_id, entry, blocking in _assigned_entries(assignment_service, principal):
+            label = str(entry.get("label") or entry.get("profile_id") or "")
+            if blocking:
+                _add(
+                    _repair_row(
+                        REPAIR_TOOL_INCOMPATIBLE,
+                        subject=label,
+                        host="",
+                        scope="local",
+                        groups=[group_id],
+                        detail=",".join(
+                            sorted({str(i.get("code") or "") for i in blocking})
+                        ),
+                    )
+                )
+                continue
+            profile_id = resolve_profile_id(db, str(entry.get("profile_id") or ""))
+            try:
+                profile = db.profiles.get(profile_id)
+            except Exception:
+                profile = None
+            if profile is None or getattr(profile, "deleted", False):
+                continue
+            host = _host_for_profile(profile)
+            base_url = str(getattr(profile, "base_url", "") or "").strip()
+            model_file = str(getattr(profile, "model_file", "") or "").strip()
+            requires_key = bool(getattr(profile, "requires_key", False))
+            name = str(getattr(profile, "name", "") or profile_id)
+            engine_kind = (
+                KIND_CLOUD
+                if base_url and not _is_lan_host(host) and requires_key
+                else (KIND_LAN if base_url else KIND_LOCAL)
+            )
+            engine_id = f"{engine_kind}:{profile_id}"
+
+            if requires_key and not _profile_key_present(profile_id):
+                _add(
+                    _repair_row(
+                        REPAIR_CREDENTIAL_EXPIRED,
+                        subject=name,
+                        host=host,
+                        scope="cloud" if engine_kind == KIND_CLOUD else "local",
+                        groups=[group_id],
+                        engine_id=engine_id,
+                    )
+                )
+            elif model_file and not local_model_file_present(model_file):
+                _add(
+                    _repair_row(
+                        REPAIR_MODEL_FILE_MISSING,
+                        subject=name,
+                        host="THIS DEVICE",
+                        scope="local",
+                        groups=[group_id],
+                        engine_id=engine_id,
+                    )
+                )
+            elif (
+                base_url
+                # A cloud endpoint is never read without his verb (D4): a key
+                # that is set is all this list can honestly say about it. Its
+                # reachability belongs to the row's own `Check`.
+                and engine_kind != KIND_CLOUD
+                and _is_lan_host(host)
+                and not _reachable(base_url)
+            ):
+                _add(
+                    _repair_row(
+                        REPAIR_ENDPOINT_UNREACHABLE,
+                        subject=name,
+                        host=host,
+                        scope="cloud" if engine_kind == KIND_CLOUD else "local",
+                        groups=[group_id],
+                        engine_id=engine_id,
+                        base_url=base_url,
+                    )
+                )
+
+    # Source credentials: the Connections door owns their repair.
+    try:
+        connections = db.automations.list_provider_connections()
+    except Exception:
+        connections = []
+    for row in connections or []:
+        state = str((row or {}).get("state") or "")
+        if state not in _SOURCE_NEEDS_OWNER:
+            continue
+        provider_id = str(row.get("provider_id") or "")
+        _add(
+            _repair_row(
+                REPAIR_CREDENTIAL_EXPIRED,
+                subject=provider_id,
+                host=provider_id,
+                scope="cloud",
+                groups=[],
+                detail=str(row.get("last_error_code") or ""),
+            )
+        )
+
+    order = {token: index for index, token in enumerate(_REPAIR_ORDER)}
+    return sorted(
+        found.values(), key=lambda row: (order.get(row["token"], 99), row["subject"])
+    )
 
 
 # ---- Apply ------------------------------------------------------------------

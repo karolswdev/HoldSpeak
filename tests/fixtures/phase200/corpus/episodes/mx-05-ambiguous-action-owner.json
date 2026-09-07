@@ -1,0 +1,46 @@
+{
+  "id": "MX-05",
+  "corpus_version": "1",
+  "category": "meeting",
+  "split": "train",
+  "title": "An action is assigned to an ambiguous first name",
+  "tags": [
+    "ambiguous_identity",
+    "missing_owner"
+  ],
+  "material": {
+    "meeting": "Delta migration weekly",
+    "attendees": [
+      "Karol",
+      "Alex Moreau",
+      "Alex Whitfield"
+    ],
+    "segments": [
+      {
+        "speaker": "Karol",
+        "text": "Alex, take the rollback rehearsal."
+      },
+      {
+        "speaker": "Alex Moreau",
+        "text": "Sure."
+      },
+      {
+        "speaker": "Alex Whitfield",
+        "text": "I can also do it if needed."
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "typed_unknown_field",
+      "params": {
+        "field": "action_owner",
+        "reason": "two attendees answer to the spoken first name",
+        "alternatives": [
+          "Alex Moreau",
+          "Alex Whitfield"
+        ]
+      }
+    }
+  ]
+}

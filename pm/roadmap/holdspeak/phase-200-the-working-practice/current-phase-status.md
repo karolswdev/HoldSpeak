@@ -1,6 +1,6 @@
 # Phase 200: The Working Practice
 
-**Last updated:** 2026-09-05, roadmap creation.
+**Last updated:** 2026-09-06 — G0: 01–04 DONE, 05's automatable half proved; G1: 06, 07, 08 DONE (the 33-episode corpus with held-out separation, six deterministic invariants, the live runner whose real result is the owner's); 09 the daily workflow design on the canvas, counsel's bounce being paid, his verdict owed.
 **Status:** planning. Forty stories defined; zero implementation stories completed.
 **Product owner:** Karol.
 **Delivery owner:** unassigned until implementation starts.
@@ -38,15 +38,15 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-200-01 | Establish the integration baseline and obligation map | ready | [story-01](story-01-baseline-and-obligation-map.md) | — |
-| HS-200-02 | Expose loaded runtime identity and prove restore | backlog | [story-02](story-02-runtime-identity-and-restore.md) | — |
-| HS-200-03 | Make release checks isolated and actionable | backlog | [story-03](story-03-ci-isolation-and-release-contract.md) | — |
-| HS-200-04 | Make first value and model readiness work cold | backlog | [story-04](story-04-first-value-and-model-readiness.md) | — |
-| HS-200-05 | Prove physical voice capture, correction, and custody | backlog | [story-05](story-05-physical-voice-and-custody.md) | — |
-| HS-200-06 | Separate citation, factual support, and acceptance | backlog | [story-06](story-06-claim-support-semantics.md) | — |
-| HS-200-07 | Make incomplete attention coverage explicit | backlog | [story-07](story-07-coverage-and-partial-results.md) | — |
-| HS-200-08 | Establish repeatable live-model quality evaluation | backlog | [story-08](story-08-semantic-evaluation-harness.md) | — |
-| HS-200-09 | Design the daily Project workflow on existing surfaces | backlog | [story-09](story-09-daily-workflow-design.md) | — |
+| HS-200-01 | Establish the integration baseline and obligation map | done | [story-01](story-01-baseline-and-obligation-map.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-200-02 | Expose loaded runtime identity and prove restore | done | [story-02](story-02-runtime-identity-and-restore.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-200-03 | Make release checks isolated and actionable | done | [story-03](story-03-ci-isolation-and-release-contract.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-200-04 | Make first value and model readiness work cold | done | [story-04](story-04-first-value-and-model-readiness.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-200-05 | Prove physical voice capture, correction, and custody | in-progress | [story-05](story-05-physical-voice-and-custody.md) | — |
+| HS-200-06 | Separate citation, factual support, and acceptance | done | [story-06](story-06-claim-support-semantics.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-200-07 | Make incomplete attention coverage explicit | done | [story-07](story-07-coverage-and-partial-results.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-200-08 | Establish repeatable live-model quality evaluation | done | [story-08](story-08-semantic-evaluation-harness.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-200-09 | Design the daily Project workflow on existing surfaces | in-progress | [story-09](story-09-daily-workflow-design.md) | — |
 | HS-200-10 | Promote reusable working context into canonical records | backlog | [story-10](story-10-scoped-working-context.md) | — |
 | HS-200-11 | Produce a useful Project preparation brief | backlog | [story-11](story-11-project-preparation.md) | — |
 | HS-200-12 | Connect a real meeting to reviewed outcomes | backlog | [story-12](story-12-meeting-to-reviewed-outcomes.md) | — |
@@ -80,6 +80,116 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-40 | Close Phase 200 on outcomes and release evidence | backlog | [story-40](story-40-release-and-phase-close.md) | — |
 
 ## Where we are
+
+2026-09-07 (small hours): HS-200-08 DONE — tests/fixtures/phase200/corpus/
+(33 episodes: 11 Interview · 11 meeting extraction · 11 grounded update;
+12 held out, assigned at authoring before any prompt change, never read by
+a tuning step — reading one raises), checks.py (six invariants; the
+critical kinds live in the module, not the episode files, so a corpus
+file cannot downgrade an invented value; a critical failure fails the run
+regardless of any score), scripts/phase200_eval.py (real product paths:
+the Interview's ThreadService, the meeting plugin chain, the model update
+drafter; the report names engine · model · route plan/boundary/host · the
+build id · per-episode material hash, invariants, latency · support
+judgments · review effort; LLM judging off by default and never gating),
+SCORING.md (the six-question source-inspection rubric). Proven only with
+a canned local stub (33 episodes, 0 critical); the LIVE run against the
+LAN engine is the owner's command in SCORING.md. A defect found: the
+model drafter resolves its deployment revision by matching the profile id
+against the model column, so his profile falls back to the deterministic
+drafter silently — being fixed. HS-200-09: the design on the canvas
+(https://claude.ai/code/artifact/63eaae1a-eb59-4bcf-902d-0c70d3e0c275),
+counsel BOUNCED on four P0s (the 393 boards drift; the display line hid
+the total; the meeting review drew a vocabulary the wire lacks; coverage
+missing on four boards) with 17 conditions, then RATIFY-W-C with N1–N2 —
+all paid (22 boards; the one-Project arrival drawn for his desk; the
+ranking key names NOT RUN, the class his desk has; coverage is a token on
+faces that list their sources; five MISSING rows on the meeting seam,
+story 12 re-judged L; five shared components owed to the library). HIS
+VERDICT on the canvas is the exit; stories 10–15 wait on it. HS-200-07 DONE — the aggregate carries `coverage`
+(one record per expected Project/watch/meeting/commitment source: state
+available · stale · failed · forbidden · unavailable, observed_at, the
+repair token + verb, the reason) and `complete`; computedAt is the aggregate
+clock only; a failed source replays its last-known items with their
+observation time so severity cannot drop by disappearance, reconciled by
+stable ids on recovery; the cache is single-flight with a build counter
+and keeps its last good payload as stale; the arrival says "Nothing needs
+you" only when complete, else "Coverage incomplete" + `COVERAGE · N OF M`
++ a repair row per gap (Retry / Reconnect / Open source); the shade and
+the deck carry the same truth; the brief gains a `Not observed` row per gap;
+the MCP `desk.needs_you` now calls build_aggregate (it silently skipped a
+failed Room). Not durable across a restart by design (no second store).
+HS-200-06 DONE (the three claim axes). HS-200-04 DONE — cold first value proven and
+fenced (Speak and FirstWords read no readiness; Copy and Keep need no
+LLM); a real task probe (`POST /api/concierge/probe {task:true}`, the
+PROBE row's `Test`) through the same adapter Ask uses, recording the
+serving deployment, the winning boundary and the host, refusing an
+off-machine route by name until confirmed (the LIVE LAN probe is his
+attended beat); four NEEDS YOU repair states on the Concierge with one
+verb each (MODEL FILE MISSING · Download; ENDPOINT UNREACHABLE · Check;
+TOOL INCOMPATIBLE · Choose; CREDENTIAL EXPIRED · Connections) — his live
+condition is CREDENTIAL EXPIRED on the migrated intel endpoint; a real
+defect fixed: every "Set up AI" handoff navigated to /settings and lost
+the Thought — the Concierge now opens over the task and applying
+announces settings-updated so the Speak face refreshes readiness;
+another: detect never emitted baseUrl so the endpoint probe never had a
+target. The eight fences that moved paid (9c143f0a) without a budget
+raised. Then: the CI-shape suite at `cbd8049d` (`-n auto`, isolated
+HOME, run beside story 04's building lane): 25 failed / 10308 passed / 97
+skipped / 1 error. The twelve formerly inherited failures are GONE (03's
+repairs hold). Remaining: 17 rigs (to re-run serially once no lane edits;
+the 175/176 families and the hs14x/15x set), 7 fences that moved with
+stories 02/03 (the build ledger, the backend density guard on
+web_runtime.py, a dash in a doc, the ask v1 contract hash, one-path
+cardinality, the two phase-143 censuses) — a fence lane is paying them —
+and one setup error (test_loop_detail_404_then_ok) to classify.
+Serial re-run (`6e3c8e34`, no lane editing): 46 of 47 green — every 175/176
+rig and the hs14x/15x set were xdist/CPU casualties; the one failure is
+hs153's guardrail row mounting deny then flipping to allow, the product
+defect ledgered to HS-200-09 (fails identically on main). The cadence-routes
+setup error did not recur serially (the fixture race, BACKLOG AI).
+
+2026-09-06 (evening): HS-200-03 DONE — the CI ledger
+(assets/ci-ledger-2026-09-06.md: 35 CI + 12 local identities reproduced,
+including under a simulated ubuntu runner and TZ=Pacific/Auckland; the two
+divergences explained: a real-clock boundary at 12:00 UTC and the quiet-hours
+window swallowing the calendar sub-receipt), the seams repaired (one
+local-model predicate so a substituted readiness reaches the path Ask
+resolves through; clocks and zones injected in the steward and heartbeat
+services; a reentrant lock over the database singletons and a shutdown that
+stops every conductor; 16 runner-environment tests declared per test with
+markers, never per module; five censuses regenerated from source), the
+isolated-HOME guard in tests/conftest.py that refuses a run pointed at a real
+installation, tests/critical/ (identity · backup/restore · the first kept
+sentence cold · the Project first result; 11 passed) with its own CI job
+"Critical Journeys (G0)"; the bundle gate's dead CSS cut and its limit raised
+300 → 310 KB with the reason beside the number as a down-only ratchet.
+RULING (R200-03-1): the three absolute fences (kernel line budget, kernel
+driver conditionals, product copy's 29 offenders) are re-baselined as DATED
+DEBT RATCHETS keyed by module/measurement or path+rule+text, never by line —
+unlisted fails, listed may not grow, a paid entry must be deleted; a
+re-baseline named as such, under the owner's "ledger, not gate"; for his eye.
+Two product defects ledgered to HS-200-09 (the Meetings arrival's 404 on
+/api/meetings/projects; the guardrail decision box mounting deny then
+flipping to allow). Earlier: HS-200-02 DONE — holdspeak/runtime_identity.py
+(backend version + revision, process start, frontend build id stamped
+by Vite, an opaque database id, schema 76, a config digest; captured
+once at start; GET /api/system/identity for diagnostics, a public
+block on setup/status), holdspeak/runtime_lock.py (a flock beside the
+database; a second hub refuses to start by name; an escape hatch runs
+with the sweeps off), the three diagnoses as tokens on Settings →
+System's RUNTIME rows (no chip when healthy), backup → the 75→76
+upgrade → restore → reopen proven on a copy (the People store and the
+Keychain named outside the backup). His running hub predates the lock
+(no lock held until his next restart). Inherited: `npm run bundle:gate`
+fails on desk CSS 307 KB > 300 KB (HS-200-03). Earlier: HS-200-01 DONE on `feat/phase-200-g0`. The baseline
+(BASELINE.md + assets/baseline-2026-09-06.md): main `bea4176c`, schema 76,
+two hubs found running against one database (the stale one stopped; the
+instance guard is HS-200-02's first requirement), the engine profile with
+KEY NOT SET while two LAN destinations are ready, zero calendar sources,
+one active Project + nine archived from the 168/169 window (the pilot is
+the owner's question), 69 contract obligations mapped (36 exist, 22
+missing, 9 partial), 35 CI failure identities placed. Next: HS-200-02.
 
 The owner authorized this Phase 200 roadmap after requesting a major commitment to the recommended direction.
 The selected planning baseline is main `519afd4f`.

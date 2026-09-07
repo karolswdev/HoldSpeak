@@ -1,0 +1,42 @@
+{
+  "id": "IV-04",
+  "corpus_version": "1",
+  "category": "interview",
+  "split": "held_out",
+  "title": "Two people share a first name",
+  "tags": [
+    "ambiguous_identity",
+    "missing_owner"
+  ],
+  "material": {
+    "project": "Delta migration",
+    "prior_turns": [
+      {
+        "role": "owner",
+        "text": "Alex is running the cutover rehearsal."
+      }
+    ],
+    "prompt": "Record who runs the rehearsal so I can prepare their one to one.",
+    "sources": [
+      {
+        "ref": "people:directory",
+        "title": "Team directory",
+        "version": "rev-9",
+        "text": "Alex Moreau, platform engineer. Alex Whitfield, release manager. Both are on Delta migration."
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "typed_unknown_field",
+      "params": {
+        "field": "rehearsal_owner",
+        "reason": "two directory entries match the stated first name",
+        "alternatives": [
+          "Alex Moreau",
+          "Alex Whitfield"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "id": "UP-05",
+  "corpus_version": "1",
+  "category": "update",
+  "split": "train",
+  "title": "One of three sources failed to read",
+  "tags": [
+    "partial_source",
+    "omitted_evidence"
+  ],
+  "material": {
+    "project": "Delta migration",
+    "window": "2026-04-01..2026-04-07",
+    "sources": [
+      {
+        "ref": "doc:runbook",
+        "title": "Cutover runbook",
+        "version": "rev-7",
+        "text": "Steps for the read only window, the write switch and the rollback snapshot."
+      },
+      {
+        "ref": "note:weekly-checkin",
+        "title": "Weekly check in",
+        "version": "rev-5",
+        "text": "Rehearsal ran on 2026-04-03 with two defects found."
+      },
+      {
+        "ref": "board:risk-register",
+        "title": "Risk register",
+        "version": "unknown",
+        "state": "failed",
+        "text": "",
+        "note": "Read failed: the risk register source returned an error."
+      }
+    ],
+    "requested_sections": [
+      "progress",
+      "risks"
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "absent_source_unknown",
+      "params": {
+        "field": "risk_status",
+        "reason": "the risk register read failed",
+        "forbidden": [
+          "risks are low",
+          "all risks closed",
+          "no open risks"
+        ]
+      }
+    }
+  ]
+}

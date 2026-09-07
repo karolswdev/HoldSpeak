@@ -22,10 +22,25 @@ pytestmark = [pytest.mark.requires_meeting]
 
 @pytest.fixture
 def activity_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Database:
-    reset_database()
+    # HS-200-03: order matters, and owning the singleton matters.
+    #
+    # This used to reset FIRST and repoint `DEFAULT_DB_PATH` second, then build
+    # a Database it never published. Between the reset and the repoint the
+    # singleton was None while the default path was still the real one, so any
+    # thread calling `get_database()` in that window published a foreign
+    # database to the very routes under test — and the routes then read a
+    # different file from the one this fixture wrote to. That is the three
+    # CI-only failures on Actions run 34007939416 (`assert 0 == 1`,
+    # `assert 404 == 200`, `assert None is not None`).
+    #
+    # Repoint first, then reset, then INSTALL this database as the singleton,
+    # so there is no moment at which the default path and the singleton
+    # disagree with what this test is asserting about.
     db_path = tmp_path / "holdspeak.db"
     monkeypatch.setattr(db_module, "DEFAULT_DB_PATH", db_path)
+    reset_database()
     database = Database(db_path)
+    monkeypatch.setattr(db_module, "_db", database, raising=False)
     yield database
     reset_database()
 

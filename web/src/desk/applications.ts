@@ -305,6 +305,12 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "Engines found, the proposed set, Use these.",
     glyph: "▣",
     href: "/models",
+    // HS-200-04 (return-to-task): `configure-runs-on` had no hosted surface, so
+    // every "Set up AI" handoff fell back to navigate("/settings") — which
+    // unmounts the calling face and loses an unfinished Thought answer. As an
+    // alias of the hosted Concierge it opens in-world instead: the task stays
+    // mounted underneath and is still there when the window closes.
+    aliases: [{ key: "configure-runs-on" }],
     surface: {
       eyebrow: "Models",
       minW: 560,

@@ -9,11 +9,14 @@ import {
   conciergeProbe,
   conciergeApply,
   conciergeDownload,
+  conciergeTaskProbe,
   type Engine,
   type EngineState,
   type ProposalRow,
   type DetectResponse,
   type ProposeResponse,
+  type Repair,
+  type TaskProbeResponse,
 } from "./api";
 
 /* ── Group glyphs — the seven user-visible groups ── */
@@ -130,6 +133,12 @@ export interface ConciergeController {
   // Adjust
   adjustOpen: boolean;
   adjustRows: AdjustRow[];
+  // HS-200-04 — the named repair states and the task probe
+  repairs: Repair[];
+  runRepair: (repair: Repair) => void;
+  probeResult: TaskProbeResponse | null;
+  probing: boolean;
+  runTaskProbe: (confirmOffMachine?: boolean) => void;
   // State
   applying: boolean;
   applied: boolean;
@@ -170,6 +179,9 @@ export function useConciergeController(): ConciergeController {
   const [downloadingEngines, setDownloadingEngines] = useState<
     Record<string, { received: number; total: number }>
   >({});
+  const [repairs, setRepairs] = useState<Repair[]>([]);
+  const [probeResult, setProbeResult] = useState<TaskProbeResponse | null>(null);
+  const [probing, setProbing] = useState(false);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -197,6 +209,7 @@ export function useConciergeController(): ConciergeController {
       safe(() => {
         setDetection(det);
         setProposal(prop);
+        setRepairs(det.repairs);
         // Build set rows from proposal
         const rows: SetRow[] = prop.rows.map((r) => {
           // Build alternatives: all engines compatible with this group
@@ -466,6 +479,16 @@ export function useConciergeController(): ConciergeController {
         }
         setApplyFailures(failures);
         setApplied(failures.length === 0);
+        if (failures.length === 0) {
+          // The one existing readiness signal (SettingsCore dispatches the same
+          // event after a save). Faces holding an unfinished task recheck on it
+          // instead of reloading and losing their draft.
+          try {
+            window.dispatchEvent(new Event("holdspeak:settings-updated"));
+          } catch {
+            // A page without a window still applied the set.
+          }
+        }
       });
     } catch (err) {
       safe(() => {
@@ -526,6 +549,57 @@ export function useConciergeController(): ConciergeController {
     }
   }, [addEngineUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /* ── HS-200-04: one verb per repair state, each opening an existing control ── */
+
+  const runRepair = useCallback(
+    (repair: Repair) => {
+      switch (repair.control) {
+        case "model_library":
+          if (repair.presetId) {
+            void downloadPreset(repair.presetId);
+            return;
+          }
+          if (repair.groups[0]) openPicker(repair.groups[0]);
+          return;
+        case "endpoint_editor":
+          setAddEngineOpen(true);
+          setAddEngineUrl(repair.baseUrl);
+          return;
+        case "engine_picker":
+          if (repair.groups[0]) openPicker(repair.groups[0]);
+          return;
+        case "connections":
+          void import("../../desk/shell").then(({ openSurfaceOr }) =>
+            openSurfaceOr("configure-integrations", "/settings"),
+          );
+          return;
+        default:
+          return;
+      }
+    },
+    [downloadPreset, openPicker],
+  );
+
+  const runTaskProbe = useCallback(
+    async (confirmOffMachine?: boolean) => {
+      setProbing(true);
+      setError("");
+      try {
+        const result = await conciergeTaskProbe(undefined, confirmOffMachine);
+        safe(() => {
+          setProbing(false);
+          setProbeResult(result);
+        });
+      } catch (err) {
+        safe(() => {
+          setProbing(false);
+          setError(readableError(err));
+        });
+      }
+    },
+    [], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
   return {
     loading,
     error,
@@ -538,6 +612,11 @@ export function useConciergeController(): ConciergeController {
     receipt,
     adjustOpen,
     adjustRows,
+    repairs,
+    runRepair,
+    probeResult,
+    probing,
+    runTaskProbe,
     applying,
     applied,
     canApply,

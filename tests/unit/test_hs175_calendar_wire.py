@@ -29,6 +29,22 @@ from holdspeak.principals import Principal, PrincipalKind
 
 OWNER = Principal(PrincipalKind.OWNER, "test-owner")
 
+# HS-200-03: a sweep held by quiet hours writes no `calendar` sub-receipt
+# (holdspeak/services/heartbeat_service.py:334), and quiet hours default to
+# 22:00-08:00 LOCAL. These tests read the machine's wall clock, so they passed
+# by day and failed at night -- which is exactly what happened on the CI runner
+# (Actions run 34007939416 started 04:18 UTC). The sweep clock is pinned to a
+# fixed midday instant, IN A FIXED ZONE, instead: both the time and the zone
+# are injected, and no tolerance is widened. Pinning the instant alone would
+# not be enough -- 12:00 UTC is midnight in Auckland, still inside the window.
+SWEEP_NOW = datetime(2026, 9, 6, 12, 0, 0, tzinfo=timezone.utc)
+
+
+def _daylight_clock():
+    """The injected sweep clock: a fixed instant outside any quiet window."""
+    return SWEEP_NOW
+
+
 # -- Minimal ICS feed for testing -----------------------------------------
 
 _ICS_TEMPLATE = """\
@@ -124,6 +140,7 @@ class TestSweepRunsCalendarRefresh:
 
         hb = HeartbeatService(
             db, watch_service=mock_ws, calendar_conductor=conductor,
+            clock=_daylight_clock, local_zone=timezone.utc,
         )
         receipt = hb.run_sweep(OWNER)
 
@@ -144,7 +161,10 @@ class TestSweepRunsCalendarRefresh:
             db_factory=lambda: db,
             config_loader=lambda: config,
         )
-        hb = HeartbeatService(db, calendar_conductor=conductor)
+        hb = HeartbeatService(
+            db, calendar_conductor=conductor,
+            clock=_daylight_clock, local_zone=timezone.utc,
+        )
         receipt = hb.run_sweep(OWNER)
 
         cal = receipt["calendar"]
@@ -455,7 +475,10 @@ class TestHttpsSourceReceipt:
             config_loader=lambda: config,
         )
 
-        hb = HeartbeatService(db, calendar_conductor=conductor)
+        hb = HeartbeatService(
+            db, calendar_conductor=conductor,
+            clock=_daylight_clock, local_zone=timezone.utc,
+        )
         receipt = hb.run_sweep(OWNER)
 
         cal = receipt.get("calendar", {})

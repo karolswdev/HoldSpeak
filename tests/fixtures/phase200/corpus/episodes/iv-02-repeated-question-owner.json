@@ -1,0 +1,50 @@
+{
+  "id": "IV-02",
+  "corpus_version": "1",
+  "category": "interview",
+  "split": "train",
+  "title": "The project owner was already stated",
+  "tags": [
+    "repeated_question"
+  ],
+  "material": {
+    "project": "Delta migration",
+    "prior_turns": [
+      {
+        "role": "assistant",
+        "text": "Who owns the Delta migration?"
+      },
+      {
+        "role": "owner",
+        "text": "I own it. I am the accountable architect."
+      }
+    ],
+    "answered_questions": [
+      {
+        "text": "Who owns the Delta migration?",
+        "keywords": [
+          "who",
+          "own"
+        ]
+      }
+    ],
+    "prompt": "Help me prepare the migration cutover plan. Ask one question only if you still need something.",
+    "sources": []
+  },
+  "invariants": [
+    {
+      "kind": "question_not_repeated",
+      "params": {
+        "answered": [
+          {
+            "text": "Who owns the Delta migration?",
+            "keywords": [
+              "who",
+              "own"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

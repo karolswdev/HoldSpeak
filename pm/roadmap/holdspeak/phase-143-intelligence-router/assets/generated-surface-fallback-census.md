@@ -99,6 +99,7 @@ story that owns their migration.
 | 143-12 | `holdspeak/services/model_library_service.py`, `holdspeak/services/inference_acquisition_service.py`, `holdspeak/services/inference_setup_service.py`, `holdspeak/web/routes/primitives/profiles.py` (private-target side-door refusal) |
 | 156-04 | `holdspeak/services/front_door_service.py` (pack preset selection, profile extraction from receipt, group assignment composition; not assignment authority) |
 | 175-07 | `holdspeak/services/calendar_snapshot_service.py` (egress host read off the admitted route plan for the snapshot receipt; vision-capable profile ordering by boundary, local first, for the direct-dispatch fallback, receipted with its host; not route selection) |
+| 200-04 | `holdspeak/services/route_probe.py` (task-probe refusal receipt when no frozen route plan resolves; not route selection) |
 
 ## Guarded web routing consumers
 
@@ -161,3 +162,24 @@ settings read time:
   selection.
 
 Classified in `BACKEND_PRIVATE_DECISIONS` with review tag `172-02`.
+
+Story 200-04 adds `holdspeak/services/route_probe.py` as a guarded
+backend surface. The Concierge's task probe borrows the registered
+`ask.answer` capability and runs it through the SAME
+`inference_adoption_service.admit` / `.execute` pair the Ask path uses,
+so the shared fallback controller — not this module — owns every
+physical attempt on the frozen plan.
+
+- `_unresolved`: matched by the scanner on its name (`resolve`) and the
+  word `model` in its docstring. It resolves nothing. It is the
+  terminal refusal receipt built when `preview_route` cannot resolve a
+  route plan at all: `state=UNREACHABLE`, `outcome=refused`, a
+  `reasonCode` taken from the exception's typed `code` (falling back to
+  its class name, so a cause is always named), an empty leg list
+  because no plan was ever frozen, and no `model`, `boundary` or `host`
+  key at all — the probe never invents what did not answer. It is
+  neither a **true model-route fallback** nor a silent fallback: no leg
+  is selected, nothing is dispatched, and the refusal is visible in the
+  result the face reads.
+
+Classified in `BACKEND_PRIVATE_DECISIONS` with review tag `200-04`.

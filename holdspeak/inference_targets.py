@@ -223,6 +223,23 @@ class InferenceTarget:
         }
 
 
+def local_model_file_present(model_path: str | Path | None) -> bool:
+    """Whether the local model artifact this deployment loads is on disk.
+
+    HS-200-03: the same `Path(...).expanduser().exists()` question was asked in
+    two places — `_this_machine_readiness()` and
+    `this_machine_target_from_model_path()` — and only the first was reachable
+    by a test substitution. Route tests that inject their own engine therefore
+    still refused with 409 `target_unavailable` on every machine without the
+    developer's `~/Models` tree, which is how `tests/unit/test_ask_grounding_
+    claims.py` and `test_ask_runner_migration.py` came to depend on one
+    developer's filesystem. Both callers now ask here, so this is also the ONE
+    seam a test substitutes to declare "the local artifact is present".
+    """
+    path = str(model_path or "").strip()
+    return bool(path) and Path(path).expanduser().exists()
+
+
 def _this_machine_readiness() -> tuple[str, str]:
     """Readiness for the LOCAL meeting-intel model this device will actually load.
 
@@ -234,7 +251,7 @@ def _this_machine_readiness() -> tuple[str, str]:
     from .intel.providers import configured_local_meeting_model_path
 
     model_path = configured_local_meeting_model_path()
-    if model_path and Path(model_path).expanduser().exists():
+    if local_model_file_present(model_path):
         return "ready", ""
     return "unavailable", f"model file not found: {model_path}"
 
@@ -244,7 +261,7 @@ def this_machine_target_from_model_path(
 ) -> InferenceTarget:
     """Resolve the canonical this-device target from an already captured path."""
     model_path = str(configured_path or "").strip()
-    state = "ready" if model_path and Path(model_path).expanduser().exists() else "unavailable"
+    state = "ready" if local_model_file_present(model_path) else "unavailable"
     reason = "" if state == "ready" else f"model file not found: {configured_path}"
     deployment_model = model or (Path(model_path).expanduser().stem if model_path else "")
     deployment = DeploymentIdentity(

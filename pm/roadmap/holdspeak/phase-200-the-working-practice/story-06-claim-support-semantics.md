@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 200
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-200-01, HS-200-03
 - **Unblocks:** HS-200-08, HS-200-10, HS-200-11, HS-200-12, HS-200-17, HS-200-24, HS-200-27, HS-200-40
 - **Owner:** unassigned
@@ -23,11 +23,11 @@ Out: A universal automated truth oracle or acceptance granted by an LLM score.
 
 ## Acceptance criteria
 
-- [ ] A real but irrelevant citation cannot mark invented prose supported.
-- [ ] Observation, inference, proposal, and accepted domain decision remain distinct.
-- [ ] Support records identify their source versions and validation method or reviewer.
-- [ ] Editing a supported sentence invalidates support without deleting its provenance.
-- [ ] Existing citation-only verified records migrate conservatively, with readable historical meaning.
+- [x] A real but irrelevant citation cannot mark invented prose supported.
+- [x] Observation, inference, proposal, and accepted domain decision remain distinct.
+- [x] Support records identify their source versions and validation method or reviewer.
+- [x] Editing a supported sentence invalidates support without deleting its provenance.
+- [x] Existing citation-only verified records migrate conservatively, with readable historical meaning.
 
 ## Test plan
 

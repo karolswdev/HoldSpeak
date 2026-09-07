@@ -80,6 +80,10 @@ test = [
     # HS-72-01: the primitive-contract drift guard validates real wire payloads
     # against the JSON Schemas in pm/roadmap/holdspeak-mobile/contracts/schemas.
     "jsonschema>=4.21",
+    # HS-200-08: the evaluation harness drives a real local OpenAI-compatible
+    # stub through the product's only transport for such an endpoint, so its
+    # proofs run on a bare runner instead of skipping.
+    "openai>=1.0.0",
 ]
 meeting = [
     "llama-cpp-python>=0.3.34",
@@ -162,6 +166,9 @@ markers = [
     "e2e: end-to-end test",
     "metal: hardware tests requiring real mic/model/keyboard (local only)",
     "spoken_e2e: opt-in spoken-meeting e2e (say + Whisper + .43 LLM + Playwright; set HOLDSPEAK_SPOKEN_E2E=1)",
+    "critical: G0 critical journey (tests/critical); real services, substituted external adapters",
+    "requires_mlx_whisper: requires the mlx_whisper package on this machine",
+    "requires_local_dictation_route: requires this machine to resolve an on-device dictation artifact from default configuration",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",

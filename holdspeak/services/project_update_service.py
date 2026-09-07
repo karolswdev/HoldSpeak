@@ -54,12 +54,12 @@ import json
 import re as _re
 import time as _time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 from ..db.updates import PublishedUpdateError
 from ..logging_config import get_logger
-from ..principals import Principal
+from ..principals import Principal, PrincipalKind
 from ..project_contracts import (
     CommandResultEnvelope,
     ResultKind,
@@ -68,7 +68,7 @@ from ..project_contracts import (
     generate_pupd_id,
 )
 from ..refs import format as format_ref, parse as parse_ref
-from .errors import ConflictError, NotFound
+from .errors import ConflictError, NotFound, ValidationError
 from .service_event_ledger import ServiceEventLedger
 
 _log = get_logger("services.project_update_service")
@@ -76,11 +76,152 @@ _log = get_logger("services.project_update_service")
 # ── Capability identity (HS-162-03) ──────────────────────────────────
 PROJECT_UPDATE_CAPABILITY = "project.update_draft"
 
+# ── The named fallback receipt (HS-200-08) ───────────────────────────
+#
+# A model draft that falls back to the deterministic drafter used to say so
+# in a log line only, so the face showed an ordinary deterministic draft and
+# nobody could tell a chosen deterministic draft from a failed model one.
+# The reason now travels WITH the row: it is encoded on the stored generator
+# and projected back out on read as ``fallback_reason`` (the code the face
+# already decodes) plus ``fallback_receipt`` (the token it can show).
+FALLBACK_GENERATOR_PREFIX = "deterministic:"
+
+FALLBACK_ROUTE_UNRESOLVED = "route_unresolved"
+FALLBACK_MODEL_UNAVAILABLE = "model_unavailable"
+FALLBACK_NO_OUTPUT = "no_output"
+FALLBACK_UNPARSEABLE_OUTPUT = "unparseable_output"
+
+FALLBACK_RECEIPT_TOKENS: dict[str, str] = {
+    FALLBACK_ROUTE_UNRESOLVED: "DETERMINISTIC · ROUTE UNRESOLVED",
+    FALLBACK_MODEL_UNAVAILABLE: "DETERMINISTIC · MODEL UNAVAILABLE",
+    FALLBACK_NO_OUTPUT: "DETERMINISTIC · NO OUTPUT",
+    FALLBACK_UNPARSEABLE_OUTPUT: "DETERMINISTIC · OUTPUT UNUSABLE",
+}
+
+
+def fallback_receipt_token(code: str | None) -> str | None:
+    """The token the face shows for one fallback reason code."""
+    if not code:
+        return None
+    known = FALLBACK_RECEIPT_TOKENS.get(code)
+    if known:
+        return known
+    return "DETERMINISTIC · " + code.replace("_", " ").upper()
+
+
 # ── Marker for unverified model claims (UPD-002) ────────────────────
 UNVERIFIED_MARKER = "**[UNVERIFIED]**"
 
 
-# ── Claim schema (UPD-002) ────────────────────────────────────────────
+# ── The three C2 axes (HS-200-06) ─────────────────────────────────────
+#
+# Phase 200 CONTRACTS §C2: Kind, Support and Acceptance are INDEPENDENT.
+# A valid reference establishes SOURCE LINKAGE and nothing more.  A model
+# score can never establish acceptance.
+
+# Kind -- what the statement asserts.
+KIND_OBSERVATION = "observation"
+KIND_INFERENCE = "inference"
+KIND_PROPOSAL = "proposal"
+KIND_DECISION = "decision"
+KIND_EXECUTION_RESULT = "execution_result"
+KIND_OUTCOME_MEASURE = "outcome_measure"
+CLAIM_KINDS: tuple[str, ...] = (
+    KIND_OBSERVATION,
+    KIND_INFERENCE,
+    KIND_PROPOSAL,
+    KIND_DECISION,
+    KIND_EXECUTION_RESULT,
+    KIND_OUTCOME_MEASURE,
+)
+
+# Support -- what the evidence establishes.
+SUPPORT_UNKNOWN = "unknown"
+SUPPORT_SOURCE_LINKED = "source_linked"
+SUPPORT_SUPPORTED = "supported"
+SUPPORT_DISPUTED = "disputed"
+SUPPORT_STATES: tuple[str, ...] = (
+    SUPPORT_UNKNOWN,
+    SUPPORT_SOURCE_LINKED,
+    SUPPORT_SUPPORTED,
+    SUPPORT_DISPUTED,
+)
+
+# Acceptance -- applicable domain or reviewer judgment.
+ACCEPTANCE_UNREVIEWED = "unreviewed"
+ACCEPTANCE_ACCEPTED = "accepted"
+ACCEPTANCE_REJECTED = "rejected"
+ACCEPTANCE_SUPERSEDED = "superseded"
+ACCEPTANCE_STATES: tuple[str, ...] = (
+    ACCEPTANCE_UNREVIEWED,
+    ACCEPTANCE_ACCEPTED,
+    ACCEPTANCE_REJECTED,
+    ACCEPTANCE_SUPERSEDED,
+)
+
+# The only two validation methods that may raise support to `supported`.
+METHOD_FIELD_MAPPING = "field_mapping"
+METHOD_REVIEWER = "reviewer"
+
+# The conservative mapping applied to citation-only `verified` records
+# written before HS-200-06.  Recorded on every claim it touches; the
+# stored blob is NEVER rewritten in place.
+CLAIM_SUPPORT_MAPPING_VERSION = "c2.1"
+
+# Reasons a support record is invalidated.
+INVALIDATION_TEXT_EDITED = "text_edited"
+
+
+# ── Support records (C2) ──────────────────────────────────────────────
+
+@dataclass(frozen=True, slots=True)
+class SupportRecord:
+    """What raised a claim above source linkage, and how.
+
+    method:        ``field_mapping`` (deterministic extraction of a
+                   recorded status) or ``reviewer`` (a person's
+                   attestation through the review path).
+    source_version: the EXACT source version checked -- the pinned
+                   project revision the claim's refs were read at.
+    source_refs:   the refs the check read.
+    fields:        the recorded fields the mapping read (field_mapping).
+    reviewer_ref:  the attesting person (reviewer).
+    checked_at:    wall clock; set ONLY on reviewer records and on
+                   invalidation, never on a deterministic draft (the
+                   determinism law forbids wall clock in claims_json).
+    invalidated_at / invalidation_reason: set when the supported
+                   sentence was edited.  The record is KEPT -- support
+                   drops, provenance stays.
+    """
+    method: str
+    source_version: str = ""
+    source_refs: list[str] = field(default_factory=list)
+    fields: list[str] = field(default_factory=list)
+    reviewer_ref: str | None = None
+    checked_at: str | None = None
+    invalidated_at: str | None = None
+    invalidation_reason: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        d: dict[str, Any] = {"method": self.method}
+        if self.source_version:
+            d["source_version"] = self.source_version
+        if self.source_refs:
+            d["source_refs"] = list(self.source_refs)
+        if self.fields:
+            d["fields"] = list(self.fields)
+        if self.reviewer_ref:
+            d["reviewer_ref"] = self.reviewer_ref
+        if self.checked_at:
+            d["checked_at"] = self.checked_at
+        if self.invalidated_at:
+            d["invalidated_at"] = self.invalidated_at
+        if self.invalidation_reason:
+            d["invalidation_reason"] = self.invalidation_reason
+        return d
+
+
+# ── Claim schema (UPD-002 + C2) ───────────────────────────────────────
 #
 # This is the SINGLE AUTHORITY for both the deterministic and model
 # drafters.  Story 03 and the face import this shape.
@@ -96,24 +237,56 @@ class Claim:
     verified: True (default) for deterministic / cited model claims.
               False for MARKED unverified model claims (UPD-002).
               Omitted from to_dict() when True so deterministic output
-              stays byte-identical.
+              stays byte-identical.  KEPT as provenance -- HS-200-06
+              never rewrites it.
+    kind / support / acceptance: the three independent C2 axes.
+    support_record: what raised support to `supported` (or what was
+              invalidated), never deleted once written.
+    unknowns: typed unknowns -- a name, deadline or number in the prose
+              that the cited source's fields do not carry.
     """
     span_id: str
     text: str
     refs: list[str]
     section: str
     verified: bool = True
+    kind: str = KIND_OBSERVATION
+    support: str = SUPPORT_UNKNOWN
+    acceptance: str = ACCEPTANCE_UNREVIEWED
+    support_record: SupportRecord | None = None
+    unknowns: list[dict[str, str]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
+            "acceptance": self.acceptance,
+            "kind": self.kind,
             "refs": list(self.refs),
             "section": self.section,
             "span_id": self.span_id,
+            "support": self.support,
             "text": self.text,
         }
+        if self.support_record is not None:
+            d["support_record"] = self.support_record.to_dict()
+        if self.unknowns:
+            d["unknowns"] = [dict(u) for u in self.unknowns]
         if not self.verified:
             d["verified"] = False
         return d
+
+
+def _field_mapping_support(
+    source_version: str,
+    refs: list[str],
+    fields_read: list[str],
+) -> SupportRecord:
+    """A deterministic extraction of recorded statuses (C2)."""
+    return SupportRecord(
+        method=METHOD_FIELD_MAPPING,
+        source_version=source_version,
+        source_refs=list(refs),
+        fields=list(fields_read),
+    )
 
 
 # The six UPD-001 section keys, in canonical order.
@@ -152,6 +325,7 @@ _HONEST_MINIMAL: dict[str, str] = {
 def _build_progress(
     items_section: dict[str, Any],
     claims: list[Claim],
+    source_version: str,
 ) -> str:
     """Progress section from room items (focus block)."""
     focus = items_section.get("focus", [])
@@ -174,6 +348,14 @@ def _build_progress(
             text=text,
             refs=[ref],
             section="progress",
+            # A recorded lifecycle read straight off the item row: an
+            # observation, supported by a field mapping (C2).
+            kind=KIND_OBSERVATION,
+            support=SUPPORT_SUPPORTED,
+            support_record=_field_mapping_support(
+                source_version, [ref],
+                ["item_type", "severity", "title", "lifecycle"],
+            ),
         ))
         lines.append(f"- {text}")
 
@@ -185,10 +367,20 @@ def _build_progress(
     return "\n".join(lines)
 
 
+# Proposal lifecycles that record a decided domain judgment.
+_PROPOSAL_ACCEPTANCE: dict[str, str] = {
+    "accepted": ACCEPTANCE_ACCEPTED,
+    "dismissed": ACCEPTANCE_REJECTED,
+    "rejected": ACCEPTANCE_REJECTED,
+    "superseded": ACCEPTANCE_SUPERSEDED,
+}
+
+
 def _build_decisions(
     review_section: dict[str, Any],
     proposals: list[dict[str, Any]],
     claims: list[Claim],
+    source_version: str,
 ) -> str:
     """Decisions section from the open review's proposals."""
     if not proposals:
@@ -204,11 +396,35 @@ def _build_decisions(
 
         text = f"{title} ({kind}) -- {lifecycle}"
         ref = f"decision:{prop_id}" if prop_id else f"decision:unknown_{ordinal}"
+        # An ACCEPTED proposal is a decision; anything else is still a
+        # proposal.  Acceptance mirrors the recorded decision -- it comes
+        # from the review path, never from a model score (C2).
+        acceptance = _PROPOSAL_ACCEPTANCE.get(lifecycle, ACCEPTANCE_UNREVIEWED)
+        kind = (
+            KIND_DECISION if acceptance == ACCEPTANCE_ACCEPTED
+            else KIND_PROPOSAL
+        )
+        record = _field_mapping_support(
+            source_version, [ref], ["title", "proposal_kind", "lifecycle"],
+        )
+        decided_by = prop.get("decided_by_ref")
+        if decided_by:
+            record = SupportRecord(
+                method=record.method,
+                source_version=record.source_version,
+                source_refs=record.source_refs,
+                fields=record.fields,
+                reviewer_ref=str(decided_by),
+            )
         claims.append(Claim(
             span_id=f"s_decisions_{ordinal}",
             text=text,
             refs=[ref],
             section="decisions",
+            kind=kind,
+            support=SUPPORT_SUPPORTED,
+            acceptance=acceptance,
+            support_record=record,
         ))
         lines.append(f"- {text}")
         ordinal += 1
@@ -219,6 +435,7 @@ def _build_decisions(
 def _build_risks_blockers(
     items_section: dict[str, Any],
     claims: list[Claim],
+    source_version: str,
 ) -> str:
     """Risks & Blockers from room items filtered to risk/dependency types."""
     focus = items_section.get("focus", [])
@@ -246,6 +463,12 @@ def _build_risks_blockers(
             text=text,
             refs=[ref],
             section="risks_blockers",
+            kind=KIND_OBSERVATION,
+            support=SUPPORT_SUPPORTED,
+            support_record=_field_mapping_support(
+                source_version, [ref],
+                ["item_type", "severity", "title", "lifecycle"],
+            ),
         ))
         lines.append(f"- {text}")
 
@@ -255,6 +478,7 @@ def _build_risks_blockers(
 def _build_dependencies(
     items_section: dict[str, Any],
     claims: list[Claim],
+    source_version: str,
 ) -> str:
     """Dependencies from room items filtered to dependency type."""
     focus = items_section.get("focus", [])
@@ -280,6 +504,11 @@ def _build_dependencies(
             text=text,
             refs=[ref],
             section="dependencies",
+            kind=KIND_OBSERVATION,
+            support=SUPPORT_SUPPORTED,
+            support_record=_field_mapping_support(
+                source_version, [ref], ["title", "severity", "lifecycle"],
+            ),
         ))
         lines.append(f"- {text}")
 
@@ -289,6 +518,7 @@ def _build_dependencies(
 def _build_next_actions(
     items_section: dict[str, Any],
     claims: list[Claim],
+    source_version: str,
 ) -> str:
     """Next actions: items with planned/active states or upcoming due dates."""
     focus = items_section.get("focus", [])
@@ -316,6 +546,12 @@ def _build_next_actions(
             text=text,
             refs=[ref],
             section="next_actions",
+            kind=KIND_OBSERVATION,
+            support=SUPPORT_SUPPORTED,
+            support_record=_field_mapping_support(
+                source_version, [ref],
+                ["item_type", "title", "lifecycle", "due_at"],
+            ),
         ))
         lines.append(f"- {text}")
 
@@ -326,6 +562,7 @@ def _build_source_coverage(
     room: dict[str, Any],
     caveats: list[dict[str, str]],
     claims: list[Claim],
+    source_version: str,
 ) -> str:
     """Source coverage section: appears only when caveats exist."""
     if not caveats:
@@ -345,6 +582,11 @@ def _build_source_coverage(
             text=text,
             refs=[ref],
             section="source_coverage",
+            kind=KIND_OBSERVATION,
+            support=SUPPORT_SUPPORTED,
+            support_record=_field_mapping_support(
+                source_version, [ref], ["section", "state", "reason"],
+            ),
         ))
         lines.append(f"- {text}")
 
@@ -545,15 +787,96 @@ def _build_model_prompt(inventory_claims: list[Claim]) -> dict[str, Any]:
     }
 
 
+# ── The deterministic literal check (HS-200-06, C2) ──────────────────
+#
+# Generated prose requires a SEPARATE support check.  A valid reference
+# buys source linkage only.  Every name, deadline and number the prose
+# states must appear in the cited source's fields; whatever does not
+# becomes a TYPED UNKNOWN and the claim stays source-linked.
+
+_DATE_LITERAL_RE = _re.compile(
+    r"\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?)?\b"
+)
+_NUMBER_LITERAL_RE = _re.compile(r"(?<![\w-])\d+(?:[.,]\d+)?%?(?![\w-])")
+_NAME_LITERAL_RE = _re.compile(r"\b[A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*\b")
+
+# Capitalized words that are grammar or report vocabulary, not names.
+# A capitalized word outside this set that the cited source does not
+# carry is reported as a typed unknown -- including at the start of a
+# sentence, where "Priya owes ..." must not hide behind grammar.
+_NAME_STOPWORDS: frozenset[str] = frozenset({
+    "A", "Action", "Actions", "Active", "After", "All", "Also", "An",
+    "And", "As", "At", "Based", "Before", "Blocked", "Blockers", "Both",
+    "But", "By", "Closed", "Completed", "Coverage", "Currently",
+    "Deadline", "Decision", "Decisions", "Delivery", "Dependencies",
+    "Dependency", "Due", "During", "Each", "Every", "For", "From",
+    "However", "If", "In", "Is", "It", "Item", "Items", "Its", "Many",
+    "Meeting", "Milestone", "Most", "New", "Next", "No", "None", "Not",
+    "Of", "On", "One", "Open", "Or", "Our", "Overall", "Owner", "Per",
+    "Planned", "Progress", "Project", "Remaining", "Review", "Risk",
+    "Risks", "Signal", "Since", "Some", "Source", "Sources", "Status",
+    "Team", "The", "There", "These", "They", "This", "Those", "Three",
+    "To", "Two", "Until", "Update", "We", "When", "While", "With",
+    "Work", "Workstream",
+})
+
+
+def _normalize_for_match(text: str) -> str:
+    """Lowercase, collapse whitespace -- the corroboration haystack."""
+    return " ".join(str(text or "").lower().split())
+
+
+def _typed_unknowns(text: str, source_text: str) -> list[dict[str, str]]:
+    """Literals in ``text`` that the cited source's fields do not carry.
+
+    Returns typed unknowns sorted deterministically:
+    ``[{"type": "deadline"|"number"|"name", "value": "..."}]``.
+    """
+    haystack = _normalize_for_match(source_text)
+    found: set[tuple[str, str]] = set()
+
+    masked = text
+    for match in _DATE_LITERAL_RE.finditer(text):
+        value = match.group(0)
+        if _normalize_for_match(value) not in haystack:
+            found.add(("deadline", value))
+    masked = _DATE_LITERAL_RE.sub(" ", masked)
+
+    for match in _NUMBER_LITERAL_RE.finditer(masked):
+        value = match.group(0)
+        if _normalize_for_match(value) not in haystack:
+            found.add(("number", value))
+
+    for match in _NAME_LITERAL_RE.finditer(masked):
+        value = match.group(0)
+        if value in _NAME_STOPWORDS:
+            continue
+        if _normalize_for_match(value) not in haystack:
+            found.add(("name", value))
+
+    return [
+        {"type": kind, "value": value}
+        for kind, value in sorted(found)
+    ]
+
+
 def _parse_model_output(
     raw: str,
     inventory_refs: frozenset[str],
+    inventory_texts: dict[str, str] | None = None,
 ) -> tuple[dict[str, str], list[Claim]] | None:
     """Parse model JSON output into sections + claims.
 
     Returns ``(sections_dict, claims_list)`` on success, ``None`` if the
     output is unparseable.  Each claim is either verified (all cited_refs
     exist in the inventory) or MARKED (``verified=False``).
+
+    C2 (HS-200-06): generated prose NEVER reaches ``supported`` here.
+    A valid ref buys ``source_linked``; an invalid or absent ref leaves
+    ``unknown``.  ``inventory_texts`` maps each inventory ref to the
+    recorded fields behind it; literals the cited source does not carry
+    are recorded as typed unknowns.  Acceptance is always
+    ``unreviewed`` -- no model output can move it.
     """
     parsed = _extract_structured_json(raw)
     if parsed is None or "sections" not in parsed:
@@ -582,12 +905,23 @@ def _parse_model_output(
             valid_refs = [r for r in cited if isinstance(r, str) and r in inventory_refs]
 
             if valid_refs:
+                # A real citation establishes SOURCE LINKAGE only (C2).
+                # The literal check names what the source cannot carry --
+                # an irrelevant citation cannot support invented prose.
+                source_text = " ".join(
+                    [(inventory_texts or {}).get(r, "") for r in valid_refs]
+                    + valid_refs
+                )
                 claims.append(Claim(
                     span_id=f"s_{key}_{i}",
                     text=text,
                     refs=valid_refs,
                     section=key,
                     verified=True,
+                    kind=KIND_INFERENCE,
+                    support=SUPPORT_SOURCE_LINKED,
+                    acceptance=ACCEPTANCE_UNREVIEWED,
+                    unknowns=_typed_unknowns(text, source_text),
                 ))
                 lines.append(f"- {text}")
             else:
@@ -598,6 +932,10 @@ def _parse_model_output(
                     refs=[],
                     section=key,
                     verified=False,
+                    kind=KIND_INFERENCE,
+                    support=SUPPORT_UNKNOWN,
+                    acceptance=ACCEPTANCE_UNREVIEWED,
+                    unknowns=_typed_unknowns(text, ""),
                 ))
                 lines.append(f"- {UNVERIFIED_MARKER} {text}")
 
@@ -614,15 +952,139 @@ def _parse_model_output(
     return sections, claims
 
 
+def _route_plan_deployment(broker: Any, capability_id: str) -> tuple[str, str, str]:
+    """The authoritative resolution: profile -> plan -> frozen leg (HS-200-08).
+
+    This is the SAME resolver the Ask path runs (``route_probe.preview_route``
+    reads exactly this plan): the capability's assignment is planned, and the
+    first frozen leg NAMES its deployment revision.  Returns
+    ``(deployment_revision_id, assignment_id, profile_id)``, or empty strings
+    when this broker carries no planner or the plan does not resolve.
+    """
+    plans = getattr(getattr(broker, "inference_adoption_service", None), "plans", None)
+    if plans is None:
+        return "", "", ""
+    try:
+        from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
+
+        plan = plans.resolve_route_plan(
+            ROUTE_PLANNING_AUTHORITY, capability_id=capability_id,
+        )
+    except Exception as exc:  # planner refusals are a fallback, never a crash
+        _log.warning(
+            "Route plan for %s did not resolve: %s", capability_id, exc,
+        )
+        return "", "", ""
+    entries = [e for e in (plan.get("entries") or ()) if e]
+    if not entries:
+        return "", "", ""
+    leg = min(entries, key=lambda e: int(e.get("ordinal") or 0))
+    revision_id = str(leg.get("deployment_revision_id") or "")
+    assignment_id = str((plan.get("source") or {}).get("assignment_id") or "")
+    profile_id = str(leg.get("profile_id") or "")
+    if not revision_id:
+        return "", "", ""
+    # The plan resolves purely (it rolls its snapshot back), so a legacy leg's
+    # content-addressed revision may never have been persisted.  The runner
+    # refuses a revision it cannot read, so capture it the way Ask does.
+    db = getattr(broker, "database", None)
+    if db is not None and db.deployment_revisions.get(revision_id) is None:
+        captured = _captured_deployment_revision(db, profile_id)
+        if not captured:
+            return "", "", ""
+        if captured != revision_id:
+            _log.warning(
+                "Frozen leg named %s; captured %s for profile %s.",
+                revision_id, captured, profile_id,
+            )
+        revision_id = captured
+    return revision_id, assignment_id, profile_id
+
+
+def _bound_deployment_revision(db: Any, profile_id: str) -> str:
+    """The deployment revision the profile's live binding head points at.
+
+    The second resolver, for a broker with no planner wired.  It reads the
+    binding the planner itself reads (``model_profile_binding_heads`` ->
+    ``model_profile_binding_revisions.deployment_revision_id``), never the
+    ``deployment_revisions.model`` column.
+    """
+    if not profile_id:
+        return ""
+    with db._connection() as conn:
+        row = conn.execute(
+            """SELECT b.deployment_revision_id AS rev
+                 FROM model_profile_binding_heads h
+                 JOIN model_profile_binding_revisions b
+                   ON b.binding_id=h.binding_id AND b.revision=h.revision
+                WHERE h.profile_id=?""",
+            (profile_id,),
+        ).fetchone()
+        if row is None:
+            return ""
+        revision_id = str(row["rev"] or "")
+        if not revision_id:
+            return ""
+        exists = conn.execute(
+            "SELECT 1 FROM deployment_revisions WHERE id=?", (revision_id,),
+        ).fetchone()
+    return revision_id if exists is not None else ""
+
+
+def _captured_deployment_revision(db: Any, profile_id: str) -> str:
+    """Capture (and persist) the profile's deployment exactly as Ask does.
+
+    The last resolver: a version-1 profile has no binding row, so the Ask
+    path's ``capture_deployment_revision`` is what freezes its deployment.
+    """
+    if not profile_id:
+        return ""
+    try:
+        from ..deployment_revisions import capture_deployment_revision
+        from ..inference_targets import resolve_inference_target
+
+        target = resolve_inference_target(db, profile_id.removeprefix("legacy-"))
+        if getattr(target, "deployment", None) is None:
+            return ""
+        return str(capture_deployment_revision(db, target).id)
+    except Exception as exc:
+        _log.warning(
+            "Could not capture a deployment for profile %s: %s",
+            profile_id, exc,
+        )
+        return ""
+
+
 def _resolve_for_capability(
-    db: Any,
+    broker: Any,
     capability_id: str,
-) -> tuple[str, str]:
+) -> tuple[str, str, str]:
     """Resolve the deployment revision and assignment ID for a capability.
 
-    Returns ``(deployment_revision_id, assignment_id)``.
-    Raises ``RuntimeError`` if no assignment exists.
+    Returns ``(deployment_revision_id, assignment_id, profile_id)`` -- the
+    profile is the one the route actually resolved through, so provenance
+    never has to guess it back out of the revision's ``model`` column.
+    Raises ``RuntimeError`` when no route resolves.
+
+    HS-200-08: this used to run
+    ``SELECT id FROM deployment_revisions WHERE model=?`` with the ASSIGNED
+    PROFILE ID.  A captured revision's ``model`` column holds the real model
+    id, so every profile whose id differs from its model id (the owner's own
+    "Migrated intel endpoint", for one) resolved NOTHING and the model
+    drafter silently fell back to the deterministic one.  A profile id is
+    never string-matched against a model column again: resolution goes
+    profile -> plan -> frozen leg -> deployment revision, the same path the
+    Ask verb takes.
     """
+    db = getattr(broker, "database", broker)
+
+    # The planner first: it owns assignment inheritance (a capability with no
+    # scoped assignment of its own still resolves through the global one), so
+    # asking it first is what makes a real desk's route the drafter's route.
+    planned_revision, planned_assignment, planned_profile = (
+        _route_plan_deployment(broker, capability_id)
+    )
+
     key = f"capability:{capability_id}"
     with db._connection() as conn:
         head = conn.execute(
@@ -630,29 +1092,39 @@ def _resolve_for_capability(
             "WHERE assignment_key=? AND cleared=0",
             (key,),
         ).fetchone()
-        if head is None:
-            raise RuntimeError(f"No assignment for {capability_id}")
-        assignment_id = str(head["assignment_id"])
-        entry = conn.execute(
-            "SELECT profile_id FROM inference_assignments "
-            "WHERE assignment_id=? AND assignment_revision=? "
-            "ORDER BY ordinal LIMIT 1",
-            (assignment_id, head["revision"]),
-        ).fetchone()
-        if entry is None:
-            raise RuntimeError(
-                f"No entries in assignment for {capability_id}"
-            )
-        profile_id = entry["profile_id"]
-        rev = conn.execute(
-            "SELECT id FROM deployment_revisions WHERE model=? LIMIT 1",
-            (profile_id,),
-        ).fetchone()
-        if rev is None:
-            raise RuntimeError(
-                f"No deployment revision for profile {profile_id}"
-            )
-        return str(rev["id"]), assignment_id
+        entry = None
+        if head is not None:
+            entry = conn.execute(
+                "SELECT profile_id FROM inference_assignments "
+                "WHERE assignment_id=? AND assignment_revision=? "
+                "ORDER BY ordinal LIMIT 1",
+                (str(head["assignment_id"]), head["revision"]),
+            ).fetchone()
+    assignment_id = str(head["assignment_id"]) if head is not None else ""
+    profile_id = str(entry["profile_id"] or "") if entry is not None else ""
+
+    if planned_revision:
+        return (
+            planned_revision,
+            (planned_assignment or assignment_id),
+            (planned_profile or profile_id),
+        )
+    if head is None:
+        raise RuntimeError(f"No assignment for {capability_id}")
+    if entry is None:
+        raise RuntimeError(f"No entries in assignment for {capability_id}")
+
+    bound = _bound_deployment_revision(db, profile_id)
+    if bound:
+        return bound, assignment_id, profile_id
+
+    captured = _captured_deployment_revision(db, profile_id)
+    if captured:
+        return captured, assignment_id, profile_id
+
+    raise RuntimeError(
+        f"No deployment revision resolves for profile {profile_id}"
+    )
 
 
 # ── Generator provenance (HS-173-02) ─────────────────────────────────
@@ -660,6 +1132,7 @@ def _resolve_for_capability(
 def _resolve_generator_provenance(
     db: Any,
     deployment_rev_id: str,
+    profile_id: str = "",
 ) -> tuple[str, str]:
     """Derive generator host and model display name from a deployment revision.
 
@@ -684,7 +1157,12 @@ def _resolve_generator_provenance(
             host = rev.boundary or "local"
 
     # Model display name: look up the profile for its name and model fields.
-    profile = db.profiles.get(rev.model)
+    # HS-200-08: the profile the ROUTE resolved through is the truth.  The
+    # revision's ``model`` column holds the real model id, so looking a
+    # profile up by it only ever worked for a profile named after its model.
+    profile = db.profiles.get(profile_id) if profile_id else None
+    if profile is None:
+        profile = db.profiles.get(rev.model)
     if profile is not None:
         display, quant = engine_display_name(
             profile_name=profile.name or profile.id,
@@ -696,6 +1174,68 @@ def _resolve_generator_provenance(
 
     model_name = f"{display} {quant}".strip() if quant else display
     return host, model_name
+
+
+# ── The conservative migration of citation-only records (HS-200-06) ──
+#
+# C2: old ``verified`` values retain their original provenance.  The
+# stored blob is NEVER rewritten in place -- the mapping is applied when
+# a record is READ, and every claim it touches carries
+# ``support_mapping_version`` so the face can say MIGRATED and never
+# "reviewed by a human".
+
+def migrate_legacy_claim(
+    raw: dict[str, Any],
+    *,
+    generator: str = "deterministic",
+) -> dict[str, Any]:
+    """Map one citation-only claim onto the three axes, conservatively.
+
+    A citation buys SOURCE LINKAGE at most -- never ``supported``, never
+    an acceptance.  ``verified`` is copied through untouched.
+    Idempotent: a claim that already carries the axes is returned as-is.
+    """
+    if not isinstance(raw, dict):
+        return raw
+    if raw.get("support") in SUPPORT_STATES:
+        return raw
+    refs = raw.get("refs") or []
+    verified = raw.get("verified", True)
+    out = dict(raw)
+    out["kind"] = (
+        KIND_INFERENCE if str(generator).startswith("model")
+        else KIND_OBSERVATION
+    )
+    out["support"] = (
+        SUPPORT_SOURCE_LINKED if (refs and verified) else SUPPORT_UNKNOWN
+    )
+    out["acceptance"] = ACCEPTANCE_UNREVIEWED
+    out["support_mapping_version"] = CLAIM_SUPPORT_MAPPING_VERSION
+    return out
+
+
+def migrate_claims_json(
+    claims_json: str,
+    *,
+    generator: str = "deterministic",
+) -> str:
+    """Apply :func:`migrate_legacy_claim` across a stored claims blob.
+
+    Returns the INPUT STRING unchanged when nothing needed mapping (so
+    the determinism law still holds byte for byte).
+    """
+    if not claims_json:
+        return claims_json
+    try:
+        parsed = json.loads(claims_json)
+    except (ValueError, TypeError):
+        return claims_json
+    if not isinstance(parsed, list):
+        return claims_json
+    migrated = [migrate_legacy_claim(c, generator=generator) for c in parsed]
+    if migrated == parsed:
+        return claims_json
+    return json.dumps(migrated, sort_keys=True, separators=(",", ":"))
 
 
 # ── The service ───────────────────────────────────────────────────────
@@ -721,6 +1261,37 @@ class ProjectUpdateService:
         self._delta_service = delta_service
         self._broker = broker
 
+    # ── C2 read projection (HS-200-06) ───────────────────────────────
+
+    @staticmethod
+    def _project_axes(row: dict[str, Any] | None) -> dict[str, Any] | None:
+        """Project the three C2 axes onto a row as it is READ.
+
+        Records written before HS-200-06 keep their stored bytes; the
+        conservative mapping is applied here, on the way out.
+
+        HS-200-08: a fallback draft stores its reason on the generator
+        (``deterministic:<code>``).  It is split back out here so
+        ``generator`` stays the two values every caller already knows and
+        the reason travels as ``fallback_reason`` + ``fallback_receipt``.
+        """
+        if not row:
+            return row
+        out = dict(row)
+        generator = str(out.get("generator") or "deterministic")
+        reason: str | None = None
+        if generator.startswith(FALLBACK_GENERATOR_PREFIX):
+            reason = generator[len(FALLBACK_GENERATOR_PREFIX):] or None
+            generator = "deterministic"
+            out["generator"] = generator
+        out["fallback_reason"] = reason
+        out["fallback_receipt"] = fallback_receipt_token(reason)
+        out["claims_json"] = migrate_claims_json(
+            out.get("claims_json") or "",
+            generator=generator,
+        )
+        return out
+
     # ── Model drafter (HS-162-03) ────────────────────────────────────
 
     def _draft_with_model(
@@ -743,24 +1314,26 @@ class ProjectUpdateService:
 
         broker = self._broker
         if broker is None:
-            raise _ModelDraftFailed("no_broker")
+            raise _ModelDraftFailed("no_broker", FALLBACK_MODEL_UNAVAILABLE)
 
         runner = broker.inference_runner
 
         # Resolve deployment revision for the update-draft capability.
         try:
-            deployment_rev_id, assignment_id = _resolve_for_capability(
-                broker.database, PROJECT_UPDATE_CAPABILITY,
+            deployment_rev_id, assignment_id, route_profile_id = (
+                _resolve_for_capability(broker, PROJECT_UPDATE_CAPABILITY)
             )
         except RuntimeError as exc:
-            raise _ModelDraftFailed(f"no_assignment: {exc}") from exc
+            raise _ModelDraftFailed(
+                f"route_unresolved: {exc}", FALLBACK_ROUTE_UNRESOLVED,
+            ) from exc
 
         # HS-173-02: derive generator provenance from the deployment revision.
         gen_host: str | None = None
         gen_model: str | None = None
         try:
             gen_host, gen_model = _resolve_generator_provenance(
-                broker.database, deployment_rev_id,
+                broker.database, deployment_rev_id, route_profile_id,
             )
         except Exception:
             pass  # Provenance is best-effort; never fails the draft.
@@ -769,6 +1342,13 @@ class ProjectUpdateService:
         inventory_refs: frozenset[str] = frozenset(
             ref for claim in det_claims for ref in claim.refs
         )
+        # HS-200-06: the recorded fields behind each ref, for the
+        # deterministic literal check in _parse_model_output.
+        inventory_texts: dict[str, str] = {}
+        for claim in det_claims:
+            for ref in claim.refs:
+                prior = inventory_texts.get(ref, "")
+                inventory_texts[ref] = f"{prior} {claim.text}".strip()
 
         payload = _build_model_prompt(det_claims)
 
@@ -793,7 +1373,9 @@ class ProjectUpdateService:
                     request, CanonicalPromptAdapter(), publish=_capture,
                 )
         except Exception as exc:
-            raise _ModelDraftFailed(f"runner_error: {exc}") from exc
+            raise _ModelDraftFailed(
+                f"runner_error: {exc}", FALLBACK_MODEL_UNAVAILABLE,
+            ) from exc
 
         # Extract raw output -- try direct result first, then captured.
         raw: str | None = None
@@ -806,12 +1388,14 @@ class ProjectUpdateService:
                 raw = str(adapter_result["output"])
 
         if raw is None:
-            raise _ModelDraftFailed("no_output")
+            raise _ModelDraftFailed("no_output", FALLBACK_NO_OUTPUT)
 
         # Parse and constrain to the claim schema.
-        parsed = _parse_model_output(raw, inventory_refs)
+        parsed = _parse_model_output(raw, inventory_refs, inventory_texts)
         if parsed is None:
-            raise _ModelDraftFailed("unparseable_output")
+            raise _ModelDraftFailed(
+                "unparseable_output", FALLBACK_UNPARSEABLE_OUTPUT,
+            )
 
         model_sections, model_claims = parsed
         body_md = _assemble_body(model_sections)
@@ -885,13 +1469,23 @@ class ProjectUpdateService:
         det_claims: list[Claim] = []
         items_section = room.get("items", {})
 
+        # The EXACT source version every field mapping was read at: the
+        # one pinned project revision this draft saw (C2).
+        source_version = f"project:{project_id}@r{revision}"
+
         det_sections: dict[str, str] = {
-            "progress": _build_progress(items_section, det_claims),
-            "decisions": _build_decisions(review_section, proposals, det_claims),
-            "risks_blockers": _build_risks_blockers(items_section, det_claims),
-            "dependencies": _build_dependencies(items_section, det_claims),
-            "next_actions": _build_next_actions(items_section, det_claims),
-            "source_coverage": _build_source_coverage(room, caveats, det_claims),
+            "progress": _build_progress(
+                items_section, det_claims, source_version),
+            "decisions": _build_decisions(
+                review_section, proposals, det_claims, source_version),
+            "risks_blockers": _build_risks_blockers(
+                items_section, det_claims, source_version),
+            "dependencies": _build_dependencies(
+                items_section, det_claims, source_version),
+            "next_actions": _build_next_actions(
+                items_section, det_claims, source_version),
+            "source_coverage": _build_source_coverage(
+                room, caveats, det_claims, source_version),
         }
 
         det_body_md = _assemble_body(det_sections)
@@ -926,7 +1520,9 @@ class ProjectUpdateService:
                 )
                 body_md = det_body_md
                 claims_json = det_claims_json
-                actual_generator = "deterministic"
+                # HS-200-08: the fallback NAMES its reason on the row, so the
+                # face shows a token instead of a log line nobody reads.
+                actual_generator = FALLBACK_GENERATOR_PREFIX + exc.code
                 actual_host = None
                 actual_model = None
         else:
@@ -954,7 +1550,7 @@ class ProjectUpdateService:
                     generator_host=actual_host,
                     generator_model=actual_model,
                 )
-                return new_row
+                return self._project_axes(new_row)
             except PublishedUpdateError:
                 # The "draft" was actually published (race).  Fall through
                 # to create a fresh draft.
@@ -979,7 +1575,7 @@ class ProjectUpdateService:
             generator_host=actual_host,
             generator_model=actual_model,
         )
-        return self._db.project_updates.get_update(new_id)
+        return self._project_axes(self._db.project_updates.get_update(new_id))
 
     # ── Route-facing verbs (HS-162-04) ─────────────────────────────
 
@@ -992,9 +1588,10 @@ class ProjectUpdateService:
     ) -> list[dict[str, Any]]:
         """List updates for a project, optionally filtered by lifecycle."""
         self._project_service._require_project(project_id)
-        return self._db.project_updates.list_updates(
+        rows = self._db.project_updates.list_updates(
             project_id, lifecycle=lifecycle,
         )
+        return [self._project_axes(r) for r in rows]
 
     def get_update(
         self,
@@ -1008,7 +1605,7 @@ class ProjectUpdateService:
         row = self._db.project_updates.get_update(update_id)
         if row is None:
             raise NotFound("update", update_id)
-        return row
+        return self._project_axes(row)
 
     def draft_update_command(
         self,
@@ -1079,9 +1676,11 @@ class ProjectUpdateService:
     ) -> dict[str, Any]:
         """Save the owner's edit of a draft.
 
-        Stores body_md; claims_json is left untouched -- it stays
-        as the draft's record of what was generated.  The owner
-        edits prose; claims are stale but preserved as provenance.
+        Stores body_md.  HS-200-06 (C2): editing a SUPPORTED sentence
+        INVALIDATES its support -- the claim drops to source-linked (or
+        unknown when it carries no ref) and its support record is KEPT,
+        stamped with ``invalidated_at`` and a reason.  Provenance is
+        never deleted; ``verified`` is never rewritten.
         The updated_at timestamp advancing past created_at is the
         implicit "edited" marker (no schema change needed).
 
@@ -1112,12 +1711,26 @@ class ProjectUpdateService:
 
         project_id = row["project_id"]
 
+        # C2: a supported sentence that no longer appears in the body
+        # loses its support; the record stays with its provenance.
+        next_claims: str | None = None
+        if body_md is not None:
+            next_claims = _invalidate_edited_support(
+                migrate_claims_json(
+                    row.get("claims_json") or "",
+                    generator=str(row.get("generator") or "deterministic"),
+                ),
+                body_md,
+            )
+
         # PublishedUpdateError is raised inside the repo
         self._db.project_updates.update_draft(
-            update_id, body_md=body_md,
+            update_id, body_md=body_md, claims_json=next_claims,
         )
 
-        result = self._db.project_updates.get_update(update_id)
+        result = self._project_axes(
+            self._db.project_updates.get_update(update_id)
+        )
 
         # Record command for idempotency
         cmd_id = command_id or generate_pcmd_id()
@@ -1310,9 +1923,114 @@ class ProjectUpdateService:
             )
 
         # Return the published update with the envelope merged in
-        published = self._db.project_updates.get_update(update_id)
+        published = self._project_axes(
+            self._db.project_updates.get_update(update_id)
+        )
         published.update(_envelope_to_dict(envelope))
         return published
+
+    # ── The reviewer path (HS-200-06, C2) ───────────────────────────
+
+    def review_claim(
+        self,
+        principal: Principal,
+        update_id: str,
+        span_id: str,
+        *,
+        acceptance: str | None = None,
+        support: str | None = None,
+    ) -> dict[str, Any]:
+        """Record a PERSON's judgment on one claim of a draft.
+
+        Acceptance is a human act: only an OWNER principal may move it.
+        No model score, and no agent, can reach this verb (C2).
+
+        ``support="supported"`` writes a REVIEWER support record naming
+        the reviewer, the exact source version, and the refs attested.
+        It refuses a claim that carries no ref -- attestation still names
+        a source.  ``support="disputed"`` needs no ref.
+
+        Raises PublishedUpdateError on a published update (the repo's
+        immutability law), NotFound when the update or span is unknown,
+        ValidationError on an unauthorized principal or unknown state.
+        """
+        if principal.kind is not PrincipalKind.OWNER:
+            raise ValidationError(
+                "Only the owner can review a claim",
+                code="claim_review_forbidden",
+            )
+        if acceptance is None and support is None:
+            raise ValidationError(
+                "Nothing to review: pass acceptance or support",
+                code="claim_review_empty",
+            )
+        if acceptance is not None and acceptance not in ACCEPTANCE_STATES:
+            raise ValidationError(
+                f"Unknown acceptance state: {acceptance!r}",
+                code="claim_acceptance_unknown",
+            )
+        if support is not None and support not in (
+            SUPPORT_SUPPORTED, SUPPORT_DISPUTED, SUPPORT_SOURCE_LINKED,
+        ):
+            raise ValidationError(
+                f"A reviewer cannot set support to {support!r}",
+                code="claim_support_unknown",
+            )
+
+        row = self._db.project_updates.get_update(update_id)
+        if row is None:
+            raise NotFound("update", update_id)
+
+        claims_json = migrate_claims_json(
+            row.get("claims_json") or "",
+            generator=str(row.get("generator") or "deterministic"),
+        )
+        try:
+            claims = json.loads(claims_json or "[]")
+        except (ValueError, TypeError):
+            claims = []
+        if not isinstance(claims, list):
+            claims = []
+
+        target: dict[str, Any] | None = None
+        for claim in claims:
+            if isinstance(claim, dict) and claim.get("span_id") == span_id:
+                target = claim
+                break
+        if target is None:
+            raise NotFound("claim", span_id)
+
+        if support == SUPPORT_SUPPORTED and not (target.get("refs") or []):
+            raise ValidationError(
+                "A reviewer cannot support a claim that cites no source",
+                code="claim_support_no_source",
+            )
+
+        now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        if acceptance is not None:
+            target["acceptance"] = acceptance
+        if support is not None:
+            target["support"] = support
+            record = SupportRecord(
+                method=METHOD_REVIEWER,
+                source_version=(
+                    f"project:{row['project_id']}@r{row['project_revision']}"
+                ),
+                source_refs=list(target.get("refs") or []),
+                reviewer_ref=f"principal:{principal.identity}",
+                checked_at=now_iso,
+            )
+            target["support_record"] = record.to_dict()
+
+        self._db.project_updates.update_draft(
+            update_id,
+            claims_json=json.dumps(
+                claims, sort_keys=True, separators=(",", ":"),
+            ),
+        )
+        return self._project_axes(
+            self._db.project_updates.get_update(update_id)
+        )
 
     # ── Internal helpers (HS-162-04) ────────────────────────────────
 
@@ -1347,6 +2065,51 @@ class ProjectUpdateService:
             )
 
 
+def _invalidate_edited_support(
+    claims_json: str,
+    body_md: str,
+) -> str | None:
+    """Drop support for every claim whose sentence left the body (C2).
+
+    Returns the rewritten blob, or ``None`` when nothing changed.
+    The support record is KEPT and stamped -- provenance survives the
+    edit, and ``verified`` is never touched.
+    """
+    if not claims_json:
+        return None
+    try:
+        claims = json.loads(claims_json)
+    except (ValueError, TypeError):
+        return None
+    if not isinstance(claims, list):
+        return None
+
+    now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    changed = False
+    for claim in claims:
+        if not isinstance(claim, dict):
+            continue
+        text = str(claim.get("text") or "")
+        if not text or text in body_md:
+            continue
+        if claim.get("support") != SUPPORT_SUPPORTED:
+            continue
+        claim["support"] = (
+            SUPPORT_SOURCE_LINKED if (claim.get("refs") or [])
+            else SUPPORT_UNKNOWN
+        )
+        record = dict(claim.get("support_record") or {})
+        record.setdefault("method", METHOD_FIELD_MAPPING)
+        record["invalidated_at"] = now_iso
+        record["invalidation_reason"] = INVALIDATION_TEXT_EDITED
+        claim["support_record"] = record
+        changed = True
+
+    if not changed:
+        return None
+    return json.dumps(claims, sort_keys=True, separators=(",", ":"))
+
+
 def _request_hash(payload: dict[str, Any]) -> str:
     """Deterministic hash of a command's request payload."""
     material = json.dumps(payload, sort_keys=True, separators=(",", ":"),
@@ -1365,8 +2128,13 @@ def _envelope_to_dict(env: CommandResultEnvelope) -> dict[str, Any]:
 
 
 class _ModelDraftFailed(Exception):
-    """Internal signal: the model drafting path failed; fall back."""
+    """Internal signal: the model drafting path failed; fall back.
 
-    def __init__(self, reason: str) -> None:
+    ``code`` is the typed reason the draft's receipt NAMES (HS-200-08);
+    ``reason`` stays the full human detail for the log.
+    """
+
+    def __init__(self, reason: str, code: str = FALLBACK_MODEL_UNAVAILABLE) -> None:
         self.reason = reason
+        self.code = code
         super().__init__(reason)

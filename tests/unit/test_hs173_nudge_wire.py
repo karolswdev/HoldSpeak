@@ -180,11 +180,17 @@ def _build_service(
     subprocess_runner: Any = None,
 ) -> ProjectStewardService:
     db = _make_db(conn)
+    # HS-200-03: the fixtures below date every PR relative to NOW, so the
+    # service must read the SAME instant. Without the injected clock the
+    # rendered "{days}" counted from the real wall clock and this file's
+    # `TestDefaultTemplate::test_template_rendering` was green only on the day
+    # it was written.
     svc = ProjectStewardService(
         db,
         MagicMock(),  # collector
         MagicMock(),  # delta
         subprocess_runner=subprocess_runner,
+        clock=lambda: NOW,
     )
     return svc
 

@@ -49,7 +49,19 @@ PRACTICE_NOTES = {
     "hs-seed-guardrail-effect-guard": "Effect guard",
     "hs-seed-guardrail-egress-guard": "Egress guard",
 }
+# The census of mode recipes a fresh desk seeds. HS-200-03 regenerated this
+# from its authoritative source, `holdspeak.services.thread_modes.MODE_SEEDS`:
+# the Interview mode joined MODE_SEEDS with the architect-assistant work and
+# this literal was never updated, so `test_fresh_db_seeds_exactly_the_manifest`
+# and `test_reset_tombstones_clutter_and_reseeds` had been failing on every
+# machine since. Behaviourally a fresh desk now offers six modes instead of
+# five; nothing else about the seed changed.
+#
+# The literal stays a literal so that adding a mode is a deliberate edit here,
+# and `test_mode_recipe_census_matches_its_authoritative_source` below fences
+# it against silently drifting from MODE_SEEDS again.
 MODE_RECIPES = {
+    "hs-seed-mode-interview",
     "hs-seed-mode-desk",
     "hs-seed-mode-chase",
     "hs-seed-mode-draft",
@@ -115,6 +127,18 @@ def test_fresh_db_seeds_exactly_the_manifest(db) -> None:
     assert set(snap["recipes"]) == MODE_RECIPES
     assert snap["chains"] == snap["workflows"] == []
     assert db.profiles.list() == db.workbenches.list() == []
+
+
+def test_mode_recipe_census_matches_its_authoritative_source() -> None:
+    """HS-200-03: the census above is regenerated, never hand-maintained.
+
+    `MODE_SEEDS` is what `seed_modes` actually applies. When the two disagree
+    the fixture is stale, and that staleness used to surface as two red seed
+    tests rather than as the one-line census edit it is.
+    """
+    from holdspeak.services.thread_modes import MODE_SEEDS
+
+    assert {mode.id for mode in MODE_SEEDS} == MODE_RECIPES
 
 
 def test_starter_text_is_questions_not_invented_owner_facts(db) -> None:

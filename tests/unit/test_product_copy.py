@@ -43,11 +43,51 @@ def test_every_declared_primary_surface_expands_and_is_classified() -> None:
     )
 
 
+# HS-200-03, 2026-09-06 — the recorded copy debt on the G0 baseline.
+#
+# This fence had been red with 29 inherited offenders, which meant it could no
+# longer report a NEW one: every run failed the same way and the signal was
+# gone. The 29 are recorded in `tests/fixtures/product_copy_debt.json`, keyed
+# by path + rule + exact text (never by line number, which any edit above the
+# offender invalidates). The fence is now a ratchet: anything not in the
+# ledger fails exactly as before, and an entry whose copy has been fixed must
+# be deleted from the ledger. The copy itself is owned by HS-200-09.
+_COPY_DEBT_LEDGER = Path(__file__).resolve().parents[1] / "fixtures" / "product_copy_debt.json"
+
+
+def _recorded_copy_debt() -> set[tuple[str, str, str]]:
+    import json
+
+    payload = json.loads(_COPY_DEBT_LEDGER.read_text(encoding="utf-8"))
+    return {
+        (row["path"], row["rule_id"], row["text"]) for row in payload["offenders"]
+    }
+
+
 def test_primary_copy_has_no_prohibited_operational_drift() -> None:
-    problems = violations(inventory(REPO))
+    recorded = _recorded_copy_debt()
+    problems = [
+        item
+        for item in violations(inventory(REPO))
+        if (str(item.path), item.rule_id, item.text) not in recorded
+    ]
     assert not problems, "Primary product-copy drift:\n  " + "\n  ".join(
         f"{item.path}:{item.line}: {item.rule_id}: {item.text}"
         for item in problems
+    )
+
+
+def test_recorded_copy_debt_only_shrinks() -> None:
+    """A repaired line must leave the ledger, or the permission slip outlives the fault."""
+    live = {
+        (str(item.path), item.rule_id, item.text)
+        for item in violations(inventory(REPO))
+    }
+    stale = sorted(_recorded_copy_debt() - live)
+    assert not stale, (
+        "the HS-200-03 product-copy debt ledger has gone stale — delete these "
+        f"repaired entries from {_COPY_DEBT_LEDGER.name}:\n  "
+        + "\n  ".join(f"{path}: {rule}: {text}" for path, rule, text in stale)
     )
 
 

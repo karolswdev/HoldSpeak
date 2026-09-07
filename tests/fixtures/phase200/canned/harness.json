@@ -1,0 +1,33 @@
+{
+  "default": "The material does not record that. It is not available here.",
+  "episodes": {
+    "IV-01": "The Delta migration review is on 2026-04-14, and the decision brief is needed before it.",
+    "MX-01": [
+      {
+        "match": "action_items",
+        "text": "```json\n{\"action_items\": [{\"task\": \"Write the migration script\", \"owner\": \"Priya\", \"due\": null}]}\n```"
+      },
+      {
+        "match": "open_questions",
+        "text": "```json\n{\"decisions\": [{\"decision\": \"Use PostgreSQL as the target store\", \"rationale\": \"It partitions better\"}], \"open_questions\": []}\n```"
+      }
+    ],
+    "MX-05": [
+      {
+        "match": "action_items",
+        "text": "```json\n{\"action_items\": [{\"task\": \"Run the rollback rehearsal\", \"owner\": null, \"due\": null}]}\n```"
+      },
+      {
+        "match": "open_questions",
+        "text": "```json\n{\"decisions\": [], \"open_questions\": [\"Which Alex owns the rehearsal?\"]}\n```"
+      }
+    ],
+    "UP-01": [
+      {
+        "match": "",
+        "note": "a model draft that cites the runbook without asserting risk or schedule",
+        "text": "{\"sections\": [{\"key\": \"progress\", \"sentences\": [{\"text\": \"The cutover runbook records the read only window, the write switch and the rollback snapshot.\", \"cited_refs\": [\"item:pitem_up01_0001000000000000000000000\"]}]}]}"
+      }
+    ]
+  }
+}

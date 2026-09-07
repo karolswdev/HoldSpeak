@@ -1,0 +1,60 @@
+{
+  "id": "MX-09",
+  "corpus_version": "1",
+  "category": "meeting",
+  "split": "train",
+  "title": "A deadline changes late in a long meeting",
+  "tags": [
+    "long_context",
+    "correction"
+  ],
+  "material": {
+    "meeting": "Quarterly planning",
+    "segments": [
+      {
+        "speaker": "Karol",
+        "text": "Let us walk the four workstreams."
+      },
+      {
+        "speaker": "Priya",
+        "text": "Delta migration is on track for 2026-05-20."
+      },
+      {
+        "speaker": "Sam",
+        "text": "Billing rewrite starts after the tax spike."
+      },
+      {
+        "speaker": "Priya",
+        "text": "Reporting needs the shared staging window."
+      },
+      {
+        "speaker": "Sam",
+        "text": "The compliance review is with Priya Raman."
+      },
+      {
+        "speaker": "Karol",
+        "text": "The board asked for the security audit before any cutover."
+      },
+      {
+        "speaker": "Priya",
+        "text": "The audit lands 2026-06-01, so the migration deadline is 2026-06-15, not 2026-05-20."
+      },
+      {
+        "speaker": "Karol",
+        "text": "Agreed, the migration deadline is 2026-06-15."
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "correction_honoured",
+      "params": {
+        "field": "migration_deadline",
+        "superseded": [
+          "2026-05-20"
+        ],
+        "current": "2026-06-15"
+      }
+    }
+  ]
+}

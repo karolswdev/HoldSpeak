@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shutil
 import sqlite3
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
@@ -190,13 +191,36 @@ class Database:
 _db: Optional[Database] = None
 _observer: Optional[Any] = None
 
+# HS-200-03: one lock over the singleton's whole lifecycle.
+#
+# `get_database` was a check-then-assign around a constructor that takes a
+# quarter of a second (it opens the file, reconciles the schema and builds
+# every repository). Two threads could therefore both see `_db is None` and
+# both build a Database over the same file, running `reconcile_schema`
+# concurrently; and a construction already in flight would publish its result
+# AFTER a `reset_database()` that ran in the meantime, silently restoring a
+# database the caller had just dropped — including one resolved from a path
+# captured before the reset.
+#
+# The hub runs long-lived conductor threads that call `get_database()` on a
+# timer, so this was not theoretical: it is the mechanism behind the three
+# CI-only `tests/integration/test_web_activity_api.py` failures on Actions run
+# 34007939416, where a conductor tick landing inside a test's setup window
+# published a foreign database to the routes under test. It is also a
+# production hazard on any in-process restart.
+#
+# The lock is reentrant because `get_observer` calls `get_database` while
+# holding it.
+_db_lock = threading.RLock()
+
 
 def get_database(db_path: Optional[Path] = None) -> Database:
     """Get or create the database singleton."""
     global _db
-    if _db is None:
-        _db = Database(db_path)
-    return _db
+    with _db_lock:
+        if _db is None:
+            _db = Database(db_path)
+        return _db
 
 
 def get_observer() -> Any:
@@ -205,19 +229,21 @@ def get_observer() -> Any:
     Returns a SQLiteObserver wired to the database singleton's connection.
     """
     global _observer
-    if _observer is None:
-        from holdspeak.services.sqlite_observer import SQLiteObserver
-        _observer = SQLiteObserver(get_database()._connection)
-    return _observer
+    with _db_lock:
+        if _observer is None:
+            from holdspeak.services.sqlite_observer import SQLiteObserver
+            _observer = SQLiteObserver(get_database()._connection)
+        return _observer
 
 
 def reset_database() -> None:
     """Reset the database singleton (for testing)."""
     global _db, _observer
-    if _db is not None:
-        try:
-            _db.close()
-        except Exception:
-            pass
-    _db = None
-    _observer = None
+    with _db_lock:
+        if _db is not None:
+            try:
+                _db.close()
+            except Exception:
+                pass
+        _db = None
+        _observer = None

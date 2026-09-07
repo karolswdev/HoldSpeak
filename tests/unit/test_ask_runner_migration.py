@@ -30,9 +30,13 @@ class Engine:
 
 
 @pytest.fixture
-def rig(tmp_path: Path, monkeypatch):
+def rig(tmp_path: Path, monkeypatch, local_model_present):
     db = Database(tmp_path / "ask-runner.db")
-    monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", ""))
+    # HS-200-03: `local_model_present` substitutes the ONE readiness predicate
+    # both `_this_machine_readiness()` and `this_machine_target_from_model_path()`
+    # ask. Patching only the former left the second path reading the developer's
+    # `~/Models` tree, so this test refused with `target_unavailable` on every
+    # machine that did not have that exact GGUF file.
     engine = Engine()
     # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
     # FROZEN revision, so the same double is installed on the engine class too.

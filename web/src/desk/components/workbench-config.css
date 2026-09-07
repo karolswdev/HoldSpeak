@@ -393,30 +393,6 @@
   gap: 6px;
 }
 
-/* ── composer (legacy) ── */
-.desk-next .wb-composer {
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.desk-next .wb-composer-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px var(--desk-window-pad-x);
-}
-.desk-next .wb-composer-input {
-  flex: 1;
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-body-size);
-  background: transparent;
-  border: none;
-  color: var(--text);
-  outline: none;
-}
-.desk-next .wb-composer-input::placeholder {
-  color: var(--text-faint);
-}
-
 /* ── inlet (HS-118-03/04, cleaned HS-135-13) ── */
 .desk-next .wb-inlet {
   border-top: 1px solid var(--border);
@@ -474,15 +450,6 @@
   font-family: var(--font-mono);
   font-size: var(--desk-surface-label-size);
   color: var(--text-muted);
-}
-
-/* ── head scanning indicator (HS-116-12) ── */
-.desk-next .wb-head-scan {
-  padding: 2px var(--desk-window-pad-x) 4px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-.desk-next .wb-head-scan .gadget-ledmeter {
-  width: 100%;
 }
 
 /* ── runs wing (HS-116-12) ── */

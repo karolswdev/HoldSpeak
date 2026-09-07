@@ -816,9 +816,15 @@ def _step_update_editor(page: Any, out_dir: Path, w: int, token: str,
         const claimChips = area.querySelectorAll('[data-testid="update-claim-ref"]');
         const claimChipCount = claimChips.length;
 
-        /* UNVERIFIED markers (data-testid="update-claim-unverified") */
+        /* Unsupported claims. HS-200-06 serves the three C2 axes, so a
+           claim with no source now says UNSUPPORTED on its support
+           token; the legacy per-claim UNVERIFIED badge remains for any
+           record served without the axes. Count both. */
         const unverifiedEls = area.querySelectorAll('[data-testid="update-claim-unverified"]');
-        let unverifiedCount = unverifiedEls.length;
+        const unsupportedEls = Array.from(area.querySelectorAll(
+            '[data-testid="update-claim-support"] .surface-state-chip'
+        )).filter((el) => (el.getAttribute('aria-label') || '') === 'UNSUPPORTED');
+        let unverifiedCount = unverifiedEls.length + unsupportedEls.length;
 
         /* host: footer model token (data-testid="update-footer-model") + EgressChip */
         const modelToken = area.querySelector('[data-testid="update-footer-model"]');

@@ -1,0 +1,159 @@
+{
+  "_comment": [
+    "HS-200-03, 2026-09-06 - the recorded product-copy debt on the G0 baseline.",
+    "test_product_copy.py::test_primary_copy_has_no_prohibited_operational_drift",
+    "had been red on every machine with these 29 offenders, so it could not",
+    "report a NEW drift. Each entry is keyed by path + rule + the exact text,",
+    "never by line number, so an unrelated edit above it does not move it.",
+    "This ledger is a RATCHET: a fixed line must be DELETED from it (the fence",
+    "fails on a stale entry), and any offender not listed here fails as before.",
+    "The copy itself is owned by HS-200-09."
+  ],
+  "offenders": [
+    {
+      "path": "README.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "| Prepare architecture work | Draft a decision brief, review questions, or an agent brief from available records. | Architecture work recipes |"
+    },
+    {
+      "path": "docs/MEETING_MODE_GUIDE.md",
+      "rule_id": "legacy-product-nouns",
+      "text": ": uses your assigned OpenAI-compatible endpoint and model-profile key"
+    },
+    {
+      "path": "docs/MEETING_MODE_GUIDE.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "If it reports an authentication failure, check the model profile's credential configuration."
+    },
+    {
+      "path": "docs/MEETING_MODE_GUIDE.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "If it reports model mismatch, set that profile's model to one of the model IDs exposed by ."
+    },
+    {
+      "path": "docs/MEETING_MODE_GUIDE.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "Verify that profile's base URL starts with or and includes the right API prefix (commonly ). **Check** in the Concierge tests the selected engine."
+    },
+    {
+      "path": "docs/MEETING_MODE_GUIDE.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "values are migration inputs only; an upgrade converts them to a model profile"
+    },
+    {
+      "path": "docs/MODELS.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "For headless provisioning, remains an environment fallback for the identified model profile."
+    },
+    {
+      "path": "docs/README.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "Interview specification package: requirements, contracts, recipes, delivery status, and verification limits."
+    },
+    {
+      "path": "docs/README.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "| Prepare an architecture decision or agent brief | Architecture work recipes |"
+    },
+    {
+      "path": "docs/SECURITY.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "A profile never borrows another one's key."
+    },
+    {
+      "path": "docs/SECURITY.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "Cloud API key**: Use the owner Model Library secret API for the identified model profile."
+    },
+    {
+      "path": "docs/SECURITY.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "Model-profile keys**: a profile stores only its non-secret definition:"
+    },
+    {
+      "path": "docs/SECURITY.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "deletion writes a tombstone that suppresses that fallback for the profile."
+    },
+    {
+      "path": "docs/SECURITY.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "names it; local/LAN profiles are preferred). Arming a recording is the"
+    },
+    {
+      "path": "docs/USER_GUIDE.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "(plaintext, via the decision record chain)."
+    },
+    {
+      "path": "docs/USER_GUIDE.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "Known-good endpoint families include llama.cpp server, LM Studio, Ollama's OpenAI bridge, vLLM, LiteLLM, and hosted OpenAI-compatible APIs. HoldSpeak uses the key you set on that model profile, or its headless fallback. It does not put the key in the profile definition, config, or project context files. If the endpoint is unavailable, times out, or returns malformed output, HoldSpeak preserves the original transcript and surfaces the failure in dry-run/readiness output."
+    },
+    {
+      "path": "docs/USER_GUIDE.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "Set model-profile keys in the configured credential controls; use environment variables"
+    },
+    {
+      "path": "docs/USER_GUIDE.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "converts it into a model profile named , and points dictation"
+    },
+    {
+      "path": "docs/USER_GUIDE.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "model profile and still applies."
+    },
+    {
+      "path": "docs/USER_GUIDE.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "via the assigned vision model (local/LAN profiles preferred; the host"
+    },
+    {
+      "path": "docs/USER_GUIDE.md",
+      "rule_id": "legacy-product-nouns",
+      "text": "| Prepare a decision review or manual agent brief | Architecture work recipes |"
+    },
+    {
+      "path": "web/src/desk/components/Pullout.tsx",
+      "rule_id": "failure-missing-facts",
+      "text": "Could not check this Note on this hub."
+    },
+    {
+      "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+      "rule_id": "failure-missing-facts",
+      "text": "Could not open. Note unchanged."
+    },
+    {
+      "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+      "rule_id": "failure-missing-facts",
+      "text": "Default context skipped · {value} unavailable"
+    },
+    {
+      "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+      "rule_id": "failure-missing-facts",
+      "text": "The answer was added, but its exact place in the Note could not be verified. Reload the workspace."
+    },
+    {
+      "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+      "rule_id": "promotional-narration",
+      "text": "Ready when you are"
+    },
+    {
+      "path": "web/src/pages/cores/AssignmentEditor.tsx",
+      "rule_id": "failure-missing-facts",
+      "text": "(\".assignment-candidates button\")?.focus()}>Replace unavailable model"
+    },
+    {
+      "path": "web/src/pages/cores/AssignmentEditor.tsx",
+      "rule_id": "legacy-product-nouns",
+      "text": "Choose a model chain."
+    },
+    {
+      "path": "web/src/pages/cores/AssignmentEditor.tsx",
+      "rule_id": "legacy-product-nouns",
+      "text": "No custom chain"
+    }
+  ]
+}

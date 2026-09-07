@@ -46,7 +46,9 @@ roadmap files, they win. Memory (the Claude Code auto-memory, index
 | 175 | Calendar and the Clock | **COMPLETE 9/9 · MERGED #558 → `aa278604`** on his word; the R1 follow-up MERGED #564 → `7d897302`; his attended walk OWED |
 | 176 | The Speak Loop | **CLOSED 7/8** on `feat/the-speak-loop` (PR #566, out of draft; merge on his word); built on his word ("Let's follow your ruling"); the `text` correction kind, the Journal stream, the Learned wing, the voice law paid; counsel-on-built's bounce paid; the suite classified; **06 his attended walk OWED** (the hub from this branch is up on his desk, port in the scratchpad only) |
 | 177–179 | Thread at Work · Portfolio · Companion | scaffolds; not chartered |
-| 180 | The Proof | named in `THE-TUESDAY-ARC.md` §6; nothing drafted |
+| 177–179 | Thread at Work · Portfolio · Companion | PARKED behind Phase 200 (never deleted) |
+| 180 | The Proof | folds into Phase 200's G5 |
+| **200** | **The Working Practice** | **CURRENT** — his charter (PR #563 → `bea4176c`): G0 built (01–04 done, 05's physical beats his), G1 06–08 done, 09's design on the canvas for HIS VERDICT; draft PR #567 on `feat/phase-200-g0` |
 
 Main also carries work that landed beside 175 from elsewhere: #560 (the
 web integration checks restored — the product-copy and write-receipt
@@ -348,10 +350,63 @@ Laws added to UX-CANON §D: one word one meaning; the species that has
 the value wins the face; a `mic={false}` is a hole; a rig never types
 into the focused window.
 
-**Owed to him.** His attended walk on 176 (beat 0: the engine key or a
-local engine; then the seven beats and the two walk questions); his word
-on the merge of #566; the attended walks 170–175; the queued "Already
-titled" job; 172–174's questions.
+**The evening: #566 MERGED on his word, and the road turned.** "Merge
+man. And let's keep going. Although, I do believe there are other PRs
+that need to be merged to main based on what's out there on `gh`?" —
+#566 merged (`8fb56d97`). Two PRs were open: #563, HIS OWN charter for
+**Phase 200 The Working Practice** ("the owner-directed line in the sand
+for new delivery"; the "phase 200" of his morning question), and #526,
+relationship-aware memory (Sept 2, 61 files, conflicting). #563 was
+merged into main in a worktree (the roadmap README carries both 176's
+close and Phase 200 as the CURRENT phase; a merge commit needs
+`.tmp/BUNDLE-OK.md`), taken out of draft and merged (`bea4176c`). Phase
+200 is the road now; 177–179 of the Tuesday arc are PARKED behind it
+(never deleted); 180 The Proof folds into its G5. HS-200-01 (the
+baseline and obligation map) is in progress on `feat/phase-200-g0`.
+#526's merge of main is being resolved in a worktree (seven conflicts:
+four docs, the Room face, its css, a glyph test) by a Fedaykin; the
+orchestrator commits and merges it on the gates.
+
+**Phase 200, the same night (feat/phase-200-g0, draft PR #567, 27
+commits).** G0: 01 the baseline (two hubs found on one DB — the stale
+one stopped; his engine profile KEY NOT SET with two LAN destinations
+ready; one active + nine archived Projects; 69 obligations mapped) ·
+02 runtime identity + the owner lock (a second hub refuses to start) +
+restore on a copy · 03 the release checks (47 identities reproduced,
+34/35 CI failures repaired; tests/conftest.py REFUSES a real HOME;
+tests/critical/ with its own CI job; three absolute fences → dated
+down-only debt ratchets, R200-03-1, for his eye) · 04 first value cold +
+the real task probe + four NEEDS YOU repair states + the return-to-task
+defect fixed · 05's automatable half (physical beats his). G1: 06 the
+three claim axes (no schema change) · 07 attention coverage (no fake
+all-clear anywhere; MCP needs_you fixed) · 08 the evaluation harness
+(33 episodes, held-out split, critical failures cannot be averaged; the
+LIVE run is his command; the drafter's silent fallback on his profile
+shape found and fixed) · 09 the daily workflow DESIGN (six postures, 22
+boards, counsel bounced then ratified; canvas
+`63eaae1a-eb59-4bcf-902d-0c70d3e0c275`; HIS VERDICT is the exit and
+10–15 wait on it). The runner: E2E traced and paid (the rigs' own
+week-edge clock bug, a leaked hub between modules, the Meetings
+arrival's real 404, the mermaid cache); 161 green, 1 ledgered.
+
+**Laws this day added.** The suite is classified against a main
+worktree, never by memory. A merge commit into a PR branch needs
+`.tmp/BUNDLE-OK.md`. A worker runs the canon scanner only to a scratch
+path. Rigs seed in the desk's zone, never UTC's. A test never types
+into the focused window. A fence anchored to a file moves with the
+file, and a private helper must be classified in the census the day it
+is born. His DB is read-only to every agent; the product's own
+additive reconcile on startup is the one write a walk may cause.
+
+**Owed to him.** His VERDICT on the 200-09 canvas (stories 10–15 wait);
+the pilot Project (one active + nine archived exist — which is the real
+stream, which sources); his word on merging #567 (G0 + 06–09); his
+attended walks: 176 (the hub from that build is on his desk, port in
+the scratchpad; beat 0 = the engine key or a LAN engine) and 200-05
+(tests/e2e/live200_voice_walk.py); the attended walks 170–175; the
+queued "Already titled" job; 172–174's questions; the walk questions
+(a text rule's first application: confirm or silent-and-undoable? an
+uncertain delivery: never automatic or `Send again`? the cap of five?).
 
 ## Muad'Dib XV — 2026-09-05 late, 175 RESUMED on his word; the four faces BUILT
 

@@ -124,14 +124,33 @@ def _count_events(db: Database, project_id: str) -> int:
 def test_no_sql_in_project_family_module() -> None:
     """MCP-001: tools must not contain SQL. Grep the source."""
     source = Path(project_family.__file__).read_text(encoding="utf-8")
-    sql_patterns = [
+    # HS-200-03: these were matched case-insensitively, so the tool
+    # description "Select an existing setup proposal ..."
+    # (holdspeak/mcp/families/project.py:909) was reported as SQL and this
+    # fence was red on the English word "Select". SQL in this codebase is
+    # written in upper case, so the keywords are matched case-sensitively;
+    # the shaped patterns below stay case-insensitive because no prose
+    # produces them, and they are what would catch lower-case SQL.
+    sql_keywords = [
         r"\bSELECT\b",
         r"\bINSERT\b",
         r"\bUPDATE\b.*\bSET\b",
         r"\bDELETE\s+FROM\b",
         r"\bCREATE\s+TABLE\b",
     ]
-    for pattern in sql_patterns:
+    sql_shapes = [
+        r"\bselect\b[^\n]{0,200}?\bfrom\b",
+        r"\binsert\s+into\b",
+        r"\bdelete\s+from\b",
+        r"\bcreate\s+table\b",
+        r"\bupdate\b[^\n]{0,200}?\bset\b[^\n]{0,200}?\bwhere\b",
+    ]
+    for pattern in sql_keywords:
+        matches = re.findall(pattern, source)
+        assert not matches, (
+            f"SQL found in project family module: {pattern} -> {matches}"
+        )
+    for pattern in sql_shapes:
         matches = re.findall(pattern, source, re.IGNORECASE)
         assert not matches, (
             f"SQL found in project family module: {pattern} -> {matches}"
@@ -792,8 +811,28 @@ def test_all_command_tools_discoverable() -> None:
         "project.suggested_sources",
         "project.add_suggested_source",
         "project.dismiss_suggested_source",
+        # HS-200-03 regenerated this census from its authoritative source,
+        # `holdspeak.mcp.families.project.TOOLS`. The Project-setup work
+        # appended four proposal-handling tools (TOOLS.extend at
+        # holdspeak/mcp/families/project.py:908) and neither this ordered
+        # census nor `test_project_mcp.py`'s count was updated, so both had
+        # been red on every machine. Behaviourally the MCP surface now offers
+        # selecting, deselecting and testing a setup proposal, and clarifying
+        # a repository scope, in addition to the Jira-scope clarification that
+        # was already there. Nothing was removed or renamed.
+        "project.setup.select_proposal",
+        "project.setup.deselect_proposal",
+        "project.setup.test_proposal",
+        "project.setup.clarify_repo_scope",
     ]
     assert project_tools == expected
+    # The census is regenerated, never hand-maintained: a tool added to the
+    # family module without an edit here is a one-line diff, not a mystery.
+    assert expected == [
+        tool["name"]
+        for tool in project_family.TOOLS
+        if tool["name"].startswith("project.")
+    ]
     # All have versioned $id and closed schemas
     for tool in response["result"]["tools"]:
         if tool["name"].startswith("project."):

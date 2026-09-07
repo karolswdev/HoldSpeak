@@ -267,7 +267,7 @@ export function SpeakFace() {
   const [engines, setEngines] = useState<Engine[]>([]);
   const [targets, setTargets] = useState<TargetProfile[]>([]);
   const [detectStatus, setDetectStatus] = useState<"pending" | "ok" | "failed">("pending");
-  useEffect(() => {
+  const readEngine = useCallback(() => {
     void getAssignmentEditor(
       { kind: "capability", capability_id: "speech.rewrite" },
       "speech.rewrite",
@@ -279,6 +279,15 @@ export function SpeakFace() {
       .then((r) => setTargets(r.targets ?? []))
       .catch(() => {});
   }, []);
+  useEffect(() => { readEngine(); }, [readEngine]);
+  // HS-200-04 (return-to-task): the owner opens Models from the ENGINE row,
+  // picks an engine, and comes back. The utterance in the well is untouched;
+  // only readiness is re-read. No reload, no second configuration.
+  useEffect(() => {
+    const onSettings = () => { readEngine(); deck.refreshReadiness(); };
+    window.addEventListener("holdspeak:settings-updated", onSettings);
+    return () => window.removeEventListener("holdspeak:settings-updated", onSettings);
+  }, [readEngine, deck]);
 
   const resolved = resolveEngine(assignment, engines, targets);
 

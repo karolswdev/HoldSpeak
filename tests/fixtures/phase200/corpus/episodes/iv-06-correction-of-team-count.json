@@ -1,0 +1,43 @@
+{
+  "id": "IV-06",
+  "corpus_version": "1",
+  "category": "interview",
+  "split": "held_out",
+  "title": "The owner corrects a stated team count",
+  "tags": [
+    "correction",
+    "contradictory_source"
+  ],
+  "material": {
+    "project": "Northwind billing rewrite",
+    "prior_turns": [
+      {
+        "role": "owner",
+        "text": "Two teams are involved in the rewrite."
+      },
+      {
+        "role": "assistant",
+        "text": "Two teams noted."
+      },
+      {
+        "role": "owner",
+        "text": "Correction: it is three teams. Billing, tax, and the platform team joined last week."
+      }
+    ],
+    "prompt": "State how many teams are involved and name them if the material says so.",
+    "sources": []
+  },
+  "invariants": [
+    {
+      "kind": "correction_honoured",
+      "params": {
+        "field": "team_count",
+        "superseded": [
+          "two teams",
+          "2 teams"
+        ],
+        "current": "three teams"
+      }
+    }
+  ]
+}

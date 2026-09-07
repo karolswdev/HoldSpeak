@@ -1,0 +1,45 @@
+{
+  "id": "UP-04",
+  "corpus_version": "1",
+  "category": "update",
+  "split": "train",
+  "title": "The owner corrected a completion figure",
+  "tags": [
+    "correction"
+  ],
+  "material": {
+    "project": "Northwind billing rewrite",
+    "window": "2026-04-01..2026-04-07",
+    "corrections": [
+      {
+        "field": "completion",
+        "wrong": "40%",
+        "right": "25%",
+        "stated_at": "2026-04-06"
+      }
+    ],
+    "sources": [
+      {
+        "ref": "note:weekly-checkin",
+        "title": "Weekly check in",
+        "version": "rev-5",
+        "text": "Earlier estimate said 40% complete. Corrected on 2026-04-06: the rewrite is 25% complete."
+      }
+    ],
+    "requested_sections": [
+      "progress"
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "correction_honoured",
+      "params": {
+        "field": "completion",
+        "superseded": [
+          "40%"
+        ],
+        "current": "25%"
+      }
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "id": "IV-09",
+  "corpus_version": "1",
+  "category": "interview",
+  "split": "train",
+  "title": "The source carries headcount but no budget",
+  "tags": [
+    "partial_source"
+  ],
+  "material": {
+    "project": "Northwind billing rewrite",
+    "prior_turns": [],
+    "prompt": "Summarise the resourcing picture, including budget if the material carries it.",
+    "sources": [
+      {
+        "ref": "note:northwind-resourcing",
+        "title": "Resourcing note",
+        "version": "rev-2",
+        "text": "Headcount: 4 engineers, 1 analyst. The budget line is still with finance and is not recorded here."
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "absent_source_unknown",
+      "params": {
+        "field": "budget",
+        "reason": "the resourcing note carries no budget figure",
+        "literal_type": "number"
+      }
+    }
+  ]
+}

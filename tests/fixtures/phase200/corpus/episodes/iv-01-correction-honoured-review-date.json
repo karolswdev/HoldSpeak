@@ -1,0 +1,42 @@
+{
+  "id": "IV-01",
+  "corpus_version": "1",
+  "category": "interview",
+  "split": "train",
+  "title": "The owner corrects the review date",
+  "tags": [
+    "correction",
+    "stated_fact"
+  ],
+  "material": {
+    "project": "Delta migration",
+    "prior_turns": [
+      {
+        "role": "owner",
+        "text": "I need a decision brief before the Delta migration review on 2026-03-03."
+      },
+      {
+        "role": "assistant",
+        "text": "Noted: the review is on 2026-03-03. What decision needs the brief?"
+      },
+      {
+        "role": "owner",
+        "text": "Correction: the review moved. It is on 2026-04-14, not 2026-03-03."
+      }
+    ],
+    "prompt": "Summarise what you have so far and tell me when the brief is needed.",
+    "sources": []
+  },
+  "invariants": [
+    {
+      "kind": "correction_honoured",
+      "params": {
+        "field": "review_date",
+        "superseded": [
+          "2026-03-03"
+        ],
+        "current": "2026-04-14"
+      }
+    }
+  ]
+}

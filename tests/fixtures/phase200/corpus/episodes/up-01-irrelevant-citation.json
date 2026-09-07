@@ -1,0 +1,46 @@
+{
+  "id": "UP-01",
+  "corpus_version": "1",
+  "category": "update",
+  "split": "train",
+  "title": "A valid citation that does not carry the sentence",
+  "tags": [
+    "irrelevant_citation"
+  ],
+  "material": {
+    "project": "Delta migration",
+    "window": "2026-04-01..2026-04-07",
+    "sources": [
+      {
+        "ref": "doc:runbook",
+        "title": "Cutover runbook",
+        "version": "rev-7",
+        "text": "Steps for the read only window, the write switch and the rollback snapshot. No schedule, no owner, no risk rating."
+      }
+    ],
+    "requested_claims": [
+      {
+        "id": "c1",
+        "text": "The cutover risk is now low and the team is ahead of schedule.",
+        "citations": [
+          "doc:runbook"
+        ]
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "citation_not_supported",
+      "params": {
+        "claim_id": "c1",
+        "citation": "doc:runbook",
+        "claim_keywords": [
+          "risk",
+          "ahead of schedule",
+          "on schedule"
+        ],
+        "reason": "the runbook carries no risk rating and no schedule"
+      }
+    }
+  ]
+}

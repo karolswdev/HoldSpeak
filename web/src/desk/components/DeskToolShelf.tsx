@@ -30,6 +30,7 @@ import { DESK_TOOLS, KIND_GLYPH, KIND_LABEL } from "../tools";
 import { VERBS, verbLabel, type VerbContext } from "../verbRegistry";
 import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
 import { useLaunchers } from "./DeskWindow";
+import type { CoverageRecord } from "../coverage";
 
 // Re-exported so existing imports keep one source (the data moved to
 // desk/tools.ts so the registry never imports a component).
@@ -138,8 +139,14 @@ export function DeskToolShelf() {
   // Fetches the cached aggregate once on mount (the server cache is
   // <= 50 ms; no second fetch storm -- the shade reads the same route).
   const [projectNeedsYou, setProjectNeedsYou] = useState<Record<string, number>>({});
+  // HS-200-07 (C4): a Room whose coverage is not `available` shows its
+  // repair token instead of a silent zero — no fake all-clear on the deck.
+  const [projectCoverage, setProjectCoverage] = useState<Record<string, string>>({});
   useEffect(() => {
-    void apiFetch<{ items?: Array<{ projectId?: string; muted?: boolean }> }>("/api/desk/needs-you")
+    void apiFetch<{
+      items?: Array<{ projectId?: string; muted?: boolean }>;
+      coverage?: CoverageRecord[];
+    }>("/api/desk/needs-you")
       .then((payload) => {
         const counts: Record<string, number> = {};
         // One count everywhere: muted Rooms' items never inflate a badge (counsel C1).
@@ -148,6 +155,14 @@ export function DeskToolShelf() {
           if (pid) counts[pid] = (counts[pid] ?? 0) + 1;
         }
         setProjectNeedsYou(counts);
+        const gaps: Record<string, string> = {};
+        for (const row of payload?.coverage ?? []) {
+          if (row.state === "available" || !row.project_id) continue;
+          if (!gaps[row.project_id]) {
+            gaps[row.project_id] = row.repair?.token ?? row.state.toUpperCase();
+          }
+        }
+        setProjectCoverage(gaps);
       })
       .catch(() => null);
   }, []);
@@ -226,7 +241,7 @@ export function DeskToolShelf() {
       const badge =
         needs && needs > 0
           ? `${needs} ${needs === 1 ? "NEEDS YOU" : "NEED YOU"}`
-          : undefined;
+          : projectCoverage[project.id];
       push({
         id: `project.open.${project.id}`,
         section: "PROJECTS",
@@ -438,6 +453,7 @@ export function DeskToolShelf() {
     normalized,
     openPullout,
     projectNeedsYou,
+    projectCoverage,
     refresh,
     openToolInspector,
     projects,

@@ -25,6 +25,12 @@ import {
   countToken,
 } from "../surface";
 import { openIntelligence } from "../intelligenceNavigation";
+import {
+  readCoverage,
+  observedToken,
+  sourceLabel,
+  type CoverageRecord,
+} from "../coverage";
 import { unfinishedThoughts, type UnfinishedThought } from "../thoughts";
 import type { Meeting } from "../../lib/primitives";
 
@@ -48,6 +54,10 @@ interface NeedsYouItem {
   proposalHost?: string;
   proposalDue?: string;
   meetingTitle?: string;
+  /** HS-200-07: a stable id, and the last-observation marks. */
+  id?: string;
+  fromLastObservation?: boolean;
+  observedAt?: string | null;
 }
 
 interface NeedsYouPayload {
@@ -56,6 +66,9 @@ interface NeedsYouPayload {
   projects: string[];
   items: NeedsYouItem[];
   next: { label: string; at: string } | null;
+  /** HS-200-07 (C4): one record per expected source. */
+  coverage?: CoverageRecord[];
+  complete?: boolean;
 }
 
 interface BriefItem {
@@ -228,9 +241,11 @@ function whySeverityTone(severity: string): string {
   return "idle";
 }
 
-/** Headline for the arrival — zero = "Nothing needs you" (UX-CANON A8). */
-function headlineFor(count: number, projectCount: number): string {
-  if (count <= 0) return "Nothing needs you";
+/** Headline for the arrival — zero = "Nothing needs you" (UX-CANON A8).
+ *  HS-200-07 (C4): the all-clear line is spoken ONLY over complete
+ *  coverage; an empty PARTIAL result names the coverage instead. */
+function headlineFor(count: number, projectCount: number, complete = true): string {
+  if (count <= 0) return complete ? "Nothing needs you" : "Coverage incomplete";
   const n = String(count);
   if (projectCount > 0) {
     const p = projectCount === 1 ? "project" : "projects";
@@ -329,10 +344,22 @@ export function ChairHome({ arrivalRequired = false }: { arrivalRequired?: boole
 
 function Arrival() {
   // ── needs-you wire (rooms) ──
+  // HS-200-07 (C4): a read that never landed is itself a coverage gap —
+  // the arrival must not speak the all-clear over an answer it lacks.
   const [needsYou, setNeedsYou] = useState<NeedsYouPayload | null>(null);
-  useEffect(() => {
-    void apiFetch<NeedsYouPayload>("/api/desk/needs-you").then(setNeedsYou).catch(() => null);
+  const [needsYouUnread, setNeedsYouUnread] = useState(false);
+  const readNeedsYou = useCallback(async (fresh = false) => {
+    try {
+      const data = await apiFetch<NeedsYouPayload>(
+        fresh ? "/api/desk/needs-you?fresh=1" : "/api/desk/needs-you",
+      );
+      setNeedsYou(data);
+      setNeedsYouUnread(false);
+    } catch {
+      setNeedsYouUnread(true);
+    }
   }, []);
+  useEffect(() => { void readNeedsYou(); }, [readNeedsYou]);
 
   // ── door wire (owner's action items) ──
   const [door, setDoor] = useState<DoorProjection | null>(null);
@@ -423,7 +450,12 @@ function Arrival() {
   const count = (needsYou?.count ?? 0) + doorItems.length;
   const projectCount = needsYou?.projects?.length ?? 0;
   const hasProjects = projectCount > 0;
-  const headline = headlineFor(count, projectCount);
+  // HS-200-07: coverage decides whether zero may be spoken as an all-clear.
+  const coverage = useMemo(
+    () => readCoverage(needsYou?.coverage, needsYou?.complete, needsYouUnread),
+    [needsYou, needsYouUnread],
+  );
+  const headline = headlineFor(count, projectCount, coverage.complete);
   const headlineAccent = count > 0;
   const mutedCount = mutedItems.length > 0 ? mutedItems.length : 0;
 
@@ -632,6 +664,16 @@ function Arrival() {
         <WeekStripSection week={week} />
       ) : null}
 
+      {/* ── Coverage (HS-200-07 / C4): what was NOT observed ── */}
+      {!coverage.complete ? (
+        <div data-testid="arrival-coverage">
+          <CoverageSection
+            reading={coverage}
+            onRetry={() => void readNeedsYou(true)}
+          />
+        </div>
+      ) : null}
+
       {/* ── Needs You (unmuted) ── */}
       {unmutedItems.length > 0 ? (
         <div data-testid="arrival-needs-you">
@@ -807,6 +849,16 @@ function NeedsYouSection({
                   {muted ? (
                     <span className="arrival-project-token">MUTED</span>
                   ) : null}
+                  {/* HS-200-07: a row kept from the last successful read
+                      of a source that has since failed says so. */}
+                  {item.fromLastObservation ? (
+                    <span
+                      className="arrival-project-token"
+                      data-testid="arrival-remembered"
+                    >
+                      {observedToken(item.observedAt)}
+                    </span>
+                  ) : null}
                   {multipleProjects && item.projectName ? (
                     <span className="arrival-project-token">{item.projectName}</span>
                   ) : null}
@@ -829,6 +881,99 @@ function NeedsYouSection({
         })}
       </SurfaceLedger>
     </SurfaceSection>
+  );
+}
+
+// ── HS-200-07 (C4): the coverage section ────────────────────────────
+//
+// One row per source that was not observed: its label, the repair token,
+// its observation time, and the OWNING verb as a library Button.
+// `Retry` re-reads the aggregate fresh; every other verb opens the source
+// where its repair lives.
+
+/** The emblem for a coverage row: what KIND of source went unobserved. */
+function coverageEmblem(kind: string): string {
+  if (kind === "watch") return "SRC";
+  if (kind === "meeting") return "MTG";
+  if (kind === "commitment") return "CMT";
+  return "RM";
+}
+
+function CoverageSection({
+  reading,
+  onRetry,
+}: {
+  reading: ReturnType<typeof readCoverage>;
+  onRetry: () => void;
+}) {
+  return (
+    <SurfaceSection label={reading.token ?? "COVERAGE"}>
+      <SurfaceLedger count={null} cols="room">
+        {reading.gaps.map((gap) => (
+          <SurfaceLedgerRow
+            key={gap.source_id}
+            lead={
+              <span className="arrival-source-emblem" data-testid="arrival-source-emblem">
+                {coverageEmblem(gap.kind)}
+              </span>
+            }
+            primary={sourceLabel(gap)}
+            cells={
+              <span className="arrival-needs-you-meta">
+                <span
+                  className="arrival-why-token"
+                  data-tone={gap.state === "stale" ? "warning" : "failure"}
+                  data-testid="arrival-coverage-token"
+                >
+                  {gap.repair?.token ?? gap.state.toUpperCase()}
+                </span>
+                <span className="arrival-project-token" data-testid="arrival-coverage-observed">
+                  {observedToken(gap.observed_at)}
+                </span>
+              </span>
+            }
+            trailing={<CoverageVerb gap={gap} onRetry={onRetry} />}
+            wrap
+            expands={false}
+            data-testid="arrival-coverage-row"
+          />
+        ))}
+      </SurfaceLedger>
+    </SurfaceSection>
+  );
+}
+
+/** The owning verb for one coverage gap — always the library Button. */
+function CoverageVerb({
+  gap,
+  onRetry,
+}: {
+  gap: CoverageRecord;
+  onRetry: () => void;
+}) {
+  const repair = gap.repair;
+  if (!repair) return null;
+  const open = () => {
+    if (repair.verb === "Retry") { onRetry(); return; }
+    if (repair.href.startsWith("/settings")) {
+      openSurfaceOr("configure-settings", "/settings", "connections");
+      return;
+    }
+    if (gap.project_id) {
+      openSurfaceOr("project-room", "/projects", gap.project_id);
+      return;
+    }
+    openSurfaceOr("project-room", "/projects", "");
+  };
+  return (
+    <Button
+      variant={repair.verb === "Retry" ? "primary" : "ghost"}
+      dense
+      onClick={open}
+      data-testid="arrival-coverage-verb"
+    >
+      {repair.verb}
+    </Button>
   );
 }
 

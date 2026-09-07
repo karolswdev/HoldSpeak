@@ -91,7 +91,13 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   // HS-170-04: gear door plumbing data (DoorSection)
   const doorActions = useResource<Record<string, unknown>>("/api/all-action-items", {});
   const doorSpeakers = useResource<Record<string, unknown>>("/api/speakers", {});
-  const doorProjects = useResource<Record<string, unknown>>("/api/meetings/projects", {});
+  // HS-200-03 follow-through: the Rooms list lives at /api/projects.
+  // "/api/meetings/projects" matched no route (only
+  // /api/meetings/{meeting_id}/projects and /api/meetings/facets exist),
+  // so every /meetings arrival logged a console 404 and the door's
+  // PROJECTS section drew from an error. Caught by
+  // tests/e2e/test_hs144_door_glass.py::test_meetings_deep_link_waits_for_registered_surface_x15.
+  const doorProjects = useResource<Record<string, unknown>>("/api/projects", {});
   const doorIntel = useResource<Record<string, unknown>>("/api/intel/jobs", {});
   const doorPlugin = useResource<Record<string, unknown>>("/api/plugin-jobs", {});
   const [queueStatus, setQueueStatus] = useState("pending");

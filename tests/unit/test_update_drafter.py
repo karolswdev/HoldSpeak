@@ -38,6 +38,9 @@ from holdspeak.services.project_evidence_collector import (
 )
 from holdspeak.services.project_delta_service import ProjectDeltaService
 from holdspeak.services.project_update_service import (
+    FALLBACK_MODEL_UNAVAILABLE,
+    FALLBACK_ROUTE_UNRESOLVED,
+    FALLBACK_UNPARSEABLE_OUTPUT,
     PROJECT_UPDATE_CAPABILITY,
     SECTION_KEYS,
     UNVERIFIED_MARKER,
@@ -539,11 +542,17 @@ class TestClaimSchema:
             section="progress",
         )
         d = c.to_dict()
+        # HS-200-06: the three C2 axes ride on every claim.  A bare
+        # Claim carries the conservative defaults (unknown support,
+        # unreviewed acceptance); the drafters set them explicitly.
         assert d == {
             "span_id": "s_progress_0",
             "text": "Milestone: Launch -- planned",
             "refs": ["item:pitem_001"],
             "section": "progress",
+            "kind": "observation",
+            "support": "unknown",
+            "acceptance": "unreviewed",
         }
 
     def test_claim_immutable(self):
@@ -758,20 +767,50 @@ class _MockBroker:
         self.inference_runner = runner
 
 
+#: The profile the seeded assignment points at, and the model the deployment
+#: it is bound to actually runs.  They DIFFER on purpose (HS-200-08): the
+#: resolver used to match ``deployment_revisions.model`` against the profile
+#: id, so every real profile -- the owner's own "Migrated intel endpoint"
+#: among them -- resolved nothing and the model drafter fell back silently.
+SEED_PROFILE_ID = "profile_update_draft"
+SEED_MODEL_ID = "qwen3-30b-a3b-instruct"
+SEED_DEPLOYMENT_REVISION = "deprev_update_draft"
+
+
 def _seed_assignment(db: Database, capability_id: str = PROJECT_UPDATE_CAPABILITY) -> str:
     """Seed the minimal assignment chain for a capability. Returns assignment_id."""
     assignment_id = "assign_update_draft_001"
-    profile_id = "profile_update_draft"
+    profile_id = SEED_PROFILE_ID
     with db._connection() as conn:
         # Temporarily disable FK enforcement for seeding.
         conn.execute("PRAGMA foreign_keys = OFF")
 
-        # deployment revision (the _resolve_for_capability SELECT target).
+        # The captured deployment revision: its `model` column holds the REAL
+        # model id, never the profile id.
         conn.execute(
             """INSERT OR IGNORE INTO deployment_revisions
                (id, model, kind, boundary, engine, destination_id)
                VALUES (?, ?, 'local', 'same_device', 'test', 'local')""",
-            (f"deprev_{profile_id}", profile_id),
+            (SEED_DEPLOYMENT_REVISION, SEED_MODEL_ID),
+        )
+
+        # The binding that ties the profile to that deployment -- the row the
+        # route planner reads, and the one the resolver must follow.
+        conn.execute(
+            """INSERT OR IGNORE INTO model_profile_binding_revisions
+               (binding_id, revision, profile_id, profile_revision,
+                deployment_head_id, deployment_configuration_revision,
+                deployment_revision_id, secret_slot, enabled,
+                readiness_observation_id, created_at)
+               VALUES (?, 1, ?, 1, ?, 1, ?, '', 1, '', ?)""",
+            (f"bind_{profile_id}", profile_id, f"dephead_{profile_id}",
+             SEED_DEPLOYMENT_REVISION, NOW_ISO),
+        )
+        conn.execute(
+            """INSERT OR IGNORE INTO model_profile_binding_heads
+               (binding_id, profile_id, revision, updated_at)
+               VALUES (?, ?, 1, ?)""",
+            (f"bind_{profile_id}", profile_id, NOW_ISO),
         )
 
         # inference_assignment_revisions (FK parent for heads + assignments).
@@ -1069,6 +1108,226 @@ class TestModelFallback:
         assert "assign_update_draft_001" in result["generator"]
 
 
+# ── ROUTE RESOLUTION (HS-200-08) ─────────────────────────────────────
+
+class TestRouteResolution:
+    """The model drafter resolves its deployment by ROUTE, not by string.
+
+    The defect story 08 found: ``_resolve_for_capability`` ran
+    ``SELECT id FROM deployment_revisions WHERE model=?`` with the assigned
+    PROFILE id.  A captured revision's ``model`` column holds the real model
+    id, so any profile whose id differs from its model id resolved nothing
+    and every ``generator="model"`` draft came back deterministic with a log
+    line and no receipt.
+    """
+
+    def test_profile_id_differing_from_model_id_reaches_the_model(self, rig):
+        """A profile whose id != its model id still resolves the model drafter."""
+        db = rig
+        pid = _seed_project(db)
+        _seed_items(db, pid)
+
+        det_svc = _make_service(db)
+        det_claims = [
+            Claim(**c)
+            for c in json.loads(det_svc.draft_update(OWNER, pid)["claims_json"])
+        ]
+
+        svc, runner = _make_model_service(
+            db, runner_output=_good_model_output(det_claims),
+        )
+
+        # The premise: the old string match would find NOTHING.
+        assert SEED_MODEL_ID != SEED_PROFILE_ID
+        with db._connection() as conn:
+            stale = conn.execute(
+                "SELECT id FROM deployment_revisions WHERE model=?",
+                (SEED_PROFILE_ID,),
+            ).fetchone()
+        assert stale is None, (
+            "The rig must NOT name a deployment revision after the profile id"
+        )
+
+        result = svc.draft_update(OWNER, pid, generator="model")
+
+        assert result["generator"].startswith("model:"), (
+            f"Model drafter did not run: generator={result['generator']!r}, "
+            f"fallback={result.get('fallback_reason')!r}"
+        )
+        assert result["fallback_reason"] is None
+        assert len(runner.invoke_calls) == 1
+        assert runner.invoke_calls[0].deployment_revision == (
+            SEED_DEPLOYMENT_REVISION
+        ), "The runner must be handed the BOUND deployment revision"
+
+    def test_unresolvable_route_falls_back_with_a_named_reason(self, rig):
+        """No route at all: deterministic draft that NAMES why, in the receipt."""
+        db = rig
+        pid = _seed_project(db)
+        _seed_items(db, pid)
+
+        svc, runner = _make_model_service(db, runner_output="irrelevant")
+        # Break the only resolution the seed offers: the profile's binding.
+        with db._connection() as conn:
+            conn.execute("DELETE FROM model_profile_binding_heads")
+            conn.execute("DELETE FROM model_profile_binding_revisions")
+
+        result = svc.draft_update(OWNER, pid, generator="model")
+
+        assert result["generator"] == "deterministic"
+        assert result["fallback_reason"] == FALLBACK_ROUTE_UNRESOLVED
+        assert result["fallback_receipt"] == "DETERMINISTIC · ROUTE UNRESOLVED"
+        assert len(runner.invoke_calls) == 0, (
+            "The runner must not be called when no route resolves"
+        )
+
+        # The reason is on the ROW, not only in a log line: it survives a
+        # fresh read through the service.
+        again = svc.get_update(OWNER, result["id"])
+        assert again["generator"] == "deterministic"
+        assert again["fallback_reason"] == FALLBACK_ROUTE_UNRESOLVED
+        assert again["fallback_receipt"] == "DETERMINISTIC · ROUTE UNRESOLVED"
+        listed = svc.list_updates(OWNER, pid, lifecycle="draft")
+        assert listed[0]["fallback_reason"] == FALLBACK_ROUTE_UNRESOLVED
+
+    def test_model_failure_reasons_are_named_separately(self, rig):
+        """A route that resolves but a model that fails names its OWN reason."""
+        db = rig
+        pid = _seed_project(db)
+        _seed_items(db, pid)
+
+        svc, runner = _make_model_service(
+            db, runner_output="this is not valid json at all {{{",
+        )
+        result = svc.draft_update(OWNER, pid, generator="model")
+        assert result["generator"] == "deterministic"
+        assert result["fallback_reason"] == FALLBACK_UNPARSEABLE_OUTPUT
+        assert len(runner.invoke_calls) == 1, (
+            "The route resolved, so the runner WAS called"
+        )
+
+        svc2, runner2 = _make_model_service(
+            db, runner_error=RuntimeError("provider_timeout"),
+        )
+        result2 = svc2.draft_update(OWNER, pid, generator="model")
+        assert result2["fallback_reason"] == FALLBACK_MODEL_UNAVAILABLE
+
+    def test_real_broker_resolves_an_endpoint_profile_by_its_route(
+        self, rig, tmp_path, monkeypatch,
+    ):
+        """The owner's shape, on the PRODUCTION broker: id "migrated-intel-
+        endpoint", model "qwen3-30b-a3b-instruct".  The old string match found
+        nothing; the route plan names the deployment the Ask path would use.
+        """
+        from holdspeak.config import Config
+        from holdspeak.kernel import runtime
+        from holdspeak.services.inference_acquisition_service import (
+            InferenceAcquisitionApplicationService,
+        )
+        from holdspeak.services.inference_assignment_service import (
+            InferenceAssignmentService,
+        )
+        from holdspeak.services.inference_setup_service import (
+            InferenceSetupApplicationService,
+        )
+        from holdspeak.services.model_library_service import (
+            ModelLibraryApplicationService,
+        )
+        from holdspeak.services.project_update_service import (
+            _resolve_for_capability,
+        )
+
+        home = tmp_path / "home"
+        home.mkdir()
+        monkeypatch.setenv("HOME", str(home))
+        db = rig
+
+        profile_id, model_id = "migrated-intel-endpoint", "qwen3-30b-a3b-instruct"
+        setup = InferenceSetupApplicationService(
+            db, config_provider=Config, home_provider=lambda: home,
+        )
+        acquisition = InferenceAcquisitionApplicationService(
+            db, setup_service=setup, model_root=home / "models",
+            home_provider=lambda: home,
+        )
+        ModelLibraryApplicationService(
+            db, setup_service=setup, acquisition_service=acquisition,
+        ).define_endpoint(OWNER, {
+            "request_id": "drafter-route-model",
+            "profile_id": profile_id,
+            "expected_profile_revision": 0,
+            "label": "Migrated intel endpoint",
+            "provider_family": "private_endpoint",
+            "model": model_id,
+            "endpoint": "http://127.0.0.1:1/v1",
+            "requires_key": False,
+        })
+        assignments = InferenceAssignmentService(db)
+        assignments.set_assignment(OWNER, {
+            "command_id": "drafter-route-global", "expected_revision": 0,
+            "scope": {"kind": "global"},
+            "entries": [{"profile_id": profile_id, "profile_revision": 1}],
+        })
+        assignments.set_assignment(OWNER, {
+            "command_id": "drafter-route-capability", "expected_revision": 0,
+            "scope": {
+                "kind": "capability",
+                "capability_id": PROJECT_UPDATE_CAPABILITY,
+            },
+            "entries": [{"profile_id": profile_id, "profile_revision": 1}],
+        })
+
+        with db._connection() as conn:
+            assert conn.execute(
+                "SELECT id FROM deployment_revisions WHERE model=?",
+                (profile_id,),
+            ).fetchone() is None, "the old string match must find nothing here"
+
+        broker = runtime._configure(db)
+        revision_id, _assignment, resolved_profile = _resolve_for_capability(
+            broker, PROJECT_UPDATE_CAPABILITY,
+        )
+        assert revision_id
+        assert resolved_profile == profile_id
+        with db._connection() as conn:
+            row = conn.execute(
+                "SELECT model FROM deployment_revisions WHERE id=?",
+                (revision_id,),
+            ).fetchone()
+        assert row is not None, (
+            "the resolved revision must be readable by the runner"
+        )
+        assert str(row["model"]) == model_id
+
+        # And with the capability-scoped assignment cleared, the planner's own
+        # inheritance still names the global route -- the drafter no longer
+        # needs its own assignment row to reach a model.
+        assignments.clear_assignment(OWNER, {
+            "command_id": "drafter-route-clear",
+            "expected_revision": 1,
+            "scope": {
+                "kind": "capability",
+                "capability_id": PROJECT_UPDATE_CAPABILITY,
+            },
+            "capability_id": PROJECT_UPDATE_CAPABILITY,
+        })
+        inherited, _assignment2, _profile2 = _resolve_for_capability(
+            runtime._configure(db), PROJECT_UPDATE_CAPABILITY,
+        )
+        assert inherited == revision_id
+
+    def test_deterministic_draft_carries_no_fallback_reason(self, rig):
+        """A draft the owner ASKED to be deterministic is not a fallback."""
+        db = rig
+        pid = _seed_project(db)
+        _seed_items(db, pid)
+
+        result = _make_service(db).draft_update(OWNER, pid)
+        assert result["generator"] == "deterministic"
+        assert result["fallback_reason"] is None
+        assert result["fallback_receipt"] is None
+
+
 # ── MANIFEST IDENTITY ────────────────────────────────────────────────
 
 class TestManifestIdentity:
@@ -1235,7 +1494,7 @@ class TestClaimVerifiedSerialization:
         assert d["verified"] is False
 
     def test_deterministic_claim_json_unchanged(self):
-        """Adding verified=True default does NOT change deterministic JSON."""
+        """verified=True stays absent; the C2 axes are always written."""
         c = Claim(
             span_id="s_progress_0",
             text="Milestone: Launch -- planned",
@@ -1244,10 +1503,13 @@ class TestClaimVerifiedSerialization:
         )
         j = json.dumps(c.to_dict(), sort_keys=True, separators=(",", ":"))
         expected = (
-            '{"refs":["item:pitem_001"],"section":"progress",'
-            '"span_id":"s_progress_0","text":"Milestone: Launch -- planned"}'
+            '{"acceptance":"unreviewed","kind":"observation",'
+            '"refs":["item:pitem_001"],"section":"progress",'
+            '"span_id":"s_progress_0","support":"unknown",'
+            '"text":"Milestone: Launch -- planned"}'
         )
         assert j == expected
+        assert "verified" not in j
 
 
 # ── BUILD MODEL PROMPT ───────────────────────────────────────────────

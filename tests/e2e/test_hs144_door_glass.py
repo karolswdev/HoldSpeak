@@ -642,6 +642,7 @@ def test_meetings_deep_link_waits_for_registered_surface_x15(
 
     server, url = _start_hub(tmp_path, monkeypatch)
     errors: list[str] = []
+    failed_resources: list[str] = []
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
@@ -661,11 +662,19 @@ def test_meetings_deep_link_waits_for_registered_surface_x15(
                 page.emulate_media(reduced_motion="reduce")
                 page.on("pageerror", lambda error: errors.append(f"{navigation}: {error}"))
                 page.on("console", lambda message: _record_console(errors, message))
+                # HS-200-03 follow-through: a bare "404 (Not Found)" console
+                # line names no resource. Record the URL beside it so the
+                # failure is actionable instead of a riddle.
+                page.on("response", lambda response: (
+                    failed_resources.append(f"{response.status} {response.url}")
+                    if response.status >= 400 else None
+                ))
                 page.goto(f"{url}/meetings?token={TOKEN}", wait_until="load")
                 page.locator('[data-surface-registry-state="registered"]').wait_for(state="attached")
                 page.locator("#surface-meetings").wait_for()
                 assert page.locator("#surface-meetings").is_visible()
                 print(f"deep-link {navigation:02d}/15 registry=registered meetings=visible")
+                assert not errors, {"errors": errors, "failed_resources": failed_resources}
                 _assert_clean(page, errors)
                 page.close()
             context.close()

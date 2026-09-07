@@ -55,5 +55,19 @@ def build_health_router(ctx: WebContext) -> APIRouter:
 
         return JSONResponse(_normalize_runtime_status_payload({}, state))
 
+    @router.get("/api/system/identity")
+    async def api_system_identity() -> Any:
+        """The loaded runtime identity and its repair diagnoses (HS-200-02, C1).
+
+        The diagnostics view: it carries the database path, the pid and the
+        owner-lock record. The ordinary Desk reads the compact block on
+        ``/api/setup/status`` instead, which drops both.
+        """
+        try:
+            from ....runtime_identity import identity_report
+
+            return JSONResponse(identity_report(detailed=True))
+        except Exception as exc:
+            return error_500(exc, log, "Failed to read runtime identity")
 
     return router

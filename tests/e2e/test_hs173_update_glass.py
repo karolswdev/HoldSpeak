@@ -181,9 +181,22 @@ def test_model_draft_footer_and_claims_1440(
             assert host_chip is not None, "Host EgressChip missing in footer"
             assert "LAN" in (host_chip.text_content() or "")
 
-            # UNVERIFIED badge(s)
+            # HS-200-06: the read path maps these citation-only records
+            # onto the C2 axes, so the unsupported sentence now says
+            # UNSUPPORTED on its support token (one word, once).
+            support = [
+                el.get_attribute("aria-label") or ""
+                for el in page.query_selector_all(
+                    '[data-testid="update-claim-support"] .surface-state-chip'
+                )
+            ]
+            assert support.count("UNSUPPORTED") == 1, support
+            assert support.count("LINKED · MIGRATED") == 3, support
             unverified = page.query_selector_all('[data-testid="update-claim-unverified"]')
-            assert len(unverified) >= 1, "UNVERIFIED badge missing for unverified claim"
+            assert len(unverified) == 0, (
+                "the axes state support once; the legacy badge is for "
+                "records without them"
+            )
 
             # Ref chips show identity labels (PR #612, KAN-7, MTG 09-05)
             ref_chips = page.query_selector_all('[data-testid="update-claim-ref"]')
@@ -271,6 +284,15 @@ def test_deterministic_no_model_footer(
 
             unverified = page.query_selector_all('[data-testid="update-claim-unverified"]')
             assert len(unverified) == 0, "No UNVERIFIED badges expected for all-verified claims"
+            # HS-200-06: a citation-only record reads LINKED · MIGRATED,
+            # never SUPPORTED -- it was never checked by anyone.
+            support = [
+                el.get_attribute("aria-label") or ""
+                for el in page.query_selector_all(
+                    '[data-testid="update-claim-support"] .surface-state-chip'
+                )
+            ]
+            assert support == ["LINKED · MIGRATED"], support
 
             page.screenshot(path=str(SHOTS / "build-update-deterministic-1440.png"), full_page=True)
             browser.close()

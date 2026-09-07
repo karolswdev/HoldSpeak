@@ -1259,12 +1259,27 @@ class MeetingWebServer:
 
         @app.on_event("shutdown")
         async def _shutdown() -> None:
-            try:
-                from .calendar_ingest_conductor import stop_calendar_ingest_conductor
+            # HS-200-03: EVERY conductor this lifespan started is stopped here.
+            # Only the calendar one was, so the workbench and scheduled-recording
+            # conductors (started at the two `startup` sites above) outlived the
+            # app that started them: on an in-process restart they kept ticking
+            # against a database nobody owned any more, and in a test process
+            # they survived every subsequent app and called `get_database()` on
+            # a 60-second timer for the rest of the run. That is the thread whose
+            # tick produced the CI-only web-activity failures.
+            for name, stop in (
+                ("calendar ingest", "calendar_ingest_conductor.stop_calendar_ingest_conductor"),
+                ("workbench", "workbench_conductor.stop_conductor"),
+                ("scheduled recording", "scheduled_recording_conductor.stop_scheduled_recording_conductor"),
+            ):
+                module_name, _, attribute = stop.partition(".")
+                try:
+                    import importlib
 
-                stop_calendar_ingest_conductor()
-            except Exception as e:
-                log.error(f"calendar ingest conductor shutdown failed: {e}")
+                    module = importlib.import_module(f".{module_name}", __package__)
+                    getattr(module, attribute)()
+                except Exception as e:
+                    log.error(f"{name} conductor shutdown failed: {e}")
             await refinement_coordinator.shutdown()
             for task in (
                 self._duration_task,

@@ -1,0 +1,41 @@
+{
+  "id": "MX-07",
+  "corpus_version": "1",
+  "category": "meeting",
+  "split": "train",
+  "title": "Speakers disagree on whether it was decided",
+  "tags": [
+    "contradictory_source"
+  ],
+  "material": {
+    "meeting": "Billing rewrite review",
+    "segments": [
+      {
+        "speaker": "Karol",
+        "text": "So we are moving the dunning service to the new platform."
+      },
+      {
+        "speaker": "Sam",
+        "text": "I did not agree to that. Finance still has to sign off."
+      },
+      {
+        "speaker": "Karol",
+        "text": "Fine, it stays open until finance answers."
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "kind": "typed_unknown_field",
+      "params": {
+        "field": "decision_acceptance",
+        "reason": "the meeting ended without agreement",
+        "allowed_values": [
+          "unreviewed",
+          "disputed",
+          "open"
+        ]
+      }
+    }
+  ]
+}

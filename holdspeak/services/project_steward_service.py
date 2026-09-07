@@ -112,6 +112,7 @@ class ProjectStewardService:
         project_service: Any = None,
         door_service: Any = None,
         subprocess_runner: Any = None,
+        clock: Any = None,
     ) -> None:
         self._db = db
         self._collector = collector
@@ -120,7 +121,20 @@ class ProjectStewardService:
         self._project_service = project_service
         self._door_service = door_service
         self._subprocess_runner = subprocess_runner
+        # HS-200-03: every reading of "now" inside this service goes through
+        # ONE injectable clock. The nudge template renders an age in whole days
+        # against it, so a test that pinned its fixture dates but not the clock
+        # was correct only on the day it was written ("5 days" became "6 days"
+        # the next morning). Time is injected, never widened into a tolerance.
+        self._clock = clock
         self._ledger = ServiceEventLedger(db)
+
+    def _now_utc(self) -> datetime:
+        """The current instant, aware and in UTC, from the injected clock."""
+        if self._clock is None:
+            return datetime.now(timezone.utc)
+        now = self._clock()
+        return now if now.tzinfo is not None else now.replace(tzinfo=timezone.utc)
 
     # ── public API ────────────────────────────────────────────────────
 
@@ -258,7 +272,7 @@ class ProjectStewardService:
                 if done.tzinfo is None:
                     done = done.replace(tzinfo=timezone.utc)
                 elapsed = (
-                    datetime.now(timezone.utc) - done
+                    self._now_utc() - done
                 ).total_seconds()
                 if elapsed < cooldown:
                     self._db.automations.update_effect(
@@ -432,7 +446,7 @@ class ProjectStewardService:
                     if done.tzinfo is None:
                         done = done.replace(tzinfo=timezone.utc)
                     elapsed = (
-                        datetime.now(timezone.utc) - done
+                        self._now_utc() - done
                     ).total_seconds()
                     if elapsed < cooldown:
                         raise CooldownActiveError(int(cooldown - elapsed))
@@ -1464,7 +1478,7 @@ class ProjectStewardService:
             return None
 
         # Filter to overdue/blocking items.
-        now_date = datetime.now(timezone.utc).date().isoformat()
+        now_date = self._now_utc().date().isoformat()
         candidates = []
         for item in items:
             lifecycle = (item.get("lifecycle") or "").lower()
@@ -1547,7 +1561,7 @@ class ProjectStewardService:
                 "reason": "no_pr_entities",
             }
 
-        now_utc = datetime.now(timezone.utc)
+        now_utc = self._now_utc()
         rw = _review_wait(pr_entities, now_utc)
         if not rw.get("present"):
             return {

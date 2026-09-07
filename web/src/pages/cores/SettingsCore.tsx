@@ -14,6 +14,7 @@ import type {
 } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
+import { documentBuildId } from "../../lib/buildId";
 import { useResource } from "../pageSupport";
 import { SurfaceState } from "../../desk/surface/Surface";
 import {
@@ -33,6 +34,7 @@ import {
 import {
   Receipt,
   countToken,
+  humanTime,
   StateChip,
   SurfaceLedger,
   SurfaceLedgerRow,
@@ -296,6 +298,144 @@ function paletteLabel(palette: string | string[] | null): string {
   return palette[0];
 }
 
+/* ── HS-200-02: the loaded runtime identity (contract C1) ──────────
+ * What this hub ACTUALLY loaded — captured at its process start, so a
+ * later checkout cannot move it. The repair chips are the compact state
+ * C1 asks the ordinary Desk to fly; the paths and the pid stay inside
+ * the RAW fold, which is the diagnostics surface. */
+
+export type RuntimeIdentityWire = {
+  identity: {
+    backend_version?: string;
+    backend_revision?: string;
+    backend_revision_source?: string;
+    process_start?: string;
+    pid?: number;
+    frontend_build?: string;
+    database_id?: string;
+    database_path?: string;
+    schema_version_expected?: number | null;
+    schema_version_loaded?: number | null;
+    config_revision?: string;
+  };
+  repair?: string[];
+  owns_database?: boolean | null;
+  diagnoses?: { id: string; token: string; detail: string }[];
+  ownership?: { held?: boolean | null; lock_path?: string | null; owner?: Record<string, unknown> | null };
+  bundle_on_disk?: string;
+};
+
+const shortToken = (value: string, length = 12) =>
+  value && value.length > length ? value.slice(0, length) : value;
+
+export function RuntimeIdentityModule() {
+  const [wire, setWire] = useState<RuntimeIdentityWire | null>(null);
+  const [error, setError] = useState("");
+  const [nonce, setNonce] = useState(0);
+
+  useEffect(() => {
+    let live = true;
+    apiFetch<RuntimeIdentityWire>("/api/system/identity")
+      .then((next) => { if (live) { setWire(next); setError(""); } })
+      .catch((err) => { if (live) setError(readableError(err)); });
+    return () => { live = false; };
+  }, [nonce]);
+
+  if (error) {
+    return (
+      <GadgetGroup label="Runtime">
+        <GadgetRow label="Runtime">
+          <StateChip state="failure" label="UNREADABLE" />
+        </GadgetRow>
+      </GadgetGroup>
+    );
+  }
+  if (!wire) return null;
+
+  const id = wire.identity ?? {};
+  const served = id.frontend_build ?? "";
+  const document_ = documentBuildId();
+  const tokens = [...(wire.repair ?? [])];
+  // The loaded document disagreeing with the process is the same finding,
+  // seen from the browser. Never list a token twice.
+  if (document_ && served && document_ !== served && !tokens.includes("STALE BUNDLE")) {
+    tokens.push("STALE BUNDLE");
+  }
+  const schema = id.schema_version_loaded ?? id.schema_version_expected;
+
+  return (
+    <GadgetGroup label="Runtime">
+      {tokens.length ? (
+        <div className="prefs-hub-chips" data-testid="runtime-repair">
+          {tokens.map((token) => (
+            <StateChip key={token} state="warning" label={token} />
+          ))}
+        </div>
+      ) : null}
+      <GadgetRow label="Backend">
+        <span className="surface-token" data-chip data-testid="runtime-backend">
+          {`${id.backend_version ?? "unknown"} · ${shortToken(id.backend_revision ?? "unknown")}`}
+        </span>
+      </GadgetRow>
+      <GadgetRow label="Bundle">
+        <span className="surface-token" data-chip data-testid="runtime-bundle">
+          {served ? shortToken(served) : "NONE"}
+        </span>
+      </GadgetRow>
+      <GadgetRow label="Document">
+        <span className="surface-token" data-chip data-testid="runtime-document">
+          {document_ ? shortToken(document_) : "NONE"}
+        </span>
+      </GadgetRow>
+      <GadgetRow label="Schema">
+        <span className="surface-token" data-chip data-testid="runtime-schema">
+          {schema == null ? "NONE" : `SCHEMA ${schema}`}
+        </span>
+      </GadgetRow>
+      <GadgetRow label="Database">
+        <span className="surface-token" data-chip data-testid="runtime-database">
+          {shortToken(id.database_id ?? "unknown", 8)}
+        </span>
+      </GadgetRow>
+      <GadgetRow label="Started">
+        <span className="surface-token" data-chip data-testid="runtime-started">
+          {humanTime(id.process_start ?? "")}
+        </span>
+      </GadgetRow>
+      <GadgetRow label="Identity">
+        <Button variant="secondary" dense onClick={() => setNonce((n) => n + 1)}>
+          Recheck
+        </Button>
+      </GadgetRow>
+      <FoldGadget title="RAW" token={tokens.length ? String(tokens.length) : undefined}>
+        <GadgetGroup label="Diagnostics">
+          <GadgetRow label="Config">
+            <span className="surface-token" data-chip>{shortToken(id.config_revision ?? "unknown", 8)}</span>
+          </GadgetRow>
+          <GadgetRow label="Process">
+            <span className="surface-token" data-chip>{`PID ${id.pid ?? "—"}`}</span>
+          </GadgetRow>
+          <GadgetRow label="Owns database">
+            <span className="surface-token" data-chip data-testid="runtime-owns">
+              {wire.owns_database === true ? "OWNER" : wire.owns_database === false ? "TENANT" : "UNKNOWN"}
+            </span>
+          </GadgetRow>
+          {id.database_path ? (
+            <GadgetRow label="Path" wide>
+              <span className="surface-token" data-chip data-testid="runtime-path">{id.database_path}</span>
+            </GadgetRow>
+          ) : null}
+          {(wire.diagnoses ?? []).map((finding) => (
+            <GadgetRow key={finding.id} label={finding.token} wide>
+              <span className="surface-token" data-chip>{finding.detail}</span>
+            </GadgetRow>
+          ))}
+        </GadgetGroup>
+      </FoldGadget>
+    </GadgetGroup>
+  );
+}
+
 /** HS-174: the System module face — owns the display step + hub chips
  *  so the REMOTE chip updates live when the toggle fires. */
 function SystemModule({
@@ -323,6 +463,7 @@ function SystemModule({
           : <span className="surface-token" data-chip>REMOTE OFF</span>}
       </div>
       <div className="prefs-rule" aria-hidden="true" />
+      <RuntimeIdentityModule />
       <GadgetGroup label="Mesh">
         {deviceName}
       </GadgetGroup>

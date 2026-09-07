@@ -25,6 +25,7 @@ export interface Engine {
   presetId?: string;
   installed?: boolean;
   path?: string;
+  baseUrl?: string;
 }
 
 export interface HardwareInfo {
@@ -37,11 +38,42 @@ export interface HardwareInfo {
   };
 }
 
+/* HS-200-04 — the named repair states. One verb each; `control` says which
+   existing control that verb opens. The face never decides the policy. */
+export type RepairToken =
+  | "MODEL FILE MISSING"
+  | "ENDPOINT UNREACHABLE"
+  | "TOOL INCOMPATIBLE"
+  | "CREDENTIAL EXPIRED";
+
+export type RepairControl =
+  | "model_library"
+  | "endpoint_editor"
+  | "engine_picker"
+  | "connections";
+
+export interface Repair {
+  id: string;
+  token: RepairToken;
+  subject: string;
+  host: string;
+  scope: "local" | "cloud";
+  groups: string[];
+  groupLabels: string[];
+  verb: string;
+  control: RepairControl;
+  engineId: string;
+  presetId: string;
+  baseUrl: string;
+  detail: string;
+}
+
 export interface DetectResponse {
   engines: Engine[];
   hardware: HardwareInfo;
   runtimes: Array<{ id: string; state: string }>;
   checkedAt: string;
+  repairs: Repair[];
 }
 
 export interface ProposalRow {
@@ -87,6 +119,32 @@ export interface ApplyResponse {
   }>;
 }
 
+/* HS-200-04 — the task probe: one real request through the assigned route. */
+export interface TaskProbeResponse {
+  state: "READY" | "UNREACHABLE" | "REFUSED";
+  ok: boolean;
+  capabilityId: string;
+  group: string;
+  outcome?: string;
+  reasonCode: string;
+  engine?: string;
+  model?: string;
+  boundary?: string;
+  host?: string;
+  latencyMs?: number;
+  routePlanId?: string;
+  executionId?: string;
+  paid?: boolean;
+  legs: Array<{
+    ordinal: number;
+    profileId?: string;
+    deploymentRevisionId: string;
+    boundary: string;
+    status?: string;
+    disposition?: string;
+  }>;
+}
+
 export interface DownloadResponse {
   jobId: string;
   presetId: string;
@@ -113,6 +171,29 @@ function decodeEngine(raw: Record<string, unknown>): Engine {
     presetId: typeof raw.presetId === "string" ? raw.presetId : undefined,
     installed: typeof raw.installed === "boolean" ? raw.installed : undefined,
     path: typeof raw.path === "string" ? raw.path : undefined,
+    baseUrl: typeof raw.baseUrl === "string" ? raw.baseUrl : undefined,
+  };
+}
+
+function decodeRepair(raw: Record<string, unknown>): Repair {
+  const groups = Array.isArray(raw.groups) ? raw.groups.map(String) : [];
+  const labels = Array.isArray(raw.groupLabels)
+    ? raw.groupLabels.map(String)
+    : groups;
+  return {
+    id: String(raw.id ?? ""),
+    token: String(raw.token ?? "") as RepairToken,
+    subject: String(raw.subject ?? ""),
+    host: String(raw.host ?? ""),
+    scope: raw.scope === "cloud" ? "cloud" : "local",
+    groups,
+    groupLabels: labels,
+    verb: String(raw.verb ?? ""),
+    control: String(raw.control ?? "engine_picker") as RepairControl,
+    engineId: String(raw.engineId ?? ""),
+    presetId: String(raw.presetId ?? ""),
+    baseUrl: String(raw.baseUrl ?? ""),
+    detail: String(raw.detail ?? ""),
   };
 }
 
@@ -127,6 +208,9 @@ function decodeDetect(raw: Record<string, unknown>): DetectResponse {
       ? (raw.runtimes as Array<{ id: string; state: string }>)
       : [],
     checkedAt: String(raw.checkedAt ?? ""),
+    repairs: Array.isArray(raw.repairs)
+      ? (raw.repairs as Record<string, unknown>[]).map(decodeRepair)
+      : [],
   };
 }
 
@@ -181,6 +265,26 @@ export async function conciergeProbe(
     keySet: typeof raw.keySet === "boolean" ? raw.keySet : undefined,
     cost: raw.cost as ProbeResponse["cost"],
     plainReason: typeof raw.plainReason === "string" ? raw.plainReason : undefined,
+  };
+}
+
+export async function conciergeTaskProbe(
+  capabilityId?: string,
+  confirmOffMachine?: boolean,
+): Promise<TaskProbeResponse> {
+  const raw = await apiFetch<Record<string, unknown>>("/api/concierge/probe", {
+    method: "POST",
+    json: {
+      task: true,
+      ...(capabilityId ? { capabilityId } : {}),
+      ...(confirmOffMachine ? { confirmOffMachine: true } : {}),
+    },
+  });
+  return {
+    ...(raw as unknown as TaskProbeResponse),
+    legs: Array.isArray(raw.legs)
+      ? (raw.legs as TaskProbeResponse["legs"])
+      : [],
   };
 }
 

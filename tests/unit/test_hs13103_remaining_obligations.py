@@ -281,14 +281,22 @@ _DECLARED_ASK_V1_SHAPE = {
     "lens": "str",
     "context_ids": "list",
     "context_titles": "list",
-    "grounding": "NoneType",
+    # CONTRACT BUMP (2026-09-06, HS-200 fence lane): was "NoneType". PR #526
+    # (relationship-aware memory, f5be54c3) removed the `grounding is None ->
+    # ("", None)` short circuit in AskService._grounding, so EVERY ask@1 payload
+    # now carries a grounding echo object (source_refs/selection/matched_count/
+    # overflow_count) even when the caller grounded nothing. The declared field
+    # set is unchanged and the field was always `dict | None`, so the wire
+    # contract's field list and ASK_PAYLOAD_SCHEMA_VERSION stay at 1; the shape
+    # hash below is re-derived for the new value type.
+    "grounding": "dict",
     "source_text": "str",
     "temperature": "NoneType",
     "max_tokens": "NoneType",
     "deployment_revision": "str",
     "selected_model": "str",
 }
-_DECLARED_ASK_V1_SHAPE_SHA256 = "sha256:1548b559f79b7bdccf43485c168abf04840bec37c26aedfa254582708083fdfa"
+_DECLARED_ASK_V1_SHAPE_SHA256 = "sha256:e77de01632ee952466740f03afad77896f20d06a463a6e25c98315fe0817c2e6"
 
 
 def test_ask_v1_contract_shape_hash_guards_service_payload_drift(rig, monkeypatch):
