@@ -48,7 +48,7 @@ roadmap files, they win. Memory (the Claude Code auto-memory, index
 | 177–179 | Thread at Work · Portfolio · Companion | scaffolds; not chartered |
 | 177–179 | Thread at Work · Portfolio · Companion | PARKED behind Phase 200 (never deleted) |
 | 180 | The Proof | folds into Phase 200's G5 |
-| **200** | **The Working Practice** | **CURRENT** — his charter (PR #563 → `bea4176c`): G0 built (01–04 done, 05's physical beats his), G1 06–08 done, 09's design on the canvas for HIS VERDICT; draft PR #567 on `feat/phase-200-g0` |
+| **200** | **The Working Practice** | **CURRENT** — his charter (PR #563 → `bea4176c`): G0 built (01–04 done, 05's physical beats his), G1 06–08 done, 09's design on the canvas for HIS VERDICT; **MERGED #567 → `5e2f1704`** on his word (2026-09-07) |
 
 Main also carries work that landed beside 175 from elsewhere: #560 (the
 web integration checks restored — the product-copy and write-receipt
@@ -367,8 +367,8 @@ baseline and obligation map) is in progress on `feat/phase-200-g0`.
 four docs, the Room face, its css, a glyph test) by a Fedaykin; the
 orchestrator commits and merges it on the gates.
 
-**Phase 200, the same night (feat/phase-200-g0, draft PR #567, 27
-commits).** G0: 01 the baseline (two hubs found on one DB — the stale
+**Phase 200, the same night — MERGED #567 → main `5e2f1704` on his word
+("Please it merge it...").** G0: 01 the baseline (two hubs found on one DB — the stale
 one stopped; his engine profile KEY NOT SET with two LAN destinations
 ready; one active + nine archived Projects; 69 obligations mapped) ·
 02 runtime identity + the owner lock (a second hub refuses to start) +
@@ -400,7 +400,7 @@ additive reconcile on startup is the one write a walk may cause.
 
 **Owed to him.** His VERDICT on the 200-09 canvas (stories 10–15 wait);
 the pilot Project (one active + nine archived exist — which is the real
-stream, which sources); his word on merging #567 (G0 + 06–09); his
+stream, which sources);  his
 attended walks: 176 (the hub from that build is on his desk, port in
 the scratchpad; beat 0 = the engine key or a LAN engine) and 200-05
 (tests/e2e/live200_voice_walk.py); the attended walks 170–175; the
