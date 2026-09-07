@@ -19,8 +19,11 @@ from __future__ import annotations
 import logging
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
+import base64
 import hashlib
+import hmac
 import json
+import re
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
@@ -41,7 +44,7 @@ from ..project_contracts import (
     generate_psrc_id,
 )
 from ..refs import format as format_ref, parse as parse_ref
-from .errors import ConflictError, NotFound, ValidationError
+from .errors import ConflictError, NotFound, ServiceError, ValidationError
 from .project_setup_service import CADENCE_PRESETS
 from .service_event_ledger import ServiceEventLedger
 
@@ -283,6 +286,42 @@ def _envelope_to_dict(env: CommandResultEnvelope) -> dict[str, Any]:
         "project_revision": env.project_revision,
         "changed_refs": [str(r) for r in env.changed_refs],
     }
+
+
+def _custody_identity() -> str:
+    """A DURABLE identity for the desk that holds a saved ask (HS-200-41 F1).
+
+    Custody asks "is this the same DESK?".  Two nearby answers were tried and
+    both answer a different question:
+
+    - ``RefinementCoordinator.host_id`` is ``refhost_<uuid4>``, minted per
+      PROCESS (`refinement_coordinator.py:45`), so custody read ``elsewhere``
+      on the same desk after every restart — and the face printed the raw
+      uuid, breaking the no-raw-ids rule as well.
+    - ``runtime_identity.database_identity`` digests the database path plus
+      its device and INODE.  That is correct for its own purpose and stays
+      untouched — HS-200-02 needs a REPLACED file to read as a different
+      database — but an inode answers "is this the same FILE?".  Recreate the
+      file and it flips, so custody was nondeterministic across a restart and
+      would have claimed SAVED ON ANOTHER DESK after a restore from backup,
+      on the very machine that saved the ask.
+
+    So custody keys on ``config.machine_identity()``: minted once, persisted
+    beside the hub's other durable settings, never regenerated.  It survives a
+    restart, a database restore and a schema reconcile.  It is opaque and
+    never leaves the hub — the DTO carries the ``here``/``elsewhere`` verdict
+    and never this token.
+
+    An identity the hub cannot establish is ``""``, and an empty custody stamp
+    draws no token at all.  Identity failure is never load-bearing: an unknown
+    desk says nothing rather than guessing ``here``.
+    """
+    try:
+        from ..config import machine_identity
+
+        return str(machine_identity() or "")
+    except Exception:  # pragma: no cover - identity is never load-bearing
+        return ""
 
 
 @observe_service
@@ -1770,6 +1809,361 @@ class ProjectService:
         now_iso = datetime.now().isoformat()
         self._db.projects.set_room_read_at(project_id, now_iso)
         return {"readAt": now_iso}
+
+    # ── HS-200-41: the saved ask (return to unfinished work) ─────────
+    #
+    # A Room ask survives nothing today: its words live in browser state, the
+    # kernel journals a payload hash, and `ask_results` keeps the answer
+    # without the question.  These five methods make the QUESTION durable and
+    # make a late answer claimable instead of re-runnable.
+    #
+    # Ownership (ruling B2): ProjectService already owns Room state, so a saved
+    # Room ask is Room state.  AskService keeps its one property — it persists
+    # nothing, which is what keeps it replayable — and gains no durable rows;
+    # the dispatch it performs is injected here as a callable so this boundary
+    # stays transport-neutral and so a test can prove that NOTHING dispatched.
+
+    def save_ask(
+        self,
+        principal: Principal,
+        project_id: str,
+        payload: dict[str, Any],
+        *,
+        host_id: str = "",
+        lease_epoch: int = 0,
+    ) -> dict[str, Any]:
+        """Persist an unfinished Room ask and mint its invocation identity.
+
+        The row is written BEFORE anything is dispatched (ruling B3), so the
+        answer that lands while the tab is gone has a key back to it.
+        """
+        self._require_project(project_id)
+        purpose = str(payload.get("purpose") or "").strip()
+        if not purpose:
+            raise ValidationError("ask purpose is required", code="ask_task_purpose_required")
+        state = str(payload.get("state") or "saved")
+        if state not in {"saved", "failed", "incomplete"}:
+            raise ValidationError(
+                "an ask can only be saved in a state it can reach",
+                code="ask_task_state_invalid",
+            )
+        grounding = payload.get("grounding")
+        if grounding is not None and not isinstance(grounding, dict):
+            raise ValidationError("grounding must be an object", code="ask_task_grounding_invalid")
+        # The target's own words, quoted; never a sentence composed here (B5).
+        stopped_reason = str(payload.get("stopped_reason") or payload.get("stoppedReason") or "")
+        stopped_code = str(payload.get("stopped_code") or payload.get("stoppedCode") or "")
+        invocation_id = "ask_" + uuid.uuid4().hex
+        task = self._db.project_ask_tasks.create(
+            task_id="asktask_" + uuid.uuid4().hex,
+            project_id=project_id,
+            invocation_id=invocation_id,
+            purpose=purpose,
+            lens=str(payload.get("lens") or "Project"),
+            recipe_key=str(payload.get("recipe_key") or payload.get("recipeKey") or ""),
+            grounding=grounding,
+            state=state,
+            stopped_reason=stopped_reason,
+            stopped_code=stopped_code,
+            # HS-200-41 F1: custody is stamped with a STABLE MACHINE identity,
+            # never the process lease.  `RefinementCoordinator.host_id` is
+            # `refhost_<uuid4>` minted per process
+            # (`refinement_coordinator.py:45`), so custody stamped with it
+            # flipped to `elsewhere` on every restart — the exact event this
+            # story exists for.  HS-200-02's `database_identity` is derived
+            # from the resolved path plus device+inode, so it survives a
+            # restart and honestly differs on another machine.  The lease id
+            # still rides `dispatch_host_id`, where it belongs.
+            custody_host_id=_custody_identity(),
+            custody_lease_epoch=int(lease_epoch or 0),
+        )
+        return {"task": self._ask_task_dto(task, host_id=host_id)}
+
+    def list_unfinished_asks(
+        self,
+        principal: Principal,
+        *,
+        limit: int = 20,
+        cursor: str | None = None,
+        project_id: str | None = None,
+        host_id: str = "",
+    ) -> dict[str, Any]:
+        """The deliberately small, keyset-paged Resume projection.
+
+        Mirrors ``RefinementThoughtService.list_unfinished``: a signed
+        high-water cursor over ``(resume_order DESC, id DESC)``, bounded limit.
+        ``discarded`` never appears (ruling B6), and neither does ``accepted``.
+        """
+        if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1 or limit > 50:
+            raise ValidationError(
+                "limit must be between 1 and 50", code="ask_task_list_limit_invalid",
+            )
+        token = self._decode_ask_cursor(cursor) if cursor else None
+        repo = self._db.project_ask_tasks
+        high = int(token["high"]) if token else repo.high_water(project_id=project_id)
+        after = (int(token["last_resume_order"]), str(token["last_id"])) if token else None
+        page, more = repo.page_unfinished(
+            limit=limit, high=high, after=after, project_id=project_id,
+        )
+        next_cursor = None
+        if more and page:
+            last = page[-1]
+            next_cursor = self._encode_ask_cursor({
+                "v": 1, "state": "unfinished", "high": high,
+                "last_resume_order": last.resume_order, "last_id": last.id,
+            })
+        return {
+            "items": [self._ask_task_dto(task, host_id=host_id) for task in page],
+            "next_cursor": next_cursor,
+        }
+
+    async def resume_ask(
+        self,
+        principal: Principal,
+        task_id: str,
+        *,
+        dispatcher: Any = None,
+        host_id: str = "",
+        lease_epoch: int = 0,
+    ) -> dict[str, Any]:
+        """Return to one unfinished ask — claiming a late answer, never re-running it.
+
+        The order is the whole law (ruling B3):
+
+        1. Read ``ask_results`` for this invocation identity FIRST.  If the
+           answer arrived while the owner was away, settle the task
+           ``accepted``, hand back the answer, and dispatch NOTHING.  A second
+           Resume takes this same branch, so a double Resume cannot double-spend.
+        2. Only with no result does a resume dispatch, under the SAME
+           ``invocation_id``, so the kernel's ``operation_id`` UNIQUE refuses a
+           duplicate operation rather than a new guard inventing one.
+        """
+        task = self._require_ask_task(task_id)
+        if task.state == "discarded":
+            raise ConflictError(
+                "this ask was discarded", code="ask_task_discarded",
+                context={"task_id": task.id},
+            )
+        repo = self._db.project_ask_tasks
+
+        claimed = repo.find_ask_result(task.invocation_id)
+        if claimed is not None:
+            settled = repo.settle(task.id, state="accepted") or task
+            return {
+                "task": self._ask_task_dto(settled, host_id=host_id),
+                "answer": claimed,
+                "claimed": True,
+                "dispatched": False,
+            }
+
+        if dispatcher is None:
+            # No transport was supplied: hand back the saved material so the
+            # caller can run it under this identity. Nothing was dispatched.
+            return {
+                "task": self._ask_task_dto(task, host_id=host_id),
+                "answer": None,
+                "claimed": False,
+                "dispatched": False,
+            }
+
+        if not repo.claim_dispatch(task.id, str(host_id or ""), int(lease_epoch or 0)):
+            raise ConflictError(
+                "this ask is already being resumed", code="ask_task_resume_in_flight",
+                context={"task_id": task.id},
+            )
+        try:
+            answer = await dispatcher(self._ask_task_dto(task, host_id=host_id))
+        except ServiceError as exc:
+            # The target's own words, stored verbatim (ruling B5).
+            repo.settle(
+                task.id, state="failed", stopped_reason=str(exc.detail),
+                stopped_code=str(exc.code),
+            )
+            raise
+        except Exception:
+            repo.release_dispatch(task.id)
+            raise
+        settled = repo.settle(task.id, state="accepted") or task
+        return {
+            "task": self._ask_task_dto(settled, host_id=host_id),
+            "answer": answer,
+            "claimed": False,
+            "dispatched": True,
+        }
+
+    # A code, not a sentence: the shape a refusal token is allowed to have.
+    _ASK_STOP_CODE = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
+
+    def record_ask_stop(
+        self,
+        principal: Principal,
+        task_id: str,
+        code: str,
+        *,
+        host_id: str = "",
+    ) -> dict[str, Any]:
+        """Record WHY a saved ask stopped, from a refusal CODE and nothing else.
+
+        `save_ask` writes the row before dispatch (ruling B3), so a failure the
+        BROWSER observed — the ordinary one, an engine that is not ready — had
+        no way back into the record and the ratified `WAITING ON THE ENGINE`
+        token could not be drawn.  This closes that, without letting a caller
+        put words in the store.
+
+        Ruling B5 is the whole design here.  The caller sends only the bounded
+        refusal code it was already handed (`code` in the /api/ask refusal
+        body, minted by ``inference_targets.target_refusal``); it may not send
+        a reason.  The server resolves the code against ITS OWN live placement
+        and stores the target's ``readiness_reason`` verbatim — the same words
+        ``ask_service.py`` raises through ``target_unavailable``.  A code the
+        server cannot currently corroborate stores the CODE and no reason;
+        nothing the caller wrote is ever echoed back into the row.
+
+        Narrow by construction: only ``saved`` -> ``failed``.  A row in any
+        other state is refused, an already-``failed`` row is a no-op (so a
+        retry is not an error), and the invocation identity is never touched —
+        a failed ask is exactly the one the owner comes back to.
+        """
+        code = str(code or "").strip()
+        if not self._ASK_STOP_CODE.match(code):
+            raise ValidationError(
+                "a stop code is a token, not a sentence",
+                code="ask_task_stop_code_invalid",
+            )
+        task = self._require_ask_task(task_id)
+        if task.state == "failed":
+            # Idempotent: a repeat changes nothing, and never overwrites the
+            # reason already quoted onto the row.
+            return {"task": self._ask_task_dto(task, host_id=host_id), "changed": False}
+        if task.state != "saved":
+            raise ConflictError(
+                "only a saved ask can be recorded as stopped",
+                code="ask_task_not_stoppable",
+                context={"task_id": task.id, "state": task.state},
+            )
+        settled = self._db.project_ask_tasks.settle(
+            task.id, state="failed",
+            stopped_reason=self._resolve_stop_reason(code),
+            stopped_code=code,
+        ) or task
+        return {"task": self._ask_task_dto(settled, host_id=host_id), "changed": True}
+
+    def _resolve_stop_reason(self, code: str) -> str:
+        """The target's OWN words for this code, or nothing at all.
+
+        Read from the live placement this hub would use, never from the
+        caller.  The reason is stored only when the destination still reports
+        the state the code names — if the engine came back in the meantime the
+        server has no words to quote, and quoting none is the honest answer.
+        """
+        try:
+            from ..inference_targets import resolve_placement
+            target = resolve_placement(self._db).target
+        except Exception:  # a hub that cannot resolve a target has no words
+            return ""
+        if f"inference_target_{target.readiness_state}" != code:
+            return ""
+        return str(getattr(target, "readiness_reason", "") or "")
+
+    def discard_ask(
+        self, principal: Principal, task_id: str, *, host_id: str = "",
+    ) -> dict[str, Any]:
+        """Discard is a STATE, never a DELETE (ruling B6)."""
+        task = self._require_ask_task(task_id)
+        settled = self._db.project_ask_tasks.settle(task.id, state="discarded") or task
+        return {"task": self._ask_task_dto(settled, host_id=host_id)}
+
+    def recover_ask_tasks_on_startup(self) -> list[str]:
+        """Settle asks whose dispatching process is gone. Dispatches nothing.
+
+        Reconcile-from-proof only, the discipline of
+        ``recover_refinements_on_startup``: a lease that a live
+        ``refinement_hosts`` row still backs is not abandonment.
+        """
+        return self._db.project_ask_tasks.reconcile_orphans()
+
+    # ── ask-task helpers ─────────────────────────────────────────────
+
+    def _require_ask_task(self, task_id: str) -> Any:
+        task = self._db.project_ask_tasks.get(task_id)
+        if task is None:
+            raise NotFound("ask task", task_id)
+        return task
+
+    @staticmethod
+    def _ask_task_dto(task: Any, *, host_id: str = "") -> dict[str, Any]:
+        """The wire shape. Empty facts are ABSENT, never drawn as nothing (A.8)."""
+        dto: dict[str, Any] = {
+            "id": task.id,
+            "projectId": task.project_id,
+            "invocationId": task.invocation_id,
+            "purpose": task.purpose,
+            "lens": task.lens,
+            "state": task.state,
+            "savedAt": task.saved_at,
+            "updatedAt": task.updated_at,
+            "resumeOrder": task.resume_order,
+        }
+        if task.recipe_key:
+            dto["recipeKey"] = task.recipe_key
+        if task.grounding:
+            dto["grounding"] = task.grounding
+        if task.stopped_reason:
+            dto["stoppedReason"] = task.stopped_reason
+        if task.stopped_code:
+            dto["stoppedCode"] = task.stopped_code
+        if task.settled_at:
+            dto["settledAt"] = task.settled_at
+        # Custody (ruling B7, corrected by F1): `here` on the machine that
+        # holds the row, `elsewhere` otherwise.  THIS DEVICE stays the egress
+        # word.  The identity itself NEVER leaves the hub: it is an opaque
+        # minted token and the face has no business printing one (canon
+        # `raw-ids`).  The wire carries the verdict, not the id.
+        if task.custody_host_id:
+            dto["custody"] = (
+                "here" if task.custody_host_id == _custody_identity() else "elsewhere"
+            )
+        return dto
+
+    def _ask_cursor_secret(self) -> bytes:
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT value FROM kernel_meta WHERE key='ask_task_cursor_secret'"
+            ).fetchone()
+            if row is None:
+                conn.execute(
+                    "INSERT OR IGNORE INTO kernel_meta (key, value) "
+                    "VALUES ('ask_task_cursor_secret', ?)",
+                    (uuid.uuid4().hex + uuid.uuid4().hex,),
+                )
+                row = conn.execute(
+                    "SELECT value FROM kernel_meta WHERE key='ask_task_cursor_secret'"
+                ).fetchone()
+        return str(row["value"]).encode()
+
+    def _encode_ask_cursor(self, value: dict[str, Any]) -> str:
+        raw = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+        sig = hmac.new(self._ask_cursor_secret(), raw, hashlib.sha256).hexdigest()
+        return base64.urlsafe_b64encode(raw).decode().rstrip("=") + "." + sig
+
+    def _decode_ask_cursor(self, token: str) -> dict[str, Any]:
+        try:
+            body, sig = str(token).split(".", 1)
+            raw = base64.urlsafe_b64decode(body + "=" * (-len(body) % 4))
+            if not hmac.compare_digest(
+                hmac.new(self._ask_cursor_secret(), raw, hashlib.sha256).hexdigest(), sig
+            ):
+                raise ValueError("signature")
+            value = json.loads(raw)
+            if value.get("v") != 1 or value.get("state") != "unfinished":
+                raise ValueError("shape")
+            if any(value.get(key) is None for key in ("high", "last_resume_order", "last_id")):
+                raise ValueError("shape")
+            return value
+        except Exception as exc:
+            raise ValidationError(
+                "ask cursor is invalid", code="ask_task_cursor_invalid",
+            ) from exc
 
     # ── writes (graduated to revision law) ───────────────────────────
 

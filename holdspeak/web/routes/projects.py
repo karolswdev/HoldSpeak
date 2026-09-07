@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 
 from ...logging_config import get_logger
 from ...principals import UNAUTHENTICATED
-from ...services.errors import ConflictError, NotFound, ValidationError
+from ...services.errors import ConflictError, NotFound, ServiceError, ValidationError
 from ...services.project_service import ProjectService
 from ..context import WebContext
 from ..runtime_support import error_500
@@ -61,6 +61,139 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return not_found(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to mark room read")
+
+    # ── HS-200-41: the saved ask ─────────────────────────────────────
+    #
+    # Four thin adapters over ProjectService.  The Resume route dispatches
+    # through the SAME Ask transport `/api/ask` uses, under the task's saved
+    # `invocation_id`, so the kernel's `operation_id` UNIQUE is the only
+    # double-spend guard there is (ruling B3).
+
+    def host_identity() -> tuple[str, int]:
+        """This hub process's refinement lease, for the custody token (B7).
+
+        Absent (an MCP sidecar, a test rig, a hub whose coordinator has not
+        started), custody is simply unknown and the row draws no token.
+        """
+        coordinator = getattr(ctx, "refinement_coordinator", None)
+        if coordinator is None:
+            return "", 0
+        return str(getattr(coordinator, "host_id", "") or ""), int(
+            getattr(coordinator, "_lease_epoch", 0) or 0
+        )
+
+    def service_error(exc: ServiceError) -> JSONResponse:
+        body: dict[str, Any] = dict(exc.context)
+        body.setdefault("error", exc.detail)
+        body.setdefault("error_code", exc.code)
+        status = int(body.pop("status", 409 if isinstance(exc, ConflictError) else 400))
+        return JSONResponse(body, status_code=status)
+
+    @router.post("/api/projects/{project_id}/ask-tasks")
+    async def api_save_ask_task(project_id: str, payload: dict[str, Any], request: Request) -> Any:
+        try:
+            host_id, lease_epoch = host_identity()
+            return JSONResponse(
+                service.save_ask(
+                    principal(request), project_id, payload,
+                    host_id=host_id, lease_epoch=lease_epoch,
+                ),
+                status_code=201,
+            )
+        except NotFound as exc:
+            return not_found(exc)
+        except ServiceError as exc:
+            return service_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to save ask")
+
+    @router.get("/api/ask-tasks")
+    async def api_list_ask_tasks(
+        request: Request,
+        state: str = "unfinished",
+        limit: int = 20,
+        cursor: str | None = None,
+        project_id: str | None = None,
+    ) -> Any:
+        # A closed `state` param: the Resume projection is the only view.
+        if state != "unfinished":
+            return JSONResponse(
+                {"error": "state must be 'unfinished'", "error_code": "ask_task_state_invalid"},
+                status_code=400,
+            )
+        try:
+            host_id, _ = host_identity()
+            return JSONResponse(service.list_unfinished_asks(
+                principal(request), limit=limit, cursor=cursor,
+                project_id=project_id, host_id=host_id,
+            ))
+        except ServiceError as exc:
+            return service_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to list unfinished asks")
+
+    @router.post("/api/ask-tasks/{task_id}/resume")
+    async def api_resume_ask_task(task_id: str, request: Request) -> Any:
+        from .primitives.ask import build_ask_service
+
+        host_id, lease_epoch = host_identity()
+
+        async def dispatch(task: dict[str, Any]) -> Any:
+            return await build_ask_service(ctx).ask(
+                principal(request),
+                str(task["purpose"]),
+                task.get("grounding") or None,
+                lens=str(task.get("lens") or "Project"),
+                invocation_id=str(task["invocationId"]),
+            )
+
+        try:
+            return JSONResponse(await service.resume_ask(
+                principal(request), task_id,
+                dispatcher=dispatch, host_id=host_id, lease_epoch=lease_epoch,
+            ))
+        except NotFound as exc:
+            return not_found(exc)
+        except ServiceError as exc:
+            return service_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to resume ask")
+
+    @router.post("/api/ask-tasks/{task_id}/stopped")
+    async def api_record_ask_stop(task_id: str, payload: dict[str, Any], request: Request) -> Any:
+        """Record why a saved ask stopped, from the refusal CODE alone.
+
+        The body carries `code` and nothing else that reaches the store: the
+        service resolves that token against its own live placement and quotes
+        the destination's words, so no caller-supplied sentence can ever land
+        on a row (ruling B5).  `saved` -> `failed` only; a repeat is a no-op.
+        """
+        try:
+            host_id, _ = host_identity()
+            return JSONResponse(service.record_ask_stop(
+                principal(request), task_id,
+                str(payload.get("code") or ""), host_id=host_id,
+            ))
+        except NotFound as exc:
+            return not_found(exc)
+        except ServiceError as exc:
+            return service_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to record ask stop")
+
+    @router.post("/api/ask-tasks/{task_id}/discard")
+    async def api_discard_ask_task(task_id: str, request: Request) -> Any:
+        try:
+            host_id, _ = host_identity()
+            return JSONResponse(service.discard_ask(
+                principal(request), task_id, host_id=host_id,
+            ))
+        except NotFound as exc:
+            return not_found(exc)
+        except ServiceError as exc:
+            return service_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to discard ask")
 
     @router.get("/api/projects")
     async def api_list_projects(request: Request, include_archived: bool = False) -> Any:

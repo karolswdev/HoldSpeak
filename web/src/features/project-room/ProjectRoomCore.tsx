@@ -20,6 +20,8 @@ import {
   ConfirmVerb,
   EgressChip,
   StateChip,
+  TaskResume,
+  TaskResumeList,
   humanTime,
   streamDayLabel,
   MicButton,
@@ -33,7 +35,19 @@ import { Button } from "../../components/signal/Signal";
 import {
   getAssignmentEditor,
 } from "../../pages/cores/assignmentExperience";
-import { runAsk, type AskRunResult } from "../../desk/ask";
+import {
+  runAsk,
+  saveAskTask,
+  listUnfinishedAsks,
+  resumeAskTask,
+  discardAskTask,
+  stopAskTask,
+  type AskRunResult,
+  type AskTask,
+} from "../../desk/ask";
+import { onReturnToTask, rememberTaskFocus } from "../../desk/returnToTask";
+import { apiFetch } from "../../lib/api";
+import type { InferenceTarget } from "../../desk/api";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
 import { useDesk } from "../../desk/store";
 import type { CoreProps } from "../../pages/cores/core-types";
@@ -1324,7 +1338,26 @@ function DecisionsCommitmentsSection({ room }: { room: RoomSnapshot }) {
 function useModelLabel(projectId: string): { host: string; scope: "local" | "cloud" | undefined } {
   const [host, setHost] = useState("NOT SET");
   const [scope, setScope] = useState<"local" | "cloud" | undefined>(undefined);
-  const targets = useDesk((s) => s.inferenceTargets);
+  const deskTargets = useDesk((s) => s.inferenceTargets);
+  // HS-200-41 — the defect on this very seam. The hook used to re-read only
+  // on `[projectId, targets]`, and `inferenceTargets` moves only when the
+  // whole desk calls `refresh()`. So the owner pressed `Choose`, assigned a
+  // model, came back — and the chip still read `MODEL · NOT SET`. That is
+  // the STATE half of return-to-task failing on the surface this story
+  // sends him back to, so it is fixed here, on the same subscription.
+  const [freshTargets, setFreshTargets] = useState<InferenceTarget[] | null>(null);
+  const [reread, setReread] = useState(0);
+  const targets = freshTargets ?? deskTargets;
+  useEffect(
+    () =>
+      onReturnToTask(() => {
+        void apiFetch<{ targets?: InferenceTarget[] }>("/api/inference-targets")
+          .then((r) => setFreshTargets(r.targets ?? []))
+          .catch(() => { /* the assignment re-read below still runs */ });
+        setReread((n) => n + 1);
+      }),
+    [],
+  );
   useEffect(() => {
     if (!projectId) return;
     let cancelled = false;
@@ -1360,7 +1393,7 @@ function useModelLabel(projectId: string): { host: string; scope: "local" | "clo
       }
     }).catch(() => { /* non-fatal */ });
     return () => { cancelled = true; };
-  }, [projectId, targets]);
+  }, [projectId, targets, reread]);
   return { host, scope };
 }
 
@@ -1375,44 +1408,175 @@ function boundaryToLabel(boundary: string): string {
   }
 }
 
-function RoomAskWell({
-  projectId,
-  projectName,
-  onOpenRef,
-}: {
-  projectId: string;
-  projectName: string;
-  onOpenRef: (ref: string) => void;
-}) {
+/** The Room's ask, as ONE controller.
+ *
+ *  HS-200-41 F5: the unfinished list and the ask well are TWO faces over one
+ *  state. They used to be one component, which put a ledger inside the
+ *  composer's sticky foot — five rows and the Room was gone behind them. The
+ *  state lives here so the list can sit in the body as its own section, where
+ *  the design's posture-6 grammar puts it, while the well stays sticky. */
+function useRoomAsk(projectId: string, projectName: string) {
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState<AskRunResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const receipt = result?.groundingReceipt;
-  const groundedCount = groundedMatchCount(receipt ?? null);
-  const modelLabel = useModelLabel(projectId);
+  // The ask no longer dies with the tab. The words are written to
+  // `project_ask_tasks` BEFORE the run goes out (ruling B3), so a restart, a
+  // crash or a trip to Settings finds them again.
+  const [unfinished, setUnfinished] = useState<AskTask[]>([]);
+  const [working, setWorking] = useState<{ id: string; verb: "resume" | "discard" } | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const loadUnfinished = useCallback(async () => {
+    if (!projectId) return;
+    const page = await listUnfinishedAsks({ projectId, limit: 5 });
+    setUnfinished(page.items);
+  }, [projectId]);
+
+  useEffect(() => { void loadUnfinished(); }, [loadUnfinished]);
+  // The generalisation the design's D3 called MISSING: the Room's ask well
+  // subscribes to return-to-task like every other face holding unfinished
+  // work, so readiness and the saved row re-read WITHOUT a reload.
+  useEffect(() => onReturnToTask(() => { void loadUnfinished(); }), [loadUnfinished]);
 
   const ask = async () => {
-    if (!prompt.trim() || busy) return;
+    const purpose = prompt.trim();
+    if (!purpose || busy) return;
     setBusy(true);
     setError("");
+    const grounding = {
+      meeting_ids: [],
+      artifact_ids: [],
+      refs: [`project:${projectId}`],
+      expand: "summary" as const,
+    };
+    // Save FIRST: the row and its invocation identity exist before anything
+    // is dispatched, so an answer that lands after the tab is gone can be
+    // claimed instead of paid for twice (ruling B3). A refusal here does not
+    // block the work — durability is the bonus, never the gate.
+    const task = await saveAskTask(projectId, {
+      purpose,
+      lens: "Project",
+      grounding,
+    });
     const answer = await runAsk({
-      prompt: prompt.trim(),
+      prompt: purpose,
       lens: "Project",
       context: [
         { id: projectId, kind: "project", ref: `project:${projectId}`, title: projectName },
       ],
-      grounding: {
-        meeting_ids: [],
-        artifact_ids: [],
-        refs: [`project:${projectId}`],
-        expand: "summary",
-      },
+      grounding,
+      ...(task ? { invocationId: task.invocationId } : {}),
     });
     setBusy(false);
-    if (!answer.ok) { setError(answer.output); return; }
+    if (!answer.ok) {
+      // Record WHY it stopped, from the hub's own refusal CODE — never its
+      // sentence (ruling B5). The server resolves the token against its live
+      // placement and quotes the engine itself; nothing written here reaches
+      // the row. The ask stays unfinished and fully resumable either way.
+      let recorded = false;
+      if (task && answer.refusalCode) {
+        recorded = (await stopAskTask(task.id, answer.refusalCode)).ok;
+      }
+      // F6: the failure is said ONCE. When it landed on a row, the row says
+      // it — in the engine's own words, beside the verb that acts on it. The
+      // inline line survives only for a failure that reached no row at all
+      // (no saved row, or a transport failure the hub never coded), where it
+      // is the only thing that can speak.
+      if (!recorded) setError(answer.output);
+      void loadUnfinished();
+      return;
+    }
     setResult(answer);
+    // Settle the record against the answer the run just wrote. The resume
+    // route reads `ask_results` first, finds it, marks the task accepted and
+    // dispatches NOTHING — there is no separate accept route, and minting a
+    // second identity to settle one is the double-spend B3 forbids.
+    if (task) await resumeAskTask(task.id);
+    void loadUnfinished();
   };
+
+  const resume = async (task: AskTask) => {
+    setWorking({ id: task.id, verb: "resume" });
+    setError("");
+    const outcome = await resumeAskTask(task.id);
+    setWorking(null);
+    if (!outcome.ok) { setError(outcome.error); return; }
+    setPrompt(task.purpose);
+    if (outcome.answer) setResult(outcome.answer);
+    await loadUnfinished();
+    inputRef.current?.focus();
+  };
+
+  const discard = async (task: AskTask) => {
+    setWorking({ id: task.id, verb: "discard" });
+    await discardAskTask(task.id);
+    setWorking(null);
+    await loadUnfinished();
+  };
+
+  return {
+    prompt, setPrompt, result, busy, error, unfinished, working,
+    inputRef, ask, resume, discard,
+  };
+}
+
+type RoomAsk = ReturnType<typeof useRoomAsk>;
+
+/** UNFINISHED — the saved work, in the Room BODY as its own section.
+ *
+ *  F5: this used to render inside `.room-ask-container`, which is
+ *  `position: sticky; bottom: 0`. A ledger does not belong in a composer's
+ *  foot: at five rows it covered every other section and the Room was a wall
+ *  of unfinished asks over dead space. */
+function RoomUnfinishedSection({ ask }: { ask: RoomAsk }) {
+  const { unfinished, working } = ask;
+  if (unfinished.length === 0) return null;
+  // The ratified board draws UNFINISHED 1 — ONE row, one filled primary. It
+  // never showed a list. Five filled primaries is no lead at all, so the
+  // filled verb survives only while the board's case holds; beyond it every
+  // row draws the quiet verb. Flagged to the owner as a board question.
+  const lead = unfinished.length === 1;
+  return (
+    <SurfaceSection label={countLabel("UNFINISHED", unfinished.length)}>
+      <TaskResumeList data-testid="room-unfinished">
+        {unfinished.map((task) => (
+          <TaskResume
+            key={task.id}
+            data-testid={`room-unfinished-${task.id}`}
+            purpose={task.purpose}
+            state={task.state}
+            savedAt={task.savedAt}
+            settledAt={task.settledAt}
+            recipe={task.recipeKey}
+            stoppedReason={task.stoppedReason}
+            stoppedCode={task.stoppedCode}
+            custody={task.custody}
+            primary={lead}
+            busy={working?.id === task.id && working.verb === "resume"}
+            onVerb={() => void ask.resume(task)}
+            onDiscard={() => void ask.discard(task)}
+            discardBusy={working?.id === task.id && working.verb === "discard"}
+          />
+        ))}
+      </TaskResumeList>
+    </SurfaceSection>
+  );
+}
+
+function RoomAskWell({
+  ask,
+  projectId,
+  onOpenRef,
+}: {
+  ask: RoomAsk;
+  projectId: string;
+  onOpenRef: (ref: string) => void;
+}) {
+  const { prompt, setPrompt, result, error, inputRef } = ask;
+  const receipt = result?.groundingReceipt;
+  const groundedCount = groundedMatchCount(receipt ?? null);
+  const modelLabel = useModelLabel(projectId);
 
   return (
     <div className="room-ask-section" data-testid="room-ask-well">
@@ -1430,6 +1594,7 @@ function RoomAskWell({
       {error ? <p className="room-ask-error">{error}</p> : null}
       <div className="room-ask-well" data-testid="room-ask-input-well">
         <input // UX-CANON: needs redesign (HS-170-04)
+          ref={inputRef}
           type="text"
           className="room-ask-input"
           aria-label="Ask this project"
@@ -1439,7 +1604,7 @@ function RoomAskWell({
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              void ask();
+              void ask.ask();
             }
           }}
         />
@@ -1451,7 +1616,17 @@ function RoomAskWell({
         {modelLabel.host === "NOT SET" ? (
           <span className="room-ask-model-chip">
             <EgressChip label="MODEL · NOT SET" className="room-egress-idle" title="No model assigned" />
-            <Button dense variant="ghost" onClick={() => openSurfaceOr("configure-runs-on", "/settings", "models")}>
+            <Button
+              dense
+              variant="ghost"
+              onClick={() => {
+                // The verb he leaves is `Choose`, but `Choose` is GONE once a
+                // model is set — so the place to come back to is the well he
+                // was typing in, with his words still in it (design D2(a)).
+                rememberTaskFocus(inputRef.current);
+                openSurfaceOr("configure-runs-on", "/settings", "models");
+              }}
+            >
               Choose
             </Button>
           </span>
@@ -1463,7 +1638,7 @@ function RoomAskWell({
           />
         )}
         {/* Condition 1: no raw <button>; visually-hidden submit for a11y */}
-        <Button dense variant="ghost" className="room-ask-submit-hidden" aria-label="Submit" onClick={() => void ask()} tabIndex={-1}>
+        <Button dense variant="ghost" className="room-ask-submit-hidden" aria-label="Submit" onClick={() => void ask.ask()} tabIndex={-1}>
           Submit
         </Button>
       </div>
@@ -1731,6 +1906,10 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     ctrl.projectId, () => void ctrl.load(),
   );
 
+  // HS-200-41 — one controller, two faces: UNFINISHED sits in the body as a
+  // section, the well stays sticky at the foot (F5).
+  const askCtrl = useRoomAsk(ctrl.projectId, ctrl.projectName);
+
   const runtimeTitle =
     ctrl.loadStatus === "ready" && ctrl.projectName !== "Project"
       ? ctrl.projectName : null;
@@ -1846,6 +2025,17 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
               <div className="room-section-rise" style={{ animationDelay: "40ms" }}>
                 <NeedsYouSection room={ctrl.room} ctrl={ctrl} reviewCtrl={reviewCtrl} pendingCount={pendingCount} />
               </div>
+              {/* HS-200-41 F5: the saved work is a SECTION in the body, and it
+                  sits HERE — directly after NEEDS YOU. Unfinished work IS
+                  attention, so it belongs in the reading path next to the
+                  Room's first question; the design's posture-6 grammar makes
+                  resuming work a peer of repair, not a footnote under SINCE
+                  CREATED. Filed last it was also the section the sticky foot
+                  reached, so the one row he came back for opened underneath
+                  the composer with its verb hidden. */}
+              <div className="room-section-rise" style={{ animationDelay: "60ms" }}>
+                <RoomUnfinishedSection ask={askCtrl} />
+              </div>
               <div className="room-section-rise" style={{ animationDelay: "80ms" }}>
                 <SourcesSection room={ctrl.room} onReload={() => void ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} />
               </div>
@@ -1863,7 +2053,7 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
               </div>
               {/* Condition 7: ask well sticky at the foot at ALL widths */}
               <div className="room-section-rise room-ask-container" style={{ animationDelay: "200ms" }}>
-                <RoomAskWell projectId={ctrl.projectId} projectName={ctrl.projectName} onOpenRef={ctrl.openProjectRef} />
+                <RoomAskWell ask={askCtrl} projectId={ctrl.projectId} onOpenRef={ctrl.openProjectRef} />
               </div>
             </>
           ) : (

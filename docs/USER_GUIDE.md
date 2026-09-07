@@ -1432,6 +1432,26 @@ appear as an aerogel inset above the well with grounding citations.
 
 ![The Room with nothing needing attention, sources live, and the ask well at the foot](assets/project-rooms/room-quiet.png)
 
+### Unfinished
+
+An ask you start is written down before it is sent, so it outlives the tab. If
+you close the window, restart the hub, or leave to set up a model, the question
+is still there when you come back.
+
+Unfinished asks appear in the Room under `UNFINISHED`, directly below what needs
+you. Each row carries the question, when it was saved, and one verb: `Resume`.
+`Discard` sits under `MORE` and asks once before it acts. A row that stopped
+because the engine was not ready shows the reason in the engine's own words, and
+`Check` takes you to it.
+
+Resume never runs your question twice. If the answer arrived while you were away,
+Resume claims that answer rather than asking again, so a slow engine and a closed
+laptop cannot cost you a second run.
+
+`SAVED HERE` means the ask belongs to this desk. `SAVED ON ANOTHER DESK` means
+the database came from somewhere else, which is worth knowing before you resume
+work you do not recognise.
+
 ### Footer
 
 On the ROOM wing, the footer receipt reads `READ HH:MM · NEXT CHECK

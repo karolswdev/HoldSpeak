@@ -7,7 +7,7 @@
 // The hook re-queries the DOM per keypress (correct under any children
 // shape, no context plumbing) and re-anchors on focusin so mouse
 // clicks move the rover.
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 
 const EDITOR_GUARD = "input, textarea, select";
 const TYPEAHEAD_MS = 500;
@@ -46,12 +46,28 @@ export function useRovingRows(
 ) {
   const current = useRef(0);
 
+  // HS-200-41 F2 — the root element is TRACKED, not read once.
+  //
+  // The listener effect below used to read `ref.current` with deps
+  // `[ref, selector, rowSelector]`, all three of which are stable. A list
+  // that renders NOTHING while it is empty — the A.8 rule, so most of them —
+  // has a null ref on mount, so the effect returned early and, its deps never
+  // changing, NEVER RAN AGAIN once the rows arrived from a fetch. The
+  // keyboard law was silently absent on every such consumer: zero listeners,
+  // invisible to any test whose specimen renders rows on mount.
+  //
+  // Mirroring the ref into state closes it: the stamping effect below runs
+  // after EVERY render, so it sees the element the moment it exists, and the
+  // change re-runs the listener effect with a real root.
+  const [root, setRoot] = useState<HTMLElement | null>(null);
+
   // Re-stamp the roving tabindex after EVERY render: rows come and go
   // with the caller's children, so the hook re-queries, never plumbs.
   useEffect(() => {
-    const root = ref.current;
-    if (!root) return;
-    const stops = Array.from(root.querySelectorAll<HTMLElement>(selector));
+    if (ref.current !== root) setRoot(ref.current);
+    const node = ref.current;
+    if (!node) return;
+    const stops = Array.from(node.querySelectorAll<HTMLElement>(selector));
     if (!stops.length) return;
     if (current.current >= stops.length) current.current = stops.length - 1;
     stops.forEach((stop, index) => {
@@ -60,7 +76,6 @@ export function useRovingRows(
   });
 
   useEffect(() => {
-    const root = ref.current;
     if (!root) return;
     const query = () =>
       Array.from(root.querySelectorAll<HTMLElement>(selector));
@@ -170,5 +185,5 @@ export function useRovingRows(
       root.removeEventListener("focusin", onFocusIn);
       root.removeEventListener("keydown", onKeyDown);
     };
-  }, [ref, selector, rowSelector]);
+  }, [root, selector, rowSelector]);
 }

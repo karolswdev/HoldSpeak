@@ -23,13 +23,22 @@ def _error(exc: ServiceError) -> JSONResponse:
     if exc.code == "grounding_not_found": return JSONResponse(payload,status_code=400)
     return JSONResponse(payload,status_code=int(payload.pop("status", 400 if exc.code == "validation_error" else 409)))
 
+def build_ask_service(ctx: WebContext) -> AskService:
+    """The hub's Ask transport, assembled once.
+
+    HS-200-41 lifted this out of ``build_ask_router`` so the ask-task Resume
+    route can dispatch through the SAME transport under a saved
+    ``invocation_id`` instead of assembling a second, divergent one.
+    """
+    from ..sync import _hub_model_name
+    return AskService(_database(),hub_model=lambda: _hub_model_name(ctx),broadcast=lambda state, **frame: _run_frame(ctx,state,**frame),rails_hydrator=lambda refs,principal: hydrate_rails_refs(refs,principal=principal),observer=get_observer())
+
 def build_ask_router(ctx: WebContext) -> APIRouter:
     router=APIRouter()
     def principal(request: Request) -> Principal:
         return getattr(request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session"))
     def service() -> AskService:
-        from ..sync import _hub_model_name
-        return AskService(_database(),hub_model=lambda: _hub_model_name(ctx),broadcast=lambda state, **frame: _run_frame(ctx,state,**frame),rails_hydrator=lambda refs,principal: hydrate_rails_refs(refs,principal=principal),observer=get_observer())
+        return build_ask_service(ctx)
     @router.get("/api/models")
     async def api_list_models(request: Request) -> Any:
         try: return JSONResponse({"models":service().list_models(principal(request))})
@@ -46,7 +55,12 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
         body=await _json_body(request)
         if body is None: return JSONResponse({"error":"expected a JSON object"},status_code=400)
         try:
-            result=await service().ask(principal(request),str(body.get("prompt") or ""),body.get("grounding"),lens=str(body.get("lens") or "Ask"),context=body.get("context") if isinstance(body.get("context"),list) else [],model=body.get("model"),inference_target_id=body.get("inference_target_id"),profile_id=body.get("profile_id"),max_tokens=body.get("max_tokens"),temperature=body.get("temperature"))
+            # HS-200-41 (ruling B3): the caller may pin the invocation identity
+            # it already saved, so an answer that lands after the tab is gone
+            # can be CLAIMED out of ask_results instead of paid for twice.
+            # AskService has always taken one (ask_service.py); only the
+            # transport never offered it.
+            result=await service().ask(principal(request),str(body.get("prompt") or ""),body.get("grounding"),lens=str(body.get("lens") or "Ask"),context=body.get("context") if isinstance(body.get("context"),list) else [],model=body.get("model"),inference_target_id=body.get("inference_target_id"),profile_id=body.get("profile_id"),max_tokens=body.get("max_tokens"),temperature=body.get("temperature"),invocation_id=(str(body.get("invocation_id")).strip() or None) if body.get("invocation_id") else None)
             return JSONResponse(result)
         except ServiceError as exc: return _error(exc)
         except Exception as exc: return error_500(exc,log,"Failed to run ask")

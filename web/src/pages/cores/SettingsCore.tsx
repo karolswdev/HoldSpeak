@@ -44,6 +44,7 @@ import { SurfaceSection } from "../../desk/surface/Surface";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressFor } from "../../desk/surface/egress";
 import { openSurface } from "../../desk/shell";
+import { announceTaskReturn } from "../../desk/returnToTask";
 import { HotkeyCapture } from "./settingsBespoke";
 import { toggleSfx } from "../../lib/sfx";
 // PARKED (HS-170-03): ModelsModule retired — the Concierge is its own window now.
@@ -865,6 +866,13 @@ function SettingsFace({ hero, scope }: CoreProps) {
     );
   };
   const performSave = async (job: SettingsWriteJob) => {
+    // HS-200-41 (return-to-task, focus half): the control the owner was on
+    // when this write began, captured BEFORE the await — see the
+    // do-not-steal rule in `desk/returnToTask.ts`.
+    const from =
+      typeof document !== "undefined"
+        ? (document.activeElement as HTMLElement | null)
+        : null;
     setSaving(true);
     setRefusal("");
     try {
@@ -887,7 +895,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
       revisionRef.current = authoritative._revision as string | undefined;
       removePendingJob(job.id);
       repaintPending();
-      window.dispatchEvent(new Event("holdspeak:settings-updated"));
+      // The readiness signal AND the focus return, in one call: a face
+      // holding an unfinished task re-reads without a reload, and the verb
+      // the owner left gets focus back (design D2(a) "Focus return").
+      announceTaskReturn(from);
       setWrittenAt(new Date().toTimeString().slice(0, 8));
       return true;
     } catch (error) {

@@ -44,6 +44,7 @@ import {
   type Engine,
 } from "../../../features/concierge/api";
 import { apiFetch } from "../../../lib/api";
+import { onReturnToTask, rememberTaskFocus } from "../../../desk/returnToTask";
 import { DICTATION_FAILURES } from "../../../lib/dictationRecovery";
 import type { MicPhase } from "../../../lib/micSession";
 
@@ -283,11 +284,12 @@ export function SpeakFace() {
   // HS-200-04 (return-to-task): the owner opens Models from the ENGINE row,
   // picks an engine, and comes back. The utterance in the well is untouched;
   // only readiness is re-read. No reload, no second configuration.
-  useEffect(() => {
-    const onSettings = () => { readEngine(); deck.refreshReadiness(); };
-    window.addEventListener("holdspeak:settings-updated", onSettings);
-    return () => window.removeEventListener("holdspeak:settings-updated", onSettings);
-  }, [readEngine, deck]);
+  // HS-200-41: the one shared subscription (`desk/returnToTask.ts`), so the
+  // event name lives in one place and the focus half rides the same signal.
+  useEffect(
+    () => onReturnToTask(() => { readEngine(); deck.refreshReadiness(); }),
+    [readEngine, deck],
+  );
 
   const resolved = resolveEngine(assignment, engines, targets);
 
@@ -635,6 +637,9 @@ function EngineRow({
   readiness: ReturnType<typeof useSpeakDeck>;
 }) {
   const openConcierge = () => {
+    // HS-200-41: remember the verb he left, so the Concierge's Apply can
+    // put focus back here instead of on nothing (design D2(a)).
+    rememberTaskFocus();
     import("../../../desk/shell").then(({ openSurface }) =>
       openSurface("open-concierge"),
     );

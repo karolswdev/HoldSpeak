@@ -1,7 +1,7 @@
 # Phase 200: The Working Practice
 
-**Last updated:** 2026-09-06 — G0: 01–04 DONE, 05's automatable half proved; G1: 06, 07, 08 DONE (the 33-episode corpus with held-out separation, six deterministic invariants, the live runner whose real result is the owner's); 09 the daily workflow design on the canvas, counsel's bounce being paid, his verdict owed.
-**Status:** planning. Forty stories defined; zero implementation stories completed.
+**Last updated:** 2026-09-07 — G0: 01–04 DONE, 05's automatable half proved; G1: 06, 07, 08 DONE; 09's design ratified by counsel and on the canvas for his verdict; **41 DONE** (the durable ask, the `TaskResume` species, return-to-task's focus half, draft custody); 10's wire design RATIFIED WITH CONDITIONS by counsel and all conditions paid, build not started.
+**Status:** in build. Forty-one stories defined; G0 01-04 and G1 06-08 done.
 **Product owner:** Karol.
 **Delivery owner:** unassigned until implementation starts.
 
@@ -23,7 +23,7 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 ## Exit criteria (evidence required)
 
 - [ ] **G0: Known and recoverable installation.** Runtime identity, isolated checks, cold first value, physical voice, and restore are proven. Evidence: stories 01, 02, 03, 04, 05.
-- [ ] **G1: Trustworthy daily Project work.** Claim support, coverage, real-model evaluation, daily flows, and the two-day owner sequence pass. Evidence: stories 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16.
+- [ ] **G1: Trustworthy daily Project work.** Claim support, coverage, real-model evaluation, daily flows, and the two-day owner sequence pass. Evidence: stories 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 41.
 - [ ] **G2: Configurable working practice.** Three recipes, replay-safe setup, revisit, one actual scheduled brief, and the R1 pilot pass. Evidence: stories 17, 18, 19, 20, 21, 22, 23.
 - [ ] **G3: Supervised assignments.** One adapter, immutable work contracts, verification, intervention, recovery, and five useful tasks pass. Evidence: stories 24, 25, 26, 27, 28, 29, 30.
 - [ ] **G4: Bounded unattended execution.** Host and credential recovery, durable triggers, bounded retry, two recipes, and real occurrences pass. Evidence: stories 31, 32, 33, 34, 35, 36.
@@ -47,7 +47,7 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-07 | Make incomplete attention coverage explicit | done | [story-07](story-07-coverage-and-partial-results.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-200-08 | Establish repeatable live-model quality evaluation | done | [story-08](story-08-semantic-evaluation-harness.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-200-09 | Design the daily Project workflow on existing surfaces | in-progress | [story-09](story-09-daily-workflow-design.md) | — |
-| HS-200-10 | Promote reusable working context into canonical records | backlog | [story-10](story-10-scoped-working-context.md) | — |
+| HS-200-10 | Promote reusable working context into canonical records | in-progress | [story-10](story-10-scoped-working-context.md) | — |
 | HS-200-11 | Produce a useful Project preparation brief | backlog | [story-11](story-11-project-preparation.md) | — |
 | HS-200-12 | Connect a real meeting to reviewed outcomes | backlog | [story-12](story-12-meeting-to-reviewed-outcomes.md) | — |
 | HS-200-13 | Carry decisions and commitments into the next day | backlog | [story-13](story-13-decision-and-commitment-continuity.md) | — |
@@ -78,8 +78,135 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-38 | Package the verified product and recovery procedures | backlog | [story-38](story-38-release-package-and-operator-guides.md) | — |
 | HS-200-39 | Rehearse the release without implementation guidance | backlog | [story-39](story-39-cold-release-rehearsal.md) | — |
 | HS-200-40 | Close Phase 200 on outcomes and release evidence | backlog | [story-40](story-40-release-and-phase-close.md) | — |
+| HS-200-41 | Return to unfinished work | done | [story-41](story-41-return-to-unfinished-work.md) | [evidence-story-41](./evidence-story-41.md) |
 
 ## Where we are
+
+2026-09-07 (evening): **HS-200-41 DONE.** An ask the owner starts in a Room is
+now durable and resumable, and the way back to it is a face rather than an event.
+Six lanes, three bounces, and four defects that only pixels or a suite could
+find.
+
+*What shipped.* `project_ask_tasks` (schema 77, additive) written **before**
+dispatch under a minted `invocation_id`, so a late answer is **claimed, never
+re-run** — the kernel already kept the answer and its `UNIQUE` identity; what was
+missing was the key back, since `/api/ask` never accepted an id though the service
+took one. Resume reads the result first and dispatches nothing when it finds one;
+a double Resume cannot double-spend; orphaned leases settle to `failed` on startup
+by reconcile only. `Discard` is a state, never a delete. The `TaskResume` species
+is in the library with `EditInPlace` and `ConfirmVerb`, whose Canon B documentation
+debt this story also paid. Return-to-task gained its focus half with a real
+do-not-steal rule, the Room's ask well subscribes to it, and the stale
+`MODEL · NOT SET` chip is fixed. Draft custody is `sessionStorage` — ruling R2's own
+escape hatch fired, so `DRAFT NOT SAVED` is drawn nowhere and the owner's walk
+question 7 is retired. Five raw buttons became library Buttons with the composer's
+appearance unchanged, and a disabled Send finally reads as refused.
+
+*Four defects the shot walk caught, after every unit test was green.* A raw 40-char
+host id printed on his face after a restart (a `raw-ids` canon break, and custody
+inverted by the very event the story exists for). `TaskResumeList` with **zero**
+event listeners — a `roving.ts` bug where the listener effect's deps never change,
+so any list that mounts empty and fills from the server never gets a keyboard;
+fixed at source for every consumer. The engine's quoted words clipped 205px
+off-glass at 393 because `StateChip` neither wraps nor truncates. And five saved
+asks eating the entire Room, because a ledger had been rendered inside a sticky
+composer foot.
+
+*And one the suite caught in the fix.* Custody's replacement identity keyed on
+`database_identity`, which digests the file's **inode** — right for HS-200-02's
+question ("same file?"), wrong for custody's ("same desk?"), and nondeterministic
+in practice: the rig failed one run in two, passed alone, and was not contention.
+Custody now keys on a machine identity minted once and persisted; it is stripped
+from the settings payload so it rides no wire at all. While fixing it a lane found
+`@observe_service` had been split from `ProjectService` by an earlier insertion —
+**the durable project boundary had silently lost its observability**, with nothing
+failing. Restored.
+
+*Triage of the CI-shape suite (10590 passed, 17 failed).* Eight were xdist
+contention and pass serially. Six were fences this story moved, all paid by
+recording the new truth: the schema floor, three phase-143 censuses, and the voice
+guard's three em dashes in accessible names (**the settled design's D2(a) writes
+those names with dashes; the guard is canon and won**). Two of those six were
+**inherited drift already red at HEAD**, paid here and attributed. Three are
+inherited on main: hs153's ledgered guardrail, and hs171's two deck legs, traced by
+blame to HS-200-07 deliberately badging an unobserved Room's repair token against
+hs171's older zero-badge assertion — ledgered for a ruling, not this story's.
+
+*Fence 2 deserves its own line.* It looked like line drift. It was not: this story
+made the product's **only HTTP Ask entrance invisible to the census**, because
+factory discovery was a single non-transitive pass. Deleting the "stale" row would
+have gone green in a minute and blinded that guard permanently. The scanner was
+fixed to a fixpoint instead, which then exposed a second invisible entrance — the
+resume route — with the blast radius measured at exactly one site before anything
+widened.
+
+**HS-200-10** is not built. Its wire design is RATIFIED WITH CONDITIONS
+(`assets/counsel-on-design-200-10-reread.md`) with all conditions paid. Counsel's
+first read was a **BOUNCE** that overturned ruling C2: containment does not
+contain, because **not attaching is the trigger condition for automatic
+retrieval** — the orchestrator verified the chain and reversed his own ruling to
+C2′, reachable by reference and never by relevance. The re-take then found a
+second retrieval route (relationship expansion reading note rows directly) that a
+corpus-only fence would have missed, and counsel's re-read found the belt placed
+on the by-reference path and the fence failing to travel over sync. Three
+choke points, a monotone merge where `revoked` beats `active`, and the title
+minted from the quote so he can still find what he said.
+
+2026-09-07: **HS-200-10 opened, traced, and split.** Three read-only lanes traced
+the story before a line of it was built, as the ratified design required, and what
+they found changed its shape.
+
+*The one UNKNOWN is answered, and the answer is no.* A Room ask persists nothing.
+The typed text lives in React state (`ProjectRoomCore.tsx:1387`); `runAsk` says so
+in its own docstring (`web/src/desk/ask.ts:127`); the kernel journals a payload
+hash, never the prompt (`holdspeak/kernel/inference_runner.py:63-66`); and
+`ask_results.payload_json` (`schema.py:2069-2076`) holds the answer without the
+question. One conditional pre-dispatch write exists, gated on a migration family
+that is **absent from the owner's desk** (his families are
+`recipe-workbench-subject-route-assignments` and
+`speech-recognition-route-assignments`, read read-only). So `RESUMED AFTER
+RESTART · SAVED 09:04` and the whole `UNFINISHED` ledger must be built, not bound.
+The sharpest fact: the **dictated audio** for that same field already survives a
+restart through IndexedDB (`web/src/lib/pendingVoice.ts:39-110`); only the typed
+words do not.
+
+*The story carried two unrelated jobs.* Promotion of working context is one;
+resuming unfinished work is another. The design had put the second here for want
+of a home. Split on the convention that design states for posture 6 — IDs stay
+stable, new IDs go at the end — into **HS-200-41 Return to unfinished work**,
+which is fully traced and ready to build, while 10 keeps its five acceptance
+criteria and gets a wire design first (three unsettled problems: where a target
+revision lives, how the People boundary is classified rather than plumbed, and a
+reverse index for staleness that stories 11, 13, 17 and 20 will all consume).
+
+*Ruling R2 is reversed.* The design said the face would state the limitation with
+`DRAFT NOT SAVED` "unless persistence proves trivial". It proved trivial — the
+precedent is `useLedgerFilter` (`web/src/desk/surface/LedgerFilter.tsx:17-49`) at
+about 25 lines, and the composer's draft store has exactly one writer and one
+eraser. The condition the design itself ratified has fired: the draft is
+persisted, to `sessionStorage` rather than `localStorage` because a draft can hold
+dictated meeting material and session scope dies with the tab. `DRAFT NOT SAVED`
+is drawn on no face, and the owner's walk question 7 is retired without him.
+
+*Three of the design's premises were wrong and are corrected in Addendum 3.* The
+mic law is already satisfied at the Thread composer (`ThreadComposer.tsx:981`) and
+the canon scanner does see `<textarea>` (`scripts/ux_canon_scan.py:549`, `:334`) —
+residue 1 was already paid. The composer has five raw buttons, not two. The
+library `Button` has no `unavailable` variant; refusal is native `disabled`.
+
+*A defect in the guard for the owner's own ruling, ledgered.* Rule A1 matches
+`r'<button[\s>/]'` per line over `content.splitlines()`
+(`scripts/ux_canon_scan.py:429`, `:713`), so a tag Prettier wrote as `<button`
+alone on its line never matches — and Prettier writes almost all of them.
+Measured over non-test `.tsx` under `web/src`, excluding the library's own files:
+**the scanner sees 9 of 206 raw `<button>` tags across 77 files**, while the
+ceiling records `A1: 4`. Not paid here; the one-character fix fails the ratchet on
+the spot and the honest repair is a conversion campaign. Ledgered in BACKLOG.md.
+
+Also paid: `ACCEPTANCE.md`'s coverage row carried a vocabulary that never shipped
+(`excluded`, `missing`) and now reads the shipped C4 words
+(`needs_you_aggregate.py:52`). `BASELINE.md:69`'s accept/reject error was already
+corrected by counsel's read.
 
 2026-09-07 (small hours): HS-200-08 DONE — tests/fixtures/phase200/corpus/
 (33 episodes: 11 Interview · 11 meeting extraction · 11 grounded update;

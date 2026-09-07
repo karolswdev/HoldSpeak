@@ -12,6 +12,8 @@ from .core import (  # noqa: F401
     LEGACY_DICTATION_PROFILE_ID,
     LEGACY_ENDPOINT_FIELDS,
     LEGACY_INTEL_PROFILE_ID,
+    MACHINE_ID_KEY,
+    machine_identity,
     _coerce,
     _coerce_config_version,
     migrate_legacy_endpoints,

@@ -26,7 +26,7 @@ It is insufficient evidence for recommendation usefulness.
 | P200-A01 | Identify the loaded backend, bundle, and database. Detect a stale bundle and a second runtime. | 01–02 | Tests, actual runtime |
 | P200-A02 | Back up, upgrade, restore a copy, and reopen the same permitted records and attachments. | 02, 38 | Tests, actual runtime |
 | P200-A03 | Cold install reaches an edited, copied or kept sentence without an LLM. | 03–05, 39 | Browser, physical |
-| P200-A04 | Select a compatible model, execute a real probe, fail one prerequisite, repair it, and return to the unfinished task. | 04 | Tests, model, browser |
+| P200-A04 | Select a compatible model, execute a real probe, fail one prerequisite, repair it, and return to the unfinished task. | 04, 41 | Tests, model, browser |
 | P200-A05 | Capture, correct, replay, and reopen physical dictation. Permission failure and uncertain delivery do not silently lose or duplicate the work. | 05 | Tests, physical |
 | P200-A06 | Attach a valid irrelevant citation to invented prose. The claim stays unsupported. Edits invalidate prior support. | 06, 08 | Tests, model |
 | P200-A07 | Fail one or every Room read. Arrival and brief show incomplete coverage rather than an all-clear. | 07, 15 | Tests, browser |
@@ -206,7 +206,7 @@ Each observation records:
 | Execution | Start/end, operation identities, output refs, terminal or indeterminate state |
 | Review | Support judgments, corrections, failed checks, reviewer outcome |
 | Effort | Active minutes, elapsed minutes, setup allocation, maintenance |
-| Coverage | Available, stale, failed, excluded, and missing sources |
+| Coverage | Available, stale, failed, forbidden, and unavailable sources, in the shipped C4 vocabulary (`holdspeak/services/needs_you_aggregate.py:52`) |
 | Result | Pass, fail, or inconclusive with reason and follow-up owner |
 
 Use the existing evidence capture and UAT conventions.

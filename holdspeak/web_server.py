@@ -1178,6 +1178,18 @@ class MeetingWebServer:
                 await refinement_coordinator.start()
             except Exception as e:
                 log.error(f"refinement coordinator startup recovery failed: {e}")
+            # HS-200-41: settle asks whose dispatching process is gone. After
+            # the coordinator starts, so that a lease a live refinement_hosts
+            # row still backs reads as work in flight and never as
+            # abandonment. Reconcile from proof only — this dispatches nothing.
+            try:
+                lost = await asyncio.to_thread(
+                    _project_service.recover_ask_tasks_on_startup
+                )
+                if lost:
+                    log.info(f"Settled {len(lost)} unfinished ask(s) whose host was lost")
+            except Exception as e:
+                log.error(f"ask task startup recovery failed: {e}")
             self._kernel_liveness_task = asyncio.create_task(
                 self._kernel_liveness_loop()
             )

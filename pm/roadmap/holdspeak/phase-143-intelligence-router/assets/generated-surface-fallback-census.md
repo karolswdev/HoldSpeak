@@ -100,6 +100,7 @@ story that owns their migration.
 | 156-04 | `holdspeak/services/front_door_service.py` (pack preset selection, profile extraction from receipt, group assignment composition; not assignment authority) |
 | 175-07 | `holdspeak/services/calendar_snapshot_service.py` (egress host read off the admitted route plan for the snapshot receipt; vision-capable profile ordering by boundary, local first, for the direct-dispatch fallback, receipted with its host; not route selection) |
 | 200-04 | `holdspeak/services/route_probe.py` (task-probe refusal receipt when no frozen route plan resolves; not route selection) |
+| 200-41 | `holdspeak/services/project_service.py` (quotes the live placement target's own readiness reason beside a saved ask task's bounded refusal code; stores no reason once the hub stops reporting that state; not route selection) |
 
 ## Guarded web routing consumers
 
@@ -183,3 +184,21 @@ physical attempt on the frozen plan.
   result the face reads.
 
 Classified in `BACKEND_PRIVATE_DECISIONS` with review tag `200-04`.
+
+Story 200-41 adds `holdspeak/services/project_service.py` as a guarded
+backend surface. A saved Room ask that stops carries a bounded refusal
+CODE; the words printed beside that code are the destination's own,
+never a sentence the server composed.
+
+- `_resolve_stop_reason`: matched by the scanner on its name (`resolve`)
+  and its `resolve_placement` import. It selects nothing and dispatches
+  nothing. It reads the LIVE placement this hub would use and returns
+  that target's `readiness_reason` VERBATIM -- but only while the target
+  still reports the state the code names (`inference_target_<state>`).
+  If the engine came back in the meantime, or no target resolves at all,
+  it returns the empty string and the row keeps its code with no reason:
+  the honest answer is no words, not stale ones. Its one caller stores
+  the result on an already-failed task row, so no leg is chosen, no
+  route is written, and nothing is retried.
+
+Classified in `BACKEND_PRIVATE_DECISIONS` with review tag `200-41`.

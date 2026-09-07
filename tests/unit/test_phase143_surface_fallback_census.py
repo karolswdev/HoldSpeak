@@ -58,6 +58,7 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/project_update_service.py", "_resolve_for_capability"): ("capability assignment resolver for project.update_draft deployment revision lookup", "162-03"),
     ("holdspeak/services/project_update_service.py", "_route_plan_deployment"): ("reads the frozen route plan the Ask path resolves so the drafter names the deployment its assignment already selected; no selection of its own", "200-08"),
     ("holdspeak/services/project_update_service.py", "_resolve_generator_provenance"): ("names the drafter's host and model on the update receipt from the recorded run; provenance display, never route selection", "173-02"),
+    ("holdspeak/services/project_service.py", "_resolve_stop_reason"): ("quotes the live placement target's own readiness reason beside a saved ask task's bounded refusal code, and stores no reason at all once the hub stops reporting the state that code names; provenance quoting, never route selection", "200-41"),
     ("holdspeak/services/project_steward_service.py", "_apply_effect_with_retry"): ("bounded steward effect retry within one run; STW-008 policy bounds, stop-checked between attempts, never route selection", "163-07"),
     ("holdspeak/speech_session/session.py", "_routed_session_validation_plan"): ("inert validation/history carrier for fully-adopted sessions; no route selection", "143-08"),
     ("holdspeak/services/inference_route_plan_service.py", "_insert_route"): ("canonical immutable route-plan persistence", "143-05"),

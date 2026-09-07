@@ -101,7 +101,7 @@ ROUTING_RESOLVER_REFERENCES = {
     # HS-172: resolve_meeting_placement in routing_glue, mcp/tools, settings route
     "holdspeak/runtime/routing_glue.py:374:import:resolve_meeting_placement",
     "holdspeak/runtime/routing_glue.py:375:ref:resolve_meeting_placement",
-    "holdspeak/mcp/tools.py:836:import:resolve_meeting_placement",
+    "holdspeak/mcp/tools.py:825:import:resolve_meeting_placement",
     "holdspeak/web/routes/system/settings.py:44:import:resolve_meeting_placement",
     "holdspeak/web/routes/system/settings.py:45:ref:resolve_meeting_placement",
     "holdspeak/services/settings_service.py:72:import:resolve_meeting_placement",
@@ -114,11 +114,28 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/speech_session/provider.py:151:ref:resolve_deployment_revision",
     "holdspeak/speech_session/provider.py:226:import:resolve_deployment_revision",
     "holdspeak/speech_session/provider.py:230:ref:resolve_deployment_revision",
+    # HS-200-41: resolve_placement inside ``ProjectService._resolve_stop_reason``.
+    # A saved ask task stores a bounded refusal CODE; the reason beside it is
+    # the destination's own words, so the resolver is read to ask the LIVE
+    # placement this hub would use what it says — and nothing is stored when the
+    # hub no longer observes the state the code names.  A provenance read, not a
+    # rival route decision, but it is a resolver reference and is registered as
+    # one rather than allowed to sit outside the census.
+    "holdspeak/services/project_service.py:2060:import:resolve_placement",
+    "holdspeak/services/project_service.py:2061:ref:resolve_placement",
+    # Pre-existing and previously UNREGISTERED, found by the HS-200-41 sweep and
+    # registered here rather than left red: ``_captured_deployment_revision``
+    # (project_update_service.py:1034) resolves a profile's target only to
+    # freeze its deployment revision through ``capture_deployment_revision``.
+    # The file is byte-identical to HEAD c6e6c1e7 — this census never had a row
+    # for it, and HS-200-41 did not create the site.
+    "holdspeak/services/project_update_service.py:1044:import:resolve_inference_target",
+    "holdspeak/services/project_update_service.py:1046:ref:resolve_inference_target",
 }
 
 ROUTING_POINTER_ATTRIBUTES = {
-    "holdspeak/config/core.py:142:intel_profile_id",
-    "holdspeak/config/core.py:165:intel_profile_id",
+    "holdspeak/config/core.py:212:intel_profile_id",
+    "holdspeak/config/core.py:235:intel_profile_id",
     "holdspeak/config/integrations.py:190:inference_target_id",
     "holdspeak/config/integrations.py:191:inference_target_id",
     "holdspeak/config/meeting.py:173:intel_profile_id",
@@ -130,11 +147,11 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/services/inference_setup_service.py:650:inference_target_id",
     "holdspeak/services/inference_setup_service.py:654:intel_profile_id",
     "holdspeak/services/inference_setup_service.py:181:inference_target_id",
-    "holdspeak/services/settings_service.py:659:intel_profile_id",
-    "holdspeak/services/settings_service.py:910:inference_target_id",
+    "holdspeak/services/settings_service.py:665:intel_profile_id",
+    "holdspeak/services/settings_service.py:916:inference_target_id",
     "holdspeak/services/workbench_service.py:562:resolver_profile_id",
     # HS-172: resolve_meeting_placement pointer reads
-    "holdspeak/mcp/tools.py:835:intel_profile_id",
+    "holdspeak/mcp/tools.py:824:intel_profile_id",
     "holdspeak/web/routes/system/settings.py:41:intel_profile_id",
 }
 
@@ -143,11 +160,11 @@ ROUTING_POINTER_ATTRIBUTES = {
 # receipts, DTOs, readiness, and unrelated records out of the assignment lane.
 PROFILE_ID_CLASSIFICATIONS = {
     **{site: "mutable assignment pointer" for site in {
-        "holdspeak/config/core.py:145:profile_id", "holdspeak/config/core.py:176:profile_id",
+        "holdspeak/config/core.py:215:profile_id", "holdspeak/config/core.py:246:profile_id",
         "holdspeak/config/integrations.py:269:profile_id", "holdspeak/config/model.py:80:profile_id",
         "holdspeak/plugins/dictation/assembly.py:327:profile_id",
-        "holdspeak/services/settings_service.py:811:profile_id",
-        "holdspeak/services/settings_service.py:883:profile_id",
+        "holdspeak/services/settings_service.py:817:profile_id",
+        "holdspeak/services/settings_service.py:889:profile_id",
         "holdspeak/services/sync_service.py:687:profile_id",
         "holdspeak/services/sync_service.py:702:profile_id",
     }},
@@ -166,7 +183,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/services/model_profile_service.py:225:profile_id",
         "holdspeak/services/model_profile_service.py:264:profile_id",
         # HS-172: meetings host resolve display reads.
-        "holdspeak/mcp/tools.py:838:profile_id",
+        "holdspeak/mcp/tools.py:827:profile_id",
         "holdspeak/web/routes/system/settings.py:46:profile_id",
     }},
     **{site: "immutable evidence" for site in {
