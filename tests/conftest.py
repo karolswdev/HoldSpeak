@@ -456,6 +456,11 @@ def pytest_configure(config):
         "requires_local_dictation_route: requires this machine to resolve an "
         "on-device dictation artifact from default configuration",
     )
+    config.addinivalue_line(
+        "markers",
+        "requires_openai_client: requires the `openai` client package (the "
+        "`meeting` / `dictation-openai` extras) on this machine",
+    )
 
 
 # ============================================================
@@ -535,10 +540,45 @@ def missing_local_dictation_route_reason() -> str:
     return ""
 
 
+def missing_openai_client_reason() -> str:
+    """Why no OpenAI-compatible endpoint can be called on this machine.
+
+    The product's ONLY transport for an OpenAI-compatible endpoint is the
+    `openai` package (`holdspeak/intel/__init__.py` imports it, and
+    `get_cloud_intel_runtime_status` answers "openai package is not available"
+    without it). It is not a core dependency: it lives in the `meeting` and
+    `dictation-openai` extras (pyproject.toml), and the CI Integration job
+    installs `--extra test` only.
+
+    The HS-200-08 evaluation harness substitutes the MODEL and nothing else:
+    its `--engine canned` stub is a real local OpenAI-compatible HTTP server
+    that the product's own client, egress guard and admission path call. With
+    no client package the route probes UNREACHABLE
+    (`reason_code: inference_failed`) and every model-bearing leg fails. That
+    is the environment, not a product defect, so the tests that need the
+    canned model to actually answer declare the dependency and skip with this
+    reason. The tests that prove the harness's own behaviour when a model
+    CANNOT be reached stay ungated and run everywhere.
+    """
+    import importlib.util
+
+    try:
+        if importlib.util.find_spec("openai") is not None:
+            return ""
+    except Exception as exc:  # pragma: no cover - broken namespace package
+        return f"the openai client package is not importable: {exc}"
+    return (
+        "the `openai` client package is not installed on this machine; it is "
+        "an optional extra (`meeting` / `dictation-openai`) and the product "
+        "has no other transport for an OpenAI-compatible endpoint"
+    )
+
+
 _DEPENDENCY_PROBES = {
     "requires_model": missing_local_model_reason,
     "requires_mlx_whisper": missing_mlx_whisper_reason,
     "requires_local_dictation_route": missing_local_dictation_route_reason,
+    "requires_openai_client": missing_openai_client_reason,
 }
 
 

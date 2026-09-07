@@ -278,3 +278,5 @@ For whoever cuts a release:
 - [`GETTING_STARTED.md`](GETTING_STARTED.md) for first-time install and run.
 - [`../README.md`](../README.md) for the install surface and project status.
 - [`MODELS.md`](MODELS.md) for the model contract.
+
+A report always carries an `aborted` column. It is empty on a completed run. When the driver stops before the episodes finish, the column names the reason, the raw file is still written, and the verdict is fail. Read the reason before reading any count.

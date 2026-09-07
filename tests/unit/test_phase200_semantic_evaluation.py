@@ -484,7 +484,7 @@ class TestReportFields:
         for key in (
             "corpus_version", "engine", "model", "route", "build", "episodes",
             "totals", "failures_by_kind", "support_judgments", "latency_ms",
-            "review_effort", "verdict", "critical_verdict", "judge",
+            "review_effort", "verdict", "critical_verdict", "judge", "aborted",
         ):
             assert key in report, key
         assert report["route"]["plan_id"] == "irp_1"
@@ -511,6 +511,88 @@ class TestReportFields:
             {"claims": [{"support": "supported"}]},
         ])
         assert counts == {"source_linked": 1, "supported": 2}
+
+
+class TestAbortIsLoud:
+    """HS-200-08 follow-through: a run that dies still writes a named report.
+
+    The CI runner's abort was invisible -- the driver wrote no report at all,
+    so every assertion died on ``KeyError: 'totals'``. The report now always
+    carries an ``aborted`` column, and a run that did not finish is never a
+    pass.
+    """
+
+    def test_a_completed_run_reports_an_empty_abort_column(self, corpus):
+        report = build_report(
+            episodes=corpus[:1],
+            outputs={corpus[0]["id"]: {"text": "unknown", "latency_ms": 1.0}},
+            route={"model": "m"},
+            engine="canned",
+        )
+        assert report["aborted"] == ""
+        assert report["aborted_traceback"] == ""
+
+    def test_an_abort_names_its_reason_and_can_never_be_a_pass(self, corpus):
+        report = build_report(
+            episodes=corpus[:1],
+            outputs={},
+            route={"model": "m"},
+            engine="canned",
+            aborted="PluginProviderFailure: plugin_provider_failed:requirements_extractor",
+            aborted_traceback="Traceback (most recent call last): ...",
+        )
+        assert "PluginProviderFailure" in report["aborted"]
+        assert report["aborted_traceback"]
+        assert report["verdict"] == "fail", "an incomplete run is never a pass"
+        assert "aborted" in phase200_eval.summarise(report)
+
+    def test_the_driver_writes_a_report_when_the_hub_cannot_boot(self, tmp_path, monkeypatch):
+        """The exact runner shape: nothing ran, and the report still lands."""
+        from tests.fixtures.phase200 import collectors
+
+        class _HubIsDead(BaseException):
+            """A BaseException, like the kernel's own PluginProviderFailure."""
+
+        def _refuse(**_kwargs):
+            raise _HubIsDead("the evaluation hub could not boot")
+
+        monkeypatch.setattr(collectors, "evaluation_hub", _refuse)
+
+        report_path = tmp_path / "report.json"
+        raw_path = tmp_path / "raw.json"
+        code = phase200_eval.main([
+            "run", "--engine", "canned",
+            "--canned", str(checks.CORPUS_ROOT.parent / "canned" / "harness.json"),
+            "--episode", "MX-01",
+            "--report", str(report_path), "--raw", str(raw_path),
+        ])
+
+        assert code == 1, "an aborted run fails the command"
+        assert report_path.exists(), "an abort must still write the report"
+        assert raw_path.exists(), "an abort must still write the raw outputs"
+        report = json.loads(report_path.read_text())
+        assert "_HubIsDead" in report["aborted"], report["aborted"]
+        assert report["aborted_traceback"]
+        assert report["verdict"] == "fail"
+        assert report["totals"]["episodes"] == 1, "the selection is still reported"
+
+    def test_a_control_signal_is_never_recorded_as_a_trial(self, tmp_path, monkeypatch):
+        """Ctrl-C is the operator speaking; it is not an evaluation result."""
+        from tests.fixtures.phase200 import collectors
+
+        def _interrupt(**_kwargs):
+            raise KeyboardInterrupt
+
+        monkeypatch.setattr(collectors, "evaluation_hub", _interrupt)
+
+        with pytest.raises(KeyboardInterrupt):
+            phase200_eval.main([
+                "run", "--engine", "canned",
+                "--canned", str(checks.CORPUS_ROOT.parent / "canned" / "harness.json"),
+                "--episode", "MX-01",
+                "--report", str(tmp_path / "report.json"),
+            ])
+        assert not (tmp_path / "report.json").exists()
 
 
 class TestCannedFixture:

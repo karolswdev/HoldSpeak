@@ -80,6 +80,10 @@ test = [
     # HS-72-01: the primitive-contract drift guard validates real wire payloads
     # against the JSON Schemas in pm/roadmap/holdspeak-mobile/contracts/schemas.
     "jsonschema>=4.21",
+    # HS-200-08: the evaluation harness drives a real local OpenAI-compatible
+    # stub through the product's only transport for such an endpoint, so its
+    # proofs run on a bare runner instead of skipping.
+    "openai>=1.0.0",
 ]
 meeting = [
     "llama-cpp-python>=0.3.34",

@@ -30,15 +30,27 @@ CANNED = REPO / "tests" / "fixtures" / "phase200" / "canned" / "harness.json"
 pytestmark = pytest.mark.integration
 
 
-def _run(tmp_path: Path, *args: str, canned: Path = CANNED) -> tuple[subprocess.CompletedProcess, dict]:
-    """Run the driver in a subprocess with an isolated HOME; return its report."""
+def _run(
+    tmp_path: Path,
+    *args: str,
+    canned: Path = CANNED,
+    engine: tuple[str, ...] = (),
+) -> tuple[subprocess.CompletedProcess, dict]:
+    """Run the driver in a subprocess with an isolated HOME; return its report.
+
+    A run that wrote no report at all is not a KeyError waiting to happen: it
+    is reported as an abort with the driver's own output attached, because
+    that is exactly how the CI runner failed (HS-200-08 follow-through) and a
+    reader must be able to see the reason in the assertion.
+    """
     home = tmp_path / "home"
     home.mkdir(exist_ok=True)
     report_path = tmp_path / "report.json"
+    engine_args = list(engine) or ["--engine", "canned", "--canned", str(canned)]
     result = subprocess.run(
         [
             sys.executable, str(DRIVER), "run",
-            "--engine", "canned", "--canned", str(canned),
+            *engine_args,
             "--report", str(report_path),
             "--raw", str(tmp_path / "raw.json"),
             *args,
@@ -49,8 +61,22 @@ def _run(tmp_path: Path, *args: str, canned: Path = CANNED) -> tuple[subprocess.
         text=True,
         timeout=600,
     )
-    report = json.loads(report_path.read_text()) if report_path.exists() else {}
+    if report_path.exists():
+        report = json.loads(report_path.read_text())
+    else:
+        report = {
+            "aborted": (
+                "the driver wrote no report at all\n"
+                f"--- stdout ---\n{result.stdout}\n--- stderr ---\n{result.stderr}"
+            )
+        }
     return result, report
+
+
+def _completed(report: dict) -> dict:
+    """Assert the run finished, naming the abort reason when it did not."""
+    assert not report.get("aborted"), report["aborted"]
+    return report
 
 
 @pytest.fixture(scope="module")
@@ -58,11 +84,16 @@ def three_categories(tmp_path_factory) -> tuple[subprocess.CompletedProcess, dic
     """One episode from each category, through its real product path."""
     tmp_path = tmp_path_factory.mktemp("phase200-eval")
     result, report = _run(tmp_path, "--episode", "IV-01", "--episode", "MX-01", "--episode", "UP-01")
-    raw = json.loads((tmp_path / "raw.json").read_text())
-    assert report, result.stdout + result.stderr
+    _completed(report)
+    raw_path = tmp_path / "raw.json"
+    assert raw_path.exists(), (
+        "the driver completed but wrote no raw outputs\n" + result.stdout + result.stderr
+    )
+    raw = json.loads(raw_path.read_text())
     return result, report, raw
 
 
+@pytest.mark.requires_openai_client
 class TestRunnerEndToEnd:
     def test_the_run_completes_over_every_category(self, three_categories):
         result, report, _ = three_categories
@@ -128,6 +159,7 @@ class TestRunnerEndToEnd:
 
 
 class TestCriticalFailureIsCaught:
+    @pytest.mark.requires_openai_client
     def test_an_invented_value_fails_the_run_and_its_exit_code(self, tmp_path):
         """A model that restates a corrected fact fails, whatever else passed."""
         canned = tmp_path / "bad.json"
@@ -150,6 +182,7 @@ class TestCriticalFailureIsCaught:
         }))
         result, report = _run(tmp_path, "--episode", "MX-02", "--episode", "MX-01", canned=canned)
 
+        _completed(report)
         assert report["totals"]["critical_failures"] == 1, report["episodes"]
         assert report["critical_verdict"] == "fail"
         assert result.returncode == 1, "a critical failure must fail the command"
@@ -161,15 +194,49 @@ class TestCriticalFailureIsCaught:
         canned = tmp_path / "empty.json"
         canned.write_text(json.dumps({"default": "unknown", "episodes": {}}))
         _, report = _run(tmp_path, "--episode", "UP-02", "--repeat", "2", canned=canned)
+        _completed(report)
         assert report["totals"]["episodes"] == 2, "a repeated trial keeps both runs"
         assert report["repeat"] == 2
 
 
+class TestTheRunNeverAbortsSilently:
+    """HS-200-08 follow-through: the CI runner's failure mode, made loud.
+
+    The Integration job has no ``openai`` client, so the product's leaf could
+    not call the canned stub and the plugin kernel raised
+    ``PluginProviderFailure`` -- a ``BaseException`` BY DESIGN, so that a
+    provider fault cannot be laundered into a plugin result. The driver's
+    trial guard caught ``Exception``, so that failure walked straight out of
+    the run and NOTHING was written: no report, no raw outputs. Every test
+    then died on ``KeyError: 'totals'`` or a missing ``raw.json``, naming
+    nothing.
+
+    This runs everywhere -- it needs no model at all, only a route that
+    cannot answer -- and it reproduces the abort on any machine. The abort
+    column itself (a hub that never boots) is proved in
+    ``tests/unit/test_phase200_semantic_evaluation.py``.
+    """
+
+    DEAD_ROUTE = ("--engine", "route", "--endpoint", "http://127.0.0.1:1/v1", "--model", "absent")
+
+    def test_a_provider_failure_is_a_retained_trial_not_an_abort(self, tmp_path):
+        result, report = _run(tmp_path, "--episode", "MX-01", engine=self.DEAD_ROUTE)
+
+        _completed(report)
+        assert (tmp_path / "raw.json").exists(), "an unanswerable route still writes raw outputs"
+        assert report["totals"]["episodes"] == 1, report["totals"]
+        row = report["episodes"][0]
+        assert "PluginProviderFailure" in row["error"], row
+        assert report["route"]["state"] == "UNREACHABLE", report["route"]
+        assert result.returncode == 0, "an unreachable route is not a CRITICAL factual failure"
+
+
 class TestSupplementaryJudge:
+    @pytest.mark.requires_openai_client
     def test_the_judge_is_a_column_and_never_a_verdict(self, tmp_path):
         """--judge adds a scored column. It cannot lift or lower a verdict."""
         result, report = _run(tmp_path, "--episode", "MX-01", "--judge")
-        judge = report["judge"]
+        judge = _completed(report)["judge"]
         assert judge["enabled"] is True
         assert judge["note"] == "supplementary only; never gating"
         assert set(judge["scores"]) == {"MX-01"}
@@ -182,6 +249,7 @@ class TestSupplementaryJudge:
 class TestSelection:
     def test_the_held_out_split_can_be_run_alone(self, tmp_path):
         _, report = _run(tmp_path, "--split", "held_out", "--category", "update", "--limit", "1")
+        _completed(report)
         assert report["totals"]["episodes"] == 1
         assert report["episodes"][0]["split"] == checks.SPLIT_HELD_OUT
         assert report["review_effort"]["total"] == 1, "every held-out episode needs a reviewer"

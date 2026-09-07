@@ -49,6 +49,12 @@ if str(REPO) not in sys.path:
 
 from tests.fixtures.phase200 import checks  # noqa: E402
 
+#: An interrupt or an exit is the operator speaking, never a trial result.
+#: Everything else -- including the deliberate ``BaseException`` failures the
+#: plugin kernel raises so a provider fault cannot be laundered into a result
+#: (holdspeak/plugins/intelligence.py, PluginProviderFailure) -- is data.
+CONTROL_SIGNALS = (KeyboardInterrupt, SystemExit)
+
 #: How the split was drawn.  Recorded in the manifest so a later reader can
 #: see that it did not follow the results.
 SPLIT_RULE = (
@@ -88,8 +94,17 @@ def build_report(
     route: Mapping[str, Any],
     engine: str,
     judge: Mapping[str, Any] | None = None,
+    aborted: str = "",
+    aborted_traceback: str = "",
 ) -> dict[str, Any]:
-    """The report every gate reads: what ran, on what, and what it cost."""
+    """The report every gate reads: what ran, on what, and what it cost.
+
+    ``aborted`` is the loud column (HS-200-08 follow-through): when the run
+    died before every selected episode had its turn -- a hub that could not
+    boot, a route that could not resolve, a leaf that raised past the trial
+    guard -- the report still lands and NAMES the reason. A reader (and a
+    test) must never have to infer an abort from a missing key.
+    """
     results = [checks.check_episode(episode, outputs.get(episode["id"], {})) for episode in episodes]
 
     failures_by_kind: dict[str, int] = {}
@@ -140,7 +155,9 @@ def build_report(
             "max": latencies[-1] if latencies else 0.0,
         },
         "review_effort": checks.review_effort(results),
-        "verdict": "fail" if (critical or any(not r.passed for r in results)) else "pass",
+        "aborted": aborted,
+        "aborted_traceback": aborted_traceback if aborted else "",
+        "verdict": "fail" if (aborted or critical or any(not r.passed for r in results)) else "pass",
         "critical_verdict": "fail" if critical else "pass",
         "judge": dict(judge) if judge else {"enabled": False, "note": "supplementary only; never gating"},
     }
@@ -159,6 +176,8 @@ def summarise(report: Mapping[str, Any]) -> str:
         f"review effort: {report['review_effort']['total']} item(s) to inspect",
         f"verdict: {report['verdict']} (critical: {report['critical_verdict']})",
     ]
+    if report.get("aborted"):
+        lines.insert(0, f"aborted: {report['aborted']}")
     return "\n".join(lines)
 
 
@@ -208,34 +227,21 @@ def _select(episodes: list[Mapping[str, Any]], args: argparse.Namespace) -> list
     return rows
 
 
-def command_run(args: argparse.Namespace) -> int:
-    from tests.fixtures.phase200 import collectors  # local: imports the product
+def _drive(
+    *,
+    args: argparse.Namespace,
+    episodes: list[Mapping[str, Any]],
+    canned: Mapping[str, Any],
+    outputs: dict[str, Any],
+    route: dict[str, Any],
+    collectors: Any,
+) -> Mapping[str, Any] | None:
+    """Boot the isolated hub, run every selected episode, return the judge column.
 
-    episodes = _select(checks.load_corpus(), args)
-    if not episodes:
-        print("no episodes selected", file=sys.stderr)
-        return 2
-
-    canned: dict[str, Any] = {}
-    if args.engine == "canned":
-        if not args.canned:
-            print("--engine canned needs --canned <file>", file=sys.stderr)
-            return 2
-        canned = json.loads(Path(args.canned).read_text())
-    elif not (args.endpoint and args.model):
-        print("--engine route needs --endpoint and --model", file=sys.stderr)
-        return 2
-
-    outputs: dict[str, Any] = {}
-    route: dict[str, Any] = {
-        "engine": args.engine,
-        "model": args.model or ("canned" if args.engine == "canned" else ""),
-        "endpoint": args.endpoint or "",
-        "plan_id": "",
-        "boundary": "",
-        "host": "",
-    }
-
+    Anything that escapes this is an ABORT: the run did not finish. Its caller
+    still writes the report, naming the reason.
+    """
+    judge: Mapping[str, Any] | None = None
     with ExitStack() as stack:
         home = Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="holdspeak-phase200-eval-")))
         original_expanduser = os.path.expanduser
@@ -266,7 +272,14 @@ def command_run(args: argparse.Namespace) -> int:
                 started = time.monotonic()
                 try:
                     output = hub.run_episode(episode)
-                except Exception as exc:  # a failed trial is retained, never dropped
+                except CONTROL_SIGNALS:
+                    raise
+                except BaseException as exc:  # a failed trial is retained, never dropped
+                    # BaseException, not Exception: the plugin kernel's provider
+                    # failures are BaseException BY DESIGN (holdspeak/plugins/
+                    # intelligence.py, PluginProviderFailure), and an `except
+                    # Exception` here let one of them abort the whole run before
+                    # a single line of report was written.
                     output = {
                         "error": f"{type(exc).__name__}: {exc}",
                         "traceback": traceback.format_exc(limit=6),
@@ -276,11 +289,62 @@ def command_run(args: argparse.Namespace) -> int:
                 mark = "!" if output.get("error") else "."
                 print(f"{mark} {key}", flush=True)
 
-        judge = None
         if args.judge:
             # A supplementary column, asked of the same route after every
             # episode has run. It cannot change a verdict; see build_report.
             judge = hub.judge_outputs(list(episodes), outputs)
+    return judge
+
+
+def command_run(args: argparse.Namespace) -> int:
+    from tests.fixtures.phase200 import collectors  # local: imports the product
+
+    episodes = _select(checks.load_corpus(), args)
+    if not episodes:
+        print("no episodes selected", file=sys.stderr)
+        return 2
+
+    canned: dict[str, Any] = {}
+    if args.engine == "canned":
+        if not args.canned:
+            print("--engine canned needs --canned <file>", file=sys.stderr)
+            return 2
+        canned = json.loads(Path(args.canned).read_text())
+    elif not (args.endpoint and args.model):
+        print("--engine route needs --endpoint and --model", file=sys.stderr)
+        return 2
+
+    outputs: dict[str, Any] = {}
+    route: dict[str, Any] = {
+        "engine": args.engine,
+        "model": args.model or ("canned" if args.engine == "canned" else ""),
+        "endpoint": args.endpoint or "",
+        "plan_id": "",
+        "boundary": "",
+        "host": "",
+    }
+
+    judge: Mapping[str, Any] | None = None
+    aborted = ""
+    aborted_traceback = ""
+    try:
+        judge = _drive(
+            args=args,
+            episodes=episodes,
+            canned=canned,
+            outputs=outputs,
+            route=route,
+            collectors=collectors,
+        )
+    except CONTROL_SIGNALS:
+        raise
+    except BaseException as exc:
+        # The run died before every episode had its turn. The report is still
+        # written and NAMES the reason, so a reader never has to read an abort
+        # out of a missing key.
+        aborted = f"{type(exc).__name__}: {exc}"
+        aborted_traceback = traceback.format_exc(limit=12)
+        print(f"\nABORTED: {aborted}", file=sys.stderr, flush=True)
 
     repeated = [
         dict(episode, id=f"{episode['id']}#{index + 1}")
@@ -293,6 +357,8 @@ def command_run(args: argparse.Namespace) -> int:
         route=route,
         engine=args.engine,
         judge=judge,
+        aborted=aborted,
+        aborted_traceback=aborted_traceback,
     )
     report["repeat"] = args.repeat
     if args.raw:
@@ -308,6 +374,8 @@ def command_run(args: argparse.Namespace) -> int:
     else:
         print(text)
     print(summarise(report))
+    if aborted:
+        return 1
     return 0 if report["critical_verdict"] == "pass" else 1
 
 

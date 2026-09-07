@@ -919,6 +919,7 @@ presence = [
 test = [
     { name = "httpx" },
     { name = "jsonschema" },
+    { name = "openai" },
     { name = "playwright" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -954,6 +955,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.24.0" },
     { name = "openai", marker = "extra == 'dictation-openai'", specifier = ">=1.0.0" },
     { name = "openai", marker = "extra == 'meeting'", specifier = ">=1.0.0" },
+    { name = "openai", marker = "extra == 'test'", specifier = ">=1.0.0" },
     { name = "openwakeword", marker = "extra == 'wakeword'", specifier = ">=0.6.0" },
     { name = "outlines", marker = "platform_machine == 'arm64' and sys_platform == 'darwin' and extra == 'dictation-mlx'", specifier = ">=0.1.0" },
     { name = "playwright", marker = "extra == 'dev'", specifier = ">=1.40.0" },

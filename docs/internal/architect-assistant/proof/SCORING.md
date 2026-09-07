@@ -218,3 +218,5 @@ State these beside any result that uses it.
 - [Phase 200 acceptance protocol](../../../../pm/roadmap/holdspeak/phase-200-the-working-practice/ACCEPTANCE.md)
 - [Phase 200 technical contracts](../../../../pm/roadmap/holdspeak/phase-200-the-working-practice/CONTRACTS.md)
 - [Releasing, upgrading, and your data](../../../RELEASING.md)
+
+A report always carries an `aborted` column. It is empty on a completed run. When the driver stops before the episodes finish, the column names the reason, the raw file is still written, and the verdict is fail. Read the reason before reading any count.
