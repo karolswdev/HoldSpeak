@@ -136,6 +136,44 @@ Default hotkey:
 
 If global hotkeys or synthetic typing are blocked, especially on Wayland, keep HoldSpeak focused and use the focused hold-to-talk fallback.
 
+### When voice typing does nothing
+
+Three macOS permissions carry three different parts of voice typing, so the
+symptom tells you which one is missing.
+
+| Symptom | Missing permission | Pane |
+| --- | --- | --- |
+| Nothing is heard at all | Microphone | **System Settings > Privacy & Security > Microphone** |
+| The hotkey does nothing | Input Monitoring | **System Settings > Privacy & Security > Input Monitoring** |
+| Words are transcribed but never arrive in the app | Accessibility | **System Settings > Privacy & Security > Accessibility** |
+
+Speak reads all three and draws a row for each one that is not granted, with
+the pane to open and a `Re-check` verb. When every grant is held and the hotkey
+is up, that block is absent: a working key says nothing, because there is
+nothing to repair.
+
+The hotkey line itself carries the state of the whole path. `ACTIVE` means the
+key is up and every grant is held. `BLOCKED` means the key is up but a grant is
+missing, which is the case that used to be silent: the listener installs, the
+key looks fine, and nothing is ever heard. `UNAVAILABLE` means the listener did
+not install at all.
+
+Each permission row reads `DENIED`, `NOT ASKED`, or `UNKNOWN`. `NOT ASKED`
+means the application you launch from has never requested that permission and
+is not listed in the pane yet. `UNKNOWN` means HoldSpeak could not read the
+state on this machine and declines to guess.
+
+Two things catch people out. The permission belongs to **the application you
+launched from**, so a hub started in a terminal needs Terminal or iTerm enabled
+in those panes, not an entry named HoldSpeak. And macOS applies several of these
+only to a newly started process, so quit and reopen the launching application
+after granting. Then press `Re-check`.
+
+If the hotkey itself failed to install, Speak names that instead, with its own
+reason. `PYNPUT MISSING` means the dependency is absent. `NO GUI SESSION` means
+there is no desktop to listen to. `PERMISSION REFUSED` and `LISTENER FAILED`
+mean the operating system rejected the listener.
+
 ### Speak your language
 
 Whisper, the transcription engine, speaks about 99 languages, and the
@@ -1431,6 +1469,26 @@ mic button. The model's egress chip sits at the right edge: `MODEL ·
 appear as an aerogel inset above the well with grounding citations.
 
 ![The Room with nothing needing attention, sources live, and the ask well at the foot](assets/project-rooms/room-quiet.png)
+
+### Unfinished
+
+An ask you start is written down before it is sent, so it outlives the tab. If
+you close the window, restart the hub, or leave to set up a model, the question
+is still there when you come back.
+
+Unfinished asks appear in the Room under `UNFINISHED`, directly below what needs
+you. Each row carries the question, when it was saved, and one verb: `Resume`.
+`Discard` sits under `MORE` and asks once before it acts. A row that stopped
+because the engine was not ready shows the reason in the engine's own words, and
+`Check` takes you to it.
+
+Resume never runs your question twice. If the answer arrived while you were away,
+Resume claims that answer rather than asking again, so a slow engine and a closed
+laptop cannot cost you a second run.
+
+`SAVED HERE` means the ask belongs to this desk. `SAVED ON ANOTHER DESK` means
+the database came from somewhere else, which is worth knowing before you resume
+work you do not recognise.
 
 ### Footer
 

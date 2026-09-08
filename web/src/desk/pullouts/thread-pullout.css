@@ -406,6 +406,34 @@
   outline-offset: -1px;
 }
 
+/* HS-200-41 (D-R2, corrected by F4) — the desk chip grammar has no disabled
+   face (chrome-menus.css `.desk-next .desk-chip`), so a refused Send read
+   exactly like a live one on an empty draft. The library's
+   `:where(.btn):disabled` cannot reach it: the chip rule outranks it. Pay it
+   on this surface only; global.css is not this story's to change.
+
+   D-R2 first reached for "the library's own disabled tokens", and the glass
+   said no: `--disabled-bg` is `--surface-1` against a `--surface-2` chip and
+   `--disabled-border` IS `--border`, so the fill differed by 1.09:1, the
+   border was byte-identical, and the entire signal was the label greying.
+   That is dimmed, not refused.
+
+   The treatment the same design already ratified for a refused primary is
+   used instead — D2(a): drawn `disabled` + `aria-disabled`, **flat, dashed
+   and muted** (C9). The DASH is the part that carries: a border-style change
+   reads as refusal at any contrast, on any ground, and to anyone who cannot
+   separate two greys. */
+.thread-composer-row .desk-chip:disabled,
+.thread-composer-row .desk-chip:disabled:hover,
+.thread-inline-editor-actions .desk-chip:disabled,
+.thread-inline-editor-actions .desk-chip:disabled:hover {
+  border: 1px dashed var(--disabled-border);
+  background: var(--disabled-bg);
+  box-shadow: none;
+  color: var(--disabled-fg);
+  cursor: not-allowed;
+}
+
 /* ── Ref chips ───────────────────────────────────────────────────────── */
 
 .thread-composer-chips {
@@ -455,6 +483,19 @@
 
 .thread-ref-chip-remove:hover {
   color: var(--danger-signal, #ef4444);
+}
+
+/* HS-200-41 (D-R3) — the remove verb is the library Button now, and the
+   library's own hover/press grammar reaches it: `:where(.btn):hover` ties with
+   the rule above on specificity and wins on sheet load order, painting a
+   background this chip never had. Outrank it here; the resting face and the
+   focus ring the swap gained both stay. */
+.thread-ref-chip .thread-ref-chip-remove:hover {
+  background: none;
+  border-color: transparent;
+}
+.thread-ref-chip .thread-ref-chip-remove:active:not(:disabled) {
+  transform: none;
 }
 
 /* ── Autocomplete anchor (positions above the field) ─────────────────── */

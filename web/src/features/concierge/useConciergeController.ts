@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { readableError } from "../../lib/api";
+import { announceTaskReturn } from "../../desk/returnToTask";
 import {
   conciergeDetect,
   conciergePropose,
@@ -444,6 +445,15 @@ export function useConciergeController(): ConciergeController {
 
   const apply = useCallback(async () => {
     if (!canApply) return;
+    // HS-200-41 (return-to-task, focus half): the control the owner pressed
+    // to finish setup, captured HERE — synchronously, before the await.
+    // After the round trip `document.activeElement` can no longer tell his
+    // hand from the DOM's, and that is exactly the difference the
+    // do-not-steal rule turns on (`desk/returnToTask.ts`).
+    const from =
+      typeof document !== "undefined"
+        ? (document.activeElement as HTMLElement | null)
+        : null;
     setApplying(true);
     setError("");
     setApplyFailures([]);
@@ -480,14 +490,21 @@ export function useConciergeController(): ConciergeController {
         setApplyFailures(failures);
         setApplied(failures.length === 0);
         if (failures.length === 0) {
-          // The one existing readiness signal (SettingsCore dispatches the same
-          // event after a save). Faces holding an unfinished task recheck on it
-          // instead of reloading and losing their draft.
-          try {
-            window.dispatchEvent(new Event("holdspeak:settings-updated"));
-          } catch {
-            // A page without a window still applied the set.
-          }
+          // The one existing readiness signal (SettingsCore dispatches the
+          // same event after a save). Faces holding an unfinished task
+          // recheck on it instead of reloading and losing their draft —
+          // and now focus goes back to the verb the owner left, which is
+          // the second half of the ratified behaviour (design D2(a)).
+          //
+          // The window closes first, because D2(a) says it does: leaving
+          // the Concierge open over the Room while focus jumps behind it
+          // is the bug, not the fix.
+          void import("../../desk/store").then(({ useDesk }) => {
+            useDesk.getState().closeSurfaceWindow("surface-concierge");
+          }).catch(() => {
+            // A page without the desk store still applied the set.
+          });
+          announceTaskReturn(from);
         }
       });
     } catch (err) {

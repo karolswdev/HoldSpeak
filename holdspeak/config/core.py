@@ -48,6 +48,76 @@ def _active_config_file() -> Path:
     return getattr(facade, "CONFIG_FILE", CONFIG_FILE)
 
 
+# HS-200-41: this desk's durable identity.
+#
+# Custody on a saved ask asks "is this the same DESK?".  Two nearby answers
+# are both wrong for that question and were both tried:
+#
+# - ``RefinementCoordinator.host_id`` is ``refhost_<uuid4>``, minted per
+#   PROCESS, so every restart read as another desk.
+# - ``runtime_identity.database_identity`` digests the database path plus its
+#   device and INODE.  That is exactly right for its own job (HS-200-02 needs
+#   a REPLACED file to read as a different database) and must not change —
+#   but an inode answers "is this the same FILE?".  Recreate the file and the
+#   answer flips, so custody was nondeterministic across a restart and would
+#   have said SAVED ON ANOTHER DESK on the very machine that saved it after a
+#   restore from backup.
+#
+# So: a value minted ONCE and persisted beside the hub's other durable
+# settings.  It survives a restart, a database restore and a schema
+# reconcile, differs on a different machine, and is opaque — the wire carries
+# only the ``here``/``elsewhere`` verdict, never this token.
+MACHINE_ID_KEY = "machine_id"
+
+# Keyed by config path so a test that repoints CONFIG_FILE gets its own answer.
+_machine_ids: dict[str, str] = {}
+
+
+def machine_identity(path: Optional[Path] = None) -> str:
+    """This desk's durable identity, minted on first use. ``""`` if unknowable.
+
+    Never regenerates: an existing value is returned untouched.  A hub that
+    has lost the file mints a new one, which is honest — it genuinely cannot
+    prove it is the same desk.  A hub that cannot persist one returns ``""``,
+    and the caller must draw no custody rather than guess.
+    """
+    import os
+    import uuid
+
+    config_path = Path(path or _active_config_file())
+    key = str(config_path)
+    cached = _machine_ids.get(key)
+    if cached:
+        return cached
+
+    data: dict = {}
+    try:
+        loaded = json.loads(config_path.read_text())
+        if isinstance(loaded, dict):
+            data = loaded
+    except Exception:
+        data = {}
+
+    existing = str(data.get(MACHINE_ID_KEY) or "").strip()
+    if existing:
+        _machine_ids[key] = existing
+        return existing
+
+    minted = uuid.uuid4().hex
+    data[MACHINE_ID_KEY] = minted
+    try:
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        scratch = config_path.with_suffix(config_path.suffix + ".machineid")
+        with open(scratch, "w") as handle:
+            json.dump(data, handle, indent=2)
+        os.replace(scratch, config_path)
+    except OSError:
+        logger.warning("config: could not persist a machine identity at %s", config_path)
+        return ""
+    _machine_ids[key] = minted
+    return minted
+
+
 # HS-112-01 -- the one dial. Endpoint/model identity lives ONLY in the
 # profiles table (`InferenceTarget`); these config fields are dead legacy
 # fallbacks kept solely as the source for the one silent migration below.
@@ -209,6 +279,10 @@ def _coerce_calendar(data: dict) -> CalendarConfig:
 class Config:
     """Main configuration container."""
     config_version: int = CONFIG_VERSION
+    # HS-200-41: this desk's durable, opaque identity. Minted once by
+    # `machine_identity()` and never regenerated; a dataclass field so a
+    # settings save round-trips it instead of dropping it as an unknown key.
+    machine_id: str = ""
     # HS-92-08: one policy preset for FUTURE operations. It never weakens hard
     # auth/secret/destination/payload/pane/audit/config/schema invariants.
     # HS-139-08: YOLO by default (owner ruling: ledger-not-gate).
@@ -264,6 +338,7 @@ class Config:
 
             config = cls(
                 config_version=config_version,
+                machine_id=str(data.get("machine_id") or ""),
                 control_mode=(
                     str(data.get("control_mode", "yolo")).strip().lower()
                     if str(data.get("control_mode", "yolo")).strip().lower()

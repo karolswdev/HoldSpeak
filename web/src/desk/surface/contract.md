@@ -116,3 +116,125 @@ Presence rules (they are the species, not the caller's business):
   face that says its one count elsewhere (UX-CANON A.7/A.8).
 - Not to be confused with `SurfaceWings`: filters are flat tokens, wings are
   the beveled strip, and the two never look alike (canon D).
+
+## EditInPlace (HS-101 rule 1, documented HS-200-41)
+
+The presented text IS the editor — data is the material, so there is no
+separate "edit mode" chrome. Click or Enter swaps the presented value for a
+same-geometry editor; Enter or blur commits, Escape reverts. Documented here
+under canon B (a species in use is a species documented): it has been in use
+across the product since HS-101 and appeared nowhere in this contract.
+
+- `value: string` — the presented text; it is also the editor's seed
+- `onCommit(next: string)` — fired only on a real, non-empty change
+- `label: string` — the accessible name; presented state reads `Edit <label>`
+- `disabledReason?: string` — a value that CANNOT be edited stays presented
+  and names why (`aria-label` becomes `<label>: <reason>`). **Never a bare
+  disabled input** — a dead field that does not say why is the bug this prop
+  exists to prevent
+- `multiline?: boolean` — textarea instead of input
+- `mic = true` — every text editor carries the speak-to-fill mic (mic law,
+  HS-111-08); pass `false` only where the host renders its own
+
+## ConfirmVerb (rule 5, documented HS-200-41)
+
+The inline two-step for a destructive verb: the first press arms, the second
+fires, and arming self-disarms after 3 s. **Never a modal** (owner ruling: no
+modals, edit in-world). Composes the library `Button` — ghost when resting,
+`danger` when armed — so a destructive verb never needs a raw `<button>`.
+
+- `label: ReactNode` — the resting label
+- `confirmLabel = "Sure?"` — the armed label, in place
+- `ariaLabel?: string` — a STABLE accessible name when the visible label is a
+  glyph (×), so the control does not rename itself between the two presses
+- `busy?`, `disabled?` — ride the Button's `loading` / native `disabled`
+- `onConfirm()` — fired on the second press only
+
+## TaskResume / TaskResumeList (HS-200-41)
+
+The ratified `UNFINISHED` row: one piece of work the owner walked away from,
+drawn so he can pick it back up. Promoted to the library BEFORE any face drew
+it (canon B; story AC2).
+
+`TaskResume` draws, in order: the purpose at the primary step, the state
+chip, `SAVED HH:MM`, the recipe when it HAS one, the custody token, why it is
+stopped, the Project button, and **ONE verb**.
+
+- `purpose: string` — the work itself, said once
+- `state: TaskResumeState` — `saved | running | waiting | failed |
+  incomplete | accepted | discarded`. The state's chip tone, its word and its
+  ONE verb are the species' business, not the caller's:
+
+  | state | chip | default verb |
+  |---|---|---|
+  | `saved` | `SAVED HH:MM` (idle) | `Resume` |
+  | `running` | `RUNNING` (working) | `Stop` |
+  | `waiting` | `WAITING ON YOU` (active) | `Answer` |
+  | `failed` | `FAILED · <reason>` (failure) | `Check` |
+  | `incomplete` | `INCOMPLETE` (warning) | `Re-read` |
+  | `accepted` | `ACCEPTED MM-DD` (success) | `Open` |
+  | `discarded` | `DISCARDED` (unreachable) | — |
+
+- `savedAt?`, `settledAt?` — ISO/epoch; formatted to `HH:MM` and `MM-DD`
+- `recipe?: string` — drawn as `RECIPE · <name>`
+- `projectName?` + `onOpenProject?` — the way back (design D2(g)); the button
+  is a ghost `Button` named `Open the Project: <name>`
+- `stoppedReason?: string` — the target's OWN words, quoted, never composed
+  by the face (ruling B5). Inside the chip on `failed`, its own token
+  otherwise, and never in both places
+- `stoppedCode?: string` — the bounded refusal token the record always
+  carries. The store quotes the destination only while it still observes the
+  state the code names, so a row can hold a code and no words: the face falls
+  back to the code, never composing a sentence out of it. **Both empty draws
+  nothing at all** (A.8)
+
+**The quoted reason is a ROW, not a chip.** Whichever of the two is shown
+rides `.surface-task-resume-reason` on its own grid line, wrapping (`
+overflow-wrap: anywhere`), and the state chip says only `FAILED`. `StateChip`
+neither wraps nor truncates, and ruling B5 quotes the engine verbatim — where
+that is a filesystem path, the ordinary case, a `FAILED · <path>` chip ran
+534px inside a 341px row and was sliced off-glass mid-token. The engine's
+words are never truncated to fit a chip.
+- `custody?: "here" | "elsewhere"` — `SAVED HERE` on the machine that holds
+  the row, `SAVED ON ANOTHER DESK` otherwise. **Never `THIS DEVICE`** (ruling
+  B7): that string is the egress vocabulary (`desk/surface/egress.ts:16,25`)
+  and egress badges are a hard boundary — two different facts must not wear
+  one token. **And never a host id.** There is deliberately no host prop: the
+  hub's machine identity is an opaque token, a face does not print opaque
+  tokens (canon `raw-ids`), and the wire carries the verdict rather than the
+  id. B7's literal `SAVED ON <host>` is superseded — the store holds no name
+  a person could read
+- `detail?: string` — the trailing fact the state's OWNER can supply
+  (`00:52`, `3 OF 4 SOURCES`). A record whose owner has no clock must not
+  pass one
+- `verbLabel?`, `verbAriaLabel?`, `onVerb?` — override the default verb; the
+  accessible name defaults to `<label>: <purpose>`
+- `verbDisabledReason?: string` — a refused verb is **native `disabled`**
+  plus `aria-disabled`, and its name says why. There is no `unavailable`
+  Button variant and none is to be invented
+- `primary?: boolean` — the face's ONE filled primary
+- `onDiscard?` — `Discard` as a `ConfirmVerb` inside a `MORE` `Disclosure`,
+  never a bare destructive verb. Discard is a STATE, never a delete (B6)
+
+Presence rules (they are the species, not the caller's business):
+
+- **No token for an absent fact** (UX-CANON A.8). No recipe → no recipe chip;
+  never `RECIPE · NONE`. No custody → no custody token
+- **No fact drawn twice.** `saved` owns the clock, `accepted` owns the day,
+  `failed` owns the quoted reason — so none of them is repeated in the token
+  row beside its own chip
+- **No prose.** Tokens and labels only; the only free text is the purpose
+  itself and the target's quoted reason
+- Every verb is the library `Button` (UX-CANON A.1)
+
+`TaskResumeList` is the container: ONE Tab stop for the whole list via
+`useRovingRows` (kit law — never re-implemented in a consumer), Up/Down rove
+rows, Left/Right walk a row's own verbs. It **returns `null` when it has no
+children**, so no face can draw a caption of zero; its optional `label` rides
+`countLabel` (`UNFINISHED 1`).
+
+The state vocabulary is deliberately wider than any single record: it is the
+union of the six work states across three owners (design D2(f)). A Room ask
+reaches only `saved`, `failed`, `accepted` and `discarded` — it is one
+blocking POST with no job row, no clock and no progress record (ruling B8),
+so no caller may hand it a running clock or a `Stop`.

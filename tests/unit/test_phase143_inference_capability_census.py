@@ -201,7 +201,7 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
         "chat.compact", "services.thread_practice", "InferenceRunner admitted child",
     ),
     # HS-162-03: model drafter for project update drafting.
-    "holdspeak/services/project_update_service.py:1184|ProjectUpdateService._draft_with_model|call": ProposedRoute(
+    "holdspeak/services/project_update_service.py:1372|ProjectUpdateService._draft_with_model|call": ProposedRoute(
         "project.update_draft", "services.project_update_service", "InferenceRunner admitted child",
     ),
 }
@@ -213,6 +213,40 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
 # Refinement is one
 # ``thought.interview`` capability whose result contract branches to either a
 # next-question or terminal synthesis; synthesis is not separately routable.
+def _service_factories(tree: ast.AST) -> tuple[set[str], set[str]]:
+    """Function names in one module that hand back an Ask/Recipe service.
+
+    Discovery runs to a FIXPOINT: a function returning ANOTHER factory's result
+    is itself a factory.  HS-200-41 lifted ``AskService(...)`` out of
+    ``build_ask_router`` into ``build_ask_service``, so the router's own
+    ``service()`` helper returns a factory call rather than the constructor.  A
+    single non-transitive pass went blind to the product's only HTTP Ask
+    entrance while its ``.ask(...)`` call was still sitting there -- the one
+    thing this census must never do.
+    """
+    returned_names: dict[str, set[str]] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            returned_names.setdefault(node.name, set()).update(
+                value.value.func.id for value in ast.walk(node)
+                if isinstance(value, ast.Return) and isinstance(value.value, ast.Call)
+                and isinstance(value.value.func, ast.Name)
+            )
+    ask_factories: set[str] = set()
+    recipe_factories: set[str] = set()
+    growing = True
+    while growing:
+        growing = False
+        for name, returned in returned_names.items():
+            if name not in ask_factories and ({"AskService"} | ask_factories) & returned:
+                ask_factories.add(name)
+                growing = True
+            if name not in recipe_factories and ({"RecipeService"} | recipe_factories) & returned:
+                recipe_factories.add(name)
+                growing = True
+    return ask_factories, recipe_factories
+
+
 def _semantic_helper_calls(sources: dict[str, str] | None = None) -> list[str]:
     """Repository-wide Ask/Recipe semantic caller discovery.
 
@@ -225,27 +259,34 @@ def _semantic_helper_calls(sources: dict[str, str] | None = None) -> list[str]:
         path.relative_to(one_path.REPO).as_posix(): path.read_text(encoding="utf-8")
         for path in one_path.PRODUCTION.rglob("*.py")
     }
+    trees = {relative: ast.parse(source) for relative, source in sorted(sources.items())}
+    # Repo-wide factory NAMES, so a caller that IMPORTS a factory is as visible
+    # as one that defines it (HS-200-41).  ``/api/ask-tasks/{id}/resume``
+    # imports ``build_ask_service`` from the ask transport and dispatches
+    # through it under the saved invocation id; a per-file factory set never saw
+    # that call, which is the exact shape -- a brand new semantic Ask entrance --
+    # this census exists to force a capability decision about.  Fails closed: a
+    # same-named non-factory import is a false positive that demands review,
+    # never a silently missing row.
+    factories = {relative: _service_factories(tree) for relative, tree in trees.items()}
+    exported_ask = {name for local_ask, _ in factories.values() for name in local_ask}
+    exported_recipe = {name for _, local_recipe in factories.values() for name in local_recipe}
     entries: list[str] = []
-    for relative, source in sorted(sources.items()):
-        tree = ast.parse(source)
+    for relative, tree in trees.items():
         scopes = one_path._scope_index(tree)
-        ask_factories: set[str] = set()
-        recipe_factories: set[str] = set()
         ask_aliases: set[str] = set()
         recipe_aliases: set[str] = set()
         ask_attributes: set[str] = set()
         recipe_attributes: set[str] = set()
+        ask_factories, recipe_factories = (set(part) for part in factories[relative])
+        imported = {
+            alias.asname or alias.name
+            for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)
+            for alias in node.names
+        }
+        ask_factories |= imported & exported_ask
+        recipe_factories |= imported & exported_recipe
         for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                returned = {
-                    value.value.func.id for value in ast.walk(node)
-                    if isinstance(value, ast.Return) and isinstance(value.value, ast.Call)
-                    and isinstance(value.value.func, ast.Name)
-                }
-                if "AskService" in returned:
-                    ask_factories.add(node.name)
-                if "RecipeService" in returned:
-                    recipe_factories.add(node.name)
             if isinstance(node, (ast.Assign, ast.AnnAssign)) and isinstance(getattr(node, "value", None), ast.Call):
                 value = node.value
                 if isinstance(value.func, ast.Name) and value.func.id in {"AskService", "RecipeService"} | ask_factories | recipe_factories:
@@ -298,8 +339,16 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
         "holdspeak/services/refinement_coordinator.py:419|RefinementCoordinator._coordinate|ask": ProposedRoute(
         "thought.interview", "services.refinement_coordinator", "AskService semantic caller; question-or-synthesis result branch",
     ),
-    "holdspeak/web/routes/primitives/ask.py:49|build_ask_router.api_ask|ask": ProposedRoute(
+    "holdspeak/web/routes/primitives/ask.py:63|build_ask_router.api_ask|ask": ProposedRoute(
         "ask.answer", "web.routes.primitives.ask", "AskService semantic caller",
+    ),
+    # HS-200-41: the resume of a SAVED ask task.  Not a second Ask authority --
+    # it imports ``build_ask_service`` and rides the SAME transport under the
+    # invocation id the row already pinned (ruling B3), so the answer can be
+    # claimed instead of paid for twice.  Same capability as the transport row
+    # above, because it is the same operation reached a second way.
+    "holdspeak/web/routes/projects.py:142|build_projects_router.api_resume_ask_task.dispatch|ask": ProposedRoute(
+        "ask.answer", "web.routes.projects", "AskService semantic caller; saved-task resume through the ask transport",
     ),
     "holdspeak/mcp/tools.py:700|dispatch|run": ProposedRoute(
         "recipe.run", "mcp.tools", "RecipeService semantic caller",

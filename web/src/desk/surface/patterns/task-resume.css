@@ -1,0 +1,121 @@
+/* ── TaskResume: one piece of unfinished work, drawn so it can be picked
+   back up (HS-200-41). Purpose at the primary step, a token row beneath
+   it, the row's ONE verb trailing. Container-responsive: at the narrow
+   container the verbs fall under the tokens. ── */
+
+.surface-task-resume-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+}
+
+.surface-task-resume-caption {
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-compact);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.surface-task-resume-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.surface-task-resume {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "purpose verbs"
+    "tokens  verbs"
+    "reason  verbs";
+  align-items: center;
+  gap: var(--space-1, 4px) var(--space-3, 12px);
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+/* A stopped row wears its trouble on its edge, never on color alone —
+   the state chip beside it still says the word. */
+.surface-task-resume[data-state="failed"] {
+  border-color: var(--danger-signal);
+}
+.surface-task-resume[data-state="incomplete"] {
+  border-color: var(--warn);
+}
+
+.surface-task-resume-purpose {
+  grid-area: purpose;
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--desk-type-primary-size);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.surface-task-resume-tokens {
+  grid-area: tokens;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1, 4px);
+  min-width: 0;
+}
+
+/* The destination's own words (HS-200-41 F3). Its OWN row, because a chip
+   neither wraps nor truncates and the quoted reason is routinely a
+   filesystem path. `anywhere` breaks a long path rather than pushing the
+   row off-glass; nothing here is ellipsized — the engine is quoted whole. */
+.surface-task-resume-reason {
+  grid-area: reason;
+  margin: 0;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-body-size);
+  line-height: 1.4;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.surface-task-resume[data-state="failed"] .surface-task-resume-reason {
+  color: var(--danger);
+}
+
+.surface-task-resume-verbs {
+  grid-area: verbs;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+}
+
+.surface-task-resume-project {
+  max-width: 22ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The narrow container (393): the verbs fall under the tokens rather
+   than squeezing the purpose to nothing. */
+@container surface (max-width: 420px) {
+  .surface-task-resume {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "purpose"
+      "tokens"
+      "reason"
+      "verbs";
+    align-items: start;
+  }
+  .surface-task-resume-purpose {
+    white-space: normal;
+  }
+}

@@ -551,6 +551,9 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
     captureReason,
     readinessConfig,
     readinessTarget,
+    // HS-200-05: the whole readiness body, so the face can read the hotkey
+    // custody block (`hotkey`) without a second fetch of the same wire.
+    readinessData: readiness.data,
     pipelineOn,
     // HS-200-04: re-read readiness after the owner configures a model, without
     // reloading the page (a reload would drop the utterance in the well).

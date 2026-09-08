@@ -3,7 +3,7 @@
  * completeSlash pure function, verb registry mapping. */
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { act, render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { useThreadComposerDrafts } from "../threadComposerDrafts";
+import { clearThreadComposerDraft, useThreadComposerDrafts } from "../threadComposerDrafts";
 import {
   ThreadComposer,
   InlineEditor,
@@ -20,6 +20,7 @@ import {
   directoryToItem,
   type AutocompleteItem,
 } from "../components/InletAutocomplete";
+import composerCss from "../pullouts/thread-pullout.css?raw";
 // ── mock dependencies ──────────────────────────────────────────────
 
 vi.mock("../../lib/api", () => ({
@@ -74,9 +75,12 @@ vi.mock("../tools", () => ({
   ],
 }));
 
+// The mic keeps the real component's `desk-mic` class: it is the transport
+// instrument (Signal.tsx's TransportKey duty), not a verb, so the raw-button
+// assertion below excludes it by the same class production renders.
 vi.mock("../components/MicButton", () => ({
   MicButton: ({ onText }: { onText: (t: string) => void }) => (
-    <button data-testid="mic-button" onClick={() => onText("hello from mic")}>
+    <button className="desk-mic" data-testid="mic-button" onClick={() => onText("hello from mic")}>
       Mic
     </button>
   ),
@@ -114,8 +118,13 @@ vi.mock("../surface/Surface", () => ({
 
 beforeEach(() => {
   useThreadComposerDrafts.setState({ drafts: {} });
+  // HS-200-41 AC4 — the draft store is sessionStorage-backed; without this a
+  // draft written by one test would rehydrate into the next.
+  window.sessionStorage.clear();
   Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: vi.fn() });
 });
+
+const DRAFT_KEY = "hs.threadComposerDrafts";
 
 function renderComposer(overrides: Partial<ThreadComposerProps> = {}) {
   const props: ThreadComposerProps = {
@@ -418,6 +427,159 @@ describe("ThreadComposer", () => {
     expect(screen.getByTestId("composer-input")).not.toBeDisabled();
   });
 
+  // ── HS-200-41 AC4: the draft survives a reload and a crash restore ──
+
+  it("writes the draft to sessionStorage, and to no durable disk store", () => {
+    const durableWrite = vi.spyOn(window.localStorage, "setItem");
+    renderComposer();
+    const input = screen.getByTestId("composer-input");
+    fireEvent.change(input, { target: { value: "@De" } });
+    fireEvent.click(screen.getByTestId("surface-row-Design notes"));
+    fireEvent.change(input, { target: { value: "Half-written question" } });
+
+    const stored = JSON.parse(window.sessionStorage.getItem(DRAFT_KEY) as string);
+    expect(stored["t-1"].text).toBe("Half-written question");
+    expect(stored["t-1"].chips).toEqual([
+      { ref: { name: "Design notes", id: "n1", ref: "note:n1", kind: "note" } },
+    ]);
+    expect(
+      durableWrite.mock.calls.filter(([key]) => String(key).includes("threadComposerDraft")),
+    ).toEqual([]);
+    expect(window.localStorage.getItem(DRAFT_KEY)).toBeNull();
+    durableWrite.mockRestore();
+  });
+
+  it("erases the stored draft once the hub accepts the message", async () => {
+    let finish!: (accepted: boolean) => void;
+    renderComposer({ onSend: vi.fn(() => new Promise<boolean>((resolve) => { finish = resolve; })) });
+    const input = screen.getByTestId("composer-input");
+    fireEvent.change(input, { target: { value: "Sent and gone" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    // An in-flight send is browser state, never custody: it is not persisted.
+    expect(JSON.parse(window.sessionStorage.getItem(DRAFT_KEY) as string)["t-1"]).toEqual({
+      text: "Sent and gone",
+      chips: [],
+      sending: false,
+    });
+    await act(async () => finish(true));
+    expect(window.sessionStorage.getItem(DRAFT_KEY)).toBeNull();
+  });
+
+  it("clears the stored draft when the Thread closes", () => {
+    renderComposer();
+    fireEvent.change(screen.getByTestId("composer-input"), { target: { value: "Gone with the window" } });
+    expect(window.sessionStorage.getItem(DRAFT_KEY)).toContain("Gone with the window");
+    // threads.ts removeThread() calls this eraser when a Thread closes.
+    act(() => clearThreadComposerDraft("t-1"));
+    expect(window.sessionStorage.getItem(DRAFT_KEY)).toBeNull();
+  });
+
+  it("restores an unsent draft after a reload, carrying no stale sending state", async () => {
+    const chip = { ref: { name: "Design notes", id: "n1", ref: "note:n1", kind: "note" } };
+    // The crash-restore shape: the tab died mid-send, so `sending` was true.
+    window.sessionStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({ "t-1": { text: "Half-written question", chips: [chip], sending: true } }),
+    );
+    vi.resetModules();
+    const reloaded = await import("../threadComposerDrafts");
+    const restored = reloaded.useThreadComposerDrafts.getState().drafts;
+    expect(restored["t-1"]).toEqual({ text: "Half-written question", chips: [chip], sending: false });
+
+    useThreadComposerDrafts.setState({ drafts: restored });
+    renderComposer();
+    expect(screen.getByTestId("composer-input")).toHaveValue("Half-written question");
+    expect(screen.getByTestId("composer-input")).not.toBeDisabled();
+    expect(screen.getByTestId("composer-send")).not.toBeDisabled();
+    expect(screen.getByTestId("ref-chip-note")).toHaveTextContent("Design notes");
+  });
+
+  it("drops unreadable stored drafts instead of failing the reload", async () => {
+    window.sessionStorage.setItem(DRAFT_KEY, "{not json");
+    vi.resetModules();
+    const reloaded = await import("../threadComposerDrafts");
+    expect(reloaded.useThreadComposerDrafts.getState().drafts).toEqual({});
+  });
+
+  it("still types when the browser refuses storage", async () => {
+    const read = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new DOMException("SecurityError");
+    });
+    const write = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("QuotaExceededError");
+    });
+    try {
+      vi.resetModules();
+      const reloaded = await import("../threadComposerDrafts");
+      expect(reloaded.useThreadComposerDrafts.getState().drafts).toEqual({});
+
+      renderComposer();
+      const input = screen.getByTestId("composer-input");
+      fireEvent.change(input, { target: { value: "Typed with storage refused" } });
+      expect(input).toHaveValue("Typed with storage refused");
+      expect(screen.getByTestId("composer-send")).not.toBeDisabled();
+    } finally {
+      read.mockRestore();
+      write.mockRestore();
+    }
+  });
+
+  // ── HS-200-41 AC5: every verb is the library Button ─────────────────
+
+  it.each([false, true])("draws every verb as the library Button: streaming=%s", (streaming) => {
+    renderComposer({ streaming });
+    const input = screen.getByTestId("composer-input");
+    fireEvent.change(input, { target: { value: "@De" } });
+    fireEvent.click(screen.getByTestId("surface-row-Design notes"));
+    fireEvent.change(input, { target: { value: "A question with an attachment" } });
+    expect(screen.getByTestId(streaming ? "composer-stop" : "composer-send")).toHaveClass("btn");
+
+    const composer = screen.getByTestId("thread-composer");
+    // The mic is the transport instrument, not a verb; every other button in
+    // the composer must carry the library's `btn` face.
+    const raw = Array.from(composer.querySelectorAll("button")).filter(
+      (el) => !el.classList.contains("btn") && !el.classList.contains("desk-mic"),
+    );
+    expect(raw.map((el) => el.outerHTML)).toEqual([]);
+  });
+
+  it("draws a refused Send as disabled, not merely marks it disabled", () => {
+    renderComposer();
+    const send = screen.getByTestId("composer-send");
+    expect(send).toBeDisabled();
+    // D-R1 — Send keeps the chip face; the swap is canon, not appearance.
+    expect(send).toHaveClass("btn", "desk-chip");
+
+    // D-R2 — jsdom applies no stylesheet, so the face is proved against the
+    // sheet that owns this surface (the editorFootGrip.test.ts precedent).
+    // `.desk-next .desk-chip` (chrome-menus.css) has no disabled rule and
+    // outranks the library's, so without this the refused verb looks live.
+    const rule = composerCss.slice(composerCss.indexOf(".thread-composer-row .desk-chip:disabled"));
+    const selectors = rule.split("{")[0] ?? "";
+    const block = rule.split("{")[1]?.split("}")[0] ?? "";
+    // The chip's own :hover outranks a bare :disabled rule, so the refused
+    // verb must stay refused under the pointer too.
+    expect(selectors).toContain(".thread-composer-row .desk-chip:disabled:hover");
+    expect(selectors).toContain(".thread-inline-editor-actions .desk-chip:disabled");
+    expect(block).toContain("var(--disabled-bg)");
+    expect(block).toContain("var(--disabled-fg)");
+    expect(block).toContain("var(--disabled-border)");
+  });
+
+  it("keeps the library's hover and press grammar off the ref-chip remove verb", () => {
+    // D-R3 — the swap must not add a hover background or a press settle the
+    // chip never had; the focus ring `all: unset` had killed does stay.
+    const hover = composerCss
+      .split(".thread-ref-chip .thread-ref-chip-remove:hover")[1]
+      ?.split("}")[0] ?? "";
+    expect(hover).toContain("background: none");
+    const press = composerCss
+      .split(".thread-ref-chip .thread-ref-chip-remove:active:not(:disabled)")[1]
+      ?.split("}")[0] ?? "";
+    expect(press).toContain("transform: none");
+    expect(composerCss).not.toContain(".thread-ref-chip-remove:focus-visible");
+  });
+
   it("Enter sends the message", () => {
     const { props } = renderComposer();
     const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
@@ -553,6 +715,21 @@ describe("InlineEditor", () => {
     fireEvent.keyDown(input, { key: "Escape" });
     expect(onCancel).toHaveBeenCalled();
     expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  // HS-200-41 AC5 — Send and Cancel are the library Button, not raw markup.
+  it("draws every verb as the library Button", () => {
+    render(
+      <InlineEditor initialText="original" onConfirm={vi.fn()} onCancel={vi.fn()} />,
+    );
+    const editor = screen.getByTestId("inline-editor");
+    const raw = Array.from(editor.querySelectorAll("button")).filter(
+      (el) => !el.classList.contains("btn") && !el.classList.contains("desk-mic"),
+    );
+    expect(raw.map((el) => el.outerHTML)).toEqual([]);
+    // D-R1 — the swap is canon only: both verbs keep the chip face they had.
+    expect(screen.getByText("Send")).toHaveClass("desk-chip");
+    expect(screen.getByText("Cancel")).toHaveClass("desk-chip", "quiet");
   });
 });
 

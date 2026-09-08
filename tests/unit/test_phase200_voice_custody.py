@@ -403,3 +403,293 @@ def test_a_ring_only_rule_fires_but_fabricates_no_id() -> None:
     landed, applied = apply_text_corrections(HEARD, ring)
     assert landed == "the PostgreSQL migration lands on friday"
     assert applied == ()
+
+
+# ── HS-200-05: the three permissions, read honestly ─────────────────────────
+#
+# The defect: `web_runtime.py:538-559` recorded `global_hotkey_available` /
+# `global_hotkey_error` and NOTHING in the tree read either key, so a refused
+# macOS grant made Right Option do nothing with no signal at all. These prove
+# the detector half — that each grant reports what the platform actually said,
+# and that anything we could not read says UNKNOWN rather than a cheerful
+# GRANTED we never verified.
+
+from pathlib import Path as _Path
+
+from holdspeak import desktop_permissions as perms
+
+
+@pytest.mark.parametrize(
+    "trusted,expected",
+    [(True, perms.GRANTED), (False, perms.DENIED)],
+)
+def test_accessibility_reports_what_ax_is_process_trusted_said(
+    monkeypatch: pytest.MonkeyPatch, trusted: bool, expected: str
+) -> None:
+    """Synthetic typing's grant is the AX trust bit, reported either way."""
+    monkeypatch.setattr(perms, "_is_macos", lambda: True)
+    monkeypatch.setattr(perms, "_ax_is_process_trusted", lambda: trusted)
+    state, source = perms.accessibility_state()
+    assert (state, source) == (expected, "AXIsProcessTrusted")
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        (0, perms.GRANTED),        # kIOHIDAccessTypeGranted
+        (1, perms.DENIED),         # kIOHIDAccessTypeDenied
+        (2, perms.NOT_DETERMINED), # kIOHIDAccessTypeUnknown — never asked
+    ],
+)
+def test_input_monitoring_maps_every_iohid_access_type(
+    monkeypatch: pytest.MonkeyPatch, value: int, expected: str
+) -> None:
+    """The hotkey listener's grant, straight off `IOHIDCheckAccess`."""
+    monkeypatch.setattr(perms, "_is_macos", lambda: True)
+    monkeypatch.setattr(perms, "_iohid_check_access", lambda: value)
+    state, source = perms.input_monitoring_state()
+    assert (state, source) == (expected, "IOHIDCheckAccess")
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        (0, perms.NOT_DETERMINED),  # AVAuthorizationStatusNotDetermined
+        (1, perms.DENIED),          # ...Restricted — not the owner's to flip
+        (2, perms.DENIED),          # ...Denied
+        (3, perms.GRANTED),         # ...Authorized
+    ],
+)
+def test_microphone_maps_every_av_authorization_status(
+    monkeypatch: pytest.MonkeyPatch, value: int, expected: str
+) -> None:
+    monkeypatch.setattr(perms, "_is_macos", lambda: True)
+    monkeypatch.setattr(perms, "_av_authorization_status", lambda: value)
+    state, source = perms.microphone_state()
+    assert state == expected
+    assert source == "AVCaptureDevice.authorizationStatusForMediaType"
+
+
+def test_an_unmapped_platform_value_is_unknown_not_a_guess(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A value macOS never documented is not quietly rounded to granted."""
+    monkeypatch.setattr(perms, "_is_macos", lambda: True)
+    monkeypatch.setattr(perms, "_iohid_check_access", lambda: 77)
+    monkeypatch.setattr(perms, "_av_authorization_status", lambda: 77)
+    assert perms.input_monitoring_state() == (perms.UNKNOWN, "IOHIDCheckAccess returned 77")
+    assert perms.microphone_state()[0] == perms.UNKNOWN
+
+
+def test_a_missing_api_degrades_to_a_plainly_labelled_unknown(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The machine has no such symbol — say UNKNOWN and name why.
+
+    This is the honest-unknown path: a mac too old for `IOHIDCheckAccess`, a
+    build without `pyobjc`, an `AVFoundation` that will not load. Not one of
+    them may answer "granted".
+    """
+    monkeypatch.setattr(perms, "_is_macos", lambda: True)
+
+    def _no_symbol() -> int:
+        raise AttributeError("IOHIDCheckAccess")
+
+    def _no_framework() -> int:
+        raise ImportError("No module named 'objc'")
+
+    def _no_ax() -> bool:
+        raise ImportError("No module named 'ApplicationServices'")
+
+    monkeypatch.setattr(perms, "_iohid_check_access", _no_symbol)
+    monkeypatch.setattr(perms, "_av_authorization_status", _no_framework)
+    monkeypatch.setattr(perms, "_ax_is_process_trusted", _no_ax)
+
+    assert perms.input_monitoring_state() == (
+        perms.UNKNOWN,
+        "IOHIDCheckAccess unavailable: AttributeError",
+    )
+    assert perms.microphone_state() == (
+        perms.UNKNOWN,
+        "AVCaptureDevice unavailable: ImportError",
+    )
+    assert perms.accessibility_state() == (
+        perms.UNKNOWN,
+        "AXIsProcessTrusted unavailable: ImportError",
+    )
+
+
+def test_off_macos_every_grant_is_unknown_and_says_so(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A Linux hub has none of these panes; it must not claim a state."""
+    monkeypatch.setattr(perms.platform, "system", lambda: "Linux")
+    rows = perms.permissions()
+    assert [r.state for r in rows] == [perms.UNKNOWN] * 3
+    assert {r.source for r in rows} == {"not macOS (Linux)"}
+    assert all(not r.satisfied for r in rows)
+
+
+def test_checking_a_permission_never_calls_a_prompting_api() -> None:
+    """The query half only — opening the desk must raise no system dialog.
+
+    Each macOS permission API has a prompting sibling. Naming one here would
+    make merely *looking* at the desk pop a modal the owner never asked for
+    (the brief's explicit refusal: no permission request at startup). The
+    proof is the module's own AST: every call target and every string literal
+    it could reach a symbol through, checked against the three prompting APIs.
+    """
+    import ast
+
+    tree = ast.parse(_Path(perms.__file__).read_text())
+    reachable: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            func = node.func
+            if isinstance(func, ast.Name):
+                reachable.add(func.id)
+            elif isinstance(func, ast.Attribute):
+                reachable.add(func.attr)
+        elif isinstance(node, (ast.Attribute,)):
+            reachable.add(node.attr)
+        elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+            reachable.add(node.value)
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            reachable.update(alias.name for alias in node.names)
+
+    for prompting in (
+        "AXIsProcessTrustedWithOptions",
+        "kAXTrustedCheckOptionPrompt",
+        "IOHIDRequestAccess",
+        "requestAccessForMediaType_completionHandler_",
+    ):
+        assert prompting not in reachable, f"{prompting} is reachable in code"
+
+    # And the query halves ARE the ones reached.
+    assert {"AXIsProcessTrusted", "IOHIDCheckAccess"} <= reachable
+    assert "authorizationStatusForMediaType_" in reachable
+
+
+def test_every_permission_carries_its_pane_path_and_deep_link() -> None:
+    """The row must be able to name the walk without writing a sentence."""
+    by_id = {p.id: p for p in perms.permissions()}
+    assert set(by_id) == {"microphone", "input_monitoring", "accessibility"}
+    assert by_id["accessibility"].path == [
+        "SYSTEM SETTINGS",
+        "PRIVACY & SECURITY",
+        "ACCESSIBILITY",
+    ]
+    assert by_id["input_monitoring"].settings_url.endswith("?Privacy_ListenEvent")
+    assert by_id["microphone"].settings_url.endswith("?Privacy_Microphone")
+    assert by_id["accessibility"].settings_url.endswith("?Privacy_Accessibility")
+    # One token naming what breaks, never a sentence.
+    assert [by_id[k].needed_for for k in perms.ORDER] == ["CAPTURE", "HOTKEY", "TYPING"]
+
+
+@pytest.mark.parametrize(
+    "error,token",
+    [
+        ("", ""),
+        ("RuntimeError: pynput is not available.", "PYNPUT MISSING"),
+        ("RuntimeError: no GUI session for this display", "NO GUI SESSION"),
+        ("OSError: permission denied by the operating system", "PERMISSION REFUSED"),
+        ("ValueError: Unknown key name: zzz", "LISTENER FAILED"),
+    ],
+)
+def test_a_listener_failure_becomes_one_token_not_a_stack(error: str, token: str) -> None:
+    """UX canon A10: a plain named reason; the raw string stays off the face."""
+    assert perms.hotkey_failure_token(error) == token
+
+
+def test_the_custody_payload_says_unknown_when_there_is_no_runtime_to_ask(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """No runtime = we do not know the listener installed. Never "working"."""
+    monkeypatch.setattr(perms, "_is_macos", lambda: True)
+    monkeypatch.setattr(perms, "_ax_is_process_trusted", lambda: True)
+    monkeypatch.setattr(perms, "_iohid_check_access", lambda: 0)
+    monkeypatch.setattr(perms, "_av_authorization_status", lambda: 3)
+
+    payload = perms.hotkey_custody(listener_available=None, key="alt_r", display="X")
+    assert payload["available"] is None
+    assert payload["missing"] == []
+    # Every grant is in hand, and the block still speaks: the listener is not
+    # PROVEN up, which is exactly the silence this story exists to break.
+    assert payload["needs_attention"] is True
+
+
+def test_the_custody_payload_is_silent_only_when_everything_is_proven(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(perms, "_is_macos", lambda: True)
+    monkeypatch.setattr(perms, "_ax_is_process_trusted", lambda: True)
+    monkeypatch.setattr(perms, "_iohid_check_access", lambda: 0)
+    monkeypatch.setattr(perms, "_av_authorization_status", lambda: 3)
+    quiet = perms.hotkey_custody(listener_available=True)
+    assert (quiet["needs_attention"], quiet["missing"], quiet["reason"]) == (False, [], "")
+
+    monkeypatch.setattr(perms, "_iohid_check_access", lambda: 1)
+    loud = perms.hotkey_custody(
+        listener_available=False,
+        listener_error="RuntimeError: pynput is not available.",
+    )
+    assert loud["needs_attention"] is True
+    assert loud["missing"] == ["input_monitoring"]
+    assert loud["reason"] == "PYNPUT MISSING"
+    # The raw string still travels for the RAW lane; the token is what a chip says.
+    assert "pynput is not available" in loud["error"]
+
+
+def test_a_grant_is_re_read_every_time_never_cached(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The owner flips the toggle and presses Re-check — the answer must move."""
+    monkeypatch.setattr(perms, "_is_macos", lambda: True)
+    monkeypatch.setattr(perms, "_ax_is_process_trusted", lambda: True)
+    monkeypatch.setattr(perms, "_av_authorization_status", lambda: 3)
+    monkeypatch.setattr(perms, "_iohid_check_access", lambda: 1)
+    assert perms.permission("input_monitoring").state == perms.DENIED
+    monkeypatch.setattr(perms, "_iohid_check_access", lambda: 0)
+    assert perms.permission("input_monitoring").state == perms.GRANTED
+
+
+def test_the_runtime_status_payload_carries_the_hotkey_facts_it_used_to_drop(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    """The other half of the silence: the curated status payload dropped them.
+
+    `web_runtime` recorded `global_hotkey_available` / `global_hotkey_error`
+    into `runtime_status`, but `_get_runtime_status` — the ONE callback the web
+    layer can ask — built a curated dict that omitted both, so even a reader
+    could not have seen them. Both are on it now, so the readiness route's
+    custody block answers from the real hub instead of UNKNOWN forever.
+    """
+    import holdspeak.web_runtime as web_runtime
+
+    class _FakeTyper:
+        def type_text(self, *a: Any, **k: Any) -> None:
+            return None
+
+    class _FakeServer:
+        def broadcast(self, *a: Any, **k: Any) -> None:
+            return None
+
+    monkeypatch.setattr(web_runtime, "TextTyper", _FakeTyper)
+    runtime = web_runtime.WebRuntime(
+        no_open=True,
+        stop_event=threading.Event(),
+        register_signal_handlers=False,
+    )
+    runtime.server = _FakeServer()  # type: ignore[assignment]
+
+    # As `web_runtime.py:552-558` writes them when the listener will not install.
+    runtime.runtime_status["global_hotkey_available"] = False
+    runtime.runtime_status["global_hotkey_error"] = "RuntimeError: pynput is not available."
+    status = runtime._get_runtime_status()
+    assert status["global_hotkey_available"] is False
+    assert "pynput" in str(status["global_hotkey_error"])
+
+    # And the success side, so the face can say ACTIVE honestly.
+    runtime.runtime_status["global_hotkey_available"] = True
+    runtime.runtime_status["global_hotkey_error"] = ""
+    assert runtime._get_runtime_status()["global_hotkey_available"] is True

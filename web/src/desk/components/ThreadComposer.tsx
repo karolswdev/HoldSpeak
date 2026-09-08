@@ -29,6 +29,7 @@ import { useDesk } from "../store";
 import { apiFetch } from "../../lib/api";
 import { KIND_GLYPH } from "../tools";
 import { SurfaceRows, SurfaceRow } from "../surface/Surface";
+import { Button } from "../../components/signal/Signal";
 import { useThreadComposerDraft } from "../threadComposerDrafts";
 
 // ── ref chip (the attachment) ───────────────────────────────────────
@@ -50,7 +51,12 @@ function RefChipRow({
         {KIND_GLYPH[chip.ref.kind] ?? chip.ref.kind}
       </span>
       <span className="thread-ref-chip-name">{chip.ref.name}</span>
-      <button
+      {/* HS-200-41 AC5 — every verb is the library Button. `ghost` keeps the
+          chip's `all: unset` face (thread-pullout.css) exactly as ratified;
+          `secondary` would drag in the global .btn wash. */}
+      <Button
+        variant="ghost"
+        dense
         type="button"
         className="thread-ref-chip-remove"
         aria-label={`Remove ${chip.ref.name}`}
@@ -61,7 +67,7 @@ function RefChipRow({
         }}
       >
         x
-      </button>
+      </Button>
     </span>
   );
 }
@@ -983,16 +989,18 @@ export function ThreadComposer({
           label="Speak"
         />
         {streaming ? (
-          <button
+          <Button
+            variant="ghost"
             type="button"
             className="desk-chip"
             onClick={() => onStop()}
             data-testid="composer-stop"
           >
             Stop
-          </button>
+          </Button>
         ) : (
-          <button
+          <Button
+            variant="ghost"
             type="button"
             className="desk-chip"
             onClick={() => void handleSend()}
@@ -1000,7 +1008,7 @@ export function ThreadComposer({
             data-testid="composer-send"
           >
             Send
-          </button>
+          </Button>
         )}
       </div>
     </div>
@@ -1085,21 +1093,23 @@ export function InlineEditor({
             }
           />
         </span>
-        <button
+        <Button
+          variant="ghost"
           type="button"
           className="desk-chip"
           onClick={() => text.trim() && onConfirm(text.trim())}
           disabled={!text.trim()}
         >
           Send
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="ghost"
           type="button"
           className="desk-chip quiet"
           onClick={onCancel}
         >
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   );

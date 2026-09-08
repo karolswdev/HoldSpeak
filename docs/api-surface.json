@@ -446,6 +446,46 @@
       ]
     },
     {
+      "path": "/api/ask-tasks",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/ask-tasks/{task_id}/discard",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/ask-tasks/{task_id}/resume",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/ask-tasks/{task_id}/stopped",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/ask/keep",
       "methods": [
         "POST"
@@ -4284,6 +4324,16 @@
       "path": "/api/projects/{project_id}/artifacts",
       "methods": [
         "GET"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/ask-tasks",
+      "methods": [
+        "POST"
       ],
       "module": "web.routes.projects",
       "consumers": [

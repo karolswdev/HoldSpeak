@@ -42,6 +42,10 @@ from .primitives import (  # noqa: F401
     DirectoryMembershipRepository,
 )
 from .refinement_thoughts import RefinementThoughtRepository  # noqa: F401
+from .task_resume import (  # noqa: F401
+    ProjectAskTask,
+    ProjectAskTaskRepository,
+)
 from .scheduled_recordings import (  # noqa: F401
     ScheduledRecording,
     ScheduledRecordingRepository,

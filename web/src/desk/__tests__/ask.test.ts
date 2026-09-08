@@ -7,6 +7,7 @@ import {
   askLineageLine,
   keepAsk,
   runAsk,
+  stopAskTask,
 } from "../ask";
 import type { Items } from "../api";
 
@@ -80,6 +81,12 @@ describe("the run/keep wire", () => {
     expect(r).toEqual({
       ok: true,
       output: "PRINTED",
+      // HS-200-41: the identity the run was journaled under. Empty when the
+      // response omits it (an older shape) — the hub stamps it today.
+      invocationId: "",
+      // HS-200-41: the hub's bounded refusal token. A run that SUCCEEDED
+      // carries none — there is nothing to record as a stop.
+      refusalCode: "",
       egress: { scope: "cloud", host: "192.168.1.43" },
       model: "Qwen3.5-9B-Q6_K",
       profileId: "p1",
@@ -94,6 +101,44 @@ describe("the run/keep wire", () => {
       groundingClaims: [],
       groundingReceipt: null,
     });
+  });
+
+  // HS-200-41 (ruling B3): a saved ask pins its invocation identity BEFORE
+  // anything is dispatched, so an answer that lands after the tab is gone can
+  // be CLAIMED out of the hub's ask_results instead of paid for twice. The
+  // client had no way to send that id, and never read the one it got back.
+  it("runAsk runs under a pinned invocation id and reads the one it is given", async () => {
+    let sent: Record<string, unknown> = {};
+    vi.stubGlobal("fetch", (_url: string, init: RequestInit) => {
+      sent = JSON.parse(String(init.body));
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({ output: "PRINTED", invocation_id: "ask_pinned1" }),
+      });
+    });
+    const r = await runAsk({
+      prompt: "Go",
+      lens: "Project",
+      context: [],
+      invocationId: "ask_pinned1",
+    });
+    expect(sent.invocation_id).toBe("ask_pinned1");
+    expect(r.invocationId).toBe("ask_pinned1");
+  });
+
+  it("runAsk omits the invocation id entirely when none is pinned", async () => {
+    let sent: Record<string, unknown> = {};
+    vi.stubGlobal("fetch", (_url: string, init: RequestInit) => {
+      sent = JSON.parse(String(init.body));
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ output: "PRINTED" }),
+      });
+    });
+    const r = await runAsk({ prompt: "Go", lens: "Project", context: [] });
+    expect(sent).not.toHaveProperty("invocation_id");
+    expect(r.invocationId).toBe("");
   });
 
   it("runAsk parses grounding_claims into the quiet per-claim flag shape", async () => {
@@ -167,5 +212,107 @@ describe("the lens presets", () => {
       "Decisions",
       "Draft email",
     ]);
+  });
+});
+
+/* HS-200-41 — the refusal CODE, kept apart from the refusal sentence.
+ *
+ * `save_ask` writes the row before dispatch (ruling B3), so the ordinary
+ * failure — an engine that is not ready — used to leave the row `saved` with
+ * nothing to say about why. The way back in is
+ * `POST /api/ask-tasks/{id}/stopped` with the hub's own bounded token, and
+ * `runAsk` never read it: it folded `data.error` into the failure string and
+ * dropped `data.code` on the floor. */
+describe("the refusal code (HS-200-41)", () => {
+  it("surfaces the hub's bounded code beside its sentence on a refusal", async () => {
+    vi.stubGlobal("fetch", () =>
+      Promise.resolve({
+        ok: false,
+        status: 409,
+        json: () =>
+          Promise.resolve({
+            error: "model file not found: qwen3-35b.gguf",
+            code: "inference_target_unavailable",
+            inference_target: { id: "t1" },
+          }),
+      }),
+    );
+    const r = await runAsk({ prompt: "Go", lens: "Project", context: [] });
+    expect(r.ok).toBe(false);
+    // The sentence is for the owner's eye — kept verbatim, as it always was.
+    expect(r.output).toBe("model file not found: qwen3-35b.gguf");
+    // The TOKEN is the only thing that may travel back to the store (B5).
+    expect(r.refusalCode).toBe("inference_target_unavailable");
+  });
+
+  it("carries no code when the hub sent none, so nothing is invented", async () => {
+    vi.stubGlobal("fetch", () =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+        json: () => Promise.resolve({ error: "boom" }),
+      }),
+    );
+    expect((await runAsk({ prompt: "Go", lens: "Project", context: [] })).refusalCode).toBe("");
+  });
+
+  it("carries no code when the transport itself failed", async () => {
+    vi.stubGlobal("fetch", () => Promise.reject(new TypeError("failed to fetch")));
+    const r = await runAsk({ prompt: "Go", lens: "Project", context: [] });
+    expect(r.ok).toBe(false);
+    expect(r.refusalCode).toBe("");
+  });
+});
+
+/* The stop wire itself: a token goes up, and NOTHING else. */
+describe("stopAskTask (HS-200-41)", () => {
+  it("posts the code alone — no reason, no prose, nothing to be helpful with", async () => {
+    let url = "";
+    let sent: Record<string, unknown> = {};
+    vi.stubGlobal("fetch", (target: string, init: RequestInit) => {
+      url = target;
+      sent = JSON.parse(String(init.body));
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            task: { id: "asktask_1", invocationId: "ask_1", state: "failed" },
+            changed: true,
+          }),
+      });
+    });
+    const out = await stopAskTask("asktask_1", "inference_target_unavailable");
+    expect(url).toBe("/api/ask-tasks/asktask_1/stopped");
+    // The server ignores any reason a caller sends; the client does not send
+    // one at all, so there is nothing to ignore (ruling B5).
+    expect(sent).toEqual({ code: "inference_target_unavailable" });
+    expect(out.ok).toBe(true);
+    expect(out.changed).toBe(true);
+    expect(out.task?.state).toBe("failed");
+  });
+
+  it("a repeat on an already-failed row is a no-op, NOT a failure", async () => {
+    vi.stubGlobal("fetch", () =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            task: { id: "asktask_1", invocationId: "ask_1", state: "failed" },
+            changed: false,
+          }),
+      }),
+    );
+    const out = await stopAskTask("asktask_1", "inference_target_unavailable");
+    expect(out.ok).toBe(true);
+    expect(out.changed).toBe(false);
+  });
+
+  it("sends nothing at all when there is no code to send", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    expect(await stopAskTask("asktask_1", "")).toEqual({
+      ok: false, task: null, changed: false,
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

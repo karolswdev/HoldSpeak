@@ -122,11 +122,17 @@ def redacted_settings(
     """
     from holdspeak.config import (
         LEGACY_ENDPOINT_FIELDS,
+        MACHINE_ID_KEY,
         calendar_sources_summary,
         calendar_subscription_summary,
     )
 
     payload = deepcopy(config.to_dict())
+    # HS-200-41: the machine identity is custody's answer to "same desk?", not
+    # a setting anyone configures. It is opaque and it stays on the hub — the
+    # ask-task DTO carries the here/elsewhere verdict and never the token, and
+    # this is the other wire it would otherwise ride out on.
+    payload.pop(MACHINE_ID_KEY, None)
     cal = payload.get("calendar", {})
     if isinstance(cal, dict) and "subscription" not in cal:
         cal["subscription"] = cal["sources"][0]["url"] if cal.get("sources") else ""

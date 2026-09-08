@@ -298,12 +298,17 @@ def _read_back(path: Path) -> tuple[str | None, str | None]:
 def _make_an_older_copy(path: Path) -> None:
     """Shape the copy the way schema 75 held it (before HS-176-02).
 
-    75 → 76 added ``dictation_journal.corrections_applied``. Removing the column
-    and re-stamping 75 is exactly the database an upgrade has to carry forward.
+    75 → 76 added ``dictation_journal.corrections_applied``; 76 → 77 added the
+    ``project_ask_tasks`` table (HS-200-41). The copy starts life at HEAD's
+    shape, so EVERY bump since 75 has to be undone here — otherwise the newest
+    step is a tautology: the reconcile would "add" a table the copy already had
+    and the rehearsal would prove nothing about the bump it was re-anchored for.
+    When SCHEMA_VERSION moves again, remove the new shape here too.
     """
     conn = sqlite3.connect(str(path))
     try:
         conn.execute("ALTER TABLE dictation_journal DROP COLUMN corrections_applied")
+        conn.execute("DROP TABLE IF EXISTS project_ask_tasks")
         conn.execute("DELETE FROM schema_version")
         conn.execute("INSERT INTO schema_version (version) VALUES (75)")
         conn.commit()
@@ -315,6 +320,17 @@ def _columns(path: Path, table: str) -> set[str]:
     conn = sqlite3.connect(str(path))
     try:
         return {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+    finally:
+        conn.close()
+
+
+def _tables(path: Path) -> set[str]:
+    conn = sqlite3.connect(str(path))
+    try:
+        return {
+            row[0]
+            for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }
     finally:
         conn.close()
 
@@ -333,21 +349,23 @@ def test_backup_upgrade_restore_reopen_on_a_copy(tmp_path):
     _make_an_older_copy(copy)
     assert read_schema_version(copy) == 75
     assert "corrections_applied" not in _columns(copy, "dictation_journal")
+    assert "project_ask_tasks" not in _tables(copy)
 
     # 1. Back up through the existing mechanism, before the upgrade.
     backup = backup_database(copy)
     assert backup.exists() and backup.parent == copy.parent
     assert read_schema_version(backup) == 75
 
-    # 2. The supported upgrade: the declarative reconcile, 75 → 76.
+    # 2. The supported upgrade: the declarative reconcile, 75 → 77.
     conn = sqlite3.connect(str(copy))
     try:
         reconcile_schema(conn)
         conn.commit()
     finally:
         conn.close()
-    assert read_schema_version(copy) == SCHEMA_VERSION == 76
+    assert read_schema_version(copy) == SCHEMA_VERSION == 77
     assert "corrections_applied" in _columns(copy, "dictation_journal")
+    assert "project_ask_tasks" in _tables(copy)
     assert _read_back(copy) == ("The rehearsal meeting", "# kept")
 
     # 3. Restore the pre-upgrade backup. The current database is snapshotted first.
@@ -361,6 +379,8 @@ def test_backup_upgrade_restore_reopen_on_a_copy(tmp_path):
     Database(copy)
     reset_database()
     assert read_schema_version(copy) == SCHEMA_VERSION
+    assert "corrections_applied" in _columns(copy, "dictation_journal")
+    assert "project_ask_tasks" in _tables(copy)
     assert _read_back(copy) == ("The rehearsal meeting", "# kept")
 
     # The control never moved.

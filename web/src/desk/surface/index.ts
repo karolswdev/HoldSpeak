@@ -114,6 +114,10 @@ export {
   Popover,
   ProvenanceChip,
   Receipt,
+  TaskResume,
+  TaskResumeList,
+  type TaskResumeState,
+  type TaskResumeProps,
 } from "./patterns";
 
 export { MicButton, type MicState } from "./controls/MicButton";

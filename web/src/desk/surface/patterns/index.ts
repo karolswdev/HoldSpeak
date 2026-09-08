@@ -8,3 +8,9 @@ export { ChoiceCardGroup, ChoiceCard } from "./ChoiceCardGroup";
 export { ChoiceCardShell, type ChoiceCardShellProps } from "./ChoiceCardShell";
 export { Popover } from "./Popover";
 export { ProvenanceChip, Receipt } from "./ProvenanceChip";
+export {
+  TaskResume,
+  TaskResumeList,
+  type TaskResumeState,
+  type TaskResumeProps,
+} from "./TaskResume";

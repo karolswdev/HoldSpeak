@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 76  # informational; 74→75: calendar_event_link_suppressions (HS-175 counsel C5); 75→76: dictation_journal.corrections_applied (HS-176-02)
+SCHEMA_VERSION = 77  # informational; 74→75: calendar_event_link_suppressions (HS-175 counsel C5); 75→76: dictation_journal.corrections_applied (HS-176-02); 76→77: project_ask_tasks (HS-200-41)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -4112,4 +4112,49 @@ CREATE TABLE IF NOT EXISTS calendar_event_link_suppressions (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (calendar_source_id, calendar_uid, project_id)
 );
+-- HS-200-41: a Room ask that outlived the tab.  `/api/ask` is one blocking
+-- request/response (holdspeak/web/routes/primitives/ask.py) and persists
+-- nothing -- the kernel journals a payload hash, and `ask_results` holds the
+-- answer without the question.  This row is therefore the ONLY durable record
+-- of what was asked.  It pins the invocation identity BEFORE dispatch so an
+-- answer that lands while the tab is gone can be CLAIMED out of `ask_results`
+-- after a restart instead of paid for twice (ruling B3).
+--
+-- `state` carries the full posture-6 vocabulary so the `TaskResume` species can
+-- draw rows from every owner (ruling B8), but this table's own writers reach
+-- only the honest subset: `saved`, `failed`, `accepted`, `discarded`.  `running`
+-- and `waiting` belong to owners that have a job row; an ask has none.
+-- `Discard` is a state, never a DELETE (ruling B6).
+-- `stopped_reason` is the target's own words, quoted verbatim from the refusal
+-- that raised them; nothing here is ever a composed sentence (ruling B5).
+-- `custody_*` is who SAVED the row (the `SAVED HERE` token, ruling B7);
+-- `dispatch_*` is the live lease held while a resume is in flight, mirroring
+-- `refinement_invocations.dispatch_host_id`, and is what startup recovery
+-- reconciles.  Additive; never rebuilt.
+CREATE TABLE IF NOT EXISTS project_ask_tasks (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    invocation_id TEXT NOT NULL UNIQUE,
+    purpose TEXT NOT NULL,
+    lens TEXT NOT NULL DEFAULT 'Project',
+    recipe_key TEXT NOT NULL DEFAULT '',
+    grounding_json TEXT NOT NULL DEFAULT '{}',
+    state TEXT NOT NULL DEFAULT 'saved'
+        CHECK (state IN ('saved', 'running', 'waiting', 'failed',
+                         'incomplete', 'accepted', 'discarded')),
+    stopped_reason TEXT NOT NULL DEFAULT '',
+    stopped_code TEXT NOT NULL DEFAULT '',
+    custody_host_id TEXT NOT NULL DEFAULT '',
+    custody_lease_epoch INTEGER NOT NULL DEFAULT 0,
+    dispatch_host_id TEXT NOT NULL DEFAULT '',
+    dispatch_lease_epoch INTEGER NOT NULL DEFAULT 0,
+    resume_order INTEGER NOT NULL DEFAULT 0,
+    saved_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    settled_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_project_ask_tasks_resume
+    ON project_ask_tasks(state, resume_order DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_project_ask_tasks_project
+    ON project_ask_tasks(project_id, state);
 """

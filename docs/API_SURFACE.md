@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 669 (plus static mounts). iOS-consumed: 89. Web-consumed: 511.
+Routes: 674 (plus static mounts). iOS-consumed: 89. Web-consumed: 516.
 
 ## device_audio_ws
 
@@ -864,6 +864,10 @@ Routes: 669 (plus static mounts). iOS-consumed: 89. Web-consumed: 511.
 
 | Method | Path | Consumers |
 |---|---|---|
+| GET | `/api/ask-tasks` | web |
+| POST | `/api/ask-tasks/{task_id}/discard` | web |
+| POST | `/api/ask-tasks/{task_id}/resume` | web |
+| POST | `/api/ask-tasks/{task_id}/stopped` | web |
 | GET | `/api/desk/needs-you` | web |
 | GET | `/api/desk/relationships/{resource_ref:path}` | web |
 | GET | `/api/meetings/{meeting_id}/projects` | server only |
@@ -874,6 +878,7 @@ Routes: 669 (plus static mounts). iOS-consumed: 89. Web-consumed: 511.
 | PATCH | `/api/projects/{project_id}` | web |
 | GET | `/api/projects/{project_id}/action-items` | server only |
 | GET | `/api/projects/{project_id}/artifacts` | web |
+| POST | `/api/projects/{project_id}/ask-tasks` | web |
 | GET | `/api/projects/{project_id}/briefings` | server only |
 | GET | `/api/projects/{project_id}/items` | server only |
 | POST | `/api/projects/{project_id}/items` | server only |

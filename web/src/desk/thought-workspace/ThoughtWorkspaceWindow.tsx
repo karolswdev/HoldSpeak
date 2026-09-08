@@ -3,6 +3,7 @@ import { ApiError, readableError } from "../../lib/api";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
+import { onReturnToTask, rememberTaskFocus } from "../returnToTask";
 import {
   actOnReview,
   answerAndContinue,
@@ -205,11 +206,10 @@ function WorkspaceReady({
     return () => window.clearInterval(timer);
   }, [projection.workspace_state, reload, writer.dirty, writer.saving]);
 
+  // HS-200-41: the one shared subscription (`desk/returnToTask.ts`).
   useEffect(() => {
     if (projection.inference.availability !== "unavailable") return;
-    const recheck = () => { void reload(false).catch(() => undefined); };
-    window.addEventListener("holdspeak:settings-updated", recheck);
-    return () => window.removeEventListener("holdspeak:settings-updated", recheck);
+    return onReturnToTask(() => { void reload(false).catch(() => undefined); });
   }, [projection.inference.availability, reload]);
 
   const installMutation = async (result: WorkspaceMutation, reveal: "note" | "marker" | "none" = "none") => {
@@ -352,6 +352,9 @@ function WorkspaceReady({
     : primaryKind ? actionLabel(primaryKind) : "Finish Thought";
   const primaryDisabled = busy || (!noteProxy && (primaryKind === "answer_review" || primaryKind === "answer_and_continue") && !answer.trim());
   const setupAI = () => {
+    // HS-200-41: remember the verb he left before the handoff, so the
+    // Apply on the other side can send focus back here (design D2(a)).
+    rememberTaskFocus();
     setMessage("Models opened. Choose where AI runs; this Thought will recheck automatically.");
     openSurfaceOr("configure-runs-on", "/settings", "models");
   };

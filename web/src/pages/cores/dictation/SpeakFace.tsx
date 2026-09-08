@@ -8,8 +8,10 @@
 // RESULT row (landed text + OK/Wrong ghosts; Wrong unfolds teach row)
 // ENGINE row (DICTATION · model name · THIS DEVICE chip · READY chip;
 //             or NOT SET + Choose when no engine)
+// HOTKEY block (HS-200-05: only when the physical key is not proven up —
+//             the listener's state, and every macOS grant that is missing)
 // > Details (Disclosure: the old register strip, folded)
-import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { useAnnounce } from "./shared";
 import { useSpeakDeck } from "./useSpeakDeck";
 import {
@@ -44,8 +46,10 @@ import {
   type Engine,
 } from "../../../features/concierge/api";
 import { apiFetch } from "../../../lib/api";
+import { onReturnToTask, rememberTaskFocus } from "../../../desk/returnToTask";
 import { DICTATION_FAILURES } from "../../../lib/dictationRecovery";
 import type { MicPhase } from "../../../lib/micSession";
+import { readHotkeyCustody, type HotkeyCustody } from "./hotkeyCustody";
 
 /** Whether a hostname is on a local/LAN network (RFC1918, loopback,
  *  link-local, CGNAT/Tailscale, or named local suffixes). Mirrors
@@ -283,13 +287,18 @@ export function SpeakFace() {
   // HS-200-04 (return-to-task): the owner opens Models from the ENGINE row,
   // picks an engine, and comes back. The utterance in the well is untouched;
   // only readiness is re-read. No reload, no second configuration.
-  useEffect(() => {
-    const onSettings = () => { readEngine(); deck.refreshReadiness(); };
-    window.addEventListener("holdspeak:settings-updated", onSettings);
-    return () => window.removeEventListener("holdspeak:settings-updated", onSettings);
-  }, [readEngine, deck]);
+  // HS-200-41: the one shared subscription (`desk/returnToTask.ts`), so the
+  // event name lives in one place and the focus half rides the same signal.
+  useEffect(
+    () => onReturnToTask(() => { readEngine(); deck.refreshReadiness(); }),
+    [readEngine, deck],
+  );
 
   const resolved = resolveEngine(assignment, engines, targets);
+  /* HS-200-05 — the physical hotkey's custody. Until this story the runtime
+     recorded `global_hotkey_available` / `global_hotkey_error` and nothing
+     read them: a refused grant made Right Option do nothing, silently. */
+  const custody = readHotkeyCustody(deck.readinessData);
 
   return (
     <div className="speak-face">
@@ -331,6 +340,11 @@ export function SpeakFace() {
 
       {/* 5. ENGINE row */}
       <EngineRow engine={resolved.name} egress={resolved.egressLabel} engineState={resolved.engineState} keySet={resolved.keySet} detectStatus={detectStatus} readiness={deck} />
+
+      {/* 5b. HOTKEY block (HS-200-05) — silent when the key is proven up. */}
+      {custody.show ? (
+        <HotkeyRow custody={custody} onRecheck={deck.refreshReadiness} />
+      ) : null}
 
       {/* 6. Details (Disclosure, folded) */}
       <Disclosure label="Details" defaultOpen={false}>
@@ -635,6 +649,9 @@ function EngineRow({
   readiness: ReturnType<typeof useSpeakDeck>;
 }) {
   const openConcierge = () => {
+    // HS-200-41: remember the verb he left, so the Concierge's Apply can
+    // put focus back here instead of on nothing (design D2(a)).
+    rememberTaskFocus();
     import("../../../desk/shell").then(({ openSurface }) =>
       openSurface("open-concierge"),
     );
@@ -741,6 +758,85 @@ function EngineRow({
           Choose
         </Button>
       ) : null}
+    </div>
+  );
+}
+
+/* ── HOTKEY block (HS-200-05) ──
+   The listener's own state, then one row per macOS grant that is NOT granted:
+   the permission, what it costs, the path to walk, and its honest state. The
+   whole block is absent when the key is proven up and all three are granted
+   (no counters of zero, no decorative "all fine" row). */
+
+function HotkeyRow({
+  custody,
+  onRecheck,
+}: {
+  custody: HotkeyCustody;
+  onRecheck: () => void;
+}) {
+  return (
+    <div
+      className="speak-hotkey"
+      data-hotkey-state={custody.token.toLowerCase().replace(/ /g, "-")}
+      data-testid="speak-hotkey"
+    >
+      <div className="speak-hotkey-head">
+        <span className="speak-hotkey-ident">
+          <span className="speak-engine-caption">HOTKEY</span>
+          {custody.display ? (
+            <>
+              <span className="speak-engine-dot">{"\u00b7"}</span>
+              <span className="speak-engine-name">{custody.display}</span>
+            </>
+          ) : null}
+          {custody.reason ? (
+            <span className="surface-token" data-chip="" data-testid="speak-hotkey-reason">
+              {custody.reason}
+            </span>
+          ) : null}
+        </span>
+        <span className="speak-hotkey-tail">
+          <StateChip state={custody.kind} label={custody.token} />
+          <Button
+            variant="ghost"
+            dense
+            onClick={onRecheck}
+            data-testid="speak-hotkey-recheck"
+          >
+            Re-check
+          </Button>
+        </span>
+      </div>
+      {custody.rows.map((row) => (
+        <div
+          className="speak-hotkey-row"
+          key={row.id}
+          data-testid={`speak-permission-${row.id}`}
+        >
+          <span className="speak-hotkey-ident">
+            <span className="speak-hotkey-name">{row.label}</span>
+            {row.neededFor ? (
+              <span className="surface-token" data-chip="">{row.neededFor}</span>
+            ) : null}
+          </span>
+          <span className="speak-hotkey-tail">
+            <StateChip state={row.kind} label={row.token} />
+          </span>
+          <span className="speak-hotkey-path">
+            {row.path.map((token, i) => (
+              <Fragment key={token}>
+                {i ? (
+                  <span className="speak-engine-dot" aria-hidden="true">
+                    {"\u203a"}
+                  </span>
+                ) : null}
+                <span className="surface-token" data-chip="">{token}</span>
+              </Fragment>
+            ))}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }

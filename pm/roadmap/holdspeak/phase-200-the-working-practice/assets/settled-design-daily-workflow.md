@@ -202,18 +202,18 @@ acceptance criterion (C12; see Sizes).
 | S2 | **`ClaimAxes`** | The three-chip triple appears in the brief (P3), the meeting review (P4) and recall (P5). It is currently reachable only from the update posture | `UpdatePosture.tsx:141` (the `hasAxes` gate), `:145-171` (the three chips + unknowns); tokens at `update/model.ts:141-196` | 11 (promote), consumed by 12, 13 |
 | S3 | **`RepairRow`** | Built TWICE already for one idea. Postures 1, 2, 3, 4 and 6 all show it | `ConciergeCore.tsx:247-291` and `ChairHome.tsx:946-976` | 15 (promote one; retire the duplicate in a later story) |
 | S4 | **`SurfaceLedger` cap + remainder** | The true total in the head, the cap in the caption, the remainder as a real count with a real verb. Unbuilt for attention | `ChairHome.tsx:1169` (`BRIEF_CAP = 3`), `:1181-1182`, `:1220-1227` -- the identical pattern, for the brief only | 15 |
-| S5 | **`TaskResume`** | The saved ask with its state, its custody token and its ONE verb appears in postures 1, 3 and 6. Today return-to-task is an EVENT with no face | Event `holdspeak:settings-updated`, consumed `SpeakFace.tsx:283-289`, dispatched `useConciergeController.ts:487` and `SettingsCore.tsx:890` | 10 |
+| S5 | **`TaskResume`** | The saved ask with its state, its custody token and its ONE verb appears in postures 1, 3 and 6. Today return-to-task is an EVENT with no face | Event `holdspeak:settings-updated`, consumed `web/src/pages/cores/dictation/SpeakFace.tsx:288-289` and `web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx:211-212`, dispatched `web/src/features/concierge/useConciergeController.ts:487` and `web/src/pages/cores/SettingsCore.tsx:890` | 10 |
 | S6 | **`ProjectButton`** | The way back to the originating Project, on every posture (C8). Drawn today as a decorative token on six boards and absent on fifteen | Nothing; `ChairHome.tsx` renders the Project name as inert text | 15 (promote), consumed by 11, 12, 13 |
 
 **Two canon residues on surfaces this design uses**, counted and
 located as counsel corrected them (C20):
 
-- **A raw `<textarea>`** at `ThreadComposer.tsx:968`, self-flagged by
+- **A raw `<textarea>`** at `web/src/desk/components/ThreadComposer.tsx:968`, self-flagged by
   the comment at `:966`. This is a **mic-law site the scanner cannot
   see** (`ux_canon_scan.py` does not match `<textarea>` -- the 176 C9
   finding). It is carried in the ceiling under rule `B`, not `A1`.
 - **Two raw `<button className="desk-chip">`** (`Stop`, `Send`) at
-  `ThreadComposer.tsx:985-1004`. Rule A.1. This is a **separate**
+  `web/src/desk/components/ThreadComposer.tsx:985-1004`. Rule A.1. This is a **separate**
   residue from the textarea.
 
 Both must be paid by whichever of stories 10--12 touches the Thread
@@ -292,7 +292,7 @@ submits (Article IV.2).
 then the COVERAGE rows, then the SOURCES rows in document order (each
 row's verb is one stop). `Enter` in Purpose runs `Prepare` when the
 field is non-empty and the verb is enabled (the composer precedent,
-`ThreadComposer.tsx:875-883`). `Escape` in Purpose clears the
+`web/src/desk/components/ThreadComposer.tsx:875-883`). `Escape` in Purpose clears the
 uncommitted edit and leaves focus in the field; `Escape` on the mic
 stops the session (`MicButton.tsx:135-147`).
 
@@ -310,7 +310,7 @@ back`; `Write it myself -- keep the purpose, draft by hand`; per row
 opens the Concierge window; on its `Apply` the window closes, the ask
 well refreshes readiness WITHOUT a reload, and **focus returns to
 `Prepare`**. That is the missing half of return-to-task: the state half
-exists as an event (`SpeakFace.tsx:283-289`), the focus half does not
+exists as an event (`web/src/pages/cores/dictation/SpeakFace.tsx:288-289`), the focus half does not
 (D3, MISSING; AC owed to story 10).
 
 **Disclosure.** `ACTIONS n` holds the per-source read, its latency, the
@@ -850,7 +850,7 @@ the tree; the two he called materially wrong are corrected and noted.
 |---|---|
 | Room read | `GET /api/projects/{id}/room` (`projects.py:46`), forced re-read `POST .../room/read` (`:55`) |
 | The four questions, as built | `ProjectRoomCore.tsx:2-3`; sections `NeedsYou` `:692-880`, `Sources` `:881-1099`, `SinceYouLooked` `:1145-1192`, `DecisionsCommitments` `:1193-1323` |
-| The ask well | `RoomAskWell` `:1378-1476` (free text + mic + grounding receipt) |
+| The ask well | `RoomAskWell` `:1378-1472` (free text + mic + grounding receipt) |
 | Posture routing | `:1783-1810` -- Review > Update > Steward > Room, each owning the body |
 | Brief service | `GET /api/brief/latest`, `POST /api/brief/generate`, `GET /api/brief/shelf`, `POST /api/brief/items/{id}/shelf` (`holdspeak/web/routes/monday_brief.py:100,110,118,122`) |
 | Updates | `GET /api/projects/{id}/updates`, `POST .../updates/draft`, `POST /api/updates/{id}/regenerate`, `.../publish`, `.../markdown` (`project_updates.py:54,74,134,167,195`) |
@@ -898,7 +898,7 @@ undrawable in D2(e).
 |---|---|
 | Concierge | `holdspeak/web/routes/concierge.py:35` (prefix), `:46` detect, `:115` probe, `:208` apply |
 | Repair face | `ConciergeCore.tsx:411-425` (the `NEEDS YOU n` section, absent at zero), `RepairRow` `:247-291`, its `StateChip` at `:275-278` |
-| Return-to-task, state half | `window.dispatchEvent(new Event("holdspeak:settings-updated"))` at `useConciergeController.ts:487` and `SettingsCore.tsx:890`; consumed at `SpeakFace.tsx:283-289` (re-read readiness, no reload, utterance preserved) |
+| Return-to-task, state half | `window.dispatchEvent(new Event("holdspeak:settings-updated"))` at `web/src/features/concierge/useConciergeController.ts:487` and `web/src/pages/cores/SettingsCore.tsx:890`; consumed at `web/src/pages/cores/dictation/SpeakFace.tsx:288-289` (re-read readiness, no reload, utterance preserved) **and at `web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx:211-212`, a second consumer this table first omitted** |
 | The Models window is reachable | `web/src/desk/applications.ts:308-313` |
 | Setup status | `GET /api/setup/status` (`holdspeak/web/routes/setup.py:48`) |
 | **MISSING: the focus half of return-to-task** | Nothing returns focus to the verb the owner left. One line per call site, and it is what makes returning feel like returning. Story 10 owns it |
@@ -913,8 +913,8 @@ undrawable in D2(e).
 | `Disclosure` | `patterns/Disclosure.tsx:13`; `aria-expanded` `:93`; Escape closes `:74-79`; focus returns to trigger `:66-72`; body `role="region"` `:105` |
 | Roving rows | `web/src/desk/surface/roving.ts:34` |
 | The canon guard | `scripts/ux_canon_scan.py`, ceiling `tests/ux_canon_ceiling.json`, test `tests/unit/test_ux_canon_ratchet.py`. **The voice law is at ceiling `mic: 0` after 176** |
-| **Residue 1: a raw `<textarea>`** | `ThreadComposer.tsx:968`, flagged by the comment at `:966`. A mic-law site the scanner cannot see (it does not match `<textarea>`); carried in the ceiling under rule `B` |
-| **Residue 2: two raw `<button className="desk-chip">`** | `ThreadComposer.tsx:985-1004` (`Stop`, `Send`). Rule A.1 |
+| **Residue 1: a raw `<textarea>`** | `web/src/desk/components/ThreadComposer.tsx:968`, flagged by the comment at `:966`. A mic-law site the scanner cannot see (it does not match `<textarea>`); carried in the ceiling under rule `B` |
+| **Residue 2: two raw `<button className="desk-chip">`** | `web/src/desk/components/ThreadComposer.tsx:985-1004` (`Stop`, `Send`). Rule A.1 |
 | **Residue 3: draft custody in-memory** | `web/src/desk/threadComposerDrafts.ts:5-15`; cleared at `web/src/desk/threads.ts:889-890`. Ruling R2: the face says `DRAFT NOT SAVED`; story 10 gains the AC |
 | **Residue 4: MCP steering read-only** | C11 requires the same service validation through Web and MCP. *Carried as BASELINE.md's claim; counsel did not trace it in code. UNKNOWN, not verified* |
 
@@ -1236,6 +1236,158 @@ remains is his.
 - **No test was run and no live face was opened.** Every judgment in
   this document is against the rendered artboard and the read source,
   not against a built face.
+
+---
+
+## Addendum 3 -- corrections from story 10's trace lanes (2026-09-07)
+
+Story 10 was opened, and the ratified design required it to trace
+`RoomAskWell`'s durability before building on it. Three read-only lanes
+ran. What they found corrects five premises of this document, resolves
+its one UNKNOWN, fires one of its own conditional rulings, and splits
+the story. Counsel ratified this design with conditions; nothing below
+redraws a board or changes a face. Where a premise moved, the reason is
+named.
+
+### The UNKNOWN is resolved: the ask persists nothing
+
+D3's preparation seam asked whether `RoomAskWell`'s submission is
+durable. It is not, on any path. The typed text lives in `useState`
+(`ProjectRoomCore.tsx:1387`); `runAsk` states it in its own docstring
+(`web/src/desk/ask.ts:127`, "Persists nothing -- keep/bin is yours");
+the kernel journals a payload **hash**, never the prompt
+(`holdspeak/kernel/inference_runner.py:63-66`); `ask_results.payload_json`
+(`holdspeak/db/schema.py:2069-2076`) holds the answer **without the
+question** -- neither `_ask_projection`
+(`holdspeak/services/ask_service.py:416-440`) nor `_routed_projection`
+(`:371-414`) writes a `prompt` key; and `RoomAskWell` never calls
+`keepAsk`, which only `web/src/desk/components/AskPanel.tsx:197` does.
+One conditional pre-dispatch write exists
+(`inference_adoption_material_snapshots.payload_json`, gated at
+`ask_service.py:365-369`) and its migration family is **absent from the
+owner's database**, read read-only. `RESUMED AFTER RESTART · SAVED
+09:04` and the `UNFINISHED` ledger must therefore be **built**, not
+bound.
+
+The complete unfinished machinery does exist, for Thoughts:
+`list_unfinished` (`holdspeak/services/refinement_thought_service.py:272-295`,
+its own docstring calls itself "the Resume projection"), durable raw
+words (`refinement_thoughts.raw_utf8`, `schema.py:890`), `resume_order`
+and its index (`:902`, `:909-910`), restart recovery
+(`recover_refinements_on_startup`, `:756`) and host leases
+(`schema.py:2080-2086`). No `refinement_*` table carries a Project
+binding, so a Project-scoped unfinished ledger is new schema by either
+route.
+
+**The sharpest honesty problem on this seam:** the **dictated audio**
+for this very field already survives a browser restart, through
+`draftScope={project-ask-${projectId}}` (`ProjectRoomCore.tsx:1455`)
+into IndexedDB (`web/src/lib/pendingVoice.ts:39-110`). Only the typed
+words are lost.
+
+### Ruling R2 fires its own escape hatch: the draft is persisted
+
+R2 said the face states the limitation with `DRAFT NOT SAVED` **"unless
+persistence proves trivial"**. It proved trivial. The precedent already
+ships for typed text -- `useLedgerFilter`
+(`web/src/desk/surface/LedgerFilter.tsx:17-49`) persists a typed query
+across reloads in about 25 lines -- and the composer's draft store has
+exactly one writer (`updateField`,
+`web/src/desk/threadComposerDrafts.ts:25-37`) and one eraser
+(`clearThreadComposerDraft`, `:17-23`), in a 45-line file, with a
+JSON-safe payload.
+
+**The condition ratified in this document has fired, so the draft is
+persisted and `DRAFT NOT SAVED` is drawn on no face.** The store is
+`sessionStorage`, not `localStorage`: a draft can hold dictated meeting
+material (`handleMicText`, `ThreadComposer.tsx:901-907`), and session
+scope survives the reload and the crash restore R2 was about while
+dying with the tab, so orphaned drafts and expiry never arise. One trap
+recorded for the build: rehydrating `sending: true` leaves the composer
+permanently disabled (`:977`, `:999`) -- force it false on hydrate.
+
+**Walk question 7 is retired.** The owner is no longer asked whether
+`DRAFT NOT SAVED` reads as honest or alarming, because no face says it.
+Six questions remain his.
+
+### Three premises in D2.0 and D3 were wrong
+
+1. **Residue 1 is already paid.** `MicButton` is wired at
+   `web/src/desk/components/ThreadComposer.tsx:981`, and the canon
+   scanner is **not** blind to `<textarea>` -- it matches it under rule
+   `B` (`scripts/ux_canon_scan.py:549`) and under the voice law
+   (`:334`). The live scan reports `mic: 0`. There is no mic debt and no
+   scanner debt at this site. What remains is the separate question of
+   whether the textarea should become a library species; that is a
+   library story, not story 10's, because `PadGadget` would need
+   `forwardRef`, `onSelect` and prop spread before it could stand in,
+   and 13 e2e locators plus about 20 test ids ride the current markup.
+2. **Residue 2 is five raw buttons, not two** -- `ThreadComposer.tsx:53`,
+   `:986`, `:995`, `:1088`, `:1096`.
+3. **The library `Button` has no `unavailable` variant.** Its variants
+   are `primary | secondary | ghost | danger`, plus `dense` and
+   `loading` (`web/src/components/signal/Signal.tsx:21-33`); a refused
+   verb is native `disabled`, which is what the D2(a) failed state
+   already draws. The D2.0 table's parenthetical is corrected here
+   rather than in place.
+
+Citation paths are repaired in place throughout: `ThreadComposer.tsx` is
+`web/src/desk/components/ThreadComposer.tsx`; the return-to-task files
+are `web/src/features/concierge/useConciergeController.ts`,
+`web/src/pages/cores/SettingsCore.tsx` and
+`web/src/pages/cores/dictation/SpeakFace.tsx:288-289`, which has a
+**second consumer this document omitted**,
+`web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx:211-212`;
+`RoomAskWell` ends at `:1472`.
+
+### A defect on the same seam, found while tracing
+
+`useModelLabel` (`ProjectRoomCore.tsx:1324-1364`) re-reads only on
+`[projectId, targets]`, and `inferenceTargets` refreshes only through
+the desk's own `refresh()`. After the owner assigns a model through
+`Choose` (`:1462`) the chip still reads `MODEL · NOT SET`. That is the
+state half of return-to-task failing on the very surface this design
+sends him back to. It belongs to the story that owns return-to-task.
+
+### The story splits
+
+Story 10's five acceptance criteria are about promoting working
+context. The four obligations the Sizes table added to it --
+`TaskResume`, the focus half of return-to-task, draft custody and the
+composer residues -- are about resuming unfinished work, and were
+placed there only because "the phase's only other draft AC is 28 AC1,
+at G3, which is too late to carry it". They are now
+**HS-200-41 Return to unfinished work**, chartered on the convention
+this document states for posture 6: IDs stay stable, new IDs go at the
+end. Story 15 depends on it, because the `TaskResume` species is what
+posture 6's `UNFINISHED` rows are made of.
+
+Story 10 keeps its five criteria, is re-judged **M to L**, and gets a
+wire design of its own before it is built
+(`assets/settled-design-working-context.md`). Three problems its story
+text does not settle: a target revision has no home and the three
+target kinds disagree on what a revision is; the People boundary is a
+classification problem rather than a plumbing one, since every existing
+guard keys on the `person:` ref kind, the `people.*` tool family or
+`thread_message_parts.sensitive` and a promoted Note is none of them;
+and staleness is detect-on-read while AC3 asks for a push, with no
+reverse index from a corrected record to its consumers.
+
+### Carried out of this document, not paid here
+
+`ACCEPTANCE.md`'s coverage row is corrected to the shipped C4
+vocabulary. `BASELINE.md:69` was already corrected by counsel's read.
+
+The A1 blind spot is **ledgered in BACKLOG.md, not paid**: rule A1
+matches `r'<button[\s>/]'` per line over `content.splitlines()`
+(`scripts/ux_canon_scan.py:429`, `:713`), so a tag Prettier wrote as
+`<button` alone on its line never matches. Measured over non-test
+`.tsx` under `web/src`, excluding the library's own files, **the
+scanner sees 9 of 206 raw `<button>` tags across 77 files**, while
+`tests/ux_canon_ceiling.json` records `A1: 4`. The guard for the
+owner's standing ruling has not been enforcing it. The one-character
+repair fails the ratchet on the spot; the honest repair is a conversion
+campaign and a re-baseline that states the true number out loud.
 
 ---
 
