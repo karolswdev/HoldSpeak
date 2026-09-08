@@ -22,6 +22,7 @@ from ....services.dictation_service import DictationService
 from ...context import WebContext
 from ._helpers import (
     _block_summary,
+    _hotkey_custody,
     _open_text_entry,
     diff_text_correction,
     record_correction,
@@ -307,6 +308,14 @@ def build_pipeline_router(
             hs_context_payload["exists"] = hs_dir.is_dir()
 
         runtime_payload = _runtime_readiness(cfg)
+        # HS-200-05: the physical hotkey's custody. `web_runtime` has always
+        # recorded `global_hotkey_available` / `global_hotkey_error` and NOTHING
+        # read them, so a refused Input Monitoring grant made Right Option do
+        # nothing and the desk never said why. This is the seam that carries it
+        # out, beside the three macOS grants the dictation path actually needs.
+        # `on_get_status` is absent on a bare/test app: then availability is
+        # honestly `None` (UNKNOWN), never a claim that the listener is up.
+        hotkey_payload = _hotkey_custody(ctx, config_snapshot)
         from ....db import get_database
         from ....speech_session import configured_pipeline_egress_boundary
 
@@ -449,6 +458,7 @@ def build_pipeline_router(
                 "project_kb": kb_payload,
                 "project_context": hs_context_payload,
                 "runtime": runtime_payload,
+                "hotkey": hotkey_payload,
                 "telemetry": runtime_payload.get("telemetry"),
                 "depth": depth_payload,
                 "target": target_payload,

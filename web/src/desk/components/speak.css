@@ -158,6 +158,59 @@
   white-space: nowrap;
 }
 
+/* ── 5b. HOTKEY block (HS-200-05) ──
+   Drawn only when the physical key is not proven up, or a macOS grant the
+   dictation path needs is missing.  Chips are the library species
+   (`.surface-token[data-chip]`), never a hand-rolled one.
+
+   ONE row grammar at BOTH widths (canon D): identity + cost left of line 1,
+   the state chip pinned right of line 1, the pane path on line 2 across the
+   full width.  The first draft flex-wrapped the row and the shots caught it:
+   at 640 the chip sat right on one row and wrapped LEFT on the next two, and
+   at 393 the last row's chip fell out of the block.  A grid cannot do that. */
+.desk-next .speak-hotkey {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+.desk-next .speak-hotkey-head,
+.desk-next .speak-hotkey-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 3px 8px;
+  min-width: 0;
+}
+.desk-next .speak-hotkey-row { padding-left: 12px; }
+.desk-next .speak-hotkey-ident,
+.desk-next .speak-hotkey-path,
+.desk-next .speak-hotkey-tail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.desk-next .speak-hotkey-tail {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  flex-wrap: nowrap;
+}
+.desk-next .speak-hotkey-path {
+  grid-column: 1 / -1;
+  gap: 4px;
+}
+.desk-next .speak-hotkey-name {
+  font: 600 12px / 1 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
 /* ── 6. Details (fold) content ── */
 .desk-next .speak-details {
   display: flex;

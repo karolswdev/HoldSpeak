@@ -188,6 +188,12 @@ class RuntimeActivityMixin:
             "activity": runtime_snapshot.get("activity") if isinstance(runtime_snapshot.get("activity"), dict) else {},
             "text_injection_enabled": runtime_snapshot.get("text_injection_enabled"),
             "text_injection_error": runtime_snapshot.get("text_injection_error", ""),
+            # HS-200-05: the two facts `web_runtime` has always recorded and
+            # this curated payload dropped on the floor, so nothing downstream
+            # could read them. Without these the readiness route's custody
+            # block can only answer UNKNOWN on the owner's real hub.
+            "global_hotkey_available": runtime_snapshot.get("global_hotkey_available"),
+            "global_hotkey_error": runtime_snapshot.get("global_hotkey_error", ""),
             "llm_capability_enabled": self.llm_capability_enabled,
             "transcription": {
                 "model": runtime_snapshot.get("transcription_model", self.config.model.name),

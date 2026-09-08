@@ -623,3 +623,261 @@ def test_an_uncertain_delivery_parks_pending_and_never_types_twice(
     assert first.json()["error_code"] == "delivery_pending"
     assert retry.status_code == 425, retry.text
     assert calls == 1, "an uncertain effect is never replayed"
+
+
+# ── HS-200-05: the custody the desk can finally SAY ─────────────────────────
+#
+# `web_runtime.py:538-559` has always recorded `global_hotkey_available` and
+# `global_hotkey_error`; until this story nothing in the tree read either, so
+# a refused Input Monitoring grant made Right Option do nothing and the desk
+# stayed silent. These run the REAL application and the REAL readiness route
+# and prove the state now reaches a face — including the honest UNKNOWN.
+
+from holdspeak import desktop_permissions as perms
+
+
+@pytest.fixture
+def all_granted(monkeypatch: pytest.MonkeyPatch):
+    """A mac with every grant in hand — the quiet baseline the rows depart from."""
+    monkeypatch.setattr(perms, "_is_macos", lambda: True)
+    monkeypatch.setattr(perms, "_ax_is_process_trusted", lambda: True)
+    monkeypatch.setattr(perms, "_iohid_check_access", lambda: 0)
+    monkeypatch.setattr(perms, "_av_authorization_status", lambda: 3)
+
+
+def _readiness(client: TestClient) -> dict[str, Any]:
+    response = client.get("/api/dictation/readiness")
+    assert response.status_code == 200
+    return response.json()
+
+
+def _hotkey(client: TestClient) -> dict[str, Any]:
+    body = _readiness(client)
+    assert "hotkey" in body, "the readiness wire carries no hotkey custody"
+    return body["hotkey"]
+
+
+def test_the_readiness_wire_now_carries_the_hotkey_fact_nothing_used_to_read(
+    db, monkeypatch: pytest.MonkeyPatch, all_granted
+) -> None:
+    """A listener that installed says so, with the configured key named."""
+    server = _build_client(
+        db,
+        monkeypatch,
+        on_get_status=lambda: {
+            "global_hotkey_available": True,
+            "global_hotkey_error": "",
+        },
+    )
+    with TestClient(server.app) as client:
+        hotkey = _hotkey(client)
+    assert hotkey["available"] is True
+    assert hotkey["needs_attention"] is False
+    assert hotkey["missing"] == []
+    assert hotkey["key"] == "alt_r"
+    assert hotkey["display"] == "⌥R"
+    assert hotkey["reason"] == ""
+
+
+def test_a_listener_that_failed_to_install_is_named_on_the_wire(
+    db, monkeypatch: pytest.MonkeyPatch, all_granted
+) -> None:
+    """The exact silent failure: the key does nothing, and now the desk says why."""
+    server = _build_client(
+        db,
+        monkeypatch,
+        on_get_status=lambda: {
+            "global_hotkey_available": False,
+            "global_hotkey_error": "RuntimeError: pynput is not available.",
+        },
+    )
+    with TestClient(server.app) as client:
+        hotkey = _hotkey(client)
+    assert hotkey["available"] is False
+    assert hotkey["needs_attention"] is True
+    # A token for the chip; the raw string stays for the RAW lane only.
+    assert hotkey["reason"] == "PYNPUT MISSING"
+    assert "pynput is not available" in hotkey["error"]
+
+
+def test_a_denied_grant_reaches_the_wire_with_the_pane_a_person_must_walk(
+    db, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Input Monitoring refused: named, stated, and the path spelled in tokens."""
+    monkeypatch.setattr(perms, "_is_macos", lambda: True)
+    monkeypatch.setattr(perms, "_ax_is_process_trusted", lambda: True)
+    monkeypatch.setattr(perms, "_iohid_check_access", lambda: 1)   # denied
+    monkeypatch.setattr(perms, "_av_authorization_status", lambda: 3)
+
+    server = _build_client(
+        db,
+        monkeypatch,
+        on_get_status=lambda: {
+            "global_hotkey_available": True,
+            "global_hotkey_error": "",
+        },
+    )
+    with TestClient(server.app) as client:
+        hotkey = _hotkey(client)
+
+    assert hotkey["missing"] == ["input_monitoring"]
+    assert hotkey["needs_attention"] is True
+    row = next(r for r in hotkey["permissions"] if r["id"] == "input_monitoring")
+    assert row["state"] == "denied"
+    assert row["satisfied"] is False
+    assert row["label"] == "INPUT MONITORING"
+    assert row["needed_for"] == "HOTKEY"
+    assert row["path"] == ["SYSTEM SETTINGS", "PRIVACY & SECURITY", "INPUT MONITORING"]
+    assert row["settings_url"].endswith("?Privacy_ListenEvent")
+    # The other two are untouched and still honest.
+    assert [r["state"] for r in hotkey["permissions"] if r["id"] != "input_monitoring"] == [
+        "granted",
+        "granted",
+    ]
+
+
+def test_a_never_asked_grant_says_not_asked_rather_than_denied(
+    db, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`kIOHIDAccessTypeUnknown` / `notDetermined` is its own honest answer."""
+    monkeypatch.setattr(perms, "_is_macos", lambda: True)
+    monkeypatch.setattr(perms, "_ax_is_process_trusted", lambda: True)
+    monkeypatch.setattr(perms, "_iohid_check_access", lambda: 2)
+    monkeypatch.setattr(perms, "_av_authorization_status", lambda: 0)
+
+    server = _build_client(db, monkeypatch, on_get_status=lambda: {})
+    with TestClient(server.app) as client:
+        hotkey = _hotkey(client)
+    by_id = {r["id"]: r for r in hotkey["permissions"]}
+    assert by_id["input_monitoring"]["state"] == "not_determined"
+    assert by_id["microphone"]["state"] == "not_determined"
+    assert sorted(hotkey["missing"]) == ["input_monitoring", "microphone"]
+
+
+def test_a_machine_whose_apis_are_absent_answers_unknown_on_the_wire(
+    db, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The honest-unknown path, end to end: never a granted we did not read."""
+
+    def _absent(*_a: Any, **_k: Any) -> Any:
+        raise ImportError("No module named 'objc'")
+
+    monkeypatch.setattr(perms, "_is_macos", lambda: True)
+    monkeypatch.setattr(perms, "_ax_is_process_trusted", _absent)
+    monkeypatch.setattr(perms, "_iohid_check_access", _absent)
+    monkeypatch.setattr(perms, "_av_authorization_status", _absent)
+
+    server = _build_client(db, monkeypatch, on_get_status=lambda: {})
+    with TestClient(server.app) as client:
+        hotkey = _hotkey(client)
+    assert [r["state"] for r in hotkey["permissions"]] == ["unknown"] * 3
+    assert all("unavailable: ImportError" in r["source"] for r in hotkey["permissions"])
+    assert hotkey["needs_attention"] is True
+
+
+def test_without_a_runtime_the_wire_says_unknown_not_working(
+    db, monkeypatch: pytest.MonkeyPatch, all_granted
+) -> None:
+    """A bare app has no listener to ask; `null` is the only honest answer."""
+    server = _build_client(db, monkeypatch)  # no on_get_status at all
+    with TestClient(server.app) as client:
+        hotkey = _hotkey(client)
+    assert hotkey["available"] is None
+    assert hotkey["needs_attention"] is True
+
+
+def test_re_reading_readiness_moves_the_state_the_owner_just_granted(
+    db, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The Re-check verb's contract: nothing is cached, so the answer moves.
+
+    He opens System Settings, ticks the box, comes back and presses Re-check.
+    A cached snapshot would keep telling him it is denied.
+    """
+    monkeypatch.setattr(perms, "_is_macos", lambda: True)
+    monkeypatch.setattr(perms, "_ax_is_process_trusted", lambda: True)
+    monkeypatch.setattr(perms, "_av_authorization_status", lambda: 3)
+    monkeypatch.setattr(perms, "_iohid_check_access", lambda: 1)
+
+    server = _build_client(
+        db, monkeypatch, on_get_status=lambda: {"global_hotkey_available": True}
+    )
+    with TestClient(server.app) as client:
+        assert _hotkey(client)["missing"] == ["input_monitoring"]
+        monkeypatch.setattr(perms, "_iohid_check_access", lambda: 0)
+        second = _hotkey(client)
+    assert second["missing"] == []
+    assert second["needs_attention"] is False
+
+
+def test_serving_readiness_never_reaches_a_prompting_permission_api(
+    db, monkeypatch: pytest.MonkeyPatch, all_granted
+) -> None:
+    """Reading the desk must never pop a macOS dialog.
+
+    The three query probes are the ONLY platform calls the request makes: each
+    is counted here, and a request that reached anything else would have to go
+    through a symbol the module's AST proof (unit suite) already forbids.
+    """
+    calls: list[str] = []
+    monkeypatch.setattr(
+        perms, "_ax_is_process_trusted", lambda: (calls.append("ax"), True)[1]
+    )
+    monkeypatch.setattr(
+        perms, "_iohid_check_access", lambda: (calls.append("hid"), 0)[1]
+    )
+    monkeypatch.setattr(
+        perms, "_av_authorization_status", lambda: (calls.append("av"), 3)[1]
+    )
+    server = _build_client(db, monkeypatch, on_get_status=lambda: {})
+    with TestClient(server.app) as client:
+        _hotkey(client)
+    assert sorted(calls) == ["av", "ax", "hid"]
+
+
+def test_the_route_reads_the_real_runtime_status_getter_not_a_fixture_shape(
+    db, monkeypatch: pytest.MonkeyPatch, all_granted
+) -> None:
+    """The seam, joined for real: the runtime's OWN getter feeds the route.
+
+    Every other test here injects a hand-built status dict, which would keep
+    passing if the runtime's curated payload dropped the two keys again (it
+    did drop them until this story). This one wires the actual
+    `WebRuntime._get_runtime_status` into the app.
+    """
+    import threading
+
+    import holdspeak.web_runtime as web_runtime
+
+    class _FakeTyper:
+        def type_text(self, *a: Any, **k: Any) -> None:
+            return None
+
+    class _FakeServer:
+        def broadcast(self, *a: Any, **k: Any) -> None:
+            return None
+
+    monkeypatch.setattr(web_runtime, "TextTyper", _FakeTyper)
+    runtime = web_runtime.WebRuntime(
+        no_open=True,
+        stop_event=threading.Event(),
+        register_signal_handlers=False,
+    )
+    runtime.server = _FakeServer()  # type: ignore[assignment]
+    runtime.runtime_status["global_hotkey_available"] = False
+    runtime.runtime_status["global_hotkey_error"] = (
+        "RuntimeError: pynput is not available."
+    )
+
+    server = _build_client(db, monkeypatch, on_get_status=runtime._get_runtime_status)
+    with TestClient(server.app) as client:
+        hotkey = _hotkey(client)
+    assert hotkey["available"] is False
+    assert hotkey["reason"] == "PYNPUT MISSING"
+
+    runtime.runtime_status["global_hotkey_available"] = True
+    runtime.runtime_status["global_hotkey_error"] = ""
+    with TestClient(server.app) as client:
+        recovered = _hotkey(client)
+    assert recovered["available"] is True
+    assert recovered["needs_attention"] is False

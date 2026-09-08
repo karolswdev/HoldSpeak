@@ -927,6 +927,44 @@ def _run_dictation_dry_run_text(
     return payload
 
 
+def _hotkey_custody(ctx: Any, config_snapshot: Any) -> dict[str, Any]:
+    """HS-200-05: the physical hotkey's custody, for `/api/dictation/readiness`.
+
+    Two facts, joined: whether the global listener actually installed (the
+    runtime's own `global_hotkey_available` / `global_hotkey_error`, which
+    until now nothing read), and the honestly-read state of the three macOS
+    grants the dictation path needs. Reading a grant NEVER prompts.
+
+    When the app has no runtime to ask — a bare test server, a dry run —
+    availability is `None`, which the face must render UNKNOWN. It is never
+    smoothed into "the hotkey works".
+    """
+    from ....desktop_permissions import hotkey_custody
+
+    available: Optional[bool] = None
+    error = ""
+    getter = getattr(ctx, "on_get_status", None)
+    if callable(getter):
+        try:
+            status = getter() or {}
+        except Exception as exc:  # pragma: no cover - defensive
+            status = {}
+            error = f"{type(exc).__name__}: {exc}"
+        raw = status.get("global_hotkey_available") if isinstance(status, dict) else None
+        if isinstance(raw, bool):
+            available = raw
+        if isinstance(status, dict) and not error:
+            error = str(status.get("global_hotkey_error") or "")
+
+    hotkey_cfg = getattr(config_snapshot, "hotkey", None)
+    return hotkey_custody(
+        listener_available=available,
+        listener_error=error,
+        key=str(getattr(hotkey_cfg, "key", "") or ""),
+        display=str(getattr(hotkey_cfg, "display", "") or ""),
+    )
+
+
 def _runtime_readiness(cfg: Any) -> dict[str, Any]:
     from ....dictation_telemetry import summarize_readiness_telemetry
     from ....plugins.dictation import runtime as runtime_module
