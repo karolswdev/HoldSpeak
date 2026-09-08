@@ -265,12 +265,162 @@ gh pr ready N ; gh pr view N --json mergeable,mergeStateStatus ; gh pr merge N -
    `.claude/agents/opus-worker.md` if it is missing (Opus, not Fable).
 2. Ask him nothing you can read. What is his: the attended walks
    (170–175), the queued "Already titled" job, 172–174's questions.
-3. The road CONTINUES (ruled 2026-09-06 on his deferral): 176 is CLOSED 7/8 on PR #566 awaiting his word to merge and his attended walk; then 177 The Thread at Work is chartered on his word, canvas first —
+3. **2026-09-08: read Muad'Dib XVII FIRST — he asked for a walk conductor, not
+   a builder.** The next sitting is his hands on HS-200-05's six physical
+   beats, with `tests/e2e/live200_voice_walk.py` and a FRESH hub (his running
+   one is from Sunday). Everything below this line is older road.
+   The road CONTINUES (ruled 2026-09-06 on his deferral): 176 is CLOSED 7/8 on PR #566 awaiting his word to merge and his attended walk; then 177 The Thread at Work is chartered on his word, canvas first —
    dictation as a daily tool (the correction taught once and kept; the
    journal as a stream; the voice law on every input; the desk answering
    the hand). Canvas first; counsel on the design; his word; then build
    by the loop in §5. If he says stop: leave the tree on main, update
    this section, write memory.
+
+## Muad'Dib XVII — 2026-09-07/08. YOUR JOB IS TO CONDUCT HIS WALK, NOT TO BUILD
+
+**Read this chapter before you do anything else. The owner asked for you
+specifically, and he asked for a guide, not another builder.**
+
+He has just watched a long build session. Two stories landed
+(`feat/phase-200-working-context`, PR #568 open, commits `6d309652` and
+`85a181e5`). What is left cannot be built by anyone: it needs his hands, his
+microphone, his Mac. **Your work this sitting is to stand beside him while he
+tests it, one beat at a time, and to write down honestly what happens.**
+
+Do not open a build lane unless he asks. Do not start a refactor. If you find a
+defect during the walk, NAME it and ledger it; fix it only if he says so.
+
+### What he is testing, and why it cannot be automated
+
+**HS-200-05, physical voice.** Six beats. A browser fixture cannot establish a
+microphone permission, cannot press a physical key, cannot be denied by macOS,
+cannot be interrupted mid-sentence, and cannot restart a hub. Everything a test
+could carry is already green (`tests/unit/test_phase200_voice_custody.py`,
+`tests/integration/…`, 55 tests). The runner is
+**`tests/e2e/live200_voice_walk.py`**, and it is written for exactly this: it
+takes a read-only census at both ends, prints the script for his hand, and
+asserts that the ONLY writes are the ones his own beats should have produced.
+It refuses to write anything itself, refuses a hub with no bundle, and redacts
+the token in everything it prints.
+
+**HS-200-41, the durable ask.** Built and proven this session, but never
+touched by him. Worth ten minutes at the end: start an ask in a Project Room,
+close the tab, come back, press `Resume`.
+
+### How to run it (get this right or the walk is hollow)
+
+His long-running hub (PID 81866 on `:49353`) is from **Sunday**, on an older
+schema and an older bundle. **A walk against that proves the wrong build.**
+Stop it and boot a fresh one on the current tree, on his real data root:
+
+```bash
+uv run holdspeak web --no-open        # then find the port; the log stays silent
+lsof -nP -iTCP -sTCP:LISTEN | grep python
+```
+
+The owner URL is `http://127.0.0.1:<port>/?token=<meeting.web_auth_token from
+~/.config/holdspeak/config.json>`. **The token goes in the scratchpad only** —
+never into the repo, never into an evidence file.
+
+```bash
+# read-only first: census, faces, then the script printed for him
+uv run python tests/e2e/live200_voice_walk.py --hub "http://127.0.0.1:PORT/?token=TOKEN"
+
+# then attended: it pauses on stdin while he walks beats 0-6
+uv run python tests/e2e/live200_voice_walk.py --hub "…" --attended
+```
+
+**Never run it beside the parallel suite.** CPU starvation reads exactly like a
+discovery hang, and this session already lost time to that lesson.
+
+### Before he starts: the permissions, which is the newest work
+
+Voice typing needs THREE macOS grants and any one can be missing alone:
+Microphone (the audio), Input Monitoring (the global hotkey), Accessibility
+(typing into the focused app). All three live in **System Settings → Privacy &
+Security**.
+
+**The grant belongs to the application he launched from.** A hub started in a
+terminal needs Terminal or iTerm enabled in those panes, not an entry named
+HoldSpeak. And macOS applies several of these only to a newly started process,
+so the launching app must be quit and reopened after granting.
+
+Commit `85a181e5` makes this legible for the first time: Speak now draws a
+head row (`ACTIVE` / `BLOCKED` / `UNAVAILABLE`) and one row per non-granted
+permission with its pane as walkable tokens and a `Re-check` verb. **`BLOCKED`
+is the state that used to be invisible** — the listener installs, the key looks
+fine, and nothing is ever heard because Input Monitoring is refused. When every
+grant is held the block is absent by design; a working hotkey says nothing.
+
+`docs/GETTING_STARTED.md` "Grant macOS permissions" and `docs/USER_GUIDE.md`
+"When voice typing does nothing" carry the same words. If the walk teaches you
+something they do not say, fix the docs in the same sitting.
+
+### The seven beats, in his order
+
+0. **Readiness.** Fresh install opens on the first-value chair; he answers it
+   himself (the runner will not — both answers are writes). Then read the
+   engine row and the egress chip. If the engine is not ready, **STOP**: every
+   beat below would be hollow.
+1. **The hotkey into a target.** Caret in Notes or a terminal. Hold Right
+   Option, speak, release. The words land IN THAT APP and the Journal gains ONE
+   row with source HOTKEY. If they land elsewhere, that is the defect.
+2. **Denied permission.** Revoke the browser's microphone access, press `Talk`.
+   The face names the refusal and his typed words REMAIN EDITABLE. No journal
+   row. He restores access before beat 3.
+3. **Silence.** Press `Talk`, say nothing, release. Nothing heard, no row, no
+   counter of zero.
+4. **Interruption.** Start speaking, then take the mic (press `Talk` again or
+   start a meeting). The face names WHO holds the microphone and the partial
+   words are not silently typed anywhere.
+5. **One correction, then a replay.** Teach a `text` correction on a row the
+   mic got wrong, then `Replay` that row. The replay shows corrected words.
+   **`N APPLIED` does NOT move** — a replay is a preview and writes no row.
+   *Ask him whether that reads right;* if he wants a replay to count, it
+   becomes a story.
+6. **Restart.** Ctrl-C the hub, start it again on the same data root. The rows
+   survive, the correction survives and still fires, `N APPLIED` is unchanged.
+
+### The one question the walk owes him
+
+A delivery whose outcome is UNKNOWN (the typing adapter died mid-keystroke)
+parks as `delivery_pending` and is **never retyped automatically**; the words
+stay in the well for him to send again. Is "never automatically, always his
+hand" right, or should the desk offer a retry? **Get his answer and record it.**
+
+### Laws you must not break while conducting
+
+- **A walk on his desk WRITES NOTHING.** The runner is read-only by
+  construction. Anything a rig seeds goes in an isolated HOME. There is a scar:
+  earlier walks left seed rows in his real database and he had to delete them
+  himself.
+- His real database is `~/.local/share/holdspeak/holdspeak.db`. Read-only
+  inspection only, `sqlite3 -readonly`.
+- Redact `token=` in every capture.
+- After the walk, census his DB read-only for anything the walk should not have
+  touched.
+- Handovers live in `docs/internal/`, never in a Claude artifact. Canvases are
+  the only artifacts.
+
+### The state of the tree
+
+PR #568 is open with two commits and awaits **his word** to merge. HS-200-41 is
+DONE. HS-200-05 is in-progress with its automatable half paid and no evidence
+file — the gate refuses evidence whose story is not done, so create
+`evidence-story-05.md` only when his beats are recorded and the story flips.
+HS-200-10's wire design is ratified with conditions, all paid, and **not
+built** — do not start it during the walk.
+
+Suite in CI shape at the last full run: 10590 passed, 17 failed — 8 xdist
+contention, 6 fences paid, 3 inherited on main (hs153's ledgered guardrail,
+hs171 ×2 from HS-200-07's coverage badge colliding with an older zero-badge
+law). `dw check` reports six known structural issues, zero new.
+
+Still his, and none of it yours to decide: the **canvas verdict on HS-200-09**
+(stories 10 through 15 wait on it), the **pilot Project** (his desk has one
+active and nine archived, all from the 168/169 build window), and the **merge**.
+
+---
 
 ## Muad'Dib XVI — 2026-09-06, the road continues on the orchestrator's ruling; 176 CHARTERED and on the canvas
 
