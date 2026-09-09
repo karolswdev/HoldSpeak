@@ -149,3 +149,60 @@ def test_agent_cannot_relabel_itself_as_direct_gesture(monkeypatch) -> None:
 
     assert handle["state"] == "refused"
     assert handle["receipt"]["outcome"] == "desktop_type_text_owner_gesture_required"
+
+
+def test_the_real_warrant_satisfies_the_privileged_executors_shape(monkeypatch) -> None:
+    """HS-200-05: the producer's ACTUAL warrant must clear the boundary.
+
+    Every test guarding `execute_authorized` hand-built its warrant key-for-key
+    from the validator's own constant and self-signed it, and every test driving
+    the real broker stubbed the typer — so no test ever showed one side's warrant
+    to the other side's check. `Broker.decide` then grew six signed fields the
+    executor's exact-set comparison forbade, and DESKTOP TYPING WAS DEAD FOR FOUR
+    WEEKS while both files stayed green: dictation heard the owner, transcribed
+    him, journalled the row, and refused to type with
+    `desktop_executor_warrant_invalid`.
+
+    This asserts the contract itself against a warrant minted by the real broker,
+    so the next field added on either side fails HERE.
+    """
+    from holdspeak.privileged_effects.desktop_executor import (
+        _ALLOWED_WARRANT_FIELDS,
+        _REQUIRED_WARRANT_FIELDS,
+    )
+
+    monkeypatch.setattr(desktop_typing, "_focused_signature", lambda: "mac:42:editor")
+
+    seen: list[dict[str, Any]] = []
+
+    class _WarrantCapturingTyper(_Typer):
+        def type_text(self, text: str, **kwargs: Any) -> None:
+            seen.append(dict(kwargs))
+            return super().type_text(text, **kwargs)
+
+    type_text_from_owner_gesture(
+        "private dictated words",
+        typer=_WarrantCapturingTyper(),
+        gesture="hold_release",
+        target_profile="editor",
+        submit=False,
+    )
+
+    assert seen, "the typing seam was never reached"
+    warrant = seen[0].get("warrant")
+    assert isinstance(warrant, dict), f"no warrant reached the typer: {seen[0].keys()}"
+
+    missing = _REQUIRED_WARRANT_FIELDS - set(warrant)
+    unknown = set(warrant) - _ALLOWED_WARRANT_FIELDS
+    assert not missing, (
+        f"the broker no longer signs {sorted(missing)} — the privileged executor "
+        "reads those fields and will refuse desktop_executor_warrant_invalid"
+    )
+    assert not unknown, (
+        f"the broker now signs {sorted(unknown)}, which the privileged executor "
+        "does not allow — every desktop typing effect will be refused "
+        "desktop_executor_warrant_invalid. Add the field to "
+        "_ALLOWED_WARRANT_FIELDS after deciding it is safe to admit; never trim "
+        "the warrant instead (sign_warrant HMACs every unsigned field, so a "
+        "trimmed warrant fails the signature)."
+    )

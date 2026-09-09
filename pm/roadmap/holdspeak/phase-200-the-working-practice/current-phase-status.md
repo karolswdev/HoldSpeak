@@ -1,6 +1,6 @@
 # Phase 200: The Working Practice
 
-**Last updated:** 2026-09-07 — G0: 01–04 DONE, 05's automatable half proved; G1: 06, 07, 08 DONE; 09's design ratified by counsel and on the canvas for his verdict; **41 DONE** (the durable ask, the `TaskResume` species, return-to-task's focus half, draft custody); 10's wire design RATIFIED WITH CONDITIONS by counsel and all conditions paid, build not started.
+**Last updated:** 2026-09-08 — HS-200-05's walk opened on the owner's desk: two four-week-old defects found and fixed (the MLX cross-thread hub crash; the warrant-shape drift that refused every desktop typing effect). Beat 1 passes end to end on his hand; beats 2-6 remain his. G0: 01-04 DONE, 05 in-progress; G1: 06, 07, 08, 41 DONE; 09 awaits his canvas verdict.
 **Status:** in build. Forty-one stories defined; G0 01-04 and G1 06-08 done.
 **Product owner:** Karol.
 **Delivery owner:** unassigned until implementation starts.
@@ -81,6 +81,71 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-41 | Return to unfinished work | done | [story-41](story-41-return-to-unfinished-work.md) | [evidence-story-41](./evidence-story-41.md) |
 
 ## Where we are
+
+2026-09-08: **HS-200-05's walk began on the owner's own desk, and voice typing was
+found DEAD — in two independent places, for four weeks each.** The story stays
+in-progress: beats 2 through 6 are still his. Beat 1 now passes end to end.
+
+*What the walk found, in the order it hurt.* The owner held the hotkey and the
+hub PROCESS DIED — `libc++abi: terminating ... There is no Stream(gpu, 1) in
+current thread`, an uncaught C++ throw through numpy's buffer protocol that no
+Python frame can catch. Root cause: `Transcriber.__init__` stores the RESOLVED
+backend (`_resolve_backend(backend)`), while `_loaded_transcriber_reusable`
+compared it against the RAW request. On a desk with `backend: "auto"` that check
+can never be true, so the boot warm was discarded and a SECOND `_MlxTranscriber`
+built on a SECOND pinned thread FOR EVERY UTTERANCE; its "load" was a
+process-level mlx_whisper `ModelHolder` cache hit, so it inherited lazy arrays
+owned by the first thread's stream, and the first eval killed the hub. Two prior
+fixes (HS-60-06's per-instance pin, HS-63-06's construction lock) had both aimed
+one level too low: everything mlx_whisper caches is PROCESS-level, so the pinned
+MLX thread is now process-wide and the class is closed however instances arise —
+including `web/routes/meeting_import.py`, which no lock ever covered.
+
+*Then the second defect, underneath the first.* With the hub surviving, every
+utterance was heard, transcribed and journalled, and then refused:
+`Typing failed in web mode: desktop_executor_warrant_invalid`. `Broker.decide`
+(`kernel/broker.py`) signs 17 fields into a warrant; `desktop_executor.py`
+demanded EXACTLY 11 and refused any other shape. The six it had never heard of —
+`target_binding`, `native_id`, `principal_kind`, `principal_identity`,
+`parent_operation_id`, `continuation_identities` — were added to the broker on
+2026-08-09, 08-10 and 08-22. The executor file has one commit in its life. So
+DESKTOP TYPING HAS BEEN DEAD SINCE 2026-08-09, unconditionally, for everyone.
+The fix widens the VALIDATOR, never the warrant: `sign_warrant` HMACs every
+unsigned field, so trimming those six fails the signature instead — their being
+signed is exactly why admitting them forges nothing. It stays an allowlist, so
+the next drift in either direction is still refused here.
+
+*The law both defects taught, which is the part worth keeping.* **A test double
+that lies about the field a check reads proves nothing about the check.** Three
+green guards covered these two seams and neither bug could ever have tripped
+them: `_FakeTranscriber.backend = "auto"` where the real class stores `"mlx"`;
+`test_privileged_desktop_executor` hand-building its warrant key-for-key from the
+validator's own constant and self-signing it; `test_desktop_type_text_kernel`
+stubbing the typer so the warrant was swallowed unread. A double is only evidence
+when it is built the way production builds it, and a boundary is only guarded
+when one side's real output is shown to the other side's real check. Both fences
+now do exactly that, and both were proven to FAIL against the pre-fix code before
+being trusted.
+
+*Proven on his desk, not in a fixture.* A real 2.8s speech WAV through
+`/api/dictation/transcribe` three times: correct text, hub alive, ONE
+`Initializing Transcriber` instead of two. Then his own hand on the hotkey over
+Screen Sharing: five utterances, all `source: hotkey`, zero warrant refusals, the
+words landing in the focused application. The journal survived a hub restart
+unchanged, which answers half of beat 6.
+
+*Open, and his.* Beats 2 (denied permission), 3 (silence), 4 (interruption) and 5
+(one correction, then a replay) are unwalked; his last three utterances give beat
+5 real material (`Tilda Jarvis` heard three different wrong ways). The walk
+question about an uncertain delivery is RETIRED on his word ("I seriously don't
+give a shit") — ruling: it stays never-automatic, the words wait in the well.
+Two findings are ledgered, not fixed: `/api/dictation/readiness` reported
+`ready: true` on a desk where dictation crashed the process every time, which is
+the fake all-clear HS-200-07 was meant to end; and the Speak face reads
+`DICTATION · GPT 5 mini · KEY NOT SET` (every assignment inherits the migrated
+`legacy-legacy-intel` cloud profile) while the runtime resolves local — one face,
+two truths, and the source of the recurring
+`intent-router classify failed: speech_provider_fenced`.
 
 2026-09-07 (evening): **HS-200-41 DONE.** An ask the owner starts in a Room is
 now durable and resumable, and the way back to it is a face rather than an event.

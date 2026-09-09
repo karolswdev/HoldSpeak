@@ -11,6 +11,7 @@ import pytest
 import holdspeak.db as db_module
 import holdspeak.web_runtime as web_runtime
 from holdspeak.db import FIRST_DICTATION_SUCCESS, Database
+from holdspeak.transcribe import resolve_backend_or_raw
 
 
 def _config() -> SimpleNamespace:
@@ -38,8 +39,14 @@ def _config() -> SimpleNamespace:
 
 class _FakeTranscriber:
     # Frozen transcription reuses an exact model/backend/language triple.
+    #
+    # HS-200-05: `backend` is the RESOLVED name, because that is what the real
+    # `Transcriber` stores (`transcribe.py`: `self.backend =
+    # _resolve_backend(backend)`). A double holding the raw `"auto"` would be
+    # reused here while production rebuilt on every utterance — the exact blind
+    # spot that hid a crash which killed the owner's hub for a week.
     model_name = "base"
-    backend = "auto"
+    backend = resolve_backend_or_raw("auto")
     language = "auto"
 
     def transcribe(self, _audio, **_admission) -> str:
@@ -98,7 +105,7 @@ def test_no_speech_does_not_set_the_milestone(monkeypatch, tmp_path):
     typed: list[str] = []
     rt, db = _runtime(monkeypatch, tmp_path, typed)
     rt.transcriber = SimpleNamespace(
-        model_name="base", backend="auto", language="auto",
+        model_name="base", backend=resolve_backend_or_raw("auto"), language="auto",
         transcribe=lambda _a, **_admission: ""
     )
 

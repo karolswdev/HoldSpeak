@@ -129,10 +129,22 @@ class TranscriberStateMixin:
         model_name: str,
         language: str | None,
     ) -> bool:
+        # HS-200-05: compare RESOLVED against RESOLVED. `Transcriber.__init__`
+        # stores `_resolve_backend(backend)` (transcribe.py), so a transcriber
+        # built by the boot warm from a routed `"mlx"` never matched a legacy
+        # dictation asking with the config's `"auto"` — the strings differ even
+        # though they name the same engine. On the owner's desk (backend
+        # "auto", warm_on_start true) that made this check ALWAYS false: every
+        # single utterance discarded the warm transcriber and built another,
+        # which is what fed the process-fatal cross-thread MLX crash.
+        from ..transcribe import resolve_backend_or_raw
+
+        resolved_backend = resolve_backend_or_raw(backend)
+
         if (
             transcriber is None
             or getattr(transcriber, "model_name", None) != model_name
-            or getattr(transcriber, "backend", None) != backend
+            or getattr(transcriber, "backend", None) != resolved_backend
             or str(getattr(transcriber, "language", None) or "auto")
             != str(language or "auto")
         ):
