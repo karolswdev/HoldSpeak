@@ -543,9 +543,17 @@ class InterviewService:
             "SELECT count(*) FROM context_promotions WHERE target_ref=? AND disclosure_state='active'",
             (target_ref,)).fetchone()[0])
         reason = "stale" if surviving else "forbidden"
+        # `forbidden` is terminal, and so is `unavailable`: the schema's lattice
+        # says both are cleared only by a rebind or a re-promotion, and neither
+        # is refreshable.  Protecting `forbidden` alone downgraded a dependent
+        # whose record had been DELETED to ordinary refreshable staleness on the
+        # next revocation of any OTHER promotion into it -- a consumer would
+        # then attempt a refresh that cannot succeed (counsel-on-built P0).
+        # Only a fresh row (`stale_reason=''`) or an already-`stale` one moves.
         cursor = conn.execute(
             "UPDATE context_dependents SET stale_since=COALESCE(stale_since,?), "
-            "stale_reason=CASE WHEN stale_reason='forbidden' THEN 'forbidden' ELSE ? END "
+            "stale_reason=CASE WHEN stale_reason IN ('forbidden','unavailable') "
+            "THEN stale_reason ELSE ? END "
             "WHERE canonical_ref=?",
             (now, reason, target_ref))
         fact = state["facts"].get(fact_id)
@@ -557,14 +565,19 @@ class InterviewService:
                 "surviving_active_promotions": surviving,
                 "dependents_marked": int(cursor.rowcount or 0), "dependent_state": reason}
 
-    def promotions(self, thread_id: str) -> list[dict[str, Any]]:
+    def promotions(self, principal: Principal, thread_id: str) -> list[dict[str, Any]]:
         """Every promotion this Thread made, with its state derived on read.
 
         `active`/`revoked` is the only STORED axis.  `current`, `corrected`,
         `unavailable` and `source_unavailable` are computed here by comparing
         hashes -- the same detect-on-read discipline the refinement context
         service already uses (settled design D2.7).
+
+        Owner-only, in the service and not merely in the handler, for the same
+        reason `command` is: this is the ONLY way to obtain a `promotion_id`
+        outside the single `promote` response, so it is the read half of AC4.
         """
+        self.require_owner(principal)
         self._thread(thread_id)
         with self._db._connection() as conn:
             rows = conn.execute("SELECT * FROM context_promotions WHERE thread_id=? ORDER BY created_at, promotion_id",

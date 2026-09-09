@@ -683,22 +683,271 @@ def test_the_backfill_agrees_with_the_reconcile_point_and_is_idempotent(rig) -> 
 
 
 def test_the_backfill_never_clears_a_forbidden_mark(rig) -> None:
+    """The skip predicate is what protects a standing revocation from a re-seed.
+
+    Counsel-on-built: this test used to call `_reconcile_dependents` directly,
+    so the thing that actually does the protecting -- the backfill's own
+    `id NOT IN (SELECT consumer_id FROM context_dependents ...)` -- was never
+    exercised, and the assertion passed on `_reconcile_dependents`'s `held`
+    carry-over instead.  It now drives `backfill_dependents_in_transaction`.
+
+    Both halves matter, so both are asserted:
+      * the revoked consumer's row is untouched BYTE FOR BYTE, `bound_at`
+        included -- delete the skip and the re-seed rewrites it, and this goes
+        red even though `held` would still carry the mark forward;
+      * a second working consumer whose rows are missing IS seeded in the same
+        call, so the skip is selective rather than the whole backfill being a
+        no-op.
+    """
     db, thoughts, context = rig
-    thought = _thought(thoughts, "backfill-forbid")
-    context.attach_context(OWNER, thought["id"], visible_ref="note:promoted",
-                           request_id="bf-attach", **_cursors(thought))
+    revoked = _thought(thoughts, "backfill-forbid")
+    context.attach_context(OWNER, revoked["id"], visible_ref="note:promoted",
+                           request_id="bf-attach", **_cursors(revoked))
+    unseeded = _thought(thoughts, "backfill-seed-me")
+    context.attach_context(OWNER, unseeded["id"], visible_ref="note:control",
+                           request_id="bf-seed-attach", **_cursors(unseeded))
+
+    with db._connection() as conn:
+        # The revocation Lane B's `revoke_promotion` writes, plus an OLD
+        # `bound_at` so a silent re-seed is visible rather than merely likely.
+        conn.execute(
+            "UPDATE context_dependents SET stale_reason='forbidden',"
+            " stale_since='2026-01-01T00:00:00', bound_at='2020-01-01T00:00:00Z'"
+            " WHERE consumer_id=?", (revoked["id"],))
+    before = _rows_for(db, revoked["id"])
+    expected_seed = _rows_for(db, unseeded["id"])
+    assert len(before) == 1 and len(expected_seed) == 1, "rig is wrong"
+
+    # The shape an older database arrives in for the OTHER consumer only.
+    with db._connection() as conn:
+        conn.execute("DELETE FROM context_dependents WHERE consumer_id=?",
+                     (unseeded["id"],))
+        written = RefinementContextService.backfill_dependents_in_transaction(
+            conn, now="2026-09-09T00:00:00Z")
+
+    assert written == 1, "the backfill seeded the revoked consumer as well"
+    assert _rows_for(db, revoked["id"]) == before, (
+        "the backfill re-seeded a consumer that already holds index rows; a "
+        "standing `forbidden` (and its original clock) must survive it"
+    )
+    seeded = _rows_for(db, unseeded["id"])
+    assert len(seeded) == 1
+    assert {k: v for k, v in seeded[0].items() if k != "bound_at"} == \
+           {k: v for k, v in expected_seed[0].items() if k != "bound_at"}
+
+
+# ── counsel-on-built: a KNOWN HOLE, pinned rather than closed ────────────
+
+
+def test_a_detach_then_reattach_currently_clears_a_standing_forbidden(rig) -> None:
+    """KNOWN HOLE.  This pins ACTUAL behaviour; it is NOT a desired property.
+
+    Recorded by counsel-on-built 2026-09-08.  Story ruling B2 states in writing
+    that a consumer fenced once is "fenced forever, for that record, by every
+    route".  It is not.  `_reconcile_dependents` reads the refs it must carry
+    forward (`held`) from the LIVE `context_dependents` table, and a DETACH
+    deletes that consumer's row outright -- proved by
+    `test_a_detach_removes_the_row_and_a_birth_creates_it` above.  So on a
+    later re-attach `held` is empty for that ref and the row comes back with
+    `stale_reason=''`.  Two ordinary owner clicks clear a standing revocation.
+
+    NOT FIXED HERE, by orchestrator ruling.  The obvious repair -- deriving
+    `forbidden` at reconcile time from the record's own promotion state --
+    collides with the ratified P0-2 test
+    `test_a_revocation_is_never_downgraded_by_a_later_stale_marking`, which
+    asserts that a standing `forbidden` SURVIVES a later promotion into the
+    same record.  `context_dependents` is write-only today (nothing in the
+    product fences on it), so the semantics are not being re-cut on this
+    commit.  This test exists so the hole is VISIBLE and any future change to
+    it is deliberate: if someone closes the hole, this test goes red and the
+    reader is sent to B2 and to P0-2 before deciding which way it should go.
+
+    The positive control below is the contrast that makes the hole precise:
+    a REBIND through the same reconcile point does NOT clear the mark.
+    """
+    db, thoughts, context = rig
+    detached = _thought(thoughts, "reattach")
+    rebound = _thought(thoughts, "rebind-control")
+    for thought, rid in ((detached, "hole-attach"), (rebound, "control-attach")):
+        context.attach_context(OWNER, thought["id"], visible_ref="note:promoted",
+                               request_id=rid, **_cursors(thought))
+
+    # The revocation lands on both (Lane B's `revoke_promotion` writes this).
     with db._connection() as conn:
         conn.execute("UPDATE context_dependents SET stale_reason='forbidden',"
                      " stale_since='2026-01-01T00:00:00'")
-        # Force the seed to consider this Thought again.
-        RefinementContextService._reconcile_dependents(
-            conn, thought["id"],
-            {"revision": 1, "attachment_sha256": "x",
-             "visible": [{"ref": "note:promoted", "leaves": []}]},
-            "2026-09-09T00:00:00Z")
-    row = _rows_for(db, thought["id"])[0]
-    assert row["stale_reason"] == "forbidden"
-    assert row["stale_since"] == "2026-01-01T00:00:00"
+    assert {r["stale_reason"] for r in _dependents(db, "note:promoted")} == {"forbidden"}
+
+    # THE HOLE: detach, then re-attach the very same record.
+    context.detach_context(
+        OWNER, detached["id"], visible_ref="note:promoted",
+        request_id="hole-detach", **_cursors(thoughts.get(OWNER, detached["id"])))
+    assert _rows_for(db, detached["id"]) == [], \
+        "a detach deletes the row, and with it the only record of the mark"
+    context.attach_context(
+        OWNER, detached["id"], visible_ref="note:promoted",
+        request_id="hole-reattach", **_cursors(thoughts.get(OWNER, detached["id"])))
+
+    reattached = _rows_for(db, detached["id"])[0]
+    assert reattached["stale_reason"] == "", (
+        "the hole is CLOSED -- a detach/re-attach no longer clears a standing "
+        "`forbidden`. That may well be right, but ruling B2 and the ratified "
+        "P0-2 test disagree about the mechanism: read both before deleting "
+        "this assertion."
+    )
+    assert reattached["stale_since"] is None
+
+    # POSITIVE CONTROL: the consumer that was never detached keeps the mark
+    # through a rebind, so the lattice is intact and it is specifically the
+    # row DELETION that loses it.
+    context.refresh_context(
+        OWNER, rebound["id"], visible_ref="note:promoted",
+        request_id="control-rebind", **_cursors(thoughts.get(OWNER, rebound["id"])))
+    control = _rows_for(db, rebound["id"])[0]
+    assert control["stale_reason"] == "forbidden"
+    assert control["stale_since"] == "2026-01-01T00:00:00"
+
+
+class _FaultingConn:
+    """The real connection, with one INSERT made to fail.
+
+    NOT a lying double: every statement is executed against the REAL sqlite
+    connection and every result is the real one.  The single deviation is that
+    ONE `INSERT INTO context_dependents` -- the Nth for a NAMED consumer, so
+    the fault does not depend on the order sqlite happens to return the
+    backfill's rows in -- raises INSTEAD of running.  That is exactly what a
+    future `NOT NULL` column, CHECK or foreign key on that table would do.
+    Counsel-on-built could not construct such an input today (every value is
+    `str()`/`int()`-coerced and the table carries no constraint), so the
+    failure is FORCED here rather than pretended.
+    """
+
+    def __init__(self, conn: Any, consumer_id: str, fail_on_insert: int) -> None:
+        self._conn = conn
+        self._consumer = consumer_id
+        self._fail_on = fail_on_insert
+        self.fired = False
+        self.seen = 0
+
+    def execute(self, sql: str, *args: Any, **kwargs: Any) -> Any:
+        if "INSERT INTO context_dependents" in sql and args:
+            params = args[0]
+            if str(params[2]) == self._consumer:
+                self.seen += 1
+                if self.seen == self._fail_on:
+                    self.fired = True
+                    raise sqlite3.IntegrityError(
+                        "NOT NULL constraint failed: "
+                        "context_dependents.some_later_column"
+                    )
+        return self._conn.execute(sql, *args, **kwargs)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._conn, name)
+
+
+def _two_ref_thought(thoughts, context, key: str) -> dict[str, Any]:
+    thought = _thought(thoughts, key)
+    context.attach_context(OWNER, thought["id"], visible_ref="note:promoted",
+                           request_id=f"{key}-a1", **_cursors(thought))
+    context.attach_context(OWNER, thought["id"], visible_ref="note:control",
+                           request_id=f"{key}-a2",
+                           **_cursors(thoughts.get(OWNER, thought["id"])))
+    return thought
+
+
+def test_a_backfill_that_fails_midway_leaves_no_half_built_consumer(rig) -> None:
+    """Counsel-on-built F1: a partial seed must never read as a complete one.
+
+    `backfill_dependents_in_transaction` sits in reconcile STEP 2, outside the
+    `BEGIN ... COMMIT/ROLLBACK` step 4 wraps every other backfill in, and its
+    call site SWALLOWS -- deliberately, because a reconcile that cannot finish
+    is a desk that cannot open.  So when `_reconcile_dependents` raises after
+    its DELETE and after >=1 INSERT, the enclosing `with self._connection()`
+    still COMMITS (db/connection.py) and the consumer is left holding SOME of
+    its rows.  Its own skip predicate -- `id NOT IN (SELECT consumer_id FROM
+    context_dependents ...)` -- then matches on EVERY later open, so the
+    half-built index looks complete FOREVER and a correction to the missing
+    record never marks that consumer stale.  That is AC3's whole job.
+
+    The fix is a per-consumer SAVEPOINT: each consumer is written whole or not
+    at all, and anything unwritten is retried on the next open.  The invariant
+    asserted here is exactly that -- NO consumer ever holds a partial set.
+    """
+    db, thoughts, context = rig
+    faulted = _two_ref_thought(thoughts, context, "faulted")
+    other = _two_ref_thought(thoughts, context, "untouched")
+    expected = {t["id"]: _rows_for(db, t["id"]) for t in (faulted, other)}
+    assert all(len(rows) == 2 for rows in expected.values()), "rig is wrong"
+
+    # An older database: the table exists, the rows do not.
+    with db._connection() as conn:
+        conn.execute("DELETE FROM context_dependents")
+
+    # Reconcile step 2, faithfully: the backfill raises, the call site swallows,
+    # and the connection context manager then COMMITS on a clean exit.
+    with db._connection() as conn:
+        faulting = _FaultingConn(conn, faulted["id"], fail_on_insert=2)
+        try:
+            RefinementContextService.backfill_dependents_in_transaction(faulting)
+        except Exception:
+            pass  # db/reconcile.py -- deliberately swallowed
+    assert faulting.fired, "the fault never fired; the test proves nothing"
+
+    for thought_id in expected:
+        rows = _rows_for(db, thought_id)
+        assert len(rows) in (0, 2), (
+            f"{thought_id} holds a PARTIAL row set ({len(rows)} of 2) through "
+            "the commit -- its own skip predicate will now treat a half-built "
+            "index as complete, forever"
+        )
+    assert _rows_for(db, faulted["id"]) == [], (
+        "the faulted consumer kept rows the failed seed had already written"
+    )
+
+    # The retry: whatever was not written is not skipped, so a second open
+    # seeds every consumer whole.
+    with db._connection() as conn:
+        RefinementContextService.backfill_dependents_in_transaction(conn)
+    for thought_id, want in expected.items():
+        got = _rows_for(db, thought_id)
+        assert len(got) == 2
+        for g, w in zip(got, want, strict=True):
+            assert {k: v for k, v in g.items() if k != "bound_at"} == \
+                   {k: v for k, v in w.items() if k != "bound_at"}
+
+
+def test_the_faulting_backfill_leaves_no_transaction_open(rig) -> None:
+    """The POSITIVE CONTROL for the SAVEPOINT's bookkeeping, and a second
+    defect the same fix closes.
+
+    `_reconcile_dependents`'s DELETE opens an implicit transaction (sqlite3's
+    legacy isolation mode), and when the INSERT after it raises, the swallowed
+    failure leaves that transaction OPEN on the connection reconcile is still
+    using.  Reconcile step 4 then runs a bare `conn.execute("BEGIN")`, which
+    raises "cannot start a transaction within a transaction" -- turning a
+    recoverable seeding gap into a desk that cannot open, the exact outcome the
+    swallow exists to prevent.  The SAVEPOINT is RELEASEd on every path, so the
+    connection is handed back in the state reconcile found it.
+    """
+    db, thoughts, context = rig
+    thought = _two_ref_thought(thoughts, context, "balanced")
+    with db._connection() as conn:
+        conn.execute("DELETE FROM context_dependents")
+
+    with db._connection() as conn:
+        faulting = _FaultingConn(conn, thought["id"], fail_on_insert=1)
+        try:
+            RefinementContextService.backfill_dependents_in_transaction(faulting)
+        except Exception:
+            pass
+        assert faulting.fired
+        assert not conn.in_transaction, (
+            "the backfill left a transaction open; reconcile step 4's BEGIN "
+            "would raise and the desk would not open"
+        )
+        conn.execute("BEGIN")
+        conn.execute("COMMIT")
 
 
 def test_an_empty_desk_backfills_zero_rows(tmp_path: Path) -> None:

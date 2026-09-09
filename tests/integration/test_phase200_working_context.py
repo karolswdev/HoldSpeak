@@ -160,7 +160,7 @@ def test_promotion_records_locator_and_never_copies_the_quote(rig: Rig) -> None:
     excerpt = str(source["text"])[locator["char_start"]:locator["char_start"] + locator["char_length"]]
     assert excerpt == CONSTRAINT
     # And the hash proves the locator still addresses what it named.
-    assert rig.svc.promotions(rig.tid)[0]["source_available"] is True
+    assert rig.svc.promotions(OWNER, rig.tid)[0]["source_available"] is True
 
 
 def test_only_a_stated_fact_may_be_promoted_and_the_body_is_his_words(rig: Rig) -> None:
@@ -483,7 +483,7 @@ def test_revoking_a_source_blocks_re_promotion_and_names_the_gap(rig: Rig) -> No
     assert rig.dependent_state(target) == "forbidden"
     # The record is HIS and it stays.
     assert rig.db.notes.get(target.split(":", 1)[1]).body_markdown == CONSTRAINT
-    assert rig.svc.promotions(rig.tid)[0]["disclosure_state"] == "revoked"
+    assert rig.svc.promotions(OWNER, rig.tid)[0]["disclosure_state"] == "revoked"
 
     # And it cannot be re-promoted: forgetting is not suppressing.
     with pytest.raises(ServiceError) as suppressed:
@@ -579,6 +579,112 @@ def test_a_revocation_is_never_downgraded_by_a_later_stale_marking(rig: Rig) -> 
     assert rig.dependent_state(target) == "forbidden"
 
 
+def test_a_revocation_never_downgrades_an_unavailable_dependent_to_stale(rig: Rig) -> None:
+    """P0 from counsel-on-built: `unavailable` is a gap no refresh can close.
+
+    The lattice `schema.py` declares says `unavailable` is cleared only by a
+    rebind.  The revoke path's CASE protected `forbidden` and NOTHING else, so
+    a dependent whose record had been deleted was silently rewritten to
+    ordinary refreshable staleness whenever any OTHER promotion into that
+    record was revoked while a survivor remained -- and a consumer reading
+    `stale` would then attempt a refresh that cannot succeed.
+
+    The `unavailable` row here is written by the REAL trigger
+    (`context_dependents_note_au`), fired by the product's own soft delete --
+    not by hand.  Beside it sits the positive control: a fresh consumer of the
+    SAME record, which the same statement must mark, so a fence that
+    over-reaches into "preserve everything" fails as loudly as the bug did.
+    """
+    rig.record(fact_id="first-fact")
+    first = rig.promote(fact_id="first-fact")["promotion"]
+    target = first["target_ref"]
+    note_id = target.split(":", 1)[1]
+
+    rig.record(fact_id="second-fact", quote="Rollbacks are rehearsed quarterly.")
+    second = rig.promote(fact_id="second-fact", target_ref=target,
+                         expected_target_revision=str(rig.db.notes.get(note_id).last_modified))["promotion"]
+
+    gone = rig.dependent(target, "thought-gone")
+    assert rig.db.notes.delete(note_id) is True
+    # The product's own delete, through the shipped trigger.
+    assert rig.dependent_state(target, gone) == "unavailable"
+    live = rig.dependent(target, "thought-live")
+    assert rig.dependent_state(target, live) == ""
+
+    # A survivor remains, so this revocation computes ordinary staleness...
+    one = rig.command({"kind": "revoke_promotion", "promotion_id": first["promotion_id"]})["promotion"]
+    assert one["surviving_active_promotions"] == 1
+    assert one["dependent_state"] == "stale"
+    assert rig.dependent_state(target, live) == "stale"          # positive control
+    assert rig.dependent_state(target, gone) == "unavailable"    # and the gap survives it
+
+    # ...and the last revocation computes `forbidden`, which likewise does not
+    # rewrite a record that is simply gone.
+    two = rig.command({"kind": "revoke_promotion", "promotion_id": second["promotion_id"]})["promotion"]
+    assert two["surviving_active_promotions"] == 0
+    assert two["dependent_state"] == "forbidden"
+    assert rig.dependent_state(target, live) == "forbidden"      # positive control
+    assert rig.dependent_state(target, gone) == "unavailable"
+
+
+def test_a_real_attachment_is_fenced_by_a_real_revocation(rig: Rig) -> None:
+    """Lane B meets Lane C: no hand-written row anywhere in this test.
+
+    Every other revoke test registers its consumer through `Rig.dependent`,
+    which writes `context_dependents` by hand.  Here the row is written by the
+    REAL reconcile point -- `RefinementContextService.attach_context` ->
+    `_persist_manifest` -> `_reconcile_dependents` -- for a Thought that really
+    attached the promoted Note, and the revocation runs through the real
+    `InterviewService.command`.  A second Thought consuming a DIFFERENT
+    promoted record is the positive control: the fence must reach the record
+    that was revoked and no other.
+    """
+    from holdspeak.services.refinement_context_service import RefinementContextService
+    from holdspeak.services.refinement_thought_service import (
+        INBOX_DIRECTORY_ID, RefinementThoughtService,
+    )
+
+    rig.db.directories.upsert(directory_id=INBOX_DIRECTORY_ID, name="Inbox")
+    thoughts = RefinementThoughtService(rig.db)
+    contexts = RefinementContextService(rig.db)
+
+    def consumer(ref: str, slug: str) -> str:
+        thought = thoughts.create(
+            OWNER, request_id=f"{slug}-capture", raw_text="Plan the cutover.",
+            source={"kind": "typed"}, initial_note={"id": f"{slug}-working", "title": "Rough plan"},
+        )
+        contexts.attach_context(
+            OWNER, thought["id"], visible_ref=ref, request_id=f"{slug}-attach",
+            expected_aggregate_revision=thought["aggregate_revision"],
+            expected_working_revision=thought["working_revision"],
+            expected_attachment_revision=thought["attachment_revision"],
+        )
+        return str(thought["id"])
+
+    rig.record(fact_id="revoked-fact")
+    revoked_ref = rig.promote(fact_id="revoked-fact")["promotion"]
+    rig.record(fact_id="kept-fact", quote="Rollbacks are rehearsed quarterly.")
+    kept_ref = rig.promote(fact_id="kept-fact")["promotion"]["target_ref"]
+
+    fenced = consumer(revoked_ref["target_ref"], "fenced")
+    control = consumer(kept_ref, "control")
+
+    # The row under test was written by `_reconcile_dependents`, not by the rig.
+    row = rig.rows("SELECT * FROM context_dependents WHERE canonical_ref=? AND consumer_id=?",
+                   (revoked_ref["target_ref"], fenced))[0]
+    stored = rig.rows("SELECT attachment_sha256,attachment_revision FROM refinement_thoughts WHERE id=?",
+                      (fenced,))[0]
+    assert str(row["consumer_kind"]) == "thought"
+    assert str(row["bound_manifest_sha256"]) == str(stored["attachment_sha256"])
+    assert int(row["consumer_revision"]) == int(stored["attachment_revision"]) > 0
+    assert str(row["stale_reason"]) == ""
+
+    rig.command({"kind": "revoke_promotion", "promotion_id": revoked_ref["promotion_id"]})
+
+    assert rig.dependent_state(revoked_ref["target_ref"], fenced) == "forbidden"
+    assert rig.dependent_state(kept_ref, control) == ""
+
+
 def test_removing_the_fact_does_not_revoke_its_promotion(rig: Rig) -> None:
     """The stated asymmetry: the Note is his now.
 
@@ -592,7 +698,7 @@ def test_removing_the_fact_does_not_revoke_its_promotion(rig: Rig) -> None:
     state = rig.command({"kind": "remove_fact", "fact_id": "goal"})
 
     assert state["facts"] == {}
-    assert rig.svc.promotions(rig.tid)[0]["disclosure_state"] == "active"
+    assert rig.svc.promotions(OWNER, rig.tid)[0]["disclosure_state"] == "active"
     assert rig.db.notes.get(promoted["target_ref"].split(":", 1)[1]).body_markdown == CONSTRAINT
     assert rig.rows("SELECT count(*) c FROM context_promotion_suppressions")[0]["c"] == 0
 
@@ -606,13 +712,13 @@ def test_deleting_the_source_message_leaves_the_promotion_naming_the_gap(rig: Ri
     """
     source = rig.record()
     promoted = rig.promote()["promotion"]
-    assert rig.svc.promotions(rig.tid)[0]["state"] == "current"
+    assert rig.svc.promotions(OWNER, rig.tid)[0]["state"] == "current"
 
     with rig.db._connection() as conn:
         conn.execute("UPDATE thread_messages SET deleted_at=? WHERE id=?", (1_800_000_000.0, source))
 
     assert rig.svc.get(rig.tid)["facts"] == {}
-    view = rig.svc.promotions(rig.tid)[0]
+    view = rig.svc.promotions(OWNER, rig.tid)[0]
     assert view["state"] == "source_unavailable"
     assert view["source_available"] is False
     assert view["target_state"] == "current"
@@ -632,32 +738,88 @@ def test_a_promotion_reads_corrected_only_when_the_CONTENT_moved(rig: Rig) -> No
     note_id = promoted["target_ref"].split(":", 1)[1]
 
     rig.db.notes.upsert(note_id=note_id, title=TITLE, body_markdown=CONSTRAINT)
-    assert rig.svc.promotions(rig.tid)[0]["state"] == "current"
+    assert rig.svc.promotions(OWNER, rig.tid)[0]["state"] == "current"
 
     rig.db.notes.upsert(note_id=note_id, title=TITLE,
                         body_markdown=CONSTRAINT + " Unless it is reversible in five minutes.")
-    assert rig.svc.promotions(rig.tid)[0]["state"] == "corrected"
+    assert rig.svc.promotions(OWNER, rig.tid)[0]["state"] == "corrected"
 
     rig.db.notes.delete(note_id)
-    assert rig.svc.promotions(rig.tid)[0]["state"] == "unavailable"
+    assert rig.svc.promotions(OWNER, rig.tid)[0]["state"] == "unavailable"
 
 
 # ── Transport ───────────────────────────────────────────────────────────
 
+# The two verbs that mint or unmake a canonical record.  They belong to the
+# owner's browser and to nothing else.
+PROMOTION_KINDS = frozenset({"promote", "revoke_promotion"})
+
+
+def _mcp_source_strings() -> tuple[set[str], int]:
+    """Every string CONSTANT in the MCP package, and how many files were read.
+
+    Equality, not substring: a docstring that says the word `promote` is not a
+    finding, an event kind that IS `"promote"` is.  Read by AST over the whole
+    package rather than off one family's ``TOOLS``, because a dispatcher in any
+    family could name the kind.
+    """
+    import ast
+
+    import holdspeak
+
+    root = Path(holdspeak.__file__).parent / "mcp"
+    files = sorted(root.rglob("*.py"))
+    constants: set[str] = set()
+    for path in files:
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                constants.add(node.value)
+    return constants, len(files)
+
+
+def _mcp_interview_kind_map() -> tuple[set[str], set[str]]:
+    """The SHIPPING tool-name -> event-kind map, read out of `dispatch` by AST.
+
+    Not a private constant the test could drift from: the literal the dispatcher
+    actually indexes.  Returns (tool names it maps, event kinds it can produce).
+    """
+    import ast
+    import inspect
+
+    from holdspeak.mcp.families import interview as interview_family
+
+    names: set[str] = set()
+    kinds: set[str] = set()
+    for node in ast.walk(ast.parse(inspect.getsource(interview_family))):
+        if not isinstance(node, ast.Dict) or not node.keys:
+            continue
+        pairs = [
+            (key.value, value.value)
+            for key, value in zip(node.keys, node.values)
+            if isinstance(key, ast.Constant) and isinstance(key.value, str)
+            and isinstance(value, ast.Constant) and isinstance(value.value, str)
+        ]
+        if len(pairs) != len(node.keys) or not pairs:
+            continue
+        if all(name.startswith("interview.") for name, _ in pairs):
+            names |= {name for name, _ in pairs}
+            kinds |= {kind for _, kind in pairs}
+    return names, kinds
+
 
 @pytest.mark.requires_meeting
-def test_the_browser_route_admits_promotion_and_the_model_gets_no_tool(tmp_path: Path) -> None:
-    """Routes only. The MCP interview family gains NOTHING.
+def test_the_browser_route_admits_promotion_and_lists_it_back(tmp_path: Path) -> None:
+    """AC4 needs a `promotion_id` the owner can reach, so a READ route ships.
 
-    The shipped asymmetry -- a browser allowlist against the model's four
-    read/record tools -- encodes that the model records and the owner disposes.
-    A `promote` tool would let a model mint a canonical record, which is the
-    precise failure AC5 exists to prevent (ruling C6 as amended).
+    Without it `revoke_promotion` is unreachable: `promotion_id` existed only
+    inside the single `promote` response, and `interview.get` does not carry
+    promotions.  The route is owner-only in the same shape as the verbs -- the
+    check lives in the SERVICE, proved here against an agent principal, not
+    only in the handler.
     """
     from fastapi.testclient import TestClient
 
     from holdspeak.db import get_database, reset_database
-    from holdspeak.mcp.families import interview as interview_family
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
     reset_database()
@@ -672,6 +834,10 @@ def test_the_browser_route_admits_promotion_and_the_model_gets_no_tool(tmp_path:
         rig = Rig(db, tid)
         rig.record()
 
+        empty = client.get(f"/api/threads/{tid}/interview/promotions")
+        assert empty.status_code == 200, empty.text
+        assert empty.json() == {"promotions": []}
+
         promote = client.post(f"/api/threads/{tid}/interview", json={
             "command_id": "route-promote", "expected_revision": rig.svc.get(tid)["revision"],
             "event": {"kind": "promote", "fact_id": "goal"}})
@@ -679,13 +845,80 @@ def test_the_browser_route_admits_promotion_and_the_model_gets_no_tool(tmp_path:
         promotion = promote.json()["promotion"]
         assert promotion["minted"] is True
 
+        # The whole point of the route: the id the owner needs to revoke.
+        listed = client.get(f"/api/threads/{tid}/interview/promotions")
+        assert listed.status_code == 200, listed.text
+        assert [row["promotion_id"] for row in listed.json()["promotions"]] == [promotion["promotion_id"]]
+        assert listed.json()["promotions"][0]["disclosure_state"] == "active"
+
         revoke = client.post(f"/api/threads/{tid}/interview", json={
             "command_id": "route-revoke", "expected_revision": rig.svc.get(tid)["revision"],
-            "event": {"kind": "revoke_promotion", "promotion_id": promotion["promotion_id"]}})
+            "event": {"kind": "revoke_promotion",
+                      "promotion_id": listed.json()["promotions"][0]["promotion_id"]}})
         assert revoke.status_code == 200, revoke.text
         assert revoke.json()["promotion"]["revoked"] == "source_claim"
+        after = client.get(f"/api/threads/{tid}/interview/promotions")
+        assert after.json()["promotions"][0]["disclosure_state"] == "revoked"
 
-        names = {str(tool.get("name")) for tool in getattr(interview_family, "TOOLS", [])}
-        assert names and not any("promot" in name or "revoke" in name for name in names)
+        # A kind the MCP map HAS and the browser allowlist does not: the
+        # allowlist is a real gate, not a comment.
+        refused = client.post(f"/api/threads/{tid}/interview", json={
+            "command_id": "route-fact", "expected_revision": rig.svc.get(tid)["revision"],
+            "event": {"kind": "fact", "fact_id": "sneak", "text": "x", "basis": "stated",
+                      "source_message_id": "m", "quote": "y"}})
+        # The body matters, not just the code: admitting `fact` would ALSO
+        # answer 400 (its own validation refuses the forged source message), so
+        # a status-only assertion cannot tell the gate from the fallout.
+        assert refused.status_code == 400, refused.text
+        assert refused.json() == {"error": "Unsupported interview control"}
+
+        # Owner-only, enforced where the verbs enforce it.
+        with pytest.raises(ServiceError) as denied:
+            InterviewService(db).promotions(AGENT, tid)
+        assert denied.value.code == "owner_required"
     finally:
         reset_database()
+
+
+@pytest.mark.requires_meeting
+def test_no_mcp_tool_anywhere_can_mint_or_revoke_a_canonical_record() -> None:
+    """Ruling C6 as amended, guarded over the WHOLE registry.
+
+    The earlier guard read ONE family's ``TOOLS``, so a promote tool registered
+    in any other family passed it.  Three assertions replace it: no tool name in
+    the whole registry names these verbs; the two event kinds appear nowhere in
+    the MCP package as string constants at all, so no dispatcher can name one;
+    and the browser allowlist against the MCP kind map is pinned in both
+    directions.
+
+    The two surfaces are NOT wholly disjoint and the assertion says so honestly:
+    `section` is legitimately on both -- the model may change section.  What
+    must be disjoint is the promotion pair, and the rest of the relationship is
+    pinned exactly rather than approximated.
+
+    `requires_meeting` is still necessary: `holdspeak.mcp.tools` imports the web
+    routers transitively (`holdspeak/web/routes/activity/__init__.py`), so the
+    registry cannot be read at all without fastapi installed.
+    """
+    from holdspeak.mcp.tools import TOOLS
+    from holdspeak.web.routes.threads import INTERVIEW_BROWSER_EVENT_KINDS
+
+    names = {str(tool["name"]) for tool in TOOLS}
+    # Non-vacuity: this is the real, whole registry.
+    assert len(names) > 100 and {"interview.record_fact", "interview.get"} <= names
+    assert not {name for name in names if "promot" in name or "revoke" in name}
+
+    constants, scanned = _mcp_source_strings()
+    # Non-vacuity: the scan does see event kinds where they exist.
+    assert scanned > 10 and {"fact", "suggestion", "section"} <= constants
+    assert PROMOTION_KINDS.isdisjoint(constants)
+
+    mapped, mcp_kinds = _mcp_interview_kind_map()
+    interview_names = {str(tool["name"]) for tool in TOOLS if str(tool["name"]).startswith("interview.")}
+    # Non-vacuity: the map is the complete kind source for the family's verbs.
+    assert mapped and mapped | {"interview.get"} == interview_names
+    assert PROMOTION_KINDS <= INTERVIEW_BROWSER_EVENT_KINDS
+    assert PROMOTION_KINDS.isdisjoint(mcp_kinds)
+    assert INTERVIEW_BROWSER_EVENT_KINDS - mcp_kinds == {
+        "remove_fact", "disposition", "status", "promote", "revoke_promotion"}
+    assert mcp_kinds - INTERVIEW_BROWSER_EVENT_KINDS == {"fact", "suggestion"}

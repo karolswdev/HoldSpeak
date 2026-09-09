@@ -1181,8 +1181,12 @@ ON decision_record_revisions(record_id);
 -- the theoretical one (settled design, "cannot promise" #6, observed).
 
 -- HS-200-10: one promotion of one Interview fact into one canonical record.
--- The quote is a LOCATOR + HASH, never a copy: provenance stays provable while
--- revoking the source actually removes the text.  The excerpt-locator idea is
+-- The quote is a LOCATOR + HASH, never a copy: provenance stays provable, and
+-- deleting the source message leaves no copy of it in this row.  It does NOT
+-- unwrite the promoted record -- the canonical Note keeps the quoted words on
+-- purpose, which is why _revoke_promotion returns record_retained: True.
+-- (counsel-on-built F4: the earlier wording read as "revoke deletes my words".)
+-- The excerpt-locator idea is
 -- borrowed from project_evidence_links.excerpt_locator_json, whose writer has
 -- zero references anywhere; this table is deliberately NOT project-scoped,
 -- because a promotion must work on a desk with no Project.
@@ -1330,9 +1334,31 @@ END;
 --
 -- The lattice, and `forbidden` is TERMINAL:
 --   ''  (fresh) -> 'stale'       cleared only by a rebind at the reconcile point
---               -> 'unavailable' cleared only by a rebind
---               -> 'forbidden'   cleared ONLY by an explicit re-promotion.
--- No trigger and no ordinary edit may leave `forbidden`.  This matters because
+--               -> 'unavailable' cleared by a rebind, OR downgraded to 'stale'
+--                                by an UNDELETE (see below)
+--               -> 'forbidden'   see the note below: nothing in the product
+--                                clears it, and one route wrongly does.
+-- No trigger and no ordinary edit may leave `forbidden`.
+--
+-- TWO CORRECTIONS from counsel-on-built (2026-09-09); the code is right and an
+-- earlier version of THIS COMMENT was wrong, so read it as the record.
+--
+-- 1. `unavailable` -> `stale` on an undelete is DELIBERATE.  The AU branch below
+--    reaches 'stale' only when NEW.deleted = 0 -- the record genuinely came
+--    back -- so the refresh a consumer would attempt CAN succeed.  This comment
+--    used to say "cleared only by a rebind", which the trigger three lines down
+--    contradicts.  What is NOT allowed is the reverse: `revoke_promotion` used
+--    to overwrite `unavailable` with `stale` while the note was still deleted,
+--    sending a consumer to refresh a record that is gone.  That was a real
+--    defect and is fixed (interview_service.py preserves both marks now).
+--
+-- 2. `forbidden` is terminal in intent and LEAKS IN PRACTICE.  A detach deletes
+--    the consumer's row outright, so a later re-attach re-inserts it with
+--    stale_reason='' -- two ordinary clicks clear a revocation.  Pinned by
+--    test_a_detach_then_reattach_currently_clears_a_standing_forbidden and
+--    ruled on in story-10 B2: not closed on this commit because the fix
+--    (deriving the mark from the record's own state) collides with the ratified
+--    P0-2 test, and nothing in the product fences on this table yet.  This matters because
 -- refinement_thought_service writes a working Note on EVERY accepted revision:
 -- a downgrade here would turn a revocation into an ordinary refreshable
 -- staleness on the very next save, and a consumer fencing on `forbidden`
@@ -3739,6 +3765,27 @@ CREATE TABLE IF NOT EXISTS thread_message_parts (
 CREATE INDEX IF NOT EXISTS idx_thread_message_parts_message_ordinal
 ON thread_message_parts(message_id, ordinal);
 
+-- HS-200-10 (F0/L4, P0-1): `origin` records HOW a frozen ref arrived, not WHEN.
+--   'reference'  the owner named it (an explicit ref on the turn, a member of
+--                a container he attached, or a seed ref on thread creation)
+--   'relevance'  a relevance/grounding pass produced it
+--   ''           UNKNOWN -- every row written before this column existed, and
+--                any row whose writer did not stamp it
+-- The default is the empty string, NOT 'relevance', for two reasons.  A
+-- `thread_refs` row is a RECEIPT, and stamping a pre-existing row 'relevance'
+-- would assert something the database does not know; '' says "unknown"
+-- honestly.  And the L4 replay fence is an ALLOW-LIST -- it keeps only
+-- 'reference' -- so unknown fences, which is the fail-closed direction:
+-- over-fencing a replay costs the model one block the owner can hand it again
+-- by reference, while under-fencing is the breach.
+--
+-- The column replaces a TIMESTAMP comparison that could not survive a second
+-- device.  `context_promotions.created_at` is the REMOTE wall clock copied
+-- verbatim on merge (`sync_service.py:630-640`, held out of the LWW field set
+-- at `:654-656`), and the post-sync corpus repair (`:672-700`) never touches
+-- `thread_refs`; comparing that clock against a LOCAL `thread_refs.created_at`
+-- read a relevance body as "arrived by reference" on every device that froze
+-- it before the promotion synced in.
 CREATE TABLE IF NOT EXISTS thread_refs (
     id TEXT PRIMARY KEY,
     thread_id TEXT NOT NULL REFERENCES threads(id),
@@ -3747,8 +3794,10 @@ CREATE TABLE IF NOT EXISTS thread_refs (
     ref_id TEXT NOT NULL DEFAULT '',
     version TEXT NOT NULL DEFAULT '',
     frozen_json TEXT NOT NULL DEFAULT '',
-    created_at REAL NOT NULL
+    created_at REAL NOT NULL,
+    origin TEXT NOT NULL DEFAULT ''
 );
+
 CREATE INDEX IF NOT EXISTS idx_thread_refs_thread
 ON thread_refs(thread_id);
 

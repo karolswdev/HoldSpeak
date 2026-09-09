@@ -676,6 +676,16 @@ def reconcile_schema(
     # it is idempotent and skips Thoughts that already hold rows. The import is
     # function-local on purpose: `db/` must not take a module-level dependency
     # on `services/`.
+    #
+    # It runs OUTSIDE step 4's transaction on purpose, and that is only safe
+    # because the backfill wraps EACH CONSUMER in its own SAVEPOINT
+    # (counsel-on-built F1). Every consumer is therefore seeded whole or not at
+    # all: a swallowed failure here leaves a consumer with zero rows, so the
+    # backfill's own `id NOT IN (SELECT consumer_id ...)` skip does not claim
+    # it and the next open retries it -- rather than committing a partial row
+    # set that reads as a complete index forever. The SAVEPOINT is also
+    # RELEASEd on every path, so the connection comes back with no open
+    # transaction for step 4's bare `BEGIN` below.
     try:
         from ..services.refinement_context_service import RefinementContextService
 

@@ -21,6 +21,10 @@ MAX_CONTEXT_BYTES = 48_000
 _OPEN = '<untrusted-refinement-context-json schema="holdspeak.context.v1">\n'
 _CLOSE = '\n</untrusted-refinement-context-json>'
 
+# HS-200-10 (counsel-on-built F1): the per-consumer SAVEPOINT the reconcile-time
+# backfill wraps each Thought in.  A literal, never interpolated from data.
+_BACKFILL_SAVEPOINT = "hs200_context_dependents_backfill"
+
 
 @dataclass(frozen=True)
 class FrozenGroundingSnapshot:
@@ -1125,6 +1129,39 @@ class RefinementContextService:
     # Idempotent by skipping any Thought that already holds index rows, so a
     # second reconcile neither restarts `bound_at` nor disturbs a `forbidden`
     # a revocation has since written.
+    #
+    # ── counsel-on-built F1: EACH CONSUMER IS WRITTEN WHOLE, OR NOT AT ALL ──
+    #
+    # That skip predicate is also this backfill's trap.  The call site in
+    # `db/reconcile.py` sits in STEP 2 -- outside the `BEGIN ... COMMIT/ROLLBACK`
+    # step 4 wraps every other backfill in -- and it SWALLOWS, deliberately: a
+    # blind reverse index is a recoverable stale-marking gap, a reconcile that
+    # cannot finish is a desk that cannot open.  So if `_reconcile_dependents`
+    # raised after its DELETE and after >=1 INSERT, the swallowed failure let
+    # the enclosing `with self._connection()` COMMIT the partial rows, and the
+    # consumer then MATCHED the skip on every later open: a half-built index
+    # that reads as complete FOREVER, with the missing record's corrections
+    # never reaching that consumer.  AC3's whole job, silently off.
+    #
+    # A SAVEPOINT per consumer, not step 4's single transaction, because:
+    #   * step 4 runs only `if shape_changed`, and this seed must also run on
+    #     an unchanged database (that is how `test_reconcile_actually_calls_
+    #     the_backfill` re-seeds a table someone emptied);
+    #   * step 4's transaction is all-or-nothing across EVERY backfill, so a
+    #     seeding failure would roll the others back and then RE-RAISE -- the
+    #     desk that cannot open, which is exactly what the swallow refuses;
+    #   * the unit that must be atomic is one CONSUMER, not the whole seed.
+    #     Per-consumer atomicity is what makes the skip predicate honest:
+    #     rows present => that consumer is complete; rows absent => it is
+    #     retried on the next open.
+    # The SAVEPOINT is RELEASEd on every path, which also hands the connection
+    # back with no open transaction -- `_reconcile_dependents`'s DELETE opens
+    # one implicitly, and a swallowed failure used to leave it open for step
+    # 4's bare `conn.execute("BEGIN")` to choke on.
+    #
+    # The exception is re-raised rather than swallowed here: reconcile's guard
+    # is the ONE place that decides a seeding failure is survivable, and two
+    # swallow points would mean neither names the failure.
     @staticmethod
     def backfill_dependents_in_transaction(conn: Any, now: str | None = None) -> int:
         """Seed `context_dependents` for working Thoughts.  Returns rows written."""
@@ -1146,12 +1183,25 @@ class RefinementContextService:
             manifest = {"revision": revision,
                         "attachment_sha256": str(row["attachment_sha256"] or ""),
                         "visible": visible}
-            RefinementContextService._reconcile_dependents(
-                conn, thought_id, manifest, now)
-            written += conn.execute(
-                "SELECT count(*) FROM context_dependents"
-                " WHERE consumer_kind='thought' AND consumer_id=?",
-                (thought_id,)).fetchone()[0]
+            conn.execute(f"SAVEPOINT {_BACKFILL_SAVEPOINT}")
+            try:
+                RefinementContextService._reconcile_dependents(
+                    conn, thought_id, manifest, now)
+                seeded = conn.execute(
+                    "SELECT count(*) FROM context_dependents"
+                    " WHERE consumer_kind='thought' AND consumer_id=?",
+                    (thought_id,)).fetchone()[0]
+            except BaseException:
+                # Leave this consumer with ZERO rows so the skip predicate does
+                # not claim it, then let reconcile's guard name the failure.
+                try:
+                    conn.execute(f"ROLLBACK TO {_BACKFILL_SAVEPOINT}")
+                    conn.execute(f"RELEASE {_BACKFILL_SAVEPOINT}")
+                except Exception:  # pragma: no cover - unusable connection
+                    pass
+                raise
+            conn.execute(f"RELEASE {_BACKFILL_SAVEPOINT}")
+            written += seeded
         return written
 
     @staticmethod

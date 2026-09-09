@@ -56,10 +56,34 @@ def _drop_promoted(memory: Any, members: list[str]) -> list[str]:
     ``test_an_explicitly_attached_knowledge_or_zone_container_still_hydrates_a_promoted_member``
     exists to fail the moment someone "simplifies" these two call sites back
     into the shared function.
+
+    FAIL-CLOSED (counsel-on-built F2): a handle that carries a relevance
+    ``search`` but cannot answer ``promoted_refs`` RAISES.  Only ``memory is
+    None`` -- no repository at all, therefore no relevance pass -- is a no-op.
     """
+    if memory is None:
+        # No memory repository on this handle at all.  ``_memory_repo`` returns
+        # None for a database opened before the memory indexes existed, and BOTH
+        # relevance call sites guard on ``memory is not None`` -- so no relevance
+        # search ran and there is no relevance pool to fence.  Recall stays an
+        # enrichment, never a precondition (see ``_memory_repo``'s docstring).
+        return list(members)
     getter = getattr(memory, "promoted_refs", None)
     if getter is None:
-        return list(members)
+        # Counsel-on-built F2.  This branch used to `return list(members)`, and
+        # that is the ONE direction this fence must never fail.  Anything that
+        # reaches here produced the relevance hit list being filtered -- it is
+        # acting as a memory repository -- so a handle that cannot answer
+        # "which refs are promoted?" means an unreconciled database or a double
+        # that lies about the field the check reads.  Its sibling
+        # ``MemoryRepository._promoted_refs`` (db/memory.py) is deliberately
+        # unguarded for exactly this reason; L3 now keeps the same discipline
+        # and REFUSES rather than hydrating a pool nobody checked.
+        raise AttributeError(
+            "grounding: this memory handle cannot answer `promoted_refs`, so a "
+            "promoted canonical record cannot be kept out of the relevance "
+            "pool; refusing rather than failing open (HS-200-10 L3/F2)"
+        )
     promoted = set(getter())
     if not promoted:
         return list(members)

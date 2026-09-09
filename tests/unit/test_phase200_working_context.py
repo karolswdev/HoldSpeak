@@ -45,6 +45,8 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from holdspeak.db import Database
 from holdspeak.db.memory import rebuild_memory_index
 from holdspeak.grounding import hydrate_refs_detailed
@@ -377,6 +379,116 @@ def test_the_project_scoped_relevance_call_site_drops_a_promoted_ref(
     assert result.selection == "relevance"
     assert "note:control" in result.source_refs
     assert "note:promoted" not in result.source_refs
+
+
+# ── counsel-on-built F2: L3 must not fail OPEN ──────────────────────
+
+
+class _MemoryThatCannotAnswerTheFence:
+    """A memory handle that answers `search` but NOT `promoted_refs`.
+
+    This is the shape counsel found L3 failing OPEN on.  `_promoted_refs` in
+    `db/memory.py` carries the opposite discipline in its own docstring --
+    "Deliberately not exception-guarded ... swallowing that would fail OPEN,
+    the one direction this fence must never fail" -- and L3 did precisely what
+    L2 refuses to do: `getattr(memory, "promoted_refs", None) is None` returned
+    the members UNFENCED.
+
+    A handle that produced relevance hits IS acting as a memory repository; if
+    it cannot answer the fence question, the honest outcome is a refusal, not
+    a prompt built out of a pool nobody checked.
+    """
+
+    def __init__(self, refs: list[str]) -> None:
+        self._refs = refs
+
+    def search(self, *args: Any, **kwargs: Any) -> _UnfencedSearch:
+        return _UnfencedSearch(list(self._refs))
+
+
+class _DbWithoutMemory:
+    """A handle opened before the memory indexes existed: no repository."""
+
+    memory = None
+
+    def __init__(self, db: Any) -> None:
+        self._db = db
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._db, name)
+
+
+def test_a_memory_handle_that_cannot_answer_the_fence_refuses_instead_of_hydrating(
+    tmp_path: Path,
+) -> None:
+    """F2: a `search`-bearing handle with no `promoted_refs` must RAISE.
+
+    Before the fix this call returned `note:promoted` hydrated with its body
+    in the prompt -- the exact leak ruling C2' exists to kill, produced by the
+    fence itself.
+    """
+    db = _rig(tmp_path, "l3-no-fence.db")
+    handle = _DbWithMemory(
+        db, _MemoryThatCannotAnswerTheFence(["note:control", "note:promoted"])
+    )
+
+    with pytest.raises(AttributeError) as excinfo:
+        hydrate_refs_detailed(
+            handle, [], [], "summary", [], query=QUERY, include_memory=True
+        )
+    assert "promoted_refs" in str(excinfo.value)
+
+
+def test_the_project_scoped_call_site_refuses_the_same_unanswerable_handle(
+    tmp_path: Path,
+) -> None:
+    """The second relevance call site takes the same refusal."""
+    db = _rig(tmp_path, "l3-no-fence-project.db")
+    db.projects.create_project(project_id="p1", name="Payments")
+    handle = _DbWithMemory(
+        db, _MemoryThatCannotAnswerTheFence(["note:control", "note:promoted"])
+    )
+
+    with pytest.raises(AttributeError):
+        hydrate_refs_detailed(
+            handle, [], [], "summary", ["project:p1"], query=QUERY,
+            include_memory=True,
+        )
+
+
+def test_a_handle_with_no_memory_repository_at_all_still_hydrates_by_reference(
+    tmp_path: Path,
+) -> None:
+    """The POSITIVE CONTROL for the refusal above, and the case it exempts.
+
+    `_memory_repo` returns None for a handle that carries no memory index, and
+    both call sites guard on `memory is not None`, so no relevance search runs
+    and there is no relevance pool to fence.  Recall stays an enrichment, never
+    a precondition: by-reference hydration is untouched.
+    """
+    db = _rig(tmp_path, "no-memory.db")
+    handle = _DbWithoutMemory(db)
+
+    result = hydrate_refs_detailed(
+        handle, [], [], "summary", ["note:promoted"], query=QUERY,
+        include_memory=True,
+    )
+    assert result.source_refs == ["note:promoted"]
+    assert PROMOTED_TOKEN in result.blocks[0].text
+    assert result.selection == "explicit"
+
+
+def test_the_fence_is_a_no_op_only_for_a_handle_with_no_repository() -> None:
+    """The two branches of the F2 decision, asserted directly on the predicate.
+
+    `None` -- no repository at all -- is the ONLY no-op.  Anything else that
+    cannot answer `promoted_refs` refuses.
+    """
+    from holdspeak.grounding import _drop_promoted
+
+    assert _drop_promoted(None, ["note:promoted"]) == ["note:promoted"]
+    with pytest.raises(AttributeError):
+        _drop_promoted(_MemoryThatCannotAnswerTheFence([]), ["note:promoted"])
 
 
 # ── P0-A: the by-reference path must NOT be fenced ───────────────────────
