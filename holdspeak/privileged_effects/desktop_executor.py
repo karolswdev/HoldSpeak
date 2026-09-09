@@ -20,7 +20,8 @@ from typing import Any
 from ..desktop_focus import focused_signature
 from ..operation_policy import POLICY_VERSION
 
-_WARRANT_FIELDS = frozenset(
+#: The warrant fields this executor REQUIRES. Every one is read below.
+_REQUIRED_WARRANT_FIELDS = frozenset(
     {
         "warrant_id",
         "operation_id",
@@ -33,6 +34,35 @@ _WARRANT_FIELDS = frozenset(
         "execution_expires_at",
         "uses",
         "signature",
+    }
+)
+
+#: HS-200-05: the fields the kernel's broker also SIGNS into a warrant.
+#:
+#: This boundary demanded an exact key set, and `Broker.decide`
+#: (`kernel/broker.py`) grew six more signed fields after this file was written
+#: — `target_binding` and `continuation_identities` (2026-08-09/10), then
+#: `native_id`, `principal_kind`, `principal_identity` and
+#: `parent_operation_id` (2026-08-22). From the first of those every desktop
+#: typing effect was refused `desktop_executor_warrant_invalid`: dictation typed
+#: nothing for four weeks, and the refusal named a shape problem rather than the
+#: drift that caused it.
+#:
+#: The answer is NOT to trim the warrant on the producing side.
+#: `JournalStore.sign_warrant` HMACs every unsigned field, so a trimmed warrant
+#: fails the signature instead — and these extras being signed is exactly why
+#: admitting them forges nothing.
+#:
+#: This stays an ALLOWLIST, not "ignore what you do not know": an unrecognised
+#: key is still refused, so the next drift in either direction is caught here.
+_ALLOWED_WARRANT_FIELDS = _REQUIRED_WARRANT_FIELDS | frozenset(
+    {
+        "target_binding",
+        "native_id",
+        "principal_kind",
+        "principal_identity",
+        "parent_operation_id",
+        "continuation_identities",
     }
 )
 _REQUEST_FIELDS = frozenset(
@@ -104,7 +134,8 @@ def execute_authorized(
     request = message.get("request")
     if (
         not isinstance(warrant, Mapping)
-        or set(warrant) != _WARRANT_FIELDS
+        or not _REQUIRED_WARRANT_FIELDS.issubset(warrant)
+        or not set(warrant).issubset(_ALLOWED_WARRANT_FIELDS)
         or not isinstance(request, Mapping)
         or set(request) != _REQUEST_FIELDS
         or not isinstance(message.get("use_clipboard"), bool)

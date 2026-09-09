@@ -30,6 +30,56 @@ from .logging_config import get_logger
 log = get_logger("transcribe")
 
 
+#: HS-200-05: the ONE thread every MLX call in this process runs on.
+#:
+#: HS-60-06 pinned MLX work to a dedicated thread PER TRANSCRIBER INSTANCE, and
+#: HS-63-06 added a construction lock so a race could not build two instances.
+#: Both missed the real invariant, and the owner's desk paid for it: mlx_whisper's
+#: ``ModelHolder`` cache, its ``mel_filters`` ``lru_cache`` and the lazy arrays
+#: hanging off a cached model are all PROCESS-level. So a second instance does no
+#: MLX work of its own — its "load" is a cache hit — and inherits arrays still
+#: owned by the FIRST instance's stream. The first eval on the second thread is a
+#: C++ ``std::runtime_error`` ("There is no Stream(gpu, N) in current thread")
+#: thrown through numpy's buffer protocol, where no Python frame can catch it:
+#: the whole hub dies. Note what is fatal and what is not (measured, mlx 0.31.2):
+#: a MATERIALIZED array crosses threads fine; only an UNEVALUATED one is fatal.
+#:
+#: Sharing one executor makes the crash impossible however the instances arose —
+#: including construction sites the init lock never covered
+#: (``web/routes/meeting_import.py``). It also stops leaking one never-shut-down
+#: thread per instance.
+_MLX_THREAD_LOCK = threading.Lock()
+_MLX_THREAD: Any = None
+
+
+def resolve_backend_or_raw(backend: str) -> str:
+    """`_resolve_backend`, but an unresolvable name compares as itself.
+
+    HS-200-05. `Transcriber.__init__` stores the RESOLVED backend, so anything
+    comparing a stored backend against a requested one must resolve the request
+    too or it is comparing "mlx" against "auto" forever. Resolution must not
+    decide the outcome by raising, though: an unsupported or uninstalled backend
+    still belongs in the constructor, where the failure is caught and recorded.
+    """
+    try:
+        return _resolve_backend(backend)
+    except TranscriberError:
+        return backend
+
+
+def _mlx_executor() -> Any:
+    """Return the process-wide pinned MLX executor, creating it once."""
+    global _MLX_THREAD
+    with _MLX_THREAD_LOCK:
+        if _MLX_THREAD is None:
+            import concurrent.futures
+
+            _MLX_THREAD = concurrent.futures.ThreadPoolExecutor(
+                max_workers=1, thread_name_prefix="HoldSpeakMlx"
+            )
+        return _MLX_THREAD
+
+
 class TranscriberError(_TranscriptionErrorBase):
     """Raised when model loading or transcription fails."""
 
@@ -154,11 +204,11 @@ class _MlxTranscriber:
         # the whole process. Pin ALL MLX work (the load below and every
         # transcribe) to one dedicated thread, so callers may live anywhere
         # (the hotkey thread, the wake listener, a route worker).
-        import concurrent.futures
-
-        self._mlx_thread = concurrent.futures.ThreadPoolExecutor(
-            max_workers=1, thread_name_prefix="HoldSpeakMlx"
-        )
+        #
+        # HS-200-05: that thread is PROCESS-WIDE, not per instance — see
+        # `_mlx_executor`. A per-instance pin cannot hold the invariant, because
+        # everything mlx_whisper caches is process-level.
+        self._mlx_thread = _mlx_executor()
         log.info(f"Initializing Transcriber with model_name='{model_name}'")
 
         try:
