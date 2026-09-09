@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/context-promotion.schema.json",
+  "title": "ContextPromotion",
+  "description": "HS-200-10: one promotion of one Interview fact into one canonical record. The quote is a LOCATOR and a HASH, never a copy, so revoking the source removes the words while provenance stays provable. This kind rides the wire so the retrieval fence travels with the record: a device that receives a promoted note without its promotion re-admits the body to its own relevance corpus. A promotion is never tombstoned -- `deleted` is always false -- because a tombstone would be an un-revoke by another name, and `revoked` beats `active` in a merge regardless of clock.",
+  "x-sync-kind": "context_promotion",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["promotion_id", "thread_id", "fact_id", "source_message_id", "quote_sha256", "target_kind", "target_ref", "disclosure_state", "created_at", "updated_at", "last_modified", "deleted"],
+  "properties": {
+    "promotion_id": { "type": "string", "minLength": 1 },
+    "thread_id": { "type": "string", "minLength": 1 },
+    "fact_id": { "type": "string", "minLength": 1 },
+    "source_message_id": { "type": "string" },
+    "quote_sha256": { "type": "string" },
+    "quote_locator_json": { "type": "string" },
+    "target_kind": { "type": "string" },
+    "target_ref": { "type": "string", "pattern": "^[a-z_]+:.+$" },
+    "target_revision_label": { "type": "string" },
+    "target_content_sha256": { "type": "string" },
+    "disclosure_state": { "type": "string", "enum": ["active", "revoked"] },
+    "request_sha256": { "type": "string" },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "last_modified": { "type": "string" },
+    "deleted": { "type": "boolean", "const": false }
+  }
+}

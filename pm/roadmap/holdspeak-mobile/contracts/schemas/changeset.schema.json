@@ -12,6 +12,9 @@
     "artifacts": {
       "$ref": "#/$defs/bucket_artifact"
     },
+    "context_promotions": {
+      "$ref": "#/$defs/bucket_context_promotion"
+    },
     "notes": {
       "$ref": "#/$defs/bucket_note"
     },
@@ -207,6 +210,35 @@
         ]
       }
     },
+    "bucket_context_promotion": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/synced"
+          },
+          {
+            "properties": {
+              "meta": {
+                "properties": {
+                  "kind": {
+                    "const": "context_promotion"
+                  }
+                }
+              },
+              "value": {
+                "if": {
+                  "type": "object"
+                },
+                "then": {
+                  "$ref": "https://holdspeak.dev/contracts/v0/context-promotion.schema.json"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
     "bucket_note": {
       "type": "array",
       "items": {
@@ -240,8 +272,28 @@
       "type": "array",
       "items": {
         "allOf": [
-          {"$ref": "#/$defs/synced"},
-          {"properties": {"meta": {"properties": {"kind": {"const": "refinement_thought"}}}, "value": {"if": {"type": "object"}, "then": {"$ref": "https://holdspeak.dev/contracts/v0/refinement-thought.schema.json"}}}}
+          {
+            "$ref": "#/$defs/synced"
+          },
+          {
+            "properties": {
+              "meta": {
+                "properties": {
+                  "kind": {
+                    "const": "refinement_thought"
+                  }
+                }
+              },
+              "value": {
+                "if": {
+                  "type": "object"
+                },
+                "then": {
+                  "$ref": "https://holdspeak.dev/contracts/v0/refinement-thought.schema.json"
+                }
+              }
+            }
+          }
         ]
       }
     },

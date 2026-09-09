@@ -546,15 +546,41 @@ def _rebuild_thread_message_parts_for_kind_drift(conn: sqlite3.Connection) -> bo
     return True
 
 
-def _refresh_tool_turn_lifecycle_guards(conn: sqlite3.Connection) -> bool:
-    """Upgrade A2's blanket immutability guards to the fenced A3/A4 lifecycle.
+def _refresh_revised_triggers(conn: sqlite3.Connection) -> bool:
+    """Bring historical trigger BODIES forward to the canonical ones.
 
-    SQLite's ``CREATE TRIGGER IF NOT EXISTS`` cannot revise a historical trigger.
-    Compare the canonical trigger SQL generated from this source, then replace
-    only the two guards whose frozen identity must now receive one durable
-    receipt/adoption transition.
+    SQLite's ``CREATE TRIGGER IF NOT EXISTS`` cannot revise a historical trigger,
+    so ``SCHEMA_SQL`` alone leaves an older database running the old body
+    forever.  Compare the canonical trigger SQL generated from this source, then
+    DROP + CREATE only the ones that differ.  This is the one exception to the
+    module's additive-only rule and it is none of the three things that rule
+    forbids: it never DROPs a table, DROPs a column, or DELETEs a row.
+
+    The list, and why each name is on it:
+
+    * ``tool_turn_model_steps_no_update`` / ``tool_turn_effect_children_no_update``
+      -- HS-153: A2's blanket immutability guards became the fenced A3/A4
+      lifecycle, so each frozen identity may now receive one durable
+      receipt/adoption transition.
+    * ``notes_memory_ai`` / ``notes_memory_au`` -- HS-200-10 (F0/L1): the notes
+      relevance corpus now excludes any note carrying a ``context_promotions``
+      row.  A database left on the old bodies would re-admit a promoted record
+      into its relevance pool on the next write -- the pre-fence state, one
+      reconcile away.
+
+    ORDERING HAZARD, observed rather than assumed: SQLite resolves a trigger
+    body's table names lazily, so ``CREATE TRIGGER`` succeeds naming a table
+    that does not exist and the FIRST ``INSERT INTO notes`` then raises
+    ``no such table: main.context_promotions`` -- a desk that cannot save a
+    note.  This function is therefore called from ``reconcile_schema`` AFTER
+    ``executescript(SCHEMA_SQL)`` has created the table, never before.
     """
-    names = ("tool_turn_model_steps_no_update", "tool_turn_effect_children_no_update")
+    names = (
+        "tool_turn_model_steps_no_update",
+        "tool_turn_effect_children_no_update",
+        "notes_memory_ai",
+        "notes_memory_au",
+    )
     reference = sqlite3.connect(":memory:")
     try:
         reference.executescript(SCHEMA_SQL)
@@ -641,7 +667,30 @@ def reconcile_schema(
 
     # ── 2. Create any missing tables / indexes / triggers ──────────────
     conn.executescript(SCHEMA_SQL)
-    tool_turn_guards_refreshed = _refresh_tool_turn_lifecycle_guards(conn)
+    revised_triggers_refreshed = _refresh_revised_triggers(conn)
+
+    # HS-200-10: seed `context_dependents` for Thoughts that were already
+    # attached when this table was born, so the reverse index is not blind to
+    # every consumer that predates it. The backfill lives BESIDE the one write
+    # point (`_persist_manifest`) and calls it, so the two shapes cannot drift;
+    # it is idempotent and skips Thoughts that already hold rows. The import is
+    # function-local on purpose: `db/` must not take a module-level dependency
+    # on `services/`.
+    try:
+        from ..services.refinement_context_service import RefinementContextService
+
+        seeded = RefinementContextService.backfill_dependents_in_transaction(conn)
+        if seeded:
+            log.info("Reconcile: seeded %d context_dependents row(s)", seeded)
+    except Exception as exc:  # pragma: no cover - never block a reconcile
+        # A blind reverse index is a stale-marking gap; a reconcile that cannot
+        # finish is a desk that cannot open. The first is recoverable, so this
+        # is deliberately swallowed and named rather than raised.
+        log.warning(
+            "Reconcile: context_dependents backfill skipped (%s: %s)",
+            type(exc).__name__,
+            exc,
+        )
 
     post_tables = {
         row[0]
@@ -650,7 +699,7 @@ def reconcile_schema(
         )
     }
     tables_created = post_tables - pre_tables
-    shape_changed = bool(tables_created) or intel_queue_rebuilt or parent_kind_rebuilt or action_items_rebuilt or tool_turn_guards_refreshed
+    shape_changed = bool(tables_created) or intel_queue_rebuilt or parent_kind_rebuilt or action_items_rebuilt or revised_triggers_refreshed
     if pre_columns_added:
         shape_changed = True
     if tables_created:

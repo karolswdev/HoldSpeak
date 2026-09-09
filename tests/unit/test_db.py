@@ -1758,6 +1758,204 @@ class TestDatabaseShape:
         )
 
 
+class TestPhase200WorkingContextMigration:
+    """HS-200-10: the two REVISED note triggers, landed on an older database.
+
+    `CREATE TRIGGER IF NOT EXISTS` cannot revise a historical trigger, so an
+    older database keeps the pre-fence bodies forever unless the reconciler
+    replaces them.  And the replacement is the single most dangerous thing in
+    this story: SQLite resolves a trigger body's table names lazily, so a
+    database that ends up with the revised trigger and WITHOUT
+    `context_promotions` cannot save a note at all -- the desk is bricked for
+    note writes, not merely degraded.  Observed, not assumed.
+    """
+
+    @staticmethod
+    def _older_schema() -> str:
+        """SCHEMA_SQL as it stood before HS-200-10: old trigger bodies, and no
+        `context_*` tables at all."""
+        from holdspeak.db.schema import SCHEMA_SQL
+
+        older = SCHEMA_SQL
+        older = older.replace(
+            """CREATE TRIGGER IF NOT EXISTS notes_memory_ai AFTER INSERT ON notes BEGIN
+    INSERT INTO notes_memory_fts(source_id,title,body_markdown)
+    SELECT NEW.id,NEW.title,NEW.body_markdown
+     WHERE NEW.deleted=0
+       AND NOT EXISTS (SELECT 1 FROM context_promotions
+                        WHERE target_ref = 'note:' || NEW.id);
+END;""",
+            """CREATE TRIGGER IF NOT EXISTS notes_memory_ai AFTER INSERT ON notes
+WHEN NEW.deleted = 0 BEGIN
+    INSERT INTO notes_memory_fts(source_id,title,body_markdown)
+    VALUES(NEW.id,NEW.title,NEW.body_markdown);
+END;""",
+        )
+        older = older.replace(
+            """    INSERT INTO notes_memory_fts(source_id,title,body_markdown)
+    SELECT NEW.id,NEW.title,NEW.body_markdown
+     WHERE NEW.deleted=0
+       AND NOT EXISTS (SELECT 1 FROM context_promotions
+                        WHERE target_ref = 'note:' || NEW.id);
+END;""",
+            """    INSERT INTO notes_memory_fts(source_id,title,body_markdown)
+    SELECT NEW.id,NEW.title,NEW.body_markdown WHERE NEW.deleted=0;
+END;""",
+        )
+        # Strip the three new tables, their indexes and the two new triggers,
+        # so the older database genuinely predates the whole story.
+        for start, end in (
+            ("CREATE TABLE IF NOT EXISTS context_promotions (", ");"),
+            ("CREATE TABLE IF NOT EXISTS context_promotion_suppressions (", ");"),
+            ("CREATE TABLE IF NOT EXISTS context_dependents (", ");"),
+            ("CREATE INDEX IF NOT EXISTS idx_context_promotions_target", ";"),
+            ("CREATE INDEX IF NOT EXISTS idx_context_promotions_source", ";"),
+            ("CREATE INDEX IF NOT EXISTS idx_context_dependents_consumer", ";"),
+            ("CREATE TRIGGER IF NOT EXISTS context_dependents_note_au", "END;"),
+            ("CREATE TRIGGER IF NOT EXISTS context_dependents_note_ad", "END;"),
+        ):
+            head, _, rest = older.partition(start)
+            assert rest, f"older-schema surgery missed {start!r}"
+            _, _, tail = rest.partition(end)
+            older = head + tail
+        # (SQL comments mentioning the tables may survive; DDL must not.)
+        assert "CREATE TABLE IF NOT EXISTS context_" not in older
+        assert "CREATE INDEX IF NOT EXISTS idx_context_" not in older
+        assert "CREATE TRIGGER IF NOT EXISTS context_dependents" not in older
+        assert "NOT EXISTS (SELECT 1 FROM context_promotions" not in older
+        return older
+
+    def test_the_reconciler_refreshes_the_two_revised_note_triggers(self, tmp_path):
+        import sqlite3
+
+        from holdspeak.db.reconcile import reconcile_schema
+
+        path = tmp_path / "older.db"
+        conn = sqlite3.connect(str(path))
+        conn.row_factory = sqlite3.Row
+        conn.executescript(self._older_schema())
+        conn.commit()
+
+        before = {
+            str(row["name"]): str(row["sql"])
+            for row in conn.execute(
+                "SELECT name, sql FROM sqlite_master WHERE type='trigger' "
+                "AND name IN ('notes_memory_ai','notes_memory_au')"
+            )
+        }
+        assert before and all(
+            "context_promotions" not in sql for sql in before.values()
+        ), before
+
+        changed = reconcile_schema(conn)
+        assert changed is True
+
+        after = {
+            str(row["name"]): str(row["sql"])
+            for row in conn.execute(
+                "SELECT name, sql FROM sqlite_master WHERE type='trigger' "
+                "AND name IN ('notes_memory_ai','notes_memory_au')"
+            )
+        }
+        assert set(after) == {"notes_memory_ai", "notes_memory_au"}
+        for name, sql in after.items():
+            assert "NOT EXISTS" in sql and "context_promotions" in sql, (name, sql)
+            assert sql != before[name]
+        conn.close()
+
+    def test_a_reconciled_older_database_can_still_write_a_note(self, tmp_path):
+        """The assertion that stands between the revised trigger and a desk
+        that cannot save a note.  Not "the trigger looks right" -- an actual
+        note write, and an actual promoted note kept out of the corpus."""
+        import sqlite3
+
+        from holdspeak.db.reconcile import reconcile_schema
+
+        path = tmp_path / "older-write.db"
+        conn = sqlite3.connect(str(path))
+        conn.row_factory = sqlite3.Row
+        conn.executescript(self._older_schema())
+        conn.execute(
+            "INSERT INTO notes (id, title, body_markdown, tags_json, created_at, "
+            "updated_at, last_modified, deleted) VALUES "
+            "('pre', 'Before', 'body before reconcile', '[]', "
+            "'2026-01-01', '2026-01-01', '2026-01-01', 0)"
+        )
+        conn.commit()
+
+        reconcile_schema(conn)
+
+        # 1. An ordinary note write SUCCEEDS after the refresh.
+        conn.execute(
+            "INSERT INTO notes (id, title, body_markdown, tags_json, created_at, "
+            "updated_at, last_modified, deleted) VALUES "
+            "('after', 'After', 'body after reconcile', '[]', "
+            "'2026-01-02', '2026-01-02', '2026-01-02', 0)"
+        )
+        conn.execute("UPDATE notes SET title='After (edited)' WHERE id='after'")
+        conn.commit()
+        assert (
+            conn.execute("SELECT title FROM notes WHERE id='after'").fetchone()[0]
+            == "After (edited)"
+        )
+        indexed = {
+            str(row[0])
+            for row in conn.execute("SELECT source_id FROM notes_memory_fts")
+        }
+        assert indexed == {"pre", "after"}
+
+        # 2. The refreshed trigger actually carries the fence.
+        conn.execute(
+            """INSERT INTO context_promotions(
+                   promotion_id, thread_id, fact_id, source_message_id,
+                   quote_sha256, quote_locator_json, target_kind, target_ref,
+                   target_revision_label, target_content_sha256,
+                   disclosure_state, request_sha256, created_at, updated_at)
+               VALUES ('cp1','t1','f1','m1','sha','{}','note','note:promoted',
+                       '','','active','sha','2026-01-03','2026-01-03')"""
+        )
+        conn.execute(
+            "INSERT INTO notes (id, title, body_markdown, tags_json, created_at, "
+            "updated_at, last_modified, deleted) VALUES "
+            "('promoted', 'Promoted', 'a constraint he stated', '[]', "
+            "'2026-01-03', '2026-01-03', '2026-01-03', 0)"
+        )
+        conn.commit()
+        indexed = {
+            str(row[0])
+            for row in conn.execute("SELECT source_id FROM notes_memory_fts")
+        }
+        assert indexed == {"pre", "after"}
+        conn.close()
+
+    def test_reconciling_twice_is_a_no_op_for_the_revised_triggers(self, tmp_path):
+        import sqlite3
+
+        from holdspeak.db.reconcile import reconcile_schema
+
+        path = tmp_path / "older-twice.db"
+        conn = sqlite3.connect(str(path))
+        conn.row_factory = sqlite3.Row
+        conn.executescript(self._older_schema())
+        conn.commit()
+        reconcile_schema(conn)
+        first = {
+            str(row["name"]): str(row["sql"])
+            for row in conn.execute(
+                "SELECT name, sql FROM sqlite_master WHERE type='trigger'"
+            )
+        }
+        reconcile_schema(conn)
+        second = {
+            str(row["name"]): str(row["sql"])
+            for row in conn.execute(
+                "SELECT name, sql FROM sqlite_master WHERE type='trigger'"
+            )
+        }
+        assert first == second
+        conn.close()
+
+
 class TestConnectionCache:
     """HS-131-09: warm per-thread connections must not change semantics."""
 

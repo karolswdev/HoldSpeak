@@ -52,6 +52,67 @@ def _prompt_json(value: Any) -> str:
     return raw.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
 
 
+# ── HS-200-10: the promotion revision, and ONLY the hash is ever compared ──
+#
+# `_leaf` below folds `last_modified` AND `deleted` into its digest, so its
+# hash is f(content, counter) and moves whenever the counter moves --
+# `NoteRepository._upsert_in_transaction` writes `last_modified=excluded.
+# last_modified` unconditionally on ON CONFLICT, with no "did anything change"
+# guard.  A promotion whose target Note is re-saved with byte-identical content
+# would therefore read `corrected`, telling the owner his constraint moved when
+# it did not (counsel P0-1).
+#
+# `promotion_content_sha256` is a NEW recipe over {ref, title, body_markdown,
+# tags} ONLY.  No timestamp, no tombstone flag.  A content hash contains
+# content, and nothing else.
+CONTENT_STATE_CURRENT = "current"
+CONTENT_STATE_CORRECTED = "corrected"
+CONTENT_STATE_UNAVAILABLE = "unavailable"
+
+
+def promotion_content_sha256(ref: str, *, title: str, body_markdown: str,
+                             tags: list[str]) -> str:
+    """The authoritative comparator for a promoted canonical record.
+
+    Deliberately NOT `_leaf`'s digest: no `last_modified`, no `deleted`.
+    """
+    return _sha(canonical_json({"ref": str(ref), "title": str(title),
+                                "body_markdown": str(body_markdown),
+                                "tags": list(tags)}))
+
+
+def note_promotion_revision_in_transaction(conn: Any, ref: str) -> dict[str, Any] | None:
+    """`(display label, content hash)` for one `note:` ref, or None if it is gone.
+
+    The label is `notes.last_modified` and is DISPLAY ONLY.  The hash is the
+    authority.  A missing or soft-deleted row returns None, which the caller
+    reads as `unavailable`.
+    """
+    kind, _, rid = str(ref).partition(":")
+    if kind != "note" or not rid:
+        raise ValidationError("promotion target kind is not supported",
+                              code="promotion_target_unsupported",
+                              context={"target_ref": str(ref)})
+    row = conn.execute("SELECT * FROM notes WHERE id=?", (rid,)).fetchone()
+    if row is None or row["deleted"]:
+        return None
+    return {"label": str(row["last_modified"]),
+            "content_sha256": promotion_content_sha256(
+                ref, title=str(row["title"]),
+                body_markdown=str(row["body_markdown"]),
+                tags=json.loads(str(row["tags_json"])))}
+
+
+def promotion_content_state_in_transaction(conn: Any, ref: str,
+                                           bound_sha256: str) -> str:
+    """`current` / `corrected` / `unavailable`, derived on read from the HASH."""
+    revision = note_promotion_revision_in_transaction(conn, ref)
+    if revision is None:
+        return CONTENT_STATE_UNAVAILABLE
+    return (CONTENT_STATE_CURRENT if revision["content_sha256"] == str(bound_sha256)
+            else CONTENT_STATE_CORRECTED)
+
+
 class RefinementContextService:
     def __init__(self, db: Any) -> None:
         self._db = db
@@ -998,6 +1059,100 @@ class RefinementContextService:
             for li, leaf in enumerate(item["leaves"]):
                 conn.execute("INSERT INTO refinement_attachment_leaves(thought_id,attachment_revision,visible_ordinal,leaf_ordinal,leaf_ref,leaf_title,source_last_modified,membership_last_modified,leaf_content_sha256,leaf_metadata_sha256) VALUES(?,?,?,?,?,?,?,?,?,?)",
                              (thought_id, manifest["revision"], vi, li, leaf["ref"], leaf["title"], leaf["source_last_modified"], leaf["membership_last_modified"], leaf["leaf_content_sha256"], leaf["leaf_metadata_sha256"]))
+        RefinementContextService._reconcile_dependents(
+            conn, thought_id, manifest, now)
+
+    # ── HS-200-10 (ruling C5): the reverse index's ONE write point ────────
+    #
+    # `refinement_attachment_visible` above is keyed (thought_id,
+    # attachment_revision, ordinal) with the ref only a PAYLOAD column, so
+    # "who consumes note:n1?" is a scan of every revision of every Thought and
+    # revisions are never pruned.  `context_dependents` answers it in one seek,
+    # with ONE row per (record, consumer) -- never one per revision, which is
+    # precisely what this table exists to avoid.
+    #
+    # It is written here and nowhere else for `consumer_kind='thought'`.  The
+    # invariant is one reconcile point PER CONSUMER KIND, each doing the same
+    # scoped delete-then-insert (counsel C9); stories 11, 13, 17 and 20 each
+    # add one and each owes the same grep-checkable property.
+    #
+    # Delete-then-insert is correct for all four verbs -- attach, detach,
+    # rebind and birth -- because the manifest is the whole truth about what
+    # this Thought consumes at this revision.  Dropping `stale` on a rebind is
+    # correct: the manifest just re-bound at the current bytes.
+    #
+    # `forbidden` is the EXCEPTION and it is TERMINAL.  A rebind does NOT
+    # clear it, because the record is under revocation and re-binding it is
+    # exactly what must not silently succeed.  The original `stale_since` is
+    # carried over too -- COALESCE keeps the FIRST staleness time on the
+    # trigger side, and a rebind must not restart that clock either.
+    @staticmethod
+    def _reconcile_dependents(conn: Any, thought_id: str,
+                              manifest: dict[str, Any], now: str) -> None:
+        refs = sorted({item["ref"] for item in manifest["visible"]}
+                      | {leaf["ref"] for item in manifest["visible"]
+                         for leaf in item["leaves"]})
+        held = {str(row["canonical_ref"]): row["stale_since"] for row in conn.execute(
+            "SELECT canonical_ref,stale_since FROM context_dependents"
+            " WHERE consumer_kind='thought' AND consumer_id=? AND stale_reason='forbidden'",
+            (thought_id,)).fetchall()}
+        conn.execute("DELETE FROM context_dependents"
+                     " WHERE consumer_kind='thought' AND consumer_id=?", (thought_id,))
+        for ref in refs:
+            forbidden = ref in held
+            conn.execute(
+                "INSERT INTO context_dependents(canonical_ref,consumer_kind,consumer_id,consumer_revision,bound_manifest_sha256,bound_at,stale_since,stale_reason) VALUES(?,?,?,?,?,?,?,?)",
+                (ref, "thought", thought_id, int(manifest["revision"]),
+                 str(manifest["attachment_sha256"]), now,
+                 (held[ref] or now) if forbidden else None,
+                 "forbidden" if forbidden else ""))
+
+    # ── HS-200-10: the backfill, beside the INSERT it must agree with ────
+    #
+    # Deliberately NOT DDL in `schema.py`: the seed's shape must agree
+    # byte-for-byte with `_reconcile_dependents` above, and the only way to
+    # guarantee that is to CALL it rather than to restate its INSERT in SQL a
+    # file away.  It is a reconcile-time backfill, run once per database.
+    #
+    # Restricted to `state='working'` and to each Thought's CURRENT
+    # attachment revision -- a completed Thought consumes nothing that a
+    # correction must fence.  Measured read-only on the owner's live database
+    # 2026-09-07: 8 Thoughts, all `completed`, 0 working; distinct (ref,
+    # thought) pairs at current revisions 9, restricted to working **0**.
+    # THE BACKFILL ON HIS DESK IS ZERO ROWS, so correctness matters here and
+    # throughput does not.
+    #
+    # Idempotent by skipping any Thought that already holds index rows, so a
+    # second reconcile neither restarts `bound_at` nor disturbs a `forbidden`
+    # a revocation has since written.
+    @staticmethod
+    def backfill_dependents_in_transaction(conn: Any, now: str | None = None) -> int:
+        """Seed `context_dependents` for working Thoughts.  Returns rows written."""
+        now = now or _now()
+        rows = conn.execute(
+            "SELECT id,attachment_revision,attachment_sha256 FROM refinement_thoughts"
+            " WHERE state='working' AND attachment_revision > 0"
+            " AND id NOT IN (SELECT consumer_id FROM context_dependents"
+            "                 WHERE consumer_kind='thought')"
+        ).fetchall()
+        written = 0
+        for row in rows:
+            thought_id = str(row["id"])
+            revision = int(row["attachment_revision"])
+            visible = RefinementContextService._stored_visible(
+                conn, thought_id, revision, True)
+            if not visible:
+                continue
+            manifest = {"revision": revision,
+                        "attachment_sha256": str(row["attachment_sha256"] or ""),
+                        "visible": visible}
+            RefinementContextService._reconcile_dependents(
+                conn, thought_id, manifest, now)
+            written += conn.execute(
+                "SELECT count(*) FROM context_dependents"
+                " WHERE consumer_kind='thought' AND consumer_id=?",
+                (thought_id,)).fetchone()[0]
+        return written
 
     @staticmethod
     def _stored_visible(conn: Any, thought_id: str, revision: int,

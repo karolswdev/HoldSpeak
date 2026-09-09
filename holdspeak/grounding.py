@@ -38,6 +38,38 @@ def _memory_repo(db: object):
     return getattr(db, "memory", None)
 
 
+def _drop_promoted(memory: Any, members: list[str]) -> list[str]:
+    """HS-200-10 (F0/L3): the belt at a RELEVANCE call site.
+
+    A promoted canonical record is reachable by reference and never by
+    relevance, so it is dropped from a relevance-selected member list before
+    hydration.  ``MemoryRepository.search`` already excludes it (L2); this is
+    the second, independent predicate for any hit list that reaches a
+    relevance call site by some other route.
+
+    THIS MUST NOT MOVE INSIDE ``_hydrate_members``.  That function is SHARED:
+    ``_hydrate_container`` calls it for an EXPLICITLY attached ``knowledge:``
+    or ``zone:`` ref, so a filter inside it would silently drop a promoted Note
+    out of a container the owner attached on purpose -- silently, because
+    ``_hydrate_members`` reports ``unknown`` only on a ref parse failure. The
+    defect would surface as missing prompt content and nothing else.
+    ``test_an_explicitly_attached_knowledge_or_zone_container_still_hydrates_a_promoted_member``
+    exists to fail the moment someone "simplifies" these two call sites back
+    into the shared function.
+    """
+    getter = getattr(memory, "promoted_refs", None)
+    if getter is None:
+        return list(members)
+    promoted = set(getter())
+    if not promoted:
+        return list(members)
+    return [
+        member
+        for member in members
+        if str(member).split("#", 1)[0] not in promoted
+    ]
+
+
 # The steer's own budget (HS-87-04): a hydrated steer must fit what a
 # TUI agent can take in one paste. Shown in the composer; over-cap
 # refuses at compose time.
@@ -206,6 +238,8 @@ def hydrate_refs_detailed(
             exclude_refs=excluded,
         )
         members = [hit.source_ref for hit in search.hits][:GROUNDING_MAX_REFS]
+        # HS-200-10 (F0/L3): reachable by reference, never by relevance.
+        members = _drop_promoted(memory, members)
         more, missing = _hydrate_members(
             db, members, expand, visited, query=query, stats=stats
         )
@@ -461,7 +495,13 @@ def _hydrate_qualified(
                 project_id=resource_id,
                 limit=GROUNDING_MAX_REFS,
             )
-            members = [hit.source_ref for hit in search.hits]
+            # HS-200-10 (F0/L3): the second relevance call site.  Applied to
+            # the RELEVANCE branch only.  The `recency_fallback` branch below
+            # is a by-reference member listing of a container the owner
+            # attached on purpose -- the same shape `knowledge:` and `zone:`
+            # take -- and filtering it would be the P0-A silent-drop defect
+            # wearing a different hat.
+            members = _drop_promoted(memory, [hit.source_ref for hit in search.hits])
             if stats is not None:
                 stats["selection"] = "relevance"
                 stats["matched_count"] = int(stats["matched_count"]) + search.total

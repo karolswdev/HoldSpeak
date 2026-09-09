@@ -84,7 +84,11 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
         # The direct controls edit local interview state; domain execution still
         # goes through the existing conversation/tool and citizen services.
         event = body["event"]
-        if not isinstance(event, dict) or event.get("kind") not in {"section", "remove_fact", "disposition", "status"}:
+        # HS-200-10: `promote` and `revoke_promotion` join the BROWSER allowlist
+        # and nothing else. The MCP interview family gains no tool: a model that
+        # could mint a canonical record is the precise failure the People
+        # boundary exists to prevent. The model records; the owner disposes.
+        if not isinstance(event, dict) or event.get("kind") not in {"section", "remove_fact", "disposition", "status", "promote", "revoke_promotion"}:
             return JSONResponse({"error": "Unsupported interview control"}, status_code=400)
         try:
             return JSONResponse(InterviewService(_service()._db).command(_principal(request), thread_id, **body))

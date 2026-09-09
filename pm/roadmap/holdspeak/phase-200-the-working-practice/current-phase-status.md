@@ -1,6 +1,6 @@
 # Phase 200: The Working Practice
 
-**Last updated:** 2026-09-08 — HS-200-05's walk opened on the owner's desk: two four-week-old defects found and fixed (the MLX cross-thread hub crash; the warrant-shape drift that refused every desktop typing effect). Beat 1 passes end to end on his hand; beats 2-6 remain his. G0: 01-04 DONE, 05 in-progress; G1: 06, 07, 08, 41 DONE; 09 awaits his canvas verdict.
+**Last updated:** 2026-09-08 (late) — **HS-200-10's wire BUILT** in three lanes (boundary → verb → reverse index): promoted records are excluded from the relevance corpus by construction, the lexical AND graph routes are closed, L4 and the sync fence are in, the verb is routes-only with no MCP tool and no face. 47 mutants run across the lanes; seven tests that passed against a broken fence were found and rewritten. Counsel-on-built and the evidence file owed before it closes. HS-200-05's beat 1 passes on his hand; beats 2-6 remain his. G0: 01-04 DONE, 05 in-progress; G1: 06, 07, 08, 41 DONE, 10 in build; 09 awaits his canvas verdict.
 **Status:** in build. Forty-one stories defined; G0 01-04 and G1 06-08 done.
 **Product owner:** Karol.
 **Delivery owner:** unassigned until implementation starts.
@@ -81,6 +81,51 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-41 | Return to unfinished work | done | [story-41](story-41-return-to-unfinished-work.md) | [evidence-story-41](./evidence-story-41.md) |
 
 ## Where we are
+
+2026-09-08 (late): **HS-200-10's WIRE IS BUILT — three lanes, strict file ownership,
+in ruling C1's order: the boundary, then the verb it bounds, then the reverse index.**
+The story stays in-progress: counsel-on-built is owed before it closes, and the face
+is struck by C6 and still owes a board.
+
+*What shipped.* Three additive tables (`context_promotions`,
+`context_promotion_suppressions`, `context_dependents`), two new lattice triggers
+where `forbidden` is TERMINAL, and the boundary C2′ demands — **a promoted record is
+excluded from the relevance corpus BY CONSTRUCTION**, not filtered afterwards: the
+promotion row is INSERTed before the Note, so the guarded `notes_memory_ai` already
+sees it and the body never enters the corpus, not even transiently. The graph route
+(`_load_related_row`, which bypasses the FTS index entirely and which L1 alone leaves
+wide open), the two relevance call sites, `rebuild_memory_index`, L4's frozen-ref
+replay fence and the P0-C sync fence are all closed. The verb is `promote` /
+`revoke_promotion` on `InterviewService`, owner-only, routes only — **no MCP tool**
+(C6 as amended: a model must not mint a canonical record) and **no face**. The quote
+is a locator plus a hash, never a copy, proven by a substring check over every column.
+
+*The discipline, which is the reusable part.* Every lane mutated its own fences out
+and re-ran: 10 mutants in A, 18 in B, 19 in C. **Seven tests across the three lanes
+passed against a deliberately broken fence and were rewritten** — one drove the
+lexical route where a different fence already covered it; one had a mutant that
+duplicated a write instead of moving it, which the self-healing trigger then cleaned
+up; one passed because a neighbouring guard covered the path; one hashed inside the
+same clock second. Two fences turned out to be genuinely redundant on a healthy
+database, and rather than pretend otherwise the lanes wrote tests that install the
+PRE-fix trigger body to prove the belt is a belt, and said so in the docstrings.
+This is [[reference_lying_test_doubles]] applied on purpose, the same day it was
+learned.
+
+*Three build rulings, recorded in the story file (B1-B3).* L4 keys on EXISTENCE and
+fences only rows frozen BEFORE the promotion — accepted, because keying on `active`
+would let a revocation re-open a surface, and a blanket fence would silently drop a
+Note the owner attached on purpose. The backfill is wired into `reconcile_schema` and
+proven wired by a test that drives the real entry point, because it shipped built and
+uncalled. And **`forbidden` is terminal in practice**: the orchestrator implemented
+the design's own "cleared only by an explicit re-promotion" and **the ratified P0-2
+test refused it**, so the change was reverted and the one-way door is recorded rather
+than hidden. A design sentence written before the lattice existed does not outrank a
+ratified P0.
+
+*Gates at this commit.* 335 passed across the new suite and every neighbour the three
+lanes touch. The canonical schema snapshot was regenerated with the normalizer. Owed
+before close: counsel-on-built, the evidence file, and the CI-shape suite run.
 
 2026-09-08: **HS-200-05's walk began on the owner's own desk, and voice typing was
 found DEAD — in two independent places, for four weeks each.** The story stays

@@ -198,3 +198,59 @@ index tests', matching the lane order.
 
 The remaining six P0s and nine conditions are carried into the re-take in
 counsel's own words; they stand independently of the bounce.
+
+### The build rulings (2026-09-08) — three lanes, and two things the build changed
+
+The wire was built in three lanes with strict file ownership, in the order ruling
+C1 requires: the boundary (A), then the verb it bounds (B), then the reverse index
+and the two fences A could not reach (C).
+
+**B1 — L4 is keyed on EXISTENCE, and fences only rows frozen BEFORE the
+promotion. ACCEPTED.** D2.4's wording was "the replay skips a `note:` ref carrying
+an *active* promotion". Lane C deviated twice and both deviations are right.
+Keying on `active` would let a **revocation re-open a replay surface that
+promotion had closed** — the opposite direction from every other fence here, and
+inconsistent with the corpus guard, which keys on existence. And a blanket
+ref-keyed fence would **break by-reference attachment in Threads**: a Thread's
+explicit `refs=[...]` reach the model ONLY through the `thread_refs` replay, so a
+blanket fence silently drops a promoted Note the owner attached on purpose. That
+is "silent loss of accepted input" and a direct contradiction of C2′, which
+promises reachability BY REFERENCE. Because L1/L2/L3 mean relevance can no longer
+produce a promoted ref, anything frozen *after* a promotion can only have arrived
+by reference, so the time key is sound. An unparseable `created_at` fences
+everything. This is the L3 mistake — a fence placed inside a shared path — one
+layer down, and only one test in the tree catches it.
+
+**B2 — `forbidden` is TERMINAL IN PRACTICE, and nothing in the product clears it.
+Recorded as a known limitation, NOT fixed.** The schema comment inherited from the
+design says the mark is "cleared ONLY by an explicit re-promotion". That sentence
+is **unimplementable as the design stands**: promotion deliberately writes no
+`context_dependents` row (D2.7's "failure window that cannot exist"), a rebind
+through `_persist_manifest` deliberately re-inserts `forbidden` with its original
+`stale_since`, and the note triggers preserve it. So `revoke_promotion` sets a
+mark that no route lifts.
+
+The orchestrator implemented the clearing, and **the existing P0-2 test refused
+it** — `test_a_revocation_is_never_downgraded_by_a_later_stale_marking` asserts
+that a standing `forbidden` survives a later promotion into the same record. That
+is counsel's own P0 and it is ratified; a consumer fencing on `forbidden` must
+never see refreshable staleness and dispatch. The change was reverted. Fail-closed
+wins, and a design sentence written before the lattice existed does not outrank a
+ratified P0 test.
+
+**The consequence, stated plainly so it is not discovered later:** a consumer
+fenced once is fenced forever, for that record, by every route. The suppression
+table already refuses re-promotion of the same `(thread, fact, target)`, so the
+only path that could have cleared it was a *different* fact promoting into the
+same record — which is exactly the case P0-2 forbids. This is owed to
+counsel-on-built and to the owner: it is a one-way door, chosen in the safe
+direction, and the design's own wording should be corrected rather than the code.
+
+**B3 — the backfill is wired, and proven wired.** `backfill_dependents_in_transaction`
+lives beside `_persist_manifest` and CALLS it, so the two shapes cannot drift; it
+is invoked from `db/reconcile.py` after the trigger refresh, under a
+function-local import (`db/` must not depend on `services/` at module level) and
+inside a swallowing guard — a blind reverse index is a recoverable stale-marking
+gap, a reconcile that cannot finish is a desk that cannot open.
+`test_reconcile_actually_calls_the_backfill` drives `reconcile_schema` rather than
+the helper, because the helper shipped built, tested and uncalled.

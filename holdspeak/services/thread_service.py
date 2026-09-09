@@ -51,6 +51,36 @@ _PEOPLE_REF_KINDS = frozenset({"person"})
 
 _UNSET = object()  # sentinel for "caller did not provide parent_id"
 
+
+def _promotion_epoch(value: Any) -> float:
+    """HS-200-10 (L4): a promotion's `created_at` as unix seconds.
+
+    `context_promotions.created_at` is an ISO string; `thread_refs.created_at`
+    is a REAL unix time, so the two have to be brought to one scale before the
+    "was this row frozen BEFORE the promotion?" question can be asked.
+
+    An unparseable or absent value returns +inf, which is AFTER every real
+    `thread_refs` row and therefore fences EVERY existing row for that note.
+    That is the fail-closed direction: over-fencing a replay costs the model
+    one block the owner can hand it again by reference; under-fencing is the
+    breach.  See `_promoted_note_fences`.
+    """
+    if value is None:
+        return float("inf")
+    if isinstance(value, (int, float)):
+        return float(value)
+    raw = str(value).strip()
+    if not raw:
+        return float("inf")
+    try:
+        from datetime import datetime, timezone
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.timestamp()
+    except ValueError:
+        return float("inf")
+
 # Maximum tool passes for a chat turn (HS-152-01 D1).
 _CHAT_PASS_CAP = 10
 
@@ -2019,6 +2049,50 @@ class ThreadService:
 
         return dispatch
 
+
+    def _promoted_note_fences(self, note_ids: set[str]) -> dict[str, float]:
+        """note id -> the unix time its FIRST promotion was recorded.
+
+        A `thread_refs` row frozen BEFORE that time was frozen by a
+        pre-promotion relevance pass, and replaying it is a fresh disclosure of
+        a record that is no longer reachable by relevance.  A row frozen AFTER
+        it can only have arrived BY REFERENCE -- the owner attached it on
+        purpose -- because L1/L2/L3 already keep a promoted record out of every
+        relevance result, so relevance cannot produce one.  Fencing those too
+        would be silent loss of accepted input, which is the mistake this
+        design made once already by placing a filter inside a SHARED hydrator.
+
+        Keyed on the EXISTENCE of a promotion, never on `disclosure_state`:
+        the same key F0's corpus guard uses.  Keying on `active` would mean a
+        REVOCATION re-opened a disclosure surface that promotion had closed,
+        which inverts the direction every fence in this design errs in.
+
+        An unparseable `created_at` fences unconditionally (0.0 is before every
+        real row): over-fencing a replay costs the model one block it can be
+        handed again by reference; under-fencing is the breach.
+        """
+        if not note_ids:
+            return {}
+        ordered = sorted(note_ids)
+        placeholders = ",".join("?" for _ in ordered)
+        try:
+            with self._db._connection() as conn:
+                rows = conn.execute(
+                    f"SELECT target_ref, created_at FROM context_promotions"
+                    f" WHERE target_ref IN ({placeholders})",
+                    [f"note:{note_id}" for note_id in ordered],
+                ).fetchall()
+        except Exception:
+            # An older database without the table cannot hold a promotion, so
+            # there is nothing to fence and a turn must not break over it.
+            return {}
+        fences: dict[str, float] = {}
+        for row in rows:
+            note_id = str(row[0]).split(":", 1)[1]
+            recorded = _promotion_epoch(row[1])
+            fences[note_id] = min(fences.get(note_id, recorded), recorded)
+        return fences
+
     def _assemble_payload(
         self,
         thread_id: str,
@@ -2080,6 +2154,24 @@ class ThreadService:
         for ref in reversed(scoped_refs):
             newest.setdefault((ref.ref_kind, ref.ref_id), ref)
         refs = list(reversed(list(newest.values())[:GROUNDING_MAX_REFS]))
+        # HS-200-10 (F0/L4): the frozen-ref REPLAY is fenced; the RECEIPT is
+        # not.  A `thread_refs` row is written once per turn from whatever the
+        # relevance pass returned then -- and it is re-gathered and re-appended
+        # into a `system` message on EVERY subsequent turn.  A body frozen
+        # BEFORE a promotion would therefore keep being disclosed to the model
+        # forever, which is not what CONTRACTS.md licenses when it declines to
+        # promise erasure of prior messages: a replay is a DISCLOSURE, and a
+        # disclosure is evaluated at each disclosure.
+        #
+        # The row itself is left untouched, deliberately.  A frozen ref is a
+        # RECEIPT of what turn N actually saw, and rewriting it retroactively
+        # would falsify a receipt.  Receipts are immutable; replays are fenced.
+        fences = self._promoted_note_fences({r.ref_id for r in refs
+                                             if r.ref_kind == "note"})
+        refs = [ref for ref in refs
+                if not (ref.ref_kind == "note"
+                        and ref.ref_id in fences
+                        and float(ref.created_at or 0.0) < fences[ref.ref_id])]
         ref_context_parts: list[str] = []
         person_names: list[str] = []
         for ref in refs:

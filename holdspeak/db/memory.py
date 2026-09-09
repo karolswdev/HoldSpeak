@@ -137,9 +137,16 @@ def rebuild_memory_index(conn: sqlite3.Connection) -> dict[str, int]:
            SELECT id,title,body_markdown FROM artifacts"""
     )
     conn.execute("DELETE FROM notes_memory_fts")
+    # HS-200-10 (F0/L1, part 3): a full re-index cannot re-admit what the
+    # guarded triggers excluded.  Same predicate as `notes_memory_ai` /
+    # `notes_memory_au` (holdspeak/db/schema.py), keyed on the EXISTENCE of a
+    # promotion rather than on its disclosure_state.
     conn.execute(
         """INSERT INTO notes_memory_fts(source_id,title,body_markdown)
-           SELECT id,title,body_markdown FROM notes WHERE deleted=0"""
+           SELECT n.id,n.title,n.body_markdown FROM notes n
+           WHERE n.deleted=0
+             AND NOT EXISTS (SELECT 1 FROM context_promotions
+                              WHERE target_ref = 'note:' || n.id)"""
     )
     counts = {
         "decisions": int(
@@ -164,6 +171,30 @@ class MemoryRepository(BaseRepository):
     def rebuild(self) -> dict[str, int]:
         with self._connection() as conn:
             return rebuild_memory_index(conn)
+
+    @staticmethod
+    def _promoted_refs(conn: sqlite3.Connection) -> set[str]:
+        """Every canonical ref carrying a promotion (HS-200-10, F0).
+
+        Keyed on the EXISTENCE of a `context_promotions` row, never on its
+        `disclosure_state`: once a record has been minted or appended to by
+        promotion it never joins the relevance pool, revoked or not.  This
+        errs closed and removes a class of state-dependent bugs.
+
+        Deliberately not exception-guarded.  A missing table here would mean an
+        unreconciled database, and swallowing that would fail OPEN -- the one
+        direction this fence must never fail.
+        """
+        return {
+            str(row[0])
+            for row in conn.execute("SELECT DISTINCT target_ref FROM context_promotions")
+            if str(row[0] or "").strip()
+        }
+
+    def promoted_refs(self) -> set[str]:
+        """The promoted-ref set, for the belt at grounding's relevance call sites."""
+        with self._connection() as conn:
+            return self._promoted_refs(conn)
 
     def search(
         self,
@@ -193,6 +224,19 @@ class MemoryRepository(BaseRepository):
 
         by_kind: dict[str, list[dict[str, Any]]] = {}
         with self._connection() as conn:
+            # HS-200-10 (F0/L2): the GRAPH route fence.  A note is reachable by
+            # relevance two ways -- lexically through `notes_memory_fts`, and as
+            # a one-hop relationship neighbour of a lexical seed, which
+            # `_load_related_row` reads straight out of `notes` and never
+            # touches the corpus at all.  L1 closes the first and leaves the
+            # second wide open while looking green.
+            #
+            # The union lands HERE, on the shipped `excluded` plumbing, and not
+            # at the `MemoryHit` constructor below: `lexical_total`, `total` and
+            # the page slice are all computed before that point, so filtering
+            # there would over-count, hand back a page shorter than `limit`, and
+            # make grounding book withheld sources as mere overflow.
+            excluded |= self._promoted_refs(conn)
             if "decision" in selected:
                 by_kind["decision"] = self._decision_rows(
                     conn, expression, project, start, end
@@ -467,7 +511,15 @@ class MemoryRepository(BaseRepository):
 
     @staticmethod
     def _note_rows(conn, match, project, start, end) -> list[dict[str, Any]]:
-        clauses = ["notes_memory_fts MATCH ?"]
+        # HS-200-10 (F0): belt as well as braces.  Corpus exclusion (L1) is the
+        # construction; this predicate is the belt that survives a botched
+        # trigger refresh on an older database.  Two independent mechanisms,
+        # because the retrieval map is a floor and not a ceiling.
+        clauses = [
+            "notes_memory_fts MATCH ?",
+            "NOT EXISTS (SELECT 1 FROM context_promotions cp"
+            " WHERE cp.target_ref = 'note:' || n.id)",
+        ]
         params: list[Any] = [match]
         if project:
             clauses.append(
