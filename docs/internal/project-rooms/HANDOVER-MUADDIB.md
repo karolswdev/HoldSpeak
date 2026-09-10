@@ -1,4 +1,4 @@
-# THE HANDOVER — 2026-09-06, from Muad'Dib XV to XVI (READ THIS FIRST)
+# THE HANDOVER — from Muad'Dib XVIII (READ **§9 THEN THE XVIII CHAPTER** FIRST)
 
 The entries below this section are the running log, newest first. This
 section is the whole picture in one sitting. When it disagrees with a
@@ -34,7 +34,7 @@ roadmap files, they win. Memory (the Claude Code auto-memory, index
   truth; a story flips done only with evidence in the same commit;
   evidence never ships without its story (the gate refuses).
 
-## 1. The state of the tree (2026-09-06)
+## 1. The state of the tree (2026-09-06 — SUPERSEDED, see the XVIII chapter's §2)
 
 | Phase | Name | State |
 |---|---|---|
@@ -260,21 +260,167 @@ gh pr ready N ; gh pr view N --json mergeable,mergeStateStatus ; gh pr merge N -
 
 ## 9. Your first hour
 
-1. Read this section, `git log --oneline -20 main`, `pm/roadmap/holdspeak/
-   README.md`, 175's `final-summary.md`. `cd web && npm ci`. Re-create
-   `.claude/agents/opus-worker.md` if it is missing (Opus, not Fable).
-2. Ask him nothing you can read. What is his: the attended walks
-   (170–175), the queued "Already titled" job, 172–174's questions.
-3. **2026-09-08: read Muad'Dib XVII FIRST — he asked for a walk conductor, not
-   a builder.** The next sitting is his hands on HS-200-05's six physical
-   beats, with `tests/e2e/live200_voice_walk.py` and a FRESH hub (his running
-   one is from Sunday). Everything below this line is older road.
-   The road CONTINUES (ruled 2026-09-06 on his deferral): 176 is CLOSED 7/8 on PR #566 awaiting his word to merge and his attended walk; then 177 The Thread at Work is chartered on his word, canvas first —
-   dictation as a daily tool (the correction taught once and kept; the
-   journal as a stream; the voice law on every input; the desk answering
-   the hand). Canvas first; counsel on the design; his word; then build
-   by the loop in §5. If he says stop: leave the tree on main, update
-   this section, write memory.
+1. **Read Muad'Dib XVIII below, first, before anything else.** It is the
+   current sitting and it supersedes XVII's walk instructions (that walk
+   happened; beat 1 passes). Then `git log --oneline -15 main`,
+   `pm/roadmap/holdspeak/README.md`, and the Phase 200 status file.
+   `cd web && npm ci`. Re-create `.claude/agents/opus-worker.md` if it is
+   missing (Opus, not Fable).
+2. Ask him nothing you can read.
+3. The road is **Phase 200 The Working Practice**, and nothing else. 177–179
+   are parked behind it; 180 folds into its G5. If he says stop: leave the
+   tree on main, update this section, write memory.
+
+## Muad'Dib XVIII — 2026-09-08/09. THE WALK HAPPENED, AND IT FOUND THE PRODUCT BROKEN
+
+**Read this chapter first. It supersedes XVII, whose walk instructions are now
+history.** Two things define this sitting: voice typing was dead on his desk in
+two independent places for four weeks each and is now fixed and proven by his own
+hand, and HS-200-10's wire is built. Both are on main or one commit from it.
+
+### 0. What he told you this sitting, in his words — this is the steering
+
+- **"why the fuck are we focusing on scenarios when a typing adapter dies
+  mid-flight, I seriously don't give a shit"** — the walk's own open question,
+  killed. RULED: uncertain delivery stays never-automatic, the words wait in the
+  well. Retired, do not raise it.
+- **"I honestly don't give too much of a shit about those corrections and so on -
+  that's really not so important in my mind to my use case, at least for now."**
+  This is the big one. **The correction/teach loop is the entire thesis of Phase
+  176 The Speak Loop**, which was built and merged on the orchestrator's ruling
+  when he deferred the road. It was justified on a canon debt (the voice law) and
+  a ZERO CENSUS — "the loop has never been taught" — not on anything he asked
+  for. He has now said it is not his use case. **When a phase's justification is
+  a canon debt or a zero census rather than a stated need of his, SAY SO at
+  charter time and get his word before building.** A zero census is not an answer
+  to "will you use this on a Tuesday?" Memory:
+  `feedback_corrections_not_his_use_case`.
+- **"let's focus on more high impact work from now on"** and **"Build it,
+  then."** — he wants forward motion, not ceremony. He does not want a menu of
+  five options; he wants a recommendation and then the work. Beats 2–6 of the
+  walk (denied permission, silence, interruption, correction) are edge cases and
+  he did not want to be marched through them. Do not.
+- He walks **over Screen Sharing**, often not at the machine. See §4.
+
+### 1. The two defects, because their SHAPE is the lesson
+
+He held the hotkey. The hub **died** — `libc++abi: terminating ... There is no
+Stream(gpu, 1) in current thread`, an uncaught C++ throw through numpy's buffer
+protocol where no Python frame can catch it. `Transcriber` stores the RESOLVED
+backend; the reuse check compared it against the RAW request; on a desk
+configured `backend: "auto"` that is `"mlx" != "auto"` forever, so the boot warm
+was discarded and a SECOND `_MlxTranscriber` was built on a SECOND pinned thread
+FOR EVERY UTTERANCE, inheriting lazy arrays owned by the first thread's stream.
+HS-60-06 (per-instance pin) and HS-63-06 (construction lock) had both aimed one
+level too low: everything mlx_whisper caches is PROCESS-level. The pinned MLX
+thread is now process-wide.
+
+Underneath it, a second: every utterance was heard, transcribed, journalled and
+then refused `desktop_executor_warrant_invalid`. `Broker.decide` signs 17 warrant
+fields; `desktop_executor.py` demanded exactly 11. The six extras landed
+2026-08-09/08-10/08-22 and that file has one commit in its life. **Desktop typing
+was dead for everyone since August 9.** The VALIDATOR widened, never the warrant —
+`sign_warrant` HMACs every unsigned field, so trimming fails the signature
+instead, and their being signed is exactly why admitting them forges nothing. It
+stays an ALLOWLIST.
+
+**THE LAW, and it is now the most useful thing in this file:
+`reference_lying_test_doubles`. A test double that lies about the field a check
+reads proves nothing about the check.** Three green guards covered these two
+seams and neither bug could have tripped them: `_FakeTranscriber.backend =
+"auto"` where the real class stores `"mlx"` (one word — and the SAME lie was in
+the HS-63-06 regression test written to guard that exact crash class); a warrant
+test hand-built key-for-key from the validator's own constant and self-signed; a
+typer stub swallowing the warrant with `**kwargs` and never reading it. Mint
+through the REAL producer, assert against the REAL validator's constants, and
+**prove every new fence FAILS against the pre-fix code before trusting it.**
+
+### 2. The state of the tree
+
+| What | Where |
+|---|---|
+| `#568` Phase 200 working context (41, 05's automatable half) | MERGED → main `cdbc8f2a` |
+| `#569` the two voice-typing defects | MERGED → main `2481d328` |
+| **HS-200-10's wire** | **committed `dbb86ce6` on `feat/hs-200-10-working-context`, PUSHED, NO PR YET** |
+| HS-200-05 | in-progress. **Beat 1 passes on his hand.** Beats 2–6 unwalked, and he does not care about 5 |
+| HS-200-09 | in-progress. **His canvas verdict is the exit, and 11–15 wait on it** (canvas `63eaae1a-eb59-4bcf-902d-0c70d3e0c275`) |
+
+### 3. HS-200-10 — what is built, and what it still owes
+
+Three lanes, strict file ownership, in ruling C1's order: boundary → verb →
+reverse index. Read `story-10-scoped-working-context.md` (the rulings, including
+**B1–B3 added this sitting**) and `assets/settled-design-working-context.md`.
+
+The boundary is **C2′: reachable by reference, never by relevance** — and note
+WHY, because it is counterintuitive and the first design draft got it backwards:
+`grounding.py` runs its global relevance pass **if and only if nothing was
+explicitly attached**, so NOT ATTACHING IS THE TRIGGER FOR AUTOMATIC RETRIEVAL.
+Exclusion is by construction (promotion row INSERTed before the Note, so the
+guarded indexing trigger never sees the body), and there are TWO retrieval routes
+— lexical through the FTS corpus, and the GRAPH route via `_load_related_row`
+which reads the notes table directly and bypasses the index entirely. Closing
+only the first looks green.
+
+**Owed before it closes: counsel-on-built, `evidence-story-10.md`, a clean
+CI-shape suite run, and the PR.** The face is struck by ruling C6 and owes a
+ratified board.
+
+**One open item that is genuinely unresolved, B2:** `forbidden` is TERMINAL in
+practice and NOTHING clears it. The design says "cleared ONLY by an explicit
+re-promotion"; that is unimplementable as built, because promotion writes no
+dependent row and a rebind deliberately re-inserts the mark. The orchestrator
+implemented the clearing and **the ratified P0-2 test refused it**. Reverted;
+fail-closed wins. A consumer fenced once is fenced forever for that record. This
+is owed to counsel and to him.
+
+### 4. Conducting him at the desk (learned the hard way this sitting)
+
+- **He is usually on Screen Sharing and not at the laptop.** `open "<url>"` and
+  `osascript -e 'tell application "TextEdit" to activate'` put faces on the Mac's
+  screen where he CAN see them. Do not tell him to "open your browser" — set it
+  up for him. Telling him to open Notes when he is remote wasted a leg.
+- **`⌥R` DOES survive Screen Sharing.** Right-Option is not collapsed. That worry
+  was wrong.
+- **The hub takes `HOLDSPEAK_WEB_PORT` — there is no `--port` flag.** Pin it so a
+  restart keeps the same URL. Token to the scratchpad only; `open` it rather than
+  printing it.
+- **NEVER run the suite beside his live walk.** This sitting produced 274 e2e
+  failures that were pure CPU starvation and had to be thrown away. That clean
+  run is still OWED.
+- His DB is read-only to every agent. `sqlite3 -readonly`, always.
+
+### 5. Ledgered, not fixed — all his to rule
+
+1. `/api/dictation/readiness` answered **`ready: true`** on a desk where dictation
+   crashed the process on every attempt. That is the fake all-clear HS-200-07 was
+   meant to end.
+2. The Speak face reads `DICTATION · GPT 5 mini · KEY NOT SET` while the runtime
+   resolves LOCAL — every assignment row inherits the migrated
+   `legacy-legacy-intel` cloud profile (readiness unknown, no key). One face, two
+   truths, and the source of the recurring `intent-router classify failed:
+   speech_provider_fenced`.
+3. **The egress ledger: NO FIRE, investigated and closed.** 326 `external.egress`
+   operations read `indeterminate`, but **325 are test-fixture pollution written
+   into his REAL DB** before the isolation fixture landed — proven by 0.58–2.39ms
+   "calls" to `api.openai.com`, physically impossible for real TLS, plus
+   blackhole and `*.example.test` hosts, 287 of them in one 2am burst on
+   2026-08-22. Exactly ONE is real (2026-08-30, a 751ms call to his llama.cpp
+   that raised). Custody is intact and the direction of error is safe. Two real
+   but smaller defects: `except BaseException` collapses every failure into
+   `indeterminate` with the reason written only to an in-process dict, so
+   "connection refused" and "sent and rejected" are indistinguishable on the
+   receipt; and nothing surfaces egress state on his desk at all. **The failure
+   branch has zero test coverage.**
+4. **325 junk rows sit in his real DB** from that pollution. He was asked whether
+   to remove them and has not answered. Do not touch his database.
+
+### 6. Owed to him, carried forward
+
+His attended walks on 170–176; the queued "Already titled" job (172's accidental
+write); 172–174's unanswered questions; **the HS-200-09 canvas verdict**; the
+pilot Project (one active, nine archived, all from the 168/169 window).
+
+---
 
 ## Muad'Dib XVII — 2026-09-07/08. YOUR JOB IS TO CONDUCT HIS WALK, NOT TO BUILD
 

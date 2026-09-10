@@ -51,6 +51,13 @@ _PEOPLE_REF_KINDS = frozenset({"person"})
 
 _UNSET = object()  # sentinel for "caller did not provide parent_id"
 
+
+# HS-200-10 (F0/L4, P0-1): the two values `thread_refs.origin` can carry when
+# a writer stamped it.  The empty string is the third state -- UNKNOWN -- and
+# it is not a constant here on purpose: nothing should ever WRITE it.
+REF_ORIGIN_REFERENCE = "reference"
+REF_ORIGIN_RELEVANCE = "relevance"
+
 # Maximum tool passes for a chat turn (HS-152-01 D1).
 _CHAT_PASS_CAP = 10
 
@@ -171,9 +178,11 @@ class ThreadService:
             profile_override=profile_override,
         )
         if seed_refs:
+            # HS-200-10 (L4): the caller named these when it opened the thread.
             self._threads.freeze_refs(
                 thread.id, None,
-                [{"ref_kind": "seed", "ref_id": ref} for ref in seed_refs],
+                [{"ref_kind": "seed", "ref_id": ref,
+                  "origin": REF_ORIGIN_REFERENCE} for ref in seed_refs],
             )
         return self._thread_dict(thread)
 
@@ -366,6 +375,8 @@ class ThreadService:
                             "text": "",
                         }, separators=(",", ":"), sort_keys=True),
                         "sensitive": True,
+                        # The owner typed this ref into the turn.
+                        "origin": REF_ORIGIN_REFERENCE,
                     })
                 except ValidationError:
                     raise
@@ -394,6 +405,34 @@ class ThreadService:
                         code="grounding_not_found",
                         context={"unknown_ids": hydration.unknown},
                     )
+                # HS-200-10 (F0/L4, P0-1): stamp HOW these blocks arrived.
+                #
+                # `hydrate_refs_detailed` runs its GLOBAL relevance pass if and
+                # only if the call carried no explicit source
+                # (`grounding.py:220-228`: `has_explicit_sources`).  So the
+                # whole batch is decided by one flag:
+                #
+                #   he named nothing -> every block came from the global
+                #     relevance pass, and none of it is something he asked for
+                #   he named something -> every block is his named ref, or a
+                #     member of a container he attached, or a hit from the
+                #     scope he attached.  All three arrived BECAUSE he named
+                #     something, and all three must keep replaying: fencing
+                #     them would be silent loss of accepted input, which is the
+                #     half of B1 that was right.
+                #
+                # A `project:` ref does run a SCOPED search inside
+                # `_hydrate_qualified`, so a hit he did not name individually
+                # can ride in under one he did.  That is still by reference --
+                # and a promoted record cannot be among those hits anyway,
+                # because L3 fences that call site
+                # (`grounding.py`, `_drop_promoted` at the project branch).
+                #
+                # `test_the_origin_stamp_rests_on_groundings_own_switch` in
+                # tests/unit/test_phase200_working_context_l4_origin.py pins the
+                # global-pass invariant, so this one flag cannot drift silently.
+                block_origin = (REF_ORIGIN_REFERENCE if grounding_refs
+                                else REF_ORIGIN_RELEVANCE)
                 for block in hydration.blocks:
                     frozen_ref_rows.append({
                         "ref_kind": block.kind,
@@ -405,6 +444,7 @@ class ThreadService:
                             "text": block.text,
                         }, separators=(",", ":"), sort_keys=True),
                         "sensitive": False,
+                        "origin": block_origin,
                     })
 
         # -- Persist user message (HS-153-04: promote draft if present) --
@@ -435,6 +475,10 @@ class ThreadService:
                     "ref_kind": fref["ref_kind"],
                     "ref_id": fref["ref_id"],
                     "frozen_json": fref["frozen_json"],
+                    # HS-200-10 (F0/L4, P0-1): the origin rides the INSERT that
+                    # creates the row, so there is no window in which a frozen
+                    # ref exists without its receipt of HOW it arrived.
+                    "origin": str(fref.get("origin", "")),
                 })
             self._threads.freeze_refs(thread_id, user_msg.id, ref_dicts)
 
@@ -2019,6 +2063,45 @@ class ThreadService:
 
         return dispatch
 
+
+    def _promoted_note_ids(self, note_ids: set[str]) -> set[str]:
+        """The subset of *note_ids* that carry a `context_promotions` row.
+
+        Keyed on the EXISTENCE of a promotion, never on `disclosure_state`:
+        the same key F0's corpus guard uses.  Keying on `active` would mean a
+        REVOCATION re-opened a disclosure surface that promotion had closed,
+        which inverts the direction every fence in this design errs in.
+
+        No timestamp is read.  The first cut of this fence compared a
+        promotion's `created_at` against the frozen row's, on the argument that
+        anything frozen AFTER a promotion could only have arrived by reference
+        -- true on the device that recorded the promotion, false on every
+        other one.  `created_at` is the REMOTE wall clock, copied verbatim on
+        merge and deliberately held out of the LWW field set
+        (`sync_service.py:630-640`, `:654-656`), while the corpus repair that
+        follows a sync (`sync_service.py:672-700`) does not touch
+        `thread_refs` at all.  So a device that ran a relevance pass before the
+        promotion synced in held a row stamped LATER than the promotion and
+        replayed a pre-promotion body forever.  The origin is recorded at the
+        freeze; the clock is not consulted.
+        """
+        if not note_ids:
+            return set()
+        ordered = sorted(note_ids)
+        placeholders = ",".join("?" for _ in ordered)
+        try:
+            with self._db._connection() as conn:
+                rows = conn.execute(
+                    f"SELECT target_ref FROM context_promotions"
+                    f" WHERE target_ref IN ({placeholders})",
+                    [f"note:{note_id}" for note_id in ordered],
+                ).fetchall()
+        except Exception:
+            # An older database without the table cannot hold a promotion, so
+            # there is nothing to fence and a turn must not break over it.
+            return set()
+        return {str(row[0]).split(":", 1)[1] for row in rows}
+
     def _assemble_payload(
         self,
         thread_id: str,
@@ -2080,6 +2163,33 @@ class ThreadService:
         for ref in reversed(scoped_refs):
             newest.setdefault((ref.ref_kind, ref.ref_id), ref)
         refs = list(reversed(list(newest.values())[:GROUNDING_MAX_REFS]))
+        # HS-200-10 (F0/L4): the frozen-ref REPLAY is fenced; the RECEIPT is
+        # not.  A `thread_refs` row is written once per turn from whatever the
+        # relevance pass returned then -- and it is re-gathered and re-appended
+        # into a `system` message on EVERY subsequent turn.  A body frozen
+        # BEFORE a promotion would therefore keep being disclosed to the model
+        # forever, which is not what CONTRACTS.md licenses when it declines to
+        # promise erasure of prior messages: a replay is a DISCLOSURE, and a
+        # disclosure is evaluated at each disclosure.
+        #
+        # The row itself is left untouched, deliberately.  A frozen ref is a
+        # RECEIPT of what turn N actually saw, and rewriting it retroactively
+        # would falsify a receipt.  Receipts are immutable; replays are fenced.
+        # The fence reads the ORIGIN stamp, never a clock.  It is an
+        # ALLOW-LIST: a promoted note replays only when its row says
+        # 'reference' -- the owner attached it on purpose, which is exactly
+        # what C2' promises stays reachable.  'relevance' and UNKNOWN (every
+        # row written before the column existed) both fence.
+        # The origin is read off the hydrated row (`db/threads.py`
+        # `_row_to_ref`), which is the SAME row the replay reads -- there is no
+        # second query that could disagree with it, and no window in which the
+        # row exists unstamped.
+        promoted = self._promoted_note_ids({r.ref_id for r in refs
+                                            if r.ref_kind == "note"})
+        refs = [ref for ref in refs
+                if not (ref.ref_kind == "note"
+                        and ref.ref_id in promoted
+                        and ref.origin != REF_ORIGIN_REFERENCE)]
         ref_context_parts: list[str] = []
         person_names: list[str] = []
         for ref in refs:

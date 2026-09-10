@@ -115,6 +115,35 @@ It does not schedule work or start a general-purpose worker.
 The first records a suggestion choice. The second creates a separate output record.
 The Thread also retains the conversation itself.
 
+## Promote a fact into a canonical record
+
+A saved Interview fact belongs to one Thread.
+Promotion copies the fact into a canonical Note so other work can reference it.
+
+This release ships the mechanism without an interface control.
+Promotion runs through the browser API only.
+It is owner only. No model tool can create or revoke a promotion.
+
+1. `POST` the `promote` control to the Thread interview endpoint with the fact.
+2. Read the returned promotion identifier and target reference.
+3. `GET /api/threads/{thread_id}/interview/promotions` to list what a Thread promoted.
+4. `POST` the `revoke_promotion` control to withdraw one.
+
+The promotion record stores a source locator and a content hash.
+It never stores a second copy of the quoted words.
+Revoking a promotion does not unwrite the Note. The Note keeps the words on purpose.
+
+**What a promoted record is reachable by.**
+A promoted record is reachable by reference and never by relevance.
+Attach it to a Thought or name it in a Thread, and it reaches the model.
+An automatic relevance search over your notes will not return it.
+This holds for word matching and for related record expansion.
+
+**One limit to know.**
+A model in an ordinary Thread can still read the Note through the desk listing
+tools, which return note bodies. The relevance boundary does not change that.
+Promote a fact you are willing to have in a Thread you open with a model.
+
 ## Repeat or resume
 
 Reopen the same Thread to resume its saved sections, facts, and suggestion choices.

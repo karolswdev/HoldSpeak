@@ -1,6 +1,6 @@
 # Phase 200: The Working Practice
 
-**Last updated:** 2026-09-08 — HS-200-05's walk opened on the owner's desk: two four-week-old defects found and fixed (the MLX cross-thread hub crash; the warrant-shape drift that refused every desktop typing effect). Beat 1 passes end to end on his hand; beats 2-6 remain his. G0: 01-04 DONE, 05 in-progress; G1: 06, 07, 08, 41 DONE; 09 awaits his canvas verdict.
+**Last updated:** 2026-09-09 — **HS-200-10 CLOSED done**: counsel-on-built ran in two lanes and both returned RATIFY-WITH-CONDITIONS. The central claim survived — the boundary lane enumerated every path that reads a note body and found NO undisclosed route. Two P0s were found and FIXED: L4's replay fence keyed a REMOTE wall clock against a LOCAL one, so on an unsynced device a relevance-frozen body read as "arrived by reference" forever (now keyed on ORIGIN, no clock at all, reproduced on the real cross-device path before the fix was trusted); and `revoke_promotion` overwrote `unavailable` with `stale`, sending a consumer to refresh a record that is gone. Two latent fail-open seams closed, one of which was hiding a NON-latent defect (a swallowed backfill exception left a transaction open, so reconcile's next `BEGIN` would raise — a desk that cannot open). AC4 is exercisable for the first time: `promotions()` had no route and no tool, so nothing could be revoked. Ruling B2's claim that a consumer is "fenced forever" was FALSE and is corrected — detach then re-attach clears it, now pinned by a test; B4 states AC4's honest half, that a model reads a promoted body with one `desk.list` call. Full CI-shape suite: 10 failed, 10742 passed, 98 skipped — seven starvation flakes, three verified failing IDENTICALLY on `main`. G0: 01-04 DONE, 05 in-progress; G1: 06, 07, 08, 10, 41 DONE; 09 awaits his canvas verdict.
 **Status:** in build. Forty-one stories defined; G0 01-04 and G1 06-08 done.
 **Product owner:** Karol.
 **Delivery owner:** unassigned until implementation starts.
@@ -47,7 +47,7 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-07 | Make incomplete attention coverage explicit | done | [story-07](story-07-coverage-and-partial-results.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-200-08 | Establish repeatable live-model quality evaluation | done | [story-08](story-08-semantic-evaluation-harness.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-200-09 | Design the daily Project workflow on existing surfaces | in-progress | [story-09](story-09-daily-workflow-design.md) | — |
-| HS-200-10 | Promote reusable working context into canonical records | in-progress | [story-10](story-10-scoped-working-context.md) | — |
+| HS-200-10 | Promote reusable working context into canonical records | done | [story-10](story-10-scoped-working-context.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-200-11 | Produce a useful Project preparation brief | backlog | [story-11](story-11-project-preparation.md) | — |
 | HS-200-12 | Connect a real meeting to reviewed outcomes | backlog | [story-12](story-12-meeting-to-reviewed-outcomes.md) | — |
 | HS-200-13 | Carry decisions and commitments into the next day | backlog | [story-13](story-13-decision-and-commitment-continuity.md) | — |
@@ -81,6 +81,87 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-41 | Return to unfinished work | done | [story-41](story-41-return-to-unfinished-work.md) | [evidence-story-41](./evidence-story-41.md) |
 
 ## Where we are
+
+2026-09-09: **HS-200-10 IS CLOSED.** Counsel-on-built hunted the built wire in two
+lanes — the boundary and the retrieval routes, then the verb, the reverse index,
+sync and the consumers — and both returned RATIFY-WITH-CONDITIONS. The design's
+central claim held: every path that reads a note body was enumerated and there is
+no undisclosed route. Both P0s landed in the lane the design had reasoned about
+least, and the sharper one was created by this very commit making promotions
+cross-device: L4 fenced replays by comparing a promotion's REMOTE `created_at`
+against a LOCAL `thread_refs.created_at`, so a desktop that had not yet synced
+would freeze a promoted body by RELEVANCE and then read it as "arrived by
+reference" on every later turn, forever. It is now keyed on ORIGIN — how the ref
+actually arrived — and consults no clock at all, which is what the ruling was
+reaching for; the timestamp was a proxy and the proxy is what broke. The fix was
+reproduced against the pre-fix code on the real cross-device path in BOTH
+directions, because the old fence also silently DROPPED a note the owner attached
+by reference when the promotion clock landed later than the attach.
+
+Two roadmap sentences were false and are corrected rather than defended. B2 said a
+consumer fenced once is "fenced forever, for that record, by every route"; a
+detach deletes the row, so re-attaching clears it — two ordinary clicks, now
+pinned by a test whose docstring says it records a hole and not a property. B3
+said the backfill calls `_persist_manifest`; it calls `_reconcile_dependents`, and
+the code was right. B4 is new and is the honest half of AC4: a model in an
+ordinary Thread reads a promoted body with one `desk.list` call. F0 fences
+relevance and reduces none of that.
+
+The clean full-suite run owed since 2026-09-08 exists: **10 failed, 10742 passed,
+98 skipped**, every failure e2e glass, seven of them starvation flakes that pass
+serially and three verified failing IDENTICALLY on `main` at `2481d328`. This
+branch adds no failure. Four census fixtures were re-registered — three inherited
+from main's own MLX fix, one ours.
+
+**What now blocks the phase is his, not ours:** the HS-200-09 canvas verdict gates
+11-15, and HS-200-05's beats 2-6 are his walk. 10's face is still struck by ruling
+C6 and still owes a ratified board.
+
+
+2026-09-08 (late): **HS-200-10's WIRE IS BUILT — three lanes, strict file ownership,
+in ruling C1's order: the boundary, then the verb it bounds, then the reverse index.**
+The story stays in-progress: counsel-on-built is owed before it closes, and the face
+is struck by C6 and still owes a board.
+
+*What shipped.* Three additive tables (`context_promotions`,
+`context_promotion_suppressions`, `context_dependents`), two new lattice triggers
+where `forbidden` is TERMINAL, and the boundary C2′ demands — **a promoted record is
+excluded from the relevance corpus BY CONSTRUCTION**, not filtered afterwards: the
+promotion row is INSERTed before the Note, so the guarded `notes_memory_ai` already
+sees it and the body never enters the corpus, not even transiently. The graph route
+(`_load_related_row`, which bypasses the FTS index entirely and which L1 alone leaves
+wide open), the two relevance call sites, `rebuild_memory_index`, L4's frozen-ref
+replay fence and the P0-C sync fence are all closed. The verb is `promote` /
+`revoke_promotion` on `InterviewService`, owner-only, routes only — **no MCP tool**
+(C6 as amended: a model must not mint a canonical record) and **no face**. The quote
+is a locator plus a hash, never a copy, proven by a substring check over every column.
+
+*The discipline, which is the reusable part.* Every lane mutated its own fences out
+and re-ran: 10 mutants in A, 18 in B, 19 in C. **Seven tests across the three lanes
+passed against a deliberately broken fence and were rewritten** — one drove the
+lexical route where a different fence already covered it; one had a mutant that
+duplicated a write instead of moving it, which the self-healing trigger then cleaned
+up; one passed because a neighbouring guard covered the path; one hashed inside the
+same clock second. Two fences turned out to be genuinely redundant on a healthy
+database, and rather than pretend otherwise the lanes wrote tests that install the
+PRE-fix trigger body to prove the belt is a belt, and said so in the docstrings.
+This is [[reference_lying_test_doubles]] applied on purpose, the same day it was
+learned.
+
+*Three build rulings, recorded in the story file (B1-B3).* L4 keys on EXISTENCE and
+fences only rows frozen BEFORE the promotion — accepted, because keying on `active`
+would let a revocation re-open a surface, and a blanket fence would silently drop a
+Note the owner attached on purpose. The backfill is wired into `reconcile_schema` and
+proven wired by a test that drives the real entry point, because it shipped built and
+uncalled. And **`forbidden` is terminal in practice**: the orchestrator implemented
+the design's own "cleared only by an explicit re-promotion" and **the ratified P0-2
+test refused it**, so the change was reverted and the one-way door is recorded rather
+than hidden. A design sentence written before the lattice existed does not outrank a
+ratified P0.
+
+*Gates at this commit.* 335 passed across the new suite and every neighbour the three
+lanes touch. The canonical schema snapshot was regenerated with the normalizer. Owed
+before close: counsel-on-built, the evidence file, and the CI-shape suite run.
 
 2026-09-08: **HS-200-05's walk began on the owner's own desk, and voice typing was
 found DEAD — in two independent places, for four weeks each.** The story stays

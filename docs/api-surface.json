@@ -5798,6 +5798,14 @@
       ]
     },
     {
+      "path": "/api/threads/{thread_id}/interview/promotions",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.threads",
+      "consumers": []
+    },
+    {
       "path": "/api/threads/{thread_id}/keep",
       "methods": [
         "POST"

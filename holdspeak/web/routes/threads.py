@@ -52,6 +52,19 @@ def _normalize_refs(raw: Any) -> list[str] | None:
     return result or None
 
 
+# HS-200-10: `promote` and `revoke_promotion` join the BROWSER allowlist and
+# nothing else. The MCP interview family gains no tool: a model that could mint
+# a canonical record is the precise failure the People boundary exists to
+# prevent. The model records; the owner disposes (ruling C6 as amended).
+#
+# Hoisted out of the handler so the asymmetry is testable as DATA -- the guard
+# that certifies it reads this set and the MCP dispatcher's own kind map, and
+# the route below is the only consumer, so the two cannot drift.
+INTERVIEW_BROWSER_EVENT_KINDS = frozenset(
+    {"section", "remove_fact", "disposition", "status", "promote", "revoke_promotion"}
+)
+
+
 def build_threads_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
@@ -84,12 +97,28 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
         # The direct controls edit local interview state; domain execution still
         # goes through the existing conversation/tool and citizen services.
         event = body["event"]
-        if not isinstance(event, dict) or event.get("kind") not in {"section", "remove_fact", "disposition", "status"}:
+        if not isinstance(event, dict) or event.get("kind") not in INTERVIEW_BROWSER_EVENT_KINDS:
             return JSONResponse({"error": "Unsupported interview control"}, status_code=400)
         try:
             return JSONResponse(InterviewService(_service()._db).command(_principal(request), thread_id, **body))
         except ServiceError as exc:
             return _error(exc)
+
+    @router.get("/api/threads/{thread_id}/interview/promotions")
+    async def api_interview_promotions(thread_id: str, request: Request) -> Any:
+        # HS-200-10 (AC4): the read half. `promotion_id` otherwise existed only
+        # inside the single `promote` response, so nothing the owner could reach
+        # named a promotion and `revoke_promotion` was unreachable. Owner-only,
+        # enforced in the service exactly as the verbs are. Routes only --
+        # there is no MCP tool here either.
+        from ...services.interview_service import InterviewService
+        try:
+            promotions = InterviewService(_service()._db).promotions(_principal(request), thread_id)
+            return JSONResponse({"promotions": promotions})
+        except ServiceError as exc:
+            return _error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to list interview promotions")
 
     @router.post("/api/threads")
     async def api_create_thread(request: Request) -> Any:

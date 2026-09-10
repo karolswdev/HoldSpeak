@@ -84,6 +84,13 @@ class ThreadRef:
     version: str
     frozen_json: str
     created_at: float
+    # HS-200-10 (F0/L4, P0-1): HOW this ref arrived -- 'reference' (the caller
+    # named it) or 'relevance' (a retrieval pass found it).  '' is the third
+    # state, UNKNOWN, and it is what every row written before the column
+    # existed reads back as.  The L4 replay fence is an ALLOW-LIST keeping only
+    # 'reference', so UNKNOWN fences: over-fencing costs the model one block
+    # the owner can hand it again by reference; under-fencing is the breach.
+    origin: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -158,6 +165,10 @@ def _row_to_ref(row: Any) -> ThreadRef:
         version=str(row["version"] or ""),
         frozen_json=str(row["frozen_json"] or ""),
         created_at=float(row["created_at"]),
+        # Guarded like `Thread.call_mode` above: a database opened before the
+        # reconciler added the column has no such key, and the value that
+        # answers honestly there is UNKNOWN -- which the L4 allow-list fences.
+        origin=str(row["origin"] or "") if "origin" in row.keys() else "",
     )
 
 
@@ -550,7 +561,16 @@ class ThreadRepository(BaseRepository):
         message_id: Optional[str],
         refs: list[dict[str, Any]],
     ) -> list[ThreadRef]:
-        """Persist a batch of frozen ref leaves for a thread/message."""
+        """Persist a batch of frozen ref leaves for a thread/message.
+
+        HS-200-10 (F0/L4, P0-1): each ref dict may carry an ``origin`` --
+        ``'reference'`` or ``'relevance'`` -- and it is written in the SAME
+        INSERT that creates the row.  There is deliberately no follow-up
+        UPDATE: a stamp applied afterwards has a window in which the row exists
+        unstamped, and a caller that omits ``origin`` gets ``''`` (UNKNOWN),
+        which the L4 replay fence drops.  The failure mode of this write is
+        over-fencing, never disclosure.
+        """
         now = time.time()
         result: list[ThreadRef] = []
         with self._connection() as conn:
@@ -562,14 +582,15 @@ class ThreadRepository(BaseRepository):
                 conn.execute(
                     """INSERT INTO thread_refs
                        (id, thread_id, message_id, ref_kind, ref_id,
-                        version, frozen_json, created_at)
-                       VALUES (?,?,?,?,?,?,?,?)""",
+                        version, frozen_json, created_at, origin)
+                       VALUES (?,?,?,?,?,?,?,?,?)""",
                     (ref_row_id, str(thread_id), message_id,
                      str(ref.get("ref_kind", "")),
                      str(ref.get("ref_id", "")),
                      str(ref.get("version", "")),
                      str(frozen),
-                     now),
+                     now,
+                     str(ref.get("origin", ""))),
                 )
                 row = conn.execute(
                     "SELECT * FROM thread_refs WHERE id=?", (ref_row_id,)
@@ -702,6 +723,15 @@ class ThreadRepository(BaseRepository):
                 parent_msg_id = tm.id
 
             # Store the import_hash ref.
+            #
+            # HS-200-10: deliberately UNSTAMPED, and it reads back ``origin=''``.
+            # This ref is an idempotency marker for the importer (counsel S2),
+            # not a piece of context: it carries no `frozen_json`, it is never
+            # replayed to a model, and it arrived by neither reference nor
+            # relevance -- so there is no honest value to write.  The L4 fence
+            # only ever looks at `ref_kind == 'note'`, so UNKNOWN here costs
+            # nothing; stamping it 'reference' to look tidy would assert
+            # something the database does not know.
             self.freeze_refs(thread.id, None, [
                 {"ref_kind": "import_hash", "ref_id": import_hash},
             ])

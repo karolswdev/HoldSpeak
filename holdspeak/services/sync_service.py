@@ -34,6 +34,25 @@ class SyncKindSpec:
 SYNC_REGISTRY = (
     SyncKindSpec("meeting", "meetings", "meeting.schema.json"),
     SyncKindSpec("artifact", "artifacts", "artifact.schema.json"),
+    # HS-200-10 (P0-C): THE FENCE TRAVELS WITH THE RECORD.
+    #
+    # F0/L1 keeps a promoted canonical record out of the relevance corpus by
+    # CONSTRUCTION -- but only on the writing device.  `notes` is a synced
+    # content class; `context_promotions` was not, so on the receiving device
+    # the note INSERT fired `notes_memory_ai`, the guard's `NOT EXISTS` found
+    # no promotion row, and the body entered THAT device's relevance pool --
+    # the pre-bounce state, one device over.  It is the one P0 in this story
+    # whose failure the owner could actually meet, because everything else
+    # here starts empty on his machine.
+    #
+    # Placed BEFORE `note` on purpose: registry order IS apply order (`push`
+    # iterates `for spec in SYNC_REGISTRY` and calls `spec.merger`), so
+    # promotions land first and the note INSERT already sees the guard.  The
+    # post-apply corpus sweep in `push` means correctness does not REST on
+    # that ordering -- both orders are proved -- but the ordering is what
+    # keeps the body from entering the corpus even transiently.
+    SyncKindSpec("context_promotion", "context_promotions",
+                 "context-promotion.schema.json"),
     SyncKindSpec("note", "notes", "note.schema.json", True),
     SyncKindSpec("refinement_thought", "refinement_thoughts", "refinement-thought.schema.json"),
     SyncKindSpec("kb", "kbs", "kb.schema.json", True),
@@ -532,6 +551,144 @@ def _decision_record_child(row: Any, kind: str) -> dict[str, Any]:
                  "last_modified": value["created_at"], "deleted": False},
         "value": value,
     }
+
+
+# ── HS-200-10 (P0-C): the promotion's wire half ──────────────────────────
+
+_PROMOTION_COLUMNS = (
+    "promotion_id", "thread_id", "fact_id", "source_message_id",
+    "quote_sha256", "quote_locator_json", "target_kind", "target_ref",
+    "target_revision_label", "target_content_sha256", "disclosure_state",
+    "request_sha256", "created_at", "updated_at",
+)
+
+
+def _context_promotion_record(row: Any) -> dict[str, Any]:
+    """Serialize one promotion.  `updated_at` is its LWW clock.
+
+    There is no `deleted` axis: a promotion row is never tombstoned, because a
+    tombstone would be an un-revoke by another name.  The emitted `deleted` is
+    therefore always false and the value always present.
+    """
+    value = {name: row[name] for name in _PROMOTION_COLUMNS}
+    value = {k: ("" if v is None else v) for k, v in value.items()}
+    value["deleted"] = False
+    value["last_modified"] = _iso(value["updated_at"])
+    return {
+        "meta": {"id": value["promotion_id"], "kind": "context_promotion",
+                 "last_modified": value["last_modified"], "deleted": False},
+        "value": value,
+    }
+
+
+def _merge_context_promotions(db: Any, spec: SyncKindSpec,
+                              records: list[dict[str, Any]]) -> int:
+    """Merge promotions as a MONOTONE JOIN, not last-write-wins.
+
+    Two rules, and neither is a clock comparison:
+
+    1. **`revoked` beats `active`, in BOTH directions, regardless of
+       `last_modified`.**  `active -> revoked` is a one-way transition, so this
+       is a join and not a race.  Under LWW a stale device still holding
+       `active` could UN-REVOKE a revocation the owner made on his laptop.
+       Same reasoning as `forbidden` being terminal in the `context_dependents`
+       lattice, and the same direction of error: the merge fails closed.
+    2. **A promotion row is never tombstoned by sync.**  An incoming
+       `meta.deleted` is ignored rather than honoured; deleting the row would
+       re-admit the body to the receiving device's relevance corpus, which is
+       precisely the breach this spec exists to close.
+
+    Everything that is NOT the disclosure state merges last-write-wins on
+    `updated_at`, the ordinary clock for this envelope.
+    """
+    if not records:
+        return 0
+    merged = 0
+    with db._connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        for rec in records:
+            meta = rec.get("meta") or {}
+            value = rec.get("value") or {}
+            promotion_id = str(meta.get("id") or "").strip()
+            if not promotion_id:
+                continue
+            if meta.get("deleted"):
+                # Rule 2, stated as its own refusal rather than left to fall
+                # through a validity guard: a tombstone is an un-revoke by
+                # another name, and deleting the row would re-admit the body
+                # to THIS device's relevance corpus on its next write.
+                continue
+            if not isinstance(value, dict) or not value:
+                continue
+            if str(value.get("promotion_id") or promotion_id) != promotion_id:
+                continue
+            incoming = {name: str(value.get(name) or "") for name in _PROMOTION_COLUMNS}
+            incoming["promotion_id"] = promotion_id
+            if not incoming["target_ref"]:
+                continue
+            incoming["updated_at"] = (incoming["updated_at"]
+                                      or str(meta.get("last_modified") or ""))
+            existing = conn.execute(
+                "SELECT * FROM context_promotions WHERE promotion_id=?",
+                (promotion_id,)).fetchone()
+            if existing is None:
+                conn.execute(
+                    "INSERT INTO context_promotions("
+                    "promotion_id,thread_id,fact_id,source_message_id,quote_sha256,"
+                    "quote_locator_json,target_kind,target_ref,target_revision_label,"
+                    "target_content_sha256,disclosure_state,request_sha256,"
+                    "created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    tuple(incoming[name] for name in _PROMOTION_COLUMNS))
+                merged += 1
+                continue
+            # Rule 1, applied before any clock is consulted.
+            state = ("revoked" if "revoked" in {str(existing["disclosure_state"]),
+                                                incoming["disclosure_state"]}
+                     else str(existing["disclosure_state"]))
+            newer = (incoming["updated_at"] > str(existing["updated_at"] or ""))
+            if not newer and state == str(existing["disclosure_state"]):
+                continue
+            fields = {name: (incoming[name] if newer else str(existing[name] or ""))
+                      for name in _PROMOTION_COLUMNS
+                      if name not in ("promotion_id", "disclosure_state", "created_at")}
+            fields["disclosure_state"] = state
+            assignments = ",".join(f"{name}=?" for name in fields)
+            conn.execute(
+                f"UPDATE context_promotions SET {assignments} WHERE promotion_id=?",
+                (*fields.values(), promotion_id))
+            merged += 1
+    return merged
+
+
+def _sweep_promoted_from_corpus(db: Any, records: list[dict[str, Any]]) -> int:
+    """Post-apply repair: no promoted body survives in THIS device's corpus.
+
+    Correctness must not rest on registry ordering alone -- the note bucket may
+    have been applied first, in which case `notes_memory_ai` fired before the
+    promotion row existed and the body IS in the corpus.  One `DELETE` per
+    applied promotion target repairs it; the guarded `notes_memory_au` then
+    declines to re-insert on every later write, so the device self-heals from
+    here.  Restore and import have the same root cause and the same answer.
+    """
+    if not records:
+        return 0
+    ids = sorted({str((rec.get("meta") or {}).get("id") or "").strip()
+                  for rec in records} - {""})
+    if not ids:
+        return 0
+    swept = 0
+    with db._connection() as conn:
+        placeholders = ",".join("?" for _ in ids)
+        targets = [str(row[0]) for row in conn.execute(
+            f"SELECT target_ref FROM context_promotions"
+            f" WHERE promotion_id IN ({placeholders})", ids).fetchall()]
+        for target in targets:
+            kind, _, rid = target.partition(":")
+            if kind != "note" or not rid:
+                continue
+            conn.execute("DELETE FROM notes_memory_fts WHERE source_id=?", (rid,))
+            swept += 1
+    return swept
 
 
 def _merge_decision_records(db: Any, records: list[dict[str, Any]]) -> int:
@@ -1060,8 +1217,16 @@ def _terminal_fingerprint(value: dict[str, Any]) -> str:
     return hashlib.sha256(json.dumps(material, sort_keys=True, separators=(",", ":"), default=list).encode("utf-8")).hexdigest()
 
 
+# `_MERGEABLE`'s last-write-wins field merge is WRONG for a promotion (see
+# `_merge_context_promotions`), so the assignment carries a branch rather than
+# widening `_MERGEABLE`.  `SyncKindSpec.merger` exists for exactly this.
+_CUSTOM_MERGERS: dict[str, Callable[[Any, SyncKindSpec, list[dict[str, Any]]], int]] = {
+    "context_promotions": _merge_context_promotions,
+}
+
 SYNC_REGISTRY = tuple(
-    replace(spec, merger=_merge_primitive_spec if spec.bucket in _MERGEABLE else None)
+    replace(spec, merger=_CUSTOM_MERGERS.get(spec.bucket)
+            or (_merge_primitive_spec if spec.bucket in _MERGEABLE else None))
     for spec in SYNC_REGISTRY
 )
 
@@ -1208,6 +1373,20 @@ class SyncService:
             for revision in getattr(db, "deployment_revisions", _EmptySyncRepo()).list(limit=bounded)
         ]
 
+        # HS-200-10 (P0-C): the fence travels with the record.  A note rides
+        # this wire today; without its promotion riding beside it the receiving
+        # device re-admits the body to its own relevance corpus.
+        context_promotions: list[dict[str, Any]] = []
+        if hasattr(db, "_connection"):
+            with db._connection() as conn:
+                context_promotions = [
+                    _context_promotion_record(row)
+                    for row in conn.execute(
+                        "SELECT * FROM context_promotions"
+                        " ORDER BY updated_at DESC, promotion_id DESC LIMIT ?",
+                        (bounded,)).fetchall()
+                ]
+
         pulled = {
             "meetings": meetings, "artifacts": artifacts, "notes": notes,
             "refinement_thoughts": refinement_thoughts,
@@ -1221,6 +1400,7 @@ class SyncService:
             "decision_record_work": decision_record_work,
             "decision_record_revisions": decision_record_revisions,
             "deployment_revisions": deployment_revisions,
+            "context_promotions": context_promotions,
         }
         return {
             spec.bucket: spec.pull_serializer(pulled) if spec.pull_serializer else []
@@ -1417,4 +1597,8 @@ class SyncService:
         for spec in SYNC_REGISTRY:
             if spec.merger is not None:
                 received[spec.bucket] = spec.merger(db, spec, body.get(spec.bucket) or [])
+        # HS-200-10 (P0-C): after EVERY bucket has landed, not after the
+        # promotion bucket alone -- the registry tuple orders promotions ahead
+        # of notes, but this must hold whichever order actually ran.
+        _sweep_promoted_from_corpus(db, body.get("context_promotions") or [])
         return {"success": True, "received": received}

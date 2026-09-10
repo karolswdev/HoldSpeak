@@ -21,6 +21,10 @@ MAX_CONTEXT_BYTES = 48_000
 _OPEN = '<untrusted-refinement-context-json schema="holdspeak.context.v1">\n'
 _CLOSE = '\n</untrusted-refinement-context-json>'
 
+# HS-200-10 (counsel-on-built F1): the per-consumer SAVEPOINT the reconcile-time
+# backfill wraps each Thought in.  A literal, never interpolated from data.
+_BACKFILL_SAVEPOINT = "hs200_context_dependents_backfill"
+
 
 @dataclass(frozen=True)
 class FrozenGroundingSnapshot:
@@ -50,6 +54,67 @@ def _sha(value: bytes) -> str:
 def _prompt_json(value: Any) -> str:
     raw = json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":"), allow_nan=False)
     return raw.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+
+
+# ── HS-200-10: the promotion revision, and ONLY the hash is ever compared ──
+#
+# `_leaf` below folds `last_modified` AND `deleted` into its digest, so its
+# hash is f(content, counter) and moves whenever the counter moves --
+# `NoteRepository._upsert_in_transaction` writes `last_modified=excluded.
+# last_modified` unconditionally on ON CONFLICT, with no "did anything change"
+# guard.  A promotion whose target Note is re-saved with byte-identical content
+# would therefore read `corrected`, telling the owner his constraint moved when
+# it did not (counsel P0-1).
+#
+# `promotion_content_sha256` is a NEW recipe over {ref, title, body_markdown,
+# tags} ONLY.  No timestamp, no tombstone flag.  A content hash contains
+# content, and nothing else.
+CONTENT_STATE_CURRENT = "current"
+CONTENT_STATE_CORRECTED = "corrected"
+CONTENT_STATE_UNAVAILABLE = "unavailable"
+
+
+def promotion_content_sha256(ref: str, *, title: str, body_markdown: str,
+                             tags: list[str]) -> str:
+    """The authoritative comparator for a promoted canonical record.
+
+    Deliberately NOT `_leaf`'s digest: no `last_modified`, no `deleted`.
+    """
+    return _sha(canonical_json({"ref": str(ref), "title": str(title),
+                                "body_markdown": str(body_markdown),
+                                "tags": list(tags)}))
+
+
+def note_promotion_revision_in_transaction(conn: Any, ref: str) -> dict[str, Any] | None:
+    """`(display label, content hash)` for one `note:` ref, or None if it is gone.
+
+    The label is `notes.last_modified` and is DISPLAY ONLY.  The hash is the
+    authority.  A missing or soft-deleted row returns None, which the caller
+    reads as `unavailable`.
+    """
+    kind, _, rid = str(ref).partition(":")
+    if kind != "note" or not rid:
+        raise ValidationError("promotion target kind is not supported",
+                              code="promotion_target_unsupported",
+                              context={"target_ref": str(ref)})
+    row = conn.execute("SELECT * FROM notes WHERE id=?", (rid,)).fetchone()
+    if row is None or row["deleted"]:
+        return None
+    return {"label": str(row["last_modified"]),
+            "content_sha256": promotion_content_sha256(
+                ref, title=str(row["title"]),
+                body_markdown=str(row["body_markdown"]),
+                tags=json.loads(str(row["tags_json"])))}
+
+
+def promotion_content_state_in_transaction(conn: Any, ref: str,
+                                           bound_sha256: str) -> str:
+    """`current` / `corrected` / `unavailable`, derived on read from the HASH."""
+    revision = note_promotion_revision_in_transaction(conn, ref)
+    if revision is None:
+        return CONTENT_STATE_UNAVAILABLE
+    return (CONTENT_STATE_CURRENT if revision["content_sha256"] == str(bound_sha256)
+            else CONTENT_STATE_CORRECTED)
 
 
 class RefinementContextService:
@@ -998,6 +1063,146 @@ class RefinementContextService:
             for li, leaf in enumerate(item["leaves"]):
                 conn.execute("INSERT INTO refinement_attachment_leaves(thought_id,attachment_revision,visible_ordinal,leaf_ordinal,leaf_ref,leaf_title,source_last_modified,membership_last_modified,leaf_content_sha256,leaf_metadata_sha256) VALUES(?,?,?,?,?,?,?,?,?,?)",
                              (thought_id, manifest["revision"], vi, li, leaf["ref"], leaf["title"], leaf["source_last_modified"], leaf["membership_last_modified"], leaf["leaf_content_sha256"], leaf["leaf_metadata_sha256"]))
+        RefinementContextService._reconcile_dependents(
+            conn, thought_id, manifest, now)
+
+    # ── HS-200-10 (ruling C5): the reverse index's ONE write point ────────
+    #
+    # `refinement_attachment_visible` above is keyed (thought_id,
+    # attachment_revision, ordinal) with the ref only a PAYLOAD column, so
+    # "who consumes note:n1?" is a scan of every revision of every Thought and
+    # revisions are never pruned.  `context_dependents` answers it in one seek,
+    # with ONE row per (record, consumer) -- never one per revision, which is
+    # precisely what this table exists to avoid.
+    #
+    # It is written here and nowhere else for `consumer_kind='thought'`.  The
+    # invariant is one reconcile point PER CONSUMER KIND, each doing the same
+    # scoped delete-then-insert (counsel C9); stories 11, 13, 17 and 20 each
+    # add one and each owes the same grep-checkable property.
+    #
+    # Delete-then-insert is correct for all four verbs -- attach, detach,
+    # rebind and birth -- because the manifest is the whole truth about what
+    # this Thought consumes at this revision.  Dropping `stale` on a rebind is
+    # correct: the manifest just re-bound at the current bytes.
+    #
+    # `forbidden` is the EXCEPTION and it is TERMINAL.  A rebind does NOT
+    # clear it, because the record is under revocation and re-binding it is
+    # exactly what must not silently succeed.  The original `stale_since` is
+    # carried over too -- COALESCE keeps the FIRST staleness time on the
+    # trigger side, and a rebind must not restart that clock either.
+    @staticmethod
+    def _reconcile_dependents(conn: Any, thought_id: str,
+                              manifest: dict[str, Any], now: str) -> None:
+        refs = sorted({item["ref"] for item in manifest["visible"]}
+                      | {leaf["ref"] for item in manifest["visible"]
+                         for leaf in item["leaves"]})
+        held = {str(row["canonical_ref"]): row["stale_since"] for row in conn.execute(
+            "SELECT canonical_ref,stale_since FROM context_dependents"
+            " WHERE consumer_kind='thought' AND consumer_id=? AND stale_reason='forbidden'",
+            (thought_id,)).fetchall()}
+        conn.execute("DELETE FROM context_dependents"
+                     " WHERE consumer_kind='thought' AND consumer_id=?", (thought_id,))
+        for ref in refs:
+            forbidden = ref in held
+            conn.execute(
+                "INSERT INTO context_dependents(canonical_ref,consumer_kind,consumer_id,consumer_revision,bound_manifest_sha256,bound_at,stale_since,stale_reason) VALUES(?,?,?,?,?,?,?,?)",
+                (ref, "thought", thought_id, int(manifest["revision"]),
+                 str(manifest["attachment_sha256"]), now,
+                 (held[ref] or now) if forbidden else None,
+                 "forbidden" if forbidden else ""))
+
+    # ── HS-200-10: the backfill, beside the INSERT it must agree with ────
+    #
+    # Deliberately NOT DDL in `schema.py`: the seed's shape must agree
+    # byte-for-byte with `_reconcile_dependents` above, and the only way to
+    # guarantee that is to CALL it rather than to restate its INSERT in SQL a
+    # file away.  It is a reconcile-time backfill, run once per database.
+    #
+    # Restricted to `state='working'` and to each Thought's CURRENT
+    # attachment revision -- a completed Thought consumes nothing that a
+    # correction must fence.  Measured read-only on the owner's live database
+    # 2026-09-07: 8 Thoughts, all `completed`, 0 working; distinct (ref,
+    # thought) pairs at current revisions 9, restricted to working **0**.
+    # THE BACKFILL ON HIS DESK IS ZERO ROWS, so correctness matters here and
+    # throughput does not.
+    #
+    # Idempotent by skipping any Thought that already holds index rows, so a
+    # second reconcile neither restarts `bound_at` nor disturbs a `forbidden`
+    # a revocation has since written.
+    #
+    # ── counsel-on-built F1: EACH CONSUMER IS WRITTEN WHOLE, OR NOT AT ALL ──
+    #
+    # That skip predicate is also this backfill's trap.  The call site in
+    # `db/reconcile.py` sits in STEP 2 -- outside the `BEGIN ... COMMIT/ROLLBACK`
+    # step 4 wraps every other backfill in -- and it SWALLOWS, deliberately: a
+    # blind reverse index is a recoverable stale-marking gap, a reconcile that
+    # cannot finish is a desk that cannot open.  So if `_reconcile_dependents`
+    # raised after its DELETE and after >=1 INSERT, the swallowed failure let
+    # the enclosing `with self._connection()` COMMIT the partial rows, and the
+    # consumer then MATCHED the skip on every later open: a half-built index
+    # that reads as complete FOREVER, with the missing record's corrections
+    # never reaching that consumer.  AC3's whole job, silently off.
+    #
+    # A SAVEPOINT per consumer, not step 4's single transaction, because:
+    #   * step 4 runs only `if shape_changed`, and this seed must also run on
+    #     an unchanged database (that is how `test_reconcile_actually_calls_
+    #     the_backfill` re-seeds a table someone emptied);
+    #   * step 4's transaction is all-or-nothing across EVERY backfill, so a
+    #     seeding failure would roll the others back and then RE-RAISE -- the
+    #     desk that cannot open, which is exactly what the swallow refuses;
+    #   * the unit that must be atomic is one CONSUMER, not the whole seed.
+    #     Per-consumer atomicity is what makes the skip predicate honest:
+    #     rows present => that consumer is complete; rows absent => it is
+    #     retried on the next open.
+    # The SAVEPOINT is RELEASEd on every path, which also hands the connection
+    # back with no open transaction -- `_reconcile_dependents`'s DELETE opens
+    # one implicitly, and a swallowed failure used to leave it open for step
+    # 4's bare `conn.execute("BEGIN")` to choke on.
+    #
+    # The exception is re-raised rather than swallowed here: reconcile's guard
+    # is the ONE place that decides a seeding failure is survivable, and two
+    # swallow points would mean neither names the failure.
+    @staticmethod
+    def backfill_dependents_in_transaction(conn: Any, now: str | None = None) -> int:
+        """Seed `context_dependents` for working Thoughts.  Returns rows written."""
+        now = now or _now()
+        rows = conn.execute(
+            "SELECT id,attachment_revision,attachment_sha256 FROM refinement_thoughts"
+            " WHERE state='working' AND attachment_revision > 0"
+            " AND id NOT IN (SELECT consumer_id FROM context_dependents"
+            "                 WHERE consumer_kind='thought')"
+        ).fetchall()
+        written = 0
+        for row in rows:
+            thought_id = str(row["id"])
+            revision = int(row["attachment_revision"])
+            visible = RefinementContextService._stored_visible(
+                conn, thought_id, revision, True)
+            if not visible:
+                continue
+            manifest = {"revision": revision,
+                        "attachment_sha256": str(row["attachment_sha256"] or ""),
+                        "visible": visible}
+            conn.execute(f"SAVEPOINT {_BACKFILL_SAVEPOINT}")
+            try:
+                RefinementContextService._reconcile_dependents(
+                    conn, thought_id, manifest, now)
+                seeded = conn.execute(
+                    "SELECT count(*) FROM context_dependents"
+                    " WHERE consumer_kind='thought' AND consumer_id=?",
+                    (thought_id,)).fetchone()[0]
+            except BaseException:
+                # Leave this consumer with ZERO rows so the skip predicate does
+                # not claim it, then let reconcile's guard name the failure.
+                try:
+                    conn.execute(f"ROLLBACK TO {_BACKFILL_SAVEPOINT}")
+                    conn.execute(f"RELEASE {_BACKFILL_SAVEPOINT}")
+                except Exception:  # pragma: no cover - unusable connection
+                    pass
+                raise
+            conn.execute(f"RELEASE {_BACKFILL_SAVEPOINT}")
+            written += seeded
+        return written
 
     @staticmethod
     def _stored_visible(conn: Any, thought_id: str, revision: int,
