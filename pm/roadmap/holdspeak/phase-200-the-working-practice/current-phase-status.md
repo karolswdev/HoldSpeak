@@ -1,6 +1,6 @@
 # Phase 200: The Working Practice
 
-**Last updated:** 2026-09-09 — **HS-200-10 CLOSED done**: counsel-on-built ran in two lanes and both returned RATIFY-WITH-CONDITIONS. The central claim survived — the boundary lane enumerated every path that reads a note body and found NO undisclosed route. Two P0s were found and FIXED: L4's replay fence keyed a REMOTE wall clock against a LOCAL one, so on an unsynced device a relevance-frozen body read as "arrived by reference" forever (now keyed on ORIGIN, no clock at all, reproduced on the real cross-device path before the fix was trusted); and `revoke_promotion` overwrote `unavailable` with `stale`, sending a consumer to refresh a record that is gone. Two latent fail-open seams closed, one of which was hiding a NON-latent defect (a swallowed backfill exception left a transaction open, so reconcile's next `BEGIN` would raise — a desk that cannot open). AC4 is exercisable for the first time: `promotions()` had no route and no tool, so nothing could be revoked. Ruling B2's claim that a consumer is "fenced forever" was FALSE and is corrected — detach then re-attach clears it, now pinned by a test; B4 states AC4's honest half, that a model reads a promoted body with one `desk.list` call. Full CI-shape suite: 10 failed, 10742 passed, 98 skipped — seven starvation flakes, three verified failing IDENTICALLY on `main`. G0: 01-04 DONE, 05 in-progress; G1: 06, 07, 08, 10, 41 DONE; 09 awaits his canvas verdict.
+**Last updated:** 2026-09-13 — **FOUR STORIES CHARTERED OUT OF THE OPERATIONAL-SURFACE AUDIT** (`docs/internal/OPERATIONAL-SURFACE-AUDIT.md`, `d33c4a1f`). The audit measured the whole surface and found the product has a real browser-free API (222 MCP tools, 675 routes, six of fifteen flows driveable without a browser) and **two missing function calls that explain every zero on his desk**. **HS-200-42:** nothing drains the intel queue — `start_intel_queue_worker` has ZERO production callers and Phase 172's design assumed a different queue's loop would do it, so a finished meeting writes a job nobody executes (`intel_snapshots` = 0 on his desk). **HS-200-43:** nothing ever arms a watch — `next_evaluation_at` is written only INSIDE `evaluate_due`, so a watch never evaluated by the scheduler can never be selected by it (32 watches, 2 armed); and manual evaluation records no effects, so the MCP path can never reach the steward. **HS-200-44:** the UX-canon guard reports A1: 4 raw buttons where an independent count finds 187 — its regex cannot see multi-line JSX, so the owner's own 'every verb is the library Button' ruling has been guarded by a blind scanner. **HS-200-45:** the MCP sidecar is a second unsynchronized writer on the hub's database — `journal_mode=delete` not WAL, no `busy_timeout`, and it never takes the owner lock whose docstring forbids exactly this. G0: 01-04 DONE, 05 in-progress, 44/45 ready; G1: 06, 07, 08, 10, 41 DONE, 42/43 ready; 09 still awaits his canvas verdict.
 **Status:** in build. Forty-one stories defined; G0 01-04 and G1 06-08 done.
 **Product owner:** Karol.
 **Delivery owner:** unassigned until implementation starts.
@@ -22,8 +22,8 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 
 ## Exit criteria (evidence required)
 
-- [ ] **G0: Known and recoverable installation.** Runtime identity, isolated checks, cold first value, physical voice, and restore are proven. Evidence: stories 01, 02, 03, 04, 05.
-- [ ] **G1: Trustworthy daily Project work.** Claim support, coverage, real-model evaluation, daily flows, and the two-day owner sequence pass. Evidence: stories 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 41.
+- [ ] **G0: Known and recoverable installation.** Runtime identity, isolated checks, cold first value, physical voice, and restore are proven. Evidence: stories 01, 02, 03, 04, 05, 44, 45.
+- [ ] **G1: Trustworthy daily Project work.** Claim support, coverage, real-model evaluation, daily flows, and the two-day owner sequence pass. Evidence: stories 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 41, 42, 43.
 - [ ] **G2: Configurable working practice.** Three recipes, replay-safe setup, revisit, one actual scheduled brief, and the R1 pilot pass. Evidence: stories 17, 18, 19, 20, 21, 22, 23.
 - [ ] **G3: Supervised assignments.** One adapter, immutable work contracts, verification, intervention, recovery, and five useful tasks pass. Evidence: stories 24, 25, 26, 27, 28, 29, 30.
 - [ ] **G4: Bounded unattended execution.** Host and credential recovery, durable triggers, bounded retry, two recipes, and real occurrences pass. Evidence: stories 31, 32, 33, 34, 35, 36.
@@ -79,8 +79,41 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-39 | Rehearse the release without implementation guidance | backlog | [story-39](story-39-cold-release-rehearsal.md) | — |
 | HS-200-40 | Close Phase 200 on outcomes and release evidence | backlog | [story-40](story-40-release-and-phase-close.md) | — |
 | HS-200-41 | Return to unfinished work | done | [story-41](story-41-return-to-unfinished-work.md) | [evidence-story-41](./evidence-story-41.md) |
+| HS-200-42 | Make a finished meeting actually produce intelligence | ready | [story-42](story-42-drain-the-intel-queue.md) | — |
+| HS-200-43 | Let a watch become schedulable, and let a manual evaluation count | ready | [story-43](story-43-arm-the-watch.md) | — |
+| HS-200-44 | Make the release guards see what they claim to guard | ready | [story-44](story-44-the-guard-sees-its-own-violations.md) | — |
+| HS-200-45 | One writer on the database, or a safe second one | ready | [story-45](story-45-one-writer-on-the-database.md) | — |
 
 ## Where we are
+
+2026-09-13: **the audit turned into work.** The owner asked where the phase-based
+execution was, and he was right to: the operational-surface audit was written and
+committed as a document with nothing on the rails. Four stories are chartered out
+of it, and they are all defects in flows THIS PHASE ALREADY OWNS — G1 is
+"trustworthy daily Project work", and the daily work does not run.
+
+**The two that matter are missing callers, not design debates.** Nothing drains
+the intel queue, so the product's headline flow ends in a row nobody reads.
+Nothing arms a watch, so the entire unattended half of the Project Rooms arc —
+thirteen merged phases of it — cannot bootstrap. Both were verified by hand
+before being written down, and both are visible on his desk as zeros: 718
+heartbeat evaluations and one notification, one meeting session ever, zero intel
+snapshots, zero decisions, zero watch effects.
+
+The other two are fences that do not fence. The canon guard sees 5% of its own
+violations, which means the ratchet HS-200-03 built has been counting the wrong
+number. And the MCP sidecar writes to the hub's database with no WAL, no busy
+timeout, and no claim on the lock whose own docstring forbids a multi-writer
+arrangement.
+
+**Order:** 42 first (it unblocks 12, 13, 16 and the pilot), then 43 (it unblocks
+the unattended half), then 45, then 44. 44 is last because it is debt made
+visible rather than a flow repaired, and its fix will produce a large honest
+number rather than a green tick.
+
+**Unchanged and still his:** the HS-200-09 canvas verdict gating 11-15, the pilot
+Project, and HS-200-05's remaining beats.
+
 
 2026-09-09: **HS-200-10 IS CLOSED.** Counsel-on-built hunted the built wire in two
 lanes — the boundary and the retrieval routes, then the verb, the reverse index,
