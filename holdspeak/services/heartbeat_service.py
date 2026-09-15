@@ -166,7 +166,12 @@ class HeartbeatService:
                 current["notify"] = n
         if "muted_projects" in patch:
             current["muted_projects"] = list(patch["muted_projects"])
-        # HS-174-08: runs_on setting.
+        # HS-174-08: runs_on setting. Selecting a remote host holds the
+        # WHOLE local sweep, not just the notification -- and since
+        # HS-200-43 R1 the heartbeat is the ONLY scheduler for graduated
+        # watches, so a non-"local" value stops local watch evaluation
+        # entirely until it is set back. The remote host is expected to
+        # run its own sweep; nothing here verifies that it does.
         if "runs_on" in patch:
             val = str(patch["runs_on"]).strip()
             current["runs_on"] = val if val else "local"
@@ -255,6 +260,11 @@ class HeartbeatService:
         """Record that the local loop held because runs_on is a remote host.
 
         Writes a quiet pipeline_events row (no notification, no kernel receipt).
+
+        HS-200-43 F3: this hold covers watch EVALUATION too. The heartbeat
+        is the single scheduler, so while `runs_on` names a remote host no
+        watch on this machine is evaluated -- fenced by
+        `test_phase200_watch_arming.TestRemoteRunnerHoldsTheSweep`.
         """
         from holdspeak.services.observer import PipelineEvent
 
@@ -302,11 +312,35 @@ class HeartbeatService:
 
     # ── The sweep ──────────────────────────────────────────────────────
 
-    def run_sweep(self, principal: Principal) -> dict[str, Any]:
+    def run_sweep(
+        self,
+        principal: Principal,
+        *,
+        owner_hand: bool = False,
+    ) -> dict[str, Any]:
         """Run one heartbeat sweep: evaluate due watches, refresh aggregate, receipt.
 
         Returns the sweep receipt payload.
+
+        ``owner_hand`` marks a sweep the owner asked for explicitly --
+        `Run now` on the Rhythm row, or the `heartbeat.run_now` tool.  ONE
+        keyword carries both exemptions, because they are one idea: he is
+        standing there watching it happen.
+
+        1. HS-200-43 F2 -- it evaluates EVERY due watch. The
+           `WATCH_SWEEP_MAX` bound protects the UNATTENDED heartbeat
+           thread, where nobody is waiting and the calendar refresh and
+           the receipt queue behind ~28 serial `gh`/`acli` subprocesses.
+        2. HS-200-43 P2-b -- it runs INSIDE quiet hours. `USER_GUIDE.md`
+           has always promised "Run now triggers one immediate sweep
+           (allowed during quiet hours)", but `held` was computed
+           unconditionally, so Run now at 23:00 did nothing at all and
+           reported success. The receipt records `quiet_overridden` when
+           the sweep fired inside the window.
         """
+        from holdspeak.services.watch_service import WATCH_SWEEP_MAX
+
+        limit = None if owner_hand else WATCH_SWEEP_MAX
         t0 = time.time()
         now = self._now_utc()
         settings = self.get_settings()
@@ -315,21 +349,51 @@ class HeartbeatService:
         # Quiet hours check. Quiet hours are the owner's LOCAL hours, so the one
         # sweep instant is converted to this machine's zone rather than read
         # from the clock a second time.
-        held = self.in_quiet_hours(self._now_local())
+        in_quiet = self.in_quiet_hours(self._now_local())
+        # P2-b: the owner's hand overrides quiet hours; the scheduled
+        # sweep does not. Recorded either way, so a receipt inside the
+        # window is never silently indistinguishable from one outside it.
+        held = in_quiet and not owner_hand
+        quiet_overridden = in_quiet and owner_hand
 
         outcomes: list[dict[str, Any]] = []
         rooms_evaluated = 0
         watch_count = 0
+        watches_baselined = 0
+        watches_deferred = 0
         errors: list[dict[str, Any]] = []
 
         if not held:
             # Call WatchService.evaluate_due to evaluate all due watches
             if self._watch_service is not None:
                 try:
-                    results = self._watch_service.evaluate_due(principal)
+                    results = self._watch_service.evaluate_due(
+                        principal, limit=limit,
+                    )
+                    # HS-200-43 F2: the sweep is BOUNDED (WATCH_SWEEP_MAX
+                    # per call, oldest-due first). What did not fit is not
+                    # dropped -- it stays due for the next sweep -- but the
+                    # receipt must say so, or a desk with more watches than
+                    # the bound looks like a desk that finished its work.
+                    # Read defensively: several existing tests inject a
+                    # MagicMock watch service, whose attributes are Mocks.
+                    _deferred = getattr(
+                        self._watch_service, "last_sweep_deferred", 0,
+                    )
+                    if isinstance(_deferred, int):
+                        watches_deferred = _deferred
                     if isinstance(results, list):
                         outcomes = results
-                        watch_count = len(results)
+                        # P2-a: a `baselined` outcome established a
+                        # baseline and diffed NOTHING (HS-200-43 F1).
+                        # Counting it as an evaluated watch would report
+                        # work that did not happen.
+                        watches_baselined = sum(
+                            1 for o in results
+                            if isinstance(o, dict)
+                            and o.get("outcome") == "baselined"
+                        )
+                        watch_count = len(results) - watches_baselined
                         # Count unique projects from evaluated watches
                         project_ids = set()
                         for o in results:
@@ -448,6 +512,9 @@ class HeartbeatService:
             "at": now.isoformat(timespec="seconds"),
             "rooms": rooms_evaluated,
             "watches": watch_count,
+            "watches_baselined": watches_baselined,
+            "watches_deferred": watches_deferred,
+            "quiet_overridden": quiet_overridden,
             "duration_ms": round(duration_ms, 1),
             "held": held,
             "errors": len(errors),

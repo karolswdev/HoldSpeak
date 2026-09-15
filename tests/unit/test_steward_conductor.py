@@ -1,9 +1,11 @@
 """HS-164-04: conductor integration -- two independent boundaries, event emission, projections.
 
 Tests:
-- TST-COND-001: A poisoned evaluate_due never stops run_due -- fault injection at block seam.
+- TST-COND-001: The conductor never calls evaluate_due at all (HS-200-43 R1:
+  the watch block was deleted; the heartbeat is the single scheduler), and
+  run_due still executes beside a watch service that would poison it.
 - TST-COND-002: A poisoned run_due never stops other conductor duties.
-- TST-COND-003: Both blocks tick under normal conditions (no errors).
+- TST-COND-003: The steward block ticks under normal conditions (no errors).
 - TST-COND-004: steward.run_started emits on execute_phases transition.
 - TST-COND-005: steward.step_completed emits per phase step.
 - TST-COND-006: steward.intervention_required emits on bounds-exhausted.
@@ -227,10 +229,15 @@ class TestBlockIsolation:
         finally:
             wc.set_scheduler_services(None, None)
 
-    def test_poisoned_evaluate_due_does_not_stop_run_due(
+    def test_conductor_never_calls_evaluate_due(
         self, tmp_path, monkeypatch,
     ) -> None:
-        """TST-COND-001: evaluate_due raises; run_due still executes."""
+        """TST-COND-001 (HS-200-43 R1): the tick does not evaluate watches.
+
+        A watch service wired into the conductor that would RAISE if
+        called proves the block is gone, not merely quiet -- and run_due
+        still executes past it.
+        """
         calls: list[str] = []
 
         class _PoisonWatch:
@@ -248,7 +255,8 @@ class TestBlockIsolation:
                 return []
 
         self._tick_with(monkeypatch, tmp_path, _PoisonWatch(), _TrackSteward())
-        assert calls == ["evaluate_due", "run_due", "projections"]
+        assert "evaluate_due" not in calls
+        assert calls == ["run_due", "projections"]
 
     def test_poisoned_run_due_does_not_stop_conductor(
         self, tmp_path, monkeypatch,
@@ -272,12 +280,18 @@ class TestBlockIsolation:
 
         # Must NOT raise out of the tick.
         self._tick_with(monkeypatch, tmp_path, _TrackWatch(), _PoisonSteward())
-        assert calls == ["evaluate_due", "run_due"]
+        # HS-200-43 R1: no "evaluate_due" -- the conductor's watch block
+        # is deleted; the heartbeat owns scheduled evaluation.
+        assert calls == ["run_due"]
 
     def test_conductor_tick_both_blocks_run(
         self, tmp_path, monkeypatch,
     ) -> None:
-        """TST-COND-003: healthy services; watch block ticks before steward."""
+        """TST-COND-003: healthy services; the steward block ticks.
+
+        HS-200-43 R1: there is no watch block in the conductor any more,
+        so the wired watch service is never touched.
+        """
         calls: list[str] = []
 
         class _W:
@@ -295,7 +309,7 @@ class TestBlockIsolation:
                 return []
 
         self._tick_with(monkeypatch, tmp_path, _W(), _S())
-        assert calls == ["evaluate_due", "run_due", "projections"]
+        assert calls == ["run_due", "projections"]
 
     def test_not_wired_skips_honestly(self, tmp_path, monkeypatch) -> None:
         """Unwired schedulers skip; the tick never builds crippled services."""

@@ -702,6 +702,30 @@ def reconcile_schema(
             exc,
         )
 
+    # HS-200-43: arm every enabled, graduated watch that has never been
+    # armed. `list_due_watches` refuses a NULL `next_evaluation_at`, and
+    # before this story the ONLY writer of that column sat inside
+    # `evaluate_due` -- so every watch created by the Door, the Interview,
+    # `ensure_meeting_watch`, or promoted out of the legacy `state=''` set
+    # by `_backfill_watch_graduation` was unschedulable forever (the
+    # owner's desk: 32 watches, 30 enabled, 2 armed).
+    #
+    # This runs UNGATED, beside the HS-200-10 backfill above and for the
+    # same reason: `_apply_data_backfills` runs only `if shape_changed`,
+    # which is dead on an up-to-date desk -- the exact shape of HS-200-10's
+    # B3 lesson. Its own SAVEPOINT, swallowed and logged on failure, so a
+    # reconcile that cannot arm still opens the desk.
+    try:
+        armed = _arm_unarmed_watches(conn)
+        if armed:
+            log.info("Reconcile: armed %d previously unarmed watch(es)", armed)
+    except Exception as exc:  # pragma: no cover - never block a reconcile
+        log.warning(
+            "Reconcile: watch arming backfill skipped (%s: %s)",
+            type(exc).__name__,
+            exc,
+        )
+
     post_tables = {
         row[0]
         for row in conn.execute(
@@ -1280,3 +1304,47 @@ def _backfill_watch_graduation(conn: sqlite3.Connection) -> None:
             "watch-graduation backfill: graduated %d row(s) to WatchSpec@1",
             graduated,
         )
+
+
+def _arm_unarmed_watches(conn: Any) -> int:
+    """Give every enabled, graduated, never-armed watch a first due time.
+
+    HS-200-43 R4. Idempotent by its own `next_evaluation_at IS NULL`
+    predicate: a second run matches nothing.
+
+    The arming rule mirrors `watch_service.compute_arm_time`: due NOW,
+    baseline or no baseline. A row with an EMPTY baseline is safe to arm
+    because `_evaluate_core` makes the first evaluation of an empty
+    baseline SILENT (HS-200-43 F1) -- it establishes the snapshot and
+    reports nothing. Arming such a row a cadence out, as this backfill
+    first did, only postponed the discovery flood; it never prevented it.
+
+    Untouched on purpose: paused, retired (a retired meeting-watch
+    tombstone is never resurrected), legacy `state=''` rows (owned by
+    `ReactionService.refresh_due_watches` -- never two schedulers on one
+    row), disabled rows, and any row already armed. Archived projects are
+    NOT excluded here: `list_due_watches` filters them at read time, and
+    a project that is un-archived must find its watches armed.
+
+    Wrapped in its own SAVEPOINT, RELEASEd on every path, so the
+    connection comes back with no open transaction.
+    """
+    conn.execute("SAVEPOINT arm_unarmed_watches")
+    try:
+        cur = conn.execute(
+            """
+            UPDATE connector_watches
+               SET next_evaluation_at =
+                     strftime('%Y-%m-%dT%H:%M:%S', 'now') || '+00:00'
+             WHERE next_evaluation_at IS NULL
+               AND enabled = 1
+               AND state IN ('active', 'tested')
+            """
+        )
+        changed = int(cur.rowcount or 0)
+    except Exception:
+        conn.execute("ROLLBACK TO SAVEPOINT arm_unarmed_watches")
+        conn.execute("RELEASE SAVEPOINT arm_unarmed_watches")
+        raise
+    conn.execute("RELEASE SAVEPOINT arm_unarmed_watches")
+    return changed

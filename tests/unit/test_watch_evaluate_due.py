@@ -879,8 +879,17 @@ class TestEffectRecordingInEvaluateDue:
         matched = json.loads(row[0])
         assert rule_id in matched
 
-    def test_evaluate_once_does_not_record_effects(self, tmp_path) -> None:
-        """Manual evaluate_once NEVER records effects (byte-identical)."""
+    def test_evaluate_once_records_effects(self, tmp_path) -> None:
+        """Manual evaluate_once records effects, like a scheduled run.
+
+        HS-200-43 R5 REVERSES this test. It used to assert
+        `len(effects) == 0` and named that "byte-identical" -- but the
+        behaviour it pinned was the defect: `_match_and_record_effects`
+        had exactly one caller, inside `evaluate_due`, so the owner could
+        evaluate a watch by hand all day and the steward would never see
+        a thing (`watch_effects` on his desk: 0). Both paths now go
+        through `_record_effects_if_any`.
+        """
         db = Database(tmp_path / "eff-manual.db")
         _make_watch(db, "w-manual-eff")
         _graduate_watch(db, "w-manual-eff", cadence_minutes=60)
@@ -911,10 +920,14 @@ class TestEffectRecordingInEvaluateDue:
         svc.baseline_watch(OWNER, "w-manual-eff")
 
         result = svc.evaluate_once(OWNER, "w-manual-eff")
-        # Manual evaluation does not record effects.
         eval_id = result["evaluation_id"]
         effects = db.automations.list_effects(eval_id)
-        assert len(effects) == 0
+        assert len(effects) == 1
+        assert effects[0]["action_kind"] == "project.steward.run_once"
+        assert effects[0]["state"] == "pending"
+        assert len(result.get("effects", [])) == 1
+        # The internal raw-transition channel never reaches the caller.
+        assert "_transitions" not in result
 
     def test_changed_to_condition_matches(self, tmp_path) -> None:
         """A changed_to comparison matches when the field changed to

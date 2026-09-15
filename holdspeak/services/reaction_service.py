@@ -231,6 +231,16 @@ class ReactionService:
         self._owner(principal)
         if not self._repo.set_watch_enabled(watch_id, enabled):
             raise NotFound("watch", watch_id)
+        if enabled:
+            # HS-200-43: enabling arms -- but ONLY a graduated row.
+            # `arm_watch` itself refuses a disabled, paused, retired or
+            # legacy (state='') watch, so a legacy row stays owned by
+            # refresh_due_watches and never crosses into evaluate_due's
+            # territory. Disabling writes nothing: `list_due_watches`
+            # already filters on `enabled = 1`, so a stale
+            # next_evaluation_at on a disabled row is inert.
+            from .watch_service import arm_watch
+            arm_watch(self._repo, watch_id)
         return self._repo.get_watch(watch_id) or {}
 
     def preview_watch(self, principal: Principal, watch_id: str,

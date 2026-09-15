@@ -1140,6 +1140,15 @@ GitHub API. In the walk, this was solved with a file-based fixture.
 In production, watch evaluation requires live `gh` auth (the adapter
 reads stored snapshots, but evaluation fetches new ones).
 
+Since HS-200-43, `project.watch.evaluate` **records `watch_effects`** just as
+a scheduled evaluation does — under the same evaluation-derived idempotency
+key, so a manual run followed by a scheduled one mints exactly one effect —
+and `project.steward.run_due` can act on what it mints. The first evaluation
+of a watch that has no baseline is deliberately silent: it establishes the
+baseline and returns `state: "baselined"` with zero transitions, zero
+observations and zero effects, so a watch cannot discover its whole source
+as new.
+
 This is pre-existing composition debt: the web app injects the fetcher
 at server startup; the sidecar does not. The watch tools will return
 `connector_unavailable` when evaluation requires a live fetch and no

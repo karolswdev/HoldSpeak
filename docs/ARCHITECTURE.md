@@ -834,7 +834,72 @@ and their lifetimes:
 The Heartbeat thread (`runtime/heartbeat.py`) ticks every 60 seconds and
 checks whether a sweep is due. When due, it calls
 `HeartbeatService.run_sweep` (`services/heartbeat_service.py`), which
-performs three steps:
+performs three steps.
+
+The Heartbeat is the **only** scheduler for graduated Watches (HS-200-43).
+The workbench conductor used to call `evaluate_due` as well, every 60
+seconds, with no quiet-hours check — and both paths advanced
+`next_evaluation_at` identically, so the conductor always won the race and
+the quiet-hours promise was not kept. That block is deleted; the conductor
+keeps the Steward scheduler only. The Heartbeat evaluates through the
+app-wired `WatchService` (`workbench_conductor.get_scheduler_services`), not
+a bare one, so scheduled evaluation runs the same fully-wired instance the
+app serves.
+
+**Quiet hours hold the whole sweep** — no watch is evaluated and no
+notification is sent; the first sweep after quiet hours end catches up.
+That is the SCHEDULED sweep. **Run now is the owner's override**: it runs
+inside quiet hours and the receipt records `quiet_overridden: true`
+(`run_sweep(..., owner_hand=True)`). Before HS-200-43 `held` was computed
+unconditionally, so Run now at 23:00 did nothing and reported success —
+contradicting this document and the User Guide both.
+
+**A remote `runs_on` also holds the whole sweep**, evaluation included
+(`runtime/heartbeat.py`). Setting the Rhythm row's runner to anything but
+`local` stops local watch evaluation entirely — the remote host is expected
+to run its own sweep, and nothing verifies that it does. The hold is
+receipted quietly through `HeartbeatService.record_held_remote`.
+
+**The sweep is bounded.** `evaluate_due` evaluates at most
+`WATCH_SWEEP_MAX` (10) watches per call, oldest-due first (`ORDER BY
+next_evaluation_at ASC, id ASC` — a total order, since arming puts many
+rows on the same instant), because each watch can cost a serial
+`gh`/`acli` subprocess with a 5-10s timeout on the heartbeat thread with
+the calendar refresh and the receipt queued behind it. Watches that do not
+fit stay due and the next sweep takes them, oldest first, so none can
+starve; the receipt carries `watches_deferred` beside `watches`.
+
+### The owner's hand
+
+Four paths are the owner asking explicitly, and they are exempt from both
+bounds above — he is standing there watching it happen:
+`POST /api/steward/trigger`, the MCP `project.steward.trigger` tool (both
+call `evaluate_due(..., limit=None)`), **Run now** on the Rhythm row
+(`POST /api/settings/heartbeat/run-now`) and the MCP `heartbeat.run_now`
+tool (both call `run_sweep(..., owner_hand=True)`, which means unbounded
+*and* not held by quiet hours). Only `runtime/heartbeat.py`'s scheduled
+loop takes the defaults.
+
+### The first evaluation of a watch is silent
+
+A Watch is armed the moment it is created or enabled — `next_evaluation_at`
+is set by the creation path, by `resume`, and by an ungated reconcile
+backfill for rows already on disk (before HS-200-43 the only writer of that
+column lived inside `evaluate_due`, so a Watch the scheduler had never run
+could never be selected by it: 32 Watches on the owner's desk, 2 armed).
+
+Because evaluation diffs against `snapshot_json` and `diff_snapshots` emits
+a *discovered* event for every entity absent from the baseline, arming a
+Watch whose baseline is empty would make its first run report the whole
+source as new — measured at 30 entities → 30 transitions, 30 observations,
+1 effect. So `_evaluate_core` makes the first evaluation of an empty
+baseline **silent**: it establishes the snapshot, writes **no evaluation
+row**, and returns `state: "baselined"` with zero transitions, zero
+observations and zero effects. The second run is an ordinary diff against a
+real baseline. The sweep receipt counts these as `watches_baselined`, kept
+out of `watches`, which counts diffed evaluations only.
+
+The three steps:
 
 1. **Evaluate due watches** via `WatchService.evaluate_due`. Each
    graduated Watch with `next_evaluation_at <= now` is evaluated against
@@ -851,8 +916,9 @@ performs three steps:
    (Article XI.2) and a `pipeline_events` entry with the duration,
    watch count, room count, and the bounded outcome summary.
 
-After the sweep, the Heartbeat evaluates the notification edge and quiet
-hours. The notifier (`desktop_notify.py`) fires a macOS banner via
+After the sweep, the Heartbeat evaluates the notification edge. (Quiet
+hours were already decided before step 1: a held sweep evaluates nothing
+and notifies nothing.) The notifier (`desktop_notify.py`) fires a macOS banner via
 `osascript` (the PyObjC `UserNotifications` bridge is not in the venv)
 or a Linux banner via the libnotify seam. Every notification writes a
 `heartbeat.notify` receipt.
@@ -873,14 +939,14 @@ sequenceDiagram
 
   loop Every 60s tick
     HB->>HS: is sweep due?
-    alt sweep due
+    alt sweep due and not quiet hours
       HS->>WS: evaluate_due(principal)
       WS-->>HS: outcomes[]
       HS->>AGG: invalidate + rebuild
       AGG-->>HS: {count, items, computedAt, stale, sweepId}
       HS->>KO: write heartbeat.sweep receipt
-      HS->>DN: edge check + quiet hours
-      alt rising edge and not quiet
+      HS->>DN: notification edge check
+      alt rising edge
         DN->>DN: osascript / libnotify banner
         DN->>KO: write heartbeat.notify receipt
       end

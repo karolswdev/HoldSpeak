@@ -2320,6 +2320,12 @@ class ProjectService:
             )
 
             # 2. Activate selected+passed proposals as Watch rows
+            # HS-200-43: function-local import -- watch_service imports the
+            # reaction/diff stack, and project_service is imported by it in
+            # turn through the setup service; a module-level import here
+            # closes a cycle.
+            from .watch_service import compute_arm_time as _compute_arm_time
+
             activated_watches: list[dict[str, Any]] = []
             for proposal in proposals:
                 spec = proposal.get("spec") or {}
@@ -2383,6 +2389,15 @@ class ProjectService:
                     test_state="passed",  # carried from proposal test
                     created_at=now_iso,
                     updated_at=now_iso,
+                    # HS-200-43: ARM the row in the same transaction that
+                    # creates it, due now. Without this the watch is
+                    # unschedulable forever -- `list_due_watches` refuses a
+                    # NULL. `baseline_state='established'` above is written
+                    # before any snapshot exists, so it is not evidence of a
+                    # baseline; if the caller's `baseline_watch` raises, the
+                    # first scheduled run establishes the baseline silently
+                    # (F1) rather than discovering the whole source.
+                    next_evaluation_at=_compute_arm_time(),
                 )
 
                 # 3. Create watch_rules via sanctioned repo helper
