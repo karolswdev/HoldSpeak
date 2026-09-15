@@ -453,19 +453,57 @@ missing feature, but a second instance of something that should have been one.
 
 ### 4. What is chartered and what order
 
-**HS-200-42** drain the intel queue (G1) → **43** arm the watch + make manual
-evaluation record effects, and RULE on the double scheduler (G1) → **45** one
-composition root (G0) → **44** the canon guard sees its own violations (G0).
+Five stories, all `ready`, none started:
 
-42 first because it unblocks 12, 13, 16 and the pilot. 44 last because it makes
-debt visible rather than repairing a flow. **He was offered the option of doing 45
-first** (it is the architecture, and it precedes HS-200-28 and any wire-face work)
-and has not ruled.
+| Story | Gate | What it repairs |
+|---|---|---|
+| **HS-200-42** | G1 | drain the intel queue — a finished meeting produces intelligence |
+| **HS-200-43** | G1 | arm the watch; make manual evaluation record effects; RULE on the double scheduler |
+| **HS-200-45** | G0 | one composition root — MCP goes through the hub's services |
+| **HS-200-44** | G0 | the canon guard sees its own violations |
+| **HS-200-46** | G0 | a stale document fails CI — the claims registry behind §7b |
+
+**Order: 42 → 43 → 45 → 44**, with **46 pairing with 45** (that is where the first
+`known_false` claims flip). 42 first because it unblocks 12, 13, 16 and the pilot.
+44 last because it makes debt visible rather than repairing a flow, and its honest
+output is a large number rather than a green tick. **He was offered the option of
+doing 45 first** — it is the architecture, and it precedes HS-200-28 and any
+wire-face work — and has not ruled.
 
 **NOT chartered: the X11 wire face.** It wants a phase and it needs his word. The
 audit's §11 has what each half costs and the cheapest honest first steps — a
 parity test binding the three drifted verb lists, and making `desk_snapshot`
-either return layout or stop advertising it.
+either return layout or stop advertising it. (46 pays the cheap half of both.)
+
+### 4b. STATE AT HANDOFF — read this before you touch anything
+
+**No code has been written since HS-200-10 merged.** Everything after it is
+planning, and all of it sits **UNPUSHED on `main`**:
+
+```
+ab3bfb83  docs(200-46): the claims registry
+4d058cd2  docs(handover): Muad'Dib XIX  (this file)
+196d338b  docs(200-45): two composition roots, not a second writer
+b87c376e  docs(200): four stories chartered out of the audit
+d33c4a1f  docs(audit): the operational surface, measured
+```
+
+**Two asks are open with him and both were put to him plainly:**
+
+1. **Push those five, or move them to a branch with a PR?** They landed on `main`
+   directly, which was the orchestrator's slip — the repo's law is a PR to main.
+   Do not push them on your own initiative; ask, or branch.
+2. **Start HS-200-42?** He has not said go. Four exchanges in a row were planning;
+   the next honest move is building, not another document.
+
+**Working tree is clean.** Phase 200 stands at **10 done, 2 in-progress (05, 09),
+5 ready (42-46), the rest backlog.** His hub (pid from Tuesday) still runs
+pre-200-10 code at schema v77.
+
+**Do not call `mcp__holdspeak__*` tools against his desk** until he rules on
+`.mcp.json` — the sidecar opens his live database as a second writer (§3, and
+`reference_mcp_sidecar_second_writer`). That file is his configuration; do not
+edit it.
 
 ### 5. Still his, carried forward
 
