@@ -131,12 +131,19 @@ FAILED tests/e2e/test_hs176_loop_glass.py::test_speak_loop_393 - AssertionErr...
 
 **Note on the 04:41:26Z capture above (exit 1):** the one failure was
 `tests/e2e/test_hs176_loop_glass.py::test_speak_loop_393`, a Phase 176 glass leg
-this story does not touch in code. Characterized serially: untouched main passes
-the file 3 of 3 runs (6/6 legs); this branch passes 3 of 6 runs, failing at
-different beats and widths (line 278, the taught rule not applied on the second
-speak; line 324, an attribute reading `false`). That is branch-affected, not an
-inherited flake, and it is under investigation before merge. The capture is
-kept as the honest record; the run below is the same set without it.
+this story does not touch in code. First read as branch-affected (main 6/6
+legs, branch 3/6). Bisected: reverting each of this branch's web changes still
+failed, and the pre-story base failed under the same load — the failure rate
+tracked how busy the machine was, not what was in the tree. The cause is a
+pre-existing paint race in the window-wings species (`web/src/desk/surface/
+wings.tsx`): the wing strip lives in the window head and was bridged to the
+body by a passive `useEffect`, so every wing change painted in two commits
+and the head named the old wing over the new body for up to ~600 ms at 393.
+Line 324 reads `aria-selected` on the Journal tab the instant the body
+appears. Fixed at the source with `useLayoutEffect` (head and body land in
+one paint, every window that uses wings); measured lag 0 ms; 6/6 serial runs
+green after the fix (the last capture below). The failing capture is kept as
+the honest record.
 
 ### Captured run — 2026-09-15T04:44:32Z
 
@@ -148,4 +155,16 @@ kept as the honest record; the run below is the same set without it.
 ```text
 ............................................................             [100%]
 60 passed in 33.23s
+```
+
+### Captured run — 2026-09-15T05:12:41Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Ls25hZsEt PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q -p no:randomly tests/e2e/test_hs176_loop_glass.py tests/e2e/test_hs168_window_wings_glass.py tests/e2e/test_hs176_journal_glass.py tests/e2e/test_hs170_meetings_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** a6c1d9b0f687d4b60b64357e48e659ea4f6f5820
+
+```text
+.................                                                        [100%]
+17 passed in 90.51s (0:01:30)
 ```
