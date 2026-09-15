@@ -166,10 +166,16 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       setReceipt({ text: `QUEUED ${clockTime(new Date().toISOString())}` });
       // HS-200-42: when the route says no drainer exists, polling every 3s for
       // 120s is a lie told forty times — nothing in the hub will move this job.
-      // Reload once so the row shows the server's own QUEUED state, and stop.
+      // Stop the poll and refresh the row once.
+      //
+      // `runningId` / `runHost` are deliberately LEFT SET. They are this
+      // click's Article III receipt — where the run would egress is a fact
+      // the click established, and it is owed to the user whether or not a
+      // drainer exists. Clearing them removed the host chip from the row
+      // (caught by tests/e2e/test_hs170_meetings_glass.py S-3). The row's
+      // own token stays honest: `MeetingStreamRow` reads NOT DRAINING rather
+      // than RUNNING while the drainer is absent.
       if (result.drainer !== "running") {
-        setRunningId(null);
-        setRunHost(null);
         void meetings.reload();
         return;
       }

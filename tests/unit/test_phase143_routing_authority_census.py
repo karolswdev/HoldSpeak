@@ -96,8 +96,17 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/services/refinement_coordinator.py:310:ref:resolve_thought_placement",
     "holdspeak/services/refinement_thought_service.py:640:import:resolve_thought_placement",
     "holdspeak/services/refinement_thought_service.py:681:ref:resolve_thought_placement",
-    "holdspeak/services/meeting_intel_service.py:71:import:resolve_meeting_placement",
-    "holdspeak/services/meeting_intel_service.py:73:ref:resolve_meeting_placement",
+    # HS-200-42 census review (2026-09-14): :71/:73 -> :79/:81. LINE DRIFT
+    # ONLY. `run_intelligence` gained eight docstring lines above this block;
+    # the import and the single enqueue-time `resolve_meeting_placement(...)`
+    # call are unchanged in module, function, and purpose, and no new
+    # resolver, import, or read was introduced. The story's execution-time
+    # host is NOT a second resolver: it reads the frozen DeploymentRevision
+    # off the claimed route plan (`meeting_session/deferred_bound.py:
+    # BoundDeferredIntelJob.egress_model_host`), which is immutable evidence,
+    # not mutable placement authority.
+    "holdspeak/services/meeting_intel_service.py:79:import:resolve_meeting_placement",
+    "holdspeak/services/meeting_intel_service.py:81:ref:resolve_meeting_placement",
     # HS-172: resolve_meeting_placement in routing_glue, mcp/tools, settings route
     "holdspeak/runtime/routing_glue.py:374:import:resolve_meeting_placement",
     "holdspeak/runtime/routing_glue.py:375:ref:resolve_meeting_placement",

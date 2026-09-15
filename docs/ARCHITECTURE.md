@@ -488,7 +488,7 @@ sequenceDiagram
   participant PS as persistence.py<br/>(session save)
   participant PD as project_detector.py<br/>(associate Rooms)
   participant IQ as intel_queue.py<br/>(deferred queue)
-  participant DR as intel_queue_conductor.py<br/>(hub drainer, HS-200-42)
+  participant DR as intel_queue_conductor.py<br/>(hub drainer)
   participant DC as decision_capture<br/>(plugin)
   participant AO as action_owner_enforcer<br/>(plugin)
   participant FT as FollowThroughService<br/>(proposal bridge)

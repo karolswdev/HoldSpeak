@@ -65,10 +65,12 @@ function MeetingStreamRow({
     displayTone = "accent";
   }
 
-  // If the job is running, override the state
+  // If the job is running, override the state. HS-200-42: `isRunning` is
+  // this client's OPTIMISM about a click, not the server's state — so when
+  // the hub has no drainer it is not running and never will be.
   if (isRunning) {
-    displayLabel = "RUNNING";
-    displayTone = "warn";
+    displayLabel = drainerAbsent ? "NOT DRAINING" : "RUNNING";
+    displayTone = drainerAbsent ? "danger" : "warn";
   }
   // HS-200-42 (counsel N1): a job the hub has nobody to execute is not
   // "queued" in any useful sense. Same token and tone the Chair uses.
