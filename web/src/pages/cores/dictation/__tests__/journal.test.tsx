@@ -165,7 +165,8 @@ describe("the Journal row grammar", () => {
     render(<Journal />);
 
     const line = await screen.findByText("Ship the Q4 platform in October");
-    fireEvent.click(line.closest("button")!);
+    // HS-200-42 (counsel F3): the ledger line is role="button", not <button>.
+    fireEvent.click(line.closest('[role="button"]')!);
 
     // The 175 law: a replacing face keeps its verbs.
     expect(screen.getByRole("button", { name: "Replay" })).toBeInTheDocument();

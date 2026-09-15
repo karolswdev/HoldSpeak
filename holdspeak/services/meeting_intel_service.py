@@ -49,8 +49,16 @@ class MeetingIntelService:
         """HS-170-04: enqueue a fresh intelligence job for a meeting.
 
         Named verb for the face's 'Run intelligence' button. Returns
-        ``{jobId, state, host}`` where host is the assigned model's egress
-        host at the point of decision (Article III).
+        ``{jobId, state, host, drainer, expectedWithinSeconds}`` where host is
+        the assigned model's egress host at the point of decision (Article III).
+
+        HS-200-42: the verb enqueues, and until the hub grew a drainer nothing
+        executed what it enqueued (audit 2026-09-13 §3.1) — so this returned
+        ``queued`` while the queue was never drained. It now wakes the hub's
+        drainer and reports honestly whether one exists: ``drainer`` is
+        ``"running"`` or ``"absent"``, and ``expectedWithinSeconds`` is 0 when
+        a woken drainer will pick the job up immediately and ``None`` when
+        nothing will.
         """
         outcome = self._db.intel.request_intel_retry(meeting_id, reason="Run intelligence")
         errors = {
@@ -81,10 +89,24 @@ class MeetingIntelService:
         # HS-172-02: record the host on the job row at enqueue time.
         self._db.intel.set_intel_job_model_host(meeting_id, host)
         job = self._db.intel.get_intel_job(meeting_id)
+        # Wake the hub drainer so the job runs now rather than at the next
+        # poll. `woken` is False when there is no drainer in this process.
+        try:
+            from ..intel_queue_conductor import (
+                drainer_state,
+                wake_intel_queue_conductor,
+            )
+
+            woken = wake_intel_queue_conductor()
+            drainer = drainer_state()
+        except Exception:
+            woken, drainer = False, "absent"
         return {
             "jobId": job.job_id if job else meeting_id,
             "state": "queued",
             "host": host,
+            "drainer": drainer,
+            "expectedWithinSeconds": 0 if (woken and drainer == "running") else None,
         }
     def get_recovery(self, principal: Principal | None, meeting_id: str) -> dict[str, Any]:
         meeting = self._db.meetings.get_meeting(meeting_id)

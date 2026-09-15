@@ -17,6 +17,8 @@ def test_worker_start_and_stop(monkeypatch) -> None:
         model_path=None,
         *,
         provider="local",
+        # HS-200-42: the worker now forwards the finished-meeting callback.
+        on_meeting_ready=None,
         cloud_model="gpt-5-mini",
         cloud_api_key_env="OPENAI_API_KEY",
         cloud_base_url=None,
@@ -30,6 +32,7 @@ def test_worker_start_and_stop(monkeypatch) -> None:
     ):
         _ = (
             provider,
+            on_meeting_ready,
             cloud_model,
             cloud_api_key_env,
             cloud_base_url,
@@ -48,15 +51,21 @@ def test_worker_start_and_stop(monkeypatch) -> None:
     monkeypatch.setattr(
         intel_queue_module,
         "get_database",
+        # HS-200-42: the double now has the shape the REAL `Database` has —
+        # the summary hangs off `.intel`. The old flat double asserted a
+        # surface that never existed, so it hid the AttributeError the worker
+        # raised on every failure-alert check.
         lambda: SimpleNamespace(
-            get_intel_queue_summary=lambda: SimpleNamespace(
-                total_jobs=0,
-                queued_jobs=0,
-                running_jobs=0,
-                failed_jobs=0,
-                queued_due_jobs=0,
-                scheduled_retry_jobs=0,
-                next_retry_at=None,
+            intel=SimpleNamespace(
+                get_intel_queue_summary=lambda: SimpleNamespace(
+                    total_jobs=0,
+                    queued_jobs=0,
+                    running_jobs=0,
+                    failed_jobs=0,
+                    queued_due_jobs=0,
+                    scheduled_retry_jobs=0,
+                    next_retry_at=None,
+                )
             )
         ),
     )

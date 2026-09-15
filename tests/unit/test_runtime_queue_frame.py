@@ -52,9 +52,11 @@ def test_frame_carries_jobs_and_summary(db) -> None:
 
 def test_empty_queue_is_an_honest_empty_frame(db) -> None:
     frame = build_runtime_queue_frame(db)
+    # HS-200-42 (counsel N1): the frame also names WHO will execute the
+    # queue. With no hub drainer in this process that is honestly "absent".
     assert frame == {
         "jobs": [], "queued": 0, "running": 0, "failed": 0,
-        "scheduled_retries": 0, "next_retry_at": None,
+        "scheduled_retries": 0, "next_retry_at": None, "drainer": "absent",
     }
 
 

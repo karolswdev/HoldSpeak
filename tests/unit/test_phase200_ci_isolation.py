@@ -307,5 +307,7 @@ def test_the_shutdown_handler_stops_every_conductor_it_started() -> None:
         "stop_calendar_ingest_conductor",
         "stop_conductor",
         "stop_scheduled_recording_conductor",
+        # HS-200-42: the fourth conductor (the intel-queue drainer).
+        "stop_intel_queue_conductor",
     ):
         assert stop in body, f"{stop} is not called on shutdown"

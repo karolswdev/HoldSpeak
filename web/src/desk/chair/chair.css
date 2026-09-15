@@ -382,6 +382,11 @@
 .arrival-meeting-badge[data-badge="ran"] {
   color: var(--success, #38a169);
 }
+/* HS-200-42 — a job was enqueued with nothing in the hub to execute it.
+   The same danger tone FAILED wears: it is a problem, not a stage. */
+.arrival-meeting-badge[data-badge="not-draining"] {
+  color: var(--danger, #c53030);
+}
 
 /* ── Proposal prefix (HS-172-03) ───────────────────────────────────── */
 .arrival-proposal-prefix {

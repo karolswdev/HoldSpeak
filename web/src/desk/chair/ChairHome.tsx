@@ -14,6 +14,7 @@ import { apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { intelBadge } from "./intelBadge";
+import { useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { labelFor, supportsDoorVerb, commandForDoorVerb } from "./doorVerbs";
 import {
   SurfaceSection,
@@ -389,6 +390,14 @@ function Arrival() {
   // ── meetings ──
   const meetings = useDesk((s) => s.items.meeting);
 
+  // HS-200-42 (counsel N1): WHO will execute the queue. The `runtime_queue`
+  // frame (the same one the ambient HUD chip reads) now carries the hub
+  // drainer's state, so "queued with nothing to run it" is a durable fact on
+  // the row rather than a sub-second flash of the click receipt. `null` means
+  // no frame has arrived yet — unknown, and never reported as absent.
+  const queueFrame = useRuntimeFrame<{ drainer?: string }>("runtime_queue");
+  const drainerAbsent = queueFrame?.drainer === "absent";
+
   // ── agents (coders sessions) ──
   const [agentSessions, setAgentSessions] = useState<Record<string, unknown>[]>([]);
   useEffect(() => {
@@ -505,16 +514,30 @@ function Arrival() {
 
   // ── intel run (S-2: response carries host for the egress chip) ──
   const [runningIntel, setRunningIntel] = useState<string | null>(null);
-  const [intelReceipt, setIntelReceipt] = useState<{ meetingId: string; host: string } | null>(null);
+  // HS-200-42: the receipt carries the DRAINER's state too. The verb
+  // enqueues; whether anything executes the queue is a separate fact, and
+  // the face must not say "Running..." when the answer is "nothing will".
+  const [intelReceipt, setIntelReceipt] = useState<
+    { meetingId: string; host: string; drainer: string } | null
+  >(null);
   const runIntelligence = async (meetingId: string) => {
     setRunningIntel(meetingId);
     setIntelReceipt(null);
     try {
-      const result = await apiFetch<{ jobId: string; state: string; host: string }>(
+      const result = await apiFetch<{
+        jobId: string;
+        state: string;
+        host: string;
+        drainer?: string;
+      }>(
         `/api/meetings/${encodeURIComponent(meetingId)}/intelligence/run`,
         { method: "POST" },
       );
-      setIntelReceipt({ meetingId, host: result.host || "THIS DEVICE" });
+      setIntelReceipt({
+        meetingId,
+        host: result.host || "THIS DEVICE",
+        drainer: result.drainer === "running" ? "running" : "absent",
+      });
       void useDesk.getState().refresh();
       clearWriteFailure();
     } catch (error) {
@@ -522,6 +545,20 @@ function Arrival() {
     }
     finally { setRunningIntel(null); }
   };
+
+  // HS-200-42 (counsel F2): the receipt is a PRE-REFRESH optimistic state and
+  // nothing more. It used to pin the Chair badge to QUEUED forever, so the
+  // story-42 walk caught the Chair reading QUEUED while the Meetings window
+  // read RUNNING at the same instant. The moment the server's own status for
+  // that meeting leaves `off`, the receipt is dropped and the badge follows
+  // the server — which is also what puts the verb back after a failed job
+  // that returns to an off-with-transcript row.
+  useEffect(() => {
+    if (!intelReceipt) return;
+    const row = meetings.find((m) => m.id === intelReceipt.meetingId);
+    if (!row) return;
+    if (intelBadge(row.intelStatus) !== "OFF") setIntelReceipt(null);
+  }, [meetings, intelReceipt]);
 
   // ── proposal confirm: optimistically remove from needs-you ──
   const handleProposalConfirm = useCallback((proposalId: string) => {
@@ -773,6 +810,7 @@ function Arrival() {
             meetings={meetings}
             runningIntel={runningIntel}
             intelReceipt={intelReceipt}
+            drainerAbsent={drainerAbsent}
             onRunIntel={runIntelligence}
           />
         </div>
@@ -1234,11 +1272,14 @@ function MeetingsSection({
   meetings,
   runningIntel,
   intelReceipt,
+  drainerAbsent,
   onRunIntel,
 }: {
   meetings: Meeting[];
   runningIntel: string | null;
-  intelReceipt: { meetingId: string; host: string } | null;
+  intelReceipt: { meetingId: string; host: string; drainer: string } | null;
+  /** The `runtime_queue` frame says no hub drainer will execute the queue. */
+  drainerAbsent: boolean;
   onRunIntel: (id: string) => void;
 }) {
   // Sort by startedAt descending, limit to 3.
@@ -1251,7 +1292,20 @@ function MeetingsSection({
       <SurfaceLedger count={null} cols="room">
         {sorted.map((m) => {
           const receipt = intelReceipt?.meetingId === m.id ? intelReceipt : null;
-          const badge = receipt ? "QUEUED" : intelBadge(m.intelStatus);
+          // HS-200-42 (counsel F1): the honest surface is the BADGE. The verb
+          // label could never carry the drainer fact — the moment a receipt
+          // exists the row is no longer OFF and the verb leaves the DOM (the
+          // story-42 walk shot both worlds and got identical pixels). A queued
+          // job with nothing to execute it says so here, in the badge species'
+          // own vocabulary.
+          const serverBadge = intelBadge(m.intelStatus);
+          const badge = receipt
+            ? receipt.drainer === "running"
+              ? "QUEUED"
+              : "NOT DRAINING"
+            : serverBadge === "QUEUED" && drainerAbsent
+              ? "NOT DRAINING"
+              : serverBadge;
           const hasTranscript = m.transcriptWords != null && m.transcriptWords > 0;
           const isOff = badge === "OFF";
           const isComplete = badge === "RAN" || badge === "SAVED";
@@ -1272,7 +1326,7 @@ function MeetingsSection({
                   ) : (
                     <span
                       className="arrival-meeting-badge"
-                      data-badge={badge.toLowerCase()}
+                      data-badge={badge.toLowerCase().replace(/\s+/g, "-")}
                       data-testid="arrival-meeting-badge"
                     >
                       {badge}
@@ -1295,7 +1349,10 @@ function MeetingsSection({
                     onClick={() => onRunIntel(m.id)}
                     data-testid="arrival-run-intel"
                   >
-                    {runningIntel === m.id ? "Running..." : "Run intelligence"}
+                    {/* In flight: the same label, disabled. Nothing is queued
+                        until the route answers 2xx, and the badge says the
+                        rest. */}
+                    Run intelligence
                   </Button>
                 ) : isComplete ? (
                   <Button

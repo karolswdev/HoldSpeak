@@ -85,6 +85,26 @@ class DatabaseOwnershipMixin:
         except Exception as exc:  # pragma: no cover - the claim already stands
             log.debug(f"Could not record the serving port on the owner claim: {exc}")
 
+    def _stop_writers_and_release_database(self) -> None:
+        """Join this process's queue writers, THEN hand the database back.
+
+        HS-200-42 (counsel P1-1): the hub's intel drainer can be inside a
+        model call writing rows. ``server.stop()`` joins the uvicorn thread
+        for 10s, which is shorter than the drainer's own bounded join, so the
+        app shutdown hook may not have finished when it returns. This blocks
+        until it has (the conductor holds its lock across the join) and is a
+        no-op when the hook already returned. Only then is the owner claim
+        released, so the lock never leaves this process while a daemon thread
+        of ours is still writing.
+        """
+        try:
+            from ..intel_queue_conductor import stop_intel_queue_conductor
+
+            stop_intel_queue_conductor()
+        except Exception as exc:
+            log.debug(f"Intel drainer stop during shutdown failed: {exc}")
+        self._release_database()
+
     def _release_database(self) -> None:
         """Hand the database back on an ordinary stop (HS-200-02).
 

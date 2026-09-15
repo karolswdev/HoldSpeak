@@ -806,9 +806,14 @@ describe("Draft list: lifecycle-honest", () => {
     expect(chevron).toBeTruthy();
     expect(chevron.textContent).toBe("›"); // ›
 
-    // The row is rendered inside a button (SurfaceLedgerRow renders <button class="surface-ledger-line">)
+    // The row line is the species' keyboard-accessible control. HS-200-42
+    // (counsel F3) made it role="button" rather than a <button> element, so a
+    // trailing verb is no longer a button nested inside a button; the
+    // accessibility contract this test guards is unchanged and is asserted
+    // directly rather than through the tag name.
     const item = screen.getByTestId("update-list-item");
-    expect(item.tagName).toBe("BUTTON");
+    expect(item.getAttribute("role")).toBe("button");
+    expect(item.getAttribute("tabindex")).toBe("0");
 
     // S-3: rows navigate, not expand -- no aria-expanded attribute
     expect(item.hasAttribute("aria-expanded")).toBe(false);
