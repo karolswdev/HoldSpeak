@@ -245,28 +245,32 @@ gh pr ready N ; gh pr view N --json mergeable,mergeStateStatus ; gh pr merge N -
   deliberately broken code is a defect in the test.
 - Scars become laws the same day: UX-CANON.md, this file, memory.
 
-## 7b. Sentences in this tree that are FALSE (verified 2026-09-13)
+## 7b. Sentences in this tree that are FALSE
 
 **This section exists because a zero-context agent cannot tell a true
-doc from a stale one, and this tree has both.** Each line below was
-checked against the code during the operational-surface audit
-(`docs/internal/OPERATIONAL-SURFACE-AUDIT.md`). Trust the code column.
-If you fix one, delete its row.
+doc from a stale one, and this tree has both.** The list used to live
+here by hand, and a hand-maintained list of lies rots exactly like the
+lies it catalogues. Since HS-200-46 it lives in
+`tests/unit/doc_claims/registry.py`, where each row carries the
+document and a literal anchor, the sentence in the author's own words,
+an **executable predicate over the real code**, its state (`holds` or
+`known_false`), the measured truth, and the story that owns the repair.
+`tests/unit/test_phase200_doc_claims.py` fails CI in both directions: a
+`holds` sentence the code stops satisfying, and a `known_false`
+sentence the code starts satisfying (so a fix cannot land without
+correcting the prose in the same commit). The `known_false` count is a
+dated, down-only ratchet.
 
-| Where | What it claims | What is true |
-|---|---|---|
-| `holdspeak/web/routes/mcp_http.py:3` | the HTTP MCP route composes "on the web runtime's LIVE services" | `:149` reaches the same bare composition as the sidecar (HS-200-45) |
-| `holdspeak/db/connection.py:3` | "WAL pragmas" | `journal_mode=delete`; only `foreign_keys=ON` is set; no `busy_timeout` |
-| `holdspeak/mcp/resources.py:60` | the verb catalog "Mirrors web/src/desk/verbRegistry.ts" | drifted: 20 registry verbs missing, 13 phantoms, no parity test |
-| `holdspeak/mcp/resources.py:158` | `desk_snapshot` returns Desk state "and layout" | seven lists of DB rows; no layout, no window, no focus |
-| `docs/internal/UX-CANON.md:131` | A1 holds at "4 residues with reasons" | 187 raw `<button>`; the guard's regex cannot see multi-line JSX (HS-200-44) |
-| `docs/USER_GUIDE.md:978` | "the owner's web token is refused on a non-loopback request" | true ONLY for `/api/mcp`; `SECURITY.md` states it correctly |
-| `docs/SECURITY.md:277` | Reach "accepts connections on the tailnet address only" | `bind_host` is stored, rendered, and applied by nothing; no CIDR check exists |
-| `docs/internal/DESK_GRAMMAR.md:50` | the window remembers via `hs.desk.zone-windows` | that key is in `GHOST_LAYOUT_KEYS`; only `hs.desk.workspace.v1` is live |
-| `docs/internal/DESKOS_COMPONENT_PATTERN.md` | describes "DeskOS component anatomy" | documents the SwiftUI iPad desk, and is actively anti-window |
-| `docs/MCP_SIDECAR.md:854` | 16 templates / 29 non-owner resources | measured 21 / 34 |
-| `CLAUDE.md:153` | `.githooks/dw-mcp` is "wired via `.mcp.json`" | it is not, and the omission is intentional (holdspeak-only) |
-| `holdspeak/db/schema.py` lattice comment (pre-fix) | `unavailable` "cleared only by a rebind" | an undelete also clears it — corrected 2026-09-09 |
+To read the table — the same columns this section used to carry, from
+the one place it now exists:
+
+```sh
+uv run python scripts/doc_claims.py            # the table
+uv run python scripts/doc_claims.py --measure  # + run every predicate
+```
+
+Trust the code column. If you fix one, fix its sentence and its
+registry row in the same commit.
 
 **The general lesson, which is worth more than the table:** in this
 repo, a comment describing the architecture someone INTENDED is how the

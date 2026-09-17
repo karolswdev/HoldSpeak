@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 200
-- **Status:** ready
+- **Status:** done
 - **Depends on:** HS-200-03
 - **Unblocks:** HS-200-39, HS-200-40
 - **Owner:** unassigned
@@ -63,25 +63,25 @@ story owns it.
 
 ## Acceptance criteria
 
-- [ ] A claims registry exists in which each entry carries: the document and
+- [x] A claims registry exists in which each entry carries: the document and
       anchor, the sentence in the author's own words, an executable predicate
       over the code, and a state — `holds` or `known_false`.
-- [ ] `holds` entries FAIL the check when the code stops satisfying them. Proven
+- [x] `holds` entries FAIL the check when the code stops satisfying them. Proven
       by mutating the code, not the registry.
-- [ ] `known_false` entries FAIL the check when the code starts satisfying them —
+- [x] `known_false` entries FAIL the check when the code starts satisfying them —
       so fixing the code forces the sentence to be corrected in the same commit,
       and a fixed claim cannot sit in the ledger pretending to be debt.
-- [ ] The `known_false` count is a **dated, down-only ratchet**. It may shrink; it
+- [x] The `known_false` count is a **dated, down-only ratchet**. It may shrink; it
       may not grow without a named reason in the same commit, exactly as
       HS-200-03's three fences were converted.
-- [ ] The thirteen claims from handover §7b are the opening registry, each with
+- [x] The thirteen claims from handover §7b are the opening registry, each with
       its measured truth recorded.
-- [ ] The check runs in the existing CI job and names, on failure, the document,
+- [x] The check runs in the existing CI job and names, on failure, the document,
       the sentence, and what is actually true — a failure a reader can act on
       without opening the test.
-- [ ] Handover §7b is generated from the registry or deleted, so there is one
+- [x] Handover §7b is generated from the registry or deleted, so there is one
       list and not two.
-- [ ] The fence is proven to FAIL against the pre-fix tree in both directions:
+- [x] The fence is proven to FAIL against the pre-fix tree in both directions:
       one `holds` claim broken, one `known_false` claim satisfied.
 
 ## Test plan

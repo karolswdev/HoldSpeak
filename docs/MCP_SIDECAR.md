@@ -851,9 +851,9 @@ client discovers it at tool-listing time, not at call time.
 
 ## Resources
 
-Owner discovery exposes 16 static resources and 16 resource templates. The
-default non-owner discovery filters that to 15 static resources and 14
-templates, or 29 total. List results are bounded to the first 100 items per
+Owner discovery exposes 16 static resources and 21 resource templates. The
+default non-owner discovery filters that to 15 static resources and
+19 templates, or 34 total. List results are bounded to the first 100 items per
 read.
 
 ### Static resources
