@@ -1140,9 +1140,9 @@ GitHub API. In the walk, this was solved with a file-based fixture.
 In production, watch evaluation requires live `gh` auth (the adapter
 reads stored snapshots, but evaluation fetches new ones).
 
-Since HS-200-43, `project.watch.evaluate` **records `watch_effects`** just as
-a scheduled evaluation does — under the same evaluation-derived idempotency
-key, so a manual run followed by a scheduled one mints exactly one effect —
+`project.watch.evaluate` **records `watch_effects`** just as
+a scheduled evaluation does, under the same evaluation-derived idempotency
+key, so a manual run followed by a scheduled one mints exactly one effect,
 and `project.steward.run_due` can act on what it mints. The first evaluation
 of a watch that has no baseline is deliberately silent: it establishes the
 baseline and returns `state: "baselined"` with zero transitions, zero
