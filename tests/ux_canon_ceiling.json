@@ -1,36 +1,120 @@
 {
   "faces": {
+    "ActionNotice": {
+      "A1": 1
+    },
+    "ApplicationBoundary": {
+      "A3-prose": 1
+    },
+    "ArtifactPullout": {
+      "A1": 3
+    },
     "AskPanel": {
+      "A3-prose": 2,
       "A8": 5,
       "B": 1,
       "emoji": 2
     },
+    "AssignmentModelChooser": {
+      "A1": 1
+    },
     "CadenceCore": {
       "A3-prose": 1
+    },
+    "CalendarSnapshotReviewCore": {
+      "A3-prose": 2
+    },
+    "CallChip": {
+      "A1": 1
     },
     "CapabilityAssignmentsCore": {
       "raw-ids": 1
     },
     "CapabilitySection": {
+      "A1": 3,
+      "A3-prose": 1,
       "B": 1
+    },
+    "ChainPullout": {
+      "A1": 2
+    },
+    "ChoiceCardGroup": {
+      "A1": 1
     },
     "CoderPullout": {
+      "A1": 5,
+      "A3-prose": 1,
       "B": 1
     },
-    "ComponentsCore": {
-      "emoji": 4
-    },
-    "DeskMenu": {
+    "CommandsCore": {
       "A3-prose": 1
     },
-    "DeskSortableTable": {
+    "ComponentsCore": {
+      "A1": 1,
+      "A3-prose": 1,
+      "emoji": 4
+    },
+    "ConciergeCore": {
       "A8": 1
     },
+    "DeliveryBoard": {
+      "A1": 3
+    },
+    "DeliveryDossierWindow": {
+      "A1": 1
+    },
+    "DeliveryListSection": {
+      "A1": 1
+    },
+    "DeskChrome": {
+      "A1": 2
+    },
+    "DeskCreateMenu": {
+      "A1": 1
+    },
+    "DeskEditor": {
+      "A1": 11
+    },
+    "DeskFilingStrip": {
+      "A1": 4
+    },
+    "DeskListView": {
+      "A3-prose": 1
+    },
+    "DeskMenu": {
+      "A1": 4,
+      "A3-prose": 1
+    },
+    "DeskMenuBar": {
+      "A1": 1
+    },
+    "DeskSortableTable": {
+      "A1": 1,
+      "A8": 1
+    },
+    "DeskStartActions": {
+      "A1": 2
+    },
     "DeskToolInspector": {
+      "A1": 10,
+      "A3-prose": 6,
       "raw-ids": 1
     },
     "DeskToolShelf": {
+      "A1": 2,
       "raw-ids": 1
+    },
+    "DeskWindow": {
+      "A1": 3
+    },
+    "DirectoryPullout": {
+      "A1": 1
+    },
+    "Disclosure": {
+      "A1": 1
+    },
+    "Dock": {
+      "A1": 7
     },
     "DoorCore": {
       "B": 1
@@ -38,53 +122,114 @@
     "EditorAIBar": {
       "A8": 1
     },
+    "EmptyDesk": {
+      "A1": 2
+    },
+    "Expose": {
+      "A1": 1
+    },
+    "FirstWords": {
+      "A1": 2,
+      "A3-prose": 1,
+      "A3-sentence": 1
+    },
+    "FollowThroughView": {
+      "A1": 1
+    },
     "GlassDropLayer": {
+      "A1": 3,
       "A3-prose": 1
+    },
+    "GroundingSection": {
+      "A1": 5
     },
     "ImportSection": {
       "B": 1
     },
+    "InfoWindow": {
+      "A1": 4
+    },
     "InletAutocomplete": {
       "A8": 1
     },
+    "IntelligencePullout": {
+      "A1": 1
+    },
+    "InterviewPanel": {
+      "A3-prose": 2
+    },
     "KbEditor": {
+      "A1": 2,
       "C": 1
     },
+    "LedgerFilter": {
+      "A1": 2
+    },
     "LiveCore": {
+      "A1": 1,
       "A8": 1
     },
     "MeetingPullout": {
+      "A1": 2,
+      "A3-prose": 1,
       "A8": 1
+    },
+    "Memory": {
+      "A3-prose": 1
+    },
+    "MicButton": {
+      "A1": 2
+    },
+    "MissionControlConveyor": {
+      "A1": 4
+    },
+    "ModeTabs": {
+      "A1": 1
     },
     "ModelLibraryCore": {
       "B": 4
     },
     "NoteEditor": {
+      "A1": 2,
       "C": 1
-    },
-    "NotePullout": {
-      "B": 1
     },
     "PeopleCore": {
       "raw-ids": 12
     },
     "PrReceiptsSection": {
-      "A3-prose": 1
+      "A3-prose": 1,
+      "raw-ids": 1
     },
     "ProgressPlan": {
+      "A1": 1,
       "emoji": 2
     },
     "ProjectRoomCore": {
+      "A3-prose": 5,
       "A8": 2,
       "B": 2
+    },
+    "ProvenanceChip": {
+      "A1": 2
     },
     "Pullout": {
       "A1": 1
     },
     "RailsPicker": {
+      "A1": 1,
       "A8": 1
     },
+    "Readiness": {
+      "A3-prose": 1
+    },
+    "RecipeEditor": {
+      "A1": 1
+    },
+    "RecordOrb": {
+      "A1": 1
+    },
     "ReviewPosture": {
+      "A3-prose": 1,
       "A8": 3,
       "B": 2
     },
@@ -93,25 +238,34 @@
       "C": 1
     },
     "SessionPullout": {
+      "A1": 6,
       "B": 1
     },
     "SettingsCore": {
       "A8": 2
     },
+    "SetupCore": {
+      "A3-prose": 1
+    },
+    "SpeakerGlyph": {
+      "A1": 1
+    },
     "StateChip": {
       "emoji": 3
     },
     "StewardPosture": {
+      "A1": 1,
       "A3-sentence": 1,
       "A8": 2
     },
     "Surface": {
-      "A1": 2,
+      "A1": 4,
       "A3-prose": 1,
       "B": 2,
       "emoji": 4
     },
     "SystemShade": {
+      "A3-prose": 2,
       "emoji": 1
     },
     "ThoughtContextPicker": {
@@ -122,13 +276,13 @@
       "B": 2
     },
     "ThoughtWorkspaceWindow": {
-      "A3-prose": 5,
-      "B": 1
+      "A3-prose": 5
     },
     "ThreadComposer": {
       "B": 2
     },
     "ThreadPullout": {
+      "A1": 3,
       "A8": 2,
       "B": 6
     },
@@ -136,10 +290,18 @@
       "B": 2
     },
     "TopologySurface": {
+      "A1": 1,
       "emoji": 3
     },
     "TranscriptWell": {
       "A3-prose": 1
+    },
+    "TrustWindow": {
+      "A1": 1,
+      "A3-prose": 1
+    },
+    "UpdatePosture": {
+      "A1": 2
     },
     "WhyControl": {
       "A8": 1
@@ -147,24 +309,55 @@
     "WorkbenchAutomations": {
       "raw-ids": 1
     },
+    "WorkbenchResourceful": {
+      "A1": 2,
+      "A3-prose": 3
+    },
+    "WorkbenchTemplatePicker": {
+      "A1": 2
+    },
     "WorkbenchWindow": {
+      "A1": 23,
+      "A3-prose": 1,
       "A8": 1,
       "B": 1
     },
+    "WorkbenchesHomeCore": {
+      "A1": 1
+    },
+    "WorkflowEditor": {
+      "A1": 3
+    },
     "WorldStage": {
+      "A1": 3,
       "B": 1
     },
     "XtermPane": {
       "C": 1
     },
+    "ZoneWindow": {
+      "A1": 2
+    },
+    "citations": {
+      "A1": 1
+    },
     "gadgets": {
       "emoji": 2
+    },
+    "settingsBespoke": {
+      "A1": 1
+    },
+    "settingsWallpaper": {
+      "A3-prose": 1
+    },
+    "wings": {
+      "A1": 2
     }
   },
   "per_rule": {
-    "A1": 4,
-    "A3-prose": 11,
-    "A3-sentence": 1,
+    "A1": 175,
+    "A3-prose": 48,
+    "A3-sentence": 2,
     "A4": 0,
     "A8": 25,
     "A9": 0,
@@ -173,6 +366,10 @@
     "DS6": 0,
     "emoji": 21,
     "mic": 0,
-    "raw-ids": 16
+    "raw-ids": 17
+  },
+  "ratchet": {
+    "date": "2026-09-17",
+    "reason": "HS-200-44, 2026-09-17: the numbers are the measured truth after the matchers were made to see multi-line JSX (A1 was 4, A3-prose 11, A3-sentence 1, raw-ids 16: artifacts of per-line regexes blind to the tag-per-line shape Prettier writes). The 175 raw buttons are debt that accumulated while the guard was blind; face stories pay them file by file and this number only shrinks."
   }
 }

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 200
-- **Status:** ready
+- **Status:** done
 - **Depends on:** HS-200-03
 - **Owner:** unassigned
 - **Gate:** G0
@@ -45,17 +45,17 @@ sets the ratchet so it can only shrink.
 
 ## Acceptance criteria
 
-- [ ] The A1 matcher sees a multi-line `<button` opening, and the scanner's count
+- [x] The A1 matcher sees a multi-line `<button` opening, and the scanner's count
       matches an independent count over the same scope.
-- [ ] **Every other rule in the scanner is checked for the same line-shape
+- [x] **Every other rule in the scanner is checked for the same line-shape
       assumption**, and the ones that share it are fixed or named as not
       applicable, with the reason recorded.
-- [ ] The ceilings are reset to the true counts, dated, down-only — no rule is
+- [x] The ceilings are reset to the true counts, dated, down-only — no rule is
       quietly relaxed to make a number pass.
-- [ ] `UX-CANON.md`'s residue claim is corrected to the measured truth.
-- [ ] A fence test proves the scanner catches a multi-line raw button, and FAILS
+- [x] `UX-CANON.md`'s residue claim is corrected to the measured truth.
+- [x] A fence test proves the scanner catches a multi-line raw button, and FAILS
       against the pre-fix scanner.
-- [ ] The scanner stops writing census assets into the repo as a side effect of
+- [x] The scanner stops writing census assets into the repo as a side effect of
       running, or the write is made explicit — a guard that dirties the tree on
       every run is how other phases' evidence gets rewritten by accident
       (see `reference_suite_dirties_evidence_assets`).

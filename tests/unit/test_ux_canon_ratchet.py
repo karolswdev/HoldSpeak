@@ -5,15 +5,22 @@ web/src tree and compares to the committed ceiling file
 (tests/ux_canon_ceiling.json).  Three tests:
 
 1. ratchet  — per-rule counts must not exceed the ceiling.
-2. hard_zeros — DS6, A9 must stay at 0; A1 must stay within a named
-   allowlist.
+2. hard_zeros — DS6, A9 must stay at 0; A1 must stay within its dated,
+   down-only ratchet (HS-200-44).
 3. healing — passes with a notice when a count drops below the ceiling
    (informational; reminds to lower the ceiling).
+4. the ceiling file carries the date and the reason its numbers stand.
+
+The ceiling is rewritten only by an explicit
+`python scripts/ux_canon_scan.py --write-ceiling tests/ux_canon_ceiling.json`;
+a number may fall freely under the reason on file and may only rise with a
+new `--ceiling-reason` in the same commit.
 """
 from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -91,21 +98,34 @@ def test_ratchet():
 # Test 2: hard zeros (+ A1 allowlist)
 # ---------------------------------------------------------------------------
 
-# Named allowlist for A1 (raw <button>) residues.  Each entry is
-# "Face:approximate_line" with a one-line reason.
-_A1_ALLOWLIST: dict[str, str] = {
-    "Pullout": "PulloutFrame fallback retry — Button lacks ref forward for this inline pattern",
-    "Surface:188": "surface-row-open — library-internal species in the surface kit",
-    "Surface:959": "surface-tile-ghost-btn — library-internal species in the surface kit",
-    "ThoughtContextPicker": "li button list-item pattern — Button lacks a ref forward for list items",
-}
+# HS-200-44, 2026-09-17 — the dated, down-only A1 ratchet.
+#
+# Until this story the guard held A1 to a four-entry allowlist ("4 residues
+# with reasons").  That number was an artifact of the matcher: `<button[\s>/]`
+# ran per line over `content.splitlines()`, so a tag Prettier wrote as
+# `<button` alone on its line never matched, and the guard certified a tree
+# it could not read (2026-09-13 audit §10 defect 4).  The matcher now reads
+# the file as written; the measured count on that date is the ceiling.  The
+# owner's ruling stands unchanged: every verb is the library Button, and a
+# raw `<button>` is a species bug.  This number may only shrink; raising it
+# requires changing A1_RATCHET_REASON in the same commit to name the debt
+# being admitted (the HS-200-03 / HS-200-46 shape).
+A1_RATCHET = 175
+A1_RATCHET_DATE = "2026-09-17"
+A1_RATCHET_REASON = (
+    "HS-200-44: 175 raw <button> elements measured across the scanner's scope "
+    "(features/, pages/cores/, desk/; not Signal.tsx, gadgets.tsx, tests or "
+    "_parked) once the A1 matcher could see a multi-line opening tag; the "
+    "previous ceiling of 4 was an artifact of a per-line regex, not a fact "
+    "about the code. Face stories pay this down file by file."
+)
 
 
 def test_hard_zeros():
     """DS6 (accent rail) and A9 (egress) must be zero.
 
-    A1 (raw <button>) must stay within the named allowlist — every
-    residue is accounted for.
+    A1 (raw <button>) must stay within its dated ratchet, which agrees with
+    the ceiling file so there is one number, not two.
     """
     result = _get_scan()
     totals = result["totals"]
@@ -117,9 +137,29 @@ def test_hard_zeros():
     assert a9 == 0, f"A9 (missing egress chip) must be 0, got {a9}"
 
     a1 = totals["per_rule"].get("A1", 0)
-    assert a1 <= len(_A1_ALLOWLIST), (
-        f"A1 (raw <button>) is {a1}, allowlist has {len(_A1_ALLOWLIST)} entries — "
-        f"new raw buttons found; fix them or extend the allowlist with a reason"
+    assert a1 <= A1_RATCHET, (
+        f"A1 (raw <button>) is {a1} against a ratchet of {A1_RATCHET} set "
+        f"{A1_RATCHET_DATE}.\n{A1_RATCHET_REASON}\n"
+        "New raw buttons were introduced: use the library Button. Raising the "
+        "ratchet requires changing A1_RATCHET_REASON in the same commit."
+    )
+    ceiling = json.loads(CEILING_PATH.read_text())
+    assert ceiling["per_rule"]["A1"] == A1_RATCHET, (
+        f"tests/ux_canon_ceiling.json says A1={ceiling['per_rule']['A1']} but "
+        f"A1_RATCHET is {A1_RATCHET}: one number, kept in two places, drifted"
+    )
+
+
+def test_ceiling_carries_its_date_and_reason():
+    """The ceiling names when its numbers were measured and why they stand."""
+    ceiling = json.loads(CEILING_PATH.read_text())
+    ratchet = ceiling.get("ratchet") or {}
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", ratchet.get("date", "")), (
+        "tests/ux_canon_ceiling.json has no dated `ratchet` block; write it with "
+        "--write-ceiling --ceiling-reason ..."
+    )
+    assert re.search(r"HS-\d+-\d+", ratchet.get("reason", "")), (
+        "the ceiling's reason must name the story that set it"
     )
 
 
