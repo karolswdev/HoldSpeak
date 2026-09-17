@@ -79,11 +79,23 @@ def _timestamped_backup_path(db_path: Path) -> Path:
     return backup_path
 
 
+def _sqlite_sidecars(db_path: Path) -> list[Path]:
+    """The WAL/SHM companions SQLite keeps beside a database file."""
+    return [db_path.with_name(db_path.name + suffix) for suffix in ("-wal", "-shm")]
+
+
 def backup_database(db_path: Path) -> Path:
     """Snapshot the SQLite database to a timestamped sibling and return it."""
     backup_path = _timestamped_backup_path(db_path)
     source = sqlite3.connect(str(db_path))
     try:
+        # HS-200-45 R5: under WAL the committed tail lives in ``-wal`` until a
+        # checkpoint. ``Connection.backup`` reads through SQLite and so is
+        # already WAL-correct; the checkpoint is belt, and it keeps the
+        # resulting ``.bak`` a single self-contained file with no sidecar.
+        from .connection import checkpoint as _checkpoint
+
+        _checkpoint(source)
         dest = sqlite3.connect(str(backup_path))
         try:
             source.backup(dest)
@@ -119,6 +131,14 @@ def restore_database(backup_path: Path, db_path: Path) -> Optional[Path]:
         safety = backup_database(db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(backup_path, db_path)
+    # HS-200-45 R5: the file copy above replaces the main database but leaves
+    # any ``-wal`` / ``-shm`` from BEFORE the restore in place. Under WAL a
+    # stale sidecar beside a freshly replaced main file is not a stale read —
+    # it resurrects pre-restore pages, or corrupts outright. The restored
+    # snapshot is checkpointed and self-contained, so the sidecars have nothing
+    # to contribute and must go.
+    for sidecar in _sqlite_sidecars(db_path):
+        sidecar.unlink(missing_ok=True)
     return safety
 
 

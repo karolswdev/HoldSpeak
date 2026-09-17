@@ -24,6 +24,21 @@ writes race the real owner. Refusing is loud, immediate, and reaches the person
 who just typed the command. The escape hatch ``HOLDSPEAK_ALLOW_UNOWNED_DB=1``
 starts anyway **without** the scheduled sweeps and flies a ``TWO RUNTIMES``
 repair state on the Desk; it exists for a diagnosis session, not for daily use.
+
+**The same argument settled the MCP sidecar (HS-200-45 R2, 2026-09-14.)** The
+stdio sidecar was the OTHER unlocked writer on this file: ``.mcp.json`` carries
+no ``env`` block, so it inherited ``$HOME``, opened the owner's live database,
+and ran ``reconcile_schema`` on every start, with zero references to this
+module. The option rejected there was the mirror of the one rejected above --
+let the sidecar open the file **read-only** and serve only the read tools. It
+fails for the same reason: it is still a second builder of the same service
+layer over a file another process is checkpointing, and it makes the tool
+catalogue mean something different depending on who is running, which the
+palettes deliberately avoid. The sidecar is now a CLIENT of the hub: it
+discovers the hub through this lock's JSON body and forwards each JSON-RPC
+message to ``POST /api/mcp``. Its only lawful claim on this lock is the
+``HOLDSPEAK_MCP_STANDALONE=1`` diagnosis hatch, which claims it under the label
+``holdspeak-mcp`` so the next ``holdspeak web`` refuses by name.
 """
 
 from __future__ import annotations
@@ -131,6 +146,7 @@ class DatabaseOwnerLock:
         port: Optional[int] = None,
         host: Optional[str] = None,
         process_start: Optional[str] = None,
+        label: Optional[str] = None,
     ) -> bool:
         """Claim the database. ``False`` means a live hub already owns it.
 
@@ -138,7 +154,7 @@ class DatabaseOwnerLock:
         process can never overwrite the real owner's record.
         """
         if self.held:
-            self._write_claim(port=port, host=host, process_start=process_start)
+            self._write_claim(port=port, host=host, process_start=process_start, label=label)
             return True
         self.path.parent.mkdir(parents=True, exist_ok=True)
         handle = os.open(str(self.path), os.O_RDWR | os.O_CREAT, 0o600)
@@ -153,7 +169,7 @@ class DatabaseOwnerLock:
         except ImportError:  # pragma: no cover - platform without fcntl
             log.warning("runtime_lock: fcntl unavailable; database ownership unguarded")
         self._handle = handle
-        self._write_claim(port=port, host=host, process_start=process_start)
+        self._write_claim(port=port, host=host, process_start=process_start, label=label)
         return True
 
     def release(self) -> None:
@@ -173,12 +189,18 @@ class DatabaseOwnerLock:
         port: Optional[int],
         host: Optional[str],
         process_start: Optional[str],
+        label: Optional[str] = None,
     ) -> None:
         self._owner = {
             "pid": os.getpid(),
             "process_start": process_start or datetime.now().isoformat(),
             "port": port,
             "host": host,
+            # HS-200-45 R2: which COMMAND holds the database, so a refusal can
+            # say "holdspeak-mcp pid 812" rather than leaving the owner to guess
+            # why a pid with no web port owns their hub's file. The standalone
+            # MCP hatch is the only non-hub claimant today.
+            "label": label or "holdspeak web",
         }
         if self._handle is None:  # pragma: no cover - fcntl-less fallback
             return
@@ -203,6 +225,7 @@ def claim_database(
     port: Optional[int] = None,
     host: Optional[str] = None,
     process_start: Optional[str] = None,
+    label: Optional[str] = None,
 ) -> DatabaseOwnerLock:
     """Claim ``db_path`` for this process and remember the claim.
 
@@ -214,10 +237,10 @@ def claim_database(
     global _LOCK
     path = Path(db_path).expanduser()
     if _LOCK is not None and _LOCK.held and _LOCK.db_path == path:
-        _LOCK.acquire(port=port, host=host, process_start=process_start)
+        _LOCK.acquire(port=port, host=host, process_start=process_start, label=label)
         return _LOCK
     lock = DatabaseOwnerLock(path)
-    lock.acquire(port=port, host=host, process_start=process_start)
+    lock.acquire(port=port, host=host, process_start=process_start, label=label)
     _LOCK = lock
     return lock
 
@@ -255,7 +278,7 @@ def refusal_message(db_path: Path, owner: Optional[dict[str, Any]]) -> str:
         f"  database: {Path(db_path).expanduser()}",
     ]
     if owner:
-        lines.append(f"  owner pid: {owner.get('pid')}")
+        lines.append(f"  owner pid: {owner.get('label') or 'holdspeak web'} pid {owner.get('pid')}")
         if owner.get("port"):
             lines.append(f"  owner url: http://{owner.get('host') or '127.0.0.1'}:{owner.get('port')}")
         if owner.get("process_start"):

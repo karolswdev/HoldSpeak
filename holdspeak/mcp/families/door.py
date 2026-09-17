@@ -1,6 +1,8 @@
 """Dashboard Door MCP twin over the transport-neutral DoorService."""
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 from typing import Any
 
 from holdspeak.config import Config
@@ -61,7 +63,7 @@ TOOLS: list[dict[str, Any]] = [
 ]
 
 
-def _service() -> DoorService:
+def _build_service() -> DoorService:
     """Compose the same Door authorities as the web application edge.
 
     MCP's People capability is an encrypted disclosure boundary.  When it is
@@ -70,7 +72,7 @@ def _service() -> DoorService:
     encrypted-store composition supplies the overlay (or its unavailable
     authority state, never a plaintext substitute).
     """
-    db = get_database()
+    db = db_or(get_database)
     people_projection = None if people.access_mode() == "off" else people.build_people_service()
     return DoorService(
         FollowThroughService(db, people_projection=people_projection),
@@ -107,3 +109,13 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
 
 
 __all__ = ["TOOLS", "dispatch"]
+
+
+# HS-200-45 R1: _service asks the ONE composition root first. Inside the hub that
+# returns the instance the HTTP routes use -- composed with the hub's follow-through and refinement collaborators.
+# Outside a hub (a unit test's bare root, or the standalone diagnosis hatch) the
+# root holds nothing and the bare builder above runs, producing exactly the
+# object the pre-HS-200-45 code produced.
+def _service() -> DoorService:
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("door_service", _build_service)

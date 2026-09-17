@@ -5,6 +5,8 @@ concierge.apply, concierge.download.
 """
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 from typing import Any
 
 from holdspeak.db import get_database
@@ -86,7 +88,7 @@ TOOLS: list[dict[str, Any]] = [
 
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     """Route concierge MCP tool calls."""
-    db = get_database()
+    db = db_or(get_database)
 
     if name == "concierge.detect":
         from holdspeak.services.concierge_service import detect

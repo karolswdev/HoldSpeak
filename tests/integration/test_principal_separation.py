@@ -225,4 +225,10 @@ def test_loopback_classifier_has_no_request_authority_callers() -> None:
         ("web_server.py", "start"),
         ("web_server.py", "_start_mesh_advertising"),
         ("web_server.py", "_create_app"),
+        # HS-200-45: the stdio sidecar's hub discovery. It classifies the host
+        # it read out of the owner lock so it only ever dials loopback (POST
+        # /api/mcp refuses an OWNER token off-loopback anyway, C5). An OUTBOUND
+        # target decision: it grants no request authority, and derives no
+        # principal.
+        ("mcp/server.py", "discover_hub"),
     }

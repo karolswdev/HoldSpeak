@@ -1,6 +1,8 @@
 """Memory family — MCP tools for the MemoryService surface."""
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 from typing import Any
 
 from holdspeak.db import get_database
@@ -35,7 +37,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     if name != "memory.search":
         raise LookupError(name)
 
-    svc = MemoryService(db=get_database(), observer=get_observer())
+    svc = MemoryService(db=db_or(get_database), observer=observer_or(get_observer))
 
     kwargs: dict[str, Any] = {"query": str(arguments.get("query") or "")}
     for key in ("kind", "project_id", "time_from", "time_to"):

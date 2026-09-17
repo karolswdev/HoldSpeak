@@ -1,9 +1,52 @@
-"""Newline-delimited JSON-RPC stdio server for HoldSpeak MCP tools."""
+"""Newline-delimited JSON-RPC stdio server for HoldSpeak MCP tools.
+
+**The sidecar is a CLIENT of the running hub, not a second writer
+(HS-200-45 R2).** It used to be its own composition root: ``uv run
+holdspeak-mcp`` inherits ``$HOME`` from whatever launched it, opened
+``~/.local/share/holdspeak/holdspeak.db`` -- the file a running hub owns --
+ran ``reconcile_schema`` (a write transaction) on every start, and never
+touched the owner lock. ``runtime_lock.py``'s own docstring says C10 "forbids
+introducing a multi-writer SQLite arrangement at all"; ``grep -rn
+"runtime_lock" holdspeak/mcp/`` found zero hits.
+
+So :func:`serve` no longer composes anything. For each message it discovers
+the hub through the owner lock beside the default database path (pid liveness
+confirmed, host and port read from the lock body) and forwards the JSON-RPC
+message **verbatim** to ``POST http://127.0.0.1:<port>/api/mcp`` with the
+owner's token, returning the hub's response verbatim. Discovery is per message
+and never cached, so a hub started *after* the editor launched this sidecar
+just starts working.
+
+With no live hub, everything but ``initialize`` and ``ping`` answers a
+JSON-RPC error naming the situation and the remedy -- and the database is not
+opened at all: no ``reconcile_schema``, no ``get_database()``, no
+``holdspeak.db`` created.
+
+**The rejected option: a read-only second builder.** Letting the sidecar open
+the file read-only and serve just the read tools was considered and refused,
+for the reason ``runtime_lock.py``'s docstring already gives about a read-only
+second hub: it is still a second builder of the same service layer, so every
+write tool would either have to be hidden (changing the tool catalogue
+depending on who is running, which the palettes deliberately do not do) or
+silently refuse; and a reader that walks around the owner lock still holds an
+open handle on a file another process is checkpointing. Proxying keeps ONE
+writer, ONE composition root, and a tool catalogue that means the same thing
+wherever it is called from.
+
+**The standalone hatch.** ``HOLDSPEAK_MCP_STANDALONE=1`` restores the old
+one-root-per-process behaviour for a diagnosis session -- and in that mode the
+sidecar CLAIMS the owner lock, so a hub started afterwards refuses loudly and
+names ``holdspeak-mcp pid N``. Never the daily path.
+"""
 from __future__ import annotations
 
 import json
+import os
 import sys
-from typing import Any, TextIO
+import urllib.error
+import urllib.request
+from pathlib import Path
+from typing import Any, Optional, TextIO
 
 from .auth import resolve_auth
 from .resources import ResourceError, list_resources, read_resource
@@ -43,6 +86,143 @@ def _tool_result(value: Any, *, is_error: bool = False) -> dict[str, Any]:
         "content": [{"type": "text", "text": json.dumps(value, sort_keys=True, default=str)}],
         "isError": is_error,
     }
+
+
+#: Methods the sidecar answers itself when no hub is reachable, so a client's
+#: handshake completes and it can report the real problem on the first tool call
+#: instead of failing to connect at all.
+_LOCAL_WHEN_NO_HUB = frozenset({"initialize", "ping", "notifications/initialized"})
+
+#: How long to wait on the hub's loopback HTTP response. Generous: a steward run
+#: or a model-invoking tool is slow by design, and MCP-003's long-running
+#: contract already returns a run id promptly for the slowest of them.
+_HUB_TIMEOUT_SECONDS = 300.0
+
+
+def _default_db_path() -> Path:
+    """The database path the hub would own. Reading this opens nothing."""
+    from holdspeak.db.core import DEFAULT_DB_PATH
+
+    return Path(DEFAULT_DB_PATH).expanduser()
+
+
+def discover_hub(db_path: Optional[Path] = None) -> Optional[dict[str, Any]]:
+    """The live hub that owns the database, or ``None``.
+
+    Reads the owner lock's JSON body beside the database FILE -- never the
+    database itself -- and trusts it only as far as ``pid_alive`` confirms.
+    Called on every message: a hub that starts later is found without
+    restarting this process, and a hub that dies is not proxied to twice.
+    """
+    from holdspeak.runtime_lock import read_owner
+
+    path = db_path or _default_db_path()
+    owner = read_owner(path)
+    if not owner or not owner.get("alive"):
+        return None
+    try:
+        port = int(owner.get("port") or 0)
+    except (TypeError, ValueError):
+        return None
+    if port <= 0:
+        return None
+    host = str(owner.get("host") or "127.0.0.1")
+    # Always speak to loopback: a hub bound to 0.0.0.0 is still reachable on
+    # 127.0.0.1, and POST /api/mcp refuses an OWNER token off-loopback (C5).
+    from holdspeak.web_auth import is_loopback_host
+
+    if not is_loopback_host(host):
+        host = "127.0.0.1"
+    return {"host": host, "port": port, "pid": owner.get("pid"), "db_path": str(path)}
+
+
+def _owner_token() -> str:
+    """The hub's web auth token, read from the config FILE.
+
+    An explicit path keeps ``Config.load``'s one-time legacy-endpoint
+    migration inert -- that migration calls ``get_database()``, and this
+    process must not open the database.
+    """
+    import holdspeak.config as config_facade
+    from holdspeak.config import Config
+
+    try:
+        config = Config.load(path=getattr(config_facade, "CONFIG_FILE"))
+    except Exception:
+        return ""
+    return str(getattr(getattr(config, "meeting", None), "web_auth_token", "") or "")
+
+
+def no_hub_message(db_path: Optional[Path] = None) -> str:
+    """One sentence: the situation, and the remedy."""
+    path = db_path or _default_db_path()
+    return (
+        f"No running HoldSpeak hub owns {path}; start `holdspeak web`, then retry. "
+        "The MCP sidecar is a client of the hub and never opens the database "
+        "itself (set HOLDSPEAK_MCP_STANDALONE=1 for a diagnosis session that "
+        "does, claiming the owner lock)."
+    )
+
+
+def forward_to_hub(
+    request: dict[str, Any], hub: dict[str, Any]
+) -> dict[str, Any] | None:
+    """POST *request* to the hub's ``/api/mcp`` and return its response.
+
+    Verbatim in both directions: the hub owns every protocol decision -- the
+    tool catalogue, the palette refusals, the error codes. ``204`` means the
+    hub treated the message as a notification, so there is no response.
+    """
+    body = json.dumps(request).encode("utf-8")
+    url = f"http://{hub['host']}:{hub['port']}/api/mcp"
+    req = urllib.request.Request(url, data=body, method="POST")
+    req.add_header("Content-Type", "application/json")
+    token = _owner_token()
+    if token:
+        req.add_header("Authorization", f"Bearer {token}")
+    with urllib.request.urlopen(req, timeout=_HUB_TIMEOUT_SECONDS) as resp:
+        if resp.status == 204:
+            return None
+        raw = resp.read()
+    if not raw:
+        return None
+    return json.loads(raw.decode("utf-8"))
+
+
+def handle_message_via_hub(request: dict[str, Any]) -> dict[str, Any] | None:
+    """One message, answered by the running hub -- or refused honestly."""
+    request_id = request.get("id")
+    method = request.get("method")
+    hub = discover_hub()
+    if hub is None:
+        if method in _LOCAL_WHEN_NO_HUB or (
+            isinstance(method, str) and method.startswith("notifications/")
+        ):
+            return handle_message_locally(request)
+        return _error(request_id, -32002, no_hub_message())
+    try:
+        return forward_to_hub(request, hub)
+    except urllib.error.HTTPError as exc:
+        detail = ""
+        try:
+            detail = exc.read().decode("utf-8", "replace")[:400]
+        except Exception:
+            pass
+        return _error(
+            request_id,
+            -32002,
+            f"The hub at 127.0.0.1:{hub['port']} (pid {hub['pid']}) refused this "
+            f"MCP call with HTTP {exc.code}; check that its owner token matches "
+            f"this machine's config. {detail}".strip(),
+        )
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        return _error(
+            request_id,
+            -32002,
+            f"The owner lock names pid {hub['pid']} on port {hub['port']}, but "
+            f"that hub did not answer POST /api/mcp ({exc}); restart "
+            f"`holdspeak web`, then retry.",
+        )
 
 
 def handle_message(request: dict[str, Any]) -> dict[str, Any] | None:
@@ -114,6 +294,13 @@ def handle_message(request: dict[str, Any]) -> dict[str, Any] | None:
     if method.startswith("notifications/"):
         return None
     return _error(request_id, -32601, f"Method not found: {method}")
+
+
+#: The in-process handler, kept under an explicit name. It composes against
+#: whatever composition root this process holds, so it is reached only from the
+#: standalone hatch, from :func:`handle_message_via_hub`'s local handshake
+#: answers, and from the unit tests that drive dispatch directly.
+handle_message_locally = handle_message
 
 
 # HS-174: MCP-005 error code for palette refusal.
@@ -213,37 +400,83 @@ def handle_message_for_principal(
     return _error(request_id, -32601, f"Method not found: {method}")
 
 
-def serve(stdin: TextIO = sys.stdin, stdout: TextIO = sys.stdout) -> int:
-    """Run the stdio server until the client closes its input pipe."""
-    # Compose the immutable semantic registry before the sidecar announces any
-    # capability. A bad census/plugin/schema is a process-start failure, not
-    # a lazy resource-read error after MCP initialization.
+def _pump(
+    stdin: TextIO, stdout: TextIO, handler: Any
+) -> int:
+    """Read newline-delimited JSON-RPC from *stdin*, answer on *stdout*."""
+    for line in stdin:
+        if not line.strip():
+            continue
+        try:
+            request = json.loads(line)
+            if not isinstance(request, dict):
+                raise ValueError("request must be an object")
+        except (json.JSONDecodeError, ValueError) as exc:
+            stdout.write(json.dumps(_error(None, -32700, f"Parse error: {exc}")) + "\n")
+            stdout.flush()
+            continue
+        response = handler(request)
+        if response is not None:
+            stdout.write(json.dumps(response, default=str) + "\n")
+            stdout.flush()
+    return 0
+
+
+def serve_standalone(stdin: TextIO = sys.stdin, stdout: TextIO = sys.stdout) -> int:
+    """The diagnosis hatch: one composition root in THIS process.
+
+    This is the pre-HS-200-45 behaviour, and it is honest about being a
+    writer: it claims the database owner lock first, so a ``holdspeak web``
+    started afterwards refuses loudly and names this pid instead of silently
+    becoming a second writer. If a hub already owns the database, this refuses
+    rather than opening the file.
+    """
     from holdspeak.inference_capabilities import process_inference_capability_registry
+    from holdspeak.runtime import composition
+    from holdspeak.runtime_lock import claim_database, refusal_message
     from .families import thought
     from .refinement_runtime import SidecarRefinementRuntime
 
+    db_path = _default_db_path()
+    lock = claim_database(db_path, port=None, label="holdspeak-mcp")
+    if not lock.held:
+        from holdspeak.runtime_lock import read_owner
+
+        stdout.write(
+            json.dumps(_error(None, -32002, refusal_message(db_path, read_owner(db_path)))) + "\n"
+        )
+        stdout.flush()
+        return 1
+
+    # The standalone root shares no handle: every MCP module falls back to its
+    # own ``get_database``, which is exactly what this mode is for.
+    composition.install(composition.bare(label="standalone"))
+
+    # Compose the immutable semantic registry before the sidecar announces any
+    # capability. A bad census/plugin/schema is a process-start failure, not
+    # a lazy resource-read error after MCP initialization.
     process_inference_capability_registry()
     runtime = SidecarRefinementRuntime()
     runtime.start()
     thought.configure_runtime(runtime)
     try:
-        for line in stdin:
-            try:
-                request = json.loads(line)
-                if not isinstance(request, dict):
-                    raise ValueError("request must be an object")
-            except (json.JSONDecodeError, ValueError) as exc:
-                stdout.write(json.dumps(_error(None, -32700, f"Parse error: {exc}")) + "\n")
-                stdout.flush()
-                continue
-            response = handle_message(request)
-            if response is not None:
-                stdout.write(json.dumps(response, default=str) + "\n")
-                stdout.flush()
-        return 0
+        return _pump(stdin, stdout, handle_message_locally)
     finally:
         thought.configure_runtime(None)
         runtime.close()
+
+
+def serve(stdin: TextIO = sys.stdin, stdout: TextIO = sys.stdout) -> int:
+    """Run the stdio server until the client closes its input pipe.
+
+    Proxy mode by default: nothing is composed here and the database is never
+    opened. ``HOLDSPEAK_MCP_STANDALONE=1`` selects the diagnosis hatch.
+    """
+    from holdspeak.runtime import composition
+
+    if composition.standalone_enabled():
+        return serve_standalone(stdin, stdout)
+    return _pump(stdin, stdout, handle_message_via_hub)
 
 
 def main() -> int:

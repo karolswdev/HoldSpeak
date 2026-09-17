@@ -1,6 +1,8 @@
 """MCP tool schemas and transport-neutral HoldSpeak service dispatch."""
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 import asyncio
 from collections.abc import Callable
 from dataclasses import asdict
@@ -611,6 +613,29 @@ def _run(coro: Any) -> Any:
     raise ToolError("async MCP tools cannot execute inside an active event loop")
 
 
+def _require_live_capture(tool: str, meetings: Any) -> None:
+    """Refuse a live-capture verb honestly when no capture controller exists.
+
+    HS-200-45 R6. Before this, the bare ``MeetingService`` MCP composed had no
+    lifecycle callbacks, so every call reached
+    ``MeetingService.start_capture``'s ``ValidationError("Meeting start control
+    not supported")`` -- an error whose wire ``code`` is ``validation_error``,
+    i.e. "your input was wrong". The truth is the opposite: the input was fine
+    and there is no capture controller in this process. Now that dispatch reads
+    the hub's composition root, the hub path has the callbacks and this refusal
+    only fires where it is true.
+    """
+    if getattr(meetings, "_on_start", None) is not None:
+        return
+    raise ToolError(
+        f"{tool} needs the hub's live capture controller, which only "
+        "`holdspeak web` owns: the microphone, the pipeline and the lifecycle "
+        "callbacks live in that process. Start the hub (the stdio sidecar then "
+        "forwards this call to it) and retry; there is nothing to configure "
+        "here."
+    )
+
+
 def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) -> Any:
     """Call one day-one MCP tool and return JSON-serializable data."""
     args = arguments or {}
@@ -637,15 +662,23 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
             return family.dispatch(name, args, principal)
 
     _validate_tool_arguments(name, args)
-    db = get_database()
-    obs = get_observer()
-    primitives = PrimitiveService(db, observer=obs)
-    workbenches = WorkbenchService(db, observer=obs)
-    meetings = MeetingService(db, observer=obs)
+    db = db_or(get_database)
+    obs = observer_or(get_observer)
+    # HS-200-45 R1: the FIVE services the hub composes with wiring a bare
+    # constructor cannot reproduce come from the one composition root.
+    # ``primitives``/``workbenches`` carry ``on_changed`` -> the /ws bus (R4),
+    # ``meetings`` carries ``bind_lifecycle`` (so meeting.start_capture can
+    # actually start a capture, R6), ``follow_through`` the hub's People
+    # projection, ``dictation`` the hub's journal repository. The rest are
+    # plain (db, observer) services the hub's own routes also build per
+    # request, so a fresh instance over the same Database is identical.
+    primitives = runtime_service("primitive_service", lambda: PrimitiveService(db, observer=obs))
+    workbenches = runtime_service("workbench_service", lambda: WorkbenchService(db, observer=obs))
+    meetings = runtime_service("meeting_service", lambda: MeetingService(db, observer=obs))
+    dictation = runtime_service("dictation_service", lambda: DictationService(db, observer=obs))
+    follow_through = runtime_service("follow_through_service", lambda: FollowThroughService(db, observer=obs))
     recipes = RecipeService(db, observer=obs)
-    dictation = DictationService(db, observer=obs)
     events = EventQueryService(db)
-    follow_through = FollowThroughService(db, observer=obs)
     monday_brief = MondayBriefService(db, observer=obs)
     desk = DeskService(db, observer=obs)
     records = DecisionRecordService(db, observer=obs)
@@ -700,13 +733,15 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         return _run(recipes.run(principal, str(args.get("recipe_id") or ""), input=str(args.get("input") or ""), **{key: options[key] for key in allowed if key in options}))
     if name == "recipe.chat":
         # HS-151-02: recipe.chat RETIRED. The tool definition stays so tool
-        # counts documented elsewhere remain stable; the body returns the
-        # retired error.
-        return {
-            "error": "recipe_chat_retired",
-            "replacement": "POST /api/threads/{id}/turns",
-            "reason": "HS-151-04 lands the thread alias",
-        }
+        # counts documented elsewhere remain stable.
+        # HS-200-45 R6: it RAISES now. Returning the refusal made the sidecar
+        # answer `isError: false`, so a caller read a permanent retirement as a
+        # successful chat turn.
+        raise ToolError(
+            "recipe.chat is retired (HS-151-02) and will never run: threads "
+            "replaced it. Post the turn to /api/threads/{id}/turns instead, or "
+            "call thought.* for the refinement loop."
+        )
     if name == "zone.file":
         return primitives.file_member(principal, str(args.get("directory_id") or ""), str(args.get("primitive_id") or ""))
     if name == "zone.unfile":
@@ -732,9 +767,11 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         config = args.get("config")
         if config is not None and not isinstance(config, dict):
             raise ToolError("config must be an object")
+        _require_live_capture("meeting.start_capture", meetings)
         return meetings.start_capture(principal, config=config)
     if name == "meeting.stop_capture":
         meeting_id = args.get("meeting_id")
+        _require_live_capture("meeting.stop_capture", meetings)
         return meetings.stop_capture(principal, meeting_id=str(meeting_id) if meeting_id is not None else None)
     if name == "meeting.delete":
         meeting_id = str(args.get("meeting_id") or "")

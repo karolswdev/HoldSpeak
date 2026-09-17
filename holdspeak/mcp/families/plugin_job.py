@@ -1,6 +1,8 @@
 """Plugin-job family — MCP tools for the PluginJobService surface."""
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 from typing import Any
 
 from holdspeak.db import get_database, get_observer
@@ -68,9 +70,9 @@ TOOLS: list[dict[str, Any]] = [
 _NAMES = {t["name"] for t in TOOLS}
 
 
-def _service() -> PluginJobService:
+def _build_service() -> PluginJobService:
     """Construct PluginJobService per spec: db + observer."""
-    return PluginJobService(db=get_database(), observer=get_observer())
+    return PluginJobService(db=db_or(get_database), observer=observer_or(get_observer))
 
 
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
@@ -100,3 +102,13 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     if not isinstance(job_id, int):
         raise ValueError("job_id is required and must be an integer")
     return svc.cancel(principal, job_id)
+
+
+# HS-200-45 R1: _service asks the ONE composition root first. Inside the hub that
+# returns the instance the HTTP routes use -- composed with the hub's observer.
+# Outside a hub (a unit test's bare root, or the standalone diagnosis hatch) the
+# root holds nothing and the bare builder above runs, producing exactly the
+# object the pre-HS-200-45 code produced.
+def _service() -> PluginJobService:
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("plugin_job_service", _build_service)

@@ -1,6 +1,8 @@
 """MCP resources for read-oriented HoldSpeak desk context."""
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 import json
 import re
 from dataclasses import asdict
@@ -475,7 +477,7 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
                 "inference_setup_owner_required", "Owner access is required.",
                 context={"status": 403},
             )
-        db = get_database()
+        db = db_or(get_database)
         setup = InferenceSetupApplicationService(db)
         from holdspeak.services.inference_acquisition_service import InferenceAcquisitionApplicationService
 
@@ -484,15 +486,15 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
         ).get_acquisition(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if uri == "holdspeak://desk/snapshot":
-        return _contents(uri, _JSON_MIME, DeskService(get_database()).snapshot(principal))
+        return _contents(uri, _JSON_MIME, DeskService(db_or(get_database)).snapshot(principal))
     if uri == "holdspeak://workbenches":
-        return _contents(uri, _JSON_MIME, WorkbenchService(get_database()).list_workbenches(principal)[:100])
+        return _contents(uri, _JSON_MIME, WorkbenchService(db_or(get_database)).list_workbenches(principal)[:100])
     if uri == "holdspeak://recipes":
-        return _contents(uri, _JSON_MIME, RecipeService(get_database()).list_recipes(principal)[:100])
+        return _contents(uri, _JSON_MIME, RecipeService(db_or(get_database)).list_recipes(principal)[:100])
     if uri == "holdspeak://dictation/journal":
-        return _contents(uri, _JSON_MIME, DictationService(get_database()).list_journal(principal, limit=100))
+        return _contents(uri, _JSON_MIME, DictationService(db_or(get_database)).list_journal(principal, limit=100))
     if uri == "holdspeak://follow-through/board":
-        board = FollowThroughService(get_database()).board(principal)
+        board = FollowThroughService(db_or(get_database)).board(principal)
         return _contents(uri, _JSON_MIME, {
             "now": [asdict(card) for card in board.now],
             "waiting": [asdict(card) for card in board.waiting],
@@ -500,20 +502,20 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
             "overdue": [asdict(card) for card in board.overdue],
         })
     if uri == "holdspeak://briefs/latest":
-        brief = MondayBriefService(get_database()).get_latest(principal)
+        brief = MondayBriefService(db_or(get_database)).get_latest(principal)
         return _contents(uri, _JSON_MIME, asdict(brief) if brief is not None else None)
     if uri == "pipeline://events/recent":
-        return _contents(uri, _JSON_MIME, EventQueryService(get_database()).recent(principal))
+        return _contents(uri, _JSON_MIME, EventQueryService(db_or(get_database)).recent(principal))
     if uri == "pipeline://events/stats":
-        return _contents(uri, _JSON_MIME, EventQueryService(get_database()).stats(principal))
+        return _contents(uri, _JSON_MIME, EventQueryService(db_or(get_database)).stats(principal))
     if uri == "holdspeak://cadence/status":
-        return _contents(uri, _JSON_MIME, CadenceService(get_database(), Config.load().cadence).status(principal))
+        return _contents(uri, _JSON_MIME, CadenceService(db_or(get_database), Config.load().cadence).status(principal))
     if uri == "holdspeak://people/readiness":
         return _contents(uri, _JSON_MIME, people_family.readiness(principal))
     if uri == "holdspeak://people/relationships":
         return _contents(uri, _JSON_MIME, people_family.list_relationships(principal))
     if uri == "holdspeak://thoughts/unfinished":
-        value = RefinementThoughtService(get_database()).list_unfinished(
+        value = RefinementThoughtService(db_or(get_database)).list_unfinished(
             principal, limit=50
         )
         return _contents(uri, _JSON_MIME, value)
@@ -521,17 +523,17 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
     if match := _THOUGHT_WORKBENCH_PATTERN.fullmatch(uri):
         runtime = thought_family._runtime
         value = RefinementApplicationService(
-            get_database(), coordinator=runtime.coordinator if runtime else None
+            db_or(get_database), coordinator=runtime.coordinator if runtime else None
         ).get_workbench(principal, thought_id=match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _THOUGHT_ORIGINAL_PATTERN.fullmatch(uri):
         value = RefinementApplicationService(
-            get_database(), coordinator=None
+            db_or(get_database), coordinator=None
         ).get_original(principal, thought_id=match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _THOUGHT_REVIEW_PATTERN.fullmatch(uri):
         value = RefinementApplicationService(
-            get_database(), coordinator=None
+            db_or(get_database), coordinator=None
         ).review(
             principal,
             thought_id=match.group(1),
@@ -539,7 +541,7 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
         )
         return _contents(uri, _JSON_MIME, value)
     if match := _THOUGHT_DETAIL_PATTERN.fullmatch(uri):
-        value = RefinementThoughtService(get_database()).get(
+        value = RefinementThoughtService(db_or(get_database)).get(
             principal, match.group(1)
         )
         return _contents(uri, _JSON_MIME, {"thought": value})
@@ -547,31 +549,31 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
         kind = _PRIMITIVE_KIND_ALIASES.get(match.group(1))
         if kind is None:
             raise ResourceError(f"Unsupported primitive kind: {match.group(1)}")
-        value = getattr(PrimitiveService(get_database()), f"get_{kind}")(principal, match.group(2))
+        value = getattr(PrimitiveService(db_or(get_database)), f"get_{kind}")(principal, match.group(2))
         return _contents(uri, _JSON_MIME, value)
     if match := _WORKBENCH_RUNS_PATTERN.fullmatch(uri):
-        value = WorkbenchService(get_database()).list_runs(principal, match.group(1))
+        value = WorkbenchService(db_or(get_database)).list_runs(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _WORKBENCH_DETAIL_PATTERN.fullmatch(uri):
-        value = WorkbenchService(get_database()).get_workbench(principal, match.group(1))
+        value = WorkbenchService(db_or(get_database)).get_workbench(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _RECIPE_DETAIL_PATTERN.fullmatch(uri):
-        value = RecipeService(get_database()).get_recipe(principal, match.group(1))
+        value = RecipeService(db_or(get_database)).get_recipe(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _ZONE_MEMBERS_PATTERN.fullmatch(uri):
-        value = PrimitiveService(get_database()).list_directory_members(principal, match.group(1))
+        value = PrimitiveService(db_or(get_database)).list_directory_members(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _MEETING_DETAIL_PATTERN.fullmatch(uri):
-        value = MeetingService(get_database()).get_meeting(principal, match.group(1))
+        value = MeetingService(db_or(get_database)).get_meeting(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _DECISION_RECORD_PATTERN.fullmatch(uri):
-        value = DecisionRecordService(get_database()).get(principal, match.group(1))
+        value = DecisionRecordService(db_or(get_database)).get(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _PIPELINE_RECENT_SERVICE_PATTERN.fullmatch(uri):
-        value = EventQueryService(get_database()).recent(principal, service=match.group(1))
+        value = EventQueryService(db_or(get_database)).recent(principal, service=match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _PIPELINE_CORRELATION_PATTERN.fullmatch(uri):
-        value = EventQueryService(get_database()).by_correlation(principal, correlation_id=match.group(1))
+        value = EventQueryService(db_or(get_database)).by_correlation(principal, correlation_id=match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _PEOPLE_RELATIONSHIP_PATTERN.fullmatch(uri):
         value = people_family.get_relationship(principal, match.group(1))
@@ -580,7 +582,7 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
     if match := _PROJECT_STEWARD_RUN_PATTERN.fullmatch(uri):
         # Must precede _PROJECT_DETAIL_PATTERN (longer path wins).
         _project_id, run_id = match.group(1), match.group(2)
-        db = get_database()
+        db = db_or(get_database)
         run = db.steward_runs.get_run(run_id)
         if run is None:
             raise ServiceError(
@@ -597,18 +599,18 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
     if match := _PROJECT_UPDATE_PATTERN.fullmatch(uri):
         _project_id, update_id = match.group(1), match.group(2)
         from holdspeak.services.project_update_service import ProjectUpdateService
-        svc = ProjectUpdateService(get_database())
+        svc = ProjectUpdateService(db_or(get_database))
         value = svc.get_update(principal, update_id)
         return _contents(uri, _JSON_MIME, value)
     if match := _PROJECT_ROOM_PATTERN.fullmatch(uri):
         from holdspeak.services.project_service import ProjectService
-        value = ProjectService(get_database()).room(principal, match.group(1))
+        value = ProjectService(db_or(get_database)).room(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _PROJECT_DELTA_PATTERN.fullmatch(uri):
         project_id = match.group(1)
         from holdspeak.services.project_service import ProjectService as _PS
         from holdspeak.services.project_delta_service import ProjectDeltaService
-        db = get_database()
+        db = db_or(get_database)
         ps = _PS(db)
         ps._require_project(project_id)
         # collector=None is safe: _find_open_review and _load_frozen_window
@@ -626,6 +628,6 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
         })
     if match := _PROJECT_DETAIL_PATTERN.fullmatch(uri):
         from holdspeak.services.project_service import ProjectService
-        value = ProjectService(get_database()).get_project(principal, match.group(1))
+        value = ProjectService(db_or(get_database)).get_project(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     raise ResourceError(f"Unknown resource: {uri}")

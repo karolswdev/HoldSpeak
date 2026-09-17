@@ -1,6 +1,8 @@
 """HS-171-02: Heartbeat family -- MCP tools for the heartbeat sweep."""
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 from typing import Any
 
 from holdspeak.db import get_database, get_observer
@@ -75,8 +77,8 @@ TOOLS: list[dict[str, Any]] = [
 
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     """Route a tool call. Raises LookupError for unowned names."""
-    db = get_database()
-    obs = get_observer()
+    db = db_or(get_database)
+    obs = observer_or(get_observer)
     hb = HeartbeatService(db, observer=obs)
 
     if name == "heartbeat.status":

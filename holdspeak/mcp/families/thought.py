@@ -1,6 +1,8 @@
 """Thought family -- exact MCP commands for one-turn refinement."""
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 from typing import Any
 
 from holdspeak.db import get_database
@@ -215,9 +217,9 @@ def configure_runtime(runtime: SidecarRefinementRuntime | None) -> None:
     _runtime = runtime
 
 
-def _service() -> RefinementApplicationService:
+def _build_service() -> RefinementApplicationService:
     return RefinementApplicationService(
-        get_database(), coordinator=_runtime.coordinator if _runtime else None
+        db_or(get_database), coordinator=_runtime.coordinator if _runtime else None
     )
 
 
@@ -346,3 +348,13 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             workspace_cursor=arguments.get("workspace_cursor"),
         )
     raise LookupError(name)
+
+
+# HS-200-45 R1: _service asks the ONE composition root first. Inside the hub that
+# returns the instance the HTTP routes use -- composed with the hub's refinement coordinator (host_kind web).
+# Outside a hub (a unit test's bare root, or the standalone diagnosis hatch) the
+# root holds nothing and the bare builder above runs, producing exactly the
+# object the pre-HS-200-45 code produced.
+def _service() -> RefinementApplicationService:
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("refinement_service", _build_service)

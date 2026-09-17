@@ -274,11 +274,26 @@ cloud endpoint). The model's display name and host appear in the update
 footer's egress chip. The deterministic fallback has no egress.
 
 **The remote boundary.** The Streamable HTTP listener
-(`POST /api/mcp`) is opt-in and off by default. When enabled, it accepts
-connections on the tailnet address only. An `OWNER` principal is never derived
-from a non-loopback request on this route; the owner's web token presented from
-a remote address returns 403. `X-Forwarded-For` is never read for principal
-derivation on any route.
+(`POST /api/mcp`) is opt-in and off by default for **remote** callers. When
+enabled, it accepts connections on the tailnet address only. An `OWNER`
+principal is never derived from a non-loopback request on this route; the
+owner's web token presented from a remote address returns 403.
+`X-Forwarded-For` is never read for principal derivation on any route.
+
+A **loopback** request bearing the owner's own token is not remote access: it
+is the hub's own local transport, and it is admitted whether or not the remote
+flag is on. That is the path the stdio MCP sidecar uses.
+
+**The MCP sidecar's database access.** The sidecar does not open the database.
+It discovers the running hub through the owner lock beside the database file
+and forwards each JSON-RPC message to the hub's loopback `POST /api/mcp` with
+the owner token; the hub is the only process that writes. With no hub running
+the sidecar refuses by name and opens nothing. The sole exception is the
+`HOLDSPEAK_MCP_STANDALONE=1` diagnosis hatch, which opens the database **and
+claims the owner lock** under the label `holdspeak-mcp`, so the arrangement is
+never silent. Previously the sidecar inherited `$HOME` from its MCP client,
+opened the owner's live database as a second unlocked writer, and ran a schema
+reconcile on every start.
 
 Scoped credentials carry a palette (which tool families the caller may invoke)
 and a TTL (capped at 30 days). The hub stores `sha256(token)` at rest and

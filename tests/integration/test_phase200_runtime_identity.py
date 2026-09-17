@@ -345,7 +345,20 @@ def test_backup_upgrade_restore_reopen_on_a_copy(tmp_path):
     # The rehearsal runs on a COPY. The original is the control.
     copy = tmp_path / "rehearsal" / "holdspeak.db"
     copy.parent.mkdir(parents=True)
-    copy.write_bytes(original.read_bytes())
+    # HS-200-45 R5: the database runs in WAL, so `_seed`'s rows can still be in
+    # `holdspeak.db-wal` when this line runs. A raw byte copy of the main file
+    # alone produced a copy with the schema and none of the seeded rows, and
+    # step 2's `_read_back` assertion caught it. The sqlite backup API reads one
+    # consistent snapshot through SQLite.
+    _src = sqlite3.connect(str(original))
+    try:
+        _dest = sqlite3.connect(str(copy))
+        try:
+            _src.backup(_dest)
+        finally:
+            _dest.close()
+    finally:
+        _src.close()
     _make_an_older_copy(copy)
     assert read_schema_version(copy) == 75
     assert "corrections_applied" not in _columns(copy, "dictation_journal")

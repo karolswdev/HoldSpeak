@@ -409,10 +409,19 @@ _TOOLS_NO_REQUIRED_ARGS = [
 ]
 
 
+# HS-200-45 R6: tools that need a runtime seam only the HUB holds. They refuse
+# honestly with `isError: true` outside it -- which is the point of the story:
+# `project.steward.trigger` used to RETURN `{"success": false, "code":
+# "scheduler_not_wired"}`, so the sidecar reported success and the caller read
+# a refusal as a completed trigger. They belong with the provider tools below,
+# not with the tools that work anywhere.
+_TOOLS_NO_REQUIRED_ARGS_HUB_ONLY = {"project.steward.trigger"}
+
 # Tools with no required args that always succeed with {} (no external deps).
 _TOOLS_NO_REQUIRED_ARGS_PURE = [
     name for name in _TOOLS_NO_REQUIRED_ARGS
     if not name.startswith("provider.github")
+    and name not in _TOOLS_NO_REQUIRED_ARGS_HUB_ONLY
 ]
 
 # Provider tools with no required args that may error on missing config.
@@ -436,6 +445,22 @@ def test_no_required_args_tools_succeed_with_empty(
         f"{tool_name} should succeed with empty args: {data}"
     )
     assert isinstance(data, dict)
+
+
+@pytest.mark.parametrize(
+    "tool_name",
+    sorted(_TOOLS_NO_REQUIRED_ARGS_HUB_ONLY),
+    ids=sorted(_TOOLS_NO_REQUIRED_ARGS_HUB_ONLY),
+)
+def test_hub_only_tools_refuse_as_an_error_not_as_success(
+    db: Database, tool_name: str,
+) -> None:
+    """HS-200-45 R6: "I cannot do this here" is an error, never a success."""
+    is_error, data = _call(tool_name, {})
+    assert is_error is True, f"{tool_name} dressed a refusal as success: {data}"
+    assert data.get("code"), f"{tool_name}: missing a stable code: {data}"
+    # And the message names WHY and what context would work.
+    assert "hub" in data.get("error", "").lower(), data
 
 
 @pytest.mark.parametrize(

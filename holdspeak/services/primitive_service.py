@@ -8,7 +8,7 @@ from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import uuid
-from typing import Any
+from typing import Any, Callable
 
 from ..db.core import Database
 from ..db.primitives import ZoneNameTaken, normalize_zone_name
@@ -23,9 +23,31 @@ def _new_id(prefix: str) -> str:
 
 @observe_service
 class PrimitiveService:
-    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
+    def __init__(
+        self,
+        db: Database,
+        *,
+        observer: PipelineObserver | None = None,
+        on_changed: Callable[[str, str, str], None] | None = None,
+    ) -> None:
         self._db = db
         self._observer = observer or NullObserver()
+        # HS-200-45 R4: ONE frame for a changed desk object. The hub binds this
+        # to ``broadcast("desk_changed", ...)`` so a write from any caller --
+        # an HTTP route, MCP over stdio or HTTP, the iPad -- reaches every open
+        # desk. Before this, only the browser that made the write knew, because
+        # ``dataSlice.refresh()`` ran in its own tab; a write from anywhere else
+        # landed in the database and sat there.
+        self._on_changed = on_changed
+
+    def _changed(self, kind: str, obj_id: str, op: str) -> None:
+        """Announce a successful write. Never fails the write it reports on."""
+        if self._on_changed is None:
+            return
+        try:
+            self._on_changed(kind, obj_id, op)
+        except Exception:  # pragma: no cover - a dead socket is not a failed write
+            pass
 
     # ── Notes ────────────────────────────────────────────────────────────
 
@@ -63,6 +85,7 @@ class PrimitiveService:
             if "thought-owned notes require expected revision" not in str(exc):
                 raise
             raise ConflictError("thought-owned notes require expected revision", code="thought_expected_revision_required") from exc
+        self._changed("note", note.id, "create")
         return note.to_dict()
 
     def update_note(
@@ -98,6 +121,7 @@ class PrimitiveService:
             if "thought-owned notes require expected revision" not in str(exc):
                 raise
             raise ConflictError("thought-owned notes require expected revision", code="thought_expected_revision_required") from exc
+        self._changed("note", note.id, "update")
         return note.to_dict()
 
     def delete_note(self, principal: Principal, note_id: str, *, expected_aggregate_revision: int | None = None,
@@ -116,6 +140,7 @@ class PrimitiveService:
             raise ConflictError("thought-owned notes require expected revision", code="thought_expected_revision_required") from exc
         if not removed:
             raise NotFound("note", note_id)
+        self._changed("note", note_id, "delete")
         return True
 
     @staticmethod
@@ -163,6 +188,7 @@ class PrimitiveService:
             consequences_markdown=consequences_markdown,
             tags=tags or [],
         )
+        self._changed("decision", decision.id, "create")
         return decision.to_dict()
 
     def update_decision(
@@ -171,11 +197,13 @@ class PrimitiveService:
         decision = self._db.desk_decisions.update(decision_id, **fields)
         if decision is None:
             raise NotFound("decision", decision_id)
+        self._changed("decision", decision_id, "update")
         return decision.to_dict()
 
     def delete_decision(self, principal: Principal, decision_id: str) -> bool:
         if not self._db.desk_decisions.delete(decision_id):
             raise NotFound("decision", decision_id)
+        self._changed("decision", decision_id, "delete")
         return True
 
     def update_decision_status(
@@ -184,6 +212,7 @@ class PrimitiveService:
         decision = self._db.desk_decisions.update(decision_id, status=status)
         if decision is None:
             raise NotFound("decision", decision_id)
+        self._changed("decision", decision_id, "update")
         return decision.to_dict()
 
     def supersede_decision(
@@ -194,6 +223,8 @@ class PrimitiveService:
         )
         if successor is None:
             raise NotFound("decision", decision_id)
+        self._changed("decision", decision_id, "update")
+        self._changed("decision", successor.id, "create")
         return successor.to_dict()
 
     # ── Knowledge bases ──────────────────────────────────────────────────
@@ -222,6 +253,7 @@ class PrimitiveService:
             name=name,
             member_ids=member_ids or [],
         )
+        self._changed("kb", kb.id, "create")
         return kb.to_dict()
 
     def update_kb(
@@ -240,11 +272,13 @@ class PrimitiveService:
             name=name if name is not None else existing.name,
             member_ids=member_ids if member_ids is not None else existing.member_ids,
         )
+        self._changed("kb", kb.id, "update")
         return kb.to_dict()
 
     def delete_kb(self, principal: Principal, kb_id: str) -> bool:
         if not self._db.kbs.delete(kb_id):
             raise NotFound("kb", kb_id)
+        self._changed("kb", kb_id, "delete")
         return True
 
     def list_kb_members(
@@ -261,12 +295,16 @@ class PrimitiveService:
         member = self._db.knowledge_memberships.upsert(
             knowledge_id=kb_id, resource_ref=resource_ref
         )
+        self._changed("kb", kb_id, "update")
         return member.to_dict()
 
     def remove_kb_member(
         self, principal: Principal, kb_id: str, resource_ref: str
     ) -> bool:
-        return self._db.knowledge_memberships.delete(kb_id, resource_ref)
+        removed = self._db.knowledge_memberships.delete(kb_id, resource_ref)
+        if removed:
+            self._changed("kb", kb_id, "update")
+        return removed
 
     # ── Directories (zones) ──────────────────────────────────────────────
 
@@ -312,6 +350,7 @@ class PrimitiveService:
             raise ConflictError(
                 "zone_name_taken", existing_name=exc.existing_name
             ) from exc
+        self._changed("directory", directory.id, "create")
         return directory.to_dict()
 
     def update_directory(
@@ -337,11 +376,13 @@ class PrimitiveService:
             raise ConflictError(
                 "zone_name_taken", existing_name=exc.existing_name
             ) from exc
+        self._changed("directory", directory.id, "update")
         return directory.to_dict()
 
     def delete_directory(self, principal: Principal, directory_id: str) -> bool:
         if not self._db.directories.delete(directory_id):
             raise NotFound("directory", directory_id)
+        self._changed("directory", directory_id, "delete")
         return True
 
     def list_directory_members(
@@ -366,6 +407,7 @@ class PrimitiveService:
             primitive_id=primitive_ref,
             directory_id=directory_id,
         )
+        self._changed("directory", directory_id, "update")
         return membership.to_dict()
 
     def unfile_member(
@@ -380,6 +422,7 @@ class PrimitiveService:
         if existing is None or existing.directory_id != directory_id:
             raise NotFound("membership", f"{primitive_id} in {directory_id}")
         self._db.directory_memberships.delete(ref)
+        self._changed("directory", directory_id, "update")
         return True
 
     # ── Workflows ────────────────────────────────────────────────────────
@@ -410,6 +453,7 @@ class PrimitiveService:
             prompt=prompt,
             graph_json=graph_json or {},
         )
+        self._changed("workflow", workflow.id, "create")
         return self._workflow_payload(workflow)
 
     def update_workflow(
@@ -430,11 +474,13 @@ class PrimitiveService:
             prompt=prompt if prompt is not None else existing.prompt,
             graph_json=graph_json if graph_json is not None else existing.graph_json,
         )
+        self._changed("workflow", workflow.id, "update")
         return self._workflow_payload(workflow)
 
     def delete_workflow(self, principal: Principal, workflow_id: str) -> bool:
         if not self._db.workflows.delete(workflow_id):
             raise NotFound("workflow", workflow_id)
+        self._changed("workflow", workflow_id, "delete")
         return True
 
     # ── Chains ───────────────────────────────────────────────────────────
@@ -463,6 +509,7 @@ class PrimitiveService:
             name=name,
             steps=steps or [],
         )
+        self._changed("chain", chain.id, "create")
         return self._chain_payload(chain)
 
     def update_chain(
@@ -481,11 +528,13 @@ class PrimitiveService:
             name=name if name is not None else existing.name,
             steps=steps if steps is not None else existing.steps,
         )
+        self._changed("chain", chain.id, "update")
         return self._chain_payload(chain)
 
     def delete_chain(self, principal: Principal, chain_id: str) -> bool:
         if not self._db.chains.delete(chain_id):
             raise NotFound("chain", chain_id)
+        self._changed("chain", chain_id, "delete")
         return True
 
     # ── Internal helpers ─────────────────────────────────────────────────

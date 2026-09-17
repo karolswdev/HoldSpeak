@@ -82,7 +82,7 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-42 | Make a finished meeting actually produce intelligence | done | [story-42](story-42-drain-the-intel-queue.md) | [evidence-story-42](./evidence-story-42.md) |
 | HS-200-43 | Let a watch become schedulable, and let a manual evaluation count | done | [story-43](story-43-arm-the-watch.md) | [evidence-story-43](./evidence-story-43.md) |
 | HS-200-44 | Make the release guards see what they claim to guard | ready | [story-44](story-44-the-guard-sees-its-own-violations.md) | — |
-| HS-200-45 | One composition root — MCP goes through the hub's services | ready | [story-45](story-45-one-composition-root.md) | — |
+| HS-200-45 | One composition root — MCP goes through the hub's services | in-progress | [story-45](story-45-one-composition-root.md) | — |
 | HS-200-46 | A stale document fails CI instead of misleading the next agent | done | [story-46](story-46-a-stale-doc-fails-ci.md) | [evidence-story-46](./evidence-story-46.md) |
 
 ## Where we are

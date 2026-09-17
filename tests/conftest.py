@@ -613,6 +613,32 @@ def pytest_collection_modifyitems(config, items):
 
 
 @pytest.fixture(autouse=True)
+def _bare_composition_root():
+    """HS-200-45: install a BARE composition root for every test, ALWAYS.
+
+    Outside a hub, `holdspeak.runtime.composition.current()` refuses to
+    improvise a root — that refusal is the fence that stops the MCP sidecar
+    becoming a second writer on the owner's live database. A unit test is
+    exactly the lawful exception: it runs on an isolated HOME (enforced by
+    `_enforce_isolated_home` below) and it owns whatever database it opens.
+
+    The bare root shares NO database handle (`db=None`), which is
+    load-bearing: every MCP module keeps falling back to its own
+    `get_database` symbol, so the ~40 test files that monkeypatch
+    `<module>.get_database` per module keep working unchanged. A test that
+    builds a real hub app gets that hub's root installed over this one by
+    `_create_app`, and the next test gets a fresh bare one.
+    """
+    from holdspeak.runtime import composition
+
+    composition.install(composition.bare(label="pytest"))
+    try:
+        yield
+    finally:
+        composition.uninstall()
+
+
+@pytest.fixture(autouse=True)
 def _isolate_agent_session_registry(tmp_path_factory, monkeypatch):
     """Point the coder-session registry at a per-test temp file, ALWAYS.
 

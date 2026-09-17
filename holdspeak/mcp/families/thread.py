@@ -7,6 +7,8 @@ touches only the database, no global broadcast seam.
 """
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 from typing import Any
 
 from holdspeak.db import get_database
@@ -52,7 +54,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
                 "thread_id is required.",
                 context={"status": 400},
             )
-        db = get_database()
+        db = db_or(get_database)
         db.threads.patch(thread_id, status_line=text)
         return {"status_line": text, "thread_id": thread_id}
     raise LookupError(name)

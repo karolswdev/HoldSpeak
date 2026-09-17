@@ -1,6 +1,8 @@
 """Coder family — MCP tools for the CoderService surface."""
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 from typing import Any
 
 from holdspeak.db import get_database
@@ -53,7 +55,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     if name not in ("coder.list", "coder.get", "coder.audit"):
         raise LookupError(name)
 
-    svc = CoderService(db=get_database(), reply_sender=None, observer=get_observer())
+    svc = CoderService(db=db_or(get_database), reply_sender=None, observer=observer_or(get_observer))
 
     if name == "coder.list":
         kwargs: dict[str, Any] = {}

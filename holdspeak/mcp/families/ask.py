@@ -1,6 +1,8 @@
 """Ask family — MCP tools for the AskService surface."""
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 import asyncio
 from typing import Any
 
@@ -94,13 +96,13 @@ def _run(coro: Any) -> Any:
     raise ValueError("async MCP tools cannot execute inside an active event loop")
 
 
-def _service() -> AskService:
+def _build_service() -> AskService:
     """Construct AskService per spec: db + observer, no broadcast, no rails_hydrator."""
     return AskService(
-        db=get_database(),
+        db=db_or(get_database),
         broadcast=None,
         rails_hydrator=None,
-        observer=get_observer(),
+        observer=observer_or(get_observer),
     )
 
 
@@ -156,3 +158,13 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         return _service().keep(principal, **kwargs_keep)
 
     raise LookupError(name)
+
+
+# HS-200-45 R1: _service asks the ONE composition root first. Inside the hub that
+# returns the instance the HTTP routes use -- composed with broadcast= and the rails hydrator.
+# Outside a hub (a unit test's bare root, or the standalone diagnosis hatch) the
+# root holds nothing and the bare builder above runs, producing exactly the
+# object the pre-HS-200-45 code produced.
+def _service() -> AskService:
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("ask_service", _build_service)

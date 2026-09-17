@@ -1,8 +1,37 @@
 """Connection factory for HoldSpeak's SQLite persistence layer (HS-117-12).
 
-Extracted from ``Database`` so the connection protocol (WAL pragmas, row factory,
-commit/rollback) lives in one place. The ``Database`` container delegates to
-:func:`make_connection_factory`.
+Extracted from ``Database`` so the connection protocol lives in one place: the
+three pragmas, the row factory, and commit-on-clean-exit / rollback-on-raise.
+The ``Database`` container delegates to :func:`make_connection_factory`.
+
+**The protocol, and why (HS-200-45 R5).** This docstring used to say "WAL
+pragmas" while the code set only ``foreign_keys=ON`` — the 2026-09-13
+operational-surface audit measured ``journal_mode = delete`` on the owner's real
+database, and ``sqlite3.OperationalError: database is locked`` already appeared
+in E2E runs. All three pragmas are now real:
+
+* ``journal_mode = WAL`` — a reader never blocks a writer. This is a
+  **persistent** property of the database FILE, not of a connection: SQLite
+  records it in the header, so the first connection that sets it converts the
+  file and every later connection inherits it. Setting it on every open is
+  therefore idempotent, and cheap. Measured on this machine: 0.18 ms median
+  (0.55 ms p95) as a connection's FIRST statement against an already-WAL file,
+  0.0008 ms once the connection is warm, and 0.26 ms for the one-time
+  ``delete`` -> ``wal`` conversion. Compare the ~0.9 ms this module's cache
+  docstring records for parsing the 356-object schema on a connection's first
+  statement — which is why the cache exists, and why one extra header read per
+  connection is not worth conditionalizing.
+* ``busy_timeout = 5000`` — a connection that meets a held write lock waits up
+  to five seconds instead of raising ``database is locked`` immediately. Per
+  connection, not persistent, so it must be set on every open.
+* ``foreign_keys = ON`` — per connection, as before.
+
+WAL has a consequence outside this module: the committed tail of a WAL database
+lives in the ``-wal`` sidecar until a checkpoint, so **copying the database file
+alone loses recent writes**. Every path that snapshots the file must go through
+the sqlite backup API (``Connection.backup``, which is WAL-correct) or
+checkpoint first — see :func:`checkpoint` and ``holdspeak/db/core.py``'s
+``backup_database`` / ``restore_database``.
 """
 from __future__ import annotations
 
@@ -18,13 +47,13 @@ def connection(db_path: Path) -> Iterator[sqlite3.Connection]:
     """Context manager for a single database connection.
 
     Creates the parent directory if needed, sets ``row_factory`` to
-    :class:`sqlite3.Row`, enables foreign keys, and commits on clean exit /
-    rolls back on exception.
+    :class:`sqlite3.Row`, applies the three pragmas this module's docstring
+    describes, and commits on clean exit / rolls back on exception.
     """
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
+    _apply_pragmas(conn)
     try:
         yield conn
         conn.commit()
@@ -35,12 +64,41 @@ def connection(db_path: Path) -> Iterator[sqlite3.Connection]:
         conn.close()
 
 
+def _apply_pragmas(conn: sqlite3.Connection) -> None:
+    """The three pragmas of the connection protocol, in one place.
+
+    ``journal_mode`` is a file property and so is a no-op after the first
+    conversion; the other two are per-connection and must be set every time.
+    An in-memory database cannot be WAL, so that one failure is tolerated —
+    every other pragma failure is a real misconfiguration and propagates.
+    """
+    try:
+        conn.execute("PRAGMA journal_mode = WAL")
+    except sqlite3.DatabaseError:  # pragma: no cover - :memory: has no WAL
+        pass
+    conn.execute("PRAGMA busy_timeout = 5000")
+    conn.execute("PRAGMA foreign_keys = ON")
+
+
+def checkpoint(conn: sqlite3.Connection) -> None:
+    """Fold the WAL tail back into the main file and truncate the sidecar.
+
+    Call this before any operation that reads or copies the database FILE
+    rather than going through SQLite — otherwise the copy is missing every
+    write still sitting in ``-wal``.
+    """
+    try:
+        conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    except sqlite3.DatabaseError:  # pragma: no cover - not a WAL database
+        pass
+
+
 def _open(db_path: Path) -> sqlite3.Connection:
     """Open one connection with the protocol :func:`connection` applies."""
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
+    _apply_pragmas(conn)
     return conn
 
 

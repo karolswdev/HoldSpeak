@@ -6,11 +6,70 @@ resources; the owner discovery lists 37 because access filtering admits 16
 static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
 
-The sidecar runs as a child process of the MCP client. It opens the same
-local database the web runtime uses, dispatches every tool through the same
-service layer, and returns the same results. It has no web server, no
-WebSocket, and no live-reload signal: it reads and writes the desk's state
-directly.
+## The sidecar is a client of the hub
+
+The sidecar runs as a child process of the MCP client, and it **does not open
+the database**. For each JSON-RPC message it finds the running hub through the
+owner lock beside the database file (`<database>.owner.lock`, with pid
+liveness confirmed and host and port read from the body), then forwards the
+message verbatim
+to `POST http://127.0.0.1:<port>/api/mcp`, returning the hub's response
+verbatim. One process owns the database; every tool is dispatched by that
+process, through the same composed service layer its own HTTP routes use.
+
+Discovery happens per message and is never cached, so a hub started *after*
+your editor launched the sidecar starts working with no restart.
+
+**With no hub running**, the handshake (`initialize`, `ping`) is answered
+locally so your client connects, and every other call returns a JSON-RPC error
+naming the situation and the remedy:
+
+```
+No running HoldSpeak hub owns /Users/you/.local/share/holdspeak/holdspeak.db;
+start `holdspeak web`, then retry.
+```
+
+Nothing is opened in that state: no schema reconcile, no `holdspeak.db`
+created.
+
+**Why, and what was rejected.** The sidecar used to be its own composition
+root. `.mcp.json` carries no `env` block, so it inherited `$HOME`, opened the
+same `holdspeak.db` a running hub owns, and ran `reconcile_schema` (a write
+transaction) on every start, without ever touching the owner lock that exists
+precisely to forbid that (`holdspeak/runtime_lock.py`: C10 "forbids introducing
+a multi-writer SQLite arrangement at all"). The rejected alternative was to
+open the file **read-only** and serve only the read tools:
+it is still a second builder of the same service layer over a file another
+process is checkpointing, and it makes the tool catalogue mean something
+different depending on who is running it. Proxying keeps one writer, one
+composition root, and one meaning per tool.
+
+**The diagnosis hatch.** `HOLDSPEAK_MCP_STANDALONE=1` restores the old
+behaviour, in which this process composes its own service layer and opens the
+database. It claims the owner lock while doing so, under the label
+`holdspeak-mcp`, so a `holdspeak web` started afterwards refuses loudly and
+names the sidecar's pid instead of quietly becoming a second writer. If a hub
+already owns the database, standalone mode refuses rather than opening the
+file. It exists for a diagnosis session, never for daily use.
+
+### A write reaches the open desk
+
+Because dispatch goes through the hub's composed services, a write over MCP
+emits one `desk_changed` frame on the hub's `/ws` bus
+(`{"kind": ..., "id": ..., "op": "create" | "update" | "delete", "origin": ...}`),
+and any open desk re-reads itself. That holds for a write from any caller: an
+HTTP route, MCP over stdio, MCP over `/api/mcp`, or the iPad. Previously only
+the browser that made the write knew about it (it refreshed itself), and a
+remote write landed in the database and sat there.
+
+### `POST /api/mcp` and the Reach flag
+
+`remote.streamable_http_enabled` governs the **remote** listener: scoped agent
+credentials arriving from elsewhere. A **loopback request bearing the owner
+token** is the hub's own local transport, the one the stdio sidecar proxies
+into, and is admitted with the flag off. Everything else on that route still
+requires the flag on, and an OWNER token from a non-loopback address is still
+refused with 403 (Article XI:4).
 
 ## Wiring
 
@@ -307,7 +366,8 @@ grounding, or context payload. MCP supplies identities and cursors; the shared T
 application service loads authoritative content exactly as the web surface
 does, including the exact immutable attachment hash. The stdio sidecar keeps a coordinator loop alive for its whole process,
 but does not perform global startup recovery because the web runtime may own
-live work in the same database.
+live work in the same database. (In proxy mode there is no sidecar
+coordinator at all: the hub's own coordinator runs every refinement.)
 
 Thought command failures are structured tool errors: `error` is the readable
 detail, `code` is the stable service code, and safe conflict context such as
@@ -935,7 +995,8 @@ Each excerpt is real structured output, trimmed where noted.
 ### 1. Boot the sidecar
 
 Wire the sidecar into your MCP client (see Wiring above). The server
-speaks stdio JSON-RPC; it opens the local database on startup.
+speaks stdio JSON-RPC and forwards each message to the running hub; start
+`holdspeak web` first.
 
 ### 2. Start the setup interview and create a project
 

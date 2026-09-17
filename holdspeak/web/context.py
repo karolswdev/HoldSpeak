@@ -45,6 +45,12 @@ class WebContext:
     on_update_meeting: Optional[Callable[..., Any]] = None
     on_set_title: Optional[Callable[[str], None]] = None
     on_set_tags: Optional[Callable[[list[str]], None]] = None
+    # HS-200-45: the hub's ONE desk-primitive services, composed with the
+    # ``on_changed`` hook bound to the bus. Every primitive route and every MCP
+    # call writes through these instances, so one write puts one
+    # ``desk_changed`` frame on /ws whoever made it.
+    primitive_service: Optional[Any] = None
+    workbench_service: Optional[Any] = None
     # HS-122-04: transport-neutral meeting archive and lifecycle boundary.
     # The runtime-owned callbacks above remain bound into this service at app
     # composition, keeping the service itself independent of the web layer.

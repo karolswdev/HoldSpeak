@@ -1,6 +1,8 @@
 """Interview tools use the same durable controller as the Desk."""
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 from typing import Any
 
 from jsonschema import Draft202012Validator
@@ -47,7 +49,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     error = next(Draft202012Validator(tool["inputSchema"]).iter_errors(arguments), None)
     if error:
         raise ValidationError(error.message)
-    service = InterviewService(get_database())
+    service = InterviewService(db_or(get_database))
     def model_view() -> dict[str, Any]:
         path = service._db.threads.list_path(arguments["thread_id"])
         user_id = next((message.id for message in reversed(path) if message.role == "user" and not service._db.threads.is_draft_message(message.id)), "")
