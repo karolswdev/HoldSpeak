@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 200
-- **Status:** ready
+- **Status:** done
 - **Depends on:** HS-200-04, HS-200-05, HS-200-06, HS-200-09
 - **Unblocks:** HS-200-13, HS-200-14, HS-200-16, HS-200-40
 - **Owner:** unassigned
@@ -23,11 +23,11 @@ Out: Automatic external publication or invented organizational decision authorit
 
 ## Acceptance criteria
 
-- [ ] One linked recording or import produces proposals through the actual completion and intelligence services.
-- [ ] Each decision/action preserves meeting, relevant transcript evidence, and extraction provenance.
-- [ ] Unknown owner, deadline, or acceptance remains unknown until supported or supplied by the user.
-- [ ] Confirm, Edit, and Dismiss call the canonical service and return its durable result.
-- [ ] Repeated completion, model retry, and lost acknowledgement do not create duplicate proposals or commitments.
+- [x] One linked recording or import produces proposals through the actual completion and intelligence services.
+- [x] Each decision/action preserves meeting, relevant transcript evidence, and extraction provenance.
+- [x] Unknown owner, deadline, or acceptance remains unknown until supported or supplied by the user.
+- [x] Confirm, Edit, and Dismiss call the canonical service and return its durable result.
+- [x] Repeated completion, model retry, and lost acknowledgement do not create duplicate proposals or commitments.
 
 ## Test plan
 

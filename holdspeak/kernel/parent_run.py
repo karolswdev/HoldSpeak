@@ -9,6 +9,7 @@ from typing import Any, Mapping
 
 from ..principals import Principal, PrincipalKind
 from .parent_lease import ParentLeaseHeartbeats
+from .orphan_lease import orphaned_claimed_shells
 from .model import Admission, KernelRefused, OperationRequest, valid_ref
 
 _PARENT_FIELDS = frozenset({"native_id", "definition_ref", "definition_revision", "input", "deadline_at", "child_budget"})
@@ -322,14 +323,7 @@ class ParentRunController:
     def reconcile_abandoned(self) -> int:
         now, closed = self._clock(), 0
         with self._database._connection() as conn:
-            placeholders = ",".join("?" for _ in self._operation_names.values())
-            orphaned = conn.execute(
-                f"""SELECT o.operation_id FROM kernel_operations o
-                       LEFT JOIN kernel_parent_runs p ON p.operation_id=o.operation_id
-                      WHERE o.state='claimed' AND p.operation_id IS NULL
-                        AND o.name IN ({placeholders})""",
-                tuple(self._operation_names.values()),
-            ).fetchall()
+            orphaned = orphaned_claimed_shells(conn, self._operation_names.values(), now=now, lease_seconds=self._lease_seconds)
             rows = conn.execute("SELECT p.*,o.principal_kind,o.principal_identity FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE p.state IN ('OPEN','CANCELLING') AND (p.lease_heartbeat_at IS NULL OR p.lease_heartbeat_at < ?)", (now-self._lease_seconds,)).fetchall()
         for orphan in orphaned:
             try:

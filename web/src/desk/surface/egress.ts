@@ -21,7 +21,10 @@ export function egressFor(host: string | null | undefined): {
   scope: EgressScope;
 } {
   if (!host) return { label: "", scope: undefined };
-  if (host === "local" || host === "LOCAL" || host === "this_device") {
+  // HS-200-12: `same_device` is the deployment revision's boundary word
+  // (holdspeak/deployment_revisions.py:97), the value a bound intel job
+  // records as its host when the model runs here; it read as a cloud host.
+  if (host === "local" || host === "LOCAL" || host === "this_device" || host === "same_device") {
     return { label: "THIS DEVICE", scope: "local" };
   }
   if (host === "THIS DEVICE") {

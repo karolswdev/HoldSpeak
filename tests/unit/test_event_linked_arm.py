@@ -501,8 +501,12 @@ class TestEventLinkedLifecycle:
             # Now advance the clock past next_fire_at so the tick fires it.
             clock.set(rec.next_fire_at + 1)
 
-            # Wait for the conductor to arm and fire
-            deadline = time.time() + 5.0
+            # Wait for the conductor to arm and fire.  The loop returns the
+            # moment the row reads `recording` (about 2s under coverage on a
+            # loaded machine); the patience is only the ceiling, and 5s was
+            # crossed once on the CI runner (PR #578 rerun 35334527863) while
+            # the conductor thread ticked under coverage tracing.
+            deadline = time.time() + 30.0
             while time.time() < deadline:
                 rec = db.scheduled_recordings.get(schedule_id)
                 if rec and rec.state == "recording":

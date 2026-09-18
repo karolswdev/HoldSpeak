@@ -295,20 +295,94 @@ def _read_back(path: Path) -> tuple[str | None, str | None]:
         conn.close()
 
 
+# The follow_through_proposals columns HS-200-12 added at schema 78.
+_FTP_78_COLUMNS = (
+    "retry_key", "extraction_revision", "job_id", "job_attempt", "extraction_model",
+    "span_start", "span_end", "segment_index", "support", "support_record_json",
+    "owner_supplied", "due_supplied", "edited_at",
+)
+
+
+# `follow_through_proposals` as schema 77 declared it (holdspeak/db/schema.py at
+# 7b0d5c3c), the 19 columns and the three indexes, for the rebuild below.
+_FTP_77_CREATE = """CREATE TABLE follow_through_proposals (
+    id TEXT PRIMARY KEY,
+    meeting_id TEXT NOT NULL,
+    project_id TEXT,
+    kind TEXT NOT NULL CHECK (kind IN ('decision', 'action')),
+    text TEXT NOT NULL,
+    owner_hint TEXT,
+    due_hint TEXT,
+    source_artifact_id TEXT,
+    source_plugin TEXT NOT NULL,
+    segment_timestamp REAL,
+    speaker_label TEXT,
+    model_host TEXT,
+    fingerprint TEXT NOT NULL,
+    state TEXT NOT NULL DEFAULT 'proposed'
+        CHECK (state IN ('proposed', 'confirmed', 'dismissed')),
+    original_text TEXT,
+    decision_record_id TEXT,
+    commitment_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    decided_at TEXT
+)"""
+_FTP_77_COLUMNS = (
+    "id", "meeting_id", "project_id", "kind", "text", "owner_hint", "due_hint",
+    "source_artifact_id", "source_plugin", "segment_timestamp", "speaker_label",
+    "model_host", "fingerprint", "state", "original_text", "decision_record_id",
+    "commitment_id", "created_at", "decided_at",
+)
+_FTP_77_INDEXES = (
+    "CREATE INDEX IF NOT EXISTS idx_ftp_meeting ON follow_through_proposals(meeting_id, state)",
+    "CREATE INDEX IF NOT EXISTS idx_ftp_project ON follow_through_proposals(project_id, state)",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_ftp_dedup ON follow_through_proposals(meeting_id, fingerprint) WHERE state = 'proposed'",
+)
+
+
+def _reshape_follow_through_proposals_to_77(conn: sqlite3.Connection) -> None:
+    """Rebuild the table at its 77 shape, portable across SQLite builds."""
+    for row in conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='follow_through_proposals' "
+        "AND name NOT LIKE 'sqlite_%'"
+    ).fetchall():
+        conn.execute(f"DROP INDEX IF EXISTS {row[0]}")
+    columns = ", ".join(_FTP_77_COLUMNS)
+    conn.execute(_FTP_77_CREATE.replace("CREATE TABLE follow_through_proposals", "CREATE TABLE ftp_77"))
+    conn.execute(f"INSERT INTO ftp_77 ({columns}) SELECT {columns} FROM follow_through_proposals")
+    conn.execute("DROP TABLE follow_through_proposals")
+    conn.execute("ALTER TABLE ftp_77 RENAME TO follow_through_proposals")
+    for statement in _FTP_77_INDEXES:
+        conn.execute(statement)
+    present = {row[1] for row in conn.execute("PRAGMA table_info(follow_through_proposals)")}
+    assert present == set(_FTP_77_COLUMNS), present ^ set(_FTP_77_COLUMNS)
+    assert not any(c in present for c in _FTP_78_COLUMNS)
+
+
 def _make_an_older_copy(path: Path) -> None:
     """Shape the copy the way schema 75 held it (before HS-176-02).
 
     75 → 76 added ``dictation_journal.corrections_applied``; 76 → 77 added the
-    ``project_ask_tasks`` table (HS-200-41). The copy starts life at HEAD's
-    shape, so EVERY bump since 75 has to be undone here — otherwise the newest
-    step is a tautology: the reconcile would "add" a table the copy already had
-    and the rehearsal would prove nothing about the bump it was re-anchored for.
-    When SCHEMA_VERSION moves again, remove the new shape here too.
+    ``project_ask_tasks`` table (HS-200-41); 77 → 78 added the
+    ``project_briefs`` table (HS-200-11) and the retry-identity + evidence
+    columns on ``follow_through_proposals`` (HS-200-12). The copy starts life
+    at HEAD's shape, so EVERY bump since 75 has to be undone here — otherwise
+    the newest step is a tautology: the reconcile would "add" a table the copy
+    already had and the rehearsal would prove nothing about the bump it was
+    re-anchored for. When SCHEMA_VERSION moves again, remove the new shape
+    here too.
     """
     conn = sqlite3.connect(str(path))
     try:
         conn.execute("ALTER TABLE dictation_journal DROP COLUMN corrections_applied")
         conn.execute("DROP TABLE IF EXISTS project_ask_tasks")
+        # 77 → 78 (HS-200-11 + HS-200-12, one version carrying both shapes).
+        conn.execute("DROP TABLE IF EXISTS project_briefs")
+        # The CI runner's SQLite refuses `ALTER TABLE ... DROP COLUMN` on this
+        # table ("incomplete input" after the drop; the columns ride a partial
+        # index), so the 77 shape is REBUILT rather than carved: the 77 CREATE
+        # verbatim, the surviving columns copied, the 77 indexes recreated.
+        _reshape_follow_through_proposals_to_77(conn)
         conn.execute("DELETE FROM schema_version")
         conn.execute("INSERT INTO schema_version (version) VALUES (75)")
         conn.commit()
@@ -322,6 +396,13 @@ def _columns(path: Path, table: str) -> set[str]:
         return {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
     finally:
         conn.close()
+
+
+def _declares(table: str) -> bool:
+    """Whether the live schema declares ``table`` (stories land in parallel lanes:
+    the 78 shapes are stripped and re-proven only where the tree has them)."""
+    from holdspeak.db.schema import SCHEMA_SQL
+    return f"CREATE TABLE IF NOT EXISTS {table}" in SCHEMA_SQL or f"CREATE TABLE {table}" in SCHEMA_SQL
 
 
 def _tables(path: Path) -> set[str]:
@@ -363,22 +444,30 @@ def test_backup_upgrade_restore_reopen_on_a_copy(tmp_path):
     assert read_schema_version(copy) == 75
     assert "corrections_applied" not in _columns(copy, "dictation_journal")
     assert "project_ask_tasks" not in _tables(copy)
+    if _declares("project_briefs"):
+        assert "project_briefs" not in _tables(copy)
+    assert "retry_key" not in _columns(copy, "follow_through_proposals")
 
     # 1. Back up through the existing mechanism, before the upgrade.
     backup = backup_database(copy)
     assert backup.exists() and backup.parent == copy.parent
     assert read_schema_version(backup) == 75
 
-    # 2. The supported upgrade: the declarative reconcile, 75 → 77.
+    # 2. The supported upgrade: the declarative reconcile, 75 → 78.
     conn = sqlite3.connect(str(copy))
     try:
         reconcile_schema(conn)
         conn.commit()
     finally:
         conn.close()
-    assert read_schema_version(copy) == SCHEMA_VERSION == 77
+    # The copy reports the CURRENT version, whatever it is; the shapes below
+    # are what 76, 77 and 78 each added.
+    assert read_schema_version(copy) == SCHEMA_VERSION
     assert "corrections_applied" in _columns(copy, "dictation_journal")
     assert "project_ask_tasks" in _tables(copy)
+    if _declares("project_briefs"):
+        assert "project_briefs" in _tables(copy)
+    assert "retry_key" in _columns(copy, "follow_through_proposals")
     assert _read_back(copy) == ("The rehearsal meeting", "# kept")
 
     # 3. Restore the pre-upgrade backup. The current database is snapshotted first.
@@ -394,6 +483,9 @@ def test_backup_upgrade_restore_reopen_on_a_copy(tmp_path):
     assert read_schema_version(copy) == SCHEMA_VERSION
     assert "corrections_applied" in _columns(copy, "dictation_journal")
     assert "project_ask_tasks" in _tables(copy)
+    if _declares("project_briefs"):
+        assert "project_briefs" in _tables(copy)
+    assert "retry_key" in _columns(copy, "follow_through_proposals")
     assert _read_back(copy) == ("The rehearsal meeting", "# kept")
 
     # The control never moved.

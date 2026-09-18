@@ -1,6 +1,7 @@
 // HS-117-09 — barrel for history sub-components.
 export { displayState, stateToken, type StateToken, ledgerDate, durationToken, clockTime, download, WINGS, DOOR_SECTIONS, MONTHS, wordsToken, needsIntelligence, meetingRowState, type MeetingRowState, intelDurationToken } from "./helpers";
-export type { Receipt, NeedsRow } from "./helpers";
+export type { Receipt, NeedsRow, DetailView } from "./helpers";
+export { MeetingReview } from "./MeetingReview";
 export { StateTokenSpan } from "./StateTokenSpan";
 export { ImportSection } from "./ImportSection";
 export { MeetingDetail } from "./MeetingDetail";

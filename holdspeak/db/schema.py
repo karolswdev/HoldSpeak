@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 77  # informational; 74→75: calendar_event_link_suppressions (HS-175 counsel C5); 75→76: dictation_journal.corrections_applied (HS-176-02); 76→77: project_ask_tasks (HS-200-41)
+SCHEMA_VERSION = 78  # informational; 74→75: calendar_event_link_suppressions (HS-175 counsel C5); 75→76: dictation_journal.corrections_applied (HS-176-02); 76→77: project_ask_tasks (HS-200-41); 77→78: follow_through_proposals retry identity + evidence columns (HS-200-12)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -4255,7 +4255,26 @@ CREATE TABLE IF NOT EXISTS follow_through_proposals (
     decision_record_id TEXT,
     commitment_id TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    decided_at TEXT
+    decided_at TEXT,
+    -- HS-200-12: the retry identity and the evidence a proposal carries.
+    -- `retry_key` is deterministic over (meeting, extraction revision, kind,
+    -- transcript span, ordinal-in-span) so a repeated completion, a model
+    -- retry and a lost acknowledgement resolve to the SAME row in ANY state
+    -- (the fingerprint index above is partial over 'proposed' and let a
+    -- re-run re-mint a proposal the owner had already confirmed).
+    retry_key TEXT,
+    extraction_revision TEXT,
+    job_id TEXT,
+    job_attempt INTEGER,
+    extraction_model TEXT,
+    span_start REAL,
+    span_end REAL,
+    segment_index INTEGER,
+    support TEXT NOT NULL DEFAULT 'unknown',
+    support_record_json TEXT,
+    owner_supplied TEXT,
+    due_supplied TEXT,
+    edited_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_ftp_meeting
     ON follow_through_proposals(meeting_id, state);
@@ -4264,6 +4283,10 @@ CREATE INDEX IF NOT EXISTS idx_ftp_project
 CREATE UNIQUE INDEX IF NOT EXISTS idx_ftp_dedup
     ON follow_through_proposals(meeting_id, fingerprint)
     WHERE state = 'proposed';
+-- HS-200-12: one proposal per retry identity, whatever its state.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ftp_retry_key
+    ON follow_through_proposals(meeting_id, retry_key)
+    WHERE retry_key IS NOT NULL;
 
 -- HS-175-02: Calendar event to Room (project) matcher join table.
 CREATE TABLE IF NOT EXISTS calendar_event_projects (

@@ -1241,7 +1241,7 @@ _BROKER_BUDGET_DEBT: dict[str, int] = {
     "holdspeak/kernel/inference_stream.py": 311,
     "holdspeak/kernel/journal.py": 521,
     "holdspeak/kernel/meeting_plugin_projection.py": 369,
-    "holdspeak/kernel/parent_run.py": 359,
+    "holdspeak/kernel/parent_run.py": 353,
     "holdspeak/kernel/projection_stager.py": 395,
 }
 

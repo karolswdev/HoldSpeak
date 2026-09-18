@@ -45,11 +45,19 @@ def test_run_success_flags_gaps() -> None:
         "Review the migration plan",
         "Book the venue",
     ]
-    assert items[0]["gap"] is None
-    assert items[1]["gap"] == "missing_both"
-    assert items[2]["gap"] == "missing_due"
-    assert out["gap_count"] == 2
+    # HS-200-12: `gap` is the BOOLEAN the registered contract declares and
+    # the count lives in the summary; `gap_count` was an unregistered field
+    # that made every real run fail its own closed schema.
+    assert items[0]["gap"] is False
+    assert items[1]["gap"] is True
+    assert items[2]["gap"] is True
+    assert "gap_count" not in out
     assert "2 missing" in out["summary"]
+    from holdspeak.inference_capabilities import process_inference_capability_registry
+
+    process_inference_capability_registry().require(
+        "meeting.plugin.action_owner_enforcer"
+    ).validate_result(out)
 
 
 def test_run_parses_bare_json_without_fence() -> None:
@@ -57,8 +65,8 @@ def test_run_parses_bare_json_without_fence() -> None:
         {"transcript": "t"}
     )
     assert out["confidence_hint"] == 1.0
-    assert out["action_items"][0]["gap"] is None
-    assert out["gap_count"] == 0
+    assert out["action_items"][0]["gap"] is False
+    assert "gap_count" not in out
 
 
 def test_run_unparseable_response_is_clean_failure() -> None:
@@ -99,7 +107,7 @@ def test_extract_treats_placeholder_owners_as_missing() -> None:
     items = _extract_action_items(
         '{"action_items": [{"task": "X", "owner": "unassigned", "due": "TBD"}]}'
     )
-    assert items == [{"task": "X", "owner": None, "due": None, "gap": "missing_both"}]
+    assert items == [{"task": "X", "owner": None, "due": None, "gap": True}]
 
 
 def test_extract_returns_none_for_non_object() -> None:

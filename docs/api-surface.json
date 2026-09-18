@@ -3414,6 +3414,16 @@
       ]
     },
     {
+      "path": "/api/meetings/{meeting_id}/outcome-review",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.proposals",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/meetings/{meeting_id}/plugin-runs",
       "methods": [
         "GET"
@@ -3437,6 +3447,16 @@
       "module": "web.routes.meetings.aftercare",
       "consumers": [
         "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/meetings/{meeting_id}/proposals/accept-reviewed",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.proposals",
+      "consumers": [
         "web"
       ]
     },
@@ -4668,6 +4688,16 @@
     },
     {
       "path": "/api/proposals/{proposal_id}/dismiss",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.proposals",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/proposals/{proposal_id}/edit",
       "methods": [
         "POST"
       ],

@@ -3893,3 +3893,236 @@ button.surface-edit-in-place:hover {
     justify-content: flex-end;
   }
 }
+
+/* ── HS-200-12 — the meeting REVIEW wing (posture 4) ───────────────
+   Boards P4Review / P4ReviewPhone / P4Processing. Head (display line +
+   token row), the coverage row, DECISIONS / COMMITMENTS ledgers whose
+   rows carry the sentence, the three axes as chips, ONE verb and a MORE
+   disclosure; the kept ledger on the processing face. */
+.meetings-review {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.meetings-review-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.meetings-review-head .surface-display[data-accent] {
+  color: var(--accent);
+}
+.meetings-review-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.meetings-review-dot {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.meetings-review-project .btn {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.meetings-review .surface-caption {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.meetings-review-caption-value {
+  color: var(--text-primary);
+}
+.meetings-review-coverage-row,
+.meetings-review-kept-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 6px 0;
+}
+.meetings-review-coverage-name {
+  flex: 0 1 auto;
+  white-space: nowrap;
+}
+.meetings-review-coverage-facts {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px 8px;
+  min-width: 0;
+}
+.meetings-detail-head[data-compact] .meetings-detail-name {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+.meetings-review-emblem {
+  width: 40px;
+  flex-shrink: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+.meetings-review-text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--desk-type-primary-size, 15px);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+.meetings-review-section {
+  display: flex;
+  flex-direction: column;
+}
+.meetings-review-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.meetings-review-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  grid-template-areas:
+    "sentence verbs"
+    "axes axes"
+    "more more";
+  align-items: start;
+  gap: 6px 10px;
+  padding: 8px 6px;
+  border-top: 1px solid var(--border-subtle);
+  outline: none;
+}
+.meetings-review-row:first-child {
+  border-top: 0;
+}
+.meetings-review-row:focus-visible {
+  background: var(--wash-1);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.meetings-review-row[data-state="confirmed"] {
+  background: var(--wash-1);
+}
+.meetings-review-sentence {
+  grid-area: sentence;
+  min-width: 0;
+}
+.meetings-review-sentence .surface-edit-in-place {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--desk-type-primary-size, 15px);
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+.meetings-review-sentence .surface-edit-in-place.is-editing {
+  width: 100%;
+  min-height: 2.8em;
+  padding: 4px 6px;
+  border: 1px solid var(--accent);
+  background: var(--desk-window-well);
+  cursor: text;
+}
+.meetings-review-sentence .surface-edit-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.meetings-review-sentence .surface-edit-wrap .surface-edit-in-place.is-editing {
+  flex: 1;
+}
+.meetings-review-axes {
+  grid-area: axes;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+.meetings-review-verbs {
+  grid-area: verbs;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.meetings-review-more {
+  grid-area: more;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 6px 8px;
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+}
+.meetings-review-supply {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.meetings-review-supply .surface-caption {
+  margin: 0;
+}
+.meetings-review-kept .surface-disclosure-body,
+.meetings-review-prior .surface-disclosure-body {
+  padding: 0;
+}
+.meetings-review-kept-row {
+  border-top: 1px solid var(--border-subtle);
+  outline: none;
+}
+.meetings-review-kept-row:first-child {
+  border-top: 0;
+}
+.meetings-review-kept-row:focus-visible {
+  background: var(--wash-1);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+/* 393: the verbs fall under the sentence, right-aligned; the coverage row
+   keeps its verb at the end of the line. */
+@container surface (max-width: 559.9px) {
+  .meetings-review-row {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "sentence"
+      "axes"
+      "verbs"
+      "more";
+  }
+  .meetings-review-verbs {
+    justify-content: flex-end;
+  }
+  .meetings-review-emblem {
+    width: 32px;
+  }
+  .meetings-review-coverage-facts {
+    flex-basis: 100%;
+    justify-content: flex-start;
+    padding-left: 40px;
+  }
+}

@@ -1220,6 +1220,9 @@ export function ConfirmVerb({
   busy,
   disabled,
   onConfirm,
+  variant = "ghost",
+  armedVariant = "danger",
+  "data-testid": dataTestId,
 }: {
   label: ReactNode;
   confirmLabel?: ReactNode;
@@ -1228,6 +1231,12 @@ export function ConfirmVerb({
   busy?: boolean;
   disabled?: boolean;
   onConfirm: () => void;
+  /** HS-200-12 — the resting look; `primary` for a face's one filled
+   *  two-step verb (`Accept reviewed`). Armed stays `danger` unless
+   *  `armedVariant` says otherwise (an accept is not a destruction). */
+  variant?: "ghost" | "primary";
+  armedVariant?: "danger" | "primary";
+  "data-testid"?: string;
 }) {
   const [armed, setArmed] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -1235,7 +1244,8 @@ export function ConfirmVerb({
   return (
     <Button
       dense
-      variant={armed ? "danger" : "ghost"}
+      data-testid={dataTestId}
+      variant={armed ? armedVariant : variant}
       aria-label={ariaLabel}
       loading={busy}
       disabled={disabled}
