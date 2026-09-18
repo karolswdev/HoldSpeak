@@ -1,4 +1,4 @@
-# THE HANDOVER — from Muad'Dib XX (READ **§9, THEN §7b, THEN THE XX CHAPTER** FIRST)
+# THE HANDOVER — from Muad'Dib XXI (READ **§9, THEN §7b, THEN THE XXI CHAPTER** FIRST)
 
 The entries below this section are the running log, newest first. This
 section is the whole picture in one sitting. When it disagrees with a
@@ -18,13 +18,16 @@ roadmap files, they win. Memory (the Claude Code auto-memory, index
   him as the owner; never a first name; never a pronoun from a name.
 - **Muad'Dib** — the orchestrator (you), on Fable. Charters, briefs,
   reads every shot beside its board, bounces with specifics, runs the
-  gates, commits, opens PRs, merges on his word. Never delegates the
-  gates. Never lets a worker touch git.
+  gates, commits, opens PRs, and MERGES ON ITS OWN VERIFICATION
+  (2026-09-17: "there's no such thing as my word. This is your
+  opportunity to verify and validate."). Never delegates the gates.
+  Never lets a worker touch git.
 - **The Fedaykin** — the workers, `.claude/agents/opus-worker.md`.
-  **NERF 2026-09-06: they are OPUS 5.1 again** ("All his workers are
-  now Opus 5.1. Not Fable 5.1."); the file says `model: opus`. The file
-  is gitignored — on a fresh clone re-create it (memory
-  `feedback_opus_terra_verify_model` has the text). Scoped tests only,
+  **2026-09-17: they are FABLE 5.1** ("you are empowered to use Fable
+  Fedaykins from now on"); the file says `model: fable` (the filename is
+  historical). The file is gitignored — on a fresh clone re-create it
+  (memory `feedback_no_such_thing_as_his_word` has the ruling;
+  `feedback_opus_terra_verify_model` the older text). Scoped tests only,
   isolated HOME, never git, never his real DB, never a secret in the
   tree, honest reports ("could not verify X" is a good answer).
 - **Counsel** — a Fedaykin briefed to HUNT (the design, then the built
@@ -318,7 +321,7 @@ resolves into its `.venv` before trusting a count.
 3. `git log --oneline -15 main`; `pm/roadmap/holdspeak/README.md`'s
    "Last updated" line; the Phase 200 status file.
 4. `cd web && npm ci`. Re-create `.claude/agents/opus-worker.md` if
-   missing (Opus, not Fable — the file is gitignored).
+   missing (`model: fable` since 2026-09-17 — the file is gitignored).
 5. **Read `docs/internal/OPERATIONAL-SURFACE-AUDIT.md` before proposing
    anything.** It is the measured state of every surface as of
    2026-09-13, and it names what is broken versus what is merely OFF.
@@ -343,6 +346,126 @@ resolves into its `.venv` before trusting a count.
 **And the rule I broke this sitting, so you do not:** the tree's default
 branch is `main` and two documentation commits landed on it directly
 instead of on a branch with a PR. Branch first.
+
+## Muad'Dib XXI — 2026-09-17/18. "THERE'S NO SUCH THING AS MY WORD"; THE FOUR AUDIT STORIES BUILT AND STACKED
+
+**Read this first. It supersedes XX.** Two rulings and four stories.
+
+### 0. His words, verbatim — the steering
+
+- **"Muad'Dib, you are empowered to use Fable Fedaykins from now on."** The
+  agent file says `model: fable`. Counsel and builders both.
+- On being told three stacked PRs "await his word": **"No, there's no such
+  thing as my word. This is your opportunity to verify and validate."** LAW:
+  a PR merges when the orchestrator has VERIFIED it — CI read, every failure
+  attributed (pre-existing runner set vs branch-new), local gates green,
+  counsel paid — and the merge record says so. Never unverified, never
+  waiting on him. The canvas is the same: counsel ratifies on his behalf
+  unless he asks to see it.
+
+### 1. What shipped
+
+- **#571 (docs) MERGED 62c3a767** on verification: docs-only, CI set = the
+  seven pre-existing runner-environment failures from #570 plus one
+  ordering flake (green 3/3 locally).
+- **#572 (HS-200-42) MERGED 9bca5246**: CI set six of the same seven, zero
+  branch-new.
+- **#573 (HS-200-43)** retargeted to main, CI run 35289938977 — merge when
+  its set ⊆ the known seven. Its own docs commit had turned the drift guard
+  red (story number + em dashes in `docs/ARCHITECTURE.md`,
+  `docs/MCP_SIDECAR.md`); paid b391632f.
+- **#574 (HS-200-46) → #575 (HS-200-45) → #576 (HS-200-44)**, stacked in that
+  order on #573. Each is DONE on the rails with evidence; each merges in
+  order after the one below it, by verification.
+
+**CI only runs on `pull_request` to main.** Retargeting a stacked PR does not
+fire it: close + reopen does (`gh pr close N; gh pr reopen N`).
+
+### 2. HS-200-46 (33090cdb) — a stale document fails CI
+
+The thirteen §7b sentences are `tests/unit/doc_claims/registry.py`: sentence
+verbatim, anchor, a predicate over the REAL module/file/generated surface,
+state, measured truth. `holds` fails when broken; `known_false` fails when
+the code starts satisfying it (a fixed claim cannot sit as debt). Dated
+down-only ratchet. §7b is a pointer + `scripts/doc_claims.py`. Measuring
+corrected the audit: 22 missing catalog verbs / 0 phantoms (the "phantoms"
+were `go.*` verbs derived from `applications.ts`), 203 raw buttons, and
+`busy_timeout=5000` was sqlite3's default, not a pragma. **The worker
+refused to edit CLAUDE.md on a brief's authority** — correct; the
+orchestrator paid it. The fence fired twice this sitting, exactly as
+designed, when 45 and 44 made their sentences true.
+
+### 3. HS-200-45 (5d0701d4) — one composition root
+
+`holdspeak/runtime/composition.py` is the ONE root; the hub installs it in
+`_create_app`; every MCP family reads it (`db_or`/`observer_or`/
+`runtime_service`; `service()` raises on unknown names). An AST fence
+forbids bare accessors under `holdspeak/mcp/`; a live-root fence drives the
+real app and proves every asked service is non-None — it caught
+`confluence_provider` declared on `WebContext` and never constructed since
+HS-174-07. The stdio sidecar is a CLIENT of the running hub (owner lock body
+→ port; the hub's token read from the config FILE, never `Config.load`,
+which mints one); no hub → an honest JSON-RPC error and the DB is never
+opened; `HOLDSPEAK_MCP_STANDALONE=1` claims the owner lock. Loopback OWNER
+admitted on `/api/mcp` with the remote flag off. One `desk_changed` frame.
+WAL + busy_timeout + foreign_keys, proven on a `cp` of his real DB.
+
+**Counsel BOUNCED with a P0 the R5 ruling itself caused:** "remove stale
+`-wal`/`-shm` on restore" under a RUNNING hub bricked the database (`disk
+I/O error` for every fresh reader and the next hub). Restore now refuses
+under a live owner, under ANY open connection (SQLite's own exclusivity:
+`PRAGMA journal_mode=DELETE` on a timeout-0 connection), and on a
+write-protected file. P1s: the null-body 204 raised inside the hub on every
+handshake; the sidecar minted `config.json`; `ask_service`/`plugin_job_service`
+were asked for and not carried; the "any caller" frame claim was overstated.
+All paid; re-read RATIFY. **The lesson: a ruling that is only safe under a
+precondition nobody enforces is a defect, and counsel-on-built is where it
+is found.** R7(b)'s premise was wrong too (busy_timeout), and the worker
+corrected the premise instead of writing a fence that passed pre-fix.
+
+Full suite twice (isolated HOME, xdist): six branch-new census/registry
+fences on pass one, all paid (one census had gone BLIND to a factory the
+moment it was wrapped in `runtime_service(...)`; it now sees through it).
+
+### 4. HS-200-44 (d957af84 + 217305a7) — the guard sees its own violations
+
+A1 was 4 because `<button[\s>/]` ran on `splitlines()`; the truth is **175**
+in scope, 203 repo-wide, reconciled file by file (28 in `design/`,
+`_parked/`, `*.test.tsx`). Seven rules fixed to whole-file matching
+(superset of old hits, nothing lost); the rest recorded as per-line by
+construction. Ceilings reset as dated down-only ratchets; `--write-ceiling`
+refuses a rise without `--ceiling-reason`; a plain run writes NOTHING (it
+used to rewrite the phase-170 census). UX-CANON states 175. The 175 are
+debt: face stories pay them file by file.
+
+### 5. Open, in order
+
+1. Merge #573 → #574 → #575 → #576 as each CI set proves ⊆ the known seven
+   (each needs a close/reopen after its base merges).
+2. BACKLOG §AJ (this sitting): `bind_host` applied by nothing; the
+   verb-catalog mirror and `desk_snapshot` layout (registry unowned rows);
+   `doctor.py` builds a bare `PrimitiveService`; the delete-mode restore
+   still proceeds under a live hub.
+3. Still his: HS-200-09 canvas verdict (gates 11-15), the pilot Project,
+   HS-200-05's beats, the walks. The X11 wire face wants its own phase.
+4. His hub still runs pre-42 code; after the stack merges, a restart on his
+   desk picks up the drainer, the armed watches, WAL, and the sidecar
+   proxy — `.mcp.json` needs NO change for the proxy (it reads the lock).
+
+### 6. Laws this sitting adds
+
+- **Verify and validate, then merge.** The merge record names the CI run,
+  the failure set, and its attribution.
+- **A worker may not edit CLAUDE.md or `.mcp.json` on a brief's authority.**
+  The orchestrator does, and says so.
+- **Stacked PRs: base merges first, then close/reopen the next to fire CI.**
+- **A rebase of a story with `dw story status` edits conflicts on the
+  status table and the cadence lines; resolve by hand, then re-check the
+  story's own row** (an auto-merge left 44's row at `ready`).
+- **Counsel-on-built pays for itself every time.** 45's P0 was the
+  orchestrator's own ruling.
+
+---
 
 ## Muad'Dib XX — 2026-09-14. THE TWO MISSING CALLERS ARE PAID; THREE STACKED PRs AWAIT HIS WORD
 

@@ -1063,6 +1063,15 @@ wanted on day one.
 - **HS-200-04 note (from the census fence):** holdspeak/services/route_probe.py wraps `preview_route` and `adoption.admit` in a bare `except Exception`; the refusal is always named (the class name as a backstop) but a genuine resolver bug reaches the face as UNREACHABLE with a Python class name for a reason. Narrow to the resolver's typed errors.
 - **HS-200-03 residual:** tests/integration/test_cadence_routes.py's fixture races the database singleton (reset then get as two steps); build the Database directly in the fixture.
 
+### AJ. Phase 200 audit-story remainders (parked 2026-09-18 from HS-200-44/45/46)
+
+- **Reach `bind_host` is decorative:** stored and echoed by the settings route, applied by nothing; no CIDR/peer check exists (`docs/SECURITY.md:277` stays `known_false` in the doc-claims registry). Wants the remote auth model story that HS-200-45 kept out of scope.
+- **Verb-catalog mirror:** `holdspeak/mcp/resources.py` `_VERBS` is 45 of the face's 67 (22 missing, 0 phantoms once `go.*` from `applications.ts` is resolved); no parity test. Registry row unowned. The cheap half of the X11 read face.
+- **`desk_snapshot` advertises "and layout"** and returns seven lists of rows. Either return layout or stop advertising it. Registry row unowned.
+- **`holdspeak/doctor.py:251`** builds a bare `PrimitiveService(get_database())`; a CLI path with no hub to borrow from. Could report through the hub when one is running.
+- **Restore under a live hub in `delete` journal mode still proceeds** (only the WAL case needed exclusivity; the lock-owner gate covers a cooperative hub). Consider refusing on any open connection regardless of mode for symmetry.
+- **`ResourcefulService` is not composed on `WebContext`** (built in the conductor and a route), so its `on_changed` defaults to `composition.notify_desk_changed` rather than the hub's bound callback. Works; not the one-root shape.
+
 ## The model-era collapse (parked 2026-08-31, from the owner's question)
 
 The #511 revolution collapsed the WEB platform's parallel authorities;
