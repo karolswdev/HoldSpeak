@@ -313,6 +313,9 @@ verb becomes `Show fewer`.
 
 - `ariaLabel?: string` — an accessible name richer than the visible label
   (`Sources: Priya confirms the freeze window` over `2 SOURCES`).
+- `variant="dense"` — the caption-step trigger that rides a ledger row's
+  meta line (`▸ 2 SOURCES`); its styling lives in `disclosure.css`, so no
+  face restyles a library trigger.
 - `controlsId?: string` — the id of a body rendered ELSEWHERE, such as a
   `SurfaceLedgerRow`'s own expansion slot (`open` + `children`), so a body
   that must span the row's full width is not trapped inside a cell. The

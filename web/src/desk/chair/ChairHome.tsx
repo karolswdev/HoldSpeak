@@ -1137,6 +1137,7 @@ function NeedsYouRow({
               open={sourcesOpen}
               onOpenChange={setSourcesOpen}
               controlsId={sourcesId}
+              variant="dense"
             >
               {null}
             </Disclosure>

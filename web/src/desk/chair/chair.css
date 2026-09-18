@@ -308,22 +308,9 @@
   white-space: nowrap;
 }
 
-/* HS-200-15: the dedup disclosure rides the row's meta as a column — the
-   trigger on the line, the constituent sources beneath it. */
-.arrival-needs-you-meta .surface-disclosure {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.arrival-needs-you-meta .surface-disclosure-trigger {
-  min-height: 22px;
-  margin: 0;
-  padding: 1px 6px 1px 4px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
+/* HS-200-15: the dedup disclosure is the library Disclosure's `dense`
+   variant (its trigger styling lives in the species' own css); its body
+   is the row's expansion slot. */
 .arrival-sources {
   list-style: none;
   margin: 0;
@@ -549,10 +536,6 @@
     min-width: 0;
     max-width: 100%;
   }
-  .arrival-needs-you-meta .surface-disclosure-trigger {
-    max-width: 100%;
-    white-space: nowrap;
-  }
   .chair .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-trailing {
     flex: none;
     margin-left: auto;
@@ -628,10 +611,6 @@
   .arrival-needs-you-meta > * {
     min-width: 0;
     max-width: 100%;
-  }
-  .arrival-needs-you-meta .surface-disclosure-trigger {
-    max-width: 100%;
-    white-space: nowrap;
   }
   .chair .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-trailing {
     flex: none;

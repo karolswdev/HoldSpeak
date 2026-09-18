@@ -27,7 +27,9 @@ export function Disclosure({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   persistKey?: string;
-  variant?: "default" | "raw";
+  /** `dense` (HS-200-15): the caption-step trigger for a ledger row's meta
+   *  line; `raw`: no chrome, just the body. */
+  variant?: "default" | "raw" | "dense";
   children: ReactNode;
   token?: ReactNode;
   /** HS-200-15: an accessible name richer than the visible label

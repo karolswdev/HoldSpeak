@@ -101,3 +101,23 @@
   text-transform: uppercase;
   color: var(--text-faint);
 }
+
+/* ── DENSE variant (HS-200-15): a caption-step trigger that rides a ledger
+   row's meta line (`▸ 2 SOURCES`), never wider than its line. ── */
+
+.desk-next .surface-disclosure[data-variant="dense"] {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+}
+.desk-next .surface-disclosure[data-variant="dense"] .surface-disclosure-trigger {
+  min-height: 22px;
+  max-width: 100%;
+  margin: 0;
+  padding: 1px 6px 1px 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
