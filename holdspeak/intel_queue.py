@@ -314,7 +314,26 @@ class _BoundExecutorLease:
         self._db.intel.release_bound_executor_lease(self._job)
 
 
-def _on_intel_complete(db: Any, meeting_id: str) -> None:
+def _bridge_proposals(db: Any, meeting_id: str, job: Any = None) -> None:
+    """HS-172-03 (a): bridge extractor artifacts to follow-through proposals.
+
+    HS-200-12: also called after a PARTIAL plugin chain, before its retry is
+    scheduled, so the results attempt 1 did produce reach the owner as
+    proposals stamped with that attempt (the ``ALREADY KEPT`` rows of the
+    processing face) instead of waiting for a retry that may never succeed.
+    Safe to repeat: every proposal is keyed by its retry identity.
+    """
+    try:
+        from .services.proposal_bridge_service import ProposalBridgeService
+        bridge = ProposalBridgeService(db)
+        created = bridge.bridge_meeting_artifacts(meeting_id, job=job)
+        if created:
+            log.info("HS-172-03: bridged %d proposals for meeting %s", len(created), meeting_id)
+    except Exception as exc:
+        log.warning("HS-172-03: proposal bridge failed for meeting %s: %s", meeting_id, exc)
+
+
+def _on_intel_complete(db: Any, meeting_id: str, job: Any = None) -> None:
     """HS-172-03: post-completion hooks, each in its own failure boundary.
 
     (a) Bridge extractor artifacts to follow-through proposals.
@@ -322,14 +341,7 @@ def _on_intel_complete(db: Any, meeting_id: str) -> None:
     (c) Invalidate the needs-you aggregate cache.
     """
     # (a) Proposal bridge.
-    try:
-        from .services.proposal_bridge_service import ProposalBridgeService
-        bridge = ProposalBridgeService(db)
-        created = bridge.bridge_meeting_artifacts(meeting_id)
-        if created:
-            log.info("HS-172-03: bridged %d proposals for meeting %s", len(created), meeting_id)
-    except Exception as exc:
-        log.warning("HS-172-03: proposal bridge failed for meeting %s: %s", meeting_id, exc)
+    _bridge_proposals(db, meeting_id, job)
 
     # (b) Source suggestions for each linked Room.
     try:
@@ -510,6 +522,11 @@ def _process_bound_intel_job(
             if incomplete:
                 detail = "Remaining routed intelligence did not finish: " + ", ".join(incomplete)
                 log.warning("Bound deferred plugin chain partial for meeting %s: %s", job.meeting_id, detail)
+                # HS-200-12: the members that DID finish wrote their artifacts;
+                # bridge them now so a decision extracted on attempt 1 is on
+                # the owner's face while attempt 2 is queued (keyed, so the
+                # retry mints nothing twice).
+                _bridge_proposals(db, job.meeting_id, job)
                 # Revision/host/bundle drift is an explicit refusal, not a
                 # controller retry.  Other model-reaching failures retain C1's
                 # bounded retry lineage and its frozen per-member budget.
@@ -539,7 +556,7 @@ def _process_bound_intel_job(
             except Exception as exc:
                 log.debug("on_meeting_ready observer failed: %s", type(exc).__name__)
         # HS-172-03: bridge artifacts to proposals + suggest sources.
-        _on_intel_complete(db, job.meeting_id)
+        _on_intel_complete(db, job.meeting_id, job)
         return True
     except KernelRefused as exc:
         # The provider's typed refusal is terminal, not a fallback/retry signal.

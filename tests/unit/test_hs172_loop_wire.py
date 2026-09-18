@@ -396,8 +396,14 @@ class TestProposalBridge:
             ).fetchone()
             assert decisions["c"] == 0
 
-    def test_double_confirm_rejected(self, db: Database) -> None:
-        """Confirming an already-confirmed proposal returns error."""
+    def test_double_confirm_replays_the_same_durable_result(self, db: Database) -> None:
+        """Confirming an already-confirmed proposal mints nothing twice.
+
+        HS-200-12 (AC4/AC5): a retried Confirm -- the lost-acknowledgement
+        path -- returns the SAME durable result (record + commitment ids)
+        with ``replayed`` set, instead of the HS-172 error, so the face can
+        render the receipt it never received.  The record chain stays single.
+        """
         from holdspeak.services.proposal_bridge_service import ProposalBridgeService
 
         meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
@@ -406,9 +412,15 @@ class TestProposalBridge:
 
         bridge = ProposalBridgeService(db)
         created = bridge.bridge_meeting_artifacts(meeting_id)
-        bridge.confirm_proposal(OWNER, created[0].id)
+        first = bridge.confirm_proposal(OWNER, created[0].id)
         result = bridge.confirm_proposal(OWNER, created[0].id)
-        assert "error" in result
+        assert "error" not in result
+        assert result["replayed"] is True and first["replayed"] is False
+        for key in ("decision_id", "decision_record_id", "action_item_id", "commitment_id"):
+            assert result[key] == first[key], key
+        with db._connection() as conn:
+            assert conn.execute("SELECT COUNT(*) FROM decision_records").fetchone()[0] == 1
+            assert conn.execute("SELECT COUNT(*) FROM decision_commitments").fetchone()[0] == 1
 
 
 # ── Room needsYou proposals ─────────────────────────────────────────

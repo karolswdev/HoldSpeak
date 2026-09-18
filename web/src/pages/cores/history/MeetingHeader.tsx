@@ -12,9 +12,14 @@ import type { MeetingData } from "./useMeetingData";
 export function MeetingHeader({
   meeting,
   data,
+  compact,
 }: {
   meeting: Record<string, unknown>;
   data: MeetingData;
+  /** HS-200-12: on the review wing the display line belongs to the
+   *  review (`5 to review`) and the meeting's name is in the window title
+   *  bar (the subject, said once); the fact row keeps only the facts. */
+  compact?: boolean;
 }) {
   const { detail, startedAt, durationS } = data;
   const source = detail ?? meeting;
@@ -56,6 +61,13 @@ export function MeetingHeader({
     interleaved.push(part);
   });
 
+  if (compact) {
+    return (
+      <div className="meetings-detail-head" data-compact>
+        <div className="meetings-detail-facts">{interleaved}</div>
+      </div>
+    );
+  }
   return (
     <div className="meetings-detail-head">
       <div className="surface-display">{title}</div>

@@ -7,9 +7,13 @@ import type { ReactNode } from "react";
 
 export const WINGS = [
   { id: "outcomes", label: "Outcomes" },
+  { id: "review", label: "Review" },
   { id: "record", label: "Record" },
   { id: "artifacts", label: "Artifacts" },
 ];
+/** HS-200-12 — the detail pane's faces: the outcomes face, the review
+ *  wing (posture 4), the artifacts wing. */
+export type DetailView = "outcomes" | "artifacts" | "review";
 // Door sections (ids are part of the phase-91 archive lock).
 export const DOOR_SECTIONS = ["actions", "speakers", "projects", "queues"] as const;
 // Receipt sections inside a meeting ("transcript", "aftercare",
@@ -91,8 +95,10 @@ export function stateToken(row: Record<string, unknown>): StateToken {
     import_failed: { label: "IMPORT FAILED", tone: "danger" },
   };
   if (row.status === "failed") return { label: "FAILED", tone: "danger" };
-  // HS-172: complete intel → RAN (success).
-  if (state === "complete") return { label: "RAN", tone: "success" };
+  // HS-172: complete intel → RAN (success).  HS-200-12: the bound executor
+  // writes `ready` when a real run finishes (db/intel.py, "Meeting
+  // intelligence ready."); `complete` is the seeded/legacy word.  Both RAN.
+  if (state === "complete" || state === "ready") return { label: "RAN", tone: "success" };
   return known[state] ?? { label: "SAVED" };
 }
 

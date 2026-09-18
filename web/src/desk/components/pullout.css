@@ -301,6 +301,33 @@
 .desk-next .desk-wings-tabs {
   display: contents;
 }
+/* HS-200-12 (counsel P2-ii, the 393 ruling): the window's subject is said
+   ONCE, in the title bar.  At the phone width a four-wing strip beside the
+   lights left the title zero pixels, so the strip drops to its own row
+   beneath the title: the title keeps the full width (ellipsized, leading
+   words visible) and every wing stays reachable without horizontal scroll.
+   Viewport seam, not container: floating cards are not inside `surface`. */
+@media (max-width: 480px) {
+  .desk-next .desk-pullout-head.has-wings {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 40px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    row-gap: 6px;
+  }
+  .desk-next .desk-pullout-head.has-wings .desk-pullout-title {
+    flex: 1 1 auto;
+    min-width: 40%;
+  }
+  .desk-next .desk-pullout-head.has-wings .desk-wings {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin-inline: 0;
+    row-gap: 4px;
+  }
+}
 .desk-next .desk-wing-door {
   margin-left: 4px;
 }

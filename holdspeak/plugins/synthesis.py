@@ -39,7 +39,14 @@ def _action_item_line(item: dict[str, Any]) -> str:
     owner = _clean_text(item.get("owner")) or "—"
     due = _clean_text(item.get("due")) or "—"
     gap = item.get("gap")
-    flag = f"  ⚠️ {gap.replace('_', ' ')}" if isinstance(gap, str) and gap else ""
+    if isinstance(gap, str) and gap:
+        # Artifacts written before HS-200-12 carry the string form.
+        flag = f"  ⚠️ {gap.replace('_', ' ')}"
+    elif gap is True:
+        missing = [name for name, value in (("owner", owner), ("due", due)) if value == "—"]
+        flag = f"  ⚠️ missing {' and '.join(missing) or 'owner or due'}"
+    else:
+        flag = ""
     return f"- [ ] {task} — owner: {owner} · due: {due}{flag}"
 
 

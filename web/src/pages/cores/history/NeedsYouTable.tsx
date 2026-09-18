@@ -13,6 +13,7 @@ export function NeedsYouTable({
   intelOff,
   intelState,
   hasTranscript,
+  onReview,
   onRunIntelligence,
   onRetryIntelligence,
   onSkipIntelligence,
@@ -23,6 +24,8 @@ export function NeedsYouTable({
   /** The raw intel state string: "disabled", "queued", "running", "error", "failed", "complete". */
   intelState?: string;
   hasTranscript: boolean;
+  /** HS-200-12 — proposals are reviewed on the Review wing; this is the way there. */
+  onReview?: () => void;
   onRunIntelligence?: () => void;
   onRetryIntelligence?: () => void;
   onSkipIntelligence?: () => void;
@@ -32,7 +35,8 @@ export function NeedsYouTable({
   const isQueued = intelState === "queued" || intelState === "pending";
   const showRetry = isFailed && Boolean(onRetryIntelligence);
   const showSkip = (isFailed || isQueued) && Boolean(onSkipIntelligence);
-  const hasVerbs = showRunIntel || showRetry || showSkip;
+  const showReview = needsRows.length > 0 && Boolean(onReview);
+  const hasVerbs = showRunIntel || showRetry || showSkip || showReview;
 
   if (needsRows.length === 0 && !hasVerbs) return null;
 
@@ -42,6 +46,16 @@ export function NeedsYouTable({
         <span className="surface-caption">
           {countLabel("NEEDS YOU", needsCount)}
         </span>
+        {showReview ? (
+          <Button
+            dense
+            variant="ghost"
+            onClick={onReview}
+            data-testid="detail-review-btn"
+          >
+            Review
+          </Button>
+        ) : null}
         {showRunIntel ? (
           <Button
             dense

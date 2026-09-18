@@ -4,7 +4,8 @@ import { SurfaceSection } from "../../../desk/surface/Surface";
 import { MeetingConflictRecovery } from "../../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../../meetings/MeetingIntelRecovery";
 import { apiFetch } from "../../../lib/api";
-import type { Receipt } from "./helpers";
+import type { DetailView, Receipt } from "./helpers";
+import { MeetingReview } from "./MeetingReview";
 import { useMeetingData } from "./useMeetingData";
 import { MeetingHeader } from "./MeetingHeader";
 import { CaptureSlab } from "./CaptureSlab";
@@ -22,10 +23,12 @@ export function MeetingDetail({
   onDeleted,
   onReceipt,
   onRunIntelligence,
+  onReview,
+  onOpenEvidence,
 }: {
   meeting: Record<string, unknown> | null;
-  /** "outcomes" (the face) or "artifacts" (the wing). */
-  view: "outcomes" | "artifacts";
+  /** "outcomes" (the face), "review" (HS-200-12, posture 4) or "artifacts". */
+  view: DetailView;
   /** HS-109-02/05: a resolved decision moment seeks this transcript row. */
   momentSegmentIndex?: number | null;
   onClose(): void;
@@ -33,6 +36,10 @@ export function MeetingDetail({
   /** HS-111-03 — outcomes land on the footer receipt bar. */
   onReceipt(receipt: Receipt): void;
   onRunIntelligence?: () => void;
+  /** HS-200-12 — the way to the review wing from NEEDS YOU. */
+  onReview?: () => void;
+  /** HS-200-12 — `Open evidence`: the outcomes face, scrolled to a segment. */
+  onOpenEvidence?: (segmentIndex: number | null) => void;
 }) {
   const id = String(meeting?.id ?? "");
   const data = useMeetingData(meeting, onReceipt);
@@ -62,7 +69,7 @@ export function MeetingDetail({
 
   return (
     <SurfaceSection>
-      <MeetingHeader meeting={meeting} data={data} />
+      <MeetingHeader meeting={meeting} data={data} compact={view === "review"} />
       <CaptureSlab detail={detail} meeting={meeting} />
       <MeetingConflictRecovery
         meetingId={id}
@@ -87,6 +94,14 @@ export function MeetingDetail({
           artifactRows={artifactRows}
           meetingTitle={meetingTitle}
         />
+      ) : view === "review" ? (
+        <MeetingReview
+          meetingId={id}
+          onOpenEvidence={(segmentIndex) => onOpenEvidence?.(segmentIndex)}
+          onOpenTranscript={() => onOpenEvidence?.(null)}
+          onRunIntelligence={onRunIntelligence}
+          onChanged={onDeleted}
+        />
       ) : (
         <>
           <NeedsYouTable
@@ -95,6 +110,7 @@ export function MeetingDetail({
             intelOff={intelOff}
             intelState={intelState}
             hasTranscript={hasTranscript}
+            onReview={onReview}
             onRunIntelligence={onRunIntelligence}
             onRetryIntelligence={
               (intelState === "error" || intelState === "failed") && onRunIntelligence

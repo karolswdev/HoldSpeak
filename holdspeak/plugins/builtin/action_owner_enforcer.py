@@ -61,14 +61,19 @@ def _optional_field(value: Any) -> Optional[str]:
     return text
 
 
-def _gap_for(owner: Optional[str], due: Optional[str]) -> Optional[str]:
-    if owner is None and due is None:
-        return "missing_both"
-    if owner is None:
-        return "missing_owner"
-    if due is None:
-        return "missing_due"
-    return None
+def _gap_for(owner: Optional[str], due: Optional[str]) -> bool:
+    """True when the item is missing an owner or a due date.
+
+    HS-200-12: the registered result contract for this plugin
+    (``inference_capabilities.py``, ``meeting.plugin.action_owner_enforcer``)
+    declares ``gap`` a BOOLEAN and the object closed.  The plugin emitted
+    ``"missing_both" | "missing_owner" | "missing_due" | None`` plus an
+    unregistered ``gap_count``, so under the bound executor every real run
+    of this extractor was rejected by its own schema, retried to the ceiling,
+    and no action item ever reached the desk as a proposal.  Which field is
+    missing is still readable from ``owner``/``due`` being null.
+    """
+    return owner is None or due is None
 
 
 def _extract_action_items(text: str) -> Optional[list[dict[str, Any]]]:
@@ -213,10 +218,11 @@ class ActionOwnerEnforcerPlugin(IntelligenceConsumer):
             else f"{len(items)} action item(s); all have an owner and due date."
         )
 
+        # No `gap_count` key: the contract is closed and the count is in
+        # the summary sentence (HS-200-12).
         return {
             "summary": summary,
             "action_items": items,
-            "gap_count": gaps,
             "confidence_hint": 1.0,
             "active_intents": active_intents,
         }

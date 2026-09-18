@@ -2257,6 +2257,30 @@ class IntelRepository(BaseRepository):
             ).fetchone()
         return self._job_from_row(row) if row is not None else None
 
+    def get_latest_intel_job(self, meeting_id: str) -> Optional[IntelJob]:
+        """HS-200-12: the meeting's current lineage leaf in ANY status.
+
+        ``get_intel_job`` answers "what is still to run" and hides a finished
+        job from ordinary readers; the review face needs the job that DID
+        run -- its id, attempt and host -- after it succeeded.
+        """
+        with self._connection() as conn:
+            row = conn.execute(
+                _CURRENT_LINEAGE_CTE + """
+                SELECT
+                    j.*,
+                    m.title AS meeting_title,
+                    m.started_at AS meeting_started_at,
+                    m.intel_status_detail AS intel_status_detail
+                FROM current_jobs j
+                JOIN meetings m ON m.id = j.meeting_id
+                WHERE j.meeting_id = ? AND j.current_rank=1
+                LIMIT 1
+                """,
+                (meeting_id,),
+            ).fetchone()
+        return self._job_from_row(row) if row is not None else None
+
     def list_intel_jobs(
         self,
         *,

@@ -773,7 +773,55 @@ The meeting row in the stream gains a state token after an auto-run:
 `RAN, 41 S, 192.168.1.43, LAN` (a success chip, the wall-clock duration, and
 the model's host). A failed run reads `FAILED` with the reason named. The
 detail view's **NEEDS YOU** section lists the proposals scoped to that meeting,
-with **Confirm** and **Dismiss**.
+with **Confirm** and **Dismiss**, and a **Review** verb that opens the
+meeting's Review wing.
+
+### Reviewing a meeting's outcomes
+
+Open a meeting and choose the **Review** wing. The head says how many
+proposals wait (`5 to review`), names the Project the meeting is linked to
+(one verb, the way back to the Room), and stamps when the extraction ran
+(`EXTRACTED 12:04`). Above the proposals, **COVERAGE** states how much of the
+transcript the read covered (`47 OF 47 TURNS`, `AVAILABLE`), with **Open
+transcript**; while a read is in flight the head reads `Reading the meeting`
+with the job (`JOB K-8C21`) and, on a retry, `ATTEMPT 2 · SAME JOB`. Anything
+already confirmed or dismissed from an earlier attempt sits behind the
+**ALREADY KEPT n** verb, each row stamped with its attempt, so a retry never
+looks like new work.
+
+Proposals arrive in two ledgers, **DECISIONS** and **COMMITMENTS**. Every row
+carries the sentence and three independent chips: the kind (`PROPOSAL`), what
+the transcript establishes (`SUPPORTED` when the sentence is a quote of its
+transcript span, `LINKED` when the span is found but the wording is not,
+`UNSUPPORTED` with `NO SOURCE` when nothing in the transcript anchors it) and
+your judgment (`UNREVIEWED` until you act). The span is a provenance token
+(`MTG 09-07 · 11:18 to 11:21`). An owner or due date the extraction did not find
+is a typed unknown (`OWNER · UNKNOWN`, `DUE · UNKNOWN`); nothing is guessed.
+
+One verb per row, **Confirm**; the row's **MORE** disclosure holds the rest:
+
+| Verb | What it does |
+|---|---|
+| **Confirm** | Writes the decision record and the commitment through the kernel and returns them; the row stays in place, its chip flips to `ACCEPTED`, and the footer receipt names the record. Enter on a focused row does the same. |
+| **Edit** | Opens the sentence in place (mic included). The edit is saved on the proposal; a supported sentence drops to `LINKED · EDITED` and the original stays as `WAS · …`. Under MORE, **OWNER** and **DUE** can be supplied the same way, which resolves that unknown; a value you supplied reads `OWNER · PRIYA · SUPPLIED`, one the extraction found reads `OWNER · KAROL`. |
+| **Dismiss** | Two presses, in world. No record is created; focus moves to the next row. |
+| **Open evidence** | Lands on the transcript scrolled to the span. Withheld when the proposal has no span. |
+
+**Accept reviewed** in the footer (two presses, in place) confirms the rows
+that are `SUPPORTED` or `LINKED` and carry no typed unknown; an
+`UNSUPPORTED` row, a row with an unknown owner or due date, and a row from an
+earlier transcript revision stay where they are, and the receipt names what
+was left and why (`ACCEPTED 3 · LEFT 2 · UNSUPPORTED 1 · UNKNOWN 1`). The
+verb is drawn refused when no row is eligible. The footer's egress chip names
+the host the extraction ran on.
+
+Repeating a completion, retrying the model, or re-sending a Confirm whose
+answer was lost never creates a second proposal or a second record while the
+transcript is unchanged: the retry returns the record the first call made. A
+re-read with a changed transcript (a speaker renamed, a segment corrected)
+proposes again beside the earlier decisions; the head then carries a
+**PRIOR REVISION** disclosure listing the earlier revision's rows with their
+state, so nothing is doubled silently.
 
 ### The 1:1 card
 

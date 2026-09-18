@@ -2,9 +2,12 @@
 
 Routes:
   GET  /api/meetings/{id}/follow-through-proposals - list proposals for a meeting
+  GET  /api/meetings/{id}/outcome-review  - HS-200-12: the review face's projection
   GET  /api/projects/{id}/proposals       - list proposals for a project
-  POST /api/proposals/{id}/confirm        - confirm a proposal
-  POST /api/proposals/{id}/dismiss        - dismiss a proposal
+  POST /api/proposals/{id}/confirm        - confirm a proposal (idempotent)
+  POST /api/proposals/{id}/edit           - HS-200-12: amend a proposed row in place
+  POST /api/meetings/{id}/proposals/accept-reviewed - HS-200-12: confirm the eligible rows
+  POST /api/proposals/{id}/dismiss        - dismiss a proposal (idempotent)
 """
 from __future__ import annotations
 
@@ -36,6 +39,11 @@ def _service(ctx: WebContext) -> ProposalBridgeService:
     return service
 
 
+def _status(result: dict[str, Any]) -> int:
+    """404 for a missing proposal; 409 for one already decided the other way."""
+    return 409 if result.get("code") in {"confirmed", "dismissed", "meeting_deleted"} else 404
+
+
 def build_proposal_router(ctx: WebContext) -> APIRouter:
     router = APIRouter(tags=["proposals"])
 
@@ -50,6 +58,26 @@ def build_proposal_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"meeting_id": meeting_id, "proposals": proposals})
         except Exception as exc:
             return error_500(exc, log, "Failed to list meeting proposals")
+
+    @router.get("/api/meetings/{meeting_id}/outcome-review")
+    async def api_meeting_outcome_review(meeting_id: str, request: Request) -> Any:
+        try:
+            review = _service(ctx).meeting_review(meeting_id)
+            if "error" in review:
+                return JSONResponse({"success": False, "error": review["error"]}, status_code=404)
+            return JSONResponse(review)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to read the meeting review")
+
+    @router.post("/api/meetings/{meeting_id}/proposals/accept-reviewed")
+    async def api_accept_reviewed(meeting_id: str, request: Request) -> Any:
+        try:
+            result = _service(ctx).accept_reviewed(_principal(request), meeting_id)
+            if "error" in result:
+                return JSONResponse({"success": False, **result}, status_code=404)
+            return JSONResponse({"success": True, **result})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to accept the reviewed proposals")
 
     @router.get("/api/projects/{project_id}/proposals")
     async def api_project_proposals(
@@ -78,10 +106,31 @@ def build_proposal_router(ctx: WebContext) -> APIRouter:
                 due=body.get("due"),
             )
             if "error" in result:
-                return JSONResponse({"success": False, "error": result["error"]}, status_code=404)
+                return JSONResponse({"success": False, **result}, status_code=_status(result))
             return JSONResponse({"success": True, **result})
         except Exception as exc:
             return error_500(exc, log, "Failed to confirm proposal")
+
+    @router.post("/api/proposals/{proposal_id}/edit")
+    async def api_edit_proposal(
+        proposal_id: str,
+        request: Request,
+        body: dict[str, Any] = Body(default={}),
+    ) -> Any:
+        """HS-200-12: edit in place (edit-then-confirm, ruling R5)."""
+        try:
+            result = _service(ctx).edit_proposal(
+                _principal(request),
+                proposal_id,
+                text=body.get("text"),
+                owner=body.get("owner"),
+                due=body.get("due"),
+            )
+            if "error" in result:
+                return JSONResponse({"success": False, **result}, status_code=_status(result))
+            return JSONResponse(result)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to edit proposal")
 
     @router.post("/api/proposals/{proposal_id}/dismiss")
     async def api_dismiss_proposal(
@@ -91,7 +140,7 @@ def build_proposal_router(ctx: WebContext) -> APIRouter:
         try:
             result = _service(ctx).dismiss_proposal(_principal(request), proposal_id)
             if "error" in result:
-                return JSONResponse({"success": False, "error": result["error"]}, status_code=404)
+                return JSONResponse({"success": False, **result}, status_code=_status(result))
             return JSONResponse({"success": True, **result})
         except Exception as exc:
             return error_500(exc, log, "Failed to dismiss proposal")

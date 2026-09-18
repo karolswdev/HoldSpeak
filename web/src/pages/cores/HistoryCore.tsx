@@ -15,7 +15,7 @@ import { useCoreWings } from "./core-hooks";
 import { useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { renderHeroSlot } from "./core-layout";
 import {
-  WINGS, clockTime, download, needsIntelligence, type Receipt,
+  WINGS, clockTime, download, needsIntelligence, type Receipt, type DetailView,
   MeetingDetail, ImportSection, CatalogRail, DoorSection,
 } from "./history";
 
@@ -53,6 +53,9 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     string | null
   >(null);
   const [requestedMeetingError, setRequestedMeetingError] = useState("");
+  // HS-200-12: `Open evidence` on the review wing lands on the outcomes face
+  // scrolled to the proposal's segment.
+  const [evidenceSegment, setEvidenceSegment] = useState<number | null>(null);
 
   // Intelligence run state
   // HS-200-42 (counsel N1): the same drainer fact the Chair reads, from the
@@ -302,21 +305,33 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     />
   );
 
-  const detailPane = (paneView: "outcomes" | "artifacts") => (
+  const detailPane = (paneView: DetailView) => (
     <MeetingDetail
       meeting={selected}
       view={paneView}
-      momentSegmentIndex={requestedMomentSegment}
+      momentSegmentIndex={evidenceSegment ?? requestedMomentSegment}
       onClose={() => setSelected(null)}
       onDeleted={() => void meetings.reload()}
       onReceipt={setReceipt}
       onRunIntelligence={
-        selected && needsIntelligence(selected)
+        selected && (needsIntelligence(selected) || paneView === "review")
           ? () => void handleRunIntelligence(String(selected.id))
           : undefined
       }
+      onReview={() => {
+        wings.setDoorOpen(false);
+        wings.setView("review");
+      }}
+      onOpenEvidence={(segmentIndex) => {
+        setEvidenceSegment(segmentIndex);
+        wings.setDoorOpen(false);
+        wings.setView("outcomes");
+      }}
     />
   );
+  // HS-200-12: the review wing draws its own footer (egress where the
+  // extraction happened, the receipt, `Accept reviewed`).
+  const reviewOwnsFooter = wings.view === "review" && Boolean(selected) && !wings.doorOpen;
 
   const face = wings.doorOpen ? (
     <DoorSection
@@ -337,6 +352,12 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   ) : wings.view === "artifacts" ? (
     selected ? (
       detailPane("artifacts")
+    ) : (
+      rail
+    )
+  ) : wings.view === "review" ? (
+    selected ? (
+      detailPane("review")
     ) : (
       rail
     )
@@ -400,7 +421,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         </div>
       ) : null}
       {face}
-      <SurfaceFooter
+      {reviewOwnsFooter ? null : <SurfaceFooter
         egress={<EgressChip />}
         receipt={
           <span
@@ -431,7 +452,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
             </span>
           ) : null
         }
-      />
+      />}
     </>
   );
 }
