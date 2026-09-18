@@ -340,6 +340,13 @@ def _columns(path: Path, table: str) -> set[str]:
         conn.close()
 
 
+def _declares(table: str) -> bool:
+    """Whether the live schema declares ``table`` (stories land in parallel lanes:
+    the 78 shapes are stripped and re-proven only where the tree has them)."""
+    from holdspeak.db.schema import SCHEMA_SQL
+    return f"CREATE TABLE IF NOT EXISTS {table}" in SCHEMA_SQL or f"CREATE TABLE {table}" in SCHEMA_SQL
+
+
 def _tables(path: Path) -> set[str]:
     conn = sqlite3.connect(str(path))
     try:
@@ -379,7 +386,8 @@ def test_backup_upgrade_restore_reopen_on_a_copy(tmp_path):
     assert read_schema_version(copy) == 75
     assert "corrections_applied" not in _columns(copy, "dictation_journal")
     assert "project_ask_tasks" not in _tables(copy)
-    assert "project_briefs" not in _tables(copy)
+    if _declares("project_briefs"):
+        assert "project_briefs" not in _tables(copy)
     assert "retry_key" not in _columns(copy, "follow_through_proposals")
 
     # 1. Back up through the existing mechanism, before the upgrade.
@@ -399,7 +407,8 @@ def test_backup_upgrade_restore_reopen_on_a_copy(tmp_path):
     assert read_schema_version(copy) == SCHEMA_VERSION
     assert "corrections_applied" in _columns(copy, "dictation_journal")
     assert "project_ask_tasks" in _tables(copy)
-    assert "project_briefs" in _tables(copy)
+    if _declares("project_briefs"):
+        assert "project_briefs" in _tables(copy)
     assert "retry_key" in _columns(copy, "follow_through_proposals")
     assert _read_back(copy) == ("The rehearsal meeting", "# kept")
 
@@ -416,7 +425,8 @@ def test_backup_upgrade_restore_reopen_on_a_copy(tmp_path):
     assert read_schema_version(copy) == SCHEMA_VERSION
     assert "corrections_applied" in _columns(copy, "dictation_journal")
     assert "project_ask_tasks" in _tables(copy)
-    assert "project_briefs" in _tables(copy)
+    if _declares("project_briefs"):
+        assert "project_briefs" in _tables(copy)
     assert "retry_key" in _columns(copy, "follow_through_proposals")
     assert _read_back(copy) == ("The rehearsal meeting", "# kept")
 
