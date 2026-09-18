@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+import os
 import sqlite3
 import threading
 from datetime import datetime
@@ -106,8 +107,20 @@ def backup_database(db_path: Path) -> Path:
     return backup_path
 
 
+class DatabaseInUse(ValueError):
+    """A restore was asked for while a live process owns the database."""
+
+
 def restore_database(backup_path: Path, db_path: Path) -> Optional[Path]:
-    """Restore ``db_path`` from ``backup_path``, returning the safety backup taken."""
+    """Restore ``db_path`` from ``backup_path``, returning the safety backup taken.
+
+    Refuses while a LIVE process owns ``db_path`` (HS-200-45 counsel P0).
+    Under WAL the hub holds per-thread connections whose committed tail lives
+    in the ``-wal`` sidecar; replacing the main file and unlinking the
+    sidecars underneath those connections leaves every later reader -- and
+    the next hub -- failing with ``disk I/O error``. The refusal lives HERE,
+    not in the CLI, so every caller inherits it.
+    """
     if not backup_path.exists():
         raise ValueError(f"Backup file not found: {backup_path}")
     probe = sqlite3.connect(str(backup_path))
@@ -126,6 +139,53 @@ def restore_database(backup_path: Path, db_path: Path) -> Optional[Path]:
             )
     finally:
         probe.close()
+    from ..runtime_lock import read_owner
+
+    owner = read_owner(db_path)
+    if owner and owner.get("alive"):
+        raise DatabaseInUse(
+            f"{owner.get('label') or 'holdspeak web'} (pid {owner.get('pid')}) is "
+            f"running on {db_path}; stop `holdspeak web` first, then restore. "
+            "Nothing was changed."
+        )
+    # The lock names a cooperative owner; a process that opened the file
+    # without claiming it (a tool, a script, a hub started with
+    # HOLDSPEAK_ALLOW_UNOWNED_DB) is invisible to it. SQLite itself knows:
+    # leaving WAL needs exclusive access, so the switch fails with "database
+    # is locked" while ANY other connection is open. When it succeeds the
+    # file is checkpointed into a single self-contained main file, which is
+    # exactly the state the copy below wants to overwrite.
+    if db_path.exists():
+        # Counsel (HS-200-45 re-read): on a read-only file or directory the
+        # journal switch is a silent no-op, so the refusal never fired and the
+        # run died later with a misleading "not a readable backup" error.
+        # `mode=rw` makes the open itself fail there, with the real reason.
+        # SQLite silently downgrades a write-protected file to read-only even
+        # under ``mode=rw``, so the OS is asked first.
+        if not (os.access(db_path, os.W_OK) and os.access(db_path.parent, os.W_OK)):
+            raise DatabaseInUse(
+                f"{db_path} or its directory is not writable; restore needs a "
+                "writable database file and directory. Nothing was changed."
+            )
+        try:
+            exclusivity = sqlite3.connect(
+                f"file:{db_path}?mode=rw", uri=True, timeout=0
+            )
+        except sqlite3.OperationalError as exc:
+            raise DatabaseInUse(
+                f"{db_path} cannot be opened for writing ({exc}); restore needs a "
+                "writable database file and directory. Nothing was changed."
+            ) from exc
+        try:
+            exclusivity.execute("PRAGMA journal_mode = DELETE")
+        except sqlite3.OperationalError as exc:
+            raise DatabaseInUse(
+                f"another process has {db_path} open ({exc}); stop `holdspeak web` "
+                "and any tool holding the database first, then restore. Nothing "
+                "was changed."
+            ) from exc
+        finally:
+            exclusivity.close()
     safety: Optional[Path] = None
     if db_path.exists():
         safety = backup_database(db_path)

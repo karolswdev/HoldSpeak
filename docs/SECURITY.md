@@ -295,6 +295,11 @@ never silent. Previously the sidecar inherited `$HOME` from its MCP client,
 opened the owner's live database as a second unlocked writer, and ran a schema
 reconcile on every start.
 
+The database runs in WAL mode, so its recent writes live in `holdspeak.db-wal`
+and `holdspeak.db-shm` beside the file while a hub is open; the data directory
+must not be a synced folder (iCloud, Dropbox), and a backup is taken with
+`holdspeak backup`, never by copying the file.
+
 Scoped credentials carry a palette (which tool families the caller may invoke)
 and a TTL (capped at 30 days). The hub stores `sha256(token)` at rest and
 compares hashes in constant time. The plaintext exists only in the issue

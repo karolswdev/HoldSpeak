@@ -751,6 +751,11 @@ class MeetingWebServer:
             return _MeshNodeTokenStore(None)
 
         obs = get_observer()
+        # HS-200-45 R4: the services the hub holds that write BELOW the two
+        # primitive services (reaction projections, coder-materialized notes)
+        # get the same desk_changed callback. Late-bound through the root the
+        # block below installs.
+        from .runtime.composition import notify_desk_changed as _composition_notify
         meeting_service = MeetingService(get_database(), observer=obs)
         notify = lambda message_type, data: self.broadcast(message_type, data)
         meeting_intel_service = MeetingIntelService(get_database(), notify=notify, observer=obs)
@@ -923,7 +928,10 @@ class MeetingWebServer:
             ),
             memory_service=MemoryService(get_database(), observer=obs),
             mission_control_service=MissionControlService(get_database(), observer=obs),
-            reaction_service=ReactionService(get_database(), observer=obs),
+            reaction_service=ReactionService(
+                get_database(), observer=obs,
+                on_changed=lambda kind, obj_id, op: _composition_notify(kind, obj_id, op),
+            ),
             watch_service=WatchService(
                 get_database(), observer=obs,
                 **self._gh_watch_service_kwargs(),
@@ -933,6 +941,16 @@ class MeetingWebServer:
             ),
             jira_provider=JiraProviderAdapter(
                 db=get_database(), runner=self._acli_runner,
+            ),
+            # HS-174-07 declared this field "construction only here" and then
+            # never constructed it; the MCP `provider.confluence.*` family
+            # built a bare adapter in the hub as a result. Same shape as the
+            # Jira adapter above (counsel P1-3, caught by the asked-names fence).
+            confluence_provider=(
+                self._build_confluence_adapter()
+                or __import__(
+                    "holdspeak.services.confluence_provider", fromlist=["ConfluenceProviderAdapter"]
+                ).ConfluenceProviderAdapter(db=get_database(), runner=self._acli_runner)
             ),
             connections_service=ConnectionsService(
                 github_adapter=GitHubProviderAdapter(
@@ -1008,7 +1026,10 @@ class MeetingWebServer:
             on_route_preview=self.on_route_preview,
             on_dictation_config_changed=self.on_dictation_config_changed,
             on_remote_dictation=self.on_remote_dictation,
-            coder_service=CoderService(get_database(), observer=obs),
+            coder_service=CoderService(
+                get_database(), observer=obs,
+                on_changed=lambda kind, obj_id, op: _composition_notify(kind, obj_id, op),
+            ),
             dictation_service=DictationService(
                 get_database(), observer=obs,
                 journal_repository=getattr(self.dictation_journal, "repository", None),

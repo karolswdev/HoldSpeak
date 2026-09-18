@@ -131,26 +131,35 @@ def discover_hub(db_path: Optional[Path] = None) -> Optional[dict[str, Any]]:
     # 127.0.0.1, and POST /api/mcp refuses an OWNER token off-loopback (C5).
     from holdspeak.web_auth import is_loopback_host
 
+    bound_host = host
     if not is_loopback_host(host):
         host = "127.0.0.1"
-    return {"host": host, "port": port, "pid": owner.get("pid"), "db_path": str(path)}
+    return {
+        "host": host, "port": port, "pid": owner.get("pid"),
+        "db_path": str(path), "bound_host": bound_host,
+        "label": owner.get("label") or "holdspeak web",
+    }
 
 
 def _owner_token() -> str:
-    """The hub's web auth token, read from the config FILE.
+    """The hub's web auth token, read straight out of the config FILE.
 
-    An explicit path keeps ``Config.load``'s one-time legacy-endpoint
-    migration inert -- that migration calls ``get_database()``, and this
-    process must not open the database.
+    Not ``Config.load``: with no file present that SAVES a default config,
+    so the sidecar was creating ``~/.config/holdspeak/config.json`` on a
+    machine that had never run the hub (counsel P1-2). And its legacy
+    migration calls ``get_database()``. This process writes nothing and opens
+    nothing: a missing or unreadable file is simply "no token".
     """
     import holdspeak.config as config_facade
-    from holdspeak.config import Config
 
+    path = Path(getattr(config_facade, "CONFIG_FILE"))
     try:
-        config = Config.load(path=getattr(config_facade, "CONFIG_FILE"))
-    except Exception:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
         return ""
-    return str(getattr(getattr(config, "meeting", None), "web_auth_token", "") or "")
+    meeting = data.get("meeting") if isinstance(data, dict) else None
+    token = meeting.get("web_auth_token") if isinstance(meeting, dict) else ""
+    return str(token or "")
 
 
 def no_hub_message(db_path: Optional[Path] = None) -> str:
@@ -208,6 +217,18 @@ def handle_message_via_hub(request: dict[str, Any]) -> dict[str, Any] | None:
             detail = exc.read().decode("utf-8", "replace")[:400]
         except Exception:
             pass
+        if not _owner_token():
+            import holdspeak.config as config_facade
+
+            return _error(
+                request_id,
+                -32002,
+                f"The hub at 127.0.0.1:{hub['port']} (pid {hub['pid']}) refused "
+                f"this MCP call with HTTP {exc.code}, and no owner token is "
+                f"configured in {getattr(config_facade, 'CONFIG_FILE')}; the "
+                "sidecar sends the hub's own token, so run `holdspeak web` on "
+                "this machine once so it writes one, then retry.",
+            )
         return _error(
             request_id,
             -32002,
@@ -216,6 +237,19 @@ def handle_message_via_hub(request: dict[str, Any]) -> dict[str, Any] | None:
             f"this machine's config. {detail}".strip(),
         )
     except (urllib.error.URLError, OSError, ValueError) as exc:
+        bound = hub.get("bound_host") or "127.0.0.1"
+        if bound != hub["host"]:
+            # The lock says the hub is bound off-loopback. The sidecar dials
+            # loopback only (an OWNER token is refused off-loopback, C5), so
+            # "restart" would be the wrong remedy (counsel P2-ii).
+            return _error(
+                request_id,
+                -32002,
+                f"The hub (pid {hub['pid']}) is bound to {bound}:{hub['port']}; "
+                "the sidecar reaches it on loopback only, and 127.0.0.1 did not "
+                f"answer ({exc}). Set HOLDSPEAK_WEB_HOST so the hub also listens "
+                "on loopback, then retry.",
+            )
         return _error(
             request_id,
             -32002,

@@ -49,7 +49,7 @@ import time
 from typing import Any
 
 from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from ...logging_config import get_logger
 from ...principals import (
@@ -187,8 +187,11 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             _caller_identity.reset(identity_token)
 
         if response is None:
-            # Notification (no response expected).
-            return JSONResponse(content=None, status_code=204)
+            # Notification (no response expected). A bare Response: a
+            # JSONResponse(None) serialises the literal ``null`` into a 204,
+            # and uvicorn raises "Response content longer than Content-Length"
+            # on every sidecar handshake (HS-200-45 counsel P1-1).
+            return Response(status_code=204)
         return JSONResponse(content=response, status_code=200)
 
     # ── GET /api/settings/remote ───────────────────────────────────

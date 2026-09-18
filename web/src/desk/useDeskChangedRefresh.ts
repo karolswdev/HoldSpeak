@@ -7,12 +7,16 @@
  * "Refresh from hub" by hand. The 2026-09-13 operational-surface audit (§9)
  * measured that: "A remote write lands in the DB and sits there."
  *
- * The hub now emits ONE `desk_changed` frame after any successful primitive or
- * workbench write, whoever made it (`PrimitiveService` / `WorkbenchService`
- * `on_changed` -> `broadcast`). This hook is the whole client half: subscribe,
- * and re-read. No per-kind patching and no new UI -- the existing `refresh()`
- * already loads the desk consistently, and a patch-by-kind reducer would be a
- * second, divergent model of the same data.
+ * The hub now emits ONE `desk_changed` frame after a successful write through
+ * its composed `PrimitiveService` / `WorkbenchService` (notes, decisions, kbs,
+ * directories, workflows, chains, workbenches, items, skills), whoever made it,
+ * plus the writers below those services that announce themselves (reaction and
+ * resourceful projections, coder-materialized notes, the rails journal, the
+ * guardrail seeds). Writes on other tables (meetings, project rooms, thoughts,
+ * sync) emit no frame; their surfaces carry their own signals. This hook is the
+ * whole client half: subscribe, and re-read. No per-kind patching and no new
+ * UI -- the existing `refresh()` already loads the desk consistently, and a
+ * patch-by-kind reducer would be a second, divergent model of the same data.
  *
  * Debounced trailing, not leading: a burst (a steward run publishing an update,
  * a zone of notes filed at once) arrives as many frames in a few hundred

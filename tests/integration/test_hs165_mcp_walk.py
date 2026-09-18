@@ -781,6 +781,14 @@ class TestMCPWalk:
         }
 
         TRANSCRIPT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        # HS-200-45: the transcript is a TRACKED evidence asset of a closed
+        # phase. A plain run must leave the tree clean; regenerate it only on
+        # request (HOLDSPEAK_WRITE_WALK_TRANSCRIPT=1), then review the diff.
+        if os.environ.get("HOLDSPEAK_WRITE_WALK_TRANSCRIPT") != "1":
+            # Counsel note: this also skips the write-then-reload check below;
+            # the determinism assertions above run unconditionally, so the
+            # walk's proof does not depend on the write.
+            return
         TRANSCRIPT_PATH.write_text(
             json.dumps(transcript_artifact, indent=2, default=str) + "\n",
         )

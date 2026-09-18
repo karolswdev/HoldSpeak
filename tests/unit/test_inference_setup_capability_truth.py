@@ -112,6 +112,17 @@ def test_projection_is_closed_redacted_and_preserves_v1_identity(tmp_path: Path)
 
 
 def test_first_and_repeated_reads_do_not_mutate_database_or_config(tmp_path: Path):
+    """Two reads mutate neither the config file nor the database.
+
+    The config half compares raw bytes and stat, unchanged. The database half
+    compares LOGICAL content since HS-200-45 put the database in WAL mode: a
+    read legitimately touches (and may create) ``holdspeak.db-shm``, the
+    shared-memory index every connection maps, so byte-comparing every
+    ``holdspeak.db*`` sibling now differs with no data change. What "does not
+    mutate" means is that no row and no schema changed, which is exactly what
+    ``PRAGMA data_version`` (bumped by any committed write from another
+    connection) plus per-table row counts on a fresh connection assert.
+    """
     config_path = tmp_path / "config.json"
     cfg = Config()
     cfg.meeting.intel_provider = "cloud"
@@ -126,13 +137,22 @@ def test_first_and_repeated_reads_do_not_mutate_database_or_config(tmp_path: Pat
     )
     before_config = config_path.read_bytes()
     before_stat = (config_path.stat().st_size, config_path.stat().st_mtime_ns)
-    def db_files():
-        return {
-            path.name: (path.read_bytes(), path.stat().st_size, path.stat().st_mtime_ns)
-            for path in tmp_path.glob("holdspeak.db*")
-            if path.is_file()
-        }
-    before_db = db_files()
+    import sqlite3
+
+    witness = sqlite3.connect(str(tmp_path / "holdspeak.db"))
+
+    def db_state():
+        tables = sorted(
+            row[0] for row in witness.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+            )
+        )
+        return (
+            witness.execute("PRAGMA data_version").fetchone()[0],
+            witness.execute("PRAGMA schema_version").fetchone()[0],
+            {t: witness.execute(f'SELECT count(*) FROM "{t}"').fetchone()[0] for t in tables},
+        )
+    before_db = db_state()
 
     first = service.get_inference_setup(OWNER)
     second = service.get_inference_setup(OWNER)
@@ -148,7 +168,8 @@ def test_first_and_repeated_reads_do_not_mutate_database_or_config(tmp_path: Pat
         assert available is None or available >= 0
     assert config_path.read_bytes() == before_config
     assert (config_path.stat().st_size, config_path.stat().st_mtime_ns) == before_stat
-    assert db_files() == before_db
+    assert db_state() == before_db
+    witness.close()
     assert db.profiles.list() == []
 
 

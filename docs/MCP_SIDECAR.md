@@ -57,10 +57,17 @@ file. It exists for a diagnosis session, never for daily use.
 Because dispatch goes through the hub's composed services, a write over MCP
 emits one `desk_changed` frame on the hub's `/ws` bus
 (`{"kind": ..., "id": ..., "op": "create" | "update" | "delete", "origin": ...}`),
-and any open desk re-reads itself. That holds for a write from any caller: an
-HTTP route, MCP over stdio, MCP over `/api/mcp`, or the iPad. Previously only
-the browser that made the write knew about it (it refreshed itself), and a
-remote write landed in the database and sat there.
+and any open desk re-reads itself. Exactly what emits the frame: every write
+through the hub's `PrimitiveService` and `WorkbenchService` (notes, decisions,
+knowledge bases, directories, workflows, chains, workbenches, items, skills),
+whichever caller made it (an HTTP route, MCP over stdio, MCP over `/api/mcp`,
+the iPad); the reaction and resourceful projections that add workbench items
+below those services; the note a coder reply materializes; the rails journal
+note; and the guardrail seed notes. Writes that reach a table by any other
+path (a meeting, a project room, a thought, a sync pull) emit no frame; their
+surfaces have their own signals. Previously only the browser that made the
+write knew about it (it refreshed itself), and a remote write landed in the
+database and sat there.
 
 ### `POST /api/mcp` and the Reach flag
 

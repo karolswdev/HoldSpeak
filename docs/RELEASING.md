@@ -69,11 +69,17 @@ holdspeak restore               # list the backups next to your database
 holdspeak restore <backup-file> # restore that backup
 ```
 
-Restore snapshots your current database before it overwrites it, so a restore can
-never be the step that loses data. If you restore the wrong file, the state you
-were in is still saved. A restore that cannot complete, because the file is
-missing, truncated, or is not a HoldSpeak database, stops before it writes
-anything and leaves your current database exactly as it was.
+Restore snapshots your current database before it overwrites it. If you restore
+the wrong file, the state you were in is still saved. A restore that cannot
+complete, because the file is missing, truncated, or is not a HoldSpeak
+database, stops before it writes anything and leaves your current database
+exactly as it was.
+
+Restore refuses while HoldSpeak, or anything else, has the database open. The
+database keeps recent writes in a sidecar file beside it while it is open, and
+replacing the file under an open connection would corrupt it. The refusal
+names the running process where it can and the remedy: stop `holdspeak web`
+(and any tool holding the file), then restore.
 
 ### What the backup covers, and what it does not
 

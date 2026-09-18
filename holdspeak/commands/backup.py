@@ -67,7 +67,10 @@ def run_restore_command(args) -> int:
     try:
         safety = restore_database(backup_path, db_path)
     except ValueError as exc:
-        print(f"Restore failed: {exc}")
+        # Includes DatabaseInUse: a live hub owns the file, and a restore under
+        # it would brick the database (WAL sidecars unlinked beneath its open
+        # connections). The sentence names the owner and the remedy.
+        print(f"Restore refused: {exc}")
         return 1
 
     print(f"Restored {db_path}")

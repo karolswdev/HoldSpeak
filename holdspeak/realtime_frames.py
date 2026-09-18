@@ -54,6 +54,9 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
                                 # audience: the owner's own desk sockets — the runtime
                                 #           bus has no other subscriber
     "dictation_preview",        # dictation is held for preview
+    "desk_changed",             # one desk object was written, by ANY caller
+                                #   (HS-200-45): payload {kind, id, op, origin};
+                                #   the desk re-reads itself, debounced
     "duration",                 # the live meeting clock
     "intel_complete",           # a meeting intelligence window landed
     "intel_status",             # any run's running/ready/error state

@@ -128,8 +128,19 @@ def _owner_principal():
 def desk_snapshot_keys() -> set[str]:
     """Keys of the real ``holdspeak://desk/snapshot`` payload."""
     from holdspeak.mcp import resources
+    from holdspeak.runtime import composition
 
-    contents = resources.read_resource("holdspeak://desk/snapshot", _owner_principal())
+    # HS-200-45: MCP reads compose from the process's composition root. Under
+    # pytest the conftest installs a bare root; `scripts/doc_claims.py` runs
+    # outside pytest, so install one here for the duration of the read.
+    mine = composition.installed() is None
+    if mine:
+        composition.install(composition.bare(label="doc-claims"))
+    try:
+        contents = resources.read_resource("holdspeak://desk/snapshot", _owner_principal())
+    finally:
+        if mine:
+            composition.uninstall()
     payload = json.loads(contents["contents"][0]["text"])
     return set(payload) if isinstance(payload, dict) else set()
 
@@ -310,51 +321,63 @@ def undelete_clears_unavailable() -> str:
 # ---------------------------------------------------------------------------
 
 CLAIMS: list[Claim] = [
-    # ── owned by HS-200-45 ────────────────────────────────────────────
+    # ── paid by HS-200-45 (2026-09-17) ───────────────────────────────
     Claim(
         doc="holdspeak/web/routes/mcp_http.py",
-        anchor="composing on\nthe web runtime's LIVE services (never the sidecar's bare serve() instances)",
+        anchor="installs its composed services as the\nprocess's ONE composition root",
         sentence=(
-            "JSON-RPC in -> handle_message_for_principal -> JSON-RPC out, composing "
-            "on the web runtime's LIVE services (never the sidecar's bare serve() "
-            "instances)."
+            "``MeetingWebServer._create_app`` installs its composed services as the "
+            "process's ONE composition root (``holdspeak/runtime/composition.py``); "
+            "``tools.dispatch`` and every MCP family read that root."
         ),
-        predicate=lambda: bool(
-            handle_message_for_principal_parameters()
-            & {"services", "runtime", "container", "composition", "context"}
+        predicate=lambda: (
+            "composition.install_from_web_context(" in _read("holdspeak/web_server.py")
+            and "get_database()" not in _read("holdspeak/mcp/tools.py")
+            and not [
+                path
+                for path in sorted(REPO_ROOT.glob("holdspeak/mcp/families/*.py"))
+                if "get_database()" in path.read_text(encoding="utf-8")
+            ]
         ),
-        state="known_false",
+        state="holds",
         truth=(
-            "the route calls holdspeak.mcp.server.handle_message_for_principal, whose "
-            "only parameters are "
-            "{request, principal, palette} — no live-services handle is threaded in, "
-            "so it composes exactly as the sidecar's serve() does"
+            "web_server.py installs the hub's services through "
+            "holdspeak.runtime.composition.install_from_web_context; tools.py and "
+            "every families/*.py resolve db/observer/services through that root "
+            "(db_or/observer_or/runtime_service) and call get_database() nowhere"
         ),
         story="HS-200-45",
     ),
     Claim(
         doc="holdspeak/db/connection.py",
-        anchor="the connection protocol (WAL pragmas, row factory,",
+        anchor="the connection protocol lives in one place: the\nthree pragmas",
         sentence=(
-            "Extracted from ``Database`` so the connection protocol (WAL pragmas, "
-            "row factory, commit/rollback) lives in one place."
+            "Extracted from ``Database`` so the connection protocol lives in one "
+            "place: the three pragmas, the row factory, and commit-on-clean-exit / "
+            "rollback-on-raise."
         ),
-        predicate=lambda: connection_pragmas()["journal_mode"].lower() == "wal",
-        state="known_false",
+        predicate=lambda: (
+            connection_pragmas()["journal_mode"].lower() == "wal"
+            and int(connection_pragmas()["busy_timeout"]) == 5000
+            and int(connection_pragmas()["foreign_keys"]) == 1
+        ),
+        state="holds",
         truth=(
-            "a connection opened through this factory reports journal_mode=delete; the "
-            "module sets only PRAGMA foreign_keys=ON, and the 5000ms busy_timeout it "
-            "reports is sqlite3.connect's own timeout=5.0 default, not a pragma this "
-            "module applies"
+            "a connection opened through this factory reports journal_mode=wal, "
+            "busy_timeout=5000 and foreign_keys=1, all three set by _apply_pragmas "
+            "(HS-200-45 R5; before it, journal_mode was delete and only foreign_keys "
+            "was set)"
         ),
         story="HS-200-45",
     ),
+    # ── unowned: the remote bind is still decorative ───────────────────
     Claim(
         doc="docs/SECURITY.md",
-        anchor="it accepts\nconnections on the tailnet address only",
+        anchor="it accepts connections on the tailnet address only",
         sentence=(
             "The Streamable HTTP listener (`POST /api/mcp`) is opt-in and off by "
-            "default. When enabled, it accepts connections on the tailnet address only."
+            "default for **remote** callers. When enabled, it accepts connections on "
+            "the tailnet address only."
         ),
         predicate=lambda: bool(
             bind_host_references() - {"holdspeak/web/routes/mcp_http.py"}
@@ -365,9 +388,10 @@ CLAIMS: list[Claim] = [
             "holdspeak/web/routes/mcp_http.py and mentioned by no other module, so "
             "nothing applies it to a bind or a peer check; the package's only "
             "tailnet CIDR (100.64.0.0/10, concierge_service.py:297) is an "
-            "egress-advice helper, not a listener fence"
+            "egress-advice helper, not a listener fence. HS-200-45 kept the remote "
+            "auth model out of scope; parked in BACKLOG"
         ),
-        story="HS-200-45",
+        story="",
     ),
     # ── owned by HS-200-44 ────────────────────────────────────────────
     Claim(
@@ -602,20 +626,21 @@ def _sidecar_counts_match_doc() -> bool:
 # NOT grow past this number without a commit that changes the reason string
 # below to name the new debt and why it is being admitted.
 #
-# Reason for the current ceiling:
-#   four are owned (HS-200-45: the MCP composition root, the WAL pragma
-#   sentence, the SECURITY.md tailnet bind; HS-200-44: the UX-CANON A1
-#   residue count), and three are unowned and need a code change rather than
-#   a prose correction — the verb-catalog mirror and desk_snapshot's
-#   advertised shape, and DESKOS_COMPONENT_PATTERN (a whole doc describing
-#   the wrong desk).
-KNOWN_FALSE_RATCHET = 7
+# Reason for the current ceiling (5, lowered from 7 by HS-200-45 on
+# 2026-09-17, which paid the MCP composition root and the WAL pragma sentence):
+#   one is owned (HS-200-44: the UX-CANON A1 residue count), and four are
+#   unowned and need a code change rather than a prose correction — the
+#   SECURITY.md tailnet bind (bind_host is applied by nothing), the
+#   verb-catalog mirror and desk_snapshot's advertised shape, and
+#   DESKOS_COMPONENT_PATTERN (a whole doc describing the wrong desk).
+KNOWN_FALSE_RATCHET = 5
 KNOWN_FALSE_RATCHET_DATE = "2026-09-17"
 KNOWN_FALSE_RATCHET_REASON = (
-    "HS-200-45 owns three (mcp_http composition, connection WAL pragmas, "
-    "SECURITY tailnet bind); HS-200-44 owns the UX-CANON A1 residue count; three "
-    "are unowned and need a code change rather than a one-line doc correction "
-    "(the verb-catalog mirror, desk_snapshot's layout, DESKOS_COMPONENT_PATTERN)"
+    "HS-200-44 owns the UX-CANON A1 residue count; four are unowned and need a "
+    "code change rather than a one-line doc correction (the SECURITY tailnet bind, "
+    "the verb-catalog mirror, desk_snapshot's layout, DESKOS_COMPONENT_PATTERN). "
+    "HS-200-45 paid the MCP composition root and the WAL pragma sentence on "
+    "2026-09-17 (7 -> 5)"
 )
 
 

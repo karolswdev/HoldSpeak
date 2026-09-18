@@ -80,6 +80,7 @@ from .core import (  # noqa: F401  explicit: names import * may skip
     Database,
     DEFAULT_DB_PATH,
     backup_database,
+    DatabaseInUse,
     get_observer,
     restore_database,
 )

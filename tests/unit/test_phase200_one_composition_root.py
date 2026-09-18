@@ -21,6 +21,7 @@ against a real hub) live in
 
 from __future__ import annotations
 
+import os
 import sqlite3
 import threading
 import time
@@ -477,3 +478,226 @@ class TestHonestRefusals:
         assert "holdspeak web" in message
         assert "capture" in message.lower()
         assert "nothing to configure" in message.lower()
+
+
+# ── counsel-on-built (2026-09-17): the P0 and the P1s ──────────────────
+
+
+class TestRestoreRefusesUnderALiveOwner:
+    """P0: `holdspeak restore` with the hub running bricked the database.
+
+    `restore_database` unlinked `-wal`/`-shm` beneath the hub's live
+    per-thread WAL connections; the next fresh reader and the next hub failed
+    with `disk I/O error`. The refusal lives in `restore_database` itself, so
+    every caller inherits it.
+    """
+
+    def test_restore_refuses_and_touches_nothing_while_an_owner_is_alive(
+        self, tmp_path: Path
+    ) -> None:
+        from holdspeak.db.core import DatabaseInUse, backup_database, restore_database
+        from holdspeak.runtime_lock import claim_database, release_database
+
+        path = tmp_path / "holdspeak.db"
+        hub = Database(path)
+        with hub._connection() as conn:
+            conn.execute("INSERT INTO notes (id, title, body_markdown) VALUES ('before','b','')")
+        backup = backup_database(path)
+        with hub._connection() as conn:
+            conn.execute("INSERT INTO notes (id, title, body_markdown) VALUES ('after','a','')")
+        before_bytes = path.read_bytes()
+        wal = path.with_name(path.name + "-wal")
+        wal_before = wal.read_bytes() if wal.exists() else None
+
+        claim_database(path, port=12345)  # a live owner: this pid
+        try:
+            with pytest.raises(DatabaseInUse) as excinfo:
+                restore_database(backup, path)
+        finally:
+            release_database()
+        message = str(excinfo.value)
+        assert "holdspeak web" in message and str(os.getpid()) in message
+        assert "stop `holdspeak web` first" in message
+
+        assert path.read_bytes() == before_bytes
+        assert (wal.read_bytes() if wal.exists() else None) == wal_before
+        # The live hub keeps working, and so does a fresh reader.
+        with hub._connection() as conn:
+            conn.execute("INSERT INTO notes (id, title, body_markdown) VALUES ('later','l','')")
+        fresh = sqlite3.connect(str(path))
+        assert {r[0] for r in fresh.execute("SELECT id FROM notes")} >= {"before", "after", "later"}
+        fresh.close()
+        hub.close()
+
+    def test_restore_refuses_an_unlocked_open_connection_too(self, tmp_path: Path) -> None:
+        """Counsel's probe held the database open WITHOUT the owner lock; the
+        lock check alone let it through and bricked the file. SQLite's own
+        exclusivity rule (leaving WAL) is the second gate."""
+        from holdspeak.db.core import DatabaseInUse, backup_database, restore_database
+
+        path = tmp_path / "holdspeak.db"
+        hub = Database(path)
+        with hub._connection() as conn:
+            conn.execute("INSERT INTO notes (id, title, body_markdown) VALUES ('before','b','')")
+        backup = backup_database(path)
+        with hub._connection() as conn:
+            conn.execute("INSERT INTO notes (id, title, body_markdown) VALUES ('after','a','')")
+
+        with pytest.raises(DatabaseInUse, match="another process has"):
+            restore_database(backup, path)
+
+        with hub._connection() as conn:
+            conn.execute("INSERT INTO notes (id, title, body_markdown) VALUES ('later','l','')")
+        fresh = sqlite3.connect(str(path))
+        assert {r[0] for r in fresh.execute("SELECT id FROM notes")} == {"before", "after", "later"}
+        assert fresh.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+        fresh.close()
+        hub.close()
+
+    def test_offline_restore_still_works(self, tmp_path: Path) -> None:
+        from holdspeak.db.core import backup_database, restore_database
+
+        path = tmp_path / "holdspeak.db"
+        db = Database(path)
+        with db._connection() as conn:
+            conn.execute("INSERT INTO notes (id, title, body_markdown) VALUES ('before','b','')")
+        backup = backup_database(path)
+        with db._connection() as conn:
+            conn.execute("INSERT INTO notes (id, title, body_markdown) VALUES ('after','a','')")
+        db.close()
+
+        safety = restore_database(backup, path)
+        assert safety is not None and safety.exists()
+        assert not path.with_name(path.name + "-wal").exists()
+        again = sqlite3.connect(str(path))
+        assert [r[0] for r in again.execute("SELECT id FROM notes")] == ["before"]
+        assert again.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+        again.close()
+
+    def test_the_cli_surfaces_the_refusal_and_exits_non_zero(
+        self, tmp_path: Path, monkeypatch, capsys
+    ) -> None:
+        from types import SimpleNamespace
+
+        import holdspeak.commands.backup as backup_cmd
+        from holdspeak.db.core import backup_database
+        from holdspeak.runtime_lock import claim_database, release_database
+
+        path = tmp_path / "holdspeak.db"
+        Database(path).close()
+        backup = backup_database(path)
+        monkeypatch.setattr(backup_cmd, "DEFAULT_DB_PATH", path)
+        claim_database(path, port=1)
+        try:
+            code = backup_cmd.run_restore_command(SimpleNamespace(backup=str(backup), yes=True))
+        finally:
+            release_database()
+        out = capsys.readouterr().out
+        assert code == 1
+        assert "Restore refused" in out and "stop `holdspeak web` first" in out
+
+
+class TestNotificationIsARealNoContent:
+    """P1-1: `JSONResponse(None, 204)` put a `null` body into a 204 and uvicorn
+    raised "Response content longer than Content-Length" on every sidecar
+    handshake."""
+
+    def test_notification_yields_an_empty_204(self, tmp_path: Path) -> None:
+        from starlette.testclient import TestClient
+
+        db = Database(tmp_path / "notify.db")
+        client = TestClient(_hub_app(db, [], remote_enabled=True))
+        resp = client.post(
+            "/api/mcp",
+            json={"jsonrpc": "2.0", "method": "notifications/initialized"},
+            headers={"Authorization": "Bearer owner-tok-123"},
+        )
+        assert resp.status_code == 204
+        assert resp.content == b""
+        assert resp.headers.get("content-length", "0") == "0"
+
+
+class TestEveryAskedServiceIsCarriedAndLive:
+    """P1-3: `runtime_service("ask_service")` named a field the root did not
+    carry, so the hub built a bare AskService while the comment claimed the
+    hub's. Now `service()` rejects an unknown name, and every name a family
+    asks for is a field that the hub's installed root fills."""
+
+    @staticmethod
+    def _asked_names() -> set[str]:
+        import ast
+
+        root = Path(__file__).resolve().parents[2] / "holdspeak" / "mcp"
+        names: set[str] = set()
+        for source in root.rglob("*.py"):
+            for node in ast.walk(ast.parse(source.read_text(encoding="utf-8"))):
+                if (isinstance(node, ast.Call)
+                        and isinstance(node.func, ast.Name)
+                        and node.func.id == "runtime_service"
+                        and node.args and isinstance(node.args[0], ast.Constant)):
+                    names.add(str(node.args[0].value))
+        return names
+
+    def test_an_unknown_name_is_a_programming_error(self) -> None:
+        with pytest.raises(KeyError, match="no field 'nope_service'"):
+            composition.service("nope_service", lambda: object())
+
+    def test_every_asked_name_is_a_field(self) -> None:
+        asked = self._asked_names()
+        assert asked, "no runtime_service(...) call found under holdspeak/mcp"
+        assert asked <= composition.SERVICE_FIELDS, asked - composition.SERVICE_FIELDS
+
+    @pytest.mark.timeout(120)
+    def test_every_asked_name_is_live_in_the_hubs_root(self, tmp_path: Path, monkeypatch) -> None:
+        import holdspeak.config as config_module
+        import holdspeak.db.core as db_core
+        from holdspeak.db import reset_database
+        from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+        home = tmp_path / "home"
+        home.mkdir()
+        monkeypatch.setenv("HOME", str(home))
+        monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
+        monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
+        reset_database()
+        server = MeetingWebServer(
+            WebRuntimeCallbacks(on_bookmark=lambda *_: None, on_stop=lambda: None, get_state=lambda: {}),
+            auth_token="t",
+        )
+        try:
+            server._create_app()  # installs the root; never serves
+            root = composition.installed()
+            assert root is not None and not root.bare_root
+            missing = sorted(n for n in self._asked_names() if getattr(root, n, None) is None)
+            assert missing == [], f"hub root leaves these asked-for services None: {missing}"
+            # And the one counsel caught is the hub's Ask transport, not a bare one.
+            assert getattr(root.ask_service, "_broadcast", None) is not None
+        finally:
+            reset_database()
+
+
+class TestNoBareAccessorInMcp:
+    """P2-iii: the autouse bare root masks `NoRuntimeError` in unit tests, so
+    an accessor call that bypasses the root would never be noticed there.
+    This fence reads the source instead."""
+
+    def test_every_accessor_call_under_mcp_goes_through_the_root(self) -> None:
+        import ast
+
+        root = Path(__file__).resolve().parents[2] / "holdspeak" / "mcp"
+        offenders: list[str] = []
+        for source in sorted(root.rglob("*.py")):
+            tree = ast.parse(source.read_text(encoding="utf-8"))
+            allowed: set[int] = set()
+            for node in ast.walk(tree):
+                if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                        and node.func.id in {"db_or", "observer_or"}):
+                    for arg in node.args:
+                        allowed.add(id(arg))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Call):
+                    name = node.func.attr if isinstance(node.func, ast.Attribute) else (
+                        node.func.id if isinstance(node.func, ast.Name) else "")
+                    if name in {"get_database", "get_observer"}:
+                        offenders.append(f"{source.relative_to(root.parent)}:{node.lineno} calls {name}()")
+        assert offenders == [], "\n".join(offenders)

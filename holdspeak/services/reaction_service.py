@@ -10,7 +10,7 @@ import hashlib
 import json
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Callable
 
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import NotFound, ServiceError, ValidationError
@@ -196,12 +196,19 @@ def diff_snapshots(connector_id: str, before: dict[str, Any],
 @observe_service
 class ReactionService:
     def __init__(self, db: Any, *, observer: PipelineObserver | None = None,
-                 snapshot_fetcher: Any | None = None) -> None:
+                 snapshot_fetcher: Any | None = None,
+                 on_changed: Callable[[str, str, str], None] | None = None) -> None:
         self._db = db
         self._repo = db.automations
         self._ledger = ServiceEventLedger(db)
         self._observer = observer or NullObserver()
         self._snapshot_fetcher = snapshot_fetcher
+        # HS-200-45 R4: a projection writes workbench items below the
+        # composed WorkbenchService. The hub passes its own callback; without
+        # one, the composition root's bus is used, and outside a hub there is
+        # no bus, so nothing is emitted.
+        from holdspeak.runtime.composition import notify_desk_changed
+        self._on_changed = on_changed or notify_desk_changed
 
     @staticmethod
     def _owner(principal: Principal) -> None:
@@ -523,7 +530,7 @@ class ReactionService:
     async def _project(self, principal: Principal,
                        event: dict[str, Any]) -> list[dict[str, Any]]:
         results = []
-        workbenches = WorkbenchService(self._db)
+        workbenches = WorkbenchService(self._db, on_changed=self._on_changed)
         watch_ref = next((ref for ref in event.get("refs", []) if ref.startswith("watch:")), "")
         watch_id = watch_ref.removeprefix("watch:") or None
         for reaction in self._repo.matching_reactions(watch_id, event["event_type"]):

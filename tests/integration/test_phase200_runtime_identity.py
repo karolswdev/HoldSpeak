@@ -409,7 +409,7 @@ def test_the_backup_covers_the_main_database_only(tmp_path):
     all. Neither is inside the backup, and neither is touched by a restore.
     """
     db = tmp_path / "holdspeak.db"
-    Database(db)
+    Database(db).close()  # HS-200-45: restore refuses an open connection
     _seed(db)
     reset_database()
 
@@ -436,7 +436,7 @@ def test_the_backup_covers_the_main_database_only(tmp_path):
 def test_an_interrupted_restore_leaves_the_original_intact(tmp_path):
     """A restore that cannot complete never becomes the step that loses data."""
     db = tmp_path / "holdspeak.db"
-    Database(db)
+    Database(db).close()  # HS-200-45: restore refuses an open connection
     _seed(db)
     reset_database()
     before = hashlib.sha256(db.read_bytes()).hexdigest()

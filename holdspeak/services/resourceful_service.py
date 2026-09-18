@@ -58,11 +58,18 @@ def _night_key(now: datetime, start: int, end: int) -> str | None:
 
 
 class ResourcefulService:
-    def __init__(self, db: Any, *, item_runner: ItemRunner | None = None) -> None:
+    def __init__(self, db: Any, *, item_runner: ItemRunner | None = None,
+                 on_changed: Callable[[str, str, str], None] | None = None) -> None:
         self._db = db
         self._repo = db.resourceful_policies
         self._ledger = ServiceEventLedger(db)
         self._item_runner = item_runner
+        # HS-200-45 R4: see ReactionService -- the same hook, the same fallback.
+        from holdspeak.runtime.composition import notify_desk_changed
+        self._on_changed = on_changed or notify_desk_changed
+
+    def _workbenches(self) -> WorkbenchService:
+        return WorkbenchService(self._db, on_changed=self._on_changed)
 
     @staticmethod
     def _owner(principal: Principal) -> None:
@@ -241,7 +248,7 @@ class ResourcefulService:
         if self._item_runner is not None:
             result = self._item_runner(principal, workbench_id, item_id, event)
             return await result if inspect.isawaitable(result) else result
-        return await WorkbenchService(self._db).run_item(
+        return await self._workbenches().run_item(
             principal,
             workbench_id,
             item_id,
@@ -341,7 +348,7 @@ class ResourcefulService:
                 item_id = "wbi_resourceful_" + hashlib.sha256(
                     f'{workbench_id}:{candidate["candidate_key"]}'.encode()
                 ).hexdigest()[:20]
-                item = WorkbenchService(self._db).add_item(
+                item = self._workbenches().add_item(
                     principal,
                     workbench_id,
                     id=item_id,
@@ -396,7 +403,7 @@ class ResourcefulService:
                 if item is not None:
                     admitted = self._db.workbench_items.get(item["id"])
                     if admitted is not None and admitted.status in {"pending", "claimed"}:
-                        WorkbenchService(self._db).update_item(
+                        self._workbenches().update_item(
                             principal,
                             workbench_id,
                             item["id"],

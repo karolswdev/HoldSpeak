@@ -76,13 +76,20 @@ def test_sidecar_with_no_hub_refuses_and_opens_no_database(tmp_path: Path) -> No
          "params": {"name": "desk.list", "arguments": {"kind": "notes"}}},
     ])
 
-    # THE fence: nothing was opened, so nothing was created.
-    created = sorted(str(p.relative_to(home)) for p in home.rglob("holdspeak.db"))
-    assert created == [], (
-        f"the sidecar opened the database with no hub running: {created}. "
-        "That is the second-writer arrangement C10 forbids."
+    # THE fence: nothing was opened, so nothing was created -- and (counsel
+    # P1-2) nothing else either: the sidecar used to SAVE a default
+    # ~/.config/holdspeak/config.json through Config.load on a machine that
+    # had never run the hub. The whole HOME must be exactly as it was, minus
+    # the caches Python and uv keep for themselves.
+    created = sorted(
+        str(p.relative_to(home)) for p in home.rglob("*") if p.is_file()
+        and not any(part in {".cache", "__pycache__"} for part in p.relative_to(home).parts)
     )
-    assert not list(home.rglob("holdspeak.db-wal"))
+    assert created == [], (
+        f"the sidecar wrote files with no hub running: {created}. "
+        "A client of the hub creates nothing on its own."
+    )
+    assert not list(home.rglob("holdspeak.db"))
     assert not list(home.rglob("*.owner.lock"))
 
     responses = _responses(proc)

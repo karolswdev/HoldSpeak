@@ -43,6 +43,9 @@ def test_backup_then_restore_reopens_the_same_kept_work(cold_install, db) -> Non
     )
     assert db.notes.get("critical-after") is not None
     reset_database()
+    # HS-200-45: restore refuses while any connection holds the file -- the
+    # product behaviour a real caller meets. Close ours first.
+    db.close()
 
     safety = restore_database(backup, cold_install.db_path)
     assert safety is not None and safety.exists(), (

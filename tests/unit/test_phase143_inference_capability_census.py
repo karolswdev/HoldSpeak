@@ -224,11 +224,23 @@ def _service_factories(tree: ast.AST) -> tuple[set[str], set[str]]:
     entrance while its ``.ask(...)`` call was still sitting there -- the one
     thing this census must never do.
     """
+    def _returned(call: ast.Call) -> str:
+        # HS-200-45: ``runtime_service("<field>", <builder>)`` is the
+        # composition root's typed lookup -- it hands back the hub's live
+        # instance OR the builder's result, the same type either way. Seeing
+        # through it keeps a factory that moved behind the root visible; the
+        # MCP ask family's ``_service()`` did exactly that and this census
+        # went blind to its ``.ask(...)`` call, the one thing it must never do.
+        if (isinstance(call.func, ast.Name) and call.func.id == "runtime_service"
+                and len(call.args) >= 2 and isinstance(call.args[1], ast.Name)):
+            return call.args[1].id
+        return call.func.id if isinstance(call.func, ast.Name) else ""
+
     returned_names: dict[str, set[str]] = {}
     for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             returned_names.setdefault(node.name, set()).update(
-                value.value.func.id for value in ast.walk(node)
+                _returned(value.value) for value in ast.walk(node)
                 if isinstance(value, ast.Return) and isinstance(value.value, ast.Call)
                 and isinstance(value.value.func, ast.Name)
             )
@@ -333,7 +345,7 @@ def _semantic_helper_calls(sources: dict[str, str] | None = None) -> list[str]:
 
 
 SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
-    "holdspeak/mcp/families/ask.py:134|dispatch|ask": ProposedRoute(
+    "holdspeak/mcp/families/ask.py:136|dispatch|ask": ProposedRoute(
         "ask.answer", "mcp.families.ask", "AskService semantic caller",
     ),
         "holdspeak/services/refinement_coordinator.py:419|RefinementCoordinator._coordinate|ask": ProposedRoute(
@@ -350,7 +362,7 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
     "holdspeak/web/routes/projects.py:142|build_projects_router.api_resume_ask_task.dispatch|ask": ProposedRoute(
         "ask.answer", "web.routes.projects", "AskService semantic caller; saved-task resume through the ask transport",
     ),
-    "holdspeak/mcp/tools.py:700|dispatch|run": ProposedRoute(
+    "holdspeak/mcp/tools.py:733|dispatch|run": ProposedRoute(
         "recipe.run", "mcp.tools", "RecipeService semantic caller",
     ),
     # HS-151-02: recipe.chat retired; mcp/tools.py:613 and recipes.py:115

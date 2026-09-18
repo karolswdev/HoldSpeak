@@ -453,9 +453,18 @@ def test_no_required_args_tools_succeed_with_empty(
     ids=sorted(_TOOLS_NO_REQUIRED_ARGS_HUB_ONLY),
 )
 def test_hub_only_tools_refuse_as_an_error_not_as_success(
-    db: Database, tool_name: str,
+    db: Database, tool_name: str, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """HS-200-45 R6: "I cannot do this here" is an error, never a success."""
+    """HS-200-45 R6: "I cannot do this here" is an error, never a success.
+
+    The precondition is pinned, not assumed: `set_scheduler_services` is a
+    module global, and a sibling test on the same xdist worker can leave the
+    conductor wired, in which case the trigger genuinely runs.
+    """
+    import holdspeak.workbench_conductor as conductor
+
+    monkeypatch.setattr(conductor, "_watch_service", None)
+    monkeypatch.setattr(conductor, "_steward_service", None)
     is_error, data = _call(tool_name, {})
     assert is_error is True, f"{tool_name} dressed a refusal as success: {data}"
     assert data.get("code"), f"{tool_name}: missing a stable code: {data}"

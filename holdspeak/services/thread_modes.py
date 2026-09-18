@@ -386,6 +386,10 @@ def seed_guardrails(db: "Database") -> int:
             body_markdown=seed["body_markdown"],
             tags=seed["tags"],
         )
+        # HS-200-45 R4: a repository-level note write; announce it through
+        # the composition root's bus (a no-op when no hub is installed).
+        from holdspeak.runtime.composition import notify_desk_changed
+        notify_desk_changed("note", seed["id"], "create")
         created += 1
     return created
 

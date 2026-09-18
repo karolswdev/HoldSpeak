@@ -32,6 +32,7 @@ to the composition root that owns the wiring, not to the registry.
 
 from __future__ import annotations
 
+import dataclasses
 import os
 import threading
 from dataclasses import dataclass
@@ -142,6 +143,14 @@ class RuntimeServices:
     refinement_coordinator: Optional[Any] = None   # host_kind="web"
     refinement_service: Optional[Any] = None
 
+    # --- composed by the hub outside its WebContext ----------------------
+    # The hub's Ask transport (hub_model=, broadcast=, rails_hydrator=) is
+    # assembled by ``web/routes/primitives/ask.build_ask_service``; the plugin
+    # job service is plain. Both are populated by :func:`install_from_web_context`
+    # because families ask for them by name (counsel P1-3).
+    ask_service: Optional[Any] = None
+    plugin_job_service: Optional[Any] = None
+
     # --- providers -------------------------------------------------------
     github_provider: Optional[Any] = None          # self._gh_runner
     jira_provider: Optional[Any] = None            # self._acli_runner
@@ -180,6 +189,12 @@ class RuntimeServices:
 
 _lock = threading.Lock()
 _installed: Optional[RuntimeServices] = None
+
+#: Every service field a caller may ask :func:`service` for, by name.
+SERVICE_FIELDS: frozenset[str] = frozenset(
+    f.name for f in dataclasses.fields(RuntimeServices)
+    if f.name not in {"db", "observer", "broadcast", "web_context", "bare_root", "label"}
+)
 
 
 def install(services: RuntimeServices) -> RuntimeServices:
@@ -307,10 +322,31 @@ def service(name: str, build: Callable[[], T]) -> T:
     and how ``meeting.start_capture`` lost its lifecycle callbacks.
     """
     root = current()
+    if name not in SERVICE_FIELDS:
+        # A programming error, surfaced where the tests run rather than
+        # hidden behind a silent bare build in production (counsel P1-3).
+        raise KeyError(
+            f"RuntimeServices has no field {name!r}; a family asked the "
+            "composition root for a service it does not carry"
+        )
     instance = getattr(root, name, None)
     if instance is not None:
         return instance  # type: ignore[return-value]
     return build()
+
+
+def notify_desk_changed(kind: str, obj_id: str, op: str) -> None:
+    """Announce a desk write from a writer that has no ``on_changed`` of its own.
+
+    For the few writers below the two primitive services -- the reaction and
+    resourceful projections, the coder note materializer, the rails journal,
+    the guardrail seeds -- that upsert notes or workbench items directly.
+    A no-op outside a hub (no root, or a bare one): there is no bus.
+    """
+    root = _installed
+    if root is None or root.broadcast is None:
+        return
+    root.emit_desk_changed(kind, obj_id, op)
 
 
 def services_from_web_context(
@@ -430,4 +466,14 @@ def install_from_web_context(
         ctx.workbench_service = workbenches
     except AttributeError:  # pragma: no cover - a non-dataclass stand-in
         pass
+
+    # The two services families ask for that the hub composes OUTSIDE its
+    # WebContext (counsel P1-3). Built by the hub's real builders, so an MCP
+    # ``ask.run`` in the hub gets the Ask transport with hub_model=,
+    # broadcast= and rails_hydrator= -- not a bare one.
+    from holdspeak.services.plugin_job_service import PluginJobService
+    from holdspeak.web.routes.primitives.ask import build_ask_service
+
+    services.ask_service = build_ask_service(ctx)
+    services.plugin_job_service = PluginJobService(resolved_db, observer=resolved_observer)
     return install(services)

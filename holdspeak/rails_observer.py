@@ -171,12 +171,17 @@ def record_journal_entry(db: Any, batch: dict[str, Any], *, title: str) -> Any:
         ).hexdigest()
     # The batch hash is the observer's durable materializer identity. A process
     # restart replays this one note rather than a second note or provider call.
-    return db.notes.upsert(
+    note = db.notes.upsert(
         note_id="rails-journal-" + batch_sha.removeprefix("sha256:")[:32],
         title=title,
         body_markdown=journal_body(batch),
         tags=[JOURNAL_TAG],
     )
+    # HS-200-45 R4: a repository-level note write (the observer's durable
+    # materializer); announce it through the composition root's bus.
+    from holdspeak.runtime.composition import notify_desk_changed
+    notify_desk_changed("note", note.id, "create")
+    return note
 
 
 def list_journal(db: Any, *, limit: int = 50) -> list[Any]:
