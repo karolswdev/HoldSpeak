@@ -1068,10 +1068,15 @@ class TestSweepNotificationWire:
         calls, fake_notifier = _notifier_calls
         mock_ws = MagicMock()
         mock_ws.evaluate_due.return_value = []
+        from datetime import datetime, timezone
         svc = HeartbeatService(
             db, watch_service=mock_ws, notifier=fake_notifier,
+            # An injected noon: the wall clock reads 23:xx once a day, and
+            # [0, 23) is not "always quiet" then.
+            clock=lambda: datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc),
+            local_zone=timezone.utc,
         )
-        # Set quiet hours to cover the current hour.
+        # Set quiet hours to cover the injected hour.
         svc.update_settings({
             "notify": "edge",
             "quiet_hours": {"start": 0, "end": 23},
