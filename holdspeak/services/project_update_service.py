@@ -797,13 +797,15 @@ def _build_model_prompt(inventory_claims: list[Claim]) -> dict[str, Any]:
 _DATE_LITERAL_RE = _re.compile(
     r"\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?)?\b"
 )
+# A clock time is ONE token (`04:00`), never two numbers (HS-200-11 counsel).
+_TIME_LITERAL_RE = _re.compile(r"\b\d{1,2}:\d{2}(?::\d{2})?\b")
 _NUMBER_LITERAL_RE = _re.compile(r"(?<![\w-])\d+(?:[.,]\d+)?%?(?![\w-])")
-_NAME_LITERAL_RE = _re.compile(r"\b[A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*\b")
+# A capitalised token, hyphenated parts INCLUDED so `Cut-over` and `KAN-7`
+# are one token each and never split into halves (HS-200-11 counsel).
+_CAP_TOKEN_RE = _re.compile(r"\b[A-Z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)*\b")
+_SENTENCE_START_RE = _re.compile(r"(?:^|[.!?:]\s+|--\s+)")
 
 # Capitalized words that are grammar or report vocabulary, not names.
-# A capitalized word outside this set that the cited source does not
-# carry is reported as a typed unknown -- including at the start of a
-# sentence, where "Priya owes ..." must not hide behind grammar.
 _NAME_STOPWORDS: frozenset[str] = frozenset({
     "A", "Action", "Actions", "Active", "After", "All", "Also", "An",
     "And", "As", "At", "Based", "Before", "Blocked", "Blockers", "Both",
@@ -817,7 +819,10 @@ _NAME_STOPWORDS: frozenset[str] = frozenset({
     "Risks", "Signal", "Since", "Some", "Source", "Sources", "Status",
     "Team", "The", "There", "These", "They", "This", "Those", "Three",
     "To", "Two", "Until", "Update", "We", "When", "While", "With",
-    "Work", "Workstream",
+    "Work", "Workstream", "Who", "What", "Where", "Why", "How", "Nobody",
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
+    "January", "February", "March", "April", "May", "June", "July", "August",
+    "September", "October", "November", "December", "Superseded",
 })
 
 
@@ -826,11 +831,33 @@ def _normalize_for_match(text: str) -> str:
     return " ".join(str(text or "").lower().split())
 
 
-def _typed_unknowns(text: str, source_text: str) -> list[dict[str, str]]:
+def _is_acronym(token: str) -> bool:
+    """`KAN`, `DNS`, `KAN-7`, `QA`: upper-case letters, digits and hyphens only."""
+    letters = [c for c in token if c.isalpha()]
+    return bool(letters) and all(c.isupper() for c in letters)
+
+
+def _typed_unknowns(
+    text: str,
+    source_text: str,
+    known_names: Any = (),
+) -> list[dict[str, str]]:
     """Literals in ``text`` that the cited source's fields do not carry.
 
     Returns typed unknowns sorted deterministically:
     ``[{"type": "deadline"|"number"|"name", "value": "..."}]``.
+
+    The NAME rule (HS-200-11 counsel, measured over 30 realistic sentences,
+    28 false positives under the old regex):
+
+    - a sentence-initial single capitalised word is grammar, never a name;
+    - a hyphenated word is one token and never split into halves;
+    - an all-caps token is an acronym, never a name;
+    - a sentence with NO source (empty ``source_text``) mints no NAME at
+      all -- its face already says ``NO SOURCE``;
+    - a name survives only as a MULTI-WORD capitalised sequence, or as a
+      single word that matches a known-person alias in ``known_names``
+      (the People ledger, the Room's owners).
     """
     haystack = _normalize_for_match(source_text)
     found: set[tuple[str, str]] = set()
@@ -842,17 +869,56 @@ def _typed_unknowns(text: str, source_text: str) -> list[dict[str, str]]:
             found.add(("deadline", value))
     masked = _DATE_LITERAL_RE.sub(" ", masked)
 
+    for match in _TIME_LITERAL_RE.finditer(masked):
+        value = match.group(0)
+        if _normalize_for_match(value) not in haystack:
+            found.add(("number", value))
+    masked = _TIME_LITERAL_RE.sub(" ", masked)
+
     for match in _NUMBER_LITERAL_RE.finditer(masked):
         value = match.group(0)
         if _normalize_for_match(value) not in haystack:
             found.add(("number", value))
 
-    for match in _NAME_LITERAL_RE.finditer(masked):
-        value = match.group(0)
-        if value in _NAME_STOPWORDS:
-            continue
-        if _normalize_for_match(value) not in haystack:
-            found.add(("name", value))
+    if haystack:
+        aliases = {_normalize_for_match(n) for n in (known_names or ()) if str(n or "").strip()}
+        starts = {m.end() for m in _SENTENCE_START_RE.finditer(masked)}
+        runs: list[list[tuple[str, int]]] = []
+        current: list[tuple[str, int]] = []
+        last_end = -1
+        for match in _CAP_TOKEN_RE.finditer(masked):
+            token = match.group(0)
+            if token in _NAME_STOPWORDS or _is_acronym(token) or any(c.isdigit() for c in token):
+                if current:
+                    runs.append(current)
+                current = []
+                last_end = -1
+                continue
+            gap = masked[last_end:match.start()] if last_end >= 0 else ""
+            if current and gap.strip() == "":
+                current.append((token, match.start()))
+            else:
+                if current:
+                    runs.append(current)
+                current = [(token, match.start())]
+            last_end = match.end()
+        if current:
+            runs.append(current)
+        for run in runs:
+            value = " ".join(tok for tok, _ in run)
+            normalized = _normalize_for_match(value)
+            if normalized in haystack:
+                continue
+            if len(run) >= 2:
+                found.add(("name", value))
+                continue
+            token, at = run[0]
+            if normalized in aliases:
+                found.add(("name", token))
+                continue
+            # A single capitalised word: only an alias earns it, and never
+            # at the start of a sentence.
+            del at
 
     return [
         {"type": kind, "value": value}
@@ -860,10 +926,34 @@ def _typed_unknowns(text: str, source_text: str) -> list[dict[str, str]]:
     ]
 
 
+def _known_names_for_room(room: dict[str, Any]) -> set[str]:
+    """The Room's own people: item owners, commitment owners, team members.
+
+    The alias set a name unknown may match against -- an invented owner is
+    an unknown only when the desk KNOWS that person (HS-200-11 counsel)."""
+    names: set[str] = set()
+    project = room.get("project") or {}
+    for member in project.get("team_members") or project.get("team_members_json") or []:
+        if isinstance(member, str) and member.strip():
+            names.add(member.strip())
+        elif isinstance(member, dict):
+            for key in ("name", "display_name", "label"):
+                if member.get(key):
+                    names.add(str(member[key]).strip())
+    for section_key in ("items", "commitments"):
+        section = room.get(section_key) or {}
+        for item in section.get("items") or []:
+            owner = item.get("owner") or item.get("owner_ref")
+            if owner and isinstance(owner, str):
+                names.add(owner.split(":", 1)[-1].strip())
+    return {n for n in names if n}
+
+
 def _parse_model_output(
     raw: str,
     inventory_refs: frozenset[str],
     inventory_texts: dict[str, str] | None = None,
+    known_names: Any = (),
 ) -> tuple[dict[str, str], list[Claim]] | None:
     """Parse model JSON output into sections + claims.
 
@@ -921,7 +1011,7 @@ def _parse_model_output(
                     kind=KIND_INFERENCE,
                     support=SUPPORT_SOURCE_LINKED,
                     acceptance=ACCEPTANCE_UNREVIEWED,
-                    unknowns=_typed_unknowns(text, source_text),
+                    unknowns=_typed_unknowns(text, source_text, known_names),
                 ))
                 lines.append(f"- {text}")
             else:
@@ -1300,6 +1390,7 @@ class ProjectUpdateService:
         det_claims: list[Claim],
         det_sections: dict[str, str],
         det_body_md: str,
+        known_names: Any = (),
     ) -> tuple[str, str, str, str | None, str | None]:
         """Attempt model drafting over the deterministic evidence inventory.
 
@@ -1391,7 +1482,7 @@ class ProjectUpdateService:
             raise _ModelDraftFailed("no_output", FALLBACK_NO_OUTPUT)
 
         # Parse and constrain to the claim schema.
-        parsed = _parse_model_output(raw, inventory_refs, inventory_texts)
+        parsed = _parse_model_output(raw, inventory_refs, inventory_texts, known_names)
         if parsed is None:
             raise _ModelDraftFailed(
                 "unparseable_output", FALLBACK_UNPARSEABLE_OUTPUT,
@@ -1511,6 +1602,7 @@ class ProjectUpdateService:
                 body_md, claims_json, actual_generator, actual_host, actual_model = (
                     self._draft_with_model(
                         principal, det_claims, det_sections, det_body_md,
+                        known_names=_known_names_for_room(room),
                     )
                 )
             except _ModelDraftFailed as exc:

@@ -201,8 +201,13 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
         "chat.compact", "services.thread_practice", "InferenceRunner admitted child",
     ),
     # HS-162-03: model drafter for project update drafting.
-    "holdspeak/services/project_update_service.py:1372|ProjectUpdateService._draft_with_model|call": ProposedRoute(
+    "holdspeak/services/project_update_service.py:1463|ProjectUpdateService._draft_with_model|call": ProposedRoute(
         "project.update_draft", "services.project_update_service", "InferenceRunner admitted child",
+    ),
+    # HS-200-11: model drafter for the preparation brief, constrained to the
+    # deterministic outline; refuses (never falls back) when the route is not ready.
+    "holdspeak/services/preparation_brief_service.py:1029|PreparationBriefService._draft_with_model|call": ProposedRoute(
+        "project.brief_prepare", "services.preparation_brief_service", "InferenceRunner admitted child",
     ),
 }
 

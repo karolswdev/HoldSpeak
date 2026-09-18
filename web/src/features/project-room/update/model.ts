@@ -6,6 +6,13 @@
 /* ── Wire update shape (from project_updates table rows) ── */
 
 import type { ChipState } from "../../../desk/surface";
+import {
+  claimKindToken as libraryKindToken,
+  claimSupportToken as librarySupportToken,
+  claimAcceptanceToken as libraryAcceptanceToken,
+  claimUnknownToken as libraryUnknownToken,
+  type ClaimAxisToken,
+} from "../../../desk/surface/patterns/ClaimAxes";
 
 export type UpdateLifecycle = "draft" | "published" | "superseded";
 
@@ -137,63 +144,34 @@ export function decodeClaim(raw: Record<string, unknown>): UpdateClaim {
   };
 }
 
-/* ── Claim axis tokens (HS-200-06) ── */
+/* ── Claim axis tokens (HS-200-06) — the library species owns the words
+   (HS-200-11 promoted `ClaimAxes` to `desk/surface/patterns`); these
+   adapters keep the update posture's call sites unchanged. ── */
 
-const KIND_TOKENS: Record<string, string> = {
-  observation: "OBSERVATION",
-  inference: "INFERENCE",
-  proposal: "PROPOSAL",
-  decision: "DECISION",
-  execution_result: "EXECUTION RESULT",
-  outcome_measure: "OUTCOME MEASURE",
-};
+export type ClaimToken = ClaimAxisToken;
 
 /** The lead emblem: what the sentence asserts. */
 export function claimKindToken(kind: string): string {
-  return KIND_TOKENS[kind] ?? kind.replace(/_/g, " ").toUpperCase();
+  return libraryKindToken(kind);
 }
 
-export type ClaimToken = { label: string; state: ChipState };
-
-/** What the evidence establishes -- with the honest history suffix:
- *  MIGRATED for a record mapped from a citation-only row, EDITED when
- *  the sentence changed after it was supported. */
+/** What the evidence establishes -- with the honest history suffix. */
 export function claimSupportToken(claim: UpdateClaim): ClaimToken {
-  if (claim.support === "supported") {
-    return { label: "SUPPORTED", state: "success" };
-  }
-  if (claim.support === "disputed") {
-    return { label: "DISPUTED", state: "failure" };
-  }
-  if (claim.support === "source_linked") {
-    if (claim.supportRecord?.invalidatedAt) {
-      return { label: "LINKED · EDITED", state: "warning" };
-    }
-    if (claim.supportMappingVersion) {
-      return { label: "LINKED · MIGRATED", state: "idle" };
-    }
-    return { label: "LINKED", state: "idle" };
-  }
-  return { label: "UNSUPPORTED", state: "warning" };
+  return librarySupportToken({
+    support: claim.support,
+    edited: Boolean(claim.supportRecord?.invalidatedAt),
+    migrated: Boolean(claim.supportMappingVersion),
+  });
 }
 
 /** Applicable domain or reviewer judgment. Never inferred from a score. */
 export function claimAcceptanceToken(claim: UpdateClaim): ClaimToken {
-  if (claim.acceptance === "accepted") {
-    return { label: "ACCEPTED", state: "success" };
-  }
-  if (claim.acceptance === "rejected") {
-    return { label: "REJECTED", state: "failure" };
-  }
-  if (claim.acceptance === "superseded") {
-    return { label: "SUPERSEDED", state: "warning" };
-  }
-  return { label: "UNREVIEWED", state: "idle" };
+  return libraryAcceptanceToken(claim.acceptance);
 }
 
-/** A typed unknown the cited source cannot carry: "NAME · Priya". */
+/** A typed unknown the cited source cannot carry: `NAME Priya · NO SOURCE`. */
 export function claimUnknownToken(unknown: ClaimUnknown): string {
-  return `${unknown.type.toUpperCase()} · ${unknown.value}`;
+  return libraryUnknownToken(unknown);
 }
 
 export function decodeUpdate(raw: Record<string, unknown>): ProjectUpdate {

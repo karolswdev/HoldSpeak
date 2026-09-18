@@ -184,12 +184,16 @@ class TestIrrelevantCitation:
             "Dependency [medium]: API Gateway -- at_risk",
     }
 
+    # HS-200-11 (counsel): a single capitalised word is a NAME unknown only
+    # when the desk KNOWS the person; this rig knows Priya.
+    KNOWN_NAMES = ("Priya",)
+
     def _parse(self, text: str, refs: list[str]):
         raw = json.dumps({"sections": [{
             "key": "progress",
             "sentences": [{"text": text, "cited_refs": refs}],
         }]})
-        result = _parse_model_output(raw, self.INVENTORY, self.TEXTS)
+        result = _parse_model_output(raw, self.INVENTORY, self.TEXTS, self.KNOWN_NAMES)
         assert result is not None
         _, claims = result
         return claims[0]
@@ -268,7 +272,7 @@ class TestTypedUnknowns:
 
     def test_unknowns_are_sorted_and_typed(self):
         found = _typed_unknowns(
-            "Priya owes 40% by 2026-12-31.", "nothing relevant",
+            "Priya owes 40% by 2026-12-31.", "nothing relevant", ("Priya",),
         )
         assert found == [
             {"type": "deadline", "value": "2026-12-31"},
@@ -281,11 +285,14 @@ class TestTypedUnknowns:
         assert _typed_unknowns("Progress holds. Delivery is open.", "x") == []
 
     def test_a_sentence_initial_proper_noun_is_still_checked(self):
-        # "Priya owes ..." must not hide behind sentence-initial grammar.
-        assert _typed_unknowns("Priya owns it.", "nothing") == [
+        # "Priya owes ..." must not hide behind sentence-initial grammar --
+        # when the desk KNOWS Priya (HS-200-11 counsel: a sentence-initial
+        # single word is grammar unless it matches a known person).
+        assert _typed_unknowns("Priya owns it.", "nothing", ("Priya",)) == [
             {"type": "name", "value": "Priya"},
         ]
-        assert _typed_unknowns("Priya owns it.", "Priya owns the item") == []
+        assert _typed_unknowns("Priya owns it.", "Priya owns the item", ("Priya",)) == []
+        assert _typed_unknowns("Ship owns it.", "nothing") == []
 
 
 # ── THE FOUR KINDS STAY DISTINCT ─────────────────────────────────────

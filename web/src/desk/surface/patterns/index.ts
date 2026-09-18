@@ -9,6 +9,16 @@ export { ChoiceCardShell, type ChoiceCardShellProps } from "./ChoiceCardShell";
 export { Popover } from "./Popover";
 export { ProvenanceChip, Receipt } from "./ProvenanceChip";
 export {
+  ClaimAxes,
+  claimKindToken,
+  claimSupportToken,
+  claimAcceptanceToken,
+  claimUnknownToken,
+  type ClaimAxisToken,
+  type ClaimUnknownValue,
+  type ClaimAxesProps,
+} from "./ClaimAxes";
+export {
   TaskResume,
   TaskResumeList,
   type TaskResumeState,

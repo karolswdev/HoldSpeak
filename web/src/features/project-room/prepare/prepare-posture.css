@@ -1,0 +1,130 @@
+/* HS-200-11 — the Prepare posture on the surface library. */
+
+.prepare-posture {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
+}
+
+.prepare-project-group {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ── the ask well ── */
+
+.prepare-well {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.prepare-well-purpose .gadget-string,
+.prepare-well-purpose .gadget-pad {
+  width: 100%;
+}
+/* P2 iv: the purpose WRAPS at 393 -- a PadGadget, never a clipped line. */
+.prepare-well-purpose .gadget-pad textarea {
+  width: 100%;
+  min-height: 0;
+  resize: none;
+  overflow-wrap: anywhere;
+}
+
+.prepare-well-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.prepare-route {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.prepare-well-verbs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+/* A refused primary is DRAWN refused (UX-CANON A.11; ruling C9): disabled +
+   aria-disabled, flat, dashed, muted — never byte-identical to the live verb.
+   The dash is the part that carries at any contrast (HS-200-41's finding). */
+.prepare-verb:disabled,
+.prepare-verb:disabled:hover,
+.prepare-verb--refused,
+.prepare-verb--refused:hover {
+  border: 1px dashed var(--disabled-border, var(--border));
+  background: var(--disabled-bg, transparent);
+  box-shadow: none;
+  color: var(--disabled-fg, var(--text-muted));
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+/* ── the source ledger ── */
+
+.prepare-emblem {
+  font: 600 11px/1 var(--font-mono, ui-monospace, monospace);
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.prepare-source-primary {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.prepare-source-cells {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── the document and the claims ── */
+
+.prepare-document {
+  padding: 12px 14px;
+}
+
+.prepare-claim-text {
+  overflow-wrap: anywhere;
+}
+
+.prepare-claim-source {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.prepare-claim-axes {
+  padding: 4px 0 2px;
+}
+
+.prepare-running {
+  padding: 4px 0;
+}
+
+/* ── 393: the well stacks, the verbs fall under the route ── */
+
+@container surface (max-width: 559.9px) {
+  .prepare-well-verbs {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .prepare-source-cells {
+    width: 100%;
+  }
+}

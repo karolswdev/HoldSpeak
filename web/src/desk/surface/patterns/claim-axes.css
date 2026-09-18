@@ -1,0 +1,8 @@
+/* ClaimAxes — three chips on one line, wrapping at the narrow container.
+   Promoted from update-posture.css (HS-200-06) by HS-200-11. */
+.surface-claim-axes {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}

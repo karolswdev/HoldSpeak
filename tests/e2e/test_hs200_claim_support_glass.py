@@ -23,6 +23,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import os
+
 import pytest
 
 from .glass_infra import _boot, _api, _normal_chair, _ensure_build
@@ -31,6 +33,17 @@ pytest.importorskip("playwright.sync_api", reason="Claim glass needs Playwright"
 
 TOKEN = "hs200-claim-glass"
 REPO = Path(__file__).resolve().parents[2]
+# Shots are TRACKED story evidence: a rig rewrites them only on request
+# (HS-200-11 counsel: three story-06 PNGs were silently rewritten).
+WRITE_SHOTS = os.environ.get("HOLDSPEAK_WRITE_SHOTS") == "1"
+
+
+def _shot(page: Any, path: Path, **kw: Any) -> None:
+    if not WRITE_SHOTS:
+        return
+    page.screenshot(path=str(path), **kw)
+
+
 SHOTS = (
     REPO
     / "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-06-shots"
@@ -114,7 +127,6 @@ def test_real_draft_supported_then_edited_1440(
 ) -> None:
     _ensure_build()
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
-    SHOTS.mkdir(parents=True, exist_ok=True)
     try:
         from playwright.sync_api import sync_playwright
         with sync_playwright() as pw:
@@ -184,10 +196,7 @@ def test_real_draft_supported_then_edited_1440(
                 ["UNREVIEWED"] * len(claims)
             )
 
-            page.screenshot(
-                path=str(SHOTS / "build-claim-axes-real-1440.png"),
-                full_page=True,
-            )
+            _shot(page, SHOTS / "build-claim-axes-real-1440.png", full_page=True)
             browser.close()
     finally:
         server.stop()
@@ -315,7 +324,8 @@ def _assert_mixed_axes(page: Any) -> None:
 
     unknowns = _chip_labels(page, "update-claim-unknown")
     assert unknowns == [
-        "DEADLINE · 2026-12-31", "NAME · Priya", "NUMBER · 95%",
+        # HS-200-11: the ratified word -- printed AND typed unsupported.
+        "DEADLINE 2026-12-31 · NO SOURCE", "NAME Priya · NO SOURCE", "NUMBER 95% · NO SOURCE",
     ], unknowns
 
 
@@ -325,7 +335,6 @@ def test_mixed_claims_axes_1440(
 ) -> None:
     _ensure_build()
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
-    SHOTS.mkdir(parents=True, exist_ok=True)
     try:
         from playwright.sync_api import sync_playwright
         with sync_playwright() as pw:
@@ -343,10 +352,7 @@ def test_mixed_claims_axes_1440(
             _assert_mixed_axes(page)
             _show_claims(page)
 
-            page.screenshot(
-                path=str(SHOTS / "build-claim-axes-mixed-1440.png"),
-                full_page=True,
-            )
+            _shot(page, SHOTS / "build-claim-axes-mixed-1440.png", full_page=True)
             browser.close()
     finally:
         server.stop()
@@ -358,7 +364,6 @@ def test_mixed_claims_axes_393(
 ) -> None:
     _ensure_build()
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
-    SHOTS.mkdir(parents=True, exist_ok=True)
     try:
         from playwright.sync_api import sync_playwright
         with sync_playwright() as pw:
@@ -376,10 +381,7 @@ def test_mixed_claims_axes_393(
             _assert_mixed_axes(page)
             _show_claims(page)
 
-            page.screenshot(
-                path=str(SHOTS / "build-claim-axes-mixed-393.png"),
-                full_page=True,
-            )
+            _shot(page, SHOTS / "build-claim-axes-mixed-393.png", full_page=True)
             browser.close()
     finally:
         server.stop()

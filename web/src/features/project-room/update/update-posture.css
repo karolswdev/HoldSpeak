@@ -106,14 +106,8 @@
   color: var(--text-primary, #f2f3f5);
 }
 
-/* ── HS-200-06: the three claim axes (kind, support, acceptance) ── */
-
-.update-claim-axes {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-}
+/* ── HS-200-06: the three claim axes live in the library now
+   (desk/surface/patterns/claim-axes.css, promoted by HS-200-11). ── */
 
 /* ── Draft model action with egress ── */
 

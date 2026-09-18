@@ -366,10 +366,12 @@ describe("HS-200-06: the three claim axes on the glass", () => {
     render(<WindowHarness scope="project:p1" />);
     await openEditor();
 
+    // HS-200-11: the ratified word (design D1, verdict): the value is
+    // printed AND typed unsupported -- `DEADLINE 2026-12-31 · NO SOURCE`.
     expect(chipLabels("update-claim-unknown")).toEqual([
-      "DEADLINE · 2026-12-31",
-      "NAME · Priya",
-      "NUMBER · 95%",
+      "DEADLINE 2026-12-31 · NO SOURCE",
+      "NAME Priya · NO SOURCE",
+      "NUMBER 95% · NO SOURCE",
     ]);
   });
 

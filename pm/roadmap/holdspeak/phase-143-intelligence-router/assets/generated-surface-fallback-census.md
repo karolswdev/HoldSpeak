@@ -202,3 +202,22 @@ never a sentence the server composed.
   route is written, and nothing is retried.
 
 Classified in `BACKEND_PRIVATE_DECISIONS` with review tag `200-41`.
+
+Story 200-11 adds `holdspeak/services/preparation_brief_service.py` as a
+guarded backend surface. The preparation brief's model drafter runs
+through the SAME frozen-route resolver the update drafter uses
+(`_resolve_for_capability`, capability `project.brief_prepare`) and
+refuses -- it never falls back -- when that route is not ready.
+
+- `_route_state`: matched by the scanner on its name (`route`) and the
+  `model` / `deployment_revision` words in its body. It selects nothing
+  and dispatches nothing. It names the frozen route the assignment
+  already resolved (host, model, boundary) and quotes the target's own
+  `readiness_state` beside it as a bounded token (`READY` · `MODEL NOT
+  SET` · `KEY NOT SET` · `ENGINE UNAVAILABLE`), so the face can draw the
+  route beside `Prepare` before a byte leaves and the refusal receipt can
+  say why nothing was sent. Its two callers are the route probe route
+  (`GET /api/projects/{id}/briefs/route`) and the refusal path of
+  `prepare`; neither writes a route, chooses a leg, or retries.
+
+Classified in `BACKEND_PRIVATE_DECISIONS` with review tag `200-11`.

@@ -130,16 +130,21 @@ ROUTING_RESOLVER_REFERENCES = {
     # hub no longer observes the state the code names.  A provenance read, not a
     # rival route decision, but it is a resolver reference and is registered as
     # one rather than allowed to sit outside the census.
-    "holdspeak/services/project_service.py:2063:import:resolve_placement",
-    "holdspeak/services/project_service.py:2064:ref:resolve_placement",
+    # HS-200-11 (stacked on 12 over 15, 9a8073fc): the same two sites moved down
+    # with the additive Room fields (decision `lifecycle`/`successor_id`, the
+    # needs-you `watchId`); re-anchored, not re-registered.
+    "holdspeak/services/project_service.py:2083:import:resolve_placement",
+    "holdspeak/services/project_service.py:2084:ref:resolve_placement",
     # Pre-existing and previously UNREGISTERED, found by the HS-200-41 sweep and
     # registered here rather than left red: ``_captured_deployment_revision``
     # (project_update_service.py:1034) resolves a profile's target only to
     # freeze its deployment revision through ``capture_deployment_revision``.
     # The file is byte-identical to HEAD c6e6c1e7 — this census never had a row
     # for it, and HS-200-41 did not create the site.
-    "holdspeak/services/project_update_service.py:1044:import:resolve_inference_target",
-    "holdspeak/services/project_update_service.py:1046:ref:resolve_inference_target",
+    # HS-200-11 (same stack): moved down with the shared NAME helper's known-name
+    # alias rule and `_known_names_for_room`; the site itself is unchanged.
+    "holdspeak/services/project_update_service.py:1134:import:resolve_inference_target",
+    "holdspeak/services/project_update_service.py:1136:ref:resolve_inference_target",
 }
 
 ROUTING_POINTER_ATTRIBUTES = {

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 200
-- **Status:** ready
+- **Status:** done
 - **Depends on:** HS-200-04, HS-200-06, HS-200-07, HS-200-09, HS-200-10
 - **Unblocks:** HS-200-13, HS-200-16, HS-200-17, HS-200-22, HS-200-40
 - **Owner:** unassigned
@@ -23,11 +23,11 @@ Out: Additional connectors or mandatory calendar integration.
 
 ## Acceptance criteria
 
-- [ ] The user can name a meeting purpose without configuring a calendar.
-- [ ] Preparation binds a source manifest with current/superseded decisions and named omissions.
-- [ ] The result contains bounded priorities, questions, and obligations rather than an unfiltered source dump.
-- [ ] Sources open in context and the kept brief remains attached to the originating Project.
-- [ ] Unavailable AI retains the user's purpose and exposes the existing setup or manual completion path.
+- [x] The user can name a meeting purpose without configuring a calendar.
+- [x] Preparation binds a source manifest with current/superseded decisions and named omissions.
+- [x] The result contains bounded priorities, questions, and obligations rather than an unfiltered source dump.
+- [x] Sources open in context and the kept brief remains attached to the originating Project.
+- [x] Unavailable AI retains the user's purpose and exposes the existing setup or manual completion path.
 
 ## Test plan
 

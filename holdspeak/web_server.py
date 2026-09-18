@@ -720,6 +720,7 @@ class MeetingWebServer:
             build_project_door_router,
             build_project_setup_router,
             build_project_updates_router,
+            build_project_briefs_router,
             build_providers_router,
             build_connections_router,
             build_steward_router,
@@ -741,6 +742,7 @@ class MeetingWebServer:
         from .services.project_evidence_collector import ProjectEvidenceCollector
         from .services.project_delta_service import ProjectDeltaService
         from .services.project_update_service import ProjectUpdateService
+        from .services.preparation_brief_service import PreparationBriefService
         from .services.project_steward_service import ProjectStewardService
         from .services.refinement_coordinator import RefinementCoordinator
         from .services.refinement_application_service import RefinementApplicationService
@@ -1006,6 +1008,11 @@ class MeetingWebServer:
                 delta_service=_project_delta_service,
                 broker=broker,
             )),
+            project_brief_service=PreparationBriefService(
+                get_database(),
+                project_service=_project_service,
+                broker=broker,
+            ),
             project_steward_service=ProjectStewardService(
                 get_database(),
                 ProjectEvidenceCollector(get_database()),
@@ -1183,6 +1190,7 @@ class MeetingWebServer:
         app.include_router(build_project_door_router(web_ctx))
         app.include_router(build_project_setup_router(web_ctx))
         app.include_router(build_project_updates_router(web_ctx))
+        app.include_router(build_project_briefs_router(web_ctx))
         app.include_router(build_providers_router(web_ctx))
         app.include_router(build_connections_router(web_ctx))
         app.include_router(build_steward_router(web_ctx))
