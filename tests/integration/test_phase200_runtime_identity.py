@@ -303,6 +303,62 @@ _FTP_78_COLUMNS = (
 )
 
 
+# `follow_through_proposals` as schema 77 declared it (holdspeak/db/schema.py at
+# 7b0d5c3c), the 19 columns and the three indexes, for the rebuild below.
+_FTP_77_CREATE = """CREATE TABLE follow_through_proposals (
+    id TEXT PRIMARY KEY,
+    meeting_id TEXT NOT NULL,
+    project_id TEXT,
+    kind TEXT NOT NULL CHECK (kind IN ('decision', 'action')),
+    text TEXT NOT NULL,
+    owner_hint TEXT,
+    due_hint TEXT,
+    source_artifact_id TEXT,
+    source_plugin TEXT NOT NULL,
+    segment_timestamp REAL,
+    speaker_label TEXT,
+    model_host TEXT,
+    fingerprint TEXT NOT NULL,
+    state TEXT NOT NULL DEFAULT 'proposed'
+        CHECK (state IN ('proposed', 'confirmed', 'dismissed')),
+    original_text TEXT,
+    decision_record_id TEXT,
+    commitment_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    decided_at TEXT
+)"""
+_FTP_77_COLUMNS = (
+    "id", "meeting_id", "project_id", "kind", "text", "owner_hint", "due_hint",
+    "source_artifact_id", "source_plugin", "segment_timestamp", "speaker_label",
+    "model_host", "fingerprint", "state", "original_text", "decision_record_id",
+    "commitment_id", "created_at", "decided_at",
+)
+_FTP_77_INDEXES = (
+    "CREATE INDEX IF NOT EXISTS idx_ftp_meeting ON follow_through_proposals(meeting_id, state)",
+    "CREATE INDEX IF NOT EXISTS idx_ftp_project ON follow_through_proposals(project_id, state)",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_ftp_dedup ON follow_through_proposals(meeting_id, fingerprint) WHERE state = 'proposed'",
+)
+
+
+def _reshape_follow_through_proposals_to_77(conn: sqlite3.Connection) -> None:
+    """Rebuild the table at its 77 shape, portable across SQLite builds."""
+    for row in conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='follow_through_proposals' "
+        "AND name NOT LIKE 'sqlite_%'"
+    ).fetchall():
+        conn.execute(f"DROP INDEX IF EXISTS {row[0]}")
+    columns = ", ".join(_FTP_77_COLUMNS)
+    conn.execute(_FTP_77_CREATE.replace("CREATE TABLE follow_through_proposals", "CREATE TABLE ftp_77"))
+    conn.execute(f"INSERT INTO ftp_77 ({columns}) SELECT {columns} FROM follow_through_proposals")
+    conn.execute("DROP TABLE follow_through_proposals")
+    conn.execute("ALTER TABLE ftp_77 RENAME TO follow_through_proposals")
+    for statement in _FTP_77_INDEXES:
+        conn.execute(statement)
+    present = {row[1] for row in conn.execute("PRAGMA table_info(follow_through_proposals)")}
+    assert present == set(_FTP_77_COLUMNS), present ^ set(_FTP_77_COLUMNS)
+    assert not any(c in present for c in _FTP_78_COLUMNS)
+
+
 def _make_an_older_copy(path: Path) -> None:
     """Shape the copy the way schema 75 held it (before HS-176-02).
 
@@ -322,9 +378,11 @@ def _make_an_older_copy(path: Path) -> None:
         conn.execute("DROP TABLE IF EXISTS project_ask_tasks")
         # 77 → 78 (HS-200-11 + HS-200-12, one version carrying both shapes).
         conn.execute("DROP TABLE IF EXISTS project_briefs")
-        conn.execute("DROP INDEX IF EXISTS idx_ftp_retry_key")
-        for column in _FTP_78_COLUMNS:
-            conn.execute(f"ALTER TABLE follow_through_proposals DROP COLUMN {column}")
+        # The CI runner's SQLite refuses `ALTER TABLE ... DROP COLUMN` on this
+        # table ("incomplete input" after the drop; the columns ride a partial
+        # index), so the 77 shape is REBUILT rather than carved: the 77 CREATE
+        # verbatim, the surviving columns copied, the 77 indexes recreated.
+        _reshape_follow_through_proposals_to_77(conn)
         conn.execute("DELETE FROM schema_version")
         conn.execute("INSERT INTO schema_version (version) VALUES (75)")
         conn.commit()

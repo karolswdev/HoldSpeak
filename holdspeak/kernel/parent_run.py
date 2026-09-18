@@ -9,6 +9,7 @@ from typing import Any, Mapping
 
 from ..principals import Principal, PrincipalKind
 from .parent_lease import ParentLeaseHeartbeats
+from .orphan_lease import orphaned_claimed_shells
 from .model import Admission, KernelRefused, OperationRequest, valid_ref
 
 _PARENT_FIELDS = frozenset({"native_id", "definition_ref", "definition_revision", "input", "deadline_at", "child_budget"})
@@ -322,27 +323,7 @@ class ParentRunController:
     def reconcile_abandoned(self) -> int:
         now, closed = self._clock(), 0
         with self._database._connection() as conn:
-            placeholders = ",".join("?" for _ in self._operation_names.values())
-            # HS-200-12 (CI, 2026-09-18): a claimed operation with no parent-run
-            # row is not an orphan while it is YOUNGER than a lease.  The deferred
-            # intel binder starts its parent with `_defer_persist=True`
-            # (services/meeting_deferred_queue_binding.py) so the shell is
-            # claimed in one commit and its `kernel_parent_runs` row lands inside
-            # the queue-claim transaction; the hub's 1s liveness tick
-            # (web_server._kernel_liveness_loop) landing in that gap receipted the
-            # shell `indeterminate`, and the executor's first child admission then
-            # met `parent_operation_not_running` -- a terminal `refused` at
-            # attempt 1 with nothing run.  A shell that lost its claim race is the
-            # binder's own `discard()`; only a shell unpersisted for a whole lease
-            # is a dead context.
-            orphaned = conn.execute(
-                f"""SELECT o.operation_id FROM kernel_operations o
-                       LEFT JOIN kernel_parent_runs p ON p.operation_id=o.operation_id
-                      WHERE o.state='claimed' AND p.operation_id IS NULL
-                        AND o.name IN ({placeholders})
-                        AND o.updated_at < ?""",
-                (*self._operation_names.values(), now - self._lease_seconds),
-            ).fetchall()
+            orphaned = orphaned_claimed_shells(conn, self._operation_names.values(), now=now, lease_seconds=self._lease_seconds)
             rows = conn.execute("SELECT p.*,o.principal_kind,o.principal_identity FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE p.state IN ('OPEN','CANCELLING') AND (p.lease_heartbeat_at IS NULL OR p.lease_heartbeat_at < ?)", (now-self._lease_seconds,)).fetchall()
         for orphan in orphaned:
             try:
