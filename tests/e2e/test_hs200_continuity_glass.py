@@ -317,8 +317,8 @@ def _run_recall(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> 
             assert current.get_by_test_id("recall-dec-token").text_content() == "DEC 09-07"
             assert current.get_by_test_id("recall-rationale").text_content() == NEW_WHY
             assert current.get_by_test_id("recall-source-token").text_content() == "MTG 09-07 · 11:31"
-            assert current.get_by_role("button", name="Open source — MTG 09-07").count() == 1
-            assert current.get_by_role("group", name="Project").get_by_role("button", name="Open the Project — Q4 Platform").count() == 1
+            assert current.get_by_role("button", name="Open source: MTG 09-07").count() == 1
+            assert current.get_by_role("group", name="Project").get_by_role("button", name="Open the Project: Q4 Platform").count() == 1
             assert (page.get_by_test_id("recall-carry").text_content() or "").strip() == "CARRIED"
             superseded = cards.nth(1)
             assert (superseded.get_by_test_id("recall-card-title").text_content() or "") == OLD_TEXT
@@ -333,7 +333,7 @@ def _run_recall(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> 
             assert owed.get_by_test_id("recall-due-token").text_content() == "DUE · UNKNOWN"
             assert owed.get_by_test_id("recall-owner-token").text_content() == "OWNER · UNKNOWN"
             assert (owed.get_by_test_id("recall-owed-verb").text_content() or "").strip() == "Name an owner"
-            assert owed.get_by_role("button", name="Mark done — " + CMT_TEXT).count() == 0
+            assert owed.get_by_role("button", name="Mark done: " + CMT_TEXT).count() == 0
             # Sections carry real counts; no zero anywhere.
             body = page.get_by_test_id("desk-memory-body").text_content() or ""
             assert "CURRENT 1" in body and "SUPERSEDED 1" in body and "OWED 1" in body and "MEETINGS 2" in body
@@ -355,7 +355,7 @@ def _run_recall(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> 
             page.get_by_test_id("recall-owed-well").wait_for(timeout=5000)
             assert page.get_by_role("dialog").count() == 0
             page.get_by_role("textbox", name="Owner").fill("Priya")
-            page.get_by_role("button", name="Save owner — " + CMT_TEXT).click()
+            page.get_by_role("button", name="Save owner: " + CMT_TEXT).click()
             page.locator("[data-testid='recall-owed-row'][data-next-action='set_date']").wait_for(timeout=10000)
             _settle(page)
             assert page.get_by_test_id("recall-owner-token").count() == 0

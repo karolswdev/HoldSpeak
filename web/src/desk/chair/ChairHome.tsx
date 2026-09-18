@@ -238,7 +238,7 @@ function doorCardsToItems(
       why = days > 0 ? `OVERDUE · ${days}D` : "OVERDUE";
       severity = "danger";
     } else if (column === "now") {
-      // HS-200-15: the Door's `now` column is what is due now — the
+      // HS-200-15: the Door's `now` column is what is due now: the
       // DUE TODAY class of the ranking key.
       why = "DUE TODAY";
       severity = "warning";
@@ -284,7 +284,7 @@ function whySeverityTone(severity: string): string {
   return "idle";
 }
 
-/** Headline for the arrival — zero = "Nothing needs you" (UX-CANON A8).
+/** Headline for the arrival: zero = "Nothing needs you" (UX-CANON A8).
  *  HS-200-07 (C4): the all-clear line is spoken ONLY over complete
  *  coverage; an empty PARTIAL result names the coverage instead.
  *  HS-200-15 (verdict): the display line is the TRUE total; the Project
@@ -437,7 +437,7 @@ function Arrival() {
   // frame (the same one the ambient HUD chip reads) now carries the hub
   // drainer's state, so "queued with nothing to run it" is a durable fact on
   // the row rather than a sub-second flash of the click receipt. `null` means
-  // no frame has arrived yet — unknown, and never reported as absent.
+  // no frame has arrived yet: unknown, and never reported as absent.
   const queueFrame = useRuntimeFrame<{ drainer?: string }>("runtime_queue");
   const drainerAbsent = queueFrame?.drainer === "absent";
 
@@ -498,7 +498,7 @@ function Arrival() {
   // HS-171: separate muted from unmuted; muted render dimmed at the end.
   // HS-200-15 (AC2, AC3): the merged rows are deduplicated (one obligation,
   // one row, its sources traceable) and RANKED by the five-class key —
-  // overdue, due today, not run, no due date, waiting — never by severity.
+  // overdue, due today, not run, no due date, waiting: never by severity.
   const { unmutedItems, mutedItems } = useMemo(() => {
     const merged = rankAttention(dedupAttention([...doorItems, ...roomItems], now), now);
     const unmuted: NeedsYouItem[] = [];
@@ -638,7 +638,7 @@ function Arrival() {
   // story-42 walk caught the Chair reading QUEUED while the Meetings window
   // read RUNNING at the same instant. The moment the server's own status for
   // that meeting leaves `off`, the receipt is dropped and the badge follows
-  // the server — which is also what puts the verb back after a failed job
+  // the server: which is also what puts the verb back after a failed job
   // that returns to an off-with-transcript row.
   useEffect(() => {
     if (!intelReceipt) return;
@@ -750,7 +750,7 @@ function Arrival() {
         {next ? (
           <p className="arrival-next" data-testid="arrival-next">{next}</p>
         ) : null}
-        {/* HS-200-15: the head token row — the ranking key stated on the
+        {/* HS-200-15: the head token row: the ranking key stated on the
             face (a real filter strip, one tap per class), the coverage
             chip when coverage is complete, the calendar state. One
             wrapping line: nothing here ever scrolls sideways. */}
@@ -1124,7 +1124,7 @@ function NeedsYouRow({
   const sources = item.sources ?? [];
   const cls = rankClassOf(item, now);
   // The reason token wears the class ink: overdue is danger, due today
-  // is warning, the rest muted — severity rides the token, never the order.
+  // is warning, the rest muted: severity rides the token, never the order.
   const tone =
     cls === "overdue" ? "failure"
     : cls === "due_today" ? "warning"
@@ -1227,7 +1227,7 @@ function NeedsYouRow({
         <div
           className="arrival-commit-well"
           role="region"
-          aria-label={`${commitWell === "owner" ? "Owner" : "Due"} — ${item.title}`}
+          aria-label={`${commitWell === "owner" ? "Owner" : "Due"}: ${item.title}`}
           data-testid="arrival-commit-well"
           onKeyDown={(event) => {
             if (event.key === "Escape") { event.stopPropagation(); setCommitWell(null); }
@@ -1245,7 +1245,7 @@ function NeedsYouRow({
             dense
             variant="secondary"
             disabled={!commitDraft.trim() || commitBusy}
-            aria-label={commitWell === "owner" ? `Save owner — ${item.title}` : `Save date — ${item.title}`}
+            aria-label={commitWell === "owner" ? `Save owner: ${item.title}` : `Save date: ${item.title}`}
             data-testid="arrival-commit-save"
             onClick={() => void saveCommit()}
           >
@@ -1347,7 +1347,7 @@ function NeedsYouRowVerbs({
   isDoor: boolean;
   isUnassigned: boolean;
   doorCard?: DoorCard;
-  /** HS-200-15: ONE filled primary per face — the top-ranked row's verb. */
+  /** HS-200-15: ONE filled primary per face: the top-ranked row's verb. */
   primary?: boolean;
   onProposalConfirm?: (proposalId: string) => void;
   /** HS-200-13: the row's open in-place well (owner / date) and its toggle. */
@@ -1390,7 +1390,7 @@ function NeedsYouRowVerbs({
         variant={lead}
         dense
         disabled={busy}
-        aria-label={`${label} — ${item.title}`}
+        aria-label={`${label}: ${item.title}`}
         aria-expanded={next !== "mark_done" ? Boolean(commitWell) : undefined}
         data-testid="arrival-commitment-verb"
         data-next-action={next}
@@ -1674,7 +1674,7 @@ function MeetingsSection({
         {sorted.map((m) => {
           const receipt = intelReceipt?.meetingId === m.id ? intelReceipt : null;
           // HS-200-42 (counsel F1): the honest surface is the BADGE. The verb
-          // label could never carry the drainer fact — the moment a receipt
+          // label could never carry the drainer fact: the moment a receipt
           // exists the row is no longer OFF and the verb leaves the DOM (the
           // story-42 walk shot both worlds and got identical pixels). A queued
           // job with nothing to execute it says so here, in the badge species'

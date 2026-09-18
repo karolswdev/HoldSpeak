@@ -1,32 +1,32 @@
-/* HS-200-13 — the Desk memory face: recall (posture 5).
+/* HS-200-13: the Desk memory face: recall (posture 5).
  *
  * Built to the ratified boards `P5Recall` (1440), `P5RecallPhone` (393) and
  * `P5RecallQuiet` (the miss), design D2(e):
  *
- *   head      — `3 remembered` (display, once) + `REF · FREEZE WINDOW` +
+ *   head     : `3 remembered` (display, once) + `REF · FREEZE WINDOW` +
  *               `SEARCHED 09:20`; before the first search only the token
  *               `SEARCH THE DESK`; `SEARCHING` while the last content dims;
  *               `CANT SEARCH · <reason>` with `Retry` when the read failed.
- *   well      — StringGadget with its mic (`Dictate into the search`) +
+ *   well     : StringGadget with its mic (`Dictate into the search`) +
  *               `Search` (`Search desk memory`).
- *   filters   — `All · Decisions · Commitments · Briefs · Meetings`, the
+ *   filters  : `All · Decisions · Commitments · Briefs · Meetings`, the
  *               same five at both widths, roved Left/Right.
- *   CURRENT   — the accented card: the decision at primary step, the three
+ *   CURRENT  : the accented card: the decision at primary step, the three
  *               axes, the Project button, the rationale at body step, then
  *               SOURCE + `MTG 09-07 · 11:31` + `Open source`; the ONE filled
  *               primary is `Carry into brief` (it reads `CARRIED` once done
  *               and keeps focus).
- *   SUPERSEDED — the same object dimmed, `SUPERSEDED BY DEC 09-07`,
+ *   SUPERSEDED: the same object dimmed, `SUPERSEDED BY DEC 09-07`,
  *               discoverable, never current (story 13 AC2).
- *   DISPUTED  — the same object, `DISPUTED`, never accented.
- *   OWED      — `CMT` rows with `DUE …` / `OWNER · UNKNOWN` typed, and ONE
+ *   DISPUTED : the same object, `DISPUTED`, never accented.
+ *   OWED     : `CMT` rows with `DUE …` / `OWNER · UNKNOWN` typed, and ONE
  *               verb each: `Name an owner`, `Set a date`, or `Mark done`
- *               (only when owner and date are known — AC3/AC4).  Naming and
+ *               (only when owner and date are known: AC3/AC4).  Naming and
  *               dating unfold a well under the row (no modals, A.4).
- *   the miss  — `Nothing matches`, the glyph and one true line; the
+ *   the miss : `Nothing matches`, the glyph and one true line; the
  *               filters stay; `Clear` is withheld (A.11).
  *
- * Two board verbs are withheld here, on canon: `Open — the decision` (no
+ * Two board verbs are withheld here, on canon: `Open: the decision` (no
  * decision-record face exists to open; the Room via the Project button and
  * the transcript via `Open source` are the two real destinations, A.11) and
  * the footer's `Unfinished` / `Repairs` wings (not built on this window yet;
@@ -115,7 +115,7 @@ function DecisionCardView({
       data-state={card.state}
       data-recall-row
       data-testid="recall-card"
-      aria-label={`${card.text} — ${stateWord}`}
+      aria-label={`${card.text}: ${stateWord}`}
     >
       <div className="recall-card-line">
         <span className="surface-primary recall-card-title" data-testid="recall-card-title">
@@ -126,7 +126,7 @@ function DecisionCardView({
             dense
             variant={card.carried ? "secondary" : primary ? "primary" : "secondary"}
             loading={carrying}
-            aria-label={card.carried ? `Carried into brief — ${card.text}` : "Carry into brief"}
+            aria-label={card.carried ? `Carried into brief: ${card.text}` : "Carry into brief"}
             aria-pressed={card.carried || undefined}
             data-carried={card.carried || undefined}
             data-testid="recall-carry"
@@ -173,7 +173,7 @@ function DecisionCardView({
           <Button
             dense
             variant="ghost"
-            aria-label={`Open source — ${card.source.token.split(" · ")[0]}`}
+            aria-label={`Open source: ${card.source.token.split(" · ")[0]}`}
             data-testid="recall-open-source"
             onClick={() => openSurfaceOr("review-meetings", "/meetings", card.source!.scope)}
           >
@@ -235,7 +235,7 @@ function OwedRowView({ row, ctrl }: { row: OwedRow; ctrl: RecallController }) {
             dense
             variant="ghost"
             disabled={busy}
-            aria-label={`${verb} — ${row.text}`}
+            aria-label={`${verb}: ${row.text}`}
             aria-expanded={well ? true : undefined}
             data-testid="recall-owed-verb"
             onClick={act}
@@ -258,7 +258,7 @@ function OwedRowView({ row, ctrl }: { row: OwedRow; ctrl: RecallController }) {
             }}
           />
           <Button dense variant="secondary" disabled={!value.trim() || busy} onClick={() => void save()}
-            aria-label={well === "owner" ? `Save owner — ${row.text}` : `Save date — ${row.text}`}
+            aria-label={well === "owner" ? `Save owner: ${row.text}` : `Save date: ${row.text}`}
             data-testid="recall-owed-save">
             Save
           </Button>
@@ -411,7 +411,7 @@ export function RecallFace() {
         <div ref={filtersRef} onKeyDown={onFilterKeys} className="recall-filters">
           <FilterTokens
             label="Filter the memory"
-            options={RECALL_FILTERS.map((f) => ({ ...f, ariaLabel: `Filter — ${f.label}` }))}
+            options={RECALL_FILTERS.map((f) => ({ ...f, ariaLabel: `Filter: ${f.label}` }))}
             value={ctrl.filter}
             onChange={(next) => ctrl.setFilter(next as RecallFilter)}
           />

@@ -1,4 +1,4 @@
-// HS-200-13 — the recall face against the ratified boards (P5Recall,
+// HS-200-13: the recall face against the ratified boards (P5Recall,
 // P5RecallPhone, P5RecallQuiet): the current decision accented with its
 // rationale, source and Project; the superseded one dimmed and named
 // `SUPERSEDED BY DEC 09-07`; the disputed one never accented; the OWED
@@ -113,7 +113,7 @@ describe("RecallFace (HS-200-13)", () => {
     expect(within(group).getAllByRole("button").map((b) => b.textContent)).toEqual(
       ["All", "Decisions", "Commitments", "Briefs", "Meetings"],
     );
-    expect(within(group).getByRole("button", { name: "Filter — Decisions" }).getAttribute("aria-pressed")).toBe("false");
+    expect(within(group).getByRole("button", { name: "Filter: Decisions" }).getAttribute("aria-pressed")).toBe("false");
     expect(screen.getByRole("button", { name: "Search desk memory" })).toHaveProperty("disabled", true);
   });
 
@@ -134,7 +134,7 @@ describe("RecallFace (HS-200-13)", () => {
     expect(within(current).getAllByTestId("recall-axis").map((c) => c.textContent)).toEqual(["DECISION", "SUPPORTED", "ACCEPTED"]);
     expect(within(current).getByTestId("recall-rationale").textContent).toBe(CURRENT.rationale);
     expect(within(current).getByTestId("recall-source-token").textContent).toBe("MTG 09-07 · 11:31");
-    expect(within(current).getByRole("button", { name: "Open the Project — Q4 platform" })).toBeTruthy();
+    expect(within(current).getByRole("button", { name: "Open the Project: Q4 platform" })).toBeTruthy();
     expect(within(current).getByRole("group", { name: "Project" })).toBeTruthy();
     expect(within(current).getByRole("button", { name: "Carry into brief" }).className).toContain("btn--primary");
 
@@ -142,7 +142,7 @@ describe("RecallFace (HS-200-13)", () => {
     expect(within(superseded).getByTestId("recall-superseded-by").textContent).toBe("SUPERSEDED BY DEC 09-07");
     expect(within(superseded).getAllByTestId("recall-axis").map((c) => c.textContent)).toContain("SUPERSEDED");
     expect(within(superseded).queryByRole("button", { name: "Carry into brief" })).toBeNull();
-    expect(within(superseded).getByRole("button", { name: "Open source — MTG 09-02" })).toBeTruthy();
+    expect(within(superseded).getByRole("button", { name: "Open source: MTG 09-02" })).toBeTruthy();
 
     // ONE filled primary on the whole face.
     expect(document.querySelectorAll(".btn--primary")).toHaveLength(1);
@@ -162,9 +162,9 @@ describe("RecallFace (HS-200-13)", () => {
     wire(result());
     render(<RecallFace />);
     await search();
-    fireEvent.click(screen.getByRole("button", { name: "Open source — MTG 09-07" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open source: MTG 09-07" }));
     expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/meetings", "meeting:m-sun?segment=2");
-    fireEvent.click(screen.getAllByRole("button", { name: "Open the Project — Q4 platform" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Open the Project: Q4 platform" })[0]);
     expect(openSurfaceOr).toHaveBeenCalledWith("project-room", "/projects", "project:p-q4");
   });
 
@@ -206,7 +206,7 @@ describe("RecallFace (HS-200-13)", () => {
     expect(within(row).getByTestId("recall-due-token").textContent).toBe("DUE · UNKNOWN");
     expect(within(row).getByTestId("recall-owner-token").textContent).toBe("OWNER · UNKNOWN");
     expect(within(row).getAllByRole("button").map((b) => b.getAttribute("aria-label"))).toEqual([
-      "Open the Project — Q4 platform", "Name an owner — Priya confirms the freeze window",
+      "Open the Project: Q4 platform", "Name an owner: Priya confirms the freeze window",
     ]);
     expect(within(row).queryByRole("button", { name: /Mark done/ })).toBeNull();
 
@@ -234,7 +234,7 @@ describe("RecallFace (HS-200-13)", () => {
     expect(within(row).getByTestId("recall-due-token").textContent).toBe("DUE TODAY");
     expect(within(row).queryByTestId("recall-owner-token")).toBeNull();
     owed = [];
-    fireEvent.click(within(row).getByRole("button", { name: "Mark done — Priya confirms the freeze window" }));
+    fireEvent.click(within(row).getByRole("button", { name: "Mark done: Priya confirms the freeze window" }));
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/follow-through/complete", {
       method: "POST", json: { card_id: "action-1", verb: "done", payload: {} },
     }));
@@ -269,7 +269,7 @@ describe("RecallFace (HS-200-13)", () => {
     wire(result());
     render(<RecallFace />);
     await search();
-    fireEvent.click(screen.getByRole("button", { name: "Filter — Commitments" }));
+    fireEvent.click(screen.getByRole("button", { name: "Filter: Commitments" }));
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/memory/recall?query=freeze+window&filter=commitments"));
     const box = screen.getByRole("searchbox", { name: "Search the Desk" }) as HTMLInputElement;
     fireEvent.keyDown(box, { key: "Escape" });
@@ -284,6 +284,6 @@ describe("RecallFace (HS-200-13)", () => {
     await screen.findByTestId("recall-results");
     expect(apiFetch).toHaveBeenCalledWith("/api/memory/recall?query=freeze+window&filter=decisions");
     expect((screen.getByRole("searchbox", { name: "Search the Desk" }) as HTMLInputElement).value).toBe("freeze window");
-    expect(screen.getByRole("button", { name: "Filter — Decisions" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "Filter: Decisions" }).getAttribute("aria-pressed")).toBe("true");
   });
 });

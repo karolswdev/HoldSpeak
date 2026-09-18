@@ -1,4 +1,4 @@
-// HS-200-15 — the arrival's attention face: five in the first view with
+// HS-200-15: the arrival's attention face: five in the first view with
 // reason, source and one action; the true total on the display line and
 // the cap in the caption; the remainder revealed in place; the ranking
 // strip as a real filter; the dedup disclosure; the Project button; the
