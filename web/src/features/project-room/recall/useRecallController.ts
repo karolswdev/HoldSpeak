@@ -44,10 +44,16 @@ function readableError(reason: unknown): string {
   return String(reason || "search failed");
 }
 
-export function useRecallController() {
+export function useRecallController(initialQuery = "") {
+  // A `q:` scope (HS-200-11, `Find support`) outranks the resumed query:
+  // the sentence is prefilled and searched under `all`; otherwise the
+  // query and filter that were in the well when the tab closed resume.
   const resumed = useRef(readResume());
-  const [query, setQuery] = useState(resumed.current?.query ?? "");
-  const [filter, setFilterState] = useState<RecallFilter>(resumed.current?.filter ?? "all");
+  const opened = useRef(initialQuery.trim());
+  const [query, setQuery] = useState(opened.current || (resumed.current?.query ?? ""));
+  const [filter, setFilterState] = useState<RecallFilter>(
+    opened.current ? "all" : (resumed.current?.filter ?? "all"),
+  );
   const [result, setResult] = useState<RecallResult>(EMPTY_RESULT);
   const [status, setStatus] = useState<RecallStatus>("empty");
   const [error, setError] = useState("");
@@ -106,11 +112,25 @@ export function useRecallController() {
     }
   }, []);
 
-  // Resumed: the query that was in the well when the tab closed runs again.
+  // Opened with a sentence (`q:` scope), else resumed: the query that was in
+  // the well when the tab closed runs again.
   useEffect(() => {
+    if (opened.current) {
+      void run(opened.current, "all");
+      return;
+    }
     const saved = resumed.current;
     if (saved?.query?.trim()) void run(saved.query, saved.filter);
   }, [run]);
+  // A later `Find support` on the same open window re-points the well.
+  useEffect(() => {
+    const next = initialQuery.trim();
+    if (!next || next === opened.current) return;
+    opened.current = next;
+    setQuery(next);
+    setFilterState("all");
+    void run(next, "all");
+  }, [initialQuery, run]);
 
   const refresh = useCallback(() => {
     if (searchedOnce.current && query.trim()) return run(query, filter);

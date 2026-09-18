@@ -277,6 +277,17 @@ describe("RecallFace (HS-200-13)", () => {
     expect(screen.getByTestId("recall-results")).toBeTruthy();
   });
 
+  it("opened with a sentence (HS-200-11 `q:` scope): prefilled in the well and searched", async () => {
+    localStorage.setItem("hs.desk-memory.recall.v1", JSON.stringify({ query: "freeze window", filter: "decisions" }));
+    wire(result({ query: "Sprint velocity is 40 points", remembered: 0, current: [], superseded: [], owed: [] }));
+    render(<RecallFace initialQuery="Sprint velocity is 40 points" />);
+    await screen.findByTestId("recall-results");
+    expect(apiFetch).toHaveBeenCalledWith("/api/memory/recall?query=Sprint+velocity+is+40+points&filter=all");
+    const box = screen.getByRole("searchbox", { name: "Search the Desk" }) as HTMLInputElement;
+    expect(box.value).toBe("Sprint velocity is 40 points");
+    expect(box.closest('[data-testid="desk-memory-body"]')).not.toBeNull();
+  });
+
   it("resumed: the query and its filter survive a restart", async () => {
     localStorage.setItem("hs.desk-memory.recall.v1", JSON.stringify({ query: "freeze window", filter: "decisions" }));
     wire(result({ filter: "decisions", owed: [] , remembered: 2 }));

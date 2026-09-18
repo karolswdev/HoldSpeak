@@ -297,8 +297,8 @@ function HitRows({ rows, testid }: { rows: MemoryHitRow[]; testid: string }) {
 
 /* ── the face ── */
 
-export function RecallFace() {
-  const ctrl = useRecallController();
+export function RecallFace({ initialQuery = "" }: { initialQuery?: string } = {}) {
+  const ctrl = useRecallController(initialQuery);
   const { result, status } = ctrl;
   const resultsRef = useRef<HTMLDivElement | null>(null);
   const filtersRef = useRef<HTMLDivElement | null>(null);

@@ -1913,7 +1913,10 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   // The unscoped surface is Desk memory: the recall face (HS-200-13,
   // posture 5) -- CURRENT / SUPERSEDED / OWED over one query, never a
   // dead empty state.
-  if (!ctrl.projectId) return <RecallFace />;
+  // HS-200-11's `q:<sentence>` scope (`Find support` opens Desk memory WITH
+  // the sentence, searched; counsel P1-5) reaches the recall face here.
+  if (!ctrl.projectId)
+    return <RecallFace initialQuery={scope?.startsWith("q:") ? scope.slice("q:".length).trim() : ""} />;
 
   // Posture routing: Review > Update > Steward > Room
   if (reviewCtrl.posture === "active") {

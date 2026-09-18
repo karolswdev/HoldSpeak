@@ -259,8 +259,18 @@ describe("ProjectRoomCore — two wings (was: four wings)", () => {
 });
 
 describe("ProjectRoomCore — no-scope states", () => {
+  it("a `q:` scope reaches the recall face's well (HS-200-11 Find support)", async () => {
+    localStorage.clear();
+    render(<ProjectRoomCore scope="q:Sprint velocity is 40 points" />);
+    const box = screen.getByRole("searchbox", { name: "Search the Desk" }) as HTMLInputElement;
+    expect(box.value).toBe("Sprint velocity is 40 points");
+    expect(box.closest('[data-testid="desk-memory-body"]')).not.toBeNull();
+  });
+
   it("shows the Desk memory recall face when no project scope is provided", () => {
-    // HS-200-13: the unscoped surface is the recall face (posture 5).
+    // HS-200-13: the unscoped surface is the recall face (posture 5); the
+    // recall face resumes a stored query, so the store is cleared first.
+    localStorage.clear();
     render(<ProjectRoomCore />);
     expect(screen.getByRole("searchbox", { name: "Search the Desk" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Search desk memory" })).toBeTruthy();
