@@ -382,3 +382,72 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
     expect(prepTab.getAttribute("aria-selected")).toBe("true");
   });
 });
+
+// HS-200-14 (AC4): `people:project:<id>` scopes the roster to the Project's
+// people; the window's close hands focus back to the Room verb it came from.
+import { rememberTaskFocus, taskFocusPending } from "../../../desk/returnToTask";
+
+describe("PeopleCore scoped to a Project (HS-200-14)", () => {
+  const ready = () => json({ readiness: "ready", store: "encrypted", sync: "local_only", capture: "notes_only" });
+
+  it("lists only the people linked to the Project, names the rest as a way out, and never a zero", async () => {
+    stub({
+      "/api/people/readiness": ready,
+      "/api/people/relationships": () => json({ relationships: [
+        { id: "r1", display_name: "Marek Kubiak", relationship_kind: "direct_report", project_refs: ["p1"] },
+        { id: "r2", display_name: "Priya Sharma", relationship_kind: "peer", project_refs: [] },
+        { id: "r3", display_name: "Anil Kumar", relationship_kind: "peer" },
+      ] }),
+    });
+    render(<PeopleCore scope="people:project:p1" />);
+    expect(await screen.findByText("1 ON THIS PROJECT")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Marek Kubiak/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Priya Sharma/ })).toBeNull();
+    const everyone = screen.getByTestId("people-roster-everyone");
+    expect(everyone).toHaveTextContent("2 MORE · Everyone");
+    fireEvent.click(everyone);
+    expect(await screen.findByRole("button", { name: /Priya Sharma/ })).toBeTruthy();
+    expect(screen.getByText("Relationships")).toBeTruthy();
+    expect(screen.queryByTestId("people-roster-everyone")).toBeNull();
+  });
+
+  it("says NO ONE LINKED YET as a token, not a sentence, when the Project links nobody", async () => {
+    stub({
+      "/api/people/readiness": ready,
+      "/api/people/relationships": () => json({ relationships: [
+        { id: "r2", display_name: "Priya Sharma", relationship_kind: "peer", project_refs: [] },
+      ] }),
+    });
+    render(<PeopleCore scope="people:project:p1" />);
+    expect(await screen.findByTestId("people-roster-none-linked")).toHaveTextContent("NO ONE LINKED YET");
+    expect(screen.getByTestId("people-roster-everyone")).toHaveTextContent("1 MORE · Everyone");
+  });
+
+  it("hands focus back to the Room verb when the window closes with a return owed", async () => {
+    stub({ "/api/people/readiness": ready, "/api/people/relationships": () => json({ relationships: [] }) });
+    const verb = document.createElement("button");
+    verb.textContent = "People";
+    document.body.appendChild(verb);
+    verb.focus();
+    rememberTaskFocus(verb);
+    expect(taskFocusPending()).toBe(true);
+    const view = render(<PeopleCore scope="people:project:p1" />);
+    await screen.findByTestId("people-roster-none-linked");
+    verb.blur();
+    view.unmount();
+    await waitFor(() => expect(document.activeElement).toBe(verb));
+    expect(taskFocusPending()).toBe(false);
+    verb.remove();
+  });
+
+  it("owes nothing when it was not opened from a task", async () => {
+    stub({ "/api/people/readiness": ready, "/api/people/relationships": () => json({ relationships: [] }) });
+    const listener = vi.fn();
+    window.addEventListener("holdspeak:settings-updated", listener);
+    const view = render(<PeopleCore />);
+    await screen.findByText("Add a relationship to start");
+    view.unmount();
+    expect(listener).not.toHaveBeenCalled();
+    window.removeEventListener("holdspeak:settings-updated", listener);
+  });
+});

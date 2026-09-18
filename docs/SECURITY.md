@@ -242,7 +242,15 @@ inside the encrypted People store, in memory, at read time. Only an opaque
 relationship id crosses into the Watch projection; no alias string, display
 name, or relationship detail appears in plaintext outside the People store.
 Intelligence runs on the model's assigned host, named at the point of
-decision by the egress chip.
+decision by the egress chip. A match is never a guess: two active
+relationships that share a display name, or an owner string that names a
+first name two people carry, resolve to nobody and are reported as
+ambiguous with their candidates (`people_service.resolve_owner_candidates`);
+the only write that settles it is the owner's own alias link. The Room's
+PEOPLE projection reads the ledger for the authenticated owner in memory,
+crosses only the relationship id and display name (the two fields the Room
+already crossed), and names a locked or missing store as a state rather than
+drawing an empty section.
 
 **The reviewer nudge boundary.** The reviewer nudge is
 the steward's first external write. The only subprocess it may run is

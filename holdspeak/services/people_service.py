@@ -1003,17 +1003,121 @@ class PeopleService:
                 if isinstance(alias, str) and alias.casefold() == folded:
                     return {"state": "ready", "relationship": self._relationship_view(record)}
 
-        # Pass 2: display_name (case-insensitive).
-        for record in relationships:
-            if not isinstance(record, dict):
-                continue
-            if str(record.get("state") or "") == "archived":
-                continue
-            display = str(record.get("display_name") or "")
-            if display and display.casefold() == folded:
-                return {"state": "ready", "relationship": self._relationship_view(record)}
+        # Pass 2: display_name (case-insensitive).  HS-200-14 (AC1): two
+        # active relationships can share a display name, and first-match-
+        # wins attributed one person's work to whichever the store listed
+        # first.  A shared name is AMBIGUOUS: no relationship, the
+        # candidates named, and the caller must ask for a resolution.
+        by_name = [
+            record for record in relationships
+            if isinstance(record, dict)
+            and str(record.get("state") or "") != "archived"
+            and str(record.get("display_name") or "").casefold() == folded
+        ]
+        if len(by_name) == 1:
+            return {"state": "ready", "relationship": self._relationship_view(by_name[0])}
+        if len(by_name) > 1:
+            return {
+                "state": "ready",
+                "relationship": None,
+                "ambiguous": True,
+                "candidates": [self._candidate_view(record) for record in by_name],
+            }
 
         return {"state": "ready", "relationship": None}
+
+    def readiness_state(self) -> str:
+        """The store's readiness as a content-free string (``ready``,
+        ``locked``, ``unconfigured``, ...).  HS-200-14: a Room projection
+        must NAME a locked or missing store rather than drawing an empty
+        section (the silent gap the story-14 charter forbids)."""
+        try:
+            state = self._store.readiness()
+        except Exception:
+            return "unavailable"
+        return str(getattr(state, "value", state) or "unavailable")
+
+    def resolve_owner_candidates(self, owner_string: str) -> dict[str, Any]:
+        """HS-200-14 (AC1): resolve a record's owner string WITHOUT ever
+        attributing on a guess.
+
+        Returns ``{"state": "unavailable"}`` for a locked/absent store,
+        otherwise ``{"state": "ready", "link": L, "relationship": R,
+        "candidates": [...]}`` where ``link`` is one of:
+
+        * ``linked``     -- exactly one exact match (an owner alias, which
+                            invariant P2 keeps unique, or a display name
+                            held by exactly one active relationship);
+        * ``ambiguous``  -- two or more people could be meant (two share
+                            the display name, or two share the first name
+                            the owner string names); ``candidates`` lists
+                            them and ``relationship`` is ``None``;
+        * ``not_linked`` -- nobody matches exactly; a single near match
+                            (one person whose first name is the owner
+                            string) rides in ``candidates`` as a
+                            SUGGESTION and is never attributed (design D1:
+                            "never a hedged guess").
+
+        Case-insensitive, in memory, never persisted (Article III).
+        """
+        try:
+            state = self._store.readiness()
+            if str(getattr(state, "value", state)) != "ready":
+                return {"state": "unavailable"}
+        except Exception:
+            return {"state": "unavailable"}
+
+        clean = str(owner_string or "").strip()
+        if not clean or clean.casefold() in _RESERVED_OWNER_ALIASES:
+            return {"state": "ready", "link": "not_linked", "relationship": None, "candidates": []}
+
+        try:
+            relationships = [
+                record for record in self._store.list(kind="relationship")
+                if isinstance(record, dict) and str(record.get("state") or "") != "archived"
+            ]
+        except Exception:
+            return {"state": "unavailable"}
+
+        folded = clean.casefold()
+        for record in relationships:
+            for alias in record.get("owner_aliases") or []:
+                if isinstance(alias, str) and alias.casefold() == folded:
+                    return {
+                        "state": "ready", "link": "linked",
+                        "relationship": self._relationship_view(record), "candidates": [],
+                    }
+
+        by_name = [
+            record for record in relationships
+            if str(record.get("display_name") or "").casefold() == folded
+        ]
+        if len(by_name) == 1:
+            return {
+                "state": "ready", "link": "linked",
+                "relationship": self._relationship_view(by_name[0]), "candidates": [],
+            }
+        if len(by_name) > 1:
+            return {
+                "state": "ready", "link": "ambiguous", "relationship": None,
+                "candidates": [self._candidate_view(record) for record in by_name],
+            }
+
+        # Near matches: the owner string names a first name (or any one
+        # word of the display name).  Never resolved on its own.
+        near = [
+            record for record in relationships
+            if folded in [
+                word.casefold()
+                for word in str(record.get("display_name") or "").split()
+            ]
+        ]
+        return {
+            "state": "ready",
+            "link": "ambiguous" if len(near) > 1 else "not_linked",
+            "relationship": None,
+            "candidates": [self._candidate_view(record) for record in near],
+        }
 
     def resolve_relationship_by_series(self, uid: str, source_id: str) -> dict[str, Any]:
         """Find the relationship linked to a calendar series.
@@ -1213,6 +1317,11 @@ class PeopleService:
         if value != "ready":
             result["reason_code"] = f"people_store_{value}"
         return result
+
+    @staticmethod
+    def _candidate_view(record: dict[str, Any]) -> dict[str, Any]:
+        """The two fields a resolution choice needs; nothing else crosses."""
+        return {"id": record.get("id"), "display_name": record.get("display_name")}
 
     @staticmethod
     def _relationship_view(record: dict[str, Any]) -> dict[str, Any]:

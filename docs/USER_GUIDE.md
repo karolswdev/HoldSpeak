@@ -2015,6 +2015,43 @@ One person per alias: mapping an alias already held by another relationship refu
 and names the holder. Re-mapping the same person is a no-op. Reserved strings are
 refused by name.
 
+### People in the Room
+
+A Project Room's **PEOPLE** section lists every person the Project names:
+an owner on one of its confirmed commitments, a reviewer or assignee on one
+of its Watches once the ledger links that identity, and any relationship
+linked to the Project from the **Context** lens. The caption is a typed
+partial, `PEOPLE 2 OF 3` when someone the Project names is not yet linked,
+and the ledger line under it names the gaps (`1 AMBIGUOUS · 1 NOT LINKED`).
+
+A linked person's row opens on their commitments that are still open (the
+meeting and transcript segment each came from, with **Open source**; a
+commitment marked **Done** or **Dismiss** on the Follow-through board
+leaves the row, and **Reopen** brings it back) and their observable facts
+(`2 PRS WAITING` beside the Watch that saw them). A paused, retired, or
+disabled Watch contributes no count; the row names it instead
+(`PAUSED · OMITTED`). Nothing is scored, ranked, or inferred; a fact never
+appears without its source. The owner strings `me`, `remote`, and `you`
+name you, not a person on the ledger, and never make a row.
+
+An owner string two people could be meant by, for example `Priya` when the
+ledger holds Priya Sharma and Priya Nair, reads `OWNER · AMBIGUOUS · 2
+MATCHES` with **Resolve**. Resolve unfolds the candidates under the row;
+one click links that owner string as the person's alias, the same alias
+the Context lens manages. HoldSpeak never attributes an ambiguous owner on
+its own, and a single near match is offered, never applied.
+
+An owner nobody answers for reads `OWNER · NOT LINKED` with **Link**. When
+one person's first name matches, Link unfolds that single suggestion under
+the row (your click is the link); when nobody matches, Link opens People
+scoped to this Project. A locked, missing, or unreadable ledger is named on
+the section (`LOCKED` with **Unlock**, `NOT SET UP` with **Set up People**,
+`UNAVAILABLE` with **People**) and every named owner carries the same word
+(`OWNER · LOCKED`, `OWNER · NOT SET UP`, `OWNER · UNAVAILABLE`) with no
+link verb; the section is never empty over a known gap. **People** on the section head opens the
+People window scoped to the Project's people (`N ON THIS PROJECT`, with
+**Everyone** to widen); closing it returns focus to the verb you left.
+
 ### Person chips, filter, and staleness
 
 Once a card's owner is mapped, a quiet mono chip with the person's name appears on

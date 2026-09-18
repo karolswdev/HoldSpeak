@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 200
-- **Status:** ready
+- **Status:** done
 - **Depends on:** HS-200-07, HS-200-12, HS-200-13
 - **Unblocks:** HS-200-16, HS-200-40
 - **Owner:** unassigned
@@ -23,11 +23,11 @@ Out: Personal scoring, inferred motives, or inferred organizational authority.
 
 ## Acceptance criteria
 
-- [ ] Ambiguous aliases require resolution instead of attributing another person's work.
-- [ ] Preparation shows source-backed commitments and observable work facts.
-- [ ] Protected fields remain in their permitted storage, retrieval, prompt, and export paths.
-- [ ] The user can reach People from the relevant Project at both widths and return to the task.
-- [ ] Missing or locked People context produces a specific partial result.
+- [x] Ambiguous aliases require resolution instead of attributing another person's work.
+- [x] Preparation shows source-backed commitments and observable work facts.
+- [x] Protected fields remain in their permitted storage, retrieval, prompt, and export paths.
+- [x] The user can reach People from the relevant Project at both widths and return to the task.
+- [x] Missing or locked People context produces a specific partial result.
 
 ## Test plan
 
