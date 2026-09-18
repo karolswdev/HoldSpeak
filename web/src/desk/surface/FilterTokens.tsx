@@ -14,7 +14,10 @@
  *
  * Three laws bind this species:
  *   1. Every verb is the library Button (UX-CANON A.1) — the active token is
- *      `primary dense`, the resting ones `ghost dense`. No raw `<button>`.
+ *      `secondary dense` (tinted, raised), the resting ones `ghost dense`.
+ *      Never `primary`: a face has ONE filled primary, and it is the action
+ *      the face is for, not a filter (HS-200-15 counsel P1-2). No raw
+ *      `<button>`.
  *   2. NO sparse rule. It never returns null: a filter strip that vanishes on
  *      an empty list leaves the owner no way to widen the view.
  *   3. It carries NO count. `matchCount/total` would be a second count on a
@@ -58,7 +61,7 @@ export function FilterTokens({
           <Button
             key={option.value}
             dense
-            variant={active ? "primary" : "ghost"}
+            variant={active ? "secondary" : "ghost"}
             className="surface-filter-token"
             data-filter-active={active || undefined}
             aria-pressed={active}

@@ -34,6 +34,15 @@ those items marked ``fromLastObservation`` with the ``observedAt`` of
 that observation, so a severity can never fall by disappearance.  When
 the source recovers, the fresh items replace the remembered ones by
 their stable ``id``.
+
+HS-200-15 -- ranking, dedup, and the wire fields they read
+----------------------------------------------------------
+Every row carries ``since`` (the Room's change stamp), ``dueAt`` (when
+the source knows one), ``rankClass`` (``overdue | due_today | not_run |
+no_due_date | waiting``), ``rank`` (1-based), ``sources`` (the
+constituent projections, most urgent first) and ``dedupCount``.  The
+pure functions live in ``attention_ranking.py``; ``items`` is returned
+in rank order.
 """
 from __future__ import annotations
 
@@ -42,6 +51,8 @@ import threading
 import time
 from datetime import datetime, timedelta
 from typing import Any, Callable
+
+from .attention_ranking import rank_and_dedup
 
 log = logging.getLogger(__name__)
 
@@ -288,6 +299,12 @@ def build_aggregate(
                 "title": item.get("title", ""),
                 "why": item.get("why", ""),
                 "ageToken": item.get("since", ""),
+                # HS-200-15: the observable facts the ranking reads --
+                # the Room's own change/observation stamp and, where the
+                # source knows one, the due date.
+                "since": item.get("since", ""),
+                "dueAt": item.get("due_at") or item.get("dueAt"),
+                "kind": item.get("kind"),
                 "source": item.get("source", ""),
                 "verbHref": item.get("url") or item.get("verbHref"),
                 "severity": item.get("severity", "info"),
@@ -339,10 +356,12 @@ def build_aggregate(
         if row.get("projectId"):
             project_ids.add(str(row["projectId"]))
 
-    items.sort(key=lambda r: (
-        _SEVERITY_ORDER.get(r.get("severity", "info"), 2),
-        r.get("ageToken") or "",
-    ))
+    # HS-200-15 (AC2, AC3): duplicate projections of one obligation
+    # collapse to one row with traceable ``sources``; the rows are then
+    # ranked by observable urgency (overdue, due today, not run, no due
+    # date, waiting), age within the class, and the stable id as the
+    # tie-break.  Severity is NOT a sort key (D2(b)).
+    items = rank_and_dedup(items, clock_now)
 
     next_item = None
     if door_upcoming is not None:

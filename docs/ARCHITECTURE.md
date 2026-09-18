@@ -916,12 +916,41 @@ The three steps:
    (Article XI.2) and a `pipeline_events` entry with the duration,
    watch count, room count, and the bounded outcome summary.
 
-After the sweep, the Heartbeat evaluates the notification edge. (Quiet
-hours were already decided before step 1: a held sweep evaluates nothing
-and notifies nothing.) The notifier (`desktop_notify.py`) fires a macOS banner via
+After the sweep, the Heartbeat evaluates the notification edge. The edge
+is the ITEM SET, not the count: `ItemSetEdge`
+(`desktop_notify.py`) remembers which stable item ids
+(`needs_you_aggregate._item_id`) have been notified, persisted as
+`last_notified_items` in the heartbeat policy row, and fires when any
+current unmuted id is new. A swapped item at an unchanged total still
+notifies, a known id that escalates into due today or overdue notifies
+again (`escalated`), a restart re-notifies nothing, a held (quiet-hours)
+sweep never marks its ids delivered so they go out once after the window,
+a muted Room's ids are neither offered nor forgotten, and an id whose
+Project is known but not fully observed on this pass (a source
+`cant_check`, stale or failed) is never pruned, so a recovered source
+re-announces nothing and an empty result over a gap is receipted
+`held_coverage_incomplete`, never as an all-clear. Ids whose Project no
+longer exists, and projectless ids that left the aggregate, are pruned,
+so the set is bounded by the desk. The policy row is written only when
+the set or the outcome changed. (Quiet hours were
+already decided before step 1: a held sweep evaluates nothing and notifies
+nothing; the notification's own quiet-hours check reads the same injectable
+instant.) The notifier (`desktop_notify.py`) fires a macOS banner via
 `osascript` (the PyObjC `UserNotifications` bridge is not in the venv)
 or a Linux banner via the libnotify seam. Every notification writes a
 `heartbeat.notify` receipt.
+
+The aggregate itself (`needs_you_aggregate.build_aggregate`) returns its
+rows deduplicated and ranked by `services/attention_ranking.py`: one
+obligation projected by several sources is one row with `sources`, and
+the order is overdue → due today → not run → no due date → waiting, then
+the observable time within the class, then the stable id. Two projections
+merge only across sources, with agreeing (or absent) issue/PR refs; the
+same source with distinct refs is two obligations. `LastKnownStore` is
+process-local: last-observed items survive a source being down, not a hub
+restart. The browser
+(`web/src/desk/attention.ts`) applies the same rule to what it merges in
+from the Door.
 
 The cadence engine's tick also regenerates the Monday brief once per day
 after quiet hours close (`_maybe_regenerate_brief` in

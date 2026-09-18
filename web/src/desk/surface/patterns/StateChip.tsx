@@ -37,11 +37,13 @@ export function StateChip({
   label,
   icon,
   className,
+  "data-testid": dataTestId,
 }: {
   state: ChipState;
   label?: string;
   icon?: string;
   className?: string;
+  "data-testid"?: string;
 }) {
   return (
     <span
@@ -49,6 +51,7 @@ export function StateChip({
       data-state={state}
       role="status"
       aria-label={label ?? DEFAULT_LABELS[state]}
+      data-testid={dataTestId}
     >
       <span className="surface-state-chip-icon" aria-hidden="true">
         {icon ?? DEFAULT_ICONS[state]}

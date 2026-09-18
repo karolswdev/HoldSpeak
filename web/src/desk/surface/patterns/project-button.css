@@ -1,0 +1,34 @@
+/* ProjectButton (HS-200-15, species S6) — the way back, as a caption-step
+   ghost Button. It reads like the project token it replaces and behaves
+   like the verb it is. */
+
+.surface-project-group {
+  display: inline-flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.surface-project-button.btn {
+  min-height: 20px;
+  padding: 1px 6px;
+  border-radius: 0;
+  box-shadow: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  /* A long Project name ellipsizes inside its line; it never pushes the
+     row past the viewport (counsel P0-2). Still a Button. */
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+}
+.surface-project-button.btn:hover:not(:disabled) {
+  color: var(--text);
+}

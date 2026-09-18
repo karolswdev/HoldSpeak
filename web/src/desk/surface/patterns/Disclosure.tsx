@@ -19,6 +19,8 @@ export function Disclosure({
   variant = "default",
   children,
   token,
+  ariaLabel,
+  controlsId,
 }: {
   label: string;
   defaultOpen?: boolean;
@@ -28,6 +30,13 @@ export function Disclosure({
   variant?: "default" | "raw";
   children: ReactNode;
   token?: ReactNode;
+  /** HS-200-15: an accessible name richer than the visible label
+   *  (`Sources — Priya confirms the freeze window` over `2 SOURCES`). */
+  ariaLabel?: string;
+  /** HS-200-15: the id of a body rendered ELSEWHERE (a ledger row's own
+   *  expansion slot). The trigger then owns no body of its own and names
+   *  the external one through `aria-controls`; `children` are ignored. */
+  controlsId?: string;
 }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -91,6 +100,8 @@ export function Disclosure({
         type="button"
         className="surface-disclosure-trigger"
         aria-expanded={isOpen}
+        aria-controls={controlsId}
+        aria-label={ariaLabel}
         onClick={() => setOpen(!isOpen)}
       >
         <span className="surface-disclosure-caret" aria-hidden="true">
@@ -101,8 +112,8 @@ export function Disclosure({
           <span className="surface-disclosure-token">{token}</span>
         ) : null}
       </button>
-      {isOpen ? (
-        <div className="surface-disclosure-body" role="region" aria-label={label}>
+      {isOpen && !controlsId ? (
+        <div className="surface-disclosure-body" role="region" aria-label={ariaLabel ?? label}>
           {children}
         </div>
       ) : null}

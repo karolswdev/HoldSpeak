@@ -1,0 +1,44 @@
+/* CoverageRow (HS-200-15, species S1) — emblem · name · reason · chip ·
+   OBSERVED · verb. The row is a SurfaceLedgerRow; only its cells are
+   styled here. */
+
+.surface-coverage-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.surface-coverage-reason {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.surface-coverage-reason[data-tone="failure"] {
+  color: var(--danger, #c53030);
+}
+.surface-coverage-reason[data-tone="warning"] {
+  color: var(--accent);
+}
+
+.surface-coverage-observed {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+/* The chip is the repair TOKEN: `CANT CHECK` in danger ink, `STALE` in the
+   warn tint (coverage incomplete is never drawn as danger — verdict Q6). */
+.surface-coverage-token.surface-state-chip {
+  font-size: 10px;
+}

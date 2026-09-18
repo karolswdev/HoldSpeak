@@ -105,9 +105,11 @@ recurring element the library lacked.
 
 Presence rules (they are the species, not the caller's business):
 
-- The active token is `Button` **primary dense**, the resting ones **ghost
-  dense**; each carries `aria-pressed` and the active one `data-filter-active`.
-  No raw `<button>` (UX-CANON A.1).
+- The active token is `Button` **secondary dense** (accent-tinted, raised),
+  the resting ones **ghost dense**; each carries `aria-pressed` and the
+  active one `data-filter-active`. Never **primary**: a face has one filled
+  primary and it is the action the face is for, not a filter. No raw
+  `<button>` (UX-CANON A.1).
 - **No sparse rule — it never returns `null`.** A strip that vanishes on a
   short or empty list leaves no way to widen the view; it renders over an
   empty stream. This is the difference from `LedgerFilterBar`, which returns
@@ -238,3 +240,83 @@ union of the six work states across three owners (design D2(f)). A Room ask
 reaches only `saved`, `failed`, `accepted` and `discarded` — it is one
 blocking POST with no job row, no clock and no progress record (ruling B8),
 so no caller may hand it a running clock or a `Stop`.
+
+## CoverageRow / CoverageLedger (HS-200-15, species S1)
+
+ONE grammar for "a source that was not observed", on every face that reads
+sources (the arrival first; the brief, the meeting and the repair faces
+consume it). Promoted from `ChairHome.tsx`'s `CoverageSection` (HS-200-07),
+where the token was a raw span while `ConciergeCore.tsx` drew the same fact
+as a `StateChip` — converged here on `StateChip`.
+
+A row draws, in order: the emblem (`RM` · `SRC` · `MTG` · `CMT`, via
+`coverageEmblem(kind)`), the source's name at the primary step, the source's
+own reason, the state chip (the repair TOKEN: `CANT CHECK` · `STALE` ·
+`READ FAILED` · `FORBIDDEN` · `PAUSED` · `NEVER CHECKED` · `NOT OBSERVED`),
+`OBSERVED hh:mm` (`OBSERVED MM-DD hh:mm` on another day, `NEVER OBSERVED`
+when never), and the OWNING verb as the library `Button`, raised.
+
+- `gap: CoverageRecord` — one record from `readCoverage(...).gaps`
+- `onRepair(gap)` — the verb was pressed; the FACE maps it (`Retry`
+  re-reads, `Reconnect` opens connections, `Open source` opens the Room).
+  The species draws the verb the record names and never invents one
+- `now?: Date` — the clock the `OBSERVED` token is read against
+- `CoverageLedger({ gaps, onRepair, now, rowTestId })` — the ledger of
+  every gap; renders `null` over no gaps (A.8)
+
+Rules the species enforces:
+
+- **The reason is the source's own words, uppercased, or nothing.** A raw
+  id (`needsYou_read_failed`, a dotted path) is refused by `plainReason`
+  and the token carries the class alone (162's no-raw-ids law, A.10).
+- **`stale` is a warning; every other gap is a failure** — the ink
+  `coverage.ts` orders gaps by. `Coverage incomplete` is never danger
+  (verdict Q6).
+- **Coverage rides ABOVE the answer** (design D1): the face places the
+  ledger between the head and the first result, never under it.
+
+## ProjectButton (HS-200-15, species S6)
+
+The way back to the originating Project, on every posture (story 09 AC2;
+design D1). A library `Button` (ghost, dense, caption step) inside a
+`role="group"` region named `Project` (canon D); accessible name
+`Open the Project — <name>`. It is a READ; a write is never named as a way
+back.
+
+- `name: string` — the Project's name, drawn uppercased
+- `onOpen()` — opens the Room
+- `withheld?: boolean` — true when the desk holds exactly ONE Project: the
+  species renders nothing (repeating one word on every row says nothing,
+  A.7). The caller passes the fact; the species holds the rule
+- Never a decorative token: a Project name the owner can read but not
+  follow is a verb that does nothing (A.11)
+
+## LedgerRemainder (HS-200-15, species S4)
+
+The cap and the remainder as one grammar under a capped ledger: the TRUE
+total lives in the head (the display line), the cap in the section caption
+(`NEEDS YOU 5 OF 17`, via `attentionCaption` in `desk/attention.ts`), and
+the remainder is this row — a real count and a real verb:
+`12 MORE · Show all`. Pressing it reveals the rest IN PLACE (A.4) and the
+verb becomes `Show fewer`.
+
+- `remaining: number` — rows not shown while collapsed; `<= 0` renders
+  nothing (A.8)
+- `expanded: boolean`, `onToggle()` — the caller's state
+- `noun = "MORE"`, `subject?` — the count noun and the verb's accessible
+  subject (`Show all — the remaining 12`)
+- `ref` — forwarded to the verb, so `Escape` inside the revealed rows can
+  return focus to it (the arrival does)
+- The count is `countToken`; the verb is the library `Button`
+
+## Disclosure: `ariaLabel` and `controlsId` (HS-200-15)
+
+- `ariaLabel?: string` — an accessible name richer than the visible label
+  (`Sources — Priya confirms the freeze window` over `2 SOURCES`).
+- `controlsId?: string` — the id of a body rendered ELSEWHERE, such as a
+  `SurfaceLedgerRow`'s own expansion slot (`open` + `children`), so a body
+  that must span the row's full width is not trapped inside a cell. The
+  trigger keeps `aria-expanded`, names the body via `aria-controls`, and
+  renders no body of its own; the external body carries the `role="region"`
+  and closes on `Escape` itself (the Disclosure's focus-return to the trigger
+  still fires). Used by the arrival's `N SOURCES` row.

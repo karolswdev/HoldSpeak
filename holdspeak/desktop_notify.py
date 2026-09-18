@@ -21,7 +21,7 @@ import logging
 import platform
 import subprocess
 import time
-from typing import Any, Callable
+from typing import Any, Callable, Iterable, Mapping
 
 from .cadence.scheduler import in_quiet_hours
 
@@ -55,6 +55,117 @@ class EdgeDetector:
     @property
     def last_notified_count(self) -> int:
         return self._last
+
+
+class ItemSetEdge:
+    """HS-200-15 (AC4): fire on a changed ITEM SET, never on a changed count.
+
+    The audit found the count edge can miss a new item when the total
+    stays unchanged (one item resolved, another arrived: 3 -> 3, silent).
+    This detector remembers WHICH items have been notified -- the stable
+    ``_item_id`` -> ``{"project": <project id>, "class": <rank class>}``
+    -- and fires when any current item is new, or when a known item has
+    ESCALATED (any class -> ``due_today`` or ``overdue``, or ``due_today``
+    -> ``overdue``; counsel P1-4).
+
+    The explicit transitions (D2(b) "Notifications"):
+
+    * **changed item, same count** -- a new id is present: fire.
+    * **escalation, same id** -- the class rose into due today / overdue:
+      fire, and say ``N escalated``.
+    * **quiet hours** -- the caller holds and does NOT mark, so the new
+      ids stay new and are delivered ONCE on the first sweep after the
+      window; a sweep inside the window never marks them delivered.
+    * **mute** -- muted items are not offered to ``should_fire``; their
+      ids are not pruned while the item still exists (``present``
+      includes muted ids), so un-muting re-notifies only what arrived
+      while the Room was muted, never what was already notified.
+    * **restart** -- the caller persists ``notified`` and seeds a fresh
+      detector from it, so a restart re-notifies nothing.
+    * **recovery** -- ``prune`` keeps an absent id whose Project is
+      KNOWN but not fully observed (a source ``cant_check`` / stale /
+      failed), so the source coming back re-notifies nothing; it drops
+      an absent id whose Project was fully observed, whose Project no
+      longer exists (archived / deleted), or which has no Project and
+      is simply gone (a resolved Door card) -- counsel P1-3.  An empty
+      set over a failed source is never an all-clear (the caller reports
+      ``held_coverage_incomplete``).
+    """
+
+    ESCALATED = ("due_today", "overdue")
+
+    def __init__(self, *, notified: Mapping[str, Any] | Iterable[str] | None = None) -> None:
+        self._notified: dict[str, dict[str, str]] = {}
+        if isinstance(notified, Mapping):
+            for key, value in notified.items():
+                self._notified[str(key)] = _entry(value)
+        elif notified:
+            for key in notified:
+                self._notified[str(key)] = _entry("")
+
+    @staticmethod
+    def _rank(cls: str) -> int:
+        return {"overdue": 2, "due_today": 1}.get(cls, 0)
+
+    def new_ids(self, current: Mapping[str, Any]) -> list[str]:
+        """The current ids not yet notified, sorted (deterministic)."""
+        return sorted(str(k) for k in current if str(k) not in self._notified)
+
+    def escalated_ids(self, current: Mapping[str, Any]) -> list[str]:
+        """Known ids whose class rose into due today / overdue since they
+        were notified, sorted."""
+        out: list[str] = []
+        for key, value in current.items():
+            known = self._notified.get(str(key))
+            if known is None:
+                continue
+            if self._rank(_entry(value)["class"]) > self._rank(known["class"]):
+                out.append(str(key))
+        return sorted(out)
+
+    def should_fire(self, current: Mapping[str, Any]) -> bool:
+        return bool(self.new_ids(current) or self.escalated_ids(current))
+
+    def mark_fired(self, current: Mapping[str, Any]) -> None:
+        for key, value in current.items():
+            self._notified[str(key)] = _entry(value)
+
+    def prune(
+        self,
+        present: Iterable[str],
+        observed_projects: Iterable[str] | None = None,
+        known_projects: Iterable[str] | None = None,
+    ) -> None:
+        """Forget ids that are gone -- unless their Project is known but
+        was not fully observed.  ``observed_projects=None`` means every
+        Project was observed (no coverage on the wire); ``known_projects``
+        defaults to the observed set."""
+        keep = {str(k) for k in present}
+        observed = None if observed_projects is None else {str(p) for p in observed_projects}
+        known = observed if known_projects is None else {str(p) for p in known_projects}
+        for key in list(self._notified):
+            if key in keep:
+                continue
+            project = self._notified[key]["project"]
+            if observed is None or not project:
+                del self._notified[key]
+            elif project in observed or project not in (known or set()):
+                del self._notified[key]
+
+    @property
+    def notified(self) -> dict[str, dict[str, str]]:
+        return {k: dict(v) for k, v in self._notified.items()}
+
+
+def _entry(value: Any) -> dict[str, str]:
+    """One notified-set entry: ``{"project", "class"}`` from a mapping, a
+    bare project id (the older persisted shape), or nothing."""
+    if isinstance(value, Mapping):
+        return {
+            "project": str(value.get("project") or value.get("projectId") or ""),
+            "class": str(value.get("class") or value.get("rankClass") or ""),
+        }
+    return {"project": str(value or ""), "class": ""}
 
 
 # ── macOS notifier (osascript fallback) ──────────────────────────────
@@ -166,7 +277,8 @@ def heartbeat_notify(
     count: int,
     project_count: int,
     *,
-    edge: EdgeDetector,
+    edge: EdgeDetector | ItemSetEdge,
+    item_ids: Mapping[str, str] | None = None,
     quiet_hours_start: int = 22,
     quiet_hours_end: int = 8,
     content_items: list[dict[str, Any]] | None = None,
@@ -175,11 +287,19 @@ def heartbeat_notify(
     receipt_writer: Callable[[dict[str, Any]], None] | None = None,
     mesh_event_writer: Callable[[dict[str, Any]], None] | None = None,
     _notifier: Callable[..., bool] | None = None,
+    now: Any | None = None,
 ) -> dict[str, Any]:
     """Evaluate the edge rule, quiet hours, and fire if appropriate.
 
     Returns a receipt dict (always), with ``fired``, ``held``,
     ``reason``, and the count.
+
+    HS-200-15 (AC4): with an ``ItemSetEdge`` and ``item_ids`` (the
+    current unmuted ids -> Project), the edge is the ITEM SET -- a new
+    id fires even when the count is unchanged, and ``newItems`` says how
+    many were new.  A count-based ``EdgeDetector`` is still honoured for
+    callers that have no ids.  A held notification never marks the ids
+    delivered, so quiet hours hold and then deliver once.
 
     HS-174-09: when ``mesh_event_writer`` is provided and a notification
     fires, publish a ``desk.notification`` event on the mesh bus with
@@ -188,18 +308,29 @@ def heartbeat_notify(
     """
     from datetime import datetime
 
-    now = datetime.now()
+    # The instant is the CALLER's (the heartbeat's injectable local clock);
+    # the wall clock is only for callers that pass none.
+    now = now or datetime.now()
+    set_based = isinstance(edge, ItemSetEdge) and item_ids is not None
+    new_ids = edge.new_ids(item_ids) if set_based else []  # type: ignore[union-attr]
+    escalated = edge.escalated_ids(item_ids) if set_based else []  # type: ignore[union-attr]
     result: dict[str, Any] = {
         "count": count,
         "projectCount": project_count,
         "fired": False,
         "held": False,
         "reason": "",
+        "newItems": len(new_ids),
+        "escalatedItems": len(escalated),
         "timestamp": now.isoformat(),
     }
 
     # Edge check first.
-    if not edge.should_fire(count):
+    if set_based:
+        if not new_ids and not escalated:
+            result["reason"] = "no_edge"
+            return result
+    elif not edge.should_fire(count):
         result["reason"] = "no_edge"
         return result
 
@@ -220,6 +351,15 @@ def heartbeat_notify(
         body = f"{count} need you across {project_count} projects"
     else:
         body = f"{count} need you"
+    # HS-200-15: a notification whose total did not move says what moved.
+    if set_based:
+        moved: list[str] = []
+        if 0 < len(new_ids) < count:
+            moved.append(f"{len(new_ids)} new")
+        if escalated:
+            moved.append(f"{len(escalated)} escalated")
+        if moved:
+            body = f"{body} · " + " · ".join(moved)
 
     if notify_content and content_items:
         # First WHY per project, max 3 lines.
@@ -241,7 +381,10 @@ def heartbeat_notify(
 
     fired = notify("HoldSpeak", body, click_url=click_url, _notifier=_notifier)
     if fired:
-        edge.mark_fired(count)
+        if set_based:
+            edge.mark_fired(item_ids)  # type: ignore[union-attr]
+        else:
+            edge.mark_fired(count)  # type: ignore[union-attr]
     result["fired"] = fired
     result["reason"] = "fired" if fired else "dispatch_failed"
 
@@ -273,4 +416,5 @@ __all__ = [
     "notify",
     "heartbeat_notify",
     "EdgeDetector",
+    "ItemSetEdge",
 ]

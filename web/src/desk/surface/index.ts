@@ -118,6 +118,15 @@ export {
   TaskResumeList,
   type TaskResumeState,
   type TaskResumeProps,
+  CoverageRow,
+  CoverageLedger,
+  coverageEmblem,
+  type CoverageRowProps,
+  type CoverageLedgerProps,
+  ProjectButton,
+  type ProjectButtonProps,
+  LedgerRemainder,
+  type LedgerRemainderProps,
 } from "./patterns";
 
 export { MicButton, type MicState } from "./controls/MicButton";
