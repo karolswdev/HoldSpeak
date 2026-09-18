@@ -96,3 +96,7 @@ A plain `scripts/ux_canon_scan.py --root .` on HEAD rewrote three tracked census
 ## Orchestrator ruling
 
 The 175 are debt, not regression; they accumulated while the guard was blind. No face was fixed here by charter. The doc-claims registry's UX-CANON row flips to `holds` (the sentence now states the measured ratchet) in the commit that stacks this on the shipped HS-200-45 tree, where the registry lives.
+
+## Registry flip (on the shipped HS-200-45 tree)
+
+The UX-CANON row moved from `known_false` to `holds`: its predicate reads the repo-wide A1 ceiling out of `tests/ux_canon_ceiling.json`, the number the document states, and the scanner's live count, and requires all three to agree with the count at or under the ceiling. Ratchet 5 → 4. `scripts/doc_claims.py --measure`: 0 drifted rows.

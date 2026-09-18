@@ -193,6 +193,14 @@ def bind_host_references() -> set[str]:
     return hits
 
 
+def ux_canon_ceiling_a1() -> int:
+    """The committed repo-wide A1 ceiling in ``tests/ux_canon_ceiling.json``."""
+    data = json.loads(_read("tests/ux_canon_ceiling.json"))
+    # The repo-wide ceiling is `per_rule`; `faces/<name>/A1` are per-face
+    # sub-ceilings and must not be mistaken for it.
+    return int(data["per_rule"]["A1"])
+
+
 def raw_button_count() -> int:
     """Raw ``<button`` elements in ``web/src``, counting multi-line JSX.
 
@@ -396,19 +404,25 @@ CLAIMS: list[Claim] = [
     # ── owned by HS-200-44 ────────────────────────────────────────────
     Claim(
         doc="docs/internal/UX-CANON.md",
-        anchor="A1 (raw `<button>`) must stay within\na named allowlist (4 residues with reasons)",
+        anchor="A1 (raw `<button>`) is held to a\ndated, down-only ratchet of 175, measured on 2026-09-17 by HS-200-44",
         sentence=(
-            "(ii) *Hard zeros*: DS6 (accent rail) and A9 (missing egress) must stay "
-            "at 0; A1 (raw `<button>`) must stay within a named allowlist (4 residues "
-            "with reasons)."
+            "A1 (raw `<button>`) is held to a dated, down-only ratchet of 175, "
+            "measured on 2026-09-17 by HS-200-44 once the matcher could see a "
+            "multi-line opening tag. That number can only shrink."
         ),
-        predicate=lambda: raw_button_count() <= 4,
-        state="known_false",
+        predicate=lambda: (
+            ux_canon_ceiling_a1() == 175
+            and int(re.search(r"down-only ratchet of (\d+)", _read("docs/internal/UX-CANON.md")).group(1))
+            == ux_canon_ceiling_a1()
+            and canon_scanner_a1_total() <= ux_canon_ceiling_a1()
+        ),
+        state="holds",
         truth=(
-            "the live web/src tree holds 203 raw <button> elements outside the Signal/"
-            "gadgets library files; the canon scanner sees 4 of them because its A1 "
-            "regex requires a character after `<button` on the same line, so every "
-            "multi-line JSX tag is invisible to it"
+            "tests/ux_canon_ceiling.json holds A1 = 175 with a dated reason, the "
+            "canon scanner's A1 count over web/src is at or under it, and the "
+            "document states the same number; the independent count over ALL of "
+            "web/src is 203 (28 sit in design/, _parked/ and *.test.tsx outside the "
+            "scanner's scope). Corrected 2026-09-17 by HS-200-44"
         ),
         story="HS-200-44",
     ),
@@ -626,21 +640,21 @@ def _sidecar_counts_match_doc() -> bool:
 # NOT grow past this number without a commit that changes the reason string
 # below to name the new debt and why it is being admitted.
 #
-# Reason for the current ceiling (5, lowered from 7 by HS-200-45 on
-# 2026-09-17, which paid the MCP composition root and the WAL pragma sentence):
-#   one is owned (HS-200-44: the UX-CANON A1 residue count), and four are
+# Reason for the current ceiling (4: 7 -> 5 by HS-200-45, 5 -> 4 by HS-200-44,
+# both 2026-09-17):
+#   none is owned by an open story; four are
 #   unowned and need a code change rather than a prose correction — the
 #   SECURITY.md tailnet bind (bind_host is applied by nothing), the
 #   verb-catalog mirror and desk_snapshot's advertised shape, and
 #   DESKOS_COMPONENT_PATTERN (a whole doc describing the wrong desk).
-KNOWN_FALSE_RATCHET = 5
+KNOWN_FALSE_RATCHET = 4
 KNOWN_FALSE_RATCHET_DATE = "2026-09-17"
 KNOWN_FALSE_RATCHET_REASON = (
-    "HS-200-44 owns the UX-CANON A1 residue count; four are unowned and need a "
-    "code change rather than a one-line doc correction (the SECURITY tailnet bind, "
-    "the verb-catalog mirror, desk_snapshot's layout, DESKOS_COMPONENT_PATTERN). "
-    "HS-200-45 paid the MCP composition root and the WAL pragma sentence on "
-    "2026-09-17 (7 -> 5)"
+    "four are unowned and need a code change rather than a one-line doc "
+    "correction (the SECURITY tailnet bind, the verb-catalog mirror, "
+    "desk_snapshot's layout, DESKOS_COMPONENT_PATTERN). HS-200-44 paid the "
+    "UX-CANON A1 residue count on 2026-09-17 (5 -> 4); HS-200-45 paid the MCP "
+    "composition root and the WAL pragma sentence (7 -> 5)"
 )
 
 

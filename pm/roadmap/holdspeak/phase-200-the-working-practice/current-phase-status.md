@@ -83,7 +83,7 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-43 | Let a watch become schedulable, and let a manual evaluation count | done | [story-43](story-43-arm-the-watch.md) | [evidence-story-43](./evidence-story-43.md) |
 2026-09-18, later: **the guard sees its own violations.** HS-200-44 is done on top of 45: the scanner's A1 count is 175 (was 4), reconciled with the registry's 203 file by file, every rule audited for the same blindness, the ratchet only shrinks, and a plain run writes nothing. The UX-CANON registry row is `holds` (ratchet 5 to 4). All five audit stories are now built; merging proceeds by the orchestrator's verification.
 
-| HS-200-44 | Make the release guards see what they claim to guard | ready | [story-44](story-44-the-guard-sees-its-own-violations.md) | — |
+| HS-200-44 | Make the release guards see what they claim to guard | done | [story-44](story-44-the-guard-sees-its-own-violations.md) | — |
 | HS-200-45 | One composition root — MCP goes through the hub's services | done | [story-45](story-45-one-composition-root.md) | [evidence-story-45](./evidence-story-45.md) |
 | HS-200-46 | A stale document fails CI instead of misleading the next agent | done | [story-46](story-46-a-stale-doc-fails-ci.md) | [evidence-story-46](./evidence-story-46.md) |
 
