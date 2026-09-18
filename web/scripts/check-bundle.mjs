@@ -20,7 +20,15 @@ const limits = {
   // provably dead). The overrun is inherited, not caused by this branch.
   // THIS NUMBER IS A RATCHET: from here it may only ever move DOWN. Anyone
   // who needs it higher must first show the CSS that cannot be removed.
-  css: 310_000,
+  //
+  // RATCHET — HS-200-15/11/12/13/14, 2026-09-18. Raised 310_000 -> 325_000.
+  // The CSS that cannot be removed: seven library species and three Room
+  // postures the owner's PASSED daily-workflow design (HS-200-09) is built
+  // from — CoverageRow, ProjectButton, LedgerRemainder, ClaimAxes, the dense
+  // Disclosure variant, the recall, prepare and People postures. Measured
+  // Desk CSS on the full stack (13 over 14 over 11 over 12 over 15):
+  // 318_681 B. Nothing dead was found to delete first. Down-only from here.
+  css: 325_000,
 };
 
 const bytes = (names) =>
