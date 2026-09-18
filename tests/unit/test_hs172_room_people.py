@@ -100,6 +100,17 @@ def _make_people_service(relationships: list[dict[str, Any]]) -> MagicMock:
         return {"state": "ready", "relationship": None}
 
     svc.resolve_relationship_by_watch_identity = resolve
+    # HS-200-14: the Room projection now asks the ledger's readiness first
+    # (a locked store is NAMED, never an empty list) and resolves record
+    # owners through the candidate resolver.  A MagicMock would answer
+    # both with a MagicMock -- i.e. "unavailable" -- so say it plainly.
+    svc.readiness_state = lambda: "ready"
+    svc.resolve_owner_candidates = lambda owner: {
+        "state": "ready",
+        "link": "linked" if alias_map.get(owner.lower().strip()) else "not_linked",
+        "relationship": alias_map.get(owner.lower().strip()),
+        "candidates": [],
+    }
     return svc
 
 

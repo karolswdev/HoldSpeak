@@ -596,3 +596,36 @@
   margin-left: var(--space-2);
   color: var(--text-faint);
 }
+
+/* ── HS-200-14: PEOPLE preparation (sub-ledger, tokens, resolve well) ── */
+.room-people-warn {
+  color: var(--desk-warning, #fbbf24);
+}
+.room-people-fail {
+  color: var(--desk-danger, #f87171);
+}
+.room-people-cells {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.room-people-source {
+  color: var(--text-muted, #9ba2b0);
+}
+.room-people-detail {
+  margin: 0;
+  padding: 0 0 0 8px;
+  list-style: none;
+}
+.room-people-detail .surface-ledger-line {
+  min-height: 32px;
+}
+.room-people-resolve {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 8px 8px;
+}

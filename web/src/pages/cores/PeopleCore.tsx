@@ -1,10 +1,11 @@
-// HS-135-04 — People is a single protected Desk application.  Its roster is
+// HS-135-04: People is a single protected Desk application.  Its roster is
 // a relationship projection, never a field of person tiles or a scorecard.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CoreProps } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { openSurfaceOr } from "../../desk/shell";
+import { announceTaskReturn, taskFocusPending } from "../../desk/returnToTask";
 import { CycleGadget, EgressChip, PadGadget, StringGadget } from "../../desk/surface/gadgets";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import {
@@ -137,8 +138,13 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const requestedScope = scope?.startsWith("people:") ? scope.slice("people:".length) : null;
-  const requestedRelationshipId = requestedScope?.includes(":") ? requestedScope.split(":")[0] : requestedScope;
-  const requestedLens = requestedScope?.includes(":") ? requestedScope.split(":")[1] as Lens : null;
+  // HS-200-14 (AC4): `people:project:<id>` scopes the roster to the people
+  // linked to that Project; `people:<relationship>[:<lens>]` stays as it was.
+  const requestedProjectId = requestedScope?.startsWith("project:") ? requestedScope.slice("project:".length) : null;
+  const relationshipScope = requestedProjectId ? null : requestedScope;
+  const requestedRelationshipId = relationshipScope?.includes(":") ? relationshipScope.split(":")[0] : relationshipScope;
+  const requestedLens = relationshipScope?.includes(":") ? relationshipScope.split(":")[1] as Lens : null;
+  const [projectFilter, setProjectFilter] = useState<string | null>(requestedProjectId);
 
   const clearProtected = useCallback(() => {
     setRelationships([]);
@@ -162,6 +168,11 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     } finally { setLoading(false); }
   }, [clearProtected]);
   useEffect(() => { void load(); }, [load]);
+  // HS-200-14 (AC4): the way back to the task. When this window was
+  // opened from a Room verb (`rememberTaskFocus` on the way in), closing
+  // it announces the return: the Room re-reads and focus lands back on
+  // the verb the owner left -- and only then (the do-not-steal rule).
+  useEffect(() => () => { if (taskFocusPending()) announceTaskReturn(); }, []);
 
   const unavailable = stateOf(readiness) !== "ready";
   const openSettings = () => openSurfaceOr("configure-settings", "/settings", "people-security");
@@ -227,23 +238,33 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     {error ? <SurfaceState error={error} onRetry={() => void load()} /> : null}
     <SurfaceSplit
       detailOpen={Boolean(selected)}
-      main={<Roster relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} newKind={newKind} setNewKind={setNewKind} busy={busy} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} />}
+      main={<Roster relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} newKind={newKind} setNewKind={setNewKind} busy={busy} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} projectFilter={projectFilter} onClearProjectFilter={() => setProjectFilter(null)} />}
       detail={selected ? <RelationshipPane relationship={selected} initialLens={requestedLens} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={() => { setSelectedId(null); setDetail(null); }} /> : undefined}
     />
   </div>;
 }
 
-function Roster({ relationships, selectedId, newName, setNewName, newKind, setNewKind, busy, onCreate, onSelect }: {
+function Roster({ relationships, selectedId, newName, setNewName, newKind, setNewKind, busy, onCreate, onSelect, projectFilter = null, onClearProjectFilter }: {
   relationships: Relationship[]; selectedId: string | null; newName: string; setNewName(value: string): void; newKind: RelationshipKind; setNewKind(value: RelationshipKind): void; busy: boolean; onCreate(): void; onSelect(id: string): void;
+  /** HS-200-14: the Project the roster is scoped to (`people:project:<id>`), or null for everyone. */
+  projectFilter?: string | null; onClearProjectFilter?(): void;
 }) {
-  const ordered = useMemo(() => [...relationships].sort((a, b) => (Number(b.manager_commitment_count ?? 0) - Number(a.manager_commitment_count ?? 0)) || a.display_name.localeCompare(b.display_name)), [relationships]);
-  return <SurfaceSection label="Relationships">
+  const scoped = useMemo(
+    () => (projectFilter ? relationships.filter((r) => (r.project_refs ?? []).includes(projectFilter)) : relationships),
+    [relationships, projectFilter],
+  );
+  const ordered = useMemo(() => [...scoped].sort((a, b) => (Number(b.manager_commitment_count ?? 0) - Number(a.manager_commitment_count ?? 0)) || a.display_name.localeCompare(b.display_name)), [scoped]);
+  const scopedOut = projectFilter ? relationships.length - scoped.length : 0;
+  return <SurfaceSection
+    label={projectFilter ? countToken(ordered.length, "ON THIS PROJECT", "ON THIS PROJECT") ?? "THIS PROJECT" : "Relationships"}
+    actions={projectFilter && scopedOut > 0 ? <Button dense variant="ghost" aria-label="Everyone: clear the Project scope" onClick={onClearProjectFilter} data-testid="people-roster-everyone">{countToken(scopedOut, "MORE", "MORE")} · Everyone</Button> : undefined}
+  >
     <div className="people-new">
       <StringGadget label="New relationship" value={newName} onChange={setNewName} placeholder="Name" inputProps={{ id: "people-new-relationship" }} onKeyDown={(event) => { if (event.key === "Enter") onCreate(); }} />
       <CycleGadget label="Relationship" value={newKind} onChange={(value) => setNewKind(value as RelationshipKind)} options={[{ value: "direct_report", label: "Direct report" }, { value: "peer", label: "Peer" }, { value: "extended", label: "Extended" }]} />
       <Button dense disabled={!newName.trim() || busy} loading={busy} onClick={onCreate}>Add</Button>
     </div>
-    {!ordered.length ? <div className="people-empty-roster" data-testid="people-empty-roster"><p className="people-empty-lead">Add a relationship to start</p></div> : <SurfaceRows>{ordered.map((relationship) => <SurfaceRow key={relationship.id} selected={selectedId === relationship.id} title={relationship.display_name} detail={`${relationshipLabel(relationship.relationship_kind)}${relationship.next_one_on_one ? ` · ${relationship.next_one_on_one}` : ""}`} meta={relationship.manager_commitment_count ? `You owe ${relationship.manager_commitment_count}` : undefined} onOpen={() => onSelect(relationship.id)} />)}</SurfaceRows>}
+    {!ordered.length ? <div className="people-empty-roster" data-testid="people-empty-roster">{projectFilter ? <span className="surface-token" data-testid="people-roster-none-linked">NO ONE LINKED YET</span> : <p className="people-empty-lead">Add a relationship to start</p>}</div> : <SurfaceRows>{ordered.map((relationship) => <SurfaceRow key={relationship.id} selected={selectedId === relationship.id} title={relationship.display_name} detail={`${relationshipLabel(relationship.relationship_kind)}${relationship.next_one_on_one ? ` · ${relationship.next_one_on_one}` : ""}`} meta={relationship.manager_commitment_count ? `You owe ${relationship.manager_commitment_count}` : undefined} onOpen={() => onSelect(relationship.id)} />)}</SurfaceRows>}
   </SurfaceSection>;
 }
 

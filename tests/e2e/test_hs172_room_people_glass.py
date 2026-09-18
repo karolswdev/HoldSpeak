@@ -18,6 +18,7 @@ Shots to phase-172-the-loop-closes/assets/story-07-shots/.
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -39,7 +40,10 @@ SHOTS = (
     Path(__file__).resolve().parents[2]
     / "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-07-shots"
 )
-SHOTS.mkdir(parents=True, exist_ok=True)
+#: Shots are tracked evidence: a plain suite run never rewrites them
+#: (HS-200-14, counsel P2-iv; the 388-PNG scar).  HOLDSPEAK_WRITE_SHOTS=1
+#: to (re)take them.
+WRITE_SHOTS = os.environ.get("HOLDSPEAK_WRITE_SHOTS") == "1"
 
 TOKEN = "hs172-people"
 
@@ -172,15 +176,22 @@ def _patch_room_people(monkeypatch: pytest.MonkeyPatch) -> None:
     """
     import holdspeak.services.room_people_service as rps
 
-    _orig = rps.room_people
+    _orig = rps.room_people_preparation
 
-    def _mock(project_service: Any, people_service: Any, project_id: str) -> list[dict[str, Any]]:
-        # Only return mock data for our test project
+    def _mock(project_service: Any, people_service: Any, project_id: str, principal: Any = None) -> dict[str, Any]:
+        # Only return mock data for our test project.  HS-200-14: the route
+        # reads the preparation projection; its ``people`` half keeps this
+        # story's row shape, so the mock rides it unchanged.
         if project_id == "proj-172-people":
-            return list(MOCK_PEOPLE)
-        return _orig(project_service, people_service, project_id)
+            people = [dict(p, link="linked", commitments=[], facts=[]) for p in MOCK_PEOPLE]
+            return {
+                "state": "ready", "expected": len(people), "resolved": len(people),
+                "gaps": {"ambiguous": 0, "not_linked": 0, "locked": 0},
+                "people": people, "unresolved": [],
+            }
+        return _orig(project_service, people_service, project_id, principal)
 
-    monkeypatch.setattr(rps, "room_people", _mock)
+    monkeypatch.setattr(rps, "room_people_preparation", _mock)
 
 
 # ── Window helpers ────────────────────────────────────────────────
@@ -200,8 +211,11 @@ def _open_room(page: Any, project_id: str) -> None:
     _normal_chair(page)
 
 
-def _shot(page: Any, name: str, width: int) -> Path:
+def _shot(page: Any, name: str, width: int) -> Path | None:
     _settle(page)
+    if not WRITE_SHOTS:
+        return None
+    SHOTS.mkdir(parents=True, exist_ok=True)
     path = SHOTS / f"{name}.png"
     window = page.locator(".desk-surface-window").filter(
         has=page.locator("[data-testid='room-body']")
@@ -311,9 +325,11 @@ def _run_room_people_rig(
                     assert "ania-dev" not in people_text, "Raw login leaked to shade"
                     assert "marek-k" not in people_text, "Raw login leaked to shade"
 
-                shade_path = SHOTS / "build-shade-people-393.png"
-                shade.screenshot(path=str(shade_path))
-                assert shade_path.stat().st_size > 1_000
+                if WRITE_SHOTS:
+                    SHOTS.mkdir(parents=True, exist_ok=True)
+                    shade_path = SHOTS / "build-shade-people-393.png"
+                    shade.screenshot(path=str(shade_path))
+                    assert shade_path.stat().st_size > 1_000
 
             _assert_clean(page, errors)
             browser.close()

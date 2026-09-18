@@ -258,3 +258,98 @@ export async function fetchRoomPeople(
   );
   return raw.people || [];
 }
+
+/* ── HS-200-14: Room people preparation ── */
+
+/** The ledger's own state: only `ready` resolves anybody. */
+export type RoomPeopleLedgerState = "ready" | "locked" | "unconfigured" | "unavailable";
+
+/** A commitment's source: story 12's record points at its meeting and,
+ *  when the sentence was anchored, the transcript segment. */
+export type RoomPersonCommitmentSource = {
+  kind: "meeting";
+  meeting_id: string;
+  label: string;
+  segment_index?: number;
+  span_start?: number;
+  span_end?: number;
+};
+
+export type RoomPersonCommitment = {
+  id: string;
+  text: string;
+  due_at: string | null;
+  owner: string;
+  source: RoomPersonCommitmentSource;
+};
+
+/** An observable fact with the Watch it came from. Never inferred. */
+export type RoomPersonFact = {
+  kind: "prs_waiting" | "assignments_open" | "assignments_overdue";
+  count: number;
+  source: { kind: "watch"; watch_id: string; connector_id: string; label: string };
+};
+
+/** A Watch that names this person but whose facts are OMITTED because it
+ *  is paused, retired or disabled -- drawn with its state, never silently. */
+export type RoomOmittedSource = {
+  kind: "watch"; watch_id: string; connector_id: string; label: string;
+  state: "paused" | "retired" | "disabled" | string;
+};
+
+/** A linked person: 172-07's row plus what the Project holds on them. */
+export type RoomLinkedPerson = RoomPersonItem & {
+  link: "linked";
+  commitments: RoomPersonCommitment[];
+  facts: RoomPersonFact[];
+  omitted_sources?: RoomOmittedSource[];
+};
+
+export type RoomPersonCandidate = { relationship_id: string; display_name: string };
+
+/** An owner the Project names that no ONE ledger entry answers for. */
+export type RoomUnresolvedOwner = {
+  owner: string;
+  /** `locked` / `unconfigured` / `unavailable` mirror the ledger's own state. */
+  link: "ambiguous" | "not_linked" | "locked" | "unconfigured" | "unavailable";
+  candidates: RoomPersonCandidate[];
+  commitments: RoomPersonCommitment[];
+};
+
+export type RoomPeoplePreparation = {
+  state: RoomPeopleLedgerState;
+  expected: number;
+  resolved: number;
+  gaps: { ambiguous: number; not_linked: number; unreadable: number };
+  people: RoomLinkedPerson[];
+  unresolved: RoomUnresolvedOwner[];
+};
+
+export async function fetchRoomPeoplePreparation(
+  projectId: string,
+): Promise<RoomPeoplePreparation> {
+  const raw = await apiFetch<Partial<RoomPeoplePreparation>>(
+    `/api/projects/${encodeURIComponent(projectId)}/people`,
+  );
+  return {
+    state: raw.state ?? "unavailable",
+    expected: raw.expected ?? 0,
+    resolved: raw.resolved ?? 0,
+    gaps: raw.gaps ?? { ambiguous: 0, not_linked: 0, unreadable: 0 },
+    people: raw.people ?? [],
+    unresolved: raw.unresolved ?? [],
+  };
+}
+
+/** `Resolve` / `Link`: the existing owner-alias link, in place. The
+ *  alias is the owner string the record already carries; the ledger
+ *  keeps it unique (invariant P2) and names the holder on a clash. */
+export async function linkOwnerAlias(
+  relationshipId: string,
+  alias: string,
+): Promise<void> {
+  await apiFetch(
+    `/api/people/relationships/${encodeURIComponent(relationshipId)}/owner-aliases`,
+    { method: "POST", json: { alias } },
+  );
+}
