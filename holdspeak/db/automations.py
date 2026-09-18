@@ -59,26 +59,33 @@ class AutomationRepository(BaseRepository):
         test_state: str = "",
         created_at: str = "",
         updated_at: str = "",
+        next_evaluation_at: str | None = None,
     ) -> None:
         """Insert a connector_watches row on a caller-owned connection.
 
         Graduated column set (WatchSpec@1).  The caller is responsible
         for transaction boundaries; this method never opens or commits
         its own connection.
+
+        HS-200-43: `next_evaluation_at` ARMS the row -- `list_due_watches`
+        refuses any row where it is NULL, so a creation path that omits it
+        mints a watch the scheduler can never select.  Leave it None only
+        for a row that is deliberately not schedulable yet.
         """
         conn.execute(
             """INSERT INTO connector_watches
                (id, connector_id, query_kind, name, query_json, enabled,
                 schema_version, project_id, intent, subject_kind,
                 trigger_kind, trigger_json, mode, state, revision,
-                baseline_state, test_state, created_at, updated_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                baseline_state, test_state, created_at, updated_at,
+                next_evaluation_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 watch_id, connector_id, query_kind, name, query_json,
                 int(enabled), schema_version, project_id, intent,
                 subject_kind, trigger_kind, trigger_json, mode, state,
                 revision, baseline_state, test_state, created_at,
-                updated_at,
+                updated_at, next_evaluation_at,
             ),
         )
 
@@ -453,7 +460,7 @@ class AutomationRepository(BaseRepository):
                      AND (cw.project_id = '' OR cw.project_id IS NULL
                           OR p.lifecycle IS NULL
                           OR p.lifecycle != 'archived')
-                   ORDER BY cw.next_evaluation_at ASC""",
+                   ORDER BY cw.next_evaluation_at ASC, cw.id ASC""",
                 (now_iso,),
             ).fetchall()
         return [self._payload(row, "query", "snapshot") for row in rows]

@@ -419,7 +419,13 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
             # scoped and never raise (per-watch isolation inside); an
             # exception here is a real fault and is surfaced, not dressed
             # as success.
-            eval_outcomes = wired_watch.evaluate_due(p) if wired_watch is not None else []
+            # HS-200-43 F2: an explicit trigger is the owner's hand --
+            # limit=None evaluates every due watch. The WATCH_SWEEP_MAX
+            # bound exists to protect the UNATTENDED heartbeat thread.
+            eval_outcomes = (
+                wired_watch.evaluate_due(p, limit=None)
+                if wired_watch is not None else []
+            )
             run_outcomes = wired_steward.run_due(p) if wired_steward is not None else []
 
             return JSONResponse({

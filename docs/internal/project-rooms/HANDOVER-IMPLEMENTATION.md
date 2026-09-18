@@ -147,8 +147,10 @@ do not collide.
   `ProjectService` (AD-PRJ-006), don't fork authority into MCP.
 - Workbench/Cadence are collaborators, NOT the Steward engine
   (AD-PRJ-005). `ProjectStewardService.run_due()` and
-  `WatchService.evaluate_due()` are independent conductor failure
-  boundaries (P5).
+  `WatchService.evaluate_due()` are independent failure boundaries
+  (P5) — since HS-200-43 (2026-09-14) they also run on different
+  threads: the workbench conductor runs the steward only, and the
+  heartbeat sweep is the single scheduler for `evaluate_due`.
 - Jira readiness = live discovery/search or it doesn't exist. Pushed
   fixtures asserting readiness is the exact dishonesty the suite
   forbids twice.

@@ -1,4 +1,4 @@
-# THE HANDOVER — from Muad'Dib XIX (READ **§9, THEN §7b, THEN THE XIX CHAPTER** FIRST)
+# THE HANDOVER — from Muad'Dib XX (READ **§9, THEN §7b, THEN THE XX CHAPTER** FIRST)
 
 The entries below this section are the running log, newest first. This
 section is the whole picture in one sitting. When it disagrees with a
@@ -266,7 +266,6 @@ If you fix one, delete its row.
 | `docs/internal/DESKOS_COMPONENT_PATTERN.md` | describes "DeskOS component anatomy" | documents the SwiftUI iPad desk, and is actively anti-window |
 | `docs/MCP_SIDECAR.md:854` | 16 templates / 29 non-owner resources | measured 21 / 34 |
 | `CLAUDE.md:153` | `.githooks/dw-mcp` is "wired via `.mcp.json`" | it is not, and the omission is intentional (holdspeak-only) |
-| `phase-172/assets/settled-design-loop-closes.md:317` | the deferred plugin loop drains queued intel jobs | it drains a DIFFERENT queue; nothing drains intel (HS-200-42) |
 | `holdspeak/db/schema.py` lattice comment (pre-fix) | `unavailable` "cleared only by a rebind" | an undelete also clears it — corrected 2026-09-09 |
 
 **The general lesson, which is worth more than the table:** in this
@@ -299,6 +298,13 @@ these, fix the sentence in the same commit.
   reach the LAN.
 
 ## 9. Your first hour (mechanical — do these in order)
+
+**XX adds one trap to the four below:** a fresh `git worktree` + `uv venv
+--python 3.13 && uv sync` does NOT install the `[test]` extras, so `uv run
+pytest` silently falls through to a homebrew Python 3.14 pytest with no
+`pytest-timeout` ("Unknown config option: timeout" is the tell). Run
+`uv pip install -e '.[test]'` in the worktree and check `pytest.__file__`
+resolves into its `.venv` before trusting a count.
 
 1. **`.githooks/dw context holdspeak --compact`** and **`.githooks/dw next holdspeak`**.
    The roadmap is the source of truth, not this file. (`dw next` still
@@ -333,6 +339,138 @@ these, fix the sentence in the same commit.
 **And the rule I broke this sitting, so you do not:** the tree's default
 branch is `main` and two documentation commits landed on it directly
 instead of on a branch with a PR. Branch first.
+
+## Muad'Dib XX — 2026-09-14. THE TWO MISSING CALLERS ARE PAID; THREE STACKED PRs AWAIT HIS WORD
+
+**Read this first. It supersedes XIX's §4b.** His whole instruction was
+"continue Muad'Dibbing"; XIX had left two asks open and this sitting resolved
+both without asking again: the six docs commits went to a branch with a PR
+(the law), and 42 was built — then 43 in parallel, because their files are
+disjoint.
+
+### 0. State at handoff
+
+```
+#571  docs/audit-and-200-charters        the audit + the five charters (6 commits)
+#572  feat/hs-200-42-drain-intel-queue   c80d27b7 + 79d683fa + fa3c770e   stacked on #571
+#573  feat/hs-200-43-arm-the-watch       efd899ef (+ this handover commit)      stacked on #572
+```
+GitHub retargets each as its base merges. Merge order: 571 → 572 → 573, ON HIS
+WORD. Local `main` equals `origin/main`. Nothing on his desk has changed: his
+hub still runs pre-42 code. Phase 200: 12 done, 05 and 09 in progress, 44/45/46
+ready. **Next in order: 45 (one composition root) with 46 pairing, then 44.**
+The worktrees `scratchpad/wt42` and `wt43` die with the session; the branches
+are pushed.
+
+**The full suite ran on 42 (CI shape, -n auto): 12 failed / 10732 passed.**
+Three were branch-new and are paid in `79d683fa` (a story id in a user-facing
+diagram — the doc-drift guard; two census line anchors; the History core's
+no-drainer path forgot the egress receipt the click had established). Eight
+were inherited or timing (hs153 guardrail and hs171 command deck are red on
+untouched main; the rest pass serially). One looked branch-new and was not:
+the hs176 speak loop passed 6/6 legs on main and 3/6 on the branch, and the
+bisect showed the failure rate tracked MACHINE LOAD, not the tree — a
+pre-existing paint race in the window-wings species (a passive `useEffect`
+bridging the wing strip in the head to the body in the core, so the head
+named the old wing over the new body for up to ~600 ms). Paid at the source
+in `fa3c770e` (`useLayoutEffect`; lag 0 ms; 6/6 green). **The lesson: "passes
+on main, fails on the branch" is not attribution until you have bisected
+under the same load.**
+
+### 1. What 42 is, in one screen
+
+The drainer is the hub's FOURTH lifespan conductor (`intel_queue_conductor.py`),
+on the calendar-ingest pattern, ownership-gated (the three existing conductors
+never were — a hub under `HOLDSPEAK_ALLOW_UNOWNED_DB=1` starts no drainer), 15 s
+poll plus a `wake()` the verb calls. Rulings: `intelligence_auto` gates enqueue
+only; quiet hours govern notification, not compute (and there is no
+`aftercare_ready` → desktop path at all — it is a WebSocket frame); Article III
+host restated at execution time from the frozen deployment revision (the
+enqueue-time Config estimate and the executed route DISAGREED on the rig);
+owner lock released only after the conductors stop.
+
+**Two defects underneath, both paid:** every failure-alert check raised a
+swallowed `AttributeError` (`get_database().get_intel_queue_summary()` — the
+accessor lives on `.intel`; a lying double had modelled the flat one); and with
+an EMPTY routed plugin chain the claim planner re-froze an identical descriptor
+on every claim and inserted the successor with `attempts=0`, so the retry
+ceiling was unreachable and a permanently failing job grew `intel_jobs` two
+rows a cycle — unreachable before, because nothing drained. The shape to look
+for: a bug that was harmless only because its caller did not exist.
+
+**The shot walk caught what 12 green unit tests had passed:** the first face
+change never reached a pixel (the receipt swapped the badge before the verb
+branch rendered), and `SurfaceLedgerRow` rendered its trailing verb INSIDE the
+row's own `<button>` — every click also opened a window, nested buttons. Fixed
+in the species (`role="button"`, trailing stops propagation), not the face.
+The badge now reads `QUEUED` / `NOT DRAINING` from the `runtime_queue` frame,
+which carries `drainer`.
+
+### 2. What 43 is, in one screen
+
+Five rulings on his standing deferral, each premise verified by a read-only
+research lane at file:line before ruling: R1 the heartbeat is the single
+scheduler (the conductor's block ran every 60 s with no quiet-hours check and no
+ownership gate and always won the race); R2 quiet hours hold the whole sweep,
+and Run now overrides (`owner_hand=True`, unbounded + not held); R3 arm to
+`now`; R4 the backfill is UNGATED in reconcile step 2 (`_apply_data_backfills`
+runs only under `if shape_changed:` — dead on an up-to-date desk; the B3 lesson
+a second time); R5 manual evaluation mints effects through the extracted
+`_record_effects_if_any`.
+
+**Counsel found the rulings' own P0, and it was MINE.** R3's first form armed
+`now + cadence` when no snapshot existed, believing the delay protected against
+discovery-from-nothing. It delayed it by an hour: `_evaluate_core` diffs against
+`snapshot or {}` and `baseline_state` is never read by evaluation. Counsel's
+repro: one `pending` row + one `older_than` rule → 30 false transitions. Now the
+first evaluation of ANY empty-baseline watch is silent by construction in
+`_evaluate_core` (`baselined`, zero transitions, no evaluation row), so every
+caller inherits it. **When counsel refutes your ruling, say which sentence was
+wrong** — the story file does.
+
+The unattended sweep is bounded to 10 fetches a sweep (`watches_deferred` on the
+receipt); on his desk the ~30 backfilled rows baseline over three sweeps, ~45
+minutes, every one silent. Ceiling 40 evaluations an hour and no face says so —
+backlogged with the cadence-preset defect (`trigger_json.every_minutes` never
+reaches `evaluation_cadence_minutes`; every watch runs hourly whatever he
+picked).
+
+### 3. The loop this sitting ran, and what it cost
+
+research lane (43) → build lanes (42, 43 in parallel worktrees) → counsel-on-
+built → conditions paid → shot walk (42) → counsel re-read → last P2s → evidence
+capture through the gate → docs → contract → commit → PR. Both counsels returned
+RATIFY-WITH-CONDITIONS then RATIFY. Every fence on new behaviour was proven to
+fail on a pre-fix tree (43 kept four surgical trees, one per ruling round).
+
+### 4. Laws this sitting adds
+
+- **A worktree's `uv venv` does not carry `[test]`** — §9 has the tell and the fix.
+- **macOS `xargs` has no `-a`, and a newline-joined variable does not word-split
+  in zsh.** The restore of rig-dirtied assets silently failed once and 79 PNGs
+  from other phases were staged; caught by counting before the contract. Use
+  `< list xargs git checkout --` and COUNT staged assets outside the phase.
+- **Stash-free rebase of a dirty worktree:** `git diff > patch; cp` the
+  untracked files out; `checkout -- .; reset --hard <base>; git apply --3way`;
+  resolve; recapture evidence on the rebased tree (43's capture on top of 42
+  ran 42's fences too — the cheapest integration proof there is).
+- **The tool's foreground cap kills a backgrounded `&` chain** — use the
+  harness's own background mode for the full suite, never `nohup … &`.
+- **`git add -A` also sweeps UNTRACKED rig orphans from other phases.** Six
+  PNGs from 153/170/171 rode into a commit and the commit was redone. Before
+  every contract: `git diff --cached --name-only | grep -v <phase> | grep png`
+  must print nothing.
+- **His hub is never touched by a sitting.** All proof was isolated-HOME; the
+  claim that his 30 unarmed watches arm on next open is an inference from the
+  backfill's WHERE clause and is written as one.
+
+### 5. Still his, carried forward
+
+The merge order above; the HS-200-09 canvas verdict (gates 11-15); the pilot
+Project; 05's beats 2-6; the attended walks on 169-176; `.mcp.json` (the sidecar
+is a second unlocked writer — HS-200-45 is where that is paid, and it is next).
+
+---
 
 ## Muad'Dib XIX — 2026-09-09/13. THE STORY CLOSED, THEN THE WHOLE SURFACE WAS MEASURED
 

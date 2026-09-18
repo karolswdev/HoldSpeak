@@ -104,12 +104,12 @@ backlog, blocked on the owner's canvas verdict.
 | 1 | Meeting capture → intel → decisions | **PARTIAL — broken at the drain** | drain only via CLI |
 | 2 | Project Room via the Door | COMPLETE | **no** — no MCP tool, no CLI |
 | 3 | Project Room via the Interview | COMPLETE headless, **face parked** | **yes** |
-| 4 | Watches → evaluation (scheduled) | **WIRED-BUT-DEAD — cannot bootstrap** | n/a |
-| 5 | Watches → evaluation (manual) | COMPLETE, **but writes no effects** | yes |
+| 4 | Watches → evaluation (scheduled) | **WIRED-BUT-DEAD — cannot bootstrap** *(RESOLVED by HS-200-43: arming on create/enable + an ungated reconcile backfill)* | n/a |
+| 5 | Watches → evaluation (manual) | COMPLETE, **but writes no effects** *(RESOLVED by HS-200-43: both paths mint effects through `_record_effects_if_any`)* | yes |
 | 6 | Observations → draft → publish update | COMPLETE | **yes** |
 | 7 | Claim review on an update | **UNREACHABLE — no route, tool or face** | — |
 | 8 | Steward run (manual) | COMPLETE | **yes** |
-| 9 | Steward run (unattended) | WIRED, never armed — depends on #4 | n/a |
+| 9 | Steward run (unattended) | WIRED, never armed — depends on #4 *(#4 RESOLVED by HS-200-43; unattended execution still waits on the owner's policies, which stay OFF by his ruling)* | n/a |
 | 10 | Calendar → scheduled recording | WIRED-BUT-UNPROVEN | arming yes, firing no |
 | 11 | Daily brief / cadence | PARTIAL — tick off by default, no face calls `run-now` | **yes, fully** |
 | 12 | Dictation → desktop typing | **COMPLETE for beat 1, on his own hand** | hotkey no |
@@ -167,6 +167,12 @@ the scheduler.** The Door and Interview creation paths set only
 **Consequence on his desk:** 32 watches, 30 enabled, **2 armed**.
 
 ### 3.3 And when a watch IS evaluated by hand, it records no effects
+
+*(RESOLVED by HS-200-43: `_match_and_record_effects` is reached from
+`_record_effects_if_any`, which both `evaluate_due` and `evaluate_once` call,
+so a manual evaluation mints the same effects under the same idempotency key
+and `ProjectStewardService.run_due` can read them. The finding below is left
+standing as the dated record of what was measured.)*
 
 `_match_and_record_effects` (`watch_service.py:958`) has one caller, inside
 `evaluate_due`. So `project.watch.evaluate` — the MCP tool — can never trigger
@@ -417,13 +423,16 @@ this reason. A remote write lands in the DB and sits there.
    code; it is an artifact of the regex — and it underwrites the owner's own
    ruling that every verb is the library Button.
 5. **P1 — manual watch evaluation records no effects** (§3.3), so the MCP path
-   can never reach the steward.
+   can never reach the steward. *(RESOLVED by HS-200-43.)*
 6. **P1 — `review_claim` is unreachable**: the only occurrence in the product is
    its own definition; the face renders the acceptance token read-only. Every
    claim is permanently `unreviewed`.
 7. **P2 — two schedulers on one row.** Both the conductor and the heartbeat call
    `evaluate_due`; **only the heartbeat checks quiet hours.** The quiet-hours
-   promise is not kept on the conductor's path.
+   promise is not kept on the conductor's path. *(RESOLVED by HS-200-43: the
+   conductor's watch block is deleted, the heartbeat is the single scheduler,
+   and quiet hours now hold evaluation as well as notification. The finding is
+   left standing as the dated record of what was measured.)*
 8. **P2 — `promote`/`revoke_promotion` reachable from no shipped caller.** The
    read route now exists but nothing in `web/src` fetches it, and the panel emits
    only four kinds. The face being absent is ruling C6; the fetch gap is not.

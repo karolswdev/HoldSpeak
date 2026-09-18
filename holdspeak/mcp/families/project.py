@@ -736,7 +736,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "project.watch.evaluate",
-        "description": "Manually evaluate a graduated watch: snapshot, diff, transitions, observations.",
+        "description": "Manually evaluate a graduated watch: snapshot, diff, transitions, observations. Records watch_effects the Steward can act on (HS-200-43), keyed identically to a scheduled evaluation, so a manual run and the scheduler cannot double-mint. The first evaluation of a watch with no baseline is silent: it establishes the baseline and returns state=baselined with zero transitions.",
         "inputSchema": {
             "$id": "holdspeak://mcp/project.watch.evaluate@1",
             "type": "object",
@@ -1672,7 +1672,11 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
                            "(set_scheduler_services has not been called)",
             }
 
-        eval_outcomes = wired_watch.evaluate_due(principal) if wired_watch is not None else []
+        # HS-200-43 F2: explicit trigger = the owner's hand = unbounded.
+        eval_outcomes = (
+            wired_watch.evaluate_due(principal, limit=None)
+            if wired_watch is not None else []
+        )
         run_outcomes = wired_steward.run_due(principal) if wired_steward is not None else []
 
         return {

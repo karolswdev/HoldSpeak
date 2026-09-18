@@ -29,7 +29,7 @@ was receipted. Nothing left the machine.
 | Nothing leaves the machine | Constitution Article III | The notification is local (UNUserNotificationCenter / libnotify); the body names the COUNT only unless he opts in; no remote push |
 | Watching is free | Constitution Article V | The sweep, the cache, the aggregate, the shade poll -- all reads; no write, no egress |
 | The notification names the count only | Article III.1 | Default body: `N need you across M projects`; Room names only under a content-opt-in setting (off by default) |
-| Quiet hours | integrations.py:209-210, cadence/scheduler.py:25-26,30 | Notifications suppressed during `quiet_hours_start..quiet_hours_end` (default 22:00--08:00); the brief regeneration waits until the window closes |
+| Quiet hours | integrations.py:209-210, cadence/scheduler.py:25-26,30 | Quiet hours hold the whole sweep -- no watch is evaluated and no notification is sent; the first sweep after quiet hours end catches up. Run now is the owner's override. (Corrected HS-200-43: this row used to promise suppression of notifications only.) |
 | No counters of zero | UX-CANON.md rule A.8 | The PROJECTS section is absent when the aggregate is zero; the dock badge is absent at zero; the brief row is absent when no brief exists |
 | Every verb the library Button | UX-CANON.md rule A.1 | `Open` on shade rows, `Run now` on the cadence row, `Generate` on the brief caption -- all library Button |
 | One egress vocabulary | UX-CANON.md, 170 settled (counsel M1) | `THIS DEVICE` on every face that names a host (the notification is local; the sweep reads local DB) |
@@ -92,10 +92,14 @@ last notification. Do NOT fire when the count stays the same or
 decreases. The edge detector tracks `last_notified_count` across
 restarts (a DB column or a cadence policy row).
 
-**Quiet hours:** no notification fires during `quiet_hours_start` to
-`quiet_hours_end` (integrations.py:209-210). An edge that occurs during
-quiet hours is SWALLOWED -- no deferred fire after the window closes
-(the next sweep's edge will fire naturally if the count is still > 0).
+**Quiet hours:** quiet hours hold the whole sweep -- no watch is
+evaluated and no notification is sent; the first sweep after quiet hours
+end catches up. Run now is the owner's override. (Corrected HS-200-43:
+this paragraph used to describe quiet hours as a notification gate only,
+which is not what `heartbeat_service.run_sweep` does -- the held sweep
+evaluates nothing.) An edge that would have occurred during quiet hours
+is therefore never detected during the window; the first sweep after it
+closes sees the current count and fires naturally if it is still > 0.
 
 **Per-project mute:** a boolean on the project settings. A muted
 project's needs-you items are excluded from the aggregate count for

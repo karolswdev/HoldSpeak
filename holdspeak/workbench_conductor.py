@@ -598,29 +598,20 @@ class WorkbenchConductor:
         except Exception as exc:
             log.error("Resourceful conductor tick failed: %s", exc, exc_info=True)
 
-        # HS-164-04: Watch scheduler -- evaluate graduated watches that are
-        # due.  Independent failure boundary: a broken evaluate_due must never
-        # stop run_due or the other conductor duties.
-        try:
-            from .principals import Principal, PrincipalKind
-
-            if _watch_service is None:
-                log.debug("Watch scheduler: no wired service; skipping")
-                raise _SchedulerNotWired()
-            owner = Principal(PrincipalKind.OWNER, "local-watch-conductor")
-            eval_outcomes = _watch_service.evaluate_due(owner)
-            for outcome in eval_outcomes:
-                if outcome.get("outcome") in {"failed", "skipped_circuit_open"}:
-                    log.warning("Watch scheduler: %s", outcome)
-                elif outcome.get("outcome") in {"evaluated", "refreshed"}:
-                    log.info("Watch scheduler: %s", outcome)
-        except _SchedulerNotWired:
-            pass
-        except Exception as exc:
-            log.error("Watch scheduler tick failed: %s", exc, exc_info=True)
-
+        # HS-200-43 (R1): the watch scheduler block that used to live here was
+        # DELETED.  There is exactly ONE scheduler for graduated watches now --
+        # the heartbeat (`runtime/heartbeat.py` -> `HeartbeatService.run_sweep`
+        # -> `WatchService.evaluate_due`).  This block ticked every 60s with no
+        # quiet-hours check and no owns_database gate, and advanced
+        # `next_evaluation_at` identically to the heartbeat's own call, so the
+        # conductor always won the race and quiet hours never actually held
+        # evaluation.  `set_scheduler_services` / `get_scheduler_services` stay:
+        # they are still the seam the heartbeat, the steward block below, the
+        # trigger route (`web/routes/steward.py`) and the MCP trigger tool read.
+        #
         # HS-164-04: Steward scheduler -- drain pending steward run_once
-        # effects.  SEPARATE failure boundary from Watch scheduler above.
+        # effects.  Its own failure boundary (see the block above and the
+        # others in this tick).
         try:
             from .principals import Principal, PrincipalKind
 

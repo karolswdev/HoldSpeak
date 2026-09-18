@@ -630,7 +630,7 @@ class WatchProviderAdapter(Protocol):
 
 ## 12. Scheduling and action execution
 
-- The conductor invokes `WatchService.evaluate_due()` within its own failure boundary.
+- The scheduler invokes `WatchService.evaluate_due()` within its own failure boundary. (HS-200-43: that scheduler is the Heartbeat sweep, `runtime/heartbeat.py` -> `HeartbeatService.run_sweep`; the workbench conductor's own watch block was deleted so that exactly one scheduler owns the row and quiet hours actually hold evaluation.)
 - `next_evaluation_at`, not an in-memory map, is the restart-safe cursor.
 - Evaluation claims a Watch with compare-and-set semantics.
 - Identical provider reads MAY be shared only when connection, subject kind, scope, and query hashes match; each Watch evaluates independently.

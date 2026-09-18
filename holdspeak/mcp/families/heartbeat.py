@@ -87,7 +87,9 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     if name == "heartbeat.run_now":
         ws = WatchService(db, observer=obs)
         hb_with_ws = HeartbeatService(db, observer=obs, watch_service=ws)
-        return hb_with_ws.run_sweep(principal)
+        # HS-200-43: the owner's hand evaluates everything and is not
+        # held by quiet hours; only the unattended sweep is.
+        return hb_with_ws.run_sweep(principal, owner_hand=True)
 
     if name == "heartbeat.set":
         return hb.update_settings(arguments)

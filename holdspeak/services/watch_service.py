@@ -67,6 +67,58 @@ CIRCUIT_COOLDOWN_SECONDS = 900  # 15 minutes
 _EVALUABLE_STATES = frozenset({"active", "tested"})
 
 
+# ── HS-200-43: arming ──────────────────────────────────────────────
+#
+# `list_due_watches` requires a non-NULL `next_evaluation_at`
+# (db/automations.py), and before this story the ONLY writer of that
+# column sat inside `evaluate_due` -- so a watch the scheduler had never
+# evaluated could never be selected by the scheduler (the owner's desk:
+# 32 watches, 30 enabled, 2 armed).  These two helpers are the one place
+# that decides WHEN a newly created / re-enabled watch first comes due.
+
+
+# HS-200-43 F2: the most watches ONE sweep will evaluate. Each watch can
+# cost a serial `gh`/`acli` subprocess with a 5-10s timeout, and the sweep
+# runs on the heartbeat thread with the calendar refresh and the receipt
+# queued behind it -- 28 unbounded fetches is a multi-minute stall. The
+# oldest-due are taken first and the rest simply wait for the next sweep,
+# which is at most `sweep_every_minutes` (default 15) away.
+WATCH_SWEEP_MAX = 10
+
+
+def compute_arm_time(now: datetime | None = None) -> str:
+    """The instant a watch should first be evaluated, as an ISO string.
+
+    Always NOW. HS-200-43 F1 removed the second branch: an empty baseline
+    used to be armed one cadence out to keep its first evaluation from
+    discovering the whole source, but delaying that evaluation never
+    prevented it -- `_evaluate_core` now makes the first run of an empty
+    baseline SILENT, which is the real fix. With that in place there is no
+    reason to postpone anything.
+    """
+    return (now or datetime.now(timezone.utc)).isoformat(timespec="seconds")
+
+
+def arm_watch(repo: Any, watch_id: str, *, now: datetime | None = None) -> str | None:
+    """Arm one watch for scheduled evaluation; return the ISO instant written.
+
+    Returns None (and writes nothing) when the row does not exist, is
+    disabled, or is not graduated -- a paused, retired or legacy
+    (``state=''``) row is never armed, which is what keeps the scheduler
+    from picking up a watch the owner stopped.
+    """
+    watch = repo.get_watch(watch_id)
+    if not watch:
+        return None
+    if not bool(watch.get("enabled", True)):
+        return None
+    if str(watch.get("state") or "") not in _EVALUABLE_STATES:
+        return None
+    next_iso = compute_arm_time(now)
+    repo.update_watch_spec(watch_id, next_evaluation_at=next_iso)
+    return next_iso
+
+
 # ── SS8.1 github transition kinds (diff_snapshots vocabulary) ──────
 #
 # The closed set of event_type values that diff_snapshots produces for
@@ -229,6 +281,9 @@ class WatchService:
         # circuit-open transitions.
         from holdspeak.services.service_event_ledger import ServiceEventLedger
         self._ledger = ServiceEventLedger(db)
+        # HS-200-43 F2: how many due watches the LAST evaluate_due call
+        # left for the next sweep. Read by the heartbeat's receipt.
+        self.last_sweep_deferred = 0
 
     # ── Guards ──────────────────────────────────────────────────────
 
@@ -240,6 +295,14 @@ class WatchService:
                 "Watch operations require OWNER principal",
                 context={"status": 403},
             )
+
+    def _arm_watch(self, watch_id: str) -> str | None:
+        """HS-200-43: make this watch selectable by the scheduler.
+
+        Thin instance seam over the module-level `arm_watch` so every
+        creation / enable path in this service reaches the SAME rule.
+        """
+        return arm_watch(self._repo, watch_id)
 
     # ── Reads ───────────────────────────────────────────────────────
 
@@ -377,6 +440,10 @@ class WatchService:
         if not watch:
             raise NotFound("watch", watch_id)
         self._repo.update_watch_spec(watch_id, state="active")
+        # HS-200-43: resuming re-arms. Without this the row comes back
+        # active with whatever next_evaluation_at it had when it was
+        # paused -- NULL for a watch that was paused before it ever ran.
+        self._arm_watch(watch_id)
         return self.get_watch(principal, watch_id)
 
     def retire_watch(
@@ -542,6 +609,23 @@ class WatchService:
 
     # ── Baseline ────────────────────────────────────────────────────
 
+    def _persist_baseline(
+        self,
+        watch_id: str,
+        snapshot: dict[str, Any],
+    ) -> None:
+        """Write a snapshot as the watch's baseline, silently (ACT-005).
+
+        The ONE write that establishes a baseline. `baseline_watch` (the
+        explicit verb) and `_evaluate_core`'s silent first evaluation
+        (HS-200-43 F1) both go through here, so the two cannot drift.
+
+        `record_refresh` with ``events=[]`` writes the snapshot WITHOUT
+        creating any service events -- that is the ACT-005 guarantee.
+        """
+        self._repo.record_refresh(watch_id, snapshot, [])
+        self._repo.update_watch_spec(watch_id, baseline_state="established")
+
     def baseline_watch(
         self,
         principal: Principal,
@@ -562,15 +646,19 @@ class WatchService:
             snapshot = normalize_snapshot(
                 watch["connector_id"], self._fetch(principal, watch),
             )
-            # record_refresh with events=[] writes the snapshot without
-            # creating any service events -- this IS the ACT-005 guarantee.
-            self._repo.record_refresh(watch_id, snapshot, [])
         except Exception as exc:
             self._repo.record_refresh_error(watch_id, str(exc))
             raise
 
-        # Mark the graduated baseline_state column.
-        self._repo.update_watch_spec(watch_id, baseline_state="established")
+        self._persist_baseline(watch_id, snapshot)
+
+        # HS-200-43: the snapshot now exists, so the watch is due NOW --
+        # its first scheduled evaluation diffs against a real baseline
+        # and can only report real change. This is also what makes a
+        # Door- or Interview-created watch selectable by the scheduler
+        # without a prior manual run: both creation paths call
+        # baseline_watch immediately after create_from_setup commits.
+        self._arm_watch(watch_id)
 
         return {
             "watch_id": watch_id,
@@ -620,6 +708,45 @@ class WatchService:
         from holdspeak.services.watch_sources import drain_fetch_meta
         fetch_meta = drain_fetch_meta()
         snapshot = normalize_snapshot(connector_id, entities)
+
+        # 1b. HS-200-43 F1: THE FIRST EVALUATION OF AN EMPTY BASELINE IS
+        # SILENT.  `diff_snapshots` emits a discovered event for every
+        # entity absent from the baseline, and the baseline it reads is
+        # `watch["snapshot"]` -- `baseline_state` is never consulted by
+        # evaluation.  So a watch whose snapshot is empty or NULL (the
+        # Door/Interview shape when `baseline_watch` raised, every legacy
+        # row promoted by `_backfill_watch_graduation`, and every
+        # `ensure_meeting_watch` row -- which NO caller ever baselines)
+        # would discover its whole source as new the first time it ran:
+        # counsel measured 30 entities -> 30 transitions, 30 observations,
+        # 1 effect.  Delaying that evaluation does not prevent it.
+        #
+        # Instead the first run ESTABLISHES the baseline and reports
+        # nothing: zero transitions, zero observations, zero effects, no
+        # evaluation row.  Bookkeeping still advances through the caller's
+        # txn_hook, so the watch comes due again on its normal cadence and
+        # the SECOND run is a real diff against a real baseline.
+        if not (watch.get("snapshot") or {}):
+            self._persist_baseline(watch_id, snapshot)
+            if txn_hook is not None:
+                # The scheduler's bookkeeping (last_evaluated_at,
+                # next_evaluation_at, circuit reset) must advance even
+                # though no evaluation row exists -- otherwise the watch
+                # stays due forever and re-baselines every sweep.
+                with self._db._connection() as conn:
+                    txn_hook(conn, watch_id, now)
+            return {
+                "watch_id": watch_id,
+                "evaluation_id": "",
+                "state": "baselined",
+                "transitions": 0,
+                "observation_ids": [],
+                "message": (
+                    f"Baseline established from {len(snapshot['entities'])} "
+                    "entities; the first evaluation is silent"
+                ),
+                "_transitions": [],
+            }
 
         # 2. Compute source_revision (deterministic hash of snapshot).
         snapshot_json_str = json.dumps(
@@ -816,6 +943,11 @@ class WatchService:
         overrides.  A successful manual evaluation closes the circuit
         (streak reset, circuit closed) via the post-txn update.
         Only the scheduler (evaluate_due) respects the circuit.
+
+        HS-200-43: a manual evaluation now RECORDS ITS EFFECTS, exactly
+        as a scheduled one does, and returns them under the existing
+        ``effects`` key.  Before this the owner's own hand could evaluate
+        a watch all day and the steward would never see a thing.
         """
         self._owner(principal)
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -843,13 +975,36 @@ class WatchService:
                 circuit_opened_at=None,
             )
 
-        return result
+        # HS-200-43 P2-g: a manual evaluation that established a
+        # baseline still RAN. `_persist_baseline` set baseline_state;
+        # last_evaluated_at is this seam's to write, or the face shows a
+        # watch the owner just evaluated as never evaluated.
+        if result["state"] == "baselined":
+            self._repo.update_watch_spec(watch_id, last_evaluated_at=now)
+
+        # HS-200-43: the same guard the scheduler runs. Idempotent by
+        # idempotency_key, so a scheduled pass over the same evaluation
+        # mints nothing new.
+        matched_effects = self._record_effects_if_any(result, watch_id)
+
+        # `_transitions` is the internal raw-transition channel between
+        # _evaluate_core and the effect recorder. `_evaluate_core`'s
+        # docstring has always said it is never serialised to the caller;
+        # it leaked out of evaluate_once until HS-200-43. Strip it here,
+        # at the one public seam, rather than in _evaluate_core -- the
+        # scheduler still needs it on the way past.
+        payload = {k: v for k, v in result.items() if k != "_transitions"}
+        if matched_effects:
+            payload["effects"] = matched_effects
+        return payload
 
     # ── HS-164-02: evaluate_due — scheduled evaluation ─────────────
 
     def evaluate_due(
         self,
         principal: Principal,
+        *,
+        limit: int | None = WATCH_SWEEP_MAX,
     ) -> list[dict[str, Any]]:
         """Evaluate graduated watches that are due based on their cadence.
 
@@ -872,6 +1027,25 @@ class WatchService:
         Manual evaluate_once on a circuit-open watch: the OWNER's hand
         overrides — manual evaluation still runs (and its success closes
         the circuit).  Only THIS scheduler respects the circuit.
+
+        HS-200-43 F2: BOUNDED. At most ``limit`` watches are evaluated per
+        call, oldest-due first (`list_due_watches` orders by
+        `next_evaluation_at ASC`).  Each watch can cost a serial
+        `gh`/`acli` subprocess with a 5-10s timeout, and this runs on the
+        heartbeat thread with the calendar refresh and the sweep receipt
+        queued behind it.  The watches left over are not dropped -- they
+        stay due and the next sweep takes them, oldest first, so no watch
+        can starve.  ``self.last_sweep_deferred`` carries how many were
+        left for the caller's receipt.
+
+        The bound is for the UNATTENDED sweep only.  The owner's
+        explicit triggers pass ``limit=None`` and evaluate everything --
+        he is standing there watching it happen:
+        `POST /api/steward/trigger` (`web/routes/steward.py`), the MCP
+        `project.steward.trigger` tool, `Run now` on the Rhythm row
+        (`web/routes/system/settings.py` -> `run_sweep(watch_limit=None)`)
+        and the MCP `heartbeat.run_now` tool.  Only
+        `runtime/heartbeat.py`'s scheduled loop takes the default.
         """
         self._owner(principal)
         now = datetime.now(timezone.utc)
@@ -879,6 +1053,15 @@ class WatchService:
 
         outcomes: list[dict[str, Any]] = []
         due_watches = self._repo.list_due_watches(now_iso)
+
+        # Oldest-due first is the repo query's ORDER BY; the slice is the
+        # bound. `last_sweep_deferred` is an attribute rather than part of
+        # the return value because `evaluate_due`'s list contract is read
+        # by the steward route, the MCP trigger tool and two e2e rigs.
+        self.last_sweep_deferred = 0
+        if limit is not None and len(due_watches) > int(limit):
+            self.last_sweep_deferred = len(due_watches) - int(limit)
+            due_watches = due_watches[: int(limit)]
 
         for watch in due_watches:
             watch_id = watch["id"]
@@ -945,25 +1128,22 @@ class WatchService:
                 )
 
                 # ── HS-164-03: rule matching + effect recording ───
-                # Only for completed evaluations with transitions.
-                matched_effects: list[dict[str, Any]] = []
-                raw_transitions = result.get("_transitions", [])
-                eval_id = result.get("evaluation_id", "")
-
-                if (
-                    result["state"] == "completed"
-                    and raw_transitions
-                    and eval_id
-                ):
-                    matched_effects = self._match_and_record_effects(
-                        watch_id, eval_id, raw_transitions,
-                    )
+                # HS-200-43: through the shared guard, so a manual
+                # evaluation mints the identical effects.
+                matched_effects = self._record_effects_if_any(
+                    result, watch_id,
+                )
 
                 outcome_type = "probe_half_open" if is_probe else "evaluated"
                 # Idempotent no_op is still a successful evaluation
                 # (same snapshot already seen).
                 if result["state"] == "no_op":
                     outcome_type = "evaluated"
+                # HS-200-43 F1: an empty baseline was filled in silently.
+                # Named honestly rather than reported as an evaluation --
+                # nothing was diffed and nothing was observed.
+                if result["state"] == "baselined":
+                    outcome_type = "baselined"
 
                 outcome_entry: dict[str, Any] = {
                     "watch_id": watch_id,
@@ -1061,6 +1241,34 @@ class WatchService:
 
     # ── HS-164-03: rule matching + effect recording ───────────────
 
+    def _record_effects_if_any(
+        self,
+        result: dict[str, Any],
+        watch_id: str,
+    ) -> list[dict[str, Any]]:
+        """Record effects for an evaluation result, if it has any.
+
+        HS-200-43: this guard used to be inlined in `evaluate_due`, which
+        made `_match_and_record_effects` reachable ONLY from the
+        scheduler -- so `project.watch.evaluate` (MCP) and
+        `POST /api/watches/{id}/evaluate` ran, recorded an evaluation and
+        its observations, and minted ZERO `watch_effects`: the steward
+        could never see the owner's own hand. Both callers go through
+        here now, so a manual evaluation and a scheduled one mint the
+        SAME effects under the SAME idempotency key.
+        """
+        raw_transitions = result.get("_transitions", [])
+        eval_id = result.get("evaluation_id", "")
+        if (
+            result.get("state") == "completed"
+            and raw_transitions
+            and eval_id
+        ):
+            return self._match_and_record_effects(
+                watch_id, eval_id, raw_transitions,
+            )
+        return []
+
     def _match_and_record_effects(
         self,
         watch_id: str,
@@ -1073,8 +1281,11 @@ class WatchService:
         Idempotent: lookup-first by idempotency_key; re-processing the
         same evaluation mints nothing new.
 
-        Called ONLY from evaluate_due (scheduled); evaluate_once stays
-        byte-identical.
+        Called from `_record_effects_if_any`, which both `evaluate_due`
+        (scheduled) and `evaluate_once` (manual) go through -- HS-200-43.
+        The idempotency key is derived from the evaluation, not from the
+        trigger kind, so a manual and a scheduled pass over the SAME
+        evaluation mint exactly one effect.
         """
         rules = self._repo.list_rules(watch_id)
         if not rules:
@@ -1345,6 +1556,12 @@ def ensure_meeting_watch(
             test_state="",
             created_at=now_iso,
             updated_at=now_iso,
+            # HS-200-43: arm in the same transaction, due now. No
+            # caller ever baselines a meeting watch, so its first
+            # evaluation is the silent one that establishes the
+            # baseline (F1) -- that is what keeps a Room from
+            # discovering every linked meeting as new.
+            next_evaluation_at=compute_arm_time(),
         )
 
         for ordinal, rule in enumerate(rules):

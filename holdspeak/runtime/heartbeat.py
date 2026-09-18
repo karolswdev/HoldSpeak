@@ -18,6 +18,45 @@ from ..logging_config import get_logger
 log = get_logger("runtime.heartbeat")
 
 
+def _sweep_watch_service(db, obs):
+    """Return the WatchService the sweep must evaluate through (HS-200-43 R1).
+
+    The heartbeat is now the ONLY scheduler for graduated watches, so it must
+    run the SAME fully-wired instance the app serves.
+
+    A bare ``WatchService(db)`` does NOT fail outright -- `_fetch` falls
+    through to `watch_sources.fetch_watch_snapshot`, so a GitHub watch still
+    reads (HS-200-43 F4 corrected an earlier claim here that it would fail).
+    What the bare instance loses is the COMPOSITION: the app wires
+    `default_snapshot_fetcher(github_runner=..., jira_adapter=JiraProviderAdapter(
+    db, runner=self._acli_runner))` (`web_server.py:341-353`), so the wired
+    instance carries the Jira adapter composed with the real acli runner and
+    the hub's gh runner. The fallback path builds a lazy db-only adapter
+    instead, so a Jira watch evaluated through it would not reach acli.
+
+    The bare instance survives only as an explicitly-logged fallback for a
+    process that never called `set_scheduler_services` (a CLI or a test
+    harness).
+    """
+    from ..services.watch_service import WatchService
+
+    try:
+        from ..workbench_conductor import get_scheduler_services
+
+        wired, _steward = get_scheduler_services()
+    except Exception as exc:  # pragma: no cover - import guard only
+        wired = None
+        log.warning("heartbeat: scheduler-services read failed (%s)", exc)
+    if wired is not None:
+        return wired
+    log.warning(
+        "heartbeat: no app-wired WatchService (set_scheduler_services was "
+        "never called); falling back to a bare WatchService whose Jira "
+        "adapter is not composed with the acli runner",
+    )
+    return WatchService(db, observer=obs)
+
+
 class HeartbeatMixin:
     """The heartbeat conductor loop -- evaluates due watches on a cadence."""
 
@@ -43,7 +82,6 @@ class HeartbeatMixin:
         from ..db import get_database, get_observer
         from ..principals import Principal, PrincipalKind
         from ..services.heartbeat_service import HeartbeatService
-        from ..services.watch_service import WatchService
 
         TICK_SECONDS = 60  # check every minute whether a sweep is due
 
@@ -86,7 +124,7 @@ class HeartbeatMixin:
                     should_sweep = False
 
                 if should_sweep:
-                    ws = WatchService(db, observer=obs)
+                    ws = _sweep_watch_service(db, obs)
                     # HS-175-02: the calendar refresh rides the heartbeat sweep;
                     # the standalone conductor thread is retired.
                     from ..calendar_ingest_conductor import _conductor as _cal_conductor
