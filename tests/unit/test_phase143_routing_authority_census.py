@@ -110,7 +110,9 @@ ROUTING_RESOLVER_REFERENCES = {
     # HS-172: resolve_meeting_placement in routing_glue, mcp/tools, settings route
     "holdspeak/runtime/routing_glue.py:374:import:resolve_meeting_placement",
     "holdspeak/runtime/routing_glue.py:375:ref:resolve_meeting_placement",
-    "holdspeak/mcp/tools.py:862:import:resolve_meeting_placement",
+    # HS-200-13 (stacked on 14 over 11 over 12 over 15): moved down two lines
+    # with `desk.needs_you` taking the shared last-known store; re-anchored.
+    "holdspeak/mcp/tools.py:864:import:resolve_meeting_placement",
     "holdspeak/web/routes/system/settings.py:44:import:resolve_meeting_placement",
     "holdspeak/web/routes/system/settings.py:45:ref:resolve_meeting_placement",
     "holdspeak/services/settings_service.py:72:import:resolve_meeting_placement",
@@ -133,8 +135,11 @@ ROUTING_RESOLVER_REFERENCES = {
     # HS-200-11 (stacked on 12 over 15, 9a8073fc): the same two sites moved down
     # with the additive Room fields (decision `lifecycle`/`successor_id`, the
     # needs-you `watchId`); re-anchored, not re-registered.
-    "holdspeak/services/project_service.py:2083:import:resolve_placement",
-    "holdspeak/services/project_service.py:2084:ref:resolve_placement",
+    # HS-200-13 (stacked on 14 over 11 over 12 over 15): moved down again with
+    # the Room's commitment attention producer (`_room_commitment_items`);
+    # re-anchored, the site unchanged.
+    "holdspeak/services/project_service.py:2198:import:resolve_placement",
+    "holdspeak/services/project_service.py:2199:ref:resolve_placement",
     # Pre-existing and previously UNREGISTERED, found by the HS-200-41 sweep and
     # registered here rather than left red: ``_captured_deployment_revision``
     # (project_update_service.py:1034) resolves a profile's target only to
@@ -165,7 +170,8 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/services/settings_service.py:916:inference_target_id",
     "holdspeak/services/workbench_service.py:592:resolver_profile_id",
     # HS-172: resolve_meeting_placement pointer reads
-    "holdspeak/mcp/tools.py:861:intel_profile_id",
+    # HS-200-13: mcp/tools.py moved down two lines (see the reference set).
+    "holdspeak/mcp/tools.py:863:intel_profile_id",
     "holdspeak/web/routes/system/settings.py:41:intel_profile_id",
 }
 
@@ -196,8 +202,8 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/setup_status.py:151:profile_id",
         "holdspeak/services/model_profile_service.py:225:profile_id",
         "holdspeak/services/model_profile_service.py:264:profile_id",
-        # HS-172: meetings host resolve display reads.
-        "holdspeak/mcp/tools.py:864:profile_id",
+        # HS-172: meetings host resolve display reads (HS-200-13: +2 lines).
+        "holdspeak/mcp/tools.py:866:profile_id",
         "holdspeak/web/routes/system/settings.py:46:profile_id",
     }},
     **{site: "immutable evidence" for site in {

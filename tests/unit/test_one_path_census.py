@@ -1662,11 +1662,19 @@ def test_a_direct_receiver_run_prompt_fails_the_fence() -> None:
     """The mutation proof: restore the side door and the census must name it.
 
     A disposable edit puts a direct ``engine.run_prompt(...)`` back into the
-    receiver. The fence has to fail BEFORE the source is restored — a green suite
-    that only ever saw the fixed tree proves nothing about the fence — and the
-    file must come back byte-identical, verified by digest.
+    receiver. The fence has to fail on that source — a green suite that only
+    ever saw the fixed tree proves nothing about the fence.
+
+    HS-200-13 (the 15/12/11/14/13 stack): the mutation is applied to the TEXT
+    the census parses (``sites_in_source``), never written to the tree.  The
+    earlier disk write raced every sibling xdist worker whose ``census()`` read
+    ``mesh_serve.py`` inside the write/restore window, so the one-path and the
+    capability censuses reported ``_mutation_direct_dispatch`` as a real
+    unregistered execution on a tree that never held it.  The tree is asserted
+    unchanged by digest before and after.
     """
     target = REPO / "holdspeak/commands/mesh_serve.py"
+    relative = target.relative_to(REPO).as_posix()
     original = target.read_bytes()
     before = hashlib.sha256(original).hexdigest()
     anchor = "    def claim_once(self) -> Optional[tuple[dict[str, Any], Any]]:"
@@ -1676,22 +1684,19 @@ def test_a_direct_receiver_run_prompt_fails_the_fence() -> None:
     )
     text = original.decode("utf-8")
     assert anchor in text, "the mutation anchor moved; re-review this proof"
-    try:
-        target.write_text(text.replace(anchor, mutation + anchor, 1), encoding="utf-8")
-        sites = [site for site in census() if site.path == "holdspeak/commands/mesh_serve.py"]
-        assert len(sites) == 1, sites
-        site = sites[0]
-        assert site.target == "run_prompt"
-        assert site.scope == "MeshServeWorker._mutation_direct_dispatch"
-        # Unregistered: not a gateway, not an allowlist entry, not a seam, and
-        # NOT a finding — the family is gone, so there is nothing to fall into.
-        assert _bucket(site) is None
-        assert site.named().startswith("UNREGISTERED_MODEL_EXECUTION")
-        assert site.line_key not in NAMED_FINDINGS
-    finally:
-        target.write_bytes(original)
+    mutated = text.replace(anchor, mutation + anchor, 1)
+    sites = [site for site in sites_in_source(relative, mutated) if site.path == relative]
+    assert len(sites) == 1, sites
+    site = sites[0]
+    assert site.target == "run_prompt"
+    assert site.scope == "MeshServeWorker._mutation_direct_dispatch"
+    # Unregistered: not a gateway, not an allowlist entry, not a seam, and
+    # NOT a finding — the family is gone, so there is nothing to fall into.
+    assert _bucket(site) is None
+    assert site.named().startswith("UNREGISTERED_MODEL_EXECUTION")
+    assert site.line_key not in NAMED_FINDINGS
     assert hashlib.sha256(target.read_bytes()).hexdigest() == before
-    assert [site for site in census() if site.path == "holdspeak/commands/mesh_serve.py"] == []
+    assert [site for site in census() if site.path == relative] == []
 
 
 # ---------------------------------------- HS-143-10 placement-adopter closure
