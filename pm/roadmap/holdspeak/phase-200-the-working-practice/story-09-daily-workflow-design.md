@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 200
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-200-01
 - **Unblocks:** HS-200-10, HS-200-11, HS-200-12, HS-200-15, HS-200-18, HS-200-22, HS-200-28, HS-200-40, HS-200-41
 - **Owner:** unassigned
@@ -23,11 +23,11 @@ Out: A new home metaphor, top-level application, or environment art collection.
 
 ## Acceptance criteria
 
-- [ ] Show the full path at 1440 and 393 pixels, including empty, loading, partial, failed, and resumed states.
-- [ ] Each daily posture has a clear primary action, evidence access, and continuity back to the originating Project.
-- [ ] Reuse the existing library and identify required shared components before implementing feature-specific controls.
-- [ ] Voice, keyboard operation, accessible names, focus return, and disclosure behavior are specified.
-- [ ] Record the owner design verdict under the existing repository convention, with unresolved concerns visible.
+- [x] Show the full path at 1440 and 393 pixels, including empty, loading, partial, failed, and resumed states.
+- [x] Each daily posture has a clear primary action, evidence access, and continuity back to the originating Project.
+- [x] Reuse the existing library and identify required shared components before implementing feature-specific controls.
+- [x] Voice, keyboard operation, accessible names, focus return, and disclosure behavior are specified.
+- [x] Record the owner design verdict under the existing repository convention, with unresolved concerns visible.
 
 ## Test plan
 

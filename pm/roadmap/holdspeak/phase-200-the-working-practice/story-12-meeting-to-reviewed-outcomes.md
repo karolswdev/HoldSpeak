@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 200
-- **Status:** backlog
+- **Status:** ready
 - **Depends on:** HS-200-04, HS-200-05, HS-200-06, HS-200-09
 - **Unblocks:** HS-200-13, HS-200-14, HS-200-16, HS-200-40
 - **Owner:** unassigned

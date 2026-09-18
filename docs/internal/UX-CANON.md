@@ -129,11 +129,18 @@ and enforces three invariants.  (i) *Ratchet*: per-rule violation
 counts must not exceed the committed ceiling file
 `tests/ux_canon_ceiling.json`; a regression names the rule, the delta,
 and the faces that rose.  (ii) *Hard zeros*: DS6 (accent rail) and A9
-(missing egress) must stay at 0; A1 (raw `<button>`) must stay within
-a named allowlist (4 residues with reasons).  (iii) *Healing*: when a
+(missing egress) must stay at 0; A1 (raw `<button>`) is held to a
+dated, down-only ratchet of 175, measured on 2026-09-17 by HS-200-44
+once the matcher could see a multi-line opening tag (the earlier "4
+residues" was an artifact of a per-line regex, not a fact about the
+code).  That number can only shrink; the ruling itself is unchanged:
+every verb is the library Button, and a raw `<button>` is a species
+bug that face stories pay down file by file.  (iii) *Healing*: when a
 count drops below the ceiling, the test passes with a notice to lower
 the ceiling.  To lower the ceiling after fixing violations, run:
 `python scripts/ux_canon_scan.py --write-ceiling tests/ux_canon_ceiling.json`.
+A ceiling only rises with a new `--ceiling-reason` in the same commit,
+and a plain scanner run writes nothing into the tree.
 
 **The census and the ratchet.** The scanner (`scripts/ux_canon_scan.py`)
 reads every file under `web/src` and counts violations per rule and per

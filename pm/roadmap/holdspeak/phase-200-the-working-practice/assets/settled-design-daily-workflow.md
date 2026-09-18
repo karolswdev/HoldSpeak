@@ -1424,3 +1424,32 @@ element each, three to five type steps each, every board exactly 1440
 or 393, zero counters of zero, 275 buttons and 0 unlabelled (318 accessible names, the surplus being the `role="group"` regions).** Board
 heights: 900--1130 for the 1440 desk boards (1520 for `Library`); the
 393 boards run 762 to 1085.
+
+## Addendum 4 -- the owner's verdict (2026-09-18): PASS
+
+Given on the page *The Tuesday Verdict*
+(`https://claude.ai/code/artifact/8d7119f5-c6cf-4f89-9bfc-a67419077d8a`, the
+22 boards embedded, the six questions with the orchestrator's recommendations):
+**"OK I accept."** The recommendations therefore stand as his answers:
+
+| Q | Answer | Binds |
+|---|---|---|
+| 1 | Five, with ranking (overdue first, then reason class); `12 MORE · Show all` | HS-200-15 |
+| 2 | Coverage stays above the answer, as a head TOKEN where a sources ledger exists | HS-200-11, 15 |
+| 3 | `Write it myself` is DROPPED; the failed face refuses cleanly with the repair and keeps the purpose | HS-200-11 |
+| 4 | The recall minute stands and is measured on his data | HS-200-13 |
+| 5 | `ATTEMPT 2 · SAME JOB` and `ALREADY KEPT N` both stay; the count is a verb that opens the kept rows | HS-200-12 |
+| 6 | `Coverage incomplete` keeps its words, drawn in the warn tint, never danger | HS-200-11, 15 |
+
+With it, his second sentence, which is the steering for everything after:
+*"I certainly want you to manage the orchestration process a lot more
+efficiently - to push this product to the full usability it has promised to
+me."* Stories 11--15 are unblocked and build in parallel lanes.
+
+Two things remain his to name and do not block the build: the pilot stream
+(the walk's beats 3--6 run on it) and the model route (the design places the
+choice beside the verb).
+
+One defect the render for the page found: `P2ArrivalPhone`'s filter row does
+not wrap and overruns 393 by 28 px, a horizontal scroll C1 forbids. Owed to
+HS-200-15's build, not redrawn here.
