@@ -346,7 +346,7 @@ def _run_ready_resolve_and_people(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
 
             # ── resolve: candidates under the row, no modal, the ledger's own write ──
             resolve = page.get_by_test_id("room-people-resolve-verb")
-            assert resolve.get_attribute("aria-label") == "Resolve — Priya"
+            assert resolve.get_attribute("aria-label") == "Resolve: Priya"
             resolve.click()
             page.get_by_test_id("room-people-resolve").wait_for(timeout=5000)
             _settle(page)

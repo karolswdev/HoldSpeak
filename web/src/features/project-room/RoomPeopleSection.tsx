@@ -1,14 +1,14 @@
-// HS-172-07 / HS-200-14 — PEOPLE section in the Room.
+// HS-172-07 / HS-200-14: PEOPLE section in the Room.
 //
 // 172-07 drew the people a Room's Watches name, resolved through the
 // ledger: monogram lead, display name as stored, `N PRS WAITING` /
 // `N ASSIGNMENTS OVERDUE` tokens absent at zero, `Open` trailing.
 //
 // 200-14 makes the section a preparation face inside the same boundary:
-//   * the caption is a typed partial — `PEOPLE 3` when every person the
+//   * the caption is a typed partial: `PEOPLE 3` when every person the
 //     Project names is linked, `PEOPLE 2 OF 3` when not, and the ledger's
 //     mono head line names the gaps (`1 AMBIGUOUS · 1 NOT LINKED`,
-//     `LOCKED`) — never an empty section over a known gap (AC5);
+//     `LOCKED`): never an empty section over a known gap (AC5);
 //   * a linked person's row opens on their commitments (story 12's
 //     records, `DUE`, the meeting and segment they came from, `Open
 //     source`) and their observable facts, each with its Watch (AC2);
@@ -113,7 +113,7 @@ export function ownerToken(row: Pick<RoomUnresolvedOwner, "link" | "candidates">
 }
 
 /** The one head verb: the repair while the ledger is not ready, else
- *  the way into People. Never both — they open the same door. */
+ *  the way into People. Never both: they open the same door. */
 export function headVerbLabel(state: RoomPeoplePreparation["state"]): string {
   if (state === "locked") return "Unlock";
   if (state === "unconfigured") return "Set up People";
@@ -193,7 +193,7 @@ function PersonDetail({
               <Button
                 dense
                 variant="ghost"
-                aria-label={`Open source — ${c.source.label}`}
+                aria-label={`Open source: ${c.source.label}`}
                 onClick={() => openPrimitive(`meeting:${c.source.meeting_id}`)}
                 data-testid="room-people-open-source"
               >
@@ -262,13 +262,13 @@ function ResolveWell({
   onElsewhere: (from: HTMLElement) => void;
 }) {
   return (
-    <div className="room-people-resolve" role="group" aria-label={`Resolve — ${row.owner}`} data-testid="room-people-resolve">
+    <div className="room-people-resolve" role="group" aria-label={`Resolve: ${row.owner}`} data-testid="room-people-resolve">
       {row.candidates.map((c) => (
         <Button
           key={c.relationship_id}
           dense
           disabled={busy}
-          aria-label={`Link — ${c.display_name}`}
+          aria-label={`Link: ${c.display_name}`}
           onClick={() => onPick(c.relationship_id)}
           data-testid="room-people-candidate"
         >
@@ -279,7 +279,7 @@ function ResolveWell({
         dense
         variant="ghost"
         disabled={busy}
-        aria-label="Someone else — open People"
+        aria-label="Someone else: open People"
         onClick={(e) => onElsewhere(e.currentTarget)}
         data-testid="room-people-elsewhere"
       >
@@ -362,7 +362,7 @@ export function RoomPeopleSection({
         <Button
           dense
           variant={prep.state === "ready" ? "ghost" : "secondary"}
-          aria-label={prep.state === "ready" ? "People — this Project's people" : `${verb} — the People ledger`}
+          aria-label={prep.state === "ready" ? "People: this Project's people" : `${verb}: the People ledger`}
           onClick={(e) => openPeople(e.currentTarget)}
           data-testid="room-people-head-verb"
         >
@@ -417,7 +417,7 @@ export function RoomPeopleSection({
                   <Button
                     dense
                     variant="ghost"
-                    aria-label={`Open — ${person.display_name}`}
+                    aria-label={`Open: ${person.display_name}`}
                     onClick={() => {
                       openSurfaceOr(
                         "open-people",
@@ -468,7 +468,7 @@ export function RoomPeopleSection({
                       dense
                       variant="secondary"
                       aria-pressed={isOpen}
-                      aria-label={`${verbLabel} — ${row.owner}`}
+                      aria-label={`${verbLabel}: ${row.owner}`}
                       onClick={(e) => {
                         if (row.candidates.length === 0) {
                           openPeople(e.currentTarget);

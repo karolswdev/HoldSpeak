@@ -116,17 +116,17 @@ describe("RoomPeopleSection (HS-200-14)", () => {
     expect(within(priyaRow).getByText("Confirm the freeze window")).toBeTruthy();
     expect(screen.queryByText("Priya Sharma")).toBeNull();
     // Resolve unfolds the candidates under the row; no dialog anywhere.
-    fireEvent.click(screen.getByRole("button", { name: "Resolve — Priya" }));
+    fireEvent.click(screen.getByRole("button", { name: "Resolve: Priya" }));
     const well = screen.getByTestId("room-people-resolve");
-    expect(within(well).getByRole("button", { name: "Link — Priya Sharma" })).toBeTruthy();
-    expect(within(well).getByRole("button", { name: "Link — Priya Nair" })).toBeTruthy();
+    expect(within(well).getByRole("button", { name: "Link: Priya Sharma" })).toBeTruthy();
+    expect(within(well).getByRole("button", { name: "Link: Priya Nair" })).toBeTruthy();
     expect(document.querySelector("[role='dialog']")).toBeNull();
     // A pick links the alias through the ledger's own write, then re-reads.
     apiFetch.mockResolvedValueOnce({});
     apiFetch.mockResolvedValueOnce(prep({ expected: 3, resolved: 2, gaps: { ambiguous: 0, not_linked: 1, unreadable: 0 }, people: [
       { relationship_id: "rel-sharma", display_name: "Priya Sharma", link: "linked", commitments: [commitment], facts: [] },
     ], unresolved: [{ owner: "Zbigniew", link: "not_linked", commitments: [], candidates: [] }] }));
-    fireEvent.click(within(well).getByRole("button", { name: "Link — Priya Sharma" }));
+    fireEvent.click(within(well).getByRole("button", { name: "Link: Priya Sharma" }));
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
       "/api/people/relationships/rel-sharma/owner-aliases",
       expect.objectContaining({ method: "POST", json: { alias: "Priya" } }),
@@ -147,7 +147,7 @@ describe("RoomPeopleSection (HS-200-14)", () => {
     expect(within(commitmentRow).getByText("Own the PostgreSQL migration")).toBeTruthy();
     expect(within(commitmentRow).getByText("MTG · Architecture review · SEG 4")).toBeTruthy();
     expect(within(commitmentRow).getByText(/^DUE /)).toBeTruthy();
-    fireEvent.click(within(commitmentRow).getByRole("button", { name: "Open source — Architecture review" }));
+    fireEvent.click(within(commitmentRow).getByRole("button", { name: "Open source: Architecture review" }));
     expect(openPrimitive).toHaveBeenCalledWith("meeting:m1");
     const fact = within(row).getByTestId("room-people-fact");
     expect(within(fact).getByText("karolswdev/HoldSpeak")).toBeTruthy();
@@ -230,7 +230,7 @@ describe("RoomPeopleSection (HS-200-14)", () => {
     apiFetch.mockResolvedValueOnce(ready());
     render(<RoomPeopleSection projectId="p1" />);
     await screen.findByText("OWNER · NOT LINKED");
-    const link = screen.getByRole("button", { name: "Link — Zbigniew" });
+    const link = screen.getByRole("button", { name: "Link: Zbigniew" });
     fireEvent.click(link);
     expect(openSurfaceOr).toHaveBeenCalledWith("open-people", "/", "people:project:p1");
     expect(taskFocusPending()).toBe(true);
