@@ -64,7 +64,7 @@
 }
 .recall-results[data-dimmed] {
   opacity: 0.55;
-  transition: opacity 120ms ease;
+  transition: opacity var(--duration-short) ease;
 }
 .recall-section {
   min-width: 0;
