@@ -128,9 +128,10 @@ def _open_desk_memory(page: Any) -> None:
 
 
 def _search_verb(page: Any) -> Any:
-    """The face's own Search verb (the desk chrome has one too)."""
+    """The face's own Search verb (the desk chrome has one too).
+    HS-200-13: the recall face names it `Search desk memory`."""
     return page.locator(".desk-surface-window").get_by_role(
-        "button", name="Search", exact=True
+        "button", name="Search desk memory", exact=True
     )
 
 
@@ -270,7 +271,9 @@ def test_desk_memory_empty(tmp_path, monkeypatch, width, height):
             _open_desk_memory(page)
             _search(page, QUIET_QUERY)
 
-            page.get_by_text("No matches").first.wait_for(timeout=10000)
+            # HS-200-13: the miss reads `Nothing matches` (board P5RecallQuiet).
+            page.get_by_test_id("recall-miss").wait_for(timeout=10000)
+            assert page.get_by_test_id("recall-display").text_content() == "Nothing matches"
             assert page.locator(".desk-surface-window .surface-row").count() == 0
             assert _search_verb(page).count() == 1
 

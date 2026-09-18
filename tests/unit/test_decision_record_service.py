@@ -168,8 +168,9 @@ def test_supersede_seals_predecessor_and_preserves_both_records(tmp_path):
     )
     service.link_work(None, predecessor["id"], "project", "HS-127")
 
+    # HS-200-13: supersede is a DECIDE act; the owner does it.
     sealed = service.supersede(
-        None, predecessor["id"], successor["id"], "Requirements changed."
+        Principal(PrincipalKind.OWNER, "owner"), predecessor["id"], successor["id"], "Requirements changed."
     )
     loaded_successor = service.get(None, successor["id"])
 

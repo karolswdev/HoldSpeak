@@ -301,6 +301,7 @@ class ProposalBridgeService:
         speaker: Any,
         owner_hint: Any = None,
         due_hint: Any = None,
+        rationale: Any = None,
     ) -> Optional[Proposal]:
         evidence = locate_evidence(
             segments, text, timestamp, meeting_id=meeting_id, revision=revision,
@@ -337,6 +338,7 @@ class ProposalBridgeService:
             segment_index=evidence.segment_index,
             support=evidence.support,
             support_record=evidence.record,
+            rationale=str(rationale).strip() if isinstance(rationale, str) and rationale.strip() else None,
         )
 
     def _bridge_decision_artifact(
@@ -368,6 +370,9 @@ class ProposalBridgeService:
                 segments=segments, revision=revision, provenance=provenance,
                 span_ordinals=span_ordinals, job=job,
                 timestamp=dec.get("source_timestamp"), speaker=dec.get("speaker"),
+                # HS-200-13 (AC1): the plugin's `rationale` rides with the
+                # proposal so the confirmed record can say WHY.
+                rationale=dec.get("rationale"),
             )
             if prop is not None:
                 created.append(prop)
@@ -666,10 +671,10 @@ class ProposalBridgeService:
                     source_timestamp, provenance_label, source_artifact_id,
                     source_meeting_id, project_key, lifecycle,
                     created_at, updated_at, last_modified)
-                   VALUES (?, ?, '', ?, 'meeting_date', ?, ?, ?, ?, ?, 'accepted',
+                   VALUES (?, ?, ?, ?, 'meeting_date', ?, ?, ?, ?, ?, 'accepted',
                            ?, ?, ?)""",
                 (
-                    decision_id, final_text, now,
+                    decision_id, final_text, proposal.rationale or "", now,
                     proposal.span_start if anchored else proposal.segment_timestamp,
                     "anchored" if anchored else "reported",
                     proposal.source_artifact_id or "",
@@ -685,9 +690,9 @@ class ProposalBridgeService:
                    (id, decision_text, rationale, alternatives, owner,
                     review_date, lifecycle, source_type, source_id,
                     created_at, updated_at)
-                   VALUES (?, ?, '', '', ?, '', 'active', 'meeting', ?,
+                   VALUES (?, ?, ?, '', ?, '', 'active', 'meeting', ?,
                            ?, ?)""",
-                (record_id, final_text, final_owner, decision_id, now, now),
+                (record_id, final_text, proposal.rationale or "", final_owner, decision_id, now, now),
             )
 
             # 3. decision_record_sources: the meeting (what every Room read
@@ -1073,6 +1078,7 @@ class ProposalBridgeService:
             "state": p.state,
             "original_text": p.original_text,
             "decision_record_id": p.decision_record_id,
+            "rationale": p.rationale,
             "commitment_id": p.commitment_id,
             "created_at": p.created_at,
             "decided_at": p.decided_at,

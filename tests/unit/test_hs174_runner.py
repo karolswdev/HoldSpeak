@@ -430,7 +430,8 @@ class TestDeskNotificationMeshEvent:
             3, 1,
             edge=edge,
             quiet_hours_start=0,
-            quiet_hours_end=23,  # always quiet
+            quiet_hours_end=23,  # quiet for the injected noon (the wall clock is 23:xx once a day)
+            now=__import__("datetime").datetime(2026, 1, 1, 12, 0),
             mesh_event_writer=events.append,
             _notifier=lambda *a, **kw: True,
         )

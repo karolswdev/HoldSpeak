@@ -52,6 +52,8 @@ class Proposal:
     owner_supplied: Optional[str] = None
     due_supplied: Optional[str] = None
     edited_at: Optional[str] = None
+    # HS-200-13: the extractor's rationale, carried through confirm (AC1).
+    rationale: Optional[str] = None
 
     @property
     def owner(self) -> Optional[str]:
@@ -101,6 +103,7 @@ class ProposalRepository(BaseRepository):
         segment_index: Optional[int] = None,
         support: str = "unknown",
         support_record: Optional[dict[str, Any]] = None,
+        rationale: Optional[str] = None,
     ) -> Optional[Proposal]:
         """Insert a proposal; returns None when its identity already exists.
 
@@ -137,9 +140,9 @@ class ProposalRepository(BaseRepository):
                     fingerprint, state, original_text, created_at,
                     retry_key, extraction_revision, job_id, job_attempt,
                     extraction_model, span_start, span_end, segment_index,
-                    support, support_record_json)
+                    support, support_record_json, rationale)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'proposed', ?, ?,
-                           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     proposal_id, meeting_id, project_id, kind, text,
                     owner_hint, due_hint, source_artifact_id, source_plugin,
@@ -148,6 +151,7 @@ class ProposalRepository(BaseRepository):
                     retry_key, extraction_revision, job_id, job_attempt,
                     extraction_model, span_start, span_end, segment_index,
                     support, json.dumps(support_record) if support_record else None,
+                    (str(rationale).strip() or None) if rationale else None,
                 ),
             )
         return Proposal(
@@ -180,6 +184,7 @@ class ProposalRepository(BaseRepository):
             segment_index=segment_index,
             support=support,
             support_record=dict(support_record) if support_record else None,
+            rationale=(str(rationale).strip() or None) if rationale else None,
         )
 
     def edit_proposal(
@@ -415,6 +420,7 @@ class ProposalRepository(BaseRepository):
             owner_supplied=_opt_str(row, "owner_supplied"),
             due_supplied=_opt_str(row, "due_supplied"),
             edited_at=_opt_str(row, "edited_at"),
+            rationale=_opt_str(row, "rationale"),
         )
 
 

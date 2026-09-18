@@ -29,6 +29,7 @@ import {
   LedgerRemainder,
   countLabel,
   countToken,
+  StringGadget,
 } from "../surface";
 import { openIntelligence } from "../intelligenceNavigation";
 import { readCoverage, type CoverageRecord } from "../coverage";
@@ -82,6 +83,14 @@ interface NeedsYouItem {
   rank?: number;
   sources?: AttentionSource[];
   dedupCount?: number;
+  /** HS-200-13: a commitment row's verbs write to its action item; the
+   *  producer names the typed unknowns and the ONE lawful next action. */
+  commitmentId?: string;
+  actionItemId?: string | null;
+  owner?: string | null;
+  unknowns?: string[];
+  nextAction?: "name_owner" | "set_date" | "mark_done" | null;
+  decisionRecordId?: string | null;
 }
 
 interface NeedsYouPayload {
@@ -229,7 +238,7 @@ function doorCardsToItems(
       why = days > 0 ? `OVERDUE · ${days}D` : "OVERDUE";
       severity = "danger";
     } else if (column === "now") {
-      // HS-200-15: the Door's `now` column is what is due now — the
+      // HS-200-15: the Door's `now` column is what is due now: the
       // DUE TODAY class of the ranking key.
       why = "DUE TODAY";
       severity = "warning";
@@ -275,7 +284,7 @@ function whySeverityTone(severity: string): string {
   return "idle";
 }
 
-/** Headline for the arrival — zero = "Nothing needs you" (UX-CANON A8).
+/** Headline for the arrival: zero = "Nothing needs you" (UX-CANON A8).
  *  HS-200-07 (C4): the all-clear line is spoken ONLY over complete
  *  coverage; an empty PARTIAL result names the coverage instead.
  *  HS-200-15 (verdict): the display line is the TRUE total; the Project
@@ -428,7 +437,7 @@ function Arrival() {
   // frame (the same one the ambient HUD chip reads) now carries the hub
   // drainer's state, so "queued with nothing to run it" is a durable fact on
   // the row rather than a sub-second flash of the click receipt. `null` means
-  // no frame has arrived yet — unknown, and never reported as absent.
+  // no frame has arrived yet: unknown, and never reported as absent.
   const queueFrame = useRuntimeFrame<{ drainer?: string }>("runtime_queue");
   const drainerAbsent = queueFrame?.drainer === "absent";
 
@@ -460,10 +469,21 @@ function Arrival() {
     finally { setGenerating(false); }
   };
 
+  const roomItems = needsYou?.items ?? [];
+
   // ── merge door items into needs-you ──
   const doorItems = useMemo(() => {
     if (!door) return [];
     const board = door.board ?? {};
+    // HS-200-13 (AC3): a commitment the Room already emits as an attention
+    // row (source `commitment`, with its Project and its next action) is
+    // the same action item the Door's board projects; the Room's row wins
+    // and the Door's card for it is not drawn a second time.
+    const covered = new Set(
+      roomItems
+        .filter((item) => item.source === "commitment" && item.actionItemId)
+        .map((item) => String(item.actionItemId)),
+    );
     // Order: overdue first, then now, then waiting, then unassigned.
     // Active items do not appear.
     return [
@@ -471,16 +491,14 @@ function Arrival() {
       ...doorCardsToItems("now", board.now ?? []),
       ...doorCardsToItems("waiting", board.waiting ?? []),
       ...doorCardsToItems("unassigned", board.unassigned ?? []),
-    ];
-  }, [door]);
-
-  const roomItems = needsYou?.items ?? [];
+    ].filter((item) => !covered.has(String(item.ref)));
+  }, [door, roomItems]);
   // HS-200-15: ONE clock per render for every age and OBSERVED token.
   const now = useMemo(() => new Date(), [needsYou, door]);
   // HS-171: separate muted from unmuted; muted render dimmed at the end.
   // HS-200-15 (AC2, AC3): the merged rows are deduplicated (one obligation,
   // one row, its sources traceable) and RANKED by the five-class key —
-  // overdue, due today, not run, no due date, waiting — never by severity.
+  // overdue, due today, not run, no due date, waiting: never by severity.
   const { unmutedItems, mutedItems } = useMemo(() => {
     const merged = rankAttention(dedupAttention([...doorItems, ...roomItems], now), now);
     const unmuted: NeedsYouItem[] = [];
@@ -620,7 +638,7 @@ function Arrival() {
   // story-42 walk caught the Chair reading QUEUED while the Meetings window
   // read RUNNING at the same instant. The moment the server's own status for
   // that meeting leaves `off`, the receipt is dropped and the badge follows
-  // the server — which is also what puts the verb back after a failed job
+  // the server: which is also what puts the verb back after a failed job
   // that returns to an off-with-transcript row.
   useEffect(() => {
     if (!intelReceipt) return;
@@ -732,7 +750,7 @@ function Arrival() {
         {next ? (
           <p className="arrival-next" data-testid="arrival-next">{next}</p>
         ) : null}
-        {/* HS-200-15: the head token row — the ranking key stated on the
+        {/* HS-200-15: the head token row: the ranking key stated on the
             face (a real filter strip, one tap per class), the coverage
             chip when coverage is complete, the calendar state. One
             wrapping line: nothing here ever scrolls sideways. */}
@@ -832,6 +850,7 @@ function Arrival() {
             now={now}
             onProposalConfirm={handleProposalConfirm}
             onOpenProject={openProject}
+            onCommitmentChanged={() => void readNeedsYou(true)}
           />
         </div>
       ) : null}
@@ -847,6 +866,7 @@ function Arrival() {
             muted
             onProposalConfirm={handleProposalConfirm}
             onOpenProject={openProject}
+            onCommitmentChanged={() => void readNeedsYou(true)}
           />
         </div>
       ) : null}
@@ -954,6 +974,7 @@ function NeedsYouSection({
   muted = false,
   onProposalConfirm,
   onOpenProject,
+  onCommitmentChanged,
 }: {
   /** The ranked rows (already deduplicated). */
   items: NeedsYouItem[];
@@ -964,6 +985,7 @@ function NeedsYouSection({
   muted?: boolean;
   onProposalConfirm?: (proposalId: string) => void;
   onOpenProject: (projectId: string) => void;
+  onCommitmentChanged?: () => void;
 }) {
   // HS-200-15 (verdict Q1): five in the first view; the rest reveal IN
   // PLACE behind `N MORE · Show all`. The caption carries the cap
@@ -1010,6 +1032,7 @@ function NeedsYouSection({
                 multipleProjects={multipleProjects}
                 onProposalConfirm={onProposalConfirm}
                 onOpenProject={onOpenProject}
+                onCommitmentChanged={onCommitmentChanged}
               />
             ))}
           </SurfaceLedger>
@@ -1038,6 +1061,7 @@ function NeedsYouRow({
   multipleProjects,
   onProposalConfirm,
   onOpenProject,
+  onCommitmentChanged,
 }: {
   item: NeedsYouItem;
   now: Date;
@@ -1046,11 +1070,49 @@ function NeedsYouRow({
   multipleProjects: boolean;
   onProposalConfirm?: (proposalId: string) => void;
   onOpenProject: (projectId: string) => void;
+  /** HS-200-13: a commitment's owner or date was written; re-read the aggregate. */
+  onCommitmentChanged?: () => void;
 }) {
   // The `N SOURCES` body lives in the row's own expansion slot beneath the
   // line (full width at both viewports); the Disclosure is its trigger.
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const sourcesId = `arrival-sources-${(item.id ?? item.ref ?? "").replace(/[^A-Za-z0-9_-]/g, "_")}`;
+  // HS-200-13 (counsel P2): a commitment row's `Name an owner` / `Set a
+  // date` unfold an in-place well under the row -- no detour, no modal.
+  const [commitWell, setCommitWell] = useState<"owner" | "date" | null>(null);
+  const [commitDraft, setCommitDraft] = useState("");
+  const [commitBusy, setCommitBusy] = useState(false);
+  const [commitResult, setCommitResult] = useState<{ owner?: string | null; dueAt?: string | null }>({});
+  const saveCommit = async () => {
+    const value = commitDraft.trim();
+    if (!value || !item.actionItemId || commitBusy) return;
+    setCommitBusy(true);
+    const verb = commitWell === "owner" ? "delegate" : "due";
+    try {
+      await apiFetch("/api/follow-through/complete", {
+        method: "POST",
+        json: { card_id: item.actionItemId, verb, payload: verb === "delegate" ? { to: value } : { due_at: value } },
+      });
+      setCommitResult((prev) => (verb === "delegate" ? { ...prev, owner: value } : { ...prev, dueAt: value }));
+      setCommitWell(null);
+      setCommitDraft("");
+      clearWriteFailure();
+      onCommitmentChanged?.();
+    } catch (error) {
+      reportWriteFailure(verb === "delegate" ? "Name an owner" : "Set a date", error, () => void saveCommit());
+    } finally { setCommitBusy(false); }
+  };
+  // The row reflects what it just wrote until the arrival re-reads.
+  const rowItem: NeedsYouItem = {
+    ...item,
+    ...(commitResult.owner !== undefined ? { owner: commitResult.owner, unknowns: (item.unknowns ?? []).filter((u) => u !== "owner") } : {}),
+    ...(commitResult.dueAt !== undefined ? { dueAt: commitResult.dueAt, unknowns: (item.unknowns ?? []).filter((u) => u !== "due") } : {}),
+  };
+  if (commitResult.owner !== undefined || commitResult.dueAt !== undefined) {
+    rowItem.nextAction = (rowItem.unknowns ?? []).includes("owner") ? "name_owner"
+      : (rowItem.unknowns ?? []).includes("due") ? "set_date" : "mark_done";
+    if (commitResult.owner) rowItem.why = rowItem.dueAt ? rowItem.why : "DUE · UNKNOWN";
+  }
   const ext = item as NeedsYouItem & { _isDoor?: boolean; _isUnassigned?: boolean; _doorCard?: DoorCard };
   const isDoor = ext._isDoor === true;
   const isUnassigned = ext._isUnassigned === true;
@@ -1062,7 +1124,7 @@ function NeedsYouRow({
   const sources = item.sources ?? [];
   const cls = rankClassOf(item, now);
   // The reason token wears the class ink: overdue is danger, due today
-  // is warning, the rest muted — severity rides the token, never the order.
+  // is warning, the rest muted: severity rides the token, never the order.
   const tone =
     cls === "overdue" ? "failure"
     : cls === "due_today" ? "warning"
@@ -1146,19 +1208,51 @@ function NeedsYouRow({
       }
       trailing={
         <NeedsYouRowVerbs
-          item={item}
+          item={rowItem}
           isDoor={isDoor}
           isUnassigned={isUnassigned}
           doorCard={ext._doorCard}
           primary={primary}
           onProposalConfirm={onProposalConfirm}
+          commitWell={commitWell}
+          onCommitWell={(well) => { setCommitDraft(""); setCommitWell(well); }}
         />
       }
       wrap
       expands={false}
-      open={sourcesOpen && sources.length > 1}
+      open={(sourcesOpen && sources.length > 1) || commitWell !== null}
       data-testid={isProposal ? "arrival-proposal-row" : "arrival-needs-you-row"}
     >
+      {commitWell ? (
+        <div
+          className="arrival-commit-well"
+          role="region"
+          aria-label={`${commitWell === "owner" ? "Owner" : "Due"}: ${item.title}`}
+          data-testid="arrival-commit-well"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") { event.stopPropagation(); setCommitWell(null); }
+          }}
+        >
+          <StringGadget
+            label={commitWell === "owner" ? "Owner" : "Due"}
+            type={commitWell === "owner" ? "text" : "date"}
+            value={commitDraft}
+            onChange={setCommitDraft}
+            autoFocus
+            onKeyDown={(event) => { if (event.key === "Enter") void saveCommit(); }}
+          />
+          <Button
+            dense
+            variant="secondary"
+            disabled={!commitDraft.trim() || commitBusy}
+            aria-label={commitWell === "owner" ? `Save owner: ${item.title}` : `Save date: ${item.title}`}
+            data-testid="arrival-commit-save"
+            onClick={() => void saveCommit()}
+          >
+            Save
+          </Button>
+        </div>
+      ) : null}
       {sources.length > 1 ? (
         <div
           id={sourcesId}
@@ -1246,18 +1340,69 @@ function NeedsYouRowVerbs({
   doorCard,
   primary = false,
   onProposalConfirm,
+  commitWell = null,
+  onCommitWell,
 }: {
   item: NeedsYouItem;
   isDoor: boolean;
   isUnassigned: boolean;
   doorCard?: DoorCard;
-  /** HS-200-15: ONE filled primary per face — the top-ranked row's verb. */
+  /** HS-200-15: ONE filled primary per face: the top-ranked row's verb. */
   primary?: boolean;
   onProposalConfirm?: (proposalId: string) => void;
+  /** HS-200-13: the row's open in-place well (owner / date) and its toggle. */
+  commitWell?: "owner" | "date" | null;
+  onCommitWell?: (well: "owner" | "date" | null) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const lead = primary ? "primary" : "ghost";
+
+  // HS-200-13 (AC3/AC4): a commitment row carries ONE lawful next action.
+  // `Mark done` is the explicit act (receipted by the service); naming an
+  // owner or setting a date happens on the Desk memory face, where the
+  // well unfolds under the row -- never here as a modal.
+  if (item.source === "commitment" && item.actionItemId) {
+    const next = item.nextAction
+      ?? (item.unknowns?.includes("owner") ? "name_owner"
+        : item.unknowns?.includes("due") ? "set_date" : "mark_done");
+    const label = next === "name_owner" ? "Name an owner" : next === "set_date" ? "Set a date" : "Mark done";
+    const markDone = async () => {
+      if (busy) return;
+      setBusy(true);
+      try {
+        await apiFetch("/api/follow-through/complete", {
+          method: "POST",
+          json: { card_id: item.actionItemId, verb: "done", payload: {} },
+        });
+        setDone(true);
+        clearWriteFailure();
+      } catch (error) {
+        reportWriteFailure("Mark done", error, () => void markDone());
+      } finally { setBusy(false); }
+    };
+    if (done) return null;
+    // Counsel P2 ruling: no detour.  `Name an owner` / `Set a date` unfold
+    // the row's own well (the expansion slot beneath the line); `Mark done`
+    // is the row's act.
+    return (
+      <Button
+        variant={lead}
+        dense
+        disabled={busy}
+        aria-label={`${label}: ${item.title}`}
+        aria-expanded={next !== "mark_done" ? Boolean(commitWell) : undefined}
+        data-testid="arrival-commitment-verb"
+        data-next-action={next}
+        onClick={() => {
+          if (next === "mark_done") { void markDone(); return; }
+          onCommitWell?.(commitWell ? null : next === "name_owner" ? "owner" : "date");
+        }}
+      >
+        {busy ? "..." : label}
+      </Button>
+    );
+  }
 
   if (isUnassigned) {
     return (
@@ -1529,7 +1674,7 @@ function MeetingsSection({
         {sorted.map((m) => {
           const receipt = intelReceipt?.meetingId === m.id ? intelReceipt : null;
           // HS-200-42 (counsel F1): the honest surface is the BADGE. The verb
-          // label could never carry the drainer fact — the moment a receipt
+          // label could never carry the drainer fact: the moment a receipt
           // exists the row is no longer OFF and the verb leaves the DOM (the
           // story-42 walk shot both worlds and got identical pixels). A queued
           // job with nothing to execute it says so here, in the badge species'

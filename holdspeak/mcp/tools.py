@@ -407,7 +407,7 @@ TOOLS.extend([
         "Apply a completion verb to a Follow-Through action card.",
         {
             "card_id": {"type": "string", "description": "Action card identifier."},
-            "verb": {"type": "string", "enum": ["done", "dismiss", "snooze", "delegate", "reopen"], "description": "Write-through board verb."},
+            "verb": {"type": "string", "enum": ["done", "dismiss", "snooze", "delegate", "reopen", "due"], "description": "Write-through board verb (`due` sets payload.due_at, HS-200-13)."},
             "payload": {"type": "object", "description": "Verb data: until for snooze, to for delegate."},
         },
         ["card_id", "verb"],
@@ -794,13 +794,15 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         # HS-200-07 (C4): ONE owner of the aggregate shape.  The inline
         # copy that lived here skipped a failed Room silently, so an
         # unobserved source read as an all-clear on this surface.
-        from holdspeak.services.needs_you_aggregate import build_aggregate
+        from holdspeak.services.needs_you_aggregate import build_aggregate, shared_last_known
         from holdspeak.services.project_service import ProjectService
         project_service = ProjectService(db, observer=obs)
         return build_aggregate(
             list_projects=project_service.list_projects,
             room=project_service.room,
             principal=principal,
+            # HS-200-13 (counsel P1-4): ONE last-known store with the hub.
+            last_known=shared_last_known(lambda: db),
         )
     if name == "settings.hub":
         from holdspeak.config import Config, CONFIG_FILE

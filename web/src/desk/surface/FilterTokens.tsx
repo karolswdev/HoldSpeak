@@ -35,6 +35,9 @@ export type FilterTokenOption = {
   value: string;
   /** The token as the face reads it — a caption-step word, never a sentence. */
   label: string;
+  /** HS-200-13: an accessible name richer than the visible label
+   *  (`Filter — Decisions` over `Decisions`), when the face names it. */
+  ariaLabel?: string;
 };
 
 export function FilterTokens({
@@ -65,6 +68,7 @@ export function FilterTokens({
             className="surface-filter-token"
             data-filter-active={active || undefined}
             aria-pressed={active}
+            aria-label={option.ariaLabel}
             onClick={() => onChange(option.value)}
           >
             {option.label}

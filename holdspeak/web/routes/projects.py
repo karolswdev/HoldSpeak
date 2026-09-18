@@ -510,11 +510,21 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
 
     # ── HS-170-04 / HS-171-03: desk needs-you aggregate (cached) ────────
 
-    from ...services.needs_you_aggregate import NeedsYouCache, build_aggregate
+    from ...services.needs_you_aggregate import NeedsYouCache, build_aggregate, shared_last_known
 
     # The owner principal for background rebuilds (the cache builder runs
     # outside a request context).
     _owner_principal = UNAUTHENTICATED  # will be replaced on first request
+
+    def _get_db():
+        from ...db import get_database
+        return get_database()
+
+    # HS-200-13 (AC5): the ONE durable last-known store (shared with the
+    # heartbeat and the sidecar through the composition root), so a restart
+    # replays what a failed source last said.
+    _last_known = shared_last_known(_get_db)
+    ctx.needs_you_last_known = _last_known  # type: ignore[attr-defined]
 
     def _build_needs_you() -> dict:
         door = ctx.door_service
@@ -524,6 +534,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             room=service.room,
             principal=_owner_principal,
             door_upcoming=door_upcoming,
+            last_known=_last_known,
         )
         # M1 (counsel): apply the mute list from heartbeat settings so
         # the route's count matches the notification edge count (one count
@@ -554,10 +565,6 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
                 {str(i.get("projectId")) for i in unmuted if i.get("projectId")}
             )
         return aggregate
-
-    def _get_db():
-        from ...db import get_database
-        return get_database()
 
     _needs_you_cache = NeedsYouCache(
         _build_needs_you, max_age_s=900.0, db_factory=_get_db,

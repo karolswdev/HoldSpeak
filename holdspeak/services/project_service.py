@@ -859,6 +859,17 @@ class ProjectService:
         except Exception:
             pass
 
+        # HS-200-13 (AC3): the Room's open commitments are attention items.
+        # HS-200-15 built the `commitment` source, the `CMT` emblem and the
+        # due-driven rank class against synthetic rows; this is the real
+        # producer.  Each row carries its typed unknowns and ONE lawful next
+        # action (name an owner, set a date, or -- only when both are known
+        # -- mark it done).  Nothing here can complete a commitment (AC4).
+        try:
+            needs.extend(self._room_commitment_items(project_id, now))
+        except Exception as exc:
+            _log.warning("room commitments as attention failed for %s: %s", project_id, exc)
+
         # HS-173: review bottleneck items (resolved reviewers whose median
         # exceeds the threshold get a NEEDS YOU row).
         try:
@@ -906,6 +917,110 @@ class ProjectService:
         ))
 
         return {"items": needs, "count": len(needs)}
+
+    #: HS-200-13: the commitment states that are still owed.  `closed` is
+    #: what `FollowThroughService.complete` writes on done/dismiss;
+    #: `completed` is the People vocabulary the Room read already excluded.
+    _COMMITMENT_SETTLED = frozenset({"closed", "completed", "done", "dismissed"})
+
+    def _room_commitment_items(self, project_id: str, now: datetime) -> list[dict[str, Any]]:
+        """The Room's open commitments as attention rows (HS-200-13 AC3).
+
+        A commitment reaches a Room through its decision: ``decision_commitments
+        .decision_id`` -> ``decision_records.source_id`` -> a record whose
+        source meeting is linked to the Room (the same walk
+        ``_read_room_commitments`` makes), or a record filed on the Room as a
+        resource.  The obligation stands whether its decision is current or
+        superseded: a superseded decision's commitment is still owed until
+        someone says otherwise.
+        """
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                """SELECT c.id AS commitment_id, c.owner, c.due_at, c.status,
+                          c.created_at, c.updated_at, c.action_item_id,
+                          ai.task AS text, ai.status AS action_status,
+                          r.id AS record_id, r.lifecycle AS record_lifecycle,
+                          (SELECT p.kind FROM follow_through_proposals p
+                            WHERE p.commitment_id = c.id LIMIT 1) AS proposal_kind
+                   FROM decision_commitments c
+                   JOIN decision_records r ON r.source_id = c.decision_id AND r.deleted = 0
+                   LEFT JOIN action_items ai ON ai.id = c.action_item_id
+                   WHERE (
+                       EXISTS (SELECT 1 FROM decision_record_sources s
+                               JOIN meeting_projects mp ON mp.project_id = ?
+                               WHERE s.record_id = r.id AND s.source_type = 'meeting'
+                                 AND s.source_ref IN (mp.meeting_id, 'meeting:' || mp.meeting_id))
+                       OR EXISTS (SELECT 1 FROM project_resources pr
+                                  WHERE pr.project_id = ? AND pr.deleted = 0
+                                    AND pr.resource_ref = 'decision_record:' || r.id)
+                   )
+                   ORDER BY c.due_at ASC NULLS LAST, c.created_at ASC""",
+                (project_id, project_id),
+            ).fetchall()
+        items: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        today = now.date()
+        for row in rows:
+            cid = str(row["commitment_id"])
+            if cid in seen:
+                continue
+            seen.add(cid)
+            status = str(row["status"] or "open").lower()
+            action_status = str(row["action_status"] or "").lower()
+            if status in self._COMMITMENT_SETTLED or action_status in self._COMMITMENT_SETTLED:
+                continue
+            # HS-200-12's confirm mints a commitment row for a DECISION-kind
+            # proposal too; a decision is not an obligation and is never an
+            # attention row (the recall face applies the same rule).
+            if str(row["proposal_kind"] or "") == "decision":
+                continue
+            owner = (row["owner"] or "").strip() or None
+            due_at = (row["due_at"] or "").strip() or None
+            unknowns: list[str] = []
+            if not owner:
+                unknowns.append("owner")
+            if not due_at:
+                unknowns.append("due")
+            due_date = None
+            if due_at:
+                try:
+                    due_date = datetime.fromisoformat(due_at.replace("Z", "+00:00").split("T")[0]).date()
+                except (ValueError, TypeError):
+                    due_date = None
+            overdue_days = (today - due_date).days if due_date is not None else 0
+            # The reason token: the most urgent observable fact, once.
+            if due_date is not None and overdue_days > 0:
+                why, severity = f"OVERDUE · {overdue_days} D", "danger"
+            elif due_date is not None and overdue_days == 0:
+                why, severity = "DUE TODAY", "warning"
+            elif not owner:
+                why, severity = "OWNER · UNKNOWN", "warning"
+            elif not due_at:
+                why, severity = "DUE · UNKNOWN", "info"
+            else:
+                why, severity = f"WAITING ON {owner.upper()}", "info"
+            # ONE lawful next action (story 13 AC3/AC4): an unknown is named
+            # before anything can be marked done.
+            next_action = "name_owner" if not owner else ("set_date" if not due_at else "mark_done")
+            items.append({
+                "source": "commitment",
+                "kind": "commitment",
+                "title": str(row["text"] or "").strip() or "Untitled commitment",
+                "why": why,
+                "since": str(row["updated_at"] or row["created_at"] or ""),
+                "due_at": due_at,
+                "url": None,
+                "verb": next_action,
+                "severity": severity,
+                "commitment_id": cid,
+                "action_item_id": str(row["action_item_id"] or ""),
+                "decision_record_id": str(row["record_id"] or ""),
+                "decision_lifecycle": str(row["record_lifecycle"] or "active"),
+                "owner": owner,
+                "unknowns": unknowns,
+                "next_action": next_action,
+            })
+        return items
 
     def _get_github_owner_login(self) -> str | None:
         """Get the GitHub owner login from the connection service."""

@@ -191,7 +191,8 @@ class TestQuietHours:
             project_count=2,
             edge=edge,
             quiet_hours_start=0,
-            quiet_hours_end=23,   # always quiet
+            quiet_hours_end=23,   # quiet for the injected noon (the wall clock is 23:xx once a day)
+            now=__import__("datetime").datetime(2026, 1, 1, 12, 0),
             receipt_writer=lambda r: receipts.append(r),
             _notifier=lambda *a, **k: True,
         )

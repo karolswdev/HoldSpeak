@@ -122,6 +122,11 @@ class RuntimeServices:
     dictation_service: Optional[Any] = None        # journal_repository=
     people_service: Optional[Any] = None           # production People store
 
+    # --- attention (HS-200-13, counsel P1-4) ----------------------------
+    # The ONE durable last-known store the arrival route, the heartbeat and
+    # the MCP sidecar replay from (``needs_you_aggregate.shared_last_known``).
+    needs_you_last_known: Optional[Any] = None
+
     # --- inference -------------------------------------------------------
     inference_setup_service: Optional[Any] = None
     inference_acquisition_service: Optional[Any] = None
@@ -404,6 +409,7 @@ def services_from_web_context(
         "credential_service",
         "dictation_service",
         "people_service",
+        "needs_you_last_known",
         "refinement_coordinator",
         "refinement_service",
         "github_provider",
