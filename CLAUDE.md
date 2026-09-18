@@ -150,8 +150,9 @@ structural rules from pushed history alone — audit any range,
 no local contract needed.
 
 MCP-capable agents: prefer the MCP tools over shelling out —
-`.githooks/dw-mcp` (wired via `.mcp.json`) serves the same core as
-structured tools with identical refusals: orientation (`dw_context`,
+`.githooks/dw-mcp` (NOT wired in `.mcp.json`, which declares only the
+`holdspeak` server by intent; add it to your own client config) serves
+the same core as structured tools with identical refusals: orientation (`dw_context`,
 `dw_next`, `dw_check`, `dw_doctor`), verification (`dw_verify`,
 `dw_gate`), guarded mutations (`dw_story_status`,
 `dw_evidence_capture`, `dw_contract_new`). Certification is never a

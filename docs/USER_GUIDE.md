@@ -973,8 +973,9 @@ re-issue after a restart.
 
 ### What a remote caller can and cannot do
 
-A remote credential derives an `AGENT` principal, never `OWNER`. The owner's
-web token is refused on a non-loopback request. The caller may invoke only the
+A remote credential derives an `AGENT` principal, never `OWNER`. On
+`POST /api/mcp` the owner's web token is refused on a non-loopback request; no
+other route applies that refusal. The caller may invoke only the
 tool families named in its palette; calls outside the palette return a capability
 error. `X-Forwarded-For` is never read for principal
 derivation on any route.

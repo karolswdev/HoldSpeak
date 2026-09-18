@@ -50,8 +50,11 @@ stacking, dock chips, restoration).
    coexist; dive survives only as the context menu's Focus verb.
 3. Two views, one truth: Icons (the cell contract) and List (Name /
    Kind / Modified, sortable both ways). THE WINDOW REMEMBERS — view,
-   sort, direction per zone (`hs.desk.zone-views`), the open set
-   (`hs.desk.zone-windows`), rect via panels — and restores.
+   sort, direction per zone and the open set (`hs.desk.workspace.v1`),
+   rect via panels — and restores. The older `hs.desk.zone-views` /
+   `hs.desk.zone-windows` keys are retired: they survive in
+   `GHOST_LAYOUT_KEYS` so a reset still sweeps them, and nothing reads
+   them.
 4. Take out un-files through the real membership DELETE. Empty says
    "Empty".
 
