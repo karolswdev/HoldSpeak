@@ -4,7 +4,7 @@
 // The lane vocabulary is PARKED; the arrival composes directly from
 // the surface library and the needs-you wire.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chair } from "./Chair";
 import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
@@ -22,16 +22,30 @@ import {
   SurfaceLedgerRow,
   EgressChip,
   StateChip,
+  Disclosure,
+  FilterTokens,
+  CoverageLedger,
+  ProjectButton,
+  LedgerRemainder,
   countLabel,
   countToken,
 } from "../surface";
 import { openIntelligence } from "../intelligenceNavigation";
+import { readCoverage, type CoverageRecord } from "../coverage";
 import {
-  readCoverage,
-  observedToken,
-  sourceLabel,
-  type CoverageRecord,
-} from "../coverage";
+  ATTENTION_CAP,
+  RANK_CLASSES,
+  RANK_LABEL,
+  ageToken,
+  attentionCaption,
+  dedupAttention,
+  observedAtToken,
+  rankAttention,
+  rankClassOf,
+  reasonToken,
+  type AttentionSource,
+  type RankClass,
+} from "../attention";
 import { unfinishedThoughts, type UnfinishedThought } from "../thoughts";
 import type { Meeting } from "../../lib/primitives";
 
@@ -59,6 +73,15 @@ interface NeedsYouItem {
   id?: string;
   fromLastObservation?: boolean;
   observedAt?: string | null;
+  /** HS-200-15: the observable facts the ranking reads, the wire's
+   *  class, and the constituent projections of a deduplicated row. */
+  since?: string;
+  dueAt?: string | null;
+  kind?: string | null;
+  rankClass?: string;
+  rank?: number;
+  sources?: AttentionSource[];
+  dedupCount?: number;
 }
 
 interface NeedsYouPayload {
@@ -70,6 +93,8 @@ interface NeedsYouPayload {
   /** HS-200-07 (C4): one record per expected source. */
   coverage?: CoverageRecord[];
   complete?: boolean;
+  /** The aggregate's own clock (HS-171-03). */
+  computedAt?: string;
 }
 
 interface BriefItem {
@@ -177,7 +202,10 @@ function sourceEmblem(source: string): string {
   if (s === "github") return "GH";
   if (s === "jira") return "J";
   if (s === "delta") return "D";
-  if (s === "proposal") return "MTG";
+  if (s === "proposal" || s === "meeting" || s === "action_item") return "MTG";
+  if (s === "commitment") return "CMT";
+  if (s === "decision") return "DEC";
+  if (s === "thought") return "TH";
   return s.slice(0, 2).toUpperCase();
 }
 
@@ -201,7 +229,9 @@ function doorCardsToItems(
       why = days > 0 ? `OVERDUE · ${days}D` : "OVERDUE";
       severity = "danger";
     } else if (column === "now") {
-      why = "NOW";
+      // HS-200-15: the Door's `now` column is what is due now — the
+      // DUE TODAY class of the ranking key.
+      why = "DUE TODAY";
       severity = "warning";
     } else if (column === "waiting") {
       why = card.owner ? `WAITING ON ${card.owner.toUpperCase()}` : "WAITING";
@@ -211,12 +241,15 @@ function doorCardsToItems(
       severity = "warning";
     }
     return {
+      id: `door:${card.id}`,
       projectId: "",
       projectName: "",
       ref: card.id,
       title: card.title || card.text || "Untitled",
       why,
       ageToken: "",
+      since: "",
+      dueAt: card.due ?? null,
       source: card.source,
       verbHref: null,
       severity,
@@ -244,13 +277,14 @@ function whySeverityTone(severity: string): string {
 
 /** Headline for the arrival — zero = "Nothing needs you" (UX-CANON A8).
  *  HS-200-07 (C4): the all-clear line is spoken ONLY over complete
- *  coverage; an empty PARTIAL result names the coverage instead. */
-function headlineFor(count: number, projectCount: number, complete = true): string {
+ *  coverage; an empty PARTIAL result names the coverage instead.
+ *  HS-200-15 (verdict): the display line is the TRUE total; the Project
+ *  clause is withheld when there is exactly one Project (`3 need you`). */
+export function headlineFor(count: number, projectCount: number, complete = true): string {
   if (count <= 0) return complete ? "Nothing needs you" : "Coverage incomplete";
   const n = String(count);
-  if (projectCount > 0) {
-    const p = projectCount === 1 ? "project" : "projects";
-    return n + " need you across " + String(projectCount) + " " + p;
+  if (projectCount > 1) {
+    return n + " need you across " + String(projectCount) + " projects";
   }
   return n + " need you";
 }
@@ -441,11 +475,14 @@ function Arrival() {
   }, [door]);
 
   const roomItems = needsYou?.items ?? [];
+  // HS-200-15: ONE clock per render for every age and OBSERVED token.
+  const now = useMemo(() => new Date(), [needsYou, door]);
   // HS-171: separate muted from unmuted; muted render dimmed at the end.
+  // HS-200-15 (AC2, AC3): the merged rows are deduplicated (one obligation,
+  // one row, its sources traceable) and RANKED by the five-class key —
+  // overdue, due today, not run, no due date, waiting — never by severity.
   const { unmutedItems, mutedItems } = useMemo(() => {
-    const SEV: Record<string, number> = { danger: 0, warning: 1, info: 2 };
-    const merged = [...doorItems, ...roomItems];
-    merged.sort((a, b) => (SEV[a.severity] ?? 2) - (SEV[b.severity] ?? 2));
+    const merged = rankAttention(dedupAttention([...doorItems, ...roomItems], now), now);
     const unmuted: NeedsYouItem[] = [];
     const muted: NeedsYouItem[] = [];
     for (const item of merged) {
@@ -453,12 +490,17 @@ function Arrival() {
       else unmuted.push(item);
     }
     return { unmutedItems: unmuted, mutedItems: muted };
-  }, [doorItems, roomItems]);
+  }, [doorItems, roomItems, now]);
 
-  // ── headline: uses the wire's count (excludes muted) + door items ──
-  const count = (needsYou?.count ?? 0) + doorItems.length;
+  // ── the ranking filter (RANKED = the full key) ──
+  const [rankFilter, setRankFilter] = useState<"" | RankClass>("");
+
+  // ── headline: the TRUE total of what the arrival lists (unmuted) ──
+  const count = unmutedItems.length;
   const projectCount = needsYou?.projects?.length ?? 0;
-  const hasProjects = projectCount > 0;
+  // The way back is drawn on every row, withheld when the desk holds ONE
+  // Project (repeating one word on every row says nothing).
+  const multipleProjects = projectCount > 1;
   // HS-200-07: coverage decides whether zero may be spoken as an all-clear.
   const coverage = useMemo(
     () => readCoverage(needsYou?.coverage, needsYou?.complete, needsYouUnread),
@@ -467,6 +509,33 @@ function Arrival() {
   const headline = headlineFor(count, projectCount, coverage.complete);
   const headlineAccent = count > 0;
   const mutedCount = mutedItems.length > 0 ? mutedItems.length : 0;
+  // HS-200-15 (D1): the head states coverage only when it is COMPLETE;
+  // an incomplete read is stated by the COVERAGE section, once.
+  const coverageChip =
+    coverage.complete && coverage.expected > 0
+      ? `${coverage.available} OF ${coverage.expected} AVAILABLE`
+      : null;
+  const checkedAge = coverageChip ? ageToken(needsYou?.computedAt, now) : "";
+  const checkedToken = checkedAge
+    ? checkedAge === "JUST NOW" ? "CHECKED JUST NOW" : `CHECKED ${checkedAge} AGO`
+    : "";
+
+  const openProject = useCallback((projectId: string) => {
+    openSurfaceOr("project-room", "/projects", projectId);
+  }, []);
+
+  // The owning verb of a coverage gap: `Retry` re-reads the aggregate
+  // fresh; every other verb opens the source where its repair lives.
+  const repairCoverage = useCallback((gap: CoverageRecord) => {
+    const repair = gap.repair;
+    if (!repair) return;
+    if (repair.verb === "Retry") { void readNeedsYou(true); return; }
+    if (repair.href.startsWith("/settings")) {
+      openSurfaceOr("configure-settings", "/settings", "connections");
+      return;
+    }
+    openSurfaceOr("project-room", "/projects", gap.project_id ?? "");
+  }, [readNeedsYou]);
 
   // ── NEXT line: prefer door upcoming (schedule/calendar), fall back to rooms ──
   // HS-175-02: when the next item is a calendar_event with a Room link,
@@ -662,19 +731,53 @@ function Arrival() {
         </h1>
         {next ? (
           <p className="arrival-next" data-testid="arrival-next">{next}</p>
-        ) : !calendarConfigured ? (
-          <p className="arrival-next" data-testid="arrival-no-calendar">
-            <span className="arrival-no-calendar-token">NO CALENDAR</span>
-            {" "}
-            <Button
-              variant="ghost"
-              dense
-              onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}
-              data-testid="arrival-connect-calendar"
-            >
-              Connect calendar
-            </Button>
-          </p>
+        ) : null}
+        {/* HS-200-15: the head token row — the ranking key stated on the
+            face (a real filter strip, one tap per class), the coverage
+            chip when coverage is complete, the calendar state. One
+            wrapping line: nothing here ever scrolls sideways. */}
+        {count > 0 || coverageChip || (!next && !calendarConfigured) ? (
+          <div className="arrival-head-tokens" data-testid="arrival-head-tokens">
+            {count > 0 ? (
+              <FilterTokens
+                className="arrival-ranking"
+                label="Ranking"
+                value={rankFilter}
+                onChange={(next) => setRankFilter(next as "" | RankClass)}
+                options={[
+                  { value: "", label: "RANKED" },
+                  ...RANK_CLASSES.map((cls) => ({ value: cls, label: RANK_LABEL[cls] })),
+                ]}
+              />
+            ) : null}
+            {coverageChip ? (
+              <StateChip
+                state="success"
+                icon="●"
+                label={coverageChip}
+                data-testid="arrival-coverage-complete"
+              />
+            ) : null}
+            {checkedToken ? (
+              <span className="arrival-checked-token" data-testid="arrival-checked">
+                {checkedToken}
+              </span>
+            ) : null}
+            {!next && !calendarConfigured ? (
+              <span className="arrival-next" data-testid="arrival-no-calendar">
+                <span className="arrival-no-calendar-token">NO CALENDAR</span>
+                {" "}
+                <Button
+                  variant="ghost"
+                  dense
+                  onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}
+                  data-testid="arrival-connect-calendar"
+                >
+                  Connect calendar
+                </Button>
+              </span>
+            ) : null}
+          </div>
         ) : null}
         {isArming ? (
           <p className="arrival-arming" data-testid="arrival-arming">
@@ -701,24 +804,34 @@ function Arrival() {
         <WeekStripSection week={week} />
       ) : null}
 
-      {/* ── Coverage (HS-200-07 / C4): what was NOT observed ── */}
+      {/* ── Coverage (HS-200-07 / C4): what was NOT observed ──
+          HS-200-15: ABOVE the answer, as the library CoverageLedger; one
+          row per unreadable source with its reason, its token, its
+          observation time and its owning verb. */}
       {!coverage.complete ? (
         <div data-testid="arrival-coverage">
-          <CoverageSection
-            reading={coverage}
-            onRetry={() => void readNeedsYou(true)}
-          />
+          <SurfaceSection label={coverage.token ?? "COVERAGE"}>
+            <CoverageLedger
+              gaps={coverage.gaps}
+              onRepair={repairCoverage}
+              now={now}
+              rowTestId="arrival-coverage-row"
+            />
+          </SurfaceSection>
         </div>
       ) : null}
 
-      {/* ── Needs You (unmuted) ── */}
+      {/* ── Needs You (unmuted): five in the first view, the rest behind
+          `N MORE · Show all` ── */}
       {unmutedItems.length > 0 ? (
         <div data-testid="arrival-needs-you">
           <NeedsYouSection
             items={unmutedItems}
-            count={count}
-            multipleProjects={hasProjects}
+            filter={rankFilter}
+            multipleProjects={multipleProjects}
+            now={now}
             onProposalConfirm={handleProposalConfirm}
+            onOpenProject={openProject}
           />
         </div>
       ) : null}
@@ -728,10 +841,12 @@ function Arrival() {
         <div data-testid="arrival-muted" className="arrival-muted-section">
           <NeedsYouSection
             items={mutedItems}
-            count={mutedCount}
-            multipleProjects={hasProjects}
+            filter={rankFilter}
+            multipleProjects={multipleProjects}
+            now={now}
             muted
             onProposalConfirm={handleProposalConfirm}
+            onOpenProject={openProject}
           />
         </div>
       ) : null}
@@ -833,186 +948,293 @@ function Arrival() {
 
 function NeedsYouSection({
   items,
-  count,
+  filter = "",
   multipleProjects,
+  now,
   muted = false,
   onProposalConfirm,
+  onOpenProject,
 }: {
+  /** The ranked rows (already deduplicated). */
   items: NeedsYouItem[];
-  count: number;
+  /** The active class of the ranking strip; "" = the full key. */
+  filter?: "" | RankClass;
   multipleProjects: boolean;
+  now: Date;
   muted?: boolean;
   onProposalConfirm?: (proposalId: string) => void;
+  onOpenProject: (projectId: string) => void;
 }) {
+  // HS-200-15 (verdict Q1): five in the first view; the rest reveal IN
+  // PLACE behind `N MORE · Show all`. The caption carries the cap
+  // (`NEEDS YOU 5 OF 17`); the display line above carries the true total.
+  const [showAll, setShowAll] = useState(false);
+  const remainderRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => { setShowAll(false); }, [filter]);
+
+  const filtered = filter
+    ? items.filter((item) => rankClassOf(item, now) === filter)
+    : items;
+  const visible = showAll ? filtered : filtered.slice(0, ATTENTION_CAP);
+  // What the cap hides (the remainder row stays while expanded, as the
+  // way back).
+  const remaining = Math.max(0, filtered.length - ATTENTION_CAP);
+  const label = muted ? "MUTED" : "NEEDS YOU";
+
+  // Escape inside the revealed rows returns focus to the remainder verb.
+  const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape" && showAll) {
+      event.stopPropagation();
+      setShowAll(false);
+      window.setTimeout(() => remainderRef.current?.focus(), 0);
+    }
+  };
+
   return (
-    <SurfaceSection label={countLabel(muted ? "MUTED" : "NEEDS YOU", count)}>
-      <SurfaceLedger count={null} cols="room">
-        {items.map((item, i) => {
-          const ext = item as NeedsYouItem & { _isDoor?: boolean; _isUnassigned?: boolean; _doorCard?: DoorCard };
-          const isDoor = ext._isDoor === true;
-          const isUnassigned = ext._isUnassigned === true;
-          const isProposal = Boolean(item.proposalId);
-          const emblem = isDoor ? doorEmblem(item.source) : sourceEmblem(item.source);
-          const proposalPrefix = isProposal
-            ? (item.proposalKind === "decision" ? "Decide:" : "Confirm:")
-            : null;
-          return (
-            <SurfaceLedgerRow
-              key={`${item.projectId || "door"}-${item.ref || item.proposalId}-${i}`}
-              lead={
-                <span className="arrival-source-emblem" data-testid="arrival-source-emblem">
-                  {emblem}
-                </span>
-              }
-              primary={
-                isProposal ? (
-                  <span data-testid="arrival-proposal-text">
-                    <span className="arrival-proposal-prefix" data-testid="arrival-proposal-prefix">
-                      {proposalPrefix}
-                    </span>{" "}
-                    {item.title}
-                    {item.proposalDue ? ` · by ${item.proposalDue}` : null}
-                  </span>
-                ) : item.title
-              }
-              cells={
-                <span className="arrival-needs-you-meta">
-                  <span
-                    className="arrival-why-token"
-                    data-tone={isProposal ? undefined : whySeverityTone(item.severity)}
-                    data-testid="arrival-why"
-                  >
-                    {item.why}
-                  </span>
-                  {muted ? (
-                    <span className="arrival-project-token">MUTED</span>
-                  ) : null}
-                  {/* HS-200-07: a row kept from the last successful read
-                      of a source that has since failed says so. */}
-                  {item.fromLastObservation ? (
-                    <span
-                      className="arrival-project-token"
-                      data-testid="arrival-remembered"
-                    >
-                      {observedToken(item.observedAt)}
-                    </span>
-                  ) : null}
-                  {multipleProjects && item.projectName ? (
-                    <span className="arrival-project-token">{item.projectName}</span>
-                  ) : null}
-                </span>
-              }
-              trailing={
-                <NeedsYouRowVerbs
-                  item={item}
-                  isDoor={isDoor}
-                  isUnassigned={isUnassigned}
-                  doorCard={ext._doorCard}
-                  onProposalConfirm={onProposalConfirm}
-                />
-              }
-              wrap
-              expands={false}
-              data-testid={isProposal ? "arrival-proposal-row" : "arrival-needs-you-row"}
-            />
-          );
-        })}
-      </SurfaceLedger>
-    </SurfaceSection>
-  );
-}
-
-// ── HS-200-07 (C4): the coverage section ────────────────────────────
-//
-// One row per source that was not observed: its label, the repair token,
-// its observation time, and the OWNING verb as a library Button.
-// `Retry` re-reads the aggregate fresh; every other verb opens the source
-// where its repair lives.
-
-/** The emblem for a coverage row: what KIND of source went unobserved. */
-function coverageEmblem(kind: string): string {
-  if (kind === "watch") return "SRC";
-  if (kind === "meeting") return "MTG";
-  if (kind === "commitment") return "CMT";
-  return "RM";
-}
-
-function CoverageSection({
-  reading,
-  onRetry,
-}: {
-  reading: ReturnType<typeof readCoverage>;
-  onRetry: () => void;
-}) {
-  return (
-    <SurfaceSection label={reading.token ?? "COVERAGE"}>
-      <SurfaceLedger count={null} cols="room">
-        {reading.gaps.map((gap) => (
-          <SurfaceLedgerRow
-            key={gap.source_id}
-            lead={
-              <span className="arrival-source-emblem" data-testid="arrival-source-emblem">
-                {coverageEmblem(gap.kind)}
-              </span>
-            }
-            primary={sourceLabel(gap)}
-            cells={
-              <span className="arrival-needs-you-meta">
-                <span
-                  className="arrival-why-token"
-                  data-tone={gap.state === "stale" ? "warning" : "failure"}
-                  data-testid="arrival-coverage-token"
-                >
-                  {gap.repair?.token ?? gap.state.toUpperCase()}
-                </span>
-                <span className="arrival-project-token" data-testid="arrival-coverage-observed">
-                  {observedToken(gap.observed_at)}
-                </span>
-              </span>
-            }
-            trailing={<CoverageVerb gap={gap} onRetry={onRetry} />}
-            wrap
-            expands={false}
-            data-testid="arrival-coverage-row"
+    <SurfaceSection label={attentionCaption(visible.length, filtered.length, label)}>
+      {filtered.length === 0 && filter ? (
+        <span className="arrival-needs-you-none" data-testid="arrival-needs-you-none">
+          NOTHING {RANK_LABEL[filter]}
+        </span>
+      ) : (
+        <div onKeyDown={onKeyDown} data-testid={muted ? "arrival-muted-ledger" : "arrival-needs-you-ledger"}>
+          <SurfaceLedger count={null} cols="room">
+            {visible.map((item, i) => (
+              <NeedsYouRow
+                key={item.id ?? `${item.projectId || "door"}-${item.ref || item.proposalId}-${i}`}
+                item={item}
+                now={now}
+                muted={muted}
+                // One filled primary per face: the top-ranked row's verb.
+                primary={!muted && i === 0}
+                multipleProjects={multipleProjects}
+                onProposalConfirm={onProposalConfirm}
+                onOpenProject={onOpenProject}
+              />
+            ))}
+          </SurfaceLedger>
+          <LedgerRemainder
+            ref={remainderRef}
+            remaining={remaining}
+            expanded={showAll}
+            onToggle={() => setShowAll((open) => !open)}
+            data-testid={muted ? "arrival-muted-remainder" : "arrival-needs-you-remainder"}
           />
-        ))}
-      </SurfaceLedger>
+        </div>
+      )}
     </SurfaceSection>
   );
 }
 
-/** The owning verb for one coverage gap — always the library Button. */
-function CoverageVerb({
-  gap,
-  onRetry,
+/** ONE row grammar at both widths (design D2(b) §5): emblem · name ·
+ *  reason token · [STILL TRUE · OBSERVED hh:mm] · ProjectButton ·
+ *  [N SOURCES] · one verb. At 393 the meta wraps under the name; the
+ *  same object, the same verbs, the same rows. */
+function NeedsYouRow({
+  item,
+  now,
+  muted,
+  primary,
+  multipleProjects,
+  onProposalConfirm,
+  onOpenProject,
 }: {
-  gap: CoverageRecord;
-  onRetry: () => void;
+  item: NeedsYouItem;
+  now: Date;
+  muted: boolean;
+  primary: boolean;
+  multipleProjects: boolean;
+  onProposalConfirm?: (proposalId: string) => void;
+  onOpenProject: (projectId: string) => void;
 }) {
-  const repair = gap.repair;
-  if (!repair) return null;
-  const open = () => {
-    if (repair.verb === "Retry") { onRetry(); return; }
-    if (repair.href.startsWith("/settings")) {
-      openSurfaceOr("configure-settings", "/settings", "connections");
-      return;
-    }
-    if (gap.project_id) {
-      openSurfaceOr("project-room", "/projects", gap.project_id);
-      return;
-    }
-    openSurfaceOr("project-room", "/projects", "");
+  // The `N SOURCES` body lives in the row's own expansion slot beneath the
+  // line (full width at both viewports); the Disclosure is its trigger.
+  const [sourcesOpen, setSourcesOpen] = useState(false);
+  const sourcesId = `arrival-sources-${(item.id ?? item.ref ?? "").replace(/[^A-Za-z0-9_-]/g, "_")}`;
+  const ext = item as NeedsYouItem & { _isDoor?: boolean; _isUnassigned?: boolean; _doorCard?: DoorCard };
+  const isDoor = ext._isDoor === true;
+  const isUnassigned = ext._isUnassigned === true;
+  const isProposal = Boolean(item.proposalId);
+  const emblem = isDoor ? doorEmblem(item.source) : sourceEmblem(item.source);
+  const proposalPrefix = isProposal
+    ? (item.proposalKind === "decision" ? "Decide:" : "Confirm:")
+    : null;
+  const sources = item.sources ?? [];
+  const cls = rankClassOf(item, now);
+  // The reason token wears the class ink: overdue is danger, due today
+  // is warning, the rest muted — severity rides the token, never the order.
+  const tone =
+    cls === "overdue" ? "failure"
+    : cls === "due_today" ? "warning"
+    : isProposal ? undefined
+    : whySeverityTone(item.severity) === "idle" ? undefined
+    : whySeverityTone(item.severity);
+  // The cells hold verbs (the Project button, the sources disclosure): a
+  // key or click inside them must not reach the row line's own handler.
+  const swallow = (event: React.SyntheticEvent) => {
+    if (event.target !== event.currentTarget) event.stopPropagation();
   };
   return (
-    <Button
-      variant={repair.verb === "Retry" ? "primary" : "ghost"}
-      dense
-      onClick={open}
-      data-testid="arrival-coverage-verb"
+    <SurfaceLedgerRow
+      lead={
+        <span className="arrival-source-emblem" data-testid="arrival-source-emblem">
+          {emblem}
+        </span>
+      }
+      primary={
+        isProposal ? (
+          <span data-testid="arrival-proposal-text">
+            <span className="arrival-proposal-prefix" data-testid="arrival-proposal-prefix">
+              {proposalPrefix}
+            </span>{" "}
+            {item.title}
+            {item.proposalDue ? ` · by ${item.proposalDue}` : null}
+          </span>
+        ) : item.title
+      }
+      cells={
+        <span
+          className="arrival-needs-you-meta"
+          onClick={swallow}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") swallow(event);
+          }}
+        >
+          <span
+            className="arrival-why-token"
+            data-tone={tone}
+            data-rank-class={cls}
+            data-testid="arrival-why"
+          >
+            {reasonToken(item, now)}
+          </span>
+          {muted ? (
+            <span className="arrival-project-token">MUTED</span>
+          ) : null}
+          {/* HS-200-07 / HS-200-15: a row kept from the last successful
+              read of a source that has since failed is STILL TRUE, and
+              says when it was observed. */}
+          {item.fromLastObservation ? (
+            <span
+              className="arrival-project-token"
+              data-testid="arrival-remembered"
+            >
+              STILL TRUE · {observedAtToken(item.observedAt, now)}
+            </span>
+          ) : null}
+          {item.projectName && item.projectId ? (
+            <ProjectButton
+              name={item.projectName}
+              withheld={!multipleProjects}
+              onOpen={() => onOpenProject(item.projectId)}
+              data-testid="arrival-project"
+            />
+          ) : null}
+          {sources.length > 1 ? (
+            <Disclosure
+              label={countToken(sources.length, "SOURCE", "SOURCES") ?? "SOURCES"}
+              ariaLabel={`Sources: ${item.title}`}
+              open={sourcesOpen}
+              onOpenChange={setSourcesOpen}
+              controlsId={sourcesId}
+              variant="dense"
+            >
+              {null}
+            </Disclosure>
+          ) : null}
+        </span>
+      }
+      trailing={
+        <NeedsYouRowVerbs
+          item={item}
+          isDoor={isDoor}
+          isUnassigned={isUnassigned}
+          doorCard={ext._doorCard}
+          primary={primary}
+          onProposalConfirm={onProposalConfirm}
+        />
+      }
+      wrap
+      expands={false}
+      open={sourcesOpen && sources.length > 1}
+      data-testid={isProposal ? "arrival-proposal-row" : "arrival-needs-you-row"}
     >
-      {repair.verb}
-    </Button>
+      {sources.length > 1 ? (
+        <div
+          id={sourcesId}
+          role="region"
+          aria-label={`Sources: ${item.title}`}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              // Close the sources; the Disclosure returns focus to its
+              // trigger. The section's own Escape (Show fewer) must not
+              // also fire.
+              event.stopPropagation();
+              setSourcesOpen(false);
+            }
+          }}
+        >
+          <ul className="arrival-sources" data-testid="arrival-sources">
+            {sources.map((source, i) => (
+              <li key={source.id ?? `${source.source}-${i}`} data-testid="arrival-source">
+                <span className="arrival-source-emblem">{sourceEmblem(source.source)}</span>
+                <span className="arrival-source-title">{source.title || item.title}</span>
+                <span className="arrival-why-token">{source.why || source.source.toUpperCase()}</span>
+                {source.fromLastObservation ? (
+                  <span className="arrival-project-token">
+                    STILL TRUE · {observedAtToken(source.observedAt, now)}
+                  </span>
+                ) : null}
+                {/* Every projection keeps its OWN way in (A.11): a
+                    swallowed obligation with no verb is a lie. */}
+                <SourceVerb source={source} fallbackTitle={item.title} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </SurfaceLedgerRow>
   );
+}
+
+/** The one verb of a constituent projection inside the `N SOURCES`
+ *  disclosure: `Open` on its own URL, or on its proposal in the Room. */
+function SourceVerb({
+  source,
+  fallbackTitle,
+}: {
+  source: AttentionSource;
+  fallbackTitle: string;
+}) {
+  const title = source.title || fallbackTitle;
+  const proposalId = source.id?.startsWith("proposal:") ? source.id.slice("proposal:".length) : null;
+  if (source.verbHref) {
+    return (
+      <Button
+        variant="ghost"
+        dense
+        onClick={() => window.open(source.verbHref!, "_blank", "noopener")}
+        aria-label={`Open: ${title}`}
+        data-testid="arrival-source-open"
+      >
+        Open
+      </Button>
+    );
+  }
+  if (proposalId) {
+    return (
+      <Button
+        variant="ghost"
+        dense
+        onClick={() => openSurfaceOr("project-room", "/projects", `?focus=proposal:${proposalId}`)}
+        aria-label={`Open: ${title}`}
+        data-testid="arrival-source-open"
+      >
+        Open
+      </Button>
+    );
+  }
+  return null;
 }
 
 /** Verb buttons for a NEEDS YOU row: door lawful verb (primary dense) + Open (ghost),
@@ -1022,25 +1244,30 @@ function NeedsYouRowVerbs({
   isDoor,
   isUnassigned,
   doorCard,
+  primary = false,
   onProposalConfirm,
 }: {
   item: NeedsYouItem;
   isDoor: boolean;
   isUnassigned: boolean;
   doorCard?: DoorCard;
+  /** HS-200-15: ONE filled primary per face — the top-ranked row's verb. */
+  primary?: boolean;
   onProposalConfirm?: (proposalId: string) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const lead = primary ? "primary" : "ghost";
 
   if (isUnassigned) {
     return (
       <Button
-        variant="ghost"
+        variant={lead}
         dense
         onClick={() => {
           if (doorCard?.open_ref) useDesk.getState().openPullout(doorCard.open_ref);
         }}
+        aria-label={`Name an owner: ${item.title}`}
         data-testid="arrival-name-owner"
       >
         Name an owner
@@ -1066,31 +1293,37 @@ function NeedsYouRowVerbs({
       finally { setBusy(false); }
     };
     if (done) return null;
+    // One verb per row (design D1): `Confirm` on the row, `Open` inside
+    // the row's MORE disclosure.
     return (
       <>
         <Button
-          variant="primary"
+          variant={lead}
           dense
           disabled={busy}
           onClick={() => void confirmProposal()}
+          aria-label={`Confirm: ${item.title}`}
           data-testid="arrival-proposal-confirm"
         >
           {busy ? "..." : "Confirm"}
         </Button>
-        <Button
-          variant="ghost"
-          dense
-          onClick={() =>
-            openSurfaceOr(
-              "project-room",
-              "/projects",
-              `${item.projectId}?focus=proposal:${item.proposalId}`,
-            )
-          }
-          data-testid="arrival-proposal-open"
-        >
-          Open
-        </Button>
+        <Disclosure label="MORE" ariaLabel={`More: ${item.title}`}>
+          <Button
+            variant="ghost"
+            dense
+            onClick={() =>
+              openSurfaceOr(
+                "project-room",
+                "/projects",
+                `${item.projectId}?focus=proposal:${item.proposalId}`,
+              )
+            }
+            aria-label={`Open: ${item.title}`}
+            data-testid="arrival-proposal-open"
+          >
+            Open
+          </Button>
+        </Disclosure>
       </>
     );
   }
@@ -1120,10 +1353,11 @@ function NeedsYouRowVerbs({
       <>
         {firstVerb ? (
           <Button
-            variant="primary"
+            variant={lead}
             dense
             disabled={busy}
             onClick={() => void fireVerb()}
+            aria-label={`${labelFor(firstVerb)}: ${item.title}`}
             data-testid="arrival-door-verb"
           >
             {busy ? "..." : labelFor(firstVerb)}
@@ -1145,9 +1379,11 @@ function NeedsYouRowVerbs({
   if (item.verbHref) {
     return (
       <Button
-        variant="ghost"
+        variant={lead}
         dense
         onClick={() => window.open(item.verbHref!, "_blank", "noopener")}
+        aria-label={`Open: ${item.title}`}
+        data-testid="arrival-open"
       >
         Open
       </Button>

@@ -211,15 +211,30 @@ class TestArrivalProposals:
                 f"MTG emblem missing at {width}: {emblem_texts}"
             )
 
-            # Confirm and Open verbs on proposals
+            # Confirm on the row; Open behind the row's MORE disclosure.
+            # HS-200-15 (settled design D1, "one verb per row; its
+            # secondaries live in the row's MORE disclosure"): a proposal
+            # row carries ONE verb, `Confirm`; `Open` is reachable inside
+            # `MORE`, at both widths.
             confirm_btns = page.locator("[data-testid='arrival-proposal-confirm']")
-            open_btns = page.locator("[data-testid='arrival-proposal-open']")
             assert confirm_btns.count() >= 1, (
                 f"No Confirm buttons at {width}, got {confirm_btns.count()}"
             )
-            assert open_btns.count() >= 1, (
-                f"No Open buttons at {width}, got {open_btns.count()}"
+            assert page.locator("[data-testid='arrival-proposal-open']").count() == 0, (
+                f"Open must sit behind MORE, not on the row, at {width}"
             )
+            more = page.locator("[data-testid='arrival-proposal-row']").first.locator(
+                ".surface-disclosure-trigger"
+            )
+            assert more.count() >= 1, f"No MORE disclosure on a proposal row at {width}"
+            more.first.click()
+            page.wait_for_timeout(150)
+            open_btns = page.locator("[data-testid='arrival-proposal-open']")
+            assert open_btns.count() >= 1, (
+                f"No Open buttons inside MORE at {width}, got {open_btns.count()}"
+            )
+            more.first.click()
+            page.wait_for_timeout(150)
 
             # Decide: and Confirm: prefixes
             prefix_els = page.locator("[data-testid='arrival-proposal-prefix']")
@@ -233,8 +248,10 @@ class TestArrivalProposals:
             raw_buttons = page.evaluate("""() => {
                 const body = document.querySelector('.chair');
                 if (!body) return [];
+                // HS-200-15: the library Disclosure owns its own trigger
+                // (the row's MORE control); it is a species, not a raw button.
                 const allowed = ['btn', 'desk-mic', 'surface-ledger-line',
-                    'gadget-cycle', 'gadget-stepper-btn'];
+                    'gadget-cycle', 'gadget-stepper-btn', 'surface-disclosure-trigger'];
                 return Array.from(body.querySelectorAll('button'))
                     .filter(b => !allowed.some(c => b.classList.contains(c)))
                     .map(b => (b.textContent || '').trim().slice(0, 40));

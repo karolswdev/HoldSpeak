@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 200
-- **Status:** ready
+- **Status:** done
 - **Depends on:** HS-200-07, HS-200-09, HS-200-13, HS-200-41
 - **Unblocks:** HS-200-16, HS-200-21, HS-200-40
 - **Owner:** unassigned
@@ -23,11 +23,11 @@ Out: A second task manager or opaque model-only priority ranking.
 
 ## Acceptance criteria
 
-- [ ] The first view shows at most five items with reason, source, and action, plus accessible remaining items.
-- [ ] Ranking uses observable urgency and age with deterministic tie-breaking.
-- [ ] Duplicate projections of one obligation produce one attention item with traceable sources.
-- [ ] Changed-item, same-count, quiet-hour, mute, restart, and recovery transitions have explicit notification behavior.
-- [ ] A failed source cannot silently clear known work or produce a false all-clear.
+- [x] The first view shows at most five items with reason, source, and action, plus accessible remaining items.
+- [x] Ranking uses observable urgency and age with deterministic tie-breaking.
+- [x] Duplicate projections of one obligation produce one attention item with traceable sources.
+- [x] Changed-item, same-count, quiet-hour, mute, restart, and recovery transitions have explicit notification behavior.
+- [x] A failed source cannot silently clear known work or produce a false all-clear.
 
 ## Test plan
 

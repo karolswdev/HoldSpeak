@@ -282,6 +282,89 @@
   gap: 8px;
   flex-wrap: nowrap;
   white-space: nowrap;
+  min-width: 0;
+}
+
+/* HS-200-15: the head token row — the ranking strip, the coverage chip,
+   the calendar state — one wrapping line under the display line. */
+.arrival-head-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+.arrival-head-tokens .surface-filter-tokens {
+  max-width: 100%;
+}
+.arrival-checked-token {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* HS-200-15: the dedup disclosure is the library Disclosure's `dense`
+   variant (its trigger styling lives in the species' own css); its body
+   is the row's expansion slot. */
+.arrival-sources {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.arrival-sources li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) max-content;
+  grid-template-areas: "emblem title verb" "emblem meta verb";
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 2px;
+  white-space: normal;
+}
+.arrival-sources li > .arrival-source-emblem { grid-area: emblem; }
+.arrival-sources li > .arrival-source-title { grid-area: title; }
+.arrival-sources li > .arrival-why-token,
+.arrival-sources li > .arrival-project-token { grid-area: meta; white-space: normal; }
+.arrival-sources li > .btn { grid-area: verb; }
+.chair .surface-ledger[data-cols="room"] .surface-ledger-open {
+  padding: 4px 0 8px 40px;
+}
+@media (max-width: 480px) {
+  .chair .surface-ledger[data-cols="room"] .surface-ledger-open {
+    padding-left: 0;
+  }
+}
+.arrival-sources .arrival-source-emblem {
+  width: 24px;
+  height: 24px;
+}
+.arrival-source-title {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+
+/* HS-200-15: the filtered ledger with nothing in that class says so in
+   one token, never a number. */
+.arrival-needs-you-none {
+  display: block;
+  padding: 10px 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .arrival-source-emblem {
@@ -439,6 +522,24 @@
   .arrival-capture-bar {
     flex-wrap: wrap;
   }
+  /* HS-200-15: the same row grammar at 393 — name on line 1, then ONE
+     meta line that wraps (reason · Project (ellipsis) · sources) with the
+     verb at its right; nothing extends past the viewport (counsel P0-2). */
+  .chair .surface-ledger[data-cols="room"] .surface-ledger-line > .arrival-needs-you-meta {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+  .arrival-needs-you-meta > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .chair .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-trailing {
+    flex: none;
+    margin-left: auto;
+  }
   /* HS-175 C5: Unlink is visible at the phone width (no hover there). */
   .arrival-meeting-verbs {
     opacity: 1;
@@ -481,5 +582,38 @@
     bottom: 0;
     z-index: var(--desk-z-local, 1);
     flex-wrap: wrap;
+  }
+  /* HS-200-15 (counsel P1-8): the sticky bar floats over the content it
+     follows; the section before it clears the bar's height so nothing
+     sits under it at the end of the scroll. */
+  .chair > :nth-last-child(2) {
+    margin-bottom: 112px;
+  }
+  /* HS-200-15 (counsel P0-2): the @container block above cannot reach the
+     chair (it is the container ancestor), so the 393 row grammar lives
+     HERE: name on line 1, then ONE meta line that wraps (reason · Project
+     (ellipsis) · sources) with the verb at its right. */
+  /* The name owns line 1 beside the 28px lead (its 2px margin and the
+     10px gap leave 50px); the meta's basis is too wide to join line 1 and
+     narrow enough to leave the verb its place on line 2. A basis of 0
+     would "fit" beside anything and squeeze to nothing. */
+  .chair .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-primary {
+    flex: 1 1 calc(100% - 50px);
+  }
+  .chair .surface-ledger[data-cols="room"] .surface-ledger-line > .arrival-needs-you-meta {
+    display: flex;
+    flex: 1 1 calc(100% - 70px);
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+  .arrival-needs-you-meta > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .chair .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-trailing {
+    flex: none;
+    margin-left: auto;
   }
 }

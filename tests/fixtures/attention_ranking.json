@@ -1,0 +1,36 @@
+{
+  "_comment": "HS-200-15 (counsel P1-1): ONE fixture for the Python and the browser ranking/dedup. `now` is a local wall time; `items` go in; `expected_order` is the ranked ids out; `expected_groups` is the dedup partition (head id -> member ids, in source order).",
+  "now": "2026-09-07T09:12:00",
+  "items": [
+    {"id": "w-review", "projectId": "p1", "title": "#612 Rig settles animations", "why": "WAITING ON YOUR REVIEW · 3d", "since": "2026-09-04T09:00:00", "severity": "warning", "source": "github"},
+    {"id": "n-ci", "projectId": "p2", "title": "CI failing on main", "why": "CI RED", "since": "2026-09-07T08:32:00", "severity": "danger", "source": "github"},
+    {"id": "r-standup", "projectId": "p1", "title": "Census standup", "why": "NOT RUN · 2 DAYS", "since": "2026-09-05T09:00:00", "severity": "info", "source": "meeting"},
+    {"id": "t-freeze", "projectId": "p1", "title": "Priya confirms the freeze window", "why": "DUE TODAY", "dueAt": "2026-09-07T17:00:00", "severity": "info", "source": "commitment"},
+    {"id": "t-freeze-proposal", "projectId": "p1", "title": "Priya confirms the freeze window", "why": "PROPOSED · STANDUP", "since": "2026-09-06T11:31:00", "severity": "info", "source": "proposal"},
+    {"id": "o-kan7", "projectId": "p1", "title": "KAN-7 Rotate the staging credentials", "why": "OVERDUE · 2 DAYS", "dueAt": "2026-09-05", "severity": "danger", "source": "jira"},
+    {"id": "o-kan12", "projectId": "p1", "title": "KAN-12 Rotate the staging credentials", "why": "OVERDUE · 1 DAYS", "dueAt": "2026-09-06", "severity": "danger", "source": "jira"},
+    {"id": "o-kan7-proposal", "projectId": "p1", "title": "Rotate the staging credentials", "why": "PROPOSED · STANDUP", "since": "2026-09-06T11:40:00", "severity": "info", "source": "proposal"},
+    {"id": "w-a", "projectId": "p3", "title": "Straße cut-over", "why": "WAITING", "since": "2026-09-04T09:00:00", "severity": "info", "source": "github"},
+    {"id": "w-b", "projectId": "p3", "title": "STRASSE cut-over", "why": "WAITING", "since": "2026-09-04T09:00:00", "severity": "info", "source": "commitment"},
+    {"id": "tie-b", "projectId": "p2", "title": "Tie B", "why": "CI RED", "since": "2026-09-07T08:00:00", "severity": "info", "source": "github"},
+    {"id": "tie-a", "projectId": "p2", "title": "Tie A", "why": "CI RED", "since": "2026-09-07T08:00:00", "severity": "info", "source": "github"}
+  ],
+  "expected_groups": {
+    "w-review": ["w-review"],
+    "n-ci": ["n-ci"],
+    "r-standup": ["r-standup"],
+    "t-freeze": ["t-freeze", "t-freeze-proposal"],
+    "o-kan7": ["o-kan7", "o-kan7-proposal"],
+    "o-kan12": ["o-kan12"],
+    "w-a": ["w-a"],
+    "w-b": ["w-b"],
+    "tie-b": ["tie-b"],
+    "tie-a": ["tie-a"]
+  },
+  "expected_order": ["o-kan7", "o-kan12", "t-freeze", "r-standup", "n-ci", "tie-a", "tie-b", "w-a", "w-b", "w-review"],
+  "normalize": {
+    "Straße cut-over": "straße cut-over",
+    "KAN-7 Payments cut-over runbook": "payments cut-over runbook",
+    "#612 Rig  settles": "rig settles"
+  }
+}

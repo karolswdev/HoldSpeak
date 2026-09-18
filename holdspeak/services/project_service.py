@@ -788,6 +788,9 @@ class ProjectService:
                             "title": f"{jira_id} {jira_title}".strip(),
                             "why": f"OVERDUE · {overdue_days} DAYS",
                             "since": due_at,
+                            # HS-200-15: the due date is the ranking's
+                            # observable fact, named as itself.
+                            "due_at": str(due_at),
                             "url": entity.get("url"),
                             "verb": "open",
                             "severity": "danger",

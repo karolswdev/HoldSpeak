@@ -1037,25 +1037,52 @@ read `THIS DEVICE`.
 ## The Arrival
 
 The arrival is the desk's home screen. Its headline tells you the one fact
-that matters: how many items need you across your active projects, or
-`Nothing needs you` when none do. Under the headline, one line names your
-next scheduled recording or calendar event when one exists.
+that matters: how many items need you (`17 need you across 3 projects`;
+`3 need you` when one project holds them all), or `Nothing needs you` when
+none do. Under the headline, one line names your next scheduled recording
+or calendar event when one exists.
 
-**NEEDS YOU** lists the items across all project rooms (source, the thing,
-why, **Open**). Each row carries its project token when more than one room
-contributes. When nothing needs you the section is absent.
+### Returning priorities
+
+**NEEDS YOU** shows at most five items in the first view, ranked so the
+first row is where to start. The ranking key is stated on the face as a
+strip of tokens (`RANKED · OVERDUE · DUE TODAY · NOT RUN · NO DUE DATE ·
+WAITING`), and each token is a one-tap filter for that class (`RANKED` is
+the full key). Within a class: most overdue first; earliest due time first;
+oldest meeting first; most recently changed first; longest waiting first.
+Severity colours the reason token and never reorders a class.
+
+The section caption carries the cap (`NEEDS YOU 5 OF 17`); the remaining
+items sit behind `12 MORE · Show all`, which reveals them in place
+(`Show fewer` leads back; `Escape` returns to the verb). Each row carries
+its source emblem, the thing, its reason (`OVERDUE · 2 DAYS`, `DUE TODAY`,
+`NO DUE DATE · CI RED · CHANGED 40 MIN AGO`, `WAITING ON YOUR REVIEW ·
+3 DAYS`), the Project as a button that opens its Room (withheld when one
+project holds everything), and one verb. The first row's verb is the one
+filled verb on the face. A proposal row's verb is **Confirm**; its
+**Open** sits in the row's `MORE` control.
+
+One obligation seen from several places is ONE row: two projections
+merge only when they come from different sources (a watch and a meeting,
+a meeting and a person), name the same project and the same thing, and
+either agree on the ticket or pull-request number or one of them carries
+none. Two tickets with the same words and different keys stay two rows.
+The constituent projections are listed behind `N SOURCES` on the row,
+each with its own **Open**. When nothing needs you the section is absent.
 
 ### When a source was not observed
 
 `Nothing needs you` is an all-clear, so the desk says it only when every
-expected source actually answered. When one did not, the headline reads
-`Coverage incomplete` instead and a **COVERAGE** section appears above
-**NEEDS YOU**, captioned with how many sources of how many were observed
-(`COVERAGE · 3 OF 4`).
+expected source actually answered; the head then carries a `N OF N
+AVAILABLE` chip and `CHECKED n MIN AGO`. When one did not, the headline
+reads `Coverage incomplete` instead and a **COVERAGE** section appears
+above **NEEDS YOU**, captioned with how many sources of how many were
+observed (`COVERAGE · 3 OF 4`).
 
-Each coverage row names the source that went unobserved, why, when it was
-last seen (`LAST SEEN 09-06 08:12`, or `NEVER OBSERVED`), and the verb that
-repairs it:
+Each coverage row names the source that went unobserved, its own reason in
+plain words (`JIRA REJECTED THE QUERY`), its token, when it was observed
+(`OBSERVED 08:41`, `OBSERVED 09-06 08:12` on another day, or `NEVER
+OBSERVED`), and the verb that repairs it:
 
 | Row token | What it means | Verb |
 |---|---|---|
@@ -1068,8 +1095,11 @@ repairs it:
 | `FORBIDDEN` | The source refused the read. | **Open source** |
 
 Items a failing source told you about last time do not disappear while it
-is down. They stay in **NEEDS YOU** with the time they were last seen, and
-they return to their normal state when the source answers again.
+is down. They stay in **NEEDS YOU**, stamped `STILL TRUE · OBSERVED 08:41`
+with the time of the last good read, keep their place in the ranking, and
+return to their normal state when the source answers again. This memory
+lives in the running hub: after a hub restart, a source that is still down
+shows only its coverage row until it answers again.
 
 The shade behind the bell carries the same truth: it shows a **Coverage**
 group instead of `Nothing missed`, and the command deck badges an
@@ -1564,12 +1594,25 @@ The **Notify** row carries two cycle controls:
 | **Mode** | `OFF`, `ON THE EDGE` (the default), `EVERY SWEEP` |
 | **Content** | `COUNT ONLY` (the default), `ROOM NAMES` |
 
-`ON THE EDGE` fires when the needs-you count crosses from 0 to
-positive, or when it increases since the last notification. `EVERY
-SWEEP` fires after every sweep that finds items. `COUNT ONLY` limits
-the body to the count (`3 need you across 2 projects`); `ROOM NAMES`
-adds the first WHY per project (at most three lines). During quiet
-hours a `HELD` chip appears on the row.
+`ON THE EDGE` fires when the SET of items that need you gains one it
+has not told you about. A new item fires even when the total is
+unchanged because another item resolved in the same sweep (the body
+then reads `3 need you · 1 new`). The same items again are silent.
+`EVERY SWEEP` fires after every sweep that finds items. `COUNT ONLY`
+limits the body to the count (`3 need you across 2 projects`);
+`ROOM NAMES` adds the first WHY per project (at most three lines).
+During quiet hours a `HELD` chip appears on the row.
+
+The transitions are explicit:
+
+| Transition | Behaviour |
+|---|---|
+| A changed item, same count | Fires: the new item is what you have not heard about. |
+| Quiet hours | Held. The first sweep after the window delivers once; the held items are not repeated per sweep. |
+| A muted Room | Its items never fire. Un-muting fires only for what arrived while it was muted, never for what you were already told. |
+| A restart | Re-notifies nothing: the notified set is kept with the heartbeat settings. |
+| An item escalates | A known item that becomes due today or overdue fires again, as `1 escalated`. |
+| A source fails, then recovers | While it is down nothing is cleared and no all-clear is sent; a new item elsewhere still fires; when it comes back its known items are not re-announced (until the hub restarts: the last-observed items themselves are held only in the running hub). |
 
 ### Per-Room mute
 

@@ -41,7 +41,8 @@ describe("FilterTokens", () => {
     const active = screen.getByRole("button", { name: "DICTATION" });
     expect(active).toHaveAttribute("aria-pressed", "true");
     expect(active).toHaveAttribute("data-filter-active");
-    expect(active.className).toContain("btn--primary");
+    expect(active.className).toContain("btn--secondary");
+    expect(active.className).not.toContain("btn--primary");
 
     const resting = screen.getByRole("button", { name: "ALL" });
     expect(resting).toHaveAttribute("aria-pressed", "false");

@@ -46,6 +46,28 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
+def _as_item_map(value: Any) -> dict[str, dict[str, str]]:
+    """HS-200-15: the persisted notified set as
+    ``{item_id: {"project": <id>, "class": <rank class>}}``.
+
+    Tolerates the shapes a config row may hold (a mapping of entries, a
+    mapping of bare project ids from the first cut, or a bare list of ids)
+    and never raises on garbage.
+    """
+    if isinstance(value, dict):
+        out: dict[str, dict[str, str]] = {}
+        for k, v in value.items():
+            if isinstance(v, dict):
+                out[str(k)] = {"project": str(v.get("project") or ""),
+                               "class": str(v.get("class") or "")}
+            else:
+                out[str(k)] = {"project": str(v or ""), "class": ""}
+        return out
+    if isinstance(value, (list, tuple, set)):
+        return {str(k): {"project": "", "class": ""} for k in value}
+    return {}
+
+
 def _now_epoch() -> float:
     return time.time()
 
@@ -137,6 +159,10 @@ class HeartbeatService:
             "last_sweep_at": config.get("last_sweep_at"),
             "next_sweep_at": config.get("next_sweep_at"),
             "last_notified_count": int(config.get("last_notified_count", 0)),
+            # HS-200-15: the notified ITEM SET (id -> project), so a
+            # restart re-notifies nothing and a same-count change fires.
+            "last_notified_items": _as_item_map(config.get("last_notified_items")),
+            "last_notify_outcome": str(config.get("last_notify_outcome") or ""),
             # HS-174-08: remote runner settings.
             "runs_on": str(config.get("runs_on", "local")),
             "remote_hosts": self._compute_remote_hosts(),
@@ -187,6 +213,8 @@ class HeartbeatService:
             "last_sweep_at": None,
             "next_sweep_at": None,
             "last_notified_count": 0,
+            "last_notified_items": {},
+            "last_notify_outcome": "",
             # HS-174-08: remote runner defaults (computed values added in
             # get_settings; not stored).
             "runs_on": "local",
@@ -206,6 +234,8 @@ class HeartbeatService:
             "last_sweep_at": settings.get("last_sweep_at"),
             "next_sweep_at": settings.get("next_sweep_at"),
             "last_notified_count": settings.get("last_notified_count", 0),
+            "last_notified_items": _as_item_map(settings.get("last_notified_items")),
+            "last_notify_outcome": str(settings.get("last_notify_outcome") or ""),
             # HS-174-08
             "runs_on": settings.get("runs_on", "local"),
         }
@@ -636,12 +666,17 @@ class HeartbeatService:
     ) -> dict[str, Any]:
         """Evaluate the notification edge after a sweep and fire if appropriate.
 
-        Persists ``last_notified_count`` in the heartbeat policy config so a
-        restart does not re-notify the same count.  Returns a receipt dict
-        with outcome vocabulary: ``sent``, ``held_quiet_hours``,
-        ``held_no_edge``, ``off``, ``error``.
+        HS-200-15 (AC4): the edge is the ITEM SET, not the count.  The
+        notified set (``last_notified_items``, id -> project) is persisted
+        in the heartbeat policy config so a restart re-notifies nothing;
+        ``last_notified_count`` is kept for the settings face.  The five
+        transitions are explicit -- see ``desktop_notify.ItemSetEdge`` --
+        and the receipt vocabulary is: ``sent``, ``held_quiet_hours``,
+        ``held_no_edge``, ``held_coverage_incomplete`` (zero items over an
+        unobserved source is NOT an all-clear), ``off``, ``error``.
         """
-        from holdspeak.desktop_notify import EdgeDetector, heartbeat_notify
+        from holdspeak.desktop_notify import ItemSetEdge, heartbeat_notify
+        from holdspeak.services.needs_you_aggregate import _item_id
 
         notify_mode = settings.get("notify", _DEFAULT_NOTIFY)
 
@@ -651,32 +686,69 @@ class HeartbeatService:
             self._write_notify_receipt(receipt)
             return receipt
 
-        # Build the aggregate count (muted-aware).
-        count = self.notification_count(principal)
+        # ONE aggregate build serves the count, the ids and the body.
+        agg = self._build_aggregate_via_canonical(principal)
+        all_items = list(agg.get("items", []))
+        unmuted = [it for it in all_items if not it.get("muted")]
+        count = int(agg.get("count", len(unmuted)))
+        project_count = len(agg.get("projects", []))
+        content_items = unmuted
+        complete = bool(agg.get("complete", True))
 
-        # Recover persisted edge state.
+        def _id_of(item: dict[str, Any]) -> str:
+            return str(item.get("id") or _item_id(str(item.get("projectId") or ""), item))
+
+        current_ids = {
+            _id_of(it): {"project": str(it.get("projectId") or ""),
+                         "class": str(it.get("rankClass") or "")}
+            for it in unmuted
+        }
+        present_ids = {_id_of(it) for it in all_items}
+        # Prune only where the Project was FULLY observed on this pass: an
+        # id whose Project has any source cant_check / stale / failed stays
+        # remembered (recovery re-notifies nothing); an id whose Project no
+        # longer exists is dropped.  No coverage on the wire = every
+        # Project observed.
+        coverage = agg.get("coverage")
+        observed_projects: set[str] | None
+        known_projects: set[str] | None
+        if isinstance(coverage, list) and coverage:
+            known_projects = {
+                str(row.get("project_id") or "")
+                for row in coverage if row.get("project_id")
+            }
+            unobserved = {
+                str(row.get("project_id") or "")
+                for row in coverage
+                if row.get("project_id") and row.get("state") != "available"
+            }
+            observed_projects = known_projects - unobserved
+        else:
+            observed_projects = None
+            known_projects = None
+
+        # Recover the persisted edge state (the notified item set).
         persisted_edge = int(settings.get("last_notified_count", 0))
-        edge = EdgeDetector(initial_count=persisted_edge)
+        edge = ItemSetEdge(notified=_as_item_map(settings.get("last_notified_items")))
 
         quiet_start = settings["quiet_hours"]["start"]
         quiet_end = settings["quiet_hours"]["end"]
 
-        # Build aggregate for project_count.
-        agg = self._build_aggregate_via_canonical(principal)
-        project_count = len(agg.get("projects", []))
-        content_items = agg.get("items", [])
-
-        # The notification decision.
+        # The notification decision.  The quiet-hours instant is the same
+        # injectable local clock the sweep reads (HS-200-03), never a
+        # second wall-clock read.
         result = heartbeat_notify(
             count,
             project_count,
             edge=edge,
+            item_ids=current_ids,
             quiet_hours_start=quiet_start,
             quiet_hours_end=quiet_end,
             content_items=content_items,
             notify_content=False,
             receipt_writer=None,
             _notifier=self._notifier,
+            now=self._now_local().replace(tzinfo=None),
         )
 
         # For mode "edge", rely on the edge detector (heartbeat_notify
@@ -694,7 +766,7 @@ class HeartbeatService:
                 _notifier = self._notifier or _do_notify
                 fired = _notifier("HoldSpeak", body, click_url=None)
                 if fired:
-                    edge.mark_fired(count)
+                    edge.mark_fired(current_ids)
                 result["fired"] = fired
                 result["reason"] = "fired" if fired else "dispatch_failed"
 
@@ -703,6 +775,10 @@ class HeartbeatService:
             outcome = "sent"
         elif result.get("held") and result["reason"] == "quiet_hours":
             outcome = "held_quiet_hours"
+        elif result["reason"] == "no_edge" and count == 0 and not complete:
+            # Zero items over an unobserved source: nothing to say, and
+            # NEVER an all-clear (C4).
+            outcome = "held_coverage_incomplete"
         elif result["reason"] == "no_edge":
             outcome = "held_no_edge"
         elif result["reason"] == "dispatch_failed":
@@ -716,19 +792,41 @@ class HeartbeatService:
             "count": count,
             "projectCount": project_count,
             "fired": result["fired"],
+            "newItems": int(result.get("newItems", 0)),
+            "escalatedItems": int(result.get("escalatedItems", 0)),
+            "complete": complete,
             "lastNotifiedCount": persisted_edge,
         }
 
-        # Persist edge state for restart survival.
-        if result["fired"]:
-            self._persist_edge(count)
+        # Persist the edge state for restart survival: the notified set,
+        # pruned per the recovery rule, and the count the settings face
+        # shows -- written ONLY when the set or the outcome changed
+        # (counsel P1-5), never on every sweep.
+        before = _as_item_map(settings.get("last_notified_items"))
+        edge.prune(present_ids, observed_projects, known_projects)
+        after = edge.notified
+        new_count = count if result["fired"] else persisted_edge
+        if (after != before
+                or outcome != str(settings.get("last_notify_outcome") or "")
+                or new_count != persisted_edge):
+            self._persist_edge(new_count, after, outcome)
         self._write_notify_receipt(receipt)
         return receipt
 
-    def _persist_edge(self, count: int) -> None:
-        """Persist the last-notified count in the heartbeat policy config."""
+    def _persist_edge(
+        self,
+        count: int,
+        notified_items: dict[str, dict[str, str]] | None = None,
+        outcome: str | None = None,
+    ) -> None:
+        """Persist the last-notified count (and, HS-200-15, the notified
+        item set and the last outcome) in the heartbeat policy config."""
         settings = self.get_settings()
         settings["last_notified_count"] = count
+        if notified_items is not None:
+            settings["last_notified_items"] = {k: dict(v) for k, v in notified_items.items()}
+        if outcome is not None:
+            settings["last_notify_outcome"] = outcome
         self._persist(settings)
 
     def _write_notify_receipt(self, receipt: dict[str, Any]) -> None:

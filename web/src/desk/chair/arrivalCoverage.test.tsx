@@ -74,9 +74,10 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
     expect(screen.getByTestId("arrival-display").textContent)
       .not.toBe("Nothing needs you");
     expect(screen.getByText("COVERAGE · 1 OF 2")).toBeTruthy();
-    expect(screen.getByTestId("arrival-coverage-token").textContent).toBe("READ FAILED");
+    expect(screen.getByTestId("arrival-coverage-token").textContent).toContain("READ FAILED");
+    // HS-200-15: the boards' vocabulary — OBSERVED hh:mm (LAST SEEN stays the shade's).
     expect(screen.getByTestId("arrival-coverage-observed").textContent)
-      .toContain("LAST SEEN");
+      .toContain("OBSERVED");
     // The owning verb, as the library Button.
     const verb = screen.getByTestId("arrival-coverage-verb");
     expect(verb.textContent).toBe("Retry");
@@ -103,7 +104,7 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
     await waitFor(() => expect(screen.getByTestId("arrival-needs-you")).toBeTruthy());
     expect(screen.getByTestId("arrival-display").textContent).toContain("need you");
     expect(screen.getByTestId("arrival-coverage")).toBeTruthy();
-    expect(screen.getByTestId("arrival-remembered").textContent).toContain("LAST SEEN");
+    expect(screen.getByTestId("arrival-remembered").textContent).toContain("STILL TRUE · OBSERVED");
   });
 
   it("treats a read that never landed as a coverage gap, not as quiet", async () => {

@@ -32,8 +32,15 @@
   margin-left: -1px;
 }
 
-/* The active token keeps the Button primary species' fill; this only holds
-   its bevel-free presence through hover so the strip never bounces. */
+/* The active token is the Button SECONDARY species, tinted with the accent
+   (never the filled primary — a face has one of those, and it is not a
+   filter). Bevel-free through hover so the strip never bounces. */
 .surface-filter-token.btn[data-filter-active] {
   box-shadow: none;
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface-2));
+  color: var(--text);
+}
+.surface-filter-token.btn[data-filter-active]:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 30%, var(--surface-2));
 }

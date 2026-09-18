@@ -309,14 +309,22 @@ class TestNeedsYouAggregate:
         # Projects: both active projects
         assert sorted(body["projects"]) == ["p1", "p2"]
 
-        # Severity order: danger first, then warning, then info
+        # HS-200-15: severity is NOT a sort key (settled design D2(b); the
+        # owner's verdict Q1). The aggregate ranks by observable class --
+        # overdue, due today, not run, no due date, waiting -- then by time
+        # within the class (an unknown time last), then by stable id.
+        # `CI RED` and `DECISION PENDING` have no due date (rank 4) and
+        # outrank `WAITING ON YOUR REVIEW` (rank 5); severity rides the
+        # row's reason token instead.
         items = body["items"]
         assert len(items) == 3
+        assert [i["rankClass"] for i in items] == ["no_due_date", "no_due_date", "waiting"]
         assert items[0]["severity"] == "danger"
         assert items[0]["projectId"] == "p2"
-        assert items[1]["severity"] == "warning"
-        assert items[1]["projectId"] == "p1"
-        assert items[2]["severity"] == "info"
+        assert items[1]["severity"] == "info"
+        assert items[1]["projectId"] == "p2"
+        assert items[2]["severity"] == "warning"
+        assert items[2]["projectId"] == "p1"
 
         # next is None (no door service)
         assert body["next"] is None
