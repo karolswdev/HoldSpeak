@@ -1,4 +1,4 @@
-# THE HANDOVER — from Muad'Dib XXI (READ **§9, THEN §7b, THEN THE XXI CHAPTER** FIRST)
+# THE HANDOVER — from Muad'Dib XXII (READ **§9, THEN §7b, THEN THE XXII CHAPTER** FIRST)
 
 The entries below this section are the running log, newest first. This
 section is the whole picture in one sitting. When it disagrees with a
@@ -346,6 +346,104 @@ resolves into its `.venv` before trusting a count.
 **And the rule I broke this sitting, so you do not:** the tree's default
 branch is `main` and two documentation commits landed on it directly
 instead of on a branch with a PR. Branch first.
+
+## Muad'Dib XXII — 2026-09-18. THE VERDICT, THEN THE DAILY PATH BUILT END TO END
+
+**Read this first. It supersedes XXI.** One verdict and six stories in one
+sitting, across a session-limit cut and a resume.
+
+### 0. His words, verbatim — the steering
+
+- On being shown *The Tuesday Verdict* (a page that walked the 22 boards
+  posture by posture with the design's own examples and put the six remaining
+  questions to him with recommendations): **"OK I accept."** HS-200-09 is
+  PASSED; the recommendations stand as his answers (settled-design Addendum 4).
+- With it: **"I certainly want you to manage the orchestration process a lot
+  more efficiently - to push this product to the full usability it has
+  promised to me."** LAW: parallel lanes on disjoint stories; counsel once, on
+  the BUILT code; merge on verification; every story ends on his desk as a
+  face he can use on a Tuesday. Documents are not delivery.
+- **"resume, please."** after a session limit killed two lanes mid-fix. A lane
+  resumes from its own transcript with `SendMessage`; nothing was lost.
+
+### 1. What shipped
+
+| Story | Commit(s) | PR | What it is |
+|---|---|---|---|
+| 09 | 7b0d5c3c | (on #576) | the verdict recorded; 11–15 ready |
+| 15 | f364c83f, ff2c2433 | #577 | attention: five ranked, coverage above, set-based notifications |
+| 12 | a283c21e, d01f715c, f4e2544e | #578 | a real meeting → reviewed outcomes; retry identity |
+| 11 | 1b1ab206, a6629212, dbffb7ff… | #579 | the preparation brief with a manifest that names its omissions |
+| 14 | c2f285fd, 52e7c8b6, 18789c3d… | #580 | People preparation inside the boundary |
+| 13 | 71e7c408, ddbc92d2, 36d0e5c7, e8951375 | #581 | recall, carry, completion by explicit act |
+
+Merged to main this sitting on verification: #571, #572, #573, #574, #575.
+The train: #576 (44) → #577 → #578 → #579 → #580 → #581, each fired with
+close/reopen after its base merges, each merged when its CI failure set ⊆ the
+known seven runner-environment failures.
+
+### 2. What counsel found in the BUILT code (this is why counsel-on-built exists)
+
+- **12:** no real meeting had EVER produced a proposal, for two reasons one
+  layer under the audit's finding — the HS-172 bridge read `dec["text"]`
+  while the extractor writes `decision`, and `action_owner_enforcer`
+  violated its own closed registry contract so every real chain run errored.
+- **11:** the refused face said `NOTHING SENT · THIS DEVICE` after a request
+  had left and been answered (Constitution III/VI); readiness was never
+  consulted on a real desk (the leg id did not match the profile row);
+  `Stop` stopped nothing; the NAME-unknown heuristic (HS-200-06's) minted a
+  false person on 28 of 30 ordinary sentences.
+- **15:** the dedup key merged two different tickets with one title (a row
+  vanished); a long Project name clipped verbs off a 393 viewport without
+  moving `scrollWidth`; `heartbeat_notify` read `datetime.now()` past the
+  injected clock.
+- **14:** the boundary held on every door; the P0 was a dead status filter
+  (a Done commitment stayed open forever).
+- **13:** carry + supersession doubled the mark; closed commitments accepted
+  further verbs; the durable last-known store was never pruned and only one
+  of three callers used it.
+- **The stack itself:** seven branch-new census/vocabulary/pin fences on the
+  first full pass of 11 over 12 over 15; a pre-existing xdist race in
+  `test_one_path_census` that mutated a real source file on disk.
+
+### 3. Laws this sitting adds
+
+- **Parallel lanes, one composition.** Three or four Fable lanes on disjoint
+  files; stack in one order; rebase up as each lands; `SCHEMA_VERSION` is
+  informational, so two lanes at 78 become one 78 carrying both shapes and
+  the next takes 79; regenerate the API surface and the canonical snapshot
+  on the COMBINED tree, never per lane.
+- **Run the full suite on the stack top before the CI train reaches it.**
+  Census, vocabulary and line-pin fences only fail on the combined tree.
+- **Colons, not em dashes, in accessible names** (`Open: ${title}`); the web
+  vocabulary guard reads them as prose.
+- **A worker may not edit CLAUDE.md or `.mcp.json`**; a worker restores a
+  tracked asset with `git show HEAD:<path> >`, never a checkout.
+- **Every rig writes shots only with `HOLDSPEAK_WRITE_SHOTS=1`.** Five rigs
+  were gated this sitting; the 388-PNG scar is the reason.
+- **A session limit is not a loss.** `SendMessage` to the lane's id resumes it
+  with its context; check `git status` for a partial edit first.
+- **Counsel's probes are evidence.** Their before/after outputs go in the
+  story's evidence file verbatim.
+
+### 4. Open, in order
+
+1. Merge the train as CI proves each set (see §1).
+2. After the merge, his hub needs a restart to pick up the drainer, the
+   armed watches, WAL, the sidecar proxy, and the six faces.
+3. Still his: the pilot Project and the model route (the walk's beats 3–6
+   run on them); HS-200-05's remaining beats; the walks on 169–176.
+4. BACKLOG §AJ (from 44/45/46) and the new parked items from this sitting:
+   ASCII-only recall search; a forged supersession cycle; diacritics in owner
+   matching; an alias equal to another display name; the resumed
+   `INCOMPLETE · n OF m SOURCES` brief state; `Open source` on a commitment
+   ref; two library raw buttons inside the ceiling (`Disclosure` trigger,
+   `ProgressPlan` action); the 0.6 content-word support threshold; the Door
+   board listing decision-kind action items as `UNASSIGNED`.
+5. Next stories: G2 (three recipes via the Interview, the owner pilot) once
+   the train is merged.
+
+---
 
 ## Muad'Dib XXI — 2026-09-17/18. "THERE'S NO SUCH THING AS MY WORD"; THE FOUR AUDIT STORIES BUILT AND STACKED
 
