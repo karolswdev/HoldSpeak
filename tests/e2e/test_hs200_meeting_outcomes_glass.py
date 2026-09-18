@@ -345,7 +345,7 @@ def test_meeting_to_reviewed_outcomes(tmp_path: Path, monkeypatch: pytest.Monkey
             assert headline.text_content() == "5 to review", headline.text_content()
             assert page.locator("[data-testid='review-confirm']").count() == 5
             assert page.locator("[data-testid='review-more']").count() == 5
-            assert page.get_by_role("button", name="Open the Project — Q4 platform").count() == 1
+            assert page.get_by_role("button", name="Open the Project: Q4 platform").count() == 1
             coverage = page.locator("[data-testid='review-coverage']").text_content() or ""
             assert "6 OF 6 TURNS" in coverage and "AVAILABLE" in coverage, coverage
             supports = [

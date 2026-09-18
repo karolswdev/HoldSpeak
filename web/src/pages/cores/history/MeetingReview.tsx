@@ -315,7 +315,7 @@ export function MeetingReview({
         <Button
           variant="ghost"
           dense
-          aria-label={`Open the Project — ${model.project.name || "Project"}`}
+          aria-label={`Open the Project: ${model.project.name || "Project"}`}
           onClick={openProject}
           data-testid="review-project"
         >
@@ -500,7 +500,7 @@ export function MeetingReview({
                 variant="ghost"
                 dense
                 aria-expanded={isOpen}
-                aria-label={`More — ${p.text}`}
+                aria-label={`More: ${p.text}`}
                 onClick={() => setOpenId(isOpen ? null : p.id)}
                 data-testid="review-more"
               >
@@ -511,7 +511,7 @@ export function MeetingReview({
                 dense
                 loading={busy}
                 disabled={Boolean(busyId) && !busy}
-                aria-label={`Confirm — ${p.text}`}
+                aria-label={`Confirm: ${p.text}`}
                 onClick={() => void confirm(p)}
                 data-testid="review-confirm"
               >
@@ -521,11 +521,11 @@ export function MeetingReview({
           )}
         </div>
         {isOpen && !decidedRow ? (
-          <div className="meetings-review-more" role="region" aria-label={`More — ${p.text}`}>
+          <div className="meetings-review-more" role="region" aria-label={`More: ${p.text}`}>
             <Button
               variant="ghost"
               dense
-              aria-label={`Edit — ${p.text}`}
+              aria-label={`Edit: ${p.text}`}
               onClick={(event) => {
                 const line = (event.currentTarget as HTMLElement).closest(".meetings-review-row");
                 line?.querySelector<HTMLElement>(".surface-edit-in-place")?.click();
@@ -537,7 +537,7 @@ export function MeetingReview({
             <ConfirmVerb
               label="Dismiss"
               confirmLabel="Dismiss?"
-              ariaLabel={`Dismiss — ${p.text}`}
+              ariaLabel={`Dismiss: ${p.text}`}
               busy={busy}
               onConfirm={() => void dismiss(p)}
             />
@@ -545,7 +545,7 @@ export function MeetingReview({
               <Button
                 variant="ghost"
                 dense
-                aria-label={`Open evidence — ${p.text}`}
+                aria-label={`Open evidence: ${p.text}`}
                 onClick={() => onOpenEvidence(p.segmentIndex as number)}
                 data-testid="review-evidence"
               >
@@ -557,7 +557,7 @@ export function MeetingReview({
                 <span className="surface-caption">OWNER</span>
                 <EditInPlace
                   value="Unknown"
-                  label={`owner — ${p.text}`}
+                  label={`owner: ${p.text}`}
                   onCommit={(next) => edit(p, { owner: next })}
                 />
               </span>
@@ -567,7 +567,7 @@ export function MeetingReview({
                 <span className="surface-caption">DUE</span>
                 <EditInPlace
                   value="Unknown"
-                  label={`due — ${p.text}`}
+                  label={`due: ${p.text}`}
                   onCommit={(next) => edit(p, { due: next })}
                 />
               </span>
@@ -609,7 +609,7 @@ export function MeetingReview({
       <Button
         variant="ghost"
         dense
-        aria-label={`Open — ${p.text}`}
+        aria-label={`Open: ${p.text}`}
         onClick={() => (p.segmentIndex != null ? onOpenEvidence(p.segmentIndex) : onOpenTranscript())}
         data-testid="review-kept-open"
       >
@@ -634,7 +634,7 @@ export function MeetingReview({
         label={p.state === "confirmed" ? "ACCEPTED" : p.state === "dismissed" ? "DISMISSED" : "UNREVIEWED"}
       />
       {p.state === "proposed" ? (
-        <Button variant="ghost" dense aria-label={`Confirm — ${p.text}`} loading={busyId === p.id} onClick={() => void confirm(p)} data-testid="review-prior-confirm">
+        <Button variant="ghost" dense aria-label={`Confirm: ${p.text}`} loading={busyId === p.id} onClick={() => void confirm(p)} data-testid="review-prior-confirm">
           Confirm
         </Button>
       ) : null}
@@ -687,14 +687,14 @@ export function MeetingReview({
               <StateChip state={coverageChip.state} label={coverageChip.label} />
               {observed ? <span className="surface-token">{`OBSERVED ${observed}`}</span> : null}
               {coverage.state === "failed" && onRunIntelligence ? (
-                <Button variant="ghost" dense aria-label="Re-read — Transcript" onClick={onRunIntelligence}>
+                <Button variant="ghost" dense aria-label="Re-read: Transcript" onClick={onRunIntelligence}>
                   Re-read
                 </Button>
               ) : coverage.turns > 0 ? (
                 <Button
                   variant="ghost"
                   dense
-                  aria-label="Open transcript — Transcript"
+                  aria-label="Open transcript: Transcript"
                   onClick={onOpenTranscript}
                   data-testid="review-open-transcript"
                 >

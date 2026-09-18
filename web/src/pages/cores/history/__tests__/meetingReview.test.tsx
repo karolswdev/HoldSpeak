@@ -110,7 +110,7 @@ describe("MeetingReview (HS-200-12)", () => {
     expect(screen.queryByText(/\b0 /)).toBeNull();
     expect(screen.queryByText("Architecture review")).toBeNull();
     // The way back to the Project; the extraction's egress.
-    expect(screen.getByRole("button", { name: "Open the Project — Q4 platform" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open the Project: Q4 platform" })).toBeInTheDocument();
     expect(screen.getByText("192.168.1.43 · LAN")).toBeInTheDocument();
     expect(screen.getByText("QWEN3-35B")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Accept reviewed" })).not.toBeDisabled();
@@ -216,13 +216,13 @@ describe("MeetingReview (HS-200-12)", () => {
     await screen.findByText("5 to review");
     const row = screen.getAllByTestId("review-row-decision")[1];
     fireEvent.click(within(row).getByTestId("review-more"));
-    expect(screen.getByRole("button", { name: "Edit — Freeze window moves to Sunday 02:00" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Dismiss — Freeze window moves to Sunday 02:00" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Open evidence — Freeze window moves to Sunday 02:00" }));
+    expect(screen.getByRole("button", { name: "Edit: Freeze window moves to Sunday 02:00" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Dismiss: Freeze window moves to Sunday 02:00" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open evidence: Freeze window moves to Sunday 02:00" }));
     expect(onOpenEvidence).toHaveBeenCalledWith(2);
     // Escape closes MORE.
     fireEvent.keyDown(row, { key: "Escape" });
-    expect(screen.queryByRole("button", { name: "Edit — Freeze window moves to Sunday 02:00" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Edit: Freeze window moves to Sunday 02:00" })).toBeNull();
     // Enter confirms.
     apiFetch.mockImplementationOnce(async (path: string) => {
       expect(path).toBe("/api/proposals/p2/confirm");
@@ -273,7 +273,7 @@ describe("MeetingReview (HS-200-12)", () => {
     await screen.findByText("5 to review");
     const rows = screen.getAllByTestId("review-row-action");
     fireEvent.click(within(rows[0]).getByTestId("review-more"));
-    const dismiss = screen.getByRole("button", { name: "Dismiss — Confirm the freeze window with the payments team" });
+    const dismiss = screen.getByRole("button", { name: "Dismiss: Confirm the freeze window with the payments team" });
     fireEvent.click(dismiss);            // arms
     apiFetch.mockImplementationOnce(async (path: string) => {
       expect(path).toBe("/api/proposals/p3/dismiss");
