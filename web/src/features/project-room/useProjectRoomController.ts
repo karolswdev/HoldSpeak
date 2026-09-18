@@ -33,6 +33,9 @@ export function useProjectRoomController(
   const projectId = scope?.startsWith("project:")
     ? scope.slice("project:".length)
     : "";
+  // HS-200-11: `Find support` opens Desk memory WITH the sentence -- the
+  // `q:` scope prefills the query and runs it (counsel P1-5).
+  const initialQuery = scope?.startsWith("q:") ? scope.slice("q:".length).trim() : "";
   // The unscoped surface is Desk memory, which has neither a Room nor a
   // History: a wing that leads nowhere would be a verb that does nothing
   // (UX-CANON A.11).
@@ -48,7 +51,7 @@ export function useProjectRoomController(
   );
   const [detailStatus, setDetailStatus] = useState<"idle" | "loading" | "ready">("idle");
   const [error, setError] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [searchHits, setSearchHits] = useState<Record<string, unknown>[]>([]);
   const [searched, setSearched] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -269,13 +272,20 @@ export function useProjectRoomController(
     }
   };
 
-  const search = async () => {
-    if (!searchQuery.trim()) return;
+  useEffect(() => {
+    if (!initialQuery) return;
+    setSearchQuery(initialQuery);
+    void search(initialQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQuery]);
+
+  const search = async (query: string = searchQuery) => {
+    if (!query.trim()) return;
     setSearching(true);
     setSearched(true);
     setError("");
     try {
-      const body = await api.searchProjectMemory(searchQuery.trim(), projectId);
+      const body = await api.searchProjectMemory(query.trim(), projectId);
       setSearchHits(body.hits || []);
     } catch (reason) {
       setSearchHits([]);

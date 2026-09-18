@@ -703,6 +703,8 @@ class ProjectService:
                 continue
             entities = self._entities(snapshot)
             query_kind = watch.get("query_kind", "")
+            watch_id = str(watch.get("id") or "")
+            rows_before = len(needs)
 
             if connector_id == "gh" and query_kind == "pull_requests":
                 # PRs whose review_requests name the owner or review_decision = changes_requested.
@@ -796,6 +798,10 @@ class ProjectService:
                             "severity": "danger",
                         })
 
+            # HS-200-11: the row names the Watch it was read from, so a brief
+            # can cite the source by id, never by provider kind (counsel P2 vi).
+            for row in needs[rows_before:]:
+                row.setdefault("watchId", watch_id)
         # Delta proposals pending
         if self._delta_service is not None:
             try:
@@ -1666,7 +1672,21 @@ class ProjectService:
                 "text": row["decision_text"],
                 "at": row["created_at"],
                 "url": None,
+                # HS-200-11: current vs superseded rides with the row so a
+                # preparation manifest can carry the distinction in (AC2),
+                # and a superseded record names its successor (counsel P1-2).
+                "lifecycle": str(row["lifecycle"] or "active"),
             }
+            if item["lifecycle"] == "superseded":
+                with self._db._connection() as succ_conn:
+                    successor = succ_conn.execute(
+                    """SELECT new_value FROM decision_record_revisions
+                       WHERE record_id = ? AND field_name = 'successor_id'
+                       ORDER BY created_at DESC LIMIT 1""",
+                        (rid,),
+                    ).fetchone()
+                if successor and successor["new_value"]:
+                    item["successor_id"] = str(successor["new_value"])
 
             # HS-172-03: proposal provenance fields.
             proposal_id = row["proposal_id"] if "proposal_id" in row.keys() else None

@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 78  # informational; 74→75: calendar_event_link_suppressions (HS-175 counsel C5); 75→76: dictation_journal.corrections_applied (HS-176-02); 76→77: project_ask_tasks (HS-200-41); 77→78: follow_through_proposals retry identity + evidence columns (HS-200-12)
+SCHEMA_VERSION = 78  # informational; 74→75: calendar_event_link_suppressions (HS-175 counsel C5); 75→76: dictation_journal.corrections_applied (HS-176-02); 76→77: project_ask_tasks (HS-200-41); 77→78: follow_through_proposals retry identity + evidence columns (HS-200-12) and project_briefs (HS-200-11)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -4357,4 +4357,41 @@ CREATE INDEX IF NOT EXISTS idx_project_ask_tasks_resume
     ON project_ask_tasks(state, resume_order DESC, id DESC);
 CREATE INDEX IF NOT EXISTS idx_project_ask_tasks_project
     ON project_ask_tasks(project_id, state);
+
+-- HS-200-11: the preparation brief, bound to its Project (story 11 AC4) with
+-- its SOURCE MANIFEST frozen beside it (AC2).  `monday_briefs` is window-keyed
+-- and carries no project_id (design D3, "the preparation seam"); a sibling
+-- table is the additive answer, never a rebuild of that one.
+-- `manifest_json` records exactly what the draft read -- every source with its
+-- state, observation time and revision, the current and superseded decisions
+-- carried in, and every named omission with its reason and repair.
+-- `manifest_sha256` is recomputed and compared on every read, the
+-- `refinement_attachment_revisions` freeze mechanic reused (ruling R3).
+-- `outline_json` is the BOUNDED typed shape (priorities · questions ·
+-- obligations) both drafters produce (AC3); `claims_json` carries the three
+-- C2 axes per sentence (HS-200-06).  `generator*` copies the data boundary
+-- pattern of `project_updates`.  Keep is a lifecycle flip, never a copy.
+CREATE TABLE IF NOT EXISTS project_briefs (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    project_revision INTEGER NOT NULL DEFAULT 0,
+    purpose TEXT NOT NULL,
+    lifecycle TEXT NOT NULL DEFAULT 'draft'
+        CHECK (lifecycle IN ('draft', 'kept', 'discarded')),
+    manifest_revision INTEGER NOT NULL DEFAULT 1,
+    manifest_json TEXT NOT NULL DEFAULT '{}',
+    manifest_sha256 TEXT NOT NULL DEFAULT '',
+    outline_json TEXT NOT NULL DEFAULT '{}',
+    body_md TEXT NOT NULL DEFAULT '',
+    claims_json TEXT NOT NULL DEFAULT '[]',
+    generator TEXT NOT NULL DEFAULT 'deterministic',
+    generator_host TEXT,
+    generator_model TEXT,
+    elapsed_ms INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    kept_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_project_briefs_project
+    ON project_briefs(project_id, lifecycle, created_at DESC);
 """

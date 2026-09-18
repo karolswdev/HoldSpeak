@@ -323,3 +323,32 @@ verb becomes `Show fewer`.
   renders no body of its own; the external body carries the `role="region"`
   and closes on `Escape` itself (the Disclosure's focus-return to the trigger
   still fires). Used by the arrival's `N SOURCES` row.
+
+## ClaimAxes (HS-200-06, promoted HS-200-11)
+
+The three INDEPENDENT axes of one claim, as three chips on one line: kind ·
+support · acceptance, then any typed unknown (design D2.0, species S2).
+Promoted from the update posture so the brief (P3), the meeting review (P4)
+and recall (P5) say the same word for the same fact.
+
+- `kind: string` — `observation | inference | proposal | decision |
+  execution_result | outcome_measure`; drawn as a `surface-token[data-chip]`
+  (`DECISION`, `EXECUTION RESULT`)
+- `support: string` — `unknown | source_linked | supported | disputed`;
+  drawn as a `StateChip`: `SUPPORTED` (success) · `LINKED` (idle) ·
+  `DISPUTED` (failure) · `UNSUPPORTED` (warning). A valid reference buys
+  LINKED, never SUPPORTED (C2)
+- `supportEdited?` → `LINKED · EDITED` (warning); `supportMigrated?` →
+  `LINKED · MIGRATED` (idle). The history suffix is honest, never "reviewed"
+- `acceptance: string` — `unreviewed | accepted | rejected | superseded`;
+  `ACCEPTED` (success) · `REJECTED` (failure) · `SUPERSEDED` (warning) ·
+  `UNREVIEWED` (idle). Never inferred from a score
+- `unknowns?: {type, value}[]` — each printed AND typed unsupported, in the
+  warn tint: `DEADLINE 2026-12-31 · NO SOURCE`, `NUMBER 95% · NO SOURCE`
+- `testIdPrefix?` (default `claim`) — `<stem>-axes`, `-kind`, `-support`,
+  `-acceptance`, `-unknown`, so a face keeps its own ids
+
+The token functions (`claimKindToken`, `claimSupportToken`,
+`claimAcceptanceToken`, `claimUnknownToken`) are exported beside it and are
+the ONE vocabulary; a feature that needs the words imports them, never
+re-spells them.

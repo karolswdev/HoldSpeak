@@ -722,6 +722,36 @@
       ]
     },
     {
+      "path": "/api/briefs/{brief_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.project_briefs",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/briefs/{brief_id}/discard",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_briefs",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/briefs/{brief_id}/keep",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_briefs",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/cadence/audit",
       "methods": [
         "GET"
@@ -4366,6 +4396,46 @@
         "GET"
       ],
       "module": "web.routes.projects",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/briefs",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.project_briefs",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/briefs/manifest",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.project_briefs",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/briefs/prepare",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_briefs",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/briefs/route",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.project_briefs",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/briefs/stop",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_briefs",
       "consumers": []
     },
     {

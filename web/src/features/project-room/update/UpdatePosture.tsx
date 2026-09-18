@@ -20,6 +20,7 @@ import {
   ProvenanceChip,
   ActionNotice,
   CitationChips,
+  ClaimAxes as LibraryClaimAxes,
   countLabel,
   humanTime,
   type ChipState,
@@ -29,11 +30,7 @@ import { egressFor } from "../../../desk/surface/egress";
 import type { UpdateController } from "./useUpdateController";
 import type { ProjectUpdate, UpdateClaim } from "./model";
 import {
-  claimAcceptanceToken,
   claimChipTitle,
-  claimKindToken,
-  claimSupportToken,
-  claimUnknownToken,
   generatorLabel,
   humanFallbackReason,
   lifecycleLabel,
@@ -135,40 +132,22 @@ function SectionSourceRow({
   );
 }
 
-/* ── HS-200-06 (C2): the three axes on one claim, honestly ── */
+/* ── HS-200-06 (C2): the three axes on one claim — the library species
+   (`ClaimAxes`, promoted by HS-200-11); the update posture keeps its ids. ── */
 
 function ClaimAxes({ claim }: { claim: UpdateClaim }) {
   if (!claim.hasAxes) return null;
-  const support = claimSupportToken(claim);
-  const acceptance = claimAcceptanceToken(claim);
   return (
-    <span className="update-claim-axes" data-testid="update-claim-axes">
-      <span
-        className="surface-token"
-        data-chip
-        data-testid="update-claim-kind"
-        data-kind={claim.kind}
-      >
-        {claimKindToken(claim.kind)}
-      </span>
-      <span data-testid="update-claim-support" data-support={claim.support}>
-        <StateChip state={support.state} label={support.label} />
-      </span>
-      <span
-        data-testid="update-claim-acceptance"
-        data-acceptance={claim.acceptance}
-      >
-        <StateChip state={acceptance.state} label={acceptance.label} />
-      </span>
-      {claim.unknowns.map((unknown) => (
-        <span
-          key={`${unknown.type}:${unknown.value}`}
-          data-testid="update-claim-unknown"
-        >
-          <StateChip state="warning" label={claimUnknownToken(unknown)} />
-        </span>
-      ))}
-    </span>
+    <LibraryClaimAxes
+      kind={claim.kind}
+      support={claim.support}
+      acceptance={claim.acceptance}
+      supportEdited={Boolean(claim.supportRecord?.invalidatedAt)}
+      supportMigrated={Boolean(claim.supportMappingVersion)}
+      unknowns={claim.unknowns}
+      testIdPrefix="update-claim"
+      className="update-claim-axes"
+    />
   );
 }
 

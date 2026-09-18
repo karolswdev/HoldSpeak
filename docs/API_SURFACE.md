@@ -808,6 +808,19 @@ Routes: 678 (plus static mounts). iOS-consumed: 89. Web-consumed: 519.
 | PUT | `/api/workflows/{workflow_id}` | web |
 | POST | `/api/workflows/{workflow_id}/run` | ios, web |
 
+## web.routes.project_briefs
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/briefs/{brief_id}` | web |
+| POST | `/api/briefs/{brief_id}/discard` | web |
+| POST | `/api/briefs/{brief_id}/keep` | web |
+| GET | `/api/projects/{project_id}/briefs` | server only |
+| GET | `/api/projects/{project_id}/briefs/manifest` | server only |
+| POST | `/api/projects/{project_id}/briefs/prepare` | server only |
+| GET | `/api/projects/{project_id}/briefs/route` | server only |
+| POST | `/api/projects/{project_id}/briefs/stop` | server only |
+
 ## web.routes.project_door
 
 | Method | Path | Consumers |

@@ -66,7 +66,7 @@ import type {
   NudgeCardAction,
 } from "./model";
 import { lifecycleLabel, resolveHealthRows, nudgeCardReducer, formatDays } from "./model";
-import { StringGadget } from "../../desk/surface/gadgets";
+import { StringGadget, CycleGadget } from "../../desk/surface/gadgets";
 import { egressFor, egressForEvent, receiptLabel } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
 import { useReviewController } from "./review/useReviewController";
@@ -75,6 +75,9 @@ import { useUpdateController } from "./update/useUpdateController";
 import { UpdatePosture } from "./update/UpdatePosture";
 import { useStewardController } from "./steward/useStewardController";
 import { StewardPosture } from "./steward/StewardPosture";
+import { usePrepareController, type PrepareController } from "./prepare/usePrepareController";
+import { PreparePosture, RESULT_OPTIONS } from "./prepare/PreparePosture";
+import { coverageToken, clockToken } from "./prepare/model";
 import * as api from "./api";
 import { RoomPeopleSection, monogram } from "./RoomPeopleSection";
 import "./project-room.css";
@@ -1564,14 +1567,61 @@ function RoomUnfinishedSection({ ask }: { ask: RoomAsk }) {
   );
 }
 
+/** BRIEFS — the kept preparation briefs, attached to this Project (HS-200-11
+ *  AC4).  Absent at zero (A.8). */
+function RoomBriefsSection({ prepare }: { prepare: PrepareController }) {
+  const { kept } = prepare;
+  if (kept.length === 0) return null;
+  return (
+    <SurfaceSection label={countLabel("BRIEFS", kept.length)}>
+      <SurfaceLedger count="" cols="room">
+        <ul className="surface-ledger-rows" data-testid="room-briefs">
+          {kept.map((brief) => {
+            const coverage = coverageToken(brief.manifest.coverage);
+            const keptAt = clockToken("KEPT", brief.keptAt);
+            return (
+              <SurfaceLedgerRow
+                key={brief.id}
+                data-testid="room-brief-row"
+                lead={<span className="prepare-emblem" aria-hidden="true">BRF</span>}
+                primary={<span className="surface-primary">{brief.purpose}</span>}
+                cells={
+                  <span className="prepare-source-cells">
+                    {keptAt ? <span className="surface-token" data-chip>{keptAt}</span> : null}
+                    {coverage ? (
+                      <StateChip state={brief.manifest.coverage.complete ? "success" : "warning"} label={coverage} />
+                    ) : null}
+                  </span>
+                }
+                trailing={
+                  <Button dense variant="ghost" aria-label={`Open: ${brief.purpose}`} data-testid="room-brief-open" onClick={() => void prepare.openBrief(brief)}>
+                    Open
+                  </Button>
+                }
+                wrap
+                open
+                expands={false}
+              />
+            );
+          })}
+        </ul>
+      </SurfaceLedger>
+    </SurfaceSection>
+  );
+}
+
 function RoomAskWell({
   ask,
   projectId,
   onOpenRef,
+  onPrepare,
 }: {
   ask: RoomAsk;
   projectId: string;
   onOpenRef: (ref: string) => void;
+  /** HS-200-11: `Result → Preparation brief` hands the words to the Prepare
+   *  posture; nothing here requires a calendar (AC1). */
+  onPrepare?: (purpose: string) => void;
 }) {
   const { prompt, setPrompt, result, error, inputRef } = ask;
   const receipt = result?.groundingReceipt;
@@ -1612,6 +1662,16 @@ function RoomAskWell({
           draftScope={`project-ask-${projectId}`}
           onText={(text) => setPrompt((v) => (v ? `${v} ${text}` : text))}
         />
+        {onPrepare ? (
+          <span className="room-ask-result" data-testid="room-ask-result">
+            <CycleGadget
+              label="Result"
+              value="answer"
+              options={RESULT_OPTIONS}
+              onChange={(next) => { if (next === "brief") onPrepare(prompt); }}
+            />
+          </span>
+        ) : null}
         {/* Condition 8: NOT SET = idle/muted tone (no scope), assigned = scope from assignment */}
         {modelLabel.host === "NOT SET" ? (
           <span className="room-ask-model-chip">
@@ -1910,6 +1970,10 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   // section, the well stays sticky at the foot (F5).
   const askCtrl = useRoomAsk(ctrl.projectId, ctrl.projectName);
 
+  // HS-200-11 — the Prepare posture: one manual preparation path over the
+  // Room's read sources, its carried decisions and its open commitments.
+  const prepareCtrl = usePrepareController(ctrl.projectId, () => void ctrl.load());
+
   const runtimeTitle =
     ctrl.loadStatus === "ready" && ctrl.projectName !== "Project"
       ? ctrl.projectName : null;
@@ -1986,6 +2050,26 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     );
   }
 
+  if (prepareCtrl.posture !== "off") {
+    return (
+      <>
+        {hero ? hero(<Button dense variant="ghost" onClick={handleRefresh}>Refresh</Button>) : null}
+        <div className="room-body" data-testid="room-body">
+          <PreparePosture
+            ctrl={prepareCtrl}
+            projectName={ctrl.projectName}
+            onOpenRef={ctrl.openProjectRef}
+            onResultChange={(purpose) => {
+              // `Result → Answer` walks back to the Room well with his words.
+              askCtrl.setPrompt(purpose);
+              prepareCtrl.exit();
+            }}
+          />
+        </div>
+      </>
+    );
+  }
+
   const readReceipt = ctrl.readAt ? `READ ${formatTimeShort(ctrl.readAt)}` : "";
   const nextCheck = ctrl.room?.sources.state === "ok" ? ctrl.room.sources.nextCheckAt : null;
 
@@ -2051,9 +2135,17 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
               <div className="room-section-rise" style={{ animationDelay: "160ms" }}>
                 <DecisionsCommitmentsSection room={ctrl.room} />
               </div>
+              <div className="room-section-rise" style={{ animationDelay: "180ms" }}>
+                <RoomBriefsSection prepare={prepareCtrl} />
+              </div>
               {/* Condition 7: ask well sticky at the foot at ALL widths */}
               <div className="room-section-rise room-ask-container" style={{ animationDelay: "200ms" }}>
-                <RoomAskWell ask={askCtrl} projectId={ctrl.projectId} onOpenRef={ctrl.openProjectRef} />
+                <RoomAskWell
+                  ask={askCtrl}
+                  projectId={ctrl.projectId}
+                  onOpenRef={ctrl.openProjectRef}
+                  onPrepare={(purpose) => prepareCtrl.enterPrepare(purpose)}
+                />
               </div>
             </>
           ) : (
