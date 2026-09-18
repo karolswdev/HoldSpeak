@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from ...db import get_database, get_observer
 from ...principals import UNAUTHENTICATED
 from ...services.errors import NotFound, ServiceError, ValidationError
+from ...services import recipe_catalog
 from ...services.reaction_service import ReactionService
 from ...web_requests import (
     _ReactionCreateRequest,
@@ -103,6 +104,78 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
 
     def principal(request: Request) -> Any:
         return getattr(request.state, "principal", UNAUTHENTICATED)
+
+    # ── HS-200-17: the prepared-recipe catalog (contract C5) ──────────
+    #
+    # Read-only discovery over ``holdspeak.services.recipe_catalog``.  It
+    # lives on this existing automations surface, and NOT under
+    # ``/api/recipes/...``: that prefix already belongs to the Agent
+    # primitive (``primitives/recipes.py``), whose ``/api/recipes/{recipe_id}``
+    # would shadow any sibling path added there.  Ruling R17-4: no new face
+    # is introduced -- these are JSON reads for the Web app and the MCP
+    # sidecar, not a screen.
+
+    def _project_service() -> Any:
+        """The hub's ProjectService when it has one, else a bare read."""
+        from ...runtime import composition
+        from ...services.project_service import ProjectService
+
+        existing = getattr(ctx, "project_service", None)
+        if existing is not None:
+            return existing
+        try:
+            return composition.service(
+                "project_service", lambda: ProjectService(service._db)
+            )
+        except composition.NoRuntimeError:
+            return ProjectService(service._db)
+
+    @router.get("/automations/practice-recipes")
+    async def list_practice_recipes() -> Any:
+        return JSONResponse(recipe_catalog.catalog_payload())
+
+    @router.get("/automations/practice-recipes/{recipe_id}")
+    async def get_practice_recipe(recipe_id: str) -> Any:
+        try:
+            return JSONResponse(recipe_catalog.get_descriptor(recipe_id).to_dict())
+        except recipe_catalog.UnknownRecipe as exc:
+            return JSONResponse(
+                {"error": str(exc), "code": "unknown_recipe"}, status_code=404
+            )
+
+    @router.get("/automations/practice-recipes/{recipe_id}/plan")
+    async def compile_practice_recipe(
+        request: Request,
+        recipe_id: str,
+        project_id: str = Query("", description="The Project the plan is scoped to."),
+        trigger: str = Query(recipe_catalog.TRIGGER_MANUAL),
+        version: int | None = Query(None, ge=1),
+        purpose: str = Query("", description="Preparation purpose, when the recipe takes one."),
+    ) -> Any:
+        """Compile a plan. A read: it writes nothing and runs nothing."""
+        try:
+            inputs: dict[str, Any] = {"project_id": project_id}
+            if purpose:
+                inputs["purpose"] = purpose
+            plan = recipe_catalog.compile_recipe(
+                recipe_id,
+                version=version,
+                trigger=trigger,
+                inputs=inputs,
+                coverage=recipe_catalog.observed_coverage(
+                    _project_service(), principal(request), project_id
+                ),
+            )
+            return JSONResponse(plan.to_dict())
+        except recipe_catalog.UnknownRecipe as exc:
+            return JSONResponse(
+                {"error": str(exc), "code": "unknown_recipe"}, status_code=404
+            )
+        except recipe_catalog.CatalogError as exc:
+            # A broken descriptor is a typed answer, not a 500 (counsel P2-3).
+            return JSONResponse(
+                {"error": str(exc), "code": "catalog_error"}, status_code=500
+            )
 
     @router.get("/automations/watches")
     async def list_watches(request: Request) -> Any:
