@@ -1,4 +1,4 @@
-// HS-135-04 — People is a single protected Desk application.  Its roster is
+// HS-135-04: People is a single protected Desk application.  Its roster is
 // a relationship projection, never a field of person tiles or a scorecard.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CoreProps } from "./core-types";
@@ -257,7 +257,7 @@ function Roster({ relationships, selectedId, newName, setNewName, newKind, setNe
   const scopedOut = projectFilter ? relationships.length - scoped.length : 0;
   return <SurfaceSection
     label={projectFilter ? countToken(ordered.length, "ON THIS PROJECT", "ON THIS PROJECT") ?? "THIS PROJECT" : "Relationships"}
-    actions={projectFilter && scopedOut > 0 ? <Button dense variant="ghost" aria-label="Everyone — clear the Project scope" onClick={onClearProjectFilter} data-testid="people-roster-everyone">{countToken(scopedOut, "MORE", "MORE")} · Everyone</Button> : undefined}
+    actions={projectFilter && scopedOut > 0 ? <Button dense variant="ghost" aria-label="Everyone: clear the Project scope" onClick={onClearProjectFilter} data-testid="people-roster-everyone">{countToken(scopedOut, "MORE", "MORE")} · Everyone</Button> : undefined}
   >
     <div className="people-new">
       <StringGadget label="New relationship" value={newName} onChange={setNewName} placeholder="Name" inputProps={{ id: "people-new-relationship" }} onKeyDown={(event) => { if (event.key === "Enter") onCreate(); }} />
