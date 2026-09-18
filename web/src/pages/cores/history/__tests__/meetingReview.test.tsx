@@ -294,7 +294,7 @@ describe("MeetingReview (HS-200-12)", () => {
     fireEvent.click(within(row).getByTestId("review-more"));
     const owner = within(within(row).getByTestId("review-supply-owner")).getByRole("button");
     fireEvent.click(owner);
-    const field = within(row).getByRole("textbox", { name: /owner —/ });
+    const field = within(row).getByRole("textbox", { name: /owner:/ });
     fireEvent.change(field, { target: { value: "Priya" } });
     apiFetch.mockImplementationOnce(async (path: string, init: { json?: { owner?: string } }) => {
       expect(path).toBe("/api/proposals/p4/edit");
