@@ -1,6 +1,8 @@
 """Cadence family — MCP tools for the CadenceService surface."""
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 import asyncio
 from typing import Any
 
@@ -174,13 +176,13 @@ def _run(coro: Any) -> Any:
     raise ValueError("async MCP tools cannot execute inside an active event loop")
 
 
-def _service() -> CadenceService:
+def _build_service() -> CadenceService:
     """Construct CadenceService per spec: db + config.cadence + kernel=None + observer."""
     return CadenceService(
-        db=get_database(),
+        db=db_or(get_database),
         config=Config.load().cadence,
         kernel=None,
-        observer=get_observer(),
+        observer=observer_or(get_observer),
     )
 
 
@@ -244,3 +246,13 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         return _service().apply_closeout(principal, {"decisions": decisions})
 
     raise LookupError(name)
+
+
+# HS-200-45 R1: _service asks the ONE composition root first. Inside the hub that
+# returns the instance the HTTP routes use -- composed with the hub's loaded cadence config and its kernel.
+# Outside a hub (a unit test's bare root, or the standalone diagnosis hatch) the
+# root holds nothing and the bare builder above runs, producing exactly the
+# object the pre-HS-200-45 code produced.
+def _service() -> CadenceService:
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("cadence_service", _build_service)

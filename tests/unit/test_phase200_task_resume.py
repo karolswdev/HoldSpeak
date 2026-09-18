@@ -714,6 +714,12 @@ def test_custody_survives_the_database_file_being_recreated(tmp_path, monkeypatc
     backup = tmp_path / "backup.db"
     shutil.copy2(db_path, backup)
     db_path.unlink()
+    # HS-200-45 R5: under WAL, sidecars left beside a replaced main file
+    # resurrect pre-restore pages. `restore_database` removes them; this
+    # hand-rolled restore must do the same or it is simulating a restore the
+    # product no longer performs.
+    for _suffix in ("-wal", "-shm"):
+        db_path.with_name(db_path.name + _suffix).unlink(missing_ok=True)
     shutil.copy2(backup, db_path)
 
     restored = Database(db_path)

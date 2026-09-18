@@ -1,6 +1,8 @@
 """Sidecar-lifetime execution host for Thought refinement MCP tools."""
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 import asyncio
 import threading
 from collections.abc import Awaitable, Callable
@@ -27,7 +29,7 @@ class SidecarRefinementRuntime:
         coordinator_factory: Callable[[], RefinementCoordinator] | None = None,
     ) -> None:
         self._factory = coordinator_factory or (
-            lambda: RefinementCoordinator(get_database(), host_kind="mcp")
+            lambda: RefinementCoordinator(db_or(get_database), host_kind="mcp")
         )
         self._loop: asyncio.AbstractEventLoop | None = None
         self._coordinator: RefinementCoordinator | None = None

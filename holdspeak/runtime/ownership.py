@@ -81,6 +81,9 @@ class DatabaseOwnershipMixin:
                 port=getattr(self.server, "port", None),
                 host=getattr(self.server, "host", None),
                 process_start=self.runtime_started_at.isoformat(),
+                # Re-acquiring rewrites the claim body: carry the label, or the
+                # port note would silently drop it (counsel P2-i).
+                label=(lock.owner() or {}).get("label"),
             )
         except Exception as exc:  # pragma: no cover - the claim already stands
             log.debug(f"Could not record the serving port on the owner claim: {exc}")

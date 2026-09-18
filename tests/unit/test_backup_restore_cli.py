@@ -29,7 +29,9 @@ def db_path(tmp_path, monkeypatch) -> Path:
 
 
 def _seed(path: Path, title: str) -> None:
-    Database(path)
+    # HS-200-45: restore refuses while the file is open; an unassigned
+    # Database lingers until the GC runs, so close it explicitly.
+    Database(path).close()
     conn = sqlite3.connect(str(path))
     conn.execute(
         "INSERT OR REPLACE INTO meetings (id, title, started_at) VALUES ('m1', ?, datetime('now'))",
@@ -116,7 +118,7 @@ def test_restore_database_primitive_returns_safety_backup(tmp_path) -> None:
     live = tmp_path / "holdspeak.db"
     _seed(live, "Live")
     snapshot = tmp_path / "snap.bak"
-    Database(snapshot)  # a valid empty HoldSpeak DB to restore from
+    Database(snapshot).close()  # a valid empty HoldSpeak DB to restore from
 
     safety = restore_database(snapshot, live)
     assert safety is not None and safety.exists()

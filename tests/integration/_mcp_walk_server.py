@@ -5,7 +5,15 @@ snapshot fetcher reads from a JSON file (HOLDSPEAK_TEST_SNAPSHOT_FILE)
 instead of calling the gh CLI.  The subprocess boundary, JSON-RPC
 protocol, auth, tool dispatch, and service composition are all real.
 
+HS-200-45: the sidecar proxies to a running hub by default, so this walk runs
+it under ``HOLDSPEAK_MCP_STANDALONE=1`` -- the diagnosis hatch, in which the
+sidecar is its own composition root and claims the owner lock for the isolated
+HOME's database. That keeps the walk's "the subprocess boundary, JSON-RPC
+protocol, auth, tool dispatch, and service composition are all real" claim
+true, and it is one writer rather than a silent second one.
+
 Usage:
+    HOLDSPEAK_MCP_STANDALONE=1 \
     HOLDSPEAK_TEST_SNAPSHOT_FILE=/path/to/snapshot.json \
         uv run python -m tests.integration._mcp_walk_server
 """

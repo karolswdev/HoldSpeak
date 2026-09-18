@@ -142,9 +142,17 @@ def test_pipeline_tools_dispatch_through_mcp_protocol(monkeypatch) -> None:
     assert call("recipe.list", {}) == [{"id": "recipe"}]
     assert call("recipe.get", {"recipe_id": "recipe"})["id"] == "recipe"
     assert call("recipe.run", {"recipe_id": "recipe", "input": "go", "options": {"max_tokens": 10}})["max_tokens"] == 10
-    # HS-151-02: recipe.chat retired — tool returns retired error instead
-    # of dispatching to RecipeService.chat.
-    assert call("recipe.chat", {"recipe_id": "recipe", "question": "why"})["error"] == "recipe_chat_retired"
+    # HS-151-02: recipe.chat retired — the tool refuses instead of dispatching
+    # to RecipeService.chat. HS-200-45 R6: the refusal is RAISED now, so the
+    # sidecar reports `isError: true`; returning it made a permanent retirement
+    # read as a successful chat turn.
+    retired = handle_message({
+        "jsonrpc": "2.0", "id": "recipe.chat", "method": "tools/call",
+        "params": {"name": "recipe.chat", "arguments": {"recipe_id": "recipe", "question": "why"}},
+    })
+    assert retired is not None
+    assert retired["result"]["isError"] is True
+    assert "retired" in retired["result"]["content"][0]["text"]
     assert call("zone.file", {"directory_id": "dir", "primitive_id": "note:1"})["directory_id"] == "dir"
     assert call("zone.unfile", {"directory_id": "dir", "primitive_id": "note:1"}) == {"deleted": True, "id": "note:1"}
     assert call("zone.list_members", {"directory_id": "dir"}) == [{"directory_id": "dir"}]

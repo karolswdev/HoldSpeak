@@ -236,7 +236,18 @@ def test_protocol_version_is_streamable_http():
 # ── Route: 404 when disabled ───────────────────────────────────────────
 
 def test_route_404_when_disabled():
-    """174-02: POST /api/mcp returns 404 when remote is not enabled."""
+    """174-02: POST /api/mcp returns 404 when remote is not enabled.
+
+    HS-200-45 R3 narrowed this rule: the flag governs the REMOTE listener, so
+    a LOOPBACK request bearing the owner token is admitted with the flag off
+    (it is the hub's own local transport, the one the stdio sidecar proxies
+    into). This case is unaffected because `_make_app` passes no
+    `fake_client_host`, so the request arrives from "testclient", which
+    `is_loopback_host` does not accept. The loopback-owner half of the rule is
+    fenced in
+    tests/unit/test_phase200_one_composition_root.py::TestLoopbackOwnerAdmission,
+    which also keeps a non-loopback 404 case.
+    """
     app = _make_app(remote_enabled=False)
     client = TestClient(app)
     resp = client.post(

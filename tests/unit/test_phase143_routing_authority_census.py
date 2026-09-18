@@ -110,7 +110,7 @@ ROUTING_RESOLVER_REFERENCES = {
     # HS-172: resolve_meeting_placement in routing_glue, mcp/tools, settings route
     "holdspeak/runtime/routing_glue.py:374:import:resolve_meeting_placement",
     "holdspeak/runtime/routing_glue.py:375:ref:resolve_meeting_placement",
-    "holdspeak/mcp/tools.py:825:import:resolve_meeting_placement",
+    "holdspeak/mcp/tools.py:862:import:resolve_meeting_placement",
     "holdspeak/web/routes/system/settings.py:44:import:resolve_meeting_placement",
     "holdspeak/web/routes/system/settings.py:45:ref:resolve_meeting_placement",
     "holdspeak/services/settings_service.py:72:import:resolve_meeting_placement",
@@ -158,9 +158,9 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/services/inference_setup_service.py:181:inference_target_id",
     "holdspeak/services/settings_service.py:665:intel_profile_id",
     "holdspeak/services/settings_service.py:916:inference_target_id",
-    "holdspeak/services/workbench_service.py:562:resolver_profile_id",
+    "holdspeak/services/workbench_service.py:592:resolver_profile_id",
     # HS-172: resolve_meeting_placement pointer reads
-    "holdspeak/mcp/tools.py:824:intel_profile_id",
+    "holdspeak/mcp/tools.py:861:intel_profile_id",
     "holdspeak/web/routes/system/settings.py:41:intel_profile_id",
 }
 
@@ -192,7 +192,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/services/model_profile_service.py:225:profile_id",
         "holdspeak/services/model_profile_service.py:264:profile_id",
         # HS-172: meetings host resolve display reads.
-        "holdspeak/mcp/tools.py:827:profile_id",
+        "holdspeak/mcp/tools.py:864:profile_id",
         "holdspeak/web/routes/system/settings.py:46:profile_id",
     }},
     **{site: "immutable evidence" for site in {
@@ -203,7 +203,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/db/models/__init__.py:1136:profile_id",
         "holdspeak/db/models/workbench.py:138:profile_id",
         "holdspeak/services/recipe_service.py:416:profile_id",
-        "holdspeak/services/workbench_service.py:561:profile_id",
+        "holdspeak/services/workbench_service.py:591:profile_id",
     }},
     **{site: "credential/provider identity" for site in {
         "holdspeak/intel/providers.py:687:profile_id", "holdspeak/intel/providers.py:694:profile_id",

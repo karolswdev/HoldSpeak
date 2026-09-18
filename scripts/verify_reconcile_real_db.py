@@ -55,12 +55,19 @@ def main() -> int:
 
     tmp = Path(tempfile.mkdtemp(prefix="hs137-verify-"))
     copy = tmp / "holdspeak.db"
-    # Copy the DB and any sidecar WAL/SHM so the copy is consistent.
-    shutil.copy2(REAL_DB, copy)
-    for suffix in ("-wal", "-shm"):
-        side = REAL_DB.with_name(REAL_DB.name + suffix)
-        if side.exists():
-            shutil.copy2(side, copy.with_name(copy.name + suffix))
+    # HS-200-45 R5: the three-file copy this used to do (main + -wal + -shm)
+    # is not atomic — a checkpoint landing between the copies yields a torn
+    # set. The sqlite backup API reads one consistent snapshot through SQLite,
+    # which is correct under WAL and needs no sidecars at all.
+    src = sqlite3.connect(f"file:{REAL_DB}?mode=ro", uri=True)
+    try:
+        dest = sqlite3.connect(str(copy))
+        try:
+            src.backup(dest)
+        finally:
+            dest.close()
+    finally:
+        src.close()
     print(f"copied real DB → {copy}", flush=True)
 
     # ── PRE: snapshot the copy before the reconcile ────────────────────

@@ -18,6 +18,9 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
     router=APIRouter()
     def _principal(request: Request) -> Any: return getattr(request.state,"principal",Principal(PrincipalKind.OWNER,"owner-session"))
     def _svc() -> PrimitiveService:
+        # HS-200-45: the hub's ONE composed instance (on_changed -> the bus).
+        if getattr(ctx, "primitive_service", None) is not None:
+            return ctx.primitive_service
         from ....db import get_database,get_observer
         return PrimitiveService(get_database(),observer=get_observer())
     @router.get("/api/chains")

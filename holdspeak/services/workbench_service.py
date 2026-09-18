@@ -6,7 +6,7 @@ import hashlib
 import json
 import time
 import uuid
-from typing import Any
+from typing import Any, Callable
 
 from holdspeak.db.core import Database
 from holdspeak.principals import Principal, PrincipalKind
@@ -42,9 +42,28 @@ class WorkbenchService:
     # Route adapters create a short-lived service per request; limiter state is shared.
     _resolve_timestamps: dict[str, float] = {}
 
-    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
+    def __init__(
+        self,
+        db: Database,
+        *,
+        observer: PipelineObserver | None = None,
+        on_changed: Callable[[str, str, str], None] | None = None,
+    ) -> None:
         self._db = db
         self._observer = observer or NullObserver()
+        # HS-200-45 R4: workbench/item/skill writes bypass PrimitiveService, so
+        # this service carries the same ``on_changed`` hook. The hub binds both
+        # to one ``desk_changed`` broadcast.
+        self._on_changed = on_changed
+
+    def _changed(self, kind: str, obj_id: str, op: str) -> None:
+        """Announce a successful write. Never fails the write it reports on."""
+        if self._on_changed is None:
+            return
+        try:
+            self._on_changed(kind, obj_id, op)
+        except Exception:  # pragma: no cover - a dead socket is not a failed write
+            pass
 
     def _refuse_post_marker_pointer_write(self, principal: Principal, fields: dict[str, Any]) -> None:
         """Retired selectors never create or rewrite assignment authority."""
@@ -85,6 +104,7 @@ class WorkbenchService:
         workbench_id = str(body.pop("id", "") or _new_id("workbench"))
         if not fields["schedule_enabled"]:
             wb = self._db.workbenches.upsert(workbench_id=workbench_id, **fields)
+            self._changed("workbench", wb.id, "create")
             return self._wb_payload(wb, principal)
         # The owner's single enable gesture commits its configuration, captured
         # deployment revision, and local delegation as one crash-consistent unit.
@@ -95,6 +115,7 @@ class WorkbenchService:
             conn.execute("BEGIN IMMEDIATE")
             wb = self._db.workbenches.upsert_in_transaction(conn, workbench_id=workbench_id, **fields)
             ScheduleDelegationService(self._db).enable_from_owner_in_transaction(principal, wb, conn)
+        self._changed("workbench", wb.id, "create")
         return self._wb_payload(wb, principal)
 
     def update_workbench(
@@ -116,6 +137,7 @@ class WorkbenchService:
             proposed["schedule_revision"] = existing.schedule_revision
         if not bound_changed:
             wb = self._db.workbenches.upsert(workbench_id=workbench_id, **proposed)
+            self._changed("workbench", wb.id, "update")
             return self._wb_payload(wb, principal)
         # Bound configuration and the authority it invalidates share one lock.
         # A provider is only signalled after the epoch fence has committed.
@@ -131,6 +153,7 @@ class WorkbenchService:
             if enabling:
                 service.enable_from_owner_in_transaction(principal, wb, conn)
         service.complete_fenced(fenced)
+        self._changed("workbench", wb.id, "update")
         return self._wb_payload(wb, principal)
 
     def delete_workbench(self, principal: Principal, workbench_id: str) -> bool:
@@ -140,6 +163,7 @@ class WorkbenchService:
             )
         if not self._db.workbenches.delete(workbench_id):
             raise NotFound("workbench", workbench_id)
+        self._changed("workbench", workbench_id, "delete")
         return True
 
     # ── Items ────────────────────────────────────────────────────────────
@@ -162,6 +186,7 @@ class WorkbenchService:
             grounding=fields.get("grounding") or {},
             context=fields.get("context") or {},
         )
+        self._changed("workbench_item", item.id, "create")
         return item.to_dict()
 
     def update_item(
@@ -187,6 +212,7 @@ class WorkbenchService:
             claimed_at=pick("claimed_at", existing.claimed_at),
             completed_at=pick("completed_at", existing.completed_at),
         )
+        self._changed("workbench_item", item.id, "update")
         return item.to_dict()
 
     def delete_item(self, principal: Principal, workbench_id: str, item_id: str) -> bool:
@@ -195,6 +221,7 @@ class WorkbenchService:
             raise ConflictError("Cannot delete a claimed item")
         if not self._db.workbench_items.delete(item_id):
             raise NotFound("item", item_id)
+        self._changed("workbench_item", item_id, "delete")
         return True
 
     def retry_mint(self, principal: Principal, workbench_id: str, item_id: str) -> dict[str, Any]:
@@ -376,6 +403,7 @@ class WorkbenchService:
             recipe_ids=list(fields.get("recipe_ids", [])),
             created_by=str(fields.get("created_by", "")),
         )
+        self._changed("skill", skill.id, "create")
         return skill.to_dict()
 
     def update_skill(self, principal: Principal, skill_id: str, **fields: Any) -> dict[str, Any]:
@@ -393,11 +421,13 @@ class WorkbenchService:
             recipe_ids=list(pick("recipe_ids", existing.to_dict().get("recipe_ids", []))),
             created_by=str(pick("created_by", existing.created_by)),
         )
+        self._changed("skill", skill.id, "update")
         return skill.to_dict()
 
     def delete_skill(self, principal: Principal, skill_id: str) -> bool:
         if not self._db.skills.delete(skill_id):
             raise NotFound("skill", skill_id)
+        self._changed("skill", skill_id, "delete")
         return True
 
     # ── Memory ───────────────────────────────────────────────────────────

@@ -10,6 +10,8 @@ HS-165-04: PROJECT_PALETTE — the scoped allow-list for agent sessions.
 """
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 import hashlib
 import json
 import sqlite3
@@ -913,18 +915,18 @@ TOOLS.extend([
 ])
 
 
-def _service():
+def _build_service():
     """Compose the same ProjectService the web application edge uses."""
     from holdspeak.services.project_service import ProjectService
-    db = get_database()
+    db = db_or(get_database)
     return ProjectService(db)
 
 
-def _delta_service():
+def _build_delta_service():
     """Compose ProjectDeltaService (same wiring as web context)."""
     from holdspeak.services.project_delta_service import ProjectDeltaService
     from holdspeak.services.project_service import ProjectService
-    db = get_database()
+    db = db_or(get_database)
     ps = ProjectService(db)
     # collector=None is safe for decide_proposal/accept_review which
     # do not invoke the collector.  open_review DOES need it; composed
@@ -943,23 +945,23 @@ def _delta_service():
     return delta_svc
 
 
-def _update_service():
+def _build_update_service():
     """Compose ProjectUpdateService (same wiring as web context)."""
     from holdspeak.services.project_service import ProjectService
     from holdspeak.services.project_update_service import ProjectUpdateService
-    db = get_database()
+    db = db_or(get_database)
     ps = ProjectService(db)
     return ProjectUpdateService(db, project_service=ps)
 
 
-def _steward_service():
+def _build_steward_service():
     """Compose ProjectStewardService (same wiring as web context)."""
     from holdspeak.services.project_evidence_collector import ProjectEvidenceCollector
     from holdspeak.services.project_delta_service import ProjectDeltaService
     from holdspeak.services.project_service import ProjectService
     from holdspeak.services.project_steward_service import ProjectStewardService
     from holdspeak.services.project_update_service import ProjectUpdateService
-    db = get_database()
+    db = db_or(get_database)
     ps = ProjectService(db)
     collector = ProjectEvidenceCollector(db)
     delta = ProjectDeltaService(db, collector=collector, project_service=ps)
@@ -970,7 +972,7 @@ def _steward_service():
     )
 
 
-def _connections_service():
+def _build_connections_service():
     """Compose ConnectionsService (same wiring as web context, HS-168-02)."""
     from holdspeak.config import Config
     from holdspeak.mcp.families.inference_assignments import _service as _assignment_service
@@ -986,13 +988,13 @@ def _connections_service():
     )
 
 
-def _setup_service():
+def _build_setup_service():
     """Compose ProjectSetupService (same wiring as web context)."""
     from holdspeak.services.project_service import ProjectService
     from holdspeak.services.project_setup_service import ProjectSetupService
     from holdspeak.services.watch_service import WatchService
     from holdspeak.services.watch_sources import default_snapshot_fetcher
-    db = get_database()
+    db = db_or(get_database)
     ps = ProjectService(db)
     ga = _github_adapter()
     ja = _jira_adapter()
@@ -1007,41 +1009,41 @@ def _setup_service():
     )
 
 
-def _watch_service():
+def _build_watch_service():
     """Compose WatchService (same wiring as web context, HS-174-07 rider)."""
     from holdspeak.services.watch_service import WatchService
     from holdspeak.services.watch_sources import default_snapshot_fetcher
-    db = get_database()
+    db = db_or(get_database)
     ja = _jira_adapter()
     ca = _confluence_adapter()
     fetcher = default_snapshot_fetcher(jira_adapter=ja, confluence_adapter=ca)
     return WatchService(db, snapshot_fetcher=fetcher)
 
 
-def _github_adapter():
+def _build_github_adapter():
     """Return the GitHubProviderAdapter or None (same as web context)."""
     from holdspeak.services.github_provider import GitHubProviderAdapter
-    db = get_database()
+    db = db_or(get_database)
     try:
         return GitHubProviderAdapter(db)
     except Exception:
         return None
 
 
-def _jira_adapter():
+def _build_jira_adapter():
     """Return the JiraProviderAdapter or None (same as web context)."""
     from holdspeak.services.jira_provider import JiraProviderAdapter
-    db = get_database()
+    db = db_or(get_database)
     try:
         return JiraProviderAdapter(db)
     except Exception:
         return None
 
 
-def _confluence_adapter():
+def _build_confluence_adapter():
     """Return the ConfluenceProviderAdapter or None (same as web context)."""
     from holdspeak.services.confluence_provider import ConfluenceProviderAdapter
-    db = get_database()
+    db = db_or(get_database)
     try:
         return ConfluenceProviderAdapter(db)
     except Exception:
@@ -1112,7 +1114,7 @@ def _require_graduated_watch(watch_id: str) -> dict[str, Any]:
     whose state is in _GRADUATED_WATCH_STATES.  Legacy rows (state='')
     belong to the reactions family.
     """
-    db = get_database()
+    db = db_or(get_database)
     watch = db.automations.get_watch(watch_id)
     if not watch:
         raise NotFound("watch", watch_id)
@@ -1284,7 +1286,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             return delta_svc._load_frozen_window(open_review)
         # Honest empty state (WEB-STA-004) -- parity with the Web
         # route's empty branch incl. source_coverage (counsel S-2).
-        db = get_database()
+        db = db_or(get_database)
         room_fields = db.projects.get_project_room_fields(project_id)
         last_accepted_at = (room_fields or {}).get("last_review_at")
         source_coverage = None
@@ -1323,7 +1325,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         cmd_id = arguments.get("command_id")
 
         # Route glue: verify proposal belongs to this review
-        db = get_database()
+        db = db_or(get_database)
         proposal = db.project_observations.get_proposal(proposal_id)
         if proposal is None:
             raise NotFound("proposal", proposal_id)
@@ -1572,7 +1574,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         })
 
         # command_id replay (mirrors steward.py:78-91)
-        db = get_database()
+        db = db_or(get_database)
         if cmd_id is not None:
             existing = db.projects.get_project_command(cmd_id)
             if existing is not None:
@@ -1665,12 +1667,25 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         wired_watch, wired_steward = get_scheduler_services()
 
         if wired_watch is None and wired_steward is None:
-            return {
-                "success": False,
-                "code": "scheduler_not_wired",
-                "message": "The conductor's scheduler services are not wired "
-                           "(set_scheduler_services has not been called)",
-            }
+            # HS-200-45 R6: this RAISES now. The comment above claims "a raised
+            # error is surfaced, never dressed as success" -- but it was a
+            # `return`, so the sidecar wrapped it with `isError: false` and a
+            # naive caller read a refusal as a completed trigger. And it was
+            # the ONLY branch reachable from the old sidecar, which never
+            # called `set_scheduler_services`: every steward trigger over MCP
+            # "succeeded" and ran nothing.
+            raise ServiceError(
+                # The code the HTTP 503 path and docs/PROJECT_ROOMS.md already
+                # name is kept; only the ENVELOPE changes, from a returned
+                # success to a raised refusal.
+                "scheduler_not_wired",
+                "project.steward.trigger needs the conductor's scheduler "
+                "services, which only the running hub wires "
+                "(set_scheduler_services is called by `holdspeak web`'s "
+                "conductor). Nothing was evaluated and no steward run started. "
+                "Start the hub and retry -- the stdio sidecar forwards this "
+                "call to it."
+            )
 
         # HS-200-43 F2: explicit trigger = the owner's hand = unbounded.
         eval_outcomes = (
@@ -1994,7 +2009,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
                 raise ValidationError(
                     "evaluation_cadence_minutes must be 1..10080",
                 )
-            get_database().automations.update_watch_spec(
+            db_or(get_database).automations.update_watch_spec(
                 watch_id, evaluation_cadence_minutes=cadence,
             )
             result["evaluation_cadence_minutes"] = cadence
@@ -2084,3 +2099,103 @@ PROJECT_PALETTE: frozenset[str] = frozenset(t["name"] for t in TOOLS)
 
 
 __all__ = ["TOOLS", "PROJECT_PALETTE", "dispatch"]
+
+
+# HS-200-45 R1: _service now asks the ONE composition root first. Inside the hub
+# that returns the instance the HTTP routes use -- the one composed with
+# delta_service= (mutual composition with the room review section). Outside a hub (a unit test's bare root, or the
+# standalone diagnosis hatch) the root holds nothing and the bare builder above
+# runs, which is the same object the pre-HS-200-45 code produced.
+def _service():
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("project_service", lambda: _build_service())
+
+
+# HS-200-45 R1: _delta_service now asks the ONE composition root first. Inside the hub
+# that returns the instance the HTTP routes use -- the one composed with
+# the evidence collector AND an attached project_service. Outside a hub (a unit test's bare root, or the
+# standalone diagnosis hatch) the root holds nothing and the bare builder above
+# runs, which is the same object the pre-HS-200-45 code produced.
+def _delta_service():
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("project_delta_service", lambda: _build_delta_service())
+
+
+# HS-200-45 R1: _update_service now asks the ONE composition root first. Inside the hub
+# that returns the instance the HTTP routes use -- the one composed with
+# the kernel broker, so a model drafter is reachable. Outside a hub (a unit test's bare root, or the
+# standalone diagnosis hatch) the root holds nothing and the bare builder above
+# runs, which is the same object the pre-HS-200-45 code produced.
+def _update_service():
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("project_update_service", lambda: _build_update_service())
+
+
+# HS-200-45 R1: _steward_service now asks the ONE composition root first. Inside the hub
+# that returns the instance the HTTP routes use -- the one composed with
+# the door_service, so a steward run can open a door. Outside a hub (a unit test's bare root, or the
+# standalone diagnosis hatch) the root holds nothing and the bare builder above
+# runs, which is the same object the pre-HS-200-45 code produced.
+def _steward_service():
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("project_steward_service", lambda: _build_steward_service())
+
+
+# HS-200-45 R1: _connections_service now asks the ONE composition root first. Inside the hub
+# that returns the instance the HTTP routes use -- the one composed with
+# the hub's gh/acli runners and its assignment service. Outside a hub (a unit test's bare root, or the
+# standalone diagnosis hatch) the root holds nothing and the bare builder above
+# runs, which is the same object the pre-HS-200-45 code produced.
+def _connections_service():
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("connections_service", lambda: _build_connections_service())
+
+
+# HS-200-45 R1: _setup_service now asks the ONE composition root first. Inside the hub
+# that returns the instance the HTTP routes use -- the one composed with
+# the hub's gh/acli runners. Outside a hub (a unit test's bare root, or the
+# standalone diagnosis hatch) the root holds nothing and the bare builder above
+# runs, which is the same object the pre-HS-200-45 code produced.
+def _setup_service():
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("project_setup_service", lambda: _build_setup_service())
+
+
+# HS-200-45 R1: _watch_service now asks the ONE composition root first. Inside the hub
+# that returns the instance the HTTP routes use -- the one composed with
+# the hub's gh watch kwargs (_gh_watch_service_kwargs). Outside a hub (a unit test's bare root, or the
+# standalone diagnosis hatch) the root holds nothing and the bare builder above
+# runs, which is the same object the pre-HS-200-45 code produced.
+def _watch_service():
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("watch_service", lambda: _build_watch_service())
+
+
+# HS-200-45 R1: _github_adapter now asks the ONE composition root first. Inside the hub
+# that returns the instance the HTTP routes use -- the one composed with
+# the hub's _gh_runner. Outside a hub (a unit test's bare root, or the
+# standalone diagnosis hatch) the root holds nothing and the bare builder above
+# runs, which is the same object the pre-HS-200-45 code produced.
+def _github_adapter():
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("github_provider", lambda: _build_github_adapter())
+
+
+# HS-200-45 R1: _jira_adapter now asks the ONE composition root first. Inside the hub
+# that returns the instance the HTTP routes use -- the one composed with
+# the hub's _acli_runner. Outside a hub (a unit test's bare root, or the
+# standalone diagnosis hatch) the root holds nothing and the bare builder above
+# runs, which is the same object the pre-HS-200-45 code produced.
+def _jira_adapter():
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("jira_provider", lambda: _build_jira_adapter())
+
+
+# HS-200-45 R1: _confluence_adapter now asks the ONE composition root first. Inside the hub
+# that returns the instance the HTTP routes use -- the one composed with
+# the hub's acli runner. Outside a hub (a unit test's bare root, or the
+# standalone diagnosis hatch) the root holds nothing and the bare builder above
+# runs, which is the same object the pre-HS-200-45 code produced.
+def _confluence_adapter():
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("confluence_provider", lambda: _build_confluence_adapter())

@@ -578,7 +578,20 @@ class TestRealDbReconcile:
         assert real_db is not None
 
         copy_path = tmp_path / "real_copy.db"
-        shutil.copy2(str(real_db), str(copy_path))
+        # HS-200-45 R5: the database runs in WAL now, so its committed tail can
+        # live in the ``-wal`` sidecar. A bare file copy would hand this test a
+        # database missing its most recent rows (or, on a fresh file, an empty
+        # one) and the "preserves data" assertions would pass vacuously. The
+        # sqlite backup API reads one consistent snapshot through SQLite.
+        _src = sqlite3.connect(f"file:{real_db}?mode=ro", uri=True)
+        try:
+            _dest = sqlite3.connect(str(copy_path))
+            try:
+                _src.backup(_dest)
+            finally:
+                _dest.close()
+        finally:
+            _src.close()
 
         conn = sqlite3.connect(str(copy_path))
         conn.row_factory = sqlite3.Row

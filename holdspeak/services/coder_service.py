@@ -18,7 +18,12 @@ class CoderService:
         *,
         reply_sender: Callable[[str, str], Any] | None = None,
         observer: PipelineObserver | None = None,
+        on_changed: Callable[[str, str, str], None] | None = None,
     ) -> None:
+        # HS-200-45 R4: the note a coder reply materializes is written below
+        # PrimitiveService, so this service announces it itself.
+        from holdspeak.runtime.composition import notify_desk_changed
+        self._on_changed = on_changed or notify_desk_changed
         if db is None:
             from ..db import get_database
 
@@ -125,6 +130,10 @@ class CoderService:
             body_markdown=body_markdown,
             tags=[tag.strip() for tag in raw_tags if tag.strip()],
         )
+        try:
+            self._on_changed("note", note.id, "create")
+        except Exception:  # pragma: no cover - a dead socket is not a failed write
+            pass
         return note.to_dict()
 
     def hydrate_refs(

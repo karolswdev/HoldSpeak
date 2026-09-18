@@ -6,6 +6,8 @@ write-only field and are passed only to ``ModelLibraryApplicationService``.
 """
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 import base64
 import binascii
 import tempfile
@@ -158,9 +160,9 @@ TOOLS: list[dict[str, Any]] = [
 ]
 
 
-def _service() -> ModelLibraryApplicationService:
+def _build_service() -> ModelLibraryApplicationService:
     """Compose the same owner aggregate and acquisition foundation as web startup."""
-    db = get_database()
+    db = db_or(get_database)
     setup = InferenceSetupApplicationService(db)
     acquisition = InferenceAcquisitionApplicationService(db, setup_service=setup)
     return ModelLibraryApplicationService(
@@ -274,3 +276,13 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
 
 
 __all__ = ["MAX_MODEL_FILE_BYTES", "TOOLS", "dispatch"]
+
+
+# HS-200-45 R1: _service asks the ONE composition root first. Inside the hub that
+# returns the instance the HTTP routes use -- composed with the hub's setup and acquisition services.
+# Outside a hub (a unit test's bare root, or the standalone diagnosis hatch) the
+# root holds nothing and the bare builder above runs, producing exactly the
+# object the pre-HS-200-45 code produced.
+def _service() -> ModelLibraryApplicationService:
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("model_library_service", _build_service)

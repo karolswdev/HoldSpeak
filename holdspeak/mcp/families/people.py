@@ -8,6 +8,8 @@ ledger-not-gate ruling; the owner can restrict via
 """
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 import os
 from typing import Any, Mapping
 
@@ -446,7 +448,7 @@ def one_on_one_brief(principal: Principal, relationship_id: str) -> dict[str, An
     # Cross-boundary: get the main DB for plaintext meeting data.
     try:
         from holdspeak.db import get_database
-        db = get_database()
+        db = db_or(get_database)
     except Exception:
         db = None
     brief = service.one_on_one_brief(principal, relationship_id, db=db)

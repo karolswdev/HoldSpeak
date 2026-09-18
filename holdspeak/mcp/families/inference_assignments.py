@@ -1,6 +1,8 @@
 """Owner Inference Assignment MCP twins over the canonical assignment service."""
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 from typing import Any
 
 from holdspeak.db import get_database
@@ -110,9 +112,9 @@ TOOLS: list[dict[str, Any]] = [
 ]
 
 
-def _service() -> InferenceAssignmentService:
+def _build_service() -> InferenceAssignmentService:
     """Compose the same frozen broker foundation as web startup."""
-    db = get_database()
+    db = db_or(get_database)
     broker = _configure(db)
     return InferenceAssignmentService(
         db,
@@ -170,3 +172,13 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
 
 
 __all__ = ["TOOLS", "dispatch"]
+
+
+# HS-200-45 R1: _service asks the ONE composition root first. Inside the hub that
+# returns the instance the HTTP routes use -- composed with the hub's kernel registry and tool-capability foundation.
+# Outside a hub (a unit test's bare root, or the standalone diagnosis hatch) the
+# root holds nothing and the bare builder above runs, producing exactly the
+# object the pre-HS-200-45 code produced.
+def _service() -> InferenceAssignmentService:
+    """The hub's live service, else the bare composition above."""
+    return runtime_service("inference_assignment_service", _build_service)

@@ -177,6 +177,17 @@ _CALL_RULES = (
 # independent so harmless edits above a call do not create false drift.
 _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
     (
+        "holdspeak/mcp/server.py",
+        "forward_to_hub",
+        "urlopen",
+        1,
+    ): (
+        "HS-200-45: the stdio sidecar's POST to the owner's OWN hub on "
+        "127.0.0.1 (POST /api/mcp, owner token). Not egress from the owner's "
+        "machine: the hub dispatches the tool and ITS receipts are the ledger; "
+        "this hop moves the JSON-RPC message across a process boundary only"
+    ),
+    (
         "holdspeak/tmux_transport.py",
         "_run_tmux",
         "run",

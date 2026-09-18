@@ -1,7 +1,24 @@
 """HS-174-02: Streamable HTTP transport for MCP (POST /api/mcp).
 
-JSON-RPC in -> handle_message_for_principal -> JSON-RPC out, composing on
-the web runtime's LIVE services (never the sidecar's bare serve() instances).
+JSON-RPC in -> handle_message_for_principal -> JSON-RPC out.
+
+**How the composition actually works (HS-200-45).** This docstring used to
+claim the route composed "on the web runtime's LIVE services (never the
+sidecar's bare serve() instances)". That was false: the route received
+``ctx: WebContext``, handed the message to ``handle_message_for_principal``,
+and ``tools.dispatch`` rebuilt every service from ``get_database()`` -- bare,
+with no broadcast. The context was received and unused for dispatch.
+
+It is true now, and by a different mechanism than "the route passes ctx
+along". ``MeetingWebServer._create_app`` installs its composed services as the
+process's ONE composition root
+(``holdspeak/runtime/composition.py``); ``tools.dispatch`` and every MCP family
+read that root. So this route needs to pass nothing: the dispatch it calls
+resolves the same ``PrimitiveService`` (with ``on_changed`` bound to the bus),
+the same ``MeetingService`` (with its lifecycle callbacks), and the same
+``Database`` handle that the hub's HTTP routes use. A ``desk.create`` over this
+route therefore puts a ``desk_changed`` frame on ``/ws``, exactly as the
+equivalent ``POST /api/notes`` does.
 
 Principal derivation per D3:
 - Loopback + owner token -> OWNER (unrestricted).
@@ -10,8 +27,15 @@ Principal derivation per D3:
 - Non-loopback + agent credential -> AGENT (palette from credential).
 - No match -> 401.
 
-The listener is opt-in: ``remote.streamable_http_enabled`` (off by default).
-When off, the route returns 404.
+**The enable flag governs the REMOTE listener, not the local transport
+(HS-200-45 R3).** ``remote.streamable_http_enabled`` is the owner's switch for
+letting *agent credentials from elsewhere* in. A loopback request bearing the
+owner's own token is not remote access -- it is the hub's own local transport,
+the one the stdio sidecar proxies into so that the sidecar never has to open
+the database itself. Refusing that with 404 while the flag is off would leave
+the sidecar no lawful path and push it straight back to being a second writer.
+So: a loopback OWNER is admitted with the flag off; everything else still needs
+the flag on.
 
 Settings routes:
 - GET  /api/settings/remote        -> current remote config + credential list
@@ -25,7 +49,7 @@ import time
 from typing import Any
 
 from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from ...logging_config import get_logger
 from ...principals import (
@@ -67,8 +91,18 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         expiring mid-run returns 403 on the poll; the run continues on
         the hub.
         """
-        # Gate: return 404 when the transport is not enabled.
-        if not _remote_enabled(request):
+        principal_probe = getattr(request.state, "principal", UNAUTHENTICATED)
+        probe_host = request.client.host if request.client else "unknown"
+        loopback_owner = (
+            principal_probe.kind is PrincipalKind.OWNER
+            and is_loopback_host(probe_host)
+        )
+
+        # Gate: return 404 when the REMOTE transport is not enabled. A loopback
+        # OWNER is the hub's own local transport (HS-200-45 R3) and passes with
+        # the flag off -- the stdio sidecar proxies through here rather than
+        # opening the database as a second writer.
+        if not _remote_enabled(request) and not loopback_owner:
             return JSONResponse(
                 {"error": "streamable_http_not_enabled"},
                 status_code=404,
@@ -153,8 +187,11 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             _caller_identity.reset(identity_token)
 
         if response is None:
-            # Notification (no response expected).
-            return JSONResponse(content=None, status_code=204)
+            # Notification (no response expected). A bare Response: a
+            # JSONResponse(None) serialises the literal ``null`` into a 204,
+            # and uvicorn raises "Response content longer than Content-Length"
+            # on every sidecar handshake (HS-200-45 counsel P1-1).
+            return Response(status_code=204)
         return JSONResponse(content=response, status_code=200)
 
     # ── GET /api/settings/remote ───────────────────────────────────

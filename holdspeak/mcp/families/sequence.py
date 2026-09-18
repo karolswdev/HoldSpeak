@@ -1,6 +1,8 @@
 """Sequence family — MCP tools for the SequenceWorkflowService surface."""
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 import asyncio
 from typing import Any
 
@@ -89,7 +91,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             raise ValueError("chain_id is required")
         from holdspeak.kernel.runtime import _configure
         from holdspeak.services.sequence_workflow_service import SequenceWorkflowService
-        db = get_database()
+        db = db_or(get_database)
         broker = _configure(db)
         svc = SequenceWorkflowService(db, broker)
         body: dict[str, Any] = {}
@@ -110,7 +112,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         if not isinstance(parent_operation_id, str) or not parent_operation_id.strip():
             raise ValueError("parent_operation_id is required")
         from holdspeak.kernel.runtime import _configure
-        db = get_database()
+        db = db_or(get_database)
         broker = _configure(db)
         disposition = broker.parent_run_controller.cancel_by_operation_id(principal, parent_operation_id)
         return {"parent_operation_id": parent_operation_id, "disposition": disposition}
@@ -124,7 +126,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             raise ValueError("workflow_id is required")
         from holdspeak.kernel.runtime import _configure
         from holdspeak.services.sequence_workflow_service import SequenceWorkflowService
-        db = get_database()
+        db = db_or(get_database)
         broker = _configure(db)
         svc = SequenceWorkflowService(db, broker)
         body = {}
@@ -145,7 +147,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         if not isinstance(parent_operation_id, str) or not parent_operation_id.strip():
             raise ValueError("parent_operation_id is required")
         from holdspeak.kernel.runtime import _configure
-        db = get_database()
+        db = db_or(get_database)
         broker = _configure(db)
         disposition = broker.parent_run_controller.cancel_by_operation_id(principal, parent_operation_id)
         return {"parent_operation_id": parent_operation_id, "disposition": disposition}

@@ -20,6 +20,12 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     def _svc() -> WorkbenchService:
+        # HS-200-45: the hub's ONE composed instance (it carries the
+        # ``on_changed`` hook that puts a ``desk_changed`` frame on the bus).
+        # A bare instance is built only for a partially-wired context -- a
+        # route test that supplies just the fields it exercises.
+        if getattr(ctx, "workbench_service", None) is not None:
+            return ctx.workbench_service
         from ....db import get_database, get_observer
         return WorkbenchService(get_database(), observer=get_observer())
 

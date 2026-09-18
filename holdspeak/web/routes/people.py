@@ -51,6 +51,9 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         return getattr(request.state, "principal", UNAUTHENTICATED)
 
     def workbenches() -> WorkbenchService:
+        # HS-200-45: the hub's ONE composed instance (on_changed -> the bus).
+        if getattr(ctx, "workbench_service", None) is not None:
+            return ctx.workbench_service
         from ...db import get_database, get_observer
         return WorkbenchService(get_database(), observer=get_observer())
 

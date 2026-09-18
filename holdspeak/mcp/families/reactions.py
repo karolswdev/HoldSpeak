@@ -1,6 +1,8 @@
 """MCP family for connector Watches and OWNER-mode Reactions."""
 from __future__ import annotations
 
+from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+
 import asyncio
 from typing import Any
 
@@ -65,7 +67,7 @@ def _run(coro: Any) -> Any:
 
 
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
-    service = ReactionService(get_database(), observer=get_observer())
+    service = ReactionService(db_or(get_database), observer=observer_or(get_observer))
     if name == "reaction.presets":
         return service.list_presets(principal)
     if name == "watch.list":

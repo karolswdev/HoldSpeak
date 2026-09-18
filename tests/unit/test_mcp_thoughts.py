@@ -270,17 +270,61 @@ def test_sidecar_start_does_not_terminalize_a_web_owned_live_invocation(tmp_path
         runtime.close()
 
 
-def test_serve_owns_one_runtime_for_the_whole_stdio_session(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_serve_owns_one_runtime_for_the_whole_stdio_session(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    """HS-200-45: the refinement runtime belongs to the STANDALONE hatch.
+
+    `serve()` is a proxy now: it composes nothing and opens no database, so it
+    owns no refinement runtime either -- the hub's coordinator runs every
+    refinement. The one-runtime-per-session property still matters for the
+    diagnosis hatch, which is where it is asserted.
+    """
     events: list[str] = []
 
     class FakeRuntime:
         def start(self) -> None: events.append("start")
         def close(self) -> None: events.append("close")
 
+    import holdspeak.db.core as db_core
+
+    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "standalone.db")
     monkeypatch.setattr("holdspeak.mcp.refinement_runtime.SidecarRefinementRuntime", FakeRuntime)
+    monkeypatch.setattr(
+        "holdspeak.inference_capabilities.process_inference_capability_registry",
+        lambda *a, **k: None,
+    )
     monkeypatch.setattr(thought_family, "configure_runtime", lambda value: events.append("bind" if value else "unbind"))
     stdin = io.StringIO('{"jsonrpc":"2.0","id":1,"method":"ping"}\n')
     stdout = io.StringIO()
-    assert server.serve(stdin, stdout) == 0
+    from holdspeak.runtime_lock import release_database
+
+    try:
+        assert server.serve_standalone(stdin, stdout) == 0
+    finally:
+        release_database()
     assert events == ["start", "bind", "unbind", "close"]
+    assert json.loads(stdout.getvalue())["result"] == {}
+
+
+def test_proxy_serve_owns_no_runtime_and_opens_nothing(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    """The default path composes nothing: no runtime, no database, no lock."""
+    events: list[str] = []
+
+    class FakeRuntime:
+        def start(self) -> None: events.append("start")
+        def close(self) -> None: events.append("close")
+
+    import holdspeak.db.core as db_core
+
+    db_path = tmp_path / "never-opened.db"
+    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", db_path)
+    monkeypatch.delenv("HOLDSPEAK_MCP_STANDALONE", raising=False)
+    monkeypatch.setattr("holdspeak.mcp.refinement_runtime.SidecarRefinementRuntime", FakeRuntime)
+    monkeypatch.setattr(thought_family, "configure_runtime", lambda value: events.append("bind" if value else "unbind"))
+
+    stdin = io.StringIO('{"jsonrpc":"2.0","id":1,"method":"ping"}\n')
+    stdout = io.StringIO()
+    assert server.serve(stdin, stdout) == 0
+    assert events == []
+    assert not db_path.exists()
+    assert not db_path.with_name(db_path.name + ".owner.lock").exists()
     assert json.loads(stdout.getvalue())["result"] == {}

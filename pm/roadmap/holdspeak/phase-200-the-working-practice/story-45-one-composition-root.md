@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 200
-- **Status:** ready
+- **Status:** done
 - **Depends on:** HS-200-02
 - **Unblocks:** HS-200-28
 - **Owner:** unassigned
@@ -70,28 +70,28 @@ remote transport's auth model. Out: editing the owner's `.mcp.json`.
 
 ## Acceptance criteria
 
-- [ ] **The in-hub MCP path uses the hub's own composed services.** An MCP write
+- [x] **The in-hub MCP path uses the hub's own composed services.** An MCP write
       arriving at `/api/mcp` broadcasts exactly as the equivalent HTTP write
       does, and the open desk updates without a manual refresh. Proven by
       driving the real route against a real bus subscriber.
-- [ ] **A caller that cannot be in-process is a CLIENT of the hub, not a second
+- [x] **A caller that cannot be in-process is a CLIENT of the hub, not a second
       builder.** The stdio sidecar either proxies to a running hub or refuses
       with a sentence naming the owner and the remedy — never a silent second
       writer. The fork is argued in the evidence, with the rejected option and
       why.
-- [ ] **Where concurrent access remains possible at all, it is actually safe:**
+- [x] **Where concurrent access remains possible at all, it is actually safe:**
       `journal_mode` and `busy_timeout` match what `db/connection.py`'s own
       docstring claims, or the docstring is corrected. Code and comment agree.
-- [ ] An existing database is migrated to the chosen journal mode without data
+- [x] An existing database is migrated to the chosen journal mode without data
       loss, proven on a COPY of a real database, never on the owner's.
-- [ ] **A tool that cannot do its job in the caller's context says so as an
+- [x] **A tool that cannot do its job in the caller's context says so as an
       error, not as success.** `project.steward.trigger`'s soft refusal becomes
       an honest one; `meeting.start_capture`'s unavailability names why.
-- [ ] A fence test reproduces the no-broadcast defect against the pre-fix tree —
+- [x] A fence test reproduces the no-broadcast defect against the pre-fix tree —
       an MCP write, a subscribed bus, and no frame — and passes after.
-- [ ] A fence test reproduces the contended-write failure pre-fix and passes
+- [x] A fence test reproduces the contended-write failure pre-fix and passes
       after.
-- [ ] `docs/MCP_SIDECAR.md` states the actual arrangement. Its current claim that
+- [x] `docs/MCP_SIDECAR.md` states the actual arrangement. Its current claim that
       the HTTP route composes "on the web runtime's LIVE services (never the
       sidecar's bare `serve()` instances)" (`mcp_http.py:3`) is **false today**
       and becomes true here, or is corrected.

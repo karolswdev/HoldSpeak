@@ -102,6 +102,14 @@ class MCPClient:
         env["HOME"] = str(self._home)
         env["HOLDSPEAK_TEST_SNAPSHOT_FILE"] = str(self._snapshot_file)
         env["HOLDSPEAK_MCP_PEOPLE_ACCESS"] = "off"
+        # HS-200-45: the sidecar is a CLIENT of the hub by default and refuses
+        # every tool call when no hub owns the database. This walk deliberately
+        # drives the sidecar as its OWN composition root against an isolated
+        # HOME with no hub, which is exactly what the standalone hatch is: it
+        # claims the owner lock for this HOME's database, so it is one writer
+        # and it says so. (A hub-proxied walk is covered by
+        # tests/integration/test_phase200_one_composition_root_processes.py.)
+        env["HOLDSPEAK_MCP_STANDALONE"] = "1"
         # Ensure the DB directory exists
         db_dir = self._home / ".local" / "share" / "holdspeak"
         db_dir.mkdir(parents=True, exist_ok=True)
@@ -773,6 +781,14 @@ class TestMCPWalk:
         }
 
         TRANSCRIPT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        # HS-200-45: the transcript is a TRACKED evidence asset of a closed
+        # phase. A plain run must leave the tree clean; regenerate it only on
+        # request (HOLDSPEAK_WRITE_WALK_TRANSCRIPT=1), then review the diff.
+        if os.environ.get("HOLDSPEAK_WRITE_WALK_TRANSCRIPT") != "1":
+            # Counsel note: this also skips the write-then-reload check below;
+            # the determinism assertions above run unconditionally, so the
+            # walk's proof does not depend on the write.
+            return
         TRANSCRIPT_PATH.write_text(
             json.dumps(transcript_artifact, indent=2, default=str) + "\n",
         )

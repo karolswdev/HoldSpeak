@@ -21,6 +21,7 @@ export const RUNTIME_FRAME_TYPES = [
   "device_health",
   "dictation.journal.entry",
   "dictation_preview",
+  "desk_changed",
   "duration",
   "intel_complete",
   "intel_status",
