@@ -11,7 +11,7 @@
 import {
   createContext,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useRef,
   type ReactNode,
 } from "react";
@@ -26,10 +26,25 @@ export const WingSlotContext = createContext<
 >(null);
 
 /** Publish a wing bar into the hosting window's head. Pass null to
- * clear. `deps` gates republishing (typically [active]). */
+ * clear. `deps` gates republishing (typically [active]).
+ *
+ * HS-200-42: this is a LAYOUT effect, and that is the whole point. The
+ * strip lives in the window HEAD (`SurfaceWindows` holds it in `useState`)
+ * while the body it labels lives in the core, so a wing change is two
+ * commits: one paints the new body, the effect then schedules a second that
+ * repaints the head. With a passive `useEffect` the browser paints in
+ * between, and the head shows the OLD wing selected over the NEW body --
+ * a strip that disagrees with the thing it names. Measured at up to 600ms
+ * on a loaded machine at 393 (the Speak loop's `Review` verb crosses to the
+ * Journal wing; `tests/e2e/test_hs176_loop_glass.py:324` reads the strip the
+ * instant the body arrives). `useLayoutEffect` runs before paint and React
+ * flushes the resulting head update synchronously, so head and body land in
+ * the SAME paint at every width. The desk is client-only; there is no SSR
+ * pass for this to warn in.
+ */
 export function useWindowWings(node: ReactNode, deps: unknown[]) {
   const setSlot = useContext(WingSlotContext);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!setSlot) return;
     setSlot(node);
     return () => setSlot(null);

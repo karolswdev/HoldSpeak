@@ -784,8 +784,11 @@ describe("History list: designed rows", () => {
     fireEvent.click(await screen.findByTestId("steward-verb"));
     await waitFor(() => screen.getByTestId("steward-posture"));
 
+    // HS-200-42 (counsel F3): the species' row line is role="button" +
+    // tabIndex, not a <button> element — see UpdatePosture.test.tsx for why.
     const item = screen.getByTestId("steward-list-item");
-    expect(item.tagName).toBe("BUTTON");
+    expect(item.getAttribute("role")).toBe("button");
+    expect(item.getAttribute("tabindex")).toBe("0");
     expect(item.hasAttribute("aria-expanded")).toBe(false);
   });
 

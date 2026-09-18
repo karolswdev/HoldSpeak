@@ -1,4 +1,12 @@
-"""Deferred meeting intelligence queue processing."""
+"""Deferred meeting intelligence queue processing.
+
+Who runs this in production: ``holdspeak/intel_queue_conductor.py``, started
+by the hub lifespan (HS-200-42).  Before that conductor existed,
+``IntelQueueWorker`` and ``start_intel_queue_worker`` below had zero
+production callers and ``drain_intel_queue`` was reachable only from the CLI
+(``commands/intel.py``) and ``POST /api/intel/process`` — so a job enqueued by
+a stopped meeting was never executed (audit 2026-09-13 §3.1).
+"""
 
 from __future__ import annotations
 
@@ -37,6 +45,17 @@ def build_runtime_queue_frame(db) -> dict:
     dictation) stays derived from `runtime_activity`/`intel_status`.
     """
     summary = db.intel.get_intel_queue_summary()
+    # HS-200-42 (counsel N1): the frame carries WHO WILL EXECUTE these jobs.
+    # Without it a face can only say "queued", which is exactly the sentence
+    # that was true and useless for three months while nothing drained the
+    # queue. Imported here, not at module scope: the conductor imports this
+    # module for the frame it broadcasts.
+    try:
+        from .intel_queue_conductor import drainer_state
+
+        drainer = drainer_state()
+    except Exception:  # pragma: no cover - a frame is never a gate
+        drainer = "absent"
     jobs = []
     for job in db.intel.list_intel_jobs(limit=20):
         jobs.append({
@@ -48,6 +67,7 @@ def build_runtime_queue_frame(db) -> dict:
         })
     return {
         "jobs": jobs,
+        "drainer": drainer,
         "queued": int(summary.queued_jobs or 0),
         "running": int(summary.running_jobs or 0),
         "failed": int(summary.failed_jobs or 0),
@@ -390,6 +410,18 @@ def _process_bound_intel_job(
         transcript = "\n".join(str(segment) for segment in meeting.segments)
         if not lease.held():
             return False
+        # HS-200-42 (counsel P1-2, Article III): re-state the row's model host
+        # from the route this bound job ACTUALLY egresses through, before any
+        # transcript material reaches a provider. The enqueue-time value was an
+        # estimate resolved from mutable Config; this one is the frozen truth,
+        # and writing it here means a crash mid-call still leaves an honest
+        # host on the row rather than the estimate.
+        try:
+            egress_host = bound.egress_model_host(db, "meeting.deferred_analysis")
+            if egress_host:
+                db.intel.set_intel_job_model_host(job.meeting_id, egress_host)
+        except Exception as exc:
+            log.debug(f"Execution-time model host not recorded: {exc}")
         projection, routed = bound.execute(
             capability="meeting.deferred_analysis",
             operation_suffix="analysis",
@@ -691,9 +723,16 @@ class IntelQueueWorker:
         failure_alert_webhook_url: Optional[str] = None,
         failure_alert_webhook_header_name: Optional[str] = None,
         failure_alert_webhook_header_value: Optional[str] = None,
+        on_meeting_ready=None,
     ) -> None:
         self.model_path = model_path
         self.provider = provider
+        # HS-200-42: the hub drainer needs the finished-meeting callback the
+        # HTTP route always had (`MeetingIntelService.process_jobs`). The
+        # worker never forwarded it, so a job drained by the worker broadcast
+        # nothing. Keyword-only and defaulting to None: every existing caller
+        # is unaffected.
+        self.on_meeting_ready = on_meeting_ready
         self.retry_base_seconds = max(1, int(retry_base_seconds))
         self.retry_max_seconds = max(self.retry_base_seconds, int(retry_max_seconds))
         self.retry_max_attempts = max(1, int(retry_max_attempts))
@@ -712,6 +751,11 @@ class IntelQueueWorker:
         self._failure_alert_above_since: Optional[datetime] = None
         self._failure_alert_sent = False
         self._stop_event = threading.Event()
+        # HS-200-42: the idle wait is an Event, not a sleep, so `wake()` drains
+        # immediately instead of leaving a just-enqueued job sitting for up to
+        # `poll_seconds`. `stop()` sets both, so shutdown never waits out a poll.
+        self._wake_event = threading.Event()
+        self._iterations = 0
         self._thread = threading.Thread(target=self._run, name="HoldSpeakIntelQueue", daemon=True)
         self._thread.start()
 
@@ -840,7 +884,13 @@ class IntelQueueWorker:
 
     def _check_failure_alerts(self) -> None:
         try:
-            summary = get_database().get_intel_queue_summary()
+            # HS-200-42: this read the accessor off `Database` itself, which
+            # has never carried it (`db.intel.get_intel_queue_summary`), so
+            # every failure-alert check raised AttributeError and was
+            # swallowed by the except below. Invisible while the worker had
+            # zero production callers; an error line every poll once the hub
+            # started one.
+            summary = get_database().intel.get_intel_queue_summary()
         except Exception as exc:
             log.error(f"Deferred intel failure-alert check failed: {exc}")
             return
@@ -852,6 +902,7 @@ class IntelQueueWorker:
                 processed = drain_intel_queue(
                     self.model_path,
                     provider=self.provider,
+                    on_meeting_ready=self.on_meeting_ready,
                     retry_base_seconds=self.retry_base_seconds,
                     retry_max_seconds=self.retry_max_seconds,
                     retry_max_attempts=self.retry_max_attempts,
@@ -861,10 +912,22 @@ class IntelQueueWorker:
             except Exception as exc:
                 log.error(f"Deferred intel worker iteration failed: {exc}")
             self._check_failure_alerts()
-            self._stop_event.wait(self.poll_seconds)
+            self._iterations += 1
+            self._wake_event.wait(self.poll_seconds)
+            self._wake_event.clear()
+
+    @property
+    def iterations(self) -> int:
+        """Completed drain iterations. Lets a caller observe real progress."""
+        return self._iterations
+
+    def wake(self) -> None:
+        """Drain now instead of at the next poll (HS-200-42)."""
+        self._wake_event.set()
 
     def stop(self, timeout: float = 5.0) -> None:
         self._stop_event.set()
+        self._wake_event.set()
         self._thread.join(timeout=timeout)
 
     def is_alive(self) -> bool:
@@ -883,6 +946,7 @@ def start_intel_queue_worker(
     failure_alert_webhook_url: Optional[str] = None,
     failure_alert_webhook_header_name: Optional[str] = None,
     failure_alert_webhook_header_value: Optional[str] = None,
+    on_meeting_ready=None,
     poll_seconds: float = 120.0,
 ) -> IntelQueueWorker:
     """Start a deferred-intel worker that can be stopped cleanly."""
@@ -898,4 +962,5 @@ def start_intel_queue_worker(
         failure_alert_webhook_url=failure_alert_webhook_url,
         failure_alert_webhook_header_name=failure_alert_webhook_header_name,
         failure_alert_webhook_header_value=failure_alert_webhook_header_value,
+        on_meeting_ready=on_meeting_ready,
     )

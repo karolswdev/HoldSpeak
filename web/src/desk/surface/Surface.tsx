@@ -816,7 +816,10 @@ export function SurfaceLedgerRow({
   /** Trailing fact cells (destination, ms, taught chip). */
   cells?: ReactNode;
   /** HS-167-03 — a quiet verb or chevron, right-aligned after cells
-   *  (its own grid slot, never overlapping the 52px time column). */
+   *  (its own grid slot, never overlapping the 52px time column).
+   *  HS-200-42: INTERACTIVE CONTENT ONLY. The slot stops click and key
+   *  propagation, so a verb here never reaches `onToggle`; anything put
+   *  here that is meant to open the row will not. */
   trailing?: ReactNode;
   /** HS-167-03 — when true the primary wraps instead of ellipsizing;
    *  at the narrow container cells fall under. */
@@ -825,8 +828,8 @@ export function SurfaceLedgerRow({
   onToggle?: () => void;
   /** HS-111-07 — row keyboard verbs (Space = Ask-context on the desk
    * face); the caller owns the grammar. */
-  onLineKeyDown?: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
-  onLineContextMenu?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onLineKeyDown?: (e: React.KeyboardEvent<HTMLDivElement>) => void;
+  onLineContextMenu?: (e: React.MouseEvent<HTMLDivElement>) => void;
   lineLabel?: string;
   /** false = the row is a plain verb line (no aria-expanded claim). */
   expands?: boolean;
@@ -836,15 +839,34 @@ export function SurfaceLedgerRow({
 }) {
   return (
     <li className="surface-ledger-row" data-open={open || undefined} data-wrap={wrap || undefined}>
-      <button
-        type="button"
+      {/* HS-200-42 (counsel F3 — a SPECIES fix, not a face fix): the line
+       *  was a <button> and `trailing` rendered INSIDE it, so every row
+       *  with a verb shipped a button nested in a button (invalid HTML)
+       *  and a verb click bubbled to `onToggle` — the story-42 walk caught
+       *  `Run intelligence` opening the Meetings window over the row it
+       *  was clicked in. The line is now the same role="button" div the
+       *  meetings rail already uses (CatalogRail.tsx:141), keeping the
+       *  identical class, grid slot and CSS (`.surface-ledger-line` resets
+       *  border/background/font, so no pixel moves), and the trailing slot
+       *  swallows its own clicks and keys. */}
+      <div
+        role="button"
+        tabIndex={0}
         className="surface-ledger-line"
         data-testid={dataTestId}
         data-has-trailing={trailing != null || undefined}
         aria-expanded={expands ? open || false : undefined}
         aria-label={lineLabel}
         onClick={onToggle}
-        onKeyDown={onLineKeyDown}
+        onKeyDown={(e) => {
+          onLineKeyDown?.(e);
+          if (e.defaultPrevented) return;
+          // The <button> semantics the element used to get for free.
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggle?.();
+          }
+        }}
         onContextMenu={onLineContextMenu}
       >
         {time != null ? (
@@ -856,9 +878,15 @@ export function SurfaceLedgerRow({
         <span className="surface-ledger-primary">{primary}</span>
         {cells}
         {trailing != null ? (
-          <span className="surface-ledger-trailing">{trailing}</span>
+          <span
+            className="surface-ledger-trailing"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            {trailing}
+          </span>
         ) : null}
-      </button>
+      </div>
       {open && children ? (
         <div className="surface-ledger-open">{children}</div>
       ) : null}

@@ -12,6 +12,7 @@ import { ConfirmVerb, SurfaceSplit } from "../../desk/surface/Surface";
 import { countToken } from "../../desk/surface";
 import { EgressChip, StringGadget, CheckGadget } from "../../desk/surface/gadgets";
 import { useCoreWings } from "./core-hooks";
+import { useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { renderHeroSlot } from "./core-layout";
 import {
   WINGS, clockTime, download, needsIntelligence, type Receipt,
@@ -54,6 +55,11 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const [requestedMeetingError, setRequestedMeetingError] = useState("");
 
   // Intelligence run state
+  // HS-200-42 (counsel N1): the same drainer fact the Chair reads, from the
+  // same frame, so the catalog's QUEUED token is not a claim that something
+  // is about to run. `null` = no frame yet = unknown, never reported absent.
+  const queueFrame = useRuntimeFrame<{ drainer?: string }>("runtime_queue");
+  const drainerAbsent = queueFrame?.drainer === "absent";
   const [runningId, setRunningId] = useState<string | null>(null);
   const [runHost, setRunHost] = useState<string | null>(null);
 
@@ -147,12 +153,32 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     setRunningId(meetingId);
     setRunHost(null);
     try {
-      const result = await apiFetch<{ jobId: string; state: string; host: string }>(
+      const result = await apiFetch<{
+        jobId: string;
+        state: string;
+        host: string;
+        drainer?: string;
+      }>(
         `/api/meetings/${encodeURIComponent(meetingId)}/intelligence/run`,
         { method: "POST" },
       );
       setRunHost(result.host ?? "THIS DEVICE");
       setReceipt({ text: `QUEUED ${clockTime(new Date().toISOString())}` });
+      // HS-200-42: when the route says no drainer exists, polling every 3s for
+      // 120s is a lie told forty times — nothing in the hub will move this job.
+      // Stop the poll and refresh the row once.
+      //
+      // `runningId` / `runHost` are deliberately LEFT SET. They are this
+      // click's Article III receipt — where the run would egress is a fact
+      // the click established, and it is owed to the user whether or not a
+      // drainer exists. Clearing them removed the host chip from the row
+      // (caught by tests/e2e/test_hs170_meetings_glass.py S-3). The row's
+      // own token stays honest: `MeetingStreamRow` reads NOT DRAINING rather
+      // than RUNNING while the drainer is absent.
+      if (result.drainer !== "running") {
+        void meetings.reload();
+        return;
+      }
       // Poll for completion
       const poll = setInterval(async () => {
         try {
@@ -271,6 +297,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       onRunIntelligence={(id) => void handleRunIntelligence(id)}
       runningId={runningId}
       runHost={runHost}
+      drainerAbsent={drainerAbsent}
       narrowed={Boolean(selected)}
     />
   );

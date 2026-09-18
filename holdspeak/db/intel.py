@@ -274,6 +274,22 @@ def _bound_command_id(job_id: str, kind: str) -> str:
     return f"{kind}_{digest}"
 
 
+def _row_model_host(row: Any) -> str | None:
+    """HS-200-42 (counsel P1-2): the recorded egress host, carried to a successor.
+
+    A replacement row minted by claim planning is the SAME work; leaving its
+    `model_host` NULL made every reader fall back to "the newest ancestor that
+    happens to have one", which is a guess dressed as a receipt.
+    """
+    try:
+        if "model_host" not in set(row.keys()):
+            return None
+    except Exception:
+        return None
+    value = row["model_host"]
+    return str(value) if value else None
+
+
 def _successor_posture(old: Any) -> tuple[str, str]:
     """Reserve successors until a bound predecessor has a terminal receipt."""
     if str(old["parent_operation_id"] or "").strip():
@@ -1316,16 +1332,20 @@ class IntelRepository(BaseRepository):
                     meeting_id, str(row["transcript_hash"]), frozen_descriptor,
                     now, job_id,
                 )
+                # HS-200-42 (counsel P1-2): carry the recorded host onto the
+                # replacement instead of leaving it NULL and relying on
+                # `get_intel_job_model_host`'s ancestor fallback.
                 conn.execute(
                     """INSERT INTO intel_jobs (
                         job_id,meeting_id,origin_job_id,work_descriptor_sha256,
                         transcript_hash,displaced_work,status,lifecycle_posture,
-                        requested_at,updated_at,attempts,last_error
-                    ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?)""",
+                        requested_at,updated_at,attempts,last_error,model_host
+                    ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?,?)""",
                     (
                         frozen_job_id, meeting_id, job_id, frozen_descriptor,
                         str(row["transcript_hash"]), frozen_work, now, now,
                         "Bound descriptor frozen from legacy Stop handoff.",
+                        _row_model_host(row),
                     ),
                 )
                 # `prepare()` opens its own durable kernel-shell transaction.
@@ -1374,36 +1394,55 @@ class IntelRepository(BaseRepository):
                 frozen_descriptor = _work_descriptor_sha256(
                     meeting_id, str(row["transcript_hash"]), frozen_work,
                 )
-                conn.execute(
-                    """UPDATE intel_jobs SET status='superseded',
-                       lifecycle_posture='superseded',updated_at=?,
-                       last_error='Installed plugin membership frozen for bound claim.'
-                       WHERE job_id=? AND status='queued'""",
-                    (now, job_id),
+                # HS-200-42: replace ONLY a descriptor that would actually
+                # change.  `_frozen_plugin_members` is a proxy for "already
+                # frozen" that is permanently false when the routed plugin
+                # chain is EMPTY -- the ordinary case on the owner's desk.  So
+                # every claim of such a job superseded a descriptor identical
+                # to the one it minted, and the replacement row was inserted
+                # with `attempts` reset to 0 (see the literal below).  A
+                # permanently failing job therefore never reached its attempt
+                # ceiling and grew `intel_jobs` by two rows per retry, forever.
+                # The freeze is deterministic (`_freeze_displaced_work` emits
+                # sorted, separator-fixed JSON), so an identical descriptor
+                # means nothing to replace: claim the row that is already here
+                # and let `attempts=attempts+1` below do its work.
+                already_frozen = (
+                    frozen_descriptor == str(row["work_descriptor_sha256"] or "")
+                    and frozen_work == str(row["displaced_work"] or "")
                 )
-                planned_job_id = _job_id(
-                    meeting_id, str(row["transcript_hash"]), frozen_descriptor,
-                    now, job_id,
-                )
-                conn.execute(
-                    """INSERT INTO intel_jobs (
-                        job_id,meeting_id,origin_job_id,work_descriptor_sha256,
-                        transcript_hash,displaced_work,status,lifecycle_posture,
-                        requested_at,updated_at,attempts,last_error
-                    ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?)""",
-                    (
-                        planned_job_id, meeting_id, job_id, frozen_descriptor,
-                        str(row["transcript_hash"]), frozen_work, now, now,
-                        "Installed plugin membership frozen for bound claim.",
-                    ),
-                )
-                conn.commit()
-                job_id = planned_job_id
-                row = conn.execute(
-                    "SELECT * FROM intel_jobs WHERE job_id=?", (job_id,),
-                ).fetchone()
-                if row is None:
-                    return None
+                if not already_frozen:
+                    conn.execute(
+                        """UPDATE intel_jobs SET status='superseded',
+                           lifecycle_posture='superseded',updated_at=?,
+                           last_error='Installed plugin membership frozen for bound claim.'
+                           WHERE job_id=? AND status='queued'""",
+                        (now, job_id),
+                    )
+                    planned_job_id = _job_id(
+                        meeting_id, str(row["transcript_hash"]), frozen_descriptor,
+                        now, job_id,
+                    )
+                    conn.execute(
+                        """INSERT INTO intel_jobs (
+                            job_id,meeting_id,origin_job_id,work_descriptor_sha256,
+                            transcript_hash,displaced_work,status,lifecycle_posture,
+                            requested_at,updated_at,attempts,last_error,model_host
+                        ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?,?)""",
+                        (
+                            planned_job_id, meeting_id, job_id, frozen_descriptor,
+                            str(row["transcript_hash"]), frozen_work, now, now,
+                            "Installed plugin membership frozen for bound claim.",
+                            _row_model_host(row),
+                        ),
+                    )
+                    conn.commit()
+                    job_id = planned_job_id
+                    row = conn.execute(
+                        "SELECT * FROM intel_jobs WHERE job_id=?", (job_id,),
+                    ).fetchone()
+                    if row is None:
+                        return None
             job = self._job_from_row(row)
             command_ids = {
                 "claim_id": _claim_id(job_id),

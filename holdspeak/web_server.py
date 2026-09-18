@@ -1266,6 +1266,20 @@ class MeetingWebServer:
                 start_calendar_ingest_conductor()
             except Exception as e:
                 log.error(f"calendar ingest conductor startup failed: {e}")
+            # HS-200-42: the fourth conductor. Until this line nothing in the
+            # running product drained `intel_jobs` (audit 2026-09-13 §3.1):
+            # a stopped meeting enqueued a row and it sat there. It refuses
+            # to start when this process does not own the database, so the
+            # HOLDSPEAK_ALLOW_UNOWNED_DB hub keeps its "scheduled work OFF"
+            # promise.
+            try:
+                from .intel_queue_conductor import start_intel_queue_conductor
+
+                start_intel_queue_conductor(
+                    broadcast=lambda t, d: self.broadcast(t, d)
+                )
+            except Exception as e:
+                log.error(f"intel queue conductor startup failed: {e}")
             self._started.set()
             log.debug("Meeting web server startup complete")
 
@@ -1283,6 +1297,7 @@ class MeetingWebServer:
                 ("calendar ingest", "calendar_ingest_conductor.stop_calendar_ingest_conductor"),
                 ("workbench", "workbench_conductor.stop_conductor"),
                 ("scheduled recording", "scheduled_recording_conductor.stop_scheduled_recording_conductor"),
+                ("intel queue", "intel_queue_conductor.stop_intel_queue_conductor"),
             ):
                 module_name, _, attribute = stop.partition(".")
                 try:

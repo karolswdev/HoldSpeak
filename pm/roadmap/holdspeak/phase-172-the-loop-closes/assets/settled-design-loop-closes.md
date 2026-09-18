@@ -314,10 +314,19 @@ which calls `project_detector` to match the meeting to projects. The
 auto-intel trigger runs AFTER this association, so `meeting_projects`
 is populated before the check.
 
-**The deferred queue worker** (`intel_queue.py:592,
-IntelQueueWorker`) already picks up queued jobs. No new worker needed;
-the existing `_deferred_plugin_queue_loop`
-(web_runtime.py:519) processes them.
+**The deferred queue worker** (`intel_queue.py`, `IntelQueueWorker`)
+already picks up queued jobs. No new worker needed; the existing
+`_deferred_plugin_queue_loop` (web_runtime.py:519) processes them.
+
+> **FALSE — corrected 2026-09-14 (HS-200-42).** The paragraph above was
+> wrong when it was written and is kept only as the record of where the
+> defect entered. `_deferred_plugin_queue_loop` calls
+> `process_next_plugin_run_job` (`runtime/plugin_queue.py`) — a DIFFERENT
+> queue. `IntelQueueWorker` had **zero production callers** until HS-200-42,
+> so nothing drained `intel_jobs` at all (audit 2026-09-13 §3.1; the owner's
+> desk carried `intel_snapshots` = 0 and a job `queued` since 2026-09-10).
+> The queue is now drained by `holdspeak/intel_queue_conductor.py`, started
+> and stopped by the hub lifespan alongside the other three conductors.
 
 ### The extractor (which plugin)
 

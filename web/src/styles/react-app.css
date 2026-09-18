@@ -406,6 +406,24 @@
   .welcome-mark {
     position: static;
   }
+  /* HS-200-42 (counsel F4) — the queue chip is `position: fixed` at
+     `top: 76px; left: 50%`, which at a phone width lands dead centre on the
+     Chair headline ("Nothing needs you"): the story-42 walk shot the
+     `1 QUEUED` chip printed over it. The owner's law is that nothing
+     overlaps UI. Scoped to the narrow width, so the desk width is untouched:
+     the chip moves to the right margin of the same band, which is empty
+     there, and its popover hangs from that edge instead of off-screen. */
+  .ambient-queue {
+    left: auto;
+    right: var(--space-3);
+    transform: none;
+  }
+  .ambient-queue > div {
+    left: auto;
+    right: 0;
+    width: min(250px, calc(100vw - 24px));
+    transform: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -616,6 +616,7 @@ class WebRuntime(
                 except Exception as exc:
                     log.error(f"Failed to finalize active meeting during shutdown: {exc}")
             if self.server is not None:
+                # Runs the app shutdown hook, which joins every conductor.
                 self.server.stop()
             if self.desktop_presence is not None:
                 try:
@@ -626,7 +627,9 @@ class WebRuntime(
                 self.plugin_queue_thread.join(timeout=2.0)
             if self.cadence_thread is not None:
                 self.cadence_thread.join(timeout=2.0)
-            self._release_database()  # HS-200-02
+            # LAST: joins this process's queue writers, then hands the
+            # database back (HS-200-02, HS-200-42 counsel P1-1).
+            self._stop_writers_and_release_database()
 
 
 def run_web_runtime(

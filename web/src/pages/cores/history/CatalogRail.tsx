@@ -36,6 +36,7 @@ function MeetingStreamRow({
   onRunIntelligence,
   runningId,
   runHost,
+  drainerAbsent,
 }: {
   row: Record<string, unknown>;
   isSelected: boolean;
@@ -43,6 +44,8 @@ function MeetingStreamRow({
   onRunIntelligence: (id: string) => void;
   runningId: string | null;
   runHost: string | null;
+  /** The `runtime_queue` frame says no hub drainer will execute the queue. */
+  drainerAbsent?: boolean;
 }) {
   const state = meetingRowState(row);
   const words = wordsToken(row.transcriptWords);
@@ -62,10 +65,18 @@ function MeetingStreamRow({
     displayTone = "accent";
   }
 
-  // If the job is running, override the state
+  // If the job is running, override the state. HS-200-42: `isRunning` is
+  // this client's OPTIMISM about a click, not the server's state — so when
+  // the hub has no drainer it is not running and never will be.
   if (isRunning) {
-    displayLabel = "RUNNING";
-    displayTone = "warn";
+    displayLabel = drainerAbsent ? "NOT DRAINING" : "RUNNING";
+    displayTone = drainerAbsent ? "danger" : "warn";
+  }
+  // HS-200-42 (counsel N1): a job the hub has nobody to execute is not
+  // "queued" in any useful sense. Same token and tone the Chair uses.
+  if (displayLabel === "QUEUED" && drainerAbsent) {
+    displayLabel = "NOT DRAINING";
+    displayTone = "danger";
   }
 
   // Build token parts: SEP 04 · 30 MIN · 1,204 WORDS · OFF
@@ -182,6 +193,7 @@ export function CatalogRail({
   onRunIntelligence,
   runningId,
   runHost,
+  drainerAbsent,
   narrowed,
 }: {
   meetingRows: Record<string, unknown>[];
@@ -191,6 +203,8 @@ export function CatalogRail({
   onRunIntelligence: (id: string) => void;
   runningId: string | null;
   runHost: string | null;
+  /** The `runtime_queue` frame says no hub drainer will execute the queue. */
+  drainerAbsent?: boolean;
   /** When true, shown as the narrowed left side in SurfaceSplit. */
   narrowed?: boolean;
 }) {
@@ -220,6 +234,7 @@ export function CatalogRail({
               onRunIntelligence={onRunIntelligence}
               runningId={runningId}
               runHost={runHost}
+              drainerAbsent={drainerAbsent}
             />
           ))}
         </div>

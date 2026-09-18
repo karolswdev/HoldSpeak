@@ -198,6 +198,44 @@ class BoundDeferredIntelJob:
     def parent_operation_id(self) -> str:
         return str(self._parent.operation_id)
 
+    def egress_model_host(self, db: Any, capability: str) -> str:
+        """The host this bound job's FROZEN route actually egresses to.
+
+        HS-200-42 (counsel P1-2, Article III).  ``run_intelligence`` records a
+        host at ENQUEUE time from ``resolve_meeting_placement(Config.load()
+        .meeting)`` (``intel/providers.py:666``) -- mutable config, read before
+        a claim exists.  Execution goes somewhere else entirely: through the
+        deployment revision frozen into this bundle member's route plan, which
+        is what ``_engine_for_revision`` (``inference_targets.py:721``) builds
+        the engine from.  The two sources are NOT structurally guaranteed to
+        agree, so the row must be re-stated from THIS one, before the call.
+
+        Same vocabulary as the enqueue-time estimate: an adopted mesh node
+        wins, else the endpoint's bare host, else the frozen boundary.
+        """
+        member = self._members.get(capability)
+        if member is None:
+            return ""
+        with db._connection() as conn:
+            row = conn.execute(
+                """SELECT d.node,d.endpoint,d.boundary
+                     FROM inference_route_plan_entries e
+                     JOIN deployment_revisions d ON d.id=e.deployment_revision_id
+                    WHERE e.plan_id=? ORDER BY e.route_leg_ordinal LIMIT 1""",
+                (str(member["route_plan_id"]),),
+            ).fetchone()
+        if row is None:
+            return ""
+        from ..intel.providers import endpoint_host
+
+        node = str(row["node"] or "").strip()
+        if node:
+            return node
+        host = endpoint_host(row["endpoint"])
+        if host:
+            return host
+        return str(row["boundary"] or "").strip() or "local"
+
     def require_frozen_plugin_member(self, frozen: Mapping[str, Any]) -> Mapping[str, Any]:
         """Prove descriptor, bundle, and frozen capability say the same plugin.
 
