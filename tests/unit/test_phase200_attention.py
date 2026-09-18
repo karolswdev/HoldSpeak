@@ -32,7 +32,7 @@ from holdspeak.db import Database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.attention_ranking import (
     RANK_CLASSES,
-    classify,
+    attention_class,
     dedup_items,
     normalize_title,
     projection_ref,
@@ -96,9 +96,9 @@ class TestRanking:
     def test_a_due_date_decides_before_the_reason_token(self) -> None:
         # A row whose reason says WAITING but whose due date is yesterday
         # is overdue: the observable fact outranks the phrase.
-        assert classify(_item("x", why="WAITING", due_at="2026-09-06"), NOW) == "overdue"
-        assert classify(_item("x", why="WAITING", due_at="2026-09-07"), NOW) == "due_today"
-        assert classify(_item("x", why="WAITING", due_at="2026-09-09"), NOW) == "waiting"
+        assert attention_class(_item("x", why="WAITING", due_at="2026-09-06"), NOW) == "overdue"
+        assert attention_class(_item("x", why="WAITING", due_at="2026-09-07"), NOW) == "due_today"
+        assert attention_class(_item("x", why="WAITING", due_at="2026-09-09"), NOW) == "waiting"
 
     def test_within_class_orders_are_the_ratified_ones(self) -> None:
         overdue = rank_items([

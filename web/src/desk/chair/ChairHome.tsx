@@ -1133,7 +1133,7 @@ function NeedsYouRow({
           {sources.length > 1 ? (
             <Disclosure
               label={countToken(sources.length, "SOURCE", "SOURCES") ?? "SOURCES"}
-              ariaLabel={`Sources — ${item.title}`}
+              ariaLabel={`Sources: ${item.title}`}
               open={sourcesOpen}
               onOpenChange={setSourcesOpen}
               controlsId={sourcesId}
@@ -1162,7 +1162,7 @@ function NeedsYouRow({
         <div
           id={sourcesId}
           role="region"
-          aria-label={`Sources — ${item.title}`}
+          aria-label={`Sources: ${item.title}`}
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               // Close the sources; the Disclosure returns focus to its
@@ -1213,7 +1213,7 @@ function SourceVerb({
         variant="ghost"
         dense
         onClick={() => window.open(source.verbHref!, "_blank", "noopener")}
-        aria-label={`Open — ${title}`}
+        aria-label={`Open: ${title}`}
         data-testid="arrival-source-open"
       >
         Open
@@ -1226,7 +1226,7 @@ function SourceVerb({
         variant="ghost"
         dense
         onClick={() => openSurfaceOr("project-room", "/projects", `?focus=proposal:${proposalId}`)}
-        aria-label={`Open — ${title}`}
+        aria-label={`Open: ${title}`}
         data-testid="arrival-source-open"
       >
         Open
@@ -1266,7 +1266,7 @@ function NeedsYouRowVerbs({
         onClick={() => {
           if (doorCard?.open_ref) useDesk.getState().openPullout(doorCard.open_ref);
         }}
-        aria-label={`Name an owner — ${item.title}`}
+        aria-label={`Name an owner: ${item.title}`}
         data-testid="arrival-name-owner"
       >
         Name an owner
@@ -1301,12 +1301,12 @@ function NeedsYouRowVerbs({
           dense
           disabled={busy}
           onClick={() => void confirmProposal()}
-          aria-label={`Confirm — ${item.title}`}
+          aria-label={`Confirm: ${item.title}`}
           data-testid="arrival-proposal-confirm"
         >
           {busy ? "..." : "Confirm"}
         </Button>
-        <Disclosure label="MORE" ariaLabel={`More — ${item.title}`}>
+        <Disclosure label="MORE" ariaLabel={`More: ${item.title}`}>
           <Button
             variant="ghost"
             dense
@@ -1317,7 +1317,7 @@ function NeedsYouRowVerbs({
                 `${item.projectId}?focus=proposal:${item.proposalId}`,
               )
             }
-            aria-label={`Open — ${item.title}`}
+            aria-label={`Open: ${item.title}`}
             data-testid="arrival-proposal-open"
           >
             Open
@@ -1356,7 +1356,7 @@ function NeedsYouRowVerbs({
             dense
             disabled={busy}
             onClick={() => void fireVerb()}
-            aria-label={`${labelFor(firstVerb)} — ${item.title}`}
+            aria-label={`${labelFor(firstVerb)}: ${item.title}`}
             data-testid="arrival-door-verb"
           >
             {busy ? "..." : labelFor(firstVerb)}
@@ -1381,7 +1381,7 @@ function NeedsYouRowVerbs({
         variant={lead}
         dense
         onClick={() => window.open(item.verbHref!, "_blank", "noopener")}
-        aria-label={`Open — ${item.title}`}
+        aria-label={`Open: ${item.title}`}
         data-testid="arrival-open"
       >
         Open

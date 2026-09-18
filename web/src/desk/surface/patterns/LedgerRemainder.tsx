@@ -60,7 +60,7 @@ export const LedgerRemainder = forwardRef<HTMLButtonElement, LedgerRemainderProp
           variant="ghost"
           dense
           aria-expanded={expanded}
-          aria-label={expanded ? `Show fewer — hide ${what}` : `Show all — ${what}`}
+          aria-label={expanded ? `Show fewer: hide ${what}` : `Show all: ${what}`}
           onClick={onToggle}
           data-testid={`${dataTestId}-verb`}
         >

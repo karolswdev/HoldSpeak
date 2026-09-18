@@ -130,8 +130,8 @@ ROUTING_RESOLVER_REFERENCES = {
     # hub no longer observes the state the code names.  A provenance read, not a
     # rival route decision, but it is a resolver reference and is registered as
     # one rather than allowed to sit outside the census.
-    "holdspeak/services/project_service.py:2060:import:resolve_placement",
-    "holdspeak/services/project_service.py:2061:ref:resolve_placement",
+    "holdspeak/services/project_service.py:2063:import:resolve_placement",
+    "holdspeak/services/project_service.py:2064:ref:resolve_placement",
     # Pre-existing and previously UNREGISTERED, found by the HS-200-41 sweep and
     # registered here rather than left red: ``_captured_deployment_revision``
     # (project_update_service.py:1034) resolves a profile's target only to

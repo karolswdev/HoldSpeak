@@ -128,7 +128,7 @@ function isRankClass(value: unknown): value is RankClass {
 }
 
 /** The rank class of one row, from observable facts only. */
-export function classify(item: RankableItem, now: Date = new Date()): RankClass {
+export function attentionClass(item: RankableItem, now: Date = new Date()): RankClass {
   const due = parseStamp(item.dueAt);
   if (due) {
     const dueDay = startOfDay(due);
@@ -147,7 +147,7 @@ export function classify(item: RankableItem, now: Date = new Date()): RankClass 
 
 /** The wire's class when it is lawful, else the browser's own reading. */
 export function rankClassOf(item: RankableItem, now: Date = new Date()): RankClass {
-  return isRankClass(item.rankClass) ? item.rankClass : classify(item, now);
+  return isRankClass(item.rankClass) ? item.rankClass : attentionClass(item, now);
 }
 
 function withinClassKey(cls: RankClass, item: RankableItem): number {

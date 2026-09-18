@@ -102,15 +102,15 @@ describe("Arrival attention (HS-200-15)", () => {
       expect(within(r).getByTestId("arrival-source-emblem").textContent).not.toBe("");
       expect(within(r).getByTestId("arrival-why").textContent).not.toBe("");
       expect(within(r).getByRole("group", { name: "Project" })).toBeTruthy();
-      expect(within(r).getByRole("button", { name: /^Open — / })).toBeTruthy();
+      expect(within(r).getByRole("button", { name: /^Open: / })).toBeTruthy();
     }
     // One filled primary per face: the top row's verb.
-    expect(within(rows[0]).getByRole("button", { name: /^Open — / }).className).toContain("btn--primary");
-    expect(within(rows[1]).getByRole("button", { name: /^Open — / }).className).toContain("btn--ghost");
+    expect(within(rows[0]).getByRole("button", { name: /^Open: / }).className).toContain("btn--primary");
+    expect(within(rows[1]).getByRole("button", { name: /^Open: / }).className).toContain("btn--ghost");
 
     // The remainder: a real count and a real verb, in place.
     expect(screen.getByTestId("arrival-needs-you-remainder-count").textContent).toBe("12 MORE");
-    fireEvent.click(screen.getByRole("button", { name: "Show all — the remaining 12" }));
+    fireEvent.click(screen.getByRole("button", { name: "Show all: the remaining 12" }));
     expect(within(section).getAllByTestId("arrival-needs-you-row")).toHaveLength(17);
     expect(section.textContent).toContain("NEEDS YOU 17");
     expect(screen.queryByTestId("arrival-needs-you-remainder-count")).toBeNull();
@@ -123,7 +123,7 @@ describe("Arrival attention (HS-200-15)", () => {
            coverage: [AVAILABLE("p1", "Q4 Platform")], complete: true });
     render(<ChairHome />);
     await waitFor(() => expect(screen.getByTestId("arrival-needs-you")).toBeTruthy(), { timeout: 5000 });
-    const trigger = screen.getByRole("button", { name: "Sources — Priya confirms the freeze window" });
+    const trigger = screen.getByRole("button", { name: "Sources: Priya confirms the freeze window" });
     expect(trigger.textContent).toContain("2 SOURCES");
     fireEvent.click(trigger);
     const list = screen.getByTestId("arrival-sources");
@@ -134,7 +134,7 @@ describe("Arrival attention (HS-200-15)", () => {
     for (const entry of entries) {
       expect(entry.querySelector(".arrival-source-emblem")?.textContent).not.toBe("");
       expect(entry.querySelector(".arrival-source-title")?.textContent).toBe("Priya confirms the freeze window");
-      expect(within(entry).getByRole("button", { name: "Open — Priya confirms the freeze window" })).toBeTruthy();
+      expect(within(entry).getByRole("button", { name: "Open: Priya confirms the freeze window" })).toBeTruthy();
     }
   });
 
@@ -191,7 +191,7 @@ describe("Arrival attention (HS-200-15)", () => {
     expect(within(gap).getByTestId("arrival-coverage-reason").textContent).toBe("JIRA REJECTED THE QUERY");
     expect(within(gap).getByTestId("arrival-coverage-token").textContent).toContain("CANT CHECK");
     expect(within(gap).getByTestId("arrival-coverage-observed").textContent).toBe("OBSERVED 09-07 08:41");
-    const verb = within(gap).getByRole("button", { name: "Reconnect — jira KAN" });
+    const verb = within(gap).getByRole("button", { name: "Reconnect: jira KAN" });
     expect(verb.className).toContain("btn");
     // Above the answer: the coverage section precedes the NEEDS YOU section.
     const order = Array.from(container.querySelectorAll("[data-testid='arrival-coverage'], [data-testid='arrival-needs-you']"))

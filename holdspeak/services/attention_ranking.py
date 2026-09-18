@@ -90,7 +90,7 @@ def _observed_since(item: dict[str, Any]) -> Any:
 # ── classification ───────────────────────────────────────────────────
 
 
-def classify(item: dict[str, Any], now: datetime) -> str:
+def attention_class(item: dict[str, Any], now: datetime) -> str:
     """The rank class of one attention row, from observable facts only.
 
     A known due date decides first (overdue / due today / waiting); then
@@ -136,9 +136,9 @@ def _within_class_key(rank_class: str, item: dict[str, Any]) -> float:
 
 def sort_key(item: dict[str, Any], now: datetime) -> tuple[int, float, str]:
     """The complete, deterministic ranking key for one row."""
-    rank_class = str(item.get("rankClass") or classify(item, now))
+    rank_class = str(item.get("rankClass") or attention_class(item, now))
     if rank_class not in _RANK:
-        rank_class = classify(item, now)
+        rank_class = attention_class(item, now)
     return (
         _RANK[rank_class],
         _within_class_key(rank_class, item),
@@ -155,7 +155,7 @@ def rank_items(
     out: list[dict[str, Any]] = []
     for item in items:
         row = dict(item)
-        row["rankClass"] = classify(row, clock_now)
+        row["rankClass"] = attention_class(row, clock_now)
         out.append(row)
     out.sort(key=lambda row: sort_key(row, clock_now))
     for position, row in enumerate(out, start=1):
@@ -321,7 +321,7 @@ def rank_and_dedup(
 
 __all__ = [
     "RANK_CLASSES",
-    "classify",
+    "attention_class",
     "sort_key",
     "rank_items",
     "normalize_title",

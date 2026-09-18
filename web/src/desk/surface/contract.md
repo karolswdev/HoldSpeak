@@ -280,7 +280,7 @@ Rules the species enforces:
 The way back to the originating Project, on every posture (story 09 AC2;
 design D1). A library `Button` (ghost, dense, caption step) inside a
 `role="group"` region named `Project` (canon D); accessible name
-`Open the Project — <name>`. It is a READ; a write is never named as a way
+`Open the Project: <name>`. It is a READ; a write is never named as a way
 back.
 
 - `name: string` — the Project's name, drawn uppercased
@@ -304,7 +304,7 @@ verb becomes `Show fewer`.
   nothing (A.8)
 - `expanded: boolean`, `onToggle()` — the caller's state
 - `noun = "MORE"`, `subject?` — the count noun and the verb's accessible
-  subject (`Show all — the remaining 12`)
+  subject (`Show all: the remaining 12`)
 - `ref` — forwarded to the verb, so `Escape` inside the revealed rows can
   return focus to it (the arrival does)
 - The count is `countToken`; the verb is the library `Button`
@@ -312,7 +312,7 @@ verb becomes `Show fewer`.
 ## Disclosure: `ariaLabel` and `controlsId` (HS-200-15)
 
 - `ariaLabel?: string` — an accessible name richer than the visible label
-  (`Sources — Priya confirms the freeze window` over `2 SOURCES`).
+  (`Sources: Priya confirms the freeze window` over `2 SOURCES`).
 - `controlsId?: string` — the id of a body rendered ELSEWHERE, such as a
   `SurfaceLedgerRow`'s own expansion slot (`open` + `children`), so a body
   that must span the row's full width is not trapped inside a cell. The

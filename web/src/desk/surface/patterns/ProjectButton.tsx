@@ -4,7 +4,7 @@
  *
  *  A library `Button` (ghost, dense, caption step) inside a
  *  `role="group"` region named `Project` (canon D), accessible name
- *  `Open the Project — <name>`. It is a READ (it opens the Room); a write
+ *  `Open the Project: <name>`. It is a READ (it opens the Room); a write
  *  is never named as a way back.
  *
  *  Two rules the species enforces:
@@ -47,7 +47,7 @@ export function ProjectButton({
         variant="ghost"
         dense
         className="surface-project-button"
-        aria-label={`Open the Project — ${label}`}
+        aria-label={`Open the Project: ${label}`}
         onClick={onOpen}
         data-testid={dataTestId}
       >

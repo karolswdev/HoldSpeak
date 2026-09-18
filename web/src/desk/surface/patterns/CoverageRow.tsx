@@ -105,7 +105,7 @@ export function CoverageRow({
             variant="secondary"
             dense
             onClick={() => onRepair(gap)}
-            aria-label={`${repair.verb} — ${name}`}
+            aria-label={`${repair.verb}: ${name}`}
             data-testid="arrival-coverage-verb"
           >
             {repair.verb}

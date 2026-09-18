@@ -9,7 +9,7 @@ import {
   RANK_CLASSES,
   ageToken,
   attentionCaption,
-  classify,
+  attentionClass,
   dedupAttention,
   normalizeTitle,
   observedAtToken,
@@ -68,7 +68,7 @@ describe("ranking (AC2)", () => {
   });
 
   it("trusts the wire's class when lawful and reads the facts otherwise", () => {
-    expect(classify(item("x", { why: "WAITING", dueAt: "2026-09-06" }), NOW)).toBe("overdue");
+    expect(attentionClass(item("x", { why: "WAITING", dueAt: "2026-09-06" }), NOW)).toBe("overdue");
     expect(rankAttention([item("x", { rankClass: "not_run", why: "CI RED" })], NOW)[0].rankClass).toBe("not_run");
     expect(rankAttention([item("x", { rankClass: "bogus", why: "CI RED" })], NOW)[0].rankClass).toBe("no_due_date");
   });

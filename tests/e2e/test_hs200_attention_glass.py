@@ -527,7 +527,7 @@ def _run_three_projects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: 
             # exact: the row line is a role=button whose name is computed
             # from its content, so a substring match would hit it too.
             trigger = page.get_by_role(
-                "button", name="Sources — KAN-7 Payments cut-over runbook", exact=True,
+                "button", name="Sources: KAN-7 Payments cut-over runbook", exact=True,
             )
             assert trigger.count() == 1
             assert "2 SOURCES" in (trigger.text_content() or "")
@@ -546,13 +546,13 @@ def _run_three_projects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: 
 
             # The remainder: a real count, a real verb, revealed in place.
             assert (page.get_by_test_id("arrival-needs-you-remainder-count").text_content() or "").strip() == "12 MORE"
-            page.get_by_role("button", name="Show all — the remaining 12").click()
+            page.get_by_role("button", name="Show all: the remaining 12").click()
             _settle(page)
             assert rows.count() == 17
             assert "NEEDS YOU 17" in (section.text_content() or "")
             _no_horizontal_scroll(page, width)
             _shot(page, "three-projects-all", width)
-            page.get_by_role("button", name="Show fewer — hide the remaining 12").click()
+            page.get_by_role("button", name="Show fewer: hide the remaining 12").click()
             _settle(page)
             assert rows.count() == 5
 
@@ -603,7 +603,7 @@ def _run_long_row(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
             assert LONG_TITLE in (row.text_content() or "")
             project = row.locator(".surface-project-button")
             assert project.count() == 1
-            assert (project.get_attribute("aria-label") or "") == f"Open the Project — {LONG_PROJECT}"
+            assert (project.get_attribute("aria-label") or "") == f"Open the Project: {LONG_PROJECT}"
             _no_horizontal_scroll(page, width)
             # The verb sits on the SAME line as the meta, at its right.
             boxes = page.evaluate("""() => {
