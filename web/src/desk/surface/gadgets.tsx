@@ -241,6 +241,7 @@ export function StringGadget({
   placeholder,
   type = "text",
   mic = true,
+  micLabel,
   disabled,
   autoFocus,
   onKeyDown,
@@ -254,6 +255,9 @@ export function StringGadget({
   type?: string;
   /** Every text well carries the speak-to-fill mic unless secret. */
   mic?: boolean;
+  /** HS-200-13: the mic's own accessible name when the face names it
+   *  (`Dictate into the search`); default `Speak <label>`. */
+  micLabel?: string;
   disabled?: boolean;
   autoFocus?: boolean;
   onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
@@ -296,7 +300,7 @@ export function StringGadget({
         onKeyDown={onKeyDown}
       />
       {mic && type !== "password" ? (
-        <MicButton label={`Speak ${label}`} onText={(text) => onChange(text)} />
+        <MicButton label={micLabel ?? `Speak ${label}`} onText={(text) => onChange(text)} />
       ) : null}
     </span>
   );

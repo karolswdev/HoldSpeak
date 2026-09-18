@@ -1442,6 +1442,32 @@
       ]
     },
     {
+      "path": "/api/decision-records/{record_id}/carry",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.decision_records",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/decision-records/{record_id}/dispute",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.decision_records",
+      "consumers": []
+    },
+    {
+      "path": "/api/decision-records/{record_id}/supersede",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.decision_records",
+      "consumers": []
+    },
+    {
       "path": "/api/decisions",
       "methods": [
         "GET"
@@ -3517,6 +3543,16 @@
         "POST"
       ],
       "module": "web.routes.meetings.crud",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/memory/recall",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.memory",
       "consumers": [
         "web"
       ]

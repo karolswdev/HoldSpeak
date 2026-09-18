@@ -886,7 +886,7 @@ class HeartbeatService:
         Muted Rooms' items get ``muted: true`` and are excluded from ``count``
         but included in ``mutedCount``.
         """
-        from holdspeak.services.needs_you_aggregate import build_aggregate
+        from holdspeak.services.needs_you_aggregate import build_aggregate, shared_last_known
         from holdspeak.services.project_service import ProjectService
 
         ps = ProjectService(self._db, observer=self._observer)
@@ -898,6 +898,8 @@ class HeartbeatService:
             list_projects=ps.list_projects,
             room=ps.room,
             principal=_p,
+            # HS-200-13 (counsel P1-4): the same durable memory the arrival reads.
+            last_known=shared_last_known(lambda: self._db),
         )
 
         # M1: apply mute list -- mark muted items and split counts.

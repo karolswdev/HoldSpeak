@@ -28,8 +28,10 @@ observed:
       ``observed_at``).
 
 A failed source does not drop its items: the builder remembers the last
-successful observation per source (``LastKnownStore``, process-local,
-the aggregate's own memory -- NOT a second attention store) and replays
+successful observation per source (``LastKnownStore`` -- the aggregate's
+own memory, NOT a second attention store; HS-200-13 made it durable in
+``needs_you_last_known`` so a hub restart still replays what a failed
+source last said) and replays
 those items marked ``fromLastObservation`` with the ``observedAt`` of
 that observation, so a severity can never fall by disappearance.  When
 the source recovers, the fresh items replace the remembered ones by
@@ -46,6 +48,7 @@ in rank order.
 """
 from __future__ import annotations
 
+import json
 import logging
 import threading
 import time
@@ -154,18 +157,70 @@ def _item_id(project_id: str, item: dict[str, Any]) -> str:
     return f"{project_id}:{item.get('source', '')}:{item.get('ref', '')}"
 
 
+#: A remembered observation older than this is not replayed: a source that
+#: has not been read for two weeks is stated as unobserved (coverage names
+#: it), never replayed as a fortnight-old "still true" (counsel P1-4).
+REPLAY_HORIZON_DAYS = 14
+
+
 class LastKnownStore:
     """Per-source memory of the last SUCCESSFUL observation.
 
-    Process-local and thread-safe.  It is the aggregate's own memory,
-    not a second attention store: nothing here is durable, and a fresh
-    process simply has nothing to replay (coverage still names the
-    failure, so the result is never read as an all-clear).
+    Thread-safe.  It is the aggregate's own memory, not a second attention
+    store.  HS-200-15 left it process-local; HS-200-13 (AC5) gives it an
+    optional ``db_factory``: every ``remember`` writes through to
+    ``needs_you_last_known`` and a cold ``recall`` reads the row back, so a
+    hub restart replays what a failed source last said instead of forgetting
+    it (coverage still names the failure either way -- the result is never
+    read as an all-clear).  Without a factory it behaves exactly as before.
+
+    Three bounds (counsel-on-built P1-4): ``recall`` returns nothing for an
+    observation older than ``REPLAY_HORIZON_DAYS``; ``forget_except`` drops
+    the sources a successful project read no longer lists (archived,
+    unlinked); and a recall re-reads the durable row when it is newer than
+    the in-memory copy, so several stores over one database agree.  The
+    process shares ONE store: ``shared_last_known`` (below) returns the
+    composition root's, else the module default, bound to the database.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, db_factory: Callable[[], Any] | None = None) -> None:
         self._lock = threading.Lock()
         self._by_source: dict[str, dict[str, Any]] = {}
+        self._db_factory = db_factory
+
+    def bind(self, db_factory: Callable[[], Any]) -> "LastKnownStore":
+        """Attach the database this store writes through (once)."""
+        if self._db_factory is None:
+            self._db_factory = db_factory
+        return self
+
+    @property
+    def durable(self) -> bool:
+        return self._db_factory is not None
+
+    def forget_except(self, keep: set[str], *, prefix: str = "project:") -> int:
+        """Drop remembered sources under ``prefix`` that are not in ``keep``
+        (the set a SUCCESSFUL project read just produced).  Returns how many."""
+        dropped = 0
+        with self._lock:
+            for source_id in [k for k in self._by_source if k.startswith(prefix) and k not in keep]:
+                del self._by_source[source_id]
+                dropped += 1
+        if self._db_factory is not None:
+            try:
+                db = self._db_factory()
+                with db._connection() as conn:
+                    rows = conn.execute(
+                        "SELECT source_id FROM needs_you_last_known WHERE source_id LIKE ?",
+                        (prefix + "%",),
+                    ).fetchall()
+                    stale = [str(r["source_id"]) for r in rows if str(r["source_id"]) not in keep]
+                    for source_id in stale:
+                        conn.execute("DELETE FROM needs_you_last_known WHERE source_id = ?", (source_id,))
+                    dropped = max(dropped, len(stale))
+            except Exception as exc:
+                log.warning("needs-you: last-known prune failed: %s", exc)
+        return dropped
 
     def remember(self, source_id: str, *, items: list[dict[str, Any]],
                  observed_at: str, label: str = "", project_id: str = "") -> None:
@@ -176,26 +231,103 @@ class LastKnownStore:
                 "label": label,
                 "project_id": project_id,
             }
+        if self._db_factory is None:
+            return
+        try:
+            db = self._db_factory()
+            with db._connection() as conn:
+                conn.execute(
+                    """INSERT OR REPLACE INTO needs_you_last_known
+                       (source_id, project_id, label, observed_at, items_json, updated_at)
+                       VALUES (?, ?, ?, ?, ?, ?)""",
+                    (source_id, project_id or "", label or "", observed_at,
+                     json.dumps(items, sort_keys=True, default=str),
+                     datetime.now().isoformat()),
+                )
+        except Exception as exc:  # the durable copy is belt, never the loop
+            log.warning("needs-you: last-known write failed for %s: %s", source_id, exc)
 
-    def recall(self, source_id: str) -> dict[str, Any] | None:
+    def _read_durable(self, source_id: str, *, replace: bool = False) -> dict[str, Any] | None:
+        if self._db_factory is None:
+            return None
+        try:
+            db = self._db_factory()
+            with db._connection() as conn:
+                row = conn.execute(
+                    "SELECT * FROM needs_you_last_known WHERE source_id = ?", (source_id,)
+                ).fetchone()
+        except Exception as exc:
+            log.warning("needs-you: last-known read failed for %s: %s", source_id, exc)
+            return None
+        if row is None:
+            return None
+        try:
+            items = json.loads(row["items_json"] or "[]")
+        except (TypeError, ValueError):
+            items = []
+        entry = {
+            "items": [dict(r) for r in items if isinstance(r, dict)],
+            "observed_at": str(row["observed_at"]),
+            "label": str(row["label"] or ""),
+            "project_id": str(row["project_id"] or ""),
+        }
+        with self._lock:
+            if replace:
+                held = self._by_source.get(source_id)
+                if held is None or str(entry["observed_at"]) > str(held["observed_at"]):
+                    self._by_source[source_id] = entry
+            else:
+                self._by_source.setdefault(source_id, entry)
+        return entry
+
+    def recall(self, source_id: str, *, now: datetime | None = None) -> dict[str, Any] | None:
         with self._lock:
             entry = self._by_source.get(source_id)
-            if entry is None:
-                return None
-            return {
-                "items": [dict(row) for row in entry["items"]],
-                "observed_at": entry["observed_at"],
-                "label": entry["label"],
-                "project_id": entry["project_id"],
-            }
+        if self._db_factory is not None:
+            # Another store over the same database may have observed since
+            # (the hub's cache, the heartbeat, the sidecar): the newer row wins.
+            durable = self._read_durable(source_id, replace=True)
+            if durable is not None and (
+                entry is None or str(durable["observed_at"]) > str(entry["observed_at"])
+            ):
+                entry = durable
+        if entry is None:
+            return None
+        horizon = (now or datetime.now()) - timedelta(days=REPLAY_HORIZON_DAYS)
+        if _older_than(str(entry["observed_at"]), horizon):
+            return None
+        return {
+            "items": [dict(row) for row in entry["items"]],
+            "observed_at": entry["observed_at"],
+            "label": entry["label"],
+            "project_id": entry["project_id"],
+        }
 
     def source_ids(self) -> list[str]:
         with self._lock:
-            return sorted(self._by_source)
+            ids = set(self._by_source)
+        if self._db_factory is not None:
+            try:
+                db = self._db_factory()
+                with db._connection() as conn:
+                    ids.update(
+                        str(r["source_id"]) for r in
+                        conn.execute("SELECT source_id FROM needs_you_last_known").fetchall()
+                    )
+            except Exception as exc:
+                log.warning("needs-you: last-known listing failed: %s", exc)
+        return sorted(ids)
 
     def clear(self) -> None:
         with self._lock:
             self._by_source.clear()
+        if self._db_factory is not None:
+            try:
+                db = self._db_factory()
+                with db._connection() as conn:
+                    conn.execute("DELETE FROM needs_you_last_known")
+            except Exception as exc:
+                log.warning("needs-you: last-known clear failed: %s", exc)
 
 
 #: The default store the live runtime uses.
@@ -205,6 +337,33 @@ _LAST_KNOWN = LastKnownStore()
 def last_known_store() -> LastKnownStore:
     """The process-wide last-known store (tests may clear it)."""
     return _LAST_KNOWN
+
+
+def shared_last_known(db_factory: Callable[[], Any] | None = None) -> LastKnownStore:
+    """ONE durable store per process (counsel P1-4).
+
+    The composition root (HS-200-45 ``RuntimeServices.needs_you_last_known``)
+    carries it when a hub installed one; otherwise the module default is
+    used.  Either way the store is bound to ``db_factory`` on first use, so
+    the arrival route, the heartbeat and the MCP sidecar replay the same
+    memory and prune it together.
+    """
+    store: LastKnownStore | None = None
+    try:
+        from holdspeak.runtime import composition as _composition
+        root = _composition.installed()
+        if root is not None:
+            store = getattr(root, "needs_you_last_known", None)
+            if store is None and not getattr(root, "bare_root", True):
+                store = _LAST_KNOWN
+                root.needs_you_last_known = store
+    except Exception:  # pragma: no cover - the root is optional here
+        store = None
+    if store is None:
+        store = _LAST_KNOWN
+    if db_factory is not None:
+        store.bind(db_factory)
+    return store
 
 
 # ── Pure aggregate builder (the N+1 lives here, nowhere else) ─────────
@@ -265,7 +424,7 @@ def build_aggregate(
             rm = room(principal, pid)
         except Exception as exc:
             state, reason = _classify_read_failure(exc)
-            remembered = memory.recall(source_id)
+            remembered = memory.recall(source_id, now=clock_now)
             coverage.append(_coverage_row(
                 source_id=source_id, kind="project", state=state,
                 observed_at=(remembered or {}).get("observed_at"),
@@ -276,7 +435,7 @@ def build_aggregate(
 
         needs = rm.get("needsYou", {})
         if needs.get("state") != "ok":
-            remembered = memory.recall(source_id)
+            remembered = memory.recall(source_id, now=clock_now)
             coverage.append(_coverage_row(
                 source_id=source_id, kind="project", state="failed",
                 observed_at=(remembered or {}).get("observed_at"),
@@ -309,6 +468,16 @@ def build_aggregate(
                 "verbHref": item.get("url") or item.get("verbHref"),
                 "severity": item.get("severity", "info"),
             }
+            # HS-200-13 (AC3): a commitment row carries what its verbs need
+            # -- the action item the verb writes to, the typed unknowns, and
+            # the ONE lawful next action the producer chose.
+            if item.get("commitment_id"):
+                row["commitmentId"] = item["commitment_id"]
+                row["actionItemId"] = item.get("action_item_id")
+                row["owner"] = item.get("owner")
+                row["unknowns"] = list(item.get("unknowns") or [])
+                row["nextAction"] = item.get("next_action")
+                row["decisionRecordId"] = item.get("decision_record_id")
             if item.get("proposal_id"):
                 row["proposalId"] = item["proposal_id"]
                 row["proposalKind"] = item.get("proposal_kind", "action")
@@ -331,11 +500,20 @@ def build_aggregate(
         coverage.extend(_watch_coverage(rm, pid, pname, clock_now,
                                         source_stale_after_s))
 
+    if not project_list_failed:
+        # The project list is the expected-source set: a source it no longer
+        # names (archived, deleted) is forgotten, so a later list failure
+        # cannot replay a ghost (counsel P1-4).
+        memory.forget_except({f"project:{pid}" for pid in seen_projects})
+
     if project_list_failed:
         for source_id in memory.source_ids():
             if not source_id.startswith("project:"):
                 continue
-            remembered = memory.recall(source_id) or {}
+            remembered = memory.recall(source_id, now=clock_now)
+            if remembered is None:
+                # Beyond the replay horizon: unobserved, not "still true".
+                continue
             coverage.append(_coverage_row(
                 source_id=source_id, kind="project", state="failed",
                 observed_at=remembered.get("observed_at"),
@@ -675,6 +853,8 @@ __all__ = [
     "NeedsYouCache",
     "LastKnownStore",
     "last_known_store",
+    "shared_last_known",
+    "REPLAY_HORIZON_DAYS",
     "COVERAGE_STATES",
     "COVERAGE_KINDS",
     "DEFAULT_SOURCE_STALE_AFTER_S",

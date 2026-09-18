@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 78  # informational; 74→75: calendar_event_link_suppressions (HS-175 counsel C5); 75→76: dictation_journal.corrections_applied (HS-176-02); 76→77: project_ask_tasks (HS-200-41); 77→78: follow_through_proposals retry identity + evidence columns (HS-200-12) and project_briefs (HS-200-11)
+SCHEMA_VERSION = 79  # informational; 74→75: calendar_event_link_suppressions (HS-175 counsel C5); 75→76: dictation_journal.corrections_applied (HS-176-02); 76→77: project_ask_tasks (HS-200-41); 77→78: follow_through_proposals retry identity + evidence columns (HS-200-12) and project_briefs (HS-200-11); 78→79: preparation_carries + needs_you_last_known (HS-200-13; 11 and 12 both stamped 78 in parallel lanes, so 13 takes 79)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -4274,7 +4274,11 @@ CREATE TABLE IF NOT EXISTS follow_through_proposals (
     support_record_json TEXT,
     owner_supplied TEXT,
     due_supplied TEXT,
-    edited_at TEXT
+    edited_at TEXT,
+    -- HS-200-13 (AC1): the rationale the extractor read beside the decision.
+    -- Without it a confirmed record carried `rationale ''` and recall could
+    -- return the decision but never WHY (the plugin has said why all along).
+    rationale TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_ftp_meeting
     ON follow_through_proposals(meeting_id, state);
@@ -4394,4 +4398,46 @@ CREATE TABLE IF NOT EXISTS project_briefs (
 );
 CREATE INDEX IF NOT EXISTS idx_project_briefs_project
     ON project_briefs(project_id, lifecycle, created_at DESC);
+
+-- HS-200-13: the carry mark.  `Carry into brief` on the Desk memory face
+-- attaches a decision record BY REFERENCE to the next preparation of its
+-- Project (C3) -- the row names the record and never copies it, so a record
+-- superseded between the recall and the preparation resolves to the CURRENT
+-- one when the manifest is built (holdspeak/services/brief_carry.py,
+-- `pending_carries`).  `consumed_at` / `consumed_by` are stamped by the
+-- preparation that read the mark (HS-200-11, `consume_carries`); a pending
+-- mark is one with `consumed_at IS NULL`.  Identity is ONE MARK PER CURRENT
+-- RECORD, enforced by resolution at write time (`carry_into_brief` replays
+-- when the pressed record resolves to an already-pending one); the unique
+-- index on the pressed ref below is only the belt against a double press.
+-- Additive; never rebuilt.
+CREATE TABLE IF NOT EXISTS preparation_carries (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    record_ref TEXT NOT NULL,
+    carried_at TEXT NOT NULL,
+    carried_by TEXT NOT NULL DEFAULT '',
+    consumed_at TEXT,
+    consumed_by TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_preparation_carries_project
+    ON preparation_carries(project_id, consumed_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_preparation_carries_pending
+    ON preparation_carries(project_id, record_ref)
+    WHERE consumed_at IS NULL;
+
+-- HS-200-13 (AC5): the attention aggregate's last SUCCESSFUL observation per
+-- source, made durable.  HS-200-15 left `LastKnownStore` process-local, so a
+-- hub restart forgot every item a failed source had last said; the store now
+-- writes through to this row and reads it back on a cold miss.  One row per
+-- source id; `items_json` is the list of attention rows exactly as the
+-- aggregate built them.  Additive; never rebuilt.
+CREATE TABLE IF NOT EXISTS needs_you_last_known (
+    source_id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL DEFAULT '',
+    label TEXT NOT NULL DEFAULT '',
+    observed_at TEXT NOT NULL,
+    items_json TEXT NOT NULL DEFAULT '[]',
+    updated_at TEXT NOT NULL
+);
 """

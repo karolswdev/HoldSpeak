@@ -259,10 +259,13 @@ describe("ProjectRoomCore — two wings (was: four wings)", () => {
 });
 
 describe("ProjectRoomCore — no-scope states", () => {
-  it("shows global Desk memory search when no project scope is provided", () => {
+  it("shows the Desk memory recall face when no project scope is provided", () => {
+    // HS-200-13: the unscoped surface is the recall face (posture 5).
     render(<ProjectRoomCore />);
     expect(screen.getByRole("searchbox", { name: "Search the Desk" })).toBeTruthy();
-    expect(screen.getByText("DESK MEMORY · RELATIONSHIP-AWARE")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Search desk memory" })).toBeTruthy();
+    expect(screen.getByText("SEARCH THE DESK")).toBeTruthy();
+    expect(screen.getByText("THIS DEVICE")).toBeTruthy();
   });
 });
 

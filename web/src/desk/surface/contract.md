@@ -102,6 +102,9 @@ recurring element the library lacked.
 - `onChange(next: string)` — the one-tap toggle
 - `label: string` — the group's accessible name (e.g. `"Source filter"`)
 - `className?: string` — an extra class on the group span
+- `options[].ariaLabel?: string` — HS-200-13: a per-token accessible name
+  richer than its visible label (`Filter — Decisions` over `Decisions`),
+  when the design names it; the visible word stays the caption-step token
 
 Presence rules (they are the species, not the caller's business):
 
@@ -118,6 +121,14 @@ Presence rules (they are the species, not the caller's business):
   face that says its one count elsewhere (UX-CANON A.7/A.8).
 - Not to be confused with `SurfaceWings`: filters are flat tokens, wings are
   the beveled strip, and the two never look alike (canon D).
+
+## StringGadget.micLabel (HS-200-13)
+
+The text well's mic is the voice law (canon B: MicButton on every text
+input). Its accessible name defaults to `Speak <label>`; a face whose design
+names the mic (`Dictate into the search`, board P5Recall) passes `micLabel`.
+The mic itself, its placement and its behaviour are unchanged — only the
+name the screen reader says.
 
 ## EditInPlace (HS-101 rule 1, documented HS-200-41)
 

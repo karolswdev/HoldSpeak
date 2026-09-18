@@ -232,4 +232,77 @@ describe("Arrival attention (HS-200-15)", () => {
     expect(screen.queryByRole("group", { name: "Ranking" })).toBeNull();
     expect(screen.getByTestId("arrival-no-calendar").textContent).toContain("NO CALENDAR");
   });
+  // HS-200-13 (AC3/AC4): a commitment the Room emits is an attention row
+  // with the CMT emblem, its due-driven class, and ONE lawful next action;
+  // the Door's card for the same action item is not drawn a second time;
+  // `Mark done` is the explicit act, `Name an owner` opens the recall face.
+  it("a Room commitment is one row with one lawful verb; the Door's card for it is not drawn twice", async () => {
+    const commitment = row("p1:commitment:Priya confirms the freeze window", {
+      title: "Priya confirms the freeze window", source: "commitment", kind: "commitment",
+      why: "OWNER · UNKNOWN", severity: "warning", rankClass: "no_due_date", dueAt: null,
+      commitmentId: "cmt-1", actionItemId: "action-1", owner: null, unknowns: ["owner", "due"],
+      nextAction: "name_owner", verbHref: null,
+    });
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you")) {
+        return { count: 1, projects: ["p1"], items: [commitment], next: null,
+          coverage: [AVAILABLE("p1", "Q4 Platform")], complete: true };
+      }
+      if (String(path).startsWith("/api/door")) {
+        return { board: { unassigned: [{ id: "action-1", title: "Priya confirms the freeze window",
+          source: "action_item", lawful_verbs: ["done"], open_ref: "action:action-1" }] },
+          counts: {}, upcoming: [], calendar_configured: false };
+      }
+      if (String(path) === "/api/follow-through/complete") return { card_id: "action-1", verb: "delegate" };
+      return null;
+    });
+    render(<ChairHome />);
+    const section = await screen.findByTestId("arrival-needs-you");
+    const rows = within(section).getAllByTestId("arrival-needs-you-row");
+    expect(rows).toHaveLength(1);
+    expect(within(rows[0]).getByTestId("arrival-source-emblem").textContent).toBe("CMT");
+    const verb = within(rows[0]).getByTestId("arrival-commitment-verb");
+    expect(verb.textContent).toBe("Name an owner");
+    expect(verb.getAttribute("data-next-action")).toBe("name_owner");
+    expect(within(rows[0]).queryByTestId("arrival-name-owner")).toBeNull();
+    fireEvent.click(verb);
+    // Counsel P2: no detour -- the well unfolds under the row (no modal), and
+    // Save writes through the follow-through verb; the verb becomes Set a date.
+    const well = await screen.findByTestId("arrival-commit-well");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(vi.mocked(apiFetch).mock.calls.some(([p]) => String(p) === "/api/follow-through/complete")).toBe(false);
+    fireEvent.change(within(well).getByRole("textbox", { name: "Owner" }), { target: { value: "Priya" } });
+    fireEvent.click(within(well).getByRole("button", { name: /Save owner/ }));
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/follow-through/complete", {
+      method: "POST", json: { card_id: "action-1", verb: "delegate", payload: { to: "Priya" } },
+    }));
+    await waitFor(() => expect(within(rows[0]).getByTestId("arrival-commitment-verb").textContent).toBe("Set a date"));
+    expect(screen.queryByTestId("arrival-commit-well")).toBeNull();
+  });
+
+  it("Mark done is the verb only when owner and date are known, and it posts the explicit act", async () => {
+    const commitment = row("p1:commitment:Priya confirms the freeze window", {
+      title: "Priya confirms the freeze window", source: "commitment", kind: "commitment",
+      why: "DUE TODAY", severity: "warning", rankClass: "due_today", dueAt: new Date().toISOString().slice(0, 10),
+      commitmentId: "cmt-1", actionItemId: "action-1", owner: "Priya", unknowns: [],
+      nextAction: "mark_done", verbHref: null,
+    });
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you")) {
+        return { count: 1, projects: ["p1"], items: [commitment], next: null,
+          coverage: [AVAILABLE("p1", "Q4 Platform")], complete: true };
+      }
+      if (String(path).startsWith("/api/door")) return { board: {}, counts: {}, upcoming: [], calendar_configured: false };
+      if (String(path) === "/api/follow-through/complete") return { card_id: "action-1", verb: "done" };
+      return null;
+    });
+    render(<ChairHome />);
+    const section = await screen.findByTestId("arrival-needs-you");
+    const verb = within(section).getByTestId("arrival-commitment-verb");
+    expect(verb.textContent).toBe("Mark done");
+    fireEvent.click(verb);
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/follow-through/complete", {
+      method: "POST", json: { card_id: "action-1", verb: "done", payload: {} },
+    }));
+  });
 });

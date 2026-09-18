@@ -1,0 +1,244 @@
+/* HS-200-13 — the recall face (boards P5Recall / P5RecallPhone / P5RecallQuiet). */
+
+.recall-face {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* ── head: the one display line, then the tokens ── */
+.recall-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.recall-display {
+  color: var(--text-muted);
+}
+.recall-display[data-accent] {
+  color: var(--accent);
+}
+.recall-head-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.recall-head-tokens .surface-token {
+  font-size: 10px;
+}
+.recall-dot {
+  color: var(--text-faint, var(--text-muted));
+}
+
+/* ── the well and the filters ── */
+.recall-well .desk-chat-composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.recall-well .gadget-string {
+  flex: 1;
+  min-width: 0;
+}
+.recall-filters {
+  min-width: 0;
+  max-width: 100%;
+}
+.recall-filters .surface-filter-tokens {
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+/* ── the results region ── */
+.recall-results {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  outline: none;
+}
+.recall-results[data-dimmed] {
+  opacity: 0.55;
+  transition: opacity 120ms ease;
+}
+.recall-section {
+  min-width: 0;
+}
+.recall-section > .surface-section-head {
+  border-top: 0;
+  padding-top: 0;
+}
+
+/* ── a decision card: one object, three inks ── */
+.recall-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid transparent;
+}
+.recall-card[data-state="current"] {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+.recall-card[data-state="superseded"] {
+  padding: 8px 0;
+  opacity: 0.72;
+}
+.recall-card[data-state="superseded"] .recall-card-title {
+  color: var(--text-muted);
+}
+.recall-card[data-state="disputed"] {
+  padding: 8px 0;
+  border-color: var(--wash-1);
+}
+.recall-card-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.recall-card-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.recall-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.recall-superseded-by {
+  opacity: 0.7;
+  font-size: 10px;
+}
+.recall-rationale {
+  font-size: var(--desk-type-body-size, 13px);
+  line-height: 1.6;
+  color: var(--text-muted);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.recall-source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.recall-source > .surface-token:first-child {
+  font-size: 10px;
+}
+
+/* ── an owed row ── */
+.recall-owed {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 0;
+}
+.recall-owed-line {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 0 8px;
+  align-items: center;
+  min-width: 0;
+}
+.recall-emblem {
+  padding-top: 1px;
+  text-align: center;
+  font: 700 13px/1 var(--font-mono);
+  color: var(--text-muted);
+}
+.recall-owed-title {
+  min-width: 0;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.recall-owed-meta {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  min-width: 0;
+}
+.recall-owed-meta .surface-token {
+  font-size: 10px;
+}
+.recall-owed-well {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-left: 60px;
+  padding: 8px 10px;
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+}
+.recall-owed-well .gadget-string {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── the miss ── */
+.recall-miss {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 0;
+}
+.recall-miss-glyph {
+  font: 400 22px/1 var(--font-mono);
+  color: var(--border, #2a2e3e);
+}
+.recall-miss-line {
+  font-size: var(--desk-type-body-size, 13px);
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* ── 393: the title line keeps its verb; the meta wraps beneath ── */
+@container surface (max-width: 480px) {
+  .recall-owed-line {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+  .recall-owed-well {
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+  .recall-card[data-state="current"] {
+    padding: 8px;
+  }
+  /* The decision text is the object of the face: at 393 it WRAPS, never
+     ellipsises (counsel P2; the board wraps). */
+  .recall-card-title,
+  .recall-owed-title {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+  }
+  .recall-card-line {
+    align-items: flex-start;
+  }
+}

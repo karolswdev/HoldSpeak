@@ -357,26 +357,48 @@ class FollowThroughService:
         one SQLite transaction so board reads cannot observe a partial result.
         """
         normalized_verb = str(verb).strip().lower()
-        if normalized_verb not in {"done", "dismiss", "snooze", "delegate", "reopen"}:
+        if normalized_verb not in {"done", "dismiss", "snooze", "delegate", "reopen", "due"}:
             raise ValueError(f"Unknown follow-through verb: {verb}")
         if str(card_id).startswith("people:"):
             if self._people_projection is None:
                 # Do not disclose whether a guessed opaque People id exists.
                 raise ValueError("people_commitment_unavailable")
-            if normalized_verb in {"snooze", "delegate"}:
+            if normalized_verb in {"snooze", "delegate", "due"}:
                 raise ValueError("people_commitment_verb_unsupported")
             return self._people_projection.transition(principal, str(card_id), normalized_verb)
 
-        del principal  # The caller's authority is enforced by the transport.
         data = payload or {}
         now = datetime.now().isoformat()
 
         with self._db._connection() as conn:
             action = conn.execute(
-                "SELECT id FROM action_items WHERE id = ?", (card_id,)
+                "SELECT id, task, owner, due, status FROM action_items WHERE id = ?", (card_id,)
             ).fetchone()
             if action is None:
                 raise ValueError(f"Action item not found: {card_id}")
+            # HS-200-13 (counsel P1-3): a closed commitment takes no further
+            # act but `reopen`.  `done` on a done item (and `dismiss` on a
+            # dismissed one) is a REPLAY -- the same result, no second receipt;
+            # the other way round, and `due` / `delegate` / `snooze`, are
+            # refused by name.
+            current_status = str(action["status"] or "").lower()
+            if current_status in _TERMINAL_STATES and normalized_verb != "reopen":
+                same = (normalized_verb == "done" and current_status == "done") or (
+                    normalized_verb == "dismiss" and current_status == "dismissed"
+                )
+                if not same:
+                    raise ValueError(
+                        f"commitment_closed: {card_id} is {current_status}; reopen it first"
+                    )
+                loop_ids = [str(r["id"]) for r in conn.execute(
+                    "SELECT id FROM cadence_loops WHERE source_id = ?", (card_id,)).fetchall()]
+                commitment_ids = [str(r["id"]) for r in conn.execute(
+                    "SELECT id FROM decision_commitments WHERE action_item_id = ?", (card_id,)).fetchall()]
+                return {
+                    "card_id": card_id, "verb": normalized_verb,
+                    "loop_ids": loop_ids, "commitment_ids": commitment_ids,
+                    "replayed": True,
+                }
 
             loop_rows = conn.execute(
                 "SELECT id FROM cadence_loops WHERE source_id = ?", (card_id,)
@@ -400,6 +422,17 @@ class FollowThroughService:
                 conn.execute(
                     "UPDATE decision_commitments SET status = 'closed', updated_at = ? WHERE action_item_id = ?",
                     (now, card_id),
+                )
+                # HS-200-13 (AC4): completion is an EXPLICIT act with a
+                # receipt (Article XI).  Nothing else in this service --
+                # naming an owner, setting a date, linking work -- ever
+                # writes `done`; only this verb does, and it says who.
+                self._receipt(
+                    conn, principal,
+                    event_type=("commitment.completed" if normalized_verb == "done"
+                                else "commitment.dismissed"),
+                    card_id=card_id, action=action, commitment_ids=commitment_ids,
+                    facts={"status": action_status},
                 )
             elif normalized_verb == "snooze":
                 until = data.get("until")
@@ -433,6 +466,37 @@ class FollowThroughService:
                     "UPDATE decision_commitments SET owner = ?, updated_at = ? WHERE action_item_id = ?",
                     (owner, now, card_id),
                 )
+                # HS-200-13 (AC3/AC4): naming an owner is a receipted act
+                # that changes ownership and NOTHING else -- the status
+                # column is untouched above, by construction.
+                self._receipt(
+                    conn, principal, event_type="commitment.owner_named",
+                    card_id=card_id, action=action, commitment_ids=commitment_ids,
+                    facts={"owner": owner, "previous_owner": old_owner},
+                )
+            elif normalized_verb == "due":
+                # HS-200-13 (AC3): `Set a date` -- the lawful next action on a
+                # commitment whose due date is unknown.  The value is a
+                # calendar DAY: `YYYY-MM-DD` is stored as given, the basic
+                # ISO form `YYYYMMDD` is normalised to it, and anything else
+                # (a time part, a word, an impossible date) is refused.  A
+                # PAST date is lawful: a commitment can be recorded as
+                # already overdue, and the board says so.
+                due_at = self._due_day(data.get("due_at") or data.get("due"))
+                conn.execute("UPDATE action_items SET due = ? WHERE id = ?", (due_at, card_id))
+                conn.execute(
+                    "UPDATE decision_commitments SET due_at = ?, updated_at = ? WHERE action_item_id = ?",
+                    (due_at, now, card_id),
+                )
+                conn.execute(
+                    "UPDATE cadence_loops SET due_at = ?, updated_at = ? WHERE source_id = ?",
+                    (due_at, now, card_id),
+                )
+                self._receipt(
+                    conn, principal, event_type="commitment.due_set",
+                    card_id=card_id, action=action, commitment_ids=commitment_ids,
+                    facts={"due_at": due_at, "previous_due": action["due"]},
+                )
             else:  # reopen
                 conn.execute(
                     "UPDATE action_items SET status = 'open', completed_at = NULL WHERE id = ?",
@@ -448,6 +512,13 @@ class FollowThroughService:
                     "UPDATE decision_commitments SET status = 'open', updated_at = ? WHERE action_item_id = ?",
                     (now, card_id),
                 )
+                # HS-200-13 (counsel P2): the reopen is receipted like the
+                # close it undoes, in the same transaction.
+                self._receipt(
+                    conn, principal, event_type="commitment.reopened",
+                    card_id=card_id, action=action, commitment_ids=commitment_ids,
+                    facts={"previous_status": current_status},
+                )
 
         return {
             "card_id": card_id,
@@ -455,6 +526,45 @@ class FollowThroughService:
             "loop_ids": loop_ids,
             "commitment_ids": commitment_ids,
         }
+
+    @staticmethod
+    def _due_day(value: Any) -> str:
+        """A calendar day as `YYYY-MM-DD`; `YYYYMMDD` normalised; else refused."""
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError("due requires payload['due_at'] (YYYY-MM-DD)")
+        text = value.strip()
+        if len(text) == 8 and text.isdigit():
+            text = f"{text[:4]}-{text[4:6]}-{text[6:]}"
+        if len(text) != 10 or text[4] != "-" or text[7] != "-":
+            raise ValueError(f"due_at must be a calendar day (YYYY-MM-DD), not {value!r}")
+        try:
+            date.fromisoformat(text)
+        except ValueError as exc:
+            raise ValueError(f"due_at is not a real day: {value!r}") from exc
+        return text
+
+    def _receipt(
+        self, conn: Any, principal: Any, *, event_type: str, card_id: str,
+        action: Any, commitment_ids: list[str], facts: dict[str, Any],
+    ) -> None:
+        """HS-200-13: one kernel receipt per follow-through write, inside
+        the write's own transaction (Article XI)."""
+        ServiceEventLedger(self._db).append_in_transaction(
+            conn, principal,
+            event_type=event_type,
+            producer=type(self).__name__,
+            subject_ref=f"action_item:{card_id}",
+            source_revision=datetime.now().isoformat(),
+            facts={
+                "action_item_id": card_id,
+                "commitment_ids": list(commitment_ids),
+                "entity_title": str(action["task"] or "") if action is not None else "",
+                **facts,
+            },
+            refs=[f"action_item:{card_id}", *(f"commitment:{cid}" for cid in commitment_ids)],
+            correlation_id=current_correlation_id(),
+            causation_id=f"action_item:{card_id}",
+        )
 
     def _provenance_for(
         self,

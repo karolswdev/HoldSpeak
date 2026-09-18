@@ -2155,6 +2155,7 @@ The branch controls let you inspect sibling branches.
 Keep a useful reply as a separate Note or Artifact with its provenance.
 Desk search includes saved Threads.
 Desk memory searches saved Threads with Meetings, Notes, Artifacts, Decisions, Actions, Project items, Workbench results, and Cadence loops.
+A recall on the Desk memory window returns the current decision first, with its rationale and source, above any superseded or disputed version, and the commitments it left with their owner and date or their typed unknowns; **Carry into brief** queues the current record for the Project's next preparation.
 See [Relationship-aware memory](RELATIONSHIP_AWARE_MEMORY.md) for the retrieval contract.
 
 ### People boundary

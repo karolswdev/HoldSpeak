@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 200
-- **Status:** ready
+- **Status:** done
 - **Depends on:** HS-200-10, HS-200-11, HS-200-12
 - **Unblocks:** HS-200-14, HS-200-15, HS-200-16, HS-200-17, HS-200-40
 - **Owner:** unassigned
@@ -23,11 +23,11 @@ Out: Enterprise approval workflows and new issue-tracker writes.
 
 ## Acceptance criteria
 
-- [ ] Recall returns the current decision, rationale, and original source.
-- [ ] Superseded and disputed decisions remain discoverable without being presented as current.
-- [ ] A commitment has an actual owner/date or explicit unknown values and a lawful next action.
-- [ ] Assignment or artifact association alone cannot mark the commitment complete.
-- [ ] The complete chain survives service restart and a later preparation session.
+- [x] Recall returns the current decision, rationale, and original source.
+- [x] Superseded and disputed decisions remain discoverable without being presented as current.
+- [x] A commitment has an actual owner/date or explicit unknown values and a lawful next action.
+- [x] Assignment or artifact association alone cannot mark the commitment complete.
+- [x] The complete chain survives service restart and a later preparation session.
 
 ## Test plan
 

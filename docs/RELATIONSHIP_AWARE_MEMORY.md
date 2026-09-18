@@ -186,6 +186,52 @@ Both accept `query`, optional comma-separated `kind`, `project_id`, ISO-8601
 `decision`, `decision_record`, `desk_decision`, `artifact`, `meeting`, `note`,
 `thread`, `action`, `project_item`, `workbench_item`, and `cadence`.
 
+## Recall on the Desk memory face
+
+The Desk memory window's search is a **recall**: one query over
+the desk comes back as sections, not a flat list, so the current meaning of
+a decision is never confused with an earlier one.
+
+```text
+GET /api/memory/recall?query=freeze+window&filter=all
+```
+
+`filter` is one of `all`, `decisions`, `commitments`, `briefs`, `meetings`.
+The response carries `current`, `superseded` and `disputed` decision records
+(each with its rationale, its three axes, its source moment such as
+`MTG 09-07 · 11:31`, its Project, and whether it is already carried),
+`owed` commitments (owner and due date, or `OWNER · UNKNOWN` /
+`DUE · UNKNOWN` typed, and the one lawful next action: `name_owner`,
+`set_date`, or `mark_done` only when both are known), `meetings`, `briefs`,
+`also` (every other memory kind, relationship hits included), and one count,
+`remembered`. A record's section is derived from its lifecycle alone: a
+superseded or disputed record is always discoverable and never presented as
+current. When more than one current decision matches, they are ordered
+newest decided first and the first one is the accented card.
+
+The face's verbs write through the existing seams:
+
+- `Carry into brief` -> `POST /api/decision-records/{id}/carry` records the
+  decision **by reference** for its Project's next preparation
+  (`preparation_carries`), one mark per current record: only the current
+  decision can be carried, a repeated press replays the mark, and a carried
+  record that is superseded before the brief is built is handed over as its
+  successor, which then reads as carried.
+- `Name an owner` / `Set a date` -> `POST /api/follow-through/complete` with
+  verb `delegate` or `due`; neither changes the commitment's status.
+- `Mark done` -> the same route with verb `done`: `Mark done` or `Dismiss`
+  are the only acts that close a commitment, and each leaves a kernel
+  receipt (`commitment.completed`, `commitment.dismissed`; `reopen` leaves
+  `commitment.reopened`). Assigning an owner or linking a pull request or
+  artifact never completes anything, and a closed commitment refuses
+  `delegate` and `due` (`commitment_closed`) until it is reopened. `due`
+  takes a calendar day (`YYYY-MM-DD`; `YYYYMMDD` is normalised); a past
+  day is lawful and reads as overdue.
+- `POST /api/decision-records/{id}/supersede` and `/dispute` seal a record
+  (`superseded` names its successor; `disputed` carries a reason).
+
+The query and its filter are kept per device and resume after a restart.
+
 ## What this feature does not do
 
 - It does not create embeddings or call a model to rank results.

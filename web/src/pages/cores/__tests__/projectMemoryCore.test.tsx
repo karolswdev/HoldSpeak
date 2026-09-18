@@ -130,6 +130,8 @@ function response(url: string) {
 }
 
 beforeEach(() => {
+  // HS-200-13: the recall face resumes the last query from localStorage.
+  localStorage.clear();
   apiFetch.mockImplementation((url: string) => Promise.resolve(response(url)));
   useDesk.setState({
     windowsById: {},
@@ -259,11 +261,16 @@ describe("Project Memory", () => {
   });
 
   it("names evidence reached through a durable relationship", async () => {
+    // HS-200-13: the unscoped face is the recall face; a relationship hit
+    // arrives under ALSO with its edge named and its marks rendered.
     apiFetch.mockImplementation((url: string) =>
       Promise.resolve(
-        url.startsWith("/api/memory/search")
+        url.startsWith("/api/memory/recall")
           ? {
-              hits: [
+              query: "zephyr", filter: "all", searched_at: "2026-09-07T09:20:00",
+              projects_searched: 1, current: [], superseded: [], disputed: [], owed: [],
+              meetings: [], briefs: [], remembered: 1,
+              also: [
                 {
                   source_ref: "artifact:a1",
                   title: "Rollout checklist",
@@ -288,7 +295,7 @@ describe("Project Memory", () => {
         target: { value: "zephyr" },
       },
     );
-    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search desk memory" }));
 
     expect(await screen.findByText("Rollout checklist")).toBeTruthy();
     expect(screen.getByText("Owners").tagName).toBe("MARK");
@@ -321,17 +328,17 @@ describe("Project Memory", () => {
     expect(await screen.findByText("Network failure")).toBeTruthy();
   });
 
-  it("turns the unscoped surface into global Desk memory search", async () => {
+  it("turns the unscoped surface into the Desk memory recall face", async () => {
     render(<ProjectMemoryCore />);
     const input = screen.getByRole("searchbox", { name: "Search the Desk" });
     fireEvent.change(input, { target: { value: "connected evidence" } });
-    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search desk memory" }));
 
     await waitFor(() =>
       expect(apiFetch).toHaveBeenCalledWith(
-        expect.stringMatching(/^\/api\/memory\/search\?query=connected\+evidence$/),
+        expect.stringMatching(/^\/api\/memory\/recall\?query=connected\+evidence&filter=all$/),
       ),
     );
-    expect(screen.getByText("DESK MEMORY · RELATIONSHIP-AWARE")).toBeTruthy();
+    expect(screen.getByText("THIS DEVICE")).toBeTruthy();
   });
 });

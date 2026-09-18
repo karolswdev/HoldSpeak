@@ -50,7 +50,7 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-10 | Promote reusable working context into canonical records | done | [story-10](story-10-scoped-working-context.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-200-11 | Produce a useful Project preparation brief | done | [story-11](story-11-project-preparation.md) | [evidence-story-11](./evidence-story-11.md) |
 | HS-200-12 | Connect a real meeting to reviewed outcomes | done | [story-12](story-12-meeting-to-reviewed-outcomes.md) | [evidence-story-12](./evidence-story-12.md) |
-| HS-200-13 | Carry decisions and commitments into the next day | ready | [story-13](story-13-decision-and-commitment-continuity.md) | — |
+| HS-200-13 | Carry decisions and commitments into the next day | done | [story-13](story-13-decision-and-commitment-continuity.md) | [evidence-story-13](./evidence-story-13.md) |
 | HS-200-14 | Make permitted People preparation useful | done | [story-14](story-14-people-preparation-boundary.md) | [evidence-story-14](./evidence-story-14.md) |
 | HS-200-15 | Present actionable attention with controlled notifications | done | [story-15](story-15-relevant-attention.md) | [evidence-story-15](./evidence-story-15.md) |
 | HS-200-16 | Prove the daily loop and open the owner pilot | backlog | [story-16](story-16-two-day-daily-loop.md) | — |

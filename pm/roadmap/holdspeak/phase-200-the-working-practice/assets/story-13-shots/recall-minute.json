@@ -1,0 +1,26 @@
+{
+  "1440": {
+    "beats": [
+      "arrival",
+      "open Desk memory",
+      "search `freeze window`",
+      "current + superseded on the face",
+      "Carry into brief -> CARRIED"
+    ],
+    "measured_at": "2026-09-17T22:59:05",
+    "seconds": 3.5,
+    "target_seconds": 60.0
+  },
+  "393": {
+    "beats": [
+      "arrival",
+      "open Desk memory",
+      "search `freeze window`",
+      "current + superseded on the face",
+      "Carry into brief -> CARRIED"
+    ],
+    "measured_at": "2026-09-17T22:59:12",
+    "seconds": 3.6,
+    "target_seconds": 60.0
+  }
+}

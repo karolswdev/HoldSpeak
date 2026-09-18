@@ -216,6 +216,9 @@ Routes: 686 (plus static mounts). iOS-consumed: 89. Web-consumed: 522.
 | GET | `/api/decision-records/source/{source_type}/{source_id}` | web |
 | GET | `/api/decision-records/work/{work_type}/{work_ref}` | web |
 | GET | `/api/decision-records/{record_id}` | web |
+| POST | `/api/decision-records/{record_id}/carry` | web |
+| POST | `/api/decision-records/{record_id}/dispute` | server only |
+| POST | `/api/decision-records/{record_id}/supersede` | server only |
 
 ## web.routes.decisions
 
@@ -520,6 +523,7 @@ Routes: 686 (plus static mounts). iOS-consumed: 89. Web-consumed: 522.
 
 | Method | Path | Consumers |
 |---|---|---|
+| GET | `/api/memory/recall` | web |
 | GET | `/api/memory/search` | web |
 
 ## web.routes.mesh

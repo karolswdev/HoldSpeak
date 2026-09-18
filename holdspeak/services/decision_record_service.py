@@ -7,10 +7,28 @@ from datetime import UTC, date, datetime
 from typing import Any
 from uuid import uuid4
 
-from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
+from holdspeak.principals import PrincipalRight
+from holdspeak.services.brief_carry import require_right
+from holdspeak.services.observer import (
+    NullObserver,
+    PipelineObserver,
+    current_correlation_id,
+    observe_service,
+)
+from holdspeak.services.service_event_ledger import ServiceEventLedger
 
 
 _SOURCE_TYPES = frozenset({"meeting", "desk"})
+#: HS-200-13: the record lifecycles.  ``active`` / ``published`` are CURRENT;
+#: ``superseded`` names a successor; ``disputed`` is contested -- discoverable
+#: on recall, never presented as current, never accented (story 13 AC2).
+#: ``disputed`` is defined minimally here: a verb, a reason, a revision row;
+#: no resolution workflow (out of scope: enterprise approval).
+LIFECYCLES = frozenset({"active", "superseded", "published", "disputed"})
+CURRENT_LIFECYCLES = frozenset({"active", "published"})
+#: A supersession may seal an active OR a disputed predecessor (the usual
+#: way a dispute ends is a newer decision).
+_SUPERSEDABLE = frozenset({"active", "disputed"})
 _EDITABLE_FIELDS = frozenset(
     {"decision_text", "rationale", "alternatives", "owner", "review_date"}
 )
@@ -267,7 +285,12 @@ class DecisionRecordService:
         successor_id: str,
         reason: str | None = None,
     ) -> dict[str, Any]:
-        """Seal a record while retaining its navigable successor lineage."""
+        """Seal a record while retaining its navigable successor lineage.
+
+        HS-200-13: the DECIDE right is required (an UNAUTHENTICATED caller is
+        refused by name), as for ``dispute`` and the carry mark.
+        """
+        require_right(principal, PrincipalRight.DECIDE)
         if record_id == successor_id:
             raise ValueError("record cannot supersede itself")
         with self._db._connection() as conn:
@@ -281,7 +304,7 @@ class DecisionRecordService:
             ).fetchone()
             if successor is None:
                 raise KeyError(str(successor_id or "").strip())
-            if predecessor["lifecycle"] != "active":
+            if predecessor["lifecycle"] not in _SUPERSEDABLE:
                 raise ValueError(f"record is sealed: {record_id}")
             if successor["lifecycle"] != "active":
                 raise ValueError(f"successor is sealed: {successor_id}")
@@ -334,6 +357,61 @@ class DecisionRecordService:
         sealed = self.get(principal, record_id)
         assert sealed is not None
         return sealed
+
+    def dispute(
+        self, principal: Any, record_id: str, reason: str | None = None,
+    ) -> dict[str, Any]:
+        """HS-200-13 (AC2): mark an active record DISPUTED.
+
+        Minimal by design: the lifecycle flips, the reason is a revision row,
+        a kernel receipt is written.  A disputed record stays discoverable
+        and is never presented as current; superseding it with a newer
+        decision is how a dispute ends.  The DECIDE right is required.
+        """
+        require_right(principal, PrincipalRight.DECIDE)
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM decision_records WHERE id = ? AND deleted = 0", (record_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(str(record_id or "").strip())
+            if row["lifecycle"] == "disputed":
+                return self.get(principal, record_id) or self._record_dict(row)
+            if row["lifecycle"] not in CURRENT_LIFECYCLES:
+                raise ValueError(f"record is sealed: {record_id}")
+            now = datetime.now(UTC).isoformat()
+            conn.execute(
+                "UPDATE decision_records SET lifecycle = 'disputed', updated_at = ? WHERE id = ?",
+                (now, record_id),
+            )
+            for field_name, old_value, new_value in (
+                ("lifecycle", row["lifecycle"], "disputed"),
+                ("dispute_reason", None, (str(reason).strip() or None) if reason else None),
+            ):
+                conn.execute(
+                    """INSERT INTO decision_record_revisions
+                       (id, record_id, field_name, old_value, new_value, created_at)
+                       VALUES (?, ?, ?, ?, ?, ?)""",
+                    (f"record-revision-{uuid4().hex}", record_id, field_name, old_value, new_value, now),
+                )
+            ServiceEventLedger(self._db).append_in_transaction(
+                conn, principal,
+                event_type="decision.disputed",
+                producer=type(self).__name__,
+                subject_ref=f"decision_record:{record_id}",
+                source_revision=now,
+                facts={
+                    "record_id": record_id,
+                    "reason": (str(reason).strip() if reason else ""),
+                    "entity_title": str(row["decision_text"] or ""),
+                },
+                refs=[f"decision_record:{record_id}"],
+                correlation_id=current_correlation_id(),
+                causation_id=f"decision_record:{record_id}",
+            )
+        disputed = self.get(principal, record_id)
+        assert disputed is not None
+        return disputed
 
     def due_for_review(self, principal: Any) -> list[dict[str, Any]]:
         """Return active records whose review date is today or earlier."""
@@ -389,6 +467,11 @@ class DecisionRecordService:
             record["supersession_reason"] = next(
                 (revision["new_value"] for revision in record["revisions"]
                  if revision["field_name"] == "supersession_reason"),
+                None,
+            )
+            record["dispute_reason"] = next(
+                (revision["new_value"] for revision in reversed(record["revisions"])
+                 if revision["field_name"] == "dispute_reason"),
                 None,
             )
             return record
