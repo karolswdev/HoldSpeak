@@ -221,6 +221,35 @@ def _review(page: Any, meeting_id: str) -> dict[str, Any]:
     return _api(page, "GET", f"/api/meetings/{meeting_id}/outcome-review", token=TOKEN)
 
 
+def _diagnose(meeting_id: str) -> dict[str, Any]:
+    """Everything the hub knows about one meeting's read, for a failing
+    assertion: the job lineage with its errors, the attempt ledger, the
+    plugin runs.  A CI failure must name its mechanism, not its symptom."""
+    from holdspeak.db import get_database
+
+    db = get_database()
+    with db._connection() as conn:
+        jobs = [dict(r) for r in conn.execute(
+            "SELECT job_id, origin_job_id, status, lifecycle_posture, attempts, last_error, "
+            "requested_at, updated_at, transcript_hash FROM intel_jobs WHERE meeting_id = ? "
+            "ORDER BY requested_at", (meeting_id,),
+        )]
+        attempts = [dict(r) for r in conn.execute(
+            "SELECT job_id, event_kind, attempt, outcome, error, created_at FROM intel_job_attempts "
+            "WHERE meeting_id = ? ORDER BY id", (meeting_id,),
+        )]
+        meeting = dict(conn.execute(
+            "SELECT intel_status, intel_status_detail, "
+            "(SELECT COUNT(*) FROM segments s WHERE s.meeting_id = m.id) AS segments "
+            "FROM meetings m WHERE id = ?", (meeting_id,),
+        ).fetchone() or {})
+    runs = [
+        (r.plugin_id, r.status, getattr(r, "error", None))
+        for r in db.plugins.list_plugin_runs(meeting_id, limit=50)
+    ]
+    return {"meeting": meeting, "jobs": jobs, "attempts": attempts, "plugin_runs": runs}
+
+
 def _open_review_wing(page: Any, url: str, meeting_id: str) -> None:
     page.evaluate(
         """([scope]) => {
@@ -327,7 +356,7 @@ def test_meeting_to_reviewed_outcomes(tmp_path: Path, monkeypatch: pytest.Monkey
             run = _api(page, "POST", f"/api/meetings/{m1}/intelligence/run", token=TOKEN)
             assert run["state"] == "queued" and run["drainer"] == "running", run
             assert _wait(lambda: len(_review(page, m1)["proposals"]) == 5, timeout=90.0), (
-                _review(page, m1), engine.plugin_calls,
+                _review(page, m1), engine.plugin_calls, _diagnose(m1),
             )
             review = _review(page, m1)
             assert review["job"]["status"] == "succeeded" and review["job"]["attempt"] == 1, review["job"]
@@ -414,7 +443,7 @@ def test_meeting_to_reviewed_outcomes(tmp_path: Path, monkeypatch: pytest.Monkey
                 lambda: len(_review(page, m2)["proposals"]) == 2
                 and _review(page, m2)["job"]["status"] == "queued",
                 timeout=90.0,
-            ), (_review(page, m2), engine.plugin_calls)
+            ), (_review(page, m2), engine.plugin_calls, _diagnose(m2))
             # Now the provider recovers -- but the successor waits out its
             # backoff and the poll, so the face is caught mid-retry.
             engine.fail_plugins = set()
@@ -443,7 +472,9 @@ def test_meeting_to_reviewed_outcomes(tmp_path: Path, monkeypatch: pytest.Monkey
             # Attempt 2 runs (the drainer is woken rather than waited for its
             # 15s poll) and mints nothing twice.
             conductor.wake_intel_queue_conductor()
-            assert _wait(lambda: _review(page, m2)["job"]["status"] == "succeeded", timeout=90.0), _review(page, m2)["job"]
+            assert _wait(lambda: _review(page, m2)["job"]["status"] == "succeeded", timeout=90.0), (
+                _review(page, m2)["job"], _diagnose(m2),
+            )
             final = _review(page, m2)
             assert len(final["proposals"]) == 5, [(p["kind"], p["text"], p["state"]) for p in final["proposals"]]
             assert sorted(p["state"] for p in final["proposals"]) == ["confirmed", "confirmed", "proposed", "proposed", "proposed"]
@@ -460,6 +491,14 @@ def test_meeting_to_reviewed_outcomes(tmp_path: Path, monkeypatch: pytest.Monkey
         from holdspeak import intel_queue_conductor as conductor
         from holdspeak.runtime_lock import release_database
 
+        # `server.stop()` joins the hub thread for 10s (web_server.py) and
+        # returns whether or not the lifespan shutdown finished; on a slow
+        # runner the hub's 1s kernel liveness loop kept ticking into the NEXT
+        # leg's database.  Hold the thread until it is really gone.
+        hub_thread = server._thread
         server.stop()
+        if hub_thread is not None:
+            hub_thread.join(120)
+            assert not hub_thread.is_alive(), "the hub thread outlived its stop"
         conductor.stop_intel_queue_conductor()
         release_database()

@@ -704,3 +704,83 @@ def test_confirm_after_the_meeting_was_deleted_is_a_named_refusal(tmp_path, monk
     assert _count(db, "service_events", "WHERE subject_ref = ?", (f"proposal:{rows[0]['id']}",)) == 0
     from holdspeak.web.routes.proposals import _status
     assert _status(result) == 409
+
+
+# ── the CI failure of PR #578 (2026-09-18), fenced ────────────────────
+
+
+def test_a_liveness_tick_racing_the_claim_does_not_refuse_the_bound_executor(tmp_path, monkeypatch):
+    """The hub runs ``_kernel_liveness_loop`` (web_server.py) every second:
+    ``reap_and_recover_projections`` -> ``reconcile_abandoned``.  The deferred
+    binder starts its parent with ``_defer_persist=True``, so between the
+    operation's claim commit and the queue-claim transaction that persists the
+    ``kernel_parent_runs`` row there is a claimed operation with no parent row.
+    Pre-fix a tick in that gap receipted it ``indeterminate`` and the executor's
+    first child admission met ``parent_operation_not_running``: the job ended
+    ``failed`` at attempt 1 with no plugin dispatched -- CI's exact shape.
+    A tight ticker makes the race deterministic (5/5 pre-fix)."""
+    import threading
+
+    from holdspeak.kernel.runtime import _service
+
+    db, engine = _rig(tmp_path, monkeypatch)
+    _meeting(db, "m-tick")
+    stop = threading.Event()
+    ticks = [0]
+
+    def tick() -> None:
+        while not stop.is_set():
+            _service().reap_and_recover_projections()
+            ticks[0] += 1
+
+    ticker = threading.Thread(target=tick, daemon=True)
+    ticker.start()
+    try:
+        _drain()
+    finally:
+        stop.set()
+        ticker.join(5)
+    assert ticks[0] > 10, "the ticker never raced the claim"
+    job = _latest_job(db, "m-tick")
+    assert job is not None and job.status == "succeeded", (job.status, job.last_error)
+    assert engine.plugin_calls == [DEC, ACT], engine.plugin_calls
+    assert len(_proposals(db, "m-tick")) == 5
+    assert not [r for r in _rows(db, "intel_job_attempts") if r["outcome"] == "refused"]
+
+
+def test_an_unpersisted_parent_shell_is_an_orphan_only_after_a_lease(tmp_path, monkeypatch):
+    """The kernel-level rule behind the fence above, on a driven clock: a
+    claimed deferred-parent operation with no ``kernel_parent_runs`` row
+    survives ``reconcile_abandoned`` while younger than ``_lease_seconds``
+    and is receipted ``indeterminate`` once older."""
+    from holdspeak.db import Database
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.meeting_session.deferred_bound import PARENT_KIND, queue_service_principal
+
+    clock = [1_800_000_000.0]
+    db = Database(tmp_path / "shell.db")
+    broker = _configure(db, clock=lambda: clock[0])
+    controller = broker.parent_run_controller
+    shell = controller.start(
+        queue_service_principal(),
+        kind=PARENT_KIND,
+        definition_ref="meeting:m-shell:deferred:job-shell",
+        definition_revision="rev",
+        input_snapshot={"schema": "MeetingDeferredIntelQueueParent@1", "job_id": "job-shell"},
+        deadline_at=clock[0] + 1800,
+        child_budget=4,
+        idempotency_key="shell-command-1",
+        _defer_persist=True,
+    )
+    assert shell.context is None                      # the deliberate gap
+    assert broker.store.operation(shell.operation_id)["state"] == "claimed"
+
+    assert controller.reconcile_abandoned() == 0
+    assert broker.store.operation(shell.operation_id)["state"] == "claimed"
+    clock[0] += controller._lease_seconds - 1
+    assert controller.reconcile_abandoned() == 0
+    assert broker.store.operation(shell.operation_id)["state"] == "claimed"
+
+    clock[0] += 2
+    assert controller.reconcile_abandoned() == 1
+    assert broker.store.operation(shell.operation_id)["state"] == "indeterminate"
