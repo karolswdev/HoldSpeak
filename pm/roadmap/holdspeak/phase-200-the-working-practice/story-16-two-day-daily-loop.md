@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 200
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-200-05, HS-200-08, HS-200-11, HS-200-12, HS-200-13, HS-200-14, HS-200-15
 - **Unblocks:** HS-200-23, HS-200-40
 - **Owner:** unassigned
@@ -23,11 +23,11 @@ Out: Waiting for assignments or unattended execution before collecting R1 adopti
 
 ## Acceptance criteria
 
-- [ ] Prepare a real conversation, capture its meeting, review a decision and commitment, and retrieve them on a later working day.
-- [ ] Record active time, corrections, abandoned paths, source coverage, and exact build/model.
-- [ ] The user completes the path through normal controls without implementation guidance.
-- [ ] Fixtures and live model results remain separate from the owner usefulness judgment.
-- [ ] Open the ten-workday R1 observation period with predeclared tasks and denominators.
+- [x] Prepare a real conversation, capture its meeting, review a decision and commitment, and retrieve them on a later working day. *(Cross-day mechanism machine-proved; the word "real" closes on the owner's ruling — the conversation was a scripted transcript.)*
+- [x] Record active time, corrections, abandoned paths, source coverage, and exact build/model. *(Machine.)*
+- [x] The user completes the path through normal controls without implementation guidance. *(ACCEPTED by the owner's ruling of 2026-09-19, **not observed** — no attended walk took place.)*
+- [x] Fixtures and live model results remain separate from the owner usefulness judgment. *(Machine; the `legs` block states the acceptance rather than contradicting it.)*
+- [x] Open the ten-workday R1 observation period with predeclared tasks and denominators. *(`PILOT-R1.md`, opened and **not begun** — the ruling does not start it.)*
 
 ## Test plan
 

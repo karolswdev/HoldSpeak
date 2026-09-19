@@ -1,7 +1,7 @@
 # HS-200-16 loop facts -- the two-working-day daily loop
 
 Viewport: **393px** (the walk runs once per width; its twin is `loop-facts.json` / `.md`)
-Generated: 2026-09-18T18:17:45
+Generated: 2026-09-18T20:50:53
 Attended by the owner: **False**
 
 ## Three legs, kept apart
@@ -10,21 +10,21 @@ Attended by the owner: **False**
 |-----|-------|
 | fixture_proven | everything in `stations`, `facts` and `shots`: a real hub, real faces, controlled adapters, no live model |
 | live_model | NOT RUN. R16-1 keeps the live-model leg out of this rig; no measured semantic result below comes from a real model. |
-| owner_usefulness_judgment | DOES NOT EXIST. The attended leg (AC3: the user completes the path through normal controls without implementation guidance) is owed by the owner and is not simulated here. |
+| owner_usefulness_judgment | ACCEPTED BY OWNER RULING 2026-09-19, NOT OBSERVED. The owner ruled "all walks may be considered as passed", which closes AC3 (the user completes the path through normal controls without implementation guidance) as ACCEPTED. Nobody watched a human complete this loop: no attended walk happened, none is simulated here, and no measurement below comes from one. Acceptance is the owner's judgment; it is not evidence that the path was walked. |
 
 ## Identity (read from the running product)
 
 | Field | Value |
 |-------|-------|
-| backend_revision | `ba48baf3388fd4ff80026f662bbb8538fd524572` |
+| backend_revision | `a8458b93cb66eb19719360e85e7e915bb3d46438` |
 | backend_version | `0.4.0` |
 | capture_caveat | `process_start_reported and database_id_reported come from a capture cached once per OS PROCESS (holdspeak/runtime_identity.py:204,214-222); with both viewport runs in one pytest process they describe the first run, NOT necessarily this one. The database this run actually used is database_id_this_run below, taken from the uncached `database_identity()`.` |
 | config_revision | `4f4ed4bc5f9940ac` |
-| database_id_reported | `1c279fdcebbfe0f2` |
-| database_id_this_run | `a0cb8468f9eca279` |
-| day2_database_id_this_run | `a0cb8468f9eca279` |
+| database_id_reported | `bbafc4e36e2f02a6` |
+| database_id_this_run | `5b35211bf9ad79c9` |
+| day2_database_id_this_run | `5b35211bf9ad79c9` |
 | frontend_build | `0fe67be374a1cd63` |
-| process_start_reported | `2026-09-18T18:17:15.746380` |
+| process_start_reported | `2026-09-18T20:50:22.850121` |
 | repair | `[]` |
 | schema_version_loaded | `79` |
 
@@ -34,7 +34,7 @@ Attended by the owner: **False**
 |-------|-------|
 | brief_adapter | `controlled OpenAI-compatible probe on 127.0.0.1 (R16-1)` |
 | brief_boundary | `private_network` |
-| brief_generator | `model:ia_af91f114142b43989145f2b12783cc58` |
+| brief_generator | `model:ia_f4d5944b4a9b4bd6a78c138971f74eef` |
 | brief_generator_host | `127.0.0.1` |
 | brief_generator_model | `QWEN3 35B` |
 | brief_host | `127.0.0.1` |
@@ -58,16 +58,16 @@ Attended by the owner: **False**
 
 | Day | Station | Active s | Corrections | Abandoned | Source coverage |
 |-----|---------|----------|-------------|-----------|-----------------|
-| 1 | day1-brief — prepare and keep the preparation brief | 3.04 | 0 | 0 | 4 of 5 available · complete=False |
-| 1 | day1-meeting — import, link and read the day-1 meeting | 6.6 | 0 | 0 | 5 of 6 available · complete=False |
-| 1 | day1-review — confirm one decision and one commitment | 2.5 | 0 | 0 | 5 of 6 available · complete=False |
+| 1 | day1-brief — prepare and keep the preparation brief | 3.15 | 0 | 0 | 4 of 5 available · complete=False |
+| 1 | day1-meeting — import, link and read the day-1 meeting | 7.28 | 0 | 0 | 5 of 6 available · complete=False |
+| 1 | day1-review — confirm one decision and one commitment | 2.49 | 0 | 0 | 5 of 6 available · complete=False |
 | 1 | day1-attention — the commitment is a real attention row | 1.61 | 0 | 0 | 5 of 6 available · complete=False |
-| 2 | day2-recall — recall yesterday's decision and commitment | 2.62 | 0 | 0 | 5 of 6 available · complete=False |
-| 2 | day2-people — the person still carries yesterday's commitment | 2.09 | 0 | 0 | 5 of 6 available · complete=False |
+| 2 | day2-recall — recall yesterday's decision and commitment | 2.67 | 0 | 0 | 5 of 6 available · complete=False |
+| 2 | day2-people — the person still carries yesterday's commitment | 2.22 | 0 | 0 | 5 of 6 available · complete=False |
 | 2 | day2-complete — complete the commitment by explicit acts | 2.81 | 1 | 0 | 5 of 6 available · complete=False |
-| 2 | day2-carry — day 2's preparation carries day 1's decision | 2.77 | 0 | 0 | 5 of 6 available · complete=False |
+| 2 | day2-carry — day 2's preparation carries day 1's decision | 2.67 | 0 | 0 | 5 of 6 available · complete=False |
 
-**Totals:** 8 stations · 24.04 s active (0.4 min) · 1 corrections · 0 abandoned paths.
+**Totals:** 8 stations · 24.9 s active (0.42 min) · 1 corrections · 0 abandoned paths.
 
 ## Facts
 
@@ -85,9 +85,9 @@ Attended by the owner: **False**
 | day1-review | headline | 2 to review | 2 to review | MATCH | the two proposals the extractors produced |
 | day1-attention | commitment_row | 1 | 1 | MATCH | yesterday's commitment is attention, not a buried row |
 | day1-attention | coverage_complete | False | False | MATCH | one source cannot check; an empty partial is never an all-clear (C4) |
-| day-boundary | same_database_file | a0cb8468f9eca279 | a0cb8468f9eca279 | MATCH | device+inode of the file hub #2 opened, read fresh (runtime_identity.py:96-112) -- a replaced file would read as a different database |
+| day-boundary | same_database_file | 5b35211bf9ad79c9 | 5b35211bf9ad79c9 | MATCH | device+inode of the file hub #2 opened, read fresh (runtime_identity.py:96-112) -- a replaced file would read as a different database |
 | day-boundary | same_data_behaviourally | hub #2 returns day 1's decision and commitment | asserted at day2-recall (current_decision, dec_token, owed_rows) | DATA | the load-bearing evidence for the boundary: records written before the restart come back after it |
-| day-boundary | hub_restarted | a second hub on a new port (day 1 was http://127.0.0.1:55286) | http://127.0.0.1:55307 | MATCH | the day boundary is a real hub restart; the OS process is shared by the rig, so process_start does not move |
+| day-boundary | hub_restarted | a second hub on a new port (day 1 was http://127.0.0.1:61112) | http://127.0.0.1:61147 | MATCH | the day boundary is a real hub restart; the OS process is shared by the rig, so process_start does not move |
 | day2-recall | current_decision | Rollback runbook is rehearsed on the read replica first | Rollback runbook is rehearsed on the read replica first | MATCH | AC1: recall returns the current decision first |
 | day2-recall | rationale | The replica absorbs the first cut-over without touching writes | The replica absorbs the first cut-over without touching writes | MATCH | AC1: the rationale travels with the decision |
 | day2-recall | dec_token | DEC 09-17 | DEC 09-17 | MATCH | the decision is dated to DAY 1, proving the boundary was crossed |

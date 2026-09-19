@@ -53,7 +53,7 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-13 | Carry decisions and commitments into the next day | done | [story-13](story-13-decision-and-commitment-continuity.md) | [evidence-story-13](./evidence-story-13.md) |
 | HS-200-14 | Make permitted People preparation useful | done | [story-14](story-14-people-preparation-boundary.md) | [evidence-story-14](./evidence-story-14.md) |
 | HS-200-15 | Present actionable attention with controlled notifications | done | [story-15](story-15-relevant-attention.md) | [evidence-story-15](./evidence-story-15.md) |
-| HS-200-16 | Prove the daily loop and open the owner pilot | in-progress | [story-16](story-16-two-day-daily-loop.md) | — |
+| HS-200-16 | Prove the daily loop and open the owner pilot | done | [story-16](story-16-two-day-daily-loop.md) | [evidence-story-16](./evidence-story-16.md) |
 | HS-200-17 | Define three executable recipe contracts | backlog | [story-17](story-17-recipe-catalog-and-compiler.md) | — |
 | HS-200-18 | Turn Interview intent into a reviewable setup plan | backlog | [story-18](story-18-interview-prepared-configuration.md) | — |
 | HS-200-19 | Apply and recover multi-service recipe setup | backlog | [story-19](story-19-setup-apply-and-reconciliation.md) | — |
@@ -88,6 +88,8 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-46 | A stale document fails CI instead of misleading the next agent | done | [story-46](story-46-a-stale-doc-fails-ci.md) | [evidence-story-46](./evidence-story-46.md) |
 
 ## Where we are
+
+2026-09-19: **G1's last story closes -- on two different bases, and the difference is the point.** HS-200-16 ships the machine half: `tests/e2e/test_phase200_daily_loop.py` drives one Project across a real day boundary through normal controls at 1440 and 393 -- eight stations, seven fences, a measured record, and four defects only a second morning could see (a proposal dated by its write time, `1 DAYS`, a due date drawn as a clock, and a commitment drawn as an accepted decision), each fixed with a fence proven red without it. The attended leg closes on the **owner's ruling of 2026-09-19, "all walks may be considered as passed"** -- an acceptance, **not an observation**: no attended walk took place and nobody watched a human complete this path. G1 therefore closes with its last criterion accepted rather than demonstrated; `evidence-story-16.md` section 3 lists what nobody has now looked for (usefulness, followability, a live model on the daily path). R1 is opened in `PILOT-R1.md` and **has not begun** -- the ruling does not start it.
 
 2026-09-18, night: **the daily path is built.** HS-200-13 closes G1's chain: ask, return, prepare, review, recall, recover, each on the surfaces that already existed, each counselled on the built code. The stack to main is 44 → 15 → 12 → 11 → 14 → 13, merging in that order as each CI run proves its failure set is the known runner set. Still the owner's: the pilot Project and the model route (the walk's beats 3–6 run on them), HS-200-05's remaining beats.
 

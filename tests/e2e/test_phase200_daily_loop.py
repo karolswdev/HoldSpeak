@@ -49,7 +49,10 @@ receipts and every face are the product's own.
 
 R16-5: this is the fixture-proven leg ONLY.  The owner's attended leg
 ("the user completes the path through normal controls without
-implementation guidance") is NOT performed here and is not claimed.
+implementation guidance") is NOT performed here and is not claimed.  The
+owner ACCEPTED it by ruling on 2026-09-19 ("all walks may be considered
+as passed"); accepted is not observed, and nothing in this rig or its
+record may be read as a human having walked the path.
 Everything measured lands in
 ``assets/story-16-shots/loop-facts.json`` (+ a Markdown twin), which
 keeps fixture-proven results, live-model results and the owner's
@@ -565,9 +568,15 @@ class Walk:
                     "measured semantic result below comes from a real model."
                 ),
                 "owner_usefulness_judgment": (
-                    "DOES NOT EXIST. The attended leg (AC3: the user completes the "
-                    "path through normal controls without implementation guidance) "
-                    "is owed by the owner and is not simulated here."
+                    "ACCEPTED BY OWNER RULING 2026-09-19, NOT OBSERVED. The "
+                    "owner ruled \"all walks may be considered as passed\", "
+                    "which closes AC3 (the user completes the path through "
+                    "normal controls without implementation guidance) as "
+                    "ACCEPTED. Nobody watched a human complete this loop: no "
+                    "attended walk happened, none is simulated here, and no "
+                    "measurement below comes from one. Acceptance is the "
+                    "owner's judgment; it is not evidence that the path was "
+                    "walked."
                 ),
             },
             "identity": self.identity,

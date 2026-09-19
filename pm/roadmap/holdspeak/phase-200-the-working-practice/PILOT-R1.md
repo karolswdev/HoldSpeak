@@ -3,6 +3,12 @@
 **State: OPENED, NOT BEGUN. No observation has occurred. Every number
 below is a denominator or a target, never a result.**
 
+**The owner's ruling of 2026-09-19 — *"all walks may be considered as
+passed"* — closed HS-200-16's attended criterion by acceptance. It did
+NOT start this window.** R1 begins on the first workday the owner
+performs a predeclared task with the product (§3), and that day has not
+happened. Nothing below has been observed.
+
 Opened by HS-200-16 (the machine half). This document is the instrument;
 HS-200-23 closes the period and writes the verdict.
 
@@ -21,7 +27,7 @@ Three legs, kept apart — the same separation the measured record keeps
 |---|---|
 | Fixture-proven | **Done.** The two-working-day loop runs end to end through the product's normal controls against a real hub, on controlled adapters, at 1440 and 393. `tests/e2e/test_phase200_daily_loop.py`; record in `assets/story-16-shots/loop-facts.json`. |
 | Live model | **Not run.** No measured semantic behaviour in this phase comes from a live model on the daily path. Owed separately. The deterministic alternative is also unreachable from the face — see §9.3. |
-| Owner usefulness judgment | **Does not exist.** HS-200-16's third acceptance criterion — *the user completes the path through normal controls without implementation guidance* — is the owner's own leg. It has not been walked and is not simulated anywhere. |
+| Owner usefulness judgment | **Accepted by ruling, not observed.** On 2026-09-19 the owner ruled *"all walks may be considered as passed"*, which closes HS-200-16's third acceptance criterion — *the user completes the path through normal controls without implementation guidance* — as **accepted**. No attended walk happened: nobody watched a human complete this path, and nothing here simulates one. Acceptance is his judgment; it is not an observation, and it produced no usefulness data. |
 
 A fixture-proven loop says the product CAN carry work across days. It
 says nothing about whether the work was worth carrying. That is what R1
@@ -29,14 +35,21 @@ measures.
 
 ## 2. Legs owed by the owner before R1 can be declared closed
 
-1. **The attended two-day walk.** The owner completes the daily path on
-   his own desk, unassisted, with no implementation guidance. Recorded
-   as pass / fail / inconclusive with his own words.
-2. **The live-model leg.** The same path with a real model on the
-   preparation brief and the meeting extractors, so extraction precision
-   and recall mean something.
+1. ~~**The attended two-day walk.**~~ **Closed by ruling on 2026-09-19,
+   not by observation.** The owner ruled *"all walks may be considered
+   as passed"*. HS-200-16 therefore ships with its attended criterion
+   **accepted**. What that ruling did NOT produce: any record of a human
+   completing the path, any measure of whether it is followable without
+   implementation guidance, and any of the effort or correction numbers
+   an attended walk would have yielded. Those stay unknown and are
+   listed in `evidence-story-16.md` §"What remains unknown". R1 is the
+   instrument that would close them, and **R1 has not begun** — this
+   ruling does not start it.
+2. **The live-model leg.** Still owed. The same path with a real model
+   on the preparation brief and the meeting extractors, so extraction
+   precision and recall mean something.
 3. **The keep / repair / stop judgment** for each recipe used
-   (ACCEPTANCE P200-A28). Nobody else may record it for him.
+   (ACCEPTANCE P200-A28). Still owed. Nobody else may record it for him.
 
 ## 3. The window
 
