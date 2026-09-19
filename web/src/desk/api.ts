@@ -433,7 +433,8 @@ const fromWireMeeting = (m: unknown): Meeting | null => {
   return {
     kind: "meeting",
     id,
-    title: wireString(m, "title", "Untitled meeting"),
+    // HS-201-06 (tenet 4, ASD-STE100): plain words, no un- prefix.
+    title: wireString(m, "title", "Meeting with no title"),
     startedAt: wireString(m, "started_at"),
     endedAt: wireStringOrNull(m, "ended_at"),
     segmentCount: wireNumber(m, "segment_count"),

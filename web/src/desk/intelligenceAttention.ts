@@ -91,7 +91,7 @@ export function publishAftercare(frame: unknown): AftercareSignal | null {
   const signal: AftercareSignal = {
     meetingId,
     title:
-      (typeof data.title === "string" && data.title.trim()) || "Untitled meeting",
+      (typeof data.title === "string" && data.title.trim()) || "Meeting with no title",
     openTotal: Number(data.open_total ?? 0) || 0,
     decidedTotal: Number(data.decided_total ?? 0) || 0,
   };

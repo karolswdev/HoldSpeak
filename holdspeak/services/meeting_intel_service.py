@@ -38,7 +38,7 @@ class MeetingIntelService:
         self._broadcast_queue(); return {"success": True, "processed": processed, "mode": mode}
     def _retry(self, meeting_id: str, *, recovery: bool) -> dict[str, Any]:
         outcome = self._db.intel.request_intel_retry(meeting_id, reason=MANUAL_INTEL_RETRY_REASON)
-        errors = {"missing": "Meeting not found", "empty": "Meeting transcript is empty; no intelligence can run" if recovery else "Meeting transcript is empty", "reserved": "Meeting intelligence is awaiting Stop settlement", "running": "Meeting intelligence is already running", "ready": "Meeting intelligence is already ready"}
+        errors = {"missing": "Meeting not found", "empty": "This meeting has no transcript. No summary can run." if recovery else "Meeting transcript is empty", "reserved": "Meeting intelligence is awaiting Stop settlement", "running": "Meeting intelligence is already running", "ready": "Meeting intelligence is already ready"}
         if outcome in errors:
             if outcome == "missing": raise NotFound("meeting", meeting_id)
             raise ConflictError(errors[outcome], code=outcome)

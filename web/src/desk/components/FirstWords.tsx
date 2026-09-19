@@ -353,7 +353,10 @@ export function FirstWords({
     <section className="desk-first-words" aria-labelledby="first-words-title">
       <span className="surface-eyebrow">Voice typing</span>
       <Heading id="first-words-title">Dictate one sentence</Heading>
-      <p>Tap to speak, edit here, then use</p>
+      {/* HS-201-06 (Constitution tenet 4, ASD-STE100): one instruction
+          per sentence, and the verbs are the ones on this card. The line
+          stays under 40 characters: UX-CANON A3 admits no prose. */}
+      <p>Speak. Then edit and keep your text.</p>
       <button
         type="button"
         className={`desk-first-talk is-${state}`}

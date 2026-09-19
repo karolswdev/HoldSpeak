@@ -64,7 +64,7 @@ over claim). Faces obey UX-CANON. Orchestration: TWO-BRAINS.md.
 | HS-201-03 | The host is disclosed before the run and truthful after | backlog | [story-03-the-host-is-disclosed-before-the-run-and-truthful-after](./story-03-the-host-is-disclosed-before-the-run-and-truthful-after.md) | - |
 | HS-201-04 | Ask for the summary and find it again | backlog | [story-04-ask-for-the-summary-and-find-it-again](./story-04-ask-for-the-summary-and-find-it-again.md) | - |
 | HS-201-05 | One engine and one assignment from the face | backlog | [story-05-one-engine-and-one-assignment-from-the-face](./story-05-one-engine-and-one-assignment-from-the-face.md) | - |
-| HS-201-06 | Plain words on the path | backlog | [story-06-plain-words-on-the-path](./story-06-plain-words-on-the-path.md) | - |
+| HS-201-06 | Plain words on the path | done | [story-06-plain-words-on-the-path](./story-06-plain-words-on-the-path.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-201-07 | Run it from main and the sitting | backlog | [story-07-run-it-from-main-and-the-sitting](./story-07-run-it-from-main-and-the-sitting.md) | - |
 
 ## Lanes (TWO-BRAINS.md §4)

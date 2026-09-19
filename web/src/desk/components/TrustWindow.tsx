@@ -4,6 +4,7 @@
 // tapping it opens THIS window — the full boundary read-out (scope,
 // enabled destinations, authority basis, revoke action, last receipt) from
 // `/api/setup/status`, ported verbatim from the Phase 42 shell panel.
+// HS-201-06 — the row heads speak plain words (Constitution tenet 4).
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { apiFetch } from "../../lib/api";
@@ -111,11 +112,15 @@ export function TrustWindow() {
                 [
                   ["Destination", destination.destination],
                   ["Operation", destination.operation],
-                  ["Boundary", destination.boundary],
+                  // HS-201-06 (Constitution tenet 4, ASD-STE100): the
+                  // heads are short common words with one meaning.
+                  // "Receipt" stays: it is a registered product term
+                  // (docs/product-language.json, terms.receipt).
+                  ["Where it goes", destination.boundary],
                   ["Data", destination.data_class],
-                  ["Authority", destination.authority_basis],
-                  ["Background", destination.background_ability],
-                  ["Revoke", destination.revoke_action],
+                  ["Allowed by", destination.authority_basis],
+                  ["Runs without you", destination.background_ability],
+                  ["How to stop it", destination.revoke_action],
                   ["Last receipt", destination.last_receipt ?? "None recorded"],
                 ] as const
               ).map(([label, value]) => (

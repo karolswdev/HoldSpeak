@@ -502,7 +502,7 @@ function SteerComposer() {
       <GroundingSection
         meetings={(meetings || []).map((m) => ({
           id: m.id,
-          title: String(m.title || "Untitled meeting"),
+          title: String(m.title || "Meeting with no title"),
           startedAt: m.startedAt,
         }))}
         selection={grounding}

@@ -242,7 +242,9 @@ export const VERBS: Verb[] = [
   // ── Desk: the floor verbs ───────────────────────────────────────────
   {
     id: "desk.settle",
-    label: () => useSettleState.getState().settled ? "Back to Desk" : "Settle in",
+    // HS-201-06 (Constitution tenet 4, ASD-STE100): "Settle in" is an
+    // idiom. The verb hides the navigation chrome and shows it again.
+    label: () => useSettleState.getState().settled ? "Back to Desk" : "Hide the menus",
     menu: "desk",
     scope: "floor",
     group: "view",

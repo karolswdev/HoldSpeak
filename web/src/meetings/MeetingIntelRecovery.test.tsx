@@ -1,6 +1,7 @@
 // HS-111-03 — re-pointed to the one-row attention slab (audit §3.5):
-// state token, RETAINED fact, REMAINING token, RETRY/SKIP verbs on
-// the row. The wire contract under test is unchanged.
+// state token, KEPT fact, NOT DONE token, RETRY/SKIP verbs on the row.
+// HS-201-06 — the words are plain ones now (Constitution tenet 4,
+// ASD-STE100); the wire contract under test is unchanged.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../lib/api";
@@ -52,11 +53,9 @@ describe("HS-93-06 Meeting intelligence recovery", () => {
     render(<MeetingIntelRecovery meetingId="meeting-1" />);
 
     expect(await screen.findByText("PARTIAL")).toBeInTheDocument();
-    // Retained counts token from the completed facts (3 SEG / 2 ART).
-    expect(screen.getByText("RETAINED 3 SEG / 2 ART")).toBeInTheDocument();
-    const remaining = screen.getByText(
-      "REMAINING: ROUTED MEETING INTELLIGENCE",
-    );
+    // HS-201-06: whole words, no clipped jargon (was RETAINED 3 SEG / 2 ART).
+    expect(screen.getByText("KEPT 3 SEGMENTS · 2 ARTIFACTS")).toBeInTheDocument();
+    const remaining = screen.getByText("NOT DONE: ARTIFACTS");
     expect(remaining).toBeInTheDocument();
     // The failure reason stays on the token, not as body prose.
     expect(remaining).toHaveAttribute("title", "Decision extraction timed out.");
