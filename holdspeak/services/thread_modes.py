@@ -35,8 +35,14 @@ if TYPE_CHECKING:
 # HS-165 law: MCP-only families (project.*, provider.*) are classified
 # for the tool GATE but belong to NO thread palette -- the thread
 # grammar stays bounded; agents reach those tools over MCP only.
+# HS-200-17: ``practice_recipe.*`` joins them.  R17-3 forbids widening the
+# ordinary Thread palette for the prepared-recipe catalog, and a mode
+# allow-list computed from the class map would have widened Desk and Chase
+# by three tools as a side effect of classifying them for the gate.
 def _thread_side(name: str) -> bool:
-    return not name.startswith(("project.", "provider.", "interview."))
+    return not name.startswith(
+        ("project.", "provider.", "interview.", "practice_recipe.")
+    )
 
 
 _EVIDENCE_READ = frozenset(

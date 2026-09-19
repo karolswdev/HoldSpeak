@@ -978,6 +978,66 @@ Nudge verb.
 cooldown still applies, so the steward will not re-propose the same nudge
 until the cooldown expires.
 
+## Prepared work: preparation, review, and the weekly update
+
+Three prepared procedures ship: **meeting preparation**, **decision and
+commitment review**, and the **weekly project update**. Each is a versioned
+descriptor in the product tree, bound to the service that already does the
+work: the preparation brief, the follow-through board and decision records,
+and the Update Factory. None of them is something you author. Each is a
+supported execution path with an exact set of fields.
+
+Each descriptor declares six things: the inputs it takes, the sources it
+reads, the record it produces, the service that executes it, the effects it
+has, and the triggers it supports. Compiling one against a project binds
+those declarations to that project: the qualified service refs, the source
+scope with each source's observed coverage state, the route policy, the
+limits, and the acceptance criteria the result is judged against.
+
+A descriptor declares a limit only where one is real. Where the executing
+service enforces a cap, the descriptor points at that service's own value
+and reads it rather than repeating the number. Where no cap exists, it
+declares none. The same rule covers inputs: none of the three offers a
+setting no step can act on, so every field you see is one the run will
+actually use.
+
+Anything that would block a run comes back as a typed gap rather than a
+silent degradation. A gap names what is missing and what would supply it, and
+carries one of the five coverage states (`available`, `stale`, `failed`,
+`forbidden`, `unavailable`). A plan with any gap is not ready. A project you
+have not connected a source to reports `unavailable` for that source; it never
+reports an all-clear it did not observe.
+
+### Running one
+
+All three run manually today, through the surface each already had: the
+preparation brief from the project room, the review from the follow-through
+board and the project's manifest, the update from the steward. Compiling a
+plan is a read. It writes nothing and runs nothing.
+
+**None of the three fires on a schedule yet.** All three name the same owner
+path, the one that really recurs in this product: a connector watch on its
+evaluation interval, swept by the Heartbeat, whose due evaluation mints an
+effect the steward drains for that project. Cadence is a nudge projection
+with no schedule of its own, and the steward drains work but keeps no clock,
+so neither is a trigger owner on its own. No effect kind names one of these
+three yet, so every descriptor reports its scheduled trigger as an
+unavailable prerequisite and says which adapter a future release must add. A
+manual run and a later scheduled run use the same descriptor at the same
+version, so nothing changes about how one behaves when its schedule is
+turned on.
+
+### Finding them
+
+Over MCP: `practice_recipe.list` reads the catalog, `practice_recipe.get`
+reads one descriptor, and `practice_recipe.compile` compiles a plan against a
+project. These are distinct from `recipe.list` and `recipe.run`, which are
+the wire names for Agents, the ones you author yourself.
+
+Over HTTP: `GET /api/automations/practice-recipes`,
+`GET /api/automations/practice-recipes/{recipe_id}`, and
+`GET /api/automations/practice-recipes/{recipe_id}/plan`.
+
 ## Reach
 
 Reach lets a second machine on your tailnet trigger the hub's sweep and the

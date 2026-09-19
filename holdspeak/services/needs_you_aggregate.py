@@ -443,9 +443,10 @@ def build_aggregate(
                 reason=str(needs.get("error_code") or "needs_you_read_failed"),
             ))
             carried.extend(_carry(remembered))
-            coverage.extend(_section_coverage(rm, pid, pname))
-            coverage.extend(_watch_coverage(rm, pid, pname, clock_now,
-                                            source_stale_after_s))
+            coverage.extend(room_coverage(
+                rm, pid, pname, now=clock_now,
+                stale_after_s=source_stale_after_s,
+            ))
             continue
 
         observed_at = str(rm.get("observed_at") or clock_now.isoformat())
@@ -496,9 +497,9 @@ def build_aggregate(
             source_id=source_id, kind="project", state="available",
             observed_at=observed_at, label=pname, project_id=pid,
         ))
-        coverage.extend(_section_coverage(rm, pid, pname))
-        coverage.extend(_watch_coverage(rm, pid, pname, clock_now,
-                                        source_stale_after_s))
+        coverage.extend(room_coverage(
+            rm, pid, pname, now=clock_now, stale_after_s=source_stale_after_s,
+        ))
 
     if not project_list_failed:
         # The project list is the expected-source set: a source it no longer
@@ -581,6 +582,43 @@ def _carry(remembered: dict[str, Any] | None) -> list[dict[str, Any]]:
         carried["observedAt"] = remembered.get("observed_at")
         out.append(carried)
     return out
+
+
+def room_coverage(
+    rm: dict[str, Any], project_id: str, project_name: str, *,
+    now: datetime | None = None,
+    stale_after_s: float = DEFAULT_SOURCE_STALE_AFTER_S,
+) -> list[dict[str, Any]]:
+    """Every non-project C4 coverage row for one Room projection.
+
+    **``now`` is a LOCAL wall clock, naive.** This is load-bearing and it
+    is the one thing a caller can get wrong without noticing. Source
+    timestamps arrive from the Room as offset-aware UTC (SQLite
+    ``datetime('now')`` through ``aware_iso``), and
+    :func:`_older_than` converts them to LOCAL time before comparing them
+    to the horizon derived from this argument. Pass a UTC clock and every
+    source west of Greenwich reads stale by the offset; pass an aware
+    datetime and the comparison silently drifts the same way.
+    ``build_aggregate`` passes ``datetime.now()``, and so should you.
+    ``None`` means exactly that.
+
+    The PUBLIC seam over :func:`_section_coverage` and
+    :func:`_watch_coverage` (HS-200-17 ruling R17-9).  The arrival
+    aggregate below calls it, and so does anything else that needs the
+    same answer: a second caller deriving these states by hand is exactly
+    the defect that ruling was written for -- a hand-rolled mapping
+    reported ``available`` for a ``cant_check`` watch while this producer
+    reported ``failed``.
+
+    Callers that need one state per KIND rather than one row per source
+    must not average or pick arbitrarily; reduce to the WORST row, so a
+    summary can never read better than the sources behind it.
+    """
+    clock = now or datetime.now()
+    return [
+        *_section_coverage(rm, project_id, project_name),
+        *_watch_coverage(rm, project_id, project_name, clock, stale_after_s),
+    ]
 
 
 def _section_coverage(
@@ -858,4 +896,5 @@ __all__ = [
     "COVERAGE_STATES",
     "COVERAGE_KINDS",
     "DEFAULT_SOURCE_STALE_AFTER_S",
+    "room_coverage",
 ]
