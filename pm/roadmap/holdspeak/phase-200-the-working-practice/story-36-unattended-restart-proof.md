@@ -3,7 +3,7 @@
 - **Project:** holdspeak
 - **Phase:** 200
 - **Status:** backlog
-- **Depends on:** HS-200-31, HS-200-32, HS-200-34, HS-200-35
+- **Depends on:** HS-200-31, HS-200-32, HS-200-34, HS-200-35, HS-200-53
 - **Unblocks:** HS-200-37, HS-200-38, HS-200-40
 - **Owner:** unassigned
 - **Gate:** G4
@@ -38,6 +38,8 @@ Update the affected public procedure with implemented behavior in the same PR.
 Retain actual output in this story's evidence file when it ships.
 
 ## Notes / open questions
+
+**Amended 2026-09-18 (HS-200-47..53 cluster).** Three consecutive real occurrences cannot start from zero: `kernel_schedule_ticks` is reported empty on the owner's desk (a figure carried from the 2026-09-18 clock measurement's read of his real database, not measured by this lane), and no exercised end-to-end proof of the delegated-schedule path exists in the tree. HS-200-53 is the first occurrence and is now a dependency. The acceptance criteria are unchanged.
 
 This story targets [G4](DELIVERY.md#release-gates).
 The [technical contracts](CONTRACTS.md) and [acceptance protocol](ACCEPTANCE.md) define the shared invariants.

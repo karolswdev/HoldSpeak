@@ -3,7 +3,7 @@
 - **Project:** holdspeak
 - **Phase:** 200
 - **Status:** backlog
-- **Depends on:** HS-200-17, HS-200-21, HS-200-25, HS-200-31, HS-200-32
+- **Depends on:** HS-200-17, HS-200-21, HS-200-25, HS-200-31, HS-200-32, HS-200-47, HS-200-52, HS-200-53
 - **Unblocks:** HS-200-34, HS-200-35, HS-200-40
 - **Owner:** unassigned
 - **Gate:** G4
@@ -17,7 +17,7 @@ Recurring work needs a stable logical occurrence linked to the exact configurati
 
 Extend the existing scheduler owners with versioned bindings, occurrence identity, and unified status projection.
 
-Implementation seams: Heartbeat/Cadence/Steward scheduling seams; assignment run links; recipe configuration projection.
+Implementation seams: the two measured recurring owners — the Workbench cron clock (`holdspeak/workbench_conductor.py:544`, delegated terms frozen at `holdspeak/services/schedule_delegation.py:30-34`, occurrences receipted in `kernel_schedule_ticks`, `holdspeak/db/schema.py:1830-1834`) and the connector-watch interval swept by `HeartbeatService.run_sweep` into `watch_effects`; assignment run links; recipe configuration projection.
 
 Out: A new generic scheduler or arbitrary workflow graph semantics.
 
@@ -38,6 +38,8 @@ Update the affected public procedure with implemented behavior in the same PR.
 Retain actual output in this story's evidence file when it ships.
 
 ## Notes / open questions
+
+**Amended 2026-09-18 (HS-200-47..53 cluster).** The seam line named "Heartbeat/Cadence/Steward" as the scheduling seams. Cadence schedules nothing — the product's own tick calls its projections *"attention only, never schedule"* (`holdspeak/workbench_conductor.py:630`) — and the Steward drains effects without a clock. The seams are corrected to the two owners that actually fire, and the occurrence-identity work now rests on the zone (HS-200-47), the create surface (HS-200-52) and the first real occurrence (HS-200-53). The acceptance criteria are unchanged.
 
 This story targets [G4](DELIVERY.md#release-gates).
 The [technical contracts](CONTRACTS.md) and [acceptance protocol](ACCEPTANCE.md) define the shared invariants.
