@@ -75,6 +75,7 @@ import { useUpdateController } from "./update/useUpdateController";
 import { UpdatePosture } from "./update/UpdatePosture";
 import { useStewardController } from "./steward/useStewardController";
 import { StewardPosture } from "./steward/StewardPosture";
+import { pluralize } from "./steward/model";
 import { usePrepareController, type PrepareController } from "./prepare/usePrepareController";
 import { PreparePosture, RESULT_OPTIONS } from "./prepare/PreparePosture";
 import { coverageToken, clockToken } from "./prepare/model";
@@ -326,9 +327,14 @@ function RoomHead({
             data-testid="room-target-chip"
             data-tone={target.passed ? "danger" : undefined}
           >
+            {/* HS-200-16: one day is a day.  Both branches count through the
+                tree's existing honest-pluralization helper (steward/model.ts),
+                the same rule `_count_unit` applies on the backend. */}
             {target.passed
-              ? (target.daysLeft ? `OVERDUE BY ${Math.abs(target.daysLeft)} DAYS` : "OVERDUE TODAY")
-              : `TARGET ${formatTargetDate(target.targetAt)}${target.daysLeft ? ` · ${target.daysLeft} DAYS` : " · TODAY"}`
+              ? (target.daysLeft
+                  ? `OVERDUE BY ${pluralize(Math.abs(target.daysLeft), "DAY", "DAYS")}`
+                  : "OVERDUE TODAY")
+              : `TARGET ${formatTargetDate(target.targetAt)}${target.daysLeft ? ` · ${pluralize(target.daysLeft, "DAY", "DAYS")}` : " · TODAY"}`
             }
           </span>
         ) : null}
@@ -591,6 +597,7 @@ function ProposalRow({
   // Caption: BY FRI · from Standup 09-05 · MAREK + EgressChip
   const dueHint = proposal?.dueHint || item.dueHint;
   const meetingTitle = item.meetingTitle || "";
+  const meetingStartedAt = item.meetingStartedAt || "";
   const createdAt = proposal?.createdAt || item.createdAt || "";
   const speaker = proposal?.speakerLabel || item.speakerLabel || "";
   const ownerHint = proposal?.ownerHint || item.ownerHint || "";
@@ -658,7 +665,11 @@ function ProposalRow({
   const captionParts: string[] = [];
   if (dueHint) captionParts.push(`BY ${dueHint.toUpperCase()}`);
   if (meetingTitle) {
-    const dateStr = formatMMDD(createdAt);
+    // HS-200-16: the date belongs to the MEETING this came from, not to the
+    // moment the proposal row was written.  They agree on a same-day desk and
+    // disagree the next morning; the caption said `from <meeting> <today>`
+    // while the review wing and recall both said the meeting's own day.
+    const dateStr = formatMMDD(meetingStartedAt || createdAt);
     captionParts.push(`from ${meetingTitle}${dateStr ? ` ${dateStr}` : ""}`);
   }
 

@@ -250,6 +250,15 @@ ROOM_CHANGES_CAP: int = 10
 _ABSENT_SECTION: dict[str, str] = {"state": "absent", "reason": "not_yet_built"}
 
 
+def _count_unit(count: int, unit: str) -> str:
+    """``1 DAY`` / ``2 DAYS`` -- HS-200-16.
+
+    The Room read ``WAITING ON YOUR REVIEW · 1 DAYS`` where the arrival
+    read ``1 DAY`` for the same row.
+    """
+    return f"{count} {unit}" if count == 1 else f"{count} {unit}S"
+
+
 def _format_age(iso_str: str, now: datetime) -> str:
     """Format an ISO timestamp as a human-readable age token."""
     if not iso_str:
@@ -259,10 +268,10 @@ def _format_age(iso_str: str, now: datetime) -> str:
         delta = now - dt.replace(tzinfo=None)
         days = delta.days
         if days > 0:
-            return f"{days} DAYS"
+            return _count_unit(days, "DAY")
         hours = delta.seconds // 3600
         if hours > 0:
-            return f"{hours} HOURS"
+            return _count_unit(hours, "HOUR")
         minutes = delta.seconds // 60
         if minutes > 0:
             return f"{minutes} MIN AGO"
@@ -788,7 +797,7 @@ class ProjectService:
                         needs.append({
                             "source": "jira",
                             "title": f"{jira_id} {jira_title}".strip(),
-                            "why": f"OVERDUE · {overdue_days} DAYS",
+                            "why": f"OVERDUE · {_count_unit(overdue_days, 'DAY')}",
                             "since": due_at,
                             # HS-200-15: the due date is the ranking's
                             # observable fact, named as itself.
@@ -826,11 +835,20 @@ class ProjectService:
                 project_id=project_id, state="proposed",
             )
             for prop in proposals:
-                # Resolve meeting title for provenance.
+                # Resolve meeting title AND its start for provenance.
+                # HS-200-16: the caption reads `from <meeting> <MM-DD>`; that
+                # date is the MEETING's, never the proposal row's write time.
+                # On a same-day desk the two agree, so the difference was
+                # invisible until a two-working-day walk: a meeting read the
+                # next morning was captioned with today's date while the
+                # review wing and recall both said yesterday's.
                 meeting_title = ""
+                meeting_started_at = ""
                 try:
                     mtg = self._db.meetings.get_meeting(prop.meeting_id)
                     meeting_title = (mtg.title or "") if mtg else ""
+                    if mtg is not None and getattr(mtg, "started_at", None) is not None:
+                        meeting_started_at = mtg.started_at.isoformat()
                 except Exception:
                     pass
                 why_parts = ["PROPOSED"]
@@ -854,6 +872,7 @@ class ProjectService:
                     "owner_hint": prop.owner_hint,
                     "original_text": prop.original_text,
                     "meeting_title": meeting_title,
+                    "meeting_started_at": meeting_started_at,
                     "created_at": prop.created_at,
                 })
         except Exception:
@@ -1418,7 +1437,7 @@ class ProjectService:
         elif ci_failing:
             reason = "CI RED"
         elif review_waiting_days is not None and review_waiting_days > 3:
-            reason = f"REVIEW WAITING {review_waiting_days} DAYS"
+            reason = f"REVIEW WAITING {_count_unit(review_waiting_days, 'DAY')}"
         elif target_passed:
             reason = "TARGET PASSED"
 
@@ -1791,6 +1810,15 @@ class ProjectService:
                 # preparation manifest can carry the distinction in (AC2),
                 # and a superseded record names its successor (counsel P1-2).
                 "lifecycle": str(row["lifecycle"] or "active"),
+                # HS-200-16: the RECORD's kind rides with the row.  Confirming
+                # an action-kind proposal also writes a decision_records row
+                # (proposal_bridge_service.py:588-590), so this section holds
+                # commitments too; without the kind every consumer draws them
+                # as decisions.  RecallService reads the same column to keep
+                # an action out of its CURRENT cards
+                # (recall_service.py:193-196); a consumer that cannot drop the
+                # row must at least tell the truth about what it is.
+                "kind": str(row["proposal_kind"] or "") or "decision",
             }
             if item["lifecycle"] == "superseded":
                 with self._db._connection() as succ_conn:
@@ -1860,7 +1888,9 @@ class ProjectService:
             placeholders2 = ",".join("?" * len(decision_ids))
             commitment_rows = conn.execute(
                 f"""SELECT c.id, c.owner, c.due_at, c.status,
-                           ai.task AS text
+                           ai.task AS text,
+                           (SELECT p.kind FROM follow_through_proposals p
+                             WHERE p.commitment_id = c.id LIMIT 1) AS proposal_kind
                     FROM decision_commitments c
                     LEFT JOIN action_items ai ON ai.id = c.action_item_id
                     WHERE c.decision_id IN ({placeholders2})
@@ -1876,6 +1906,10 @@ class ProjectService:
                 "text": row["text"] or "",
                 "dueAt": row["due_at"],
                 "owner": row["owner"],
+                # HS-200-16, the mirror of the decisions rule: confirming a
+                # decision-kind proposal also writes a commitment, so this
+                # section holds decisions too.  The kind rides with the row.
+                "kind": str(row["proposal_kind"] or "") or "action",
             })
         return {"items": items}
 

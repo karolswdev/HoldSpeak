@@ -138,8 +138,12 @@ ROUTING_RESOLVER_REFERENCES = {
     # HS-200-13 (stacked on 14 over 11 over 12 over 15): moved down again with
     # the Room's commitment attention producer (`_room_commitment_items`);
     # re-anchored, the site unchanged.
-    "holdspeak/services/project_service.py:2198:import:resolve_placement",
-    "holdspeak/services/project_service.py:2199:ref:resolve_placement",
+    # HS-200-16: moved down 34 lines (+40/-6 above it) by the `_count_unit`
+    # helper, the proposal row's `meeting_started_at`, and the Room
+    # projections carrying each row's `kind`; re-anchored, the site unchanged.
+    # The reference count is still 50 and no added line names a resolver.
+    "holdspeak/services/project_service.py:2232:import:resolve_placement",
+    "holdspeak/services/project_service.py:2233:ref:resolve_placement",
     # Pre-existing and previously UNREGISTERED, found by the HS-200-41 sweep and
     # registered here rather than left red: ``_captured_deployment_revision``
     # (project_update_service.py:1034) resolves a profile's target only to

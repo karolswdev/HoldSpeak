@@ -334,6 +334,10 @@ def build_manifest(room: dict[str, Any], purpose: str, *, now: datetime) -> dict
                 "lifecycle": "superseded" if lifecycle == "superseded" else "current",
                 "at": item.get("at"),
                 "meeting_title": item.get("meeting_title") or "",
+                # HS-200-16: the record's own kind, so a consumer never draws
+                # a commitment as a decision (the Room's DECISIONS section
+                # holds both -- proposal_bridge_service.py:588-590).
+                "kind": str(item.get("kind") or "") or "decision",
             }
             if item.get("successor_id"):
                 row["successor_ref"] = f"decision_record:{item['successor_id']}"
@@ -348,6 +352,7 @@ def build_manifest(room: dict[str, Any], purpose: str, *, now: datetime) -> dict
                 "text": str(item.get("text") or ""),
                 "owner": item.get("owner"),
                 "due_at": item.get("dueAt") or item.get("due_at"),
+                "kind": str(item.get("kind") or "") or "action",
             })
 
     available = sum(1 for row in sources if row["state"] == STATE_AVAILABLE)

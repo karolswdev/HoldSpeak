@@ -31,6 +31,10 @@ export type ManifestDecision = {
   meetingTitle: string;
   /** The record that replaced a superseded one (P1-2). */
   successorRef: string | null;
+  /** HS-200-16: the RECORD's own kind. Confirming an action-kind proposal
+   *  also writes a decision record, so this list holds commitments too; the
+   *  face draws each row as what it IS, never as the list it arrived in. */
+  kind: "decision" | "action";
 };
 
 /** An item the bound left out, named (P1-3). */
@@ -41,6 +45,8 @@ export type ManifestCommitment = {
   text: string;
   owner: string | null;
   dueAt: string | null;
+  /** HS-200-16: the mirror -- this list holds decision-kind rows too. */
+  kind: "decision" | "action";
 };
 
 export type BriefManifest = {
@@ -179,6 +185,7 @@ export function decodeManifest(raw: Record<string, unknown> | null | undefined):
           at: strOrNull(d.at),
           meetingTitle: str(d.meeting_title),
           successorRef: strOrNull(d.successor_ref),
+          kind: str(d.kind) === "action" ? ("action" as const) : ("decision" as const),
         }))
       : [],
     commitments: Array.isArray(r.commitments)
@@ -187,6 +194,7 @@ export function decodeManifest(raw: Record<string, unknown> | null | undefined):
           text: str(c.text),
           owner: strOrNull(c.owner),
           dueAt: strOrNull(c.due_at),
+          kind: str(c.kind) === "decision" ? ("decision" as const) : ("action" as const),
         }))
       : [],
     notIncluded: Array.isArray(r.not_included)
@@ -309,6 +317,25 @@ export function clockToken(prefix: string, iso: string | null): string | null {
   if (Number.isNaN(d.getTime())) return null;
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${prefix} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** `DUE 09-20` -- a commitment's due DAY.
+ *
+ *  HS-200-16: this row used `clockToken`, which draws a wall clock.  A
+ *  due value is a DATE (`2026-09-20`); `new Date("2026-09-20")` is UTC
+ *  midnight, so the face read `DUE 18:00` -- a date shown as a time, and
+ *  in a negative-offset zone the wrong day.  Recall already says
+ *  `DUE 09-20` for the same commitment
+ *  (`holdspeak/services/recall_service.py:93-105`).
+ */
+export function dueDayToken(prefix: string, iso: string | null): string | null {
+  if (!iso) return null;
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+  if (dateOnly) return `${prefix} ${dateOnly[2]}-${dateOnly[3]}`;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${prefix} ${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 /** `11.4 S` from milliseconds; nothing under a tenth of a second (A.8). */
