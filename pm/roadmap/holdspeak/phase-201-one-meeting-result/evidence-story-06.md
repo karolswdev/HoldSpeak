@@ -151,3 +151,17 @@ FAILED tests/unit/test_doc_drift_guard.py::test_docs_do_not_restore_retired_infe
 FAILED tests/unit/test_doc_drift_guard.py::test_no_live_doc_has_a_dangling_relative_link
 2 failed, 170 passed in 23.36s
 ```
+
+### Captured run — 2026-09-19T22:49:25Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.eaNJRa6vBp uv run pytest -q tests/unit/test_product_copy.py tests/unit/test_product_language.py tests/unit/test_ux_canon_ratchet.py tests/unit/test_ux_canon_scan.py tests/unit/test_phase200_canon_guard.py tests/unit/test_phase200_doc_claims.py tests/unit/test_meeting_deferred_admission.py tests/unit/test_doc_drift_guard.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 88e26388e8d14d6b566323e06061215c035832b5
+
+```text
+........................................................................ [ 41%]
+........................................................................ [ 83%]
+............................                                             [100%]
+172 passed in 23.24s
+```
