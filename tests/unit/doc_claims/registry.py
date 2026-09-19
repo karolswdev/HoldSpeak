@@ -602,14 +602,14 @@ CLAIMS: list[Claim] = [
     # ── paid by HS-200-17 (the prepared-recipe catalog) ──────────────
     Claim(
         doc="docs/USER_GUIDE.md",
-        anchor="A recipe declares a limit only where one is real.",
+        anchor="A descriptor declares a limit only where one is real.",
         sentence=(
-            "A recipe declares a limit only where one is real. Where the "
-            "executing service enforces a cap, the descriptor points at "
+            "A descriptor declares a limit only where one is real. Where "
+            "the executing service enforces a cap, the descriptor points at "
             "that service's own value and reads it rather than repeating "
-            "the number. Where no cap exists, the recipe declares none. "
-            "The same rule covers inputs: a recipe does not offer a setting "
-            "no step can act on."
+            "the number. Where no cap exists, it declares none. The same "
+            "rule covers inputs: none of the three offers a setting no step "
+            "can act on."
         ),
         predicate=lambda: _prepared_recipes_declare_nothing_unreadable(),
         state="holds",
@@ -623,10 +623,10 @@ CLAIMS: list[Claim] = [
     ),
     Claim(
         doc="docs/USER_GUIDE.md",
-        anchor="Three prepared recipes ship",
+        anchor="Three prepared procedures ship",
         sentence=(
-            "Three prepared recipes ship: meeting preparation, decision and "
-            "commitment review, and the weekly project update. Each one is a "
+            "Three prepared procedures ship: meeting preparation, decision "
+            "and commitment review, and the weekly project update. Each is a "
             "versioned descriptor in the product tree, bound to the service "
             "that already does the work."
         ),
@@ -642,14 +642,14 @@ CLAIMS: list[Claim] = [
     ),
     Claim(
         doc="docs/USER_GUIDE.md",
-        anchor="**No prepared recipe fires on a schedule yet.**",
+        anchor="**None of the three fires on a schedule yet.**",
         sentence=(
-            "No prepared recipe fires on a schedule yet. All three name the "
-            "same owner chain, the one that really recurs in this product: "
+            "None of the three fires on a schedule yet. All three name the "
+            "same owner path, the one that really recurs in this product: "
             "a connector watch on its evaluation interval, swept by the "
-            "heartbeat, whose due evaluation mints an effect the steward "
-            "drains for that project. No effect kind names a prepared "
-            "recipe yet."
+            "Heartbeat, whose due evaluation mints an effect the steward "
+            "drains for that project. No effect kind names one of these "
+            "three yet."
         ),
         predicate=lambda: _no_prepared_recipe_has_a_wired_schedule(),
         state="holds",

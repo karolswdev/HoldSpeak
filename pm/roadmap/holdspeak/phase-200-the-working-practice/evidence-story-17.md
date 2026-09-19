@@ -259,3 +259,35 @@ weekly_update@v1
 ............................................                             [100%]
 116 passed in 6.62s
 ```
+
+### Captured run — 2026-09-19T00:58:12Z
+
+- **Command:** `uv run pytest -q tests/unit/test_product_copy.py tests/unit/test_phase200_recipe_catalog.py tests/integration/test_phase200_recipe_catalog.py tests/unit/test_phase200_attention_coverage.py tests/unit/test_phase200_attention.py tests/unit/test_phase200_doc_claims.py tests/unit/test_doc_drift_guard.py tests/unit/test_api_surface.py tests/unit/test_mcp_sidecar_doc_drift.py tests/unit/test_thread_tool_gate.py tests/unit/test_thread_modes.py tests/unit/test_thread_family.py tests/unit/test_thread_tool_loop.py tests/unit/test_phase200_one_composition_root.py tests/unit/test_hs172_people_sources.py tests/unit/test_hs171_heartbeat_wire.py tests/unit/test_hs171_aggregate_notify.py tests/unit/test_phase200_preparation_brief.py tests/unit/test_update_drafter.py tests/unit/test_phase200_continuity.py tests/unit/test_watch_service.py -rf`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 75485182a776d10b6727242874a86c429c4ca335
+
+```text
+........................................................................ [ 10%]
+........................................................................ [ 20%]
+........................................................................ [ 30%]
+........................................................................ [ 40%]
+........................................................................ [ 50%]
+........................................................................ [ 60%]
+........................................................................ [ 70%]
+........................................................................ [ 81%]
+........................................................................ [ 91%]
+..............................................................           [100%]
+710 passed in 66.12s (0:01:06)
+```
+
+### Captured run — 2026-09-19T00:59:21Z
+
+- **Command:** `git diff --stat tests/fixtures/product_copy_debt.json`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 75485182a776d10b6727242874a86c429c4ca335
+
+```text
+(no output)
+```
