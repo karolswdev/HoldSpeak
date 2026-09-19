@@ -72,7 +72,7 @@ on screenshots only. `no` = nobody watched him use it.
 | 139 | The Settings Reckoning | done 8/8 | Settings cut to seven job-named tiles; 101 controls thinned | no |
 | 140 | The First Sentence | **5/6, active** | One obvious first useful act on arrival | **no — the cold walk is the open story**, physical-device legs remain |
 | 141 | From Thought to Work | **6/9, active** | Speak a rough thought, develop it, freeze a typed outcome | no |
-| 142 | Inference Instrument | done 6/6 | "Download & use" a model in one gesture; honest readiness | no |
+| 142 | Inference Instrument | done 6/6 | "the old download-and-use verb" a model in one gesture; honest readiness | no |
 | 143 | Intelligence Router | done 15/15 | Every AI feature routes through one assignment with fallbacks | no |
 | 144 | The Dashboard Door | done 6/6 | The Door board: overdue / now / waiting columns | no |
 | 145 | The Door Polish | done 3/3 | The 393-wide board says it scrolls | no |
