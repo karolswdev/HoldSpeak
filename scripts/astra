@@ -57,6 +57,8 @@ set +e
 RC=$?
 set -e
 
+# Codex writes absolute-path links; the doc drift guard forbids them in docs/.
+[[ -f "$OUT/last.md" ]] && sed -E -i '' 's#\[([^]]+)\]\('"$REPO"'/([^)[:space:]]+)\)#`\2`#g' "$OUT/last.md"
 SID="$(grep -o '"thread_id":"[^"]*"' "$OUT/events.jsonl" | head -1 | cut -d'"' -f4)"
 [[ -n "$SID" ]] || SID="$(grep -o 'session id: [0-9a-f-]*' "$OUT/stderr.log" | head -1 | awk '{print $3}')"
 printf '%s\n' "$SID" > "$OUT/session-id"
