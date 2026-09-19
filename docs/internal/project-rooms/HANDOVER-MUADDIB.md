@@ -1,4 +1,4 @@
-# THE HANDOVER — from Muad'Dib XXII (READ **§9, THEN §7b, THEN THE XXII CHAPTER** FIRST)
+# THE HANDOVER — from Muad'Dib XXIII (READ **§9, THEN §7b, THEN THE XXIII CHAPTER** FIRST)
 
 The entries below this section are the running log, newest first. This
 section is the whole picture in one sitting. When it disagrees with a
@@ -346,6 +346,154 @@ resolves into its `.venv` before trusting a count.
 **And the rule I broke this sitting, so you do not:** the tree's default
 branch is `main` and two documentation commits landed on it directly
 instead of on a branch with a PR. Branch first.
+
+## Muad'Dib XXIII — 2026-09-18/19. THREE LANES, SIX BOUNCES, AND THE CLOCK THE PRODUCT ALREADY HAD
+
+**Read this first. It supersedes XXII.** G1 finished building, G2 started, and
+the sitting's real output was not code — it was finding out what this product
+cannot do and writing that down where the next agent cannot miss it.
+
+### 0. What he said, verbatim
+
+- **"all your workers must also be Opus 4-6 workers, got it? opus-4-6[1m]"** —
+  supersedes the Fable ruling of 2026-09-17. `.claude/agents/opus-worker.md` now
+  says `model: opus-4-6[1m]`. **The file is gitignored; re-apply it on a fresh
+  clone.** The agent definition is cached at session start, so an edit lands on
+  the NEXT session — inside the session that edits it, pass an explicit `model`
+  override on every Agent call. A 429 naming `claude-fable-5-1` is how the stale
+  definition announces itself.
+- **"Lane starts.... now"** — on a three-lane plan. No further steering was
+  asked for and none was needed.
+- **"Yes - that's next..."** — on making the real scheduled clock serve
+  recipes. That became the HS-200-47…53 cluster the same sitting, per XIX's law:
+  an analysis that does not become chartered stories is not delivery.
+
+### 1. What shipped
+
+| | Story | State |
+|---|---|---|
+| PR #581 | HS-200-13 | MERGED `ba48baf3` on verification (one branch-new failure, `hs160_delta_glass`, failed a DIFFERENT param each CI run and ran 12/12 green serially on the PR head — a load flake) |
+| PR #582 | HS-200-17 | three prepared procedures, `24f2f974` + copy fix `1e5efa26` |
+| PR #583 | HS-200-16 | the daily-loop rig, `a8458b93`; **story deliberately left `in-progress`** |
+| PR #584 | the clock cluster | `29210b59`, seven stories chartered, stacked on #582 |
+| canvas | HS-200-18 | design RATIFIED-W-C, 11 boards / 26 artboards, artifact `b39abb5b-784d-4f47-b938-eb0228716ccc` — **HIS VERDICT OWED** |
+
+### 2. The law this sitting proved twice: counsel corrects the ORCHESTRATOR
+
+Every lane was counselled and **every counsel bounced its lane at least once**;
+the 18 design bounced twice. Two of the corrections landed on me, not on a
+worker, and both had already been told to the owner before they were checked:
+
+- I reported a timezone double-conversion as a live defect on his desk. Counsel
+  measured a freshly-read watch at six offsets — `available` everywhere. Both
+  writers of `last_success_at` use SQLite `datetime('now')` (naive UTC) and the
+  comparison is local-to-local; **the test FIXTURE wrote a shape no production
+  writer produces.** Retracted to him in the next message.
+- I passed him "nothing in this product can trigger on a wall clock" as a
+  universal negative, from one lane's single grep. It is false — see §4.
+
+**The habit, and it is the whole job: say it to him, then let counsel try to
+break it, and retract in your own voice when it breaks.** Do not let a
+convenient finding harden just because you already reported it.
+
+### 3. The three findings worth more than the code
+
+**a. A fence that agrees with the code instead of the producer (HS-200-17's
+P0).** The catalog claimed to reuse the shipped coverage vocabulary and had
+hand-rolled it: a watch in `cant_check` reported `available`. Paid by
+DELEGATION, not by correcting the copy — a public `room_coverage()` seam on
+`needs_you_aggregate`, the producer's own two call sites rerouted through it,
+worst-first reduction so a summary can never read better than its sources.
+**One producer, three callers.** Delegating immediately surfaced two more errors
+the hand-rolled version had. This is the shape of fix to reach for here.
+
+**b. A false proof of a true thing (HS-200-16's P0).** `capture_runtime_identity`
+caches `_IDENTITY` for the process lifetime; both hubs in the day-boundary walk
+share one OS process; so the same-database fence compared a cached value with
+itself, and the 393 record described the 1440 run's database. The boundary was
+real — hub #2's recall returns day-1 records, impossible from another file — but
+the attestation was fake, and HS-200-23 would have read it as evidence. Reproved
+through `database_identity()`, plus a fence that goes red the moment the
+instrument becomes a constant again.
+
+**c. Four defects only a second morning can see.** A proposal dated by its row's
+write time (09-18 in the Room, 09-17 in recall). A due DATE drawn as a wall
+clock (`DUE 18:00`, wrong day west of UTC). `1 DAYS`. And the carried-forward
+**kind swap** — a commitment drawn `DEC … ✓ CURRENT`, a decision drawn `CMT` —
+fixed in the Room's projection, which selected `proposal_kind` and threw it
+away while recall read the same column to keep an action out of its decision
+cards. **A same-day test cannot see any of these.**
+
+### 4. THE CLOCK — the correction, and what it costs
+
+**The wall clock is real and good.** `workbenches.schedule` is a five-field
+cron (`schema.py:1714-1716`), ticked by `workbench_conductor.py:541-551` via
+`cron_is_due` (`holdspeak/cron.py:34`), run by `WorkbenchRunner.run_scheduled`
+under a delegation **only the owner mints** (`schedule_delegation.py:50-58`),
+terms hashed (`:37-39`), one receipt per due-minute with duplicates rejected as
+`duplicate_tick`. `kernel_schedule_ticks` is reported empty on his desk.
+
+**Four gaps stop a prepared procedure riding it** — and G1 is refused by the
+code, not merely missing: `_terms` resolves `wb.recipe_id` against the
+agent-persona `recipes` table and raises `delegation_stale_work` (`:17-19`), so
+a delegation cannot be minted at all; the route freezes at
+`capability_id="workbench.item"` (`:20-24`); `workbenches` has no `project_id`;
+and `workbench_items.result` is not a kept brief. Plus `cron_is_due` on naive
+`datetime.now()` with no zone stored anywhere.
+
+**And the finding that is worse than the clock:** `ReactionService.create_watch`
+mints `state=''`, which `arm_watch` refuses (`watch_service.py:115`) and
+`list_due_watches` excludes (`db/automations.py:457`). `ensure_meeting_watch`
+arms, but it is automatic and meeting-only. **No surface can create a connector
+watch that recurs.** That is why 30 enabled watches plus HS-200-43's repaired
+arming still add up to no recurring anything.
+
+**Cadence is not a scheduler** — a projection of open loops, and the product
+says so in its own tick (`workbench_conductor.py:630`). Stories 21, 33, 34, 35
+and CONTRACTS.md C9 all named it as a scheduler seam and are corrected on the
+clock branch.
+
+### 5. Rulings I made (record them, he deferred none of these explicitly)
+
+- **HS-200-18 ENDS AT PREPARED.** There is no install operation, so every state
+  past `PREPARED` is drawn under a `NOT REACHABLE ON THIS TREE` band naming what
+  19 must build. The apply verb is **ABSENT** on manual boards (a refused verb
+  teaches a concept the product will never have) and **REFUSED** only where the
+  operation exists and is blocked.
+- **The clock is a cluster inside 200, not a new phase** — G4 already owns this,
+  and 41-46 set the precedent for chartering into 200 mid-flight.
+- **Story 21 is NOT re-gated.** Its scheduled leg is what 53 proves in G4, so
+  **G2 cannot close before a G4 story lands** — stated in the status file,
+  DELIVERY, and 21 itself rather than discovered later. The gates are his.
+- **Never widen a ratchet to admit new copy.** The product-copy debt ledger only
+  shrinks: it records what was already wrong, never what we just wrote.
+- **POSITIONING has no noun for a prepared procedure**, and both near misses are
+  traps (`persona` → Agent; `workflow` → a shipped table). The user guide names
+  the three things instead. **Minting a canonical feature name is his call.**
+
+### 6. What is open, and whose it is
+
+**His:** the 18 canvas verdict; his attended walk (HS-200-16 stays
+`in-progress`, `PILOT-R1.md` opens the ten-workday window unstarted); HS-200-05's
+physical voice beats; and four measured rulings — the CARRIED FORWARD doubling
+(4 rows for 2 outcomes, deliberate), three filled primaries in the Room, ten
+receipt rows carrying no tokens, and that **no owner can choose a deterministic
+brief** (the route accepts `generator: deterministic`, the face never sends it).
+
+**The next orchestrator's:** merge #582 → #583 → #584 in order as each CI
+failure set falls inside main's known six (hs153 guardrail, two task-resume
+`Connection refused`, ci-isolation, custody-after-recreate, transcriber race;
+`hs160_delta_glass` is a load flake, proven green serially). Then HS-200-47 and
+HS-200-52 are startable immediately; 48→49→50→51 are strictly serial; 53 is the
+proof.
+
+### 7. A gate repair worth remembering
+
+A duplicated paragraph inside the story-status table had been hiding **stories
+44, 45 and 46 from `dw` since they landed** — `dw context` reported 43 stories
+on HEAD and 53 on the clock branch. Proven a heal, not damage, against a
+pristine `git archive HEAD` extract. **When a story seems to vanish from the
+gate, suspect the table's prose before suspecting the story.**
 
 ## Muad'Dib XXII — 2026-09-18. THE VERDICT, THEN THE DAILY PATH BUILT END TO END
 
