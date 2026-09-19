@@ -1,6 +1,11 @@
 # The UX Canon — what every face must do (ratified by the owner's rulings)
 
-The Constitution is the supreme canon (docs/internal/CONSTITUTION.md);
+The Constitution is the supreme canon (docs/internal/CONSTITUTION.md),
+and its Seven Tenets sit above every rule here: no over-engineering for
+safety; not even pre-alpha; help and accelerate, never a million
+interfaces; ASD-STE100 on every face; a component framework in the
+manner of Intuition; Workbench 2.0+ on steroids; the first user is a
+Senior Software Architect with reports.
 DESIGN_SYSTEM.md is the material canon (tokens, the interior type
 scale, the composition rules, the chrome ladder); the surface library
 contract (web/src/desk/surface/contract.md) is the species canon. This

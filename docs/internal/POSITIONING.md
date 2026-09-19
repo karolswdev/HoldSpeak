@@ -1,5 +1,9 @@
 # HoldSpeak positioning canon
 
+This document is bound by the Constitution's Seven Tenets
+(CONSTITUTION.md, 2026-09-19); the story below serves the first user, a
+Senior Software Architect with reports, in ASD-STE100.
+
 This document fixes what HoldSpeak's story is. Every user-facing doc (the
 root `README.md` and the top-level `docs/*.md`) aligns to it; future docs
 stories are measured against it. If a user-facing doc disagrees with this

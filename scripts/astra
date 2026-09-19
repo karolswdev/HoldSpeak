@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# scripts/astra — Muad'Dib's channel to Astra (gpt-6-astra via codex exec).
+# Canon: docs/internal/TWO-BRAINS.md §6.
+#
+#   scripts/astra <role> <brief.md | -> [--resume <session-id>] [--cd <dir>]
+#                 [--effort xhigh] [--tag <name>] [--model gpt-6-astra]
+#
+# role ∈ check | lane | counsel | ask. Prints the session id and the path of
+# the final message; the full event stream lands beside it under
+# .tmp/two-brains/ (gitignored). Sessions are persisted on purpose: the
+# codex rollout under ~/.codex/sessions is the evidence.
+set -euo pipefail
+
+ROLE="${1:-}"; BRIEF="${2:-}"
+[[ -n "$ROLE" && -n "$BRIEF" ]] || { sed -n 2,9p "$0" | sed 's/^# \{0,1\}//'; exit 64; }
+shift 2
+
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
+CD="$REPO"; EFFORT="xhigh"; MODEL="gpt-6-astra"; TAG=""; RESUME=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --resume) RESUME="$2"; shift 2;;
+    --cd) CD="$2"; shift 2;;
+    --effort) EFFORT="$2"; shift 2;;
+    --model) MODEL="$2"; shift 2;;
+    --tag) TAG="$2"; shift 2;;
+    *) echo "astra: unknown flag $1" >&2; exit 64;;
+  esac
+done
+
+case "$ROLE" in
+  check) PREAMBLE="ROLE: check. You are Astra, co-orchestrator of HoldSpeak (docs/internal/TWO-BRAINS.md §3, AGENTS.md §Checks). Muad'Dib authored the artifact(s) named below and asks: what did I miss, what would you not ratify, and why, with evidence (path:line, a shot, a DB row)? And: could the owner, tired, on a Tuesday, do the thing? Read the artifacts by path; do not summarize a summary. Answer in exactly the check report shape (VERDICT / FINDINGS / CONDITIONS / MISSED / TUESDAY / UNKNOWN). Change nothing in the tree.";;
+  lane) PREAMBLE="ROLE: lane. You are Astra, owner of the lane described below (docs/internal/TWO-BRAINS.md §4, §7; AGENTS.md). Orchestrate down to gpt-5.6-luna at xhigh via spawn_agent; verify on glass and by the tests the brief names; commit through the gate in the worktree named; report in the lane report shape (LANE / OUTCOME / PROOF / LEDGER / AMENDMENTS / UNKNOWN). Never work in the main checkout.";;
+  counsel) PREAMBLE="ROLE: counsel on built. You are Astra (docs/internal/TWO-BRAINS.md §4). A lane Muad'Dib owns is built; review the PR, the shots and the evidence named below before merge. Answer in the check report shape. Change nothing in the tree.";;
+  ask) PREAMBLE="ROLE: ask. You are Astra, co-orchestrator of HoldSpeak (docs/internal/TWO-BRAINS.md). Answer the question below tersely, with evidence where a claim rests on the tree. Change nothing unless the question asks you to.";;
+  *) echo "astra: role must be check|lane|counsel|ask" >&2; exit 64;;
+esac
+
+if [[ "$BRIEF" == "-" ]]; then BODY="$(cat)"; else BODY="$(cat "$BRIEF")"; fi
+TS="$(date +%Y%m%d-%H%M%S)"
+OUT="$REPO/.tmp/two-brains/$TS-$ROLE${TAG:+-$TAG}"
+mkdir -p "$OUT"
+printf '%s\n\n%s\n' "$PREAMBLE" "$BODY" > "$OUT/brief.md"
+
+# `--yolo` is the undocumented alias of --dangerously-bypass-approvals-and-sandbox;
+# `exec resume` takes neither --yolo nor -C, so the resume path cd's instead.
+COMMON=(--dangerously-bypass-approvals-and-sandbox --skip-git-repo-check -c "model_reasoning_effort=\"$EFFORT\"" --json -o "$OUT/last.md")
+if [[ -n "$RESUME" ]]; then
+  cd "$CD"
+  CMD=(codex exec resume "$RESUME" "${COMMON[@]}" -)
+else
+  CMD=(codex exec -m "$MODEL" -C "$CD" "${COMMON[@]}" -)
+fi
+
+set +e
+"${CMD[@]}" < "$OUT/brief.md" > "$OUT/events.jsonl" 2> "$OUT/stderr.log"
+RC=$?
+set -e
+
+SID="$(grep -o '"thread_id":"[^"]*"' "$OUT/events.jsonl" | head -1 | cut -d'"' -f4)"
+[[ -n "$SID" ]] || SID="$(grep -o 'session id: [0-9a-f-]*' "$OUT/stderr.log" | head -1 | awk '{print $3}')"
+printf '%s\n' "$SID" > "$OUT/session-id"
+echo "astra: role=$ROLE model=$MODEL effort=$EFFORT rc=$RC"
+echo "astra: session=$SID"
+echo "astra: report=$OUT/last.md"
+exit $RC
