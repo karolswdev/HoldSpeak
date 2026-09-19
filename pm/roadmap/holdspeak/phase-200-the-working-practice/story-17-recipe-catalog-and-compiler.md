@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 200
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-200-06, HS-200-10, HS-200-11, HS-200-13
 - **Unblocks:** HS-200-18, HS-200-19, HS-200-21, HS-200-24, HS-200-33, HS-200-40
 - **Owner:** unassigned
@@ -23,11 +23,11 @@ Out: A general workflow language or arbitrary graph executor.
 
 ## Acceptance criteria
 
-- [ ] Each recipe declares input schema, source requirements, output, execution owner, effects, and supported triggers.
-- [ ] Compilation binds qualified refs, source scope, route policy, limits, and acceptance criteria.
-- [ ] Missing adapters and unavailable prerequisites produce typed gaps.
-- [ ] A manual run and later scheduled run can share the same recipe definition.
-- [ ] The catalog is discoverable through supported Web and MCP paths without widening the ordinary Thread palette.
+- [x] Each recipe declares input schema, source requirements, output, execution owner, effects, and supported triggers.
+- [x] Compilation binds qualified refs, source scope, route policy, limits, and acceptance criteria.
+- [x] Missing adapters and unavailable prerequisites produce typed gaps.
+- [x] A manual run and later scheduled run can share the same recipe definition.
+- [x] The catalog is discoverable through supported Web and MCP paths without widening the ordinary Thread palette.
 
 ## Test plan
 

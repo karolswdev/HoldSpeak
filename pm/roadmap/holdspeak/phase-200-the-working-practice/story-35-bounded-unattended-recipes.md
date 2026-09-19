@@ -17,7 +17,7 @@ Automatic execution should begin with tasks whose scope, output, and limits are 
 
 Enable two bounded recipe classes using the reviewed contracts: preparation and selected change analysis or verification.
 
-Implementation seams: Existing preparation/Steward services; AssignmentService; scheduler owners; Project result projection.
+Implementation seams: the execution owners HS-200-17's descriptors declare by qualified ref (`PreparationBriefService`, the decision/follow-through services, `ProjectUpdateService` — `holdspeak/services/recipe_catalog.py:34-43`); AssignmentService; the Workbench cron clock and the connector-watch/heartbeat chain; Project result projection.
 
 Out: Automatic reviewer nudges, issue writes, publication, or unrestricted agent crews as new Phase 200 defaults.
 
@@ -38,6 +38,8 @@ Update the affected public procedure with implemented behavior in the same PR.
 Retain actual output in this story's evidence file when it ships.
 
 ## Notes / open questions
+
+**Amended 2026-09-18 (HS-200-47..53 cluster).** The seam line said "Existing preparation/Steward services" and "scheduler owners". The Steward is a drainer, not a scheduler or an executor (`holdspeak/workbench_conductor.py:630`), and the executors are the three services the recipe catalog names by qualified ref. The seams are corrected to those. This story's two enabled recipes reach their executors through HS-200-50 and return their results through HS-200-51, both reached transitively via HS-200-33. The acceptance criteria are unchanged.
 
 This story targets [G4](DELIVERY.md#release-gates).
 The [technical contracts](CONTRACTS.md) and [acceptance protocol](ACCEPTANCE.md) define the shared invariants.

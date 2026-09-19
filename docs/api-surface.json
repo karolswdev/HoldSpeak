@@ -582,6 +582,32 @@
       ]
     },
     {
+      "path": "/api/automations/practice-recipes",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.automations",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/automations/practice-recipes/{recipe_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.automations",
+      "consumers": []
+    },
+    {
+      "path": "/api/automations/practice-recipes/{recipe_id}/plan",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.automations",
+      "consumers": []
+    },
+    {
       "path": "/api/automations/presets",
       "methods": [
         "GET"
