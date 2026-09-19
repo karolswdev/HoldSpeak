@@ -15,25 +15,10 @@ import { useCoreWings } from "./core-hooks";
 import { useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { renderHeroSlot } from "./core-layout";
 import {
-  WINGS, clockTime, download, needsIntelligence, type Receipt, type DetailView,
+  WINGS, clockTime, download, needsIntelligence, meetingsHeadline,
+  type Receipt, type DetailView,
   MeetingDetail, ImportSection, CatalogRail, DoorSection,
 } from "./history";
-
-/** HS-170-04 — the display headline: `N meeting(s) need intelligence` (accent)
- *  or `Nothing needs you` (muted) or `No meetings yet` when empty. */
-function meetingsHeadline(
-  meetingRows: Record<string, unknown>[],
-  loading: boolean,
-): { text: string; accent: boolean } {
-  if (loading) return { text: "", accent: false };
-  if (meetingRows.length === 0) return { text: "No meetings yet", accent: false };
-  const offWithWords = meetingRows.filter(needsIntelligence).length;
-  if (offWithWords > 0) {
-    const noun = offWithWords === 1 ? "meeting needs" : "meetings need";
-    return { text: `${offWithWords} ${noun} intelligence`, accent: true };
-  }
-  return { text: "Nothing needs you", accent: false };
-}
 
 export function HistoryCore({ hero, scope }: CoreProps) {
   const requestedMeetingScope =

@@ -14,6 +14,8 @@ import { apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { intelBadge } from "./intelBadge";
+import { meetingPathBlocker } from "./meetingPathBlocker";
+import { getAssignmentSummary, type AssignmentSummary } from "../../pages/cores/assignmentExperience";
 import { useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { labelFor, supportsDoorVerb, commandForDoorVerb } from "./doorVerbs";
 import {
@@ -289,8 +291,20 @@ function whySeverityTone(severity: string): string {
  *  coverage; an empty PARTIAL result names the coverage instead.
  *  HS-200-15 (verdict): the display line is the TRUE total; the Project
  *  clause is withheld when there is exactly one Project (`3 need you`). */
-export function headlineFor(count: number, projectCount: number, complete = true): string {
-  if (count <= 0) return complete ? "Nothing needs you" : "Coverage incomplete";
+export function headlineFor(
+  count: number,
+  projectCount: number,
+  complete = true,
+  pending = 0,
+): string {
+  // HS-201-01: `pending` is what needs the owner but is not an attention
+  // row -- the meeting-path blocker and every FAILED meeting on the face.
+  // The all-clear is never spoken over one (audits/face-walk-opus.md
+  // defect 8: `Nothing needs you` above a FAILED meeting).
+  if (count <= 0) {
+    if (pending > 0) return String(pending) + " need you";
+    return complete ? "Nothing needs you" : "Coverage incomplete";
+  }
   const n = String(count);
   if (projectCount > 1) {
     return n + " need you across " + String(projectCount) + " projects";
@@ -433,6 +447,15 @@ function Arrival() {
   // ── meetings ──
   const meetings = useDesk((s) => s.items.meeting);
 
+  // ── the meeting-path blocker (HS-201-01) ──
+  // One read of the assignment roster. A failed read leaves the row
+  // withheld: an unknown is never drawn as a blocker.
+  const [assignments, setAssignments] = useState<AssignmentSummary | null>(null);
+  useEffect(() => {
+    void getAssignmentSummary().then(setAssignments).catch(() => undefined);
+  }, []);
+  const blocker = useMemo(() => meetingPathBlocker(assignments), [assignments]);
+
   // HS-200-42 (counsel N1): WHO will execute the queue. The `runtime_queue`
   // frame (the same one the ambient HUD chip reads) now carries the hub
   // drainer's state, so "queued with nothing to run it" is a durable fact on
@@ -524,8 +547,15 @@ function Arrival() {
     () => readCoverage(needsYou?.coverage, needsYou?.complete, needsYouUnread),
     [needsYou, needsYouUnread],
   );
-  const headline = headlineFor(count, projectCount, coverage.complete);
-  const headlineAccent = count > 0;
+  // HS-201-01: what needs the owner but is not an attention row -- the
+  // meeting-path blocker and every FAILED meeting. `Nothing needs you`
+  // is never spoken over one (audits/face-walk-opus.md defect 8).
+  const failedMeetings = meetings.filter(
+    (m) => intelBadge(m.intelStatus) === "FAILED",
+  ).length;
+  const pending = (blocker ? 1 : 0) + failedMeetings;
+  const headline = headlineFor(count, projectCount, coverage.complete, pending);
+  const headlineAccent = count > 0 || pending > 0;
   const mutedCount = mutedItems.length > 0 ? mutedItems.length : 0;
   // HS-200-15 (D1): the head states coverage only when it is COMPLETE;
   // an incomplete read is stated by the COVERAGE section, once.
@@ -816,6 +846,34 @@ function Arrival() {
           </p>
         ) : null}
       </div>
+
+      {/* ── The one thing the meeting path needs (HS-201-01) ──
+          ONE row, ONE library Button, and it is gone the moment an
+          engine is assigned to the summary capability. */}
+      {blocker ? (
+        <div data-testid="arrival-blocker">
+          <SurfaceSection label="SETUP">
+            <SurfaceLedger count={null} cols="room">
+              <SurfaceLedgerRow
+                primary={blocker.label}
+                trailing={
+                  <Button
+                    variant="primary"
+                    dense
+                    onClick={() => openSurfaceOr("open-concierge", "/models")}
+                    data-testid="arrival-blocker-verb"
+                  >
+                    {blocker.verb}
+                  </Button>
+                }
+                expands={false}
+                wrap
+                data-testid="arrival-blocker-row"
+              />
+            </SurfaceLedger>
+          </SurfaceSection>
+        </div>
+      ) : null}
 
       {/* ── Week Strip (HS-175-02) ── */}
       {week && week.has_calendar && week.total > 0 ? (

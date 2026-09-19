@@ -29,12 +29,14 @@ export function displayState(value: unknown): string {
     recoverable: "Recovery available",
     recording: "Recording",
     finalized: "Saved",
-    error: "Intelligence failed",
-    partial: "Intelligence incomplete",
-    skipped: "Intelligence skipped",
-    queued: "Intelligence queued",
-    running: "Intelligence running",
-    ready: "Intelligence ready",
+    // HS-201-06 (Constitution tenet 4, ASD-STE100): the thing the user
+    // asked for is a summary; "intelligence" is the wire's word for it.
+    error: "Summary failed",
+    partial: "Summary incomplete",
+    skipped: "Summary skipped",
+    queued: "Summary queued",
+    running: "Summary running",
+    ready: "Summary ready",
   };
   return (
     known[state] ||
@@ -45,8 +47,8 @@ export function displayState(value: unknown): string {
 }
 
 /* HS-111-03 — the catalog's state token: axis-named, tone as color on
-   the words (never a shuffle, never a pill). "Intelligence", never
-   the banned abbreviation (HS-100-05 vocabulary guard). The axis word
+   the words (never a shuffle, never a pill). "Summary" since HS-201-06;
+   never the banned abbreviation (HS-100-05 vocabulary guard). The axis word
    rides its own span so the narrow rail can fold it away without
    losing the state. */
 export type StateToken = { axis?: string; label: string; tone?: "warn" | "danger" | "success" };
@@ -82,7 +84,9 @@ export function stateToken(row: Record<string, unknown>): StateToken {
     typeof intelValue === "object" && intelValue !== null
       ? String((intelValue as Record<string, unknown>).state ?? "")
       : String(intelValue ?? "");
-  const axis = "INTELLIGENCE";
+  // HS-201-06: the axis is the SUMMARY (audit row 4: `INTELLIGENCE
+  // FAILED` on the meeting record said nothing a stranger could read).
+  const axis = "SUMMARY";
   const known: Record<string, StateToken> = {
     disabled: { axis, label: "OFF" },
     skipped: { axis, label: "SKIPPED", tone: "warn" },
@@ -181,6 +185,35 @@ export function needsIntelligence(row: Record<string, unknown>): boolean {
   const token = stateToken(row);
   if (token.label !== "OFF") return false;
   return row.transcriptWords != null && Number(row.transcriptWords) > 0;
+}
+
+/** HS-201-01 — true when the meeting's state token names a failure:
+ *  FAILED, CAPTURE FAILED, IMPORT FAILED. A failed meeting needs the
+ *  owner, so no headline may speak the all-clear over it. */
+export function meetingFailed(row: Record<string, unknown>): boolean {
+  return stateToken(row).label.endsWith("FAILED");
+}
+
+/** HS-170-04 — the display headline: `N meeting(s) need intelligence` (accent)
+ *  or `Nothing needs you` (muted) or `No meetings yet` when empty.
+ *  HS-201-01: a FAILED row is named instead of the all-clear. */
+export function meetingsHeadline(
+  meetingRows: Record<string, unknown>[],
+  loading: boolean,
+): { text: string; accent: boolean } {
+  if (loading) return { text: "", accent: false };
+  if (meetingRows.length === 0) return { text: "No meetings yet", accent: false };
+  const offWithWords = meetingRows.filter(needsIntelligence).length;
+  if (offWithWords > 0) {
+    const noun = offWithWords === 1 ? "meeting needs" : "meetings need";
+    return { text: `${offWithWords} ${noun} intelligence`, accent: true };
+  }
+  const failed = meetingRows.filter(meetingFailed).length;
+  if (failed > 0) {
+    const noun = failed === 1 ? "meeting failed" : "meetings failed";
+    return { text: `${failed} ${noun}`, accent: true };
+  }
+  return { text: "Nothing needs you", accent: false };
 }
 
 /** HS-170-04 — the face's meeting state for list rows: label + verb.

@@ -63,7 +63,16 @@ export function egressBadge(setup: SetupStatus | null): EgressBadge {
       title: `Last receipted egress: ${t.last_egress.receipt}`,
     };
   }
-  if (t.actuators_enabled || (offLoopback && !t.auth_token_set)) {
+  // HS-201-01: the chip and the Trust window state the same thing. The
+  // Trust window reads the DESTINATIONS (`components/TrustWindow.tsx:59`,
+  // `:79-81`), so `actuators_enabled` alone -- a permission with nothing
+  // switched on to use it -- must not read as reach. Zero enabled
+  // destinations = this device, on both faces.
+  const enabledDestinations = (t.destinations ?? []).filter((d) => d.enabled);
+  if (
+    enabledDestinations.length > 0 &&
+    (t.actuators_enabled || (offLoopback && !t.auth_token_set))
+  ) {
     return {
       scope: "mixed",
       text: "→ External reach enabled",

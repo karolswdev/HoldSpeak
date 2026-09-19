@@ -59,7 +59,7 @@ over claim). Faces obey UX-CANON. Orchestration: TWO-BRAINS.md.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-201-01 | The desk names the one thing it needs | backlog | [story-01-the-desk-names-the-one-thing-it-needs](./story-01-the-desk-names-the-one-thing-it-needs.md) | - |
+| HS-201-01 | The desk names the one thing it needs | done | [story-01-the-desk-names-the-one-thing-it-needs](./story-01-the-desk-names-the-one-thing-it-needs.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-201-02 | Record works with no summary model | backlog | [story-02-record-works-with-no-summary-model](./story-02-record-works-with-no-summary-model.md) | - |
 | HS-201-03 | The host is disclosed before the run and truthful after | backlog | [story-03-the-host-is-disclosed-before-the-run-and-truthful-after](./story-03-the-host-is-disclosed-before-the-run-and-truthful-after.md) | - |
 | HS-201-04 | Ask for the summary and find it again | backlog | [story-04-ask-for-the-summary-and-find-it-again](./story-04-ask-for-the-summary-and-find-it-again.md) | - |
