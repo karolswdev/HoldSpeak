@@ -1055,10 +1055,12 @@ wanted on day one.
 
 ### AI. Phase 200 G0 remainders (parked 2026-09-06 from HS-200-05's proof)
 
+*Reconciled 2026-09-19 when HS-200-05 closed.* The owner ruled "all walks may be considered as passed", which closes the STORY. It does not close gaps 1-3: each is a code defect found by reading, not a walk beat, and the ruling accepts unwalked physical legs rather than repairing the journal/receipt link, the dropped target profile, or the mislabelled `failed`/`uncertain` outcome. They stay open and still want a destination. The walk question below was already retired on 2026-09-08 and is closed.
+
 - **HS-200-05 gap 1:** the dictation journal row carries no delivery outcome; the delivery receipt lives in the kernel (desktop_typing.py's operation_id / state / target_ref) and nothing links the two. Closing it is a schema move (an operation_id column) after story 02 baked schema 76 into the runtime identity. Destination: a G1 story or a G0 addendum on his word.
 - **HS-200-05 gap 2:** a pipeline-off hotkey row drops the target profile (`_journal_passthrough` in dictation_runner.py passes none; target detection runs only in the enabled branch).
 - **HS-200-05 gap 3:** desktop_typing.py classifies an adapter exception as `failed`, not `uncertain`; the route above parks the claim pending so nothing double types, but the kernel receipt misnames a genuinely unknown outcome.
-- **HS-200-05 walk question:** should an uncertain delivery stay "never automatic" or gain a one-tap `Send again`?
+- **HS-200-05 walk question — RETIRED 2026-09-08 on the owner's word** ("I seriously don't give a shit"): an uncertain delivery stays never-automatic; the words wait in the well. Kept here as the record of the ruling, not as an open item.
 - **HS-200-08 follow-up (the drafter's fallback receipt on the face):** the update face's FALLBACK_REASON_LABELS (web/src/features/project-room/update/model.ts) knows model_unavailable · no_output · unparseable_output but not `route_unresolved`, and does not yet show the row's `fallback_receipt` token (`DETERMINISTIC · ROUTE UNRESOLVED`). One web edit; story 11's face touch.
 - **HS-200-04 note (from the census fence):** holdspeak/services/route_probe.py wraps `preview_route` and `adoption.admit` in a bare `except Exception`; the refusal is always named (the class name as a backstop) but a genuine resolver bug reaches the face as UNREACHABLE with a Python class name for a reason. Narrow to the resolver's typed errors.
 - **HS-200-03 residual:** tests/integration/test_cadence_routes.py's fixture races the database singleton (reset then get as two steps); build the Database directly in the fixture.
