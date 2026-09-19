@@ -1,0 +1,526 @@
+{
+  "story": "HS-200-16",
+  "what": "the two-working-day daily loop, machine half",
+  "viewport_width": 1440,
+  "generated_at": "2026-09-18T18:17:10",
+  "attended_by_owner": false,
+  "legs": {
+    "fixture_proven": "everything in `stations`, `facts` and `shots`: a real hub, real faces, controlled adapters, no live model",
+    "live_model": "NOT RUN. R16-1 keeps the live-model leg out of this rig; no measured semantic result below comes from a real model.",
+    "owner_usefulness_judgment": "DOES NOT EXIST. The attended leg (AC3: the user completes the path through normal controls without implementation guidance) is owed by the owner and is not simulated here."
+  },
+  "identity": {
+    "backend_version": "0.4.0",
+    "backend_revision": "ba48baf3388fd4ff80026f662bbb8538fd524572",
+    "frontend_build": "0fe67be374a1cd63",
+    "schema_version_loaded": 79,
+    "config_revision": "4f4ed4bc5f9940ac",
+    "repair": [],
+    "process_start_reported": "2026-09-18T18:17:15.746380",
+    "database_id_reported": "1c279fdcebbfe0f2",
+    "capture_caveat": "process_start_reported and database_id_reported come from a capture cached once per OS PROCESS (holdspeak/runtime_identity.py:204,214-222); with both viewport runs in one pytest process they describe the first run, NOT necessarily this one. The database this run actually used is database_id_this_run below, taken from the uncached `database_identity()`.",
+    "database_id_this_run": "1c279fdcebbfe0f2",
+    "day2_database_id_this_run": "1c279fdcebbfe0f2"
+  },
+  "model": {
+    "brief_route_state": "ready",
+    "brief_model": "QWEN3 35B",
+    "brief_host": "127.0.0.1",
+    "brief_boundary": "private_network",
+    "brief_adapter": "controlled OpenAI-compatible probe on 127.0.0.1 (R16-1)",
+    "meeting_extractor_provider": "ScriptedIntel",
+    "meeting_extractor_model": "test-model",
+    "live_model": false,
+    "brief_generator": "model:ia_1c9c0dc120df486baf156d507e5f3843",
+    "brief_generator_model": "QWEN3 35B",
+    "brief_generator_host": "127.0.0.1"
+  },
+  "day_boundary": {
+    "seam": "hub restart onto the same HOME and the same database file",
+    "same_seam_as": "tests/e2e/test_hs200_continuity_glass.py::TestContinuityGlass::test_chain_survives_a_hub_restart",
+    "earlier_day": "the day-1 meeting is imported through the product's own `started_at_ms` control; the faces date its records from the meeting (holdspeak/services/recall_service.py:249-251)",
+    "clock_mutation": "none -- the product exposes no clock-injection seam",
+    "day1_meeting_started_at": "2026-09-17T11:00:00"
+  },
+  "totals": {
+    "stations": 8,
+    "active_seconds": 24.55,
+    "active_minutes": 0.41,
+    "corrections": 1,
+    "abandoned_paths": 0
+  },
+  "stations": [
+    {
+      "station": "day1-brief",
+      "day": 1,
+      "what": "prepare and keep the preparation brief",
+      "corrections": 0,
+      "abandoned": 0,
+      "active_seconds": 3.34,
+      "coverage": {
+        "expected": 5,
+        "available": 4,
+        "by_state": {
+          "available": 4,
+          "failed": 1
+        },
+        "complete": false,
+        "items": 2,
+        "computed_at": "2026-09-18T18:17:19.220995"
+      }
+    },
+    {
+      "station": "day1-meeting",
+      "day": 1,
+      "what": "import, link and read the day-1 meeting",
+      "corrections": 0,
+      "abandoned": 0,
+      "active_seconds": 6.76,
+      "coverage": {
+        "expected": 6,
+        "available": 5,
+        "by_state": {
+          "available": 5,
+          "failed": 1
+        },
+        "complete": false,
+        "items": 4,
+        "computed_at": "2026-09-18T18:17:26.172441"
+      }
+    },
+    {
+      "station": "day1-review",
+      "day": 1,
+      "what": "confirm one decision and one commitment",
+      "corrections": 0,
+      "abandoned": 0,
+      "active_seconds": 2.65,
+      "coverage": {
+        "expected": 6,
+        "available": 5,
+        "by_state": {
+          "available": 5,
+          "failed": 1
+        },
+        "complete": false,
+        "items": 3,
+        "computed_at": "2026-09-18T18:17:28.817290"
+      }
+    },
+    {
+      "station": "day1-attention",
+      "day": 1,
+      "what": "the commitment is a real attention row",
+      "corrections": 0,
+      "abandoned": 0,
+      "active_seconds": 1.61,
+      "coverage": {
+        "expected": 6,
+        "available": 5,
+        "by_state": {
+          "available": 5,
+          "failed": 1
+        },
+        "complete": false,
+        "items": 3,
+        "computed_at": "2026-09-18T18:17:30.620127"
+      }
+    },
+    {
+      "station": "day2-recall",
+      "day": 2,
+      "what": "recall yesterday's decision and commitment",
+      "corrections": 0,
+      "abandoned": 0,
+      "active_seconds": 2.63,
+      "coverage": {
+        "expected": 6,
+        "available": 5,
+        "by_state": {
+          "available": 5,
+          "failed": 1
+        },
+        "complete": false,
+        "items": 3,
+        "computed_at": "2026-09-18T18:17:36.019756"
+      }
+    },
+    {
+      "station": "day2-people",
+      "day": 2,
+      "what": "the person still carries yesterday's commitment",
+      "corrections": 0,
+      "abandoned": 0,
+      "active_seconds": 2.08,
+      "coverage": {
+        "expected": 6,
+        "available": 5,
+        "by_state": {
+          "available": 5,
+          "failed": 1
+        },
+        "complete": false,
+        "items": 3,
+        "computed_at": "2026-09-18T18:17:38.415457"
+      }
+    },
+    {
+      "station": "day2-complete",
+      "day": 2,
+      "what": "complete the commitment by explicit acts",
+      "corrections": 1,
+      "abandoned": 0,
+      "correction_notes": [
+        "the commitment arrived with no date"
+      ],
+      "active_seconds": 2.78,
+      "coverage": {
+        "expected": 6,
+        "available": 5,
+        "by_state": {
+          "available": 5,
+          "failed": 1
+        },
+        "complete": false,
+        "items": 2,
+        "computed_at": "2026-09-18T18:17:41.377760"
+      }
+    },
+    {
+      "station": "day2-carry",
+      "day": 2,
+      "what": "day 2's preparation carries day 1's decision",
+      "corrections": 0,
+      "abandoned": 0,
+      "active_seconds": 2.7,
+      "coverage": {
+        "expected": 6,
+        "available": 5,
+        "by_state": {
+          "available": 5,
+          "failed": 1
+        },
+        "complete": false,
+        "items": 2,
+        "computed_at": "2026-09-18T18:17:44.269395"
+      }
+    }
+  ],
+  "facts": [
+    {
+      "face": "day1-identity",
+      "field": "database_identity_discriminates",
+      "expected": "a different file yields a different identity",
+      "observed": "different",
+      "verdict": "MATCH",
+      "why": "an identity that cannot tell two files apart proves nothing about which file was opened"
+    },
+    {
+      "face": "day1-brief",
+      "field": "coverage_chip",
+      "expected": "COVERAGE \u00b7 1 OF 2",
+      "observed": "COVERAGE \u00b7 1 OF 2",
+      "verdict": "MATCH",
+      "why": "the Jira Watch cannot check; the face says so before the run"
+    },
+    {
+      "face": "day1-brief",
+      "field": "lifecycle",
+      "expected": "kept",
+      "observed": "kept",
+      "verdict": "MATCH",
+      "why": "the brief is kept work, not a draft that evaporates"
+    },
+    {
+      "face": "day1-meeting",
+      "field": "meeting_started_at",
+      "expected": "2026-09-17",
+      "observed": "2026-09-17",
+      "verdict": "MATCH",
+      "why": "day 1 is a real earlier calendar day, set through the import control"
+    },
+    {
+      "face": "day1-room",
+      "field": "proposal_caption_date",
+      "expected": "from Architecture review 09-17",
+      "observed": "from Architecture review 09-17 | from Architecture review 09-17",
+      "verdict": "MATCH",
+      "why": "a proposal is dated by its meeting, not by the row's write time"
+    },
+    {
+      "face": "day1-room",
+      "field": "singular_day_positive",
+      "expected": "a one-day-old row renders `\u2026 \u00b7 1 DAY`",
+      "observed": "WAITING ON YOUR REVIEW \u00b7 1 DAY",
+      "verdict": "MATCH",
+      "why": "the fence must see the singular, not just miss the plural"
+    },
+    {
+      "face": "day1-room",
+      "field": "singular_day",
+      "expected": "no `1 DAYS` / `1 HOURS` anywhere on the Room",
+      "observed": "(none)",
+      "verdict": "MATCH",
+      "why": "one day is a day; the arrival already said so"
+    },
+    {
+      "face": "day1-room",
+      "field": "target_chip_singular",
+      "expected": "TARGET <date> \u00b7 1 DAY",
+      "observed": "TARGET SEP 19 \u00b7 1 DAY",
+      "verdict": "MATCH",
+      "why": "the target chip counts one day in the singular"
+    },
+    {
+      "face": "day1-room",
+      "field": "filled_primaries",
+      "expected": "1 (UX-CANON A.2)",
+      "observed": "3: Draft update, Confirm, Confirm",
+      "verdict": "FINDING",
+      "why": "measured on the Room while two proposals are pending"
+    },
+    {
+      "face": "day1-review",
+      "field": "headline",
+      "expected": "2 to review",
+      "observed": "2 to review",
+      "verdict": "MATCH",
+      "why": "the two proposals the extractors produced"
+    },
+    {
+      "face": "day1-attention",
+      "field": "commitment_row",
+      "expected": "1",
+      "observed": "1",
+      "verdict": "MATCH",
+      "why": "yesterday's commitment is attention, not a buried row"
+    },
+    {
+      "face": "day1-attention",
+      "field": "coverage_complete",
+      "expected": "False",
+      "observed": "False",
+      "verdict": "MATCH",
+      "why": "one source cannot check; an empty partial is never an all-clear (C4)"
+    },
+    {
+      "face": "day-boundary",
+      "field": "same_database_file",
+      "expected": "1c279fdcebbfe0f2",
+      "observed": "1c279fdcebbfe0f2",
+      "verdict": "MATCH",
+      "why": "device+inode of the file hub #2 opened, read fresh (runtime_identity.py:96-112) -- a replaced file would read as a different database"
+    },
+    {
+      "face": "day-boundary",
+      "field": "same_data_behaviourally",
+      "expected": "hub #2 returns day 1's decision and commitment",
+      "observed": "asserted at day2-recall (current_decision, dec_token, owed_rows)",
+      "verdict": "DATA",
+      "why": "the load-bearing evidence for the boundary: records written before the restart come back after it"
+    },
+    {
+      "face": "day-boundary",
+      "field": "hub_restarted",
+      "expected": "a second hub on a new port (day 1 was http://127.0.0.1:55241)",
+      "observed": "http://127.0.0.1:55268",
+      "verdict": "MATCH",
+      "why": "the day boundary is a real hub restart; the OS process is shared by the rig, so process_start does not move"
+    },
+    {
+      "face": "day2-recall",
+      "field": "current_decision",
+      "expected": "Rollback runbook is rehearsed on the read replica first",
+      "observed": "Rollback runbook is rehearsed on the read replica first",
+      "verdict": "MATCH",
+      "why": "AC1: recall returns the current decision first"
+    },
+    {
+      "face": "day2-recall",
+      "field": "rationale",
+      "expected": "The replica absorbs the first cut-over without touching writes",
+      "observed": "The replica absorbs the first cut-over without touching writes",
+      "verdict": "MATCH",
+      "why": "AC1: the rationale travels with the decision"
+    },
+    {
+      "face": "day2-recall",
+      "field": "dec_token",
+      "expected": "DEC 09-17",
+      "observed": "DEC 09-17",
+      "verdict": "MATCH",
+      "why": "the decision is dated to DAY 1, proving the boundary was crossed"
+    },
+    {
+      "face": "day2-recall",
+      "field": "source_token",
+      "expected": "MTG 09-17 \u00b7 \u2026",
+      "observed": "MTG 09-17 \u00b7 11:18",
+      "verdict": "MATCH",
+      "why": "AC1: the original source is still reachable on day 2"
+    },
+    {
+      "face": "day2-recall",
+      "field": "owed_rows",
+      "expected": "1",
+      "observed": "1",
+      "verdict": "MATCH",
+      "why": "yesterday's commitment is still owed today"
+    },
+    {
+      "face": "day2-people",
+      "field": "person_named",
+      "expected": "Marek Kubiak",
+      "observed": "Marek Kubiak",
+      "verdict": "MATCH",
+      "why": "AC: People preparation reflects the commitment's owner"
+    },
+    {
+      "face": "day2-people",
+      "field": "open_commitment",
+      "expected": "1 OPEN COMMITMENT",
+      "observed": "1 OPEN COMMITMENT",
+      "verdict": "MATCH",
+      "why": "the obligation made yesterday is on the person today"
+    },
+    {
+      "face": "day2-people",
+      "field": "receipt_rows",
+      "expected": "rows a reader can tell apart",
+      "observed": "10 rows, 2 distinct labels (READ, READ MEETINGS), 0 carrying any token",
+      "verdict": "DATA",
+      "why": "measured on the Room's RECEIPTS ledger"
+    },
+    {
+      "face": "day2-complete",
+      "field": "commitment_status",
+      "expected": "completed",
+      "observed": "(gone from the board)",
+      "verdict": "MATCH",
+      "why": "completion is an explicit act with a receipt, never a side effect"
+    },
+    {
+      "face": "day2-carry",
+      "field": "people_after_completion",
+      "expected": "no OPEN COMMITMENT for the completed work",
+      "observed": "absent",
+      "verdict": "MATCH",
+      "why": "the completed commitment stops being owed on the People section"
+    },
+    {
+      "face": "day2-carry",
+      "field": "carried_forward_names_the_decision",
+      "expected": "Rollback runbook is rehearsed on the read replica first",
+      "observed": "Rollback runbook is rehearsed on the read replica first",
+      "verdict": "MATCH",
+      "why": "day 2's preparation carries yesterday's decision: the loop closed"
+    },
+    {
+      "face": "day2-carry",
+      "field": "carried_forward_caption",
+      "expected": "CARRIED FORWARD 4",
+      "observed": "CARRIED FORWARD 4",
+      "verdict": "MATCH",
+      "why": "2 decision records + 2 commitments from 2 confirmations"
+    },
+    {
+      "face": "day2-carry",
+      "field": "carried_commitment_due",
+      "expected": "DUE 09-20",
+      "observed": "DUE 09-20",
+      "verdict": "MATCH",
+      "why": "a due DATE is drawn as a day, the way recall draws it"
+    },
+    {
+      "face": "day2-carry",
+      "field": "carried_forward_rows",
+      "expected": "2 confirmed outcomes",
+      "observed": "CMT\nDraft the rollback runbook\nOpen / DEC\nRollback runbook is rehearsed on the read replica first\n\u2713\nCURRENT\nOpen / CMT\nDraft the rollback runbook\nOWNER MAREK\nDUE 09-20\nOpen / DEC\nRollback runbook is rehearsed on the read replica first\nOpen",
+      "verdict": "DATA",
+      "why": "read beside the shot: the emblems cross over (`DEC Draft the rollback runbook`, `CMT Rollback runbook is rehearsed ...`)"
+    },
+    {
+      "face": "day2-carry",
+      "field": "carried_forward_kinds",
+      "expected": "every row drawn as the kind of record it is",
+      "observed": "(no swapped row)",
+      "verdict": "MATCH",
+      "why": "a commitment drawn `DEC \u00b7 CURRENT` presents an action item as an accepted decision (ACCEPTANCE, critical defects: invented decision acceptance)"
+    }
+  ],
+  "shots": [
+    {
+      "station": "day1-brief",
+      "width": 1440,
+      "path": "day1-brief-1440.png"
+    },
+    {
+      "station": "day1-room-proposals",
+      "width": 1440,
+      "path": "day1-room-proposals-1440.png"
+    },
+    {
+      "station": "day1-review",
+      "width": 1440,
+      "path": "day1-review-1440.png"
+    },
+    {
+      "station": "day1-reviewed",
+      "width": 1440,
+      "path": "day1-reviewed-1440.png"
+    },
+    {
+      "station": "day1-attention",
+      "width": 1440,
+      "path": "day1-attention-1440.png"
+    },
+    {
+      "station": "day2-recall",
+      "width": 1440,
+      "path": "day2-recall-1440.png"
+    },
+    {
+      "station": "day2-carried",
+      "width": 1440,
+      "path": "day2-carried-1440.png"
+    },
+    {
+      "station": "day2-people-owes",
+      "width": 1440,
+      "path": "day2-people-owes-1440.png"
+    },
+    {
+      "station": "day2-mark-done",
+      "width": 1440,
+      "path": "day2-mark-done-1440.png"
+    },
+    {
+      "station": "day2-completed",
+      "width": 1440,
+      "path": "day2-completed-1440.png"
+    },
+    {
+      "station": "day2-people-clear",
+      "width": 1440,
+      "path": "day2-people-clear-1440.png"
+    },
+    {
+      "station": "day2-prepare",
+      "width": 1440,
+      "path": "day2-prepare-1440.png"
+    }
+  ],
+  "page_errors": [],
+  "surprises": [
+    "FOR THE CANVAS: with two proposals pending the Room draws 3 filled primaries at once -- `Draft update`, `Confirm`, `Confirm` (see day1-room-proposals-1440.png). UX-CANON asks for one filled primary per face. HS-200-14's Room fence never saw it because its seed had no pending proposal. Not touched: which verb keeps the fill is a design call (R16-4).",
+    "FOR THE CANVAS: the Room's RECEIPTS ledger draws 10 rows with only 2 distinct labels (`READ`, `READ MEETINGS`) and 0 of them carry any token at all -- no time, outcome or egress chip -- so a reader cannot tell one receipt from another (see day2-people-owes-1440.png). The row HAS slots for outcome, egress and time (ProjectRoomCore.tsx, ReceiptsSection ~:1145-1153); they are empty because the receipt records carry no timestamp. Not touched: what a receipt row should say is a design call (R16-4).",
+    "FOR THE OWNER TO RULE: day two's brief lists yesterday's two confirmed outcomes FOUR times -- each one appears once as a decision and once as a commitment. That is not a bug: confirming either kind deliberately records both (holdspeak/services/proposal_bridge_service.py:588-590), so the Room holds two entries per outcome and the brief lists both. Each row is now labelled truthfully (DEC / CMT), so the question left is only whether the brief should show the pair or fold it into one row. Left as built.",
+    "PRODUCT GAP, not a rig limit: no owner can choose a DETERMINISTIC brief today. `POST /api/projects/{id}/briefs/prepare` accepts `generator: \"deterministic\"` (holdspeak/services/preparation_brief_service.py:890-912) and the face never sends it (web/src/features/project-room/prepare/api.ts), so every brief prepared through the Room goes to a model route. This walk therefore proves the model path with a CONTROLLED adapter on 127.0.0.1, never a live model; the deterministic path is unreachable without a face change (R16-4) and is unproved on glass."
+  ],
+  "defects": [
+    "FOUND AND FIXED by this walk: the Room read `WAITING ON YOUR REVIEW \u00b7 1 DAYS` where the arrival read `1 DAY` for the same row. Fix: `_count_unit` in holdspeak/services/project_service.py:253-259, used by `_format_age` and by the `OVERDUE` / `REVIEW WAITING` reasons. Fence: the `day1-room` `singular_day` assertion here, which fails pre-fix with `assert '1 DAYS' not in room_text`.",
+    "FOUND AND FIXED by this walk: the Room's proposal caption `from <meeting> <MM-DD>` formatted the PROPOSAL's write time, not the meeting's start (web/src/features/project-room/ProjectRoomCore.tsx, the caption builder). A meeting reviewed the next morning was captioned with today's date while the review wing (`MTG 09-17`) and recall (`DEC 09-17`) both said the meeting's own day. Invisible on a same-day desk. Fix: holdspeak/services/project_service.py now carries `meeting_started_at` on the needs-you proposal row and the caption formats it. Fence: the `day1-room` `proposal_caption_date` assertion in this rig, which fails pre-fix with `assert 'Architecture review 09-17' in 'from Architecture review 09-18'`.",
+    "FOUND AND FIXED by this walk: the preparation brief's CARRIED FORWARD ledger drew a commitment's due DATE as a wall clock -- `2026-09-20` rendered `DUE 18:00` (web/src/features/project-room/prepare/PreparePosture.tsx called `clockToken` on a date-only value, and `new Date('2026-09-20')` is UTC midnight, so a negative-offset desk also saw the wrong day). Recall says `DUE 09-20` for the same commitment (holdspeak/services/recall_service.py:93-105). Fix: `dueDayToken` in web/src/features/project-room/prepare/model.ts. Fence: the `day2-carry` `carried_commitment_due` assertion here, which fails pre-fix with `assert ['DUE 18:00'] == ['DUE 09-20']`.",
+    "FOUND AND FIXED by this walk: the preparation brief's CARRIED FORWARD ledger drew each row as the kind of the LIST it arrived in, not the kind of the record -- the commitment read `DEC ... \u2713 CURRENT` and the decision read `CMT`. Presenting an action item as an accepted decision is ACCEPTANCE's `Invented decision acceptance` line. The kind was lost in the Room's own projection, which is where it is now carried: holdspeak/services/project_service.py `_read_room_decisions` / `_read_room_commitments` add `kind` from the confirmed proposal (the column RecallService already reads, recall_service.py:193-196), `build_manifest` (holdspeak/services/preparation_brief_service.py) carries it, and PreparePosture draws the emblem and the CURRENT chip from it. Fence: the `day2-carry` `carried_forward_kinds` assertion here, which fails pre-fix with `assert ['DEC :: Draft the rollback runbook', 'CMT :: Rollback runbook is rehearsed on the read replica first'] == []`."
+  ]
+}

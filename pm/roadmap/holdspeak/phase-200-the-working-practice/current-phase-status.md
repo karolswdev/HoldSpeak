@@ -53,7 +53,7 @@ See the [charter](README.md), [baseline](BASELINE.md), and [contracts](CONTRACTS
 | HS-200-13 | Carry decisions and commitments into the next day | done | [story-13](story-13-decision-and-commitment-continuity.md) | [evidence-story-13](./evidence-story-13.md) |
 | HS-200-14 | Make permitted People preparation useful | done | [story-14](story-14-people-preparation-boundary.md) | [evidence-story-14](./evidence-story-14.md) |
 | HS-200-15 | Present actionable attention with controlled notifications | done | [story-15](story-15-relevant-attention.md) | [evidence-story-15](./evidence-story-15.md) |
-| HS-200-16 | Prove the daily loop and open the owner pilot | backlog | [story-16](story-16-two-day-daily-loop.md) | — |
+| HS-200-16 | Prove the daily loop and open the owner pilot | in-progress | [story-16](story-16-two-day-daily-loop.md) | — |
 | HS-200-17 | Define three executable recipe contracts | backlog | [story-17](story-17-recipe-catalog-and-compiler.md) | — |
 | HS-200-18 | Turn Interview intent into a reviewable setup plan | backlog | [story-18](story-18-interview-prepared-configuration.md) | — |
 | HS-200-19 | Apply and recover multi-service recipe setup | backlog | [story-19](story-19-setup-apply-and-reconciliation.md) | — |

@@ -206,6 +206,9 @@ export type RoomNeedsYouItem = {
   ownerHint?: string;
   originalText?: string;
   meetingTitle?: string;
+  /** HS-200-16: the MEETING's start -- the caption's date is the meeting's,
+   *  never the proposal row's write time. */
+  meetingStartedAt?: string;
   createdAt?: string;
   /** HS-173: review_bottleneck kind. */
   kind?: string;
@@ -567,6 +570,7 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
             ownerHint: r.owner_hint != null ? String(r.owner_hint) : undefined,
             originalText: r.original_text != null ? String(r.original_text) : undefined,
             meetingTitle: r.meeting_title != null ? String(r.meeting_title) : undefined,
+            meetingStartedAt: r.meeting_started_at != null ? String(r.meeting_started_at) : undefined,
             createdAt: r.created_at != null ? String(r.created_at) : undefined,
             kind: r.kind != null ? String(r.kind) : undefined,
             relationshipId: r.relationship_id != null ? String(r.relationship_id) : undefined,

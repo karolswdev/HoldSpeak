@@ -43,6 +43,7 @@ import type { UpdateClaim } from "../update/model";
 import type { PrepareController } from "./usePrepareController";
 import {
   clockToken,
+  dueDayToken,
   coverageToken,
   elapsedToken,
   observedToken,
@@ -295,12 +296,23 @@ function CarriedForwardSection({ manifest, onOpenRef }: { manifest: BriefManifes
     <SurfaceSection label={countLabel("CARRIED FORWARD", rows)}>
       <SurfaceLedger count="" cols="room">
         <ul className="surface-ledger-rows" data-testid="prepare-carried">
+          {/* HS-200-16: the emblem and the lifecycle chip come from the
+              RECORD's kind, not from the list it arrived in.  Confirming an
+              action-kind proposal also writes a decision record
+              (proposal_bridge_service.py:588-590), so this list holds
+              commitments; drawing one `DEC · CURRENT` presented an action
+              item as an accepted decision.  Recall types the same two rows
+              correctly from the same column (recall_service.py:193-196). */}
           {current.map((decision) => (
             <SurfaceLedgerRow
               key={decision.ref}
-              lead={<span className="prepare-emblem" aria-hidden="true">DEC</span>}
+              lead={
+                <span className="prepare-emblem" aria-hidden="true">
+                  {decision.kind === "action" ? "CMT" : "DEC"}
+                </span>
+              }
               primary={<span className="surface-primary">{decision.text}</span>}
-              cells={<StateChip state="success" label="CURRENT" />}
+              cells={decision.kind === "action" ? null : <StateChip state="success" label="CURRENT" />}
               trailing={
                 <Button dense variant="ghost" aria-label={`Open: ${decision.text}`} onClick={() => onOpenRef(decision.ref)}>
                   Open
@@ -313,11 +325,15 @@ function CarriedForwardSection({ manifest, onOpenRef }: { manifest: BriefManifes
             />
           ))}
           {manifest.commitments.map((commitment) => {
-            const due = commitment.dueAt ? clockToken("DUE", commitment.dueAt) : null;
+            const due = commitment.dueAt ? dueDayToken("DUE", commitment.dueAt) : null;
             return (
               <SurfaceLedgerRow
                 key={commitment.ref}
-                lead={<span className="prepare-emblem" aria-hidden="true">CMT</span>}
+                lead={
+                  <span className="prepare-emblem" aria-hidden="true">
+                    {commitment.kind === "decision" ? "DEC" : "CMT"}
+                  </span>
+                }
                 primary={<span className="surface-primary">{commitment.text}</span>}
                 cells={
                   <span className="prepare-source-cells">
