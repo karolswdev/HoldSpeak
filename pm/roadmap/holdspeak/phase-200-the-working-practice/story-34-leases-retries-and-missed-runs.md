@@ -3,7 +3,7 @@
 - **Project:** holdspeak
 - **Phase:** 200
 - **Status:** backlog
-- **Depends on:** HS-200-29, HS-200-33
+- **Depends on:** HS-200-29, HS-200-33, HS-200-47
 - **Unblocks:** HS-200-35, HS-200-36, HS-200-40
 - **Owner:** unassigned
 - **Gate:** G4
@@ -17,7 +17,7 @@ Unattended work must recover without duplicate dispatch, unlimited retries, or m
 
 Implement durable claim leases, generation fencing, finite retry classification, and explicit missed/overlap policies at existing owner seams.
 
-Implementation seams: Existing scheduler owners; kernel claims/fences; assignment run links; Heartbeat notifications.
+Implementation seams: the two measured recurring owners (the Workbench cron clock and the connector-watch interval swept by the heartbeat); the duplicate-minute rejection that already exists (`duplicate_tick`, `holdspeak/kernel/schedule_delegated.py:84-86`); kernel claims/fences; assignment run links; Heartbeat notifications.
 
 Out: Blind replay after an uncertain external effect or uninterrupted-coverage claims on a sleeping hub.
 
@@ -38,6 +38,8 @@ Update the affected public procedure with implemented behavior in the same PR.
 Retain actual output in this story's evidence file when it ships.
 
 ## Notes / open questions
+
+**Amended 2026-09-18 (HS-200-47..53 cluster).** "Existing scheduler owners" read as though Cadence and the Steward were among them; neither holds a clock (`holdspeak/workbench_conductor.py:630`). The seams now name the two that fire, and the DST criterion depends on HS-200-47 — until a schedule records its zone, no DST policy can be stated, let alone enforced (`holdspeak/cron.py:45` reads a naive `datetime.now()`). The acceptance criteria are unchanged.
 
 This story targets [G4](DELIVERY.md#release-gates).
 The [technical contracts](CONTRACTS.md) and [acceptance protocol](ACCEPTANCE.md) define the shared invariants.

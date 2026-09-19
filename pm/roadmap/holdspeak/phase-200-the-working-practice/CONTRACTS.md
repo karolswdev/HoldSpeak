@@ -180,7 +180,10 @@ The design review must resolve:
 
 ## C9. Scheduling and availability
 
-Heartbeat, Cadence, Steward, and scheduled recordings retain their existing owners.
+**Amended 2026-09-18 (HS-200-47..53 cluster; on the orchestrator's instruction).** The opening sentence named Cadence and the Steward among the scheduling owners. Neither holds a clock. Cadence is a projection of open loops and the product says so in its own tick — *"Cadence projections (attention only, never schedule)"*, `holdspeak/workbench_conductor.py:630` — and the Steward drains `watch_effects` without a clock of its own. Corrected below; the rest of C9 stands unchanged, including the rule that Phase 200 introduces no second generic scheduler. This is the same false premise HS-200-47..53 corrected in stories 21, 33, 34 and 35, paid here so a canon doc does not keep contradicting the stories that cite it.
+
+Three clocks exist, and they retain their existing owners: the Workbench cron schedule ticked by `workbench_conductor` (`holdspeak/workbench_conductor.py:544`), the connector-watch interval swept by `HeartbeatService.run_sweep`, and scheduled recordings (`holdspeak/scheduled_recording_conductor.py:29`).
+Cadence projects attention and schedules nothing. The Steward drains effects and executes; it does not fire.
 A recipe binding names which owner supplies the trigger and which executor performs the work.
 A common status projection can unify their presentation.
 Phase 200 does not introduce a second generic scheduler.
