@@ -23,10 +23,39 @@ def _svc(ctx: WebContext) -> MeetingIntelService:
     ctx.meeting_intel_service = service
     return service
 
+async def _json_body(request: Request) -> dict[str, Any]:
+    try:
+        value = await request.json()
+    except Exception:
+        return {}
+    return value if isinstance(value, dict) else {}
+
 def _error(exc: Exception, action: str) -> JSONResponse:
     if isinstance(exc, NotFound): return JSONResponse({"success": False, "error": "Meeting not found"}, status_code=404)
     if isinstance(exc, (ConflictError, ValidationError)): return JSONResponse({"success": False, "error": str(exc)}, status_code=400 if isinstance(exc, ValidationError) else 409)
     return error_500(exc, log, action)
+
+def _conflict_response(service: MeetingIntelService, meeting_id: str, exc: ConflictError) -> JSONResponse:
+    """Keep the route conflict contract identical across all three verbs."""
+    context = dict(getattr(exc, "context", {}) or {})
+    planned_route = context.get("current_planned_route") or context.get("planned_route")
+    if planned_route is None:
+        try:
+            planned_route = service.get_recovery(None, meeting_id).get("planned_route")
+        except Exception:
+            planned_route = {"status": "unavailable", "reason_code": "route unavailable", "selection_hash": None, "legs": []}
+    return JSONResponse(
+        {
+            "success": False,
+            "error": str(exc),
+            "plainReason": str(exc),
+            "code": getattr(exc, "code", "conflict"),
+            "planned_route": planned_route,
+            "current_planned_route": planned_route,
+            "run_receipt": context.get("run_receipt"),
+        },
+        status_code=409,
+    )
 
 def build_intel_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
@@ -46,8 +75,13 @@ def build_intel_router(ctx: WebContext) -> APIRouter:
         except Exception as exc: return _error(exc, "Failed to process intel jobs")
     @router.post("/api/intel/retry/{meeting_id}")
     async def api_retry_intel_job(meeting_id: str, request: Request) -> Any:
-        try: return JSONResponse(_svc(ctx).retry_job(_principal(request), meeting_id))
-        except Exception as exc: return _error(exc, "Failed to retry intel job")
+        try:
+            body = await _json_body(request)
+            return JSONResponse(_svc(ctx).retry_job(_principal(request), meeting_id, expected_selection_hash=body.get("expected_selection_hash")))
+        except Exception as exc:
+            if isinstance(exc, ConflictError):
+                return _conflict_response(_svc(ctx), meeting_id, exc)
+            return _error(exc, "Failed to retry intel job")
     @router.post("/api/meetings/{meeting_id}/intelligence/run")
     async def api_run_meeting_intelligence(meeting_id: str, request: Request) -> Any:
         """HS-170-04: enqueue a fresh intelligence job for a meeting.
@@ -56,10 +90,11 @@ def build_intel_router(ctx: WebContext) -> APIRouter:
         409 with plainReason when the meeting has no transcript.
         """
         try:
-            result = _svc(ctx).run_intelligence(_principal(request), meeting_id)
+            body = await _json_body(request)
+            result = _svc(ctx).run_intelligence(_principal(request), meeting_id, expected_selection_hash=body.get("expected_selection_hash"))
             return JSONResponse(result)
         except ConflictError as exc:
-            return JSONResponse({"plainReason": str(exc)}, status_code=409)
+            return _conflict_response(_svc(ctx), meeting_id, exc)
         except Exception as exc:
             return _error(exc, "Failed to run Meeting intelligence")
 
@@ -69,8 +104,13 @@ def build_intel_router(ctx: WebContext) -> APIRouter:
         except Exception as exc: return _error(exc, "Failed to load Meeting intelligence recovery")
     @router.post("/api/meetings/{meeting_id}/intel-recovery/retry")
     async def api_retry_meeting_intel_recovery(meeting_id: str, request: Request) -> Any:
-        try: return JSONResponse(_svc(ctx).retry_recovery(_principal(request), meeting_id))
-        except Exception as exc: return _error(exc, "Failed to retry Meeting intelligence")
+        try:
+            body = await _json_body(request)
+            return JSONResponse(_svc(ctx).retry_recovery(_principal(request), meeting_id, body))
+        except Exception as exc:
+            if isinstance(exc, ConflictError):
+                return _conflict_response(_svc(ctx), meeting_id, exc)
+            return _error(exc, "Failed to retry Meeting intelligence")
     @router.post("/api/meetings/{meeting_id}/intel-recovery/skip")
     async def api_skip_meeting_intel_recovery(meeting_id: str, request: Request) -> Any:
         try: return JSONResponse(_svc(ctx).skip_recovery(_principal(request), meeting_id))

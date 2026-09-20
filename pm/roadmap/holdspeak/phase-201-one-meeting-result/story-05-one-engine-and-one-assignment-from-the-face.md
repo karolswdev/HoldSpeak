@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 201
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-201-02
 - **Unblocks:** (optional)
-- **Owner:** unassigned
+- **Owner:** Astra (lane A; face in B)
 
 ## Problem
 
@@ -18,11 +18,13 @@ The path needs exactly one text engine and one EXACT capability assignment for `
 
 ## Acceptance criteria
 
-- [ ] Isolated HOME: the summary-selection gesture in Models; `inference_assignment_heads` then holds an exact `capability:meeting.deferred_analysis` row for a compatible profile, revision from the real service; connecting an engine without the gesture changes no assignment; the speech row is unchanged.
-- [ ] A revision conflict and a partial failure each surface truthfully on the face (no silent success).
-- [ ] The meeting queue's SERVICE principal freezes a route with that assignment (the binder test).
-- [ ] Speech recognition is never assigned a text-only profile (fence).
-- [ ] One gesture, one receipt; no modal.
+- [x] **A-proven:** Isolated HOME: the summary-selection HTTP gesture; `inference_assignment_heads` then holds an exact `capability:meeting.deferred_analysis` row for a compatible profile, revision from the real service; connecting an engine without the gesture changes no assignment; the speech row is unchanged.
+- [x] **A-proven:** A revision conflict and a partial failure each return a truthful typed result and visible receipt, with no silent success.
+- **Transferred to HS-201-06 (see status):** Models renders these results and the assigned engine at both widths.
+- [x] **A-proven:** The meeting queue's SERVICE principal freezes a route with that assignment (the binder test).
+- [x] **A-proven:** Speech recognition is never assigned a text-only profile (fence).
+- [x] **A-proven:** One summary-selection gesture returns one visible receipt.
+- **Transferred to HS-201-06 (see status):** The face uses one gesture with no modal; Models shots after accept at both widths.
 
 ## Test plan
 
@@ -33,3 +35,11 @@ The path needs exactly one text engine and one EXACT capability assignment for `
 ## Notes / open questions
 
 Lane A (Astra to Luna) for the service and the read model; the Models FACE edit is lane B (story 06 owns `web/src/features/concierge/*` on this path) against A's contract. Serves exit criteria 3 and 4. Isolated credential storage for any rig that connects a hosted engine (keychain inside the walk HOME). Which engine the owner picks is his (his config says cloud gpt-5-mini; the expected host is then api.openai.com).
+
+## Lane delivery boundary
+
+A owns the service and read model; B owns the Models gesture and its rendering
+in HS-201-06. The real producer → detect → HTTP selection → ready route → binder
+path is proved in `evidence-story-05.md`. The checked producer amendment mints
+a new manifest declaring existing adapter support; it does not rewrite old
+profile revisions or make an assignment when a model is connected.

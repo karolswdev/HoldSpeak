@@ -452,6 +452,41 @@ def _process_bound_intel_job(
             },
             executor_held=lease.held,
         )
+        # The kernel receipt is the source of truth for contacted legs.  The
+        # public receipt drops reserved and pre-send rows, retaining only legs
+        # with a provider dispatch phase (including failed dispatches).
+        route_receipt = routed.get("receipt") if isinstance(routed, dict) else None
+        # Jobs created by the settled HTTP gesture carry a disclosed route. A
+        # small set of pre-201 internal handoffs still has no disclosure row;
+        # preserve their existing queue behavior without manufacturing a route
+        # receipt from current configuration. New/manual jobs never enter this
+        # branch without ``planned_route`` (the service fence owns that check).
+        if getattr(job, "planned_route", None):
+            public_receipt = db.intel.record_run_receipt(
+                job.meeting_id,
+                str(job.job_id),
+                (getattr(job, "planned_route", {}) or {}).get("selection_hash"),
+                str(routed.get("outcome") or "failed"),
+                route_receipt if isinstance(route_receipt, dict) else None,
+            )
+            # A dispatched leg that cannot be mapped to the frozen disclosure
+            # is a truthful execution failure.  The receipt keeps the
+            # contacted attempt as ``undisclosed``; the job must not publish a
+            # success for a route we cannot explain.
+            if (
+                public_receipt.get("outcome") == "failed"
+                and str(routed.get("outcome") or "failed") not in {"failed", "refused"}
+            ):
+                changed = db.intel.settle_bound_execution(
+                    job,
+                    error="Meeting intelligence contacted an undisclosed route. Try again.",
+                    terminal_outcome="terminal_failure",
+                )
+                if changed:
+                    outcome = "failed"
+                else:
+                    lease.mark_lost()
+                return changed
         # Publication's transcript fence can terminalize this job during
         # finalize. A token/epoch mismatch is stronger: this executor was fenced
         # and must perform no subsequent queue, Meeting, or parent effect.
@@ -591,6 +626,16 @@ def _process_bound_intel_job(
         log.error("Bound deferred intel failed for meeting %s: %s: %s", job.meeting_id, type(exc).__name__, getattr(exc, "code", str(exc)))
         return True
     finally:
+        if getattr(job, "planned_route", None) and db.intel.get_run_receipt_for_job(str(job.job_id)) is None:
+            # Refusals before route execution still need a durable, empty
+            # attempt list. This is distinct from a dispatched provider failure.
+            db.intel.record_run_receipt(
+                job.meeting_id,
+                str(job.job_id),
+                (getattr(job, "planned_route", {}) or {}).get("selection_hash"),
+                outcome,
+                None,
+            )
         # A fenced-out executor may not terminalize the shared parent after a
         # newer bearer adopted it. A normal terminal job still closes its parent
         # even though completion has already made lease renewal inapplicable.

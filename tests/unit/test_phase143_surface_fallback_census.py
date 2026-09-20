@@ -77,6 +77,8 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/model_profile_service.py", "_profile_payload"): ("canonical Profile payload builder", "143-03"),
     ("holdspeak/services/model_profile_service.py", "_profile_projection"): ("canonical Profile owner projection", "143-03"),
     ("holdspeak/services/model_profile_service.py", "_route_plan_dependencies"): ("exact Profile assignment dependency lookup", "143-03"),
+    ("holdspeak/services/concierge_service.py", "_model_profile_revision"): ("immutable model-library revision read; no assignment selection", "143-12"),
+    ("holdspeak/services/concierge_service.py", "_detected_profile_fields"): ("immutable model-library revision projection; no assignment selection", "143-12"),
     ("holdspeak/services/profile_service.py", "_target_fields"): ("profile transport-neutral mutation", "143-03"),
     ("holdspeak/services/recipe_service.py", "_refuse_missing_legacy_profile"): ("post-cutover dangling legacy selection refusal fence", "143-10"),
     ("holdspeak/services/recipe_service.py", "_reject_retired_selector"): ("legacy selector refusal fence", "143-10"),

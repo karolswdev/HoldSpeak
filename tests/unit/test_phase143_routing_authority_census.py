@@ -96,23 +96,15 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/services/refinement_coordinator.py:310:ref:resolve_thought_placement",
     "holdspeak/services/refinement_thought_service.py:640:import:resolve_thought_placement",
     "holdspeak/services/refinement_thought_service.py:681:ref:resolve_thought_placement",
-    # HS-200-42 census review (2026-09-14): :71/:73 -> :79/:81. LINE DRIFT
-    # ONLY. `run_intelligence` gained eight docstring lines above this block;
-    # the import and the single enqueue-time `resolve_meeting_placement(...)`
-    # call are unchanged in module, function, and purpose, and no new
-    # resolver, import, or read was introduced. The story's execution-time
-    # host is NOT a second resolver: it reads the frozen DeploymentRevision
-    # off the claimed route plan (`meeting_session/deferred_bound.py:
-    # BoundDeferredIntelJob.egress_model_host`), which is immutable evidence,
-    # not mutable placement authority.
-    "holdspeak/services/meeting_intel_service.py:79:import:resolve_meeting_placement",
-    "holdspeak/services/meeting_intel_service.py:81:ref:resolve_meeting_placement",
+    # HS-201-03: the Meeting service now reads the disclosed frozen route
+    # selection; its former legacy resolver import and call were removed. The
+    # execution host remains immutable route evidence in deferred_bound.py.
     # HS-172: resolve_meeting_placement in routing_glue, mcp/tools, settings route
     "holdspeak/runtime/routing_glue.py:374:import:resolve_meeting_placement",
     "holdspeak/runtime/routing_glue.py:375:ref:resolve_meeting_placement",
-    # HS-200-13 (stacked on 14 over 11 over 12 over 15): moved down two lines
-    # with `desk.needs_you` taking the shared last-known store; re-anchored.
-    "holdspeak/mcp/tools.py:864:import:resolve_meeting_placement",
+    # HS-201-03: moved down three lines with the added route/receipt transport;
+    # re-anchored.
+    "holdspeak/mcp/tools.py:867:import:resolve_meeting_placement",
     "holdspeak/web/routes/system/settings.py:44:import:resolve_meeting_placement",
     "holdspeak/web/routes/system/settings.py:45:ref:resolve_meeting_placement",
     "holdspeak/services/settings_service.py:72:import:resolve_meeting_placement",
@@ -163,7 +155,7 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/config/integrations.py:191:inference_target_id",
     "holdspeak/config/meeting.py:173:intel_profile_id",
     "holdspeak/config/meeting.py:172:intel_profile_id",
-    "holdspeak/db/models/__init__.py:1137:resolver_profile_id",
+    "holdspeak/db/models/__init__.py:1141:resolver_profile_id",
     "holdspeak/db/models/workbench.py:139:resolver_profile_id",
     "holdspeak/services/inference_setup_service.py:644:intel_profile_id",
     "holdspeak/services/inference_setup_service.py:649:inference_target_id",
@@ -174,8 +166,8 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/services/settings_service.py:916:inference_target_id",
     "holdspeak/services/workbench_service.py:592:resolver_profile_id",
     # HS-172: resolve_meeting_placement pointer reads
-    # HS-200-13: mcp/tools.py moved down two lines (see the reference set).
-    "holdspeak/mcp/tools.py:863:intel_profile_id",
+    # HS-201-03: mcp/tools.py moved down three lines (see the reference set).
+    "holdspeak/mcp/tools.py:866:intel_profile_id",
     "holdspeak/web/routes/system/settings.py:41:intel_profile_id",
 }
 
@@ -196,7 +188,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/commands/doctor.py:488:profile_id", "holdspeak/commands/doctor.py:787:profile_id",
         "holdspeak/commands/doctor.py:795:profile_id", "holdspeak/commands/doctor.py:809:profile_id",
         "holdspeak/commands/doctor.py:934:profile_id",
-        "holdspeak/db/models/__init__.py:694:profile_id", "holdspeak/inference_targets.py:161:profile_id",
+        "holdspeak/db/models/__init__.py:698:profile_id", "holdspeak/inference_targets.py:161:profile_id",
         # HS-162-03: front_door.py profile_id reads (display, Phase 156).
         "holdspeak/web/routes/front_door.py:416:profile_id",
         "holdspeak/web/routes/front_door.py:417:profile_id",
@@ -207,7 +199,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/services/model_profile_service.py:225:profile_id",
         "holdspeak/services/model_profile_service.py:264:profile_id",
         # HS-172: meetings host resolve display reads (HS-200-13: +2 lines).
-        "holdspeak/mcp/tools.py:866:profile_id",
+        "holdspeak/mcp/tools.py:869:profile_id",
         "holdspeak/web/routes/system/settings.py:46:profile_id",
     }},
     **{site: "immutable evidence" for site in {
@@ -215,7 +207,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/services/inference_assignment_service.py:1788:profile_id",
     }},
     **{site: "migration source" for site in {
-        "holdspeak/db/models/__init__.py:1136:profile_id",
+        "holdspeak/db/models/__init__.py:1140:profile_id",
         "holdspeak/db/models/workbench.py:138:profile_id",
         "holdspeak/services/recipe_service.py:416:profile_id",
         "holdspeak/services/workbench_service.py:591:profile_id",

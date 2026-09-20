@@ -19,6 +19,14 @@ from .models import IntelJob, IntelQueueSummary, IntelJobAttempt
 
 log = get_logger("db.intel")
 
+
+def _json(value: Mapping[str, Any] | None) -> str | None:
+    return None if value is None else json.dumps(dict(value), sort_keys=True, separators=(",", ":"))
+
+
+def _canonical_receipt(value: Mapping[str, Any]) -> str:
+    return json.dumps(dict(value), sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+
 def _work_descriptor(
     raw: str,
 ) -> tuple[
@@ -440,6 +448,63 @@ class IntelRepository(BaseRepository):
 
     """Persistence for the deferred-intel queue (jobs, attempts, status)."""
 
+    @classmethod
+    def _gesture_state_in_transaction(cls, conn: Any, meeting_id: str) -> str:
+        """Return the state that must win before a route fence can write.
+
+        Route disclosure is a point-of-decision check.  A stale gesture must
+        not create a newer refusal row when the Meeting already has provider
+        work (including queued work), a Stop reservation, or a truthful
+        completed result.  This helper is deliberately read-only so callers
+        can run it before resolving or recording a route refusal; the queue
+        admission transaction remains the final race guard.
+        """
+        meeting = conn.execute(
+            "SELECT intel_status FROM meetings WHERE id=?",
+            (str(meeting_id),),
+        ).fetchone()
+        if meeting is None:
+            return "missing"
+        if conn.execute(
+            "SELECT 1 FROM segments WHERE meeting_id=? LIMIT 1",
+            (str(meeting_id),),
+        ).fetchone() is None:
+            return "empty"
+        current_job = conn.execute(
+            _CURRENT_LINEAGE_CTE + """
+            SELECT * FROM current_jobs
+            WHERE meeting_id=? AND current_rank=1 LIMIT 1
+            """,
+            (str(meeting_id),),
+        ).fetchone()
+        if cls._is_unsettled_stop_reservation_in_transaction(conn, current_job):
+            return "reserved"
+        if cls._is_compatibility_cutover_in_transaction(conn, current_job):
+            return "reserved"
+        if current_job is not None:
+            status = str(current_job["status"] or "").strip().lower()
+            if status in {"running", "claimed"}:
+                return "running"
+            if status == "queued":
+                return "queued"
+        meeting_status = str(meeting["intel_status"] or "").strip().lower()
+        if meeting_status == "running":
+            return "running"
+        if meeting_status == "queued" and current_job is None:
+            return "queued"
+        if meeting_status == "ready" and (
+            current_job is None
+            or str(current_job["status"] or "").strip().lower()
+            in {"succeeded", "skipped"}
+        ):
+            return "ready"
+        return "available"
+
+    def get_gesture_state(self, meeting_id: str) -> str:
+        """Read the protected state for a new Run or Retry gesture."""
+        with self._connection() as conn:
+            return self._gesture_state_in_transaction(conn, meeting_id)
+
     def enqueue_intel_job(
         self,
         meeting_id: str,
@@ -449,6 +514,7 @@ class IntelRepository(BaseRepository):
         displaced_work: Sequence[str] = (),
         conn: Any | None = None,
         legacy_displaced_work: bool = False,
+        planned_route: Mapping[str, Any] | None = None,
     ) -> str:
         """Queue or refresh deferred intelligence processing for a meeting.
 
@@ -466,6 +532,7 @@ class IntelRepository(BaseRepository):
                     reason=reason,
                     displaced_work=displaced_work,
                     legacy_displaced_work=legacy_displaced_work,
+                    planned_route=planned_route,
                 )
         return self._enqueue_intel_job_in_transaction(
             conn,
@@ -474,6 +541,7 @@ class IntelRepository(BaseRepository):
             reason=reason,
             displaced_work=displaced_work,
             legacy_displaced_work=legacy_displaced_work,
+            planned_route=planned_route,
         )
 
     @staticmethod
@@ -485,6 +553,7 @@ class IntelRepository(BaseRepository):
         reason: Optional[str],
         displaced_work: Sequence[str],
         legacy_displaced_work: bool,
+        planned_route: Mapping[str, Any] | None,
     ) -> str:
         """Create or refresh one immutable descriptor without reclaiming an owner.
 
@@ -530,8 +599,8 @@ class IntelRepository(BaseRepository):
             # Refreshing the same unclaimed descriptor is metadata-only; its
             # immutable work identity and queue ownership do not change.
             conn.execute(
-                "UPDATE intel_jobs SET updated_at=?,last_error=? WHERE job_id=?",
-                (now, reason, str(current["job_id"])),
+                "UPDATE intel_jobs SET updated_at=?,last_error=?,planned_route_json=COALESCE(?,planned_route_json) WHERE job_id=?",
+                (now, reason, _json(planned_route), str(current["job_id"])),
             )
             job_id = str(current["job_id"])
         else:
@@ -550,10 +619,10 @@ class IntelRepository(BaseRepository):
                 """INSERT INTO intel_jobs (
                     job_id,meeting_id,origin_job_id,work_descriptor_sha256,
                     transcript_hash,displaced_work,status,lifecycle_posture,
-                    requested_at,updated_at,attempts,last_error
-                ) VALUES (?, ?, ?, ?, ?, ?, 'queued', 'queued', ?, ?, 0, ?)""",
+                    requested_at,updated_at,attempts,last_error,planned_route_json
+                ) VALUES (?, ?, ?, ?, ?, ?, 'queued', 'queued', ?, ?, 0, ?, ?)""",
                 (job_id, meeting_id, origin_job_id, descriptor, transcript_hash,
-                 work, now, now, reason),
+                 work, now, now, reason, _json(planned_route)),
             )
         conn.execute(
             """UPDATE meetings
@@ -1109,11 +1178,12 @@ class IntelRepository(BaseRepository):
                     """INSERT INTO intel_jobs (
                         job_id,meeting_id,origin_job_id,work_descriptor_sha256,
                         transcript_hash,displaced_work,status,lifecycle_posture,
-                        requested_at,updated_at,attempts,last_error
-                    ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?)""",
+                        requested_at,updated_at,attempts,last_error,planned_route_json
+                    ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?,?)""",
                     (
                         fresh_id, meeting_id, str(job_id), descriptor, transcript_hash,
                         work, now, now, "compatibility_cutover_fresh_recovery",
+                        old["planned_route_json"],
                     ),
                 )
                 conn.execute(
@@ -1234,6 +1304,14 @@ class IntelRepository(BaseRepository):
                 work_descriptor_sha256=str(row["work_descriptor_sha256"]),
                 claim_id=(str(claim_id)),
                 lifecycle_posture="claimed",
+                planned_route=(
+                    json.loads(str(row["planned_route_json"]))
+                    if row["planned_route_json"] else None
+                ),
+                run_receipt=(
+                    json.loads(str(row["run_receipt_json"]))
+                    if row["run_receipt_json"] else None
+                ),
             )
 
     def claim_next_intel_job_bound(
@@ -1291,10 +1369,10 @@ class IntelRepository(BaseRepository):
                     """INSERT INTO intel_jobs (
                         job_id,meeting_id,origin_job_id,work_descriptor_sha256,
                         transcript_hash,displaced_work,status,lifecycle_posture,
-                        requested_at,updated_at,attempts,last_error
-                    ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?)""",
+                        requested_at,updated_at,attempts,last_error,planned_route_json
+                    ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?,?)""",
                     (fresh_id, meeting_id, job_id, descriptor, durable_hash, work,
-                     now, now, "Transcript changed; queued fresh immutable job."),
+                     now, now, "Transcript changed; queued fresh immutable job.", row["planned_route_json"]),
                 )
                 conn.execute(
                     """INSERT INTO intel_job_attempts (
@@ -1339,13 +1417,13 @@ class IntelRepository(BaseRepository):
                     """INSERT INTO intel_jobs (
                         job_id,meeting_id,origin_job_id,work_descriptor_sha256,
                         transcript_hash,displaced_work,status,lifecycle_posture,
-                        requested_at,updated_at,attempts,last_error,model_host
-                    ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?,?)""",
+                        requested_at,updated_at,attempts,last_error,model_host,planned_route_json
+                    ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?,?,?)""",
                     (
                         frozen_job_id, meeting_id, job_id, frozen_descriptor,
                         str(row["transcript_hash"]), frozen_work, now, now,
                         "Bound descriptor frozen from legacy Stop handoff.",
-                        _row_model_host(row),
+                        _row_model_host(row), row["planned_route_json"],
                     ),
                 )
                 # `prepare()` opens its own durable kernel-shell transaction.
@@ -1364,9 +1442,16 @@ class IntelRepository(BaseRepository):
             # and closed result schema.  A claimed legacy row never reaches here.
             if not _frozen_plugin_members(row):
                 try:
-                    plugin_members, plugin_route = _plan_installed_plugin_members(
-                        conn, meeting_id,
-                    )
+                    # An explicit HS-201 run discloses only the selected summary
+                    # route.  Do not append the ambient installed-plugin chain or
+                    # displaced Stop work to that job: those destinations were
+                    # never shown to the user and cannot receive transcript bytes.
+                    if row["planned_route_json"]:
+                        plugin_members, plugin_route = (), {}
+                    else:
+                        plugin_members, plugin_route = _plan_installed_plugin_members(
+                            conn, meeting_id,
+                        )
                 except Exception as exc:
                     # An unknown/non-exact plugin can never be smuggled through
                     # as a runtime string.  Make the queued admission refusal
@@ -1427,13 +1512,13 @@ class IntelRepository(BaseRepository):
                         """INSERT INTO intel_jobs (
                             job_id,meeting_id,origin_job_id,work_descriptor_sha256,
                             transcript_hash,displaced_work,status,lifecycle_posture,
-                            requested_at,updated_at,attempts,last_error,model_host
-                        ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?,?)""",
+                            requested_at,updated_at,attempts,last_error,model_host,planned_route_json
+                        ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?,?,?)""",
                         (
                             planned_job_id, meeting_id, job_id, frozen_descriptor,
                             str(row["transcript_hash"]), frozen_work, now, now,
                             "Installed plugin membership frozen for bound claim.",
-                            _row_model_host(row),
+                            _row_model_host(row), row["planned_route_json"],
                         ),
                     )
                     conn.commit()
@@ -1502,10 +1587,10 @@ class IntelRepository(BaseRepository):
                         """INSERT INTO intel_jobs (
                             job_id,meeting_id,origin_job_id,work_descriptor_sha256,
                             transcript_hash,displaced_work,status,lifecycle_posture,
-                            requested_at,updated_at,attempts,last_error
-                        ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?)""",
+                            requested_at,updated_at,attempts,last_error,planned_route_json
+                        ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?,?)""",
                         (fresh_id, meeting_id, job_id, descriptor, refreshed_hash, work,
-                         now, now, "Transcript changed; queued fresh immutable job."),
+                         now, now, "Transcript changed; queued fresh immutable job.", row["planned_route_json"]),
                     )
                     conn.execute(
                         """INSERT INTO intel_job_attempts (
@@ -1616,10 +1701,11 @@ class IntelRepository(BaseRepository):
             """INSERT INTO intel_jobs (
                 job_id,meeting_id,origin_job_id,work_descriptor_sha256,
                 transcript_hash,displaced_work,status,lifecycle_posture,
-                requested_at,updated_at,attempts,last_error
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,0,?)""",
+                requested_at,updated_at,attempts,last_error,planned_route_json
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,0,?,?)""",
             (fresh_id, meeting_id, job_id, descriptor, durable_hash, work,
-             successor_status, successor_posture, now, now, reason),
+             successor_status, successor_posture, now, now, reason,
+             old["planned_route_json"]),
         )
         conn.execute(
             """INSERT INTO intel_job_attempts (
@@ -1728,7 +1814,7 @@ class IntelRepository(BaseRepository):
                     ),
                 )
             conn.commit()
-            return bool(changed)
+        return bool(changed)
 
     def settle_bound_execution(
         self,
@@ -1818,11 +1904,12 @@ class IntelRepository(BaseRepository):
                 """INSERT INTO intel_jobs (
                     job_id,meeting_id,origin_job_id,work_descriptor_sha256,
                     transcript_hash,displaced_work,status,lifecycle_posture,
-                    requested_at,updated_at,attempts,last_error
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    requested_at,updated_at,attempts,last_error,planned_route_json
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?, ?,?)""",
                 (successor_id, meeting_id, str(job.job_id), str(old["work_descriptor_sha256"]),
                  str(old["transcript_hash"]), str(old["displaced_work"]),
-                 successor_status, successor_posture, retry_at_iso, now.isoformat(), attempt, error),
+                 successor_status, successor_posture, retry_at_iso, now.isoformat(), attempt, error,
+                 old["planned_route_json"]),
             )
             conn.execute(
                 """INSERT INTO intel_job_attempts (
@@ -1862,7 +1949,11 @@ class IntelRepository(BaseRepository):
         from ..services.errors import ServiceError
 
         now = datetime.now()
-        detail = f"Bound route refusal: {type(error).__name__}: {error}"
+        # Product text stays plain.  Service refusals already carry their
+        # user-facing detail; unknown admission faults get one honest generic
+        # sentence instead of exposing an exception class name.
+        raw_detail = str(getattr(error, "detail", "") or str(error)).strip()
+        detail = raw_detail or "Meeting intelligence could not prepare its route. Try again."
         terminal = isinstance(error, (ServiceError, KernelRefused))
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
@@ -1917,7 +2008,23 @@ class IntelRepository(BaseRepository):
                      detail, retry_at, now.isoformat()),
                 )
             conn.commit()
-            return bool(changed)
+        # A disclosed route refusal is itself a durable, empty run receipt. Do
+        # this after the queue writer transaction releases SQLite so the receipt
+        # write cannot deadlock the claim refusal path. Legacy jobs without a
+        # planned route retain their pre-disclosure ledger behavior.
+        planned = None
+        if row is not None and row["planned_route_json"]:
+            try:
+                candidate = json.loads(str(row["planned_route_json"]))
+                planned = candidate if isinstance(candidate, dict) else None
+            except (TypeError, ValueError, json.JSONDecodeError):
+                planned = None
+        if changed and planned is not None and outcome == "refused":
+            self.record_run_receipt(
+                str(row["meeting_id"]), str(job_id),
+                planned.get("selection_hash"), "refused", None,
+            )
+        return bool(changed)
 
     def promote_successors_after_parent_terminal(
         self, parent_operation_id: str, *, executor_job: IntelJob | None = None
@@ -2063,11 +2170,11 @@ class IntelRepository(BaseRepository):
                 """INSERT INTO intel_jobs (
                     job_id,meeting_id,origin_job_id,work_descriptor_sha256,
                     transcript_hash,displaced_work,status,lifecycle_posture,
-                    requested_at,updated_at,attempts,last_error
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    requested_at,updated_at,attempts,last_error,planned_route_json
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?, ?,?)""",
                 (job_id, meeting_id, str(old["job_id"]), descriptor,
                  transcript_hash, work, successor_status, successor_posture,
-                 now, now, int(old["attempts"]), reason),
+                 now, now, int(old["attempts"]), reason, old["planned_route_json"]),
             )
             conn.execute(
                 """UPDATE meetings SET intel_status='queued',intel_status_detail=?,
@@ -2119,12 +2226,12 @@ class IntelRepository(BaseRepository):
                 """INSERT INTO intel_jobs (
                     job_id,meeting_id,origin_job_id,work_descriptor_sha256,
                     transcript_hash,displaced_work,status,lifecycle_posture,
-                    requested_at,updated_at,attempts,last_error
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    requested_at,updated_at,attempts,last_error,planned_route_json
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?, ?,?)""",
                 (job_id, meeting_id, str(old["job_id"]),
                  str(old["work_descriptor_sha256"]), str(old["transcript_hash"]),
                  str(old["displaced_work"]), successor_status, successor_posture,
-                 retry_at_iso, now, int(attempt), error),
+                 retry_at_iso, now, int(attempt), error, old["planned_route_json"]),
             )
             conn.execute(
                 """INSERT INTO intel_job_attempts (
@@ -2163,6 +2270,230 @@ class IntelRepository(BaseRepository):
                 (meeting_id,),
             ).fetchone()
         return str(row["model_host"]) if row and row["model_host"] else None
+
+    def get_planned_route(self, meeting_id: str) -> dict[str, Any] | None:
+        """Read the admitted route from the current job lineage, if present."""
+        with self._connection() as conn:
+            row = conn.execute(
+                _CURRENT_LINEAGE_CTE + """
+                SELECT planned_route_json FROM current_jobs
+                WHERE meeting_id=? AND current_rank=1 AND planned_route_json IS NOT NULL
+                LIMIT 1""",
+                (meeting_id,),
+            ).fetchone()
+        if row is None or not row["planned_route_json"]:
+            return None
+        value = json.loads(str(row["planned_route_json"]))
+        return dict(value) if isinstance(value, dict) else None
+
+    def _planned_route_for_job(self, job_id: str) -> dict[str, Any] | None:
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT planned_route_json FROM intel_jobs WHERE job_id=?",
+                (str(job_id),),
+            ).fetchone()
+        if row is None or not row["planned_route_json"]:
+            return None
+        value = json.loads(str(row["planned_route_json"]))
+        return dict(value) if isinstance(value, dict) else None
+
+    def set_run_receipt(self, meeting_id: str, receipt: Mapping[str, Any]) -> dict[str, Any]:
+        """Persist one content-free public receipt on the current job lineage."""
+        payload = dict(receipt)
+        encoded = _json(payload)
+        job_id = str(payload.get("job_id") or "")
+        with self._connection() as conn:
+            if job_id:
+                conn.execute(
+                    "UPDATE intel_jobs SET run_receipt_json=? WHERE job_id=?",
+                    (encoded, job_id),
+                )
+            else:
+                conn.execute(
+                    _CURRENT_LINEAGE_CTE + """
+                    UPDATE intel_jobs SET run_receipt_json=?
+                    WHERE job_id=(SELECT job_id FROM current_jobs WHERE meeting_id=? AND current_rank=1)""",
+                    (encoded, meeting_id),
+                )
+        return payload
+
+    def get_run_receipt(self, meeting_id: str) -> dict[str, Any] | None:
+        with self._connection() as conn:
+            row = conn.execute(
+                _CURRENT_LINEAGE_CTE + """
+                SELECT run_receipt_json FROM current_jobs
+                WHERE meeting_id=? AND current_rank=1 AND run_receipt_json IS NOT NULL
+                LIMIT 1""",
+                (meeting_id,),
+            ).fetchone()
+            if row is None:
+                row = conn.execute(
+                    """SELECT run_receipt_json FROM intel_jobs
+                       WHERE meeting_id=? AND run_receipt_json IS NOT NULL
+                       ORDER BY requested_at DESC LIMIT 1""",
+                    (meeting_id,),
+                ).fetchone()
+        if row is None or not row["run_receipt_json"]:
+            return None
+        value = json.loads(str(row["run_receipt_json"]))
+        return dict(value) if isinstance(value, dict) else None
+
+    def get_run_receipt_for_job(self, job_id: str) -> dict[str, Any] | None:
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT run_receipt_json FROM intel_jobs WHERE job_id=?",
+                (str(job_id),),
+            ).fetchone()
+        if row is None or not row["run_receipt_json"]:
+            return None
+        value = json.loads(str(row["run_receipt_json"]))
+        return dict(value) if isinstance(value, dict) else None
+
+    def record_route_refusal(
+        self,
+        meeting_id: str,
+        *,
+        planned_route: Mapping[str, Any],
+        expected_selection_hash: str | None,
+        reason: str,
+    ) -> dict[str, Any] | None:
+        """Persist a no-call route refusal as a failed immutable job receipt.
+
+        A run gesture can be refused before queue admission (for example when
+        its disclosed hash drifted).  It still needs a durable ``job_id`` and
+        empty attempt list so readers never reconstruct the event from current
+        configuration.  The route stored here is the read-time projection; the
+        receipt's selection hash remains the hash carried by the gesture.
+        """
+        now = datetime.now().isoformat()
+        route_hash = str(planned_route.get("selection_hash") or "")
+        refusal_key = f"route-refusal:{expected_selection_hash or ''}:{route_hash}"
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            # The route may have changed between the service's read and this
+            # writer epoch.  Re-check the exact current leaf before creating a
+            # refusal row.  A good result, an active executor, a Stop-owned
+            # reservation, or valid queued work remains the current truth.
+            # Returning without a write also keeps that queued owner eligible
+            # for dispatch instead of hiding it behind a newer refusal leaf.
+            protected = self._gesture_state_in_transaction(conn, str(meeting_id))
+            if protected in {"ready", "running", "reserved", "queued"}:
+                conn.commit()
+                return self.get_run_receipt(str(meeting_id))
+            transcript_hash = _durable_transcript_hash(conn, str(meeting_id))
+            work = "[]"
+            descriptor = _work_descriptor_sha256(str(meeting_id), transcript_hash, work)
+            job_id = _job_id(
+                str(meeting_id), transcript_hash, descriptor, refusal_key, None,
+            )
+            existing = conn.execute(
+                "SELECT job_id,run_receipt_json FROM intel_jobs WHERE job_id=?",
+                (job_id,),
+            ).fetchone()
+            if existing is None:
+                conn.execute(
+                    """INSERT INTO intel_jobs (
+                        job_id,meeting_id,origin_job_id,work_descriptor_sha256,
+                        transcript_hash,displaced_work,status,lifecycle_posture,
+                        requested_at,updated_at,attempts,last_error,planned_route_json
+                    ) VALUES (?,?,?,?,?,?,'failed','terminal',?,?,1,?,?)""",
+                    (
+                        job_id, str(meeting_id), None, descriptor, transcript_hash, work,
+                        now, now, str(reason), _json(planned_route),
+                    ),
+                )
+                conn.execute(
+                    """INSERT INTO intel_job_attempts (
+                        meeting_id,job_id,event_kind,attempt,outcome,error,retry_at,created_at
+                    ) VALUES (?,?, 'refusal', 1, 'refused', ?, NULL, ?)""",
+                    (str(meeting_id), job_id, str(reason), now),
+                )
+                conn.execute(
+                    """UPDATE meetings SET intel_status='error',intel_status_detail=?,
+                       intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now')
+                       WHERE id=?""",
+                    (str(reason), now, str(meeting_id)),
+                )
+            conn.commit()
+        prior = self.get_run_receipt_for_job(job_id)
+        if prior is not None:
+            return prior
+        return self.record_run_receipt(
+            str(meeting_id), job_id, expected_selection_hash, "refused", None,
+        )
+
+    def record_run_receipt(
+        self, meeting_id: str, job_id: str, selection_hash: str | None,
+        outcome: str, route_receipt: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Project physically dispatched legs from a kernel receipt.
+
+        The kernel is authoritative about what was sent.  If a malformed or
+        stale kernel row names a leg that is absent from the frozen route, keep
+        the attempt with ``undisclosed`` as the host and fail the public
+        receipt.  Dropping the row and writing ``attempts: []`` would claim
+        that no provider was contacted.
+        """
+        raw_attempts = list((route_receipt or {}).get("attempts") or [])
+        planned = self._planned_route_for_job(str(job_id)) or {}
+        hosts: dict[int, str] = {}
+        for item in planned.get("legs", ()):
+            if not isinstance(item, Mapping) or item.get("ordinal") is None:
+                continue
+            try:
+                ordinal = int(item["ordinal"])
+            except (TypeError, ValueError):
+                continue
+            host = str(item.get("host") or "").strip()
+            # Keep a valid ordinal with no usable host as undisclosed.  The
+            # attempt mapper below uses the same honest fallback as a leg that
+            # is missing from the frozen route.
+            if ordinal not in hosts:
+                hosts[ordinal] = host or "undisclosed"
+        attempts = []
+        undisclosed = False
+        for item in raw_attempts:
+            if not isinstance(item, Mapping):
+                continue
+            phase = str(item.get("send_phase") or "")
+            if phase not in {"dispatch_intent", "provider_no_generation", "provider_returned"}:
+                continue
+            raw_ordinal = item.get("route_leg_ordinal")
+            try:
+                ordinal = int(raw_ordinal) if raw_ordinal is not None else None
+            except (TypeError, ValueError):
+                ordinal = None
+            host = hosts.get(ordinal) if ordinal is not None else None
+            if not host:
+                undisclosed = True
+                host = "undisclosed"
+            attempts.append(
+                {
+                    "leg_ordinal": ordinal,
+                    "host": host,
+                    "outcome": str(item.get("outcome") or "indeterminate"),
+                    "operation_id": str(item.get("child_operation_id") or item.get("attempt_id") or ""),
+                }
+            )
+        public_outcome = "failed" if undisclosed else str(outcome)
+        material = {
+            "job_id": str(job_id),
+            "meeting_id": str(meeting_id),
+            "selection_hash": selection_hash,
+            "outcome": public_outcome,
+            "attempts": attempts,
+        }
+        receipt_id = "rr_" + hashlib.sha256(_canonical_receipt(material).encode()).hexdigest()[:32]
+        receipt = {
+            "receipt_id": receipt_id,
+            "job_id": str(job_id),
+            "meeting_id": str(meeting_id),
+            "selection_hash": selection_hash,
+            "outcome": public_outcome,
+            "attempts": attempts,
+        }
+        self.set_run_receipt(meeting_id, receipt)
+        return receipt
 
     def complete_intel_job(self, meeting_id: str) -> None:
         """Retain completed job history while removing it from ordinary readers."""
@@ -2234,6 +2565,14 @@ class IntelRepository(BaseRepository):
             lifecycle_posture=(
                 str(row["lifecycle_posture"])
                 if "lifecycle_posture" in keys and row["lifecycle_posture"] else None
+            ),
+            planned_route=(
+                json.loads(str(row["planned_route_json"]))
+                if "planned_route_json" in keys and row["planned_route_json"] else None
+            ),
+            run_receipt=(
+                json.loads(str(row["run_receipt_json"]))
+                if "run_receipt_json" in keys and row["run_receipt_json"] else None
             ),
         )
 
@@ -2482,6 +2821,7 @@ class IntelRepository(BaseRepository):
         meeting_id: str,
         *,
         reason: Optional[str] = None,
+        planned_route: Mapping[str, Any] | None = None,
     ) -> str:
         """Atomically requeue remaining Meeting intelligence.
 
@@ -2559,7 +2899,9 @@ class IntelRepository(BaseRepository):
                 else detail
             )
             displaced_work = (
-                str(current_job["displaced_work"])
+                "[]"
+                if planned_route is not None
+                else str(current_job["displaced_work"])
                 if current_job is not None else "[]"
             )
             descriptor = _work_descriptor_sha256(
@@ -2583,10 +2925,11 @@ class IntelRepository(BaseRepository):
                 """INSERT INTO intel_jobs (
                     job_id,meeting_id,origin_job_id,work_descriptor_sha256,
                     transcript_hash,displaced_work,status,lifecycle_posture,
-                    requested_at,updated_at,attempts,last_error
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,0,?)""",
+                    requested_at,updated_at,attempts,last_error,planned_route_json
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,0,?,?)""",
                 (job_id, meeting_id, origin_job_id, descriptor, transcript_hash,
-                 displaced_work, successor_status, successor_posture, now, now, retry_detail),
+                 displaced_work, successor_status, successor_posture, now, now, retry_detail,
+                 _json(planned_route)),
             )
             conn.execute(
                 """

@@ -196,11 +196,27 @@ def _service(db, notify=None):
     return MeetingIntelService(db, notify)
 
 
+def _planned_selection_hash(db, meeting_id: str) -> str:
+    """Read the exact SERVICE route disclosed before a run gesture."""
+    from holdspeak.services.meeting_route_projection import project_route
+
+    planned = project_route(db, invocation_id=f"meeting:{meeting_id}")
+    assert planned["status"] == "ready", planned
+    assert planned["legs"], planned
+    selection_hash = planned["selection_hash"]
+    assert selection_hash, planned
+    return str(selection_hash)
+
+
 def test_run_intelligence_names_an_absent_drainer_instead_of_claiming_it_runs(tmp_path, monkeypatch):
     db, *_ = _queue_rig(tmp_path, monkeypatch)
     _queued_meeting(db, "m-absent")
 
-    result = _service(db).run_intelligence(OWNER, "m-absent")
+    result = _service(db).run_intelligence(
+        OWNER,
+        "m-absent",
+        expected_selection_hash=_planned_selection_hash(db, "m-absent"),
+    )
     assert result["state"] == "queued"
     assert result["drainer"] == "absent"
     assert result["expectedWithinSeconds"] is None
@@ -220,7 +236,11 @@ def test_run_intelligence_reports_a_running_drainer_and_wakes_it(tmp_path, monke
     assert worker is not None
     before = worker.iterations
 
-    result = _service(db).run_intelligence(OWNER, "m-wake")
+    result = _service(db).run_intelligence(
+        OWNER,
+        "m-wake",
+        expected_selection_hash=_planned_selection_hash(db, "m-wake"),
+    )
     assert result["drainer"] == "running"
     assert result["expectedWithinSeconds"] == 0
 
@@ -542,7 +562,11 @@ def test_the_fence_trips_on_the_pre_fix_lifespan(tmp_path, monkeypatch):
             )
         assert conductor.drainer_state() == "absent"
         # The pre-fix verb: it returns `queued` and nothing executes it.
-        result = _service(db).run_intelligence(OWNER, "m-prefix")
+        result = _service(db).run_intelligence(
+            OWNER,
+            "m-prefix",
+            expected_selection_hash=_planned_selection_hash(db, "m-prefix"),
+        )
         assert result["state"] == "queued"
         assert result["drainer"] == "absent"
         # Give a drainer that does not exist a generous window to act.
@@ -682,7 +706,11 @@ def test_the_model_host_is_restated_from_the_route_the_run_actually_takes(
     _queued_meeting(db, "m-host")
 
     # The enqueue-time estimate, written by the real verb.
-    result = _service(db).run_intelligence(OWNER, "m-host")
+    result = _service(db).run_intelligence(
+        OWNER,
+        "m-host",
+        expected_selection_hash=_planned_selection_hash(db, "m-host"),
+    )
     estimate = str(result["host"])
     db.intel.set_intel_job_model_host("m-host", "ESTIMATE-FROM-CONFIG")
     assert db.intel.get_intel_job_model_host("m-host") == "ESTIMATE-FROM-CONFIG"

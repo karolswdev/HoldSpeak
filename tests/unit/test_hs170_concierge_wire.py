@@ -278,6 +278,25 @@ def test_propose_chat_label_is_chat():
     assert chat_group[0][1] == "Chat"
 
 
+def test_propose_does_not_offer_a_text_only_whisper_profile_to_speech():
+    """Speech requires an audio-capable profile, even when its label says Whisper."""
+    from holdspeak.services.concierge_service import propose
+
+    rows = propose(engines=[{
+        "id": "local:whisper-text-only",
+        "kind": "local",
+        "name": "whisper-text-only",
+        "host": "THIS DEVICE",
+        "state": "READY",
+        "profileId": "text-only",
+        "profileRevision": 1,
+        "audioCapable": False,
+    }])["rows"]
+    speech = next(row for row in rows if row["group"] == "speech_recognition")
+    assert speech["state"] == "WAITING"
+    assert speech["engineId"] is None
+
+
 # ---- probe ------------------------------------------------------------------
 
 def test_probe_cloud_without_generate_no_network():
@@ -410,6 +429,56 @@ def test_apply_writes_receipt():
     # Verify the DB was asked to write
     conn = db._conn_mock.__enter__()
     assert conn.execute.call_count >= 1
+
+
+def test_apply_meetings_uses_exact_summary_capability_and_selected_profile_revision():
+    """The existing Use these gesture must bind the SERVICE-visible capability."""
+    from holdspeak.services.concierge_service import apply, STATE_READY
+
+    mock_svc = MagicMock()
+    mock_svc.get_assignment.return_value = {"revision": 0, "entries": []}
+    mock_svc.set_assignment.return_value = {
+        "revision": 1,
+        "entries": [
+            {
+                "profile_id": "summary-profile",
+                "profile_revision": 2,
+                "label": "Summary model",
+                "boundary": "local",
+                "readiness": "ready",
+            }
+        ],
+    }
+    result = apply(
+        rows=[{"group": "meetings", "engineId": "lan:summary", "state": STATE_READY}],
+        engines=[
+            {
+                "id": "lan:summary",
+                "kind": "lan",
+                "profileId": "summary-profile",
+                "profileRevision": 2,
+            }
+        ],
+        assignment_service=mock_svc,
+        principal=MagicMock(),
+        db=FakeDB(),
+    )
+
+    assert result["results"] == [
+        {
+            "group": "meetings",
+            "capabilityId": "meeting.deferred_analysis",
+            "state": "READY",
+            "profileId": "summary-profile",
+            "profileRevision": 2,
+        }
+    ]
+    body = mock_svc.set_assignment.call_args.args[1]
+    assert body["scope"] == {
+        "kind": "capability",
+        "capability_id": "meeting.deferred_analysis",
+    }
+    assert body["entries"] == [{"profile_id": "summary-profile", "profile_revision": 2}]
 
 
 # ---- download ---------------------------------------------------------------

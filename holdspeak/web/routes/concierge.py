@@ -5,6 +5,7 @@ POST /api/concierge/propose   -- the seven groups with proposed engines
 POST /api/concierge/probe     -- reachability for an engine, or `task: true` for
                                  one REAL request through the assigned route
 POST /api/concierge/apply     -- write the assignment set
+POST /api/concierge/summary-selection -- select one summary engine
 POST /api/concierge/download  -- start a preset download
 """
 from __future__ import annotations
@@ -63,7 +64,12 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             from pathlib import Path
             home = setup_svc._home_provider() if setup_svc is not None else Path.home()
 
-            result = detect(db=db, home=home)
+            result = detect(
+                db=db,
+                home=home,
+                assignment_service=ctx.inference_assignment_service,
+                principal=getattr(request.state, "principal", None),
+            )
             # HS-200-04: `needs_attention` resolved into named repair states,
             # each carrying the ONE verb that opens an existing control.  A
             # repair read never blocks the face: it degrades to no rows.
@@ -259,6 +265,54 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             return _safe_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to apply engine set")
+
+    @router.post("/summary-selection")
+    async def post_summary_selection(request: Request) -> Any:
+        """Commit the owner's one explicit summary-engine selection."""
+        try:
+            _owner(request)
+            body = await request.json()
+            allowed = {
+                "commandId",
+                "expectedAssignmentRevision",
+                "profileId",
+                "profileRevision",
+            }
+            if not isinstance(body, dict) or set(body) != allowed:
+                raise ServiceError(
+                    "concierge_summary_selection_invalid",
+                    "Summary selection has an invalid request shape.",
+                    context={"status": 400},
+                )
+
+            setup_svc = ctx.inference_setup_service
+            assignment_svc = ctx.inference_assignment_service
+            db = setup_svc._db if setup_svc is not None else None
+            if db is None or assignment_svc is None:
+                return JSONResponse(
+                    {
+                        "code": "concierge_unavailable",
+                        "message": "Required services are not available.",
+                    },
+                    status_code=503,
+                )
+
+            from ...services.concierge_service import assign_summary
+
+            result = assign_summary(
+                assignment_service=assignment_svc,
+                principal=request.state.principal,
+                db=db,
+                profile_id=body["profileId"],
+                profile_revision=body["profileRevision"],
+                expected_assignment_revision=body["expectedAssignmentRevision"],
+                command_id=body["commandId"],
+            )
+            return JSONResponse(result)
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to select summary engine")
 
     @router.post("/download")
     async def post_download(request: Request) -> Any:

@@ -10,6 +10,7 @@ from ..intel_queue import build_runtime_queue_frame, drain_intel_queue
 from ..meeting_aftercare import build_aftercare_ready_event
 from ..principals import Principal
 from .errors import ConflictError, NotFound, ValidationError
+from .meeting_route_projection import project_route, require_expected_selection
 
 @observe_service
 class MeetingIntelService:
@@ -18,12 +19,57 @@ class MeetingIntelService:
         self._observer = observer or NullObserver()
     def _broadcast_queue(self) -> None:
         if self._notify: self._notify("runtime_queue", build_runtime_queue_frame(self._db))
+
+    def _conflict(
+        self,
+        meeting_id: str,
+        detail: str,
+        *,
+        code: str,
+        run_receipt: dict[str, Any] | None = None,
+        planned_route: dict[str, Any] | None = None,
+    ) -> ConflictError:
+        """Build a conflict with the same read model used by all transports."""
+        if planned_route is None:
+            planned_route = project_route(
+                self._db, invocation_id=f"meeting:{meeting_id}:conflict"
+            )
+        if run_receipt is None:
+            run_receipt = self._db.intel.get_run_receipt(meeting_id)
+        exc = ConflictError(detail, code=code)
+        exc.context.update(
+            {
+                "planned_route": planned_route,
+                "current_planned_route": planned_route,
+                "run_receipt": run_receipt,
+            }
+        )
+        return exc
+
+    def _guard_gesture_state(self, meeting_id: str, expected_selection_hash: str | None = None) -> str:
+        """Refuse protected work before resolving or recording a route fence."""
+        state = self._db.intel.get_gesture_state(meeting_id)
+        details = {
+            "reserved": "Meeting intelligence is awaiting Stop settlement",
+            "running": "Meeting intelligence is already running",
+            "queued": "Meeting intelligence is already queued",
+            "ready": "Meeting intelligence is already ready",
+        }
+        # An existing queued owner may still be retried with the currently
+        # disclosed hash.  A missing hash must stop before route resolution;
+        # a supplied stale hash proceeds to the route fence, whose writer
+        # epoch preserves the queued owner without adding a refusal leaf.
+        if state == "queued" and str(expected_selection_hash or "").strip():
+            return state
+        if state in details:
+            raise self._conflict(meeting_id, details[state], code=state)
+        return state
     def list_jobs(self, principal: Principal, filters: dict[str, Any]) -> dict[str, Any]:
         status, limit = filters.get("status", "all"), filters.get("limit", 20)
         history_limit = max(1, min(int(filters.get("history_limit", 5)), 20))
         retry_max = max(1, int(Config.load().meeting.intel_retry_max_attempts)); now = datetime.now()
         jobs = self._db.intel.list_intel_jobs(status=status, limit=limit)
-        return {"jobs": [{"job_id": j.job_id, "origin_job_id": j.origin_job_id, "work_descriptor_sha256": j.work_descriptor_sha256, "claim_id": j.claim_id, "parent_operation_id": j.parent_operation_id, "bundle_id": j.bundle_id, "bundle_sha256": j.bundle_sha256, "lifecycle_posture": j.lifecycle_posture, "meeting_id": j.meeting_id, "status": j.status, "transcript_hash": j.transcript_hash, "requested_at": j.requested_at.isoformat(), "updated_at": j.updated_at.isoformat(), "attempts": j.attempts, "last_error": j.last_error, "meeting_title": j.meeting_title, "started_at": j.started_at.isoformat() if j.started_at else None, "intel_status_detail": j.intel_status_detail, "retry_scheduled": j.status == "queued" and bool(j.last_error) and j.requested_at > now, "next_retry_at": j.requested_at.isoformat() if j.status == "queued" and bool(j.last_error) and j.requested_at > now else None, "retries_remaining": max(0, retry_max - int(j.attempts)), "retry_max_attempts": retry_max, "retry_history": [{"job_id": e.job_id, "event_kind": e.event_kind, "attempt": e.attempt, "outcome": e.outcome, "error": e.error, "retry_at": e.retry_at.isoformat() if e.retry_at else None, "created_at": e.created_at.isoformat()} for e in self._db.intel.list_intel_job_attempts(j.meeting_id, limit=history_limit)]} for j in jobs]}
+        return {"jobs": [{"job_id": j.job_id, "origin_job_id": j.origin_job_id, "work_descriptor_sha256": j.work_descriptor_sha256, "claim_id": j.claim_id, "parent_operation_id": j.parent_operation_id, "bundle_id": j.bundle_id, "bundle_sha256": j.bundle_sha256, "lifecycle_posture": j.lifecycle_posture, "meeting_id": j.meeting_id, "status": j.status, "transcript_hash": j.transcript_hash, "requested_at": j.requested_at.isoformat(), "updated_at": j.updated_at.isoformat(), "attempts": j.attempts, "last_error": j.last_error, "planned_route": j.planned_route, "run_receipt": j.run_receipt, "meeting_title": j.meeting_title, "started_at": j.started_at.isoformat() if j.started_at else None, "intel_status_detail": j.intel_status_detail, "retry_scheduled": j.status == "queued" and bool(j.last_error) and j.requested_at > now, "next_retry_at": j.requested_at.isoformat() if j.status == "queued" and bool(j.last_error) and j.requested_at > now else None, "retries_remaining": max(0, retry_max - int(j.attempts)), "retry_max_attempts": retry_max, "retry_history": [{"job_id": e.job_id, "event_kind": e.event_kind, "attempt": e.attempt, "outcome": e.outcome, "error": e.error, "retry_at": e.retry_at.isoformat() if e.retry_at else None, "created_at": e.created_at.isoformat()} for e in self._db.intel.list_intel_job_attempts(j.meeting_id, limit=history_limit)]} for j in jobs]}
     def queue_summary(self, principal: Principal) -> dict[str, Any]:
         s = self._db.intel.get_intel_queue_summary()
         return {"total_jobs": s.total_jobs, "queued_jobs": s.queued_jobs, "running_jobs": s.running_jobs, "failed_jobs": s.failed_jobs, "queued_due_jobs": s.queued_due_jobs, "scheduled_retry_jobs": s.scheduled_retry_jobs, "next_retry_at": s.next_retry_at.isoformat() if s.next_retry_at else None}
@@ -36,16 +82,59 @@ class MeetingIntelService:
             if event and self._notify: self._notify("aftercare_ready", event)
         processed = drain_intel_queue(cfg.intel_realtime_model, on_meeting_ready=ready, provider=cfg.intel_provider, retry_base_seconds=cfg.intel_retry_base_seconds, retry_max_seconds=cfg.intel_retry_max_seconds, retry_max_attempts=cfg.intel_retry_max_attempts, include_scheduled=mode == "retry_now", max_jobs=payload.get("max_jobs"))
         self._broadcast_queue(); return {"success": True, "processed": processed, "mode": mode}
-    def _retry(self, meeting_id: str, *, recovery: bool) -> dict[str, Any]:
-        outcome = self._db.intel.request_intel_retry(meeting_id, reason=MANUAL_INTEL_RETRY_REASON)
+    def _route_for_gesture(self, meeting_id: str, expected_selection_hash: str | None) -> dict[str, Any]:
+        route = project_route(self._db, invocation_id=f"meeting:{meeting_id}")
+        try:
+            require_expected_selection(route, expected_selection_hash)
+        except ConflictError as exc:
+            receipt = self._db.intel.record_route_refusal(
+                meeting_id,
+                planned_route=route,
+                expected_selection_hash=expected_selection_hash,
+                reason=str(exc),
+            )
+            raise self._conflict(
+                meeting_id,
+                str(exc),
+                code=exc.code,
+                run_receipt=receipt,
+                planned_route=route,
+            ) from exc
+        return route
+
+    def _retry(self, meeting_id: str, *, recovery: bool, expected_selection_hash: str | None) -> dict[str, Any]:
+        # Preserve the settled no-assignment/no-transcript refusal before route
+        # disclosure checks.  This keeps the named recording refusal owned by 02
+        # while every actual run with transcript bytes binds a disclosed route.
+        meeting = self._db.meetings.get_meeting(meeting_id)
+        if meeting is None:
+            raise NotFound("meeting", meeting_id)
+        state = self._guard_gesture_state(meeting_id, expected_selection_hash)
+        if state == "empty":
+            outcome = self._db.intel.request_intel_retry(meeting_id, reason=MANUAL_INTEL_RETRY_REASON)
+        else:
+            route = self._route_for_gesture(meeting_id, expected_selection_hash)
+            outcome = self._db.intel.request_intel_retry(
+                meeting_id, reason=MANUAL_INTEL_RETRY_REASON, planned_route=route,
+            )
         errors = {"missing": "Meeting not found", "empty": "This meeting has no transcript. No summary can run." if recovery else "Meeting transcript is empty", "reserved": "Meeting intelligence is awaiting Stop settlement", "running": "Meeting intelligence is already running", "ready": "Meeting intelligence is already ready"}
         if outcome in errors:
             if outcome == "missing": raise NotFound("meeting", meeting_id)
-            raise ConflictError(errors[outcome], code=outcome)
+            if outcome == "empty":
+                meeting = self._db.meetings.get_meeting(meeting_id)
+                detail = getattr(meeting, "transcription_status_detail", None) if meeting else None
+                reason = str(detail.get("reason_code") or "").strip() if isinstance(detail, dict) else ""
+                if reason:
+                    raise self._conflict(
+                        meeting_id,
+                        f"Meeting transcription is not available: {reason.replace('_', ' ')}.",
+                        code=reason,
+                    )
+            raise self._conflict(meeting_id, errors[outcome], code=outcome)
         self._broadcast_queue(); return {"success": True, **({"recovery": self.get_recovery(None, meeting_id)} if recovery else {})}
-    def retry_job(self, principal: Principal, meeting_id: str) -> dict[str, Any]: return self._retry(meeting_id, recovery=False)
+    def retry_job(self, principal: Principal, meeting_id: str, *, expected_selection_hash: str | None = None) -> dict[str, Any]: return self._retry(meeting_id, recovery=False, expected_selection_hash=expected_selection_hash)
 
-    def run_intelligence(self, principal: Principal, meeting_id: str) -> dict[str, Any]:
+    def run_intelligence(self, principal: Principal, meeting_id: str, *, expected_selection_hash: str | None = None) -> dict[str, Any]:
         """HS-170-04: enqueue a fresh intelligence job for a meeting.
 
         Named verb for the face's 'Run intelligence' button. Returns
@@ -60,7 +149,16 @@ class MeetingIntelService:
         a woken drainer will pick the job up immediately and ``None`` when
         nothing will.
         """
-        outcome = self._db.intel.request_intel_retry(meeting_id, reason="Run intelligence")
+        meeting = self._db.meetings.get_meeting(meeting_id)
+        if meeting is None:
+            raise NotFound("meeting", meeting_id)
+        route = None
+        state = self._guard_gesture_state(meeting_id, expected_selection_hash)
+        if state != "empty":
+            route = self._route_for_gesture(meeting_id, expected_selection_hash)
+        outcome = self._db.intel.request_intel_retry(
+            meeting_id, reason="Run intelligence", planned_route=route,
+        )
         errors = {
             "missing": "Meeting not found",
             "empty": "Meeting has no transcript",
@@ -71,23 +169,18 @@ class MeetingIntelService:
         if outcome in errors:
             if outcome == "missing":
                 raise NotFound("meeting", meeting_id)
-            raise ConflictError(errors[outcome], code=outcome)
+            if outcome == "empty":
+                detail = getattr(meeting, "transcription_status_detail", None)
+                reason = str(detail.get("reason_code") or "").strip() if isinstance(detail, dict) else ""
+                if reason:
+                    raise self._conflict(
+                        meeting_id,
+                        f"Meeting transcription is not available: {reason.replace('_', ' ')}.",
+                        code=reason,
+                    )
+            raise self._conflict(meeting_id, errors[outcome], code=outcome)
         self._broadcast_queue()
-        # Resolve the model host at the point of decision (Article III).
-        # The value is the HOST the run egresses to, never a profile label.
-        from ..config import Config
-        from ..intel.providers import resolve_meeting_placement, endpoint_host
-        try:
-            placement = resolve_meeting_placement(Config.load().meeting)
-            if placement.node:
-                host = str(placement.node)
-            else:
-                _h = endpoint_host(placement.base_url)
-                host = _h if _h else (placement.boundary or "local")
-        except Exception:
-            host = "local"
-        # HS-172-02: record the host on the job row at enqueue time.
-        self._db.intel.set_intel_job_model_host(meeting_id, host)
+        host = (route or {}).get("legs", [{}])[0].get("host") if route else None
         job = self._db.intel.get_intel_job(meeting_id)
         # Wake the hub drainer so the job runs now rather than at the next
         # poll. `woken` is False when there is no drainer in this process.
@@ -107,6 +200,8 @@ class MeetingIntelService:
             "host": host,
             "drainer": drainer,
             "expectedWithinSeconds": 0 if (woken and drainer == "running") else None,
+            "planned_route": job.planned_route if job and job.planned_route is not None else route,
+            "run_receipt": job.run_receipt if job else self._db.intel.get_run_receipt(meeting_id),
         }
     def get_recovery(self, principal: Principal | None, meeting_id: str) -> dict[str, Any]:
         meeting = self._db.meetings.get_meeting(meeting_id)
@@ -124,8 +219,8 @@ class MeetingIntelService:
         if artifacts: completed.append({"label":"Artifacts","detail":f"{len(artifacts)} saved {'artifact' if len(artifacts)==1 else 'artifacts'}"})
         detail = (job.last_error if job else None) or meeting.intel_status_detail or "Meeting intelligence did not finish."
         retry_requested = state == "queued" and detail in {MANUAL_INTEL_RETRY_REASON, ROUTED_INTEL_RETRY_REASON}
-        return {"meeting_id":meeting_id,"visible":visible,"state":state,"headline":headline,"completed":completed,"remaining":{"label":"Routed meeting intelligence" if meeting.intel is not None and meeting_state in {"partial","skipped"} else "Remaining meeting intelligence" if meeting.intel is not None else "Summary, topics, action items, and routed artifacts","detail":str(detail)},"job":{"status":job.status,"attempts":job.attempts,"requested_at":job.requested_at.isoformat(),"updated_at":job.updated_at.isoformat()} if job else None,"actions":{"retry":not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and not retry_requested,"skip":not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and meeting_state != "skipped"}}
-    def retry_recovery(self, principal: Principal, meeting_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]: return self._retry(meeting_id, recovery=True)
+        return {"meeting_id":meeting_id,"visible":visible,"state":state,"headline":headline,"completed":completed,"planned_route":project_route(self._db, invocation_id=f"meeting:{meeting_id}"),"run_receipt":self._db.intel.get_run_receipt(meeting_id),"remaining":{"label":"Routed meeting intelligence" if meeting.intel is not None and meeting_state in {"partial","skipped"} else "Remaining meeting intelligence" if meeting.intel is not None else "Summary, topics, action items, and routed artifacts","detail":str(detail)},"job":{"status":job.status,"attempts":job.attempts,"requested_at":job.requested_at.isoformat(),"updated_at":job.updated_at.isoformat(),"planned_route":job.planned_route,"run_receipt":job.run_receipt} if job else None,"actions":{"retry":not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and not retry_requested,"skip":not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and meeting_state != "skipped"}}
+    def retry_recovery(self, principal: Principal, meeting_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]: return self._retry(meeting_id, recovery=True, expected_selection_hash=(payload or {}).get("expected_selection_hash"))
     def skip_recovery(self, principal: Principal, meeting_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         outcome = self._db.intel.skip_remaining_intel(meeting_id)
         errors = {"missing":"Meeting not found", "reserved":"Meeting intelligence is awaiting Stop settlement", "running":"Meeting intelligence is running; wait for it to finish before skipping", "ready":"Meeting intelligence is already ready"}

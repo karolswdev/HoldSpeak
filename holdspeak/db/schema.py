@@ -151,6 +151,8 @@ CREATE TABLE IF NOT EXISTS intel_jobs (
     executor_lease_epoch INTEGER NOT NULL DEFAULT 0,
     executor_lease_expires_at REAL,
     model_host TEXT,
+    planned_route_json TEXT,
+    run_receipt_json TEXT,
     requested_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     attempts INTEGER NOT NULL DEFAULT 0,

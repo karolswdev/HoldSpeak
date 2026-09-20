@@ -1,0 +1,381 @@
+BASELINE SOURCE: /Users/karol/dev/tools/wt-201-a/.tmp/hs201-baseline/holdspeak/__init__.py
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_a_project_carries_work_across_two_working_days[1440] ___________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8784/test_a_project_carries_work_ac0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x108db0d60>
+width = 1440
+
+    @pytest.mark.timeout(1800)
+    @pytest.mark.parametrize("width", [WIDE, NARROW])
+    def test_a_project_carries_work_across_two_working_days(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+    ) -> None:
+        from holdspeak.runtime_lock import claim_database, current_lock, release_database
+        from playwright.sync_api import sync_playwright
+    
+        from .test_hs200_preparation_brief_glass import FakeLLM, _define_route
+    
+        _ensure_build()
+        walk = Walk(width)
+        home = tmp_path / "home"
+        home.mkdir(exist_ok=True)
+        (home / ".holdspeak").mkdir(parents=True, exist_ok=True)
+        monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(home / "people-dev-key.json"))
+    
+        llm = FakeLLM()
+        llm.reply = _brief_reply
+        engine = _scripted_engine()
+    
+        # The owner claim: the intel drainer is scheduled work that runs in the
+        # owner alone (HS-200-42); the in-process glass server does not run the
+        # hub command's claim step.
+        assert current_lock() is None, "this process already owns a database"
+        lock = claim_database(tmp_path / "holdspeak.db")
+        assert lock.held, "the rig could not claim its own tmp database"
+    
+        state: dict[str, Any] = {}
+        try:
+            # ══ DAY 1 ══════════════════════════════════════════════════════
+            server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+            try:
+                from holdspeak import intel_queue_conductor as conductor
+    
+                assert conductor.drainer_state() == "running", "the hub lifespan started no drainer"
+    
+                with sync_playwright() as pw:
+                    browser = pw.chromium.launch()
+                    page = browser.new_page(viewport={"width": width, "height": 1000 if width >= WIDE else 852})
+                    page.on("pageerror", lambda e: walk.errors.append(f"day1: {e}"))
+                    _arrive(page, url)
+    
+                    # The runtime identity of THIS process, read from the product.
+                    identity = _api(page, "GET", "/api/system/identity", token=TOKEN)
+                    # R16-7, the honest identity block.  `capture_runtime_identity`
+                    # caches `_IDENTITY` for the OS PROCESS and returns the first
+                    # capture forever after (holdspeak/runtime_identity.py:204,
+                    # 214-222).  This rig boots both hubs -- and both
+                    # parametrizations -- inside ONE pytest process, so every
+                    # product-reported identity field below describes the FIRST
+                    # capture in this process, not necessarily this run.  The
+                    # fields that are genuinely per-build (version, revision,
+                    # bundle, schema, config) are the same either way; the
+                    # database is NOT, so it is measured separately through the
+                    # uncached seam.
+                    walk.identity = {
+                        "backend_version": identity["identity"]["backend_version"],
+                        "backend_revision": identity["identity"]["backend_revision"],
+                        "frontend_build": identity["identity"]["frontend_build"],
+                        "schema_version_loaded": identity["identity"]["schema_version_loaded"],
+                        "config_revision": identity["identity"]["config_revision"],
+                        "repair": identity["repair"],
+                        "process_start_reported": identity["identity"]["process_start"],
+                        "database_id_reported": identity["identity"]["database_id"],
+                        "capture_caveat": (
+                            "process_start_reported and database_id_reported come "
+                            "from a capture cached once per OS PROCESS "
+                            "(holdspeak/runtime_identity.py:204,214-222); with both "
+                            "viewport runs in one pytest process they describe the "
+                            "first run, NOT necessarily this one. The database this "
+                            "run actually used is database_id_this_run below, taken "
+                            "from the uncached `database_identity()`."
+                        ),
+                    }
+                    assert identity["repair"] == [], identity["repair"]
+    
+                    # The uncached seam: a pure function of the resolved path plus
+                    # the file's device+inode, so a replaced file reads as a
+                    # different database (runtime_identity.py:96-112).
+                    from holdspeak.runtime_identity import database_identity
+    
+                    db_path = tmp_path / "holdspeak.db"
+                    other_path = tmp_path / "not-the-database.db"
+                    other_path.write_bytes(b"")
+                    day1_db_id = database_identity(db_path)
+                    walk.identity["database_id_this_run"] = day1_db_id
+                    # The instrument must DISCRIMINATE, which is exactly what the
+                    # cached `database_id` failed to do: counsel found both
+                    # viewport runs reporting one id over two different files.
+                    walk.fact("day1-identity", "database_identity_discriminates",
+                              "a different file yields a different identity",
+                              "different" if database_identity(other_path) != day1_db_id
+                              else "SAME -- the instrument is a constant",
+                              "MATCH" if database_identity(other_path) != day1_db_id
+                              else "MISMATCH",
+                              "an identity that cannot tell two files apart proves "
+                              "nothing about which file was opened")
+                    assert database_identity(other_path) != day1_db_id
+                    other_path.unlink()
+    
+                    project_id = _api(page, "POST", "/api/projects", {
+                        "name": PROJECT_NAME,
+                        "description": "The HS-200-16 two-day loop.",
+                        "command_id": f"hs200-16-{uuid.uuid4().hex[:8]}",
+                    }, token=TOKEN)["project"]["id"]
+                    state["project_id"] = project_id
+                    _seed_gh_source(project_id)
+                    _define_route(home, llm.endpoint, "loop-llm", 1)
+                    _api(page, "POST", "/api/people/setup", {}, token=TOKEN)
+                    person = _api(page, "POST", "/api/people/relationships",
+                                  {"display_name": PERSON_NAME}, token=TOKEN)["relationship"]["id"]
+                    _api(page, "POST", f"/api/people/relationships/{person}/owner-aliases",
+                         {"alias": OWNER_HINT.lower()}, token=TOKEN)
+                    _api(page, "POST", f"/api/people/relationships/{person}/projects/{project_id}",
+                         {}, token=TOKEN)
+                    state["person"] = person
+    
+                    route = _api(page, "GET", f"/api/projects/{project_id}/briefs/route",
+                                 token=TOKEN)["route"]
+                    walk.model = {
+                        "brief_route_state": route["state"],
+                        "brief_model": route["model"],
+                        "brief_host": route["host"],
+                        "brief_boundary": route["boundary"],
+                        "brief_adapter": "controlled OpenAI-compatible probe on 127.0.0.1 (R16-1)",
+                        "meeting_extractor_provider": type(engine).__name__,
+                        "meeting_extractor_model": getattr(engine, "active_model", "unknown"),
+                        "live_model": False,
+                    }
+                    assert route["state"] == "ready", route
+    
+                    # ── S1: the preparation brief (11) ─────────────────────
+                    walk.begin("day1-brief", 1, "prepare and keep the preparation brief")
+                    _open_room(page, project_id)
+                    _enter_prepare(page)
+                    coverage_chip = (page.get_by_test_id("prepare-coverage")
+                                     .locator(".surface-state-chip").first)
+                    chip_words = (coverage_chip.get_attribute("aria-label")
+                                  or coverage_chip.inner_text()).strip()
+                    walk.fact("day1-brief", "coverage_chip", "COVERAGE · 1 OF 2", chip_words,
+                              "MATCH" if chip_words == "COVERAGE · 1 OF 2" else "MISMATCH",
+                              "the Jira Watch cannot check; the face says so before the run")
+                    assert chip_words == "COVERAGE · 1 OF 2", chip_words
+                    page.get_by_role("textbox", name="Purpose").fill(PURPOSE_D1)
+                    page.get_by_test_id("prepare-verb").click()
+>                   _wait_for_document(page, llm)
+
+tests/e2e/test_phase200_daily_loop.py:864: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+page = <Page url='http://127.0.0.1:55141/'>
+llm = <tests.e2e.test_hs200_preparation_brief_glass.FakeLLM object at 0x1097746e0>
+timeout = 90.0
+
+    def _wait_for_document(page: Any, llm: Any, timeout: float = 90.0) -> None:
+        """Wait for the drafted brief, and name the refusal if one comes instead.
+    
+        A bare ``wait_for`` on the document reports "not visible" and hides the
+        reason the hub gave; a failing rig must name its mechanism.
+        """
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if page.get_by_test_id("prepare-document").count():
+                page.get_by_test_id("prepare-document").wait_for(timeout=5000)
+                return
+            posture = page.locator('[data-testid="prepare-posture"]').first
+            if (posture.get_attribute("data-posture") or "") == "refused":
+                head = page.get_by_test_id("prepare-head").inner_text()
+>               raise AssertionError(
+                    "the brief was refused instead of drafted:\n"
+                    f"  head: {head!r}\n"
+                    f"  llm posts: {len(llm.posts)}\n"
+                    f"  last body: {(llm.posts[-1]['body'][:1500] if llm.posts else '(none)')!r}"
+                )
+E               AssertionError: the brief was refused instead of drafted:
+E                 head: 'Cannot draft\nQ4 PLATFORM\n⚠\nCOVERAGE · 1 OF 2\nPURPOSE KEPT\nSENT · 127.0.0.1 · NOT ANSWERED'
+E                 llm posts: 0
+E                 last body: '(none)'
+
+tests/e2e/test_phase200_daily_loop.py:442: AssertionError
+___________ test_a_project_carries_work_across_two_working_days[393] ___________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8784/test_a_project_carries_work_ac1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x107dca3f0>
+width = 393
+
+    @pytest.mark.timeout(1800)
+    @pytest.mark.parametrize("width", [WIDE, NARROW])
+    def test_a_project_carries_work_across_two_working_days(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+    ) -> None:
+        from holdspeak.runtime_lock import claim_database, current_lock, release_database
+        from playwright.sync_api import sync_playwright
+    
+        from .test_hs200_preparation_brief_glass import FakeLLM, _define_route
+    
+        _ensure_build()
+        walk = Walk(width)
+        home = tmp_path / "home"
+        home.mkdir(exist_ok=True)
+        (home / ".holdspeak").mkdir(parents=True, exist_ok=True)
+        monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(home / "people-dev-key.json"))
+    
+        llm = FakeLLM()
+        llm.reply = _brief_reply
+        engine = _scripted_engine()
+    
+        # The owner claim: the intel drainer is scheduled work that runs in the
+        # owner alone (HS-200-42); the in-process glass server does not run the
+        # hub command's claim step.
+        assert current_lock() is None, "this process already owns a database"
+        lock = claim_database(tmp_path / "holdspeak.db")
+        assert lock.held, "the rig could not claim its own tmp database"
+    
+        state: dict[str, Any] = {}
+        try:
+            # ══ DAY 1 ══════════════════════════════════════════════════════
+            server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+            try:
+                from holdspeak import intel_queue_conductor as conductor
+    
+                assert conductor.drainer_state() == "running", "the hub lifespan started no drainer"
+    
+                with sync_playwright() as pw:
+                    browser = pw.chromium.launch()
+                    page = browser.new_page(viewport={"width": width, "height": 1000 if width >= WIDE else 852})
+                    page.on("pageerror", lambda e: walk.errors.append(f"day1: {e}"))
+                    _arrive(page, url)
+    
+                    # The runtime identity of THIS process, read from the product.
+                    identity = _api(page, "GET", "/api/system/identity", token=TOKEN)
+                    # R16-7, the honest identity block.  `capture_runtime_identity`
+                    # caches `_IDENTITY` for the OS PROCESS and returns the first
+                    # capture forever after (holdspeak/runtime_identity.py:204,
+                    # 214-222).  This rig boots both hubs -- and both
+                    # parametrizations -- inside ONE pytest process, so every
+                    # product-reported identity field below describes the FIRST
+                    # capture in this process, not necessarily this run.  The
+                    # fields that are genuinely per-build (version, revision,
+                    # bundle, schema, config) are the same either way; the
+                    # database is NOT, so it is measured separately through the
+                    # uncached seam.
+                    walk.identity = {
+                        "backend_version": identity["identity"]["backend_version"],
+                        "backend_revision": identity["identity"]["backend_revision"],
+                        "frontend_build": identity["identity"]["frontend_build"],
+                        "schema_version_loaded": identity["identity"]["schema_version_loaded"],
+                        "config_revision": identity["identity"]["config_revision"],
+                        "repair": identity["repair"],
+                        "process_start_reported": identity["identity"]["process_start"],
+                        "database_id_reported": identity["identity"]["database_id"],
+                        "capture_caveat": (
+                            "process_start_reported and database_id_reported come "
+                            "from a capture cached once per OS PROCESS "
+                            "(holdspeak/runtime_identity.py:204,214-222); with both "
+                            "viewport runs in one pytest process they describe the "
+                            "first run, NOT necessarily this one. The database this "
+                            "run actually used is database_id_this_run below, taken "
+                            "from the uncached `database_identity()`."
+                        ),
+                    }
+                    assert identity["repair"] == [], identity["repair"]
+    
+                    # The uncached seam: a pure function of the resolved path plus
+                    # the file's device+inode, so a replaced file reads as a
+                    # different database (runtime_identity.py:96-112).
+                    from holdspeak.runtime_identity import database_identity
+    
+                    db_path = tmp_path / "holdspeak.db"
+                    other_path = tmp_path / "not-the-database.db"
+                    other_path.write_bytes(b"")
+                    day1_db_id = database_identity(db_path)
+                    walk.identity["database_id_this_run"] = day1_db_id
+                    # The instrument must DISCRIMINATE, which is exactly what the
+                    # cached `database_id` failed to do: counsel found both
+                    # viewport runs reporting one id over two different files.
+                    walk.fact("day1-identity", "database_identity_discriminates",
+                              "a different file yields a different identity",
+                              "different" if database_identity(other_path) != day1_db_id
+                              else "SAME -- the instrument is a constant",
+                              "MATCH" if database_identity(other_path) != day1_db_id
+                              else "MISMATCH",
+                              "an identity that cannot tell two files apart proves "
+                              "nothing about which file was opened")
+                    assert database_identity(other_path) != day1_db_id
+                    other_path.unlink()
+    
+                    project_id = _api(page, "POST", "/api/projects", {
+                        "name": PROJECT_NAME,
+                        "description": "The HS-200-16 two-day loop.",
+                        "command_id": f"hs200-16-{uuid.uuid4().hex[:8]}",
+                    }, token=TOKEN)["project"]["id"]
+                    state["project_id"] = project_id
+                    _seed_gh_source(project_id)
+                    _define_route(home, llm.endpoint, "loop-llm", 1)
+                    _api(page, "POST", "/api/people/setup", {}, token=TOKEN)
+                    person = _api(page, "POST", "/api/people/relationships",
+                                  {"display_name": PERSON_NAME}, token=TOKEN)["relationship"]["id"]
+                    _api(page, "POST", f"/api/people/relationships/{person}/owner-aliases",
+                         {"alias": OWNER_HINT.lower()}, token=TOKEN)
+                    _api(page, "POST", f"/api/people/relationships/{person}/projects/{project_id}",
+                         {}, token=TOKEN)
+                    state["person"] = person
+    
+                    route = _api(page, "GET", f"/api/projects/{project_id}/briefs/route",
+                                 token=TOKEN)["route"]
+                    walk.model = {
+                        "brief_route_state": route["state"],
+                        "brief_model": route["model"],
+                        "brief_host": route["host"],
+                        "brief_boundary": route["boundary"],
+                        "brief_adapter": "controlled OpenAI-compatible probe on 127.0.0.1 (R16-1)",
+                        "meeting_extractor_provider": type(engine).__name__,
+                        "meeting_extractor_model": getattr(engine, "active_model", "unknown"),
+                        "live_model": False,
+                    }
+                    assert route["state"] == "ready", route
+    
+                    # ── S1: the preparation brief (11) ─────────────────────
+                    walk.begin("day1-brief", 1, "prepare and keep the preparation brief")
+                    _open_room(page, project_id)
+                    _enter_prepare(page)
+                    coverage_chip = (page.get_by_test_id("prepare-coverage")
+                                     .locator(".surface-state-chip").first)
+                    chip_words = (coverage_chip.get_attribute("aria-label")
+                                  or coverage_chip.inner_text()).strip()
+                    walk.fact("day1-brief", "coverage_chip", "COVERAGE · 1 OF 2", chip_words,
+                              "MATCH" if chip_words == "COVERAGE · 1 OF 2" else "MISMATCH",
+                              "the Jira Watch cannot check; the face says so before the run")
+                    assert chip_words == "COVERAGE · 1 OF 2", chip_words
+                    page.get_by_role("textbox", name="Purpose").fill(PURPOSE_D1)
+                    page.get_by_test_id("prepare-verb").click()
+>                   _wait_for_document(page, llm)
+
+tests/e2e/test_phase200_daily_loop.py:864: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+page = <Page url='http://127.0.0.1:55248/'>
+llm = <tests.e2e.test_hs200_preparation_brief_glass.FakeLLM object at 0x10e231450>
+timeout = 90.0
+
+    def _wait_for_document(page: Any, llm: Any, timeout: float = 90.0) -> None:
+        """Wait for the drafted brief, and name the refusal if one comes instead.
+    
+        A bare ``wait_for`` on the document reports "not visible" and hides the
+        reason the hub gave; a failing rig must name its mechanism.
+        """
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if page.get_by_test_id("prepare-document").count():
+                page.get_by_test_id("prepare-document").wait_for(timeout=5000)
+                return
+            posture = page.locator('[data-testid="prepare-posture"]').first
+            if (posture.get_attribute("data-posture") or "") == "refused":
+                head = page.get_by_test_id("prepare-head").inner_text()
+>               raise AssertionError(
+                    "the brief was refused instead of drafted:\n"
+                    f"  head: {head!r}\n"
+                    f"  llm posts: {len(llm.posts)}\n"
+                    f"  last body: {(llm.posts[-1]['body'][:1500] if llm.posts else '(none)')!r}"
+                )
+E               AssertionError: the brief was refused instead of drafted:
+E                 head: 'Cannot draft\nQ4 PLATFORM\n⚠\nCOVERAGE · 1 OF 2\nPURPOSE KEPT\nSENT · 127.0.0.1 · NOT ANSWERED'
+E                 llm posts: 0
+E                 last body: '(none)'
+
+tests/e2e/test_phase200_daily_loop.py:442: AssertionError
+=========================== short test summary info ============================
+FAILED tests/e2e/test_phase200_daily_loop.py::test_a_project_carries_work_across_two_working_days[1440]
+FAILED tests/e2e/test_phase200_daily_loop.py::test_a_project_carries_work_across_two_working_days[393]
+2 failed in 34.72s

@@ -221,3 +221,12 @@ refuses -- it never falls back -- when that route is not ready.
   `prepare`; neither writes a route, chooses a leg, or retries.
 
 Classified in `BACKEND_PRIVATE_DECISIONS` with review tag `200-11`.
+
+
+## HS-201-05 revision read projections
+
+`holdspeak/services/concierge_service.py` adds `_model_profile_revision` and
+`_detected_profile_fields`. They read and project the immutable Model Library
+revision for the summary-selection read model. They do not select an assignment,
+choose a route leg, or retry. Both are classified in `BACKEND_PRIVATE_DECISIONS`
+under the existing 143-12 owner-surface migration family.
