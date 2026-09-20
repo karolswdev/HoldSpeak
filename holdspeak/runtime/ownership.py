@@ -32,7 +32,14 @@ class DatabaseOwnershipMixin:
         """
         from ..runtime_identity import capture_runtime_identity
 
-        capture_runtime_identity(started_at=self.runtime_started_at)
+        identity = capture_runtime_identity(started_at=self.runtime_started_at)
+        print(
+            "HoldSpeak runtime identity: "
+            f"backend_commit={identity.backend_revision} "
+            f"frontend_build={identity.frontend_build} "
+            f"database_path={identity.database_path}",
+            flush=True,
+        )
         self._claim_database()
 
     def _claim_database(self) -> None:

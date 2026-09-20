@@ -94,7 +94,7 @@ its conflict and partial-result rendering, not labels alone.
 
 ## Where we are
 
-Lane A backend implementation and source counsel are complete. The quiet full suite finished with 11,159 passed, 24 failed, 125 skipped and four strict expected failures. Failure classification and affected focused reruns are recorded in `audits/full-suite-astra.md`; the raw run is `audits/full-suite-astra.log`. Gate commits and the PR follow verification. B owns the face integration and the sitting. No phase exit criterion is closed by A.
+Lane A backend implementation and source counsel are complete. The quiet full suite finished with 11,159 passed, 24 failed, 125 skipped and four strict expected failures. Failure classification and affected focused reruns are recorded in `audits/full-suite-astra.md`; the raw run is `audits/full-suite-astra.log`. Stories 02, 03 and 05 are committed through the gate; 07's startup backend ships separately without closing 07. The review PR follows. B owns the face integration and the sitting. No phase exit criterion is closed by A.
 
 ## Active risks
 

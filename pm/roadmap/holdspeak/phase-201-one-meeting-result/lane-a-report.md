@@ -2,10 +2,11 @@
 
 **LANE:** A, Astra. Stories HS-201-02, HS-201-03, HS-201-05; 07 backend
 startup line only. Worktree `/Users/karol/dev/tools/wt-201-a`, branch
-`feat/hs-201-a`. PR: pending gate commits.
+`feat/hs-201-a`. PR: pending creation.
 Session: `01a0bbc3-9bbd-7513-a76d-f6cc139fae2d`.
 
-**OUTCOME:** Backend built and verified; gate commits and PR next. Record uses
+**OUTCOME:** Backend built and verified; the three stories and startup backend
+are committed through the gate. Push and review PR follow. Record uses
 speech without a summary model. Summary selection creates the exact capability
 assignment. The route is disclosed before a run, bound before dispatch, and
 actual attempts persist in a receipt across restart. The startup line identifies
@@ -74,3 +75,9 @@ Review state for the unexecuted proposal chain. B owns Record token 01,
 summary/route faces 04 and Models controls/labels 06. B receives `transcription_status_detail`, `planned_route`, `run_receipt`,
 `summaryAssignment`, and `ConciergeSummaryAssignmentReceipt@1`; the transport
 details and the completed test migration are in `lane-a-handoff.md`.
+
+
+Gate commits: 02 — `183f1b5c`; 03 — `16a122ed`; 05 — `6365b7d3`.
+Each flips one story and ships its evidence. Startup backend is a separate
+commit with no story flip. `dw gate --porcelain` passed each; `dw check`
+retains the inherited issues in the ledger and no new Phase 201 issue.
