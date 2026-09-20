@@ -1,10 +1,16 @@
 // HS-172 — the detail's NEEDS YOU section.
-// Board: caption `NEEDS YOU 3` with optional `Run intelligence` at trailing.
+// Board: caption `NEEDS YOU 3` with optional `Run summary` at trailing.
 // Each row: Decide:/Confirm: prefix (accent) + text + verbs.
 // UX-CANON A.8: when zero rows AND not OFF-with-words, the section is ABSENT.
 // HS-172: QUEUED/FAILED verbs (Skip, Retry) in the header verb slot.
 import { Button } from "../../../components/signal/Signal";
 import { countLabel } from "../../../desk/surface";
+import { RouteDisclosure } from "../../../meetings/RouteDisclosure";
+import {
+  routeReady,
+  type PlannedRoute,
+  type SummaryRefusal,
+} from "../../../meetings/summaryRoute";
 import type { NeedsRow } from "./helpers";
 
 export function NeedsYouTable({
@@ -13,6 +19,8 @@ export function NeedsYouTable({
   intelOff,
   intelState,
   hasTranscript,
+  plannedRoute,
+  refusal,
   onReview,
   onRunIntelligence,
   onRetryIntelligence,
@@ -24,19 +32,31 @@ export function NeedsYouTable({
   /** The raw intel state string: "disabled", "queued", "running", "error", "failed", "complete". */
   intelState?: string;
   hasTranscript: boolean;
+  /** HS-201-04 — the disclosed route the next run will use (Article III). */
+  plannedRoute?: PlannedRoute | null;
+  /** HS-201-04 — the hub's 409 on this record's last run gesture. */
+  refusal?: SummaryRefusal | null;
   /** HS-200-12 — proposals are reviewed on the Review wing; this is the way there. */
   onReview?: () => void;
   onRunIntelligence?: () => void;
   onRetryIntelligence?: () => void;
   onSkipIntelligence?: () => void;
 }) {
-  const showRunIntel = intelOff && hasTranscript && Boolean(onRunIntelligence);
+  // HS-201-04 (UX-CANON A.11): a run verb with no route to run on is a
+  // lie. It is withheld, and the disclosure says the reason in its place.
+  const canRun = routeReady(plannedRoute);
+  const wantsRun = intelOff && hasTranscript && Boolean(onRunIntelligence);
   const isFailed = intelState === "error" || intelState === "failed";
   const isQueued = intelState === "queued" || intelState === "pending";
-  const showRetry = isFailed && Boolean(onRetryIntelligence);
+  const wantsRetry = isFailed && Boolean(onRetryIntelligence);
+  const showRunIntel = wantsRun && canRun;
+  const showRetry = wantsRetry && canRun;
   const showSkip = (isFailed || isQueued) && Boolean(onSkipIntelligence);
   const showReview = needsRows.length > 0 && Boolean(onReview);
-  const hasVerbs = showRunIntel || showRetry || showSkip || showReview;
+  // The disclosure rides beside the verb the gesture WOULD use.
+  const showRoute = wantsRun || wantsRetry;
+  const hasVerbs =
+    showRunIntel || showRetry || showSkip || showReview || showRoute || Boolean(refusal);
 
   if (needsRows.length === 0 && !hasVerbs) return null;
 
@@ -56,6 +76,20 @@ export function NeedsYouTable({
             Review
           </Button>
         ) : null}
+        {showRoute ? (
+          <RouteDisclosure route={plannedRoute} testId="detail-route" />
+        ) : null}
+        {refusal ? (
+          <span
+            className="surface-token summary-refusal"
+            data-chip
+            data-tone="danger"
+            data-testid="detail-refusal"
+            title={refusal.plainReason}
+          >
+            {`REFUSED · ${refusal.plainReason}`}
+          </span>
+        ) : null}
         {showRunIntel ? (
           <Button
             dense
@@ -63,7 +97,7 @@ export function NeedsYouTable({
             onClick={onRunIntelligence}
             data-testid="detail-run-intelligence-btn"
           >
-            Run intelligence
+            Run summary
           </Button>
         ) : null}
         {showRetry ? (

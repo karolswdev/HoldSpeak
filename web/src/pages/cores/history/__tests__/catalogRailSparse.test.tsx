@@ -21,7 +21,6 @@ function baseProps(rowCount: number) {
     setSelected: vi.fn(),
     onRunIntelligence: vi.fn(),
     runningId: null,
-    runHost: null,
   };
 }
 
@@ -55,7 +54,6 @@ describe("CatalogRail stream (HS-170-04)", () => {
       setSelected={vi.fn()}
       onRunIntelligence={vi.fn()}
       runningId={null}
-      runHost={null}
     />);
     expect(screen.getByText("NO TRANSCRIPT")).toBeInTheDocument();
   });

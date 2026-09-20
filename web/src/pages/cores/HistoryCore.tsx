@@ -11,6 +11,14 @@ import { useResource } from "../pageSupport";
 import { ConfirmVerb, SurfaceSplit } from "../../desk/surface/Surface";
 import { countToken } from "../../desk/surface";
 import { EgressChip, StringGadget, CheckGadget } from "../../desk/surface/gadgets";
+import {
+  postSummaryRun,
+  readPlannedRoute,
+  routeReady,
+  routeReasonToken,
+  type SummaryRefusal,
+} from "../../meetings/summaryRoute";
+import { egressFor } from "../../desk/surface/egress";
 import { useCoreWings } from "./core-hooks";
 import { useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { renderHeroSlot } from "./core-layout";
@@ -49,7 +57,11 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const queueFrame = useRuntimeFrame<{ drainer?: string }>("runtime_queue");
   const drainerAbsent = queueFrame?.drainer === "absent";
   const [runningId, setRunningId] = useState<string | null>(null);
-  const [runHost, setRunHost] = useState<string | null>(null);
+  // HS-201-04: the hub's 409 refusal, kept as a refusal (code + plain
+  // reason + the fresh route), never as an error surface.
+  const [runRefusal, setRunRefusal] = useState<
+    { meetingId: string; refusal: SummaryRefusal } | null
+  >(null);
 
   // HS-170-04: search (StringGadget with mic in the list head)
   const [searchQuery, setSearchQuery] = useState("");
@@ -136,33 +148,49 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     requestedMeetingId,
   ]);
 
-  // Run intelligence on a meeting
+  // Run the summary of a meeting
   const handleRunIntelligence = useCallback(async (meetingId: string) => {
     setRunningId(meetingId);
-    setRunHost(null);
+    setRunRefusal(null);
+    // HS-201-04 (lane A's interlock): read the disclosed route FIRST and
+    // send its selection hash. The hub binds that exact selection and
+    // refuses drift before any provider is contacted.
+    const row = meetingRows.find((item) => String(item.id) === meetingId);
+    const route = readPlannedRoute(row);
     try {
-      const result = await apiFetch<{
+      const outcome = await postSummaryRun<{
         jobId: string;
         state: string;
         host: string;
         drainer?: string;
       }>(
         `/api/meetings/${encodeURIComponent(meetingId)}/intelligence/run`,
-        { method: "POST" },
+        route,
       );
-      setRunHost(result.host ?? "THIS DEVICE");
+      if (!outcome.ok) {
+        // A refusal is a refusal, with its plain reason — never an error
+        // surface, and it never erases the receipt of an earlier real run.
+        setRunningId(null);
+        setRunRefusal({ meetingId, refusal: outcome.refusal });
+        setReceipt({
+          text: `REFUSED · ${outcome.refusal.plainReason}`,
+          tone: "danger",
+        });
+        void meetings.reload();
+        return;
+      }
+      const result = outcome.result;
       setReceipt({ text: `QUEUED ${clockTime(new Date().toISOString())}` });
       // HS-200-42: when the route says no drainer exists, polling every 3s for
       // 120s is a lie told forty times — nothing in the hub will move this job.
       // Stop the poll and refresh the row once.
       //
-      // `runningId` / `runHost` are deliberately LEFT SET. They are this
-      // click's Article III receipt — where the run would egress is a fact
-      // the click established, and it is owed to the user whether or not a
-      // drainer exists. Clearing them removed the host chip from the row
-      // (caught by tests/e2e/test_hs170_meetings_glass.py S-3). The row's
-      // own token stays honest: `MeetingStreamRow` reads NOT DRAINING rather
-      // than RUNNING while the drainer is absent.
+      // `runningId` is deliberately LEFT SET: where the run egresses is a
+      // fact the click established and it is owed to the user whether or
+      // not a drainer exists (HS-170 S-3). HS-201-04 moved that fact to the
+      // row's own disclosed route (`row-route`), which says it through the
+      // one egress mapper instead of echoing the POST response's raw host.
+      // The row's token stays honest: NOT DRAINING rather than RUNNING.
       if (result.drainer !== "running") {
         void meetings.reload();
         return;
@@ -180,13 +208,11 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           if (state !== "queued" && state !== "running" && state !== "pending") {
             clearInterval(poll);
             setRunningId(null);
-            setRunHost(null);
             void meetings.reload();
           }
         } catch {
           clearInterval(poll);
           setRunningId(null);
-          setRunHost(null);
         }
       }, 3000);
       // Safety timeout
@@ -199,15 +225,41 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           }
           return current;
         });
-        setRunHost(null);
       }, 120_000);
     } catch (reason) {
       setRunningId(null);
-      setRunHost(null);
       const msg = readableError(reason);
       setReceipt({ text: `REFUSED · ${msg}`, tone: "danger" });
     }
-  }, [meetings]);
+  }, [meetings, meetingRows]);
+
+  // HS-201-04 (UX-CANON A.9, audit "where the host is shown"): the footer
+  // chip was a prop-less constant that always read "This device". It reads
+  // the same disclosed route every run verb on this face reads — the
+  // SERVICE route for the next summary — and says so when there is none.
+  const faceRoute = useMemo(
+    () => readPlannedRoute(meetingRows.find((row) => readPlannedRoute(row))),
+    [meetingRows],
+  );
+  const footerEgress = useMemo(() => {
+    if (!faceRoute) return <EgressChip />;
+    if (!routeReady(faceRoute)) {
+      return (
+        <EgressChip
+          label={`NO SUMMARY ROUTE · ${routeReasonToken(faceRoute)}`}
+          title="No model is assigned to meeting summaries."
+        />
+      );
+    }
+    const lead = egressFor(faceRoute.legs[0].host);
+    return (
+      <EgressChip
+        label={lead.label}
+        scope={lead.scope}
+        title="Where a meeting summary runs."
+      />
+    );
+  }, [faceRoute]);
 
   // The headline
   const headline = meetingsHeadline(meetingRows, meetings.loading);
@@ -284,8 +336,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       setSelected={setSelected}
       onRunIntelligence={(id) => void handleRunIntelligence(id)}
       runningId={runningId}
-      runHost={runHost}
       drainerAbsent={drainerAbsent}
+      runRefusal={runRefusal}
       narrowed={Boolean(selected)}
     />
   );
@@ -298,7 +350,16 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       onClose={() => setSelected(null)}
       onDeleted={() => void meetings.reload()}
       onReceipt={setReceipt}
+      runRefusal={
+        runRefusal && selected && runRefusal.meetingId === String(selected.id)
+          ? runRefusal.refusal
+          : null
+      }
       onRunIntelligence={
+        // HS-201-04: a FAILED record's Retry is owned by the summary slab
+        // (`MeetingIntelRecovery`), which runs it through the recovery
+        // route with the same disclosed hash. NEEDS YOU must not draw a
+        // SECOND Retry/Skip pair beside it (tenet 3, one verb per job).
         selected && (needsIntelligence(selected) || paneView === "review")
           ? () => void handleRunIntelligence(String(selected.id))
           : undefined
@@ -407,7 +468,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       ) : null}
       {face}
       {reviewOwnsFooter ? null : <SurfaceFooter
-        egress={<EgressChip />}
+        egress={footerEgress}
         receipt={
           <span
             className="surface-footer-receipt-line"

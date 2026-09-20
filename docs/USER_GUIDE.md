@@ -35,7 +35,7 @@ The default Control mode is **YOLO**. Read [Control modes](AUTHORITY.md) before 
 | Project context | Keeps repo-local `.hs/` files that guide intelligent rewrites (optional LLM stage) | `/dictation` -> Project Context |
 | Automation hooks | Lets Claude Code and Codex report current cwd/session state to HoldSpeak | `/dictation` -> Hooks |
 | Meeting mode | Captures microphone plus optional system audio | Meetings, `holdspeak meeting` command |
-| Meeting intelligence | Produces transcript, topics, summaries, actions, artifacts; **Run intelligence** on any meeting that never ran | Meetings |
+| Meeting summary | Produces transcript, topics, summaries, actions, artifacts; **Run summary** on any meeting that never ran | Meetings |
 | iPad app | Drives both modes from another device over the hub's HTTP API: dictate into the desk, read a meeting back with its artifacts and sources, approve a proposal, browse the archive | [Companions](#companions) |
 | AIPI-Lite companion | Portable ESPHome device for meeting controls, status, and spoken replies to waiting Claude/Codex sessions | [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md), `/companion` |
 | Threads | Saved conversations with sources, model replies, and applicable tools | **Desk > New Thread** or **Continue in thread** on a supported object |
@@ -708,7 +708,7 @@ After a meeting, its row in the Meetings stream shows one of these states:
 | State | Meaning | Verb |
 |---|---|---|
 | **SAVED** | Intelligence ran and results are stored. | **Open** |
-| **OFF** | Has a transcript but intelligence never ran. | **Run intelligence** |
+| **OFF** | Has a transcript but no summary ran. | **Run summary** |
 | **RAN** | Auto-run completed; duration and model host shown (`RAN, 41 S, host`). | **Open** |
 | **RUNNING** | Intelligence is running now. | |
 | **NEEDS YOU** | Open items need your attention (count shown). | **Open** |
@@ -716,7 +716,7 @@ After a meeting, its row in the Meetings stream shows one of these states:
 | **FAILED** | Intelligence failed (the reason is named). | **Retry** |
 | **REC** | Recording now. | |
 
-Choose **Run intelligence** on any **OFF** meeting to process its transcript
+Choose **Run summary** on any **OFF** meeting to process its transcript
 through the configured plugins. The detail view shows the outcomes, the
 transcript, and aftercare when a channel is configured.
 
@@ -734,7 +734,7 @@ three positions and the model's host chip:
 
 | Position | Behavior |
 |---|---|
-| **OFF** | Intelligence never runs automatically. Use **Run intelligence** on individual meetings. |
+| **OFF** | No summary runs automatically. Use **Run summary** on individual meetings. |
 | **AFTER ROOM MEETINGS** (default) | Intelligence runs automatically after every meeting linked to a Room. The Room link is the consent act. |
 | **AFTER EVERY MEETING** | Intelligence runs automatically after every meeting, linked or not. |
 

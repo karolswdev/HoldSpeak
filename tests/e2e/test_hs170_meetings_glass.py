@@ -1,15 +1,15 @@
 """HS-170-04 — meetings face glass rig.
 
 Seed four meetings through the product's DB in the isolated hub:
-  1. Census standup: OFF with a transcript — Run intelligence shown
+  1. Census standup: OFF with a transcript — Run summary shown
   2. Design review: SAVED with 3 proposals (needs you)
   3. 1:1 Ania: SAVED, no outcomes
-  4. Vendor call: OFF with NO transcript — Run intelligence NOT shown
+  4. Vendor call: OFF with NO transcript — Run summary NOT shown
 
 Assert at 1440 + 393:
   - headline count equals OFF-with-words meetings (1)
-  - Run intelligence present exactly on those rows, absent on no-transcript
-  - clicking Run intelligence posts to the run route (monkeypatched)
+  - Run summary present exactly on those rows, absent on no-transcript
+  - clicking Run summary posts to the run route (monkeypatched)
   - the detail opens with one display; NEEDS YOU 3 with 3 verbs
   - NO TRANSCRIPT renders, 0 SEG never does
   - speaker tokens in transcript; no raw <button>
@@ -32,6 +32,7 @@ from .glass_infra import (
     _normal_chair,
     _ensure_build,
     _settle,
+    seed_meeting_engines,
     REPO,
 )
 
@@ -215,6 +216,10 @@ class TestMeetingsGlass:
             return {"jobId": "job-glass-123", "state": "queued", "host": "THIS DEVICE"}
         monkeypatch.setattr(mis_mod.MeetingIntelService, "run_intelligence", fake_run_intelligence)
 
+        # HS-201-04: a run verb needs a disclosed route to run on, or it is
+        # withheld (UX-CANON A.11). This rig's subject is the meetings FACE,
+        # not setup, so both halves of the meeting path are pinned first.
+        seed_meeting_engines()
         _seed_meetings()
         self.tmp_path = tmp_path
 
@@ -248,15 +253,15 @@ class TestMeetingsGlass:
 
                 # ── Assert: headline ──
                 headline_text = headline.text_content() or ""
-                assert "1" in headline_text and "intelligence" in headline_text.lower(), (
-                    f"Headline at {width}: expected '1 ... intelligence', got '{headline_text}'"
+                assert "1" in headline_text and "summary" in headline_text.lower(), (
+                    f"Headline at {width}: expected '1 ... summary', got '{headline_text}'"
                 )
 
-                # ── Assert: Run intelligence on OFF-with-words row ──
+                # ── Assert: Run summary on OFF-with-words row ──
                 run_btns = page.locator("[data-testid='run-intelligence-btn']")
                 expect(run_btns.first).to_be_visible(timeout=5_000)
                 assert run_btns.count() == 1, (
-                    f"Expected exactly 1 'Run intelligence' at {width}, got {run_btns.count()}"
+                    f"Expected exactly 1 'Run summary' at {width}, got {run_btns.count()}"
                 )
 
                 # ── Assert: NO TRANSCRIPT renders ──
@@ -320,13 +325,21 @@ class TestMeetingsGlass:
                 )
 
                 if width == 1440:
-                    # ── S-3: Click Run intelligence, assert host chip (Article III) ──
-                    run_btns.first.click()
-                    # The monkeypatch returns host="THIS DEVICE"; the
-                    # EgressChip should appear on the row after the POST.
+                    # ── S-3: Click Run summary, assert host chip (Article III) ──
+                    # HS-201-04: the host is disclosed on the row BEFORE the
+                    # click and stays through the run, from the row's own
+                    # `planned_route` through the one egress mapper — it is
+                    # no longer echoed from the POST response (which carried
+                    # the raw wire word `same_device` straight to the glass).
                     host_chip = page.locator(
-                        "[data-testid='meeting-row-m-off-words'] .gadget-chip-egress"
+                        "[data-testid='meeting-row-m-off-words'] "
+                        "[data-testid='row-route'] .gadget-chip-egress"
                     )
+                    expect(host_chip).to_be_visible(timeout=5_000)
+                    assert "THIS DEVICE" in (host_chip.text_content() or ""), (
+                        host_chip.text_content()
+                    )
+                    run_btns.first.click()
                     expect(host_chip).to_be_visible(timeout=5_000)
 
                     # ── Click Design review to open detail ──

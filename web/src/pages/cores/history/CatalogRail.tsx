@@ -5,7 +5,14 @@ import { Button } from "../../../components/signal/Signal";
 import {
   SurfaceState,
 } from "../../../desk/surface/Surface";
-import { EgressChip } from "../../../desk/surface/gadgets";
+import { RouteDisclosure, RunAttempts } from "../../../meetings/RouteDisclosure";
+import {
+  pickRunReceipt,
+  readPlannedRoute,
+  readRunReceipt,
+  routeReady,
+  type SummaryRefusal,
+} from "../../../meetings/summaryRoute";
 import { rowId } from "../../pageSupport";
 import { countToken } from "../../../desk/surface";
 import {
@@ -35,17 +42,18 @@ function MeetingStreamRow({
   onSelect,
   onRunIntelligence,
   runningId,
-  runHost,
   drainerAbsent,
+  refusal,
 }: {
   row: Record<string, unknown>;
   isSelected: boolean;
   onSelect: () => void;
   onRunIntelligence: (id: string) => void;
   runningId: string | null;
-  runHost: string | null;
   /** The `runtime_queue` frame says no hub drainer will execute the queue. */
   drainerAbsent?: boolean;
+  /** HS-201-04 — the hub's 409 on THIS row's last run gesture. */
+  refusal?: SummaryRefusal | null;
 }) {
   const state = meetingRowState(row);
   const words = wordsToken(row.transcriptWords);
@@ -114,6 +122,12 @@ function MeetingStreamRow({
     );
   }
 
+  // HS-201-04 — the disclosed route (before the click) and the receipt's
+  // destinations (after the run), both from this row's read model.
+  const plannedRoute = refusal?.route ?? readPlannedRoute(row);
+  const runReceipt = pickRunReceipt(refusal?.receipt, readRunReceipt(row));
+  const canRun = routeReady(plannedRoute);
+
   // Determine verb
   let verb = state.verb;
   let verbVariant = state.verbVariant;
@@ -121,7 +135,13 @@ function MeetingStreamRow({
     verb = null;
     verbVariant = "ghost";
   }
-  // No transcript row: only ghost Open (no Run intelligence)
+  // UX-CANON A.11: `Run summary` and `Retry` both start a summary
+  // run. With no resolvable route there is nothing to run, so the verb is
+  // withheld and the disclosure says why.
+  if ((verb === "Run summary" || verb === "Retry") && !canRun) {
+    verb = null;
+  }
+  // No transcript row: only ghost Open (no Run summary)
   if (noTranscript && token.label === "OFF") {
     verb = "Open";
     verbVariant = "ghost";
@@ -160,8 +180,27 @@ function MeetingStreamRow({
         </div>
       </div>
       <div className="meetings-stream-row-verb">
-        {isRunning && runHost ? (
-          <EgressChip label={runHost} />
+        {/* Article III — after the run: every destination contacted, in
+            order. Before the click (and while it is in flight): the route
+            the run WILL use.
+            HS-201-04: this REPLACES the old in-flight chip, which took the
+            POST response's `host` straight to the glass and printed the
+            wire word `same_device` at a person (caught by the HS-170 S-3
+            rig). One egress chip per row, through the one mapper. */}
+        <RunAttempts receipt={runReceipt} testId="row-attempts" />
+        {state.verb === "Run summary" || state.verb === "Retry" || isRunning ? (
+          <RouteDisclosure route={plannedRoute} testId="row-route" />
+        ) : null}
+        {refusal ? (
+          <span
+            className="surface-token summary-refusal"
+            data-chip
+            data-tone="danger"
+            data-testid="row-refusal"
+            title={refusal.plainReason}
+          >
+            {`REFUSED · ${refusal.plainReason}`}
+          </span>
         ) : null}
         {verb ? (
           <Button
@@ -169,13 +208,21 @@ function MeetingStreamRow({
             variant={verbVariant === "primary" ? "primary" : "ghost"}
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
-              if (verb === "Run intelligence") {
+              // HS-201-04 (audit defect 2): `Retry` used to fall through to
+              // `onSelect` and issue ZERO requests. Both run verbs dispatch.
+              if (verb === "Run summary" || verb === "Retry") {
                 onRunIntelligence(String(row.id));
               } else {
                 onSelect();
               }
             }}
-            data-testid={verb === "Run intelligence" ? "run-intelligence-btn" : undefined}
+            data-testid={
+              verb === "Run summary"
+                ? "run-intelligence-btn"
+                : verb === "Retry"
+                  ? "retry-intelligence-btn"
+                  : undefined
+            }
           >
             {verb}
           </Button>
@@ -192,8 +239,8 @@ export function CatalogRail({
   setSelected,
   onRunIntelligence,
   runningId,
-  runHost,
   drainerAbsent,
+  runRefusal,
   narrowed,
 }: {
   meetingRows: Record<string, unknown>[];
@@ -202,9 +249,10 @@ export function CatalogRail({
   setSelected: (row: Record<string, unknown> | null) => void;
   onRunIntelligence: (id: string) => void;
   runningId: string | null;
-  runHost: string | null;
   /** The `runtime_queue` frame says no hub drainer will execute the queue. */
   drainerAbsent?: boolean;
+  /** HS-201-04 — the hub's 409 on the last run gesture, with its row. */
+  runRefusal?: { meetingId: string; refusal: SummaryRefusal } | null;
   /** When true, shown as the narrowed left side in SurfaceSplit. */
   narrowed?: boolean;
 }) {
@@ -233,8 +281,12 @@ export function CatalogRail({
               }}
               onRunIntelligence={onRunIntelligence}
               runningId={runningId}
-              runHost={runHost}
               drainerAbsent={drainerAbsent}
+              refusal={
+                runRefusal && runRefusal.meetingId === String(row.id)
+                  ? runRefusal.refusal
+                  : null
+              }
             />
           ))}
         </div>

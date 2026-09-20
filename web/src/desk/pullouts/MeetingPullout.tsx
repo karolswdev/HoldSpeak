@@ -133,6 +133,20 @@ export function MeetingPullout({ object: o, onClose }: PulloutContentProps) {
             }
           />
         )}
+        {/* HS-201-04 (Article VI, no dead fields): `intel.topics` was
+            declared here and read nowhere. The producer fills it and the
+            hub persists it (holdspeak/kernel/meeting_plugin_projection.py
+            :278), so it is shown — as tokens, beside the summary, the same
+            way the Meetings record shows it. */}
+        {detail?.intel?.topics && detail.intel.topics.length > 0 ? (
+          <span className="summary-topics">
+            {detail.intel.topics.slice(0, 8).map((topic: string) => (
+              <span key={topic} className="surface-token" data-chip>
+                {String(topic).toUpperCase()}
+              </span>
+            ))}
+          </span>
+        ) : null}
         {detail?.intel?.action_items &&
           detail.intel.action_items.length > 0 && (
             <section>

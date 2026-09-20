@@ -62,7 +62,7 @@ over claim). Faces obey UX-CANON. Orchestration: TWO-BRAINS.md.
 | HS-201-01 | The desk names the one thing it needs | done | [story-01-the-desk-names-the-one-thing-it-needs](./story-01-the-desk-names-the-one-thing-it-needs.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-201-02 | Record works with no summary model | done | [story-02-record-works-with-no-summary-model](./story-02-record-works-with-no-summary-model.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-201-03 | The host is disclosed before the run and truthful after | done | [story-03-the-host-is-disclosed-before-the-run-and-truthful-after](./story-03-the-host-is-disclosed-before-the-run-and-truthful-after.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-201-04 | Ask for the summary and find it again | backlog | [story-04-ask-for-the-summary-and-find-it-again](./story-04-ask-for-the-summary-and-find-it-again.md) | - |
+| HS-201-04 | Ask for the summary and find it again | done | [story-04-ask-for-the-summary-and-find-it-again](./story-04-ask-for-the-summary-and-find-it-again.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-201-05 | One engine and one assignment from the face | done | [story-05-one-engine-and-one-assignment-from-the-face](./story-05-one-engine-and-one-assignment-from-the-face.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-201-06 | Plain words on the path | done | [story-06-plain-words-on-the-path](./story-06-plain-words-on-the-path.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-201-07 | Run it from main and the sitting | backlog | [story-07-run-it-from-main-and-the-sitting](./story-07-run-it-from-main-and-the-sitting.md) | - |

@@ -8,6 +8,12 @@ export function intelBadge(status: string | null | undefined): string {
   const s = String(status).toLowerCase();
   const map: Record<string, string> = {
     complete: "RAN",
+    // HS-201-04: the bound executor writes `ready` when a real run
+    // finishes (holdspeak/db/intel.py, "Meeting intelligence ready.");
+    // `complete` is the seeded/legacy word. The catalog already read both
+    // as RAN (history/helpers.ts); the Chair read `ready` as SAVED, so a
+    // summary that had just run looked like one that never did.
+    ready: "RAN",
     running: "RUNNING",
     queued: "QUEUED",
     pending: "QUEUED",

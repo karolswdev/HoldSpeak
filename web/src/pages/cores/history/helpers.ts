@@ -180,7 +180,7 @@ export function wordsToken(transcriptWords: unknown): string | null {
 }
 
 /** HS-170-04 — true when the meeting is OFF (intel disabled) AND has a
- *  transcript (words > 0): the Run intelligence verb is honest. */
+ *  transcript (words > 0): the Run summary verb is honest. */
 export function needsIntelligence(row: Record<string, unknown>): boolean {
   const token = stateToken(row);
   if (token.label !== "OFF") return false;
@@ -194,7 +194,7 @@ export function meetingFailed(row: Record<string, unknown>): boolean {
   return stateToken(row).label.endsWith("FAILED");
 }
 
-/** HS-170-04 — the display headline: `N meeting(s) need intelligence` (accent)
+/** HS-170-04 — the display headline: `N meeting(s) need a summary` (accent)
  *  or `Nothing needs you` (muted) or `No meetings yet` when empty.
  *  HS-201-01: a FAILED row is named instead of the all-clear. */
 export function meetingsHeadline(
@@ -205,8 +205,11 @@ export function meetingsHeadline(
   if (meetingRows.length === 0) return { text: "No meetings yet", accent: false };
   const offWithWords = meetingRows.filter(needsIntelligence).length;
   if (offWithWords > 0) {
-    const noun = offWithWords === 1 ? "meeting needs" : "meetings need";
-    return { text: `${offWithWords} ${noun} intelligence`, accent: true };
+    // HS-201-04 (tenet 4): the headline names the same thing its verb
+    // does. `Run summary` under "needs intelligence" was two words for
+    // one job.
+    const noun = offWithWords === 1 ? "meeting needs a summary" : "meetings need summaries";
+    return { text: `${offWithWords} ${noun}`, accent: true };
   }
   const failed = meetingRows.filter(meetingFailed).length;
   if (failed > 0) {
@@ -217,7 +220,7 @@ export function meetingsHeadline(
 }
 
 /** HS-170-04 — the face's meeting state for list rows: label + verb.
- *  OFF with transcript: `Run intelligence` (primary dense).
+ *  OFF with transcript: `Run summary` (primary dense).
  *  NEEDS YOU N: `Open` (ghost). SAVED: `Open` (ghost). No transcript:
  *  `Open` (ghost). The verb is null when the state alone says everything. */
 export type MeetingRowState = {
@@ -231,9 +234,12 @@ export function meetingRowState(row: Record<string, unknown>): MeetingRowState {
   const token = stateToken(row);
   const hasTranscript = row.transcriptWords != null && Number(row.transcriptWords) > 0;
 
-  // OFF with transcript => Run intelligence
+  // OFF with transcript => Run summary
+  // HS-201-04 (Constitution tenet 4, ASD-STE100): the thing the user asks
+  // for is a SUMMARY. "Intelligence" is the wire's word for it, and the
+  // verb said it out loud on every meeting row.
   if (token.label === "OFF" && hasTranscript) {
-    return { label: "OFF", verb: "Run intelligence", verbVariant: "primary" };
+    return { label: "OFF", verb: "Run summary", verbVariant: "primary" };
   }
   // OFF without transcript => no Run verb, just Open
   if (token.label === "OFF" && !hasTranscript) {

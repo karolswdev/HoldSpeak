@@ -843,7 +843,7 @@ export function SurfaceLedgerRow({
        *  was a <button> and `trailing` rendered INSIDE it, so every row
        *  with a verb shipped a button nested in a button (invalid HTML)
        *  and a verb click bubbled to `onToggle` — the story-42 walk caught
-       *  `Run intelligence` opening the Meetings window over the row it
+       *  `Run summary` opening the Meetings window over the row it
        *  was clicked in. The line is now the same role="button" div the
        *  meetings rail already uses (CatalogRail.tsx:141), keeping the
        *  identical class, grid slot and CSS (`.surface-ledger-line` resets

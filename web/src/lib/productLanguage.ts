@@ -13,6 +13,10 @@ export const PRODUCT_TERMS = {
   desk: ["Desk", "Desks"],
   meeting: ["Meeting", "Meetings"],
   transcript: ["Transcript", "Transcripts"],
+  // HS-201-06 added `summary` to docs/product-language.json (the wire's
+  // "meeting intelligence" said in plain words) and this table was not
+  // moved with it, so the registry contract test failed on the branch.
+  summary: ["Summary", "Summaries"],
   action_item: ["Action item", "Action items"],
   result: ["Result", "Results"],
   artifact: ["Artifact", "Artifacts"],

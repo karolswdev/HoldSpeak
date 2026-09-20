@@ -52,6 +52,17 @@ import {
 } from "../attention";
 import { unfinishedThoughts, type UnfinishedThought } from "../thoughts";
 import type { Meeting } from "../../lib/primitives";
+import {
+  RouteDisclosure,
+  RunAttempts,
+} from "../../meetings/RouteDisclosure";
+import {
+  pickRunReceipt,
+  postSummaryRun,
+  routeReady,
+  type PlannedRoute,
+  type SummaryRefusal,
+} from "../../meetings/summaryRoute";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -686,28 +697,41 @@ function Arrival() {
   const [intelReceipt, setIntelReceipt] = useState<
     { meetingId: string; host: string; drainer: string } | null
   >(null);
-  const runIntelligence = async (meetingId: string) => {
+  // HS-201-04: the hub's 409, kept as a refusal with its plain reason.
+  const [intelRefusal, setIntelRefusal] = useState<
+    { meetingId: string; refusal: SummaryRefusal } | null
+  >(null);
+  const runIntelligence = async (meetingId: string, route: PlannedRoute | null) => {
     setRunningIntel(meetingId);
     setIntelReceipt(null);
+    setIntelRefusal(null);
     try {
-      const result = await apiFetch<{
+      // The disclosed selection travels with the gesture (story 03's
+      // contract): the hub binds this exact selection, or refuses.
+      const outcome = await postSummaryRun<{
         jobId: string;
         state: string;
         host: string;
         drainer?: string;
       }>(
         `/api/meetings/${encodeURIComponent(meetingId)}/intelligence/run`,
-        { method: "POST" },
+        route,
       );
+      if (!outcome.ok) {
+        setIntelRefusal({ meetingId, refusal: outcome.refusal });
+        void useDesk.getState().refresh();
+        clearWriteFailure();
+        return;
+      }
       setIntelReceipt({
         meetingId,
-        host: result.host || "THIS DEVICE",
-        drainer: result.drainer === "running" ? "running" : "absent",
+        host: outcome.route?.legs?.[0]?.host || outcome.result.host || "THIS DEVICE",
+        drainer: outcome.result.drainer === "running" ? "running" : "absent",
       });
       void useDesk.getState().refresh();
       clearWriteFailure();
     } catch (error) {
-      reportWriteFailure("Run intelligence", error, () => void runIntelligence(meetingId));
+      reportWriteFailure("Run summary", error, () => void runIntelligence(meetingId, route));
     }
     finally { setRunningIntel(null); }
   };
@@ -1064,6 +1088,7 @@ function Arrival() {
             meetings={meetings}
             runningIntel={runningIntel}
             intelReceipt={intelReceipt}
+            intelRefusal={intelRefusal}
             drainerAbsent={drainerAbsent}
             onRunIntel={runIntelligence}
           />
@@ -1772,15 +1797,18 @@ function MeetingsSection({
   meetings,
   runningIntel,
   intelReceipt,
+  intelRefusal,
   drainerAbsent,
   onRunIntel,
 }: {
   meetings: Meeting[];
   runningIntel: string | null;
   intelReceipt: { meetingId: string; host: string; drainer: string } | null;
+  /** HS-201-04 — the hub's 409 on the last run gesture, with its row. */
+  intelRefusal: { meetingId: string; refusal: SummaryRefusal } | null;
   /** The `runtime_queue` frame says no hub drainer will execute the queue. */
   drainerAbsent: boolean;
-  onRunIntel: (id: string) => void;
+  onRunIntel: (id: string, route: PlannedRoute | null) => void;
 }) {
   // Sort by startedAt descending, limit to 3.
   const sorted = [...meetings]
@@ -1809,6 +1837,12 @@ function MeetingsSection({
           const hasTranscript = m.transcriptWords != null && m.transcriptWords > 0;
           const isOff = badge === "OFF";
           const isComplete = badge === "RAN" || badge === "SAVED";
+          // HS-201-04 (Article III): the route this row's Run WILL use,
+          // read before the click; the refusal's fresh route wins.
+          const rowRefusal =
+            intelRefusal?.meetingId === m.id ? intelRefusal.refusal : null;
+          const route = rowRefusal?.route ?? m.plannedRoute ?? null;
+          const canRun = routeReady(route);
           return (
             <SurfaceLedgerRow
               key={m.id}
@@ -1838,28 +1872,51 @@ function MeetingsSection({
                       scope={receipt.host === "local" ? "local" : "cloud"}
                     />
                   ) : null}
+                  {/* After the run: the destinations actually contacted. */}
+                  <RunAttempts
+                    receipt={pickRunReceipt(rowRefusal?.receipt, m.runReceipt)}
+                    testId="arrival-attempts"
+                  />
+                  {rowRefusal ? (
+                    <span
+                      className="surface-token summary-refusal"
+                      data-chip
+                      data-tone="danger"
+                      data-testid="arrival-refusal"
+                      title={rowRefusal.plainReason}
+                    >
+                      {`REFUSED · ${rowRefusal.plainReason}`}
+                    </span>
+                  ) : null}
                 </>
               }
               trailing={
                 isOff && hasTranscript ? (
-                  <Button
-                    variant="primary"
-                    dense
-                    disabled={runningIntel === m.id}
-                    onClick={() => onRunIntel(m.id)}
-                    data-testid="arrival-run-intel"
-                  >
-                    {/* In flight: the same label, disabled. Nothing is queued
-                        until the route answers 2xx, and the badge says the
-                        rest. */}
-                    Run intelligence
-                  </Button>
+                  <>
+                    {/* Before the click: where this run will go. */}
+                    <RouteDisclosure route={route} testId="arrival-route" />
+                    {/* UX-CANON A.11: withheld when nothing can run. */}
+                    {canRun ? (
+                      <Button
+                        variant="primary"
+                        dense
+                        disabled={runningIntel === m.id}
+                        onClick={() => onRunIntel(m.id, route)}
+                        data-testid="arrival-run-intel"
+                      >
+                        {/* In flight: the same label, disabled. Nothing is
+                            queued until the route answers 2xx, and the badge
+                            says the rest. */}
+                        Run summary
+                      </Button>
+                    ) : null}
+                  </>
                 ) : isComplete ? (
                   <Button
                     variant="ghost"
                     dense
                     onClick={() =>
-                      openSurfaceOr("review-meetings", "/meetings", m.id)
+                      openSurfaceOr("review-meetings", "/meetings", `meeting:${m.id}`)
                     }
                   >
                     Open
@@ -1867,7 +1924,7 @@ function MeetingsSection({
                 ) : null
               }
               onToggle={() =>
-                openSurfaceOr("review-meetings", "/meetings", m.id)
+                openSurfaceOr("review-meetings", "/meetings", `meeting:${m.id}`)
               }
               expands={false}
               wrap

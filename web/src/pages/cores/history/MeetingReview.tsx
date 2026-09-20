@@ -406,7 +406,15 @@ export function MeetingReview({
     },
     {
       id: "proposals",
-      label: countLabel("PROPOSALS", proposalCount),
+      // HS-201-04: a disclosed summary request runs ANALYSIS only — it does
+      // not run the Phase 200 plugin proposal chain (the lane A handoff,
+      // "Merge interlock and summary-only scope"). With no proposals and
+      // nothing that will make them, the step says NOT RUN. It never says
+      // `0 PROPOSALS` (UX-CANON A.8) and never implies extraction ran.
+      label:
+        proposalCount > 0
+          ? countLabel("PROPOSALS", proposalCount)
+          : "PROPOSALS · NOT RUN",
       status: proposalCount > 0 ? "done" : coverage.state === "failed" ? "failed" : "queued",
     },
   ];

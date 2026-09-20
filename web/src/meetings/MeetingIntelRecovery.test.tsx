@@ -40,6 +40,15 @@ const failedRecovery = {
     updated_at: "2026-07-11T12:01:00",
   },
   actions: { retry: true, skip: true },
+  // HS-201-04: the recovery read model carries the disclosed route; the
+  // Retry verb is withheld without one (a verb that cannot run is a lie).
+  planned_route: {
+    status: "ready",
+    reason_code: null,
+    selection_hash: "sha256:recovery",
+    legs: [{ ordinal: 1, host: "local", boundary: "local" }],
+  },
+  run_receipt: null,
 };
 
 describe("HS-93-06 Meeting intelligence recovery", () => {
