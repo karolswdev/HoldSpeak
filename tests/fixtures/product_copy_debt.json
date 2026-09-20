@@ -126,21 +126,6 @@
       "text": "Could not open. Note unchanged."
     },
     {
-      "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-      "rule_id": "failure-missing-facts",
-      "text": "Default context skipped · {value} unavailable"
-    },
-    {
-      "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-      "rule_id": "failure-missing-facts",
-      "text": "The answer was added, but its exact place in the Note could not be verified. Reload the workspace."
-    },
-    {
-      "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-      "rule_id": "promotional-narration",
-      "text": "Ready when you are"
-    },
-    {
       "path": "web/src/pages/cores/AssignmentEditor.tsx",
       "rule_id": "failure-missing-facts",
       "text": "(\".assignment-candidates button\")?.focus()}>Replace unavailable model"

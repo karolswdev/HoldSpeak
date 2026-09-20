@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApiError, readableError } from "../../lib/api";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
@@ -6,7 +6,6 @@ import { openSurfaceOr } from "../shell";
 import { onReturnToTask, rememberTaskFocus } from "../returnToTask";
 import {
   actOnReview,
-  answerAndContinue,
   completeThought,
   detachThoughtContext,
   refineThought,
@@ -16,18 +15,15 @@ import {
   type Thought,
   type ThoughtAppendEffect,
   type ThoughtAttachment,
-  type ThoughtContextReceipt,
-  type ThoughtDefaultApplicationReceipt,
-  type ThoughtWorkspaceActionKind,
   type ThoughtWorkspaceProjection,
 } from "../thoughts";
 import type { WorldObject } from "../world";
 import { Button } from "../../components/signal/Signal";
-import { countToken, PadGadget } from "../surface";
+import { countToken, EgressChip, PadGadget, SurfaceFooter } from "../surface";
 import { DeskWindowFrame } from "../components/DeskWindow";
-import { ThoughtContextPicker } from "../pullouts/ThoughtContextPicker";
 import { useThoughtNoteWriter } from "../pullouts/editors/useThoughtNoteWriter";
 import { ThoughtDocumentPane } from "./ThoughtDocumentPane";
+import { ThoughtReadsWell, type ReadsResult } from "./ThoughtReadsWell";
 import { useThoughtWorkspaceController } from "./useThoughtWorkspaceController";
 import "./thought-workspace.css";
 
@@ -37,35 +33,6 @@ function stableId(key: string): string {
   const next = crypto.randomUUID();
   sessionStorage.setItem(key, next);
   return next;
-}
-
-function useNarrowWorkspace(): boolean {
-  const read = () => typeof matchMedia === "function" && matchMedia("(max-width: 720px)").matches;
-  const [narrow, setNarrow] = useState(read);
-  useEffect(() => {
-    if (typeof matchMedia !== "function") return;
-    const media = matchMedia("(max-width: 720px)");
-    const update = () => setNarrow(media.matches);
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
-  return narrow;
-}
-
-function actionLabel(kind: ThoughtWorkspaceActionKind): string {
-  switch (kind) {
-    case "refine": return "Ask AI";
-    case "configure_ai": return "Set up AI";
-    case "stop_refinement": return "Stop";
-    case "answer_and_continue": return "Add & ask next";
-    case "answer_review": return "Add to Note";
-    case "accept_review": return "Use this draft";
-    case "refresh_context": return "Update context";
-    case "detach_context": return "Remove it";
-    case "complete": return "Finish Thought";
-    case "resume": return "Resume";
-    case "reject_review": return "Reject";
-  }
 }
 
 export function utf8OffsetToIndex(value: string, byteOffset: number): number | null {
@@ -99,20 +66,19 @@ async function verifiedReveal(thought: Thought, effect?: ThoughtAppendEffect): P
   return start === null || end === null ? null : { start, end };
 }
 
-function Placement({ projection }: { projection: ThoughtWorkspaceProjection }) {
-  const placement = projection.review?.placement;
-  if (!placement) {
-    return projection.inference.intended_placement ? <span className="thought-placement intended surface-token">{projection.inference.intended_placement.target_name}</span> : null;
+/* HS-201-12 — the engine the ask would reach, read from the projection
+   BEFORE dispatch (design condition 4).  `same_device` is the deployment
+   revision's word for "here"; every other boundary names its own target,
+   never a raw wire token (162's no-raw-ids law). */
+function engineEgress(placement: ThoughtWorkspaceProjection["inference"]["intended_placement"]):
+  { label: string; scope: "local" | "cloud" } | null {
+  if (!placement) return null;
+  if (placement.boundary === "same_device" || placement.target_kind === "this_device") {
+    return { label: "THIS DEVICE", scope: "local" };
   }
-  if (placement.state === "unavailable") return <span className="thought-placement surface-token">Placement unavailable</span>;
-  const location = placement.egress.scope === "local" ? "Local" : placement.egress.host || placement.egress.scope;
-  return <span className="thought-placement actual surface-token">{placement.actual_placement.target_name} · {location}</span>;
-}
-
-function UsedContext({ projection }: { projection: ThoughtWorkspaceProjection }) {
-  const used = projection.review?.used_context;
-  if (!used) return null;
-  return <details className="thought-workspace-used-context"><summary>{used.summary}</summary><ul>{used.attachments.flatMap((attachment) => attachment.leaves.map((leaf) => <li key={`${attachment.ref}:${leaf.ref}`}>{leaf.title} <small>{leaf.version_label}</small></li>))}</ul></details>;
+  const name = (placement.target_name || "").trim();
+  if (!name) return null;
+  return { label: name.toUpperCase(), scope: placement.boundary === "private_network" ? "local" : "cloud" };
 }
 
 type WorkspaceMutation = {
@@ -148,33 +114,17 @@ function WorkspaceReady({
   const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const [tab, setTab] = useState<"note" | "interview">("note");
-  const [picker, setPicker] = useState(false);
-  const [pickerThought, setPickerThought] = useState<Thought | null>(null);
-  const restoreContextFocus = useRef(false);
-  const [contextReceipt, setContextReceipt] = useState<ThoughtContextReceipt | null>(null);
-  const [defaultReceipt] = useState<ThoughtDefaultApplicationReceipt | null>(() => {
-    const key = `hs.thought.default-context-receipt.${initialThought.id}`;
-    const value = sessionStorage.getItem(key);
-    if (!value) return null;
-    sessionStorage.removeItem(key);
-    try { return JSON.parse(value) as ThoughtDefaultApplicationReceipt; }
-    catch { return null; }
-  });
+  const [messageVerb, setMessageVerb] = useState<"reload" | null>(null);
+  /* One line at a time, and the verb belongs to the line that set it. */
+  const say = (line: string) => { setMessage(line); setMessageVerb(null); };
+  const [reads, setReads] = useState(false);
   const [revealRange, setRevealRange] = useState<{ start: number; end: number; focus?: boolean } | null>(null);
-  const [inserted, setInserted] = useState(false);
   /* HS-176-04 — the answer well is a PadGadget (the voice law): the ref
      holds its <label> and the focus reaches the textarea inside it. */
   const answerRef = useRef<HTMLLabelElement | null>(null);
   const focusAnswer = () => answerRef.current?.querySelector("textarea")?.focus();
-  const setupRef = useRef<HTMLButtonElement | null>(null);
-  const contextRef = useRef<HTMLDivElement | null>(null);
-  useLayoutEffect(() => {
-    if (picker || !restoreContextFocus.current) return;
-    restoreContextFocus.current = false;
-    contextRef.current?.focus();
-  }, [picker]);
-  const narrow = useNarrowWorkspace();
+  const readsRef = useRef<HTMLButtonElement | null>(null);
+  const reloading = useRef(false);
   const writer = useThoughtNoteWriter({
     thought: documentThought,
     onThought: setDocumentThought,
@@ -192,9 +142,9 @@ function WorkspaceReady({
 
   useEffect(() => registerClose(() => {
     if (busy) return;
-    setBusy(true); setMessage("");
+    setBusy(true); say("");
     void writer.flush({ fence: true }).then(() => onClose()).catch((cause) => {
-      setMessage(readableError(cause));
+      say(readableError(cause));
       writer.release();
       setBusy(false);
     });
@@ -212,34 +162,29 @@ function WorkspaceReady({
     return onReturnToTask(() => { void reload(false).catch(() => undefined); });
   }, [projection.inference.availability, reload]);
 
-  const installMutation = async (result: WorkspaceMutation, reveal: "note" | "marker" | "none" = "none") => {
+  const installMutation = async (result: WorkspaceMutation, reveal: boolean) => {
     if (result.workbench && !install(result.workbench)) return false;
     setDocumentThought(result.thought);
-    if (result.workbench) { /* installed above */ }
-    else await reload();
+    if (!result.workbench) await reload();
     const effect = appendEffect(result.receipt);
     const range = await verifiedReveal(result.thought, effect);
     if (effect && !range) {
-      setMessage("The answer was added, but its exact place in the Note could not be verified. Reload the workspace.");
+      /* HS-201-12 CI fallout — a failure line carries what failed, the work
+         that is kept, and the next action (`product_copy.py:406`), and the
+         action is a REAL verb beside the line, never a word the owner
+         cannot press. */
+      setMessage("The answer is in the note, and your text is kept. Its exact place could not be checked. Reload the note.");
+      setMessageVerb("reload");
       return true;
     }
-    if (reveal === "note" && range) {
-      setRevealRange(range);
-      setTab("note");
-      setMessage("Answer added to the Note");
-    } else if (reveal === "marker" && range) {
-      setRevealRange({ ...range, focus: false });
-      setInserted(true);
-      setMessage("");
-    }
+    if (reveal && range) setRevealRange({ ...range, focus: false });
     return true;
   };
 
-  const afterFlush = async (command: (latest: Thought) => Promise<WorkspaceMutation>, reveal: "note" | "marker" | "none" = "none") => {
+  const afterFlush = async (command: (latest: Thought) => Promise<WorkspaceMutation>, reveal = false) => {
     if (busy) return false;
-    setInserted(false);
     setBusy(true);
-    setMessage("");
+    say("");
     try {
       const latest = await writer.flush({ fence: true });
       return await installMutation(await command(latest), reveal);
@@ -254,9 +199,7 @@ function WorkspaceReady({
       } else if (code === "workspace_cursor_conflict") {
         await reload(false).catch(() => undefined);
       }
-      setMessage(code === "refinement_continuation_unavailable"
-        ? "Couldn't start the next turn. Your answer is still here. Add it to the Note."
-        : readableError(cause));
+      say(readableError(cause));
       return false;
     } finally {
       writer.release();
@@ -264,31 +207,57 @@ function WorkspaceReady({
     }
   };
 
-  const answerReview = async (continueNext: boolean) => {
-    const reviewId = projection.review?.id;
-    if (!reviewId || !answer.trim()) return;
-    const key = continueNext ? `hs.thought.answer-next.${reviewId}` : `hs.thought.review.${reviewId}.answer`;
+  const review = projection.review;
+  const question = projection.workspace_state === "question" && review?.kind === "question" ? (review.question || "").trim() : "";
+  const draft = projection.workspace_state === "synthesis" && review?.kind === "synthesis" ? review : null;
+  const draftBody = (draft?.body_markdown || "").trim();
+
+  /* HS-201-12 — one verb under the question: the answer joins the note.
+     The chained turn ("Add & ask next") left this window with the settled
+     design; `Ask` asks the next question when the owner wants one. */
+  const addAnswer = async (): Promise<boolean> => {
+    const reviewId = review?.id;
+    if (!reviewId || !answer.trim()) return false;
+    const key = `hs.thought.review.${reviewId}.answer`;
     const succeeded = await afterFlush(async (latest) => {
-      if (!continueNext) return actOnReview({ thought: latest, reviewId, action: "answer", request_id: stableId(key), answer, workspace_cursor: projection.workspace_cursor });
-      const stored = sessionStorage.getItem(key);
-      const payload = stored ? JSON.parse(stored) as Parameters<typeof answerAndContinue>[0] : {
-        thought_id: latest.id,
-        reviewId,
-        command_id: crypto.randomUUID(),
-        answer,
-        expected_aggregate_revision: latest.aggregate_revision,
-        expected_working_revision: latest.working_revision,
-        expected_attachment_revision: latest.attachment_revision,
-        workspace_cursor: projection.workspace_cursor,
-      };
-      if (!stored) sessionStorage.setItem(key, JSON.stringify(payload));
-      return answerAndContinue(payload);
-    }, continueNext ? "marker" : "note");
-    if (succeeded) {
-      setAnswer("");
+      const result = await actOnReview({ thought: latest, reviewId, action: "answer", request_id: stableId(key), answer, workspace_cursor: projection.workspace_cursor });
       sessionStorage.removeItem(key);
-    } else {
-      requestAnimationFrame(() => focusAnswer());
+      return result;
+    }, true);
+    if (succeeded) setAnswer("");
+    else requestAnimationFrame(() => focusAnswer());
+    return succeeded;
+  };
+
+  /* HS-201-12 counsel round (Astra finding 1, a (b) defect) — a draft is
+     APPENDED, never accepted: the hub's `accept` REPLACES title, body and
+     tags (refinement_thought_service.py:1060), which would delete the
+     owner's own words.  The append goes through the sole writer, and that
+     durable edit supersedes the frozen review by itself ("owner_edited",
+     refinement_thought_service.py:509), so the band folds with no second
+     command.  The reveal lands on the appended range. */
+  const addDraft = async (): Promise<boolean> => {
+    const text = draftBody;
+    if (!text || busy) return false;
+    const body = writer.draft.body;
+    const gap = !body ? "" : body.endsWith("\n\n") ? "" : body.endsWith("\n") ? "\n" : "\n\n";
+    const next = `${body}${gap}${text}`;
+    const start = body.length + gap.length;
+    setBusy(true);
+    say("");
+    try {
+      writer.edit({ body: next });
+      const saved = await writer.flush({ fence: true });
+      setDocumentThought(saved);
+      setRevealRange({ start, end: next.length, focus: false });
+      await reload(false).catch(() => undefined);
+      return true;
+    } catch (cause) {
+      say(readableError(cause));
+      return false;
+    } finally {
+      writer.release();
+      setBusy(false);
     }
   };
 
@@ -298,148 +267,233 @@ function WorkspaceReady({
     sessionStorage.removeItem(key);
     return result;
   });
-  const finish = () => afterFlush(async (latest) => {
-    const key = `hs.thought.complete.${latest.id}`;
-    const result = await completeThought({ thought: latest, request_id: stableId(key), workspace_cursor: projection.workspace_cursor });
+
+  const keep = (fresh?: ThoughtWorkspaceProjection | null) => afterFlush(async (latest) => {
+    /* The answer that just landed advanced BOTH the revisions and the
+       workspace cursor; completing against the stale pair is the 409
+       `workspace_cursor_conflict` Astra's probe recorded (finding 2). */
+    const source = fresh?.thought ?? latest;
+    const key = `hs.thought.complete.${source.id}`;
+    const result = await completeThought({
+      thought: source,
+      request_id: stableId(key),
+      workspace_cursor: fresh?.workspace_cursor ?? projection.workspace_cursor,
+    });
     sessionStorage.removeItem(key);
     return result;
   });
+
+  /* HS-201-12 (design condition 2) — Finish keeps in ONE gesture: a typed
+     answer that is not in the note yet joins it first, then the Thought is
+     kept.  No prompt, no second press. */
+  const finish = async () => {
+    if (!(question && answer.trim())) {
+      await keep();
+      return;
+    }
+    if (!await addAnswer()) return;
+    await keep(await reload(false).catch(() => null));
+  };
+
   const resume = () => afterFlush(async (latest) => ({ thought: await resumeThought(latest, projection.workspace_cursor) }));
+
   const stop = async () => {
     if (!projection.thought.continuity?.invocation_id || busy) return;
-    setInserted(false);
-    setBusy(true); setMessage("");
+    setBusy(true); say("");
     try {
       const snapshot = await writer.pause();
       const invocation = snapshot.thought.continuity?.invocation_id;
       if (!invocation) throw new Error("The running turn is no longer available.");
       await stopRefinement(snapshot.thought, invocation, snapshot.workspaceCursor || projection.workspace_cursor);
       await reload();
-      setMessage("Stopped. Your Note is unchanged.");
-    } catch (cause) { setMessage(readableError(cause)); }
+      say("Stopped. The note did not change.");
+    } catch (cause) { say(readableError(cause)); }
     finally { writer.resume(); setBusy(false); }
   };
-  const reviewAction = (action: "accept" | "reject") => {
-    const reviewId = projection.review?.id;
-    if (!reviewId) return;
-    return afterFlush(async (latest) => {
-      const key = `hs.thought.review.${reviewId}.${action}`;
-      const result = await actOnReview({ thought: latest, reviewId, action, request_id: stableId(key), workspace_cursor: projection.workspace_cursor });
-      sessionStorage.removeItem(key);
-      return result;
-    });
-  };
-  const repair = async (attachment: ThoughtAttachment) => {
-    await afterFlush(async (latest) => {
-      const action = attachment.state === "missing" ? "detach" : "refresh";
-      const key = `hs.thought.context.${action}.${latest.id}.${attachment.ref}`;
-      const result = action === "detach"
-        ? await detachThoughtContext(latest, attachment.ref, stableId(key), projection.workspace_cursor)
-        : await refreshThoughtContext(latest, attachment.ref, stableId(key), projection.workspace_cursor);
-      sessionStorage.removeItem(key);
-      setContextReceipt(result.receipt);
-      return result;
-    });
-  };
 
-  const primary = projection.actions.primary;
-  const stale = documentThought.attachments?.find((attachment) => attachment.state !== "current") || null;
-  const noteProxy = narrow && tab === "note" && projection.workspace_state === "question";
-  const primaryKind = primary?.kind;
-  const setupProxy = narrow && tab === "note" && primaryKind === "configure_ai";
-  const primaryLabel = projection.workspace_state === "named_failure" && projection.terminal_status?.category === "retryable" && primaryKind === "refine"
-    ? "Try again"
-    : primaryKind ? actionLabel(primaryKind) : "Finish Thought";
-  const primaryDisabled = busy || (!noteProxy && (primaryKind === "answer_review" || primaryKind === "answer_and_continue") && !answer.trim());
+  const repair = (attachment: ThoughtAttachment) => afterFlush(async (latest) => {
+    const action = attachment.state === "missing" ? "detach" : "refresh";
+    const key = `hs.thought.context.${action}.${latest.id}.${attachment.ref}`;
+    const result = action === "detach"
+      ? await detachThoughtContext(latest, attachment.ref, stableId(key), projection.workspace_cursor)
+      : await refreshThoughtContext(latest, attachment.ref, stableId(key), projection.workspace_cursor);
+    sessionStorage.removeItem(key);
+    return result;
+  });
+
   const setupAI = () => {
     // HS-200-41: remember the verb he left before the handoff, so the
     // Apply on the other side can send focus back here (design D2(a)).
     rememberTaskFocus();
-    setMessage("Models opened. Choose where AI runs; this Thought will recheck automatically.");
     openSurfaceOr("configure-runs-on", "/settings", "models");
   };
-  const invokePrimary = () => {
-    if (noteProxy) { setTab("interview"); requestAnimationFrame(() => focusAnswer()); return; }
-    if (setupProxy) { setTab("interview"); requestAnimationFrame(() => setupRef.current?.focus()); return; }
-    switch (primaryKind) {
-      case "refine": void ask(); break;
-      case "configure_ai": setupAI(); break;
-      case "stop_refinement": void stop(); break;
-      case "answer_and_continue": void answerReview(true); break;
-      case "answer_review": void answerReview(false); break;
-      case "accept_review": void reviewAction("accept"); break;
-      case "refresh_context": if (stale) void repair(stale); break;
-      case "detach_context": if (stale) void repair(stale); break;
-      case "complete": void finish(); break;
-      case "resume": void resume(); break;
-      default: break;
+
+  const attachments = documentThought.attachments || [];
+  const stale = attachments.find((attachment) => attachment.state !== "current") || null;
+  const completed = documentThought.state === "completed" || projection.workspace_state === "completed";
+  const running = ["reserved", "in_flight", "awaiting_projection"].includes(projection.workspace_state);
+  const placement = projection.inference.intended_placement;
+  const engine = engineEgress(placement);
+  const remoteEngine = Boolean(placement && placement.target_kind !== "this_device" && placement.boundary !== "same_device");
+  const ready = projection.inference.availability === "ready";
+  const open = Boolean(question || draftBody);
+
+  // Band 3's one row: the state token and the ONE verb it owns.
+  const askRow: { token: string; label: string; act: () => void } | null = completed
+    ? null
+    : running
+      ? { token: "WORKING", label: "Stop", act: () => void stop() }
+      : projection.workspace_state === "stale" && stale
+        ? { token: stale.state === "missing" ? "CONTEXT MISSING" : "CONTEXT CHANGED", label: stale.state === "missing" ? "Remove it" : "Update it", act: () => void repair(stale) }
+        : !ready
+          /* HS-201-12 (design condition 5, corrected by Astra finding 4) —
+             three truthful states, and the projection distinguishes all
+             three: a READY target with unavailable inference is the
+             coordinator, not the engine (refinement_application_service.py:80);
+             THIS DEVICE is never unreachable, only missing its model
+             (`_this_machine_readiness`, inference_targets.py:243); a target
+             on another machine that is not ready cannot be reached. */
+          ? placement?.readiness === "ready"
+            ? { token: "ENGINE BUSY", label: "Try again", act: () => void ask() }
+            : remoteEngine
+              ? { token: "ENGINE NOT REACHABLE", label: "Check", act: setupAI }
+              : { token: "NO ENGINE YET", label: "Choose an engine", act: setupAI }
+          : projection.workspace_state === "named_failure"
+            ? { token: "", label: projection.terminal_status?.retryable === false ? "Ask" : "Try again", act: () => void ask() }
+            : open
+              ? null
+              : { token: "", label: "Ask", act: () => void ask() };
+
+  const readsToken = attachments.length
+    ? attachments.map((item) => {
+      const count = countToken(item.leaf_count, "NOTE");
+      const state = item.state === "current" ? "" : item.state === "missing" ? " · MISSING" : " · CHANGED";
+      return `${item.title}${count ? ` · ${count}` : ""}${state}`;
+    }).join(" · ")
+    : "NOTHING";
+
+  const saveFailed = writer.failed || writer.conflicted;
+  /* Astra finding 4 — `writer.retry` returns during a conflict
+     (useThoughtNoteWriter.ts:238), so "Try again" there was a verb that
+     does nothing (A.11).  The honest verb re-reads the note: the hub's
+     text replaces the draft through the sole writer, which also clears the
+     conflict fence (`edit`, useThoughtNoteWriter.ts:213). */
+  const reloadNote = async () => {
+    /* A ref, not `busy`: `busy` raises the writer's command fence, and the
+       fence would swallow the very `edit` that re-seats the note
+       (useThoughtNoteWriter.ts:212). */
+    if (busy || reloading.current) return;
+    reloading.current = true;
+    say("");
+    try {
+      const fresh = await reload(false);
+      const note = fresh.thought.working_note;
+      setDocumentThought(fresh.thought);
+      setRevealRange(null);
+      writer.edit({ title: note.title, body: note.body_markdown, tags: note.tags.join(", ") });
+    } catch (cause) {
+      say(readableError(cause));
+    } finally {
+      reloading.current = false;
     }
   };
-
-  const currentQuestion = projection.workspace_state === "question" && projection.review?.kind === "question";
-  const continuationReady = projection.inference.continuation_admission === "ready";
-  const attachments = documentThought.attachments || [];
-  const openPicker = async () => {
+  /* The well writes against the workspace cursor, so the sole writer drains
+     first — a dirty note under an attach is a cursor conflict (HS-141-05). */
+  const openReads = async () => {
+    if (reads) { setReads(false); return; }
     if (busy) return;
-    setBusy(true); setMessage("");
+    setBusy(true); say("");
     try {
-      const latest = await writer.flush({ fence: true });
-      setPickerThought(latest);
-      setPicker(true);
-    } catch (cause) { setMessage(readableError(cause)); }
+      await writer.flush({ fence: true });
+      setReads(true);
+    } catch (cause) { say(readableError(cause)); }
     finally { writer.release(); setBusy(false); }
   };
-  return <div className="thought-workspace-content" onKeyDown={(event) => {
+  const readsResult = (result: ReadsResult) => {
+    setDocumentThought(result.thought);
+    if (result.workbench) install(result.workbench);
+    else void reload();
+  };
+
+  return <div className="thought-note-window" onKeyDown={(event) => {
     if (!(event.metaKey || event.ctrlKey) || event.nativeEvent.isComposing) return;
     if (event.key.toLowerCase() === "s") {
       event.preventDefault();
       if (busy) return;
-      void writer.flush().then(() => setMessage("Saved")).catch((cause) => setMessage(readableError(cause)));
+      void writer.flush().catch((cause) => say(readableError(cause)));
       return;
     }
     if (event.key !== "Enter") return;
     event.preventDefault();
-    invokePrimary();
+    if (busy) return;
+    if (question && answer.trim()) { void addAnswer(); return; }
+    if (draftBody) { void addDraft(); return; }
+    askRow?.act();
   }}>
-    <nav className="thought-workspace-tabs" aria-label="Thought workspace panes">
-      <Button variant="ghost" dense aria-current={tab === "note" ? "page" : undefined} onClick={() => setTab("note")}>Note</Button>
-      <Button variant="ghost" dense aria-current={tab === "interview" ? "page" : undefined} onClick={() => setTab("interview")}>Interview{currentQuestion ? " 1" : ""}</Button>
-    </nav>
-    <div className="thought-workspace-main">
-      <div className="thought-workspace-note-pane" hidden={narrow && tab !== "note"} aria-hidden={narrow && tab !== "note"} inert={narrow && tab !== "note"}>
-        <ThoughtDocumentPane thoughtId={documentThought.id} draft={writer.draft} onEdit={(patch) => { setInserted(false); writer.edit(patch); }} disabled={busy || documentThought.state !== "working"} message={writer.message} onRetry={writer.retry} revealRange={revealRange} />
-        {inserted && !narrow ? <Button variant="ghost" dense className="thought-inserted-marker thought-inserted-marker-note" onClick={() => setRevealRange((value) => value ? { ...value, focus: true } : value)}>Added to Note</Button> : null}
-        <div className="thought-document-foot"><span>{documentThought.filing_status === "filed" ? "Filed" : "Not in a drawer"}</span><span>{writer.saving ? "Saving…" : "Saved"}</span></div>
+    <ThoughtDocumentPane
+      draft={writer.draft}
+      onEdit={(patch) => { setRevealRange(null); writer.edit(patch); }}
+      disabled={busy || documentThought.state !== "working"}
+      lockedReason={completed ? "FINISHED" : undefined}
+      revealRange={revealRange}
+    />
+
+    {completed ? null : <section className="thought-note-ask" aria-label="One question">
+      <div className="thought-note-ask-row">
+        <span className="thought-note-ask-label">ONE QUESTION</span>
+        {askRow?.token ? <span className="surface-token" data-chip>{askRow.token}</span> : null}
+        {/* The destination before dispatch (A.9) — and never beside the
+            no-engine token, which already says there is nowhere to go. */}
+        {engine && (ready || remoteEngine) ? <EgressChip label={engine.label} scope={engine.scope} title={`The ask reaches ${engine.label}.`} /> : null}
+        {askRow ? <Button dense disabled={busy} onClick={askRow.act}>{askRow.label}</Button> : null}
       </div>
-      <section className="thought-interview" aria-label="Interview" hidden={narrow && tab !== "interview"} aria-hidden={narrow && tab !== "interview"} inert={narrow && tab !== "interview"}>
-        <header><span>Interview</span></header>
-        <div className="thought-interview-body">
-          {projection.workspace_state === "idle" ? projection.inference.availability === "unavailable"
-            ? <div className="thought-interview-empty thought-interview-setup"><p className="thought-question-kicker">One quick setup</p><strong>AI needs a model</strong><span className="surface-token">Choose a model destination</span><Button ref={setupRef} variant="primary" className="thought-setup-ai" disabled={busy} onClick={setupAI}>Set up AI</Button><span className="thought-interview-run-hint surface-token">Opens Models settings</span></div>
-            : <div className="thought-interview-empty"><p className="thought-question-kicker">Ready when you are</p><strong>Ask AI</strong><span className="surface-token">Reads your Note, asks one question</span><span className="thought-interview-run-hint surface-token"><b>Ask AI</b> or <kbd>⌘↵</kbd></span><Placement projection={projection} /></div> : null}
-          {["reserved", "in_flight", "awaiting_projection"].includes(projection.workspace_state) ? <div role="status" className="thought-interview-working"><strong>Finding one useful question…</strong><span className="surface-token">Note v{projection.thought.working_revision}</span><p>Editing now will replace this question.</p></div> : null}
-          {currentQuestion ? <div className="thought-question"><p className="thought-question-kicker">One thing to sharpen</p><h2>{projection.review?.question}</h2>{projection.review?.reason ? <p>{projection.review.reason}</p> : null}<Placement projection={projection} /><UsedContext projection={projection} /><label ref={answerRef}><span>Your answer</span><PadGadget label="Your answer" value={answer} onChange={setAnswer} rows={5} /></label>{continuationReady ? <Button variant="ghost" dense className="thought-add-quiet" disabled={busy || !answer.trim()} onClick={() => void answerReview(false)}>Add to Note</Button> : null}</div> : null}
-          {projection.workspace_state === "synthesis" && projection.review?.kind === "synthesis" ? <div className="thought-synthesis"><p className="thought-question-kicker">A draft from your Note</p><h2>{projection.review.title}</h2><div className="thought-synthesis-body">{projection.review.body_markdown}</div><Placement projection={projection} /><UsedContext projection={projection} /><Button variant="ghost" dense className="thought-add-quiet" disabled={busy} onClick={() => void reviewAction("reject")}>Reject</Button></div> : null}
-          {projection.workspace_state === "stale" ? <div className="thought-interview-exception"><strong>{stale?.state === "missing" ? `${stale.title} is no longer available.` : `${stale?.title || "AI context"} changed.`}</strong><span className="surface-token">Repair context to continue</span></div> : null}
-          {projection.workspace_state === "named_failure" ? <div className="thought-interview-exception"><strong>That question did not land.</strong><span className="surface-token">{projection.terminal_status?.message || "Note unchanged. Try again or finish."}</span></div> : null}
-          {projection.workspace_state === "completed" ? <div className="thought-interview-empty"><strong>Thought finished</strong><span className="surface-token">Finished. Resume any time.</span></div> : null}
-          {inserted && narrow ? <Button variant="ghost" dense className="thought-inserted-marker" onClick={() => { setTab("note"); setRevealRange((value) => value ? { ...value, focus: true } : value); }}>Added to Note · View</Button> : null}
-        </div>
-      </section>
-    </div>
-    <div ref={contextRef} className="thought-workspace-context" tabIndex={-1} aria-label="AI context">
-      <span>AI context</span><div className="thought-workspace-context-items">{attachments.length ? attachments.map((attachment) => <span key={attachment.ref}>{attachment.title}{countToken(attachment.leaf_count, "NOTE") ? ` · ${countToken(attachment.leaf_count, "NOTE")}` : ""}{attachment.is_default ? <small>Default</small> : null}</span>) : <strong>None</strong>}</div>
-      <Button variant="ghost" dense disabled={busy} onClick={() => void openPicker()}>Attach</Button>
-    </div>
-    {contextReceipt ? <p className="thought-workspace-receipt" role="status">{contextReceipt.action === "attach" ? "Attached" : contextReceipt.action === "detach" ? "Removed" : "Updated"} {contextReceipt.title}</p> : null}
-    {defaultReceipt?.status === "applied" ? <p className="thought-workspace-receipt" role="status">Default · {defaultReceipt.attachments.map((item) => item.title).join(" + ")}</p> : null}
-    {defaultReceipt?.status === "not_applied" ? <p className="thought-workspace-receipt" role="alert">Default context skipped · {defaultReceipt.failure?.selections.map((item) => item.title).join(" + ") || "saved set"} unavailable</p> : null}
-    {message ? <p className="thought-workspace-message" role="status">{message}</p> : null}
-    <div className="thought-workspace-command">
-      {projection.workspace_state !== "completed" && primaryKind !== "complete" ? <Button variant="ghost" className="thought-finish" disabled={busy} onClick={() => void finish()}>Finish Thought</Button> : <span />}
-      {primaryKind === "configure_ai" && !setupProxy ? <span aria-hidden="true" /> : <Button variant="primary" className="thought-state-primary" disabled={primaryDisabled} onClick={invokePrimary}>{busy ? "Working…" : noteProxy ? "Answer question" : primaryLabel}</Button>}
-    </div>
-    {picker && pickerThought ? <ThoughtContextPicker thought={pickerThought} workspaceCursor={projection.workspace_cursor} anchor={contextRef.current} onApplied={(result) => { setDocumentThought(result.thought); setContextReceipt(result.receipt); if (result.workbench) install(result.workbench); else void reload(); }} onDefaultApplied={() => { setMessage("Default AI context updated for new Thoughts."); }} onClose={() => { restoreContextFocus.current = true; setPicker(false); setPickerThought(null); }} /> : null}
+      {projection.workspace_state === "named_failure" && projection.terminal_status?.message
+        ? <p className="thought-note-ask-reason" role="status">{projection.terminal_status.message}</p> : null}
+      {open ? <div className="thought-note-ask-open">
+        {draftBody ? <span className="thought-note-ask-kicker">A draft from your note</span> : null}
+        <p className="thought-note-ask-text">{question || draftBody}</p>
+        {question ? <>
+          <label ref={answerRef} className="thought-note-answer">
+            <PadGadget label="Your answer" micLabel="Speak your answer" value={answer} onChange={setAnswer} rows={4} />
+          </label>
+          <div className="thought-note-ask-verbs">
+            <Button dense disabled={busy || !answer.trim()} onClick={() => void addAnswer()}>Add to note</Button>
+          </div>
+        </> : <div className="thought-note-ask-verbs">
+          <Button dense disabled={busy} onClick={() => void addDraft()}>Add to note</Button>
+        </div>}
+      </div> : null}
+    </section>}
+
+    {message ? <p className="thought-note-line" role="status">
+      {message}
+      {messageVerb === "reload" ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button> : null}
+    </p> : null}
+
+    {reads ? <ThoughtReadsWell
+      thought={documentThought}
+      cursor={projection.workspace_cursor}
+      disabled={busy}
+      onApplied={readsResult}
+      onClose={() => { setReads(false); requestAnimationFrame(() => readsRef.current?.focus()); }}
+    /> : null}
+
+    <SurfaceFooter
+      className="thought-note-foot"
+      egress={<span className="thought-note-reads" title={`Reads ${readsToken}`}>READS · {readsToken}</span>}
+      receipt={saveFailed
+        ? <span className="surface-footer-receipt-line" data-tone="danger">{writer.conflicted ? "CHANGED ELSEWHERE" : "THE NOTE DID NOT SAVE"}</span>
+        : <span className="surface-footer-receipt-line">{documentThought.filing_status === "filed" ? "KEPT" : "NOT IN A DRAWER"}{completed ? " · FINISHED" : ""}</span>}
+      verbs={<>
+        {writer.conflicted
+          ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button>
+          : writer.failed ? <Button dense onClick={writer.retry}>Try again</Button> : null}
+        <Button ref={readsRef} dense aria-expanded={reads} disabled={busy} onClick={() => void openReads()}>Change</Button>
+        {completed
+          ? <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={() => void resume()}>Resume</Button>
+          : <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={() => void finish()}>Finish</Button>}
+      </>}
+    />
   </div>;
 }
 
@@ -471,10 +525,10 @@ export function ThoughtWorkspaceWindow({
     icon={<img src={spriteUrl("note", object.id)} alt="" width={24} height={24} />}
     title="Thought"
     className="desk-pullout thought-workspace-window"
-    minW={860}
-    minH={560}
-    defaultW={1080}
-    defaultH={680}
+    minW={560}
+    minH={520}
+    defaultW={820}
+    defaultH={640}
     origin={origin}
     open
     onClose={() => closeHandler.current()}

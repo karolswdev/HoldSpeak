@@ -122,13 +122,15 @@ Presence rules (they are the species, not the caller's business):
 - Not to be confused with `SurfaceWings`: filters are flat tokens, wings are
   the beveled strip, and the two never look alike (canon D).
 
-## StringGadget.micLabel (HS-200-13)
+## StringGadget.micLabel (HS-200-13) / PadGadget.micLabel (HS-201-12)
 
 The text well's mic is the voice law (canon B: MicButton on every text
 input). Its accessible name defaults to `Speak <label>`; a face whose design
 names the mic (`Dictate into the search`, board P5Recall) passes `micLabel`.
 The mic itself, its placement and its behaviour are unchanged — only the
-name the screen reader says.
+name the screen reader says. HS-201-12 gave `PadGadget` the same prop with
+the same default, so both text species answer to one rule (the Thought
+window's answer pad names its mic `Speak your answer`).
 
 ## EditInPlace (HS-101 rule 1, documented HS-200-41)
 
