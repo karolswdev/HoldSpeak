@@ -70,6 +70,7 @@ over claim). Faces obey UX-CANON. Orchestration: TWO-BRAINS.md.
 | HS-201-09 | Connect an engine from the face | done | [story-09-connect-an-engine-from-the-face](./story-09-connect-an-engine-from-the-face.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-201-10 | Import does not run the summary by itself | done | [story-10-import-does-not-run-the-summary-by-itself](./story-10-import-does-not-run-the-summary-by-itself.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-201-11 | A quiet desk for the sitting | done | [story-11-a-quiet-desk-for-the-sitting](./story-11-a-quiet-desk-for-the-sitting.md) | [evidence-story-11](./evidence-story-11.md) |
+| HS-201-12 | Write a thought is one clean note | backlog | [story-12-write-a-thought-is-one-clean-note](./story-12-write-a-thought-is-one-clean-note.md) | - |
 
 ## Lanes (TWO-BRAINS.md §4)
 
