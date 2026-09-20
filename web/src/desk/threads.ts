@@ -1080,6 +1080,16 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
           state = serverState === "awaiting_decision" ? "awaiting_decision" : "pending";
         }
 
+        const persistedDefaultDecision = meta.default_decision === "deny" || meta.default_decision === "allow"
+          ? meta.default_decision
+          : undefined;
+        // A live pending frame can arrive before the GET used for hydration.
+        // Keep its posture only for a still-held call; terminal persisted state
+        // must not inherit stale live row data.
+        const liveDefaultDecision = state === "awaiting_decision"
+          ? get().toolRows[threadId]?.[callId]?.defaultDecision
+          : undefined;
+
         rows[callId] = {
           callId,
           messageId: msg.id,
@@ -1097,6 +1107,11 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
             ...(result.payload ? { payload: result.payload } : {}),
             ...(result.summary ? { summary: result.summary } : {}),
           } : {}),
+          ...(persistedDefaultDecision !== undefined
+            ? { defaultDecision: persistedDefaultDecision }
+            : liveDefaultDecision !== undefined
+              ? { defaultDecision: liveDefaultDecision }
+              : {}),
         };
       }
     }

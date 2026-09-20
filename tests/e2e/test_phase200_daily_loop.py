@@ -4,15 +4,22 @@ The MACHINE half of the story.  One Project carries useful work across a
 day boundary, driven through the product's NORMAL CONTROLS in a real
 browser against a REAL booted hub on an isolated HOME with its own
 temporary database (R16-2: the rig writes nothing the owner can see).
+The named historical-proposal seeding step is fixture setup, not an owner
+control; the surrounding summary and continuity steps use the real controls.
 
   DAY 1 (hub #1, owner claim held so the intel drainer runs)
     S1 prepare   -- 11's preparation brief: the Room's `Prepare a brief`
                     well, a purpose by hand, the coverage ledger, `Keep`.
     S2 capture   -- 12's path: a transcript IMPORTED with a DAY-1
-                    `started_at_ms`, linked to the Room, `Run
-                    intelligence`, the real plugin host, the real bridge.
-    S3 review    -- the Review wing: one decision and one commitment
-                    confirmed through the face's own `Confirm`.
+                    `started_at_ms`, linked to the Room, and `Run
+                    intelligence` through the current ANALYSIS-ONLY route.
+                    The summary is proved with no plugin calls and no
+                    proposals; a separately labelled HISTORICAL FIXTURE then
+                    exercises the retained review/day-2 chain through the real
+                    plugins, artifact store and bridge.
+    S3 review    -- the Review wing: one decision and one commitment from the
+                    HISTORICAL FIXTURE are confirmed through the face's own
+                    `Confirm`.
     S4 attention -- 15's arrival: the commitment is a real attention row.
 
   THE DAY BOUNDARY
@@ -43,9 +50,17 @@ temporary database (R16-2: the rig writes nothing the owner can see).
 
 R16-1: no live model.  The brief's drafting route is a controlled
 OpenAI-compatible adapter on 127.0.0.1 (the HS-200-11 `FakeLLM` probe
-pattern) and the meeting extractors run against a scripted engine
-(`ScriptedIntel`).  Only the words are canned; the kernel, the wire, the
-receipts and every face are the product's own.
+pattern). The current summary route runs against a scripted engine
+(`ScriptedIntel`) and deliberately does not call the proposal plugins.
+Only the summary words are canned; the kernel, the wire, the receipts and
+every face are the product's own. The two proposals used to retain the
+downstream day-2 assertions are an explicitly marked HISTORICAL FIXTURE:
+real `decision_capture` and `action_owner_enforcer` calls on the imported
+transcript, their actual outputs recorded as artifacts, and the real bridge.
+These fixture rows are not summary output.
+The current first-use summary path does not create the decision or
+commitment that day 2 carries. No current owner creation path is proven by
+this rig.
 
 R16-5: this is the fixture-proven leg ONLY.  The owner's attended leg
 ("the user completes the path through normal controls without
@@ -174,7 +189,9 @@ def _scripted_engine() -> Any:
             from holdspeak.intel import IntelResult
 
             self.result = IntelResult(
-                topics=[], action_items=[], summary="", raw_response="{}",
+                topics=[], action_items=[],
+                summary="The cut-over plan has one recorded decision and one open commitment.",
+                raw_response="{}",
             )
 
         def _chat_completion_text(self, messages: Any, *, temperature: float, max_tokens: int) -> str:
@@ -422,6 +439,86 @@ def _run_intelligence(page: Any, meeting_id: str) -> dict[str, Any]:
         {"expected_selection_hash": planned["selection_hash"]},
         token=TOKEN,
     )
+
+
+def _seed_historical_proposal_fixture(
+    meeting_id: str, engine: Any,
+) -> list[Any]:
+    """Seed the retained day-2 path from a HISTORICAL FIXTURE.
+
+    The current Phase 201 law ends the summary route after analysis. This
+    helper is deliberately outside that route: it calls both real extractor
+    plugins on the imported transcript through an admitted dispatch, records
+    each real output, and invokes the real bridge. The resulting proposals are
+    historical continuity data for S3-S8. The current first-use summary path
+    does not create the decision or commitment that day 2 carries. No current
+    owner creation path is proven by this rig.
+    """
+    from holdspeak.plugins.builtin.action_owner_enforcer import ActionOwnerEnforcerPlugin
+    from holdspeak.plugins.builtin.decision_capture import DecisionCapturePlugin
+    from holdspeak.plugins.intelligence import PLUGIN_DISPATCH_KEY
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+    from tests.unit.plugin_dispatch_rig import admitted_dispatch, unbind
+
+    meeting = _db().meetings.get_meeting(meeting_id)
+    assert meeting is not None
+    segments = list(meeting.segments)
+    transcript_segments = [
+        {
+            "text": segment.text,
+            "speaker": segment.speaker,
+            "start_time": segment.start_time,
+            "end_time": segment.end_time,
+        }
+        for segment in segments
+    ]
+    context = {
+        "transcript": "\n".join(str(segment.text) for segment in segments),
+        "transcript_segments": transcript_segments,
+        "project_name": PROJECT_NAME,
+        "active_intents": [],
+    }
+
+    def _run(plugin: Any) -> dict[str, Any]:
+        dispatch, bound_engine, dispatch_context = admitted_dispatch(engine=engine)
+        try:
+            return plugin.run({**context, PLUGIN_DISPATCH_KEY: dispatch})
+        finally:
+            unbind(bound_engine, dispatch_context)
+
+    decision_plugin = DecisionCapturePlugin()
+    action_plugin = ActionOwnerEnforcerPlugin()
+    decision_output = _run(decision_plugin)
+    action_output = _run(action_plugin)
+    assert decision_output.get("decisions"), decision_output
+    assert action_output.get("action_items"), action_output
+
+    db = _db()
+    db.plugins.record_artifact(
+        artifact_id=f"historical-{meeting_id}-decision",
+        meeting_id=meeting_id,
+        artifact_type="decisions",
+        title="HISTORICAL FIXTURE decision output",
+        structured_json=decision_output,
+        confidence=float(decision_output.get("confidence_hint") or 0.0),
+        status="draft",
+        plugin_id=decision_plugin.id,
+        plugin_version=decision_plugin.version,
+    )
+    db.plugins.record_artifact(
+        artifact_id=f"historical-{meeting_id}-action",
+        meeting_id=meeting_id,
+        artifact_type="action_items",
+        title="HISTORICAL FIXTURE action output",
+        structured_json=action_output,
+        confidence=float(action_output.get("confidence_hint") or 0.0),
+        status="draft",
+        plugin_id=action_plugin.id,
+        plugin_version=action_plugin.version,
+    )
+    created = ProposalBridgeService(db).bridge_meeting_artifacts(meeting_id)
+    assert len(created) == 2, created
+    return created
 
 
 def _action_item_id(page: Any) -> str:
@@ -917,14 +1014,73 @@ def test_a_project_carries_work_across_two_working_days(
                     return _api(page, "GET", f"/api/meetings/{meeting_id}/outcome-review",
                                 token=TOKEN)
 
-                assert _wait(lambda: len(_review()["proposals"]) == 2, timeout=120.0), (
-                    _review(), engine.plugin_calls,
-                )
+                # Phase 201's current law: this route produces the analysis
+                # summary only. The proposal plugins are not called, and the
+                # Review face says NOT RUN. These exact empty assertions are
+                # the negative canary: forcing one plugin call or one
+                # proposal into the summary path must fail this walk.
+                assert _wait(
+                    lambda: (_review().get("job") or {}).get("status") == "succeeded",
+                    timeout=120.0,
+                ), (_review(), engine.plugin_calls)
                 review = _review()
                 assert review["job"]["status"] == "succeeded", review["job"]
+                assert review["coverage"] == {
+                    "turns": 3,
+                    "read": 3,
+                    "state": "available",
+                    "observed_at": review["coverage"]["observed_at"],
+                }, review["coverage"]
+                assert review["proposals"] == [], review["proposals"]
+                assert engine.plugin_calls == [], engine.plugin_calls
+                detail = _api(page, "GET", f"/api/meetings/{meeting_id}", token=TOKEN)
+                assert detail["intel"]["summary"] == engine.result.summary, detail["intel"]
+                _open_review_wing(page, meeting_id)
+                not_run = page.get_by_test_id("review-not-run")
+                not_run.wait_for(timeout=15000)
+                assert (not_run.text_content() or "").strip() == "PROPOSALS · NOT RUN"
+                review_words = page.locator(".desk-surface-window").first.inner_text()
+                assert "EXTRACTED" not in review_words.upper(), review_words
+                assert "Nothing to review" not in review_words, review_words
+                walk.fact(
+                    "day1-review-not-run", "proposal_origin",
+                    "HISTORICAL FIXTURE only",
+                    "summary route: no proposals; Review: PROPOSALS · NOT RUN",
+                    "MATCH",
+                    "the current analysis-only route does not create proposals",
+                )
+                walk.fact(
+                    "day1-review-not-run", "historical_fixture_label",
+                    "HISTORICAL FIXTURE; not summary output",
+                    "HISTORICAL FIXTURE; not summary output",
+                    "MATCH",
+                    "the retained day-2 path is seeded separately below",
+                )
+                walk.fact(
+                    "day1-review-not-run", "current_first_use_summary_scope",
+                    "Day 2 continuity is proven from a seeded day-1 state. "
+                    "The current first-use summary path does not create the "
+                    "decision or commitment that day 2 carries. No current "
+                    "owner creation path is proven by this rig.",
+                    "Day 2 continuity is proven from a seeded day-1 state. "
+                    "The current first-use summary path does not create the "
+                    "decision or commitment that day 2 carries. No current "
+                    "owner creation path is proven by this rig.",
+                    "MATCH",
+                    "D5 records the retained historical continuity boundary",
+                )
+                walk.shot(page, "day1-review-not-run")
+
+                # Retain S3-S8 from a disclosed historical path. The real
+                # plugin outputs are produced from this imported transcript,
+                # recorded as artifacts, and bridged by production service
+                # code. This does not turn the analysis-only summary into a
+                # proposal-producing route.
+                historical = _seed_historical_proposal_fixture(meeting_id, engine)
+                assert len(historical) == 2, historical
+                review = _review()
                 kinds = sorted(p["kind"] for p in review["proposals"])
                 assert kinds == ["action", "decision"], kinds
-                detail = _api(page, "GET", f"/api/meetings/{meeting_id}", token=TOKEN)
                 started_at = detail.get("started_at") or (detail.get("meeting") or {}).get("started_at")
                 started_day = str(started_at)[:10]
                 walk.fact("day1-meeting", "meeting_started_at", DAY1_START.date().isoformat(),

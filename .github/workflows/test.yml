@@ -113,7 +113,10 @@ jobs:
           # `uv run --extra test` syncs the project venv *with* the test extra
           # (pytest et al.) and runs in that same venv — no separate --system
           # install that uv run would otherwise ignore.
-          uv run --extra test pytest tests/unit/ -q --cov=holdspeak --cov-report=xml --cov-report=term-missing
+          # Isolate before pytest collection: a unit fixture can build the
+          # default database while the runner HOME is still its passwd home,
+          # which makes the suite's own HOME guard fail later in the run.
+          HOME=$(mktemp -d) uv run --extra test pytest tests/unit/ -q --cov=holdspeak --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

@@ -52,10 +52,12 @@ def test_an_isolated_home_is_lawful(tmp_path) -> None:
 
 
 def test_a_bare_runner_home_is_lawful(tmp_path) -> None:
-    """A CI runner IS its own passwd home; it just holds no installation.
+    """A fresh CI runner starts at its passwd home and has no installation.
 
-    The Unit, Integration and E2E jobs run without isolating HOME, so a guard
-    that refused on the HOME comparison alone would turn every job red.
+    The guard must allow that initial state. The Unit job replaces HOME with a
+    throwaway directory before pytest collection, so a test that opens the
+    default database cannot create an installation under the runner home.
+    Integration keeps its platform-specific environment and is a separate job.
     """
     home = tmp_path / "runner"
     home.mkdir()

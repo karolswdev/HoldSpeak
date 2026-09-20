@@ -1,0 +1,20 @@
+Recorded output from npm --prefix web run check (already executed; not a rerun).
+Exit file: 0
+Full raw log SHA256: 21ad715be73b28044656cbabc895e8d875cb676f4af88f6e983c5a13b60d46ab
+React architecture guard passed (785 source files; zero framework residue).
+ Test Files  274 passed (274)
+      Tests  2599 passed (2599)
+bundle gate passed (Desk JS 1312518 B; Desk CSS 319765 B; source maps 0)
+
+Recorded output from uv run python scripts/check_web_baseline.py --run:
+Suite totals: 2599 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+
+Final web check after the clock-state tests: exit 0 (DW 07:04:55Z).
+React architecture guard passed (785 source files; zero framework residue).
+ Test Files  274 passed (274)
+      Tests  2601 passed (2601)
+bundle gate passed (Desk JS 1312518 B; Desk CSS 319765 B; source maps 0)
+Raw log SHA-256: 63d28a6a5c176cc8831993e951495ca5fc1a23425a460b070ba6ccc05304f628
+Final web baseline capture 07:07:46Z: 2601 passed, 0 failed, 0 skipped; baseline-subset, zero branch-new.

@@ -3,7 +3,7 @@
   "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
   "route_owner": "scripts/gen_api_surface.py",
   "generator": "scripts/philo_api_reference.py",
-  "limits": "Complete membership from committed API manifest; static handler evidence is not full semantic endpoint verification. Test candidates are search leads only.",
+  "limits": "Complete membership from committed API manifest; static handler evidence is not full semantic endpoint verification. Test candidates are search leads only. The snapshot is the Philo census baseline; handler evidence and test candidates are read from the current working tree at generation.",
   "routes": [
     {
       "path": "/",
@@ -32749,7 +32749,9 @@
           "docstring": null
         }
       ],
-      "test_candidates": [],
+      "test_candidates": [
+        "tests/unit/test_roadmaps_api.py"
+      ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
         "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
@@ -33278,6 +33280,7 @@
         "tests/e2e/test_hs170_arrival_glass.py",
         "tests/e2e/test_hs171_rhythm_glass.py",
         "tests/e2e/test_hs171_shade_glass.py",
+        "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/e2e/test_hs174_rhythm_runs_on_glass.py",
         "tests/integration/test_calendar_settings.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -33385,6 +33388,7 @@
         "tests/e2e/test_hs170_arrival_glass.py",
         "tests/e2e/test_hs171_rhythm_glass.py",
         "tests/e2e/test_hs171_shade_glass.py",
+        "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/e2e/test_hs174_rhythm_runs_on_glass.py",
         "tests/integration/test_calendar_settings.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -33749,6 +33753,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py"
       ],
@@ -33814,6 +33819,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py"
       ],
@@ -33887,6 +33893,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py"
       ],

@@ -1681,7 +1681,7 @@
   "info": {
     "title": "FastAPI",
     "version": "0.1.0",
-    "x-philo-note": "Declared FastAPI schemas only; raw Request validation, authorization and WS contracts are not fully represented. Do not infer approval from OpenAPI.",
+    "x-philo-note": "Declared FastAPI schemas only; raw Request validation, authorization and WS contracts are not fully represented. Do not infer approval from OpenAPI. The x-source-snapshot value is the Philo census baseline; schemas are generated from the current working tree.",
     "x-source-snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8"
   },
   "openapi": "3.1.0",

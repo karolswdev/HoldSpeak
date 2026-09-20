@@ -71,6 +71,8 @@ beforeEach(() => {
     threads: {},
     buffers: {},
     loading: {},
+    toolRows: {},
+    guardrailRows: {},
   });
 });
 
@@ -343,6 +345,159 @@ describe("missing detail on mount", () => {
     expect(detail.thread.created_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
 
     vi.unstubAllGlobals();
+  });
+});
+
+describe("guardrail decision hydration", () => {
+  function seedHeldTool(meta: Record<string, unknown>): void {
+    seedThread("t-1", [
+      makeMessage({
+        id: "asst-guardrail",
+        parts: [{
+          id: "part-tool-call",
+          messageId: "asst-guardrail",
+          ordinal: 0,
+          kind: "tool_call",
+          text: "",
+          sensitive: false,
+          metaJson: meta,
+        }],
+      }),
+    ]);
+  }
+
+  it("restores persisted deny after hydration", () => {
+    seedHeldTool({
+      id: "call-guardrail",
+      name: "people.commitment.transition",
+      arguments: "{}",
+      class: "effect_proposal",
+      state: "awaiting_decision",
+      default_decision: "deny",
+    });
+
+    useThreadStore.getState().applyToolPending({
+      thread_id: "t-1",
+      message_id: "asst-guardrail",
+      call_id: "call-guardrail",
+      name: "people.commitment.transition",
+      args_head: "{}",
+      class: "effect_proposal",
+      decision_required: true,
+      default_decision: "deny",
+    });
+    useThreadStore.getState().hydrateToolRows("t-1");
+
+    expect(useThreadStore.getState().toolRows["t-1"]?.["call-guardrail"]?.defaultDecision)
+      .toBe("deny");
+  });
+
+  it("keeps the live decision when persisted metadata is absent", () => {
+    seedHeldTool({
+      id: "call-live-only",
+      name: "people.commitment.transition",
+      arguments: "{}",
+      class: "effect_proposal",
+      state: "awaiting_decision",
+    });
+
+    useThreadStore.getState().applyToolPending({
+      thread_id: "t-1",
+      message_id: "asst-guardrail",
+      call_id: "call-live-only",
+      name: "people.commitment.transition",
+      args_head: "{}",
+      class: "effect_proposal",
+      decision_required: true,
+      default_decision: "deny",
+    });
+    useThreadStore.getState().hydrateToolRows("t-1");
+
+    expect(useThreadStore.getState().toolRows["t-1"]?.["call-live-only"]?.defaultDecision)
+      .toBe("deny");
+  });
+
+  it("hydrates persisted allow and keeps explicit approval valid", () => {
+    seedHeldTool({
+      id: "call-allow",
+      name: "desk.create",
+      arguments: "{}",
+      class: "effect_proposal",
+      state: "awaiting_decision",
+      default_decision: "allow",
+    });
+
+    useThreadStore.getState().applyToolPending({
+      thread_id: "t-1",
+      message_id: "asst-guardrail",
+      call_id: "call-allow",
+      name: "desk.create",
+      args_head: "{}",
+      class: "effect_proposal",
+      decision_required: true,
+      default_decision: "allow",
+    });
+    useThreadStore.getState().hydrateToolRows("t-1");
+
+    useThreadStore.getState().decideOptimistic("t-1", "call-allow", "approve");
+    const row = useThreadStore.getState().toolRows["t-1"]?.["call-allow"];
+    expect(row?.defaultDecision).toBe("allow");
+    expect(row?.state).toBe("running");
+  });
+
+  it("does not carry a live decision onto a terminal hydrated row", () => {
+    seedThread("t-1", [
+      makeMessage({
+        id: "asst-terminal",
+        parts: [{
+          id: "part-terminal-call",
+          messageId: "asst-terminal",
+          ordinal: 0,
+          kind: "tool_call",
+          text: "",
+          sensitive: false,
+          metaJson: {
+            id: "call-terminal",
+            name: "desk.create",
+            arguments: "{}",
+            class: "effect_proposal",
+            state: "awaiting_decision",
+          },
+        }],
+      }),
+      makeMessage({
+        id: "tool-terminal",
+        role: "tool",
+        parentId: "asst-terminal",
+        parts: [{
+          id: "part-terminal-result",
+          messageId: "tool-terminal",
+          ordinal: 0,
+          kind: "text",
+          text: "{}",
+          sensitive: false,
+          toolCallId: "call-terminal",
+          metaJson: { kind: "data", receipt_id: "receipt-terminal" },
+        }],
+      }),
+    ]);
+
+    useThreadStore.getState().applyToolPending({
+      thread_id: "t-1",
+      message_id: "asst-terminal",
+      call_id: "call-terminal",
+      name: "desk.create",
+      args_head: "{}",
+      class: "effect_proposal",
+      decision_required: true,
+      default_decision: "deny",
+    });
+    useThreadStore.getState().hydrateToolRows("t-1");
+
+    const row = useThreadStore.getState().toolRows["t-1"]?.["call-terminal"];
+    expect(row?.state).toBe("receipted");
+    expect(row?.receiptId).toBe("receipt-terminal");
+    expect(row?.defaultDecision).toBeUndefined();
   });
 });
 

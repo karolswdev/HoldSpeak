@@ -1,7 +1,7 @@
 {
   "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
   "generator": "scripts/philo_doctor_reference.py",
-  "limits": "Static branches, not executed checks. Runtime status, platform applicability and dynamic repair interpolation depend on the condition_source. Some helpers supply additional results.",
+  "limits": "Static branches, not executed checks. Runtime status, platform applicability and dynamic repair interpolation depend on the condition_source. Some helpers supply additional results. The snapshot is the Philo census baseline; checks and source anchors are read from the current working tree at generation.",
   "checks": [
     {
       "path": "holdspeak/commands/doctor.py",

@@ -10,6 +10,7 @@ import asyncio
 import concurrent.futures
 import socket
 import threading
+import time
 from pathlib import Path
 from dataclasses import dataclass
 from datetime import datetime
@@ -325,6 +326,7 @@ class MeetingWebServer:
         self._server: Optional[Any] = None
         self._thread: Optional[threading.Thread] = None
         self._started = threading.Event()
+        self._startup_error: Optional[BaseException] = None
         # HSM-15-10: LAN discovery advertiser, created at start() once the port
         # is bound, only off-loopback. Best-effort (never blocks/crashes start).
         self._mesh_advertiser: Optional[Any] = None
@@ -378,6 +380,8 @@ class MeetingWebServer:
     def start(self) -> str:
         """Start the server in a background thread and return its URL."""
         if self._thread is not None and self._thread.is_alive():
+            if self._server is None or not getattr(self._server, "started", False):
+                raise RuntimeError("Web server startup is already in progress")
             if self.url is None:
                 raise RuntimeError("Server thread is running but URL is unknown")
             return self.url
@@ -408,6 +412,7 @@ class MeetingWebServer:
             lifespan="on",
         )
         self._server = uvicorn.Server(config)
+        self._startup_error = None
         self._started.clear()
 
         self._thread = threading.Thread(
@@ -417,8 +422,28 @@ class MeetingWebServer:
         )
         self._thread.start()
 
-        if not self._started.wait(timeout=5.0):
-            raise RuntimeError("Timed out waiting for web server startup")
+        # The lifespan handler sets ``_started`` before Uvicorn creates its
+        # listening socket. Keep one deadline for both phases: callers must
+        # never receive a URL that can immediately refuse a connection.
+        deadline = time.monotonic() + 5.0
+        while True:
+            running_server = self._server
+            startup_error = self._startup_error
+            if startup_error is not None:
+                self._fail_startup("Web server failed during startup", startup_error)
+            if running_server is None:
+                self._fail_startup("Web server failed during startup")
+            if getattr(running_server, "started", False):
+                break
+            if getattr(running_server, "should_exit", False):
+                self._fail_startup("Web server exited during startup")
+            if self._thread is None or not self._thread.is_alive():
+                self._fail_startup("Web server stopped during startup")
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                phase = "listener" if self._started.is_set() else "startup"
+                self._fail_startup(f"Timed out waiting for web server {phase}")
+            time.sleep(min(0.01, remaining))
 
         if self.url is None:
             raise RuntimeError("Server started but URL is unknown")
@@ -431,6 +456,26 @@ class MeetingWebServer:
         self._start_mesh_advertising()
 
         return self.url
+
+    def _fail_startup(
+        self, message: str, cause: Optional[BaseException] = None
+    ) -> None:
+        """Stop a failed startup and raise without publishing a dead URL."""
+        server = self._server
+        thread = self._thread
+        if server is not None:
+            server.should_exit = True
+        if thread is not None and thread is not threading.current_thread():
+            thread.join(timeout=1.0)
+        if thread is None or not thread.is_alive():
+            self._server = None
+            self._thread = None
+            self._loop = None
+            self.port = None
+        self._started.clear()
+        if cause is not None:
+            raise RuntimeError(message) from cause
+        raise RuntimeError(message)
 
     def stop(self) -> None:
         """Stop the server gracefully."""
@@ -548,7 +593,8 @@ class MeetingWebServer:
         assert self._server is not None
         try:
             self._server.run()
-        except Exception as e:
+        except BaseException as e:
+            self._startup_error = e
             log.error(f"Web server failed: {e}")
             self._started.set()
 

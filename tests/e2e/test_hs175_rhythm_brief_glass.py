@@ -388,125 +388,127 @@ class TestRhythmWeeklyBrief:
             f"Brief API has no this_week items: {list(brief_data.get('sections', {}).keys())}"
         )
 
-        # Wait for the intelligence pullout to appear
-        pullout = page.locator(".intelligence-pullout, .intelligence-brief")
-        try:
-            pullout.first.wait_for(timeout=3000)
-        except Exception:
-            pass
+        # Require the actual BriefView. A missing pullout must fail the glass
+        # test instead of swallowing every face assertion behind an if guard.
+        brief_el = page.locator(".intelligence-brief")
+        brief_el.wait_for(state="visible", timeout=3000)
+        pullout_visible = True
 
-        pullout_visible = pullout.first.count() > 0 and pullout.first.is_visible()
+        # ── (1) Exactly ONE display-step element (the period label) ──
+        display_els = brief_el.locator(".intelligence-brief-period")
+        assert display_els.count() == 1, (
+            f"Expected exactly 1 display-step element, got {display_els.count()}"
+        )
+        # No headline sentence on this face
+        headline = brief_el.locator(".intelligence-brief-headline")
+        assert headline.count() == 0, (
+            "Headline sentence must not appear on the brief face (canon C + A.3)"
+        )
 
-        if pullout_visible:
-            # ── (1) Exactly ONE display-step element (the period label) ──
-            brief_el = page.locator(".intelligence-brief")
-            display_els = brief_el.locator(".intelligence-brief-period")
-            assert display_els.count() == 1, (
-                f"Expected exactly 1 display-step element, got {display_els.count()}"
+        # ── (2) Positive counters only in the three THIS WEEK labels ──
+        # Generated clock labels and NEXT tokens legitimately contain 00.
+        import re
+        for testid in ("brief-tw-meetings", "brief-tw-armed", "brief-tw-due"):
+            row = brief_el.locator(f'[data-testid="{testid}"]')
+            if row.count() == 0:
+                continue
+            primary = row.locator(".intelligence-brief-tw-primary")
+            assert primary.count() == 1, f"{testid} must have one primary label"
+            primary_text = (primary.text_content() or "").strip()
+            assert re.match(r"^[1-9]\d* ", primary_text), (
+                f"{testid} primary must start with a positive count: {primary_text!r}"
             )
-            # No headline sentence on this face
-            headline = brief_el.locator(".intelligence-brief-headline")
-            assert headline.count() == 0, (
-                "Headline sentence must not appear on the brief face (canon C + A.3)"
-            )
 
-            # ── (2) No text matching /\b00\b/ (counters of zero = A.8 bounce) ──
-            body_text = brief_el.text_content() or ""
-            import re
-            assert not re.search(r'\b00\b', body_text), (
-                f"Found '00' counter of zero on the brief face: ...{body_text[:200]}..."
-            )
-
-            # ── (3) No row text ending in a period (no sentences / A.3) ──
-            # Check all primary-step text nodes
-            primaries = brief_el.locator(
-                ".intelligence-brief-tw-primary, .surface-ledger-primary, .surface-primary"
-            )
-            for i in range(primaries.count()):
-                txt = (primaries.nth(i).text_content() or "").strip()
-                if txt:
-                    assert not txt.endswith("."), (
-                        f"Row text ends in a period (prose): '{txt}'"
-                    )
-
-            # ── (4) NEXT token inside the MEETINGS row ──
-            meetings_row = page.locator('[data-testid="brief-tw-meetings"]')
-            assert meetings_row.count() > 0, "MEETINGS row not found"
-            next_token = meetings_row.locator('[data-testid="brief-tw-next"]')
-            assert next_token.count() > 0, "NEXT token not inside the MEETINGS row"
-            next_text = next_token.text_content() or ""
-            assert "NEXT" in next_text, f"NEXT token text: {next_text}"
-
-            # ── (5) DUE row has a day token ──
-            due_row = page.locator('[data-testid="brief-tw-due"]')
-            if due_row.count() > 0:
-                day_tok = due_row.locator('[data-testid="brief-tw-due-day"]')
-                # Day token may be absent if the commitment text does not
-                # contain a parseable date -- assert presence when present
-                if day_tok.count() > 0:
-                    day_text = day_tok.text_content() or ""
-                    assert len(day_text) == 3, f"Day token should be 3 chars, got: {day_text}"
-
-            # ── (6) SINCE FRIDAY rows have kind tokens ──
-            since_friday = page.locator('[data-testid="brief-since-friday"]')
-            if since_friday.count() > 0:
-                sf_rows = since_friday.locator('[data-testid="brief-sf-row"]')
-                for i in range(sf_rows.count()):
-                    row = sf_rows.nth(i)
-                    # Each row should have a kind token and a primary
-                    kind = row.locator('[data-testid="brief-sf-kind"]')
-                    primary = row.locator('.intelligence-brief-sf-primary')
-                    assert primary.count() > 0, (
-                        f"SINCE FRIDAY row {i} has no primary"
-                    )
-                    # kind may be absent when item text has no colon prefix
-                    if kind.count() > 0:
-                        kind_text = kind.text_content() or ""
-                        assert kind_text == kind_text.upper(), (
-                            f"Kind token should be uppercase, got: '{kind_text}'"
-                        )
-
-                # Emblem chips: verify format when present
-                sf_emblems = since_friday.locator('[data-testid="brief-source-emblem"]')
-                for i in range(sf_emblems.count()):
-                    txt = sf_emblems.nth(i).text_content() or ""
-                    assert txt == txt.upper() and 1 <= len(txt) <= 4, (
-                        f"Emblem chip should be 1-4 uppercase chars, got: '{txt}'"
-                    )
-
-            # ── (7) ONE GUTTER: all elements share one left edge ──
-            # Measure x offsets of period, section captions, and rows.
-            gutter_data = brief_el.evaluate("""(el) => {
-                const xs = [];
-                for (const sel of [
-                    '.intelligence-brief-period',
-                    '.intelligence-brief-generated',
-                    '.intelligence-brief-section-caption',
-                    '.intelligence-brief-tw-row',
-                    '.intelligence-brief-sf-row',
-                    '.intelligence-brief-person-unavailable',
-                ]) {
-                    for (const node of el.querySelectorAll(sel)) {
-                        const r = node.getBoundingClientRect();
-                        if (r.width > 0) xs.push({ sel, x: Math.round(r.left) });
-                    }
-                }
-                return xs;
-            }""")
-            if len(gutter_data) >= 2:
-                xs = [d["x"] for d in gutter_data]
-                min_x = min(xs)
-                max_x = max(xs)
-                assert max_x - min_x <= 4, (
-                    f"Not one gutter: left edges span {max_x - min_x}px "
-                    f"(min={min_x}, max={max_x}, data={gutter_data})"
+        # ── (3) No row text ending in a period (no sentences / A.3) ──
+        # Check all primary-step text nodes
+        primaries = brief_el.locator(
+            ".intelligence-brief-tw-primary, .surface-ledger-primary, .surface-primary"
+        )
+        for i in range(primaries.count()):
+            txt = (primaries.nth(i).text_content() or "").strip()
+            if txt:
+                assert not txt.endswith("."), (
+                    f"Row text ends in a period (prose): '{txt}'"
                 )
 
-            # ── (8) No raw ISO dates (YYYY-MM-DD) on the face ──
-            import re
-            assert not re.search(r'\d{4}-\d{2}-\d{2}', body_text), (
-                f"Raw ISO date on the brief face: {body_text[:300]}"
+        # ── (4) NEXT token inside the MEETINGS row ──
+        meetings_row = page.locator('[data-testid="brief-tw-meetings"]')
+        assert meetings_row.count() > 0, "MEETINGS row not found"
+        next_token = meetings_row.locator('[data-testid="brief-tw-next"]')
+        assert next_token.count() > 0, "NEXT token not inside the MEETINGS row"
+        next_text = next_token.text_content() or ""
+        assert "NEXT" in next_text, f"NEXT token text: {next_text}"
+
+        # ── (5) DUE row has a day token ──
+        due_row = page.locator('[data-testid="brief-tw-due"]')
+        if due_row.count() > 0:
+            day_tok = due_row.locator('[data-testid="brief-tw-due-day"]')
+            # Day token may be absent if the commitment text does not
+            # contain a parseable date -- assert presence when present
+            if day_tok.count() > 0:
+                day_text = day_tok.text_content() or ""
+                assert len(day_text) == 3, f"Day token should be 3 chars, got: {day_text}"
+
+        # ── (6) SINCE FRIDAY rows have kind tokens ──
+        since_friday = page.locator('[data-testid="brief-since-friday"]')
+        if since_friday.count() > 0:
+            sf_rows = since_friday.locator('[data-testid="brief-sf-row"]')
+            for i in range(sf_rows.count()):
+                row = sf_rows.nth(i)
+                # Each row should have a kind token and a primary
+                kind = row.locator('[data-testid="brief-sf-kind"]')
+                primary = row.locator('.intelligence-brief-sf-primary')
+                assert primary.count() > 0, (
+                    f"SINCE FRIDAY row {i} has no primary"
+                )
+                # kind may be absent when item text has no colon prefix
+                if kind.count() > 0:
+                    kind_text = kind.text_content() or ""
+                    assert kind_text == kind_text.upper(), (
+                        f"Kind token should be uppercase, got: '{kind_text}'"
+                    )
+
+            # Emblem chips: verify format when present
+            sf_emblems = since_friday.locator('[data-testid="brief-source-emblem"]')
+            for i in range(sf_emblems.count()):
+                txt = sf_emblems.nth(i).text_content() or ""
+                assert txt == txt.upper() and 1 <= len(txt) <= 4, (
+                    f"Emblem chip should be 1-4 uppercase chars, got: '{txt}'"
+                )
+
+        # ── (7) ONE GUTTER: all elements share one left edge ──
+        # Measure x offsets of period, section captions, and rows.
+        gutter_data = brief_el.evaluate("""(el) => {
+            const xs = [];
+            for (const sel of [
+                '.intelligence-brief-period',
+                '.intelligence-brief-generated',
+                '.intelligence-brief-section-caption',
+                '.intelligence-brief-tw-row',
+                '.intelligence-brief-sf-row',
+                '.intelligence-brief-person-unavailable',
+            ]) {
+                for (const node of el.querySelectorAll(sel)) {
+                    const r = node.getBoundingClientRect();
+                    if (r.width > 0) xs.push({ sel, x: Math.round(r.left) });
+                }
+            }
+            return xs;
+        }""")
+        if len(gutter_data) >= 2:
+            xs = [d["x"] for d in gutter_data]
+            min_x = min(xs)
+            max_x = max(xs)
+            assert max_x - min_x <= 4, (
+                f"Not one gutter: left edges span {max_x - min_x}px "
+                f"(min={min_x}, max={max_x}, data={gutter_data})"
             )
+
+        # ── (8) No raw ISO dates (YYYY-MM-DD) on the face ──
+        body_text = brief_el.text_content() or ""
+        assert not re.search(r'\d{4}-\d{2}-\d{2}', body_text), (
+            f"Raw ISO date on the brief face: {body_text[:300]}"
+        )
 
         # Shoot 1440 (the pullout if visible, else the full page)
         _shot(page, "brief-week-1440", 1440, pullout=pullout_visible)

@@ -5,7 +5,7 @@ import json
 import os
 import shutil
 import signal
-import select
+import selectors
 import socket
 import subprocess
 import sys
@@ -263,7 +263,9 @@ def test_real_sigkill_mid_send_reconciles_indeterminate_by_command_id(tmp_path: 
             os._exit(0)
     os.close(ready_write)
     try:
-        readable, _, _ = select.select([ready_read], [], [], 10)
+        with selectors.DefaultSelector() as readiness:
+            readiness.register(ready_read, selectors.EVENT_READ)
+            readable = readiness.select(timeout=10)
         assert readable and os.read(ready_read, 16) == b"typed"
         os.kill(child, signal.SIGKILL)
         _, status = os.waitpid(child, 0)

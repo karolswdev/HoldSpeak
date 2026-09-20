@@ -9,7 +9,7 @@ ROOT=Path(__file__).resolve().parents[1]
 def main():
     p=argparse.ArgumentParser();p.add_argument('--check',action='store_true');a=p.parse_args()
     schema=build_reference_app().openapi()
-    schema['info']['x-philo-note']='Declared FastAPI schemas only; raw Request validation, authorization and WS contracts are not fully represented. Do not infer approval from OpenAPI.'
+    schema['info']['x-philo-note']='Declared FastAPI schemas only; raw Request validation, authorization and WS contracts are not fully represented. Do not infer approval from OpenAPI. The x-source-snapshot value is the Philo census baseline; schemas are generated from the current working tree.'
     schema['info']['x-source-snapshot']=json.loads((ROOT/'docs/internal/philo/snapshot.json').read_text())['commit']
     text=json.dumps(schema,indent=2,sort_keys=True)+'\n';out=ROOT/'docs/generated/openapi.json'
     if a.check:

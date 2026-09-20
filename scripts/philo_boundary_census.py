@@ -35,7 +35,7 @@ def collect(root=ROOT):
             kinds=[k for k,pattern in PATTERNS.items() if re.search(pattern,text)]
             if kinds:
                 rows.append({'path':rel,'line':line,'kinds':kinds,'excerpt':text.strip()[:260],'line_sha256':hashlib.sha256(text.encode()).hexdigest(),'review':'candidate_only'})
-    return {'schema_version':1,'snapshot':json.loads((root/'docs/internal/philo/snapshot.json').read_text())['commit'],'scope':'tracked implementation files at snapshot, read from current unchanged product tree','limitations':['Lexical candidates include imports, comments and fixtures.','Aliases, dynamic calls and native indirect effects can be missed.','This does not certify authority, egress, privacy or complete security coverage.'],'candidates':rows}
+    return {'schema_version':1,'snapshot':json.loads((root/'docs/internal/philo/snapshot.json').read_text())['commit'],'scope':'tracked implementation files in the snapshot census baseline, read from the current working tree at generation','limitations':['Lexical candidates include imports, comments and fixtures.','Aliases, dynamic calls and native indirect effects can be missed.','This does not certify authority, egress, privacy or complete security coverage.'],'candidates':rows}
 
 
 def main():
