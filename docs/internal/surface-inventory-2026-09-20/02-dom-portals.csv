@@ -1,0 +1,9 @@
+path,line,mechanism,classification,source
+web/src/desk/components/DeskMenu.tsx,644,React portal call,ownership/egress/focus review; not automatically modal,return createPortal(
+web/src/desk/components/DeskToolShelf.tsx,525,React portal call,ownership/egress/focus review; not automatically modal,? createPortal(
+web/src/desk/components/window/ShortcutSheet.tsx,43,React portal call,ownership/egress/focus review; not automatically modal,return createPortal(
+web/src/desk/pullouts/ThoughtContextPicker.tsx,206,React portal call,ownership/egress/focus review; not automatically modal,"return createPortal(<div className=""desk-next thought-context-overlay"">{picker}</div>, document.body);"
+web/src/desk/surface/SurfaceFooter.tsx,30,React portal call,ownership/egress/focus review; not automatically modal,"? createPortal(contents, target)"
+web/src/desk/surface/patterns/Popover.tsx,120,React portal call,ownership/egress/focus review; not automatically modal,return createPortal(
+web/src/pages/cores/ContextualAssignment.tsx,85,React portal call,ownership/egress/focus review; not automatically modal,{open && projection ? createPortal(
+web/src/pages/cores/SettingsCore.tsx,1620,imperative native control,native file picker; T5 scope review,"const input = document.createElement(""input"");"

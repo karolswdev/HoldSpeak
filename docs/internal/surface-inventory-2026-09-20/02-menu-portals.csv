@@ -1,0 +1,42 @@
+classification,line,marker,path,reason
+sanctioned,157,"<div className=""desk-menubar"">",web/src/desk/components/DeskChrome.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,159,"<div className=""desk-menu-wrap"">",web/src/desk/components/DeskChrome.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,211,"className=""desk-menu""",web/src/desk/components/DeskChrome.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,53,"className=""desk-create-menu""",web/src/desk/components/DeskCreateMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,74,"<span className=""desk-menu-glyph"" aria-hidden=""true"">",web/src/desk/components/DeskCreateMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,317,"className=""desk-world-menu""",web/src/desk/components/DeskListView.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,106,"role=""menu""",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,167,"{keycap ? <kbd className=""desk-menu-key"">{keycap}</kbd> : null}",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,175,"return <span role=""separator"" className=""desk-menu-sep"" />;",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,242,"<span className=""desk-menu-keycaps"" aria-label={keycap}>",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,244,"<kbd key={i} className=""desk-menu-well"">",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,325,"role=""menuitem""",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,355,"<span className=""desk-menu-glyph"" aria-hidden=""true"" />",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,357,"<span className=""desk-menu-label"">{entry.label}</span>",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,358,"<span className=""desk-menu-submark"" aria-hidden=""true"">",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,379,"<span className=""desk-menu-glyph"" aria-hidden=""true"">",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,387,"<span className=""desk-menu-glyph"" aria-hidden=""true"">",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,394,"<span className=""desk-menu-glyph"" aria-hidden=""true"" />",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,427,"<span className=""desk-menu-label"">",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,541,"role=""menu""",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,569,"role=""menuitem""",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,570,"className=""desk-menu-back""",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,574,"<span className=""desk-menu-glyph"" aria-hidden=""true"">",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,577,"<span className=""desk-menu-label"">{sub.label}</span>",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,603,"<span className=""desk-menu-ghost-hint"">{collapsedReason}</span>",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,608,"className=""desk-menu-list desk-work-menu desk-work-submenu is-below""",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,609,"role=""menu""",web/src/desk/components/DeskMenu.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,119,"className=""desk-verbbar-menu""",web/src/desk/components/DeskMenuBar.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+needs reading,554,"role=""listbox""",web/src/desk/components/DeskToolShelf.tsx,candidate marker needs a local semantic read
+sanctioned,877,"className=""desk-head-menu""",web/src/desk/components/DeskWindow.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+needs reading,258,"role=""listbox""",web/src/desk/components/InletAutocomplete.tsx,candidate marker needs a local semantic read
+needs reading,269,"role=""listbox""",web/src/desk/components/InletAutocomplete.tsx,candidate marker needs a local semantic read
+needs reading,298,"role=""listbox""",web/src/desk/components/InletAutocomplete.tsx,candidate marker needs a local semantic read
+needs reading,310,"role=""listbox""",web/src/desk/components/InletAutocomplete.tsx,candidate marker needs a local semantic read
+needs reading,949,"role=""listbox""",web/src/desk/components/ThreadComposer.tsx,candidate marker needs a local semantic read
+sanctioned,304,"className=""desk-dock-menu""",web/src/desk/components/window/Dock.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+sanctioned,315,"className=""desk-world-menu""",web/src/desk/gl/WorldStage.tsx,shared DeskMenu OS chrome; semantic menu is intentional and in-world
+needs reading,430,"className=""desk-zone-rename-row is-overlay""",web/src/desk/gl/WorldStage.tsx,candidate marker needs a local semantic read
+needs reading,416,"{more && thought ? <section className=""surface-aerogel thought-more-menu"" aria-label=""More thought actions"">",web/src/desk/pullouts/NotePullout.tsx,candidate marker needs a local semantic read
+needs reading,206,"return createPortal(<div className=""desk-next thought-context-overlay"">{picker}</div>, document.body);",web/src/desk/pullouts/ThoughtContextPicker.tsx,portal/overlay boundary requires an ownership and escape-path read
+needs reading,633,"<div role=""listbox"" aria-label=""Review proposals"">",web/src/features/project-room/review/ReviewPosture.tsx,candidate marker needs a local semantic read
