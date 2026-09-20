@@ -7,7 +7,7 @@
   "working_tree_clean_before_authored_files": true,
   "platform": "Darwin-25.2.0-arm64-arm-64bit-Mach-O",
   "python": "3.14.6",
-  "scope": "planning baseline; not a completed capability or runtime audit",
+  "scope": "Pinned source baseline for the capability audit and Desk specification; verification and limits are recorded in docs/generated/DOCUMENTATION_AUDIT_REPORT.md",
   "owner_request_sources": [
     {
       "path": "briefs/owner-request.txt",
@@ -25,5 +25,19 @@
       "bytes": 100292
     }
   ],
-  "source_session": "01a0bc4d-502c-7170-a5bf-91ac6e6fd917"
+  "source_session": "01a0bc4d-502c-7170-a5bf-91ac6e6fd917",
+  "package": {
+    "name": "holdspeak",
+    "version": "0.4.0",
+    "requires_python": ">=3.10",
+    "classifier": "Development Status :: 4 - Beta",
+    "interpretation": "Packaging declaration; not a verified maturity claim"
+  },
+  "verification_toolchain": {
+    "node": "22.23.2 (isolated official Darwin ARM64 distribution)",
+    "npm": "10.9.8",
+    "python_environment": ".venv via uv sync --extra test",
+    "system_node": "25.9.0 failed before execution: missing libllhttp.9.3.dylib",
+    "system_modified": false
+  }
 }
