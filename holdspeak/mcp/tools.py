@@ -280,9 +280,12 @@ TOOLS.extend([
     ),
     _mcp_tool(
         "meeting.run_intelligence",
-        "Enqueue a fresh intelligence job for a meeting that has a transcript but never ran intelligence. Returns {jobId, state, host}. Refuses 409 when the meeting has no transcript.",
-        {"meeting_id": {"type": "string", "description": "Meeting identifier."}},
-        ["meeting_id"],
+        "Enqueue a fresh intelligence job using the disclosed summary route selection hash. Refuses when the hash is absent, stale, or the meeting has no transcript.",
+        {
+            "meeting_id": {"type": "string", "description": "Meeting identifier."},
+            "expected_selection_hash": {"type": "string", "description": "Selection hash from the meeting planned_route read."},
+        },
+        ["meeting_id", "expected_selection_hash"],
     ),
     _mcp_tool(
         "meeting.proposals",
@@ -875,7 +878,11 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     if name == "meeting.run_intelligence":
         from holdspeak.services.meeting_intel_service import MeetingIntelService as _MIS
         intel_svc = _MIS(db, observer=obs)
-        return intel_svc.run_intelligence(principal, str(args.get("meeting_id") or ""))
+        return intel_svc.run_intelligence(
+            principal,
+            str(args.get("meeting_id") or ""),
+            expected_selection_hash=str(args.get("expected_selection_hash") or ""),
+        )
     if name == "meeting.proposals":
         from holdspeak.services.proposal_bridge_service import ProposalBridgeService as _PBS
         pbs = _PBS(db)

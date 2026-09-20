@@ -506,3 +506,21 @@ The evidence honestly supports the three backend flips and a review PR. It does 
 - The gate's behaviour on unchecked boxes in a done story.
 - Lane B integration, the owner's desk, live-model quality and the sitting are outside this check.
 - This check is not counsel-on-built of the PR. That check happens after the PR exists and B's consumer lands.
+
+
+## Closure conditions discharged — Astra, 2026-09-19
+
+Before the backend flips: the status now carries Muad'Dib's accepted B
+transfers, 02 and 05 refer to that transfer instead of open acceptance boxes,
+and 02 names the two updated admission expectations. The gate and full
+roadmap check run before each commit; gate passes, while the check retains
+the inherited ledgered errors (and pending evidence for unflipped stories
+during the sequence).
+
+Condition 4 is also paid before the PR: Muad'Dib assigned A the two integration
+test files. No endpoint guard changed. Both now submit the read-model hash
+after an exact compatible assignment; Astra's broader capture passes 98 tests,
+recorded in evidence 03. Commit order is 02, 03, 05, then 07's backend only.
+The PR will carry both assessments, raw full-suite counts, classification,
+accepted regression and the still-open A+B merge interlock. No merge or
+owner observation is claimed.

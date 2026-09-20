@@ -725,8 +725,37 @@ class MeetingService:
         time), never resolved from config in the read path. Null when no job
         exists or the job has no recorded host.
         """
+        # The summary route is global to the SERVICE capability.  Resolve it
+        # once for this read request; each meeting still gets its own durable
+        # receipt below.
+        current_route: dict[str, Any] | None = None
+        if payloads:
+            try:
+                from .meeting_route_projection import project_route
+                current_route = project_route(self._db, invocation_id="meetings:list")
+            except Exception:
+                current_route = {
+                    "status": "unavailable", "reason_code": "route unavailable",
+                    "selection_hash": None, "legs": [],
+                }
         for p in payloads:
             meeting_id = p.get("id") or ""
+            if meeting_id:
+                try:
+                    # The next run must show the current SERVICE selection.
+                    # Historical job routes remain on the job and in its receipt;
+                    # they are never used to hide a repaired route.
+                    p["planned_route"] = dict(current_route or {
+                        "status": "unavailable", "reason_code": "route unavailable",
+                        "selection_hash": None, "legs": [],
+                    })
+                    p["run_receipt"] = self._db.intel.get_run_receipt(meeting_id)
+                except Exception:
+                    p["planned_route"] = {
+                        "status": "unavailable", "reason_code": "route unavailable",
+                        "selection_hash": None, "legs": [],
+                    }
+                    p["run_receipt"] = None
             if p.get("intel_model_host") is None and meeting_id:
                 try:
                     recorded = self._db.intel.get_intel_job_model_host(meeting_id)
@@ -785,4 +814,5 @@ class MeetingService:
             # the detail computes it from the loaded segments.
             "transcriptWords": getattr(meeting, "transcript_words", None),
             "needs_you_count": getattr(meeting, "needs_you_count", 0),
+            "planned_route": None,
         }

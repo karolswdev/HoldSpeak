@@ -20,7 +20,7 @@ is in `audits/startup-astra.md`. Red fences and raw collection output are kept.
 The quiet full run: **11,159 passed, 24 failed, 125 skipped, four xfailed**.
 Nine stale contract assertions were updated and passed the final focused
 captures. Twelve failures reproduce on the pristine charter baseline; two old
-integration callers still omit the required hash; one scanner no-write failure
+integration callers were migrated and pass a broader 98-test root capture; one scanner no-write failure
 passes twice in a quiet tree. No full-suite green is claimed. Complete output
 and classification: `audits/full-suite-astra.log` and `audits/full-suite-astra.md`.
 Product code is unchanged after the full run. Test-only follow-ups were rerun.
@@ -32,8 +32,9 @@ in the existing face. The stub engine and fixture WAV prove plumbing, not
 live-model quality or the owner's usefulness verdict. B owes the new faces.
 
 **LEDGER:** Classification a: old recording/contract expectations updated;
-two integration tests outside A's assigned test directories still need a
-compatible assignment and `expected_selection_hash`. Classification b: the
+two integration callers were assigned to A by Muad'Dib at closure and now
+submit `expected_selection_hash` from a compatible route. Their broader
+98-test suite passes. Classification b: the
 Web Stop auto-enqueue side door was reproduced and fixed. Classification c:
 the historical dictation race did not reproduce on two baseline runs or the
 current suite; the scanner status failure does not recur in two quiet runs.
@@ -58,7 +59,7 @@ Owner may overrule these amendments at the sitting.
 
 Peer source verdict: **RATIFY-WITH-CONDITIONS**, source conditions discharged;
 closure conditions, accepted B-criterion transfers and the capture-stamp correction are recorded
-in `checks/lane-a-muaddib.md`. Astra ratifies backend completion for a review PR; Muad'Dib ratifies it with the recorded closure conditions. The two integration test migrations are being completed in A on his assignment. No open dissent. This is not counsel-on-built
+in `checks/lane-a-muaddib.md`. Astra ratifies backend completion for a review PR; Muad'Dib ratifies it with the recorded closure conditions. The two integration test migrations are complete in A on his assignment (98 tests passed). No open dissent. This is not counsel-on-built
 of the eventual PR and does not authorize a merge.
 
 **UNKNOWN:** B's hash consumers and new refusal/Models/summary faces; real
@@ -72,4 +73,4 @@ on all three Run/Retry gestures. B uses “summary” and shows an absent/“Not
 Review state for the unexecuted proposal chain. B owns Record token 01,
 summary/route faces 04 and Models controls/labels 06. B receives `transcription_status_detail`, `planned_route`, `run_receipt`,
 `summaryAssignment`, and `ConciergeSummaryAssignmentReceipt@1`; the transport
-details and tests awaiting migration are in `lane-a-handoff.md`.
+details and the completed test migration are in `lane-a-handoff.md`.

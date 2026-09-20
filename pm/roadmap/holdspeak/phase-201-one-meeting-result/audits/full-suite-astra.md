@@ -22,7 +22,7 @@ focused suites are recaptured in evidence 02 and 03.
 |---|---|---|
 | 7 | a — canonical contract artifacts stale after the intended change | API manifest, DB schema, routing-authority census, private-helper census, and three inference-capability census assertions. Snapshots/line anchors updated without relaxing the guards. Focused rerun in evidence 03. |
 | 2 | a — former recording posture | Dictation-session test expected the old live+speech budget; unassigned Stop test expected implicit text work. Speech-only budget/members and zero queued aftercare are asserted; active bundle aftercare stays covered. Focused rerun in evidence 02. |
-| 2 | a — old integration callers, still red | `TestIntelQueueApiEndpoints::test_intel_jobs_list_retry_and_process` and `test_partial_intel_names_retained_work_and_supports_retry_or_skip` post without `expected_selection_hash` and now get 409. Both pass on the byte-checked charter baseline: [baseline-legacy-callers.log](baseline-legacy-callers.log). They live outside lane A's assigned test directories. Follow-up: migrate fixtures to an exact assignment plus the current read-model hash. New HS-201 HTTP tests cover valid, missing and stale hashes on all three endpoints. |
+| 2 | a — old integration callers, migrated | `TestIntelQueueApiEndpoints::test_intel_jobs_list_retry_and_process` and `test_partial_intel_names_retained_work_and_supports_retry_or_skip` posted without `expected_selection_hash` and received 409 in the full run. Both pass on the byte-checked charter baseline: [baseline-legacy-callers.log](baseline-legacy-callers.log). Muad'Dib assigned these two test files to A at closure. Both fixtures now create an exact compatible assignment and submit the current read-model hash; Astra's broader web-server/recovery/HTTP capture passes 98 tests (evidence 03). New HS-201 HTTP tests cover valid, missing and stale hashes on all three endpoints. |
 | 9 | inherited baseline failures | Nine original tests reproduced on byte-checked charter sources: [collection and module origins](baseline-glass-collect.log), [raw run](baseline-glass-run.log). Two doc-drift guards; HS-153 guardrail deny focus; both HS-171 zero-badge widths; four HS-200 preparation tests. One preparation width times out waiting for the running state on baseline rather than failing the next Stop assertion; it is not an identical stack trace. All seven browser cases fail before any new summary-selection behavior. |
 | 2 | inherited baseline failures | Daily-loop widths fail at preparation before the meeting: [baseline-daily-loop.log](baseline-daily-loop.log). |
 | 1 | inherited baseline failure | UAT ledger is already stale: [baseline-ledger.log](baseline-ledger.log). No unrelated regeneration in this lane. |
@@ -36,7 +36,7 @@ remain. The affected six tests are rerun after this test-only tightening.
 
 ## Homes and limits
 
-The old integration callers and inherited suite failures are assigned to
+The integration callers are fixed. The inherited suite failures are assigned to
 Phase 201's lane A debt ledger and `../lane-a-handoff.md` for integration
 follow-up. The production proposal regression is parked in `../../BACKLOG.md`
 under “Phase 201 parked summary follow-through”, with a disclosed-route

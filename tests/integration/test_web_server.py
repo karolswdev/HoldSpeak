@@ -28,6 +28,7 @@ from holdspeak.web_server import (
     _parse_iso_datetime,
 )
 from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+from tests.unit.test_hs201_route_contract import assign_summary, summary_profile
 
 
 # ============================================================
@@ -2200,6 +2201,8 @@ class TestIntelQueueApiEndpoints:
         _meeting("m-001", 0, "Weekly sync")
         _meeting("m-002", 5, "Design review")
         _meeting("m-003", 10, "Retro")
+        summary_profile(isolated_db, "web-server-summary")
+        assign_summary(isolated_db, ["web-server-summary"])
 
         # C1 retries and failures mutate an owned immutable descriptor, then
         # create a successor where appropriate. Arrange claims before their
@@ -2259,7 +2262,15 @@ class TestIntelQueueApiEndpoints:
         assert summary_data["scheduled_retry_jobs"] == 1
         assert summary_data["next_retry_at"] is not None
 
-        retry_response = test_client.post("/api/intel/retry/m-001")
+        route_response = test_client.get("/api/meetings/m-001/intel-recovery")
+        assert route_response.status_code == 200
+        planned_route = route_response.json()["planned_route"]
+        assert planned_route["status"] == "ready"
+        assert planned_route["selection_hash"]
+        retry_response = test_client.post(
+            "/api/intel/retry/m-001",
+            json={"expected_selection_hash": planned_route["selection_hash"]},
+        )
         assert retry_response.status_code == 200
         assert retry_response.json()["success"] is True
 

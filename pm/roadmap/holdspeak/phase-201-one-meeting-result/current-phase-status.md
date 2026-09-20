@@ -61,7 +61,7 @@ over claim). Faces obey UX-CANON. Orchestration: TWO-BRAINS.md.
 |---|---|---|---|---|
 | HS-201-01 | The desk names the one thing it needs | backlog | [story-01-the-desk-names-the-one-thing-it-needs](./story-01-the-desk-names-the-one-thing-it-needs.md) | - |
 | HS-201-02 | Record works with no summary model | done | [story-02-record-works-with-no-summary-model](./story-02-record-works-with-no-summary-model.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-201-03 | The host is disclosed before the run and truthful after | in-progress | [story-03-the-host-is-disclosed-before-the-run-and-truthful-after](./story-03-the-host-is-disclosed-before-the-run-and-truthful-after.md) | - |
+| HS-201-03 | The host is disclosed before the run and truthful after | done | [story-03-the-host-is-disclosed-before-the-run-and-truthful-after](./story-03-the-host-is-disclosed-before-the-run-and-truthful-after.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-201-04 | Ask for the summary and find it again | backlog | [story-04-ask-for-the-summary-and-find-it-again](./story-04-ask-for-the-summary-and-find-it-again.md) | - |
 | HS-201-05 | One engine and one assignment from the face | in-progress | [story-05-one-engine-and-one-assignment-from-the-face](./story-05-one-engine-and-one-assignment-from-the-face.md) | - |
 | HS-201-06 | Plain words on the path | backlog | [story-06-plain-words-on-the-path](./story-06-plain-words-on-the-path.md) | - |
@@ -164,7 +164,8 @@ Lane A backend implementation and source counsel are complete. The quiet full su
   does not compare its index tree. Framework follow-up belongs to `pmo-roadmap`.
   See the peer correction in `checks/lane-a-muaddib.md`.
 - Full-suite classification: nine stale contract assertions updated; two legacy
-  integration callers still need the required hash (outside A test ownership);
+  integration callers migrated under Muad'Dib's closure assignment (98 tests
+  passed);
   twelve inherited failures reproduced on the charter baseline; one no-write
   scanner failure passes twice with the tree quiet. Raw logs and per-group
   homes: `audits/full-suite-astra.md`.

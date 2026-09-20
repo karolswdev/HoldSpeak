@@ -97,6 +97,10 @@ class IntelJob:
     executor_lease_epoch: int = 0
     executor_lease_expires_at: Optional[float] = None
     lifecycle_posture: Optional[str] = None
+    # HS-201-03: the exact route shown before this job was admitted.
+    planned_route: dict[str, Any] | None = None
+    # HS-201-03: durable public run receipt, populated from kernel route receipts.
+    run_receipt: dict[str, Any] | None = None
 
 
 @dataclass

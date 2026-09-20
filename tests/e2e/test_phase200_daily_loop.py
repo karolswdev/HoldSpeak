@@ -409,6 +409,21 @@ def _import_transcript(page: Any, title: str, started: datetime) -> str:
     raise AssertionError("the import never produced three segments")
 
 
+def _run_intelligence(page: Any, meeting_id: str) -> dict[str, Any]:
+    """Post the hash the existing SERVICE route fixture discloses."""
+    detail = _api(page, "GET", f"/api/meetings/{meeting_id}", token=TOKEN)
+    planned = detail["planned_route"]
+    assert planned["status"] == "ready" and planned["legs"], planned
+    assert planned["selection_hash"], planned
+    return _api(
+        page,
+        "POST",
+        f"/api/meetings/{meeting_id}/intelligence/run",
+        {"expected_selection_hash": planned["selection_hash"]},
+        token=TOKEN,
+    )
+
+
 def _action_item_id(page: Any) -> str:
     """The follow-through card behind the confirmed commitment, by its text.
 
@@ -895,7 +910,7 @@ def test_a_project_carries_work_across_two_working_days(
                 meeting_id = _import_transcript(page, "Architecture review", DAY1_START)
                 state["meeting_id"] = meeting_id
                 _api(page, "POST", f"/api/projects/{project_id}/meetings/{meeting_id}", token=TOKEN)
-                run = _api(page, "POST", f"/api/meetings/{meeting_id}/intelligence/run", token=TOKEN)
+                run = _run_intelligence(page, meeting_id)
                 assert run["state"] == "queued" and run["drainer"] == "running", run
 
                 def _review() -> dict[str, Any]:

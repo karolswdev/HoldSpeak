@@ -211,7 +211,7 @@ class TestMeetingsGlass:
 
         # Monkeypatch the intel run route to return a fake job
         from holdspeak.services import meeting_intel_service as mis_mod
-        def fake_run_intelligence(self_svc, principal, meeting_id):
+        def fake_run_intelligence(self_svc, principal, meeting_id, *, expected_selection_hash=None):
             return {"jobId": "job-glass-123", "state": "queued", "host": "THIS DEVICE"}
         monkeypatch.setattr(mis_mod.MeetingIntelService, "run_intelligence", fake_run_intelligence)
 

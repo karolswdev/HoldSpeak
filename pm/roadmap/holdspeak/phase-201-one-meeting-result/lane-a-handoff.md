@@ -100,11 +100,10 @@ cannot be selected for summaries. Never invent revision 1 on the face.
 
 ## Full-suite integration handoff
 
-Two legacy integration tests still omit `expected_selection_hash`: the
-queue API retry test in `tests/integration/test_web_server.py` and the partial
-recovery test in `tests/integration/test_meeting_intel_recovery.py`. Both pass
-on the charter baseline and now correctly receive 409. Migrate those test
-fixtures to a compatible exact assignment and submit the read-model hash;
-do not weaken the new endpoint requirement. They are outside A's assigned
-test directories. Other inherited failures and raw baseline reproductions
-are in `audits/full-suite-astra.md`.
+The two legacy integration callers in `tests/integration/test_web_server.py`
+and `tests/integration/test_meeting_intel_recovery.py` are migrated. Muad'Dib
+assigned those files to A in the closure check. Each test now creates a
+compatible exact assignment and submits the route read-model hash. Astra's
+broader web-server/recovery/HTTP suite passes 98 tests. The 409 guard remains.
+Inherited failures and raw baseline reproductions are in
+`audits/full-suite-astra.md`.
