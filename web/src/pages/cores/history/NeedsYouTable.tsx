@@ -5,10 +5,11 @@
 // HS-172: QUEUED/FAILED verbs (Skip, Retry) in the header verb slot.
 import { Button } from "../../../components/signal/Signal";
 import { countLabel } from "../../../desk/surface";
-import { RouteDisclosure } from "../../../meetings/RouteDisclosure";
+import { RefusalToken, RouteDisclosure } from "../../../meetings/RouteDisclosure";
 import {
   routeReady,
   type PlannedRoute,
+  type RunReceipt,
   type SummaryRefusal,
 } from "../../../meetings/summaryRoute";
 import type { NeedsRow } from "./helpers";
@@ -21,6 +22,7 @@ export function NeedsYouTable({
   hasTranscript,
   plannedRoute,
   refusal,
+  durableRefusal,
   onReview,
   onRunIntelligence,
   onRetryIntelligence,
@@ -36,6 +38,8 @@ export function NeedsYouTable({
   plannedRoute?: PlannedRoute | null;
   /** HS-201-04 — the hub's 409 on this record's last run gesture. */
   refusal?: SummaryRefusal | null;
+  /** HS-201-04 — the hub's own durable `last_refusal` receipt. */
+  durableRefusal?: RunReceipt | null;
   /** HS-200-12 — proposals are reviewed on the Review wing; this is the way there. */
   onReview?: () => void;
   onRunIntelligence?: () => void;
@@ -56,7 +60,8 @@ export function NeedsYouTable({
   // The disclosure rides beside the verb the gesture WOULD use.
   const showRoute = wantsRun || wantsRetry;
   const hasVerbs =
-    showRunIntel || showRetry || showSkip || showReview || showRoute || Boolean(refusal);
+    showRunIntel || showRetry || showSkip || showReview || showRoute ||
+    Boolean(refusal) || Boolean(durableRefusal);
 
   if (needsRows.length === 0 && !hasVerbs) return null;
 
@@ -79,17 +84,11 @@ export function NeedsYouTable({
         {showRoute ? (
           <RouteDisclosure route={plannedRoute} testId="detail-route" />
         ) : null}
-        {refusal ? (
-          <span
-            className="surface-token summary-refusal"
-            data-chip
-            data-tone="danger"
-            data-testid="detail-refusal"
-            title={refusal.plainReason}
-          >
-            {`REFUSED · ${refusal.plainReason}`}
-          </span>
-        ) : null}
+        <RefusalToken
+          refusal={refusal}
+          durable={durableRefusal}
+          testId="detail-refusal"
+        />
         {showRunIntel ? (
           <Button
             dense

@@ -29,7 +29,11 @@ import type {
   Workbench,
   Workflow,
 } from "../lib/primitives";
-import { readPlannedRoute, readRunReceipt } from "../meetings/summaryRoute";
+import {
+  readLastRefusal,
+  readPlannedRoute,
+  readRunReceipt,
+} from "../meetings/summaryRoute";
 import { fetchRoadmaps, type RoadmapProject } from "./roadmap";
 import { fetchRepositories } from "./repository";
 import {
@@ -451,6 +455,7 @@ const fromWireMeeting = (m: unknown): Meeting | null => {
     // row, so the Chair's Run verb never composes a host from config.
     plannedRoute: readPlannedRoute(m),
     runReceipt: readRunReceipt(m),
+    lastRefusal: readLastRefusal(m),
   };
 };
 

@@ -85,11 +85,25 @@ export function readPlannedRoute(source: unknown): PlannedRoute | null {
   };
 }
 
-/** Read `run_receipt` off any read model. Null when no run happened. */
+/** Read `run_receipt` off any read model. Null when no run happened.
+ *  Since lane A's `a07d4bb5` this field is the last EXECUTED receipt: a
+ *  refusal no longer replaces it, and the refusal is served separately as
+ *  `last_refusal` (`holdspeak/db/intel.py:2352`, `:2363`). */
 export function readRunReceipt(source: unknown): RunReceipt | null {
+  return readReceiptField(source, "run_receipt");
+}
+
+/** Read `last_refusal`: the newest durable no-call refusal (`outcome:
+ *  "refused"`, no attempts). It survives a reload and a restart, so the
+ *  face can say a run was refused without holding the 409 in memory. */
+export function readLastRefusal(source: unknown): RunReceipt | null {
+  return readReceiptField(source, "last_refusal");
+}
+
+function readReceiptField(source: unknown, field: string): RunReceipt | null {
   const row = record(source);
   if (!row) return null;
-  const raw = record(row.run_receipt);
+  const raw = record(row[field]);
   if (!raw) return null;
   const attempts = Array.isArray(raw.attempts) ? raw.attempts : [];
   return {
@@ -130,6 +144,38 @@ export function pickRunReceipt(
   return present.find((value) => value.attempts.length > 0) ?? present[0] ?? null;
 }
 
+/**
+ * The last receipt per meeting that ACTUALLY contacted something.
+ *
+ * Durable retention is the hub's job and lane A now does it (`a07d4bb5`:
+ * `run_receipt` is the last EXECUTED receipt, `last_refusal` is separate).
+ * This map is only the gap between a 409 RESPONSE — whose body still
+ * carries the bare refusal receipt — and the next read that answers with
+ * the executed one. It gives up its value to any newer executed receipt.
+ */
+const EXECUTED_RECEIPTS = new Map<string, RunReceipt>();
+
+/** Remember the executed receipt among these candidates, then return the
+ *  best one to show: the freshest executed receipt if any candidate has
+ *  attempts, else the one remembered for this meeting, else the bare one. */
+export function executedReceipt(
+  meetingId: string,
+  ...candidates: (RunReceipt | null | undefined)[]
+): RunReceipt | null {
+  const picked = pickRunReceipt(...candidates);
+  if (picked && picked.attempts.length > 0) {
+    if (meetingId) EXECUTED_RECEIPTS.set(meetingId, picked);
+    return picked;
+  }
+  return (meetingId ? EXECUTED_RECEIPTS.get(meetingId) : null) ?? picked ?? null;
+}
+
+/** Test seam: the map outlives a component, so a fence that reuses a
+ *  meeting id must be able to start from nothing. */
+export function forgetExecutedReceipts(): void {
+  EXECUTED_RECEIPTS.clear();
+}
+
 /** A route that can start a run: resolved, hashed, with at least one leg. */
 export function routeReady(route: PlannedRoute | null | undefined): boolean {
   return Boolean(
@@ -146,6 +192,33 @@ export function routeReady(route: PlannedRoute | null | undefined): boolean {
 export function routeReasonToken(route: PlannedRoute | null | undefined): string {
   const reason = String(route?.reason_code ?? "").trim();
   return (reason || "route unavailable").toUpperCase();
+}
+
+/** The refusal as ONE short fact line, in the product's own words.
+ *
+ *  The hub's `plainReason` is a two-sentence instruction; a face says a
+ *  fact, not a paragraph (UX-CANON A.3). The full sentence stays on the
+ *  token's title for anyone who hovers, and the repair is the face's own
+ *  next move: the fresh route is drawn beside the verb. */
+export function refusalFact(refusal: {
+  code?: string;
+  plainReason?: string;
+}): string {
+  const words: Record<string, string> = {
+    selection_drift: "ROUTE CHANGED",
+    selection_hash_required: "ROUTE NOT READ",
+    route_unavailable: "NO SUMMARY ROUTE",
+    running: "SUMMARY IS RUNNING",
+    queued: "SUMMARY IS QUEUED",
+    ready: "SUMMARY IS READY",
+    reserved: "MEETING IS NOT SETTLED",
+    empty: "NO TRANSCRIPT",
+    no_assignment: "NO ENGINE FOR SUMMARIES",
+  };
+  const known = words[String(refusal.code ?? "")];
+  if (known) return known;
+  const first = String(refusal.plainReason ?? "").split(/(?<=[.!?])\s/)[0] ?? "";
+  return (first.replace(/[.!?]+$/, "").trim() || "REFUSED").toUpperCase();
 }
 
 export interface SummaryRefusal {

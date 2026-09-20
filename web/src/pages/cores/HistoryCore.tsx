@@ -16,6 +16,7 @@ import {
   readPlannedRoute,
   routeReady,
   routeReasonToken,
+  type PlannedRoute,
   type SummaryRefusal,
 } from "../../meetings/summaryRoute";
 import { egressFor } from "../../desk/surface/egress";
@@ -149,14 +150,19 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   ]);
 
   // Run the summary of a meeting
-  const handleRunIntelligence = useCallback(async (meetingId: string) => {
+  const handleRunIntelligence = useCallback(async (
+    meetingId: string,
+    displayed?: PlannedRoute | null,
+  ) => {
     setRunningId(meetingId);
     setRunRefusal(null);
-    // HS-201-04 (lane A's interlock): read the disclosed route FIRST and
-    // send its selection hash. The hub binds that exact selection and
-    // refuses drift before any provider is contacted.
+    // HS-201-04 (lane A's interlock): the route the face DISCLOSED is the
+    // route the request binds — the same object, never a second lookup.
+    // Astra's counsel finding 1: reading it from the list row sent an EMPTY
+    // hash for a deep-linked meeting the list never loaded, while the
+    // record displayed its own fetched route beside the verb.
     const row = meetingRows.find((item) => String(item.id) === meetingId);
-    const route = readPlannedRoute(row);
+    const route = displayed ?? readPlannedRoute(row);
     try {
       const outcome = await postSummaryRun<{
         jobId: string;
@@ -242,7 +248,10 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     [meetingRows],
   );
   const footerEgress = useMemo(() => {
-    if (!faceRoute) return <EgressChip />;
+    // Astra's counsel finding 4: a constant `<EgressChip />` is not
+    // evidence of local execution. With no route read at all, the footer
+    // says nothing; with an unresolved one it says the reason.
+    if (!faceRoute) return null;
     if (!routeReady(faceRoute)) {
       return (
         <EgressChip
@@ -267,8 +276,13 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   // Verbs in the head
   const verbs = (
     <>
+      {/* HS-201-04 (Astra's counsel finding 5; UX-CANON: one filled primary
+          per face). The Meetings face already draws a filled primary on the
+          row and the record that need a summary — the thing the headline is
+          pointing at. `Record meeting` is the way IN to this face, offered
+          again on the Chair's own capture bar as its filled verb, so here it
+          is the default species and the run verb keeps the primary. */}
       <Button
-        variant="primary"
         dense
         onClick={() => openSurfaceOr("record-live", "/live", scope)}
       >
@@ -334,7 +348,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       meetings={meetings}
       selected={selected}
       setSelected={setSelected}
-      onRunIntelligence={(id) => void handleRunIntelligence(id)}
+      onRunIntelligence={(id, route) => void handleRunIntelligence(id, route)}
       runningId={runningId}
       drainerAbsent={drainerAbsent}
       runRefusal={runRefusal}
@@ -361,7 +375,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         // route with the same disclosed hash. NEEDS YOU must not draw a
         // SECOND Retry/Skip pair beside it (tenet 3, one verb per job).
         selected && (needsIntelligence(selected) || paneView === "review")
-          ? () => void handleRunIntelligence(String(selected.id))
+          ? (displayed: PlannedRoute | null) =>
+              void handleRunIntelligence(String(selected.id), displayed)
           : undefined
       }
       onReview={() => {

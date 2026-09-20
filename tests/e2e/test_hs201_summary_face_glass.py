@@ -207,6 +207,7 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
                 route_chip.text_content()
             )
             page.get_by_test_id("detail-run-intelligence-btn").wait_for()
+            _assert_canon(page)
             _shot(page, "record-before-run")
 
             # ── station 2: the first summary, from the verb, with the hash ──
@@ -245,6 +246,23 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
             body = page.locator(".desk-surface-window").first.text_content() or ""
             assert "0 PROPOSALS" not in body.upper(), body
             _shot(page, "record-after-run")
+
+            # ── the Review wing after a real run (Astra's counsel finding 3) ──
+            # A disclosed summary request runs ANALYSIS only. Review must say
+            # the proposal chain did NOT run — never `EXTRACTED <time>`, whose
+            # stamp is the summary's own completion, and never the bare
+            # "Nothing to review" that claims it looked.
+            page.get_by_role("tab", name="Review").click()
+            not_run = page.get_by_test_id("review-not-run")
+            not_run.wait_for(timeout=15_000)
+            assert (not_run.text_content() or "").strip() == "PROPOSALS · NOT RUN"
+            review_words = (page.locator(".desk-surface-window").first.text_content() or "")
+            assert "EXTRACTED" not in review_words.upper(), review_words
+            assert "Nothing to review" not in review_words, review_words
+            print(f"REVIEW {not_run.text_content()!r}")
+            _shot(page, "review-not-run")
+            page.get_by_role("tab", name="Outcomes").click()
+            page.get_by_test_id("meeting-summary-text").wait_for(timeout=15_000)
 
             # ── station 4: a FAILED record, its slab, and a STALE refusal ──
             # The producer refuses once, with retries exhausted, so the
@@ -352,6 +370,7 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
             assert _chip_label(host) in (row_route.text_content() or ""), (
                 row_route.text_content()
             )
+            _assert_canon(page)
             _shot(page, "ledger-retry")
             requests.clear()
             retry.click()
@@ -413,6 +432,25 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
             browser.close()
     finally:
         server.stop()
+
+
+def _assert_canon(page) -> None:
+    """UX-CANON: one filled primary per face, and no counter of zero."""
+    found = page.evaluate(
+        """() => {
+            const out = {primaries: [], zeros: []};
+            for (const win of document.querySelectorAll('.desk-surface-window')) {
+              for (const b of win.querySelectorAll('.btn--primary'))
+                out.primaries.push(b.textContent || '');
+            }
+            const body = document.body.innerText || '';
+            for (const m of body.matchAll(/\b0 [A-Z]+\b/g)) out.zeros.push(m[0]);
+            return out;
+        }"""
+    )
+    print(f"CANON primaries={found['primaries']} zeros={found['zeros']}")
+    assert len(found["primaries"]) <= 1, found["primaries"]
+    assert found["zeros"] == [], found["zeros"]
 
 
 def _assert_facts_span_the_row(page) -> None:

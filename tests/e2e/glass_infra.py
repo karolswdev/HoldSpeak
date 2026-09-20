@@ -215,6 +215,13 @@ def _boot(
     monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
     monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
     reset_database()
+    # HS-201-04 (counsel item 7): `reset_database()` runs on the way IN and
+    # never on the way out, so the singleton this rig creates — pointing at
+    # its own seeded tmp database — outlived the module and was read by the
+    # next one in the same process. `monkeypatch` restores these to the
+    # `None` they hold right now, so the next module builds its own.
+    monkeypatch.setattr(db_core, "_db", None, raising=False)
+    monkeypatch.setattr(db_core, "_observer", None, raising=False)
 
     kwargs: dict[str, Any] = {}
     if gh_runner is not None:

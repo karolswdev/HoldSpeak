@@ -9,10 +9,11 @@ import { SurfaceState } from "../desk/surface/Surface";
 import { GadgetGroup, GadgetRow } from "../desk/surface/gadgets";
 import { apiFetch, readableError } from "../lib/api";
 import { countToken } from "../desk/surface/count";
-import { RouteDisclosure, RunAttempts } from "./RouteDisclosure";
+import { RefusalToken, RouteDisclosure, RunAttempts } from "./RouteDisclosure";
 import {
-  pickRunReceipt,
+  executedReceipt,
   postSummaryRun,
+  readLastRefusal,
   readPlannedRoute,
   readRunReceipt,
   routeReady,
@@ -145,7 +146,8 @@ export function MeetingIntelRecovery({
   const route = refusal?.route ?? readPlannedRoute(recovery);
   // The last run that actually contacted something wins over a bare
   // refusal receipt (pickRunReceipt): a refusal never erases the hosts.
-  const receipt = pickRunReceipt(
+  const receipt = executedReceipt(
+    meetingId,
     refusal?.receipt,
     readRunReceipt(recovery),
     readRunReceipt(recovery?.job),
@@ -231,17 +233,11 @@ export function MeetingIntelRecovery({
                 {recovery.actions.retry ? (
                   <RouteDisclosure route={route} testId="recovery-route" />
                 ) : null}
-                {refusal ? (
-                  <span
-                    className="surface-token summary-refusal"
-                    data-chip
-                    data-tone="danger"
-                    data-testid="recovery-refusal"
-                    title={refusal.plainReason}
-                  >
-                    {`REFUSED · ${refusal.plainReason}`}
-                  </span>
-                ) : null}
+                <RefusalToken
+                  refusal={refusal}
+                  durable={readLastRefusal(recovery)}
+                  testId="recovery-refusal"
+                />
               </span>
             }
           >

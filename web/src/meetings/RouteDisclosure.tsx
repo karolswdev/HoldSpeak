@@ -11,8 +11,41 @@
 import { Fragment } from "react";
 import { EgressChip } from "../desk/surface/gadgets";
 import { egressFor } from "../desk/surface/egress";
-import type { PlannedRoute, RunReceipt } from "./summaryRoute";
-import { routeReasonToken, routeReady } from "./summaryRoute";
+import type { PlannedRoute, RunReceipt, SummaryRefusal } from "./summaryRoute";
+import { refusalFact, routeReasonToken, routeReady } from "./summaryRoute";
+
+/** A refused run, said once and said short (UX-CANON A.3).
+ *
+ *  `refusal` is this session's 409, with the hub's code and sentence.
+ *  `durable` is the hub's own `last_refusal` receipt, which survives a
+ *  reload and a restart but carries no words of its own — so it says the
+ *  state and nothing it cannot prove. The full sentence rides the title. */
+export function RefusalToken({
+  refusal,
+  durable,
+  testId,
+}: {
+  refusal?: SummaryRefusal | null;
+  durable?: RunReceipt | null;
+  testId: string;
+}) {
+  if (!refusal && !durable) return null;
+  const label = refusal ? `REFUSED · ${refusalFact(refusal)}` : "REFUSED";
+  const title = refusal
+    ? refusal.plainReason
+    : `The last run was refused before any model was contacted (${durable?.selection_hash ?? "no selection"}).`;
+  return (
+    <span
+      className="surface-token summary-refusal"
+      data-chip
+      data-tone="danger"
+      data-testid={testId}
+      title={title}
+    >
+      {label}
+    </span>
+  );
+}
 
 /** The planned destinations, before the click. Withheld when there is
  *  nothing true to say; an unresolved route says its reason instead. */

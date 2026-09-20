@@ -19,7 +19,11 @@ import { ApiError, apiFetch } from "../../lib/api";
 import { MeetingIntelRecovery } from "../MeetingIntelRecovery";
 import { MeetingSummarySlab, readMeetingIntel } from "../MeetingSummarySlab";
 import { RouteDisclosure, RunAttempts } from "../RouteDisclosure";
-import { readPlannedRoute, readRunReceipt } from "../summaryRoute";
+import {
+  forgetExecutedReceipts,
+  readPlannedRoute,
+  readRunReceipt,
+} from "../summaryRoute";
 import { CatalogRail } from "../../pages/cores/history/CatalogRail";
 import { NeedsYouTable } from "../../pages/cores/history/NeedsYouTable";
 
@@ -97,6 +101,19 @@ function recovery(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/** The receipt a route refusal writes: nothing was contacted, so it has no
+ *  attempts, and the hub then serves THIS from every read
+ *  (holdspeak/db/intel.py record_route_refusal — proven live in the glass
+ *  rig: `RECEIPT AFTER REFUSAL outcome=refused attempts=[]`). */
+const REFUSED_RECEIPT = {
+  receipt_id: "rr_refused",
+  job_id: "ij_1",
+  meeting_id: "meeting-1",
+  selection_hash: "sha256:abc123",
+  outcome: "refused",
+  attempts: [],
+};
+
 /** The 409 body the hub serves (holdspeak/web/routes/meetings/intel.py:47). */
 function drift(): ApiError {
   return new ApiError(409, "The summary route changed. Check it, then try again.", {
@@ -106,7 +123,7 @@ function drift(): ApiError {
     code: "selection_drift",
     planned_route: { ...READY_ROUTE, selection_hash: "sha256:fresh" },
     current_planned_route: { ...READY_ROUTE, selection_hash: "sha256:fresh" },
-    run_receipt: SUCCEEDED_RECEIPT,
+    run_receipt: REFUSED_RECEIPT,
   });
 }
 
@@ -140,7 +157,10 @@ describe("HS-201-04 the disclosure beside the verb", () => {
 });
 
 describe("HS-201-04 the record's Retry", () => {
-  beforeEach(() => mockedApiFetch.mockReset());
+  beforeEach(() => {
+    mockedApiFetch.mockReset();
+    forgetExecutedReceipts();
+  });
 
   it("sends the disclosed selection hash with the run", async () => {
     mockedApiFetch
@@ -168,20 +188,26 @@ describe("HS-201-04 the record's Retry", () => {
     );
   });
 
-  it("shows a 409 as a refusal and keeps the earlier receipt", async () => {
+  it("shows a 409 as a refusal and keeps the EXECUTED receipt", async () => {
+    // Astra's counsel finding 2: the old fixture returned the SUCCESSFUL
+    // receipt from both the 409 and the reload after it, so it could not
+    // catch the loss. The hub really serves the bare refusal receipt from
+    // both, and the executed attempts must still be on the face.
     mockedApiFetch
       .mockResolvedValueOnce(recovery())
       .mockRejectedValueOnce(drift())
-      .mockResolvedValueOnce(recovery());
+      .mockResolvedValueOnce(recovery({ run_receipt: REFUSED_RECEIPT, job: null }));
 
     render(<MeetingIntelRecovery meetingId="meeting-1" />);
     fireEvent.click(await screen.findByRole("button", { name: "Retry" }));
 
     const refusal = await screen.findByTestId("recovery-refusal");
-    expect(refusal.textContent).toContain(
+    // ONE short fact line, not the hub's two-sentence instruction.
+    expect(refusal.textContent).toBe("REFUSED · ROUTE CHANGED");
+    expect(refusal.getAttribute("title")).toContain(
       "The summary route changed. Check it, then try again.",
     );
-    // The receipt of the earlier successful run is NOT hidden by the refusal.
+    // The receipt of the earlier executed run is NOT erased by the refusal.
     expect(screen.getByTestId("recovery-attempts").textContent).toContain(
       "api.example.com",
     );
@@ -191,6 +217,24 @@ describe("HS-201-04 the record's Retry", () => {
     );
     // A refusal is not an error surface (UX-CANON: honest states).
     expect(document.querySelector(".surface-state-error")).toBeNull();
+  });
+
+  it("renders the hub's EXECUTED receipt beside its durable last_refusal", async () => {
+    // Lane A `a07d4bb5`: a refusal no longer replaces the executed receipt.
+    // `run_receipt` is the run that really happened and `last_refusal` is
+    // the no-call refusal beside it — both survive a reload and a restart,
+    // so the face shows them together with NO 409 held in memory.
+    mockedApiFetch.mockResolvedValue(
+      recovery({ run_receipt: SUCCEEDED_RECEIPT, last_refusal: REFUSED_RECEIPT }),
+    );
+    render(<MeetingIntelRecovery meetingId="meeting-durable" />);
+    const refusal = await screen.findByTestId("recovery-refusal");
+    // No 409 in hand: the token says the state and invents no cause.
+    expect(refusal.textContent).toBe("REFUSED");
+    expect(refusal.getAttribute("title")).toContain("before any model was contacted");
+    expect(screen.getByTestId("recovery-attempts").textContent).toContain(
+      "api.example.com",
+    );
   });
 
   it("withholds Retry and says why when no route resolves", async () => {
@@ -207,6 +251,7 @@ describe("HS-201-04 the record's Retry", () => {
 });
 
 describe("HS-201-04 the ledger's Retry", () => {
+  beforeEach(() => forgetExecutedReceipts());
   function rail(row: Record<string, unknown>, onRun = vi.fn()) {
     render(
       <CatalogRail
@@ -232,10 +277,17 @@ describe("HS-201-04 the ledger's Retry", () => {
     planned_route: READY_ROUTE,
   };
 
-  it("dispatches the run (the audit measured zero requests)", () => {
+  it("dispatches the run with the route it DISPLAYED", () => {
+    // The audit measured zero requests from this verb; the counsel then
+    // measured a request whose hash came from a different object than the
+    // chip beside it. Both are fenced here: the row hands the callback the
+    // exact route it disclosed.
     const onRun = rail(FAILED_ROW);
     fireEvent.click(screen.getByTestId("retry-intelligence-btn"));
-    expect(onRun).toHaveBeenCalledWith("meeting-1");
+    expect(onRun).toHaveBeenCalledWith(
+      "meeting-1",
+      readPlannedRoute({ planned_route: READY_ROUTE }),
+    );
   });
 
   it("discloses the route beside the verb before the click", () => {

@@ -53,11 +53,13 @@ import {
 import { unfinishedThoughts, type UnfinishedThought } from "../thoughts";
 import type { Meeting } from "../../lib/primitives";
 import {
+  RefusalToken,
   RouteDisclosure,
   RunAttempts,
 } from "../../meetings/RouteDisclosure";
+import { egressFor } from "../surface/egress";
 import {
-  pickRunReceipt,
+  executedReceipt,
   postSummaryRun,
   routeReady,
   type PlannedRoute,
@@ -216,7 +218,12 @@ function ledgerDate(iso: string): string {
 
 function durationMin(seconds: number | null | undefined): string {
   if (!seconds || seconds <= 0) return "";
-  return `${Math.round(seconds / 60)} MIN`;
+  // UX-CANON A.8 (Astra's counsel finding 5): a 30-second meeting rounded
+  // to `0 MIN` on the Chair. A zero token says nothing, so it is omitted —
+  // the same rule the ledger's `durationToken` already keeps.
+  const minutes = Math.round(seconds / 60);
+  if (minutes <= 0) return "";
+  return `${minutes} MIN`;
 }
 
 /** Source emblem token: GH for github, J for jira, MTG for proposals, etc. */
@@ -1793,6 +1800,15 @@ function BriefSection({
   );
 }
 
+/** HS-201-04 — the click's egress receipt, said the ONE way the product
+ *  says a host (`egressFor`). Never the raw wire word, never "cloud" by
+ *  default (Article III; Astra's counsel finding 4). */
+function ReceiptChip({ host }: { host: string }) {
+  const eg = egressFor(host);
+  if (!eg.label) return null;
+  return <EgressChip label={eg.label} scope={eg.scope} />;
+}
+
 function MeetingsSection({
   meetings,
   runningIntel,
@@ -1866,28 +1882,21 @@ function MeetingsSection({
                       {badge}
                     </span>
                   )}
-                  {receipt ? (
-                    <EgressChip
-                      label={receipt.host === "local" ? "THIS DEVICE" : receipt.host}
-                      scope={receipt.host === "local" ? "local" : "cloud"}
-                    />
-                  ) : null}
+                  {/* HS-201-04 (Astra's counsel finding 4): the click's own
+                      receipt goes through the ONE egress mapper the ledger
+                      uses. It printed the wire word `same_device` verbatim
+                      and called every host but "local" a cloud host. */}
+                  {receipt ? <ReceiptChip host={receipt.host} /> : null}
                   {/* After the run: the destinations actually contacted. */}
                   <RunAttempts
-                    receipt={pickRunReceipt(rowRefusal?.receipt, m.runReceipt)}
+                    receipt={executedReceipt(m.id, rowRefusal?.receipt, m.runReceipt)}
                     testId="arrival-attempts"
                   />
-                  {rowRefusal ? (
-                    <span
-                      className="surface-token summary-refusal"
-                      data-chip
-                      data-tone="danger"
-                      data-testid="arrival-refusal"
-                      title={rowRefusal.plainReason}
-                    >
-                      {`REFUSED · ${rowRefusal.plainReason}`}
-                    </span>
-                  ) : null}
+                  <RefusalToken
+                    refusal={rowRefusal}
+                    durable={m.lastRefusal ?? null}
+                    testId="arrival-refusal"
+                  />
                 </>
               }
               trailing={

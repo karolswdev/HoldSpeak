@@ -8,8 +8,11 @@ import {
   readMeetingIntel,
 } from "../../../meetings/MeetingSummarySlab";
 import {
+  executedReceipt,
+  readLastRefusal,
   readPlannedRoute,
   readRunReceipt,
+  type PlannedRoute,
   type SummaryRefusal,
 } from "../../../meetings/summaryRoute";
 import { apiFetch } from "../../../lib/api";
@@ -45,7 +48,9 @@ export function MeetingDetail({
   onDeleted(): void;
   /** HS-111-03 — outcomes land on the footer receipt bar. */
   onReceipt(receipt: Receipt): void;
-  onRunIntelligence?: () => void;
+  /** HS-201-04 — called with the route this RECORD displays, so the
+   *  disclosure and the request are the same object. */
+  onRunIntelligence?: (route: PlannedRoute | null) => void;
   /** HS-200-12 — the way to the review wing from NEEDS YOU. */
   onReview?: () => void;
   /** HS-200-12 — `Open evidence`: the outcomes face, scrolled to a segment. */
@@ -79,7 +84,9 @@ export function MeetingDetail({
   // the source for all three (`intel`, `planned_route`, `run_receipt`).
   const summaryIntel = readMeetingIntel(detail ?? meeting);
   const plannedRoute = readPlannedRoute(detail ?? meeting);
-  const runReceipt = readRunReceipt(detail ?? meeting);
+  // The route the record DISPLAYS: a refusal's fresh route wins over it.
+  const displayedRoute = runRefusal?.route ?? plannedRoute;
+  const runReceipt = executedReceipt(id, readRunReceipt(detail ?? meeting));
 
   const meetingTitle = String(detail?.title ?? meeting.title ?? "Meeting");
   const hasTranscript = segments.length > 0 || (
@@ -118,7 +125,9 @@ export function MeetingDetail({
           meetingId={id}
           onOpenEvidence={(segmentIndex) => onOpenEvidence?.(segmentIndex)}
           onOpenTranscript={() => onOpenEvidence?.(null)}
-          onRunIntelligence={onRunIntelligence}
+          onRunIntelligence={
+            onRunIntelligence ? () => onRunIntelligence(displayedRoute) : undefined
+          }
           onChanged={onDeleted}
         />
       ) : (
@@ -129,13 +138,16 @@ export function MeetingDetail({
             intelOff={intelOff}
             intelState={intelState}
             hasTranscript={hasTranscript}
-            plannedRoute={runRefusal?.route ?? plannedRoute}
+            plannedRoute={displayedRoute}
             refusal={runRefusal}
+            durableRefusal={readLastRefusal(detail ?? meeting)}
             onReview={onReview}
-            onRunIntelligence={onRunIntelligence}
+            onRunIntelligence={
+              onRunIntelligence ? () => onRunIntelligence(displayedRoute) : undefined
+            }
             onRetryIntelligence={
               (intelState === "error" || intelState === "failed") && onRunIntelligence
-                ? onRunIntelligence
+                ? () => onRunIntelligence(displayedRoute)
                 : undefined
             }
             onSkipIntelligence={

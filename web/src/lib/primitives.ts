@@ -114,6 +114,8 @@ export interface Meeting {
   plannedRoute?: PlannedRoute | null;
   /** HS-201-03 contract: every destination the last run contacted. */
   runReceipt?: RunReceipt | null;
+  /** Lane A `a07d4bb5`: the newest durable no-call route refusal. */
+  lastRefusal?: RunReceipt | null;
 }
 
 /** 15 server artifact types — synthesized from a meeting's intel. */

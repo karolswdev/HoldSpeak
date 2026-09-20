@@ -462,3 +462,149 @@ click as well as after.
 Every `assets/story-04-shots/` shot was re-shot after the rename; the verb
 now reads `Run summary` and the Meetings headline `1 meeting needs a
 summary`.
+
+## Counsel fix round
+
+Astra's counsel on built (`checks/story-04-built-astra.md`, DO-NOT-RATIFY)
+reviewed `c31a4da0`. Every fence below was proven RED against that commit
+by the same method as the first round (`git show HEAD:<path>` written
+beside itself so relative imports resolve identically; baselines and red
+copies deleted after the run, nothing staged).
+
+```text
+     × shows a 409 as a refusal and keeps the EXECUTED receipt 18ms
+     × dispatches the run with the route it DISPLAYED 15ms
+     × puts the DISPLAYED selection hash on the run request 1040ms
+     × a finished meeting with no proposals reads NOT RUN, never EXTRACTED 1014ms
+ Test Files  3 failed (3)
+```
+
+The deep-link red says exactly what finding 1 predicted — the request went
+out with an empty hash while the chip beside the button showed a real host:
+
+```text
+-       "expected_selection_hash": "sha256:from-the-detail",
++       "expected_selection_hash": "",
+```
+
+…and with the honest fixture (the hub's bare refusal receipt from BOTH the
+409 and the read after it) the pre-counsel face lost the executed run's
+destinations altogether:
+
+```text
+TestingLibraryElementError: Unable to find an element by: [data-testid="recovery-attempts"]
+```
+
+### 1. Route source — the displayed route IS the request
+
+`HistoryCore.handleRunIntelligence` now takes the route as an argument
+(`HistoryCore.tsx:153`); `CatalogRail` hands it the route the ROW drew
+(`CatalogRail.tsx:224`) and `MeetingDetail` the route the RECORD drew
+(`MeetingDetail.tsx:83`, `:135`). The list lookup survives only as a
+fallback for a caller that has none. Fence:
+`web/src/pages/cores/__tests__/summaryDeepLink.test.tsx` — a meeting the
+list never loaded, opened by `meeting:<id>`, asserts the hash on the wire
+equals the hash of the route on the glass.
+
+### 2. Receipt retention — the hub's job, with a one-response fallback
+
+Lane A's `a07d4bb5` makes `run_receipt` the last EXECUTED receipt and
+serves the no-call refusal separately as `last_refusal`. The face reads
+both (`summaryRoute.ts:readLastRefusal`, rendered by one `RefusalToken`
+species in all four faces) and keeps `executedReceipt()` — a per-meeting
+memory — only for the interval between a 409 RESPONSE, whose body still
+carries the bare refusal receipt, and the next read. The masking fixture is
+gone: `summaryRun.test.tsx` now returns `REFUSED_RECEIPT` from the 409 AND
+from the reload, and asserts the executed attempts are still on the face; a
+second fence renders `run_receipt` beside `last_refusal` with no 409 held.
+
+### 3. Review says NOT RUN, and never EXTRACTED
+
+`extractionRan(model)` is true only when a proposal exists — the review read
+model's `job` is the SUMMARY job and `extracted_at` is the SUMMARY's
+completion stamp (`proposal_bridge_service.py:1046`, `:1048`), so neither
+proves extraction ran (`reviewModel.ts:275`). The finished Review headline
+reads `Not run` and the head token reads `PROPOSALS · NOT RUN` instead of
+`EXTRACTED <time>` (`MeetingReview.tsx:362`). Fenced in vitest both ways
+(with and without proposals) and on the glass: the rig now opens the Review
+wing after a real run and asserts the token, the absence of `EXTRACTED` and
+the absence of `Nothing to review` (`review-not-run-1440/393`).
+
+### 4. Egress
+
+The Chair's click receipt goes through `egressFor` like the ledger's
+(`ChairHome.tsx:ReceiptChip`) — it printed the wire word `same_device` and
+called every host but "local" a cloud host. The Meetings footer draws NO
+chip when no route was read (`HistoryCore.tsx:250`), and the Review wing's
+own footer fallback was the same claim and is gone too
+(`MeetingReview.tsx:754`).
+
+### 5. Canon — measured, not eyeballed
+
+The rig now counts the filled primaries inside each window and looks for a
+zero counter (`_assert_canon`). It caught what the shots hid:
+
+```text
+CANON primaries=['Run summary', 'Run summary'] zeros=[]
+E   AssertionError: ['Run summary', 'Run summary']
+```
+
+The row's run verb steps down to the default species while its own record
+is open (`CatalogRail.tsx:147`); the record keeps the filled verb because
+that is where the owner is working. `Record meeting` on the Meetings head
+had already dropped to default (`HistoryCore.tsx:286`) and the Chair's
+`0 MIN` was already gone (`ChairHome.tsx:219` — a 30-second meeting rounded
+to zero); the probe confirms both. Green at both stations:
+
+```text
+CANON primaries=['Run summary'] zeros=[]
+CANON primaries=['Retry'] zeros=[]
+```
+
+The refusal is now ONE short fact line: `REFUSED · ROUTE CHANGED`, with the
+hub's full sentence on the token's title (`summaryRoute.ts:refusalFact`).
+
+### 6. The guide
+
+`docs/USER_GUIDE.md:719` no longer promises the plugin chain: "read its
+transcript and write its summary, topics and action items; it does not run
+the proposal plugins."
+
+### 7. The batch capture failure — classified (c), real cross-file pollution
+
+Narrowed to ONE pair, reproduced and then fixed:
+
+```text
+# before
+tests/e2e/test_hs170_arrival_glass.py -k needs_you_1440  +  test_hs170_faces_wire.py -k hub_returns
+  →  1 failed, 1 passed        (assert 1 == 0)
+# after
+  →  2 passed
+# the original seven-file batch
+  →  100 passed in 33.66s
+```
+
+Two defects meet:
+
+- **The leak (fixed here).** `tests/e2e/glass_infra.py:_boot` calls
+  `reset_database()` on the way IN and never on the way out, so the
+  singleton it creates — pointing at its own seeded tmp database — outlived
+  the module. Two lines now hand `db_core._db` / `_observer` to
+  `monkeypatch`, which restores the `None` they hold at that moment, so the
+  next module builds its own. It belongs here: it is shared rig
+  infrastructure I touched this round, every glass rig leaks the same way,
+  and the fix is verified by the reproduction above.
+- **The ineffective patch (LEDGERED to HS-170's owner).**
+  `tests/unit/test_hs170_faces_wire.py:403` patches
+  `holdspeak.web.routes.system.settings.get_database`, but the route does a
+  function-local `from ....db import get_database`
+  (`holdspeak/web/routes/system/settings.py:186`) and never reads that
+  name. The test therefore asserts against the process-global database and
+  its green in isolation is an accident. Repointing the patch — or hoisting
+  the route's import — changes what that test asserts, so it is HS-170's
+  call, not this story's.
+
+### Shots re-taken (both widths)
+
+`record-before-run`, `record-after-run`, `review-not-run` (new),
+`refusal-stale-hash`, `ledger-retry`, `meetings-chip`, `after-restart`.

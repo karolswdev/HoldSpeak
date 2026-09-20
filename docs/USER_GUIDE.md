@@ -716,9 +716,10 @@ After a meeting, its row in the Meetings stream shows one of these states:
 | **FAILED** | Intelligence failed (the reason is named). | **Retry** |
 | **REC** | Recording now. | |
 
-Choose **Run summary** on any **OFF** meeting to process its transcript
-through the configured plugins. The detail view shows the outcomes, the
-transcript, and aftercare when a channel is configured.
+Choose **Run summary** on any **OFF** meeting to read its transcript and
+write its summary, topics and action items; it does not run the proposal
+plugins. The detail view shows the summary, the transcript, and aftercare
+when a channel is configured.
 
 ## The loop closes
 

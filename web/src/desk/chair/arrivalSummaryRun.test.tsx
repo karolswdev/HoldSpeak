@@ -136,7 +136,7 @@ describe("HS-201-04 the Chair's summary run", () => {
     );
   });
 
-  it("shows a 409 as a refusal with its plain reason", async () => {
+  it("shows a 409 as ONE short refusal fact, the reason on its title", async () => {
     wire();
     seatMeeting();
     const quiet = mockedApiFetch.getMockImplementation()!;
@@ -154,7 +154,10 @@ describe("HS-201-04 the Chair's summary run", () => {
     render(<ChairHome />);
     fireEvent.click(await screen.findByTestId("arrival-run-intel"));
     const refusal = await screen.findByTestId("arrival-refusal");
-    expect(refusal.textContent).toContain("The summary route changed");
+    // UX-CANON A.3 (Astra's counsel finding 5): a fact line, not the hub's
+    // two-sentence instruction. The full sentence stays on the title.
+    expect(refusal.textContent).toBe("REFUSED · ROUTE CHANGED");
+    expect(refusal.getAttribute("title")).toContain("The summary route changed");
   });
 
   it("opens the meeting with the `meeting:<id>` grammar History parses", async () => {

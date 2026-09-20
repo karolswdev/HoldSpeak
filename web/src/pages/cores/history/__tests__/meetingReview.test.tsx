@@ -342,10 +342,27 @@ describe("MeetingReview (HS-200-12)", () => {
     expect(screen.getByRole("button", { name: "Skip" })).toBeInTheDocument();
   });
 
-  it("a finished meeting with no proposals reads NOTHING TO REVIEW with the coverage kept", async () => {
+  // HS-201-04 (Astra's counsel finding 3): a disclosed summary request runs
+  // ANALYSIS only. With no proposal at all the chain never ran, so the
+  // finished Review must say NOT RUN and must never stamp EXTRACTED — that
+  // stamp is the SUMMARY's completion time (proposal_bridge_service.py:1048)
+  // and reads as proof that extraction looked and found nothing.
+  it("a finished meeting with no proposals reads NOT RUN, never EXTRACTED", async () => {
     mount(review({ proposals: [] }));
-    await screen.findByText("Nothing to review");
+    await screen.findByText("Not run");
+    expect(screen.getByTestId("review-not-run").textContent).toBe(
+      "PROPOSALS · NOT RUN",
+    );
+    expect(screen.queryByText(/EXTRACTED/)).toBeNull();
+    expect(screen.queryByText("Nothing to review")).toBeNull();
     expect(screen.getByText("COVERAGE").parentElement?.textContent).toContain("47 OF 47 TURNS");
     expect(screen.getByRole("button", { name: "Accept reviewed" })).toBeDisabled();
+  });
+
+  it("a finished meeting WITH proposals keeps its EXTRACTED stamp", async () => {
+    mount(review({ proposals: [proposal({ state: "confirmed", acceptance: "accepted" })] }));
+    await screen.findByText("Reviewed");
+    expect(screen.getByText(/EXTRACTED/)).toBeInTheDocument();
+    expect(screen.queryByTestId("review-not-run")).toBeNull();
   });
 });
