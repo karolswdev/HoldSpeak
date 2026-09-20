@@ -1,0 +1,780 @@
+{
+  "generated": true,
+  "generator": "scripts/generate_capability_docs.py",
+  "missing_shards": [],
+  "records": [
+    {
+      "auth": "Filesystem access and SQLite connection ownership",
+      "authority": "Database-open and operator backup/restore paths",
+      "data": [
+        "domain rows",
+        "operation metadata",
+        "receipts",
+        "schema shape"
+      ],
+      "direction": "local_read_write",
+      "docs": [
+        "docs/STORAGE_AND_MIGRATIONS.md"
+      ],
+      "failure": [
+        "locked",
+        "unreadable",
+        "shape reconciliation error"
+      ],
+      "id": "runtime.sqlite",
+      "name": "SQLite runtime store",
+      "purpose": "Persist domain, authority, journal, receipt and projection state.",
+      "secrets": [
+        "Normal DB may contain sensitive local data; it is not generally encrypted by HoldSpeak."
+      ],
+      "sources": [
+        {
+          "claim": "Configures WAL, foreign keys and busy timeout for SQLite connections.",
+          "line": 7,
+          "path": "holdspeak/db/connection.py",
+          "symbol": "ConnectionCache"
+        }
+      ],
+      "tests": [
+        {
+          "assertion": "An informational newer stamp does not block opening or discard data.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "status": "passed"
+          },
+          "node": "test_newer_stamped_db_opens_without_error",
+          "path": "tests/unit/test_db_schema_policy.py"
+        },
+        {
+          "assertion": "An invalid/interrupted restore leaves the installation openable.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "status": "passed"
+          },
+          "node": "test_an_interrupted_restore_leaves_the_installation_openable",
+          "path": "tests/critical/test_journey_backup_restore.py"
+        }
+      ]
+    },
+    {
+      "auth": "Kernel warrant plus adapter/provider credentials",
+      "authority": "Policy permit, exact destination binding, valid claim and live deadline",
+      "data": [
+        "operation-specific payload or model context",
+        "result reference",
+        "egress metadata"
+      ],
+      "direction": "outbound_and_receipt_return",
+      "docs": [
+        "docs/SECURITY_MODEL.md",
+        "docs/AUTHORITY_MODEL.md"
+      ],
+      "failure": [
+        "provider failure",
+        "timeout",
+        "cancellation",
+        "lost response",
+        "destination drift"
+      ],
+      "id": "runtime.provider_routes",
+      "name": "Model and external destination adapters",
+      "purpose": "Carry an admitted operation to a selected deployment or configured effect destination.",
+      "secrets": [
+        "Provider credentials remain outside generic journal material; exact custody varies by adapter."
+      ],
+      "sources": [
+        {
+          "claim": "Binds destination, placement, deployment revision and egress reference before dispatch.",
+          "line": 88,
+          "path": "holdspeak/kernel/inference_invoke.py",
+          "symbol": "InferenceInvokeCodec.authorize"
+        }
+      ],
+      "tests": [
+        {
+          "assertion": "Runner tests assert generic journal material omits sensitive content.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "status": "passed"
+          },
+          "node": "test_journal_has_no_prompt_output_or_audio_bodies",
+          "path": "tests/unit/test_inference_runner.py"
+        },
+        {
+          "assertion": "A cancelled reference invocation cannot publish late stream output.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "status": "passed"
+          },
+          "node": "test_synthetic_admitted_reference_invocation_and_cancelled_stream",
+          "path": "tests/integration/test_kernel_real_hub.py"
+        }
+      ]
+    },
+    {
+      "auth": "Optional configured token headers",
+      "authority": "Explicit operator doctor invocation",
+      "data": [
+        "health and diagnostic responses"
+      ],
+      "direction": "outbound_read",
+      "docs": [
+        "docs/OPERATIONS.md"
+      ],
+      "failure": [
+        "HTTP error",
+        "URL error",
+        "timeout",
+        "invalid JSON"
+      ],
+      "id": "operations.remote_health",
+      "name": "Configured hub health endpoints",
+      "purpose": "Allow doctor helpers to inspect a configured remote hub without starting the local application UI.",
+      "secrets": [
+        "Configured hub token may be supplied to the helper."
+      ],
+      "sources": [
+        {
+          "claim": "Uses short-timeout HTTP JSON health requests with optional token headers.",
+          "line": 21,
+          "path": "holdspeak/doctor.py",
+          "symbol": "_get_json"
+        }
+      ],
+      "tests": []
+    },
+    {
+      "auth": "frozen route and provider credentials at destination boundary",
+      "authority": "speech session plan and route execution controller",
+      "data": [
+        "admitted transcript or structured child payload"
+      ],
+      "direction": "outbound",
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md",
+        "docs/MODEL_RUNTIME.md"
+      ],
+      "failure": [
+        "runtime unavailable",
+        "provider failure",
+        "invalid typed output",
+        "cancellation"
+      ],
+      "id": "voice.to_model",
+      "name": "Voice to model runtime",
+      "purpose": "Send admitted dictation child requests to a local or OpenAI-compatible runtime.",
+      "secrets": [
+        "provider key remains in key store"
+      ],
+      "sources": [
+        {
+          "claim": "Runtime construction supports explicit MLX, llama.cpp, and OpenAI-compatible backends.",
+          "line": 134,
+          "path": "holdspeak/plugins/dictation/runtime.py",
+          "symbol": "build_runtime"
+        }
+      ],
+      "tests": [
+        {
+          "assertion": "Explicit unavailable backend raises a named runtime failure.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "status": "passed"
+          },
+          "node": "test_explicit_mlx_off_arm64_raises_with_remediation",
+          "path": "tests/unit/test_dictation_runtime.py"
+        }
+      ]
+    },
+    {
+      "auth": "meeting parent admission and host-issued plugin dispatch",
+      "authority": "meeting intelligence parent and PluginHost",
+      "data": [
+        "saved transcript window",
+        "plugin prompt payload"
+      ],
+      "direction": "outbound",
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ],
+      "failure": [
+        "queued",
+        "blocked",
+        "timeout",
+        "provider failure",
+        "partial recovery"
+      ],
+      "id": "meeting.to_model",
+      "name": "Meeting to model runtime",
+      "purpose": "Send an admitted live or deferred meeting analysis child to its frozen destination.",
+      "secrets": [
+        "provider credentials stay at model destination"
+      ],
+      "sources": [
+        {
+          "claim": "Saved-meeting analysis dispatches through the plugin route and persists artifacts.",
+          "line": 94,
+          "path": "holdspeak/meeting_plugins.py",
+          "symbol": "run_meeting_plugin_chain"
+        }
+      ],
+      "tests": [
+        {
+          "assertion": "Recovery retains completed work and retries unresolved work.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "status": "passed"
+          },
+          "node": "test_partial_intel_names_retained_work_and_supports_retry_or_skip",
+          "path": "tests/integration/test_meeting_intel_recovery.py"
+        }
+      ]
+    },
+    {
+      "auth": "destination-specific key or paired/mesh admission",
+      "authority": "InferenceTarget and route execution controller",
+      "data": [
+        "admitted model input",
+        "placement receipt"
+      ],
+      "direction": "outbound",
+      "docs": [
+        "docs/EXECUTION_DESTINATIONS.md"
+      ],
+      "failure": [
+        "unavailable",
+        "needs_key",
+        "offline",
+        "unsupported",
+        "paired execution unsupported"
+      ],
+      "id": "model.to_destination",
+      "name": "Model destination boundary",
+      "purpose": "Bind a frozen model child to local, private, cloud, paired, or mesh execution.",
+      "secrets": [
+        "profile key slot",
+        "provider credentials"
+      ],
+      "sources": [
+        {
+          "claim": "Profile kinds map to concrete boundaries and readiness states.",
+          "line": 369,
+          "path": "holdspeak/inference_targets.py",
+          "symbol": "target_from_profile"
+        }
+      ],
+      "tests": [
+        {
+          "assertion": "Unknown target refuses by name without silent local retargeting.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "status": "passed"
+          },
+          "node": "test_unknown_target_is_named_and_never_retargeted",
+          "path": "tests/unit/test_inference_targets.py"
+        }
+      ]
+    },
+    {
+      "auth": "connector-specific",
+      "authority": "separate actuator registration and destination policy",
+      "data": [
+        "owner-approved artifact or draft"
+      ],
+      "direction": "outbound",
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md",
+        "docs/MEETING_AFTERCARE.md"
+      ],
+      "failure": [
+        "connector refusal",
+        "authentication failure",
+        "destination failure"
+      ],
+      "id": "meeting.external_actuators",
+      "name": "Meeting external actuators",
+      "purpose": "Provide opt-in follow-up, issue, webhook, or pull-request destinations after analysis.",
+      "secrets": [
+        "connector credentials"
+      ],
+      "sources": [
+        {
+          "claim": "Actuator and deferred execution are separate from the model plugin host.",
+          "line": 280,
+          "path": "holdspeak/plugins/host.py",
+          "symbol": "PluginHost"
+        }
+      ],
+      "tests": []
+    },
+    {
+      "auth": "web auth token/cookie through existing auth seam",
+      "authority": "API routes remain authoritative for persisted domain state.",
+      "data": [
+        "domain JSON",
+        "status and error payload"
+      ],
+      "direction": "desk_to_http",
+      "docs": [
+        "docs/DESK_ARCHITECTURE.md"
+      ],
+      "failure": "ApiError with status/message; surface retry or recovery is caller-owned.",
+      "id": "desk.api",
+      "name": "Desk to HTTP API",
+      "purpose": "Fetch and mutate domain records from Desk surfaces.",
+      "secrets": [
+        "auth token handled by auth module"
+      ],
+      "sources": [
+        {
+          "claim": "The API helper issues requests and maps non-2xx responses to ApiError.",
+          "line": 14,
+          "path": "web/src/lib/api.ts",
+          "symbol": "apiFetch"
+        }
+      ],
+      "tests": [
+        {
+          "assertion": "See matching capability row and inspected test assertion.",
+          "execution": "not_run",
+          "node": "turns a server detail into a user-readable typed error",
+          "path": "web/src/lib/api.test.ts"
+        }
+      ]
+    },
+    {
+      "auth": "existing runtime authentication path",
+      "authority": "RuntimeBus owns transport truth; Desk consumers own domain reconciliation.",
+      "data": [
+        "runtime frames",
+        "connection state"
+      ],
+      "direction": "runtime_to_desk",
+      "docs": [
+        "docs/DESK_ARCHITECTURE.md"
+      ],
+      "failure": "bounded reconnect, offline state, malformed frames ignored",
+      "id": "desk.runtime_bus",
+      "name": "Desk to RuntimeBus",
+      "purpose": "Receive runtime events and connection health.",
+      "secrets": [
+        "runtime auth handled outside Desk surface"
+      ],
+      "sources": [
+        {
+          "claim": "The bus owns WebSocket connection state and event delivery.",
+          "line": 13,
+          "path": "web/src/runtime/RuntimeBus.tsx",
+          "symbol": "RuntimeBusProvider"
+        }
+      ],
+      "tests": [
+        {
+          "assertion": "See matching capability row and inspected test assertion.",
+          "execution": "not_run",
+          "node": "owns one socket and removes it with the provider",
+          "path": "web/src/runtime/RuntimeBus.test.tsx"
+        }
+      ]
+    },
+    {
+      "auth": "browser origin boundary",
+      "authority": "Desk store owns the arrangement; localStorage is storage only.",
+      "data": [
+        "window rect/order/max",
+        "zoneWindows",
+        "prefs"
+      ],
+      "direction": "desk_to_local_storage",
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "failure": "wrong version/corrupt input returns defaults; write failures are not surfaced uniformly",
+      "id": "desk.local_workspace",
+      "name": "Desk to browser localStorage",
+      "purpose": "Persist local arrangement metadata.",
+      "secrets": [],
+      "sources": [
+        {
+          "claim": "Workspace arrangement uses the versioned localStorage key.",
+          "line": 8,
+          "path": "web/src/desk/store/workspaceStorage.ts",
+          "symbol": "DESK_WORKSPACE_STORAGE_KEY"
+        }
+      ],
+      "tests": [
+        {
+          "assertion": "See matching capability row and inspected test assertion.",
+          "execution": "not_run",
+          "node": "round-trips rects + order + max through one slot; min stays out (HS-97-03)",
+          "path": "web/src/desk/__tests__/windows.test.tsx"
+        }
+      ]
+    },
+    {
+      "auth": "future explicit capability allowlist",
+      "authority": "Future host grants only declared capabilities; current browser path has no host authority.",
+      "data": [
+        "typed capability requests/results"
+      ],
+      "direction": "desk_to_host",
+      "docs": [
+        "docs/internal/philo/adr/desktop-host.md"
+      ],
+      "failure": "adapter unavailable/denied/invalid request",
+      "id": "desk.native_future",
+      "name": "Desk to future DesktopHost",
+      "purpose": "Provide bounded native display/filesystem capabilities when adopted.",
+      "secrets": [
+        "host-managed secrets remain behind adapter"
+      ],
+      "sources": [
+        {
+          "claim": "The ADR defines a proposed host seam.",
+          "line": 1,
+          "path": "docs/internal/philo/adr/desktop-host.md",
+          "symbol": "DesktopHost"
+        }
+      ],
+      "tests": []
+    },
+    {
+      "auth": "local user trust plus manifest permission gate",
+      "authority": "build_registry and PermissionGate",
+      "data": [
+        "manifest",
+        "activity rows",
+        "discovery errors"
+      ],
+      "direction": "local_read_write",
+      "docs": [
+        "docs/INTEGRATIONS.md",
+        "docs/CONNECTOR_DEVELOPMENT.md"
+      ],
+      "failure": [
+        "import_failed",
+        "no_manifest",
+        "id_collision_first_party",
+        "permission_denied"
+      ],
+      "id": "integration.connector_registry",
+      "name": "Connector registry",
+      "purpose": "Load first-party and trusted local user connector packs.",
+      "secrets": [
+        "user pack process permissions",
+        "provider CLI credentials outside HoldSpeak"
+      ],
+      "sources": [
+        {
+          "claim": "Registry discovery merges first-party and user packs with structured errors.",
+          "line": 279,
+          "path": "holdspeak/connector_pack_loader.py",
+          "symbol": "build_registry"
+        }
+      ],
+      "tests": [
+        {
+          "assertion": "Import failure is reported without crashing discovery.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "status": "passed"
+          },
+          "node": "test_pack_that_raises_at_import_does_not_crash",
+          "path": "tests/unit/test_connector_pack_loader.py"
+        }
+      ]
+    },
+    {
+      "auth": "local gh authentication",
+      "authority": "connector enabled state, shell/network manifest permissions, allowlisted argv",
+      "data": [
+        "PR/issue/CI identifiers and returned annotations"
+      ],
+      "direction": "outbound_read",
+      "docs": [
+        "docs/INTEGRATIONS.md"
+      ],
+      "failure": [
+        "gh missing",
+        "auth failure",
+        "timeout",
+        "output cap",
+        "command refused"
+      ],
+      "id": "integration.github_read",
+      "name": "GitHub read connector",
+      "purpose": "Read GitHub activity through allowlisted gh commands.",
+      "secrets": [
+        "gh credential outside HoldSpeak"
+      ],
+      "sources": [
+        {
+          "claim": "GitHub pack declares read-only commands and shell/network permissions.",
+          "line": 94,
+          "path": "holdspeak/connector_packs/github_cli.py",
+          "symbol": "MANIFEST"
+        }
+      ],
+      "tests": [
+        {
+          "assertion": "Mutating gh command prefixes are rejected.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "status": "passed"
+          },
+          "node": "test_preview_github_cli_enrichment_plans_read_only_commands",
+          "path": "tests/unit/test_activity_github.py"
+        }
+      ]
+    },
+    {
+      "auth": "acli/jira CLI account or configured provider",
+      "authority": "read-only command allowlists and provider connection policy",
+      "data": [
+        "project, work item, space, page and blog read results"
+      ],
+      "direction": "outbound_read",
+      "docs": [
+        "docs/INTEGRATIONS.md"
+      ],
+      "failure": [
+        "CLI missing",
+        "auth failed",
+        "scope unknown",
+        "timeout",
+        "unsupported command"
+      ],
+      "id": "integration.jira_confluence_read",
+      "name": "Jira and Confluence read connectors",
+      "purpose": "Read bounded Atlassian resources through CLI packs and provider adapters.",
+      "secrets": [
+        "CLI/provider credentials held outside connector payloads"
+      ],
+      "sources": [
+        {
+          "claim": "The Jira acli pack declares read-only commands and no stored credentials.",
+          "line": 71,
+          "path": "holdspeak/connector_packs/acli_jira.py",
+          "symbol": "MANIFEST"
+        },
+        {
+          "claim": "The Confluence acli pack declares read-only commands and no stored credentials.",
+          "line": 73,
+          "path": "holdspeak/connector_packs/acli_confluence.py",
+          "symbol": "MANIFEST"
+        }
+      ],
+      "tests": [
+        {
+          "assertion": "The Confluence wire uses the read-only connector boundary.",
+          "execution": "not_run",
+          "node": "test_page_create_rejected",
+          "path": "tests/unit/test_hs174_confluence_wire.py"
+        }
+      ]
+    },
+    {
+      "auth": "local activity ledger",
+      "authority": "calendar connector manifest; local candidate persistence",
+      "data": [
+        "calendar/video-call activity rows",
+        "candidate title/time/url"
+      ],
+      "direction": "local_read_write",
+      "docs": [
+        "docs/INTEGRATIONS.md"
+      ],
+      "failure": [
+        "empty ledger",
+        "malformed record",
+        "candidate duplicate"
+      ],
+      "id": "integration.calendar_local",
+      "name": "Calendar candidate derivation",
+      "purpose": "Derive meeting candidates from local activity rows.",
+      "secrets": [],
+      "sources": [
+        {
+          "claim": "Calendar pack reads local rows and persists candidates without network.",
+          "line": 35,
+          "path": "holdspeak/connector_packs/calendar_activity.py",
+          "symbol": "run"
+        }
+      ],
+      "tests": [
+        {
+          "assertion": "Calendar connector dry run returns its uniform preview shape.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "status": "passed"
+          },
+          "node": "test_dry_run_calendar_emits_proposed_candidates",
+          "path": "tests/unit/test_activity_connector_preview.py"
+        }
+      ]
+    },
+    {
+      "auth": "configured destination plus owner/control posture",
+      "authority": "ActuatorExecutor authority binding, allow-list, grant and kernel admission",
+      "data": [
+        "approved preview-equivalent payload",
+        "external response metadata",
+        "receipt"
+      ],
+      "direction": "outbound_and_receipt_return",
+      "docs": [
+        "docs/ACTUATOR_DEVELOPMENT.md",
+        "docs/INTEGRATIONS.md"
+      ],
+      "failure": [
+        "not approved",
+        "policy disabled",
+        "authority mismatch",
+        "grant revoked",
+        "connector error",
+        "timeout",
+        "non-2xx"
+      ],
+      "id": "integration.actuator_external",
+      "name": "External actuator lifecycle",
+      "purpose": "Execute approved GitHub, Slack or webhook proposals and return receipts.",
+      "secrets": [
+        "Slack webhook",
+        "companion webhook",
+        "GitHub credential"
+      ],
+      "sources": [
+        {
+          "claim": "Execution checks approval and authority before egress and records executed/failed state.",
+          "line": 91,
+          "path": "holdspeak/plugins/actuator_executor.py",
+          "symbol": "execute"
+        }
+      ],
+      "tests": [
+        {
+          "assertion": "Connector error becomes failed and is audited.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "status": "passed"
+          },
+          "node": "test_connector_error_marks_failed_and_audits",
+          "path": "tests/unit/test_actuator_executor.py"
+        }
+      ]
+    },
+    {
+      "auth": "Bearer token in HTTP header; holdspeak.v1 WebSocket protocol",
+      "authority": "Hub principal plus operation-specific owner gesture/policy",
+      "data": [
+        "dictation text",
+        "meeting/import/proposal data",
+        "Coder board state"
+      ],
+      "direction": "desk_to_http",
+      "docs": [
+        "docs/IPAD.md",
+        "docs/COMPANIONS_ARCHITECTURE.md"
+      ],
+      "failure": [
+        "offline",
+        "malformed peer",
+        "HTTP error",
+        "malformed response",
+        "receipt unknown"
+      ],
+      "id": "integration.ipad_hub",
+      "name": "Native companion hub transport",
+      "purpose": "Provide typed iPad HTTP/WebSocket access to hub capabilities.",
+      "secrets": [
+        "hub bearer token",
+        "device-local Keychain material"
+      ],
+      "sources": [
+        {
+          "claim": "The native client constructs authenticated typed requests with timeout and WebSocket auth.",
+          "line": 71,
+          "path": "apple/Sources/Providers/Desktop/HTTPDesktopClient.swift",
+          "symbol": "HTTPDesktopClient"
+        }
+      ],
+      "tests": [
+        {
+          "assertion": "StubProtocol health/runtime responses produce reachable, runtimeReady and detail state.",
+          "execution": "not_run",
+          "node": "testHandshakeReachableAndRuntimeReady",
+          "path": "apple/Tests/ProvidersTests/DesktopClientTests.swift"
+        }
+      ]
+    },
+    {
+      "auth": "bridge PSK and configured hub transport",
+      "authority": "PSK authenticates transport; hub operation policy authorizes effects",
+      "data": [
+        "audio chunks",
+        "button/control events",
+        "status"
+      ],
+      "direction": "desk_to_host",
+      "docs": [
+        "docs/AIPI_LITE.md",
+        "docs/AIPI_LITE_DEV_WORKFLOW.md"
+      ],
+      "failure": [
+        "PSK missing",
+        "bridge unreachable",
+        "format mismatch",
+        "hub auth refusal",
+        "device offline"
+      ],
+      "id": "integration.aipi_bridge",
+      "name": "AIPI bridge transport",
+      "purpose": "Connect ESPHome audio and controls to the HoldSpeak hub.",
+      "secrets": [
+        "HOLDSPEAK_PSK",
+        "ESPHome Wi-Fi/API secrets"
+      ],
+      "sources": [
+        {
+          "claim": "The bridge owns the device leg.",
+          "line": 44,
+          "path": "aipi-lite/bridge/holdspeak.py",
+          "symbol": "HoldSpeakLeg"
+        }
+      ],
+      "tests": [
+        {
+          "assertion": "The Hello frame round trips through the HoldSpeak protocol validator.",
+          "execution": "not_run",
+          "node": "test_hello_round_trip_validates_on_holdspeak",
+          "path": "aipi-lite/tests/test_protocol_sync.py"
+        }
+      ]
+    }
+  ],
+  "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+  "validation_errors_at_generation": 0,
+  "view": "integrations"
+}

@@ -72,7 +72,7 @@ structural rules from pushed history alone — audit any range,
 no local contract needed.
 
 MCP-capable agents: prefer the MCP tools over shelling out —
-`.githooks/dw-mcp` (wired via `.mcp.json`) serves the same core as
+`.githooks/dw-mcp` (configure in `.mcp.json` when needed) serves the same core as
 structured tools with identical refusals: orientation (`dw_context`,
 `dw_next`, `dw_check`, `dw_doctor`), verification (`dw_verify`,
 `dw_gate`), guarded mutations (`dw_story_status`,
@@ -114,7 +114,7 @@ def render_block() -> str:
 
 
 _CLAUDE_SLASH_PARAGRAPH_START = "Slash commands (Claude Code"
-_MCP_CLAUDE_WIRING = "(wired via `.mcp.json`)"
+_MCP_CLAUDE_WIRING = "(configure in `.mcp.json` when needed)"
 _MCP_NEUTRAL_WIRING = (
     "(stdio JSON-RPC; wire it per your client — Claude Code reads "
     "`.mcp.json`, Codex uses `codex mcp add`)"

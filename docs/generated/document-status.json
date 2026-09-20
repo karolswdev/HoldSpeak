@@ -1,0 +1,983 @@
+{
+  "documents": [
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "CONTRIBUTING.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "README.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/ACTIVITY_PREBRIEFING.md"
+    },
+    {
+      "declared_status": "  - `agent_status`",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/AGENT_HOOK_INSTALL.md"
+    },
+    {
+      "declared_status": "coding-agent replies, and status feedback. Put it on Wi-Fi, including a phone",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/AIPI_LITE_DEV_WORKFLOW.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-generator-owned",
+      "kind": "generated-reference",
+      "path": "docs/API_SURFACE.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/ARCHITECTURE.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/ARCHITECTURE_WORK.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/AUTHORITY.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/AUTOMATION.md"
+    },
+    {
+      "declared_status": "holdspeak cadence status",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/CADENCE.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/CONNECTOR_DEVELOPMENT.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/DESK_MEMORY.md"
+    },
+    {
+      "declared_status": "**Status:** LAN-only substrate today. Cross-network reach",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/DEVICE_PROTOCOL.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/DICTATION_COPILOT.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/DICTATION_PIPELINE_GUIDE.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/ENVIRONMENTS.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/FIREFOX_EXTENSION_GUIDE.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/GETTING_STARTED.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/GLOSSARY.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/INFERENCE_TARGETS.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/INTERVIEW.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/MCP_SIDECAR.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/MEETING_MODE_GUIDE.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/MODELS.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/PEOPLE_INTEGRATION.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/PEOPLE_SECURITY.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/PLUGIN_AUTHORING.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/PROJECT_ROOMS.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/REACH_RUNNER.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/README.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/RELATIONSHIP_AWARE_MEMORY.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/RELEASING.md"
+    },
+    {
+      "declared_status": "**Status:** living document.",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/SECURITY.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/USER_GUIDE.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/VOICE_COMMANDS.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/WEB_DESK.md"
+    },
+    {
+      "declared_status": "Status: active design contract",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/WEB_UI_UX_SYSTEM_AUDIT.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/assets/pixellab/README.md"
+    },
+    {
+      "declared_status": "- [ ] `02_git_status.txt` captured",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/PHASE_MIR_01_EVIDENCE_TEMPLATE.md"
+    },
+    {
+      "declared_status": "- [ ] `02_git_status.txt` captured",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/PHASE_WFS_01_EVIDENCE_TEMPLATE.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/people-pr1/README.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/people-pr1/SPRITES.md"
+    },
+    {
+      "declared_status": "- `02_git_status.txt` - worktree status at phase-exit capture.",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-action-follow-through/20260426-1819/00_manifest.md"
+    },
+    {
+      "declared_status": "- **Status:** complete",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-action-follow-through/20260426-1819/99_phase_summary.md"
+    },
+    {
+      "declared_status": "- `02_git_status.txt` — working tree state + HEAD commit at capture.",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-dir-01/20260425-2027/00_manifest.md"
+    },
+    {
+      "declared_status": "| Requirement | Method | Evidence | Status |",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-dir-01/20260425-2027/03_traceability.md"
+    },
+    {
+      "declared_status": "**Status:** complete",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-dir-01/20260425-2027/99_phase_summary.md"
+    },
+    {
+      "declared_status": "| `02_git_status.txt` | `git log -10 --oneline` + `git status --short`. |",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-dir-loop-closure/20260426-1111/00_manifest.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-dir-loop-closure/20260426-1111/99_phase_summary.md"
+    },
+    {
+      "declared_status": "- `02_git_status.txt` - working tree status before closure edits.",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-local-activity-intelligence/20260427-0000/00_manifest.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-local-activity-intelligence/20260427-0000/99_phase_summary.md"
+    },
+    {
+      "declared_status": "- `02_git_status.txt` - worktree status at phase-exit capture.",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-local-handoff-exports/20260426-1946/00_manifest.md"
+    },
+    {
+      "declared_status": "- **Status:** complete",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-local-handoff-exports/20260426-1946/99_phase_summary.md"
+    },
+    {
+      "declared_status": "- 02_git_status.txt",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-1841/00_manifest.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-1841/03_traceability.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-1841/99_phase_summary.md"
+    },
+    {
+      "declared_status": "- 02_git_status.txt",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-1842/00_manifest.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-1842/03_traceability.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-1842/99_phase_summary.md"
+    },
+    {
+      "declared_status": "- 02_git_status.txt",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-185031/00_manifest.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-185031/03_traceability.md"
+    },
+    {
+      "declared_status": "  - duplicate suppression (deduped status)",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-185031/99_phase_summary.md"
+    },
+    {
+      "declared_status": "3. 02_git_status.txt",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-192922/00_manifest.md"
+    },
+    {
+      "declared_status": "This bundle fulfills the full evidence contract file set. Requirement coverage status is split into:",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-192922/03_traceability.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-192922/99_phase_summary.md"
+    },
+    {
+      "declared_status": "3. 02_git_status.txt",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-200952/00_manifest.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-200952/03_traceability.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-200952/99_phase_summary.md"
+    },
+    {
+      "declared_status": "3. 02_git_status.txt",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-204910/00_manifest.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-204910/03_traceability.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260329-204910/99_phase_summary.md"
+    },
+    {
+      "declared_status": "| File | Purpose | Status |",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260426-0037/00_manifest.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260426-0037/03_traceability.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-mir-01/20260426-0037/99_phase_summary.md"
+    },
+    {
+      "declared_status": "| `02_git_status.txt` | Worktree status at capture time. |",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-usability-powerhouse/20260426-1755/00_manifest.md"
+    },
+    {
+      "declared_status": "- **Status:** complete",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-usability-powerhouse/20260426-1755/99_phase_summary.md"
+    },
+    {
+      "declared_status": "| File | Purpose | Status |",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-wfs-01/20260426-1537/00_manifest.md"
+    },
+    {
+      "declared_status": "| WFS-P-003 | AT | `40_api_runtime.log` | `/api/runtime/status` exposes mode/status/meeting shape. |",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-wfs-01/20260426-1537/03_traceability.md"
+    },
+    {
+      "declared_status": "| Story | Status | Evidence |",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/phase-wfs-01/20260426-1537/99_phase_summary.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "keep-and-reconcile",
+      "kind": "public-guide",
+      "path": "docs/evidence/relationship-aware-memory/README.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/AGENT_BRIEF.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/AGENT_PROMPT_ADOPTION_ADOPTABILITY_USABILITY_AWESOMENESS.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/APPLICATION_LAYER_THESIS.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md"
+    },
+    {
+      "declared_status": "**Status:** canonical since Phase 95 (the Desk OS; supersedes the Phase 91",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/ARCHITECTURE_WEB_FRONTEND.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/CONSTITUTION.md"
+    },
+    {
+      "declared_status": "**Status:** Draft for owner ratification; normative subordinate specification",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/CONTINUITY_CF0_CONTRACT_SRS.md"
+    },
+    {
+      "declared_status": "**Status:** Design record; no implementation authorization",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/CORE_MEMORY_COUNCIL.md"
+    },
+    {
+      "declared_status": "**Status:** Council revision for owner ratification; design only; no implementation",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/CORE_MEMORY_DESIGN.md"
+    },
+    {
+      "declared_status": "**Status:** Draft for owner ratification and implementation planning; no product",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/CORE_MEMORY_INTEGRATION_SRS.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/CROSS_PLATFORM_ROADMAP.md"
+    },
+    {
+      "declared_status": "- Status:",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/CROSS_PLATFORM_TASK_BOARD.md"
+    },
+    {
+      "declared_status": "**Status:** canon since Phase 96 (owner-directed; built with the vendored",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/DESIGN_SYSTEM.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/DESKOS_COMPONENT_PATTERN.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/DESK_GRAMMAR.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/DICTATION_COMMIT_BOUNDARY.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/DOCS_STYLE.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/DOCS_TERMINOLOGY.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/DOC_AUDIT_2026-06.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/DOC_AUDIT_2026-08.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/DOC_AUDIT_2026-09.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/ENVIRONMENT_VERIFICATION.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/GROUNDING.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/INVENTORY-2026-09-19.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/LINUX_PORT_EXECUTION.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/LINUX_PORT_PLAN.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/MEETING_OUTPUT_SCHEMA.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/MISSION_CONTROL_DESK.md"
+    },
+    {
+      "declared_status": "**Status:** historical study, 2026-07-26; revalidated 2026-08-30. Not a",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/OPENWORKER_INTEGRATION_FEASIBILITY.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/OPERATIONAL-SURFACE-AUDIT.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/OPERATOR_METAL_INTEL.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/ORCHESTRATION.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-status-do-not-infer-shipped",
+      "kind": "plan-or-rfc",
+      "path": "docs/internal/PLAN_ACTIVITY_ASSISTED_ENRICHMENT.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-status-do-not-infer-shipped",
+      "kind": "plan-or-rfc",
+      "path": "docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md"
+    },
+    {
+      "declared_status": "**Status (2026-06-02):** ✅ **shipped** — streaming intel, action-item management, and meeting persistence are in the product. This document is the original design plan; the `feature/intel-streaming` branch it referenced was merged and delet",
+      "disposition": "retain-status-do-not-infer-shipped",
+      "kind": "plan-or-rfc",
+      "path": "docs/internal/PLAN_INTEL_STREAMING.md"
+    },
+    {
+      "declared_status": "**Status:** RATIFIED (2026-07-26, Phase 106 / HS-106-01). **Article XI",
+      "disposition": "retain-status-do-not-infer-shipped",
+      "kind": "plan-or-rfc",
+      "path": "docs/internal/PLAN_KERNEL_OPERATION_BROKER.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-status-do-not-infer-shipped",
+      "kind": "plan-or-rfc",
+      "path": "docs/internal/PLAN_MEETING_INTEL_PI.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-status-do-not-infer-shipped",
+      "kind": "plan-or-rfc",
+      "path": "docs/internal/PLAN_MEETING_MODE.md"
+    },
+    {
+      "declared_status": "> **Status:** DC-01 shipped as Phase 151; DC-02 shipped as Phase 152",
+      "disposition": "retain-status-do-not-infer-shipped",
+      "kind": "plan-or-rfc",
+      "path": "docs/internal/PLAN_PHASE_DESK_CHAT.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-status-do-not-infer-shipped",
+      "kind": "plan-or-rfc",
+      "path": "docs/internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-status-do-not-infer-shipped",
+      "kind": "plan-or-rfc",
+      "path": "docs/internal/PLAN_PHASE_JIRA_DESK_SYNC.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-status-do-not-infer-shipped",
+      "kind": "plan-or-rfc",
+      "path": "docs/internal/PLAN_PHASE_MULTI_INTENT_ROUTING.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-status-do-not-infer-shipped",
+      "kind": "plan-or-rfc",
+      "path": "docs/internal/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md"
+    },
+    {
+      "declared_status": "> **Status:** DRAFT — awaiting owner ratification.",
+      "disposition": "retain-status-do-not-infer-shipped",
+      "kind": "plan-or-rfc",
+      "path": "docs/internal/PLAN_WORKBENCH_ARCHITECTURE.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/POSITIONING.md"
+    },
+    {
+      "declared_status": "**Status:** Current-state architecture review and design input",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/PRIVACY_APPROVAL_CONTROL_DESIGN_REVIEW.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/PROZILLAOS_STUDY.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/RELEASE_HARDENING_CHECKLIST.md"
+    },
+    {
+      "declared_status": "**Status:** Code-derived architecture inventory and concept-consolidation analysis",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/SYSTEM_PRIMITIVE_COMPONENT_INVENTORY.md"
+    },
+    {
+      "declared_status": "**Status:** canon, ratified by the owner's direction of 2026-09-19.",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/TWO-BRAINS.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/UIUX_JUDGMENT.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/UX-CANON.md"
+    },
+    {
+      "declared_status": "Status: specified, not executed. Requirements resolve in [SRS](SRS.md), execution semantics in [CONTRACTS](CONTRACTS.md), and user flows in [RECIPES](RECIPES.md). Scenario IDs in requirement rows provide forward traceability. The register b",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/architect-assistant/ACCEPTANCE.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/architect-assistant/BASELINE.md"
+    },
+    {
+      "declared_status": "Status: proposed design supporting SRS-AA. Names marked proposed are not callable APIs or installed configuration. Existing kernel schemas, qualified references, Project envelopes, and citizen services remain authoritative. This document el",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/architect-assistant/CONTRACTS.md"
+    },
+    {
+      "declared_status": "Status: proposed work packets, not activated roadmap phases. Packet IDs avoid collision with ongoing numbered phases. Requirements are canonical in [SRS](SRS.md); gate evidence is defined in [ACCEPTANCE](ACCEPTANCE.md).",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/architect-assistant/DELIVERY_PLAN.md"
+    },
+    {
+      "declared_status": "Status: initial manual increment implemented and integrated with the desktop changes. Updated 2026-09-05. Owner authorization: “I want you to drive the delivery of this” and “run it to full completion.” Delivery branch: `feat/repeatable-int",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/architect-assistant/DELIVERY_STATUS.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/architect-assistant/INTEGRATION.md"
+    },
+    {
+      "declared_status": "Status: proposed design, version 0.2, 2026-09-05. Requirements: AA-IVW-001–AA-IVW-018 in [SRS](SRS.md). Behavioral proof: AC-30–AC-38 in [ACCEPTANCE](ACCEPTANCE.md). This is a product and implementation recipe; proposed contracts below are ",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/architect-assistant/INTERVIEW.md"
+    },
+    {
+      "declared_status": "Status: target specification with an implemented first manual Interview increment. Version 0.2, 2026-09-05. See [delivery status and evidence](DELIVERY_STATUS.md) for implemented behavior and remaining work.",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/architect-assistant/README.md"
+    },
+    {
+      "declared_status": "Status: target workflows, version 0.2. These recipes are a human and implementation specification. They are not importable Workbench graphs or instructions to call unimplemented tools. Their prerequisites and release gates must hold before ",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/architect-assistant/RECIPES.md"
+    },
+    {
+      "declared_status": "Document ID: SRS-AA. Status: proposed, version 0.2. Scope and precedence are defined in [README](README.md). All requirement rows are mandatory for their named release gate. Acceptance scenario IDs resolve in [ACCEPTANCE](ACCEPTANCE.md). Da",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/architect-assistant/SRS.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/architect-assistant/VALIDATION.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/architect-assistant/proof/SCORING.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/checks/constitution-seven-tenets-astra.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/inventory-2026-09-19/01-faces.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/inventory-2026-09-19/02-capabilities.md"
+    },
+    {
+      "declared_status": "| **The README phase ledger is stale and contradicts the story files.** It lists 110 as `done` (its 7 stories are all `backlog`), 111 as `in-progress`, 150/152/153 as `not-started` (152/153 are 6/6 done), and stops enumerating around 153 — ",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/inventory-2026-09-19/03-roadmap.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/inventory-2026-09-19/04-docs-and-running.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/inventory-2026-09-19/05-desk-census.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/inventory-2026-09-19/06-check-astra.md"
+    },
+    {
+      "declared_status": "Status: in-progress (HS-157)",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/project-rooms/CONTRACTS-P0.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/project-rooms/HANDOVER-IMPLEMENTATION.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/project-rooms/HANDOVER-MUADDIB.md"
+    },
+    {
+      "declared_status": "Status: Draft for implementation planning",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/project-rooms/README.md"
+    },
+    {
+      "declared_status": "Status: Draft for implementation planning",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md"
+    },
+    {
+      "declared_status": "Status: Draft for implementation planning",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/project-rooms/SRS_PRODUCT_VALIDATION.md"
+    },
+    {
+      "declared_status": "Status: Draft for implementation planning",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/project-rooms/SRS_PROJECT_INTERVIEW_WATCHES.md"
+    },
+    {
+      "declared_status": "Status: Draft for implementation planning",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/project-rooms/SRS_SYSTEM.md"
+    },
+    {
+      "declared_status": "Status: Draft for implementation planning",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/project-rooms/SRS_WEB_EXPERIENCE.md"
+    },
+    {
+      "declared_status": "No explicit status in first 25 lines",
+      "disposition": "retain-provenance-review-authority",
+      "kind": "internal-record",
+      "path": "docs/internal/web-integration-checks.md"
+    }
+  ],
+  "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8"
+}

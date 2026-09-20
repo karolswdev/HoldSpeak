@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.local/philo/component.schema.json",
+  "title": "Philo component",
+  "type": "object", "additionalProperties": true,
+  "required": ["id", "name", "purpose", "kind", "owns", "depends_on", "interfaces", "sources", "docs"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"},
+    "name": {"type": "string", "minLength": 1},
+    "purpose": {"type": "string", "minLength": 1},
+    "kind": {"type": "string", "enum": ["authority", "frontend", "frontend_projection", "operator", "runtime", "runtime_adapter", "service", "storage"]},
+    "owns": {"type": "array", "items": {"type": "string"}},
+    "depends_on": {"type": "array", "items": {"type": "string"}},
+    "interfaces": {"type": "array", "items": {"type": "string"}},
+    "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+    "docs": {"type": "array", "items": {"type": "string"}}
+  },
+  "$defs": {"source": {"type": "object", "additionalProperties": true, "required": ["path", "symbol", "line", "claim"], "properties": {"path": {"type": "string", "minLength": 1}, "symbol": {"type": "string", "minLength": 1}, "line": {"type": "integer", "minimum": 1}, "claim": {"type": "string", "minLength": 1}}}}
+}

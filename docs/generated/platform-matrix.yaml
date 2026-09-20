@@ -1,0 +1,4330 @@
+{
+  "generated": true,
+  "generator": "scripts/generate_capability_docs.py",
+  "missing_shards": [],
+  "records": [
+    {
+      "availability": "unknown",
+      "capability_id": "runtime.kernel_admit",
+      "id": "runtime.kernel_admit@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/kernel/broker.py",
+        "holdspeak/kernel/journal.py",
+        "holdspeak/web/routes/system/kernel_routes.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "runtime.kernel_admit",
+      "id": "runtime.kernel_admit@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/kernel/broker.py",
+        "holdspeak/kernel/journal.py",
+        "holdspeak/web/routes/system/kernel_routes.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "runtime.kernel_admit",
+      "id": "runtime.kernel_admit@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/kernel/broker.py",
+        "holdspeak/kernel/journal.py",
+        "holdspeak/web/routes/system/kernel_routes.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "runtime.kernel_admit",
+      "id": "runtime.kernel_admit@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/kernel/broker.py",
+        "holdspeak/kernel/journal.py",
+        "holdspeak/web/routes/system/kernel_routes.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "runtime.kernel_admit",
+      "id": "runtime.kernel_admit@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/kernel/broker.py",
+        "holdspeak/kernel/journal.py",
+        "holdspeak/web/routes/system/kernel_routes.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "runtime.kernel_recover",
+      "id": "runtime.kernel_recover@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/kernel/broker.py",
+        "holdspeak/kernel/liveness.py",
+        "holdspeak/kernel/publication_transition.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "runtime.kernel_recover",
+      "id": "runtime.kernel_recover@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/kernel/broker.py",
+        "holdspeak/kernel/liveness.py",
+        "holdspeak/kernel/publication_transition.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "runtime.kernel_recover",
+      "id": "runtime.kernel_recover@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/kernel/broker.py",
+        "holdspeak/kernel/liveness.py",
+        "holdspeak/kernel/publication_transition.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "runtime.kernel_recover",
+      "id": "runtime.kernel_recover@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/kernel/broker.py",
+        "holdspeak/kernel/liveness.py",
+        "holdspeak/kernel/publication_transition.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "runtime.kernel_recover",
+      "id": "runtime.kernel_recover@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/kernel/broker.py",
+        "holdspeak/kernel/liveness.py",
+        "holdspeak/kernel/publication_transition.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "runtime.inference_attempt",
+      "id": "runtime.inference_attempt@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/kernel/inference_invoke.py",
+        "holdspeak/kernel/inference_invoke.py",
+        "holdspeak/kernel/inference_runner.py",
+        "holdspeak/kernel/executor.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "runtime.inference_attempt",
+      "id": "runtime.inference_attempt@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/kernel/inference_invoke.py",
+        "holdspeak/kernel/inference_invoke.py",
+        "holdspeak/kernel/inference_runner.py",
+        "holdspeak/kernel/executor.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "runtime.inference_attempt",
+      "id": "runtime.inference_attempt@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/kernel/inference_invoke.py",
+        "holdspeak/kernel/inference_invoke.py",
+        "holdspeak/kernel/inference_runner.py",
+        "holdspeak/kernel/executor.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "runtime.inference_attempt",
+      "id": "runtime.inference_attempt@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/kernel/inference_invoke.py",
+        "holdspeak/kernel/inference_invoke.py",
+        "holdspeak/kernel/inference_runner.py",
+        "holdspeak/kernel/executor.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "runtime.inference_attempt",
+      "id": "runtime.inference_attempt@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/kernel/inference_invoke.py",
+        "holdspeak/kernel/inference_invoke.py",
+        "holdspeak/kernel/inference_runner.py",
+        "holdspeak/kernel/executor.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "authority.principal_routes",
+      "id": "authority.principal_routes@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/principals.py",
+        "holdspeak/principals.py",
+        "holdspeak/principals.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "authority.principal_routes",
+      "id": "authority.principal_routes@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/principals.py",
+        "holdspeak/principals.py",
+        "holdspeak/principals.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "authority.principal_routes",
+      "id": "authority.principal_routes@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/principals.py",
+        "holdspeak/principals.py",
+        "holdspeak/principals.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "authority.principal_routes",
+      "id": "authority.principal_routes@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/principals.py",
+        "holdspeak/principals.py",
+        "holdspeak/principals.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "authority.principal_routes",
+      "id": "authority.principal_routes@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/principals.py",
+        "holdspeak/principals.py",
+        "holdspeak/principals.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "authority.policy_resolution",
+      "id": "authority.policy_resolution@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/operation_policy.py",
+        "holdspeak/services/authority_service.py",
+        "holdspeak/operation_policy.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "authority.policy_resolution",
+      "id": "authority.policy_resolution@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/operation_policy.py",
+        "holdspeak/services/authority_service.py",
+        "holdspeak/operation_policy.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "authority.policy_resolution",
+      "id": "authority.policy_resolution@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/operation_policy.py",
+        "holdspeak/services/authority_service.py",
+        "holdspeak/operation_policy.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "authority.policy_resolution",
+      "id": "authority.policy_resolution@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/operation_policy.py",
+        "holdspeak/services/authority_service.py",
+        "holdspeak/operation_policy.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "authority.policy_resolution",
+      "id": "authority.policy_resolution@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/operation_policy.py",
+        "holdspeak/services/authority_service.py",
+        "holdspeak/operation_policy.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "storage.sqlite_reconcile",
+      "id": "storage.sqlite_reconcile@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/db/schema.py",
+        "holdspeak/db/reconcile.py",
+        "holdspeak/db/reconcile.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "storage.sqlite_reconcile",
+      "id": "storage.sqlite_reconcile@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/db/schema.py",
+        "holdspeak/db/reconcile.py",
+        "holdspeak/db/reconcile.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "storage.sqlite_reconcile",
+      "id": "storage.sqlite_reconcile@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/db/schema.py",
+        "holdspeak/db/reconcile.py",
+        "holdspeak/db/reconcile.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "storage.sqlite_reconcile",
+      "id": "storage.sqlite_reconcile@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/db/schema.py",
+        "holdspeak/db/reconcile.py",
+        "holdspeak/db/reconcile.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "storage.sqlite_reconcile",
+      "id": "storage.sqlite_reconcile@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/db/schema.py",
+        "holdspeak/db/reconcile.py",
+        "holdspeak/db/reconcile.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "storage.backup_restore",
+      "id": "storage.backup_restore@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/commands/backup.py",
+        "holdspeak/db/core.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "storage.backup_restore",
+      "id": "storage.backup_restore@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/commands/backup.py",
+        "holdspeak/db/core.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "storage.backup_restore",
+      "id": "storage.backup_restore@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/commands/backup.py",
+        "holdspeak/db/core.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "storage.backup_restore",
+      "id": "storage.backup_restore@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/commands/backup.py",
+        "holdspeak/db/core.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "storage.backup_restore",
+      "id": "storage.backup_restore@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/commands/backup.py",
+        "holdspeak/db/core.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "operations.doctor",
+      "id": "operations.doctor@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/commands/doctor.py",
+        "holdspeak/commands/doctor.py",
+        "holdspeak/doctor.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "operations.doctor",
+      "id": "operations.doctor@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/commands/doctor.py",
+        "holdspeak/commands/doctor.py",
+        "holdspeak/doctor.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "operations.doctor",
+      "id": "operations.doctor@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/commands/doctor.py",
+        "holdspeak/commands/doctor.py",
+        "holdspeak/doctor.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "operations.doctor",
+      "id": "operations.doctor@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/commands/doctor.py",
+        "holdspeak/commands/doctor.py",
+        "holdspeak/doctor.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "operations.doctor",
+      "id": "operations.doctor@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/commands/doctor.py",
+        "holdspeak/commands/doctor.py",
+        "holdspeak/doctor.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "negative.kernel_content_exclusion",
+      "id": "negative.kernel_content_exclusion@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/kernel/model.py",
+        "holdspeak/kernel/journal.py",
+        "holdspeak/kernel/journal.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "negative.kernel_content_exclusion",
+      "id": "negative.kernel_content_exclusion@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/kernel/model.py",
+        "holdspeak/kernel/journal.py",
+        "holdspeak/kernel/journal.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "negative.kernel_content_exclusion",
+      "id": "negative.kernel_content_exclusion@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/kernel/model.py",
+        "holdspeak/kernel/journal.py",
+        "holdspeak/kernel/journal.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "negative.kernel_content_exclusion",
+      "id": "negative.kernel_content_exclusion@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/kernel/model.py",
+        "holdspeak/kernel/journal.py",
+        "holdspeak/kernel/journal.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "negative.kernel_content_exclusion",
+      "id": "negative.kernel_content_exclusion@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/kernel/model.py",
+        "holdspeak/kernel/journal.py",
+        "holdspeak/kernel/journal.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "negative.authority.agent_no_decide",
+      "id": "negative.authority.agent_no_decide@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/principals.py",
+        "holdspeak/kernel/broker.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "negative.authority.agent_no_decide",
+      "id": "negative.authority.agent_no_decide@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/principals.py",
+        "holdspeak/kernel/broker.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "negative.authority.agent_no_decide",
+      "id": "negative.authority.agent_no_decide@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/principals.py",
+        "holdspeak/kernel/broker.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "negative.authority.agent_no_decide",
+      "id": "negative.authority.agent_no_decide@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/principals.py",
+        "holdspeak/kernel/broker.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "negative.authority.agent_no_decide",
+      "id": "negative.authority.agent_no_decide@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/principals.py",
+        "holdspeak/kernel/broker.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "negative.storage_preserve_unknown_tables",
+      "id": "negative.storage_preserve_unknown_tables@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/db/reconcile.py",
+        "holdspeak/db/reconcile.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "negative.storage_preserve_unknown_tables",
+      "id": "negative.storage_preserve_unknown_tables@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/db/reconcile.py",
+        "holdspeak/db/reconcile.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "negative.storage_preserve_unknown_tables",
+      "id": "negative.storage_preserve_unknown_tables@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/db/reconcile.py",
+        "holdspeak/db/reconcile.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "negative.storage_preserve_unknown_tables",
+      "id": "negative.storage_preserve_unknown_tables@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/db/reconcile.py",
+        "holdspeak/db/reconcile.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "negative.storage_preserve_unknown_tables",
+      "id": "negative.storage_preserve_unknown_tables@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/db/reconcile.py",
+        "holdspeak/db/reconcile.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.capture",
+      "id": "voice.capture@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/runtime/dictation_capture.py",
+        "holdspeak/speech_session/plan.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.capture",
+      "id": "voice.capture@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/runtime/dictation_capture.py",
+        "holdspeak/speech_session/plan.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "voice.capture",
+      "id": "voice.capture@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/runtime/dictation_capture.py",
+        "holdspeak/speech_session/plan.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.capture",
+      "id": "voice.capture@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/runtime/dictation_capture.py",
+        "holdspeak/speech_session/plan.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.capture",
+      "id": "voice.capture@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/runtime/dictation_capture.py",
+        "holdspeak/speech_session/plan.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.transcribe",
+      "id": "voice.transcribe@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/inference_capabilities.py",
+        "holdspeak/meeting_session/transcribe_loop.py",
+        "holdspeak/meeting_import.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.transcribe",
+      "id": "voice.transcribe@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/inference_capabilities.py",
+        "holdspeak/meeting_session/transcribe_loop.py",
+        "holdspeak/meeting_import.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "voice.transcribe",
+      "id": "voice.transcribe@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/inference_capabilities.py",
+        "holdspeak/meeting_session/transcribe_loop.py",
+        "holdspeak/meeting_import.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.transcribe",
+      "id": "voice.transcribe@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/inference_capabilities.py",
+        "holdspeak/meeting_session/transcribe_loop.py",
+        "holdspeak/meeting_import.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.transcribe",
+      "id": "voice.transcribe@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/inference_capabilities.py",
+        "holdspeak/meeting_session/transcribe_loop.py",
+        "holdspeak/meeting_import.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.command_dispatch",
+      "id": "voice.command_dispatch@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/dictation_runner.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.command_dispatch",
+      "id": "voice.command_dispatch@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/dictation_runner.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "voice.command_dispatch",
+      "id": "voice.command_dispatch@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/dictation_runner.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.command_dispatch",
+      "id": "voice.command_dispatch@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/dictation_runner.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.command_dispatch",
+      "id": "voice.command_dispatch@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/dictation_runner.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.dictation_pipeline",
+      "id": "voice.dictation_pipeline@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/dictation_runner.py",
+        "holdspeak/plugins/dictation/pipeline.py",
+        "holdspeak/plugins/dictation/assembly.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.dictation_pipeline",
+      "id": "voice.dictation_pipeline@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/dictation_runner.py",
+        "holdspeak/plugins/dictation/pipeline.py",
+        "holdspeak/plugins/dictation/assembly.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "voice.dictation_pipeline",
+      "id": "voice.dictation_pipeline@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/dictation_runner.py",
+        "holdspeak/plugins/dictation/pipeline.py",
+        "holdspeak/plugins/dictation/assembly.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.dictation_pipeline",
+      "id": "voice.dictation_pipeline@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/dictation_runner.py",
+        "holdspeak/plugins/dictation/pipeline.py",
+        "holdspeak/plugins/dictation/assembly.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.dictation_pipeline",
+      "id": "voice.dictation_pipeline@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/dictation_runner.py",
+        "holdspeak/plugins/dictation/pipeline.py",
+        "holdspeak/plugins/dictation/assembly.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.delivery",
+      "id": "voice.delivery@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/operation_policy.py",
+        "holdspeak/runtime/dictation_capture.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.delivery",
+      "id": "voice.delivery@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/operation_policy.py",
+        "holdspeak/runtime/dictation_capture.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "voice.delivery",
+      "id": "voice.delivery@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/operation_policy.py",
+        "holdspeak/runtime/dictation_capture.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.delivery",
+      "id": "voice.delivery@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/operation_policy.py",
+        "holdspeak/runtime/dictation_capture.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.delivery",
+      "id": "voice.delivery@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/operation_policy.py",
+        "holdspeak/runtime/dictation_capture.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.capture",
+      "id": "meeting.capture@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/meeting_session/session.py",
+        "holdspeak/meeting_session/transcribe_loop.py",
+        "holdspeak/meeting_session/session.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.capture",
+      "id": "meeting.capture@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/meeting_session/session.py",
+        "holdspeak/meeting_session/transcribe_loop.py",
+        "holdspeak/meeting_session/session.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "meeting.capture",
+      "id": "meeting.capture@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/meeting_session/session.py",
+        "holdspeak/meeting_session/transcribe_loop.py",
+        "holdspeak/meeting_session/session.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.capture",
+      "id": "meeting.capture@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/meeting_session/session.py",
+        "holdspeak/meeting_session/transcribe_loop.py",
+        "holdspeak/meeting_session/session.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.capture",
+      "id": "meeting.capture@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/meeting_session/session.py",
+        "holdspeak/meeting_session/transcribe_loop.py",
+        "holdspeak/meeting_session/session.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.import",
+      "id": "meeting.import@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/meeting_import.py",
+        "holdspeak/meeting_import.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.import",
+      "id": "meeting.import@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/meeting_import.py",
+        "holdspeak/meeting_import.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.import",
+      "id": "meeting.import@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/meeting_import.py",
+        "holdspeak/meeting_import.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.import",
+      "id": "meeting.import@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/meeting_import.py",
+        "holdspeak/meeting_import.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.import",
+      "id": "meeting.import@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/meeting_import.py",
+        "holdspeak/meeting_import.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.intelligence",
+      "id": "meeting.intelligence@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/plugins/builtin/__init__.py",
+        "holdspeak/meeting_plugins.py",
+        "holdspeak/plugins/host.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.intelligence",
+      "id": "meeting.intelligence@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/plugins/builtin/__init__.py",
+        "holdspeak/meeting_plugins.py",
+        "holdspeak/plugins/host.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.intelligence",
+      "id": "meeting.intelligence@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/plugins/builtin/__init__.py",
+        "holdspeak/meeting_plugins.py",
+        "holdspeak/plugins/host.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.intelligence",
+      "id": "meeting.intelligence@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/plugins/builtin/__init__.py",
+        "holdspeak/meeting_plugins.py",
+        "holdspeak/plugins/host.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.intelligence",
+      "id": "meeting.intelligence@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/plugins/builtin/__init__.py",
+        "holdspeak/meeting_plugins.py",
+        "holdspeak/plugins/host.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.aftercare",
+      "id": "meeting.aftercare@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/meeting_aftercare.py",
+        "holdspeak/meeting_aftercare.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.aftercare",
+      "id": "meeting.aftercare@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/meeting_aftercare.py",
+        "holdspeak/meeting_aftercare.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.aftercare",
+      "id": "meeting.aftercare@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/meeting_aftercare.py",
+        "holdspeak/meeting_aftercare.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.aftercare",
+      "id": "meeting.aftercare@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/meeting_aftercare.py",
+        "holdspeak/meeting_aftercare.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.aftercare",
+      "id": "meeting.aftercare@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/meeting_aftercare.py",
+        "holdspeak/meeting_aftercare.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "model.registry",
+      "id": "model.registry@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/inference_capabilities.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "model.registry",
+      "id": "model.registry@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/inference_capabilities.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "supported",
+      "capability_id": "model.registry",
+      "id": "model.registry@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/inference_capabilities.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "supported",
+      "capability_id": "model.registry",
+      "id": "model.registry@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/inference_capabilities.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "supported",
+      "capability_id": "model.registry",
+      "id": "model.registry@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/inference_capabilities.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "model.assignment",
+      "id": "model.assignment@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/inference_assignment_service.py",
+        "holdspeak/services/inference_assignment_service.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "model.assignment",
+      "id": "model.assignment@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/inference_assignment_service.py",
+        "holdspeak/services/inference_assignment_service.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "supported",
+      "capability_id": "model.assignment",
+      "id": "model.assignment@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/inference_assignment_service.py",
+        "holdspeak/services/inference_assignment_service.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "supported",
+      "capability_id": "model.assignment",
+      "id": "model.assignment@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/inference_assignment_service.py",
+        "holdspeak/services/inference_assignment_service.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "supported",
+      "capability_id": "model.assignment",
+      "id": "model.assignment@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/inference_assignment_service.py",
+        "holdspeak/services/inference_assignment_service.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "model.route_plan",
+      "id": "model.route_plan@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/inference_route_plan_service.py",
+        "holdspeak/services/inference_route_plan_service.py",
+        "holdspeak/speech_session/plan.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "model.route_plan",
+      "id": "model.route_plan@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/inference_route_plan_service.py",
+        "holdspeak/services/inference_route_plan_service.py",
+        "holdspeak/speech_session/plan.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "supported",
+      "capability_id": "model.route_plan",
+      "id": "model.route_plan@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/inference_route_plan_service.py",
+        "holdspeak/services/inference_route_plan_service.py",
+        "holdspeak/speech_session/plan.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "supported",
+      "capability_id": "model.route_plan",
+      "id": "model.route_plan@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/inference_route_plan_service.py",
+        "holdspeak/services/inference_route_plan_service.py",
+        "holdspeak/speech_session/plan.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "supported",
+      "capability_id": "model.route_plan",
+      "id": "model.route_plan@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/inference_route_plan_service.py",
+        "holdspeak/services/inference_route_plan_service.py",
+        "holdspeak/speech_session/plan.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "model.execution",
+      "id": "model.execution@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/inference_fallback_controller.py",
+        "holdspeak/services/inference_fallback_controller.py",
+        "holdspeak/kernel/inference_runner.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "model.execution",
+      "id": "model.execution@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/inference_fallback_controller.py",
+        "holdspeak/services/inference_fallback_controller.py",
+        "holdspeak/kernel/inference_runner.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "supported",
+      "capability_id": "model.execution",
+      "id": "model.execution@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/inference_fallback_controller.py",
+        "holdspeak/services/inference_fallback_controller.py",
+        "holdspeak/kernel/inference_runner.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "supported",
+      "capability_id": "model.execution",
+      "id": "model.execution@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/inference_fallback_controller.py",
+        "holdspeak/services/inference_fallback_controller.py",
+        "holdspeak/kernel/inference_runner.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "supported",
+      "capability_id": "model.execution",
+      "id": "model.execution@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/inference_fallback_controller.py",
+        "holdspeak/services/inference_fallback_controller.py",
+        "holdspeak/kernel/inference_runner.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "model.destination_readiness",
+      "id": "model.destination_readiness@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/inference_targets.py",
+        "holdspeak/inference_targets.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "model.destination_readiness",
+      "id": "model.destination_readiness@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/inference_targets.py",
+        "holdspeak/inference_targets.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "model.destination_readiness",
+      "id": "model.destination_readiness@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/inference_targets.py",
+        "holdspeak/inference_targets.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "model.destination_readiness",
+      "id": "model.destination_readiness@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/inference_targets.py",
+        "holdspeak/inference_targets.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "model.destination_readiness",
+      "id": "model.destination_readiness@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/inference_targets.py",
+        "holdspeak/inference_targets.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "model.cancel_receipts",
+      "id": "model.cancel_receipts@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/kernel/inference_cancel_signal.py",
+        "holdspeak/kernel/inference_runner.py",
+        "holdspeak/services/inference_fallback_controller.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "model.cancel_receipts",
+      "id": "model.cancel_receipts@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/kernel/inference_cancel_signal.py",
+        "holdspeak/kernel/inference_runner.py",
+        "holdspeak/services/inference_fallback_controller.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "supported",
+      "capability_id": "model.cancel_receipts",
+      "id": "model.cancel_receipts@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/kernel/inference_cancel_signal.py",
+        "holdspeak/kernel/inference_runner.py",
+        "holdspeak/services/inference_fallback_controller.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "supported",
+      "capability_id": "model.cancel_receipts",
+      "id": "model.cancel_receipts@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/kernel/inference_cancel_signal.py",
+        "holdspeak/kernel/inference_runner.py",
+        "holdspeak/services/inference_fallback_controller.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "supported",
+      "capability_id": "model.cancel_receipts",
+      "id": "model.cancel_receipts@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/kernel/inference_cancel_signal.py",
+        "holdspeak/kernel/inference_runner.py",
+        "holdspeak/services/inference_fallback_controller.py"
+      ],
+      "status": "internal"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.correction_memory",
+      "id": "voice.correction_memory@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/plugins/dictation/corrections.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.correction_memory",
+      "id": "voice.correction_memory@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/plugins/dictation/corrections.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "voice.correction_memory",
+      "id": "voice.correction_memory@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/plugins/dictation/corrections.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.correction_memory",
+      "id": "voice.correction_memory@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/plugins/dictation/corrections.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.correction_memory",
+      "id": "voice.correction_memory@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/plugins/dictation/corrections.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.replay",
+      "id": "voice.replay@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/web/routes/dictation/pipeline.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.replay",
+      "id": "voice.replay@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/web/routes/dictation/pipeline.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "voice.replay",
+      "id": "voice.replay@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/web/routes/dictation/pipeline.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.replay",
+      "id": "voice.replay@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/web/routes/dictation/pipeline.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.replay",
+      "id": "voice.replay@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/web/routes/dictation/pipeline.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.learning_digest",
+      "id": "voice.learning_digest@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/dictation_learning.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.learning_digest",
+      "id": "voice.learning_digest@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/dictation_learning.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "voice.learning_digest",
+      "id": "voice.learning_digest@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/dictation_learning.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.learning_digest",
+      "id": "voice.learning_digest@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/dictation_learning.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.learning_digest",
+      "id": "voice.learning_digest@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/dictation_learning.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.prebrief_selection",
+      "id": "voice.prebrief_selection@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/dictation_selection.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.prebrief_selection",
+      "id": "voice.prebrief_selection@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/dictation_selection.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "voice.prebrief_selection",
+      "id": "voice.prebrief_selection@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/dictation_selection.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.prebrief_selection",
+      "id": "voice.prebrief_selection@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/dictation_selection.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.prebrief_selection",
+      "id": "voice.prebrief_selection@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/dictation_selection.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.symbol_settings",
+      "id": "voice.symbol_settings@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/text_processor.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.symbol_settings",
+      "id": "voice.symbol_settings@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/text_processor.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "voice.symbol_settings",
+      "id": "voice.symbol_settings@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/text_processor.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.symbol_settings",
+      "id": "voice.symbol_settings@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/text_processor.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.symbol_settings",
+      "id": "voice.symbol_settings@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/text_processor.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.language_settings",
+      "id": "voice.language_settings@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/languages.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.language_settings",
+      "id": "voice.language_settings@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/languages.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "voice.language_settings",
+      "id": "voice.language_settings@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/languages.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.language_settings",
+      "id": "voice.language_settings@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/languages.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.language_settings",
+      "id": "voice.language_settings@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/languages.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.wake",
+      "id": "voice.wake@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/runtime/wake_glue.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.wake",
+      "id": "voice.wake@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/runtime/wake_glue.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "voice.wake",
+      "id": "voice.wake@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/runtime/wake_glue.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.wake",
+      "id": "voice.wake@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/runtime/wake_glue.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.wake",
+      "id": "voice.wake@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/runtime/wake_glue.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.browser_remote_dictation",
+      "id": "voice.browser_remote_dictation@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/speech_session/browser_mic.py",
+        "holdspeak/runtime/dictation_delivery.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "voice.browser_remote_dictation",
+      "id": "voice.browser_remote_dictation@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/speech_session/browser_mic.py",
+        "holdspeak/runtime/dictation_delivery.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "voice.browser_remote_dictation",
+      "id": "voice.browser_remote_dictation@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/speech_session/browser_mic.py",
+        "holdspeak/runtime/dictation_delivery.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.browser_remote_dictation",
+      "id": "voice.browser_remote_dictation@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/speech_session/browser_mic.py",
+        "holdspeak/runtime/dictation_delivery.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "voice.browser_remote_dictation",
+      "id": "voice.browser_remote_dictation@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/speech_session/browser_mic.py",
+        "holdspeak/runtime/dictation_delivery.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.decision_lifecycle",
+      "id": "meeting.decision_lifecycle@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/decision_lifecycle_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.decision_lifecycle",
+      "id": "meeting.decision_lifecycle@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/decision_lifecycle_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.decision_lifecycle",
+      "id": "meeting.decision_lifecycle@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/decision_lifecycle_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.decision_lifecycle",
+      "id": "meeting.decision_lifecycle@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/decision_lifecycle_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.decision_lifecycle",
+      "id": "meeting.decision_lifecycle@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/decision_lifecycle_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.action_lifecycle",
+      "id": "meeting.action_lifecycle@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/web/routes/meetings/action_items.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.action_lifecycle",
+      "id": "meeting.action_lifecycle@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/web/routes/meetings/action_items.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.action_lifecycle",
+      "id": "meeting.action_lifecycle@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/web/routes/meetings/action_items.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.action_lifecycle",
+      "id": "meeting.action_lifecycle@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/web/routes/meetings/action_items.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.action_lifecycle",
+      "id": "meeting.action_lifecycle@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/web/routes/meetings/action_items.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "model.download",
+      "id": "model.download@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/inference_acquisition_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "model.download",
+      "id": "model.download@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/inference_acquisition_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "model.download",
+      "id": "model.download@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/inference_acquisition_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "model.download",
+      "id": "model.download@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/inference_acquisition_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "model.download",
+      "id": "model.download@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/inference_acquisition_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "model.inventory",
+      "id": "model.inventory@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/web/routes/model_library.py",
+        "holdspeak/mcp/families/model_library.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "model.inventory",
+      "id": "model.inventory@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/web/routes/model_library.py",
+        "holdspeak/mcp/families/model_library.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "model.inventory",
+      "id": "model.inventory@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/web/routes/model_library.py",
+        "holdspeak/mcp/families/model_library.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "model.inventory",
+      "id": "model.inventory@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/web/routes/model_library.py",
+        "holdspeak/mcp/families/model_library.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "model.inventory",
+      "id": "model.inventory@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/web/routes/model_library.py",
+        "holdspeak/mcp/families/model_library.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.requirements_extractor",
+      "id": "meeting.plugin.requirements_extractor@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/plugins/builtin/__init__.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.requirements_extractor",
+      "id": "meeting.plugin.requirements_extractor@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/plugins/builtin/__init__.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.requirements_extractor",
+      "id": "meeting.plugin.requirements_extractor@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/plugins/builtin/__init__.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.requirements_extractor",
+      "id": "meeting.plugin.requirements_extractor@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/plugins/builtin/__init__.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.requirements_extractor",
+      "id": "meeting.plugin.requirements_extractor@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/plugins/builtin/__init__.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.action_owner_enforcer",
+      "id": "meeting.plugin.action_owner_enforcer@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/plugins/builtin/action_owner_enforcer.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.action_owner_enforcer",
+      "id": "meeting.plugin.action_owner_enforcer@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/plugins/builtin/action_owner_enforcer.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.action_owner_enforcer",
+      "id": "meeting.plugin.action_owner_enforcer@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/plugins/builtin/action_owner_enforcer.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.action_owner_enforcer",
+      "id": "meeting.plugin.action_owner_enforcer@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/plugins/builtin/action_owner_enforcer.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.action_owner_enforcer",
+      "id": "meeting.plugin.action_owner_enforcer@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/plugins/builtin/action_owner_enforcer.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.mermaid_architecture",
+      "id": "meeting.plugin.mermaid_architecture@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/plugins/builtin/mermaid_architecture.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.mermaid_architecture",
+      "id": "meeting.plugin.mermaid_architecture@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/plugins/builtin/mermaid_architecture.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.mermaid_architecture",
+      "id": "meeting.plugin.mermaid_architecture@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/plugins/builtin/mermaid_architecture.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.mermaid_architecture",
+      "id": "meeting.plugin.mermaid_architecture@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/plugins/builtin/mermaid_architecture.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.mermaid_architecture",
+      "id": "meeting.plugin.mermaid_architecture@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/plugins/builtin/mermaid_architecture.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.adr_drafter",
+      "id": "meeting.plugin.adr_drafter@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/plugins/builtin/adr_drafter.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.adr_drafter",
+      "id": "meeting.plugin.adr_drafter@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/plugins/builtin/adr_drafter.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.adr_drafter",
+      "id": "meeting.plugin.adr_drafter@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/plugins/builtin/adr_drafter.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.adr_drafter",
+      "id": "meeting.plugin.adr_drafter@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/plugins/builtin/adr_drafter.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.adr_drafter",
+      "id": "meeting.plugin.adr_drafter@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/plugins/builtin/adr_drafter.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.milestone_planner",
+      "id": "meeting.plugin.milestone_planner@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/plugins/builtin/milestone_planner.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.milestone_planner",
+      "id": "meeting.plugin.milestone_planner@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/plugins/builtin/milestone_planner.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.milestone_planner",
+      "id": "meeting.plugin.milestone_planner@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/plugins/builtin/milestone_planner.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.milestone_planner",
+      "id": "meeting.plugin.milestone_planner@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/plugins/builtin/milestone_planner.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.milestone_planner",
+      "id": "meeting.plugin.milestone_planner@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/plugins/builtin/milestone_planner.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.dependency_mapper",
+      "id": "meeting.plugin.dependency_mapper@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/plugins/builtin/dependency_mapper.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.dependency_mapper",
+      "id": "meeting.plugin.dependency_mapper@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/plugins/builtin/dependency_mapper.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.dependency_mapper",
+      "id": "meeting.plugin.dependency_mapper@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/plugins/builtin/dependency_mapper.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.dependency_mapper",
+      "id": "meeting.plugin.dependency_mapper@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/plugins/builtin/dependency_mapper.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.dependency_mapper",
+      "id": "meeting.plugin.dependency_mapper@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/plugins/builtin/dependency_mapper.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.scope_guard",
+      "id": "meeting.plugin.scope_guard@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/plugins/builtin/scope_guard.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.scope_guard",
+      "id": "meeting.plugin.scope_guard@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/plugins/builtin/scope_guard.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.scope_guard",
+      "id": "meeting.plugin.scope_guard@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/plugins/builtin/scope_guard.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.scope_guard",
+      "id": "meeting.plugin.scope_guard@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/plugins/builtin/scope_guard.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.scope_guard",
+      "id": "meeting.plugin.scope_guard@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/plugins/builtin/scope_guard.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.customer_signal_extractor",
+      "id": "meeting.plugin.customer_signal_extractor@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/plugins/builtin/customer_signal_extractor.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.customer_signal_extractor",
+      "id": "meeting.plugin.customer_signal_extractor@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/plugins/builtin/customer_signal_extractor.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.customer_signal_extractor",
+      "id": "meeting.plugin.customer_signal_extractor@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/plugins/builtin/customer_signal_extractor.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.customer_signal_extractor",
+      "id": "meeting.plugin.customer_signal_extractor@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/plugins/builtin/customer_signal_extractor.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.customer_signal_extractor",
+      "id": "meeting.plugin.customer_signal_extractor@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/plugins/builtin/customer_signal_extractor.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.incident_timeline",
+      "id": "meeting.plugin.incident_timeline@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/plugins/builtin/incident_timeline.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.incident_timeline",
+      "id": "meeting.plugin.incident_timeline@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/plugins/builtin/incident_timeline.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.incident_timeline",
+      "id": "meeting.plugin.incident_timeline@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/plugins/builtin/incident_timeline.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.incident_timeline",
+      "id": "meeting.plugin.incident_timeline@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/plugins/builtin/incident_timeline.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.incident_timeline",
+      "id": "meeting.plugin.incident_timeline@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/plugins/builtin/incident_timeline.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.risk_heatmap",
+      "id": "meeting.plugin.risk_heatmap@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/plugins/builtin/risk_heatmap.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.risk_heatmap",
+      "id": "meeting.plugin.risk_heatmap@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/plugins/builtin/risk_heatmap.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.risk_heatmap",
+      "id": "meeting.plugin.risk_heatmap@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/plugins/builtin/risk_heatmap.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.risk_heatmap",
+      "id": "meeting.plugin.risk_heatmap@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/plugins/builtin/risk_heatmap.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.risk_heatmap",
+      "id": "meeting.plugin.risk_heatmap@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/plugins/builtin/risk_heatmap.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.stakeholder_update_drafter",
+      "id": "meeting.plugin.stakeholder_update_drafter@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/plugins/builtin/stakeholder_update_drafter.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.stakeholder_update_drafter",
+      "id": "meeting.plugin.stakeholder_update_drafter@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/plugins/builtin/stakeholder_update_drafter.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.stakeholder_update_drafter",
+      "id": "meeting.plugin.stakeholder_update_drafter@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/plugins/builtin/stakeholder_update_drafter.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.stakeholder_update_drafter",
+      "id": "meeting.plugin.stakeholder_update_drafter@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/plugins/builtin/stakeholder_update_drafter.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.stakeholder_update_drafter",
+      "id": "meeting.plugin.stakeholder_update_drafter@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/plugins/builtin/stakeholder_update_drafter.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.runbook_delta",
+      "id": "meeting.plugin.runbook_delta@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/plugins/builtin/runbook_delta.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.runbook_delta",
+      "id": "meeting.plugin.runbook_delta@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/plugins/builtin/runbook_delta.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.runbook_delta",
+      "id": "meeting.plugin.runbook_delta@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/plugins/builtin/runbook_delta.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.runbook_delta",
+      "id": "meeting.plugin.runbook_delta@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/plugins/builtin/runbook_delta.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.runbook_delta",
+      "id": "meeting.plugin.runbook_delta@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/plugins/builtin/runbook_delta.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.decision_announcement_drafter",
+      "id": "meeting.plugin.decision_announcement_drafter@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/plugins/builtin/decision_announcement_drafter.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.decision_announcement_drafter",
+      "id": "meeting.plugin.decision_announcement_drafter@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/plugins/builtin/decision_announcement_drafter.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.decision_announcement_drafter",
+      "id": "meeting.plugin.decision_announcement_drafter@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/plugins/builtin/decision_announcement_drafter.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.decision_announcement_drafter",
+      "id": "meeting.plugin.decision_announcement_drafter@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/plugins/builtin/decision_announcement_drafter.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.decision_announcement_drafter",
+      "id": "meeting.plugin.decision_announcement_drafter@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/plugins/builtin/decision_announcement_drafter.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.decision_capture",
+      "id": "meeting.plugin.decision_capture@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/plugins/builtin/decision_capture.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "meeting.plugin.decision_capture",
+      "id": "meeting.plugin.decision_capture@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/plugins/builtin/decision_capture.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.decision_capture",
+      "id": "meeting.plugin.decision_capture@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/plugins/builtin/decision_capture.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.decision_capture",
+      "id": "meeting.plugin.decision_capture@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/plugins/builtin/decision_capture.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "meeting.plugin.decision_capture",
+      "id": "meeting.plugin.decision_capture@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/plugins/builtin/decision_capture.py",
+        "holdspeak/inference_capabilities.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "desk.open",
+      "id": "desk.open@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "web/src/routes.tsx",
+        "web/src/App.tsx",
+        "web/src/desk/DeskApp.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "desk.open",
+      "id": "desk.open@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "web/src/routes.tsx",
+        "web/src/App.tsx",
+        "web/src/desk/DeskApp.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.open",
+      "id": "desk.open@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "web/src/routes.tsx",
+        "web/src/App.tsx",
+        "web/src/desk/DeskApp.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.open",
+      "id": "desk.open@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "web/src/routes.tsx",
+        "web/src/App.tsx",
+        "web/src/desk/DeskApp.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.open",
+      "id": "desk.open@macos",
+      "platform": "macos",
+      "source_ids": [
+        "web/src/routes.tsx",
+        "web/src/App.tsx",
+        "web/src/desk/DeskApp.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "desk.arrange",
+      "id": "desk.arrange@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "web/src/desk/components/window/windowGeometry.ts",
+        "web/src/desk/components/DeskWindow.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "desk.arrange",
+      "id": "desk.arrange@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "web/src/desk/components/window/windowGeometry.ts",
+        "web/src/desk/components/DeskWindow.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.arrange",
+      "id": "desk.arrange@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "web/src/desk/components/window/windowGeometry.ts",
+        "web/src/desk/components/DeskWindow.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.arrange",
+      "id": "desk.arrange@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "web/src/desk/components/window/windowGeometry.ts",
+        "web/src/desk/components/DeskWindow.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.arrange",
+      "id": "desk.arrange@macos",
+      "platform": "macos",
+      "source_ids": [
+        "web/src/desk/components/window/windowGeometry.ts",
+        "web/src/desk/components/DeskWindow.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "desk.inspect",
+      "id": "desk.inspect@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "web/src/desk/surface/contract.md",
+        "web/src/desk/surface/index.ts"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "desk.inspect",
+      "id": "desk.inspect@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "web/src/desk/surface/contract.md",
+        "web/src/desk/surface/index.ts"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.inspect",
+      "id": "desk.inspect@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "web/src/desk/surface/contract.md",
+        "web/src/desk/surface/index.ts"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.inspect",
+      "id": "desk.inspect@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "web/src/desk/surface/contract.md",
+        "web/src/desk/surface/index.ts"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.inspect",
+      "id": "desk.inspect@macos",
+      "platform": "macos",
+      "source_ids": [
+        "web/src/desk/surface/contract.md",
+        "web/src/desk/surface/index.ts"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "desk.execute",
+      "id": "desk.execute@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "web/src/desk/verbRegistry.ts",
+        "web/src/desk/verbRegistry.ts"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "desk.execute",
+      "id": "desk.execute@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "web/src/desk/verbRegistry.ts",
+        "web/src/desk/verbRegistry.ts"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.execute",
+      "id": "desk.execute@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "web/src/desk/verbRegistry.ts",
+        "web/src/desk/verbRegistry.ts"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.execute",
+      "id": "desk.execute@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "web/src/desk/verbRegistry.ts",
+        "web/src/desk/verbRegistry.ts"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.execute",
+      "id": "desk.execute@macos",
+      "platform": "macos",
+      "source_ids": [
+        "web/src/desk/verbRegistry.ts",
+        "web/src/desk/verbRegistry.ts"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "desk.drop",
+      "id": "desk.drop@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "web/src/desk/dropMatrix.ts",
+        "web/src/desk/components/GlassDropLayer.tsx"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "desk.drop",
+      "id": "desk.drop@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "web/src/desk/dropMatrix.ts",
+        "web/src/desk/components/GlassDropLayer.tsx"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.drop",
+      "id": "desk.drop@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "web/src/desk/dropMatrix.ts",
+        "web/src/desk/components/GlassDropLayer.tsx"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.drop",
+      "id": "desk.drop@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "web/src/desk/dropMatrix.ts",
+        "web/src/desk/components/GlassDropLayer.tsx"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.drop",
+      "id": "desk.drop@macos",
+      "platform": "macos",
+      "source_ids": [
+        "web/src/desk/dropMatrix.ts",
+        "web/src/desk/components/GlassDropLayer.tsx"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "desk.persist",
+      "id": "desk.persist@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "web/src/desk/store/workspaceStorage.ts",
+        "web/src/desk/store/workspaceStorage.ts"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.persist",
+      "id": "desk.persist@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "web/src/desk/store/workspaceStorage.ts",
+        "web/src/desk/store/workspaceStorage.ts"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.persist",
+      "id": "desk.persist@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "web/src/desk/store/workspaceStorage.ts",
+        "web/src/desk/store/workspaceStorage.ts"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.persist",
+      "id": "desk.persist@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "web/src/desk/store/workspaceStorage.ts",
+        "web/src/desk/store/workspaceStorage.ts"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.persist",
+      "id": "desk.persist@macos",
+      "platform": "macos",
+      "source_ids": [
+        "web/src/desk/store/workspaceStorage.ts",
+        "web/src/desk/store/workspaceStorage.ts"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "desk.runtime",
+      "id": "desk.runtime@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "web/src/runtime/RuntimeBus.tsx",
+        "web/src/lib/api.ts"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "desk.runtime",
+      "id": "desk.runtime@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "web/src/runtime/RuntimeBus.tsx",
+        "web/src/lib/api.ts"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.runtime",
+      "id": "desk.runtime@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "web/src/runtime/RuntimeBus.tsx",
+        "web/src/lib/api.ts"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.runtime",
+      "id": "desk.runtime@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "web/src/runtime/RuntimeBus.tsx",
+        "web/src/lib/api.ts"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.runtime",
+      "id": "desk.runtime@macos",
+      "platform": "macos",
+      "source_ids": [
+        "web/src/runtime/RuntimeBus.tsx",
+        "web/src/lib/api.ts"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "desk.native_host",
+      "id": "desk.native_host@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "docs/internal/philo/adr/desktop-host.md"
+      ],
+      "status": "planned"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.native_host",
+      "id": "desk.native_host@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "docs/internal/philo/adr/desktop-host.md"
+      ],
+      "status": "planned"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.native_host",
+      "id": "desk.native_host@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "docs/internal/philo/adr/desktop-host.md"
+      ],
+      "status": "planned"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.native_host",
+      "id": "desk.native_host@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "docs/internal/philo/adr/desktop-host.md"
+      ],
+      "status": "planned"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.native_host",
+      "id": "desk.native_host@macos",
+      "platform": "macos",
+      "source_ids": [
+        "docs/internal/philo/adr/desktop-host.md"
+      ],
+      "status": "planned"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "agents.thread_persistent",
+      "id": "agents.thread_persistent@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/thread_service.py",
+        "holdspeak/db/threads.py",
+        "holdspeak/web/routes/threads.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "agents.thread_persistent",
+      "id": "agents.thread_persistent@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/thread_service.py",
+        "holdspeak/db/threads.py",
+        "holdspeak/web/routes/threads.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "agents.thread_persistent",
+      "id": "agents.thread_persistent@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/thread_service.py",
+        "holdspeak/db/threads.py",
+        "holdspeak/web/routes/threads.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "agents.thread_persistent",
+      "id": "agents.thread_persistent@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/thread_service.py",
+        "holdspeak/db/threads.py",
+        "holdspeak/web/routes/threads.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "agents.thread_persistent",
+      "id": "agents.thread_persistent@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/thread_service.py",
+        "holdspeak/db/threads.py",
+        "holdspeak/web/routes/threads.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "agents.thread_tool_loop",
+      "id": "agents.thread_tool_loop@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/thread_tools.py",
+        "holdspeak/services/thread_tools.py",
+        "holdspeak/services/thread_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "agents.thread_tool_loop",
+      "id": "agents.thread_tool_loop@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/thread_tools.py",
+        "holdspeak/services/thread_tools.py",
+        "holdspeak/services/thread_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "agents.thread_tool_loop",
+      "id": "agents.thread_tool_loop@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/thread_tools.py",
+        "holdspeak/services/thread_tools.py",
+        "holdspeak/services/thread_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "agents.thread_tool_loop",
+      "id": "agents.thread_tool_loop@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/thread_tools.py",
+        "holdspeak/services/thread_tools.py",
+        "holdspeak/services/thread_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "agents.thread_tool_loop",
+      "id": "agents.thread_tool_loop@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/thread_tools.py",
+        "holdspeak/services/thread_tools.py",
+        "holdspeak/services/thread_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "agents.interview",
+      "id": "agents.interview@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/interview_contracts.py",
+        "holdspeak/services/interview_service.py",
+        "holdspeak/mcp/families/interview.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "agents.interview",
+      "id": "agents.interview@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/interview_contracts.py",
+        "holdspeak/services/interview_service.py",
+        "holdspeak/mcp/families/interview.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "degraded",
+      "capability_id": "agents.interview",
+      "id": "agents.interview@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/interview_contracts.py",
+        "holdspeak/services/interview_service.py",
+        "holdspeak/mcp/families/interview.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "agents.interview",
+      "id": "agents.interview@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/interview_contracts.py",
+        "holdspeak/services/interview_service.py",
+        "holdspeak/mcp/families/interview.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "agents.interview",
+      "id": "agents.interview@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/interview_contracts.py",
+        "holdspeak/services/interview_service.py",
+        "holdspeak/mcp/families/interview.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "unsupported",
+      "capability_id": "agents.mcp_http",
+      "id": "agents.mcp_http@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/web/routes/mcp_http.py",
+        "holdspeak/mcp/tools.py",
+        "holdspeak/mcp/families/ask.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "agents.mcp_http",
+      "id": "agents.mcp_http@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/web/routes/mcp_http.py",
+        "holdspeak/mcp/tools.py",
+        "holdspeak/mcp/families/ask.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "agents.mcp_http",
+      "id": "agents.mcp_http@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/web/routes/mcp_http.py",
+        "holdspeak/mcp/tools.py",
+        "holdspeak/mcp/families/ask.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "agents.mcp_http",
+      "id": "agents.mcp_http@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/web/routes/mcp_http.py",
+        "holdspeak/mcp/tools.py",
+        "holdspeak/mcp/families/ask.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "agents.mcp_http",
+      "id": "agents.mcp_http@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/web/routes/mcp_http.py",
+        "holdspeak/mcp/tools.py",
+        "holdspeak/mcp/families/ask.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "knowledge.grounding",
+      "id": "knowledge.grounding@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/grounding.py",
+        "holdspeak/grounding_rails.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "knowledge.grounding",
+      "id": "knowledge.grounding@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/grounding.py",
+        "holdspeak/grounding_rails.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "knowledge.grounding",
+      "id": "knowledge.grounding@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/grounding.py",
+        "holdspeak/grounding_rails.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "knowledge.grounding",
+      "id": "knowledge.grounding@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/grounding.py",
+        "holdspeak/grounding_rails.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "knowledge.grounding",
+      "id": "knowledge.grounding@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/grounding.py",
+        "holdspeak/grounding_rails.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "knowledge.memory_search",
+      "id": "knowledge.memory_search@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/db/memory.py",
+        "holdspeak/services/memory_service.py",
+        "holdspeak/web/routes/memory.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "knowledge.memory_search",
+      "id": "knowledge.memory_search@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/db/memory.py",
+        "holdspeak/services/memory_service.py",
+        "holdspeak/web/routes/memory.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "knowledge.memory_search",
+      "id": "knowledge.memory_search@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/db/memory.py",
+        "holdspeak/services/memory_service.py",
+        "holdspeak/web/routes/memory.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "knowledge.memory_search",
+      "id": "knowledge.memory_search@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/db/memory.py",
+        "holdspeak/services/memory_service.py",
+        "holdspeak/web/routes/memory.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "knowledge.memory_search",
+      "id": "knowledge.memory_search@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/db/memory.py",
+        "holdspeak/services/memory_service.py",
+        "holdspeak/web/routes/memory.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "workflows.linear_run",
+      "id": "workflows.linear_run@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/sequence_workflow_service.py",
+        "holdspeak/web/routes/primitives/workflows.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "workflows.linear_run",
+      "id": "workflows.linear_run@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/sequence_workflow_service.py",
+        "holdspeak/web/routes/primitives/workflows.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "workflows.linear_run",
+      "id": "workflows.linear_run@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/sequence_workflow_service.py",
+        "holdspeak/web/routes/primitives/workflows.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "workflows.linear_run",
+      "id": "workflows.linear_run@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/sequence_workflow_service.py",
+        "holdspeak/web/routes/primitives/workflows.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "workflows.linear_run",
+      "id": "workflows.linear_run@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/sequence_workflow_service.py",
+        "holdspeak/web/routes/primitives/workflows.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "coder.observation",
+      "id": "coder.observation@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/coder_steering.py",
+        "holdspeak/services/coder_service.py",
+        "holdspeak/web/routes/system/coders.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "coder.observation",
+      "id": "coder.observation@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/coder_steering.py",
+        "holdspeak/services/coder_service.py",
+        "holdspeak/web/routes/system/coders.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "coder.observation",
+      "id": "coder.observation@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/coder_steering.py",
+        "holdspeak/services/coder_service.py",
+        "holdspeak/web/routes/system/coders.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "coder.observation",
+      "id": "coder.observation@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/coder_steering.py",
+        "holdspeak/services/coder_service.py",
+        "holdspeak/web/routes/system/coders.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "coder.observation",
+      "id": "coder.observation@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/coder_steering.py",
+        "holdspeak/services/coder_service.py",
+        "holdspeak/web/routes/system/coders.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "coder.reply_and_draft",
+      "id": "coder.reply_and_draft@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/coder_steering.py",
+        "holdspeak/services/coder_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "coder.reply_and_draft",
+      "id": "coder.reply_and_draft@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/coder_steering.py",
+        "holdspeak/services/coder_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "coder.reply_and_draft",
+      "id": "coder.reply_and_draft@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/coder_steering.py",
+        "holdspeak/services/coder_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "coder.reply_and_draft",
+      "id": "coder.reply_and_draft@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/coder_steering.py",
+        "holdspeak/services/coder_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "coder.reply_and_draft",
+      "id": "coder.reply_and_draft@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/coder_steering.py",
+        "holdspeak/services/coder_service.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "coder.gate",
+      "id": "coder.gate@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/coder_gate.py",
+        "holdspeak/db/gate.py",
+        "holdspeak/web/routes/system/gate_routes.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "coder.gate",
+      "id": "coder.gate@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/coder_gate.py",
+        "holdspeak/db/gate.py",
+        "holdspeak/web/routes/system/gate_routes.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "coder.gate",
+      "id": "coder.gate@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/coder_gate.py",
+        "holdspeak/db/gate.py",
+        "holdspeak/web/routes/system/gate_routes.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "coder.gate",
+      "id": "coder.gate@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/coder_gate.py",
+        "holdspeak/db/gate.py",
+        "holdspeak/web/routes/system/gate_routes.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "coder.gate",
+      "id": "coder.gate@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/coder_gate.py",
+        "holdspeak/db/gate.py",
+        "holdspeak/web/routes/system/gate_routes.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "integration.activity_connectors",
+      "id": "integration.activity_connectors@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/connector_sdk.py",
+        "holdspeak/connector_pack_loader.py",
+        "holdspeak/activity_connector_preview.py",
+        "holdspeak/connector_runtime.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "integration.activity_connectors",
+      "id": "integration.activity_connectors@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/connector_sdk.py",
+        "holdspeak/connector_pack_loader.py",
+        "holdspeak/activity_connector_preview.py",
+        "holdspeak/connector_runtime.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "integration.activity_connectors",
+      "id": "integration.activity_connectors@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/connector_sdk.py",
+        "holdspeak/connector_pack_loader.py",
+        "holdspeak/activity_connector_preview.py",
+        "holdspeak/connector_runtime.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "integration.activity_connectors",
+      "id": "integration.activity_connectors@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/connector_sdk.py",
+        "holdspeak/connector_pack_loader.py",
+        "holdspeak/activity_connector_preview.py",
+        "holdspeak/connector_runtime.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "integration.activity_connectors",
+      "id": "integration.activity_connectors@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/connector_sdk.py",
+        "holdspeak/connector_pack_loader.py",
+        "holdspeak/activity_connector_preview.py",
+        "holdspeak/connector_runtime.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "integration.github_readonly",
+      "id": "integration.github_readonly@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/connector_packs/github_cli.py",
+        "holdspeak/activity_github.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "integration.github_readonly",
+      "id": "integration.github_readonly@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/connector_packs/github_cli.py",
+        "holdspeak/activity_github.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "integration.github_readonly",
+      "id": "integration.github_readonly@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/connector_packs/github_cli.py",
+        "holdspeak/activity_github.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "integration.github_readonly",
+      "id": "integration.github_readonly@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/connector_packs/github_cli.py",
+        "holdspeak/activity_github.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "integration.github_readonly",
+      "id": "integration.github_readonly@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/connector_packs/github_cli.py",
+        "holdspeak/activity_github.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "integration.jira_confluence_calendar",
+      "id": "integration.jira_confluence_calendar@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/connector_packs/acli_jira.py",
+        "holdspeak/connector_packs/acli_confluence.py",
+        "holdspeak/connector_packs/calendar_activity.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "integration.jira_confluence_calendar",
+      "id": "integration.jira_confluence_calendar@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/connector_packs/acli_jira.py",
+        "holdspeak/connector_packs/acli_confluence.py",
+        "holdspeak/connector_packs/calendar_activity.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "integration.jira_confluence_calendar",
+      "id": "integration.jira_confluence_calendar@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/connector_packs/acli_jira.py",
+        "holdspeak/connector_packs/acli_confluence.py",
+        "holdspeak/connector_packs/calendar_activity.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "integration.jira_confluence_calendar",
+      "id": "integration.jira_confluence_calendar@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/connector_packs/acli_jira.py",
+        "holdspeak/connector_packs/acli_confluence.py",
+        "holdspeak/connector_packs/calendar_activity.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "integration.jira_confluence_calendar",
+      "id": "integration.jira_confluence_calendar@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/connector_packs/acli_jira.py",
+        "holdspeak/connector_packs/acli_confluence.py",
+        "holdspeak/connector_packs/calendar_activity.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "integration.actuators",
+      "id": "integration.actuators@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/actuator_service.py",
+        "holdspeak/plugins/actuator_executor.py",
+        "holdspeak/web/routes/desk_actuators.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "integration.actuators",
+      "id": "integration.actuators@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/actuator_service.py",
+        "holdspeak/plugins/actuator_executor.py",
+        "holdspeak/web/routes/desk_actuators.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "integration.actuators",
+      "id": "integration.actuators@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/actuator_service.py",
+        "holdspeak/plugins/actuator_executor.py",
+        "holdspeak/web/routes/desk_actuators.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "integration.actuators",
+      "id": "integration.actuators@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/actuator_service.py",
+        "holdspeak/plugins/actuator_executor.py",
+        "holdspeak/web/routes/desk_actuators.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "integration.actuators",
+      "id": "integration.actuators@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/actuator_service.py",
+        "holdspeak/plugins/actuator_executor.py",
+        "holdspeak/web/routes/desk_actuators.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "companion.ipad_client",
+      "id": "companion.ipad_client@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "apple/Sources/Providers/Desktop/HTTPDesktopClient.swift",
+        "apple/Sources/RuntimeCore/Companion/VoiceNoteComposer.swift",
+        "apple/Sources/RuntimeCore/Companion/CompanionBoard.swift"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "companion.ipad_client",
+      "id": "companion.ipad_client@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "apple/Sources/Providers/Desktop/HTTPDesktopClient.swift",
+        "apple/Sources/RuntimeCore/Companion/VoiceNoteComposer.swift",
+        "apple/Sources/RuntimeCore/Companion/CompanionBoard.swift"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "companion.ipad_client",
+      "id": "companion.ipad_client@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "apple/Sources/Providers/Desktop/HTTPDesktopClient.swift",
+        "apple/Sources/RuntimeCore/Companion/VoiceNoteComposer.swift",
+        "apple/Sources/RuntimeCore/Companion/CompanionBoard.swift"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "companion.ipad_client",
+      "id": "companion.ipad_client@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "apple/Sources/Providers/Desktop/HTTPDesktopClient.swift",
+        "apple/Sources/RuntimeCore/Companion/VoiceNoteComposer.swift",
+        "apple/Sources/RuntimeCore/Companion/CompanionBoard.swift"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "companion.ipad_client",
+      "id": "companion.ipad_client@macos",
+      "platform": "macos",
+      "source_ids": [
+        "apple/Sources/Providers/Desktop/HTTPDesktopClient.swift",
+        "apple/Sources/RuntimeCore/Companion/VoiceNoteComposer.swift",
+        "apple/Sources/RuntimeCore/Companion/CompanionBoard.swift"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "companion.aipi_audio_control",
+      "id": "companion.aipi_audio_control@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "aipi-lite/bridge/holdspeak.py",
+        "aipi-lite/bridge/audio.py",
+        "aipi-lite/holdspeak_proto.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "companion.aipi_audio_control",
+      "id": "companion.aipi_audio_control@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "aipi-lite/bridge/holdspeak.py",
+        "aipi-lite/bridge/audio.py",
+        "aipi-lite/holdspeak_proto.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "companion.aipi_audio_control",
+      "id": "companion.aipi_audio_control@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "aipi-lite/bridge/holdspeak.py",
+        "aipi-lite/bridge/audio.py",
+        "aipi-lite/holdspeak_proto.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "companion.aipi_audio_control",
+      "id": "companion.aipi_audio_control@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "aipi-lite/bridge/holdspeak.py",
+        "aipi-lite/bridge/audio.py",
+        "aipi-lite/holdspeak_proto.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "companion.aipi_audio_control",
+      "id": "companion.aipi_audio_control@macos",
+      "platform": "macos",
+      "source_ids": [
+        "aipi-lite/bridge/holdspeak.py",
+        "aipi-lite/bridge/audio.py",
+        "aipi-lite/holdspeak_proto.py"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "companion.qlippy_presence",
+      "id": "companion.qlippy_presence@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/static/_built/qlippy/README.md"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "best_effort",
+      "capability_id": "companion.qlippy_presence",
+      "id": "companion.qlippy_presence@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/static/_built/qlippy/README.md"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "companion.qlippy_presence",
+      "id": "companion.qlippy_presence@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/static/_built/qlippy/README.md"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "companion.qlippy_presence",
+      "id": "companion.qlippy_presence@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/static/_built/qlippy/README.md"
+      ],
+      "status": "experimental"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "companion.qlippy_presence",
+      "id": "companion.qlippy_presence@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/static/_built/qlippy/README.md"
+      ],
+      "status": "experimental"
+    }
+  ],
+  "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+  "validation_errors_at_generation": 0,
+  "view": "platform_matrix"
+}

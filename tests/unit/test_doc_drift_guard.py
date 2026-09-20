@@ -27,7 +27,7 @@ def _live_docs() -> list[Path]:
     return [
         p
         for p in docs.rglob("*.md")
-        if "/evidence/" not in p.as_posix()
+        if "/evidence/" not in p.as_posix() and "node_modules" not in p.parts
     ]
 
 

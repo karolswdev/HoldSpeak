@@ -1,0 +1,466 @@
+{
+  "generated": true,
+  "generator": "scripts/generate_capability_docs.py",
+  "missing_shards": [],
+  "records": [
+    {
+      "category": "database_entity",
+      "docs": [
+        "docs/DOMAIN_MODEL.md",
+        "docs/DATA_MODEL.md"
+      ],
+      "id": "domain.meeting",
+      "lifecycle": [
+        "capture/import",
+        "transcribe",
+        "intelligence",
+        "retain or delete according to domain rules"
+      ],
+      "name": "Meeting aggregate",
+      "owner": "meeting capture and intelligence domain",
+      "purpose": "Own a captured or imported session and its transcript-linked records.",
+      "relationships": [
+        "meeting has segments",
+        "meeting queues intel jobs",
+        "meeting yields artifacts and action items"
+      ],
+      "sources": [
+        {
+          "claim": "Defines meeting capture fields and timed transcript segment relationships.",
+          "line": 24,
+          "path": "holdspeak/db/schema.py",
+          "symbol": "SCHEMA_SQL"
+        }
+      ],
+      "storage": [
+        "meetings",
+        "segments",
+        "meeting_tags",
+        "bookmarks",
+        "topics",
+        "intel_snapshots"
+      ]
+    },
+    {
+      "category": "database_entity",
+      "docs": [
+        "docs/DOMAIN_MODEL.md",
+        "docs/AUTHORITY_MODEL.md"
+      ],
+      "id": "domain.actuator_proposal",
+      "lifecycle": [
+        "proposed",
+        "approved",
+        "executed",
+        "rejected",
+        "failed"
+      ],
+      "name": "Actuator proposal",
+      "owner": "authority and actuator domain",
+      "purpose": "Hold a candidate external effect across review, authorization and execution.",
+      "relationships": [
+        "proposal may consume authority grant",
+        "proposal execution is evidenced by receipt"
+      ],
+      "sources": [
+        {
+          "claim": "Stores proposal content/destination hashes and separate lifecycle axes.",
+          "line": 424,
+          "path": "holdspeak/db/schema.py",
+          "symbol": "SCHEMA_SQL"
+        }
+      ],
+      "storage": [
+        "actuator_proposals",
+        "proposal_audit",
+        "native actuator receipts"
+      ]
+    },
+    {
+      "category": "database_entity",
+      "docs": [
+        "docs/KERNEL.md",
+        "docs/DATA_MODEL.md"
+      ],
+      "id": "domain.kernel_operation",
+      "lifecycle": [
+        "admitting",
+        "awaiting_decision",
+        "awaiting_execution",
+        "claimed",
+        "terminal state"
+      ],
+      "name": "Kernel operation graph",
+      "owner": "kernel runtime",
+      "purpose": "Represent one bounded operation, its parent/child relationship, journal evidence and terminal receipt.",
+      "relationships": [
+        "parent wraps child operations",
+        "operation emits journal events",
+        "operation closes with one receipt"
+      ],
+      "sources": [
+        {
+          "claim": "Defines operation identity, envelope, principal, state, warrant and claim fields.",
+          "line": 2118,
+          "path": "holdspeak/db/schema.py",
+          "symbol": "SCHEMA_SQL"
+        }
+      ],
+      "storage": [
+        "kernel_operations",
+        "kernel_parent_runs",
+        "kernel_journal",
+        "kernel_receipts",
+        "kernel_parent_checkpoints"
+      ]
+    },
+    {
+      "category": "api_representation",
+      "docs": [
+        "docs/KERNEL.md",
+        "docs/DATA_MODEL.md"
+      ],
+      "id": "domain.process_view",
+      "lifecycle": [
+        "read current",
+        "stale after restart until recovery/projection repair"
+      ],
+      "name": "Process read view",
+      "owner": "kernel read API",
+      "purpose": "Expose current operation state and evidence to a caller or UI without becoming authority.",
+      "relationships": [
+        "references operation and receipt",
+        "does not authorize or replace canonical rows"
+      ],
+      "sources": [
+        {
+          "claim": "Provides scoped state, canonical, process, receipt and full read views.",
+          "line": 37,
+          "path": "holdspeak/kernel/broker.py",
+          "symbol": "read"
+        }
+      ],
+      "storage": [
+        "derived from kernel_operations, journal and receipts"
+      ]
+    },
+    {
+      "category": "database_entity",
+      "docs": [
+        "docs/DOMAIN_MODEL.md",
+        "docs/KERNEL.md"
+      ],
+      "id": "domain.inference_attempt",
+      "lifecycle": [
+        "planned",
+        "dispatched/claimed",
+        "succeeded",
+        "failed",
+        "cancelled",
+        "indeterminate"
+      ],
+      "name": "Inference route attempt",
+      "owner": "inference runtime",
+      "purpose": "Record one physical model attempt, including deployment binding, disposition and result evidence.",
+      "relationships": [
+        "belongs to route execution",
+        "maps to child kernel operation",
+        "has receipt/result hashes"
+      ],
+      "sources": [
+        {
+          "claim": "Defines attempt state, outcome, disposition and result/receipt references.",
+          "line": 3060,
+          "path": "holdspeak/db/schema.py",
+          "symbol": "SCHEMA_SQL"
+        }
+      ],
+      "storage": [
+        "inference_route_plans",
+        "inference_route_executions",
+        "inference_route_attempts"
+      ]
+    },
+    {
+      "category": "concept",
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md",
+        "docs/MODEL_RUNTIME.md"
+      ],
+      "id": "voice.speech_session_plan",
+      "lifecycle": "freeze before child, admit child, close session",
+      "name": "Speech session plan",
+      "owner": "speech session",
+      "purpose": "Content-free frozen voice capability and deployment plan.",
+      "relationships": [
+        "voice.capture",
+        "voice.transcribe",
+        "model.route_plan"
+      ],
+      "sources": [
+        {
+          "claim": "The plan carries ids, hashes, revisions, and capability names only.",
+          "line": 1,
+          "path": "holdspeak/speech_session/plan.py",
+          "symbol": "SpeechSessionPlan"
+        }
+      ],
+      "storage": "in-memory admission and persisted route evidence"
+    },
+    {
+      "category": "database_entity",
+      "docs": [
+        "docs/MEETING_ARCHITECTURE.md"
+      ],
+      "id": "meeting.meeting_state",
+      "lifecycle": "provisional, recording or record-only, stopping, finalized",
+      "name": "Meeting state",
+      "owner": "meeting session",
+      "purpose": "Durable meeting lifecycle and transcript record.",
+      "relationships": [
+        "meeting.capture",
+        "meeting.import",
+        "meeting.intelligence"
+      ],
+      "sources": [
+        {
+          "claim": "Meeting state carries capture and intelligence statuses and queue state.",
+          "line": 115,
+          "path": "holdspeak/meeting_session/models.py",
+          "symbol": "MeetingState"
+        }
+      ],
+      "storage": "meeting database and JSON compatibility projection"
+    },
+    {
+      "category": "database_entity",
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ],
+      "id": "meeting.plugin_run",
+      "lifecycle": "queued, running, success/proposed/error/timeout/blocked/deduped/skipped",
+      "name": "Plugin run",
+      "owner": "meeting plugin host",
+      "purpose": "Record one meeting plugin execution status and result lineage.",
+      "relationships": [
+        "meeting.meeting_state",
+        "meeting.artifact_lineage",
+        "meeting.intelligence"
+      ],
+      "sources": [
+        {
+          "claim": "PluginRun is the typed run contract with status and result fields.",
+          "line": 74,
+          "path": "holdspeak/plugins/contracts.py",
+          "symbol": "PluginRun"
+        }
+      ],
+      "storage": "plugin run persistence"
+    },
+    {
+      "category": "database_entity",
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md",
+        "docs/MEETING_AFTERCARE.md"
+      ],
+      "id": "meeting.artifact_lineage",
+      "lifecycle": "created with plugin result, retained across idempotent reruns",
+      "name": "Artifact lineage",
+      "owner": "meeting plugin host",
+      "purpose": "Link a generated artifact to its plugin, meeting window, and source hash.",
+      "relationships": [
+        "meeting.plugin_run",
+        "meeting.meeting_state",
+        "meeting.aftercare"
+      ],
+      "sources": [
+        {
+          "claim": "ArtifactLineage is the typed provenance link for plugin output.",
+          "line": 114,
+          "path": "holdspeak/plugins/contracts.py",
+          "symbol": "ArtifactLineage"
+        }
+      ],
+      "storage": "artifact persistence"
+    },
+    {
+      "category": "database_entity",
+      "docs": [
+        "docs/EXECUTION_DESTINATIONS.md"
+      ],
+      "id": "model.runtime_profile",
+      "lifecycle": "configured, readiness derived, resolved into deployment identity",
+      "name": "Runtime profile",
+      "owner": "destination resolver",
+      "purpose": "Synced storage and wire primitive for a model destination.",
+      "relationships": [
+        "model.destination_readiness",
+        "model.route_plan"
+      ],
+      "sources": [
+        {
+          "claim": "Profile service manages persisted destination profiles; the transport name is not a Python RuntimeProfile class.",
+          "line": 1,
+          "path": "holdspeak/services/profile_service.py",
+          "symbol": "ProfileService"
+        }
+      ],
+      "storage": "profile store"
+    },
+    {
+      "category": "database_entity",
+      "docs": [
+        "docs/MODEL_RUNTIME.md"
+      ],
+      "id": "model.inference_assignment",
+      "lifecycle": "owner command, revision, projection, route snapshot",
+      "name": "Inference assignment",
+      "owner": "assignment service",
+      "purpose": "Sparse owner-selected capability or group configuration.",
+      "relationships": [
+        "model.registry",
+        "model.route_plan",
+        "model.destination_readiness"
+      ],
+      "sources": [
+        {
+          "claim": "Assignment is configuration rather than execution.",
+          "line": 90,
+          "path": "holdspeak/services/inference_assignment_service.py",
+          "symbol": "InferenceAssignmentService"
+        }
+      ],
+      "storage": "assignment rows and immutable head"
+    },
+    {
+      "category": "database_entity",
+      "docs": [
+        "docs/MODEL_RUNTIME.md"
+      ],
+      "id": "model.route_execution",
+      "lifecycle": "active, attempting, terminal, cancelled or indeterminate",
+      "name": "Route execution",
+      "owner": "fallback controller",
+      "purpose": "Durable execution head bound to frozen route and operation evidence.",
+      "relationships": [
+        "model.route_plan",
+        "model.cancel_receipts",
+        "model.destination_readiness"
+      ],
+      "sources": [
+        {
+          "claim": "The controller binds execution to immutable route evidence.",
+          "line": 41,
+          "path": "holdspeak/services/inference_fallback_controller.py",
+          "symbol": "InferenceFallbackController"
+        }
+      ],
+      "storage": "route execution and receipt tables"
+    },
+    {
+      "category": "frontend_projection",
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "id": "desk.world_object",
+      "lifecycle": "derive, select, inspect, mutate through named verb, refresh",
+      "name": "World object",
+      "owner": "desk.world",
+      "purpose": "Stable primitive projected into a spatial/list Desk view.",
+      "relationships": [
+        "primitive descriptor",
+        "window surface",
+        "selection context"
+      ],
+      "sources": [
+        {
+          "claim": "World objects carry id, kind, label, subtitle, position and visual fields.",
+          "line": 18,
+          "path": "web/src/desk/world.ts",
+          "symbol": "WorldObject"
+        }
+      ],
+      "storage": "derived from primitive records; arrangement metadata in workspace storage"
+    },
+    {
+      "category": "frontend_projection",
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "id": "desk.window_state",
+      "lifecycle": "open, focus, move/resize, park/maximize, restore, close",
+      "name": "Window state",
+      "owner": "desk.window",
+      "purpose": "Local frame geometry and lifecycle state for an open Desk surface.",
+      "relationships": [
+        "surface registry",
+        "active context",
+        "workspace persistence"
+      ],
+      "sources": [
+        {
+          "claim": "Persisted workspace includes panel rect, window rect/order/max, zones and preferences.",
+          "line": 67,
+          "path": "web/src/desk/store/workspaceStorage.ts",
+          "symbol": "DeskWorkspaceDocumentV1"
+        }
+      ],
+      "storage": "hs.desk.workspace.v1 plus in-memory store"
+    },
+    {
+      "category": "concept",
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "id": "desk.verb",
+      "lifecycle": "registered, available/ghost, invoked, pending/completed/failed where runner supports it",
+      "name": "Desk verb",
+      "owner": "desk.verb_registry",
+      "purpose": "Named user operation with scope, availability and runner.",
+      "relationships": [
+        "current context",
+        "window menu",
+        "keyboard map",
+        "receipt"
+      ],
+      "sources": [
+        {
+          "claim": "Verb definitions encode id, label, scope, availability and runner.",
+          "line": 28,
+          "path": "web/src/desk/verbRegistry.ts",
+          "symbol": "Verb"
+        }
+      ],
+      "storage": "source registry; outcomes are not uniformly persisted"
+    },
+    {
+      "category": "concept",
+      "docs": [
+        "docs/internal/philo/SRS.md"
+      ],
+      "id": "desk.receipt",
+      "lifecycle": "accepted, running, succeeded, failed, retried, parked",
+      "name": "Operation receipt",
+      "owner": "domain/runtime (proposed)",
+      "purpose": "Durable explanation of accepted, running, completed or failed work.",
+      "relationships": [
+        "verb",
+        "egress boundary",
+        "source/provenance",
+        "recovery"
+      ],
+      "sources": [
+        {
+          "claim": "Receipt renders status, label and timestamp fields.",
+          "line": 36,
+          "path": "web/src/desk/surface/patterns/ProvenanceChip.tsx",
+          "symbol": "Receipt"
+        }
+      ],
+      "storage": "presentational today; durable storage proposed"
+    }
+  ],
+  "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+  "validation_errors_at_generation": 0,
+  "view": "domain_model"
+}

@@ -44,8 +44,8 @@ _JS_INTERP = re.compile(r"\$\{[^}]*\}")
 _BRACE_PARAM = re.compile(r"\{[^}]*\}")
 
 
-def build_app_routes() -> list[dict[str, Any]]:
-    """Enumerate the real app's HTTP routes (path, methods, defining module)."""
+def build_reference_app():
+    """Assemble the reference app against a disposable database, without serving."""
     from holdspeak.db import get_database, reset_database
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
@@ -67,8 +67,13 @@ def build_app_routes() -> list[dict[str, Any]]:
             )
         finally:
             reset_database()
+    return server.app
+
+
+def build_app_routes() -> list[dict[str, Any]]:
+    """Enumerate the real app's HTTP routes (path, methods, defining module)."""
     routes: list[dict[str, Any]] = []
-    for route in server.app.routes:
+    for route in build_reference_app().routes:
         path = getattr(route, "path", "")
         endpoint = getattr(route, "endpoint", None)
         module = getattr(endpoint, "__module__", "") or ""

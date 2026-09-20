@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.local/philo/trust_boundary.schema.json",
+  "title": "Philo trust boundary",
+  "type": "object", "additionalProperties": true,
+  "required": ["id", "name", "purpose", "from", "to", "data", "compute", "authority", "secrets", "audit", "sources", "docs"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"},
+    "name": {"type": "string", "minLength": 1},
+    "purpose": {"type": "string", "minLength": 1},
+    "from": {"type": "string", "minLength": 1},
+    "to": {"type": "string", "minLength": 1},
+    "data": {"type": ["string", "array"], "items": {"type": "string"}},
+    "compute": {"type": ["string", "array"], "minItems": 1},
+    "authority": {"type": ["string", "array"], "minLength": 1, "minItems": 1},
+    "secrets": {"type": ["string", "array"]},
+    "audit": {"type": ["string", "array"], "minItems": 1},
+    "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+    "docs": {"type": "array", "items": {"type": "string"}}
+  },
+  "$defs": {"source": {"type": "object", "additionalProperties": true, "required": ["path", "symbol", "line", "claim"], "properties": {"path": {"type": "string", "minLength": 1}, "symbol": {"type": "string", "minLength": 1}, "line": {"type": "integer", "minimum": 1}, "claim": {"type": "string", "minLength": 1}}}}
+}

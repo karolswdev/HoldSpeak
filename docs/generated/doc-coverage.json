@@ -1,0 +1,4002 @@
+{
+  "generated": true,
+  "generator": "scripts/check_doc_coverage.py",
+  "missing_shards": [],
+  "records": [
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 1
+      },
+      "id": "runtime.kernel_admit",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 3,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "runtime.kernel_recover",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          3,
+          3
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 3,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 1
+      },
+      "id": "runtime.inference_attempt",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          4,
+          4
+        ],
+        "tests": [
+          3,
+          3
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 3
+    },
+    {
+      "assertions_inspected": 3,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 2
+      },
+      "id": "authority.principal_routes",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          3,
+          3
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 3
+    },
+    {
+      "assertions_inspected": 3,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 2
+      },
+      "id": "authority.policy_resolution",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          3,
+          3
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 3
+    },
+    {
+      "assertions_inspected": 4,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "storage.sqlite_reconcile",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          4,
+          4
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 4
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "storage.backup_restore",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 2,
+        "security": 0
+      },
+      "id": "operations.doctor",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 3,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 1
+      },
+      "id": "negative.kernel_content_exclusion",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          3,
+          3
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 3
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 2
+      },
+      "id": "negative.authority.agent_no_decide",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "negative.storage_preserve_unknown_tables",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "voice.capture",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 1
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 2,
+        "security": 0
+      },
+      "id": "voice.transcribe",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "voice.command_dispatch",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 1
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "voice.dictation_pipeline",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 3,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "voice.delivery",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          3,
+          3
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 3
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "meeting.capture",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "meeting.import",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 3,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.intelligence",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          3,
+          3
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 3
+    },
+    {
+      "assertions_inspected": 3,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.aftercare",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          3,
+          3
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 3
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "model.registry",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 1
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "model.assignment",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 2,
+        "security": 0
+      },
+      "id": "model.route_plan",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 3,
+      "docs": {
+        "api": 0,
+        "operational": 2,
+        "security": 0
+      },
+      "id": "model.execution",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          3,
+          3
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 3
+    },
+    {
+      "assertions_inspected": 3,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "model.destination_readiness",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          3,
+          3
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 3
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 2,
+        "security": 0
+      },
+      "id": "model.cancel_receipts",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "voice.correction_memory",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 1
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "voice.replay",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "voice.learning_digest",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          0,
+          0
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "voice.prebrief_selection",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          0,
+          0
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "voice.symbol_settings",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          0,
+          0
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "voice.language_settings",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          0,
+          0
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "voice.wake",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          0,
+          0
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 2,
+        "security": 0
+      },
+      "id": "voice.browser_remote_dictation",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.decision_lifecycle",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.action_lifecycle",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 1
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "model.download",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "model.inventory",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.plugin.requirements_extractor",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.plugin.action_owner_enforcer",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.plugin.mermaid_architecture",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.plugin.adr_drafter",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.plugin.milestone_planner",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.plugin.dependency_mapper",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.plugin.scope_guard",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.plugin.customer_signal_extractor",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.plugin.incident_timeline",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.plugin.risk_heatmap",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.plugin.stakeholder_update_drafter",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.plugin.runbook_delta",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.plugin.decision_announcement_drafter",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.plugin.decision_capture",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "desk.open",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "desk.arrange",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.inspect",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.execute",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.drop",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.persist",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "desk.runtime",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.native_host",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "agents.thread_persistent",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 3,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "agents.thread_tool_loop",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          3,
+          3
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 3,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "agents.interview",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          3,
+          3
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 3
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "agents.mcp_http",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "knowledge.grounding",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "knowledge.memory_search",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 3,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "workflows.linear_run",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          3,
+          3
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 3
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "coder.observation",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "coder.reply_and_draft",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 4,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "coder.gate",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          4,
+          4
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 4
+    },
+    {
+      "assertions_inspected": 3,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "integration.activity_connectors",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          4,
+          4
+        ],
+        "tests": [
+          3,
+          3
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 3
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "integration.github_readonly",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 3,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "integration.jira_confluence_calendar",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          3,
+          3
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 3,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "integration.actuators",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          3,
+          3
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          3,
+          3
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 3
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "companion.ipad_client",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          3,
+          3
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "companion.aipi_audio_control",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "companion.qlippy_presence",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "runtime.kernel",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 1
+      },
+      "id": "runtime.inference",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 2
+      },
+      "id": "authority.edge",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "storage.sqlite",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 2,
+        "security": 0
+      },
+      "id": "operations.doctor",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "voice.speech_session",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "voice.dictation_runner",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "meeting.session",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.plugin_host",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "model.capability_registry",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "model.assignment_service",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 2,
+        "security": 0
+      },
+      "id": "model.route_execution",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "model.destination_resolver",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "desk.shell",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.world",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.window",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.verb_registry",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "surface.library",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "desk.runtime",
+      "kind": "components",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "runtime.sqlite",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 2
+      },
+      "id": "runtime.provider_routes",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "operations.remote_health",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 2,
+        "security": 0
+      },
+      "id": "voice.to_model",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 1
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.to_model",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 1
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "model.to_destination",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 1
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.external_actuators",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "desk.api",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "desk.runtime_bus",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.local_workspace",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.native_future",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "integration.connector_registry",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 1
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "integration.github_read",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 1
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "integration.jira_confluence_read",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "integration.calendar_local",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 1
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "integration.actuator_external",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 1
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "integration.ipad_hub",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "integration.aipi_bridge",
+      "kind": "integrations",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "domain.meeting",
+      "kind": "domain_model",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 1
+      },
+      "id": "domain.actuator_proposal",
+      "kind": "domain_model",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "domain.kernel_operation",
+      "kind": "domain_model",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "domain.process_view",
+      "kind": "domain_model",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "domain.inference_attempt",
+      "kind": "domain_model",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 2,
+        "security": 0
+      },
+      "id": "voice.speech_session_plan",
+      "kind": "domain_model",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "meeting.meeting_state",
+      "kind": "domain_model",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.plugin_run",
+      "kind": "domain_model",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.artifact_lineage",
+      "kind": "domain_model",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "model.runtime_profile",
+      "kind": "domain_model",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "model.inference_assignment",
+      "kind": "domain_model",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "model.route_execution",
+      "kind": "domain_model",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.world_object",
+      "kind": "domain_model",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.window_state",
+      "kind": "domain_model",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.verb",
+      "kind": "domain_model",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.receipt",
+      "kind": "domain_model",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 2
+      },
+      "id": "boundary.edge_to_kernel",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 1
+      },
+      "id": "boundary.kernel_to_executor",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 1
+      },
+      "id": "boundary.executor_to_provider",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "voice.local_capture_to_transcription",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "meeting.capture_to_intelligence",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "model.local_boundary",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 2,
+        "security": 0
+      },
+      "id": "model.remote_boundary",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 2,
+        "security": 0
+      },
+      "id": "model.secret_boundary",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "meeting.actuator_boundary",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "desk.browser_to_api",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 1,
+        "security": 0
+      },
+      "id": "desk.browser_to_runtime",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.browser_to_storage",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.browser_to_future_host",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "trust.thread_model",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "trust.connector_runtime",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "trust.actuator_egress",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    },
+    {
+      "assertions_inspected": 0,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "trust.companion_hub",
+      "kind": "trust_boundaries",
+      "path_presence": {
+        "docs": [
+          3,
+          3
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          0,
+          0
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
+    }
+  ],
+  "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+  "totals": {
+    "assertions_inspected": 179,
+    "doc_paths": [
+      216,
+      216
+    ],
+    "docs": {
+      "api": 0,
+      "operational": 65,
+      "security": 19
+    },
+    "records": 147,
+    "records_with_executed_assertions": 73,
+    "semantics_unresolved": 74,
+    "source_paths": [
+      244,
+      244
+    ],
+    "test_paths": [
+      179,
+      179
+    ],
+    "tests_executed": 151
+  },
+  "validation_errors": 0
+}

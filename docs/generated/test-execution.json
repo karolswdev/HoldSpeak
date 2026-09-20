@@ -1,0 +1,1156 @@
+{
+  "source_commit": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+  "run": "full-python-suite",
+  "command": "HOME=<disposable> uv run pytest -q -n auto --ignore=tests/e2e/test_metal.py --junitxml=.tmp/philo/full-suite.xml",
+  "result": {
+    "passed": 11137,
+    "failed": 19,
+    "skipped": 115,
+    "seconds": 1846.53
+  },
+  "limits": "Exact referenced Python nodes only; every observed parameter case must pass. This records execution, not independent verification of all prose assertions. Later focused fixes are reported separately. Swift and TypeScript references are not inferred from this Python result.",
+  "references": [
+    {
+      "record": "runtime.kernel_admit",
+      "path": "tests/unit/test_kernel_broker.py",
+      "node": "test_codec_and_four_authority_layers_admit_in_order",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "runtime.kernel_admit",
+      "path": "tests/unit/test_kernel_broker.py",
+      "node": "test_refused_submission_has_terminal_receipt_and_stream_content_is_forbidden",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "runtime.kernel_recover",
+      "path": "tests/unit/test_kernel_broker.py",
+      "node": "test_liveness_reaper_refuses_approved_work_that_was_never_claimed",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "runtime.kernel_recover",
+      "path": "tests/unit/test_kernel_broker.py",
+      "node": "test_liveness_reaper_marks_silent_claimed_work_indeterminate",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "runtime.kernel_recover",
+      "path": "tests/integration/test_kernel_real_hub.py",
+      "node": "test_real_http_executor_receipt_and_sigkill_cursor_replay",
+      "status": "failed",
+      "cases": 1
+    },
+    {
+      "record": "runtime.inference_attempt",
+      "path": "tests/unit/test_inference_runner.py",
+      "node": "test_fallback_is_two_invocations_not_one_logical_receipt",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "runtime.inference_attempt",
+      "path": "tests/unit/test_inference_runner.py",
+      "node": "test_journal_has_no_prompt_output_or_audio_bodies",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "runtime.inference_attempt",
+      "path": "tests/integration/test_kernel_real_hub.py",
+      "node": "test_synthetic_admitted_reference_invocation_and_cancelled_stream",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "authority.principal_routes",
+      "path": "tests/integration/test_principal_separation.py",
+      "node": "test_agent_identity_is_derived_and_owner_only_rights_refuse_by_name",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "authority.principal_routes",
+      "path": "tests/integration/test_principal_separation.py",
+      "node": "test_node_credential_derives_node_not_owner",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "authority.principal_routes",
+      "path": "tests/integration/test_principal_separation.py",
+      "node": "test_agent_credential_expires",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "authority.policy_resolution",
+      "path": "tests/unit/test_operation_policy.py",
+      "node": "test_every_mode_preserves_identical_hard_invariants",
+      "status": "passed",
+      "cases": 12
+    },
+    {
+      "record": "authority.policy_resolution",
+      "path": "tests/unit/test_operation_policy.py",
+      "node": "test_sync_matrix_and_unsupported_fail_closed",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "authority.policy_resolution",
+      "path": "tests/unit/test_authority_grants.py",
+      "node": "test_proposal_captures_policy_once_for_future_operations",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "storage.sqlite_reconcile",
+      "path": "tests/unit/test_db_schema_policy.py",
+      "node": "test_missing_table_self_heals",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "storage.sqlite_reconcile",
+      "path": "tests/unit/test_db_schema_policy.py",
+      "node": "test_missing_column_self_heals",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "storage.sqlite_reconcile",
+      "path": "tests/unit/test_db_schema_policy.py",
+      "node": "test_orphan_table_and_rows_survive",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "storage.sqlite_reconcile",
+      "path": "tests/unit/test_phase200_doc_claims.py",
+      "node": "test_registered_claim_matches_its_state",
+      "status": "passed",
+      "cases": 19
+    },
+    {
+      "record": "storage.backup_restore",
+      "path": "tests/critical/test_journey_backup_restore.py",
+      "node": "test_backup_then_restore_reopens_the_same_kept_work",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "storage.backup_restore",
+      "path": "tests/critical/test_journey_backup_restore.py",
+      "node": "test_an_interrupted_restore_leaves_the_installation_openable",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "negative.kernel_content_exclusion",
+      "path": "tests/unit/test_kernel_broker.py",
+      "node": "test_refused_submission_has_terminal_receipt_and_stream_content_is_forbidden",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "negative.kernel_content_exclusion",
+      "path": "tests/unit/test_inference_runner.py",
+      "node": "test_journal_has_no_prompt_output_or_audio_bodies",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "negative.kernel_content_exclusion",
+      "path": "tests/unit/test_phase200_doc_claims.py",
+      "node": "test_registered_claim_matches_its_state",
+      "status": "passed",
+      "cases": 19
+    },
+    {
+      "record": "negative.authority.agent_no_decide",
+      "path": "tests/unit/test_kernel_broker.py",
+      "node": "test_agent_cannot_decide_and_http_decision_cannot_mutate_envelope",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "negative.authority.agent_no_decide",
+      "path": "tests/integration/test_principal_separation.py",
+      "node": "test_agent_identity_is_derived_and_owner_only_rights_refuse_by_name",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "negative.storage_preserve_unknown_tables",
+      "path": "tests/unit/test_db_schema_policy.py",
+      "node": "test_orphan_table_and_rows_survive",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "negative.storage_preserve_unknown_tables",
+      "path": "tests/unit/test_db_schema_policy.py",
+      "node": "test_newer_stamped_db_opens_without_error",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "runtime.sqlite",
+      "path": "tests/unit/test_db_schema_policy.py",
+      "node": "test_newer_stamped_db_opens_without_error",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "runtime.sqlite",
+      "path": "tests/critical/test_journey_backup_restore.py",
+      "node": "test_an_interrupted_restore_leaves_the_installation_openable",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "runtime.provider_routes",
+      "path": "tests/unit/test_inference_runner.py",
+      "node": "test_journal_has_no_prompt_output_or_audio_bodies",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "runtime.provider_routes",
+      "path": "tests/integration/test_kernel_real_hub.py",
+      "node": "test_synthetic_admitted_reference_invocation_and_cancelled_stream",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.capture",
+      "path": "tests/unit/test_dictation_session_admission.py",
+      "node": "test_hold_press_admits_exactly_one_dictation_session",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.transcribe",
+      "path": "tests/unit/test_meeting_import.py",
+      "node": "test_happy_path_windows_timestamps_and_persistence",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.transcribe",
+      "path": "tests/unit/test_dictation_runtime.py",
+      "node": "test_auto_prefers_mlx_on_arm64_when_importable",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.command_dispatch",
+      "path": "tests/unit/test_dictation_commit_boundary.py",
+      "node": "test_type_text_voice_command_effect_is_configured_payload_not_keyword",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.dictation_pipeline",
+      "path": "tests/unit/test_dictation_pipeline.py",
+      "node": "test_disabled_pipeline_is_noop",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.dictation_pipeline",
+      "path": "tests/unit/test_dictation_pipeline_admission.py",
+      "node": "test_a_cancelled_session_refuses_the_next_provider_child",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.delivery",
+      "path": "tests/unit/test_dictation_commit_boundary.py",
+      "node": "test_ordinary_commit_is_one_final_desktop_effect",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.delivery",
+      "path": "tests/unit/test_dictation_commit_boundary.py",
+      "node": "test_preview_commits_only_when_one_shot_type_is_consumed",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.delivery",
+      "path": "tests/unit/test_dictation_pipeline_admission.py",
+      "node": "test_a_backend_that_cannot_be_rebound_refuses_by_name",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.capture",
+      "path": "tests/unit/test_meeting_capture_durability.py",
+      "node": "test_provisional_meeting_round_trips_and_recovers_same_id",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.capture",
+      "path": "tests/unit/test_meeting_capture_durability.py",
+      "node": "test_recovery_converges_prefence_and_postfence_process_loss_to_one_aftercare_row",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.import",
+      "path": "tests/unit/test_meeting_import.py",
+      "node": "test_happy_path_windows_timestamps_and_persistence",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.import",
+      "path": "tests/integration/test_meeting_import_parity.py",
+      "node": "test_imported_meeting_is_indistinguishable_downstream",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.intelligence",
+      "path": "tests/unit/test_meeting_plugins.py",
+      "node": "test_saved_meeting_gets_window_runs_and_artifacts",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.intelligence",
+      "path": "tests/unit/test_decision_capture_plugin.py",
+      "node": "test_host_blocks_without_llm_capability",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.intelligence",
+      "path": "tests/integration/test_meeting_intel_recovery.py",
+      "node": "test_partial_intel_names_retained_work_and_supports_retry_or_skip",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.aftercare",
+      "path": "tests/unit/test_meeting_aftercare.py",
+      "node": "test_unknown_meeting_returns_none",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.aftercare",
+      "path": "tests/unit/test_meeting_aftercare.py",
+      "node": "test_since_last_meeting_real_diff",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.aftercare",
+      "path": "tests/unit/test_meeting_aftercare.py",
+      "node": "test_no_change_since_last_meeting_is_quiet",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.registry",
+      "path": "tests/unit/test_phase143_inference_assignments.py",
+      "node": "test_future_lexical_punctuation_is_not_owner_assignable",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.assignment",
+      "path": "tests/unit/test_phase143_inference_assignments.py",
+      "node": "test_readiness_and_capacity_are_not_structural_save_blockers",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.assignment",
+      "path": "tests/unit/test_phase143_inference_assignments.py",
+      "node": "test_legacy_v1_and_v2_entries_share_one_chain_without_rewriting_v1",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.route_plan",
+      "path": "tests/unit/test_phase143_inference_route_plans.py",
+      "node": "test_pure_resolution_is_one_snapshot_zero_write_and_fast",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.route_plan",
+      "path": "tests/unit/test_phase143_inference_route_plans.py",
+      "node": "test_freeze_replay_and_restart_ignore_later_assignment_mutation",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.execution",
+      "path": "tests/unit/test_phase143_inference_fallback_controller.py",
+      "node": "test_typed_provider_permanent_failure_falls_back_to_exact_next_frozen_leg",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.execution",
+      "path": "tests/unit/test_phase143_inference_fallback_controller.py",
+      "node": "test_permission_denied_is_terminal_and_never_falls_back",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.execution",
+      "path": "tests/unit/test_phase143_inference_fallback_controller.py",
+      "node": "test_local_capacity_pre_send_failure_falls_back_with_zero_physical_primary",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.destination_readiness",
+      "path": "tests/unit/test_inference_targets.py",
+      "node": "test_local_destinations_are_unavailable_without_their_model_files",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.destination_readiness",
+      "path": "tests/unit/test_inference_targets.py",
+      "node": "test_unknown_target_is_named_and_never_retargeted",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.destination_readiness",
+      "path": "tests/unit/test_inference_targets.py",
+      "node": "test_thought_placement_uses_its_selected_target_and_blank_means_this_device",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.cancel_receipts",
+      "path": "tests/unit/test_phase143_inference_fallback_controller.py",
+      "node": "test_stop_and_deadline_fence_reservation_claim",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.cancel_receipts",
+      "path": "tests/integration/test_model_library_secret_boundary.py",
+      "node": "test_secret_is_absent_from_json_exceptions_logs_receipts_and_assignment_heads",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.correction_memory",
+      "path": "tests/unit/test_dictation_selection.py",
+      "node": "test_set_then_consume_returns_id_once",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.replay",
+      "path": "tests/integration/test_dictation_journal_replay.py",
+      "node": "test_replay_reruns_transcript_without_typing_or_new_row",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.replay",
+      "path": "tests/integration/test_dictation_journal_replay.py",
+      "node": "test_replay_after_target_correction_changes_routing",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.learning_digest",
+      "path": "tests/integration/test_web_dictation_learning_digest.py",
+      "node": "test_bare_server_returns_empty_digest",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.learning_digest",
+      "path": "tests/integration/test_web_dictation_learning_digest.py",
+      "node": "test_digest_counts_real_corrections_and_reach",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.prebrief_selection",
+      "path": "tests/unit/test_dictation_selection.py",
+      "node": "test_set_then_consume_returns_id_once",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.prebrief_selection",
+      "path": "tests/unit/test_dictation_selection.py",
+      "node": "test_stale_pin_is_dropped_unused",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.symbol_settings",
+      "path": "tests/integration/test_settings_spoken_symbols.py",
+      "node": "test_symbols_round_trip_normalized",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.symbol_settings",
+      "path": "tests/integration/test_settings_spoken_symbols.py",
+      "node": "test_malformed_symbol_refused_with_400",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.wake",
+      "path": "tests/integration/test_settings_wake_word.py",
+      "node": "test_defaults_are_off_and_preview",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.wake",
+      "path": "tests/integration/test_wake_ux.py",
+      "node": "test_wake_preview_card_ships_with_the_safety_copy",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.browser_remote_dictation",
+      "path": "tests/integration/test_speech_side_door_entrypoints.py",
+      "node": "test_browser_dry_run_owns_one_parent_child_revision_and_publication",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.browser_remote_dictation",
+      "path": "tests/unit/test_dictation_commit_boundary.py",
+      "node": "test_remote_focused_send_commits_without_submit",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.decision_lifecycle",
+      "path": "tests/integration/test_decision_records.py",
+      "node": "test_decision_routes_require_read_authority_and_owner_lifecycle_principal",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.decision_lifecycle",
+      "path": "tests/integration/test_decision_records.py",
+      "node": "test_promote_route_is_idempotent_and_queryable_both_ways",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.action_lifecycle",
+      "path": "tests/integration/test_cadence_collector.py",
+      "node": "test_completing_an_action_closes_its_loop",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.download",
+      "path": "tests/unit/test_web_model_library_routes.py",
+      "node": "test_library_http_is_owner_before_body_and_closed",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.download",
+      "path": "tests/unit/test_mcp_model_library_tools.py",
+      "node": "test_model_library_mcp_stages_base64_and_never_returns_secret_or_paths",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.inventory",
+      "path": "tests/unit/test_web_model_library_routes.py",
+      "node": "test_library_http_is_owner_before_body_and_closed",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.inventory",
+      "path": "tests/unit/test_mcp_model_library_tools.py",
+      "node": "test_model_library_mcp_catalogue_is_closed_and_contains_all_http_twins",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.requirements_extractor",
+      "path": "tests/unit/test_requirements_extractor_plugin.py",
+      "node": "test_run_success_extracts_and_classifies",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.requirements_extractor",
+      "path": "tests/unit/test_requirements_extractor_plugin.py",
+      "node": "test_host_blocks_without_llm_capability",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.action_owner_enforcer",
+      "path": "tests/unit/test_action_owner_enforcer_plugin.py",
+      "node": "test_run_success_flags_gaps",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.action_owner_enforcer",
+      "path": "tests/unit/test_action_owner_enforcer_plugin.py",
+      "node": "test_host_blocks_without_llm_capability",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.mermaid_architecture",
+      "path": "tests/unit/test_mermaid_architecture_plugin.py",
+      "node": "test_run_success_path_returns_full_shape",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.mermaid_architecture",
+      "path": "tests/unit/test_mermaid_architecture_plugin.py",
+      "node": "test_run_no_fenced_block_returns_failure_shape",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.adr_drafter",
+      "path": "tests/unit/test_adr_drafter_plugin.py",
+      "node": "test_run_success_drafts_adrs",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.adr_drafter",
+      "path": "tests/unit/test_adr_drafter_plugin.py",
+      "node": "test_host_blocks_without_llm_capability",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.milestone_planner",
+      "path": "tests/unit/test_milestone_planner_plugin.py",
+      "node": "test_run_success_extracts_milestones",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.milestone_planner",
+      "path": "tests/unit/test_milestone_planner_plugin.py",
+      "node": "test_host_blocks_without_llm_capability",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.dependency_mapper",
+      "path": "tests/unit/test_dependency_mapper_plugin.py",
+      "node": "test_run_success_maps_edges",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.dependency_mapper",
+      "path": "tests/unit/test_dependency_mapper_plugin.py",
+      "node": "test_host_blocks_without_llm_capability",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.scope_guard",
+      "path": "tests/unit/test_scope_guard_plugin.py",
+      "node": "test_run_success_classifies",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.scope_guard",
+      "path": "tests/unit/test_scope_guard_plugin.py",
+      "node": "test_host_blocks_without_llm_capability",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.customer_signal_extractor",
+      "path": "tests/unit/test_customer_signal_extractor_plugin.py",
+      "node": "test_run_success_extracts_and_classifies",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.customer_signal_extractor",
+      "path": "tests/unit/test_customer_signal_extractor_plugin.py",
+      "node": "test_host_blocks_without_llm_capability",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.incident_timeline",
+      "path": "tests/unit/test_incident_timeline_plugin.py",
+      "node": "test_run_success_preserves_order",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.incident_timeline",
+      "path": "tests/unit/test_incident_timeline_plugin.py",
+      "node": "test_host_blocks_without_llm_capability",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.risk_heatmap",
+      "path": "tests/unit/test_risk_heatmap_plugin.py",
+      "node": "test_run_success_builds_register",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.risk_heatmap",
+      "path": "tests/unit/test_risk_heatmap_plugin.py",
+      "node": "test_host_blocks_without_llm_capability",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.stakeholder_update_drafter",
+      "path": "tests/unit/test_stakeholder_update_drafter_plugin.py",
+      "node": "test_run_success_drafts_update",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.stakeholder_update_drafter",
+      "path": "tests/unit/test_stakeholder_update_drafter_plugin.py",
+      "node": "test_host_blocks_without_llm_capability",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.runbook_delta",
+      "path": "tests/unit/test_runbook_delta_plugin.py",
+      "node": "test_run_success_classifies",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.runbook_delta",
+      "path": "tests/unit/test_runbook_delta_plugin.py",
+      "node": "test_host_blocks_without_llm_capability",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.decision_announcement_drafter",
+      "path": "tests/unit/test_decision_announcement_drafter_plugin.py",
+      "node": "test_run_success_drafts_announcements",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.decision_announcement_drafter",
+      "path": "tests/unit/test_decision_announcement_drafter_plugin.py",
+      "node": "test_host_blocks_without_llm_capability",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.decision_capture",
+      "path": "tests/unit/test_decision_capture_plugin.py",
+      "node": "test_source_timestamp_window_accepts_end_boundary_and_records_named_drop",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.plugin.decision_capture",
+      "path": "tests/unit/test_decision_capture_plugin.py",
+      "node": "test_host_blocks_without_llm_capability",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "voice.to_model",
+      "path": "tests/unit/test_dictation_runtime.py",
+      "node": "test_explicit_mlx_off_arm64_raises_with_remediation",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "meeting.to_model",
+      "path": "tests/integration/test_meeting_intel_recovery.py",
+      "node": "test_partial_intel_names_retained_work_and_supports_retry_or_skip",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "model.to_destination",
+      "path": "tests/unit/test_inference_targets.py",
+      "node": "test_unknown_target_is_named_and_never_retargeted",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "agents.thread_persistent",
+      "path": "tests/integration/test_threads_api.py",
+      "node": "test_create_thread",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "agents.thread_persistent",
+      "path": "tests/integration/test_threads_api.py",
+      "node": "test_import_threads",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "agents.interview",
+      "path": "tests/unit/test_interview_service.py",
+      "node": "test_command_replay_and_conflict_are_atomic",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "agents.interview",
+      "path": "tests/unit/test_interview_service.py",
+      "node": "test_people_handoff_refuses_before_input_persistence",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "agents.interview",
+      "path": "tests/integration/test_interview_conversation.py",
+      "node": "test_llm_turn_calls_real_tools_saves_suggestion_keeps_result_and_revisits",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "agents.mcp_http",
+      "path": "tests/unit/test_mcp_tools.py",
+      "node": "test_tools_list_exposes_pipeline_mcp_tools_with_closed_schemas",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "agents.mcp_http",
+      "path": "tests/unit/test_mcp_phase133_ask.py",
+      "node": "test_dispatch_ask_run",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "knowledge.grounding",
+      "path": "tests/unit/test_grounding_rails.py",
+      "node": "test_phase_evidence_roadmap_each_resolve_their_trace",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "knowledge.grounding",
+      "path": "tests/unit/test_grounding_rails.py",
+      "node": "test_unknown_id_refuses_by_name",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "knowledge.memory_search",
+      "path": "tests/integration/test_memory_retrieval.py",
+      "node": "test_cross_kind_route_requires_read_principal_and_returns_citable_hits",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "knowledge.memory_search",
+      "path": "tests/unit/test_mcp_phase133_coder_memory.py",
+      "node": "test_memory_search_dispatches",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "workflows.linear_run",
+      "path": "tests/unit/test_workflow_graph.py",
+      "node": "test_linearize_refuses_branch",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "workflows.linear_run",
+      "path": "tests/unit/test_sequence_workflow_runner_migration.py",
+      "node": "test_three_step_sequence_has_three_admitted_children_and_terminal_receipts",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "workflows.linear_run",
+      "path": "tests/integration/test_phase143_sequence_workflow_restart.py",
+      "node": "test_restart_reconstructs_the_same_frozen_sequence_node_attempt",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "coder.observation",
+      "path": "tests/unit/test_coder_steering.py",
+      "node": "test_peek_hash_gate_answers_not_modified_without_a_body",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "coder.observation",
+      "path": "tests/unit/test_coder_steering.py",
+      "node": "test_peek_dead_pane_is_pane_gone_not_an_exception",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "coder.reply_and_draft",
+      "path": "tests/unit/test_coder_steering_deliver.py",
+      "node": "test_recycled_pane_refuses_revokes_audits_and_types_nothing",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "coder.reply_and_draft",
+      "path": "tests/integration/test_coder_steering_live.py",
+      "node": "test_live_keep_as_note_creates_a_real_openable_note",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "coder.gate",
+      "path": "tests/unit/test_coder_gate.py",
+      "node": "test_unarmed_hook_is_inert_no_network",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "coder.gate",
+      "path": "tests/unit/test_coder_gate.py",
+      "node": "test_armed_hub_unreachable_denies_by_name",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "coder.gate",
+      "path": "tests/integration/test_gate_threat_model.py",
+      "node": "test_item3_toctou_args_swap_refused_and_original_revoked",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "coder.gate",
+      "path": "tests/unit/test_phase200_doc_claims.py",
+      "node": "test_registered_claim_matches_its_state",
+      "status": "passed",
+      "cases": 19
+    },
+    {
+      "record": "integration.activity_connectors",
+      "path": "tests/unit/test_connector_sdk.py",
+      "node": "test_validate_manifest_requires_network_perm_when_requires_network_true",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "integration.activity_connectors",
+      "path": "tests/unit/test_connector_pack_loader.py",
+      "node": "test_build_registry_merges_first_party_and_user",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "integration.activity_connectors",
+      "path": "tests/unit/test_connector_fixture_harness.py",
+      "node": "test_fixture_dry_run_matches_expectation",
+      "status": "passed",
+      "cases": 6
+    },
+    {
+      "record": "integration.github_readonly",
+      "path": "tests/unit/test_activity_github.py",
+      "node": "test_preview_github_cli_enrichment_plans_read_only_commands",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "integration.github_readonly",
+      "path": "tests/integration/test_web_activity_api.py",
+      "node": "test_github_run_records_a_connector_run_row",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "integration.jira_confluence_calendar",
+      "path": "tests/unit/test_activity_jira.py",
+      "node": "test_preview_jira_cli_enrichment_plans_read_only_commands",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "integration.jira_confluence_calendar",
+      "path": "tests/unit/test_activity_connector_preview.py",
+      "node": "test_dry_run_calendar_emits_proposed_candidates",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "integration.actuators",
+      "path": "tests/unit/test_actuator_executor.py",
+      "node": "test_any_authority_change_aborts_to_failed_no_call",
+      "status": "passed",
+      "cases": 10
+    },
+    {
+      "record": "integration.actuators",
+      "path": "tests/integration/test_web_companion_slack.py",
+      "node": "test_approval_posts_the_preview_byte_equal",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "integration.actuators",
+      "path": "tests/integration/test_web_companion_webhook.py",
+      "node": "test_the_url_never_rides_a_response_or_broadcast",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "companion.qlippy_presence",
+      "path": "tests/integration/test_web_companion_slack.py",
+      "node": "test_the_wire_events_ride_for_qlippy",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "companion.qlippy_presence",
+      "path": "tests/integration/test_presence_qlippy_shell.py",
+      "node": "test_qlippy_is_react_owned_and_never_autonomous",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "integration.connector_registry",
+      "path": "tests/unit/test_connector_pack_loader.py",
+      "node": "test_pack_that_raises_at_import_does_not_crash",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "integration.github_read",
+      "path": "tests/unit/test_activity_github.py",
+      "node": "test_preview_github_cli_enrichment_plans_read_only_commands",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "integration.calendar_local",
+      "path": "tests/unit/test_activity_connector_preview.py",
+      "node": "test_dry_run_calendar_emits_proposed_candidates",
+      "status": "passed",
+      "cases": 1
+    },
+    {
+      "record": "integration.actuator_external",
+      "path": "tests/unit/test_actuator_executor.py",
+      "node": "test_connector_error_marks_failed_and_audits",
+      "status": "passed",
+      "cases": 1
+    }
+  ],
+  "failures": [
+    {
+      "node": "tests.integration.test_phase200_recipe_catalog.TestTheScheduledOwnerReallyFires.test_the_sweep_is_driven_by_a_wall_clock_loop",
+      "message": "AssertionError: ('Tick every 60 seconds; on each tick, check if a sweep is due.', None, ('get_database', 'get_observer'), ('Principal', 'PrincipalKind'), ('HeartbeatService',), ('observer',), ...)\nassert []"
+    },
+    {
+      "node": "tests.unit.test_doc_drift_guard.test_docs_do_not_restore_retired_inference_setup_vocabulary",
+      "message": "AssertionError: Retired inference setup vocabulary returned to docs/ or README. Use Models for availability and Assignments for job selection instead:\n    docs/CONFIGURATION_REFERENCE.md:44: 'inference_target_id'\nassert not [\"docs/CONFIGURATION_REFERENCE.md:44: 'inference_target_id'\"]"
+    },
+    {
+      "node": "tests.unit.test_doc_drift_guard.test_no_live_doc_has_a_dangling_relative_link",
+      "message": "AssertionError: A maintained doc links a path that does not exist (dangling relative link). Fix the path or the move:\n    docs/internal/philo/desktop-prototypes/electron/node_modules/@electron-internal/extract-zip/README.md:46: -> ./SECURITY.md\n    docs/internal/philo/desktop-prototypes/electron/node_modules/@electron-internal/extract-zip/README.md:49: -> ./SECURITY.md\n    docs/internal/philo/desktop-prototypes/electron/node_modules/debug/README.md:20: -> ./examples/node/app.js\n    docs/internal/philo/desktop-prototypes/electron/node_modules/debug/README.md:43: -> ./examples/node/worker.js\n   "
+    },
+    {
+      "node": "tests.unit.test_doc_drift_guard.test_no_user_facing_doc_leaks_roadmap_vocabulary",
+      "message": "AssertionError: A user-facing doc leaks internal roadmap vocabulary (Phase NN / HS-NN-NN / PMO / 'the current roadmap'). User-facing docs speak in product-tense; the internal corpus (docs/internal, docs/evidence, docs/assets, pm/roadmap) is where that vocabulary belongs. Reword these in product-tense, see docs/internal/DOCS_STYLE.md:\n    docs/WHAT_IS_HOLDSPEAK.md:55: [Phase 201](../pm/roadmap/holdspeak/phase-201-one-meeting-result/current-phase-status.md).\nassert not ['docs/WHAT_IS_HOLDSPEAK.md:55: [Phase 201](../pm/roadmap/holdspeak/phase-201-one-meeting-result/current-phase-status.md).']"
+    },
+    {
+      "node": "tests.unit.test_doc_drift_guard.test_no_user_facing_doc_uses_dashes_in_prose",
+      "message": "AssertionError: Em/en dashes in user-facing prose (use a period, comma, colon, or parentheses \u2014 see docs/internal/POSITIONING.md voice rules; verbatim UI quotes belong in _VERBATIM_UI_QUOTES):\n    docs/ACTUATOR_DEVELOPMENT.md:12: (`holdspeak/plugins/actuators.py::ActuatorProposal`, lines 41\u201384). It never\n    docs/ACTUATOR_DEVELOPMENT.md:49: lines 50\u201386). Repeating the same source and content returns the same proposal;\n    docs/ACTUATOR_DEVELOPMENT.md:57: run (`holdspeak/plugins/actuator_executor.py::execute`, lines 102\u2013208). The\n    docs/AGENTS_AND_THREADS.md:11: (`holdspeak/db/threads.py::Thr"
+    },
+    {
+      "node": "tests.e2e.test_hs174_remote_settings_glass.TestSettingsRemoteAccess.test_remote_on_issue_revoke[393]",
+      "message": "playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\".prefs-hub-headline\") to be visible"
+    },
+    {
+      "node": "tests.integration.test_kernel_real_hub.test_real_http_executor_receipt_and_sigkill_cursor_replay",
+      "message": "AssertionError: spawned hub did not become healthy:"
+    },
+    {
+      "node": "tests.unit.test_phase200_attention.TestNotificationTransitions.test_a_changed_item_with_the_same_count_notifies",
+      "message": "AssertionError: assert 'held_quiet_hours' == 'sent'\n  \n  - sent\n  + held_quiet_hours"
+    },
+    {
+      "node": "tests.unit.test_phase200_attention.TestNotificationTransitions.test_mute_silences_a_room_and_unmute_renotifies_only_what_arrived_meanwhile",
+      "message": "AssertionError: assert 'held_quiet_hours' == 'sent'\n  \n  - sent\n  + held_quiet_hours"
+    },
+    {
+      "node": "tests.unit.test_phase200_attention.TestNotificationTransitions.test_restart_renotifies_nothing",
+      "message": "AssertionError: assert 'held_quiet_hours' == 'sent'\n  \n  - sent\n  + held_quiet_hours"
+    },
+    {
+      "node": "tests.unit.test_phase200_attention.TestNotificationTransitions.test_recovery_after_a_failed_source_is_never_an_all_clear_and_renotifies_nothing",
+      "message": "AssertionError: assert 'held_quiet_hours' == 'sent'\n  \n  - sent\n  + held_quiet_hours"
+    },
+    {
+      "node": "tests.unit.test_phase200_attention.TestNotificationTransitions.test_a_resolved_item_from_an_observed_project_is_forgotten_and_can_return_as_new",
+      "message": "AssertionError: assert 'held_quiet_hours' == 'sent'\n  \n  - sent\n  + held_quiet_hours"
+    },
+    {
+      "node": "tests.unit.test_phase200_attention.TestNotificationTransitions.test_escalation_fires_through_the_sweep_and_says_so",
+      "message": "AssertionError: assert 'held_quiet_hours' == 'sent'\n  \n  - sent\n  + held_quiet_hours"
+    },
+    {
+      "node": "tests.unit.test_phase200_attention.TestNotificationTransitions.test_counsel_probe_2b_archived_project_ids_leave_the_settings",
+      "message": "AssertionError: assert 'held_quiet_hours' == 'sent'\n  \n  - sent\n  + held_quiet_hours"
+    },
+    {
+      "node": "tests.unit.test_phase200_attention.TestNotificationTransitions.test_the_policy_row_is_written_only_when_the_set_or_outcome_changed",
+      "message": "AssertionError: assert 'held_quiet_hours' == 'sent'\n  \n  - sent\n  + held_quiet_hours"
+    },
+    {
+      "node": "tests.e2e.test_hs153_practice_glass.test_guardrail_row_renders_and_deny_focused",
+      "message": "AssertionError: Expected deny, got 'allow' at 1440\nassert 'allow' == 'deny'\n  \n  - deny\n  + allow"
+    },
+    {
+      "node": "tests.e2e.test_mermaid_renders.test_every_mermaid_block_renders",
+      "message": "AssertionError: Mermaid blocks that do not render:\n    docs/ACTUATOR_DEVELOPMENT.md block #0:     at async CdpPage.$eval (file:///Users/karol/dev/tools/HoldSpeak-Philo/.tmp/philo/mermaid/node_modules/puppeteer-core/lib/puppeteer/api/Page.js:462:20)     at async renderMermaid (file:///Users/karol/dev/tools/HoldSpeak-Philo/.tmp/philo/mermaid/node_modules/@mermaid-js/mermaid-cli/src/index.js:480:22)     at fromText (https://mermaid-cli-intercept.invalid/Users/karol/dev/tools/HoldSpeak-Philo/.tmp/philo/mermaid/node_modules/mermaid/dist/mermaid.esm.mjs:1327:17)\n    docs/CODER_INTEGRATION.md block #"
+    },
+    {
+      "node": "tests.e2e.test_hs171_command_deck_glass.test_command_deck_projects_1440",
+      "message": "AssertionError: Gamma (0 items) should have no badge\nassert 1 == 0\n +  where 1 = count()\n +    where count = <Locator frame=<Frame name= url='http://127.0.0.1:61348/'> selector=\"[id^='desk-palette-option-project\\\\.open\\\\.'] >> nth=2 >> .desk-deck-badge\">.count"
+    },
+    {
+      "node": "tests.e2e.test_hs171_command_deck_glass.test_command_deck_projects_393",
+      "message": "AssertionError: Gamma (0 items) should have no badge\nassert 1 == 0\n +  where 1 = count()\n +    where count = <Locator frame=<Frame name= url='http://127.0.0.1:61370/'> selector=\"[id^='desk-palette-option-project\\\\.open\\\\.'] >> nth=2 >> .desk-deck-badge\">.count"
+    }
+  ]
+}
