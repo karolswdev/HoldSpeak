@@ -15,6 +15,7 @@ import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { intelBadge } from "./intelBadge";
 import { meetingPathBlockers, type AssignmentRead } from "./meetingPathBlocker";
+import { onReturnToTask } from "../returnToTask";
 import { getAssignmentSummary, type AssignmentSummary } from "../../pages/cores/assignmentExperience";
 import { useRuntimeBus, useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { labelFor, supportsDoorVerb, commandForDoorVerb } from "./doorVerbs";
@@ -469,6 +470,13 @@ function Arrival() {
     }
   }, []);
   useEffect(() => { void readAssignments(); }, [readAssignments]);
+  // Counsel round 2 (condition 1): the product's OWN return signal. Models
+  // announces `holdspeak:settings-updated` the moment it applies a set
+  // (`features/concierge/useConciergeController.ts:507` ->
+  // `desk/returnToTask.ts:113`), and every face holding an unfinished task
+  // re-reads on it. The Chair is such a face: its SETUP row IS the
+  // unfinished task the owner left to repair.
+  useEffect(() => onReturnToTask(() => { void readAssignments(); }), [readAssignments]);
   const { subscribe: subscribeFrames } = useRuntimeBus();
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;

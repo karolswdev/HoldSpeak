@@ -355,3 +355,93 @@ with `git show HEAD:<path> > <path>` after the last run (never
   Nothing was deleted (the never-delete law).
 - The full suite was not re-run here (orchestrator's job); only the files
   named in the fallout list.
+
+## Counsel fix round — third pass
+
+Astra's round-2 conditions.
+
+### Condition 1 — the product's OWN return signal, not a synthetic focus
+
+`web/src/desk/chair/ChairHome.tsx:479` — the Chair's assignment re-read is
+now subscribed to `onReturnToTask`, the `holdspeak:settings-updated` signal
+(`web/src/desk/returnToTask.ts:37`, dispatched at `:113`) that Models
+announces the moment it applies a set
+(`web/src/features/concierge/useConciergeController.ts:507`). The
+`desk_changed` frame and the window-focus wires stay; they cost nothing.
+
+The glass rig no longer dispatches a focus event. It opens Models from the
+row, closes it, assigns through the real service, and then fires the
+product's own signal on the same open page — `_settings_updated()`,
+`tests/e2e/test_hs201_one_thing_glass.py:92-106`, used at `:246` and
+`:290`. This rig stubs the Concierge hardware scan (`_quiet_concierge`), so
+the Models face has no proposal row to apply; the rig therefore fires the
+same event Models fires rather than the Apply button. Stated as a limit,
+not as a proof of the Models face (story 05 owns that).
+
+RED (subscription removed, everything else as shipped):
+
+```text
+$ cd web && npx vitest run src/desk/chair/arrivalRefresh.test.tsx
+     × re-reads the roster on the product's settings-updated signal 1011ms
+AssertionError: expected <div data-testid="arrival-blocker">…(1)</div> to be null
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+
+$ HOME=$(mktemp -d) … uv run pytest -q \
+    "tests/e2e/test_hs201_one_thing_glass.py::TestOneThing::test_chair_names_the_blocker[1440]"
+tests/e2e/test_hs201_one_thing_glass.py:260:
+E           playwright._impl._errors.TimeoutError: Page.wait_for_function: Timeout 15000ms exceeded.
+```
+
+### Condition 2 — OPEN TO NETWORK inside the width at 393
+
+Measured before the fix: the right cluster reached `right=405.7` on a
+393px bar (the desk's own overhang there is `395.7` WITHOUT the token), and
+Search was pushed off the edge. The fix follows the bar's existing
+doctrine — the egress badge already clamps to 88px with its words kept in
+its title (`chrome-menus.css`, the 720px rule):
+
+- `web/src/desk/components/chrome-menus.css:912-925` — at ≤720px the
+  inbound token keeps its lamp and drops its words (`font-size: 0`), and
+  the badge beside it gives back the lamp's width (`max-width: 80px`), so
+  the bar is no wider than it is without the token.
+- `web/src/desk/components/DeskChrome.tsx:236-250` — the words live in
+  `aria-label` and the reason in `title` at every width.
+- Fence: `tests/e2e/test_hs201_one_thing_glass.py:466-486` asserts the
+  accessible name carries `OPEN TO NETWORK` at both widths, the words are
+  visible above 720px, the document does not scroll horizontally, and
+  Search is whole and on the bar.
+
+### GREEN
+
+```text
+$ cd web && npx tsc --noEmit
+tsc=0
+
+$ cd web && npx vitest run src/desk/chair/arrivalOneThing.test.tsx \
+    src/desk/chair/arrivalRefresh.test.tsx src/desk/setup.test.ts \
+    src/desk/components/__tests__/trustInbound.test.tsx --maxWorkers=2
+      Tests  23 passed (23)
+
+$ cd web && npx vitest run src/desk --maxWorkers=2
+ Test Files  171 passed (171)
+      Tests  1512 passed (1512)
+
+$ HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright \
+    uv run pytest -q tests/e2e/test_hs201_one_thing_glass.py
+..........                                                               [100%]
+10 passed in 36.46s
+```
+
+### Shots
+
+- `open-to-network-1440.png` — the words on the desktop bar beside
+  `⌂ THIS DEVICE`, with the Trust window's line.
+- `open-to-network-393.png` — the lamp alone on the phone bar (words in
+  the title and the accessible name), Search whole, and the same Trust
+  line in words.
+- `chair-before-repair-*`, `chair-no-engine-yet-*`, `chair-speech-row-*`,
+  `chair-assigned-*`, `chair-blocker-*`, `chair-unknown-setup-*`,
+  `meetings-failed-*`, `chip-and-trust-*` re-shot by the same run.
+- No tracked PNG from another phase was touched by this run (checked:
+  zero dirty outside `phase-201-one-meeting-result/`).

@@ -89,6 +89,21 @@ describe("HS-201-01 the row clears on the OPEN desk", () => {
     expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you");
   });
 
+  // Counsel round 2 (condition 1): the product's own return signal, the
+  // one Models fires after it applies a set
+  // (`features/concierge/useConciergeController.ts:507` ->
+  // `desk/returnToTask.ts:113`, event `holdspeak:settings-updated`).
+  it("re-reads the roster on the product's settings-updated signal", async () => {
+    render(<ChairHome />);
+    await screen.findByText("No engine for summaries");
+
+    roster = [ASSIGNED as Record<string, unknown>];
+    act(() => { window.dispatchEvent(new Event("holdspeak:settings-updated")); });
+
+    await waitFor(() => expect(screen.queryByTestId("arrival-blocker")).toBeNull());
+    expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you");
+  });
+
   it("re-reads the roster on the hub's desk_changed frame", async () => {
     render(<ChairHome />);
     await screen.findByText("No engine for summaries");

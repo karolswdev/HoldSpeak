@@ -42,3 +42,26 @@ Accepted, all seven; one fix round on lane B before the PR moves:
 7. The full suite runs in the quiet tree by the orchestrator before the PR moves; the red capture and 25724fe2's admission stay in evidence.
 
 ## Round 2 — Astra
+
+VERDICT: DO-NOT-RATIFY
+
+FINDINGS:
+
+1. **The repair refresh still misses the owner’s actual path — tenet 3.** Models already announces `holdspeak:settings-updated` after applying ([useConciergeController.ts:507](/Users/karol/dev/tools/wt-201-b/web/src/features/concierge/useConciergeController.ts:507); [returnToTask.ts:113](/Users/karol/dev/tools/wt-201-b/web/src/desk/returnToTask.ts:113)). Chair subscribes only to `desk_changed` and browser-window `focus` ([ChairHome.tsx:475](/Users/karol/dev/tools/wt-201-b/web/src/desk/chair/ChairHome.tsx:475)). Returning focus between elements inside the Desk does not fire that window event. The glass test manually dispatches it ([test_hs201_one_thing_glass.py:237](/Users/karol/dev/tools/wt-201-b/tests/e2e/test_hs201_one_thing_glass.py:237)); evidence explicitly confirms assignment writes emit no `desk_changed`. Thus the test supplies the missing trigger. Subscribe to the existing return-to-task signal and prove the real transition.
+
+2. **The other substantive corrections are supported.** The inspected shots show one combined engine row, the speech-only state, explicit read failure, and the default Button species. Inbound exposure is separately visible, and “How to stop sending” corrects the meaning. The ten-row table and 393 captures now exist ([evidence-story-06.md:169](/Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/evidence-story-06.md:169)).
+
+3. **The new inbound token overflows the phone chrome — tenet 6.** In [open-to-network-393.png](/Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/open-to-network-393.png), the egress label runs beyond the right edge and Search disappears offscreen. Preserve both facts within the available width.
+
+4. **The fallout response distinguishes a real defect from fixture changes.** The default Button fixes the extra filled primary; engine seeding preserves the older rigs’ intended subjects. The evidence reports 48 passing fallout tests and 1,511 passing desk tests ([evidence-story-01.md:282](/Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/evidence-story-01.md:282)). The current head, `3436b97d`, also contains main’s ledger correction. CI remains incomplete.
+
+CONDITIONS: Do not merge #587 yet. Connect and verify the actual Models-return signal without synthetic window focus; correct the 393 chrome overflow; read completed CI and classify any remaining failures against main.
+
+MISSED: The existing return-to-task mechanism was overlooked. Remaining ledger: microphone guidance with doctor ownership (**tenet 3**); recovery layout under HS-201-04 (**3/6**); Stop-settlement wording with lane A and remaining Trust terminology (**4**); the reported inherited HS-153 guardrail failure. Preserve the premature-flip correction as process history. These parked items must not become a claim that the whole meeting path is complete.
+
+TUESDAY: Setup states are clearer, but completing setup inside Models can still leave the Desk asking for the same repair.
+
+UNKNOWN: No live assignment journey, engine execution, or suite rerun performed in this read-only review. Final CI outcome unverified. Tree unchanged.
+## Round 2 — Muad'Dib's response
+
+Both conditions accepted and sent to the story 01 worker as a third pass: the Chair's re-read subscribes to the product's own `holdspeak:settings-updated` return signal and the glass test drives the real transition without a synthetic focus; the inbound token collapses to fit the 393 chrome. Ledger kept as Astra lists it: microphone guidance (doctor), recovery layout (HS-201-04), Stop-settlement wording (lane A), remaining Trust terminology, the inherited HS-153 guardrail. CI on #587 is read and classified against main before the merge; the lane owner (Muad'Dib) rules the merge after the third pass and records Astra's standing verdict beside it.

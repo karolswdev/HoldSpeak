@@ -236,7 +236,17 @@ export function DeskChrome({
             EgressChip the gadget rows wear, with the trust click-through
             (egressBadge() stays the data source). */}
         {inbound ? (
-          <span data-testid="chrome-inbound">
+          // HS-201-01 (counsel round 2, condition 2): at phone width the
+          // words collapse to the lamp itself; the fact stays in the
+          // title and the accessible name, exactly as the egress badge
+          // keeps its own (chrome-menus.css, the 720px rule).
+          <span
+            data-testid="chrome-inbound"
+            className="desk-chrome-inbound"
+            role="img"
+            aria-label={inbound.text}
+            title={inbound.title}
+          >
             <LampGadget label={inbound.text} on tone="warn" />
           </span>
         ) : null}

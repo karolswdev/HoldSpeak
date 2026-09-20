@@ -92,6 +92,22 @@ def _clear_speech_head() -> None:
     })
 
 
+def _settings_updated(page: Any) -> None:
+    """Fire the product's own "setup changed" signal on the open page.
+
+    `RETURN_TO_TASK_EVENT` is `holdspeak:settings-updated`
+    (`web/src/desk/returnToTask.ts:37`); `announceTaskReturn` dispatches
+    exactly this event on `window` (`:113`), and the Models face calls it
+    after a successful apply
+    (`web/src/features/concierge/useConciergeController.ts:507`). Faces
+    holding an unfinished task re-read on it -- the Chair's SETUP row is
+    one.
+    """
+    page.evaluate(
+        "() => window.dispatchEvent(new Event('holdspeak:settings-updated'))"
+    )
+
+
 def _seed_failed_meeting() -> None:
     """One finalized meeting whose intelligence failed."""
     from holdspeak.db import get_database
@@ -231,10 +247,16 @@ class TestOneThing:
             engine_profile()
             assign_engine(SUMMARY_CAPABILITY, 1)
 
-            # The owner comes back to this same Desk -- the browser's own
-            # focus event, the one it fires when the window is raised
-            # again. No reload, no goto, no remount.
-            page.evaluate("() => window.dispatchEvent(new Event('focus'))")
+            # The product's OWN return signal, not a synthetic focus
+            # (counsel round 2, condition 1): `holdspeak:settings-updated`
+            # is what Models announces the moment it applies a set
+            # (`web/src/features/concierge/useConciergeController.ts:507`
+            # -> `announceTaskReturn`, `web/src/desk/returnToTask.ts:113`,
+            # the event named at `:37`). This rig stubs the Concierge scan
+            # (`_quiet_concierge`), so the Models face has no row to apply;
+            # the rig therefore fires the same signal Models fires, on the
+            # same open page. No reload, no goto, no remount.
+            _settings_updated(page)
             page.wait_for_function(
                 """() => {
                   const el = document.querySelector("[data-testid='arrival-blocker']");
@@ -258,7 +280,7 @@ class TestOneThing:
                 assert fixed["has_override"] is True, fixed
                 assert fixed["effective"]["status"] == "assigned", fixed
 
-            page.evaluate("() => window.dispatchEvent(new Event('focus'))")
+            _settings_updated(page)
             page.wait_for_function(
                 """() => !document.querySelector("[data-testid='arrival-blocker']")""",
                 timeout=15_000,
@@ -442,7 +464,31 @@ class TestOneThing:
 
             token = page.locator("[data-testid='chrome-inbound']")
             token.wait_for(timeout=15_000)
-            assert "OPEN TO NETWORK" in (token.text_content() or "").upper()
+            # The words are on the desktop bar and in the accessible name
+            # at every width (counsel round 2, condition 2).
+            assert "OPEN TO NETWORK" in (token.get_attribute("aria-label") or "").upper()
+            if width > 720:
+                assert "OPEN TO NETWORK" in (token.text_content() or "").upper()
+            # The bar holds its own width: nothing is pushed off the edge.
+            assert page.evaluate(
+                "() => document.documentElement.scrollWidth <= window.innerWidth"
+            ), f"the menubar overflows at {width}"
+            # Search stays on the bar, whole (counsel round 2, condition
+            # 2: the token used to push it off the edge). The desk's right
+            # cluster overhangs the viewport by ~3px on this bar with or
+            # without the token; the token may not make that worse.
+            search = page.evaluate(
+                """() => {
+                  const el = document.querySelector('.desk-tools-launch');
+                  if (!el) return null;
+                  const r = el.getBoundingClientRect();
+                  return {left: r.left, right: r.right, width: r.width};
+                }"""
+            )
+            assert search is not None, "Search is not on the bar"
+            assert search["width"] > 0, search
+            assert search["right"] <= width + 3.5, (width, search)
+            assert search["left"] >= -0.5, (width, search)
             # ...and the egress chip still answers only for egress.
             chip = page.locator(".egress-badge").first
             assert "THIS DEVICE" in (chip.text_content() or "").upper()
