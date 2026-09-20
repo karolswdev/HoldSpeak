@@ -2353,3 +2353,313 @@ Post-merge runs above use follow-up product commit `a07d4bb5` plus incoming
 main `675401a8`; the merge brings no product-source edits. The 390-test focused
 suite passed with 11 optional-engine skips. The 34 documentation/ledger tests
 also passed. No full-suite green is inferred from these focused runs.
+
+### Captured run — 2026-09-20T03:43:08Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.yVanONFoy4 PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:/Users/karol/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run --extra dev pytest -q --tb=short tests/uat/test_egress_cloud.py::test_cloud_card_names_target_and_remains_unexecuted tests/unit/test_mesh_liveness_surfaces.py::test_doctor_runtime_profiles_names_the_mesh_node`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 971ed9ba68da4bc83c5b013786b51190c758d8f5
+
+```text
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_____________ test_cloud_card_names_target_and_remains_unexecuted ______________
+tests/uat/test_egress_cloud.py:45: in test_cloud_card_names_target_and_remains_unexecuted
+    treatment = real_manager.apply_recipe(run.id, "egress-cloud-card")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+uat/conductor/runs.py:396: in apply_recipe
+    return self.recipes.apply(name, run_id, self, allow_intel=allow_intel)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+uat/conductor/induction/recipes.py:240: in apply
+    raise RecipeVerifyError(
+E   uat.conductor.induction.recipes.RecipeVerifyError: recipe 'egress-cloud-card' failed to verify: egress_scope_is: egress scope='local', endpoints=[] (want 'cloud' target containing 'api.openai.com')
+_______________ test_doctor_runtime_profiles_names_the_mesh_node _______________
+tests/unit/test_mesh_liveness_surfaces.py:194: in test_doctor_runtime_profiles_names_the_mesh_node
+    assert "meeting intel: profile 'Pocket 4B' (mesh node 'walk-edge')" in check.detail
+E   assert "meeting intel: profile 'Pocket 4B' (mesh node 'walk-edge')" in 'Live analysis is off for Record; no dictation pipeline is enabled.'
+E    +  where 'Live analysis is off for Record; no dictation pipeline is enabled.' = DoctorCheck(name='Runtime profiles', status='PASS', detail='Live analysis is off for Record; no dictation pipeline is enabled.', fix=None).detail
+=========================== short test summary info ============================
+FAILED tests/uat/test_egress_cloud.py::test_cloud_card_names_target_and_remains_unexecuted
+FAILED tests/unit/test_mesh_liveness_surfaces.py::test_doctor_runtime_profiles_names_the_mesh_node
+2 failed in 5.29s
+```
+
+### Captured run — 2026-09-20T04:05:41Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.VLZ0jhrvVK PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:/Users/karol/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run --extra dev pytest --collect-only -q tests/unit/test_hs201_summary_egress.py tests/unit/test_hs201_summary_doctor.py tests/unit/test_hs201_live_analysis_truth.py tests/unit/test_mesh_liveness_surfaces.py tests/unit/test_doctor_runtime_profiles.py tests/unit/test_doctor_command.py tests/unit/test_doctor_config_honesty.py tests/unit/test_doctor_observer.py tests/unit/test_setup_status.py tests/unit/test_setup_status_doctor_drift.py tests/unit/test_trust_destinations.py tests/unit/test_hs201_route_contract.py tests/unit/test_hs201_route_counsel.py tests/unit/test_hs201_route_http.py tests/unit/test_hs201_run_receipt.py tests/unit/test_hs201_refusal_history.py tests/unit/test_hs201_summary_assignment.py tests/unit/test_phase143_routing_authority_census.py tests/unit/test_phase143_surface_fallback_census.py tests/unit/test_backend_density_guard.py tests/uat/test_egress_cloud.py tests/uat/test_decks.py tests/uat/test_recipes_parse.py tests/uat/test_no_holdspeak_import.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 971ed9ba68da4bc83c5b013786b51190c758d8f5
+
+```text
+tests/unit/test_hs201_summary_egress.py::test_summary_display_enriches_project_route_without_changing_public_route
+tests/unit/test_hs201_summary_egress.py::test_trust_reports_assigned_summary_route_even_when_legacy_intel_is_off
+tests/unit/test_hs201_summary_egress.py::test_legacy_cloud_fields_without_assignment_do_not_claim_summary
+tests/unit/test_hs201_summary_doctor.py::test_doctor_names_assigned_summary_route_and_ignores_legacy_pointer
+tests/unit/test_hs201_summary_doctor.py::test_doctor_quietly_names_unavailable_summary
+tests/unit/test_hs201_summary_doctor.py::test_doctor_trust_inventory_uses_the_assigned_summary_route
+tests/unit/test_hs201_live_analysis_truth.py::test_settings_wire_reports_live_analysis_off
+tests/unit/test_hs201_live_analysis_truth.py::test_doctor_reports_live_analysis_off_for_record[runtime]
+tests/unit/test_hs201_live_analysis_truth.py::test_doctor_reports_live_analysis_off_for_record[egress]
+tests/unit/test_hs201_live_analysis_truth.py::test_doctor_reports_live_analysis_off_for_record[profiles]
+tests/unit/test_hs201_live_analysis_truth.py::test_doctor_reports_live_analysis_off_for_record[preflight]
+tests/unit/test_hs201_live_analysis_truth.py::test_setup_trust_and_inventory_scope_live_analysis_off
+tests/unit/test_hs201_live_analysis_truth.py::test_legacy_intel_write_is_ignored_and_dictation_settings_stay_intact
+tests/unit/test_hs201_live_analysis_truth.py::test_cloud_preflight_does_not_probe_legacy_meeting_endpoint
+tests/unit/test_mesh_liveness_surfaces.py::test_models_rows_carry_mesh_liveness
+tests/unit/test_mesh_liveness_surfaces.py::test_stale_worker_reads_offline_with_age
+tests/unit/test_mesh_liveness_surfaces.py::test_non_mesh_rows_are_untouched
+tests/unit/test_mesh_liveness_surfaces.py::test_ask_against_offline_mesh_node_is_an_immediate_409
+tests/unit/test_mesh_liveness_surfaces.py::test_ask_against_live_mesh_node_proceeds
+tests/unit/test_mesh_liveness_surfaces.py::test_inference_targets_list_reflects_mesh_liveness
+tests/unit/test_mesh_liveness_surfaces.py::test_doctor_mesh_edges_states
+tests/unit/test_mesh_liveness_surfaces.py::test_doctor_runtime_profiles_names_the_mesh_node
+tests/unit/test_doctor_runtime_profiles.py::test_endpoint_egress_shapes
+tests/unit/test_doctor_runtime_profiles.py::test_the_scattered_egress_sites_use_the_one_constructor
+tests/unit/test_doctor_runtime_profiles.py::test_run_egress_default_cloud_reports_the_effective_endpoint
+tests/unit/test_doctor_runtime_profiles.py::test_runtime_profiles_pass_names_dictation_pipeline
+tests/unit/test_doctor_runtime_profiles.py::test_runtime_profiles_unset_reports_hub_default
+tests/unit/test_doctor_runtime_profiles.py::test_runtime_profiles_dangling_is_a_visible_warn
+tests/unit/test_doctor_runtime_profiles.py::test_runtime_profiles_requires_key_without_key_names_the_env
+tests/unit/test_doctor_runtime_profiles.py::test_runtime_profiles_requires_key_with_key_passes
+tests/unit/test_doctor_runtime_profiles.py::test_runtime_profiles_nothing_enabled_is_a_quiet_pass
+tests/unit/test_doctor_runtime_profiles.py::test_intel_egress_is_off_for_ordinary_web_record
+tests/unit/test_doctor_runtime_profiles.py::test_intel_egress_unset_detail_is_off
+tests/unit/test_doctor_runtime_profiles.py::test_dictation_runtime_adopted_profile_reports_it
+tests/unit/test_doctor_runtime_profiles.py::test_dictation_runtime_dangling_profile_warns_with_reason
+tests/unit/test_doctor_command.py::test_check_hotkey_wayland_failure_is_warn
+tests/unit/test_doctor_command.py::test_check_hotkey_non_wayland_failure_is_fail
+tests/unit/test_doctor_command.py::test_transcription_backend_failure_surfaces_fix
+tests/unit/test_doctor_command.py::test_run_doctor_command_strict_treats_warnings_as_failure
+tests/unit/test_doctor_command.py::test_cloud_preflight_is_off_without_an_api_key
+tests/unit/test_doctor_command.py::test_cloud_preflight_is_off_when_the_legacy_endpoint_is_unreachable
+tests/unit/test_doctor_command.py::test_cloud_preflight_does_not_check_the_legacy_model
+tests/unit/test_doctor_command.py::test_cloud_preflight_stays_off_when_the_legacy_model_is_available
+tests/unit/test_doctor_command.py::test_dictation_runtime_check_pass_when_pipeline_disabled
+tests/unit/test_doctor_command.py::test_dictation_runtime_check_warn_when_backend_unresolvable
+tests/unit/test_doctor_command.py::test_dictation_runtime_check_warn_when_model_missing
+tests/unit/test_doctor_command.py::test_dictation_runtime_check_pass_when_model_available
+tests/unit/test_doctor_command.py::test_dictation_runtime_check_pass_for_openai_compatible
+tests/unit/test_doctor_command.py::test_project_context_check_pass_when_pipeline_disabled
+tests/unit/test_doctor_command.py::test_project_context_check_pass_when_project_detected
+tests/unit/test_doctor_command.py::test_project_context_check_warn_when_no_project_detected
+tests/unit/test_doctor_command.py::test_runtime_counters_check_pass_when_pipeline_disabled
+tests/unit/test_doctor_command.py::test_runtime_counters_check_reports_snapshot_when_enabled
+tests/unit/test_doctor_command.py::test_dictation_compile_check_pass_when_pipeline_disabled
+tests/unit/test_doctor_command.py::test_dictation_compile_check_pass_when_no_blocks_file
+tests/unit/test_doctor_command.py::test_dictation_compile_check_pass_for_valid_blocks
+tests/unit/test_doctor_command.py::test_dictation_compile_check_warn_when_compiler_raises
+tests/unit/test_doctor_command.py::test_mir_routing_check_pass_when_router_disabled
+tests/unit/test_doctor_command.py::test_mir_routing_check_pass_when_enabled_with_valid_profile
+tests/unit/test_doctor_command.py::test_mir_routing_check_warn_for_unknown_profile
+tests/unit/test_doctor_command.py::test_mir_routing_check_never_returns_fail
+tests/unit/test_doctor_command.py::test_mir_telemetry_check_smoke_passes
+tests/unit/test_doctor_command.py::test_check_connector_packs_passes_with_only_first_party
+tests/unit/test_doctor_command.py::test_check_connector_packs_warns_on_user_pack_errors
+tests/unit/test_doctor_command.py::test_run_connector_packs_listing_returns_zero_with_no_errors
+tests/unit/test_doctor_command.py::test_run_connector_packs_listing_returns_one_when_errors_present
+tests/unit/test_doctor_config_honesty.py::test_database_check_absent_is_pass
+tests/unit/test_doctor_config_honesty.py::test_database_check_current_is_pass
+tests/unit/test_doctor_config_honesty.py::test_database_check_newer_stamp_is_still_pass
+tests/unit/test_doctor_config_honesty.py::test_database_check_unreadable_is_warn
+tests/unit/test_doctor_config_honesty.py::test_config_default_carries_current_version
+tests/unit/test_doctor_config_honesty.py::test_config_roundtrips_version
+tests/unit/test_doctor_config_honesty.py::test_config_without_version_is_coerced_forward
+tests/unit/test_doctor_config_honesty.py::test_config_newer_version_is_kept_and_flagged
+tests/unit/test_doctor_config_honesty.py::test_doctor_config_check_flags_newer_config
+tests/unit/test_doctor_observer.py::test_check_observer_healthy_on_fresh_db
+tests/unit/test_doctor_observer.py::test_check_observer_reports_event_count
+tests/unit/test_setup_status.py::test_sections_mirror_doctor_checks_one_to_one
+tests/unit/test_setup_status.py::test_overall_blocked_on_any_fail
+tests/unit/test_setup_status.py::test_overall_needs_attention_on_warn_only
+tests/unit/test_setup_status.py::test_overall_ready_when_all_pass
+tests/unit/test_setup_status.py::test_unknown_status_is_normalized
+tests/unit/test_setup_status.py::test_primary_action_points_at_the_fail
+tests/unit/test_setup_status.py::test_primary_action_is_first_dictation_when_ready_and_first_run
+tests/unit/test_setup_status.py::test_no_primary_action_when_ready_and_already_succeeded
+tests/unit/test_setup_status.py::test_first_run_true_with_no_database
+tests/unit/test_setup_status.py::test_first_run_flips_after_milestone_and_survives_restart
+tests/unit/test_setup_status.py::test_milestone_mark_is_idempotent
+tests/unit/test_setup_status.py::test_trust_default_is_local_only
+tests/unit/test_setup_status.py::test_trust_keeps_legacy_cloud_off_and_preserves_actuators
+tests/unit/test_setup_status.py::test_presence_tier_macos_is_hud
+tests/unit/test_setup_status.py::test_presence_tier_wayland_gnome_is_notification
+tests/unit/test_setup_status.py::test_status_read_skips_network_by_default
+tests/unit/test_setup_status_doctor_drift.py::test_every_real_doctor_check_becomes_a_section
+tests/unit/test_setup_status_doctor_drift.py::test_a_failing_check_surfaces_as_a_blocking_section
+tests/unit/test_setup_status_doctor_drift.py::test_skip_network_returns_cloud_preflight_as_record_off
+tests/unit/test_trust_destinations.py::test_registry_is_complete_and_inventory_is_secret_free
+tests/unit/test_trust_destinations.py::test_doctor_uses_registry_names_for_enabled_destinations
+tests/unit/test_trust_destinations.py::test_default_inventory_has_no_external_destination_enabled
+tests/unit/test_hs201_route_contract.py::test_unresolved_route_is_unavailable_never_local_before_post[detail]
+tests/unit/test_hs201_route_contract.py::test_unresolved_route_is_unavailable_never_local_before_post[ledger]
+tests/unit/test_hs201_route_contract.py::test_unresolved_route_is_unavailable_never_local_before_post[recovery]
+tests/unit/test_hs201_route_contract.py::test_planned_route_discloses_all_ordered_legs_and_stable_revision_hash
+tests/unit/test_hs201_route_contract.py::test_group_assignment_cannot_be_disclosed_as_service_route
+tests/unit/test_hs201_route_counsel.py::test_missing_hash_does_not_replace_a_completed_run
+tests/unit/test_hs201_route_counsel.py::test_missing_or_stale_hash_does_not_hide_a_queued_owner
+tests/unit/test_hs201_route_counsel.py::test_protected_state_wins_before_hash_fence[running]
+tests/unit/test_hs201_route_counsel.py::test_protected_state_wins_before_hash_fence[reserved]
+tests/unit/test_hs201_route_counsel.py::test_all_http_route_refusals_expose_the_same_contract[/api/meetings/counsel-http/intelligence/run]
+tests/unit/test_hs201_route_counsel.py::test_all_http_route_refusals_expose_the_same_contract[/api/intel/retry/counsel-http]
+tests/unit/test_hs201_route_counsel.py::test_all_http_route_refusals_expose_the_same_contract[/api/meetings/counsel-http/intel-recovery/retry]
+tests/unit/test_hs201_route_counsel.py::test_undisclosed_kernel_attempt_is_kept_and_fails_receipt
+tests/unit/test_hs201_route_counsel.py::test_scheduled_retry_claim_refusal_has_no_terminal_receipt
+tests/unit/test_hs201_route_counsel.py::test_mcp_run_requires_a_disclosed_hash_before_dispatch
+tests/unit/test_hs201_route_counsel.py::test_meeting_list_resolves_global_route_once
+tests/unit/test_hs201_route_http.py::test_http_route_refusal_and_repair_use_disclosed_selection[/api/meetings/http-route/intelligence/run]
+tests/unit/test_hs201_route_http.py::test_http_route_refusal_and_repair_use_disclosed_selection[/api/intel/retry/http-route]
+tests/unit/test_hs201_route_http.py::test_http_route_refusal_and_repair_use_disclosed_selection[/api/meetings/http-route/intel-recovery/retry]
+tests/unit/test_hs201_run_receipt.py::test_all_run_entry_points_require_the_disclosed_hash_before_queueing
+tests/unit/test_hs201_run_receipt.py::test_missing_or_stale_hash_refuses_before_request_or_provider
+tests/unit/test_hs201_run_receipt.py::test_all_run_entry_points_preserve_record_only_no_assignment_reason[run]
+tests/unit/test_hs201_run_receipt.py::test_all_run_entry_points_preserve_record_only_no_assignment_reason[retry]
+tests/unit/test_hs201_run_receipt.py::test_all_run_entry_points_preserve_record_only_no_assignment_reason[recovery]
+tests/unit/test_hs201_run_receipt.py::test_receipt_keeps_failed_and_fallback_dispatches_and_survives_restart
+tests/unit/test_hs201_run_receipt.py::test_receipt_preserves_and_fails_a_destination_outside_the_disclosed_legs
+tests/unit/test_hs201_run_receipt.py::test_real_queue_drainer_records_failed_primary_and_successful_fallback
+tests/unit/test_hs201_refusal_history.py::test_failed_execution_survives_restart_and_later_refusals
+tests/unit/test_hs201_summary_assignment.py::test_summary_gesture_writes_exact_capability_with_real_profile_revision_and_preserves_speech
+tests/unit/test_hs201_summary_assignment.py::test_summary_gesture_rejects_stale_profile_revision_after_profile_head_moves
+tests/unit/test_hs201_summary_assignment.py::test_summary_projection_names_the_engine_that_service_will_run
+tests/unit/test_hs201_summary_assignment.py::test_summary_gesture_reports_revision_conflict_without_silent_success
+tests/unit/test_hs201_summary_assignment.py::test_summary_gesture_reports_partial_failure_for_incompatible_text_profile
+tests/unit/test_hs201_summary_assignment.py::test_speech_assignment_cannot_use_text_only_profile
+tests/unit/test_hs201_summary_assignment.py::test_summary_proposal_never_offers_text_only_engine_to_speech
+tests/unit/test_hs201_summary_assignment.py::test_summary_selection_then_real_queue_binder_freezes_selected_revision
+tests/unit/test_hs201_summary_assignment.py::test_model_library_connection_keeps_assignment_rows_byte_equivalent
+tests/unit/test_phase143_routing_authority_census.py::test_census_inventory_has_one_owner_for_each_mutable_family
+tests/unit/test_phase143_routing_authority_census.py::test_census_anchors_current_routing_resolvers_and_legacy_assignment_writers
+tests/unit/test_phase143_routing_authority_census.py::test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer
+tests/unit/test_phase143_routing_authority_census.py::test_ast_census_rejects_a_new_public_resolver_or_late_pointer_read
+tests/unit/test_phase143_routing_authority_census.py::test_phase143_placement_adopters_have_zero_python_resolution_forks
+tests/unit/test_phase143_routing_authority_census.py::test_phase143_placement_adopter_fork_scan_rejects_local_resolver_or_runner
+tests/unit/test_phase143_routing_authority_census.py::test_profile_service_owner_gate_is_enforced_before_lookup_or_probe
+tests/unit/test_phase143_routing_authority_census.py::test_path_bearing_profile_sync_seam_is_a_named_blocker_not_an_exception
+tests/unit/test_phase143_routing_authority_census.py::test_phase_f_meeting_execution_surface_has_no_v1_resolver_or_direct_runner
+tests/unit/test_phase143_routing_authority_census.py::test_legacy_assignment_writers_are_delete_work_and_acquisition_is_availability_only
+tests/unit/test_phase143_surface_fallback_census.py::test_private_backend_route_and_recovery_decisions_are_classified
+tests/unit/test_phase143_surface_fallback_census.py::test_web_route_pointer_controls_are_classified_and_single_owned
+tests/unit/test_phase143_surface_fallback_census.py::test_story143_workflow_aliases_decode_once_and_no_adopter_reopens_fake_fallback
+tests/unit/test_phase143_surface_fallback_census.py::test_census_artifact_covers_every_guarded_surface_and_recovery_kind
+tests/unit/test_phase143_surface_fallback_census.py::test_swift_retry_and_fallback_policy_sites_are_exact_and_fail_closed
+tests/unit/test_backend_density_guard.py::test_web_runtime_core_stays_boot_only
+tests/unit/test_backend_density_guard.py::test_meeting_session_core_stays_lifecycle_only
+tests/unit/test_backend_density_guard.py::test_runtime_modules_stay_single_concern
+tests/unit/test_backend_density_guard.py::test_meeting_session_modules_stay_single_concern
+tests/unit/test_backend_density_guard.py::test_guard_would_catch_a_regrown_module
+tests/unit/test_backend_density_guard.py::test_phase79_package_inits_stay_composition_only
+tests/unit/test_backend_density_guard.py::test_phase79_package_modules_stay_single_concern
+tests/uat/test_egress_cloud.py::test_cloud_card_names_target_and_remains_unexecuted
+tests/uat/test_decks.py::test_all_required_decks_present
+tests/uat/test_decks.py::test_deck_roundtrips_through_config_load[bad-endpoint]
+tests/uat/test_decks.py::test_deck_roundtrips_through_config_load[cloud-egress]
+tests/uat/test_decks.py::test_deck_roundtrips_through_config_load[golden-43]
+tests/uat/test_decks.py::test_deck_roundtrips_through_config_load[golden-local]
+tests/uat/test_decks.py::test_deck_roundtrips_through_config_load[mesh-node]
+tests/uat/test_decks.py::test_deck_roundtrips_through_config_load[no-model]
+tests/uat/test_decks.py::test_bad_endpoint_points_at_dead_port
+tests/uat/test_decks.py::test_golden_43_wired_to_the_lan
+tests/uat/test_decks.py::test_no_model_is_local_and_quiet
+tests/uat/test_decks.py::test_cloud_egress_names_endpoint_but_keeps_actuators_closed
+tests/uat/test_decks.py::test_unknown_deck_raises
+tests/uat/test_recipes_parse.py::test_smoke_recipes_present
+tests/uat/test_recipes_parse.py::test_recipes_parse_and_declare_a_deck
+tests/uat/test_recipes_parse.py::test_intel_recipes_flagged_requires_intel
+tests/uat/test_recipes_parse.py::test_first_run_recipe_unlinks_caches
+tests/uat/test_recipes_parse.py::test_first_run_probe_does_not_treat_optional_llm_as_a_readiness_gate
+tests/uat/test_recipes_parse.py::test_include_cycle_refuses_at_load
+tests/uat/test_recipes_parse.py::test_include_order_is_deps_first
+tests/uat/test_recipes_parse.py::test_unknown_recipe_raises
+tests/uat/test_recipes_parse.py::test_mesh_dispatch_recipe_present_and_composes
+tests/uat/test_recipes_parse.py::test_cloud_egress_recipe_is_local_and_composes_seeded_control
+tests/uat/test_recipes_parse.py::test_every_recipe_probe_kind_resolves
+tests/uat/test_no_holdspeak_import.py::test_conductor_source_never_imports_holdspeak
+tests/uat/test_no_holdspeak_import.py::test_importing_conductor_does_not_load_holdspeak
+
+184 tests collected in 1.17s
+```
+
+### Captured run — 2026-09-20T04:06:08Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.mJJ81Y8OWy PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:/Users/karol/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run --extra dev pytest -q -n auto --tb=short tests/unit/test_hs201_summary_egress.py tests/unit/test_hs201_summary_doctor.py tests/unit/test_hs201_live_analysis_truth.py tests/unit/test_mesh_liveness_surfaces.py tests/unit/test_doctor_runtime_profiles.py tests/unit/test_doctor_command.py tests/unit/test_doctor_config_honesty.py tests/unit/test_doctor_observer.py tests/unit/test_setup_status.py tests/unit/test_setup_status_doctor_drift.py tests/unit/test_trust_destinations.py tests/unit/test_hs201_route_contract.py tests/unit/test_hs201_route_counsel.py tests/unit/test_hs201_route_http.py tests/unit/test_hs201_run_receipt.py tests/unit/test_hs201_refusal_history.py tests/unit/test_hs201_summary_assignment.py tests/unit/test_phase143_routing_authority_census.py tests/unit/test_phase143_surface_fallback_census.py tests/unit/test_backend_density_guard.py tests/uat/test_egress_cloud.py tests/uat/test_decks.py tests/uat/test_recipes_parse.py tests/uat/test_no_holdspeak_import.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 971ed9ba68da4bc83c5b013786b51190c758d8f5
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 39%]
+........................................................................ [ 78%]
+........................................                                 [100%]
+184 passed in 13.30s
+```
+
+### Captured run — 2026-09-20T04:06:33Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.nHrl17Oi8N PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:/Users/karol/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run --extra dev pytest -q -s tests/e2e/test_hs201_summary_trust_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 971ed9ba68da4bc83c5b013786b51190c758d8f5
+
+```text
+SHOT /Users/karol/dev/tools/wt-201-a/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/lane-a-followup2/summary-trust-1440.png
+SHOT /Users/karol/dev/tools/wt-201-a/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/lane-a-followup2/summary-trust-393.png
+DISCOVERY_CALLS ['https://api.openai.com/v1']
+ROUTE_EXECUTIONS 0
+PAGE_ERRORS []
+.
+1 passed in 6.95s
+```
+
+### Captured run — 2026-09-20T04:07:54Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.hr2pMdCxgU PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:/Users/karol/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run --extra dev pytest -q -s tests/e2e/test_hs201_summary_trust_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 971ed9ba68da4bc83c5b013786b51190c758d8f5
+
+```text
+SHOT /Users/karol/dev/tools/wt-201-a/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/lane-a-followup2/summary-trust-1440.png
+SHOT /Users/karol/dev/tools/wt-201-a/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/lane-a-followup2/summary-trust-393.png
+DISCOVERY_CALLS ['https://api.openai.com/v1']
+ROUTE_EXECUTIONS 0
+PAGE_ERRORS []
+.
+1 passed in 7.29s
+```
+
+
+## Follow-up 2 — classification and disclosure contract
+
+See [Astra's audit](audits/followup2-astra.md) for the a/b/c table and exact
+source anchors. Both caller-named failures are **b** product regressions.
+The **a** fixture migrations select modern summary assignments instead of
+retired live-analysis pointers; the target/model/node assertions remain.
+No failure is classified **c**. The original two-failure red capture at
+`2026-09-20T03:43:08Z` precedes product edits in this session.
+
+The SERVICE planned route is still the selection authority. Display labels
+come from its exact immutable revisions; public leg keys and selection hash
+stay unchanged. Summary egress is independent of live analysis being off.
+The UAT recipe now requires its isolated provider-discovery fixture and
+refuses ordinary invocation before making a provider call. This evidence
+proves disclosure and unexecuted proposals, not live OpenAI readiness.
+
+Additional worker doctor red tail, read by Astra (before doctor repair):
+
+```text
+FAILED tests/unit/test_mesh_liveness_surfaces.py::test_doctor_runtime_profiles_names_the_mesh_node
+FAILED tests/unit/test_hs201_summary_doctor.py::test_doctor_names_assigned_summary_route_and_ignores_legacy_pointer
+2 failed in 0.91s
+```
+
+Root's captured focused suite: **184 passed in 13.30s**. The glass walk uses
+the real isolated hub and public selection route. Its discovery leaf is
+stubbed; `ROUTE_EXECUTIONS 0`, `PAGE_ERRORS []`. The settled Trust window
+shows `api.openai.com` at 1440 and 393. The 393 badge itself still clips its
+label; that face concern is handed to lane B. No owner desk state was used.
+No story flips or fresh full-suite claim.

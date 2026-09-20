@@ -63,7 +63,7 @@ def test_doctor_reports_live_analysis_off_for_record(
     assert "live analysis is off for record" in check.detail.lower()
     if reader == "profiles":
         assert "dictation:" in check.detail
-        assert "meeting intel: live analysis is off for Record" in check.detail
+        assert "Meeting summary:" in check.detail
 
 
 def test_setup_trust_and_inventory_scope_live_analysis_off() -> None:
@@ -81,7 +81,7 @@ def test_setup_trust_and_inventory_scope_live_analysis_off() -> None:
         row for row in inventory if row["id"] == "dictation_runtime"
     )
     assert meeting_destination["enabled"] is False
-    assert meeting_destination["destination"] == "Live analysis is off for Record"
+    assert meeting_destination["destination"] == "Summary route unavailable"
     assert dictation_destination["enabled"] is True
 
 

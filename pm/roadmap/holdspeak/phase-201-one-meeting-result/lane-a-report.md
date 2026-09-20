@@ -143,3 +143,37 @@ No tracked evidence PNG churn needed restoration. The PR stays #588, open;
 Muad'Dib owns the combined verification and merge. The old documentation and
 UAT-ledger full-suite failures are healed by the imported main changes; the
 rest of the historical full-suite classification is not a fresh full run.
+
+
+## Follow-up 2 — summary route disclosure
+
+**LANE:** A, Astra; `feat/hs-201-a`, PR #588 remains open. Session
+`01a0bbc3-9bbd-7513-a76d-f6cc139fae2d`.
+
+**OUTCOME:** Trust and doctor disclose the same assigned SERVICE summary
+route. Live analysis stays off for Record. Both reported failures are fixed.
+
+| Caller-named failure | a/b/c classification |
+|---|---|
+| Cloud egress UAT | **b** product regression; **a** fixture now selects a real summary assignment |
+| Doctor mesh profile | **b** product regression; **a** fixture/copy now names summary while retaining Pocket 4B and walk-edge |
+
+**PROOF:** Root's untouched red: `2 failed in 5.29s`. Quiet focused tail:
+`184 passed in 13.30s`. Real hub glass tail: `1 passed in 6.95s`,
+`ROUTE_EXECUTIONS 0`, `PAGE_ERRORS []`. Full raw captures are appended to
+[evidence story 03](evidence-story-03.md); [the audit](audits/followup2-astra.md)
+records exact tests and inspected 1440/393 shots.
+
+**LEDGER:** No **c** classification, no story flips, no owner DB/microphone,
+no tracked PNG churn outside the two new shots. No fresh full-suite claim.
+The prior inherited Delivery Workbench doctor/check issues remain.
+
+**AMENDMENTS:** Reporting reads the assigned summary route, with copied
+profile/node labels. Public planned-route keys/hash stay unchanged. The UAT
+recipe requires its isolated discovery fixture; a normal invocation refuses
+before provider contact. No `web/**` changes or live-analysis reconnection.
+
+**UNKNOWN:** Real provider readiness/quality was not exercised. At 393 the
+chrome badge clips its label; the opened Trust window shows the full host.
+Desktop badge contrast also remains a face concern for lane B. Final combined
+verification and merge remain with Muad'Dib.

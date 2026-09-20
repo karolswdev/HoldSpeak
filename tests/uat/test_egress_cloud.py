@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from uat.conductor.db import Database
+from uat.conductor.product import ProductProcess
 from uat.conductor.runs import RunManager
 
 
@@ -12,7 +13,24 @@ from uat.conductor.runs import RunManager
 def real_manager(tmp_path, monkeypatch):
     monkeypatch.setenv("UAT_RUNS_ROOT", str(tmp_path / "_runs"))
     monkeypatch.setenv("UAT_DB_PATH", str(tmp_path / "_runs" / "uat.db"))
+    monkeypatch.setenv("UAT_SUMMARY_ROUTE_DISCOVERY_STUB", "1")
     monkeypatch.delenv("UAT_REAL_HOME", raising=False)
+    # Keep the real product, HTTP routes, Model Library producer, and
+    # assignment resolver in the loop. Only the external discovery leaf and
+    # key lookup are deterministic test doubles; no provider call or owner key
+    # is used while the proposal remains unexecuted.
+    bootstrap = (
+        "import runpy, holdspeak.setup_runtime as sr, "
+        "holdspeak.profile_key_store as pks; "
+        "sr.discover_endpoint_models=lambda *_a,**_k: {'ok': True,'models':['uat-fixture']}; "
+        "pks.resolve_profile_key=lambda *_a,**_k: None; "
+        "runpy.run_module('holdspeak.main', run_name='__main__')"
+    )
+    monkeypatch.setattr(
+        ProductProcess,
+        "_command",
+        lambda _self: [__import__("sys").executable, "-c", bootstrap, "web", "--no-open"],
+    )
     mgr = RunManager(Database(), boot_timeout=60.0, link_caches=True)
     try:
         yield mgr

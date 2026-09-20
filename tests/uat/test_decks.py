@@ -12,6 +12,7 @@ import json
 import pytest
 
 from uat.conductor.induction.decks import DeckError, DeckRegistry
+from uat.conductor.induction.recipes import RecipeRegistry
 
 REQUIRED_DECKS = {
     "golden-local",
@@ -65,10 +66,15 @@ def test_no_model_is_local_and_quiet(tmp_path):
 
 def test_cloud_egress_names_endpoint_but_keeps_actuators_closed(tmp_path):
     cfg = _load_config(DeckRegistry().load("cloud-egress"), tmp_path)
-    assert cfg.meeting.intel_enabled is True
-    assert cfg.meeting.intel_provider == "cloud"
-    assert cfg.meeting.intel_cloud_base_url == "https://api.openai.com/v1"
+    assert cfg.meeting.intel_enabled is False
     assert cfg.meeting.allow_actuators is False
+    recipe = RecipeRegistry().load("egress-cloud-card")
+    selection = next(
+        action["assign_summary_route"] for action in recipe.actions
+        if "assign_summary_route" in action
+    )
+    assert selection["endpoint"] == "https://api.openai.com/v1"
+    assert {"egress_scope_is": {"scope": "cloud", "target": "api.openai.com"}} in recipe.probe
 
 
 def test_unknown_deck_raises():
