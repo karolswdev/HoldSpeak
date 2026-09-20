@@ -484,3 +484,70 @@ bundle gate passed (Desk JS 1306225 B; Desk CSS 315474 B; source maps 0)
 ....                                                                     [100%]
 4 passed in 0.61s
 ```
+
+## CI fallout (c48013b5): tests/unit/test_product_copy.py
+
+Two branch-new failures, both mine, both paid.
+
+1. **`failure-missing-facts`** on the unverified-append line. A failure line
+   must carry what failed, the work that is kept, and the next valid action
+   (`holdspeak/product_copy.py:406-409`). It now reads
+   *"The answer is in the note, and your text is kept. Its exact place could
+   not be checked. Reload the note."*
+   (`web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx:176`) — and
+   the named action is a REAL verb beside the line, not a word the owner
+   cannot press: the line renders the library `Reload` Button, which runs
+   the same recovery as the conflict line (`:470`, `reloadNote` at `:381`).
+   Every other line in this window now goes through one `say()` seam
+   (`:119`), so a verb never outlives the line that set it.
+2. **`test_recorded_copy_debt_only_shrinks`** — the three strings this redo
+   repaired are deleted from `tests/fixtures/product_copy_debt.json`
+   (`Default context skipped · {value} unavailable`, `The answer was added,
+   but its exact place in the Note could not be verified. Reload the
+   workspace.`, `Ready when you are`). Deletions only, none added:
+   `1 file changed, 15 deletions(-)`.
+
+```text
+...........                                                              [100%]
+11 passed in 2.09s            # HOME=$(mktemp -d) uv run pytest -q tests/unit/test_product_copy.py
+      Tests  27 passed (27)   # npx vitest run src/desk/thought-workspace
+....   4 passed in 0.60s      # tests/unit/test_ux_canon_ratchet.py
+..........  10 passed in 65.02s   # the story-12 rig + the HS-141 rig
+```
+
+### Captured run — 2026-09-20T18:29:59Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.YZb8mjgGPl uv run pytest -q tests/unit/test_product_copy.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 9de3fe257aab207a2b99df43d6944ad89e0d2051
+
+```text
+...........                                                              [100%]
+11 passed in 2.15s
+```
+
+### Captured run — 2026-09-20T18:30:02Z
+
+- **Command:** `bash -c cd web && npx tsc --noEmit && npx vitest run src/desk/thought-workspace/ 2>&1 | tail -4`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 9de3fe257aab207a2b99df43d6944ad89e0d2051
+
+```text
+      Tests  27 passed (27)
+   Start at  12:30:11
+   Duration  2.53s (transform 540ms, setup 296ms, import 1.01s, tests 1.90s, environment 887ms)
+```
+
+### Captured run — 2026-09-20T18:30:20Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.sQ8T4bRASu PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run pytest -q tests/e2e/test_hs201_12_thought_note_glass.py tests/e2e/test_hs141_thought_workbench_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 9de3fe257aab207a2b99df43d6944ad89e0d2051
+
+```text
+..........                                                               [100%]
+10 passed in 60.01s (0:01:00)
+```

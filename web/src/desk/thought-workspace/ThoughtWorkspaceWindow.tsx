@@ -114,6 +114,9 @@ function WorkspaceReady({
   const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageVerb, setMessageVerb] = useState<"reload" | null>(null);
+  /* One line at a time, and the verb belongs to the line that set it. */
+  const say = (line: string) => { setMessage(line); setMessageVerb(null); };
   const [reads, setReads] = useState(false);
   const [revealRange, setRevealRange] = useState<{ start: number; end: number; focus?: boolean } | null>(null);
   /* HS-176-04 — the answer well is a PadGadget (the voice law): the ref
@@ -139,9 +142,9 @@ function WorkspaceReady({
 
   useEffect(() => registerClose(() => {
     if (busy) return;
-    setBusy(true); setMessage("");
+    setBusy(true); say("");
     void writer.flush({ fence: true }).then(() => onClose()).catch((cause) => {
-      setMessage(readableError(cause));
+      say(readableError(cause));
       writer.release();
       setBusy(false);
     });
@@ -166,7 +169,12 @@ function WorkspaceReady({
     const effect = appendEffect(result.receipt);
     const range = await verifiedReveal(result.thought, effect);
     if (effect && !range) {
-      setMessage("The answer is in the note. Its place could not be checked.");
+      /* HS-201-12 CI fallout — a failure line carries what failed, the work
+         that is kept, and the next action (`product_copy.py:406`), and the
+         action is a REAL verb beside the line, never a word the owner
+         cannot press. */
+      setMessage("The answer is in the note, and your text is kept. Its exact place could not be checked. Reload the note.");
+      setMessageVerb("reload");
       return true;
     }
     if (reveal && range) setRevealRange({ ...range, focus: false });
@@ -176,7 +184,7 @@ function WorkspaceReady({
   const afterFlush = async (command: (latest: Thought) => Promise<WorkspaceMutation>, reveal = false) => {
     if (busy) return false;
     setBusy(true);
-    setMessage("");
+    say("");
     try {
       const latest = await writer.flush({ fence: true });
       return await installMutation(await command(latest), reveal);
@@ -191,7 +199,7 @@ function WorkspaceReady({
       } else if (code === "workspace_cursor_conflict") {
         await reload(false).catch(() => undefined);
       }
-      setMessage(readableError(cause));
+      say(readableError(cause));
       return false;
     } finally {
       writer.release();
@@ -236,7 +244,7 @@ function WorkspaceReady({
     const next = `${body}${gap}${text}`;
     const start = body.length + gap.length;
     setBusy(true);
-    setMessage("");
+    say("");
     try {
       writer.edit({ body: next });
       const saved = await writer.flush({ fence: true });
@@ -245,7 +253,7 @@ function WorkspaceReady({
       await reload(false).catch(() => undefined);
       return true;
     } catch (cause) {
-      setMessage(readableError(cause));
+      say(readableError(cause));
       return false;
     } finally {
       writer.release();
@@ -291,15 +299,15 @@ function WorkspaceReady({
 
   const stop = async () => {
     if (!projection.thought.continuity?.invocation_id || busy) return;
-    setBusy(true); setMessage("");
+    setBusy(true); say("");
     try {
       const snapshot = await writer.pause();
       const invocation = snapshot.thought.continuity?.invocation_id;
       if (!invocation) throw new Error("The running turn is no longer available.");
       await stopRefinement(snapshot.thought, invocation, snapshot.workspaceCursor || projection.workspace_cursor);
       await reload();
-      setMessage("Stopped. The note did not change.");
-    } catch (cause) { setMessage(readableError(cause)); }
+      say("Stopped. The note did not change.");
+    } catch (cause) { say(readableError(cause)); }
     finally { writer.resume(); setBusy(false); }
   };
 
@@ -376,7 +384,7 @@ function WorkspaceReady({
        (useThoughtNoteWriter.ts:212). */
     if (busy || reloading.current) return;
     reloading.current = true;
-    setMessage("");
+    say("");
     try {
       const fresh = await reload(false);
       const note = fresh.thought.working_note;
@@ -384,7 +392,7 @@ function WorkspaceReady({
       setRevealRange(null);
       writer.edit({ title: note.title, body: note.body_markdown, tags: note.tags.join(", ") });
     } catch (cause) {
-      setMessage(readableError(cause));
+      say(readableError(cause));
     } finally {
       reloading.current = false;
     }
@@ -394,11 +402,11 @@ function WorkspaceReady({
   const openReads = async () => {
     if (reads) { setReads(false); return; }
     if (busy) return;
-    setBusy(true); setMessage("");
+    setBusy(true); say("");
     try {
       await writer.flush({ fence: true });
       setReads(true);
-    } catch (cause) { setMessage(readableError(cause)); }
+    } catch (cause) { say(readableError(cause)); }
     finally { writer.release(); setBusy(false); }
   };
   const readsResult = (result: ReadsResult) => {
@@ -412,7 +420,7 @@ function WorkspaceReady({
     if (event.key.toLowerCase() === "s") {
       event.preventDefault();
       if (busy) return;
-      void writer.flush().catch((cause) => setMessage(readableError(cause)));
+      void writer.flush().catch((cause) => say(readableError(cause)));
       return;
     }
     if (event.key !== "Enter") return;
@@ -457,7 +465,10 @@ function WorkspaceReady({
       </div> : null}
     </section>}
 
-    {message ? <p className="thought-note-line" role="status">{message}</p> : null}
+    {message ? <p className="thought-note-line" role="status">
+      {message}
+      {messageVerb === "reload" ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button> : null}
+    </p> : null}
 
     {reads ? <ThoughtReadsWell
       thought={documentThought}
