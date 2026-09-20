@@ -23,26 +23,75 @@ import type { AssignmentSummary } from "../../pages/cores/assignmentExperience";
 /** The capability that writes a meeting summary. */
 export const SUMMARY_CAPABILITY = "meeting.deferred_analysis";
 
+/** The capability that turns admitted audio into text. */
+export const SPEECH_CAPABILITY = "speech.transcribe";
+
+/** How the assignment roster read went.
+ *
+ *  Counsel fix round (Astra finding 3): `pending` and `failed` are both
+ *  UNKNOWN -- the Chair knows nothing about the meeting path -- and an
+ *  unknown is never drawn as a clear desk (UX-CANON A10). */
+export type AssignmentRead = "pending" | "failed" | "ok";
+
 export type MeetingPathBlocker = {
+  /** Which fact the row states. */
+  key: "engines" | "summary" | "speech" | "unknown";
   /** The state, in the product's plainest words. */
   label: string;
   /** The one verb. */
   verb: string;
 };
 
-/** The meeting-path blocker, or `null` when nothing blocks it.
+/** Every meeting-path blocker the roster states, in path order.
  *
- *  `null` for an unread summary too: an unknown is never reported as a
- *  blocker (UX-CANON A.10 -- honest states, never a guess). */
-export function meetingPathBlocker(
+ *  An empty list means nothing blocks the path. The rows:
+ *
+ *  - `unknown` -- the read FAILED. One row, one verb that re-reads it. A
+ *    read still in flight draws NOTHING (counsel fix round, second pass,
+ *    ruling 1): the desk is quiet on every arrival, and the Chair keeps
+ *    the all-clear off the headline until the roster lands.
+ *  - `engines` -- NEITHER half of the path has an engine. That is one
+ *    state, so it is one row with one filled Button (ruling 2: one
+ *    filled primary on the face).
+ *  - `speech` -- nothing turns the recorded audio into text. ANY
+ *    effective assignment clears it: an owner-started recording resolves
+ *    `speech.transcribe` through the ordinary inheritance chain
+ *    (`inference_service_route_policy.py:198-224` names the capability
+ *    only for the SERVICE-fired wake and scheduled paths).
+ *  - `summary` -- nothing writes the summary. Only an exact
+ *    `capability:meeting.deferred_analysis` head clears it: the
+ *    meeting-intel queue is a SERVICE principal, and its route policy
+ *    permits exactly one assignment source -- `capability`
+ *    (`inference_service_route_policy.py:43`, refused at `:93`). A group
+ *    or global head does NOT clear the meeting path, so it may not clear
+ *    the row.
+ *
+ *  A capability the roster does not carry is left alone: absence of a
+ *  row is not evidence of an absent engine. */
+export function meetingPathBlockers(
   summary: AssignmentSummary | null,
-): MeetingPathBlocker | null {
-  if (!summary) return null;
-  const row = (summary.task_overrides ?? []).find(
-    (task) => task.id === SUMMARY_CAPABILITY,
-  );
-  if (!row) return null;
-  const usable = row.has_override && row.effective?.status === "assigned";
-  if (usable) return null;
-  return { label: "No engine for summaries", verb: "Choose an engine" };
+  read: AssignmentRead = "ok",
+): MeetingPathBlocker[] {
+  if (read === "pending") return [];
+  if (read === "failed" || !summary) {
+    return [{ key: "unknown", label: "Could not read setup", verb: "Try again" }];
+  }
+  const tasks = summary.task_overrides ?? [];
+  const row = (id: string) => tasks.find((task) => task.id === id);
+  const verb = "Choose an engine";
+
+  const speech = row(SPEECH_CAPABILITY);
+  const speechMissing = Boolean(speech) && speech!.effective?.status !== "assigned";
+  const analysis = row(SUMMARY_CAPABILITY);
+  const summaryMissing =
+    Boolean(analysis) &&
+    !(analysis!.has_override && analysis!.effective?.status === "assigned");
+
+  if (speechMissing && summaryMissing) {
+    return [{ key: "engines", label: "No engine yet", verb }];
+  }
+  const blockers: MeetingPathBlocker[] = [];
+  if (speechMissing) blockers.push({ key: "speech", label: "No engine for speech", verb });
+  if (summaryMissing) blockers.push({ key: "summary", label: "No engine for summaries", verb });
+  return blockers;
 }

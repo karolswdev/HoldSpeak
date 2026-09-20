@@ -14,9 +14,9 @@ import { apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { intelBadge } from "./intelBadge";
-import { meetingPathBlocker } from "./meetingPathBlocker";
+import { meetingPathBlockers, type AssignmentRead } from "./meetingPathBlocker";
 import { getAssignmentSummary, type AssignmentSummary } from "../../pages/cores/assignmentExperience";
-import { useRuntimeFrame } from "../../runtime/RuntimeBus";
+import { useRuntimeBus, useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { labelFor, supportsDoorVerb, commandForDoorVerb } from "./doorVerbs";
 import {
   SurfaceSection,
@@ -447,14 +447,47 @@ function Arrival() {
   // ── meetings ──
   const meetings = useDesk((s) => s.items.meeting);
 
-  // ── the meeting-path blocker (HS-201-01) ──
-  // One read of the assignment roster. A failed read leaves the row
-  // withheld: an unknown is never drawn as a blocker.
+  // ── the meeting-path blockers (HS-201-01) ──
+  // The assignment roster, re-read whenever it can have changed. Counsel
+  // fix round (Astra finding 1): a mount-only read left the repaired row
+  // on an OPEN desk until the owner navigated -- the product knew the
+  // path was clear and the face still asked for an engine. So the Chair
+  // re-reads on the hub's `desk_changed` frame (the burst is debounced,
+  // as `useDeskChangedRefresh` does) and when the window takes focus
+  // again (the owner comes back from Models, or from anywhere else).
+  // A read that has not landed is an UNKNOWN, never a clear desk.
   const [assignments, setAssignments] = useState<AssignmentSummary | null>(null);
-  useEffect(() => {
-    void getAssignmentSummary().then(setAssignments).catch(() => undefined);
+  const [assignmentRead, setAssignmentRead] = useState<AssignmentRead>("pending");
+  const readAssignments = useCallback(async () => {
+    try {
+      const summary = await getAssignmentSummary();
+      setAssignments(summary);
+      setAssignmentRead("ok");
+    } catch {
+      setAssignments(null);
+      setAssignmentRead("failed");
+    }
   }, []);
-  const blocker = useMemo(() => meetingPathBlocker(assignments), [assignments]);
+  useEffect(() => { void readAssignments(); }, [readAssignments]);
+  const { subscribe: subscribeFrames } = useRuntimeBus();
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const unsubscribe = subscribeFrames("desk_changed", () => {
+      if (timer !== null) clearTimeout(timer);
+      timer = setTimeout(() => { timer = null; void readAssignments(); }, 300);
+    });
+    const onFocus = () => { void readAssignments(); };
+    window.addEventListener("focus", onFocus);
+    return () => {
+      if (timer !== null) clearTimeout(timer);
+      unsubscribe();
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [subscribeFrames, readAssignments]);
+  const blockers = useMemo(
+    () => meetingPathBlockers(assignments, assignmentRead),
+    [assignments, assignmentRead],
+  );
 
   // HS-200-42 (counsel N1): WHO will execute the queue. The `runtime_queue`
   // frame (the same one the ambient HUD chip reads) now carries the hub
@@ -553,8 +586,16 @@ function Arrival() {
   const failedMeetings = meetings.filter(
     (m) => intelBadge(m.intelStatus) === "FAILED",
   ).length;
-  const pending = (blocker ? 1 : 0) + failedMeetings;
-  const headline = headlineFor(count, projectCount, coverage.complete, pending);
+  const pending = blockers.length + failedMeetings;
+  // Counsel fix round, second pass (ruling 1): a roster read still in
+  // flight draws no row, and the all-clear waits for it -- an unknown is
+  // never spoken as a clear desk.
+  const headline = headlineFor(
+    count,
+    projectCount,
+    coverage.complete && assignmentRead !== "pending",
+    pending,
+  );
   const headlineAccent = count > 0 || pending > 0;
   const mutedCount = mutedItems.length > 0 ? mutedItems.length : 0;
   // HS-200-15 (D1): the head states coverage only when it is COMPLETE;
@@ -850,26 +891,38 @@ function Arrival() {
       {/* ── The one thing the meeting path needs (HS-201-01) ──
           ONE row, ONE library Button, and it is gone the moment an
           engine is assigned to the summary capability. */}
-      {blocker ? (
+      {blockers.length > 0 ? (
         <div data-testid="arrival-blocker">
           <SurfaceSection label="SETUP">
             <SurfaceLedger count={null} cols="room">
-              <SurfaceLedgerRow
-                primary={blocker.label}
-                trailing={
-                  <Button
-                    variant="primary"
-                    dense
-                    onClick={() => openSurfaceOr("open-concierge", "/models")}
-                    data-testid="arrival-blocker-verb"
-                  >
-                    {blocker.verb}
-                  </Button>
-                }
-                expands={false}
-                wrap
-                data-testid="arrival-blocker-row"
-              />
+              {blockers.map((blocker) => (
+                <SurfaceLedgerRow
+                  key={blocker.key}
+                  primary={blocker.label}
+                  trailing={
+                    // HS-201-01 (full-suite fallout): the SETUP verb is
+                    // the library Button, never a second FILLED primary.
+                    // The ratified face law is one filled primary on a
+                    // face with attention work and ZERO on a quiet one
+                    // (test_hs200_attention_glass.py:463, :694), and the
+                    // first attention row's Open owns it.
+                    <Button
+                      dense
+                      onClick={
+                        blocker.key === "unknown"
+                          ? () => void readAssignments()
+                          : () => openSurfaceOr("open-concierge", "/models")
+                      }
+                      data-testid={`arrival-blocker-verb-${blocker.key}`}
+                    >
+                      {blocker.verb}
+                    </Button>
+                  }
+                  expands={false}
+                  wrap
+                  data-testid="arrival-blocker-row"
+                />
+              ))}
             </SurfaceLedger>
           </SurfaceSection>
         </div>
@@ -1752,7 +1805,7 @@ function MeetingsSection({
             <SurfaceLedgerRow
               key={m.id}
               time={ledgerDate(m.startedAt)}
-              primary={m.title || "Untitled meeting"}
+              primary={m.title || "Meeting with no title"}
               cells={
                 <>
                   {durationMin(m.durationSeconds) ? (
@@ -2133,7 +2186,7 @@ function CaptureBar() {
         onClick={() => openSurfaceOr("dictate", "/dictation")}
         data-testid="arrival-develop-thought"
       >
-        Develop a thought
+        Write a thought
       </Button>
       <Button
         variant="ghost"

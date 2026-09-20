@@ -45,6 +45,11 @@ const HEALTHY_ROOM = {
 
 function wire(needsYou: unknown) {
   vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+    // HS-201-01 (counsel fix round): the Chair re-reads the assignment
+    // roster, and an UNREAD roster is now its own row. This face is not
+    // about the meeting path, so the roster read lands and names nothing.
+    if (String(path) === "/api/inference/assignments")
+      return { schema: "InferenceAssignmentSummary@1", rows: [], task_overrides: [], issue_count: 0 };
     if (String(path).startsWith("/api/desk/needs-you")) {
       if (needsYou === "reject") throw new Error("Connection lost");
       return needsYou;

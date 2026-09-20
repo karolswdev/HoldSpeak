@@ -1,7 +1,7 @@
 """Real-browser geometry proof for the Chair working band.
 
 HS-170-04 RE-POINT: the arrival replaces the Chair hero/lanes. The capture
-surface is now the arrival-capture-bar (Talk, Develop a thought, Record
+surface is now the arrival-capture-bar (Talk, Write a thought, Record
 meeting, Schedule). The thought-entry test-id, More capture options, Open
 advanced capture, and the door-board-column are all parked. The geometry
 assertion checks the arrival's capture bar stays inside the chrome, and a
@@ -146,7 +146,7 @@ def test_normal_chair_stays_inside_chrome_at_all_owner_widths(
             # Leave first value through the real owner action. This applies the
             # ordinary seed and reveals the normal Chair without test fixtures.
             page.get_by_role("button", name="Continue later", exact=True).click()
-            # HS-170-04: the arrival's capture bar carries Develop a thought.
+            # HS-170-04: the arrival's capture bar carries Write a thought.
             page.get_by_test_id("arrival-capture-bar").wait_for()
 
             for width, height, label in VIEWPORTS:
@@ -155,7 +155,7 @@ def test_normal_chair_stays_inside_chrome_at_all_owner_widths(
                 page.get_by_test_id("arrival-capture-bar").wait_for()
                 _assert_working_band(page)
                 # HS-170-04: the capture bar's verbs replace "More capture options".
-                _assert_hit(page, "Develop a thought")
+                _assert_hit(page, "Write a thought")
                 _assert_hit(page, "Record meeting")
                 _assert_clean(page, errors)
                 ASSETS.mkdir(parents=True, exist_ok=True)
@@ -186,7 +186,7 @@ def test_normal_chair_stays_inside_chrome_at_all_owner_widths(
                 # The parked door board columns are absent.
                 assert page.locator(".door-board-column").count() == 0
                 _assert_working_band(page)
-                _assert_hit(page, "Develop a thought")
+                _assert_hit(page, "Write a thought")
                 _assert_hit(page, "Record meeting")
 
                 # HS-170-04: the Schedule verb on the capture bar replaces the

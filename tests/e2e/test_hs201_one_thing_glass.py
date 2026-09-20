@@ -9,9 +9,11 @@ refusal the charter walk found in the hub log with nothing on the glass
 
 Tests:
   1. test_chair_names_the_blocker — the Chair draws ONE row with ONE
-     library Button, the headline is not `Nothing needs you`, the Button
-     opens Models, and after a REAL capability-scope assignment through
-     `POST /api/inference/assignments/set` the row is gone. 1440 + 393.
+     library Button (`No engine yet` while BOTH halves of the path are
+     missing), the headline is not `Nothing needs you`, the Button opens
+     Models, and REAL capability-scope assignments through the service
+     move the face on the OPEN desk: `No engine for speech` once the
+     summary half is fixed, then no row at all. 1440 + 393.
   2. test_meetings_window_over_a_failed_row — the Meetings window never
      reads `Nothing needs you` above a FAILED meeting. 1440 + 393.
   3. test_chip_and_trust_agree — the chrome egress chip and the Trust
@@ -33,6 +35,8 @@ from .glass_infra import (
     _ensure_build,
     _normal_chair,
     _settle,
+    assign_engine,
+    engine_profile,
 )
 
 pytest.importorskip("playwright.sync_api", reason="HS-201 glass needs Playwright")
@@ -40,6 +44,7 @@ pytest.importorskip("playwright.sync_api", reason="HS-201 glass needs Playwright
 SHOTS = REPO / "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots"
 TOKEN = "hs201-one-thing"
 SUMMARY_CAPABILITY = "meeting.deferred_analysis"
+SPEECH_CAPABILITY = "speech.transcribe"
 
 
 def _quiet_concierge(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -57,35 +62,33 @@ def _quiet_concierge(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(cs, "propose", lambda **_: {"rows": [], "receipt": {"groups": 0, "engines": 0, "waiting": 0}})
 
 
-def _assign_summary_engine() -> None:
-    """Assign a real engine to the summary capability, the product's way.
+def _clear_speech_head() -> None:
+    """Make the cold desk cold, the product's way.
 
-    A real ModelProfileService profile, then the real
-    InferenceAssignmentService at `capability:meeting.deferred_analysis`
-    scope — the only scope the meeting queue's service route policy may
-    read (`inference_service_route_policy.py:43`, `:93`).
+    The startup migration creates a `capability:speech.transcribe` head on
+    a HOME where a local speech runtime is importable
+    (`tests/unit/test_phase151_fired_session_admission.py:107-113` names
+    the same accident), so a rig that wants the virgin state clears it
+    through the real service -- a raw DELETE of the head leaves the
+    revision ledger behind it, and the next save collides on it.
     """
     from holdspeak.db import get_database
     from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.errors import NotFound
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
-    from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
 
-    db = get_database()
+    service = InferenceAssignmentService(get_database())
     owner = Principal(PrincipalKind.OWNER, "hs201-owner")
-    # The summary capability declares structured output and its own result
-    # schema (`holdspeak/inference_capabilities.py:1068`), so the profile
-    # must claim both or the assignment is refused as incompatible.
-    _profile(
-        db,
-        "hs201-summary-engine",
-        claims=("language", "structured_output", _result_claim(SUMMARY_CAPABILITY)),
-        modalities=("language", "text"),
-    )
-    InferenceAssignmentService(db).set_assignment(owner, {
-        "command_id": "hs201-assign-summary",
-        "expected_revision": 0,
-        "scope": {"kind": "capability", "capability_id": SUMMARY_CAPABILITY},
-        "entries": [{"profile_id": "hs201-summary-engine", "profile_revision": 1}],
+    scope = {"kind": "capability", "capability_id": SPEECH_CAPABILITY}
+    try:
+        current = service.get_assignment(owner, scope)
+    except NotFound:
+        return
+    service.clear_assignment(owner, {
+        "command_id": "hs201-clear-speech",
+        "expected_revision": int(current["revision"]),
+        "scope": scope,
+        "capability_id": SPEECH_CAPABILITY,
     })
 
 
@@ -140,6 +143,7 @@ class TestOneThing:
         _ensure_build()
         _quiet_concierge(monkeypatch)
         self.server, self.base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        _clear_speech_head()
         yield
         self.server.stop()
 
@@ -167,18 +171,40 @@ class TestOneThing:
             )
             assert summary_row["has_override"] is False, summary_row
             assert summary_row["effective"]["status"] == "no_assignment", summary_row
+            speech_row = next(
+                row for row in roster["task_overrides"]
+                if row["id"] == SPEECH_CAPABILITY
+            )
+            assert speech_row["effective"]["status"] == "no_assignment", speech_row
 
-            # ── ONE row, ONE Button ──
+            # ── neither engine is one state: ONE row, ONE filled Button
+            #    (counsel fix round, second pass, ruling 2) ──
             section = page.locator("[data-testid='arrival-blocker']")
             section.wait_for(timeout=10_000)
+            page.wait_for_function(
+                """() => {
+                  const el = document.querySelector("[data-testid='arrival-blocker']");
+                  return el && el.textContent.includes("No engine yet");
+                }""",
+                timeout=10_000,
+            )
             rows = page.locator("[data-testid='arrival-blocker-row']")
             assert rows.count() == 1, f"{rows.count()} blocker rows at {width}"
-            assert "No engine for summaries" in (rows.first.text_content() or "")
+            said = section.text_content() or ""
+            assert "No engine yet" in said, said
+            assert "No engine for speech" not in said, said
+            assert "No engine for summaries" not in said, said
             verbs = section.locator("button")
             assert verbs.count() == 1, f"{verbs.count()} verbs at {width}"
             assert (verbs.first.text_content() or "").strip() == "Choose an engine"
             # UX-CANON A1: the library Button, never a raw element
             assert "btn" in (verbs.first.get_attribute("class") or "")
+            # The SETUP verb never adds a FILLED primary: the ratified law
+            # gives that to the attention band, and this face is quiet
+            # (full-suite fallout; test_hs200_attention_glass.py:463, :694).
+            assert page.locator(".btn--primary").count() == 0, (
+                f"{page.locator('.btn--primary').count()} filled primaries at {width}"
+            )
 
             # ── the headline does not lie over it ──
             headline = page.locator("[data-testid='arrival-display']").text_content() or ""
@@ -187,25 +213,58 @@ class TestOneThing:
             page.screenshot(path=str(SHOTS / f"chair-blocker-{suffix}.png"), full_page=True)
 
             # ── the Button opens Models ──
-            page.locator("[data-testid='arrival-blocker-verb']").click()
+            page.locator("[data-testid='arrival-blocker-verb-engines']").click()
             page.locator("[data-testid='concierge-root']").wait_for(timeout=15_000)
             # Close it again so the "row is gone" shot is the Chair itself.
             page.locator("[data-testid='concierge-cancel']").click()
             _settle(page)
 
-            # ── assign the engine the product's way; the row is gone ──
-            _assign_summary_engine()
-            roster = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
-            summary_row = next(
-                row for row in roster["task_overrides"]
-                if row["id"] == SUMMARY_CAPABILITY
-            )
-            assert summary_row["has_override"] is True, summary_row
-            assert summary_row["effective"]["status"] == "assigned", summary_row
+            # ── the shot of the row the repair must clear ──
+            page.screenshot(path=str(SHOTS / f"chair-before-repair-{suffix}.png"), full_page=True)
+            section.screenshot(path=str(SHOTS / f"chair-no-engine-yet-{suffix}.png"))
 
-            _arrive(page, self.base)
+            # ── assign the engines the product's way, ONE at a time; the
+            #    face follows on the OPEN desk, with no navigation
+            #    (counsel fix round, Astra finding 1: the old rig
+            #    re-arrived here, so the machine passed while the owner's
+            #    open Desk kept asking) ──
+            engine_profile()
+            assign_engine(SUMMARY_CAPABILITY, 1)
+
+            # The owner comes back to this same Desk -- the browser's own
+            # focus event, the one it fires when the window is raised
+            # again. No reload, no goto, no remount.
+            page.evaluate("() => window.dispatchEvent(new Event('focus'))")
+            page.wait_for_function(
+                """() => {
+                  const el = document.querySelector("[data-testid='arrival-blocker']");
+                  return el && el.textContent.includes("No engine for speech");
+                }""",
+                timeout=15_000,
+            )
+            # With exactly one half missing, the row names that half.
+            said = section.text_content() or ""
+            assert "No engine yet" not in said, said
+            assert page.locator("[data-testid='arrival-blocker-row']").count() == 1
+            _settle(page)
+            section.screenshot(path=str(SHOTS / f"chair-speech-row-{suffix}.png"))
+
+            assign_engine(SPEECH_CAPABILITY, 2)
+            roster = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
+            for capability in (SUMMARY_CAPABILITY, SPEECH_CAPABILITY):
+                fixed = next(
+                    row for row in roster["task_overrides"] if row["id"] == capability
+                )
+                assert fixed["has_override"] is True, fixed
+                assert fixed["effective"]["status"] == "assigned", fixed
+
+            page.evaluate("() => window.dispatchEvent(new Event('focus'))")
+            page.wait_for_function(
+                """() => !document.querySelector("[data-testid='arrival-blocker']")""",
+                timeout=15_000,
+            )
             assert page.locator("[data-testid='arrival-blocker']").count() == 0, (
-                f"blocker row survived the assignment at {width}"
+                f"blocker row survived the assignment on the OPEN desk at {width}"
             )
             headline = page.locator("[data-testid='arrival-display']").text_content() or ""
             assert headline.strip() == "Nothing needs you", headline
@@ -292,6 +351,112 @@ class TestOneThing:
 
             page.screenshot(
                 path=str(SHOTS / f"chip-and-trust-{width}.png"), full_page=True
+            )
+            _assert_clean(page, errors)
+            page.close()
+            browser.close()
+
+    # ── an unknown is never drawn as a clear desk (Astra finding 3) ──
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_unknown_setup_is_its_own_row(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        SHOTS.mkdir(parents=True, exist_ok=True)
+        errors: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda err: errors.append(str(err)))
+
+            # The roster read fails. The Chair knows nothing about the
+            # meeting path, and an unknown is not a clear desk.
+            page.route(
+                "**/api/inference/assignments",
+                lambda route: route.abort(),
+            )
+            _arrive(page, self.base)
+
+            section = page.locator("[data-testid='arrival-blocker']")
+            section.wait_for(timeout=15_000)
+            page.wait_for_function(
+                """() => {
+                  const el = document.querySelector("[data-testid='arrival-blocker']");
+                  return el && el.textContent.includes("Could not read setup");
+                }""",
+                timeout=15_000,
+            )
+            rows = page.locator("[data-testid='arrival-blocker-row']")
+            assert rows.count() == 1, f"{rows.count()} rows at {width}"
+            verbs = section.locator("button")
+            assert verbs.count() == 1, f"{verbs.count()} verbs at {width}"
+            assert "btn" in (verbs.first.get_attribute("class") or "")
+            headline = page.locator("[data-testid='arrival-display']").text_content() or ""
+            assert headline.strip() != "Nothing needs you", headline
+            _settle(page)
+
+            page.screenshot(
+                path=str(SHOTS / f"chair-unknown-setup-{width}.png"), full_page=True
+            )
+            _assert_clean(page, errors)
+            page.close()
+            browser.close()
+
+    # ── inbound exposure is its own token (Astra finding 4) ──
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_open_to_network_is_its_own_token(
+        self, width: int, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from playwright.sync_api import sync_playwright
+
+        import holdspeak.setup_status as setup_status
+
+        SHOTS.mkdir(parents=True, exist_ok=True)
+        real_trust_block = setup_status._trust_block
+
+        def open_hub(config, *, web_bind="127.0.0.1", database=None):
+            # The same hub, stated as it would be with an off-loopback
+            # bind and no token: `web_bind` and `auth_token_set` are the
+            # two fields the face reads (`setup_status.py:176-177`).
+            block = real_trust_block(config, web_bind="192.168.1.43", database=database)
+            block["auth_token_set"] = False
+            return block
+
+        monkeypatch.setattr(setup_status, "_trust_block", open_hub)
+
+        errors: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda err: errors.append(str(err)))
+
+            _arrive(page, self.base)
+
+            setup = _api(page, "GET", "/api/setup/status", token=TOKEN)
+            assert setup["trust"]["web_bind"] == "192.168.1.43", setup["trust"]
+            assert setup["trust"]["auth_token_set"] is False, setup["trust"]
+            assert not [d for d in setup["trust"]["destinations"] if d["enabled"]]
+
+            token = page.locator("[data-testid='chrome-inbound']")
+            token.wait_for(timeout=15_000)
+            assert "OPEN TO NETWORK" in (token.text_content() or "").upper()
+            # ...and the egress chip still answers only for egress.
+            chip = page.locator(".egress-badge").first
+            assert "THIS DEVICE" in (chip.text_content() or "").upper()
+
+            chip.click()
+            window = page.locator(".desk-trust-window")
+            window.wait_for(timeout=10_000)
+            _settle(page)
+            line = page.locator("[data-testid='trust-inbound']").text_content() or ""
+            assert "yes" in line, line
+            assert "Token: not set" in line, line
+
+            page.screenshot(
+                path=str(SHOTS / f"open-to-network-{width}.png"), full_page=True
             )
             _assert_clean(page, errors)
             page.close()

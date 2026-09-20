@@ -12,7 +12,7 @@ import { useSettleState } from "../settleState";
 import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
 import { verbById, verbLabel, type VerbContext } from "../verbRegistry";
 import { useKeymap } from "../keymap";
-import { egressBadge } from "../setup";
+import { egressBadge, inboundBadge } from "../setup";
 import { EgressChip, LampGadget } from "../surface/gadgets";
 import { subscribeMicPhase, type MicPhase } from "../../lib/micSession";
 import { DeskToolShelf } from "./DeskToolShelf";
@@ -148,6 +148,10 @@ export function DeskChrome({
         ? error
         : "Connecting";
   const badge = egressBadge(setup);
+  // HS-201-01 (counsel fix round, Astra finding 4): who may REACH this hub
+  // is its own token beside the egress chip -- never folded into it, and
+  // never decided by the destination count.
+  const inbound = inboundBadge(setup);
 
   return (
     <div className="desk-menubar">
@@ -231,6 +235,11 @@ export function DeskChrome({
         {/* HS-111-07 — ONE badge species: the chrome badge is the same
             EgressChip the gadget rows wear, with the trust click-through
             (egressBadge() stays the data source). */}
+        {inbound ? (
+          <span data-testid="chrome-inbound">
+            <LampGadget label={inbound.text} on tone="warn" />
+          </span>
+        ) : null}
         <EgressChip
           label={badge.text}
           title={badge.title}

@@ -19,6 +19,8 @@ import pytest
 pytest.importorskip("playwright.sync_api", reason="glass walk needs Playwright")
 pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependencies")
 
+from .glass_infra import seed_meeting_engines
+
 DOOR_ASSETS = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-03-shots"
 RAIL_ASSETS = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-04-shots"
 TOKEN = "hs144-door-glass"
@@ -390,6 +392,7 @@ def test_hs144_door_empty_and_error_shots(
             page.emulate_media(reduced_motion="reduce")
             page.on("pageerror", lambda error: errors.append(f"page: {error}"))
             page.on("console", lambda message: _record_console(errors, message, expected_http_statuses=(500,)))
+            seed_meeting_engines()  # HS-201-01: the Door is the subject, not setup
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
             _normal_chair(page)
             # HS-170-04: empty door = NEEDS YOU absent on the arrival

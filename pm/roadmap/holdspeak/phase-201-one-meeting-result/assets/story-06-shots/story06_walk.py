@@ -3,8 +3,9 @@
 
 One process: an isolated HOME, a real in-process hub over a scratch DB
 seeded with two meetings (one with no transcript, one with three saved
-segments), driven by Playwright at 1440x900.  Nothing outside the
-scratch HOME is written; no microphone is opened.
+segments), driven by Playwright at 1440x900 and again at 393x852 (the
+counsel fix round, 2026-09-19: every station is shot at both widths).
+Nothing outside the scratch HOME is written; no microphone is opened.
 
 Run:
     REAL=$HOME; HOME=$(mktemp -d) \
@@ -22,7 +23,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[5]
 OUT = Path(__file__).resolve().parent
 TOKEN = "hs-201-06-plain-words-token"
-WIDTH, HEIGHT = 1440, 900
+# Both widths the face canon requires (docs/internal/UX-CANON.md).
+VIEWPORTS: list[tuple[int, int]] = [(1440, 900), (393, 852)]
+WIDTH, HEIGHT = VIEWPORTS[0]
 
 SHOTS: list[tuple[str, str]] = []
 FAILS: list[str] = []
@@ -30,6 +33,7 @@ NOTES: list[str] = []
 
 
 def check(label: str, cond: bool, detail: str = "") -> bool:
+    label = f"[{WIDTH}] {label}"
     if cond:
         print(f"  PASS  {label}" + (f"  {detail}" if detail else ""), flush=True)
     else:
@@ -39,6 +43,7 @@ def check(label: str, cond: bool, detail: str = "") -> bool:
 
 
 def note(text: str) -> None:
+    text = f"[{WIDTH}] {text}"
     NOTES.append(text)
     print(f"  NOTE  {text}", flush=True)
 
@@ -96,6 +101,19 @@ def seed(db_path: Path) -> None:
     db.intel.claim_next_intel_job()
     db.intel.fail_intel_job("m-201-06-kept", "Meeting intelligence did not finish.")
     return db
+
+
+def reset_arrival(db) -> None:
+    """Put the desk back on its first-run arrival.
+
+    `arrival_required` is `first_run and no onboarding disposition`
+    (holdspeak/setup_status.py:291).  `normal_chair` crosses that gate with
+    "Continue later", which writes a disposition, so the second viewport
+    pass would never see the arrival card.  Clearing the row in the scratch
+    DB restores it.  Scratch HOME only; nothing else is touched.
+    """
+    with db.onboarding._connection() as conn:
+        conn.execute("DELETE FROM onboarding_state WHERE id = 1")
 
 
 def boot(db):
@@ -166,7 +184,167 @@ def open_surface(page, key: str) -> bool:
         return False
 
 
+def stations(page, url: str) -> None:
+    """Every station, once per viewport (the fix round shoots both)."""
+
+    # ---- 1. arrival: the FirstWords line ------------------------
+    print("\n== arrival ==", flush=True)
+    goto(page, url, "/")
+    body = page.locator("body").inner_text()
+    check("arrival card present", "Dictate one sentence" in body, body[:120])
+    check("plain words line",
+          "Speak. Then edit and keep your text." in body)
+    check("old line gone", "Tap to speak, edit here, then use" not in body)
+    shot(page, "arrival-first-words", "Speak. Then edit and keep your text.")
+
+    # ---- 2. the Desk, the menus --------------------------------
+    # The phone menu bar keeps only Go: every other verbbar item is
+    # display:none under 720px (chrome-menus.css:888).  At that width the
+    # station shoots the bar that exists and says so; "Hide the menus"
+    # itself is shot at 393 in Change places (station 4).
+    print("\n== desk menus ==", flush=True)
+    normal_chair(page)
+    desk_item = page.locator('[data-menu-id="desk"] button').first
+    desk_item.wait_for(state="attached", timeout=20000)
+    if desk_item.is_visible():
+        desk_item.click()
+        page.wait_for_timeout(700)
+        menu = page.locator(".desk-verbbar-menu")
+        menu_text = menu.first.inner_text() if menu.count() else ""
+        check("Desk menu says Hide the menus", "Hide the menus" in menu_text,
+              menu_text[:160].replace("\n", " · "))
+        check("Settle in gone", "Settle in" not in menu_text)
+        shot(page, "desk-menu-hide-the-menus", "Hide the menus (was: Settle in)")
+    else:
+        note("no Desk menu on the phone menu bar (chrome-menus.css:888 hides "
+             "every verbbar item but Go); 'Hide the menus' is shot at this "
+             "width in Change places")
+        go_item = page.locator('[data-menu-id="go"] button').first
+        check("phone menu bar keeps Go", go_item.is_visible())
+        if go_item.is_visible():
+            go_item.click()
+            page.wait_for_timeout(700)
+        bar_text = page.locator(".desk-verbbar").first.inner_text()
+        check("Settle in gone from the phone bar", "Settle in" not in bar_text)
+        shot(page, "desk-menubar-go",
+             "the phone menu bar: Go only, no Desk menu at this width")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(400)
+
+    # ---- 3. the Chair meeting row -------------------------------
+    # The Chair's own no-title fallback: the story 01 worker owns
+    # ChairHome.tsx this round and changed it there; this station holds
+    # the result on the path.
+    chair_text = page.locator("body").inner_text()
+    check("Chair no longer says 'Untitled meeting'",
+          "Untitled meeting" not in chair_text)
+    if "Meeting with no title" in chair_text:
+        note("the Chair's fallback reads 'Meeting with no title' "
+             "(ChairHome.tsx, the story 01 worker's edit this round)")
+    check("no 'Develop a thought' on the Chair",
+          "Develop a thought" not in chair_text)
+    shot(page, "chair-meeting-row", "the Chair's no-title fallback, in plain words")
+
+    # ---- 4. Change places --------------------------------------
+    print("\n== change places ==", flush=True)
+    check("change-places surface opened", open_surface(page, "change-places"))
+    cp = page.locator(".desk-surface-window").first.inner_text()
+    check("Change places says Hide the menus", "Hide the menus" in cp,
+          cp[:160].replace("\n", " · "))
+    check("Settle in gone from Change places", "Settle in" not in cp)
+    shot(page, "change-places-hide-the-menus", "Hide the menus (was: Settle in)")
+
+    # ---- 5. the Meetings ledger + the two records ---------------
+    print("\n== meetings ==", flush=True)
+    check("meetings surface opened", open_surface(page, "review-meetings"))
+    led = page.locator(".desk-surface-window").first.inner_text()
+    check("ledger no longer says INTELLIGENCE", "INTELLIGENCE" not in led,
+          led[:200].replace("\n", " · "))
+    shot(page, "meetings-ledger", "the ledger after the words changed")
+
+    for meeting_id, name, expect, proves in (
+        ("m-201-06-kept", "record-kept-segments",
+         "KEPT 3 SEGMENTS",
+         "KEPT 3 SEGMENTS (was: RETAINED 3 SEG)"),
+        ("m-201-06-empty", "record-empty-no-zero-counter",
+         "NOT DONE: SUMMARY, TOPICS, ACTION ITEMS",
+         "NOT DONE (no routed artifacts); no RETAINED 0 SEG"),
+    ):
+        # A phone-width record fills the surface, so the second row is off
+        # screen after the first one opens: come back to the ledger for
+        # each record instead of assuming a two-column desktop.
+        check(f"{meeting_id}: ledger open", open_surface(page, "review-meetings"))
+        row = page.locator(f"[data-testid='meeting-row-{meeting_id}'] .meetings-stream-row-body")
+        if not row.count():
+            row = page.locator(f"[data-testid='meeting-row-{meeting_id}']")
+        check(f"{meeting_id}: row present", row.count() > 0)
+        if row.count():
+            try:
+                row.first.scroll_into_view_if_needed(timeout=5000)
+            except Exception:
+                pass
+            row.first.click()
+            page.wait_for_timeout(2000)
+        detail = page.locator(".desk-surface-window").first.inner_text()
+        check(f"{meeting_id}: {expect}", expect in detail,
+              detail[:300].replace("\n", " · "))
+        check(f"{meeting_id}: SUMMARY axis", "SUMMARY" in detail)
+        if meeting_id == "m-201-06-empty":
+            check("no zero counter", "RETAINED 0" not in detail and "KEPT 0" not in detail)
+        shot(page, name, proves)
+
+        if meeting_id == "m-201-06-empty":
+            retry = page.get_by_role("button", name="Retry", exact=True)
+            check("Retry verb on the record", retry.count() > 0)
+            if retry.count():
+                retry.first.click()
+                page.wait_for_timeout(2500)
+                refused = page.locator(".desk-surface-window").first.inner_text()
+                check("refusal ends its sentence",
+                      "This meeting has no transcript. No summary can run. "
+                      "The Meeting and completed work remain saved." in refused,
+                      refused[:320].replace("\n", " · "))
+                shot(page, "record-retry-refusal",
+                     "two sentences, each closed (was one run-on)")
+
+    # ---- 6. the egress window ----------------------------------
+    print("\n== data boundaries ==", flush=True)
+    goto(page, url, "/")
+    normal_chair(page)
+    chip = page.locator(".egress-badge-button")
+    check("chrome egress chip present", chip.count() > 0)
+    if chip.count():
+        chip.first.click()
+        page.wait_for_timeout(1500)
+    win = page.locator(".desk-trust-window")
+    check("trust window open", win.count() > 0)
+    trust = win.first.inner_text() if win.count() else ""
+    # The fix round: the head over revoke_action names what it stops —
+    # the sending, not the work (Astra finding 5, 2026-09-19).
+    for head in ("Where it goes", "Allowed by", "Runs without you",
+                 "How to stop sending"):
+        check(f"trust head: {head}", head in trust)
+    for old in ("Boundary", "Authority", "Background", "Revoke",
+                "How to stop it"):
+        check(f"old head gone: {old}", old not in trust)
+    shot(page, "trust-window-heads",
+         "Where it goes / Allowed by / Runs without you / How to stop sending")
+
+    # ---- 7. Models: the waiting token --------------------------
+    print("\n== models ==", flush=True)
+    check("concierge surface opened", open_surface(page, "open-concierge"))
+    page.wait_for_timeout(3000)
+    models = page.locator(".desk-surface-window").first.inner_text()
+    check("no invented plural", "WAITINGS" not in models,
+          models[:240].replace("\n", " · "))
+    check("waiting token present", "WAITING" in models,
+          models[:240].replace("\n", " · "))
+    shot(page, "models-waiting", "N WAITING (was: 7 WAITINGS)")
+
+
+
 def walk() -> int:
+    global WIDTH, HEIGHT
     from playwright.sync_api import sync_playwright
 
     home = Path(os.environ["HOME"])
@@ -176,129 +354,18 @@ def walk() -> int:
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
-            context = browser.new_context(
-                viewport={"width": WIDTH, "height": HEIGHT},
-                device_scale_factor=2,
-            )
-            page = context.new_page()
-
-            # ---- 1. arrival: the FirstWords line ------------------------
-            print("\n== arrival ==", flush=True)
-            goto(page, url, "/")
-            body = page.locator("body").inner_text()
-            check("arrival card present", "Dictate one sentence" in body, body[:120])
-            check("plain words line",
-                  "Speak. Then edit and keep your text." in body)
-            check("old line gone", "Tap to speak, edit here, then use" not in body)
-            shot(page, "arrival-first-words", "Speak. Then edit and keep your text.")
-
-            # ---- 2. the Desk, the menus --------------------------------
-            print("\n== desk menus ==", flush=True)
-            normal_chair(page)
-            page.locator('[data-menu-id="desk"] button').first.click()
-            page.wait_for_timeout(700)
-            menu = page.locator(".desk-verbbar-menu")
-            menu_text = menu.first.inner_text() if menu.count() else ""
-            check("Desk menu says Hide the menus", "Hide the menus" in menu_text,
-                  menu_text[:160].replace("\n", " · "))
-            check("Settle in gone", "Settle in" not in menu_text)
-            shot(page, "desk-menu-hide-the-menus", "Hide the menus (was: Settle in)")
-            page.keyboard.press("Escape")
-            page.wait_for_timeout(400)
-
-            # ---- 3. the Chair meeting row (ChairHome: lane A's file) ----
-            chair_text = page.locator("body").inner_text()
-            if "Untitled meeting" in chair_text:
-                note("ChairHome still renders 'Untitled meeting' (its own fallback "
-                     "at web/src/desk/chair/ChairHome.tsx:1709 — lane A owns the file)")
-            shot(page, "chair-meeting-row", "the Chair's own untitled-meeting fallback")
-
-            # ---- 4. Change places --------------------------------------
-            print("\n== change places ==", flush=True)
-            check("change-places surface opened", open_surface(page, "change-places"))
-            cp = page.locator(".desk-surface-window").first.inner_text()
-            check("Change places says Hide the menus", "Hide the menus" in cp,
-                  cp[:160].replace("\n", " · "))
-            check("Settle in gone from Change places", "Settle in" not in cp)
-            shot(page, "change-places-hide-the-menus", "Hide the menus (was: Settle in)")
-
-            # ---- 5. the Meetings ledger + the two records ---------------
-            print("\n== meetings ==", flush=True)
-            check("meetings surface opened", open_surface(page, "review-meetings"))
-            led = page.locator(".desk-surface-window").first.inner_text()
-            check("ledger no longer says INTELLIGENCE", "INTELLIGENCE" not in led,
-                  led[:200].replace("\n", " · "))
-            shot(page, "meetings-ledger", "the ledger after the words changed")
-
-            for meeting_id, name, expect, proves in (
-                ("m-201-06-kept", "record-kept-segments",
-                 "KEPT 3 SEGMENTS",
-                 "KEPT 3 SEGMENTS (was: RETAINED 3 SEG)"),
-                ("m-201-06-empty", "record-empty-no-zero-counter",
-                 "NOT DONE: SUMMARY, TOPICS, ACTION ITEMS",
-                 "NOT DONE (no routed artifacts); no RETAINED 0 SEG"),
-            ):
-                row = page.locator(f"[data-testid='meeting-row-{meeting_id}'] .meetings-stream-row-body")
-                if not row.count():
-                    row = page.locator(f"[data-testid='meeting-row-{meeting_id}']")
-                check(f"{meeting_id}: row present", row.count() > 0)
-                if row.count():
-                    row.first.click()
-                    page.wait_for_timeout(2000)
-                detail = page.locator(".desk-surface-window").first.inner_text()
-                check(f"{meeting_id}: {expect}", expect in detail,
-                      detail[:300].replace("\n", " · "))
-                check(f"{meeting_id}: SUMMARY axis", "SUMMARY" in detail)
-                if meeting_id == "m-201-06-empty":
-                    check("no zero counter", "RETAINED 0" not in detail and "KEPT 0" not in detail)
-                shot(page, name, proves)
-
-                if meeting_id == "m-201-06-empty":
-                    retry = page.get_by_role("button", name="Retry", exact=True)
-                    check("Retry verb on the record", retry.count() > 0)
-                    if retry.count():
-                        retry.first.click()
-                        page.wait_for_timeout(2500)
-                        refused = page.locator(".desk-surface-window").first.inner_text()
-                        check("refusal ends its sentence",
-                              "This meeting has no transcript. No summary can run. "
-                              "The Meeting and completed work remain saved." in refused,
-                              refused[:320].replace("\n", " · "))
-                        shot(page, "record-retry-refusal",
-                             "two sentences, each closed (was one run-on)")
-
-            # ---- 6. the egress window ----------------------------------
-            print("\n== data boundaries ==", flush=True)
-            goto(page, url, "/")
-            normal_chair(page)
-            chip = page.locator(".egress-badge-button")
-            check("chrome egress chip present", chip.count() > 0)
-            if chip.count():
-                chip.first.click()
-                page.wait_for_timeout(1500)
-            win = page.locator(".desk-trust-window")
-            check("trust window open", win.count() > 0)
-            trust = win.first.inner_text() if win.count() else ""
-            for head in ("Where it goes", "Allowed by", "Runs without you", "How to stop it"):
-                check(f"trust head: {head}", head in trust)
-            for old in ("Boundary", "Authority", "Background", "Revoke"):
-                check(f"old head gone: {old}", old not in trust)
-            shot(page, "trust-window-heads",
-                 "Where it goes / Allowed by / Runs without you / How to stop it")
-
-            # ---- 7. Models: the waiting token --------------------------
-            print("\n== models ==", flush=True)
-            check("concierge surface opened", open_surface(page, "open-concierge"))
-            page.wait_for_timeout(3000)
-            models = page.locator(".desk-surface-window").first.inner_text()
-            check("no invented plural", "WAITINGS" not in models,
-                  models[:240].replace("\n", " · "))
-            check("waiting token present", "WAITING" in models,
-                  models[:240].replace("\n", " · "))
-            shot(page, "models-waiting", "N WAITING (was: 7 WAITINGS)")
-
-            context.close()
+            for WIDTH, HEIGHT in VIEWPORTS:
+                print(f"\n########## {WIDTH}x{HEIGHT} ##########", flush=True)
+                context = browser.new_context(
+                    viewport={"width": WIDTH, "height": HEIGHT},
+                    device_scale_factor=2,
+                )
+                page = context.new_page()
+                reset_arrival(db)
+                stations(page, url)
+                context.close()
             browser.close()
+
     finally:
         try:
             server.stop()

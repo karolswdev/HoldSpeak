@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -99,7 +99,15 @@ def _seed_watch(
                 json.dumps(query or {}, sort_keys=True),
                 json.dumps(snapshot or []),
                 1,
-                "2026-09-04T10:00:00",
+                # HS-201-01 (full-suite fallout): a FROZEN stamp here goes
+                # `stale` the moment the calendar passes the coverage
+                # horizon (`needs_you_aggregate.py:671-687`), and the deck
+                # then draws a STALE token on a Room the rig calls quiet.
+                # The rig means "checked just now".
+                # UTC: a naive stamp in this column is read as UTC
+                # (`project_service.aware_iso`), and the rigs pin a
+                # fixed-offset desk zone (`glass_infra.pinned_desk_zone`).
+                datetime.now(timezone.utc).isoformat(timespec="seconds"),
                 None,
                 project_id,
             ),

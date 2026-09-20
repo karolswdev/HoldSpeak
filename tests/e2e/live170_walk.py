@@ -307,7 +307,7 @@ def _walk_arrival(page: Any, out_dir: Path, w: int, report: WalkReport) -> None:
         capture_verbs = (capture_bar.text_content() or "").strip()
     report.facts.append(asdict(FaceFact(
         face=face, field="capture_bar_verbs",
-        expected="(Talk, Develop a thought, Record meeting, ...)",
+        expected="(Talk, Write a thought, Record meeting, ...)",
         observed=capture_verbs if capture_verbs else "---",
         verdict="DATA", why="real desk content",
     )))

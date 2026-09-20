@@ -28,6 +28,7 @@ from .glass_infra import (
     _normal_chair,
     _ensure_build,
     _settle,
+    seed_meeting_engines,
 )
 
 pytest.importorskip("playwright.sync_api", reason="Arrival glass needs Playwright")
@@ -467,7 +468,10 @@ def _run_quiet_rig(
             page = browser.new_page(viewport={"width": width, "height": 900})
             page.on("pageerror", lambda e: errors.append(str(e)))
 
-            # Init desk -- no extra seeding
+            # Init desk -- no extra seeding beyond the meeting path.
+            # HS-201-01: a cold HOME has no engine and the Chair says so
+            # in a SETUP row; this rig's subject is the quiet arrival.
+            seed_meeting_engines()
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
             _api(page, "POST", "/api/desk/seed", token=TOKEN)
             _api(page, "PUT", "/api/setup/onboarding",

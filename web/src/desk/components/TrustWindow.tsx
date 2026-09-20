@@ -11,6 +11,7 @@ import { apiFetch } from "../../lib/api";
 import { LampGadget } from "../surface/gadgets";
 import { DeskWindowFrame } from "./DeskWindow";
 import { openSurfaceOr } from "../shell";
+import { inboundLine } from "../setup";
 import {
   SurfaceGroup,
   SurfaceSection,
@@ -34,6 +35,11 @@ type Trust = {
   transcript_egress?: "none" | "configured" | "possible";
   summary?: string;
   destinations?: TrustDestination[];
+  // HS-201-01 (counsel fix round): who may REACH this hub. Inbound is not
+  // egress, so it is stated here as its own line, whatever the
+  // destinations say (`holdspeak/setup_status.py:176-177`).
+  web_bind?: string;
+  auth_token_set?: boolean;
 };
 
 interface TrustWindowState {
@@ -86,6 +92,16 @@ export function TrustWindow() {
             label="Current scope"
             control={<span className="surface-setting-value">{egress}</span>}
           />
+          {/* HS-201-01 (counsel fix round, Astra finding 4): the inbound
+              fact, kept rather than retired. */}
+          <SurfaceSettingRow
+            label="Open to the network"
+            control={
+              <span className="surface-setting-value" data-testid="trust-inbound">
+                {inboundLine(trust)}
+              </span>
+            }
+          />
           <SurfaceSettingRow
             label="Enabled destinations"
             control={
@@ -114,13 +130,16 @@ export function TrustWindow() {
                   ["Operation", destination.operation],
                   // HS-201-06 (Constitution tenet 4, ASD-STE100): the
                   // heads are short common words with one meaning.
+                  // "How to stop sending" names what the row stops:
+                  // the transfer out of this device, not the work
+                  // itself (counsel finding 5, 2026-09-19).
                   // "Receipt" stays: it is a registered product term
                   // (docs/product-language.json, terms.receipt).
                   ["Where it goes", destination.boundary],
                   ["Data", destination.data_class],
                   ["Allowed by", destination.authority_basis],
                   ["Runs without you", destination.background_ability],
-                  ["How to stop it", destination.revoke_action],
+                  ["How to stop sending", destination.revoke_action],
                   ["Last receipt", destination.last_receipt ?? "None recorded"],
                 ] as const
               ).map(([label, value]) => (
