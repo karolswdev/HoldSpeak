@@ -1340,6 +1340,24 @@ def _summary_assignment_revision(assignment_service: Any, principal: Any) -> int
     return int(assignment.get("revision") or 0)
 
 
+def _summary_expected_revision(
+    assignment_service: Any, principal: Any, db: Any = None
+) -> int:
+    """The revision a WRITE to the summary capability must present.
+
+    HS-201-09 (counsel finding 2): OFF then ON was refused. `get_assignment`
+    reads ACTIVE heads only, so after a clear it answers 0 — while
+    `set_assignment` compares against `_current`
+    (`inference_assignment_service.py:402`), which still sees the
+    tombstone's revision. The write therefore presents the same number the
+    projection publishes: the active head when there is one, the tombstone
+    when the owner turned it off. The OFF path keeps the active-only read,
+    so re-applying OFF writes no second tombstone.
+    """
+    active = _summary_assignment_revision(assignment_service, principal)
+    return active if active else _summary_assignment_tombstone(db)
+
+
 def _summary_result(
     *,
     state: str,
@@ -1595,8 +1613,8 @@ def apply(
                     db=db,
                     profile_id=selected_profile_id,
                     profile_revision=selected_revision,
-                    expected_assignment_revision=_summary_assignment_revision(
-                        assignment_service, principal
+                    expected_assignment_revision=_summary_expected_revision(
+                        assignment_service, principal, db
                     ),
                     command_id=uuid.uuid4().hex,
                     write_receipt=False,

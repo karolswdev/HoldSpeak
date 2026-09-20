@@ -185,3 +185,11 @@ npm notice To update run: npm install -g npm@11.19.1
 npm notice
 TYPECHECK CLEAN
 ```
+
+## Correction (counsel round, HS-201-09 worker)
+
+The story file said the six fences in
+`tests/unit/test_hs201_import_no_auto_summary.py` were "all red first".
+The captured pre-fix run above reads `4 failed, 2 passed in 2.75s`: four
+were red, two held before the fix as well. The story file is corrected;
+no capture in this file was touched.

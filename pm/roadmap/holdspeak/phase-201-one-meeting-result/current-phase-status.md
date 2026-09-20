@@ -154,13 +154,17 @@ Ledger (never deleted): the 393 egress badge clips its label (Trust shows the fu
   inventory now report live analysis off for Record. The retained config byte
   is ignored on this path; it does not enable live analysis. Dictation and
   explicit summary routes remain separate. Proof: `evidence-story-02.md`.
-- Hashless legacy entry points remain outside the first-use Record path:
-  `meeting_import.py:_persist_import` can enqueue under old config;
-  `db/meetings.py:recover_capture` can enqueue historical displaced
-  work without a route bundle. Neither is proof of the new disclosure contract.
-  Fence or disclose these before restoring their automatic summary behavior;
-  parked with follow-through in BACKLOG. `meeting_session/persistence.py` is
-  inactive for ordinary Web Record because that session has intel disabled.
+- **PAID by HS-201-10:** `meeting_import.py:_persist_import` no longer
+  enqueues an intel job; Import asks for the summary the same way Record
+  does, and the fences in `tests/e2e/test_hs201_summary_producer_chain.py`
+  assert no job, no drain, no receipt and zero route attempts before the
+  owner's gesture. One hashless legacy entry point remains outside the
+  first-use Record path: `db/meetings.py:recover_capture` can enqueue
+  historical displaced work without a route bundle. It is not proof of the
+  new disclosure contract; fence or disclose it before restoring any
+  automatic summary behaviour there, parked with follow-through in BACKLOG.
+  `meeting_session/persistence.py` is inactive for ordinary Web Record
+  because that session has intel disabled.
 - Inherited suite baseline: both widths of `test_phase200_daily_loop.py` fail
   at the brief before meeting creation, including on unmodified charter
   production code (raw baseline `.tmp/hs201-daily-loop-baseline.log`).

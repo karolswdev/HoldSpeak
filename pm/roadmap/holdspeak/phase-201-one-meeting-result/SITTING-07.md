@@ -39,7 +39,7 @@ Send that line. Then open http://127.0.0.1:8765 in your browser.
 | # | You do | You should see | Send |
 |---|---|---|---|
 | 0 | The first screen says VOICE TYPING. Speak one sentence, or click "Continue later". | Your desk. | one line: which of the two you did |
-| 1 | Look at the arrival. | A SETUP row: "No engine for summaries", and one button, "Choose an engine". The head above it counts what asks. An offer, such as "Connect calendar", does not count. | a shot |
+| 1 | Look at the arrival. | A SETUP row and one button, "Choose an engine". The row says "No engine yet" when the desk has neither engine, or "No engine for summaries" when only the summary half is missing (it names what is missing, `web/src/desk/chair/meetingPathBlocker.ts:91-96`). The head above it counts what asks. An offer, such as "Connect calendar", does not count. | a shot |
 | 2 | Click "Choose an engine". | Models. Click "Add an engine". Type the address of your engine. Click "Check". The engine reads READY. Click "Use this for summaries". The SETUP row on the arrival is gone. | a shot |
 | 3 | Record one real meeting and stop it. Or click "Import" and choose a sound file. | A meeting row with its length. No summary yet. No error. | a shot |
 | 4 | Open the meeting. Look beside "Run summary". | The host that WILL run it, before you click. | a shot |

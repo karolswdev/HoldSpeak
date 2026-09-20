@@ -46,7 +46,10 @@ Lane B (Opus). Files: holdspeak/meeting_import.py, holdspeak/meeting_session/** 
   floor removed); `web/src/pages/cores/history/ImportSection.tsx:39` and
   `web/src/desk/components/GlassDropLayer.tsx:79` — neither Import door sends
   the file's mtime any more.
-- Fences: `tests/unit/test_hs201_import_no_auto_summary.py` (six, all red first),
+- Fences: `tests/unit/test_hs201_import_no_auto_summary.py` (six; the
+  captured pre-fix run in `evidence-story-10.md` shows **four failed, two
+  passed** — the two that passed before the fix are the guards that hold on
+  both sides, not proof of a defect),
   `tests/e2e/test_hs201_summary_producer_chain.py` (the import leg, `stub` and a
   real `lan` run on 192.168.1.43),
   `tests/e2e/test_hs201_summary_face_glass.py` (the browser walk through the

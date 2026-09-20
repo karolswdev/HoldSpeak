@@ -335,6 +335,16 @@ class TestConnectAnEngineFromTheFace:
             reason.wait_for(timeout=30_000)
             said = (reason.text_content() or "").strip()
             assert said, "the refused check said nothing"
+            # Counsel finding 4b: plain words, never the socket's own.
+            assert "errno" not in said.lower(), said
+            assert "urlopen" not in said.lower(), said
+            assert said == "Nothing answers at this address.", said
+            print(f"REFUSED REASON {said}")
+            # Counsel finding 4c: the host is named BEFORE the verb that
+            # contacts it (Article III at the point of decision).
+            egress = page.locator("[data-testid='concierge-add-egress']")
+            egress.wait_for(timeout=10_000)
+            assert "127.0.0.1" in (egress.text_content() or ""), egress.text_content()
             row_box = page.locator(
                 "[data-testid='concierge-add-engine-row']"
             ).bounding_box()
@@ -361,27 +371,44 @@ class TestConnectAnEngineFromTheFace:
             submit = page.locator("[data-testid='concierge-add-submit']")
             assert (submit.text_content() or "").strip() == "Use this for summaries"
             assert not submit.is_disabled()
-            # One filled primary per window while the well holds the choice.
-            assert page.locator(".btn--primary").count() == 1, source
-            _shot(page, "add-engine-ready", width)
+            assert "192.168.1.43" in (
+                page.locator("[data-testid='concierge-add-egress']").text_content() or ""
+            ) or "127.0.0.1" in (
+                page.locator("[data-testid='concierge-add-egress']").text_content() or ""
+            ), source
 
-            # ── the one gesture that finishes setup ──
-            submit.click()
+            # ── counsel finding 3: editing the address drops the READY ──
+            field.fill(url.replace("/v1", "/v2"))
             page.wait_for_function(
                 """() => !document.querySelector(
-                     "[data-testid='concierge-add-engine-row']")""",
+                     "[data-testid='concierge-add-model']")""",
+                timeout=10_000,
+            )
+            assert submit.is_disabled(), "a stale READY survived an address edit"
+            print("STALE CHECK dropped on address edit")
+            field.fill(url)
+            page.locator("[data-testid='concierge-add-check']").click()
+            named.wait_for(timeout=60_000)
+            assert (named.text_content() or "").strip() == model, source
+
+            _shot(page, "add-engine-ready", width)
+
+            # ── ONE gesture finishes setup (counsel finding 1) ──
+            # No second click: the window must close itself, and the
+            # arrival must drop its SETUP row on the readiness signal.
+            assert page.locator(BLOCKER_VERB).count() > 0, (
+                "the SETUP row was already gone before the gesture"
+            )
+            submit.click()
+            page.wait_for_function(
+                """() => !document.querySelector("[data-testid='concierge-root']")""",
                 timeout=60_000,
             )
             page.wait_for_function(
-                """async () => {
-                  const r = await fetch("/api/concierge/detect", {
-                    headers: {authorization: "Bearer %s"},
-                  });
-                  const d = await r.json();
-                  return d.summaryAssignment
-                    && d.summaryAssignment.status === "assigned";
-                }"""
-                % TOKEN,
+                """() => !document.querySelector(
+                     "[data-testid='arrival-blocker-verb-engines']") &&
+                   !document.querySelector(
+                     "[data-testid='arrival-blocker-verb-summary']")""",
                 timeout=60_000,
             )
             assigned = _api(page, "GET", "/api/concierge/detect", token=TOKEN)[
@@ -390,8 +417,13 @@ class TestConnectAnEngineFromTheFace:
             assert assigned["status"] == "assigned", assigned
             assert assigned["profileId"], assigned
             assert int(assigned["profileRevision"]) >= 1, assigned
-            print(f"SUMMARY ASSIGNED {assigned}")
+            print(f"SUMMARY ASSIGNED {assigned} (one gesture, no Use these)")
             _settle(page)
+            # The desk behind must no longer ask for an engine.
+            desk_said = page.locator("[data-testid='arrival-blocker']")
+            assert desk_said.count() == 0, desk_said.first.text_content()
+            _open_models_from_the_blocker_or_go(page)
+            assert "Choose an engine" not in (page.content() or "")
             _shot(page, "models-engine-connected", width)
 
             # ── an unrelated WAITING group never blocks the apply ──
@@ -454,6 +486,37 @@ class TestConnectAnEngineFromTheFace:
             else:
                 print("REPAIR REASON none on this desk (no blocking issue)")
             _shot(page, "models-summary-off", width)
+
+            # ── counsel finding 2: the obvious way back ON ──
+            # Pick the engine detection still lists, press Use these. The
+            # cleared assignment's tombstone revision must not refuse it.
+            page.locator("[data-testid='concierge-picker-meetings']").click()
+            page.locator(
+                "[data-testid='concierge-picker-well-meetings'] "
+                "[data-testid^='concierge-pick-meetings-']:not("
+                "[data-testid='concierge-pick-meetings-off'])"
+            ).first.click()
+            _settle(page)
+            page.locator("[data-testid='concierge-apply']").click()
+            page.wait_for_function(
+                """() => !document.querySelector("[data-testid='concierge-root']")""",
+                timeout=60_000,
+            )
+            back_on = _api(page, "GET", "/api/concierge/detect", token=TOKEN)[
+                "summaryAssignment"
+            ]
+            assert back_on["status"] == "assigned", back_on
+            assert back_on["profileId"], back_on
+            print(f"SUMMARY BACK ON {back_on}")
+
+            # ── reopen: the applied engine, not a proposal ──
+            _open_models_from_the_blocker_or_go(page)
+            picker = page.locator("[data-testid='concierge-picker-meetings']")
+            assert "—" not in (picker.text_content() or ""), picker.text_content()
+            presets = page.locator("[data-testid^='concierge-download-']").count()
+            repairs = page.locator("[data-testid^='concierge-repair-verb-']").count()
+            print(f"FACE CENSUS presets={presets} repairs={repairs}")
+            _shot(page, "models-engine-back-on", width)
 
             # ── the door: Go -> Models, no command deck ──
             page.locator("[data-testid='concierge-cancel']").click()

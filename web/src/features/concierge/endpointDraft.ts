@@ -84,3 +84,34 @@ export function endpointDraft(args: {
     requires_key: false,
   };
 }
+
+/** Whether an address stays on this network.
+ *
+ * HS-201-09 (counsel finding 4c): the Check row names the host it will
+ * contact BEFORE the owner presses Check (Article III), and the badge has
+ * to say which side of the boundary it is. Same families the hub's own
+ * `_is_lan_host` recognises (`holdspeak/services/concierge_service.py`).
+ */
+export function isLanAddress(url: string): boolean {
+  const host = endpointHostPort(url).split(":")[0]?.toLowerCase() ?? "";
+  if (!host) return true;
+  if (
+    host === "localhost" ||
+    host.endsWith(".local") ||
+    host.endsWith(".internal") ||
+    host.endsWith(".lan") ||
+    host.endsWith(".home") ||
+    host.endsWith(".localhost") ||
+    host.endsWith(".ts.net")
+  )
+    return true;
+  const octets = host.split(".").map((part) => Number(part));
+  if (octets.length !== 4 || octets.some((n) => !Number.isInteger(n))) return false;
+  const [a, b] = octets;
+  if (a === 10 || a === 127) return true;
+  if (a === 192 && b === 168) return true;
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  if (a === 169 && b === 254) return true;
+  if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT / Tailscale
+  return false;
+}

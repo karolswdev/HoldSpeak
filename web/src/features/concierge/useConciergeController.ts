@@ -613,12 +613,31 @@ export function useConciergeController(): ConciergeController {
     useState<AddEngineState>("IDLE");
   const [addEngineReason, setAddEngineReason] = useState("");
   const [addEngineModel, setAddEngineModel] = useState("");
+  // HS-201-09 (counsel finding 3): the address a check ANSWERED for. A
+  // check is a statement about one address; the moment the owner edits the
+  // field that statement is no longer about what he is looking at, so
+  // READY and the model it named are dropped and a late answer for the
+  // old address is discarded instead of being shown as the new one's.
+  const addEngineUrlRef = useRef("");
+
+  const editAddEngineUrl = useCallback((value: string) => {
+    addEngineUrlRef.current = value;
+    setAddEngineUrl((previous) => {
+      if (previous.trim() !== value.trim()) {
+        setAddEngineState("IDLE");
+        setAddEngineModel("");
+        setAddEngineReason("");
+      }
+      return value;
+    });
+  }, []);
 
   const addEngine = useCallback(() => {
     setAddEngineOpen(true);
     setAddEngineState("IDLE");
     setAddEngineReason("");
     setAddEngineModel("");
+    addEngineUrlRef.current = "";
   }, []);
 
   /* HS-201-09 — Check: the HUB reads the endpoint's /models and names the
@@ -633,6 +652,9 @@ export function useConciergeController(): ConciergeController {
     setAddEngineModel("");
     try {
       const result = await checkEndpoint(url);
+      // The field moved on while this was in flight: the answer is about
+      // an address the owner is no longer looking at.
+      if (addEngineUrlRef.current.trim() !== url) return;
       safe(() => {
         setAddEngineChecking(false);
         if (result.ok && result.models.length > 0) {
@@ -645,6 +667,7 @@ export function useConciergeController(): ConciergeController {
         setAddEngineReason(result.detail);
       });
     } catch (err) {
+      if (addEngineUrlRef.current.trim() !== url) return;
       safe(() => {
         setAddEngineChecking(false);
         setAddEngineState("UNREACHABLE");
@@ -660,6 +683,15 @@ export function useConciergeController(): ConciergeController {
   const useNewEngineForSummaries = useCallback(async () => {
     const url = addEngineUrl.trim();
     if (!url || !addEngineModel) return;
+    // HS-201-09 (counsel finding 1): this IS the setup gesture, so it ends
+    // the way ordinary Apply ends (the block at `apply` above) — the
+    // window closes, the one readiness signal fires so the arrival drops
+    // its SETUP row without another gesture, and focus goes back to the
+    // verb the owner left. Captured synchronously, before the await.
+    const from =
+      typeof document !== "undefined"
+        ? (document.activeElement as HTMLElement | null)
+        : null;
     setAddEngineChecking(true);
     setAddEngineReason("");
     try {
@@ -695,10 +727,20 @@ export function useConciergeController(): ConciergeController {
         setAddEngineChecking(false);
         setAddEngineOpen(false);
         setAddEngineUrl("");
+        addEngineUrlRef.current = "";
         setAddEngineState("IDLE");
         setAddEngineModel("");
         setAddEngineReason("");
-        void load(); // Re-detect: the new engine and the applied row.
+        setApplied(true);
+        void load(); // Re-detect, for the moment before the window goes.
+        void import("../../desk/store")
+          .then(({ useDesk }) => {
+            useDesk.getState().closeSurfaceWindow("surface-concierge");
+          })
+          .catch(() => {
+            // A page without the desk store still assigned the engine.
+          });
+        announceTaskReturn(from);
       });
     } catch (err) {
       safe(() => {
@@ -723,7 +765,9 @@ export function useConciergeController(): ConciergeController {
           return;
         case "endpoint_editor":
           setAddEngineOpen(true);
-          setAddEngineUrl(repair.baseUrl);
+          // Through the invalidating setter, so the ref that guards a
+          // late check answer knows which address the field now holds.
+          editAddEngineUrl(repair.baseUrl);
           return;
         case "engine_picker":
           if (repair.groups[0]) openPicker(repair.groups[0]);
@@ -737,7 +781,7 @@ export function useConciergeController(): ConciergeController {
           return;
       }
     },
-    [downloadPreset, openPicker],
+    [downloadPreset, openPicker, editAddEngineUrl],
   );
 
   const runTaskProbe = useCallback(
@@ -796,7 +840,7 @@ export function useConciergeController(): ConciergeController {
     addEngineState,
     addEngineReason,
     addEngineModel,
-    setAddEngineUrl,
+    setAddEngineUrl: editAddEngineUrl,
     checkNewEngine,
     useNewEngineForSummaries,
   };

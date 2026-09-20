@@ -398,3 +398,232 @@ describe("TOOL INCOMPATIBLE carries its reason (defect 7)", () => {
     expect(reason.textContent).toBe("This engine cannot use tools.");
   });
 });
+
+/* ═══ Counsel fix round (Astra, DO-NOT-RATIFY on PR #590) ══════════════ */
+
+describe("the single gesture finishes setup (counsel 1)", () => {
+  async function useTheEngine() {
+    mocks.checkEndpoint.mockResolvedValue({
+      ok: true,
+      models: [LAN_MODEL],
+      detail: "Found 1 model.",
+    });
+    mocks.defineEndpoint.mockResolvedValue({
+      profileId: "engine-192-168-1-43-8080",
+      profileRevision: 1,
+    });
+    mocks.summarySelection.mockResolvedValue({
+      status: "succeeded",
+      state: "READY",
+      plainReason: "",
+      summaryAssignment: assigned(),
+    });
+    await open();
+    fireEvent.click(screen.getByTestId("concierge-add-engine"));
+    fireEvent.change(await screen.findByDisplayValue(""), {
+      target: { value: LAN_URL },
+    });
+    fireEvent.click(screen.getByTestId("concierge-add-check"));
+    await screen.findByTestId("concierge-add-model");
+    fireEvent.click(screen.getByTestId("concierge-add-submit"));
+  }
+
+  it("fires the one readiness signal the arrival listens for", async () => {
+    const heard: string[] = [];
+    const listener = () => heard.push("settings-updated");
+    window.addEventListener("holdspeak:settings-updated", listener);
+    try {
+      await useTheEngine();
+      await waitFor(() => expect(heard).toHaveLength(1));
+    } finally {
+      window.removeEventListener("holdspeak:settings-updated", listener);
+    }
+  });
+
+  it("closes the Models window, like ordinary Apply", async () => {
+    await useTheEngine();
+    await waitFor(() =>
+      expect(mocks.closeSurfaceWindow).toHaveBeenCalledWith("surface-concierge"),
+    );
+  });
+});
+
+describe("a changed address invalidates the check (counsel 3)", () => {
+  async function checkedAt(url: string) {
+    mocks.checkEndpoint.mockResolvedValue({
+      ok: true,
+      models: [LAN_MODEL],
+      detail: "Found 1 model.",
+    });
+    await open();
+    fireEvent.click(screen.getByTestId("concierge-add-engine"));
+    fireEvent.change(await screen.findByDisplayValue(""), {
+      target: { value: url },
+    });
+    fireEvent.click(screen.getByTestId("concierge-add-check"));
+    await screen.findByTestId("concierge-add-model");
+  }
+
+  it("drops READY and the named model when the address changes", async () => {
+    await checkedAt(LAN_URL);
+    fireEvent.change(screen.getByDisplayValue(LAN_URL), {
+      target: { value: "http://192.168.1.44:8080/v1" },
+    });
+    await waitFor(() =>
+      expect(screen.queryByTestId("concierge-add-model")).toBeNull(),
+    );
+    expect(screen.getByTestId("concierge-add-submit")).toBeDisabled();
+  });
+
+  it("ignores a check answer for an address already replaced", async () => {
+    const settled: Array<(value: unknown) => void> = [];
+    mocks.checkEndpoint.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          settled.push(resolve);
+        }),
+    );
+    await open();
+    fireEvent.click(screen.getByTestId("concierge-add-engine"));
+    fireEvent.change(await screen.findByDisplayValue(""), {
+      target: { value: LAN_URL },
+    });
+    fireEvent.click(screen.getByTestId("concierge-add-check"));
+    // He edits the address while the first check is still in flight.
+    fireEvent.change(screen.getByDisplayValue(LAN_URL), {
+      target: { value: "http://192.168.1.44:8080/v1" },
+    });
+    settled[0]?.({ ok: true, models: [LAN_MODEL], detail: "Found 1 model." });
+    await waitFor(() =>
+      expect(screen.getByTestId("concierge-add-submit")).toBeDisabled(),
+    );
+    expect(screen.queryByTestId("concierge-add-model")).toBeNull();
+  });
+});
+
+describe("the address the Check will contact is named (counsel 4c)", () => {
+  it("draws the egress chip for the typed address", async () => {
+    await open();
+    fireEvent.click(screen.getByTestId("concierge-add-engine"));
+    fireEvent.change(await screen.findByDisplayValue(""), {
+      target: { value: LAN_URL },
+    });
+    const chip = await screen.findByTestId("concierge-add-egress");
+    expect(chip.textContent).toContain("192.168.1.43");
+  });
+});
+
+describe("one filled primary, measured (counsel 4a)", () => {
+  function withRepairsAndPresets(): DetectResponse {
+    const base = detection();
+    return {
+      ...base,
+      engines: [
+        ...base.engines,
+        {
+          id: "preset:qwen35-08b",
+          kind: "preset",
+          name: "Quick local Qwen",
+          host: "THIS DEVICE",
+          state: "WAITING",
+          sizeBytes: 2_600_000_000,
+          installed: false,
+          presetId: "qwen35-08b",
+        },
+        {
+          id: "preset:qwen35-tiny",
+          kind: "preset",
+          name: "Tiny local Qwen",
+          host: "THIS DEVICE",
+          state: "WAITING",
+          sizeBytes: 508_000_000,
+          installed: false,
+          presetId: "qwen35-tiny",
+        },
+      ],
+      repairs: [
+        {
+          id: "tool-incompatible:Qwen",
+          token: "TOOL INCOMPATIBLE" as const,
+          subject: "Qwen3.6 35B A3B",
+          host: "",
+          scope: "local" as const,
+          groups: ["agents_tools"],
+          groupLabels: ["Agents & tools"],
+          verb: "Choose",
+          control: "engine_picker" as const,
+          engineId: "",
+          presetId: "",
+          baseUrl: "",
+          detail: "This engine cannot use tools.",
+        },
+        {
+          id: "endpoint-unreachable:other",
+          token: "ENDPOINT UNREACHABLE" as const,
+          subject: "192.168.1.99:8080",
+          host: "192.168.1.99",
+          scope: "local" as const,
+          groups: ["background"],
+          groupLabels: ["Background"],
+          verb: "Check",
+          control: "endpoint_editor" as const,
+          engineId: "",
+          presetId: "",
+          baseUrl: "http://192.168.1.99:8080/v1",
+          detail: "Nothing answers at this address.",
+        },
+      ],
+    };
+  }
+
+  function filled(): string[] {
+    return [...document.querySelectorAll(".btn--primary")].map((b) =>
+      (b.textContent || "").trim(),
+    );
+  }
+
+  it("keeps exactly one with two repairs and two presets on the face", async () => {
+    mocks.detect.mockResolvedValue(withRepairsAndPresets());
+    mocks.propose.mockResolvedValue(proposal());
+    render(<ConciergeCore scope="" />);
+    await screen.findByTestId("concierge-set-list");
+    expect(filled()).toEqual(["Choose"]);
+  });
+
+  it("hands it to the Add-engine verb while it holds a READY engine", async () => {
+    mocks.detect.mockResolvedValue(withRepairsAndPresets());
+    mocks.propose.mockResolvedValue(proposal());
+    mocks.checkEndpoint.mockResolvedValue({
+      ok: true,
+      models: [LAN_MODEL],
+      detail: "Found 1 model.",
+    });
+    render(<ConciergeCore scope="" />);
+    await screen.findByTestId("concierge-set-list");
+    fireEvent.click(screen.getByTestId("concierge-add-engine"));
+    fireEvent.change(await screen.findByDisplayValue(""), {
+      target: { value: LAN_URL },
+    });
+    fireEvent.click(screen.getByTestId("concierge-add-check"));
+    await screen.findByTestId("concierge-add-model");
+    expect(filled()).toEqual(["Use this for summaries"]);
+  });
+
+  it("gives it to a preset Download when nothing else claims it", async () => {
+    const cold = withRepairsAndPresets();
+    mocks.detect.mockResolvedValue({ ...cold, repairs: [] });
+    mocks.propose.mockResolvedValue({
+      rows: GROUPS.map(([group, label]) => ({
+        group,
+        label,
+        engineId: null,
+        host: "",
+        state: "WAITING" as const,
+      })),
+      receipt: { groups: 7, engines: 0, waiting: 7 },
+    });
+    render(<ConciergeCore scope="" />);
+    await screen.findByTestId("concierge-set-list");
+    expect(filled()).toEqual(["Download"]);
+  });
+});

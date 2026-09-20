@@ -270,3 +270,122 @@ def test_tool_incompatible_repair_carries_a_plain_reason() -> None:
     detail = incompatible[0]["detail"]
     assert detail and detail[0].isupper() and detail.endswith(".")
     assert "_" not in detail, f"an issue code reached the face: {detail!r}"
+
+
+# ═══ Counsel fix round (Astra, DO-NOT-RATIFY on PR #590) ═══════════════════
+
+
+# ---- finding 2: OFF then ON ---------------------------------------------
+
+
+def test_apply_on_after_off_presents_the_tombstone_revision() -> None:
+    """The obvious way back ON must not be refused by the tombstone.
+
+    After OFF clears the assignment, `get_assignment` raises NotFound, so
+    the active-head read answers 0 — but `set_assignment` compares against
+    `_current`, which still sees the tombstone's revision and refuses. The
+    write must present the same revision the projection publishes.
+    """
+    from holdspeak.services.concierge_service import apply
+
+    svc = MagicMock()
+    # Cleared: no active head...
+    svc.get_assignment.side_effect = NotFound("inference assignment", "x")
+    svc.set_assignment.return_value = {
+        "revision": 4,
+        "entries": [
+            {
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "label": "192.168.1.43:8080",
+                "boundary": "private_network",
+                "readiness": "ready",
+            }
+        ],
+    }
+    # ...but a tombstone at revision 3 (what `_current` sees).
+    db = _head_db(3, 1)
+
+    result = apply(
+        rows=[{"group": "meetings", "engineId": "lan:box", "state": "READY"}],
+        engines=[
+            {
+                "id": "lan:box",
+                "kind": "lan",
+                "profileId": "engine-192-168-1-43-8080",
+                "profileRevision": 1,
+            }
+        ],
+        assignment_service=svc,
+        principal=MagicMock(),
+        db=db,
+    )
+
+    body = svc.set_assignment.call_args.args[1]
+    assert body["expected_revision"] == 3, body
+    assert result["results"][0]["state"] == "READY", result
+
+
+def test_apply_off_twice_clears_only_once() -> None:
+    """OFF on an already-cleared assignment writes no second tombstone."""
+    from holdspeak.services.concierge_service import apply
+
+    svc = MagicMock()
+    svc.get_assignment.side_effect = NotFound("inference assignment", "x")
+
+    apply(
+        rows=[{"group": "meetings", "engineId": "OFF", "state": "READY"}],
+        engines=[],
+        assignment_service=svc,
+        principal=MagicMock(),
+        db=_head_db(3, 1),
+    )
+
+    assert not svc.clear_assignment.called
+
+
+# ---- finding 4b: the refusal is in plain words ---------------------------
+
+
+@pytest.mark.parametrize(
+    ("error", "expected"),
+    [
+        (ConnectionRefusedError(61, "Connection refused"), "Nothing answers at this address."),
+        (TimeoutError("timed out"), "The server did not answer in time."),
+    ],
+)
+def test_endpoint_check_refusal_is_plain_words(
+    monkeypatch: pytest.MonkeyPatch, error: Exception, expected: str
+) -> None:
+    """No errno, no `<urlopen error …>`, on the owner's face."""
+    from urllib.error import URLError
+
+    from holdspeak import setup_runtime
+
+    def _raise(*_a: Any, **_k: Any) -> Any:
+        raise URLError(error)
+
+    monkeypatch.setattr(setup_runtime, "_default_http_json", _raise)
+    result = setup_runtime.discover_endpoint_models("http://127.0.0.1:9/v1")
+
+    assert result["ok"] is False
+    assert result["detail"] == expected
+    assert "errno" not in result["detail"].lower()
+    assert "urlopen" not in result["detail"].lower()
+
+
+def test_endpoint_check_unknown_name_is_plain_words(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from socket import gaierror
+    from urllib.error import URLError
+
+    from holdspeak import setup_runtime
+
+    def _raise(*_a: Any, **_k: Any) -> Any:
+        raise URLError(gaierror(8, "nodename nor servname provided"))
+
+    monkeypatch.setattr(setup_runtime, "_default_http_json", _raise)
+    result = setup_runtime.discover_endpoint_models("http://nowhere.invalid/v1")
+
+    assert result["detail"] == "No server has this name."

@@ -27,17 +27,50 @@ import {
   type FoundRow,
   type SetRow,
 } from "./useConciergeController";
+import { endpointHostPort, isLanAddress } from "./endpointDraft";
 import type { Engine, Repair } from "./api";
 import "./concierge.css";
+
+/* ── HS-201-09 (counsel finding 4a): ONE filled primary per window ──
+ *
+ * Four verbs on this face could each claim the filled primary — the
+ * Add-engine submit, the first repair, the footer's Use these, and a
+ * preset Download — and three of them did at once. One arbiter names the
+ * single claimant, in the order of what the owner is doing RIGHT NOW:
+ * the gesture he is mid-way through, then the thing that needs him, then
+ * the set he can commit, then the download that would unblock a cold
+ * desk. Everything else renders secondary. */
+
+export type PrimarySlot = "add" | "repair" | "apply" | "download" | null;
+
+export function primarySlot(ctrl: {
+  addEngineOpen: boolean;
+  addEngineState: string;
+  repairs: readonly unknown[];
+  canApply: boolean;
+  applying: boolean;
+  foundRows: readonly { engine: { kind: string; state: string } }[];
+}): PrimarySlot {
+  if (ctrl.addEngineOpen && ctrl.addEngineState === "READY") return "add";
+  if (ctrl.repairs.length > 0) return "repair";
+  if (ctrl.canApply && !ctrl.applying) return "apply";
+  const downloadable = ctrl.foundRows.some(
+    (row) => row.engine.kind === "preset" && row.engine.state !== "READY",
+  );
+  return downloadable ? "download" : null;
+}
 
 /* ── Found engine row ── */
 
 function FoundEngineRow({
   row,
   ctrl,
+  lead,
 }: {
   row: FoundRow;
   ctrl: ConciergeController;
+  /** This Download is the window's one filled primary. */
+  lead: boolean;
 }) {
   const { engine } = row;
   const emblem = kindEmblem(engine.kind);
@@ -79,7 +112,7 @@ function FoundEngineRow({
           ) : null}
           {isPreset && !row.downloading ? (
             <span className="concierge-cloud-actions">
-              <Button dense variant="primary" onClick={(e: React.MouseEvent) => { e.stopPropagation(); if (engine.presetId) ctrl.downloadPreset(engine.presetId); }} data-testid={`concierge-download-${engine.id}`}>Download</Button>
+              <Button dense variant={lead ? "primary" : "secondary"} onClick={(e: React.MouseEvent) => { e.stopPropagation(); if (engine.presetId) ctrl.downloadPreset(engine.presetId); }} data-testid={`concierge-download-${engine.id}`}>Download</Button>
             </span>
           ) : null}
           {row.downloading && row.progress ? (
@@ -371,6 +404,15 @@ function ProbeRow({ ctrl }: { ctrl: ConciergeController }) {
 export function ConciergeCore({ scope }: CoreProps) {
   const ctrl = useConciergeController();
   const setTitle = useContext(TitleSlotContext);
+  // One filled primary per window; every verb below asks this, and none
+  // decides for itself (counsel finding 4a).
+  const primary = primarySlot(ctrl);
+  const firstPresetId = ctrl.foundRows.find(
+    (row) => row.engine.kind === "preset" && row.engine.state !== "READY",
+  )?.engine.id;
+  // The address the Check will contact, named before he presses it.
+  const checkHost = endpointHostPort(ctrl.addEngineUrl).toUpperCase();
+  const checkScope = isLanAddress(ctrl.addEngineUrl) ? "local" : "cloud";
 
   useEffect(() => {
     setTitle?.("Models");
@@ -449,7 +491,7 @@ export function ConciergeCore({ scope }: CoreProps) {
                 key={repair.id}
                 repair={repair}
                 ctrl={ctrl}
-                lead={index === 0}
+                lead={primary === "repair" && index === 0}
               />
             ))}
           </ul>
@@ -463,7 +505,12 @@ export function ConciergeCore({ scope }: CoreProps) {
         </div>
         <ul className="concierge-found-list" data-testid="concierge-found-list">
           {ctrl.foundRows.map((row) => (
-            <FoundEngineRow key={row.engine.id} row={row} ctrl={ctrl} />
+            <FoundEngineRow
+              key={row.engine.id}
+              row={row}
+              ctrl={ctrl}
+              lead={primary === "download" && row.engine.id === firstPresetId}
+            />
           ))}
         </ul>
         {ctrl.addEngineOpen ? (
@@ -475,6 +522,13 @@ export function ConciergeCore({ scope }: CoreProps) {
               placeholder="http://192.168.1.43:8080/v1"
               autoFocus
             />
+            {/* Article III / UX-CANON A9: the host is named ON the row that
+                leaves the machine, BEFORE the verb that leaves it. */}
+            {checkHost ? (
+              <span data-testid="concierge-add-egress">
+                <EgressChip label={checkHost} scope={checkScope} />
+              </span>
+            ) : null}
             <Button
               dense
               variant="ghost"
@@ -505,9 +559,7 @@ export function ConciergeCore({ scope }: CoreProps) {
             ) : null}
             <Button
               dense
-              /* One filled primary per window: this verb is filled only
-                 once there is a checked engine behind it. */
-              variant={ctrl.addEngineState === "READY" ? "primary" : "secondary"}
+              variant={primary === "add" ? "primary" : "secondary"}
               onClick={ctrl.useNewEngineForSummaries}
               disabled={ctrl.addEngineChecking || ctrl.addEngineState !== "READY"}
               loading={ctrl.addEngineChecking && ctrl.addEngineState === "READY"}
@@ -553,16 +605,9 @@ export function ConciergeCore({ scope }: CoreProps) {
         verbs={
           <>
             <Button dense variant="ghost" onClick={ctrl.cancel} data-testid="concierge-cancel">Cancel</Button>
-            {/* One filled primary per window (UX-CANON): while the add-engine
-                well holds a READY engine, ITS verb is the primary. */}
             <Button
               dense
-              variant={
-                (ctrl.addEngineOpen && ctrl.addEngineState === "READY") ||
-                ctrl.repairs.length > 0
-                  ? "secondary"
-                  : "primary"
-              }
+              variant={primary === "apply" ? "primary" : "secondary"}
               disabled={!ctrl.canApply || ctrl.applying}
               onClick={ctrl.apply}
               loading={ctrl.applying}
