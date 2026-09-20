@@ -18,18 +18,10 @@ phone width) and dishonest on the screen: **the phone width has no doors**
 (the dock is laid out at desktop width and sits 410 px off the screen at 393;
 three of the four menus never open there), **eleven verbs leave the machine
 with no badge and four badges say "this device" and are false**, **the
-faces are built from raw HTML more often than from the library** (2,082 raw
-buttons against 869 library Buttons; the menu items, the wing tabs and the
-dock itself are raw), **type is too small and too faint by the thousands**
+faces are built from raw HTML more often than from the library** (2,082 rendered raw-button observations across the legs against 869 library Button renders, which is 157 raw-button SOURCE sites; the menu items, the wing tabs and the dock itself are raw), **type is too small and too faint by the thousands**
 (4,358 text elements under 12 px; 560 below AA contrast; 1,350 verbs under
-44 px at 393), and **things are hidden, empty or said twice** (124 cut texts,
-90 empty headings with data present, 155 duplicated facts, 11 zero
-counters). A stranger with no lore reached four of five jobs and got lost on
-the fifth because the button called "Write a thought" opens the dictation
-router. The fix is not a hundred face patches: most of the numbers fall at
-the species and the tokens, and the rest is doors, names and honesty. One
-phase, eight stories, and the walk itself becomes the fence so the numbers
-cannot climb back.
+44 px at 393), and **things are cut, empty or said twice** (124 clipped texts, some with a reveal; two empty sections and 88 label wrappers the rig misread as empty; 155 duplicated facts; 11 zero counters). A stranger with no lore scored two jobs done, two partly, one failed (the microphone), and got lost because the button called "Write a thought" opens the dictation router; saving a note gave no confirmation and the microphone failure offered a retry that cannot help. The fix is not a hundred face patches: most of the numbers fall at
+the species and the tokens, and the rest is doors, names and honesty. One phase, six stories, sized to the owner's first-use path with a small deterministic fence first; the broad census numbers stay diagnostic and are re-run at phase close.
 
 ---
 
@@ -55,41 +47,39 @@ it), contrast over wallpaper (48 leaves), microphone verbs (12), People
 
 | Rule | Count | Where it falls |
 |---|---|---|
-| U1 raw buttons vs library Buttons | **2,082 vs 869** | the species: menu items (`DeskMenu.tsx:155`), wing tabs (`wings.tsx:88`), the dock (7), DeskEditor (11), WorkbenchWindow (23), inspector (10), ThreadPullout (9), SessionPullout (7), CoderPullout (6) |
+| U1 raw-button renders vs library Button renders across 287 legs (rendered observations, not sites) | **2,082 vs 869**; **157 raw-button source sites** in consumer code (appendix 02) | the species: menu items (`DeskMenu.tsx:155`), wing tabs (`wings.tsx:88`), the dock (7), DeskEditor (11), WorkbenchWindow (23), inspector (10), ThreadPullout (9), SessionPullout (7), CoderPullout (6) |
 | M7 text under 12 px | **4,358** (smallest 6 px) | the interior type scale has no floor |
 | M7 verbs under 44 px at 393 | **1,350** on 140 legs | the dense Button has no hit-area floor |
 | M8 text below AA contrast | **560** of 8,647 (worst 2.97:1) | the muted tokens |
 | M10 legs with more than two font stacks | **63** | display + body + mono mixed on one face |
 | M1 legs with horizontal overflow | **47** | the dock at 393 (410 px past the viewport); Components; the Floor; the window switcher |
-| M2 cut text | **124** | ellipsis with no reveal |
-| M5 empty headings or labels with no value | **90** (78 on the RICH desk) | they appear with data |
+| M2 clipped text | **124** | clipped; whether a reveal exists was NOT ASSESSED by the rig |
+| M5 empty sections | **2**; the rig's other 88 are checkbox label wrappers with accessibly named inputs (misread, not defects); 12 observations were on the cold desk |
 | M6 the same fact twice on one screen | **155** on 54 legs | "Nothing needs you" ×2; context receipts |
 | U3 visible zero counters | **11** (+ one in an aria-label: "…zone, 0 items") | |
 | U4 legs with more than one filled primary | **16** | |
-| A7 prose sentences | **4** visible; the first-run card carries one | |
-| C3 surfaces with no door | **8** (Calendar snapshot, Components, Live meeting, New Project, People, Runtime docs, /presence, /welcome) + the `assignments` settings module | |
-| A3 egress verbs with no badge and no receipt | **11** (`Run once`, `Run now`, `Generate`, `Send reply`, `Process pending`, `Preview route`, two `Download`s, `Draft review`, the PR writes, `Talk`) | |
-| A3 badges present and false | **4** (`THIS DEVICE` beside an internet download; hardcoded on the dictation face; a hardcoded `⌂` on Live; five prop-less `<EgressChip/>` that print "This device" by default, `gadgets.tsx:745-747`) | |
+| A7 prose sentences | **1** distinct sentence (a dictation-install line) rendered four times; the first-run card carries another | |
+| C3 surfaces with no Go/dock door | **8** by the census's Go/dock rule; People and New Project have Desk-menu doors, Calendar snapshot a Settings door, Live the orb, so truly doorless: Components, Runtime docs, /presence, /welcome, plus the `assignments` settings module | recalculated per appendix 03 |
+| A3 egress verb groups with no badge and no receipt | **11 source-table groups** (one holds the three PR writes); two fired live and confirmed bare (`Run now`, `Generate`); the rest are source findings | |
+| A3 false-badge categories | **4** (`THIS DEVICE` beside an internet download; hardcoded on the dictation face; a hardcoded `⌂` on Live; a category of five prop-less `<EgressChip/>` that print "This device" by default, `gadgets.tsx:745-747`) | source findings; two seen on one 393 shot |
 | Menu entries that are ghosts on load | **18 of 46** (all of Object, all of Window) | |
 | Menus that never open at 393 | **3 of 4** (Desk, Object, Window; still announced to screen readers) | |
 | M13 open → settled | median 3.6 s, p90 6.5 s, max 17.2 s | |
 | M9 console errors, 4xx/5xx | **0** on 287 legs | a real pass |
-| Motion, focus rings, icon names, window grammar at 393 | **pass** (0 transitions over 400 ms; 0 of 69 tab stops without a ring; 0 anonymous icon buttons; all 14 windows become sheets, single scroll owner) | |
+| Motion, focus rings, icon names, window grammar at 393 | **pass within coverage**: 0 transitions over 400 ms (the reduced-motion pass ran at 1440 only); 0 of 69 SAMPLED tab stops without a ring; 0 anonymous icon buttons; all 14 pressed windows become sheets with one scroll owner; Agents was recorded MEASURED while its shot shows only the loading state; the Thought window at 393 was UNOPENED | |
 
 ## 3. Where the four lanes converge
 
 ### 3.1 The phone width has no doors (T3, T6)
 
 The dock is the only persistent door at 393 and it is off the screen; the
-`Record a meeting` orb lives in it. Three menus are dead there. Eight
-surfaces have no door at any width. ⌘K's Enter commits the highlighted row,
+`Record a meeting` orb lives in it. Three menus are dead there. Four surfaces and one settings module have no door at any width (the other four the census flagged have contextual doors: a Desk-menu entry, a Settings row, the orb). ⌘K's Enter commits the highlighted row,
 not the typed match (`Notes` opened `Telegram control`; `Thoughts` opened
 `Intelligence`), so two of the five owner jobs cannot be started from the
 keyboard. ⌘K's `Ask AI` row is permanently disabled while the Go menu's
 works. The button called **"Write a thought" opens the Speak dictation
 router** (`LANDS IN · Codex CLI`, `NOT SET`, no keep); the real door is Desk
-→ New Note, nine moves away for a stranger. Four of nine `New …` verbs mint
-and open nothing. Nine call sites `openSurfaceOr` an unregistered key and
+→ New Note, nine moves away for a stranger. Four of nine `New …` verbs mint an object but open no editor. Nine call sites `openSurfaceOr` an unregistered key and
 silently land on the bare desk. Dev surfaces ship ungated: Components has
 zero callers and no door; RAILS/Delivery/story objects reach ⌘K and the
 Floor wearing the raw token `STORY`; there is no build gate anywhere in the
@@ -136,8 +126,7 @@ above them; zero counters in text and in accessible names.
 A meeting result is **Summary** on the record and **Intelligence** on Live
 (F06). A failed summary offers **Retry** and **Retry intelligence** (F07).
 The Sequence object's edit verb calls it a **chain** (F08). The Project Room
-has **six names** across the faces. `Runs on` and `Sequence` are canon terms
-that render on no face. `SEG` and `MTG` stand where segment and meeting
+has **six names** across the faces. `Sequence` is a canon term that renders on no face; `Runs on` renders once, as a Rhythm row. `SEG` and `MTG` stand where segment and meeting
 would do. Thirty-eight distinct labels meet a stranger in the first two
 minutes; five did anything for the five jobs.
 
@@ -150,8 +139,8 @@ minutes; five did anything for the five jobs.
 | The owner's private LAN address is hardcoded as the shipped Server-address placeholder (`ConciergeCore.tsx:522`) | sober eye |
 | Two startup URLs are printed without the tab-scoped token (`web_runtime.py:430`, `:438`) and land on `principal_right_required` | sober eye, verified in a fresh context |
 | The ＋Create face is unreachable on any real desk: it lives only in `EmptyDesk`, and first boot furnishes zones | census |
-| An empty zone announces "…zone, 0 items" (`DeskListView.tsx:214`) | census |
-| Four or five of nine `Favorite` toggles in Change places do nothing while one fires nine requests | interaction |
+| An empty zone announces "…zone, 0 items" (`DeskListView.tsx:214`) | source evidence; the rig does not scan accessible names |
+| Four or five of nine `Favorite` toggles in Change places showed no observed effect; the probe did not read aria-pressed, SVG fill or localStorage, and the nine requests were polling GETs: UNVERIFIED, not a defect yet | interaction |
 | The meeting record does not refresh after the engine is assigned or the run completes (two reloads to see a summary) | sober eye |
 
 ## 5. What passes, and stays
@@ -165,34 +154,34 @@ restart, and provenance after a run (the host named four ways on one screen)
 were the sober eye's good moments. `docs/WHAT_IS_HOLDSPEAK.md` predicted the
 gaps honestly; `README.md` promises faces that never appeared.
 
-## 6. The plan — Phase 202: The Coherent Face
+## 6. The plan — Phase 202: The Coherent Face (re-cut after Astra's check)
 
-**Principle.** Fix at the species and the tokens, not per face; the census
-numbers are the exit criteria and the walk is the fence, so they cannot
-climb back. Every story ends with the rig re-run and the number moved.
-Nothing new ships that does not shorten one of the owner's jobs.
+**Principle.** The owner's first-use path first (Phase 201 story 07, the
+sitting, stays the exit that selects the next scope); fix at the shared
+species and the tokens where the first-use flows touch them; a small,
+deterministic fence before repairs; the broad census numbers stay
+diagnostic and are re-run at phase close, never as gates. Every story ends
+on a face the owner uses on a Tuesday.
 
-| # | Story | Exit (the census re-run) |
+| # | Story | Exit |
 |---|---|---|
-| 01 | **Doors at every width.** The dock fits at 393; the four menus open there; ⌘K commits the typed match; one Ask AI door; every application has one door (the eight without, and the `assignments` module); `Write a thought` opens a note; `New …` verbs that mint nothing leave; the nine unrouted `openSurfaceOr` calls fixed or removed; dev surfaces gated out of the product build | C3 = 0; dock M1 = 0 at 393; menus 4/4 at 393; ghost entries only when truly inapplicable |
-| 02 | **Honest egress on every verb.** The eleven bare verbs get the badge before and the receipt after; the four false badges fixed; `<EgressChip/>` with no props renders NOT SET, never "This device"; the Trust window tells the truth after a failed read; the Room never hides degraded work under an all-clear; Desk memory shows the desk's memory | A3 table: 0 bare, 0 false; F01, F02 closed |
-| 03 | **The species pay the raw-button debt.** Menu items, wing tabs, the dock, DeskEditor's controls, WorkbenchWindow, the inspector, Thread/Session/Coder pullouts, GroundingSection, BriefView: library species | U1 raw buttons: 2,082 → 0 in product faces (dev surfaces gated) |
-| 04 | **Type, size and contrast at the tokens.** A 12 px floor on the interior scale; a 44 px hit area on every verb at 393 (the dense Button extends its hit area, not its ink); AA for the muted tokens; two stacks per face by role, and the design system says so | M7 < 12 px: 4,358 → 0; verbs < 44 px at 393: 1,350 → 0; M8 below AA: 560 → 0; M10 > 2 stacks: 63 → 0 |
-| 05 | **Nothing hidden, nothing empty, nothing twice.** Cut text wraps or reveals; empty headings render nothing; one all-clear per screen; receipts never restate the row; zero counters gone from text and aria | M2: 124 → 0; M5: 90 → 0; M6: 155 → 0; U3: 11 → 0; U4: 16 → 0; A7: 4 → 0 |
-| 06 | **One name per thing.** Summary, not Intelligence, on Live; one Retry; Sequence; the Project Room's one name; SEG/MTG in words; canon terms render or leave POSITIONING; `product-language.json` enforced across every face | noun map: one row per thing; verb map: one verb per job; C2 = 0 |
-| 07 | **The eight defects.** Decisions POST; the assignments door; the LAN placeholder removed; tokened startup URLs; the Create face reachable or parked; the zone aria; the Favorite toggles; the meeting record refreshes on assignment and on run without a reload | each with a fence red first |
-| 08 | **The walk is the fence.** Both rigs in CI as down-only ratchets on every census number; the sober eye re-run at phase close on the rich desk; the phase closes on the owner's sitting, not on the numbers | the ratchet file committed; the second sober eye scorecard beside the first |
+| 01 | **The first-use fence.** One deterministic, isolated smoke at 1440 and 393: the doors to the five jobs, visible completion of each, the truthful host before and after a run, save and refind, restart; it requires the expected content to load (no green on a loading ellipsis). Reuses the existing source-button ratchet; adds no census gates | the smoke is red on main today at the doors it names, then green as the stories land |
+| 02 | **First-use doors and truthful state.** The dock fits at 393; the four menus open there; ⌘K commits the typed match; `Write a thought` opens a note and saving a note confirms; the microphone failure names the microphone and offers a recovery that can work; the two startup URLs carry the token; the meeting record refreshes on assignment and on run without a reload; one Ask AI door; the `assignments` module has a door; the four surfaces with no door get one or leave the product build; `<EgressChip/>` with no props renders NOT SET, never "This device"; the false badges on the path fixed; `Generate`, `Talk` and `Run now` badged and receipted; the Trust window truthful after a failed read; the Room never hides degraded work under an all-clear; Desk memory shows the desk's memory; decisions POST fixed; the owner's LAN address removed from the placeholder | each item with a fence red first; the first-use smoke green at both widths |
+| 03 | **Shared controls on the first-use path become library species.** Menu items, wing tabs, the dock, DeskEditor's controls, and the consumers those flows touch (bounded by the 157-site source census, migrated in this order; the rest ledgered) | the source-button ratchet moves down by the migrated sites; no raw control on the five jobs' screens |
+| 04 | **Names and repeats on the touched flows.** Summary not Intelligence on Live; one Retry; one all-clear per screen; receipts never restate the row; zero counters gone from text and accessible names on those flows; `SEG`/`MTG` in words | the touched flows' shots; the noun and verb maps collapse on those rows |
+| 05 | **The type-scale ruling, then the tokens.** A design beat first: settle the 11 px caption allowance, the 12 px floor, and the three type roles (display/body/mono) between canon and the census rule, with counsel; then apply at the tokens (floor, muted-token contrast, the dense Button's hit ownership at 393 verified by hit testing, not rectangles); the broad M7/M8/M10 numbers re-measured as diagnostics | the ruling recorded in UX-CANON and DESIGN_SYSTEM; the first-use screens pass AA and the hit test |
+| 06 | **The sitting selects the next scope.** The owner sits (Phase 201 story 07's script) on the merged phase; the sober eye re-runs on the rich desk; the census re-runs as a diagnostic; the phase closes on his words, and the next phase is chartered from what he hit | the second sober-eye scorecard beside the first; the owner's line |
 
-**Order.** 07 first (defects, small, on the owner's path), then 04 and 03
-together (tokens and species, the two lanes that move most numbers), then
-01 and 02 (doors and honesty), then 05 and 06 (the residue, mostly
-mechanical after 03/04), then 08.
+**Order.** 01 → 02 → 03 and 04 together → 05 → 06.
 
-**What parks (never deleted).** The Philo SRS's seven no-face requirements
-and 26 partly-matched rows (a scope map, not blockers). Per-face CSS
-literal cleanups beyond the shared species (474 dimension records) until
-04 has moved the shared ones. The Components catalog and the RAILS objects
-(gated, kept).
+**Ledger (recorded, not scheduled).** The broad census residue outside the
+first-use flows: the remaining raw-control sites, the 474 dimension
+records, cut text and duplicated facts on faces the five jobs do not
+touch, the 11 zero counters off-path, Components and the RAILS objects
+(gated, kept), the Favorite toggles (unverified), real voice delivery,
+populated People, full failure and recovery transitions, zoom and
+assistive-technology behaviour, the Philo SRS's seven no-face requirements
+and 26 partly-matched rows.
 
 ## 7. Appendices
 
