@@ -76,9 +76,9 @@ export function GlassDropLayer() {
       const body = new FormData();
       body.append("file", file);
       body.append("title", file.name.replace(/\.[^.]+$/, ""));
-      if (file.lastModified) {
-        body.append("started_at_ms", String(file.lastModified));
-      }
+      // HS-201-10: the drop layer is the second Import door, and it dated
+      // the meeting by the file's mtime exactly like the Import section
+      // did (rehearsal defect 10). The hub stamps the import moment.
       void apiFetch<{ meeting_id?: string }>("/api/meetings/import", {
         method: "POST",
         body,

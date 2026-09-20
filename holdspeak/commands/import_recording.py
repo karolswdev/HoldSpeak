@@ -3,8 +3,9 @@
 Synchronous (the right shape for huge files and headless machines). Audio
 decodes and transcribes window by window with visible progress; a transcript
 (`.vtt`/`.srt`/`.txt`) parses instantly with no model load at all. Both
-persist the meeting and report the intel posture. Exits non-zero on a
-refusal or failure.
+persist the meeting and stop: HS-201-10 — an import runs no summary, so the
+owner asks for it on the meeting record. Exits non-zero on a refusal or
+failure.
 """
 
 from __future__ import annotations
@@ -57,13 +58,9 @@ def run_import_command(args) -> int:
         )
         if result.speakers_found:
             print(f"  speakers from the file: {', '.join(result.speakers_found)}")
-        if result.intel_job_enqueued:
-            print(
-                "Meeting intelligence queued. Process it with `holdspeak intel --process` "
-                "or let the web runtime pick it up."
-            )
-        else:
-            print(f"Meeting intelligence: {state.intel_status_detail}")
+        # HS-201-10: an import runs no summary. It says what it did, and
+        # where to ask for the summary.
+        print(f"Summary: {state.intel_status_detail}")
         print("Review it on the History page of the web runtime.")
         return 0
 
@@ -101,12 +98,6 @@ def run_import_command(args) -> int:
         f"Imported meeting {state.id}: \"{state.title}\" — "
         f"{len(state.segments)} segment(s), {minutes}m{seconds:02d}s."
     )
-    if result.intel_job_enqueued:
-        print(
-            "Meeting intelligence queued. Process it with `holdspeak intel --process` "
-            "or let the web runtime pick it up."
-        )
-    else:
-        print(f"Meeting intelligence: {state.intel_status_detail}")
+    print(f"Summary: {state.intel_status_detail}")
     print("Review it on the History page of the web runtime.")
     return 0

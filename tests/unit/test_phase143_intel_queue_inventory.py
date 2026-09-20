@@ -118,7 +118,14 @@ def test_inventory_projection_dtos_session_import_and_persistence_writers_are_pi
     assert "args.retry_failed" in cli and "list_intel_jobs(status=\"failed\"" in cli
     assert "enqueue_intel_job" in persistence
     assert "enqueue_intel_job" in admission
-    assert "enqueue_intel_job" in imported
+    # HS-201-10: the IMPORT path is no longer an enqueue writer. It used to
+    # queue a job with only a transcript hash — no route, no selection hash —
+    # so the summary ran on whatever host the config later resolved, with no
+    # disclosure and no receipt. An import now transcribes and stops, and the
+    # owner's gesture is the only thing that enqueues from an imported
+    # meeting. The census pins the absence so it cannot creep back.
+    assert "enqueue_intel_job" not in imported
+    assert "Import does not run the summary by itself" in imported
 
 
 def test_inventory_plugin_job_family_is_separate_and_non_colliding() -> None:

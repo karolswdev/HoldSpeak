@@ -118,11 +118,20 @@ export function ledgerDate(value: unknown): string {
   return `${MONTHS[date.getMonth()]} ${String(date.getDate()).padStart(2, "0")}`;
 }
 
-/** n MIN, folding to n HR past ten hours — a catalog cell, not a
- * six-digit minute wall. Empty when the wire has no duration. */
+/** The length of the recording, in the unit that tells the truth about it:
+ * `n S` under a minute, `n MIN` above it, folding to `n HR` past ten hours —
+ * a catalog cell, not a six-digit minute wall. Empty when the wire has no
+ * duration.
+ *
+ * HS-201-10 (rehearsal defect 9): a 2.79 s import read `1 MIN` beside the
+ * `5 S` the summary run took, in the same dot-line. Minutes were the only
+ * unit this token had, so every short recording was rounded into a lie (or,
+ * below thirty seconds, rounded to nothing at all). */
 export function durationToken(seconds: unknown): string {
-  const minutes = Math.round(Number(seconds ?? 0) / 60);
-  if (!Number.isFinite(minutes) || minutes <= 0) return "";
+  const total = Number(seconds ?? 0);
+  if (!Number.isFinite(total) || total <= 0) return "";
+  if (total < 60) return `${Math.max(1, Math.round(total))} S`;
+  const minutes = Math.round(total / 60);
   if (minutes >= 600) return `${Math.round(minutes / 60)} HR`;
   return `${minutes} MIN`;
 }
@@ -217,6 +226,25 @@ export function meetingsHeadline(
     return { text: `${failed} ${noun}`, accent: true };
   }
   return { text: "Nothing needs you", accent: false };
+}
+
+/** HS-201-11 — is there an open action a meeting facet could match?
+ *
+ *  `HAS OPEN ACTIONS` was drawn on every Meetings face, including one whose
+ *  only meeting held zero actions (audits/rehearsal-07-opus.md, LANGUAGE
+ *  row): a filter that can match nothing says nothing. `/api/all-action-items`
+ *  answers only OPEN items -- `include_completed=false` becomes
+ *  `a.status = 'pending'` (holdspeak/db/meetings.py:869-870), the same
+ *  predicate the facet filters meetings on (`:651-655`). An item with no
+ *  `meeting_id` came from a thread, which the meeting facet cannot reach.
+ */
+export function hasOpenMeetingActions(actionItems: unknown): boolean {
+  if (!Array.isArray(actionItems)) return false;
+  return actionItems.some((item) => {
+    if (typeof item !== "object" || item === null) return false;
+    const meetingId = (item as Record<string, unknown>).meeting_id;
+    return meetingId != null && String(meetingId).length > 0;
+  });
 }
 
 /** HS-170-04 — the face's meeting state for list rows: label + verb.

@@ -76,9 +76,10 @@ def test_vtt_imports_with_real_timestamps_and_file_speakers(tmp_path, db):
     assert (result.windows_total, result.windows_empty) == (0, 0)
     assert result.duration_seconds == pytest.approx(12.0)
     assert state.ended_at is not None
-    # Intel mirrored from the live conditions.
-    assert result.intel_job_enqueued is True
-    assert state.intel_status == "queued"
+    # HS-201-10: an import transcribes and stops. No summary is asked for,
+    # so the meeting arrives in the "Run summary" shape.
+    assert result.intel_job_enqueued is False
+    assert state.intel_status == "disabled"
 
 
 def test_txt_imports_with_synthetic_ordering_and_fallback_speaker(tmp_path, db):
@@ -126,16 +127,23 @@ def test_missing_file_refused(tmp_path, db):
         import_transcript(tmp_path / "ghost.vtt", db=db, config=_config())
 
 
-def test_started_at_defaults_to_file_mtime(tmp_path, db):
+def test_started_at_defaults_to_the_import_moment(tmp_path, db):
+    """HS-201-10: the file's mtime is not a fact about the meeting.
+
+    It used to be the default, and a transcript copied onto the disk months
+    ago filed the meeting months back in the ledger (rehearsal defect 10).
+    """
     import os
 
     path = tmp_path / "old.txt"
     path.write_text("Ana: an old conversation\n")
     stamp = datetime(2024, 3, 1, 9, 30, 0).timestamp()
     os.utime(path, (stamp, stamp))
+    before = datetime.now()
 
     result = import_transcript(path, db=db, config=_config())
-    assert result.state.started_at == datetime.fromtimestamp(stamp)
+    assert before <= result.state.started_at <= datetime.now()
+    assert result.state.started_at != datetime.fromtimestamp(stamp)
 
 
 def test_explicit_started_at_wins(tmp_path, db):

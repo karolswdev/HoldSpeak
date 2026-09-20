@@ -8,8 +8,9 @@ so segments carry real start/end times. A transcript (``.vtt``/``.srt``/
 ``.txt``, HS-57) skips transcription entirely: the parser produces honest
 cues (real timestamps and speaker names when the file carries them). Both
 paths share one persistence tail: a normal ``MeetingState`` via
-``db.meetings.save_meeting`` and deferred meeting intelligence enqueued
-under the same conditions as a live capture.
+``db.meetings.save_meeting``. The tail stops there (HS-201-10): an import
+transcribes and asks for no summary, so the meeting arrives with its "Run
+summary" verb and the disclosed route beside it, like a recorded one.
 
 Honest limits, by design:
 
@@ -61,6 +62,10 @@ FFMPEG_SUFFIXES = {".mp3", ".m4a", ".aac", ".ogg", ".oga", ".opus", ".flac", ".w
 DEFAULT_SPEAKER_LABEL = "Recording"
 # The fallback voice for transcript imports whose file carries no labels.
 DEFAULT_TRANSCRIPT_SPEAKER_LABEL = "Transcript"
+# HS-201-10 — the terminal transcription state. A live meeting is `active`
+# while audio still arrives and `record_only` when the route refused it; an
+# import's transcript is finished the moment it is saved, so it says so.
+TRANSCRIPTION_COMPLETE = "complete"
 
 ProgressCallback = Callable[[int, int], None]
 
@@ -84,6 +89,19 @@ class ImportResult:
     # HS-57-02: transcript imports only — the speaker labels the FILE carried
     # (never invented; empty for audio imports and unlabeled transcripts).
     speakers_found: list[str] = field(default_factory=list)
+
+
+def _import_moment() -> datetime:
+    """When an import with no stated start happened: now.
+
+    HS-201-10 (rehearsal defect 10). The old default was the FILE's mtime,
+    which is not a fact about the meeting at all — a WAV copied onto the
+    disk in June dated the meeting JUN 03 and filed it three months back in
+    the ledger, where the owner had no reason to look. A caller with a real
+    start (sync, a fixture, a future "use the file's date" gesture) still
+    passes ``started_at`` and keeps its say.
+    """
+    return datetime.now()
 
 
 def ffmpeg_available() -> bool:
@@ -234,9 +252,7 @@ def import_meeting(
         )
 
     if started_at is None:
-        # An old recording should sort where it happened, not where it was
-        # imported — the file's mtime is the best honest default.
-        started_at = datetime.fromtimestamp(path.stat().st_mtime)
+        started_at = _import_moment()
 
     window_samples = max(1, int(window_seconds * TARGET_SAMPLE_RATE))
     windows_total = int(np.ceil(len(audio) / window_samples))
@@ -345,9 +361,9 @@ def _persist_import(
     """The shared persistence tail: segments in, a real meeting out.
 
     One tail, every import path (audio HS-55, transcripts HS-57): builds the
-    normal ``MeetingState``, mirrors the live capture's intel posture, saves
-    via the normal ``save_meeting``, and enqueues deferred intel under the
-    same conditions as a live capture.
+    normal ``MeetingState``, saves it via the normal ``save_meeting``, and
+    stops. **Import transcribes and stops** (HS-201-10): it asks for no
+    summary, so no provider is contacted until the owner asks for one.
     """
     state = MeetingState(
         id=meeting_id or str(uuid.uuid4())[:8],
@@ -358,33 +374,42 @@ def _persist_import(
         segments=segments,
     )
 
-    # Mirror the live capture's intel posture (meeting_session.save()): defer
-    # to the existing queue when intel is on, state the disablement when not.
+    # HS-201-10 — Import does not run the summary by itself.
+    #
+    # This tail used to enqueue an intel job with only a transcript hash: no
+    # route bundle, no selection hash (the ledgered "hashless legacy entry
+    # point", lane-a-handoff.md). The 2026-09-20 rehearsal watched it contact
+    # 192.168.1.43 before any gesture, with `run_receipt: null` and no "Run
+    # summary" verb ever drawn — and Import is the only path a stranger
+    # without a microphone can take, so the whole Phase-201 disclosure
+    # contract (stories 03 and 04) was unreachable in practice.
+    # Article III wants the host disclosed AT THE POINT OF DECISION, and the
+    # decision belongs to the owner. So the imported meeting lands in the
+    # same shape as a recorded one: a transcript, no summary, and the "Run
+    # summary" verb with its disclosed route beside it.
     meeting_cfg = config.meeting
+    state.intel_status = "disabled"
     if meeting_cfg.intel_enabled and meeting_cfg.intel_deferred_enabled:
-        state.intel_status = "queued"
-        state.intel_status_detail = "Queued for processing after import."
+        state.intel_status_detail = (
+            "No summary yet. Import does not run the summary — "
+            "ask for it on the meeting."
+        )
     else:
-        state.intel_status = "disabled"
         state.intel_status_detail = "Meeting intelligence disabled in config."
+    # The transcript this import produced cannot change again, so its
+    # transcription state is final (rehearsal defect 11: `active` forever).
+    state.transcription_status = TRANSCRIPTION_COMPLETE
+    state.transcription_status_detail = None
 
     db.meetings.save_meeting(state)
-    intel_job_enqueued = False
-    if state.intel_status == "queued" and state.segments:
-        db.intel.enqueue_intel_job(
-            state.id,
-            transcript_hash=state.transcript_hash(),
-            reason=state.intel_status_detail,
-        )
-        intel_job_enqueued = True
 
     log.info(
         f"Imported meeting {state.id} from {source_name}: "
-        f"{len(segments)} segment(s), {duration:.1f}s, intel_enqueued={intel_job_enqueued}"
+        f"{len(segments)} segment(s), {duration:.1f}s, intel_enqueued=False"
     )
     return ImportResult(
         state=state,
-        intel_job_enqueued=intel_job_enqueued,
+        intel_job_enqueued=False,
         windows_total=windows_total,
         windows_empty=windows_empty,
         duration_seconds=duration,
@@ -437,9 +462,7 @@ def import_transcript(
     duration = max(cue.end for cue in parsed.cues)
 
     if started_at is None:
-        # An old transcript should sort where the meeting happened, not where
-        # it was imported — the file's mtime is the best honest default.
-        started_at = datetime.fromtimestamp(path.stat().st_mtime)
+        started_at = _import_moment()
 
     return _persist_import(
         db=db,
