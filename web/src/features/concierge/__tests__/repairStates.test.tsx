@@ -99,6 +99,7 @@ function detection(repairs: Repair[]): DetectResponse {
     runtimes: [],
     checkedAt: "2026-09-06T09:41:00Z",
     repairs,
+    summaryAssignment: null,
   };
 }
 

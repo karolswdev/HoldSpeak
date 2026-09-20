@@ -394,24 +394,44 @@
   flex-shrink: 0;
 }
 
-/* ── Add an engine: ghost text aligned with names (no box) ── */
+/* ── Add an engine: the library Button, aligned with the names ── */
 
 .concierge-add-engine {
-  padding-left: 48px;
-  font: 400 13px/1.3 Inter, system-ui, sans-serif;
-  color: var(--faint, #767e8d);
-  cursor: pointer;
+  align-self: flex-start;
+  margin-left: 46px;
 }
 
-/* ── Add engine inline row (StringGadget + Check + Add) ── */
+/* ── Add engine inline row (StringGadget + Check + answer + primary) ── */
 
 .concierge-add-engine-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding-left: 48px;
   animation: surface-rise-in var(--duration-medium, 200ms)
     var(--ease-quart, cubic-bezier(0.25, 1, 0.5, 1)) both;
+}
+
+/* The check's answer sits beside its verb, never below the fold. */
+.concierge-add-engine-answer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 200px;
+}
+
+.concierge-add-engine-reason {
+  font: 400 12px/1.4 "JetBrains Mono", monospace;
+  color: var(--danger, #f87171);
+  min-width: 0;
+}
+
+.concierge-repair-reason {
+  font: 400 12px/1.4 "JetBrains Mono", monospace;
+  color: var(--muted, #9ba2b0);
+  min-width: 0;
 }
 
 /* ── Footer: portaled, receipt left-aligned, never wraps ── */
@@ -450,9 +470,20 @@
 /* ── 393 narrow: four-line stacked grammar ── */
 
 @container surface (max-width: 559.9px) {
-  .concierge-found-list .surface-ledger-primary,
-  .concierge-set-list .surface-ledger-primary,
-  .concierge-repair-list .surface-ledger-primary {
+  /* HS-201-09 (rehearsal defect 7) — this rule was written for the
+     stacked 393 grammar and never reached the face: the library's
+     `.surface-ledger-row[data-wrap] .surface-ledger-primary { flex: 1 1 0 }`
+     (surface.css:3645, HS-168-04, for a checkmark lead beside short answer
+     text) outranks a two-class selector, so every Concierge row squeezed
+     its group name into whatever the picker left and the name — which may
+     not break, `white-space: normal` with `overflow: visible` — ran over
+     the picker beside it (`02a-choose-an-engine-393.png`). The concierge
+     rows carry a long name AND a wide picker, so the name keeps the line
+     it was always meant to keep and the picker falls under. Scoped to this
+     face: the library's rule is right for the faces it was written for. */
+  .concierge-root .concierge-found-list .surface-ledger-row[data-wrap] .surface-ledger-primary,
+  .concierge-root .concierge-set-list .surface-ledger-row[data-wrap] .surface-ledger-primary,
+  .concierge-root .concierge-repair-list .surface-ledger-row[data-wrap] .surface-ledger-primary {
     flex: 1 1 calc(100% - 48px);
     min-width: 0;
   }
@@ -480,6 +511,10 @@
   }
 
   .concierge-add-engine {
+    margin-left: 0;
+  }
+
+  .concierge-add-engine-row {
     padding-left: 0;
   }
 }

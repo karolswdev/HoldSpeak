@@ -121,7 +121,9 @@ function SetGroupRow({
 }) {
   const glyph = GROUP_GLYPHS[row.group] ?? "○";
   const engine = engines.find((e) => e.id === row.engineId);
-  const engineName = row.engineId === "OFF" ? "—" : engine?.name ?? "—";
+  // HS-201-09: an APPLIED engine detection no longer lists still names itself.
+  const engineName =
+    row.engineId === "OFF" ? "—" : engine?.name ?? row.appliedLabel ?? "—";
   const isOff = row.engineId === "OFF" || row.engineId === null;
   const latency = engine ? latencyToken(engine.latencyMs) : null;
   const hostLabel = engine ? engineHostLabel(engine) : row.host.toUpperCase() || "";
@@ -142,9 +144,12 @@ function SetGroupRow({
               <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
             </svg>
           </Button>
-          {/* State chip: right-aligned on line 1 */}
+          {/* State chip: right-aligned on line 1.
+              HS-201-09: an OFF row draws NO state chip — a green READY
+              beside "—" said the opposite of the owner's choice. */}
           <span className="concierge-set-state">
-            {row.state === "READY" ? <StateChip state="success" label="READY" icon="●" />
+            {row.engineId === "OFF" ? <StateChip state="idle" label="OFF" />
+            : row.state === "READY" ? <StateChip state="success" label="READY" icon="●" />
             : row.state === "CHECKING" ? <StateChip state="working" label="CHECKING" icon="○" />
             : row.state === "WAITING" ? <StateChip state="warning" label="WAITING" icon="○" />
             : row.state === "NOT_SET" ? <StateChip state="warning" label="NOT SET" />
@@ -244,7 +249,17 @@ function AdjustWell({ ctrl }: { ctrl: ConciergeController }) {
 /* ── Repair row (HS-200-04) ──
    One named state, one verb, the host named where the repair happens. */
 
-function RepairRow({ repair, ctrl }: { repair: Repair; ctrl: ConciergeController }) {
+function RepairRow({
+  repair,
+  ctrl,
+  lead,
+}: {
+  repair: Repair;
+  ctrl: ConciergeController;
+  /* HS-201-09: one filled primary per window — the FIRST repair owns it
+     (the same law the arrival's attention band keeps). */
+  lead: boolean;
+}) {
   const blocking =
     repair.token === "CREDENTIAL EXPIRED" || repair.token === "ENDPOINT UNREACHABLE";
   return (
@@ -261,7 +276,7 @@ function RepairRow({ repair, ctrl }: { repair: Repair; ctrl: ConciergeController
           <span className="concierge-cloud-actions">
             <Button
               dense
-              variant="primary"
+              variant={lead ? "primary" : "secondary"}
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 ctrl.runRepair(repair);
@@ -277,9 +292,21 @@ function RepairRow({ repair, ctrl }: { repair: Repair; ctrl: ConciergeController
               label={repair.token}
             />
           </span>
-          {repair.host ? (
+          {/* HS-201-09 (defect 7): a named state with no reason repairs
+              nothing. The service's plain line rides on line 2. */}
+          {repair.detail || repair.host ? (
             <span className="concierge-found-line2">
-              <EgressChip label={repair.host.toUpperCase()} scope={repair.scope} />
+              {repair.host ? (
+                <EgressChip label={repair.host.toUpperCase()} scope={repair.scope} />
+              ) : null}
+              {repair.detail ? (
+                <span
+                  className="concierge-repair-reason"
+                  data-testid={`concierge-repair-reason-${repair.token.replace(/ /g, "-").toLowerCase()}`}
+                >
+                  {repair.detail}
+                </span>
+              ) : null}
             </span>
           ) : null}
         </span>
@@ -417,8 +444,13 @@ export function ConciergeCore({ scope }: CoreProps) {
             </span>
           </div>
           <ul className="concierge-repair-list" data-testid="concierge-repair-list">
-            {ctrl.repairs.map((repair) => (
-              <RepairRow key={repair.id} repair={repair} ctrl={ctrl} />
+            {ctrl.repairs.map((repair, index) => (
+              <RepairRow
+                key={repair.id}
+                repair={repair}
+                ctrl={ctrl}
+                lead={index === 0}
+              />
             ))}
           </ul>
         </div>
@@ -437,19 +469,65 @@ export function ConciergeCore({ scope }: CoreProps) {
         {ctrl.addEngineOpen ? (
           <div className="concierge-add-engine-row" data-testid="concierge-add-engine-row">
             <StringGadget
-              label="Base URL"
+              label="Server address"
               value={ctrl.addEngineUrl}
               onChange={ctrl.setAddEngineUrl}
               placeholder="http://192.168.1.43:8080/v1"
               autoFocus
             />
-            <Button dense variant="ghost" onClick={ctrl.checkNewEngine} disabled={ctrl.addEngineChecking || !ctrl.addEngineUrl.trim()} data-testid="concierge-add-check">Check</Button>
-            <Button dense variant="primary" onClick={ctrl.checkNewEngine} disabled={ctrl.addEngineChecking || !ctrl.addEngineUrl.trim()} loading={ctrl.addEngineChecking} data-testid="concierge-add-submit">Add</Button>
+            <Button
+              dense
+              variant="ghost"
+              onClick={ctrl.checkNewEngine}
+              disabled={ctrl.addEngineChecking || !ctrl.addEngineUrl.trim()}
+              loading={ctrl.addEngineState === "CHECKING"}
+              data-testid="concierge-add-check"
+            >
+              Check
+            </Button>
+            {/* The check's answer sits BESIDE its verb — the rehearsal found
+                the refusal 400 px below the button, off-screen (defect 1). */}
+            {ctrl.addEngineState === "READY" ? (
+              <span className="concierge-add-engine-answer">
+                <StateChip state="success" label="READY" icon="●" />
+                <span className="concierge-token" data-testid="concierge-add-model">
+                  {ctrl.addEngineModel}
+                </span>
+              </span>
+            ) : null}
+            {ctrl.addEngineState === "UNREACHABLE" ? (
+              <span className="concierge-add-engine-answer">
+                <StateChip state="failure" label="UNREACHABLE" />
+                <span className="concierge-add-engine-reason" data-testid="concierge-add-reason" role="alert">
+                  {ctrl.addEngineReason}
+                </span>
+              </span>
+            ) : null}
+            <Button
+              dense
+              /* One filled primary per window: this verb is filled only
+                 once there is a checked engine behind it. */
+              variant={ctrl.addEngineState === "READY" ? "primary" : "secondary"}
+              onClick={ctrl.useNewEngineForSummaries}
+              disabled={ctrl.addEngineChecking || ctrl.addEngineState !== "READY"}
+              loading={ctrl.addEngineChecking && ctrl.addEngineState === "READY"}
+              data-testid="concierge-add-submit"
+            >
+              Use this for summaries
+            </Button>
           </div>
         ) : (
-          <span className="concierge-add-engine" data-testid="concierge-add-engine" role="button" tabIndex={0} onClick={ctrl.addEngine} onKeyDown={(e) => { if (e.key === "Enter") ctrl.addEngine(); }}>
-            Add an engine...
-          </span>
+          /* UX-CANON A1: every verb is the library Button — this was a
+             `<span role="button">` until HS-201-09. */
+          <Button
+            dense
+            variant="ghost"
+            className="concierge-add-engine"
+            onClick={ctrl.addEngine}
+            data-testid="concierge-add-engine"
+          >
+            Add an engine
+          </Button>
         )}
       </div>
 
@@ -475,7 +553,23 @@ export function ConciergeCore({ scope }: CoreProps) {
         verbs={
           <>
             <Button dense variant="ghost" onClick={ctrl.cancel} data-testid="concierge-cancel">Cancel</Button>
-            <Button dense variant="primary" disabled={!ctrl.canApply || ctrl.applying} onClick={ctrl.apply} loading={ctrl.applying} data-testid="concierge-apply">Use these</Button>
+            {/* One filled primary per window (UX-CANON): while the add-engine
+                well holds a READY engine, ITS verb is the primary. */}
+            <Button
+              dense
+              variant={
+                (ctrl.addEngineOpen && ctrl.addEngineState === "READY") ||
+                ctrl.repairs.length > 0
+                  ? "secondary"
+                  : "primary"
+              }
+              disabled={!ctrl.canApply || ctrl.applying}
+              onClick={ctrl.apply}
+              loading={ctrl.applying}
+              data-testid="concierge-apply"
+            >
+              Use these
+            </Button>
           </>
         }
       />

@@ -1,5 +1,5 @@
 // HS-170-03 — unit tests for the Concierge controller logic.
-// Tests: propose->rows, WAITING gates Use these, OFF frees it,
+// Tests: propose->rows, per-group apply (HS-201-09), OFF rows,
 //        kindEmblem, humanSize, latencyToken.
 
 import { describe, it, expect } from "vitest";
@@ -11,6 +11,7 @@ import {
   engineHostLabel,
   engineHostScope,
   GROUP_GLYPHS,
+  applicableSetRows,
 } from "../useConciergeController";
 import type { Engine, EngineKind, EngineState } from "../api";
 
@@ -122,53 +123,50 @@ describe("GROUP_GLYPHS", () => {
   });
 });
 
-describe("canApply logic", () => {
-  // Test the same logic that the controller uses: every group must be
-  // READY or explicitly OFF (engineId === "OFF"). A null engineId with
-  // WAITING state is NOT off -- it's unset (cold Mac).
-  function canApply(rows: Array<{ state: string; engineId: string | null }>) {
-    return (
-      rows.length > 0 &&
-      rows.every(
-        (r) => r.state === "READY" || r.engineId === "OFF",
-      )
-    );
-  }
+describe("applicableSetRows (HS-201-09)", () => {
+  // The CONTROLLER's own function, not a copy of its rule: a local mirror
+  // proves nothing about the face (the lying-double scar). `Use these`
+  // applies per group, so one WAITING group never blocks the rest.
 
-  it("returns true when all READY", () => {
-    const rows = [
-      { state: "READY", engineId: "e1" },
-      { state: "READY", engineId: "e2" },
-    ];
-    expect(canApply(rows)).toBe(true);
+  it("keeps every READY row", () => {
+    expect(
+      applicableSetRows([
+        { state: "READY", engineId: "e1" },
+        { state: "READY", engineId: "e2" },
+      ]),
+    ).toHaveLength(2);
   });
 
-  it("returns false when any WAITING", () => {
+  it("keeps the READY rows beside an unrelated WAITING one", () => {
     const rows = [
       { state: "READY", engineId: "e1" },
       { state: "WAITING", engineId: "e2" },
     ];
-    expect(canApply(rows)).toBe(false);
+    expect(applicableSetRows(rows)).toEqual([
+      { state: "READY", engineId: "e1" },
+    ]);
   });
 
-  it("returns true when explicitly OFF", () => {
+  it("keeps an explicit OFF row", () => {
     const rows = [
       { state: "READY", engineId: "e1" },
       { state: "READY", engineId: "OFF" },
     ];
-    expect(canApply(rows)).toBe(true);
+    expect(applicableSetRows(rows)).toHaveLength(2);
   });
 
-  it("returns false when WAITING with null engineId (cold state)", () => {
+  it("drops a WAITING row with no engine (cold state)", () => {
     const rows = [
       { state: "READY", engineId: "e1" },
       { state: "WAITING", engineId: null },
     ];
-    expect(canApply(rows)).toBe(false);
+    expect(applicableSetRows(rows)).toEqual([
+      { state: "READY", engineId: "e1" },
+    ]);
   });
 
-  it("returns false for empty rows", () => {
-    expect(canApply([])).toBe(false);
+  it("returns nothing for empty rows", () => {
+    expect(applicableSetRows([])).toEqual([]);
   });
 });
 

@@ -177,10 +177,16 @@ def test_concierge_main(tmp_path, monkeypatch, width):
             found_list.wait_for()
             assert found_list.locator(".gadget-chip-egress").count() > 0
 
-            # Use these disabled
+            # HS-201-09: `Use these` applies PER GROUP. It used to be
+            # disabled while ANY group was WAITING — the rule that forced
+            # the rehearsal's stranger to switch Speech recognition OFF
+            # before he could connect a summary engine. With a READY group
+            # on the face the verb is live; the COLD face (nothing READY,
+            # nothing OFF) keeps the disabled state, and
+            # `test_concierge_cold` still asserts exactly that.
             apply_btn = page.get_by_test_id("concierge-apply")
             apply_btn.wait_for()
-            assert apply_btn.is_disabled()
+            assert not apply_btn.is_disabled()
 
             # No raw <button> in the Concierge face itself
             root = page.get_by_test_id("concierge-root")
@@ -327,7 +333,12 @@ def test_concierge_downloading(tmp_path, monkeypatch):
 
 
 def test_concierge_use_these_off_frees(tmp_path, monkeypatch):
-    """Use these: disabled while WAITING, enabled after picking OFF."""
+    """Use these: live per group, and still live after picking OFF.
+
+    HS-201-09 replaced the all-or-nothing gate with a per-group one, so
+    this rig now asserts the rule that replaced it: a WAITING group does
+    not disable the verb, and choosing OFF does not either.
+    """
     _monkeypatch_concierge(monkeypatch)
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     errors: list[str] = []
@@ -345,7 +356,9 @@ def test_concierge_use_these_off_frees(tmp_path, monkeypatch):
             _settle(page)
             apply_btn = page.get_by_test_id("concierge-apply")
             apply_btn.wait_for()
-            assert apply_btn.is_disabled()
+            assert not apply_btn.is_disabled(), (
+                "a WAITING group must not disable the groups beside it"
+            )
             page.get_by_test_id("concierge-picker-writing_dictation").click()
             _settle(page)
             page.get_by_test_id("concierge-pick-writing_dictation-off").click()
