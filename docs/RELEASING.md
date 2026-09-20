@@ -25,23 +25,22 @@ act safely on the answer.
 
 ## What happens to your database on upgrade
 
-When HoldSpeak starts, it reconciles the database to the canonical schema shape
-defined in the build. The reconcile is declarative: it creates any missing
-tables, indexes, and triggers, adds any missing columns, and runs idempotent
-data backfills only when the shape actually changed. It is additive-only (it
-never drops a table, drops a column, or deletes a row).
+When HoldSpeak starts, it compares the database with the build's declared
+schema. It adds missing tables and columns. It also has specific legacy table
+rebuilds, trigger replacements and data-repair passes. The informational version
+stamp does not block an open; that is not a promise of downgrade compatibility.
 
-- **No database yet.** A fresh database is created at the current schema. This
-  is the normal first-run path.
-- **Existing database, same shape.** Nothing happens. This is the common case
-  on every start.
-- **Existing database, missing tables or columns.** HoldSpeak backs the
-  database up first (a timestamped copy next to your database, logged), then
-  adds what is missing and runs the backfills. No upgrade changes your data
-  without leaving a recoverable copy first.
-- **Database stamped newer than this build.** HoldSpeak opens it without
-  error. The reconcile adds anything the live file is missing and moves on;
-  it never removes anything a newer build wrote.
+- **No database yet.** The runtime creates the declared schema.
+- **Existing database.** Shape checks and independent repair passes run. Some
+  data backfills run only when the shape changes.
+- **Missing tables or columns.** The runtime repairs the shape. Its automatic
+  backup occurs after some schema changes and before the grouped backfills.
+  It does not guarantee a copy of the file as it was before the upgrade.
+- **Newer version stamp.** The stamp alone does not cause refusal. Inspect the
+  actual schema and this build's repair rules before relying on a downgrade.
+
+Read [Storage and migrations](STORAGE_AND_MIGRATIONS.md) for the exact source
+order and the known limits of backup and restore.
 
 The same logic governs the config file. An older or unversioned config is read
 forward without dropping your settings. A config newer than this build is still
@@ -50,17 +49,16 @@ because some of its settings may not be understood.
 
 ## Back up before you upgrade
 
-Your whole HoldSpeak database is a single SQLite file. You can copy it at any
-time with one command:
+The main HoldSpeak database is one SQLite file. To make a database snapshot:
 
 ```bash
 holdspeak backup
 ```
 
 This writes a timestamped snapshot next to your database and prints the path.
-The automatic backup on a shape-changing reconcile uses the same mechanism, so
-even if you forget, an upgrade still protects you. Taking your own copy first is
-the belt-and-suspenders move before a version jump.
+Run this command before the upgrade when you need the original database state.
+The automatic reconciliation backup uses the same copy mechanism, but it runs
+after some schema changes. Separate files and stores need their own backup.
 
 To see your backups, or to put one back:
 
