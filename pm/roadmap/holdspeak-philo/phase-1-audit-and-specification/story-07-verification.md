@@ -43,3 +43,11 @@ The final report preserves unresolved interference, hardware, owner-use and
 release limits. Main still points to the audited source commit at final fetch.
 The independent Luna check and baseline investigation ship with this story.
 The owner explicitly waived the Muad'Dib dependency for this initiative.
+
+## CI portability correction
+
+The first Linux documentation job found API-reference drift caused by unsorted
+filesystem enumeration of candidate test paths. Sort before serialization; a
+regression test reverses enumeration and requires identical output. The full
+documentation job is checked locally on Python 3.12 as well as the authoring
+runtime. This is a follow-up atomic correction under the same completed story.

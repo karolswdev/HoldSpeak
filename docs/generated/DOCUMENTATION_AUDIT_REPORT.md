@@ -185,6 +185,13 @@ docs and test jobs. It does not contact cloud APIs to check documentation.
 | Authored artboard capture | 19 wide and eight compact captures; no console errors or horizontal overflow. |
 | Existing executable claim ratchet | 19 claims, zero known-false rows and zero drift after descriptive corrections. |
 
+The first GitHub documentation job exposed filesystem-dependent ordering in
+API candidate-test lists. The generator now sorts paths, and a regression test
+reverses directory enumeration and checks identical output. The complete
+standard-library documentation job was also rerun with Python 3.12 locally;
+its captured result is appended to the verification record. This correction
+does not change route membership or product execution.
+
 The full suite was **not green**. Five failures were documentation issues fixed
 by this package: retired configuration vocabulary, dependency Markdown picked
 up by the link scanner, a roadmap label in a user guide, typographic line-range

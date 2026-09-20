@@ -833,3 +833,51 @@ React architecture guard passed (772 source files; zero framework residue).
 ✓ built in 4.99s
 bundle gate passed (Desk JS 1303216 B; Desk CSS 318681 B; source maps 0)
 ```
+
+### Captured run — 2026-09-20T03:34:25Z
+
+- **Command:** `bash .tmp/philo/verify_ci_order.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 107bb2d92f21300271f14de7b4952c6f8724445a
+
+```text
+..........                                                               [100%]
+10 passed in 0.42s
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 0.005s
+
+OK
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+Documentation navigation: 33 files checked; local targets and Markdown headings resolve.
+Repository census: 5 outputs verified.
+API reference checked
+Boundary candidate census checked
+Doctor reference: 41 check functions
+Configuration declaration reference is current
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+Architecture documentation checked (10 outputs).
+Documentation coverage checked.
+```
+
+### CI portability runner
+
+```bash
+#!/bin/bash
+set -euo pipefail
+PHILO_TEST_HOME=$(mktemp -d)
+HOME="$PHILO_TEST_HOME" uv run pytest -q tests/unit/test_philo_census.py
+/opt/homebrew/bin/python3.12 -m unittest discover -s tests/unit -p test_docs_navigation.py
+/opt/homebrew/bin/python3.12 scripts/check_docs.py
+/opt/homebrew/bin/python3.12 scripts/check_docs.py docs/internal/philo/*.md docs/internal/philo/adr/*.md docs/internal/philo/checks/*.md docs/internal/philo/visuals/README.md docs/internal/philo/desktop-prototypes/README.md agent/skills/*/SKILL.md
+/opt/homebrew/bin/python3.12 scripts/philo_repository_census.py --check
+/opt/homebrew/bin/python3.12 scripts/philo_api_reference.py --check
+/opt/homebrew/bin/python3.12 scripts/philo_boundary_census.py --check
+/opt/homebrew/bin/python3.12 scripts/philo_doctor_reference.py --check
+/opt/homebrew/bin/python3.12 scripts/philo_config_reference.py --check
+/opt/homebrew/bin/python3.12 scripts/validate_architecture.py
+/opt/homebrew/bin/python3.12 scripts/generate_capability_docs.py --check
+/opt/homebrew/bin/python3.12 scripts/check_doc_coverage.py --check
+```

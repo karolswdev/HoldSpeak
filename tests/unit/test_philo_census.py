@@ -121,3 +121,25 @@ class Service:
     assert [(row['field'], row['default_expression']) for row in rows] == [
         ('names', 'field(default_factory=network_lookup)'), ('limit', '5')
     ]
+
+
+def test_api_candidates_are_independent_of_directory_enumeration(tmp_path, monkeypatch):
+    import json
+    mod = module('philo_api_reference')
+    (tmp_path / 'docs/internal/philo').mkdir(parents=True)
+    (tmp_path / 'tests').mkdir()
+    (tmp_path / 'docs/api-surface.json').write_text(json.dumps({'routes': [
+        {'module': 'demo', 'path': '/api/example', 'methods': ['GET']}
+    ]}))
+    (tmp_path / 'docs/internal/philo/snapshot.json').write_text(json.dumps({'commit': 'fixture'}))
+    first = tmp_path / 'tests/test_a.py'
+    last = tmp_path / 'tests/test_z.py'
+    first.write_text('# /api/example')
+    last.write_text('# /api/example')
+    monkeypatch.setattr(Path, 'rglob', lambda self, pattern: iter([last, first]))
+    reverse = mod.generate(tmp_path)
+    monkeypatch.setattr(Path, 'rglob', lambda self, pattern: iter([first, last]))
+    forward = mod.generate(tmp_path)
+    assert reverse == forward
+    row = json.loads(forward['docs/generated/api-reference.json'])['routes'][0]
+    assert row['test_candidates'] == ['tests/test_a.py', 'tests/test_z.py']

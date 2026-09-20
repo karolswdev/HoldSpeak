@@ -55,7 +55,7 @@ def generate(root:Path=ROOT):
     manifest=json.loads((root/'docs/api-surface.json').read_text())
     snapshot=json.loads((root/'docs/internal/philo/snapshot.json').read_text())['commit']
     modules={}
-    test_paths=list((root/'tests').rglob('test_*.py'))
+    test_paths=sorted((root/'tests').rglob('test_*.py'))
     test_text={str(p.relative_to(root)):p.read_text(errors='replace') for p in test_paths}
     rows=[]
     for route in manifest['routes']:
