@@ -317,6 +317,7 @@ export function PadGadget({
   placeholder,
   rows = 3,
   mic = true,
+  micLabel,
   autoGrow,
   disabled,
   autoFocus,
@@ -330,6 +331,10 @@ export function PadGadget({
   /** Every text well carries the speak-to-fill mic unless the host
    * renders its own capture path. */
   mic?: boolean;
+  /** HS-201-12: the mic's own accessible name when the face names it
+   *  (`Speak your answer`); default `Speak <label>` — StringGadget's
+   *  documented prop, now on both text species. */
+  micLabel?: string;
   /** Grow with the content instead of scrolling. */
   autoGrow?: boolean;
   disabled?: boolean;
@@ -359,7 +364,7 @@ export function PadGadget({
       />
       {mic ? (
         <MicButton
-          label={`Speak ${label}`}
+          label={micLabel ?? `Speak ${label}`}
           onText={(text) =>
             onChange(
               value && !/\s$/.test(value) ? `${value} ${text}` : value + text,

@@ -1,4 +1,17 @@
-"""Honest isolated-HOME browser glass for the Thought Workbench first slice."""
+"""Honest isolated-HOME browser glass for the Thought Workbench first slice.
+
+HS-201-12 re-pointed the FACE half of this rig, doctrine (a): the settled
+design of story 12 rebuilt this window as one column of four bands, so the
+formatting rail, the Info verb, the Note/Interview tab nav, the two-pane
+geometry, the "Added to Note" marker chip and the chained turn
+("Add & ask next") are gone from it — every assertion about them described
+a face that no longer exists. What this rig still owns, and still proves
+against the real hub, is the CUSTODY half: a durable Note edit made while
+the AI runs suppresses the frozen question; the working-save sequence is
+409-then-200 under the write fence; the raw capture never leaves the hub;
+a service restart never redispatches settled work. The band composition
+itself is fenced by `test_hs201_12_thought_note_glass.py`.
+"""
 from __future__ import annotations
 
 import os
@@ -128,38 +141,32 @@ def test_thought_workbench_real_glass(tmp_path: Path, monkeypatch: pytest.Monkey
                 raise AssertionError({"body": page.locator("body").inner_text(), "errors": errors,
                                       "console": console_errors, "requests": requests})
             page.get_by_role("region", name="Note", exact=True).wait_for()
-            primary = workspace.locator(".thought-state-primary")
-            primary.wait_for()
-            assert primary.inner_text() == "Ask AI"
-            idle_box = primary.bounding_box()
-            assert idle_box
+            band = page.get_by_role("region", name="One question", exact=True)
+            band.wait_for(timeout=10000)
+            ask = band.get_by_role("button", name="Ask", exact=True)
+            ask.wait_for()
             assert workspace.locator(".btn--primary:visible").count() == 1
+            assert workspace.locator(".btn--primary:visible").inner_text().strip() == "Finish"
             assert page.get_by_text("Good enough").count() == 0
             assert page.get_by_text("Keep refining").count() == 0
             assert page.get_by_text("Finish instead").count() == 0
-            formatting = workspace.get_by_role("toolbar", name="Markdown formatting")
-            formatting.wait_for()
-            for control in ["Bold", "Italic", "Underline"]:
-                assert formatting.get_by_role("button", name=control).is_visible()
-            assert formatting.get_by_role("button", name="H1").is_visible()
-            assert formatting.get_by_role("button", name="List").is_visible()
+            # Doctrine (a): the rail, the tabs and the second pane left this
+            # window with the story-12 design; their absence is the proof.
+            assert workspace.get_by_role("toolbar", name="Markdown formatting").count() == 0
+            assert workspace.get_by_role("region", name="Interview", exact=True).count() == 0
+            assert workspace.get_by_role("button", name="Info", exact=True).count() == 0
 
             window_box = workspace.bounding_box()
             assert window_box and window_box["y"] >= 48
             assert window_box["y"] + window_box["height"] <= 900
             note_box = page.get_by_role("region", name="Note", exact=True).bounding_box()
-            if width == 1440:
-                interview_box = page.get_by_role("region", name="Interview", exact=True).bounding_box()
-                assert window_box["width"] >= 1000, workspace.evaluate("el => ({style: el.getAttribute('style'), width: getComputedStyle(el).width, minWidth: getComputedStyle(el).minWidth, classes: el.className})")
-                assert note_box and interview_box
-                assert note_box["width"] >= 650 and note_box["height"] >= 360
-                assert 300 <= interview_box["width"] <= 380 and interview_box["height"] >= 360
-                assert note_box["x"] + note_box["width"] <= interview_box["x"] + 1
-                assert note_box["y"] == pytest.approx(interview_box["y"], abs=1)
-            else:
-                hidden_interview = workspace.locator(".thought-interview")
-                assert hidden_interview.get_attribute("aria-hidden") == "true"
-                assert hidden_interview.get_attribute("inert") is not None
+            band_box = band.bounding_box()
+            foot_box = workspace.locator(".surface-footer").bounding_box()
+            assert note_box and band_box and foot_box
+            # One column, four bands, in order, all inside the window.
+            assert note_box["y"] + note_box["height"] <= band_box["y"] + 1
+            assert band_box["y"] + band_box["height"] <= foot_box["y"] + 1
+            assert foot_box["y"] + foot_box["height"] <= window_box["y"] + window_box["height"] + 1
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
             assert page.evaluate("document.body.scrollWidth <= innerWidth")
             page.screenshot(path=f"/tmp/holdspeak-thought-workbench-idle-{width}.png", full_page=False)
@@ -167,15 +174,12 @@ def test_thought_workbench_real_glass(tmp_path: Path, monkeypatch: pytest.Monkey
             # A real durable Note edit while ASKING must suppress the frozen
             # result. The stale question never reaches owner-visible state.
             engine.block_next = True
-            primary.click()
-            if width == 1440:
-                page.get_by_text("Finding one useful question…", exact=True).wait_for(timeout=10000)
-            else:
-                page.wait_for_function(
-                    "el => el?.textContent?.trim() === 'Stop'",
-                    arg=primary.element_handle(),
-                    timeout=10000,
-                )
+            ask.click()
+            page.wait_for_function(
+                "el => el?.textContent?.trim() === 'Stop'",
+                arg=band.get_by_role("button").first.element_handle(),
+                timeout=10000,
+            )
             assert engine.started.wait(5)
             note_editor = page.get_by_role("textbox", name="Note body")
             assert note_editor.get_attribute("contenteditable") == "true"
@@ -194,105 +198,41 @@ def test_thought_workbench_real_glass(tmp_path: Path, monkeypatch: pytest.Monkey
             working_statuses = [status for path, status in responses if path.endswith(f"/api/thoughts/{thought['id']}/working")]
             assert working_statuses[-2:] == [409, 200], working_statuses
             engine.release.set()
-            page.wait_for_function("el => el?.textContent?.trim() === 'Ask AI'", arg=primary.element_handle(), timeout=20000)
+            band.get_by_role("button", name="Ask", exact=True).wait_for(timeout=20000)
             assert page.get_by_text("STALE QUESTION MUST NOT APPEAR", exact=True).count() == 0
 
-            primary.click()
-            if width == 393:
-                page.wait_for_function("el => el?.textContent?.trim() === 'Answer question'", arg=primary.element_handle(), timeout=20000)
-                assert primary.inner_text() == "Answer question"
-                primary.click()
+            # ── The one question, answered with the one verb ──
+            band.get_by_role("button", name="Ask", exact=True).click()
             page.get_by_text("Who owns the launch?", exact=True).wait_for(timeout=20000)
             answer = page.get_by_role("textbox", name="Your answer")
             answer.fill("Mina owns the launch.")
             page.screenshot(path=f"/tmp/holdspeak-thought-workbench-question-{width}.png", full_page=False)
-            assert primary.inner_text() == "Add & ask next"
-            question_box = primary.bounding_box()
-            assert question_box and idle_box
-            assert question_box["x"] == pytest.approx(idle_box["x"], abs=1)
-            assert question_box["y"] == pytest.approx(idle_box["y"], abs=1)
-            assert question_box["width"] == pytest.approx(idle_box["width"], abs=1)
+            assert band.get_by_role("button", name="Add to note", exact=True).count() == 1
+            assert band.get_by_role("button", name="Add & ask next").count() == 0
             assert workspace.locator(".btn--primary:visible").count() == 1
-
-            # Admission is re-evaluated under the write fence. Remove the only
-            # target after the question: answer/focus/key survive the refusal.
-            provider["path"] = None
-            primary.click()
-            page.get_by_text("Couldn't start the next turn. Your answer is still here. Add it to the Note.", exact=True).wait_for(timeout=10000)
-            assert answer.input_value() == "Mina owns the launch."
-            assert answer.evaluate("el => el === document.activeElement")
-            assert engine.calls == 2
-
-            # The refusal did not mutate the review. Restore readiness and
-            # reopen its fresh reducer, then exercise the atomic composite.
-            provider["path"] = str(model)
-            page.reload(wait_until="load")
-            workspace = page.get_by_role("region", name="Thought", exact=True)
-            workspace.wait_for(timeout=10000)
-            primary = workspace.locator(".thought-state-primary")
-            if width == 393:
-                workspace.get_by_role("button", name="Interview 1", exact=True).click()
-            page.get_by_text("Who owns the launch?", exact=True).wait_for(timeout=10000)
-            answer = page.get_by_role("textbox", name="Your answer")
-            answer.fill("Mina owns the launch.")
-            with page.expect_response(
-                lambda response: response.url.endswith("/answer-and-continue"),
-                timeout=10000,
-            ) as composite_response:
-                primary.click()
-            composite = composite_response.value
-            composite_body = composite.json()
-            assert composite.status == 202, composite_body
-            marker_name = "Added to Note · View" if width == 393 else "Added to Note"
-            marker = workspace.get_by_role("button", name=marker_name, exact=True)
-            try:
-                marker.wait_for(timeout=10000)
-            except Exception:
-                raise AssertionError({
-                    "composite": composite_body,
-                    "workspace": workspace.inner_text(),
-                    "errors": errors,
-                    "console": console_errors,
-                })
-            if width == 393:
-                marker.click()
-            page.get_by_role("region", name="Note", exact=True).get_by_text("Mina owns the launch.").wait_for()
-            assert workspace.locator(".thought-document-body .cm-scroller").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
-            deadline = time.time() + 10
-            while engine.calls < 3 and time.time() < deadline:
-                time.sleep(0.05)
-            assert engine.calls == 3
+            band.get_by_role("button", name="Add to note", exact=True).click()
+            page.get_by_role("region", name="Note", exact=True).get_by_text("Mina owns the launch.").wait_for(timeout=20000)
+            assert workspace.locator(".thought-note-body .cm-scroller").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+            # The answer is a pure write: no second turn was dispatched.
             time.sleep(0.35)
-            assert engine.calls == 3, "composite child was dispatched more than once"
+            assert engine.calls == 2, engine.calls
 
-            # Raw capture stays absent until the owner explicitly opens Info.
+            # Raw capture stays on the hub: this window never asks for it.
             assert page.get_by_text("RAW CUSTODY PHRASE — launch ownership first capture.", exact=True).count() == 0
             assert not any(path.endswith(f"/api/thoughts/{thought['id']}/original") for path in requests)
-            info = workspace.get_by_role("button", name="Info", exact=True)
-            info.click()
-            page.get_by_text("RAW CUSTODY PHRASE — launch ownership first capture.", exact=True).wait_for()
-            page.keyboard.press("Escape")
-            assert page.get_by_text("RAW CUSTODY PHRASE — launch ownership first capture.", exact=True).count() == 0
-            page.wait_for_function("el => el === document.activeElement", arg=info.element_handle())
 
-            # The real context sheet is reachable, Escape-safe, and touch-safe.
-            context_rack = workspace.get_by_label("AI context")
-            context_rack.get_by_role("button", name="Attach").click()
-            picker = page.get_by_role("region", name="Attach context")
-            picker.wait_for()
-            assert picker.get_by_text("Choose what AI may use for this Thought.").is_visible()
-            assert picker.get_by_placeholder("Find a note…").is_visible()
-            picker_box = picker.bounding_box()
-            assert picker_box and picker_box["y"] >= 12
-            assert picker_box["y"] + picker_box["height"] <= 848
-            page.screenshot(path=f"/tmp/holdspeak-thought-context-picker-{width}.png", full_page=False)
-            if width == 393:
-                for control in [picker.get_by_role("button", name="Close"), picker.get_by_role("button", name="Browse all notes")]:
-                    box = control.bounding_box()
-                    assert box and box["height"] >= 44
-            page.keyboard.press("Escape")
-            assert picker.count() == 0
-            assert context_rack.evaluate("el => el === document.activeElement")
+            # The Reads well is in-window (no portal overlay) and Escape-safe.
+            change = workspace.get_by_role("button", name="Change", exact=True)
+            change.click()
+            well = page.get_by_role("region", name="What the AI reads")
+            well.wait_for(timeout=10000)
+            assert well.evaluate("el => el.closest('.thought-workspace-window') !== null")
+            well_box = well.bounding_box()
+            assert well_box and well_box["y"] + well_box["height"] <= window_box["y"] + window_box["height"] + 1
+            page.screenshot(path=f"/tmp/holdspeak-thought-context-well-{width}.png", full_page=False)
+            well.press("Escape")
+            assert page.get_by_role("region", name="What the AI reads").count() == 0
+            page.wait_for_function("el => el === document.activeElement", arg=change.element_handle(), timeout=5000)
 
             unexpected_before_restart = [
                 message for message in console_errors
@@ -302,7 +242,7 @@ def test_thought_workbench_real_glass(tmp_path: Path, monkeypatch: pytest.Monkey
             console_errors.clear()
 
             # Restart the real HTTP service on the same durable isolated HOME.
-            # Reloading must project the existing child, never redispatch it.
+            # Reloading must project the settled work, never redispatch it.
             restart_port = server.port
             server.stop()
             server = MeetingWebServer(callbacks, port=restart_port, auth_token=TOKEN)
@@ -311,7 +251,7 @@ def test_thought_workbench_real_glass(tmp_path: Path, monkeypatch: pytest.Monkey
             page.get_by_role("region", name="Thought", exact=True).wait_for(timeout=10000)
             page.get_by_role("region", name="Note", exact=True).get_by_text("Mina owns the launch.").wait_for()
             time.sleep(0.35)
-            assert engine.calls == 3, "service restart redispatched a completed child"
+            assert engine.calls == 2, "service restart redispatched settled work"
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
             workspace = page.get_by_role("region", name="Thought", exact=True)
             assert workspace.locator(".btn--primary:visible").count() == 1

@@ -1,101 +1,67 @@
-import { useEffect, useRef, useState } from "react";
-import { Button } from "../../components/signal/Signal";
-import { MicButton } from "../surface";
+import { useEffect, useRef } from "react";
+import { EditInPlace } from "../surface";
+import { MicButton } from "../components/MicButton";
 import { DeskEditor, type DeskEditorHandle } from "../components/DeskEditor";
 import type { ThoughtDraft } from "../pullouts/editors/useThoughtNoteWriter";
-import { originalThought, sourceLabel, type Thought } from "../thoughts";
 
+/* HS-201-12 — bands 1 and 2 of the one clean note (the owner's first-use
+   verdict of 2026-09-20).  The title wraps and is edited in place; the note
+   is the text, full width, no formatting rail.  The tag row, the Info verb,
+   the orphan mic and the Filed/Saved foot left THIS window: tags and the
+   original capture stay in the Note pullout (`desk/pullouts/NotePullout`),
+   the kept state moved to the window foot.  The mic is the note field's own
+   (it writes at the cursor), never a button beside the field. */
 export function ThoughtDocumentPane({
   draft,
-  thoughtId,
   onEdit,
   disabled,
-  message,
-  onRetry,
+  lockedReason,
   revealRange,
 }: {
   draft: ThoughtDraft;
-  thoughtId: string;
   onEdit: (patch: Partial<ThoughtDraft>) => void;
   disabled: boolean;
-  message: string;
-  onRetry: () => void;
+  /** Why the note cannot be edited right now (a finished Thought). Never a
+   *  dead field without a reason — the EditInPlace contract. */
+  lockedReason?: string;
   revealRange?: { start: number; end: number; focus?: boolean } | null;
 }) {
   const bodyRef = useRef<DeskEditorHandle | null>(null);
-  const [tagsOpen, setTagsOpen] = useState(false);
-  const [original, setOriginal] = useState<Thought | null>(null);
-  const [originalBusy, setOriginalBusy] = useState(false);
-  const [originalError, setOriginalError] = useState("");
-  const infoRef = useRef<HTMLButtonElement | null>(null);
-  const originalRef = useRef<HTMLElement | null>(null);
 
+  /* HS-201-12 — the reveal is re-applied when the authoritative body
+     lands: the append arrives as a whole-document sync, which maps the
+     decoration away.  The window clears `revealRange` on the first real
+     edit, so this never re-scrolls under the owner's cursor. */
   useEffect(() => {
     if (!revealRange || !bodyRef.current) return;
     bodyRef.current.revealRange(revealRange.start, revealRange.end, { focus: revealRange.focus });
-  }, [revealRange]);
+  }, [revealRange, draft.body]);
 
-  useEffect(() => {
-    if (!original) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault(); event.stopPropagation();
-      setOriginal(null);
-      requestAnimationFrame(() => infoRef.current?.focus());
-    };
-    window.addEventListener("keydown", closeOnEscape, true);
-    return () => window.removeEventListener("keydown", closeOnEscape, true);
-  }, [original]);
-
-  const showOriginal = async () => {
-    if (originalBusy) return;
-    if (original) { originalRef.current?.focus(); return; }
-    setOriginalBusy(true); setOriginalError("");
-    try {
-      setOriginal(await originalThought(thoughtId));
-      requestAnimationFrame(() => originalRef.current?.focus());
-    } catch {
-      setOriginalError("Could not open the original on this hub. The Note is unchanged.");
-    } finally { setOriginalBusy(false); }
-  };
-
-  const tags = draft.tags.split(",").map((tag) => tag.trim()).filter(Boolean);
-  return <section className="thought-document" aria-label="Note">
-    {/* UX-CANON: needs redesign (HS-170-04) */}
-    <input
-      className="thought-document-title"
-      aria-label="Title"
+  return <section className="thought-note-document" aria-label="Note">
+    <EditInPlace
+      className="thought-note-title"
+      label="Title"
       value={draft.title}
-      disabled={disabled}
-      onChange={(event) => onEdit({ title: event.target.value })}
+      multiline
+      disabledReason={lockedReason}
+      onCommit={(next) => onEdit({ title: next })}
     />
-    <MicButton draftScope="thought-title" onText={(text) => onEdit({ title: text })} />
-    <DeskEditor
-      ref={bodyRef}
-      className="thought-document-body"
-      ariaLabel="Note body"
-      value={draft.body}
-      editable={!disabled}
-      autoFocus
-      placeholder="Start with what you know…"
-      showToolbar
-      lineWrapping
-      onChange={(body) => onEdit({ body })}
-    />
-    <div className="thought-document-meta">
-      <div className="thought-document-tags" aria-label="Tags">
-        {tags.map((tag) => <Button key={tag} variant="ghost" dense className="thought-tag" disabled={disabled} onClick={() => onEdit({ tags: tags.filter((item) => item !== tag).join(", ") })} aria-label={`Remove ${tag} tag`}>{tag}<span aria-hidden="true"> ×</span></Button>)}
-        <Button variant="ghost" dense className="thought-tag-add" aria-expanded={tagsOpen} onClick={() => setTagsOpen((value) => !value)}>Add tag</Button>
-        {/* HS-176-04 — the voice law: the tag field carries its own mic
-            (the mic above belongs to the title).  The mousedown guard keeps
-            focus in the field: its onBlur closes the tag well. */}
-        {tagsOpen ? <span className="thought-document-tags-well" onMouseDown={(event) => { if ((event.target as HTMLElement).tagName !== "INPUT") event.preventDefault(); }}><input aria-label="Tag names" value={draft.tags} disabled={disabled} onChange={(event) => onEdit({ tags: event.target.value })} onBlur={() => setTagsOpen(false)} autoFocus /><MicButton label="Speak tag names" onText={(spoken) => onEdit({ tags: spoken })} /></span> : null}
-        <Button ref={infoRef} variant="ghost" dense className="thought-tag-add" disabled={originalBusy} onClick={() => void showOriginal()}>Info</Button>
-      </div>
-      {message ? <span className="thought-save-truth" role="status">{message}</span> : null}
+    <div className="thought-note-field">
+      <DeskEditor
+        ref={bodyRef}
+        className="thought-note-body"
+        ariaLabel="Note body"
+        value={draft.body}
+        editable={!disabled}
+        autoFocus
+        placeholder="Start with what you know…"
+        showToolbar={false}
+        lineWrapping
+        onChange={(body) => onEdit({ body })}
+      />
+      <span className="thought-note-field-mic">
+        <MicButton label="Speak the note" onText={(text) => bodyRef.current?.insertAtCursor(text)} />
+      </span>
     </div>
-    {original ? <section ref={originalRef} className="thought-document-original surface-aerogel" aria-label="Original kept" tabIndex={-1}><strong>Original kept · {sourceLabel(original.source.kind)}</strong><pre className="thought-original-raw">{original.raw_text}</pre><Button variant="ghost" dense className="desk-chip quiet" onClick={() => { setOriginal(null); requestAnimationFrame(() => infoRef.current?.focus()); }}>Close original</Button></section> : null}
-    {originalError ? <p className="thought-document-original-error" role="alert">{originalError} <Button variant="ghost" dense className="desk-chip quiet" onClick={() => void showOriginal()}>Try again</Button></p> : null}
-    {message.includes("Retry save") ? <Button variant="ghost" dense className="desk-chip quiet thought-save-retry" onClick={onRetry}>Retry save</Button> : null}
   </section>;
 }

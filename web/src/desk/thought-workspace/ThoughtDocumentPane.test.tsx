@@ -1,38 +1,34 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { originalThought, type Thought } from "../thoughts";
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { ThoughtDocumentPane } from "./ThoughtDocumentPane";
 
-vi.mock("../thoughts", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../thoughts")>()),
-  originalThought: vi.fn(),
-}));
+/* HS-201-12 — doctrine (a): the Original/Info disclosure, the tag row and
+   the formatting rail were REMOVED from this window by the settled design
+   (story-12 "The settled design"; the owner's verdict of 2026-09-20).  The
+   original capture and the tags stay reachable in the Note pullout, which
+   keeps its own cover.  This file now fences what the window MUST be. */
+describe("ThoughtDocumentPane — bands 1 and 2", () => {
+  const draft = { title: "Well, there's just a little bit of misunderstanding here", body: "Yeah, I have it that way and what about you?", tags: "team" };
 
-const original: Thought = {
-  id: "thought-1", source: { kind: "typed" }, raw_captured_at: "now", raw_text: "SECRET ORIGINAL BYTES",
-  state: "working", aggregate_revision: 1, lifecycle_revision: 1, working_revision: 1, attachment_revision: 0,
-  working_note: { id: "note-1", title: "Working", body_markdown: "Changed", tags: [] }, filing_status: "filed",
-};
+  it("is the title and the note — no rail, no tag row, no Info, no orphan mic", () => {
+    render(<ThoughtDocumentPane draft={draft} onEdit={vi.fn()} disabled={false} />);
 
-afterEach(() => vi.clearAllMocks());
+    expect(screen.getByRole("button", { name: "Edit Title" })).toHaveTextContent(draft.title);
+    expect(screen.getByRole("region", { name: "Note" })).toBeInTheDocument();
+    expect(screen.queryByRole("toolbar", { name: "Markdown formatting" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Info" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Add tag" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Filed$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Saved$/)).not.toBeInTheDocument();
+    // The note field carries its OWN mic (the voice law), inside the field.
+    const mic = screen.getByRole("button", { name: /Speak the note/ });
+    expect(mic.closest(".thought-note-field")).not.toBeNull();
+  });
 
-describe("ThoughtDocumentPane Original disclosure", () => {
-  it("does not fetch or render raw capture until Info, then closes back to Info focus", async () => {
-    vi.mocked(originalThought).mockResolvedValue(original);
-    render(<ThoughtDocumentPane thoughtId="thought-1" draft={{ title: "Working", body: "Changed", tags: "" }} onEdit={vi.fn()} disabled={false} message="" onRetry={vi.fn()} />);
+  it("names why a finished note cannot be edited instead of dying silently", () => {
+    render(<ThoughtDocumentPane draft={draft} onEdit={vi.fn()} disabled lockedReason="FINISHED" />);
 
-    const formatting = screen.getByRole("toolbar", { name: "Markdown formatting" });
-    expect(formatting).toBeVisible();
-    expect(formatting).toHaveTextContent("B");
-    expect(screen.getByRole("button", { name: "Underline" })).toBeVisible();
-    expect(screen.queryByText("SECRET ORIGINAL BYTES")).not.toBeInTheDocument();
-    expect(originalThought).not.toHaveBeenCalled();
-    const info = screen.getByRole("button", { name: "Info" });
-    fireEvent.click(info);
-    expect(await screen.findByRole("region", { name: "Original kept" })).toHaveTextContent("SECRET ORIGINAL BYTES");
-    expect(originalThought).toHaveBeenCalledWith("thought-1");
-    fireEvent.keyDown(window, { key: "Escape" });
-    expect(screen.queryByText("SECRET ORIGINAL BYTES")).not.toBeInTheDocument();
-    await waitFor(() => expect(info).toHaveFocus());
+    expect(screen.queryByRole("button", { name: "Edit Title" })).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Title: FINISHED")).toHaveTextContent(draft.title);
   });
 });

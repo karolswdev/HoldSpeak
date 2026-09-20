@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 201
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** (optional)
 - **Owner:** unassigned
@@ -47,13 +47,13 @@ Rules: band 3 is folded (one row: "ONE QUESTION · Ask") until the owner asks, a
 
 ## Acceptance criteria
 
-- [ ] The window renders the four bands and nothing else; a title of 120 characters wraps and is fully visible at 1440 and 393.
-- [ ] With no question asked, band 3 is one row; no empty heading exists in the DOM (fence).
-- [ ] After Ask, the question and the answer pad are visible without scrolling at 1440x900 and reachable at 393 without a tab.
-- [ ] The context fact appears once; "Attached …" receipts do not duplicate it.
-- [ ] Exactly one filled primary in the window (Finish); every verb a library Button; zero raw <button>; zero prose sentences outside the note and the question.
-- [ ] The owner's own shot state (the dictated note in his shot) reproduced in the rig at both widths, before and after, in assets/story-12-shots/.
-- [ ] Existing thought-workspace vitest and the thought e2e rigs green or honestly re-pointed (a) with the doctrine stated.
+- [x] The window renders the four bands and nothing else; a title of 120 characters wraps and is fully visible at 1440 and 393.
+- [x] With no question asked, band 3 is one row; no empty heading exists in the DOM (fence).
+- [x] After Ask, the question and the answer pad are visible without scrolling at 1440x900 and reachable at 393 without a tab.
+- [x] The context fact appears once; "Attached …" receipts do not duplicate it.
+- [x] Exactly one filled primary in the window (Finish); every verb a library Button; zero raw <button>; zero prose sentences outside the note and the question.
+- [x] The owner's own shot state (the dictated note in his shot) reproduced in the rig at both widths, before and after, in assets/story-12-shots/.
+- [x] Existing thought-workspace vitest and the thought e2e rigs green or honestly re-pointed (a) with the doctrine stated.
 
 ## Test plan
 
