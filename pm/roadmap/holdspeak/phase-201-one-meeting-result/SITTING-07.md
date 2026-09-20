@@ -1,18 +1,22 @@
 # The sitting — HS-201-07 (the owner's desk, observed)
 
-Plain words. Seven steps. The agent watches; the owner acts. Nothing an
-agent starts touches the owner's HOME. Every step ends with a shot or a
-line the owner sends.
+Plain words. One gate and seven steps. The agent watches; the owner acts.
+Nothing an agent starts touches the owner's HOME. Every step ends with a
+shot or a line the owner sends.
+
+This script says what the faces say after stories 09, 10 and 11. The
+rehearsal of 2026-09-20 (`audits/rehearsal-07-opus.md`) walked the desk at
+`321247d2` and found the old script wrong at steps 1, 2 and 3.
 
 ## Before you start (once)
 
-1. `main` holds Phase 201 (PR #587 merged). Pull it:
+1. `main` holds Phase 201. Pull it:
 
 ```bash
 git checkout main && git pull
 ```
 
-2. Build the web bundle if the product tells you to (it will say so).
+2. Build the web bundle if the product tells you to. It says so.
 
 ## Start the product from main
 
@@ -30,26 +34,32 @@ HoldSpeak runtime identity: backend_commit=<sha> frontend_build=<id> database_pa
 
 Send that line. Then open http://127.0.0.1:8765 in your browser.
 
-## The seven steps
+## The gate and the seven steps
 
 | # | You do | You should see | Send |
 |---|---|---|---|
-| 1 | Look at the arrival | One row: "No engine yet" and one button, "Choose an engine". Nothing else asks for you. | a shot |
-| 2 | Choose an engine for summaries | Models. Pick your engine (your config names cloud gpt-5-mini; the .43 box is also fine). "Use this for summaries". The row on the arrival is gone. | a shot |
-| 3 | Record one real meeting. Stop. | A meeting row with its length. No summary yet; no error. | a shot |
+| 0 | The first screen says VOICE TYPING. Speak one sentence, or click "Continue later". | Your desk. | one line: which of the two you did |
+| 1 | Look at the arrival. | A SETUP row: "No engine for summaries", and one button, "Choose an engine". The head above it counts what asks. An offer, such as "Connect calendar", does not count. | a shot |
+| 2 | Click "Choose an engine". | Models. Click "Add an engine". Type the address of your engine. Click "Check". The engine reads READY. Click "Use this for summaries". The SETUP row on the arrival is gone. | a shot |
+| 3 | Record one real meeting and stop it. Or click "Import" and choose a sound file. | A meeting row with its length. No summary yet. No error. | a shot |
 | 4 | Open the meeting. Look beside "Run summary". | The host that WILL run it, before you click. | a shot |
 | 5 | Click "Run summary". Wait. | The host that DID run it, and the summary text under it. Read it. | a shot, and one line: useful, or not, and why |
-| 6 | Stop the product (Ctrl-C). Start it again with the same command. Find the summary. | The same summary, in at most two moves. | a shot, and the number of moves |
-| 7 | Dictate one sentence into any app. | Your words land. | one line |
+| 6 | Stop the product (Ctrl-C). Start it again with the same command. Find the summary. | The same summary, in two moves or less. | a shot, and the number of moves |
+| 7 | Dictate one sentence into another app. | Your words land. | one line |
+
+Your engine address is the one you use today. The Models field shows an
+example of the shape. A cloud engine from your configuration is also
+correct here.
 
 ## What the agent records
 
-The startup line; the seven shots; the owner's line on the summary; the
-move count; before/after row counts of the three ungated loops on the
-live DB (read-only); the phase's final summary in the owner's words.
+The startup line; the gate line; the seven shots; the owner's line on the
+summary; the move count; before and after row counts of the three ungated
+loops on the live database (read only); the phase's final summary in the
+owner's words.
 
 ## What stops the sitting
 
 Any step where the face does not say what this table says. The agent
-writes it down as a defect with the shot, and the sitting continues to
-the next step if it can. Nothing is fixed during the sitting.
+writes it down as a defect with the shot. The sitting continues to the
+next step if it can. Nothing is fixed during the sitting.

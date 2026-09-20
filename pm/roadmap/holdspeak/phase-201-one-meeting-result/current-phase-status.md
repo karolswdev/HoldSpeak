@@ -66,6 +66,9 @@ over claim). Faces obey UX-CANON. Orchestration: TWO-BRAINS.md.
 | HS-201-05 | One engine and one assignment from the face | done | [story-05-one-engine-and-one-assignment-from-the-face](./story-05-one-engine-and-one-assignment-from-the-face.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-201-06 | Plain words on the path | done | [story-06-plain-words-on-the-path](./story-06-plain-words-on-the-path.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-201-07 | Run it from main and the sitting | backlog | [story-07-run-it-from-main-and-the-sitting](./story-07-run-it-from-main-and-the-sitting.md) | - |
+| HS-201-09 | Connect an engine from the face | done | [story-09-connect-an-engine-from-the-face](./story-09-connect-an-engine-from-the-face.md) | [evidence-story-09](./evidence-story-09.md) |
+| HS-201-10 | Import does not run the summary by itself | done | [story-10-import-does-not-run-the-summary-by-itself](./story-10-import-does-not-run-the-summary-by-itself.md) | [evidence-story-10](./evidence-story-10.md) |
+| HS-201-11 | A quiet desk for the sitting | done | [story-11-a-quiet-desk-for-the-sitting](./story-11-a-quiet-desk-for-the-sitting.md) | [evidence-story-11](./evidence-story-11.md) |
 
 ## Lanes (TWO-BRAINS.md §4)
 

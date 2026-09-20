@@ -144,7 +144,14 @@ def _project(repo_root: Path, slug: str, include_phases: bool = True) -> dict[st
         next_data = json.loads(next_output)
     except (TypeError, json.JSONDecodeError):
         next_data = {}
-    next_story = next_data.get("story_id") or next_data.get("id") or next_data.get("next_story", {}).get("story_id")
+    if not isinstance(next_data, dict):
+        next_data = {}
+    # HS-201-11: `dw next` answers `{"next_story": null}` when nothing is
+    # actionable, so the key EXISTS and holds None -- a `{}` default never
+    # runs. Read the nested id only when it is a mapping.
+    nested = next_data.get("next_story")
+    nested_id = nested.get("story_id") if isinstance(nested, dict) else None
+    next_story = next_data.get("story_id") or next_data.get("id") or nested_id
     result: dict[str, Any] = {
         "slug": slug,
         "name": name_match.group(1).strip() if name_match else _title(slug),
