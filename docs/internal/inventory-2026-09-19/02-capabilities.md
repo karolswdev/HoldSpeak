@@ -497,7 +497,7 @@ product will not tell them about.
 
 | Thing | A | B | Which wins |
 |---|---|---|---|
-| **Model assignment** | 4 separate config pointers: `meeting.intel_profile_id`, `dictation.runtime.profile_id`, `thoughts.inference_target_id`, `rails_observer.profile_id` | the `inference_assignments` table (`global` + 6 groups) | **B**, but only once a per-family migration row exists — until then both are live (`settings_service.py:224-250, 262-290`). MCP's own tool description calls A "retired routing controls" (`mcp/families/settings.py:32`) |
+| **Model assignment** | 4 separate config pointers: `meeting.intel_profile_id`, `dictation.runtime.profile_id`, `thoughts.the retired inference-target key`, `rails_observer.profile_id` | the `inference_assignments` table (`global` + 6 groups) | **B**, but only once a per-family migration row exists — until then both are live (`settings_service.py:224-250, 262-290`). MCP's own tool description calls A "retired routing controls" (`mcp/families/settings.py:32`) |
 | **Meeting provider** | `meeting.intel_provider` (`local\|cloud\|auto`) | the adopted destination / placement authority | the destination can override the dial; `_placement.provider_honored` is false when it did (`settings_service.py:63, 89`) |
 | **Cloud endpoint** | `meeting.intel_cloud_*` and `dictation.runtime.openai_compatible_*` | the profiles table | A is declared dead (`LEGACY_ENDPOINT_FIELDS`, `config/core.py:120-127`), stripped on read and write — yet still serialized into the file a user can open |
 | **Calendar** | `_calendar_subscription` (single legacy source) | `calendar.sources[]` | B; A kept alive only for `SettingsCore.tsx` and e2e seeds (`settings_service.py:57-59`) |
@@ -528,7 +528,7 @@ Already-deleted-and-stripped: `ui.theme`, `ui.history_lines`,
 | Bucket | Count |
 |---|---:|
 | config keys reachable from a web screen (`PREF_MODULES`, `web/src/pages/cores/settingsPrefs.tsx:40-59`) | **109 of 112** |
-| not on any screen (`thoughts.inference_target_id`, `config_version`, `machine_id`) | 3 |
+| not on any screen (`thoughts.the retired inference-target key`, `config_version`, `machine_id`) | 3 |
 | hidden behind per-module "RAW" diagnostics folds rather than the primary face | **~33** |
 | MCP-only | **~0** — `settings.update` takes an arbitrary partial patch (`mcp/families/settings.py:41-47`), so MCP is a **superset** of the web surface |
 | web-only, not MCP | the 8 secrets |

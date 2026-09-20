@@ -126,3 +126,20 @@ reliable import provenance. Astra therefore captured historical reproductions
 from archived `ae9edfde` with the actual imported path printed, followed by
 current-code green runs. No historical run is presented as an untouched-tree
 chronological capture.
+
+
+### Follow-up integration proof
+
+Backend follow-up commit: `a07d4bb5`, Delivery Workbench gate passed,
+`shipped_count=0`. Integrated `origin/main` at `675401a8` with no conflict.
+The incoming changes are documentation/link fixes, the Astra report-link
+filter, and the Phase 201 UAT ledger entry; no product source changed in the
+merge. Quiet post-merge focused run with isolated HOME and `-n auto`:
+**390 passed, 11 optional-engine skips**. Documentation/UAT-ledger checks:
+**34 passed**. Raw captures are appended to `evidence-story-03.md` at
+`2026-09-20T02:09:14Z` and `2026-09-20T02:10:13Z`.
+
+No tracked evidence PNG churn needed restoration. The PR stays #588, open;
+Muad'Dib owns the combined verification and merge. The old documentation and
+UAT-ledger full-suite failures are healed by the imported main changes; the
+rest of the historical full-suite classification is not a fresh full run.

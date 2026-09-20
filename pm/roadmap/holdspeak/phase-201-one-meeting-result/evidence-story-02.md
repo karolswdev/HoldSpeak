@@ -1128,3 +1128,11 @@ focused run: 152 passed, 11 optional-engine skips. The 12 new cases across both
 stories were independently collected in story 03. The old red logfile initially
 imported edited code and is not accepted as red evidence. Saved root baseline
 runs are historical reproductions, not claims of pre-edit chronological capture.
+
+
+### Post-merge follow-up verification
+
+Follow-up source is committed as `a07d4bb5`; `origin/main` at `675401a8`
+integrated without conflict. Story 03 holds the combined post-merge capture
+at `2026-09-20T02:09:14Z`: **390 passed, 11 optional-engine skips**, including
+all recording/reporting tests named above. No story status was flipped.

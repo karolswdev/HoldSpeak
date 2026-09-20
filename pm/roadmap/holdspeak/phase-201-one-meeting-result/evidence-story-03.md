@@ -2303,3 +2303,53 @@ raise SystemExit(result.returncode)
 The glass runner imports `tests.e2e.test_hs201_lane_a_glass`, sets its `SHOTS`
 to `assets/lane-a-followup` under this phase, and calls `pytest.main` on that
 module with `-q -s`. Its capture supplies isolated HOME and the browser cache.
+
+### Captured run — 2026-09-20T02:09:14Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.uJBYsIFdmz PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:/Users/karol/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run --extra dev pytest -q -n auto tests/unit/test_hs201_refusal_history.py tests/e2e/test_hs201_dispatch_exception.py tests/unit/test_hs201_run_receipt.py tests/unit/test_hs201_route_contract.py tests/unit/test_hs201_route_counsel.py tests/unit/test_hs201_route_http.py tests/e2e/test_hs201_route_execution.py tests/unit/test_intel_queue.py tests/unit/test_phase200_intel_drain.py tests/unit/test_meeting_deferred_admission.py tests/unit/test_phase143_intel_queue_inventory.py tests/integration/test_web_server.py tests/integration/test_meeting_intel_recovery.py tests/unit/test_hs201_live_analysis_truth.py tests/unit/test_doctor_command.py tests/unit/test_doctor_runtime_profiles.py tests/unit/test_doctor_config_honesty.py tests/unit/test_setup_status.py tests/unit/test_setup_status_doctor_drift.py tests/unit/test_trust_destinations.py tests/unit/test_hs201_record_speech_only.py tests/unit/test_hs201_record_stop_hook.py tests/e2e/test_hs201_record_transcript.py tests/unit/test_dictation_session_admission.py tests/unit/test_backend_density_guard.py tests/unit/test_phase143_surface_fallback_census.py tests/unit/test_phase143_inference_capability_census.py tests/unit/test_phase143_routing_authority_census.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 854e4ef205c41c86164395c5b8c11e9223d97bf0
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 17%]
+........................................................................ [ 35%]
+........................................................................ [ 53%]
+........................................................................ [ 71%]
+..........s.......s...........ss...s..................sssss.........s... [ 89%]
+.................................Meeting checkpoint failed: '_FixtureRecorder' object has no attribute 'trim_before'
+........                                [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:497: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:1196: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:924: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:993: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:1175: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2242: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2534: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [2] tests/unit/test_dictation_session_admission.py:2548: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2588: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2494: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+390 passed, 11 skipped in 35.91s
+```
+
+### Captured run — 2026-09-20T02:10:13Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.6hKNAfoUNs uv run --extra dev pytest -q tests/unit/test_doc_drift_guard.py tests/uat/test_build_ledger.py tests/uat/test_ledger.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 854e4ef205c41c86164395c5b8c11e9223d97bf0
+
+```text
+..................................                                       [100%]
+34 passed in 1.79s
+```
+
+
+Post-merge runs above use follow-up product commit `a07d4bb5` plus incoming
+main `675401a8`; the merge brings no product-source edits. The 390-test focused
+suite passed with 11 optional-engine skips. The 34 documentation/ledger tests
+also passed. No full-suite green is inferred from these focused runs.
