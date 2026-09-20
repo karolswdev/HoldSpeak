@@ -608,3 +608,117 @@ Two defects meet:
 
 `record-before-run`, `record-after-run`, `review-not-run` (new),
 `refusal-stale-hash`, `ledger-retry`, `meetings-chip`, `after-restart`.
+
+### Captured run — 2026-09-20T02:31:19Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.TQFSZN69AW PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run pytest -q -s tests/e2e/test_hs201_summary_face_glass.py tests/e2e/test_hs201_summary_producer_chain.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 945caeec182c5e64c596b62c1119a01519d218ba
+
+```text
+RECORDED meeting=a9cf0902 segments=1
+PLANNED host=same_device hash=sha256:21c5c1c46ff1797d670f062030847ecdcd667aff27fef6fcb60f7505137e9c28
+ROW a9cf0902 MeetingSEP 19 · OFFSEP 19·3 WORDS·OFFTHIS DEVICERun summary
+CANON primaries=['Run summary'] zeros=[]
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-before-run-1440.png
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-before-run-393.png
+RUN POST {'path': '/api/meetings/a9cf0902/intelligence/run', 'body': '{"expected_selection_hash":"sha256:21c5c1c46ff1797d670f062030847ecdcd667aff27fef6fcb60f7505137e9c28"}'}
+RECEIPT {'attempts': [{'host': 'same_device', 'leg_ordinal': 1, 'operation_id': 'op_217ff6943d714a0cb819c3839a89bbea', 'outcome': 'succeeded'}], 'job_id': 'ij_2d6fcebe00b6754183387405c3423228d81596ba46baae5aad01999619794219', 'meeting_id': 'a9cf0902', 'outcome': 'succeeded', 'receipt_id': 'rr_71883cf452bb9d019ef0b043b777d3b0', 'selection_hash': 'sha256:21c5c1c46ff1797d670f062030847ecdcd667aff27fef6fcb60f7505137e9c28'}
+ROW a9cf0902 MeetingSEP 19 · RANSEP 19·3 WORDS·RANTHIS DEVICEOpen
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-after-run-1440.png
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-after-run-393.png
+REVIEW 'PROPOSALS · NOT RUN'
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/review-not-run-1440.png
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/review-not-run-393.png
+FAILED job attempts=1 state=failed
+ROW a407a70b MeetingSEP 19 · FAILEDSEP 19·3 WORDS·FAILEDTHIS DEVICEFAILEDTHIS DEVICERetry
+FACTS width=243 of row=366
+REFUSAL REFUSED · ROUTE CHANGED
+AFTER REFUSAL run_receipt={'attempts': [{'host': 'same_device', 'leg_ordinal': 1, 'operation_id': 'op_c6b5913798884b66afb79ead7e8d68ac', 'outcome': 'failed'}], 'job_id': 'ij_e1be369ebe2920f9892e69966e551db605871709dfb035e3c400e8394b6acc6c', 'meeting_id': 'a407a70b', 'outcome': 'failed', 'receipt_id': 'rr_ad9d62b4db73585833ff7c9e03b79621', 'selection_hash': 'sha256:21c5c1c46ff1797d670f062030847ecdcd667aff27fef6fcb60f7505137e9c28'}
+AFTER REFUSAL last_refusal={'attempts': [], 'job_id': 'ij_76547c087fb9b20b8207b8201bcba701be5628ebacab7655ba3450d25df93465', 'meeting_id': 'a407a70b', 'outcome': 'refused', 'receipt_id': 'rr_a2ae4e5f574b895f1936672b4391a103', 'selection_hash': 'sha256:21c5c1c46ff1797d670f062030847ecdcd667aff27fef6fcb60f7505137e9c28'}
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/refusal-stale-hash-1440.png
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/refusal-stale-hash-393.png
+CANON primaries=['Retry'] zeros=[]
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/ledger-retry-1440.png
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/ledger-retry-393.png
+RETRY POST {'path': '/api/meetings/a407a70b/intelligence/run', 'body': '{"expected_selection_hash":"sha256:2705a0623f0eb0bb43d0c996a4e3dab8c03a30ca9ee491b3ce9582fc7070d805"}'}
+FOOTER CHIP 'THIS DEVICE'
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/meetings-chip-1440.png
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/meetings-chip-393.png
+FOUND AFTER RESTART moves=1
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/after-restart-1440.png
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/after-restart-393.png
+...
+3 passed in 19.47s
+```
+
+## After lane A's follow-up
+
+Lane A's `a07d4bb5` merged into this branch at `73fc30b7`. The glass rig
+failed once, at `tests/e2e/test_hs201_summary_face_glass.py:354`:
+
+```text
+E   AssertionError: assert 'failed' == 'refused'
+```
+
+**This is not a lane A defect. The rig was still asserting the defect.**
+That assertion was written in the first round against the OLD behaviour and
+carried a comment recording it as an observed gap: the refusal receipt used
+to REPLACE the executed one, so `run_receipt.outcome` read `refused`. Lane
+A's follow-up repairs exactly that, so `run_receipt` is now the last
+EXECUTED receipt — and in this station the executed run is station 4's
+deliberately failed producer, whose outcome is `failed`. The rig should
+have asserted the CONTRACT, not the symptom.
+
+The merged read model, printed live (`/api/meetings/<id>/intel-recovery`
+after a stale-hash 409):
+
+```text
+AFTER REFUSAL run_receipt={'attempts': [{'host': 'same_device', 'leg_ordinal': 1,
+  'operation_id': 'op_14c3dc7a96bb4beb960c65b437d6bf2f', 'outcome': 'failed'}],
+  'job_id': 'ij_c30a369e…', 'meeting_id': 'c1e0c716', 'outcome': 'failed',
+  'receipt_id': 'rr_1f3b1d7c96028c46adb962d326cf5ad0',
+  'selection_hash': 'sha256:e99fb578…'}
+AFTER REFUSAL last_refusal={'attempts': [], 'job_id': 'ij_e656b959…',
+  'meeting_id': 'c1e0c716', 'outcome': 'refused',
+  'receipt_id': 'rr_32ebbbb4c81433b3d943885b1d683411',
+  'selection_hash': 'sha256:e99fb578…'}
+```
+
+`last_refusal.outcome` reads `refused` exactly as the contract says, with an
+empty attempt list and its own receipt id. The rig now asserts the contract
+on both fields: the executed receipt keeps its real attempt on the disclosed
+host, the refusal sits beside it with no attempt, the two receipt ids differ,
+and the face shows the executed destinations **from the hub** rather than
+from anything this client remembered.
+
+The client-side `executedReceipt()` memory is now a belt, not the mechanism:
+`_route_for_gesture` no longer passes the refusal receipt as `run_receipt`
+(`holdspeak/services/meeting_intel_service.py:92`), so `_conflict` falls
+through to `get_run_receipt()` — the executed one — and adds `last_refusal`
+separately (`:39`, `:46`; served at
+`holdspeak/web/routes/meetings/intel.py:55-56`). The 409 RESPONSE therefore
+already carries the executed receipt. The memory is kept as instructed, for
+a hub that does not.
+
+```text
+2 passed in 18.32s
+```
+
+### Shots
+
+All fourteen were re-taken in the same pass. One face genuinely changed:
+`ledger-retry` (and the Chair behind it) now shows the hub's own durable
+pair after a reload — `THIS DEVICE · FAILED` (the executed run) then
+`THIS DEVICE` (the next route) then `REFUSED` (`last_refusal`). Before the
+merge only this session's memory could have said that, and a reload lost it.
+
+### A mistake of mine, recorded
+
+My asset-restore loop was written when this story's shots were untracked.
+They are tracked since `b9d66eef`, so the loop reverted my own re-taken
+shots and one evidence capture to their committed versions. Nothing else
+was touched (it only walks `pm/roadmap`), and both were reproduced by
+re-running the rig and re-capturing. The loop now excludes this story's own
+directory and restores only OTHER phases' assets.

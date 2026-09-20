@@ -336,22 +336,33 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
             assert _api(
                 page, "GET", f"/api/meetings/{first_id}/intel-recovery", token=TOKEN
             )["run_receipt"] == receipt
-            # OBSERVED GAP (lane A, holdspeak/db/intel.py record_route_refusal):
-            # the refusal receipt REPLACES the durable receipt of the run
-            # that came before it, and it carries `attempts: []`. So after a
-            # refusal the hub can no longer tell the face which destinations
-            # the failed run contacted. The face keeps whichever receipt it
-            # still holds (pickRunReceipt) but cannot recover what the hub
-            # overwrote. Recorded, not worked around.
+            # Lane A's follow-up (`a07d4bb5`): a refusal no longer replaces
+            # the receipt of the run that really happened. `run_receipt` is
+            # the last EXECUTED receipt and the no-call refusal is served
+            # beside it as `last_refusal` (holdspeak/db/intel.py:2352, :2363).
             after_refusal = _api(
                 page, "GET", f"/api/meetings/{second_id}/intel-recovery", token=TOKEN
             )
-            print(
-                "RECEIPT AFTER REFUSAL "
-                f"outcome={after_refusal['run_receipt']['outcome']} "
-                f"attempts={after_refusal['run_receipt']['attempts']}"
+            print(f"AFTER REFUSAL run_receipt={after_refusal.get('run_receipt')}")
+            print(f"AFTER REFUSAL last_refusal={after_refusal.get('last_refusal')}")
+            executed = after_refusal["run_receipt"]
+            durable = after_refusal["last_refusal"]
+            # The executed receipt is the FAILED run of station 4 — the
+            # producer refused, so the host was contacted and the attempt
+            # stands. A route refusal does not erase it any more.
+            assert executed["outcome"] == "failed", executed
+            assert executed["attempts"], executed
+            assert executed["attempts"][0]["host"] == host, executed
+            # …and the no-call refusal is beside it, with no attempt at all.
+            assert durable is not None, after_refusal
+            assert durable["outcome"] == "refused", durable
+            assert durable["attempts"] == [], durable
+            assert durable["receipt_id"] != executed["receipt_id"], (durable, executed)
+            # The face shows the executed destinations from the HUB now, not
+            # from anything this client remembered.
+            assert _chip_label(host) in (
+                page.get_by_test_id("recovery-attempts").text_content() or ""
             )
-            assert after_refusal["run_receipt"]["outcome"] == "refused"
             # The route the NEXT run will use is still disclosed beside the verb.
             assert _chip_label(host) in (
                 page.get_by_test_id("recovery-route").text_content() or ""
