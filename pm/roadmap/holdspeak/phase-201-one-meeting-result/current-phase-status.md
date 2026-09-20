@@ -1,6 +1,6 @@
 # Phase 201 - One Meeting Result
 
-**Last updated:** 2026-09-19. Chartered from the inventory of 2026-09-19 and
+**Last updated:** 2026-09-20, 01:40 — six of seven stories done; the combined PR #587 (lanes A+B) awaits CI; story 07 is the sitting. Chartered from the inventory of 2026-09-19 and
 two Astra checks (`docs/internal/inventory-2026-09-19/06-check-astra.md`,
 `docs/internal/checks/constitution-seven-tenets-astra.md`). Stories and
 lanes follow the two read-only audits (runtime by Astra, live face walk by
@@ -94,7 +94,9 @@ its conflict and partial-result rendering, not labels alone.
 
 ## Where we are
 
-Lane A backend implementation and source counsel are complete. The quiet full suite finished with 11,159 passed, 24 failed, 125 skipped and four strict expected failures. Failure classification and affected focused reruns are recorded in `audits/full-suite-astra.md`; the raw run is `audits/full-suite-astra.log`. Stories 02, 03 and 05 are committed through the gate; 07's startup backend ships separately without closing 07. Review PR [#588](https://github.com/karolswdev/HoldSpeak/pull/588) is open against `main`; the branch is pushed and unmerged. B owns the face integration and the sitting. No phase exit criterion is closed by A.
+Six of seven stories done through the gate, both lanes checked by the other brain (checks/), the combined delivery on PR #587 (lane A's #588 merged in), a quiet-tree full suite and CI read against main before the merge. Story 07 is the sitting: the owner starts the product from main, records one real meeting, asks for its summary, reads it, restarts, finds it, dictates one sentence (SITTING-07.md). Nothing closes on "accepted, not observed".
+
+Ledger (never deleted): the 393 egress badge clips its label (Trust shows the full host; lane B face item); xdist pollution in tests/unit/test_phase200_attention.py TestNotificationTransitions (serial-green twice); HS-170's faces-wire test patches a name its route never reads; the parked Phase 200 proposal chain (BACKLOG); the five off-path red tests on main; DW roadmap bookkeeping (Z6).
 
 ## Active risks
 
