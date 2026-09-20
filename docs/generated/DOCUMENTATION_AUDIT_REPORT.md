@@ -192,6 +192,13 @@ standard-library documentation job was also rerun with Python 3.12 locally;
 its captured result is appended to the verification record. This correction
 does not change route membership or product execution.
 
+A second clean-run check rejected a Qlippy source reference to a generated build
+copy. References now name the tracked asset document and actual React component;
+the validator rejects build/environment artifacts even when present locally.
+The guide distinguishes bundled assets from rendered glyphs and static label
+checks from reachable interactions. The asset document also clarifies that
+remote clients still fetch bundled assets over the hub connection.
+
 The full suite was **not green**. Five failures were documentation issues fixed
 by this package: retired configuration vocabulary, dependency Markdown picked
 up by the link scanner, a roadmap label in a user guide, typographic line-range

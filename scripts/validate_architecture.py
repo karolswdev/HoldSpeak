@@ -230,6 +230,9 @@ def _check_path(root: Path, raw: Any, label: str, location: str, result: Validat
     if path is None:
         result.add("error", location, f"{label} path must be a safe repository-relative path")
         return None
+    if any(part in {"_built", "node_modules", ".venv", ".tmp"} for part in Path(raw).parts):
+        result.add("error", location, f"{label} reference points to a build or environment artifact: {raw}")
+        return None
     if not path.is_file():
         result.add("error", location, f"{label} path does not exist: {raw}")
         return None

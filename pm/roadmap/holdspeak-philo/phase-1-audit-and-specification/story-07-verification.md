@@ -51,3 +51,8 @@ filesystem enumeration of candidate test paths. Sort before serialization; a
 regression test reverses enumeration and requires identical output. The full
 documentation job is checked locally on Python 3.12 as well as the authoring
 runtime. This is a follow-up atomic correction under the same completed story.
+
+The clean-run source check also exposed one Qlippy reference to a build copy.
+Corrected it to tracked source and added a validator regression for build and
+environment artifacts. Source inspection narrowed Qlippy rendering/interaction
+claims and clarified hub transport for its bundled assets.

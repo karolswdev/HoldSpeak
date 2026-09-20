@@ -881,3 +881,31 @@ HOME="$PHILO_TEST_HOME" uv run pytest -q tests/unit/test_philo_census.py
 /opt/homebrew/bin/python3.12 scripts/generate_capability_docs.py --check
 /opt/homebrew/bin/python3.12 scripts/check_doc_coverage.py --check
 ```
+
+### Captured run — 2026-09-20T03:38:54Z
+
+- **Command:** `bash .tmp/philo/verify_ci_order.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 2aa12046ffa4be2e6d22f65ba2dca2123dd0eaf4
+
+```text
+...................                                                      [100%]
+19 passed in 0.54s
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 0.004s
+
+OK
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+Documentation navigation: 33 files checked; local targets and Markdown headings resolve.
+Repository census: 5 outputs verified.
+API reference checked
+Boundary candidate census checked
+Doctor reference: 41 check functions
+Configuration declaration reference is current
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+Architecture documentation checked (10 outputs).
+Documentation coverage checked.
+```

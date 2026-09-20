@@ -153,3 +153,19 @@ def test_requirement_catalogue_checks_its_own_source_references(tmp_path: Path) 
     messages = '\n'.join(str(error) for error in validate(root, expected_shards=("runtime",)).errors)
     assert "symbol 'invented' not found" in messages
     assert "missing or duplicate identity" in messages
+
+
+def test_existing_build_copy_is_not_source_evidence(tmp_path: Path) -> None:
+    root = _root(tmp_path)
+    built = root / 'holdspeak/static/_built/qlippy/README.md'
+    built.parent.mkdir(parents=True)
+    built.write_text('# Build copy\n')
+    path = root / 'docs/internal/philo/data/runtime.json'
+    shard = json.loads(path.read_text())
+    shard['capabilities'][0]['sources'][0] = {
+        'path': str(built.relative_to(root)), 'line': 1, 'symbol': 'module',
+        'claim': 'A generated file must not masquerade as maintained source.'
+    }
+    path.write_text(json.dumps(shard))
+    result = validate(root, expected_shards=('runtime',))
+    assert any('build or environment artifact' in str(error) for error in result.errors)

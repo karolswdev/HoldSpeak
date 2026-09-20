@@ -4279,7 +4279,8 @@
       "id": "companion.qlippy_presence@aipi",
       "platform": "aipi",
       "source_ids": [
-        "holdspeak/static/_built/qlippy/README.md"
+        "web/src/components/AmbientLayer.tsx",
+        "web/public/qlippy/README.md"
       ],
       "status": "experimental"
     },
@@ -4289,7 +4290,8 @@
       "id": "companion.qlippy_presence@ipad",
       "platform": "ipad",
       "source_ids": [
-        "holdspeak/static/_built/qlippy/README.md"
+        "web/src/components/AmbientLayer.tsx",
+        "web/public/qlippy/README.md"
       ],
       "status": "experimental"
     },
@@ -4299,7 +4301,8 @@
       "id": "companion.qlippy_presence@linux_wayland",
       "platform": "linux_wayland",
       "source_ids": [
-        "holdspeak/static/_built/qlippy/README.md"
+        "web/src/components/AmbientLayer.tsx",
+        "web/public/qlippy/README.md"
       ],
       "status": "experimental"
     },
@@ -4309,7 +4312,8 @@
       "id": "companion.qlippy_presence@linux_x11",
       "platform": "linux_x11",
       "source_ids": [
-        "holdspeak/static/_built/qlippy/README.md"
+        "web/src/components/AmbientLayer.tsx",
+        "web/public/qlippy/README.md"
       ],
       "status": "experimental"
     },
@@ -4319,7 +4323,8 @@
       "id": "companion.qlippy_presence@macos",
       "platform": "macos",
       "source_ids": [
-        "holdspeak/static/_built/qlippy/README.md"
+        "web/src/components/AmbientLayer.tsx",
+        "web/public/qlippy/README.md"
       ],
       "status": "experimental"
     }

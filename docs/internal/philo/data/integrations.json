@@ -2204,7 +2204,7 @@
         "Qlippy cards"
       ],
       "entry_points": [
-        "holdspeak/static/_built/qlippy/README.md::module"
+        "web/src/components/AmbientLayer.tsx::Qlippy"
       ],
       "platforms": {
         "macos": "supported_with_setup",
@@ -2219,8 +2219,8 @@
         "learning/follow-up attention"
       ],
       "outputs": [
-        "mascot sprite and glyph",
-        "presence card"
+        "mascot glyph",
+        "projection review or learning card"
       ],
       "persistence": [
         "none; event/projection state only"
@@ -2240,16 +2240,22 @@
       "network_requirements": [],
       "trust_boundary": "Qlippy presents state and egress facts; dismissing a card never authorizes an effect.",
       "egress_possible": false,
-      "egress": "The sprites are served from the local web bundle and are never fetched from a network.",
-      "side_effect": "none",
-      "authority": "Presentation only; actuator and Gate services retain effect authority.",
+      "egress": "Assets are bundled without a third-party CDN dependency. A remote browser fetches the hub over its configured connection; local bundling does not mean no network transport.",
+      "side_effect": "local_reversible",
+      "authority": "Projection review navigates to the source. A conditional decision handler delegates approval/rejection to the backend; its actuator-card branch is not fed by the current non-learning event path. Dismiss changes only local cards.",
       "kernel_operations": [],
       "sources": [
         {
-          "path": "holdspeak/static/_built/qlippy/README.md",
+          "path": "web/src/components/AmbientLayer.tsx",
+          "symbol": "Qlippy",
+          "line": 196,
+          "claim": "Settings gate the component; runtime events refresh durable projections or queue learning cards. The projection action navigates to its source."
+        },
+        {
+          "path": "web/public/qlippy/README.md",
           "symbol": "module",
           "line": 1,
-          "claim": "The bundled local sprite/glyph states and local-only serving rule are documented."
+          "claim": "Asset provenance and sprite inventory; this is not proof the current component renders those sprites."
         }
       ],
       "tests": [
@@ -2267,7 +2273,7 @@
         {
           "path": "tests/integration/test_presence_qlippy_shell.py",
           "node": "test_qlippy_is_react_owned_and_never_autonomous",
-          "assertion": "The presence shell test covers Qlippy state presentation.",
+          "assertion": "A static-source test checks the Qlippy function, subscription, event/action labels, apiFetch and useEffect strings. It does not exercise reachable approval behavior.",
           "execution": {
             "status": "passed",
             "record": "docs/generated/test-execution.json",
@@ -2278,11 +2284,12 @@
       ],
       "docs": [
         "docs/COMPANIONS_ARCHITECTURE.md",
-        "holdspeak/static/_built/qlippy/README.md"
+        "web/public/qlippy/README.md"
       ],
       "limitations": [
         "No native overlay, web card or owner observation was run.",
-        "Presence state coverage is event-dependent."
+        "Presence state coverage is event-dependent.",
+        "The component renders a glyph; bundled sprite presence does not establish sprite use. The conditional actuator-card branch is not evidence of reachable inline approval in the current projection path."
       ],
       "failure_states": [
         "asset_missing",

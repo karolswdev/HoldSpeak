@@ -13,7 +13,7 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 244 / 244 |
+| Source paths | 245 / 245 |
 | Test paths | 179 / 179 |
 | Documentation paths | 216 / 216 |
 | Assertions inspected | 179 |
@@ -109,7 +109,7 @@ Validation errors at generation: **0**.
 | `integration.actuators` | capabilities | 3/3 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `companion.ipad_client` | capabilities | 3/3 | 2/2 | 2 | 0 | 0 | unresolved |
 | `companion.aipi_audio_control` | capabilities | 3/3 | 2/2 | 2 | 0 | 0 | unresolved |
-| `companion.qlippy_presence` | capabilities | 1/1 | 2/2 | 2 | 2 | 0 | partially_evidenced |
+| `companion.qlippy_presence` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `runtime.kernel` | components | 2/2 | 0/0 | 0 | 0 | 0 | unresolved |
 | `runtime.inference` | components | 1/1 | 0/0 | 0 | 0 | 1 | unresolved |
 | `authority.edge` | components | 1/1 | 0/0 | 0 | 0 | 2 | unresolved |

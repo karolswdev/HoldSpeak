@@ -35,7 +35,7 @@ gesture, control posture or bounded grant admits the effect.
 | coder draft and explicit answer | `CoderAnswer.compose/draft/send/approve`, `VoiceNoteComposer.send` | `built_unreleased`; destination verification remains hub-owned |
 | activity nudges and briefing | `HTTPDesktopClient+Activity.swift::activityNudges`, `briefing` | `built_unreleased`; source API exists, provider state unknown |
 | Slack/GitHub/webhook proposals | `HTTPDesktopClient+Proposals` or desk actuator routes | `built_unreleased`; configured host and policy required |
-| Qlippy presence | web presence mascot and bundled `/_built/qlippy` sprites | `experimental`; optional, off by default in product docs |
+| Qlippy presence | web ambient glyph/cards; sprite assets are bundled separately | `experimental`; optional, off by default in product docs |
 | AIPI controls/audio/status | `aipi-lite/bridge/*`, `holdspeak_proto.py`, device firmware | `experimental`/optional hardware; source and focused tests |
 
 The native `HTTPDesktopClient` builds URLs from `Config.baseURL`, applies a
@@ -69,3 +69,10 @@ the integration metadata shard with `execution: not_run`. No live LAN,
 Tailscale, iPad, signed bundle, microphone, provider or owner desk walk was
 used for this audit. Those are required before saying a companion works on a
 Tuesday.
+
+The current `Qlippy` component in `web/src/components/AmbientLayer.tsx` renders
+a glyph and reads durable attention projections. Non-learning events refresh
+those projections; learning events enter its local card queue. A conditional
+actuator decision handler remains in the source, but its label strings alone
+do not prove that an actuator card can reach that branch. Asset inventory is
+in `web/public/qlippy/README.md`; the generated build copy is not a source owner.

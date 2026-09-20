@@ -201,6 +201,7 @@
     "tests/unit/test_api_surface.py",
     "tests/unit/test_doc_drift_guard.py",
     "tests/unit/test_philo_architecture.py",
-    "tests/unit/test_philo_census.py"
+    "tests/unit/test_philo_census.py",
+    "web/public/qlippy/README.md"
   ]
 }

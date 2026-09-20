@@ -27,5 +27,6 @@ the glyph**. Only large props that render well (the note, the Zzz) are baked
 into strips. Do not bake glyphs into new states.
 
 Served under the web bundle's `/_built` base (e.g.
-`/_built/qlippy/sprites/idle.png`); local only, in-bundle, never fetched from
-a network.
+`/_built/qlippy/sprites/idle.png`). Assets ship in the bundle without a
+third-party CDN dependency. A remote browser retrieves them from the hub over
+its configured connection; bundling does not eliminate network transport.
