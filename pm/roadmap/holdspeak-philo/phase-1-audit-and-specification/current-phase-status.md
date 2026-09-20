@@ -21,13 +21,13 @@ Earlier Muad'Dib reviews remain historical planning evidence. No further Claude 
 
 ## Exit criteria
 
-- [ ] The preserved request has a requirement disposition matrix.
-- [ ] All requested subsystem areas have evidence-backed documentation.
-- [ ] Registry/schema/generation/coverage tools pass positive and negative checks.
-- [ ] Desk SRS and wide/compact visual artifacts distinguish current from proposed.
-- [ ] Repository skills validate and link to real sources and tests.
-- [ ] Full required verification is recorded, with failures classified.
-- [ ] Final hostile audit and executive report name remaining unknowns.
+- [x] The preserved request has a requirement disposition matrix.
+- [x] All requested subsystem areas have evidence-backed documentation.
+- [x] Registry/schema/generation/coverage tools pass positive and negative checks.
+- [x] Desk SRS and wide/compact visual artifacts distinguish current from proposed.
+- [x] Repository skills validate and link to real sources and tests.
+- [x] Full required verification is recorded, with failures classified.
+- [x] Final hostile audit and executive report name remaining unknowns.
 
 ## Story status
 
@@ -39,7 +39,7 @@ Earlier Muad'Dib reviews remain historical planning evidence. No further Claude 
 | PHILO-1-04 | Agents, integrations, companions and knowledge | done | [story-04-integrations.md](story-04-integrations.md) | [evidence-story-04](./evidence-story-04.md) |
 | PHILO-1-05 | Desk design specification and SRS | done | [story-05-desk.md](story-05-desk.md) | [evidence-story-05](./evidence-story-05.md) |
 | PHILO-1-06 | Registries, validation and repository skills | done | [story-06-maintenance.md](story-06-maintenance.md) | [evidence-story-06](./evidence-story-06.md) |
-| PHILO-1-07 | Integrated audit and final verification | in-progress | [story-07-verification.md](story-07-verification.md) | - |
+| PHILO-1-07 | Integrated audit and final verification | done | [story-07-verification.md](story-07-verification.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Lanes
 
@@ -53,9 +53,13 @@ Earlier Muad'Dib reviews remain historical planning evidence. No further Claude 
 
 ## Where we are
 
-Implementation authorized. Initial source-only audits exist under docs/internal/philo/checks.
-Use docs/internal/philo/data/README.md as the shared metadata contract.
-Workers own disjoint files. Astra is the only commit lane.
+The audit/specification package is delivered in seven individually gated commits
+under one PR. The final audit report records 92 passing documentation tests,
+2,540 passing web tests, 27 authored artboards, four reproduced baseline failures
+and ten full-suite failures that pass in isolation. The original full suite is
+not green. Remaining product changes and observation limits are documented,
+not marked implemented. Astra owns the final delivery; Luna supplied source
+reviews and bounded verification.
 
 ## Decisions made
 

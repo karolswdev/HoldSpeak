@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 1
-- **Status:** in-progress
+- **Status:** done
 - **Owner:** Astra
 
 ## Goal
@@ -16,11 +16,11 @@ The source briefs and source checklist define the required subject coverage.
 
 ## Acceptance criteria
 
-- [ ] Requested subjects in this lane have source-backed output or an explicit verification limit.
-- [ ] Current implementation and proposed requirements are distinct.
-- [ ] Source paths and inspected test assertions are recorded.
-- [ ] Relevant validation passes or each failure is classified with evidence.
-- [ ] Astra verifies the delivered artifacts and records the result.
+- [x] Requested subjects in this lane have source-backed output or an explicit verification limit.
+- [x] Current implementation and proposed requirements are distinct.
+- [x] Source paths and inspected test assertions are recorded.
+- [x] Relevant validation passes or each failure is classified with evidence.
+- [x] Astra verifies the delivered artifacts and records the result.
 
 ## Test plan
 
@@ -33,3 +33,13 @@ Every pytest invocation uses isolated HOME. Never run tests/e2e/test_metal.py.
 Owner override for Philo: Astra owns the final deliverable; Luna xhigh workers only;
 no Muad'Dib dependency. One umbrella PR, individually gated story commits.
 Workers do not stage, commit, capture evidence, flip stories or create contracts.
+
+## Astra verification
+
+Astra integrated all lanes, checked source assertions, ran the full Python and
+web suites, fixed five documentation failures, reran the ten intermittent runtime
+failures, inspected visual evidence and classified four baseline failures.
+The final report preserves unresolved interference, hardware, owner-use and
+release limits. Main still points to the audited source commit at final fetch.
+The independent Luna check and baseline investigation ship with this story.
+The owner explicitly waived the Muad'Dib dependency for this initiative.

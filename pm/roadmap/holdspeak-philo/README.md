@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-19.
 **Current phase:** [phase-1-audit-and-specification](phase-1-audit-and-specification/current-phase-status.md)
-**Status:** active.
+**Status:** documentation package delivered for PR review.
 
 ## Vision
 
@@ -21,7 +21,7 @@ It does not replace the active HoldSpeak Phase 201 pointer.
 
 | Phase | Goal | Status | Folder |
 | --- | --- | --- | --- |
-| 1 | Source audit, maintained documentation and Desk specification | in-progress | [Phase 1](phase-1-audit-and-specification/current-phase-status.md) |
+| 1 | Source audit, maintained documentation and Desk specification | done | [Phase 1](phase-1-audit-and-specification/current-phase-status.md) |
 
 ## Operating cadence
 
