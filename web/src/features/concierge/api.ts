@@ -2,6 +2,7 @@
 // Mirrors holdspeak/services/concierge_service.py (detect + propose + probe + apply + download).
 
 import { apiFetch } from "../../lib/api";
+import type { EndpointDraft } from "./endpointDraft";
 
 /* ── Wire types ── */
 
@@ -68,12 +69,28 @@ export interface Repair {
   detail: string;
 }
 
+/* HS-201-09 — the APPLIED summary truth, read from the same projection the
+   deferred queue resolves. The face shows this, never the proposal, for the
+   Meetings row: `assigned` names the engine that will run, `off` is the
+   owner's own OFF still standing after a reload. */
+export interface SummaryAssignment {
+  capabilityId: string;
+  status: "assigned" | "attention" | "off" | "unassigned";
+  assignmentRevision: number;
+  profileId: string | null;
+  profileRevision: number | null;
+  label: string | null;
+  boundary: string | null;
+  readiness: string | null;
+}
+
 export interface DetectResponse {
   engines: Engine[];
   hardware: HardwareInfo;
   runtimes: Array<{ id: string; state: string }>;
   checkedAt: string;
   repairs: Repair[];
+  summaryAssignment: SummaryAssignment | null;
 }
 
 export interface ProposalRow {
@@ -197,6 +214,29 @@ function decodeRepair(raw: Record<string, unknown>): Repair {
   };
 }
 
+function decodeSummaryAssignment(
+  raw: unknown,
+): SummaryAssignment | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  const row = raw as Record<string, unknown>;
+  const status = String(row.status ?? "unassigned");
+  return {
+    capabilityId: String(row.capabilityId ?? ""),
+    status:
+      status === "assigned" || status === "attention" || status === "off"
+        ? status
+        : "unassigned",
+    assignmentRevision:
+      typeof row.assignmentRevision === "number" ? row.assignmentRevision : 0,
+    profileId: typeof row.profileId === "string" ? row.profileId : null,
+    profileRevision:
+      typeof row.profileRevision === "number" ? row.profileRevision : null,
+    label: typeof row.label === "string" ? row.label : null,
+    boundary: typeof row.boundary === "string" ? row.boundary : null,
+    readiness: typeof row.readiness === "string" ? row.readiness : null,
+  };
+}
+
 function decodeDetect(raw: Record<string, unknown>): DetectResponse {
   const engines = Array.isArray(raw.engines)
     ? (raw.engines as Record<string, unknown>[]).map(decodeEngine)
@@ -211,6 +251,7 @@ function decodeDetect(raw: Record<string, unknown>): DetectResponse {
     repairs: Array.isArray(raw.repairs)
       ? (raw.repairs as Record<string, unknown>[]).map(decodeRepair)
       : [],
+    summaryAssignment: decodeSummaryAssignment(raw.summaryAssignment),
   };
 }
 
@@ -296,6 +337,98 @@ export async function conciergeApply(
     json: { rows },
   });
   return raw as unknown as ApplyResponse;
+}
+
+/* HS-201-09 — Check: ask the HUB to read the endpoint's /models.
+   The hub is the one that leaves this machine, never the browser. */
+export interface EndpointCheck {
+  ok: boolean;
+  models: string[];
+  detail: string;
+}
+
+export async function checkEndpoint(baseUrl: string): Promise<EndpointCheck> {
+  const { apiFetch, ApiError } = await import("../../lib/api");
+  // An unreachable endpoint answers 422 carrying the SAME body as a reachable
+  // one; the plain reason is in it, so the refusal is read, not re-worded.
+  let raw: Record<string, unknown>;
+  try {
+    raw = await apiFetch<Record<string, unknown>>("/api/setup/discover-models", {
+      method: "POST",
+      json: { base_url: baseUrl },
+    });
+  } catch (err) {
+    if (err instanceof ApiError && err.payload && typeof err.payload === "object") {
+      raw = err.payload as Record<string, unknown>;
+    } else {
+      return {
+        ok: false,
+        models: [],
+        detail: err instanceof Error ? err.message : "Could not reach the model server.",
+      };
+    }
+  }
+  return {
+    ok: raw.ok === true,
+    models: Array.isArray(raw.models) ? raw.models.map(String) : [],
+    detail: String(raw.detail ?? "Could not reach the model server."),
+  };
+}
+
+/* HS-201-09 — define one endpoint through the Model Library command the
+   service already accepts (see endpointDraft.ts for why the body is built
+   there). The receipt names the immutable profile revision the summary
+   selection must carry. */
+export interface DefinedEndpoint {
+  profileId: string;
+  profileRevision: number;
+}
+
+export async function defineEndpoint(
+  draft: EndpointDraft,
+): Promise<DefinedEndpoint> {
+  const { apiFetch } = await import("../../lib/api");
+  const raw = await apiFetch<Record<string, unknown>>(
+    "/api/inference/model-library/define-endpoint",
+    { method: "POST", json: { draft, secret: null } },
+  );
+  const provider = (raw.provider ?? {}) as Record<string, unknown>;
+  return {
+    profileId: String(provider.profile_id ?? ""),
+    profileRevision:
+      typeof provider.profile_revision === "number"
+        ? provider.profile_revision
+        : 0,
+  };
+}
+
+/* HS-201-09 — the one explicit summary gesture (lane A's documented seam).
+   HTTP 200 alone does not mean it succeeded: read `result.state`. */
+export interface SummarySelectionResult {
+  status: string;
+  state: string;
+  plainReason: string;
+  summaryAssignment: SummaryAssignment | null;
+}
+
+export async function conciergeSummarySelection(body: {
+  commandId: string;
+  expectedAssignmentRevision: number;
+  profileId: string;
+  profileRevision: number;
+}): Promise<SummarySelectionResult> {
+  const { apiFetch } = await import("../../lib/api");
+  const raw = await apiFetch<Record<string, unknown>>(
+    "/api/concierge/summary-selection",
+    { method: "POST", json: body },
+  );
+  const result = (raw.result ?? {}) as Record<string, unknown>;
+  return {
+    status: String(raw.status ?? ""),
+    state: String(result.state ?? ""),
+    plainReason: String(result.plainReason ?? ""),
+    summaryAssignment: decodeSummaryAssignment(raw.summaryAssignment),
+  };
 }
 
 export async function conciergeDownload(presetId: string): Promise<DownloadResponse> {

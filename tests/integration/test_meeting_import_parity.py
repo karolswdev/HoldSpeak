@@ -104,7 +104,9 @@ def test_imported_meeting_is_indistinguishable_downstream(tmp_path, db, client):
     row = next(m for m in listing["meetings"] if m["id"] == meeting_id)
     assert row["title"] == "Imported kickoff"
     assert row["segment_count"] == 2
-    assert row["intel_status"] == "queued"
+    # HS-201-10: like a RECORDED meeting — a transcript and no summary yet,
+    # which is the row shape the ledger draws "Run summary" on.
+    assert row["intel_status"] == "disabled"
 
     # Full-text transcript search finds its text.
     found = client.get("/api/meetings", params={"search": "zanzibar"}).json()

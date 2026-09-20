@@ -1730,7 +1730,7 @@
     },
     {
       "path": "holdspeak/commands/doctor.py",
-      "line": 298,
+      "line": 291,
       "kinds": [
         "websocket"
       ],
@@ -1740,7 +1740,7 @@
     },
     {
       "path": "holdspeak/commands/doctor.py",
-      "line": 303,
+      "line": 296,
       "kinds": [
         "websocket"
       ],
@@ -1750,17 +1750,7 @@
     },
     {
       "path": "holdspeak/commands/doctor.py",
-      "line": 663,
-      "kinds": [
-        "model_transport"
-      ],
-      "excerpt": "fix=\"Verify endpoint compatibility with the OpenAI `/models` API.\",",
-      "line_sha256": "8ad51549c52abb2b9e31cbe8131cb7f0707d09e5735c627364fe9f06a5ad6c22",
-      "review": "candidate_only"
-    },
-    {
-      "path": "holdspeak/commands/doctor.py",
-      "line": 883,
+      "line": 665,
       "kinds": [
         "model_transport"
       ],
@@ -1770,7 +1760,7 @@
     },
     {
       "path": "holdspeak/commands/doctor.py",
-      "line": 888,
+      "line": 670,
       "kinds": [
         "model_transport"
       ],
@@ -1780,7 +1770,7 @@
     },
     {
       "path": "holdspeak/commands/doctor.py",
-      "line": 1353,
+      "line": 1135,
       "kinds": [
         "http_client"
       ],
@@ -3801,7 +3791,7 @@
     },
     {
       "path": "holdspeak/meeting_import.py",
-      "line": 32,
+      "line": 33,
       "kinds": [
         "process_or_shell"
       ],
@@ -3811,7 +3801,7 @@
     },
     {
       "path": "holdspeak/meeting_import.py",
-      "line": 125,
+      "line": 143,
       "kinds": [
         "process_or_shell"
       ],
@@ -3887,16 +3877,6 @@
       ],
       "excerpt": "stderr=subprocess.PIPE,",
       "line_sha256": "633f693193436d6a10803912c8e7e5d93e91971a8a339d749ac1dd38063b84e3",
-      "review": "candidate_only"
-    },
-    {
-      "path": "holdspeak/meeting_session/intel_admission.py",
-      "line": 469,
-      "kinds": [
-        "http_client"
-      ],
-      "excerpt": "# and an untitled Meeting requests an auto-title.  In particular, a",
-      "line_sha256": "d7cf5c8b0ea59502fe457c1ba78e5ac0fe003221efe3693af7ee303c5daf2aed",
       "review": "candidate_only"
     },
     {
@@ -5473,17 +5453,17 @@
     },
     {
       "path": "holdspeak/services/model_library_service.py",
-      "line": 379,
+      "line": 376,
       "kinds": [
         "model_transport"
       ],
-      "excerpt": "# Custody may understand Anthropic before execution does. It still",
-      "line_sha256": "0733e1c0cae8f195fd7b349b2b90e38c83a4d6c3dc4f3b386c68809fea0b6094",
+      "excerpt": "# The existing OpenAI-compatible execution adapter accepts the closed",
+      "line_sha256": "0031d085b7575ceaad40b92c6da8025775620e8fa2426042da6f46092bb9da5e",
       "review": "candidate_only"
     },
     {
       "path": "holdspeak/services/model_library_service.py",
-      "line": 534,
+      "line": 536,
       "kinds": [
         "model_transport"
       ],
@@ -5493,7 +5473,17 @@
     },
     {
       "path": "holdspeak/services/model_library_service.py",
-      "line": 853,
+      "line": 555,
+      "kinds": [
+        "model_transport"
+      ],
+      "excerpt": "# Custody may understand Anthropic before execution does. Readiness",
+      "line_sha256": "fe30d3faa4f88355e673aeae4e35695494beb533336b4dfc5f5b1d66ce4f394f",
+      "review": "candidate_only"
+    },
+    {
+      "path": "holdspeak/services/model_library_service.py",
+      "line": 878,
       "kinds": [
         "model_transport"
       ],
@@ -5743,7 +5733,7 @@
     },
     {
       "path": "holdspeak/setup_runtime.py",
-      "line": 48,
+      "line": 77,
       "kinds": [
         "model_transport"
       ],
@@ -5753,7 +5743,7 @@
     },
     {
       "path": "holdspeak/setup_runtime.py",
-      "line": 184,
+      "line": 210,
       "kinds": [
         "model_transport"
       ],
@@ -5763,7 +5753,7 @@
     },
     {
       "path": "holdspeak/setup_runtime.py",
-      "line": 188,
+      "line": 214,
       "kinds": [
         "model_transport"
       ],
@@ -5773,7 +5763,7 @@
     },
     {
       "path": "holdspeak/setup_runtime.py",
-      "line": 194,
+      "line": 220,
       "kinds": [
         "model_transport"
       ],
@@ -5783,7 +5773,7 @@
     },
     {
       "path": "holdspeak/setup_runtime.py",
-      "line": 196,
+      "line": 222,
       "kinds": [
         "model_transport"
       ],
@@ -5793,7 +5783,7 @@
     },
     {
       "path": "holdspeak/setup_runtime.py",
-      "line": 223,
+      "line": 249,
       "kinds": [
         "model_transport"
       ],
@@ -5803,7 +5793,7 @@
     },
     {
       "path": "holdspeak/setup_runtime.py",
-      "line": 260,
+      "line": 286,
       "kinds": [
         "model_transport"
       ],
@@ -6673,7 +6663,7 @@
     },
     {
       "path": "web/src/desk/api.ts",
-      "line": 1011,
+      "line": 1022,
       "kinds": [
         "http_client"
       ],
@@ -6763,7 +6753,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 584,
+      "line": 691,
       "kinds": [
         "http_client"
       ],
@@ -6773,7 +6763,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 723,
+      "line": 843,
       "kinds": [
         "http_client"
       ],
@@ -6783,7 +6773,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1092,
+      "line": 1253,
       "kinds": [
         "http_client"
       ],
@@ -6793,7 +6783,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1374,
+      "line": 1535,
       "kinds": [
         "http_client"
       ],
@@ -6803,7 +6793,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1428,
+      "line": 1589,
       "kinds": [
         "http_client"
       ],
@@ -6813,7 +6803,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1487,
+      "line": 1648,
       "kinds": [
         "http_client"
       ],
@@ -7712,16 +7702,6 @@
       "review": "candidate_only"
     },
     {
-      "path": "web/src/features/concierge/useConciergeController.ts",
-      "line": 542,
-      "kinds": [
-        "http_client"
-      ],
-      "excerpt": "await apiFetch(\"/api/inference/model-library/define-endpoint\", {",
-      "line_sha256": "9058f98fd483112c795d88d442d9d59d8517eaefc6a424e71580f6da193bbd9f",
-      "review": "candidate_only"
-    },
-    {
       "path": "web/src/features/project-room/__tests__/ProjectRoomCore.test.tsx",
       "line": 35,
       "kinds": [
@@ -8093,7 +8073,7 @@
     },
     {
       "path": "web/src/lib/primitives.ts",
-      "line": 504,
+      "line": 512,
       "kinds": [
         "http_client"
       ],
@@ -8103,7 +8083,7 @@
     },
     {
       "path": "web/src/lib/productLanguage.ts",
-      "line": 166,
+      "line": 170,
       "kinds": [
         "input_injection"
       ],
@@ -8113,7 +8093,7 @@
     },
     {
       "path": "web/src/lib/sfx.ts",
-      "line": 202,
+      "line": 212,
       "kinds": [
         "http_client"
       ],
@@ -8273,7 +8253,7 @@
     },
     {
       "path": "web/src/pages/cores/HistoryCore.tsx",
-      "line": 259,
+      "line": 321,
       "kinds": [
         "http_client"
       ],
@@ -8283,7 +8263,7 @@
     },
     {
       "path": "web/src/pages/cores/HistoryCore.tsx",
-      "line": 278,
+      "line": 340,
       "kinds": [
         "http_client"
       ],
@@ -8812,6 +8792,16 @@
       "review": "candidate_only"
     },
     {
+      "path": "web/src/pages/cores/history/CatalogRail.tsx",
+      "line": 254,
+      "kinds": [
+        "http_client"
+      ],
+      "excerpt": "// `onSelect` and issue ZERO requests. Both run verbs dispatch.",
+      "line_sha256": "d5120f5f01e2659510c1b1751202fe9f35ecadcaf4dfc652482b6b7beac23413",
+      "review": "candidate_only"
+    },
+    {
       "path": "web/src/pages/cores/history/DoorSection.tsx",
       "line": 118,
       "kinds": [
@@ -8823,7 +8813,7 @@
     },
     {
       "path": "web/src/pages/cores/history/ImportSection.tsx",
-      "line": 40,
+      "line": 44,
       "kinds": [
         "http_client"
       ],
@@ -8833,7 +8823,7 @@
     },
     {
       "path": "web/src/pages/cores/history/MeetingDetail.tsx",
-      "line": 88,
+      "line": 114,
       "kinds": [
         "http_client"
       ],
@@ -8843,7 +8833,7 @@
     },
     {
       "path": "web/src/pages/cores/history/MeetingDetail.tsx",
-      "line": 124,
+      "line": 160,
       "kinds": [
         "http_client"
       ],
@@ -8853,7 +8843,7 @@
     },
     {
       "path": "web/src/pages/cores/history/MeetingDetail.tsx",
-      "line": 128,
+      "line": 164,
       "kinds": [
         "http_client"
       ],
@@ -8863,7 +8853,7 @@
     },
     {
       "path": "web/src/pages/cores/history/MeetingReview.tsx",
-      "line": 259,
+      "line": 260,
       "kinds": [
         "http_client"
       ],

@@ -320,12 +320,19 @@ export function headlineFor(
   // row -- the meeting-path blocker and every FAILED meeting on the face.
   // The all-clear is never spoken over one (audits/face-walk-opus.md
   // defect 8: `Nothing needs you` above a FAILED meeting).
-  if (count <= 0) {
-    if (pending > 0) return String(pending) + " need you";
+  // HS-201-11: the number the head speaks is ONE total -- the attention
+  // list plus what asks beside it (the SETUP row, a FAILED meeting). The
+  // rehearsal read `1 need you` while the attention list and the blocker
+  // were counted separately (audits/rehearsal-07-opus.md, step 1). The
+  // calendar row is an OFFER and is counted by neither (owner's ruling).
+  const total = count + Math.max(0, pending);
+  if (total <= 0) {
     return complete ? "Nothing needs you" : "Coverage incomplete";
   }
-  const n = String(count);
-  if (projectCount > 1) {
+  const n = String(total);
+  // The Project clause speaks only for the attention list, which is what
+  // the Projects are counted over.
+  if (count > 0 && projectCount > 1) {
     return n + " need you across " + String(projectCount) + " projects";
   }
   return n + " need you";
@@ -612,6 +619,9 @@ function Arrival() {
   const failedMeetings = meetings.filter(
     (m) => intelBadge(m.intelStatus) === "FAILED",
   ).length;
+  // HS-201-11 (owner's ruling): the calendar row is an OFFER, not a row
+  // that asks. A desk with no calendar must not say `1 need you` for ever
+  // (tenet 3), so `Connect calendar` renders and the head never counts it.
   const pending = blockers.length + failedMeetings;
   // Counsel fix round, second pass (ruling 1): a roster read still in
   // flight draws no row, and the all-clear waits for it -- an unknown is

@@ -115,6 +115,7 @@ first category may participate in a future assignment migration.
 |---|---|---|
 | inference-route | `web/src/desk/ask.ts` | 143-07; Thought and Dictation owner glass migrated to contextual canonical assignments |
 | inference-route | `web/src/pages/cores/SettingsCore.tsx`, `web/src/pages/cores/AssignmentEditor.tsx`, `web/src/pages/cores/AssignmentModelChooser.tsx`, `web/src/pages/cores/assignmentExperience.ts` | 143-13 |
+| inference-route | `web/src/features/concierge/useConciergeController.ts` | 201-09 the Concierge controller sends the owner's explicit summary selection (profileId + profileRevision) to `/api/concierge/summary-selection` and per-group rows to `/api/concierge/apply`; the hub's assignment authority remains the only writer, and the face reads the applied truth back from `summaryAssignment` |
 | display-transport | `web/src/desk/api.ts`, `web/src/desk/components/Pullout.tsx`, `web/src/desk/detail-types.ts`, `web/src/desk/infoContract.ts`, `web/src/desk/store/types.ts`, `web/src/lib/primitives.ts`, `web/src/pages/cores/core-types.ts` | 143-11 / 143-10 display contracts; no browser placement writer remains |
 | display-transport | `web/src/pages/cores/ModelLibraryCore.tsx`, `web/src/pages/cores/modelLibrary.ts` | 143-12 availability transport; selection never writes an assignment pointer |
 | display-transport | `web/src/pages/cores/TopologyMapView.tsx` | 156-04 topology graph reads profile_id for node display; never writes an assignment pointer |
@@ -122,6 +123,7 @@ first category may participate in a future assignment migration.
 | display-transport | `web/src/features/concierge/api.ts` | 170-03 concierge engine type carries profileId for display; never writes an assignment pointer |
 | display-transport | `web/src/pages/cores/dictation/SpeakFace.tsx` | 170-04 speak face reads profileId for engine resolution display; never writes a placement pointer |
 | display-transport | `web/src/meetings/summaryRoute.ts` | 201-04 the disclosed summary route's legs carry profile_id for display; the run gesture sends the route's selection HASH, never a pointer, and the hub binds the selection |
+| display-transport | `web/src/features/concierge/endpointDraft.ts` | 201-09 the Add-an-engine draft MINTS a profile_id for the Model Library `define-endpoint` command, which snapshots assignment heads on both sides and can never change an assignment (`model_library_service.py:_assert_assignment_heads`); it writes no placement pointer |
 | unrelated | `web/src/desk/components/DeliveryBoard.tsx`, `web/src/desk/deliveryFactory.ts` | 143-01 |
 
 Adding another production routing consumer—or a private selector/recovery

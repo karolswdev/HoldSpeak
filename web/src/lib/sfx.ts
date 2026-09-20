@@ -181,16 +181,26 @@ function playBuffer(name: SfxName, buffer: AudioBuffer): void {
 
 // ---- buffer loading ----
 
-/** Determine the asset URL. OGG preferred, WAV fallback. */
+/** Determine the asset URL. OGG preferred, WAV fallback.
+ *
+ * HS-201-11: the twelve files DO ship (`web/public/desk/sfx/`, copied into
+ * `holdspeak/static/_built/desk/sfx/`), but the hub serves the bundle under
+ * the `/_built` mount (`holdspeak/web_server.py:1376`), so a root-relative
+ * `/desk/sfx/...` 404s eight times on every desk load
+ * (audits/rehearsal-07-opus.md defect 8). Every other public asset already
+ * reads the bundle base (`desk/sprites.ts:51`, `desk/gl/atmosphereRegistry.ts:16`);
+ * the sounds now do the same. */
+export const SFX_BASE = `${import.meta.env.BASE_URL || "/_built/"}desk/sfx/`;
+
 function assetUrl(name: SfxName): string {
   // Test if the browser can play OGG (all modern browsers except old Safari).
   if (typeof document !== "undefined") {
     const audio = document.createElement("audio");
     if (audio.canPlayType('audio/ogg; codecs="opus"') || audio.canPlayType("audio/ogg")) {
-      return `/desk/sfx/${name}.ogg`;
+      return `${SFX_BASE}${name}.ogg`;
     }
   }
-  return `/desk/sfx/${name}.wav`;
+  return `${SFX_BASE}${name}.wav`;
 }
 
 async function loadBuffer(name: SfxName): Promise<void> {

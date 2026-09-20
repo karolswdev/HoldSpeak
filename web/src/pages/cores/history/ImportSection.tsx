@@ -36,7 +36,11 @@ export function ImportSection({
       if (title.trim()) body.append("title", title.trim());
       if (speaker.trim()) body.append("speaker", speaker.trim());
       if (tags.trim()) body.append("tags", tags.trim());
-      body.append("started_at_ms", String(file.lastModified));
+      // HS-201-10 (rehearsal defect 10): this used to send the FILE's
+      // `lastModified` as the meeting's start, so a WAV copied onto the disk
+      // in June landed the meeting under JUN 03 — three months back in the
+      // ledger, where the owner had no reason to look. The import moment is
+      // the one fact this gesture actually knows, and the hub stamps it.
       await apiFetch("/api/meetings/import", { method: "POST", body });
       setFile(null);
       setTitle("");

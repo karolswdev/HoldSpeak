@@ -11,14 +11,19 @@ import {
   conciergeApply,
   conciergeDownload,
   conciergeTaskProbe,
+  conciergeSummarySelection,
+  checkEndpoint,
+  defineEndpoint,
   type Engine,
   type EngineState,
   type ProposalRow,
   type DetectResponse,
   type ProposeResponse,
   type Repair,
+  type SummaryAssignment,
   type TaskProbeResponse,
 } from "./api";
+import { endpointDraft } from "./endpointDraft";
 
 /* ── Group glyphs — the seven user-visible groups ── */
 
@@ -107,7 +112,72 @@ export interface SetRow {
   state: EngineState;
   pickerOpen: boolean;
   alternatives: Engine[];
+  /** HS-201-09: this row is the APPLIED truth, not a proposal. */
+  applied?: boolean;
+  /** The applied engine's own label when detection no longer lists it. */
+  appliedLabel?: string;
 }
+
+/** The one group whose row IS the exact `meeting.deferred_analysis` choice. */
+export const SUMMARY_GROUP = "meetings";
+
+/** HS-201-09 — the rows one `Use these` may write: READY, or explicitly OFF.
+ *  A WAITING group is left alone; it never blocks the groups beside it. */
+export function applicableSetRows<
+  T extends { state: string; engineId: string | null },
+>(rows: readonly T[]): T[] {
+  return rows.filter((r) => r.state === "READY" || r.engineId === "OFF");
+}
+
+/* HS-201-09 (rehearsal defect 4) — the Meetings row reads the APPLIED
+   assignment, never the proposal.  Reopening Models after the owner chose
+   showed him a fresh proposal again, so the face forgot his choice and OFF
+   came back as an engine. `summaryAssignment` is the same projection the
+   deferred queue resolves; it is the only truth this row may draw. */
+export function summaryRowFromAssignment(
+  row: SetRow,
+  assignment: SummaryAssignment | null,
+  engines: Engine[],
+): SetRow {
+  if (!assignment) return row;
+  if (assignment.status === "off") {
+    return {
+      ...row,
+      engineId: "OFF",
+      state: "READY" as EngineState,
+      host: "",
+      applied: true,
+      appliedLabel: undefined,
+    };
+  }
+  if (assignment.status !== "assigned" && assignment.status !== "attention") {
+    return row;
+  }
+  const state: EngineState =
+    assignment.status === "attention" ? "NOT_SET" : "READY";
+  const engine = engines.find((e) => e.profileId === assignment.profileId);
+  if (engine) {
+    return {
+      ...row,
+      engineId: engine.id,
+      state,
+      host: engineHostLabel(engine),
+      applied: true,
+      appliedLabel: undefined,
+    };
+  }
+  return {
+    ...row,
+    engineId: assignment.profileId,
+    state,
+    host: (assignment.boundary ?? "").toUpperCase(),
+    applied: true,
+    appliedLabel: assignment.label ?? undefined,
+  };
+}
+
+/** HS-201-09 — the Add-an-engine well's own state machine. */
+export type AddEngineState = "IDLE" | "CHECKING" | "READY" | "UNREACHABLE";
 
 export interface AdjustRow {
   capabilityId: string;
@@ -149,8 +219,13 @@ export interface ConciergeController {
   addEngineOpen: boolean;
   addEngineUrl: string;
   addEngineChecking: boolean;
+  /** HS-201-09: the check's own answer, shown beside its verb. */
+  addEngineState: AddEngineState;
+  addEngineReason: string;
+  addEngineModel: string;
   setAddEngineUrl: (v: string) => void;
   checkNewEngine: () => void;
+  useNewEngineForSummaries: () => void;
   // Actions
   openPicker: (group: string) => void;
   closePicker: (group: string) => void;
@@ -215,7 +290,7 @@ export function useConciergeController(): ConciergeController {
         const rows: SetRow[] = prop.rows.map((r) => {
           // Build alternatives: all engines compatible with this group
           const alts = buildAlternatives(r.group, det.engines);
-          return {
+          const row: SetRow = {
             group: r.group,
             label: r.label,
             engineId: r.engineId,
@@ -224,6 +299,9 @@ export function useConciergeController(): ConciergeController {
             pickerOpen: false,
             alternatives: alts,
           };
+          return r.group === SUMMARY_GROUP
+            ? summaryRowFromAssignment(row, det.summaryAssignment, det.engines)
+            : row;
         });
         setSetRows(rows);
         setLoading(false);
@@ -288,14 +366,17 @@ export function useConciergeController(): ConciergeController {
 
   const receipt = proposal?.receipt ?? { groups: 0, engines: 0, waiting: 0 };
 
-  // Can apply: every group must be READY or explicitly OFF.
-  // A group is OFF when the user picked OFF (engineId === "OFF", state === "READY").
-  // A group with null engineId and WAITING state is NOT off -- it's unset.
-  const canApply =
-    setRows.length > 0 &&
-    setRows.every(
-      (r) => r.state === "READY" || r.engineId === "OFF",
-    );
+  // HS-201-09 (rehearsal defect 5) — Use these applies PER GROUP.
+  //
+  // It used to require EVERY row to be READY or explicitly OFF, so one
+  // unrelated WAITING group (Speech recognition, waiting on a download)
+  // disabled the whole apply: to get a summary engine the stranger first
+  // had to switch OFF the thing that transcribes his meeting.  A group
+  // that is READY or OFF is applicable on its own; a WAITING group is
+  // simply not sent, and the service's own refusal for a WAITING row
+  // (concierge_service.apply) stays exactly where it is.
+  const applicableRows = applicableSetRows(setRows);
+  const canApply = applicableRows.length > 0;
 
   // Build adjust rows from current set
   const adjustRows: AdjustRow[] = setRows.map((r) => {
@@ -458,7 +539,7 @@ export function useConciergeController(): ConciergeController {
     setError("");
     setApplyFailures([]);
     try {
-      const rows = setRows.map((r) => ({
+      const rows = applicableRows.map((r) => ({
         group: r.group,
         engineId: r.engineId,
         state: r.state,
@@ -528,43 +609,155 @@ export function useConciergeController(): ConciergeController {
   const [addEngineOpen, setAddEngineOpen] = useState(false);
   const [addEngineUrl, setAddEngineUrl] = useState("");
   const [addEngineChecking, setAddEngineChecking] = useState(false);
+  const [addEngineState, setAddEngineState] =
+    useState<AddEngineState>("IDLE");
+  const [addEngineReason, setAddEngineReason] = useState("");
+  const [addEngineModel, setAddEngineModel] = useState("");
+  // HS-201-09 (counsel finding 3): the address a check ANSWERED for. A
+  // check is a statement about one address; the moment the owner edits the
+  // field that statement is no longer about what he is looking at, so
+  // READY and the model it named are dropped and a late answer for the
+  // old address is discarded instead of being shown as the new one's.
+  const addEngineUrlRef = useRef("");
+
+  const editAddEngineUrl = useCallback((value: string) => {
+    addEngineUrlRef.current = value;
+    setAddEngineUrl((previous) => {
+      if (previous.trim() !== value.trim()) {
+        setAddEngineState("IDLE");
+        setAddEngineModel("");
+        setAddEngineReason("");
+      }
+      return value;
+    });
+  }, []);
 
   const addEngine = useCallback(() => {
     setAddEngineOpen(true);
+    setAddEngineState("IDLE");
+    setAddEngineReason("");
+    setAddEngineModel("");
+    addEngineUrlRef.current = "";
   }, []);
 
+  /* HS-201-09 — Check: the HUB reads the endpoint's /models and names the
+     model it serves.  The browser never leaves this machine; the reason for
+     a refusal is the server's own plain words, shown beside the verb. */
   const checkNewEngine = useCallback(async () => {
     const url = addEngineUrl.trim();
     if (!url) return;
     setAddEngineChecking(true);
+    setAddEngineState("CHECKING");
+    setAddEngineReason("");
+    setAddEngineModel("");
     try {
-      const { apiFetch } = await import("../../lib/api");
-      await apiFetch("/api/inference/model-library/define-endpoint", {
-        method: "POST",
-        json: {
-          draft: {
-            request_id: `concierge-${Date.now()}`,
-            label: url,
-            endpoint: url,
-            model: "",
-            requires_key: false,
-          },
-          secret: null,
-        },
+      const result = await checkEndpoint(url);
+      // The field moved on while this was in flight: the answer is about
+      // an address the owner is no longer looking at. Drop the ANSWER —
+      // but end the flight, or `Check` stays disabled for ever and the
+      // corrected address can never be checked at all (round 2 residual).
+      if (addEngineUrlRef.current.trim() !== url) {
+        safe(() => setAddEngineChecking(false));
+        return;
+      }
+      safe(() => {
+        setAddEngineChecking(false);
+        if (result.ok && result.models.length > 0) {
+          setAddEngineState("READY");
+          setAddEngineModel(result.models[0]);
+          setAddEngineReason("");
+          return;
+        }
+        setAddEngineState("UNREACHABLE");
+        setAddEngineReason(result.detail);
       });
+    } catch (err) {
+      if (addEngineUrlRef.current.trim() !== url) {
+        safe(() => setAddEngineChecking(false));
+        return;
+      }
+      safe(() => {
+        setAddEngineChecking(false);
+        setAddEngineState("UNREACHABLE");
+        setAddEngineReason(readableError(err));
+      });
+    }
+  }, [addEngineUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* HS-201-09 — the one gesture that finishes setup from the face:
+     define the endpoint through the Model Library command (which never
+     touches assignments), then make ONE explicit summary selection with
+     the immutable profile revision that command just minted. */
+  const useNewEngineForSummaries = useCallback(async () => {
+    const url = addEngineUrl.trim();
+    if (!url || !addEngineModel) return;
+    // HS-201-09 (counsel finding 1): this IS the setup gesture, so it ends
+    // the way ordinary Apply ends (the block at `apply` above) — the
+    // window closes, the one readiness signal fires so the arrival drops
+    // its SETUP row without another gesture, and focus goes back to the
+    // verb the owner left. Captured synchronously, before the await.
+    const from =
+      typeof document !== "undefined"
+        ? (document.activeElement as HTMLElement | null)
+        : null;
+    setAddEngineChecking(true);
+    setAddEngineReason("");
+    try {
+      const defined = await defineEndpoint(
+        endpointDraft({
+          url,
+          model: addEngineModel,
+          requestId: `concierge-${Date.now()}`,
+        }),
+      );
+      if (!defined.profileId || defined.profileRevision < 1) {
+        throw new Error("The engine was saved without a model record.");
+      }
+      const selection = await conciergeSummarySelection({
+        commandId: `concierge-summary-${Date.now()}`,
+        expectedAssignmentRevision:
+          detection?.summaryAssignment?.assignmentRevision ?? 0,
+        profileId: defined.profileId,
+        profileRevision: defined.profileRevision,
+      });
+      // HTTP 200 is not the answer; the result's own state is.
+      if (selection.state !== "READY") {
+        safe(() => {
+          setAddEngineChecking(false);
+          setAddEngineState("UNREACHABLE");
+          setAddEngineReason(
+            selection.plainReason || "The summary engine could not be selected.",
+          );
+        });
+        return;
+      }
       safe(() => {
         setAddEngineChecking(false);
         setAddEngineOpen(false);
         setAddEngineUrl("");
-        void load(); // Re-detect
+        addEngineUrlRef.current = "";
+        setAddEngineState("IDLE");
+        setAddEngineModel("");
+        setAddEngineReason("");
+        setApplied(true);
+        void load(); // Re-detect, for the moment before the window goes.
+        void import("../../desk/store")
+          .then(({ useDesk }) => {
+            useDesk.getState().closeSurfaceWindow("surface-concierge");
+          })
+          .catch(() => {
+            // A page without the desk store still assigned the engine.
+          });
+        announceTaskReturn(from);
       });
     } catch (err) {
       safe(() => {
         setAddEngineChecking(false);
-        setError(readableError(err));
+        setAddEngineState("UNREACHABLE");
+        setAddEngineReason(readableError(err));
       });
     }
-  }, [addEngineUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [addEngineUrl, addEngineModel, detection]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── HS-200-04: one verb per repair state, each opening an existing control ── */
 
@@ -580,7 +773,9 @@ export function useConciergeController(): ConciergeController {
           return;
         case "endpoint_editor":
           setAddEngineOpen(true);
-          setAddEngineUrl(repair.baseUrl);
+          // Through the invalidating setter, so the ref that guards a
+          // late check answer knows which address the field now holds.
+          editAddEngineUrl(repair.baseUrl);
           return;
         case "engine_picker":
           if (repair.groups[0]) openPicker(repair.groups[0]);
@@ -594,7 +789,7 @@ export function useConciergeController(): ConciergeController {
           return;
       }
     },
-    [downloadPreset, openPicker],
+    [downloadPreset, openPicker, editAddEngineUrl],
   );
 
   const runTaskProbe = useCallback(
@@ -650,7 +845,11 @@ export function useConciergeController(): ConciergeController {
     addEngineOpen,
     addEngineUrl,
     addEngineChecking,
-    setAddEngineUrl,
+    addEngineState,
+    addEngineReason,
+    addEngineModel,
+    setAddEngineUrl: editAddEngineUrl,
     checkNewEngine,
+    useNewEngineForSummaries,
   };
 }

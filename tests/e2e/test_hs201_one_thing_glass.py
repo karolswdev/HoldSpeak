@@ -21,6 +21,8 @@ Tests:
 """
 from __future__ import annotations
 
+import re
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -503,6 +505,239 @@ class TestOneThing:
 
             page.screenshot(
                 path=str(SHOTS / f"open-to-network-{width}.png"), full_page=True
+            )
+            _assert_clean(page, errors)
+            page.close()
+            browser.close()
+
+
+# ── HS-201-11: a quiet desk for the sitting ────────────────────────────
+#
+# The rehearsal's hub printed 34 tracebacks across two runs and the page
+# logged eight 404s for shipped sound files on every desk load
+# (audits/rehearsal-07-opus.md defects 6 and 8). This fence reads the
+# WIRE and the CONSOLE of a cold arrival: no 4xx, no 5xx, no console
+# error, and the head does not speak an all-clear over a row that asks.
+
+QUIET_SHOTS = REPO / "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-11-shots"
+
+_SFX_REF = re.compile(r"""([^"'`]*)desk/sfx/""")
+
+
+def _sfx_bases() -> set[str]:
+    """Every path prefix the BUILT bundle asks the desk sounds for.
+
+    The emitted chunks are hashed and replaced wholesale by a rebuild, so
+    a scan that lands mid-build reads an empty or vanishing directory.
+    That is a rebuild, not a missing reference: try again.
+    """
+    built = REPO / "holdspeak" / "static" / "_built" / "assets"
+    for attempt in range(5):
+        found: set[str] = set()
+        for path in built.glob("*.js"):
+            try:
+                text = path.read_text(encoding="utf-8", errors="ignore")
+            except FileNotFoundError:
+                continue
+            found.update(_SFX_REF.findall(text))
+        if found:
+            return {prefix + "desk/sfx/" for prefix in found}
+        if attempt < 4:
+            time.sleep(3)
+    raise AssertionError("no sound reference in the built bundle")
+
+
+def _seed_plain_meeting() -> None:
+    """One finalized meeting whose summary ran and which holds NO action."""
+    from holdspeak.db import get_database
+
+    db = get_database()
+    now = datetime.now()
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO meetings "
+            "(id, started_at, ended_at, title, duration_seconds, "
+            " intel_status, capture_status, provenance) "
+            "VALUES (?, ?, ?, ?, ?, 'ready', 'finalized', 'desktop')",
+            (
+                "m-plain",
+                (now - timedelta(minutes=20)).isoformat(),
+                (now - timedelta(minutes=19)).isoformat(),
+                "Sprint planning rehearsal",
+                60.0,
+            ),
+        )
+        conn.commit()
+
+
+class TestQuietDesk:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        _ensure_build()
+        _quiet_concierge(monkeypatch)
+        self.server, self.base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        _clear_speech_head()
+        yield
+        self.server.stop()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_cold_arrival_is_quiet(self, width: int) -> None:
+        """No failed request and no console error on a cold desk load."""
+        from playwright.sync_api import sync_playwright
+
+        QUIET_SHOTS.mkdir(parents=True, exist_ok=True)
+        errors: list[str] = []
+        console: list[str] = []
+        failed: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            # NOT reduced motion: `sfx.play` is a no-op under
+            # `prefers-reduced-motion: reduce` (web/src/lib/sfx.ts,
+            # `isMuted`), so a reduced-motion page never asks for a sound
+            # file and this fence would read a clean wire while the owner's
+            # desk logged eight 404s. `_settle` still waits out the
+            # animations before the shot.
+            page.emulate_media(reduced_motion="no-preference")
+            page.on("pageerror", lambda err: errors.append(str(err)))
+            page.on(
+                "console",
+                lambda msg: console.append(f"{msg.type}: {msg.text}")
+                if msg.type == "error"
+                else None,
+            )
+            page.on(
+                "response",
+                lambda response: failed.append(f"{response.status} {response.url}")
+                if response.status >= 400
+                else None,
+            )
+
+            _arrive(page, self.base)
+
+            # The sounds load on the first gesture, not at boot: open a
+            # desk window, which is what `sfx("latch")` rides
+            # (web/src/desk/store/windowFactory.ts:48). Without the fix
+            # this is where eight `/desk/sfx/*.ogg` 404s land.
+            _open_surface(page, "review-meetings")
+            page.locator("[data-testid='meetings-headline']").wait_for(timeout=15_000)
+            _settle(page)
+            page.wait_for_timeout(1_500)
+
+            assert not failed, failed
+            assert not console, console
+
+            # ── the six desk sounds (defect 8) ──
+            # `play()` is a no-op until a gesture the mic owns, so this
+            # fence does not wait for one: it reads the URL the SHIPPED
+            # bundle asks for and makes the hub answer it. The rehearsal's
+            # eight failures were `/desk/sfx/*.ogg`, root-relative, while
+            # the bundle (and its public art) is mounted under `/_built`
+            # (holdspeak/web_server.py:1376).
+            bases = _sfx_bases()
+            assert len(bases) == 1, bases
+            base = bases.pop()
+            assert base != "/", base
+            for name in ("key-down", "key-up", "latch", "land", "file", "error"):
+                for extension in ("ogg", "wav"):
+                    url = f"{self.base}{base}{name}.{extension}"
+                    status = page.evaluate(
+                        "(u) => fetch(u).then(r => r.status)", url
+                    )
+                    assert status == 200, f"{status} {url}"
+
+            page.screenshot(
+                path=str(QUIET_SHOTS / f"quiet-arrival-{width}.png"), full_page=True
+            )
+            _assert_clean(page, errors)
+            page.close()
+            browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_the_calendar_offer_never_moves_the_count(self, width: int) -> None:
+        """The SETUP row asks; the calendar row offers. The head says one."""
+        from playwright.sync_api import sync_playwright
+
+        QUIET_SHOTS.mkdir(parents=True, exist_ok=True)
+        errors: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda err: errors.append(str(err)))
+
+            _arrive(page, self.base)
+
+            # The desk is cold: no engine for the meeting path, no calendar.
+            door = _api(page, "GET", "/api/door", token=TOKEN)
+            assert door["calendar_configured"] is False, door.get("calendar_configured")
+
+            section = page.locator("[data-testid='arrival-blocker']")
+            section.wait_for(timeout=15_000)
+            calendar = page.locator("[data-testid='arrival-connect-calendar']")
+            calendar.wait_for(timeout=15_000)
+            assert "Connect calendar" in (calendar.text_content() or "")
+
+            # ONE row asks (SETUP). The calendar row is an OFFER beside it
+            # and never moves the count (owner's ruling: a desk with no
+            # calendar must not say `1 need you` for ever, tenet 3).
+            assert page.locator("[data-testid='arrival-blocker-row']").count() == 1
+            page.wait_for_function(
+                """() => {
+                  const el = document.querySelector("[data-testid='arrival-display']");
+                  return el && el.textContent.trim() === "1 need you";
+                }""",
+                timeout=15_000,
+            )
+            headline = (
+                page.locator("[data-testid='arrival-display']").text_content() or ""
+            ).strip()
+            assert headline == "1 need you", headline
+            # One all-clear per screen: this screen has none to print.
+            assert page.get_by_text("Nothing needs you").count() == 0
+
+            _settle(page)
+            page.screenshot(
+                path=str(QUIET_SHOTS / f"head-over-setup-and-offer-{width}.png"),
+                full_page=True,
+            )
+            _assert_clean(page, errors)
+            page.close()
+            browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_no_open_actions_filter_over_a_meeting_with_no_action(self, width: int) -> None:
+        """A filter that can match nothing is not drawn."""
+        from playwright.sync_api import sync_playwright
+
+        QUIET_SHOTS.mkdir(parents=True, exist_ok=True)
+        _seed_plain_meeting()
+        errors: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda err: errors.append(str(err)))
+
+            _arrive(page, self.base)
+            _open_surface(page, "review-meetings")
+            page.locator("[data-testid='meetings-headline']").wait_for(timeout=15_000)
+            page.get_by_text("Sprint planning rehearsal").first.wait_for(timeout=15_000)
+
+            # The product's own truth: the meeting holds no open action.
+            actions = _api(page, "GET", "/api/all-action-items", token=TOKEN)
+            assert actions["action_items"] == [], actions
+
+            _settle(page)
+            assert page.locator("[data-testid='meetings-facets']").count() == 0
+            assert page.get_by_text("HAS OPEN ACTIONS").count() == 0
+
+            page.screenshot(
+                path=str(QUIET_SHOTS / f"no-open-actions-filter-{width}.png"),
+                full_page=True,
             )
             _assert_clean(page, errors)
             page.close()

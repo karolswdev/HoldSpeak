@@ -105,16 +105,19 @@ def test_happy_path_windows_timestamps_and_persistence(tmp_path, db):
     assert all(s.speaker == DEFAULT_SPEAKER_LABEL for s in state.segments)
     assert state.title == "standup recording"
     assert state.tags == ["imported", "q3"]
-    # started_at honors the file's mtime; the duration matches the audio.
-    assert state.started_at == datetime.fromtimestamp(wav.stat().st_mtime)
+    # HS-201-10: started_at is the import moment, never the file's mtime;
+    # the duration matches the audio.
+    assert state.started_at != datetime.fromtimestamp(wav.stat().st_mtime)
     assert state.duration == pytest.approx(75.0, abs=0.1)
     assert seen == [(1, 3), (2, 3), (3, 3)]
 
-    # Persisted as a real meeting + the intel job enqueued (live conditions).
+    # Persisted as a real meeting, and NO summary asked for: Import
+    # transcribes and stops (tests/unit/test_hs201_import_no_auto_summary.py
+    # holds the fence).
     stored = db.meetings.get_meeting(state.id)
     assert stored is not None
-    assert result.intel_job_enqueued and state.id in _intel_job_ids(db)
-    assert state.intel_status == "queued"
+    assert not result.intel_job_enqueued and state.id not in _intel_job_ids(db)
+    assert state.intel_status == "disabled"
 
 
 def test_stereo_44k_is_downmixed_and_resampled_before_transcription(tmp_path, db):
