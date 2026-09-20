@@ -107,3 +107,12 @@ compatible exact assignment and submits the route read-model hash. Astra's
 broader web-server/recovery/HTTP suite passes 98 tests. The 409 guard remains.
 Inherited failures and raw baseline reproductions are in
 `audits/full-suite-astra.md`.
+
+
+## Delivery
+
+PR [#588 — HS-201 lane A](https://github.com/karolswdev/HoldSpeak/pull/588),
+base `main`, branch `feat/hs-201-a`; unmerged. Source commits: `183f1b5c`
+(02), `16a122ed` (03), `6365b7d3` (05), `00a10e44` (07 backend only).
+Muad'Dib owns counsel-on-built and merge after the B consumer satisfies
+the interlock. Astra session: `01a0bbc3-9bbd-7513-a76d-f6cc139fae2d`.

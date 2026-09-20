@@ -2,11 +2,13 @@
 
 **LANE:** A, Astra. Stories HS-201-02, HS-201-03, HS-201-05; 07 backend
 startup line only. Worktree `/Users/karol/dev/tools/wt-201-a`, branch
-`feat/hs-201-a`. PR: pending creation.
+`feat/hs-201-a`. PR: [#588 — HS-201 lane A](https://github.com/karolswdev/HoldSpeak/pull/588),
+base `main`, open and unmerged.
 Session: `01a0bbc3-9bbd-7513-a76d-f6cc139fae2d`.
 
 **OUTCOME:** Backend built and verified; the three stories and startup backend
-are committed through the gate. Push and review PR follow. Record uses
+are committed through the gate and pushed. The single review PR is open;
+Astra did not merge it. Record uses
 speech without a summary model. Summary selection creates the exact capability
 assignment. The route is disclosed before a run, bound before dispatch, and
 actual attempts persist in a receipt across restart. The startup line identifies
@@ -63,7 +65,7 @@ closure conditions, accepted B-criterion transfers and the capture-stamp correct
 in `checks/lane-a-muaddib.md`. Astra ratifies backend completion for a review PR; Muad'Dib ratifies it with the recorded closure conditions. The two integration test migrations are complete in A on his assignment (98 tests passed). No open dissent. This is not counsel-on-built
 of the eventual PR and does not authorize a merge.
 
-**UNKNOWN:** B's hash consumers and new refusal/Models/summary faces; real
+**UNKNOWN:** The final PR CI result (checks queued/running at delivery); B's hash consumers and new refusal/Models/summary faces; real
 model quality; owner desk startup/restart, actual microphone and typed
 dictation; before/after loop counts and the sitting. Story 07 and all phase
 exit criteria remain open. No loop was shown unable to stay inactive, so
@@ -78,6 +80,10 @@ details and the completed test migration are in `lane-a-handoff.md`.
 
 
 Gate commits: 02 — `183f1b5c`; 03 — `16a122ed`; 05 — `6365b7d3`.
-Each flips one story and ships its evidence. Startup backend is a separate
+Each flips one story and ships its evidence. Startup backend is `00a10e44`, a separate
 commit with no story flip. `dw gate --porcelain` passed each; `dw check`
 retains the inherited issues in the ledger and no new Phase 201 issue.
+
+Final source verification: committed `holdspeak/**` equals the full-suite
+product snapshot `18f67176`; `web/**` is unchanged from the charter baseline.
+Only test and record updates followed that full run.
