@@ -7345,6 +7345,28 @@
         ]
       }
     },
+    "/api/concierge/summary-selection": {
+      "post": {
+        "description": "Commit the owner's one explicit summary-engine selection.",
+        "operationId": "post_summary_selection_api_concierge_summary_selection_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Post Summary Selection Api Concierge Summary Selection Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Post Summary Selection",
+        "tags": [
+          "concierge"
+        ]
+      }
+    },
     "/api/connections": {
       "get": {
         "description": "The ONE readiness shape: one entry per known tool.",

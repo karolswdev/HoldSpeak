@@ -215,7 +215,7 @@ PROFILE_ID_CLASSIFICATIONS = {
     }},
     **{site: "credential/provider identity" for site in {
         "holdspeak/intel/providers.py:687:profile_id", "holdspeak/intel/providers.py:694:profile_id",
-        "holdspeak/intel/providers.py:703:profile_id", "holdspeak/setup_runtime.py:198:profile_id",
+        "holdspeak/intel/providers.py:703:profile_id", "holdspeak/setup_runtime.py:224:profile_id",
         "holdspeak/trust_destinations.py:69:profile_id",
     }},
 }

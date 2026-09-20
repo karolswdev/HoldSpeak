@@ -551,3 +551,91 @@ Step 7 now reads: *"Open a different app and click in a text box. Hold the
 Right Option key (⌥R), say one sentence, then release the key."* → *"Your
 words become text in that app, at the cursor."* A note under the table
 points at the startup line and the permission repair.
+
+### Captured run — 2026-09-20T08:48:18Z
+
+- **Command:** `bash -c HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q tests/integration/test_web_history_import_ui.py tests/unit/test_api_surface.py tests/unit/test_doc_drift_guard.py tests/unit/test_phase143_inference_capability_census.py tests/unit/test_phase143_routing_authority_census.py tests/unit/test_phase143_surface_fallback_census.py tests/unit/test_phase200_readiness.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 6de419109a60daa1bc1c9e8e515ce1d1df48437b
+
+```text
+........................................................................ [ 93%]
+.....                                                                    [100%]
+77 passed in 31.59s
+```
+
+### Captured run — 2026-09-20T08:49:00Z
+
+- **Command:** `bash -c cd web && npx tsc --noEmit && echo TYPECHECK CLEAN && npx vitest run src/features/concierge 2>&1 | tail -4`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 6de419109a60daa1bc1c9e8e515ce1d1df48437b
+
+```text
+TYPECHECK CLEAN
+      Tests  58 passed (58)
+   Start at  02:49:09
+   Duration  1.33s (transform 597ms, setup 281ms, import 872ms, tests 679ms, environment 914ms)
+```
+
+### Captured run — 2026-09-20T08:49:11Z
+
+- **Command:** `bash -c HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q tests/e2e/test_hs201_09_connect_engine_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 6de419109a60daa1bc1c9e8e515ce1d1df48437b
+
+```text
+..                                                                       [100%]
+2 passed in 16.24s
+```
+
+## CI fallout
+
+Nine branch-new failures on PR #590 (`120f993d`), classified per
+`docs/internal/ORCHESTRATION.md:201` §4: **(a)** the test asserts the OLD
+posture, so the test moves to the new law with the still-valid states
+pinned explicitly; **(b)** a REAL regression the change exposed, fixed in
+code and said loudly; **(c)** unrelated flake, proven serial-green twice.
+
+**Result: eight (a), one (b) in user-facing prose, zero (c), zero real code
+regressions.** No guard, census or fence was weakened anywhere; every (a)
+edit ADDED a pin rather than removing one.
+
+| # | Test | Class | Why | Change |
+|---|---|---|---|---|
+| 1 | `tests/integration/test_web_history_import_ui.py::test_history_has_audio_and_transcript_import` | **(a)** — story **10** | It pinned `started_at_ms` and `lastModified` in the import door. HS-201-10 deliberately removed exactly that (rehearsal defect 10: a WAV copied in June landed the meeting under JUN 03). | The door's four real fields (`file`, `title`, `speaker`, `tags`) are now pinned, and BOTH removed fields are pinned as ABSENT from every `body.append(` line, so the mtime cannot come back in silence. |
+| 2 | `tests/unit/test_api_surface.py::test_committed_openapi_matches_reference_app` | **(a)** | `docs/generated/openapi.json` is a pin of the old route set. `/api/concierge/summary-selection` is a real route (lane A's story 06 seam, now the face's own path in 09). | Regenerated with the documented regenerator, never hand-edited: `HOME=$(mktemp -d) uv run python scripts/philo_openapi_reference.py` → `OpenAPI: 569 paths`; the diff is the one new path, +22 lines. |
+| 3 | `tests/unit/test_doc_drift_guard.py::test_no_user_facing_doc_leaks_roadmap_vocabulary` | **(b)** — story **10** | **A real defect in what a USER reads.** Story 10's doc edits put `HS-201-10` into `docs/MEETING_ARCHITECTURE.md:71,73` and `docs/MEETING_INTELLIGENCE.md:54`. The guard is right; the prose was wrong. | Reworded in product-tense ("An import asks for no summary.", "It enqueues nothing;", "an import runs no summary of its own"). The guard is untouched. |
+| 4 | `tests/unit/test_doc_drift_guard.py::test_no_user_facing_doc_uses_dashes_in_prose` | **(b)** — story **10** | Same edit, same line: an em dash in user-facing prose against the ratified voice rules. | The dash became a period in the same rewording. The guard is untouched. |
+| 5 | `tests/unit/test_phase143_inference_capability_census.py::test_phase143_call_site_fixture_is_complete_and_fail_closed` | **(a)** — story **10** | Line-number pin drift only: `holdspeak/meeting_import.py:313 → :329`. Same function (`_transcribe_import_windows`), same capability (`transcribe`), same kind (`call`) — story 10 moved code above it. | Both pins moved to `:329`. Nothing was added to or removed from the census. |
+| 6 | `tests/unit/test_phase143_inference_capability_census.py::test_phase143_every_censused_site_has_one_capability_and_source_owner` | **(a)** — story **10** | The same one pin, read by the second assertion. | Covered by the same move. |
+| 7 | `tests/unit/test_phase143_routing_authority_census.py::test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer` | **(a)** | Line-number pin drift: `holdspeak/setup_runtime.py:198 → :224`, because 09 inserted `unreachable_reason` above `discover_endpoint_models`. Same pointer, same file. | The pin moved to `:224`. |
+| 8 | `tests/unit/test_phase143_surface_fallback_census.py::test_web_route_pointer_controls_are_classified_and_single_owned` | **(a)** — the census doing its job | Two 09 web files now carry a profile pointer and were unregistered: `endpointDraft.ts` (new) and `useConciergeController.ts`. | Registered with one owner each, the way `summaryRoute.ts` was registered in 04, with a reasoned row in the reviewed artifact (`pm/roadmap/holdspeak/phase-143-intelligence-router/assets/generated-surface-fallback-census.md`): `endpointDraft.ts` = **display-transport** (it mints a `profile_id` for the Model Library `define-endpoint` command, which snapshots assignment heads on both sides and can never change an assignment); `useConciergeController.ts` = **inference-route** (it sends the owner's explicit summary selection and the per-group apply rows; the hub's assignment authority stays the only writer). |
+| 9 | `tests/unit/test_phase200_readiness.py::test_a_blocking_compatibility_issue_is_tool_incompatible_with_the_picker_verb` | **(a)** | The verb survived: `Choose` / `engine_picker` / `["agents_tools"]` are all still asserted and all still true. Only `detail` changed, from the raw issue code to a plain line, which is 09's whole point (rehearsal defect 7). | The assertion now reads the mapping by name (`cs._INCOMPATIBILITY_REASONS["capability_class_unsupported"]`) AND its literal text. **A lying fixture was fixed at the same time:** the test minted `capability_tools_unsupported`, a code nothing in `holdspeak/` ever emits; it now mints `capability_class_unsupported`, which `inference_assignment_service.py:1881` really returns. A new case (`test_an_unknown_blocking_code_still_says_something_a_person_can_read`) pins the fail-closed path so an unmapped future code is never shown raw. |
+
+### Green
+
+All nine, in one run, isolated HOME:
+
+```text
+........................................................................ [ 93%]
+.....                                                                    [100%]
+77 passed in 31.59s
+```
+
+Story 09's own suites, after these edits:
+
+```text
+TYPECHECK CLEAN
+      Tests  58 passed (58)      web/src/features/concierge
+2 passed in 16.24s               tests/e2e/test_hs201_09_connect_engine_glass.py (real LAN engine)
+```
+
+### Not covered here
+
+The full suite was not run (this lane's rule). Items 1, 3, 4, 5 and 6 are
+fallout from **story 10**, fixed here because the CI list came to this
+lane; items 2, 7, 8 and 9 are 09's own. Nothing was classified **(c)**, so
+no serial-green-twice proof was owed.

@@ -32,7 +32,22 @@ def test_history_has_audio_and_transcript_import() -> None:
         assert suffix in section, suffix
     assert "ffmpeg" in section
     assert '"/api/meetings/import"' in section
-    assert "started_at_ms" in section and "lastModified" in section
+    # HS-201-10 (rehearsal defect 10): the import door used to send the
+    # FILE's `lastModified` as `started_at_ms`, so a WAV copied onto the
+    # disk in June landed the meeting under JUN 03. The import moment is
+    # the one fact this gesture knows, and the hub stamps it. The fields
+    # the door DOES send stay pinned here, and the two it must never send
+    # again are pinned as absent.
+    for field in ('"file"', '"title"', '"speaker"', '"tags"'):
+        assert f"body.append({field}" in section, field
+    appended = [line for line in section.splitlines() if "body.append(" in line]
+    assert appended
+    assert not [line for line in appended if "lastModified" in line], (
+        f"the import door sent the file's mtime again: {appended}"
+    )
+    assert not [line for line in appended if "started_at_ms" in line], (
+        f"the import door sent a client-chosen start again: {appended}"
+    )
 
 
 def test_history_has_composable_server_facets() -> None:
