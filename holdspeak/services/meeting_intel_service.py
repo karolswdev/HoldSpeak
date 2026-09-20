@@ -36,12 +36,14 @@ class MeetingIntelService:
             )
         if run_receipt is None:
             run_receipt = self._db.intel.get_run_receipt(meeting_id)
+        last_refusal = self._db.intel.get_last_refusal(meeting_id)
         exc = ConflictError(detail, code=code)
         exc.context.update(
             {
                 "planned_route": planned_route,
                 "current_planned_route": planned_route,
                 "run_receipt": run_receipt,
+                "last_refusal": last_refusal,
             }
         )
         return exc
@@ -87,7 +89,7 @@ class MeetingIntelService:
         try:
             require_expected_selection(route, expected_selection_hash)
         except ConflictError as exc:
-            receipt = self._db.intel.record_route_refusal(
+            self._db.intel.record_route_refusal(
                 meeting_id,
                 planned_route=route,
                 expected_selection_hash=expected_selection_hash,
@@ -97,7 +99,6 @@ class MeetingIntelService:
                 meeting_id,
                 str(exc),
                 code=exc.code,
-                run_receipt=receipt,
                 planned_route=route,
             ) from exc
         return route
@@ -219,7 +220,7 @@ class MeetingIntelService:
         if artifacts: completed.append({"label":"Artifacts","detail":f"{len(artifacts)} saved {'artifact' if len(artifacts)==1 else 'artifacts'}"})
         detail = (job.last_error if job else None) or meeting.intel_status_detail or "Meeting intelligence did not finish."
         retry_requested = state == "queued" and detail in {MANUAL_INTEL_RETRY_REASON, ROUTED_INTEL_RETRY_REASON}
-        return {"meeting_id":meeting_id,"visible":visible,"state":state,"headline":headline,"completed":completed,"planned_route":project_route(self._db, invocation_id=f"meeting:{meeting_id}"),"run_receipt":self._db.intel.get_run_receipt(meeting_id),"remaining":{"label":"Routed meeting intelligence" if meeting.intel is not None and meeting_state in {"partial","skipped"} else "Remaining meeting intelligence" if meeting.intel is not None else "Summary, topics, action items, and routed artifacts","detail":str(detail)},"job":{"status":job.status,"attempts":job.attempts,"requested_at":job.requested_at.isoformat(),"updated_at":job.updated_at.isoformat(),"planned_route":job.planned_route,"run_receipt":job.run_receipt} if job else None,"actions":{"retry":not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and not retry_requested,"skip":not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and meeting_state != "skipped"}}
+        return {"meeting_id":meeting_id,"visible":visible,"state":state,"headline":headline,"completed":completed,"planned_route":project_route(self._db, invocation_id=f"meeting:{meeting_id}"),"run_receipt":self._db.intel.get_run_receipt(meeting_id),"last_refusal":self._db.intel.get_last_refusal(meeting_id),"remaining":{"label":"Routed meeting intelligence" if meeting.intel is not None and meeting_state in {"partial","skipped"} else "Remaining meeting intelligence" if meeting.intel is not None else "Summary, topics, action items, and routed artifacts","detail":str(detail)},"job":{"status":job.status,"attempts":job.attempts,"requested_at":job.requested_at.isoformat(),"updated_at":job.updated_at.isoformat(),"planned_route":job.planned_route,"run_receipt":job.run_receipt} if job else None,"actions":{"retry":not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and not retry_requested,"skip":not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and meeting_state != "skipped"}}
     def retry_recovery(self, principal: Principal, meeting_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]: return self._retry(meeting_id, recovery=True, expected_selection_hash=(payload or {}).get("expected_selection_hash"))
     def skip_recovery(self, principal: Principal, meeting_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         outcome = self._db.intel.skip_remaining_intel(meeting_id)

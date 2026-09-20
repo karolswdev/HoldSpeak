@@ -115,31 +115,14 @@ def _trust_block(
     config: Any, *, web_bind: str = "127.0.0.1", database: Any = None
 ) -> dict[str, Any]:
     """What can leave the machine right now, from config (display only)."""
-    from .intel import intel_egress_posture
-
     meeting = config.meeting
     dictation_runtime = config.dictation.runtime
 
-    if not meeting.intel_enabled:
-        transcript_egress = "none"
-    else:
-        provider = str(meeting.intel_provider or "local").strip().lower()
-        # local → none; cloud → configured (always off-machine); auto → possible.
-        transcript_egress = {
-            "local": "none",
-            "cloud": "configured",
-            "auto": "possible",
-        }.get(provider, "possible")
+    # HS-201: the ordinary Web Record path has no live meeting analysis. This
+    # says nothing about speech or a later manual summary route.
+    transcript_egress = "none"
 
     endpoints: list[str] = []
-    if meeting.intel_enabled and str(meeting.intel_provider).lower() != "local":
-        # HS-84-04: the EFFECTIVE endpoint — an assigned RuntimeProfile
-        # (HS-84-01) is where transcripts actually go, not the raw field.
-        from .intel.providers import effective_intel_cloud
-
-        base = (effective_intel_cloud(meeting).base_url or "").strip()
-        if base:
-            endpoints.append(base)
     # HS-84-02: report the EFFECTIVE dictation endpoint — an adopted
     # RuntimeProfile both selects the openai_compatible backend and supplies
     # the base URL, so the raw config fields would lie here.
@@ -156,9 +139,8 @@ def _trust_block(
         if base:
             endpoints.append(base)
 
-    # Static intent description reused from the doctor/web egress source of truth.
-    _, egress_description = intel_egress_posture(
-        meeting.intel_provider, meeting_cfg=meeting
+    egress_description = (
+        "Live analysis is off for Record. Dictation and manual summary can use a remote route."
     )
     from .trust_destinations import destination_inventory
 
@@ -176,8 +158,7 @@ def _trust_block(
         "web_bind": web_bind,
         "auth_token_set": bool((getattr(config, "web_auth_token", "") or "").strip()),
         "transcript_egress": transcript_egress,
-        "egress_detail": egress_description if meeting.intel_enabled else
-        "Disabled — no transcript leaves this machine.",
+        "egress_detail": egress_description,
         "configured_endpoints": endpoints,
         "actuators_enabled": bool(getattr(meeting, "allow_actuators", False)),
         "webhook_allowed_hosts": list(getattr(meeting, "webhook_allowed_hosts", []) or []),
@@ -193,7 +174,8 @@ def _trust_block(
         "summary": (
             f"{len(enabled_destinations)} external destination"
             f"{'s' if len(enabled_destinations) != 1 else ''} enabled."
-            if enabled_destinations else "No external destination is enabled."
+            if enabled_destinations
+            else "No listed destination is enabled."
         ),
     }
 

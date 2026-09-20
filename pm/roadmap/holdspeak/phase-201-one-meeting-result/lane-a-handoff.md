@@ -116,3 +116,25 @@ base `main`, branch `feat/hs-201-a`; unmerged. Source commits: `183f1b5c`
 (02), `16a122ed` (03), `6365b7d3` (05), `00a10e44` (07 backend only).
 Muad'Dib owns counsel-on-built and merge after the B consumer satisfies
 the interlock. Astra session: `01a0bbc3-9bbd-7513-a76d-f6cc139fae2d`.
+
+
+## Counsel-on-built follow-up — receipt history and live-analysis posture
+
+Meeting detail/list/recovery and HTTP 409 now expose `last_refusal` beside
+`run_receipt`. When any executed receipt exists, `run_receipt` selects the
+latest receipt with nonempty `attempts`, including a failed execution. A newer
+hashless or stale refusal does not replace it. With no execution yet, the
+existing latest-receipt behavior remains. Each job keeps its own receipt.
+`last_refusal` can predate a later successful execution; compare receipt IDs,
+not current settings, and do not turn that historical refusal into run status.
+
+Exceptions after provider contact recover the existing kernel attempt rows.
+A persisted dispatch intent without settlement is shown as `indeterminate`.
+A pre-send refusal still has no attempts. If the durable evidence itself cannot
+be read, the queue logs the failure and leaves the public receipt absent;
+it does not invent an empty receipt. No new schema or journal was added.
+
+The retired live-analysis knob now reports off through Settings, doctor,
+setup trust, and destination inventory. This is retirement on Record, not a
+reconnection. Dictation and explicit summary routes can still be remote.
+Lane B owns any face consumption of `last_refusal`; lane A changed no `web/**`.

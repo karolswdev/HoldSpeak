@@ -628,14 +628,29 @@ def _process_bound_intel_job(
     finally:
         if getattr(job, "planned_route", None) and db.intel.get_run_receipt_for_job(str(job.job_id)) is None:
             # Refusals before route execution still need a durable, empty
-            # attempt list. This is distinct from a dispatched provider failure.
-            db.intel.record_run_receipt(
-                job.meeting_id,
-                str(job.job_id),
-                (getattr(job, "planned_route", {}) or {}).get("selection_hash"),
-                outcome,
-                None,
-            )
+            # attempt list. Once bound execution has admitted a route, recover
+            # its controller evidence so a provider contact remains visible if
+            # a later provider/projection boundary raised.
+            durable_route_receipt = None
+            receipt_recovery_failed = False
+            if bound is not None:
+                try:
+                    durable_route_receipt = bound.durable_route_receipt()
+                except Exception as exc:
+                    receipt_recovery_failed = True
+                    log.error(
+                        "Could not recover bound route receipt for %s; public receipt left absent: %s",
+                        job.meeting_id,
+                        type(exc).__name__,
+                    )
+            if not receipt_recovery_failed:
+                db.intel.record_run_receipt(
+                    job.meeting_id,
+                    str(job.job_id),
+                    (getattr(job, "planned_route", {}) or {}).get("selection_hash"),
+                    outcome,
+                    durable_route_receipt,
+                )
         # A fenced-out executor may not terminalize the shared parent after a
         # newer bearer adopted it. A normal terminal job still closes its parent
         # even though completion has already made lease renewal inapplicable.

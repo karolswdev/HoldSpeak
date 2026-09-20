@@ -26,7 +26,8 @@ captures. Twelve failures reproduce on the pristine charter baseline; two old
 integration callers were migrated and pass a broader 98-test root capture; one scanner no-write failure
 passes twice in a quiet tree. No full-suite green is claimed. Complete output
 and classification: `audits/full-suite-astra.log` and `audits/full-suite-astra.md`.
-Product code is unchanged after the full run. Test-only follow-ups were rerun.
+At initial delivery, product code was unchanged after that full run.
+The counsel follow-up below changes product code and has fresh focused proof.
 
 A real isolated hub restart preserved the fixture summary and receipt. Shots:
 `assets/lane-a/meeting-after-restart-1440.png` and
@@ -84,6 +85,44 @@ Each flips one story and ships its evidence. Startup backend is `00a10e44`, a se
 commit with no story flip. `dw gate --porcelain` passed each; `dw check`
 retains the inherited issues in the ledger and no new Phase 201 issue.
 
-Final source verification: committed `holdspeak/**` equals the full-suite
-product snapshot `18f67176`; `web/**` is unchanged from the charter baseline.
-Only test and record updates followed that full run.
+Initial-delivery source verification: `holdspeak/**` then equalled full-suite
+product snapshot `18f67176`. The later counsel follow-up has separate focused
+verification; that old snapshot is not a full run of the follow-up.
+
+
+## Counsel-on-built follow-up — 2026-09-19
+
+**LANE:** A, Astra; same worktree, branch, PR #588 and session above.
+
+**OUTCOME:** All three requested backend repairs are implemented. An executed
+receipt survives later refusals, `last_refusal` is separate, four reporting
+surfaces say live analysis is off for Record, and post-contact exceptions keep
+durable attempt evidence. No story status flips. PR #588 remains open.
+
+**PROOF:** Astra independently captured 218 receipt/queue/HTTP passes;
+152 recording/reporting/census passes and 11 optional-engine skips; 30 source
+guard passes; and the real isolated hub restart (one pass). Both 1440 and 393
+shots were inspected in `assets/lane-a-followup/`. The shots show the existing
+lane A record face, not lane B's new summary/refusal face. Twelve new-fence
+cases were collected. Raw pre-fix failures and current passes are appended to
+stories 02 and 03. Post-merge verification is recorded below.
+
+**LEDGER:** The three follow-up items are paid within their named scope. Only
+stale doctor/setup expectations and source-line census anchors changed with
+the reporters. The old full-suite result remains historical; no fresh full
+suite or full green is claimed. The inherited DW doctor/check issues remain
+outside this follow-up. No owner desk state or microphone was used.
+
+**AMENDMENTS:** Chosen knob fix: retire its reporting on Record. No schema,
+loop gate, or live-analysis reconnection. New B read-model field:
+`last_refusal` on detail/list/recovery and 409. No `web/**` changes.
+
+**UNKNOWN:** B's face completion and the copied-real-DB reconciliation are
+reported by Muad'Dib/the caller; Astra did not repeat them. Real model quality,
+owner sitting, and the final post-push CI verdict remain unverified. If durable
+kernel evidence itself cannot be read, no public receipt is fabricated; the
+error is logged. The first worker red attempts were not all retained with
+reliable import provenance. Astra therefore captured historical reproductions
+from archived `ae9edfde` with the actual imported path printed, followed by
+current-code green runs. No historical run is presented as an untouched-tree
+chronological capture.

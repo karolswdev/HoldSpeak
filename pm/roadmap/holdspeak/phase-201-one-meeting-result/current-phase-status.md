@@ -145,10 +145,10 @@ Lane A backend implementation and source counsel are complete. The quiet full su
 - **c — historical, not reproduced:** dictation initialization race. Two
   pristine charter-baseline runs and current scoped runs pass; original cause
   remains unknown (02 evidence).
-- Legacy automatic-summary settings still describe the parked behavior:
-  `services/settings_service.py`, `doctor.py`, `setup_status.py`, and
-  `trust_destinations.py`. These controls must be retired or connected to a
-  future disclosed opt-in path. They do not enable Web Record summary work.
+- **Paid in lane A follow-up:** Settings, doctor, setup trust, and destination
+  inventory now report live analysis off for Record. The retained config byte
+  is ignored on this path; it does not enable live analysis. Dictation and
+  explicit summary routes remain separate. Proof: `evidence-story-02.md`.
 - Hashless legacy entry points remain outside the first-use Record path:
   `meeting_import.py:_persist_import` can enqueue under old config;
   `db/meetings.py:recover_capture` can enqueue historical displaced
