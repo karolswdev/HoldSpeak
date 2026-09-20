@@ -26,7 +26,11 @@ export function MeetingHeader({
   const token = stateToken(source);
   const title = String(detail?.title ?? meeting.title ?? "Meeting");
   const dateStr = ledgerDate(startedAt);
-  const durStr = durationS > 0 ? (durationToken(durationS) || "1 MIN") : "";
+  // HS-201-10: `|| "1 MIN"` was the floor this header put under the token,
+  // and it is what printed `1 MIN` over a 2.79 s import. `durationToken`
+  // now says seconds under a minute, so a real length always has a real
+  // token and no floor is needed.
+  const durStr = durationS > 0 ? durationToken(durationS) : "";
   // HS-172: source from the wire's intel_model_host / intel_duration_s,
   // not from proposals.
   const intelDurS = Number(source.intel_duration_s ?? 0);

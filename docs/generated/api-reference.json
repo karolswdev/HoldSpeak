@@ -2715,6 +2715,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_hs201_one_thing_glass.py",
         "tests/integration/test_web_server.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -7343,6 +7344,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_hs170_speak_glass.py",
+        "tests/e2e/test_hs201_09_connect_engine_glass.py",
         "tests/e2e/test_hs201_summary_assignment.py",
         "tests/integration/test_phase200_readiness.py"
       ],
@@ -7422,7 +7424,9 @@
       ],
       "source": "holdspeak/web/routes/concierge.py",
       "handler_evidence": [],
-      "test_candidates": [],
+      "test_candidates": [
+        "tests/e2e/test_hs201_09_connect_engine_glass.py"
+      ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
         "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
@@ -11229,6 +11233,7 @@
         "tests/e2e/test_hs200_runtime_identity_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_hs200_voice_custody_glass.py",
+        "tests/e2e/test_hs201_09_connect_engine_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_one_thing_glass.py",
         "tests/e2e/test_hs201_summary_trust_glass.py",
@@ -16456,6 +16461,7 @@
       "test_candidates": [
         "tests/e2e/test_hs143_assignments_glass.py",
         "tests/e2e/test_hs156_front_door_glass.py",
+        "tests/e2e/test_hs201_09_connect_engine_glass.py",
         "tests/e2e/test_hs201_one_thing_glass.py",
         "tests/unit/test_phase143_transport_parity.py",
         "tests/unit/test_web_inference_assignment_routes.py"
@@ -19530,6 +19536,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_web_history_import_ui.py",
         "tests/integration/test_web_meeting_import_api.py",
@@ -32720,7 +32727,7 @@
             "GET"
           ],
           "symbol": "api_roadmaps",
-          "line": 173,
+          "line": 180,
           "parameters": [],
           "return_annotation": "Any",
           "declared_response_model": null,
@@ -32775,7 +32782,7 @@
             "GET"
           ],
           "symbol": "api_roadmap",
-          "line": 188,
+          "line": 195,
           "parameters": [
             {
               "name": "slug",
@@ -32829,7 +32836,7 @@
             "GET"
           ],
           "symbol": "api_roadmap_health",
-          "line": 195,
+          "line": 202,
           "parameters": [
             {
               "name": "slug",
@@ -32885,7 +32892,7 @@
             "GET"
           ],
           "symbol": "api_roadmap_next",
-          "line": 202,
+          "line": 209,
           "parameters": [
             {
               "name": "slug",
@@ -34578,6 +34585,7 @@
         "tests/e2e/test_hs200_runtime_identity_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_hs200_voice_custody_glass.py",
+        "tests/e2e/test_hs201_09_connect_engine_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_one_thing_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",

@@ -25,6 +25,7 @@ import { useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { renderHeroSlot } from "./core-layout";
 import {
   WINGS, clockTime, download, needsIntelligence, meetingsHeadline,
+  hasOpenMeetingActions,
   type Receipt, type DetailView,
   MeetingDetail, ImportSection, CatalogRail, DoorSection,
 } from "./history";
@@ -111,6 +112,16 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const meetingRows = useMemo(
     () => asRows(meetings.data, ["meetings"]),
     [meetings.data],
+  );
+
+  // HS-201-11: the HAS OPEN ACTIONS facet is drawn only when an open
+  // action exists for it to find. `/api/all-action-items` already reaches
+  // this face for the gear door and answers OPEN items alone.
+  const openActionsFacetDrawn = useMemo(
+    () =>
+      facets.has_open_actions ||
+      hasOpenMeetingActions(asRows(doorActions.data, ["action_items"])),
+    [facets.has_open_actions, doorActions.data],
   );
 
   // Open requested meeting from scope
@@ -446,15 +457,21 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         />
       </div>
 
-      {/* HS-170-04: server-side facets (token toggles on the caption row) */}
-      <div className="meetings-facets" data-testid="meetings-facets">
-        <CheckGadget
-          label="HAS OPEN ACTIONS"
-          variant="token"
-          checked={facets.has_open_actions}
-          onChange={(next) => setFacets((f) => ({ ...f, has_open_actions: next }))}
-        />
-      </div>
+      {/* HS-170-04: server-side facets (token toggles on the caption row).
+          HS-201-11: a filter that can match nothing is not drawn -- the
+          desk held one meeting with zero actions and still offered
+          `HAS OPEN ACTIONS`. It stays on the face while it is ON, so the
+          owner always has the way back. */}
+      {openActionsFacetDrawn ? (
+        <div className="meetings-facets" data-testid="meetings-facets">
+          <CheckGadget
+            label="HAS OPEN ACTIONS"
+            variant="token"
+            checked={facets.has_open_actions}
+            onChange={(next) => setFacets((f) => ({ ...f, has_open_actions: next }))}
+          />
+        </div>
+      ) : null}
 
       {/* The stream + detail split */}
       <div className="surface-split-railed">

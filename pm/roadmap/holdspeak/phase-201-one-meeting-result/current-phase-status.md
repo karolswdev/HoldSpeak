@@ -67,6 +67,9 @@ over claim). Faces obey UX-CANON. Orchestration: TWO-BRAINS.md.
 | HS-201-06 | Plain words on the path | done | [story-06-plain-words-on-the-path](./story-06-plain-words-on-the-path.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-201-07 | Run it from main and the sitting | backlog | [story-07-run-it-from-main-and-the-sitting](./story-07-run-it-from-main-and-the-sitting.md) | - |
 | HS-201-08 | Main is green | done | [story-08-main-is-green](./story-08-main-is-green.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-201-09 | Connect an engine from the face | done | [story-09-connect-an-engine-from-the-face](./story-09-connect-an-engine-from-the-face.md) | [evidence-story-09](./evidence-story-09.md) |
+| HS-201-10 | Import does not run the summary by itself | done | [story-10-import-does-not-run-the-summary-by-itself](./story-10-import-does-not-run-the-summary-by-itself.md) | [evidence-story-10](./evidence-story-10.md) |
+| HS-201-11 | A quiet desk for the sitting | done | [story-11-a-quiet-desk-for-the-sitting](./story-11-a-quiet-desk-for-the-sitting.md) | [evidence-story-11](./evidence-story-11.md) |
 
 ## Lanes (TWO-BRAINS.md §4)
 
@@ -156,6 +159,20 @@ Ledger (never deleted): **Day 2 continuity is proven from a seeded day-1 state. 
   inventory now report live analysis off for Record. The retained config byte
   is ignored on this path; it does not enable live analysis. Dictation and
   explicit summary routes remain separate. Proof: `evidence-story-02.md`.
+- **PAID by HS-201-10:** `meeting_import.py:_persist_import` no longer
+  enqueues an intel job; Import asks for the summary the same way Record
+  does, and the fences in `tests/e2e/test_hs201_summary_producer_chain.py`
+  assert no job, no drain, no receipt and zero route attempts before the
+  owner's gesture. One hashless legacy entry point remains outside the
+  first-use Record path: `db/meetings.py:recover_capture` can enqueue
+  historical displaced work without a route bundle. It is not proof of the
+  new disclosure contract; fence or disclose it before restoring any
+  automatic summary behaviour there, parked with follow-through in BACKLOG.
+  `meeting_session/persistence.py` is inactive for ordinary Web Record
+  because that session has intel disabled.
+- Inherited suite baseline: both widths of `test_phase200_daily_loop.py` fail
+  at the brief before meeting creation, including on unmodified charter
+  production code (raw baseline `.tmp/hs201-daily-loop-baseline.log`).
 - Hashless legacy entry points remain outside the first-use Record path:
   `meeting_import.py:_persist_import` can enqueue under old config;
   `db/meetings.py:recover_capture` can enqueue historical displaced

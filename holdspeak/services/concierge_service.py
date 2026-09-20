@@ -637,6 +637,7 @@ def detect(
         result["summaryAssignment"] = summary_assignment_projection(
             assignment_service=assignment_service,
             principal=principal,
+            db=db,
         )
     return result
 
@@ -972,6 +973,39 @@ _REPAIR_ORDER = (
 # A source connection in one of these states needs the owner's credential.
 _SOURCE_NEEDS_OWNER = frozenset({"owner_action_required", "disconnected", "revoked"})
 
+# HS-201-09 (rehearsal defect 7): `TOOL INCOMPATIBLE` with no reason tells the
+# owner nothing.  The assignment authority already names WHY in its issue code
+# (`InferenceAssignmentApplicationService._incompatibility`); these are those
+# codes in plain words.  One short line each -- the honest state, not prose.
+_INCOMPATIBILITY_REASONS: dict[str, str] = {
+    "modality_unsupported": "This engine does not accept this input.",
+    "structured_output_unsupported": "This engine cannot give a structured result.",
+    "structured_tools_unqualified": "This engine cannot use tools.",
+    "tool_manifest_invalid": "This engine has no tool record.",
+    "tool_manifest_deployment_mismatch": "The tool record does not agree with the engine.",
+    "tool_capability_foundation_unavailable": "Tools are not available on this hub.",
+    "vision_unsupported": "This engine cannot read images.",
+    "audio_unsupported": "This engine cannot read audio.",
+    "capability_class_unsupported": "This engine cannot do this work.",
+    "context_unsupported": "This engine holds too little text.",
+    "boundary_unsupported": "This engine is not permitted on this network.",
+    "profile_missing": "This engine record is not available.",
+    "binding_missing": "This engine has no ready record.",
+    "binding_disabled": "This engine is turned off.",
+    "deployment_missing": "This engine has no destination.",
+    "registry_policy_growth": "This engine cannot use the retry rule.",
+    "legacy_binding_readiness_unknown": "This engine was not checked.",
+}
+
+
+def _incompatibility_reason(codes: list[str]) -> str:
+    """One plain line for the blocking codes on an assigned engine."""
+    for code in codes:
+        plain = _INCOMPATIBILITY_REASONS.get(code)
+        if plain:
+            return plain
+    return "This engine cannot do this work." if codes else ""
+
 _GROUP_LABELS: dict[str, str] = dict(ASSIGNMENT_GROUPS)
 
 
@@ -1093,7 +1127,7 @@ def repairs(
                         host="",
                         scope="local",
                         groups=[group_id],
-                        detail=",".join(
+                        detail=_incompatibility_reason(
                             sorted({str(i.get("code") or "") for i in blocking})
                         ),
                     )
@@ -1210,7 +1244,37 @@ def _summary_entry_projection(entry: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def summary_assignment_projection(*, assignment_service: Any, principal: Any) -> dict[str, Any]:
+def _summary_assignment_tombstone(db: Any) -> int:
+    """The cleared head revision for the summary capability, else 0.
+
+    ``get_assignment`` reads active heads only, so an owner who turned the
+    summary OFF and one who never chose an engine look identical to it.
+    They are not the same thing on a face: the first must reopen as OFF,
+    the second as the proposal.  The head row already records the
+    difference (``cleared=1`` with the tombstone's revision); this reads
+    that one fact and nothing else.
+    """
+    if db is None:
+        return 0
+    try:
+        with db._connection() as conn:
+            row = conn.execute(
+                "SELECT revision,cleared FROM inference_assignment_heads WHERE assignment_key=?",
+                (f"capability:{SUMMARY_CAPABILITY_ID}",),
+            ).fetchone()
+    except Exception:  # pragma: no cover - a head read never blocks the face
+        return 0
+    if row is None:
+        return 0
+    try:
+        return int(row["revision"] or 0) if int(row["cleared"] or 0) else 0
+    except (KeyError, IndexError, TypeError, ValueError):  # pragma: no cover
+        return 0
+
+
+def summary_assignment_projection(
+    *, assignment_service: Any, principal: Any, db: Any = None
+) -> dict[str, Any]:
     """Read the exact summary assignment that the SERVICE route will consume."""
     from .errors import NotFound
 
@@ -1224,11 +1288,12 @@ def summary_assignment_projection(*, assignment_service: Any, principal: Any) ->
         pass
 
     if not isinstance(assignment, dict):
+        cleared_revision = _summary_assignment_tombstone(db)
         return {
             "schema": SUMMARY_ASSIGNMENT_PROJECTION_SCHEMA,
             "capabilityId": SUMMARY_CAPABILITY_ID,
-            "status": "unassigned",
-            "assignmentRevision": 0,
+            "status": "off" if cleared_revision else "unassigned",
+            "assignmentRevision": cleared_revision,
             "profileId": None,
             "profileRevision": None,
             "label": None,
@@ -1273,6 +1338,24 @@ def _summary_assignment_revision(assignment_service: Any, principal: Any) -> int
     except NotFound:
         return 0
     return int(assignment.get("revision") or 0)
+
+
+def _summary_expected_revision(
+    assignment_service: Any, principal: Any, db: Any = None
+) -> int:
+    """The revision a WRITE to the summary capability must present.
+
+    HS-201-09 (counsel finding 2): OFF then ON was refused. `get_assignment`
+    reads ACTIVE heads only, so after a clear it answers 0 — while
+    `set_assignment` compares against `_current`
+    (`inference_assignment_service.py:402`), which still sees the
+    tombstone's revision. The write therefore presents the same number the
+    projection publishes: the active head when there is one, the tombstone
+    when the owner turned it off. The OFF path keeps the active-only read,
+    so re-applying OFF writes no second tombstone.
+    """
+    active = _summary_assignment_revision(assignment_service, principal)
+    return active if active else _summary_assignment_tombstone(db)
 
 
 def _summary_result(
@@ -1409,6 +1492,7 @@ def assign_summary(
         "summaryAssignment": summary_assignment_projection(
             assignment_service=assignment_service,
             principal=principal,
+            db=db,
         ),
     }
 
@@ -1456,7 +1540,40 @@ def apply(
         engine_id = row.get("engineId")
 
         if engine_id == "OFF" or engine_id is None:
-            # Skip OFF groups -- they stay unassigned
+            # HS-201-09 (rehearsal defect 3): OFF on the SUMMARY group has an
+            # exact meaning -- the deferred queue must stop resolving an
+            # engine.  "Stay unassigned" was true only for a group that was
+            # never assigned; for one that WAS, OFF changed nothing and the
+            # next import ran on the LAN again.  The capability assignment is
+            # cleared through the existing CAS seam, never by deleting rows.
+            if group_id == "meetings":
+                current = _summary_assignment_revision(assignment_service, principal)
+                if current >= 1:
+                    try:
+                        assignment_service.clear_assignment(
+                            principal,
+                            {
+                                "command_id": uuid.uuid4().hex,
+                                "expected_revision": current,
+                                "scope": _summary_assignment_scope(),
+                                "capability_id": SUMMARY_CAPABILITY_ID,
+                            },
+                        )
+                    except Exception as exc:
+                        results.append({
+                            "group": group_id,
+                            "capabilityId": SUMMARY_CAPABILITY_ID,
+                            "state": "FAILED",
+                            "plainReason": str(exc),
+                        })
+                        continue
+                results.append({
+                    "group": group_id,
+                    "capabilityId": SUMMARY_CAPABILITY_ID,
+                    "state": "OFF",
+                })
+                continue
+            # Every other group: nothing was written, nothing is cleared.
             results.append({
                 "group": group_id,
                 "state": "OFF",
@@ -1496,8 +1613,8 @@ def apply(
                     db=db,
                     profile_id=selected_profile_id,
                     profile_revision=selected_revision,
-                    expected_assignment_revision=_summary_assignment_revision(
-                        assignment_service, principal
+                    expected_assignment_revision=_summary_expected_revision(
+                        assignment_service, principal, db
                     ),
                     command_id=uuid.uuid4().hex,
                     write_receipt=False,

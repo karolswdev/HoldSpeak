@@ -3791,7 +3791,7 @@
     },
     {
       "path": "holdspeak/meeting_import.py",
-      "line": 32,
+      "line": 33,
       "kinds": [
         "process_or_shell"
       ],
@@ -3801,7 +3801,7 @@
     },
     {
       "path": "holdspeak/meeting_import.py",
-      "line": 125,
+      "line": 143,
       "kinds": [
         "process_or_shell"
       ],
@@ -5733,7 +5733,7 @@
     },
     {
       "path": "holdspeak/setup_runtime.py",
-      "line": 48,
+      "line": 77,
       "kinds": [
         "model_transport"
       ],
@@ -5743,7 +5743,7 @@
     },
     {
       "path": "holdspeak/setup_runtime.py",
-      "line": 184,
+      "line": 210,
       "kinds": [
         "model_transport"
       ],
@@ -5753,7 +5753,7 @@
     },
     {
       "path": "holdspeak/setup_runtime.py",
-      "line": 188,
+      "line": 214,
       "kinds": [
         "model_transport"
       ],
@@ -5763,7 +5763,7 @@
     },
     {
       "path": "holdspeak/setup_runtime.py",
-      "line": 194,
+      "line": 220,
       "kinds": [
         "model_transport"
       ],
@@ -5773,7 +5773,7 @@
     },
     {
       "path": "holdspeak/setup_runtime.py",
-      "line": 196,
+      "line": 222,
       "kinds": [
         "model_transport"
       ],
@@ -5783,7 +5783,7 @@
     },
     {
       "path": "holdspeak/setup_runtime.py",
-      "line": 223,
+      "line": 249,
       "kinds": [
         "model_transport"
       ],
@@ -5793,7 +5793,7 @@
     },
     {
       "path": "holdspeak/setup_runtime.py",
-      "line": 260,
+      "line": 286,
       "kinds": [
         "model_transport"
       ],
@@ -6753,7 +6753,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 681,
+      "line": 691,
       "kinds": [
         "http_client"
       ],
@@ -6763,7 +6763,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 833,
+      "line": 843,
       "kinds": [
         "http_client"
       ],
@@ -6773,7 +6773,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1243,
+      "line": 1253,
       "kinds": [
         "http_client"
       ],
@@ -6783,7 +6783,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1525,
+      "line": 1535,
       "kinds": [
         "http_client"
       ],
@@ -6793,7 +6793,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1579,
+      "line": 1589,
       "kinds": [
         "http_client"
       ],
@@ -6803,7 +6803,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1638,
+      "line": 1648,
       "kinds": [
         "http_client"
       ],
@@ -7702,16 +7702,6 @@
       "review": "candidate_only"
     },
     {
-      "path": "web/src/features/concierge/useConciergeController.ts",
-      "line": 542,
-      "kinds": [
-        "http_client"
-      ],
-      "excerpt": "await apiFetch(\"/api/inference/model-library/define-endpoint\", {",
-      "line_sha256": "9058f98fd483112c795d88d442d9d59d8517eaefc6a424e71580f6da193bbd9f",
-      "review": "candidate_only"
-    },
-    {
       "path": "web/src/features/project-room/__tests__/ProjectRoomCore.test.tsx",
       "line": 35,
       "kinds": [
@@ -8103,7 +8093,7 @@
     },
     {
       "path": "web/src/lib/sfx.ts",
-      "line": 202,
+      "line": 212,
       "kinds": [
         "http_client"
       ],
@@ -8263,7 +8253,7 @@
     },
     {
       "path": "web/src/pages/cores/HistoryCore.tsx",
-      "line": 310,
+      "line": 321,
       "kinds": [
         "http_client"
       ],
@@ -8273,7 +8263,7 @@
     },
     {
       "path": "web/src/pages/cores/HistoryCore.tsx",
-      "line": 329,
+      "line": 340,
       "kinds": [
         "http_client"
       ],
@@ -8823,7 +8813,7 @@
     },
     {
       "path": "web/src/pages/cores/history/ImportSection.tsx",
-      "line": 40,
+      "line": 44,
       "kinds": [
         "http_client"
       ],

@@ -10,12 +10,19 @@ controlled engine stub and a fixture WAV (never the microphone):
           ->  the Meetings footer chip is not a constant
           ->  a hub restart on the same HOME, the summary in <= 2 moves.
 
+HS-201-10 adds the same walk entered through IMPORT — the only door a
+stranger without a microphone can use — where the summary used to run by
+itself with no route, no hash and no receipt.
+
 Every run assertion reads the REQUEST the browser issued (its path and its
 body), never the click.
 """
+from datetime import datetime, timedelta
 from pathlib import Path
 import json
+import os
 import time
+import wave
 
 import pytest
 
@@ -528,3 +535,277 @@ def _assert_no_overlap(page) -> None:
         }"""
     )
     assert overlap == [], overlap
+
+
+# ──────────────────────────────────────────────────────────────────────
+# HS-201-10 — the same walk, entered through IMPORT.
+#
+# Import is the only door a stranger without a microphone can use, and the
+# 2026-09-20 rehearsal watched it run the summary by itself: contact with
+# 192.168.1.43 before any gesture, `run_receipt: null`, and no "Run summary"
+# verb ever drawn (audits/rehearsal-07-opus.md, steps 3-5 and defect 2).
+# This is the same rig, on that door: import the fixture WAV through the
+# real face, prove NOTHING ran, then ask, and read the receipt.
+# ──────────────────────────────────────────────────────────────────────
+
+IMPORT_TOKEN = "hs201-10-import"
+FIXTURE_WAV = Path(__file__).resolve().parents[1] / "fixtures" / "core_path_smoke_16k.wav"
+SHOTS_10 = Path(__file__).resolve().parents[2] / (
+    "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-10-shots"
+)
+
+
+class _FixtureImportTranscriber:
+    """Stands in for Whisper on the import path. Never loads a model."""
+
+    def transcribe(self, audio, **_admission):
+        return "The quick brown fox jumps over the lazy dog."
+
+
+def _shot_10(page, name: str) -> None:
+    SHOTS_10.mkdir(parents=True, exist_ok=True)
+    for width in WIDTHS:
+        page.set_viewport_size({"width": width, "height": 900 if width == 1440 else 852})
+        _settle(page)
+        path = SHOTS_10 / f"{name}-{width}.png"
+        page.screenshot(path=str(path))
+        assert path.stat().st_size > 2000, path
+        print(f"SHOT {path}")
+    page.set_viewport_size({"width": 1440, "height": 900})
+
+
+def test_import_transcribes_and_stops_then_the_summary_is_asked_for(
+    tmp_path, monkeypatch
+):
+    from holdspeak.db import get_database
+    from holdspeak.web.routes import meeting_import as import_route
+    from playwright.sync_api import sync_playwright
+
+    monkeypatch.setenv(
+        "HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(tmp_path / "people-keys.json")
+    )
+    _ensure_build()
+    server, url = _boot(tmp_path, monkeypatch, token=IMPORT_TOKEN)
+    db = get_database()
+    _configure(db)
+    engine = FakeIntel()
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kw: engine)
+    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
+    monkeypatch.setattr("holdspeak.intel_queue.get_database", lambda: db)
+    monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: db)
+    monkeypatch.setattr(
+        "holdspeak.meeting_plugins.build_bound_meeting_plugin_host", lambda: FakeHost(())
+    )
+    monkeypatch.setattr(
+        "holdspeak.plugins.router.preview_route_from_transcript", lambda **kw: _Route(())
+    )
+    # No Whisper on this walk: the subject is what the import DOES, not what
+    # it hears. The engine that would write the summary is the real seam and
+    # it is watched (`engine.analyzed`).
+    monkeypatch.setattr(
+        import_route, "_transcriber_factory", lambda cfg: _FixtureImportTranscriber()
+    )
+    seed_meeting_engines()
+
+    # The file the rehearsal imported, with a mtime months in the past —
+    # the exact shape that dated the meeting JUN 03 (defect 10).
+    source = tmp_path / "core_path_smoke_16k.wav"
+    source.write_bytes(FIXTURE_WAV.read_bytes())
+    old = (datetime.now() - timedelta(days=108)).timestamp()
+    os.utime(source, (old, old))
+    with wave.open(str(source), "rb") as wav_file:
+        seconds = wav_file.getnframes() / float(wav_file.getframerate())
+    assert 2.0 < seconds < 3.0, seconds
+    print(f"FIXTURE {source.name} {seconds:.2f}s mtime={datetime.fromtimestamp(old)}")
+
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            errors: list[str] = []
+            requests: list[dict] = []
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            page.on(
+                "request",
+                lambda request: requests.append(
+                    {
+                        "path": request.url.split("?")[0].replace(url, ""),
+                        "body": request.post_data or "",
+                    }
+                )
+                if request.method == "POST"
+                else None,
+            )
+
+            def open_meetings(expect_rows: bool = True) -> None:
+                page.evaluate(
+                    """() => {
+                        localStorage.removeItem('hs.desk.workspace.v1');
+                        sessionStorage.setItem('hs.desk.staged-surface-open',
+                            JSON.stringify({key:'review-meetings'}));
+                    }"""
+                )
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                # A cold desk draws the Meetings face with no stream at all,
+                # so the face's own head verbs are what a first visit waits
+                # for (the headline span is empty while the list loads).
+                page.locator(".meetings-head-verbs").wait_for(timeout=15_000)
+                if expect_rows:
+                    page.locator(".meetings-stream-rows").wait_for(timeout=15_000)
+
+            page.goto(f"{url}/?token={IMPORT_TOKEN}", wait_until="load")
+            _api(
+                page, "PUT", "/api/setup/onboarding", {"disposition": "completed"},
+                token=IMPORT_TOKEN,
+            )
+            open_meetings(expect_rows=False)
+
+            # ── station 1: the Import door, and the real gesture ──
+            page.locator(".meetings-head-verbs").get_by_role(
+                "button", name="Import", exact=True
+            ).click()
+            file_input = page.locator(".surface-dropwell input[type=file]")
+            # The dropwell hides its input behind the label's own species.
+            file_input.wait_for(timeout=15_000, state="attached")
+            file_input.set_input_files(str(source))
+            page.get_by_role("textbox", name="Title").fill("Imported standup")
+            requests.clear()
+            page.locator(".surface-actions").get_by_role(
+                "button", name="Import", exact=True
+            ).click()
+
+            import_post = None
+            for _ in range(120):
+                posts = [r for r in requests if r["path"] == "/api/meetings/import"]
+                if posts:
+                    import_post = posts[-1]
+                    break
+                page.wait_for_timeout(100)
+            assert import_post is not None, requests
+            # Defect 10 at its source: the gesture sends no file mtime.
+            assert "started_at_ms" not in import_post["body"], import_post
+            print(f"IMPORT POST {import_post['path']} (no started_at_ms)")
+
+            imported = None
+            for _ in range(150):
+                rows = db.meetings.list_meetings()
+                done = [
+                    row for row in rows
+                    if row.id and db.meetings.get_meeting(row.id).segments
+                ]
+                if done:
+                    imported = db.meetings.get_meeting(done[0].id)
+                    break
+                page.wait_for_timeout(100)
+            assert imported is not None, "the import never produced a transcript"
+            print(f"IMPORTED {imported.id} segments={len(imported.segments)}")
+
+            # ── the fence: it transcribed, and it stopped ──
+            assert db.intel.list_intel_jobs() == [], db.intel.list_intel_jobs()
+            assert db.intel.get_latest_intel_job(imported.id) is None
+            assert engine.analyzed == [], engine.analyzed
+            assert imported.intel is None
+            assert imported.intel_status == "disabled", imported.intel_status
+            # Defects 10 and 11: dated the import moment, transcript final.
+            assert imported.started_at > datetime.now() - timedelta(minutes=10)
+            assert imported.transcription_status == "complete", (
+                imported.transcription_status
+            )
+            print(
+                f"AFTER IMPORT jobs={db.intel.list_intel_jobs()} "
+                f"analyzed={engine.analyzed} intel_status={imported.intel_status} "
+                f"started_at={imported.started_at} "
+                f"transcription_status={imported.transcription_status}"
+            )
+
+            # ── station 2: the row tells the truth about its length ──
+            open_meetings()
+            row = page.get_by_test_id(f"meeting-row-{imported.id}")
+            row.wait_for(timeout=15_000)
+            row_words = row.text_content() or ""
+            print(f"ROW {row_words}")
+            assert "3 S" in row_words, row_words
+            assert "1 MIN" not in row_words, row_words
+            today = _ledger_date(datetime.now())
+            assert today in row_words, (today, row_words)
+            run_verb = row.get_by_test_id("run-intelligence-btn")
+            run_verb.wait_for(timeout=15_000)
+            detail = _api(
+                page, "GET", f"/api/meetings/{imported.id}", token=IMPORT_TOKEN
+            )
+            planned = detail["planned_route"]
+            assert planned["status"] == "ready", planned
+            host = planned["legs"][0]["host"]
+            assert _chip_label(host) in (
+                row.get_by_test_id("row-route").text_content() or ""
+            )
+            assert detail.get("run_receipt") is None, detail.get("run_receipt")
+            print(f"PLANNED host={host} hash={planned['selection_hash']}")
+            _shot_10(page, "import-row-length")
+
+            # ── station 3: the record, with the verb and the planned host ──
+            row.locator(".meetings-stream-row-body").click()
+            page.locator(".meetings-detail-head").wait_for(timeout=15_000)
+            route_chip = page.get_by_test_id("detail-route")
+            route_chip.wait_for(timeout=15_000)
+            assert _chip_label(host) in (route_chip.text_content() or "")
+            page.get_by_test_id("detail-run-intelligence-btn").wait_for(timeout=15_000)
+            head = page.locator(".meetings-detail-head").text_content() or ""
+            print(f"DETAIL HEAD {head}")
+            assert "3 S" in head, head
+            assert "1 MIN" not in head, head
+            _shot_10(page, "import-done")
+
+            # ── station 4: ask for it, and read the receipt ──
+            requests.clear()
+            page.get_by_test_id("detail-run-intelligence-btn").click()
+            page.wait_for_timeout(600)
+            run_post = [r for r in requests if r["path"].endswith("/intelligence/run")][-1]
+            assert run_post["path"] == f"/api/meetings/{imported.id}/intelligence/run"
+            assert json.loads(run_post["body"])["expected_selection_hash"] == (
+                planned["selection_hash"]
+            ), run_post
+            print(f"RUN POST {run_post}")
+
+            _drain(db, imported.id)
+            produced = db.meetings.get_meeting(imported.id)
+            assert produced.intel is not None, "no summary was produced"
+            assert produced.intel.summary == engine.result.summary
+            assert engine.analyzed, "the provider was never contacted by the gesture"
+            receipt = _api(
+                page, "GET", f"/api/meetings/{imported.id}/intel-recovery",
+                token=IMPORT_TOKEN,
+            )["run_receipt"]
+            assert receipt["outcome"] == "succeeded", receipt
+            assert receipt["attempts"], receipt
+            assert receipt["selection_hash"] == planned["selection_hash"], receipt
+            assert receipt["attempts"][0]["host"] == host, receipt
+            print(f"RECEIPT {receipt}")
+
+            open_meetings()
+            page.get_by_test_id(f"meeting-row-{imported.id}").locator(
+                ".meetings-stream-row-body"
+            ).click()
+            summary_text = page.get_by_test_id("meeting-summary-text")
+            summary_text.wait_for(timeout=15_000)
+            assert (summary_text.text_content() or "").strip() == engine.result.summary
+            attempts = page.get_by_test_id("summary-record-attempts")
+            attempts.wait_for(timeout=15_000)
+            for attempt in receipt["attempts"]:
+                assert _chip_label(attempt["host"]) in (attempts.text_content() or "")
+            _shot_10(page, "import-after-run")
+            _assert_no_overlap(page)
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
+
+
+def _ledger_date(when: datetime) -> str:
+    """The catalog's date column, as `helpers.ts::ledgerDate` draws it."""
+    months = (
+        "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+        "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
+    )
+    return f"{months[when.month - 1]} {when.day:02d}"

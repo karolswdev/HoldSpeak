@@ -277,7 +277,12 @@ def test_a_blocking_compatibility_issue_is_tool_incompatible_with_the_picker_ver
                 "lan-box",
                 label="Qwen3.6 35B",
                 issues=[
-                    {"code": "capability_tools_unsupported", "severity": "blocking"},
+                    # A code the REAL producer emits
+                    # (`InferenceAssignmentApplicationService._incompatibility`,
+                    # inference_assignment_service.py:1881) — the old fixture
+                    # said `capability_tools_unsupported`, which nothing in
+                    # holdspeak/ ever returns.
+                    {"code": "capability_class_unsupported", "severity": "blocking"},
                     {"code": "cosmetic", "severity": "advisory"},
                 ],
             )
@@ -290,7 +295,34 @@ def test_a_blocking_compatibility_issue_is_tool_incompatible_with_the_picker_ver
     assert rows[0]["verb"] == "Choose"
     assert rows[0]["control"] == "engine_picker"
     assert rows[0]["groups"] == ["agents_tools"]
-    assert rows[0]["detail"] == "capability_tools_unsupported"
+    # HS-201-09 (the rehearsal's defect 7): `detail` carries the reason in
+    # plain words now, not the assignment authority's issue code. The verb
+    # and its control are unchanged and still pinned above.
+    assert rows[0]["detail"] == cs._INCOMPATIBILITY_REASONS[
+        "capability_class_unsupported"
+    ]
+    assert rows[0]["detail"] == "This engine cannot do this work."
+
+
+def test_an_unknown_blocking_code_still_says_something_a_person_can_read() -> None:
+    """Fail closed in plain words: a code with no mapping is never shown raw."""
+    db = _FakeDb({"lan-box": _profile_row("lan-box", name="Qwen3.6 35B")})
+    assignments = _FakeAssignments(
+        [
+            _group_row(
+                "agents_tools",
+                "lan-box",
+                label="Qwen3.6 35B",
+                issues=[{"code": "a_code_from_the_future", "severity": "blocking"}],
+            )
+        ]
+    )
+
+    rows = cs.repairs(db=db, assignment_service=assignments, principal=OWNER)
+
+    assert rows[0]["token"] == cs.REPAIR_TOOL_INCOMPATIBLE
+    assert "_" not in rows[0]["detail"], rows[0]["detail"]
+    assert rows[0]["detail"].endswith(".")
 
 
 def test_a_source_connection_needing_the_owner_is_a_credential_repair() -> None:

@@ -614,6 +614,13 @@ def _run_muted_rig(
             _api(page, "PUT", "/api/setup/onboarding",
                  {"disposition": "completed"}, token=TOKEN)
 
+            # HS-201-11: this rig's subject is the MUTED rows, not setup.
+            # The head counts the SETUP row like any other row that asks,
+            # so pin both halves of the meeting path first -- the same
+            # thing the quiet and brief rigs above already do
+            # (glass_infra.py, `seed_meeting_engines`).
+            seed_meeting_engines()
+
             # Seed two projects with needs-you
             _seed_two_projects_with_needs_you()
             _seed_scheduled_recording(page)

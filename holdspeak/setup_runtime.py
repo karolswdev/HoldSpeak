@@ -38,6 +38,35 @@ def _default_http_json(
 CONTEXT_WINDOW_PRESETS = [8192, 16384, 32768, 65536, 131072, 200000, 1000000]
 
 
+def unreachable_reason(exc: BaseException) -> str:
+    """One plain line for a failed endpoint contact.
+
+    HS-201-09 (counsel finding 4): the face showed
+    ``<urlopen error [Errno 61] Connection refused>`` where the owner needed
+    a reason he could act on. The socket's own words stay in the hub log;
+    the person gets the fact (UX-CANON A10: honest states, plain reasons).
+    """
+    reason = getattr(exc, "reason", exc)
+    text = f"{type(reason).__name__} {reason}".lower()
+    if isinstance(reason, TimeoutError) or "timed out" in text or "timeout" in text:
+        return "The server did not answer in time."
+    if (
+        "gaierror" in text
+        or "nodename nor servname" in text
+        or "name or service not known" in text
+        or "getaddrinfo" in text
+        or "temporary failure in name resolution" in text
+    ):
+        return "No server has this name."
+    if "refused" in text:
+        return "Nothing answers at this address."
+    if "certificate" in text or "ssl" in text:
+        return "The server's certificate is not accepted."
+    if "no route to host" in text or "network is unreachable" in text:
+        return "This network cannot reach the server."
+    return "Could not reach the server at this address."
+
+
 def discover_endpoint_models(
     base_url: str,
     *,
@@ -77,11 +106,8 @@ def discover_endpoint_models(
             detail = f"The server returned HTTP {exc.code} for /models."
         return {"ok": False, "models": [], "detail": detail, "status": exc.code}
     except (URLError, OSError, TimeoutError, ValueError) as exc:
-        return {
-            "ok": False,
-            "models": [],
-            "detail": f"Could not reach the model server: {exc}",
-        }
+        log.info(f"endpoint discovery failed for {models_url}: {exc}")
+        return {"ok": False, "models": [], "detail": unreachable_reason(exc)}
     if not 200 <= int(code) < 300:
         return {
             "ok": False,
