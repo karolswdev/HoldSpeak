@@ -126,6 +126,7 @@ WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     "web/src/features/concierge/api.ts": ("display-transport", "170-03"),
     "web/src/pages/cores/dictation/SpeakFace.tsx": ("display-transport", "170-04"),
     "web/src/pages/cores/modelLibrary.ts": ("display-transport", "143-12"),
+    "web/src/meetings/summaryRoute.ts": ("display-transport", "201-04"),
 }
 
 POINTER_TOKENS = ("inference_target_id", "intel_profile_id", "profile_id", "resolver_profile_id")

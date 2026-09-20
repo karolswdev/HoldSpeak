@@ -842,3 +842,92 @@ pass on a rail offering fewer than two run verbs.
 `ledger-retry` re-shot at both widths: three rows — `Retry` filled on the
 top-most actionable row, `Run summary` in the default species on the third,
 `Open` on the one that ran.
+
+### Captured run — 2026-09-20T03:43:00Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.nYLLLMrtHE uv run pytest -q tests/unit/test_phase143_surface_fallback_census.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b6a4c0bbb64e73d16a5223ef7e937e1144298a4a
+
+```text
+.....                                                                    [100%]
+5 passed in 2.92s
+```
+
+### Captured run — 2026-09-20T03:43:04Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.dRp6x5jlit uv run pytest -q tests/unit/test_phase200_attention.py::TestNotificationTransitions`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b6a4c0bbb64e73d16a5223ef7e937e1144298a4a
+
+```text
+.............                                                            [100%]
+13 passed in 1.70s
+```
+
+### Captured run — 2026-09-20T03:43:06Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.Lxr15Tf2ks uv run pytest -q tests/unit/test_phase200_attention.py::TestNotificationTransitions`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b6a4c0bbb64e73d16a5223ef7e937e1144298a4a
+
+```text
+.............                                                            [100%]
+13 passed in 1.70s
+```
+
+## Final suite classification
+
+### 1. (a) — the new web consumer is registered, not widened
+
+`tests/unit/test_phase143_surface_fallback_census.py` failed closed on a new
+browser module that names a routing pointer:
+
+```text
+Unclassified web route consumer(s): ['web/src/meetings/summaryRoute.ts']
+```
+
+`summaryRoute.ts` trips the census because the disclosed route's legs carry
+`profile_id` / `profileRevision` in its `RouteLeg` type. It is a
+**display-transport** consumer, exactly like the sibling entries: it renders
+what the hub disclosed and the run gesture sends the route's **selection
+hash**, never a pointer — the hub resolves and binds the selection
+(`holdspeak/services/meeting_route_projection.py:147`). It writes no
+assignment and chooses no route.
+
+Registered as one line in the census with its single owner
+(`test_phase143_surface_fallback_census.py:129`,
+`"web/src/meetings/summaryRoute.ts": ("display-transport", "201-04")`) and
+the matching row in the generated artifact the test reads back
+(`pm/roadmap/holdspeak/phase-143-intelligence-router/assets/generated-surface-fallback-census.md:124`).
+Nothing else in the census moved; no detector was loosened.
+
+```text
+.....                                                                    [100%]
+5 passed in 3.10s
+```
+
+### 2. (c) — the attention transitions are an xdist artefact, not a defect
+
+`tests/unit/test_phase200_attention.py::TestNotificationTransitions` failed
+eight tests under `-n 4` in the quiet-tree suite. Run serially on this
+branch, twice, with an isolated HOME each time, no test changed:
+
+```text
+.............                                                            [100%]
+13 passed in 1.72s
+```
+
+```text
+.............                                                            [100%]
+13 passed in 1.82s
+```
+
+Thirteen passed both times. Classified **(c) — a parallel-execution
+artefact**: the class passes serially here and on main, and nothing in this
+story touches it (this branch's diff has no Python change outside
+`glass_infra.py`'s teardown and this census registration). The isolation
+defect that class trips under xdist belongs to the ledger, not to HS-201-04.
