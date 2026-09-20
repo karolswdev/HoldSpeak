@@ -857,3 +857,282 @@ tests/unit/test_phase143_meeting_live_cutover.py::test_persisted_v1_plan_is_disp
 
 196 tests collected in 0.83s
 ```
+
+### Captured run — 2026-09-20T02:04:16Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.0wxnZ4dDrP .venv/bin/python .tmp/hs201_followup_red.py tests/unit/test_hs201_live_analysis_truth.py`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** ac86851de893f21dda446d9bad60bd0070aaddfc
+
+```text
+BASELINE_HEAD=ae9edfde7460e3cfe81cb87b27ba6058af9f070e
+BASELINE_DIRECTORY=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs201-followup-red-ylj31dtd
+PRODUCT_IMPORT=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs201-followup-red-ylj31dtd/holdspeak/__init__.py
+Backend-only baseline: skip unrelated automatic web asset build; no browser tests selected.
+FFFFFF.F                                                                 [100%]
+=================================== FAILURES ===================================
+_________________ test_settings_wire_reports_live_analysis_off _________________
+
+    def test_settings_wire_reports_live_analysis_off() -> None:
+        config = _legacy_remote_config()
+    
+        wire = redacted_settings(config)
+>       assert wire["meeting"]["intel_enabled"] is False
+E       assert True is False
+
+tests/unit/test_hs201_live_analysis_truth.py:37: AssertionError
+__________ test_doctor_reports_live_analysis_off_for_record[runtime] ___________
+
+reader = 'runtime'
+
+    @pytest.mark.parametrize(
+        ("reader",),
+        [
+            ("runtime",),
+            ("egress",),
+            ("profiles",),
+            ("preflight",),
+        ],
+    )
+    def test_doctor_reports_live_analysis_off_for_record(
+        reader: str,
+    ) -> None:
+        config = _legacy_remote_config()
+        checks = {
+            "runtime": lambda: doctor._check_meeting_intel_runtime(config),
+            "egress": lambda: doctor._check_meeting_intel_egress(config),
+            "profiles": lambda: doctor._check_runtime_profiles(config),
+            "preflight": lambda: doctor._check_meeting_intel_cloud_preflight(config),
+        }
+    
+        check = checks[reader]()
+    
+>       assert check.status == "PASS"
+E       AssertionError: assert 'WARN' == 'PASS'
+E         
+E         - PASS
+E         + WARN
+
+tests/unit/test_hs201_live_analysis_truth.py:61: AssertionError
+___________ test_doctor_reports_live_analysis_off_for_record[egress] ___________
+
+reader = 'egress'
+
+    @pytest.mark.parametrize(
+        ("reader",),
+        [
+            ("runtime",),
+            ("egress",),
+            ("profiles",),
+            ("preflight",),
+        ],
+    )
+    def test_doctor_reports_live_analysis_off_for_record(
+        reader: str,
+    ) -> None:
+        config = _legacy_remote_config()
+        checks = {
+            "runtime": lambda: doctor._check_meeting_intel_runtime(config),
+            "egress": lambda: doctor._check_meeting_intel_egress(config),
+            "profiles": lambda: doctor._check_runtime_profiles(config),
+            "preflight": lambda: doctor._check_meeting_intel_cloud_preflight(config),
+        }
+    
+        check = checks[reader]()
+    
+>       assert check.status == "PASS"
+E       AssertionError: assert 'WARN' == 'PASS'
+E         
+E         - PASS
+E         + WARN
+
+tests/unit/test_hs201_live_analysis_truth.py:61: AssertionError
+__________ test_doctor_reports_live_analysis_off_for_record[profiles] __________
+
+reader = 'profiles'
+
+    @pytest.mark.parametrize(
+        ("reader",),
+        [
+            ("runtime",),
+            ("egress",),
+            ("profiles",),
+            ("preflight",),
+        ],
+    )
+    def test_doctor_reports_live_analysis_off_for_record(
+        reader: str,
+    ) -> None:
+        config = _legacy_remote_config()
+        checks = {
+            "runtime": lambda: doctor._check_meeting_intel_runtime(config),
+            "egress": lambda: doctor._check_meeting_intel_egress(config),
+            "profiles": lambda: doctor._check_runtime_profiles(config),
+            "preflight": lambda: doctor._check_meeting_intel_cloud_preflight(config),
+        }
+    
+        check = checks[reader]()
+    
+        assert check.status == "PASS"
+>       assert "live analysis is off for record" in check.detail.lower()
+E       AssertionError: assert 'live analysis is off for record' in 'meeting intel: hub default (no profile assigned); dictation: hub default (no profile assigned)'
+E        +  where 'meeting intel: hub default (no profile assigned); dictation: hub default (no profile assigned)' = <built-in method lower of str object at 0x10f552a60>()
+E        +    where <built-in method lower of str object at 0x10f552a60> = 'meeting intel: hub default (no profile assigned); dictation: hub default (no profile assigned)'.lower
+E        +      where 'meeting intel: hub default (no profile assigned); dictation: hub default (no profile assigned)' = DoctorCheck(name='Runtime profiles', status='PASS', detail='meeting intel: hub default (no profile assigned); dictation: hub default (no profile assigned)', fix=None).detail
+
+tests/unit/test_hs201_live_analysis_truth.py:62: AssertionError
+_________ test_doctor_reports_live_analysis_off_for_record[preflight] __________
+
+reader = 'preflight'
+
+    @pytest.mark.parametrize(
+        ("reader",),
+        [
+            ("runtime",),
+            ("egress",),
+            ("profiles",),
+            ("preflight",),
+        ],
+    )
+    def test_doctor_reports_live_analysis_off_for_record(
+        reader: str,
+    ) -> None:
+        config = _legacy_remote_config()
+        checks = {
+            "runtime": lambda: doctor._check_meeting_intel_runtime(config),
+            "egress": lambda: doctor._check_meeting_intel_egress(config),
+            "profiles": lambda: doctor._check_runtime_profiles(config),
+            "preflight": lambda: doctor._check_meeting_intel_cloud_preflight(config),
+        }
+    
+        check = checks[reader]()
+    
+>       assert check.status == "PASS"
+E       AssertionError: assert 'WARN' == 'PASS'
+E         
+E         - PASS
+E         + WARN
+
+tests/unit/test_hs201_live_analysis_truth.py:61: AssertionError
+____________ test_setup_trust_and_inventory_scope_live_analysis_off ____________
+
+    def test_setup_trust_and_inventory_scope_live_analysis_off() -> None:
+        config = _legacy_remote_config()
+    
+        trust = _trust_block(config)
+>       assert trust["transcript_egress"] == "none"
+E       AssertionError: assert 'configured' == 'none'
+E         
+E         - none
+E         + configured
+
+tests/unit/test_hs201_live_analysis_truth.py:72: AssertionError
+_________ test_cloud_preflight_does_not_probe_legacy_meeting_endpoint __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10f6096d0>
+
+    def test_cloud_preflight_does_not_probe_legacy_meeting_endpoint(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        config = _legacy_remote_config()
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    
+        def fail_network(*_args: object, **_kwargs: object) -> None:
+            raise AssertionError("legacy meeting cloud preflight must not run")
+    
+        monkeypatch.setattr(doctor.urlrequest, "urlopen", fail_network)
+    
+        check = doctor._check_meeting_intel_cloud_preflight(config, skip_network=False)
+    
+>       assert check.status == "PASS"
+E       AssertionError: assert 'WARN' == 'PASS'
+E         
+E         - PASS
+E         + WARN
+
+tests/unit/test_hs201_live_analysis_truth.py:129: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_hs201_live_analysis_truth.py::test_settings_wire_reports_live_analysis_off
+FAILED tests/unit/test_hs201_live_analysis_truth.py::test_doctor_reports_live_analysis_off_for_record[runtime]
+FAILED tests/unit/test_hs201_live_analysis_truth.py::test_doctor_reports_live_analysis_off_for_record[egress]
+FAILED tests/unit/test_hs201_live_analysis_truth.py::test_doctor_reports_live_analysis_off_for_record[profiles]
+FAILED tests/unit/test_hs201_live_analysis_truth.py::test_doctor_reports_live_analysis_off_for_record[preflight]
+FAILED tests/unit/test_hs201_live_analysis_truth.py::test_setup_trust_and_inventory_scope_live_analysis_off
+FAILED tests/unit/test_hs201_live_analysis_truth.py::test_cloud_preflight_does_not_probe_legacy_meeting_endpoint
+7 failed, 1 passed in 1.56s
+```
+
+### Captured run — 2026-09-20T02:04:43Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.WZGb8vIwsp uv run --extra dev pytest -q tests/unit/test_hs201_live_analysis_truth.py tests/unit/test_doctor_command.py tests/unit/test_doctor_runtime_profiles.py tests/unit/test_doctor_config_honesty.py tests/unit/test_setup_status.py tests/unit/test_setup_status_doctor_drift.py tests/unit/test_trust_destinations.py tests/unit/test_hs201_record_speech_only.py tests/unit/test_hs201_record_stop_hook.py tests/e2e/test_hs201_record_transcript.py tests/unit/test_dictation_session_admission.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** ac86851de893f21dda446d9bad60bd0070aaddfc
+
+```text
+........................................................................ [ 47%]
+.........................s........ss...ss..........................s.... [ 94%]
+..sssss..                                                                [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:497: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:924: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:993: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:1175: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:1196: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2242: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2494: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2534: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [2] tests/unit/test_dictation_session_admission.py:2548: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2588: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+142 passed, 11 skipped in 13.53s
+```
+
+### Captured run — 2026-09-20T02:05:52Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.dps4Erhis5 uv run --extra dev pytest -q tests/unit/test_hs201_live_analysis_truth.py tests/unit/test_doctor_command.py tests/unit/test_doctor_runtime_profiles.py tests/unit/test_doctor_config_honesty.py tests/unit/test_setup_status.py tests/unit/test_setup_status_doctor_drift.py tests/unit/test_trust_destinations.py tests/unit/test_hs201_record_speech_only.py tests/unit/test_hs201_record_stop_hook.py tests/e2e/test_hs201_record_transcript.py tests/unit/test_dictation_session_admission.py tests/unit/test_phase143_routing_authority_census.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** ac86851de893f21dda446d9bad60bd0070aaddfc
+
+```text
+........................................................................ [ 44%]
+.........................s........ss...ss..........................s.... [ 88%]
+..sssss............                                                      [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:497: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:924: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:993: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:1175: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:1196: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2242: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2494: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2534: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [2] tests/unit/test_dictation_session_admission.py:2548: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2588: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+152 passed, 11 skipped in 15.39s
+```
+
+
+## Counsel follow-up — live-analysis knob retired on Record
+
+The wire reports `meeting.intel_enabled=false`; the retained stored byte is
+not rewritten and the stale write remains ignored. Doctor, setup trust and
+inventory report live analysis off for Record, omit its legacy endpoint/probe,
+and preserve dictation reporting. Explicit summary and speech can have remote
+routes. The choice is retirement of reporting on this path, not reconnection.
+
+Root baseline capture above: seven assertion failures and one control pass
+against archived `ae9edfde`, with product import provenance printed. Current
+focused run: 152 passed, 11 optional-engine skips. The 12 new cases across both
+stories were independently collected in story 03. The old red logfile initially
+imported edited code and is not accepted as red evidence. Saved root baseline
+runs are historical reproductions, not claims of pre-edit chronological capture.
+
+
+### Post-merge follow-up verification
+
+Follow-up source is committed as `a07d4bb5`; `origin/main` at `675401a8`
+integrated without conflict. Story 03 holds the combined post-merge capture
+at `2026-09-20T02:09:14Z`: **390 passed, 11 optional-engine skips**, including
+all recording/reporting tests named above. No story status was flipped.

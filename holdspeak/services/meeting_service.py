@@ -750,12 +750,14 @@ class MeetingService:
                         "selection_hash": None, "legs": [],
                     })
                     p["run_receipt"] = self._db.intel.get_run_receipt(meeting_id)
+                    p["last_refusal"] = self._db.intel.get_last_refusal(meeting_id)
                 except Exception:
                     p["planned_route"] = {
                         "status": "unavailable", "reason_code": "route unavailable",
                         "selection_hash": None, "legs": [],
                     }
                     p["run_receipt"] = None
+                    p["last_refusal"] = None
             if p.get("intel_model_host") is None and meeting_id:
                 try:
                     recorded = self._db.intel.get_intel_job_model_host(meeting_id)

@@ -1709,3 +1709,647 @@ tests/unit/test_hs201_route_http.py::test_http_route_refusal_and_repair_use_disc
 
 98 tests collected in 0.52s
 ```
+
+### Captured run — 2026-09-20T01:59:31Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.6hWDOqCZ5J PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:/Users/karol/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run --extra dev python .tmp/hs201_followup_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** ac86851de893f21dda446d9bad60bd0070aaddfc
+
+```text
+SUMMARY meeting=lane-a-fixture text='The team reviewed the budget.'
+RECEIPT after hub restart={'attempts': [{'host': 'same_device', 'leg_ordinal': 1, 'operation_id': 'op_f967dc74369343eb8d2ecdf21514afa0', 'outcome': 'succeeded'}], 'job_id': 'ij_1041afcad364d6f2d57b84b3d1e3649f85cc06ab0f9f70651438b0fd95c97590', 'meeting_id': 'lane-a-fixture', 'outcome': 'succeeded', 'receipt_id': 'rr_c75e02fb3e034fadcc3dcf146a64dbb9', 'selection_hash': 'sha256:333cef0e761a7f9f4cf4968ebf1b45901c2367247edd6af33471a2a108e57ec5'}
+SHOT /Users/karol/dev/tools/wt-201-a/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/lane-a-followup/meeting-after-restart-1440.png
+SHOT /Users/karol/dev/tools/wt-201-a/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/lane-a-followup/meeting-after-restart-393.png
+.
+1 passed in 17.65s
+```
+
+### Captured run — 2026-09-20T02:00:23Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.Rvcv3zYKAw .venv/bin/python .tmp/hs201_followup_red.py tests/unit/test_hs201_refusal_history.py tests/e2e/test_hs201_dispatch_exception.py`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** ac86851de893f21dda446d9bad60bd0070aaddfc
+
+```text
+BASELINE_HEAD=ae9edfde7460e3cfe81cb87b27ba6058af9f070e
+BASELINE_DIRECTORY=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs201-followup-red-tp588zqa
+PRODUCT_IMPORT=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs201-followup-red-tp588zqa/holdspeak/__init__.py
+FEEE                                                                     [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_finalize_failure_keeps_the_contacted_host_in_the_public_receipt _
+
+fixturedef = <FixtureDef argname='_web_bundle_is_fresh' scope='session' baseid='tests/e2e'>
+request = <SubRequest '_web_bundle_is_fresh' for <Function test_finalize_failure_keeps_the_contacted_host_in_the_public_receipt>>
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+>               return (yield)
+                        ^^^^^
+
+/Users/karol/dev/tools/wt-201-a/.venv/lib/python3.13/site-packages/pytest_asyncio/plugin.py:730: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/e2e/conftest.py:23: in _web_bundle_is_fresh
+    _ensure_build()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ensure_build() -> None:
+        """Build the web bundle if any web source is newer than the marker.
+    
+        Cross-process safe (fcntl lock under web/); once per process after
+        the first check. Never trusts a marker older than the sources.
+        """
+        global _build_done
+        if _build_done:
+            return
+        built_marker = REPO / "holdspeak" / "static" / "_built" / "index.html"
+        lock_path = REPO / "web" / ".glass-build.lock"
+>       with open(lock_path, "w") as lock:
+             ^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs201-followup-red-tp588zqa/web/.glass-build.lock'
+
+tests/e2e/glass_infra.py:148: FileNotFoundError
+_ ERROR at setup of test_settlement_failure_projects_dispatch_intent_as_indeterminate _
+
+    @pytest.fixture(scope="session", autouse=True)
+    def _web_bundle_is_fresh() -> None:
+>       _ensure_build()
+
+tests/e2e/conftest.py:23: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ensure_build() -> None:
+        """Build the web bundle if any web source is newer than the marker.
+    
+        Cross-process safe (fcntl lock under web/); once per process after
+        the first check. Never trusts a marker older than the sources.
+        """
+        global _build_done
+        if _build_done:
+            return
+        built_marker = REPO / "holdspeak" / "static" / "_built" / "index.html"
+        lock_path = REPO / "web" / ".glass-build.lock"
+>       with open(lock_path, "w") as lock:
+             ^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs201-followup-red-tp588zqa/web/.glass-build.lock'
+
+tests/e2e/glass_infra.py:148: FileNotFoundError
+_ ERROR at setup of test_pre_send_refusal_keeps_the_receipt_empty_and_does_not_call_provider _
+
+    @pytest.fixture(scope="session", autouse=True)
+    def _web_bundle_is_fresh() -> None:
+>       _ensure_build()
+
+tests/e2e/conftest.py:23: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ensure_build() -> None:
+        """Build the web bundle if any web source is newer than the marker.
+    
+        Cross-process safe (fcntl lock under web/); once per process after
+        the first check. Never trusts a marker older than the sources.
+        """
+        global _build_done
+        if _build_done:
+            return
+        built_marker = REPO / "holdspeak" / "static" / "_built" / "index.html"
+        lock_path = REPO / "web" / ".glass-build.lock"
+>       with open(lock_path, "w") as lock:
+             ^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs201-followup-red-tp588zqa/web/.glass-build.lock'
+
+tests/e2e/glass_infra.py:148: FileNotFoundError
+=================================== FAILURES ===================================
+__________ test_failed_execution_survives_restart_and_later_refusals ___________
+
+self = <holdspeak.services.meeting_intel_service.MeetingIntelService object at 0x110f2b0e0>
+meeting_id = 'refusal-history', expected_selection_hash = None
+
+    def _route_for_gesture(self, meeting_id: str, expected_selection_hash: str | None) -> dict[str, Any]:
+        route = project_route(self._db, invocation_id=f"meeting:{meeting_id}")
+        try:
+>           require_expected_selection(route, expected_selection_hash)
+
+holdspeak/services/meeting_intel_service.py:88: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+route = {'legs': [{'boundary': 'local', 'deployment_revision_id': 'dep2_e7a62dc8f9a8a01201b88657bb3bca368e2160b1560541e6c6c11f...: None, 'selection_hash': 'sha256:1f22eab7ef8178843ebddfc1823c1cea087834083d1267831f0128b38c9366b2', 'status': 'ready'}
+expected = None
+
+    def require_expected_selection(route: Mapping[str, Any], expected: Any) -> None:
+        """Enforce the point-of-decision binding carried by a run gesture."""
+        from .errors import ConflictError
+    
+        if route.get("status") != "ready":
+            raise ConflictError("The summary route is not available.", code="route_unavailable")
+        supplied = str(expected or "").strip()
+        if not supplied:
+>           raise ConflictError(
+                "Check the summary route, then try again.",
+                code="selection_hash_required",
+            )
+E           holdspeak.services.errors.ConflictError: Check the summary route, then try again.
+
+holdspeak/services/meeting_route_projection.py:150: ConflictError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8963/test_failed_execution_survives0')
+
+    def test_failed_execution_survives_restart_and_later_refusals(tmp_path: Path):
+        db, meeting = _ready_db(tmp_path, "refusal-history")
+        executed = _failed_execution(db, meeting.id)
+        db_path = Path(db.db_path)
+        db.close()
+        db = Database(db_path)
+        service = MeetingIntelService(db)
+    
+        refusal_ids: list[str] = []
+        for expected_hash in (None, "stale-selection"):
+            try:
+>               service.run_intelligence(
+                    OWNER,
+                    meeting.id,
+                    expected_selection_hash=expected_hash,
+                )
+
+tests/unit/test_hs201_refusal_history.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+holdspeak/services/observer.py:177: in sync_wrapper
+    result = fn(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+holdspeak/services/meeting_intel_service.py:158: in run_intelligence
+    route = self._route_for_gesture(meeting_id, expected_selection_hash)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.services.meeting_intel_service.MeetingIntelService object at 0x110f2b0e0>
+meeting_id = 'refusal-history', expected_selection_hash = None
+
+    def _route_for_gesture(self, meeting_id: str, expected_selection_hash: str | None) -> dict[str, Any]:
+        route = project_route(self._db, invocation_id=f"meeting:{meeting_id}")
+        try:
+            require_expected_selection(route, expected_selection_hash)
+        except ConflictError as exc:
+            receipt = self._db.intel.record_route_refusal(
+                meeting_id,
+                planned_route=route,
+                expected_selection_hash=expected_selection_hash,
+                reason=str(exc),
+            )
+>           raise self._conflict(
+                meeting_id,
+                str(exc),
+                code=exc.code,
+                run_receipt=receipt,
+                planned_route=route,
+            ) from exc
+E           holdspeak.services.errors.ConflictError: Check the summary route, then try again.
+
+holdspeak/services/meeting_intel_service.py:96: ConflictError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8963/test_failed_execution_survives0')
+
+    def test_failed_execution_survives_restart_and_later_refusals(tmp_path: Path):
+        db, meeting = _ready_db(tmp_path, "refusal-history")
+        executed = _failed_execution(db, meeting.id)
+        db_path = Path(db.db_path)
+        db.close()
+        db = Database(db_path)
+        service = MeetingIntelService(db)
+    
+        refusal_ids: list[str] = []
+        for expected_hash in (None, "stale-selection"):
+            try:
+                service.run_intelligence(
+                    OWNER,
+                    meeting.id,
+                    expected_selection_hash=expected_hash,
+                )
+            except ConflictError as exc:
+                assert exc.code in {"selection_hash_required", "selection_drift"}
+>               assert exc.context["run_receipt"] == executed
+E               AssertionError: assert {'attempts': ...refused', ...} == {'attempts': ...'failed', ...}
+E                 
+E                 Omitting 1 identical items, use -vv to show
+E                 Differing items:
+E                 {'selection_hash': None} != {'selection_hash': 'sha256:1f22eab7ef8178843ebddfc1823c1cea087834083d1267831f0128b38c9366b2'}
+E                 {'receipt_id': 'rr_8e9cdb3782dd8e21d83aacc23766aae8'} != {'receipt_id': 'rr_69c8ad81714afa37e17a1f4f8885c313'}
+E                 {'attempts': []} != {'attempts': [{'host': 'same_device', 'leg_ordinal': 1, 'operation_id': 'op-failed-primary', 'outcome': 'failed'}]}
+E                 {'outcome': 'refused'} != {'outcome': 'failed'}...
+E                 
+E                 ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests/unit/test_hs201_refusal_history.py:77: AssertionError
+=========================== short test summary info ============================
+ERROR tests/e2e/test_hs201_dispatch_exception.py::test_finalize_failure_keeps_the_contacted_host_in_the_public_receipt
+ERROR tests/e2e/test_hs201_dispatch_exception.py::test_settlement_failure_projects_dispatch_intent_as_indeterminate
+ERROR tests/e2e/test_hs201_dispatch_exception.py::test_pre_send_refusal_keeps_the_receipt_empty_and_does_not_call_provider
+FAILED tests/unit/test_hs201_refusal_history.py::test_failed_execution_survives_restart_and_later_refusals
+1 failed, 3 errors in 2.86s
+```
+
+### Captured run — 2026-09-20T02:01:14Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.QOasZt8iqx .venv/bin/python .tmp/hs201_followup_red.py tests/unit/test_hs201_refusal_history.py tests/e2e/test_hs201_dispatch_exception.py`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** ac86851de893f21dda446d9bad60bd0070aaddfc
+
+```text
+BASELINE_HEAD=ae9edfde7460e3cfe81cb87b27ba6058af9f070e
+BASELINE_DIRECTORY=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs201-followup-red-nhffu05w
+PRODUCT_IMPORT=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs201-followup-red-nhffu05w/holdspeak/__init__.py
+Backend-only baseline: skip unrelated automatic web asset build; no browser tests selected.
+FFF.                                                                     [100%]
+=================================== FAILURES ===================================
+__________ test_failed_execution_survives_restart_and_later_refusals ___________
+
+self = <holdspeak.services.meeting_intel_service.MeetingIntelService object at 0x10d3670e0>
+meeting_id = 'refusal-history', expected_selection_hash = None
+
+    def _route_for_gesture(self, meeting_id: str, expected_selection_hash: str | None) -> dict[str, Any]:
+        route = project_route(self._db, invocation_id=f"meeting:{meeting_id}")
+        try:
+>           require_expected_selection(route, expected_selection_hash)
+
+holdspeak/services/meeting_intel_service.py:88: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+route = {'legs': [{'boundary': 'local', 'deployment_revision_id': 'dep2_e7a62dc8f9a8a01201b88657bb3bca368e2160b1560541e6c6c11f...: None, 'selection_hash': 'sha256:e668b3c87af5f4e46fed705be070f1b72ba1744155b414b149e6ffeba088f997', 'status': 'ready'}
+expected = None
+
+    def require_expected_selection(route: Mapping[str, Any], expected: Any) -> None:
+        """Enforce the point-of-decision binding carried by a run gesture."""
+        from .errors import ConflictError
+    
+        if route.get("status") != "ready":
+            raise ConflictError("The summary route is not available.", code="route_unavailable")
+        supplied = str(expected or "").strip()
+        if not supplied:
+>           raise ConflictError(
+                "Check the summary route, then try again.",
+                code="selection_hash_required",
+            )
+E           holdspeak.services.errors.ConflictError: Check the summary route, then try again.
+
+holdspeak/services/meeting_route_projection.py:150: ConflictError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8965/test_failed_execution_survives0')
+
+    def test_failed_execution_survives_restart_and_later_refusals(tmp_path: Path):
+        db, meeting = _ready_db(tmp_path, "refusal-history")
+        executed = _failed_execution(db, meeting.id)
+        db_path = Path(db.db_path)
+        db.close()
+        db = Database(db_path)
+        service = MeetingIntelService(db)
+    
+        refusal_ids: list[str] = []
+        for expected_hash in (None, "stale-selection"):
+            try:
+>               service.run_intelligence(
+                    OWNER,
+                    meeting.id,
+                    expected_selection_hash=expected_hash,
+                )
+
+tests/unit/test_hs201_refusal_history.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+holdspeak/services/observer.py:177: in sync_wrapper
+    result = fn(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+holdspeak/services/meeting_intel_service.py:158: in run_intelligence
+    route = self._route_for_gesture(meeting_id, expected_selection_hash)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.services.meeting_intel_service.MeetingIntelService object at 0x10d3670e0>
+meeting_id = 'refusal-history', expected_selection_hash = None
+
+    def _route_for_gesture(self, meeting_id: str, expected_selection_hash: str | None) -> dict[str, Any]:
+        route = project_route(self._db, invocation_id=f"meeting:{meeting_id}")
+        try:
+            require_expected_selection(route, expected_selection_hash)
+        except ConflictError as exc:
+            receipt = self._db.intel.record_route_refusal(
+                meeting_id,
+                planned_route=route,
+                expected_selection_hash=expected_selection_hash,
+                reason=str(exc),
+            )
+>           raise self._conflict(
+                meeting_id,
+                str(exc),
+                code=exc.code,
+                run_receipt=receipt,
+                planned_route=route,
+            ) from exc
+E           holdspeak.services.errors.ConflictError: Check the summary route, then try again.
+
+holdspeak/services/meeting_intel_service.py:96: ConflictError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8965/test_failed_execution_survives0')
+
+    def test_failed_execution_survives_restart_and_later_refusals(tmp_path: Path):
+        db, meeting = _ready_db(tmp_path, "refusal-history")
+        executed = _failed_execution(db, meeting.id)
+        db_path = Path(db.db_path)
+        db.close()
+        db = Database(db_path)
+        service = MeetingIntelService(db)
+    
+        refusal_ids: list[str] = []
+        for expected_hash in (None, "stale-selection"):
+            try:
+                service.run_intelligence(
+                    OWNER,
+                    meeting.id,
+                    expected_selection_hash=expected_hash,
+                )
+            except ConflictError as exc:
+                assert exc.code in {"selection_hash_required", "selection_drift"}
+>               assert exc.context["run_receipt"] == executed
+E               AssertionError: assert {'attempts': ...refused', ...} == {'attempts': ...'failed', ...}
+E                 
+E                 Omitting 1 identical items, use -vv to show
+E                 Differing items:
+E                 {'receipt_id': 'rr_035bfea8d48ae85972176e51d325bc6e'} != {'receipt_id': 'rr_7a7c81722997df2850194d2489a5316a'}
+E                 {'selection_hash': None} != {'selection_hash': 'sha256:e668b3c87af5f4e46fed705be070f1b72ba1744155b414b149e6ffeba088f997'}
+E                 {'job_id': 'ij_241e8f6c3036a921196e26e42767b720e0b884a17f6a92cdfc6632749984f19f'} != {'job_id': 'ij_f9fea4a0d2db09c3019094ed430bc2b0018eb822b247986c778d9b8ed9bb2059'}
+E                 {'attempts': []} != {'attempts': [{'host': 'same_device', 'leg_ordinal': 1, 'operation_id': 'op-failed-primary', 'outcome': 'failed'}]}...
+E                 
+E                 ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests/unit/test_hs201_refusal_history.py:77: AssertionError
+_____ test_finalize_failure_keeps_the_contacted_host_in_the_public_receipt _____
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8965/test_finalize_failure_keeps_th0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d38be10>
+
+    def test_finalize_failure_keeps_the_contacted_host_in_the_public_receipt(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        db, library, broker = _rig(tmp_path, monkeypatch)
+        _provider(library, "dispatch-exception", "192.168.1.40")
+        _assign(db, ["dispatch-exception"], expected_revision=0)
+        meeting = _meeting(db, "hs201-dispatch-exception")
+        route = project_route(db, invocation_id=f"meeting:{meeting.id}")
+        db.intel.enqueue_intel_job(
+            meeting.id,
+            transcript_hash=meeting.transcript_hash(),
+            reason="HS-201 dispatch exception",
+            planned_route=route,
+        )
+    
+        calls: list[str] = []
+        _engine_leaf(monkeypatch, calls, set())
+    
+        def fail_after_provider(*_args: Any, **_kwargs: Any) -> None:
+            raise RuntimeError("projection finalization failed")
+    
+        monkeypatch.setattr(broker.projection_stager, "finalize", fail_after_provider)
+    
+        from holdspeak.intel_queue import process_next_intel_job
+    
+        assert process_next_intel_job() is True
+        assert calls == ["dispatch-exception"]
+        receipt = db.intel.get_run_receipt(meeting.id)
+        assert receipt is not None
+        assert receipt["outcome"] == "failed"
+>       assert len(receipt["attempts"]) == 1
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/e2e/test_hs201_dispatch_exception.py:54: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue:intel_queue.py:120 Deferred intel failed for meeting hs201-dispatch-exception (attempt 1/6): retrying in 30s
+ERROR    holdspeak.intel_queue:intel_queue.py:626 Bound deferred intel failed for meeting hs201-dispatch-exception: RuntimeError: projection finalization failed
+______ test_settlement_failure_projects_dispatch_intent_as_indeterminate _______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8965/test_settlement_failure_projec0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d2867b0>
+
+    def test_settlement_failure_projects_dispatch_intent_as_indeterminate(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        db, library, broker = _rig(tmp_path, monkeypatch)
+        _provider(library, "settlement-exception", "192.168.1.41")
+        _assign(db, ["settlement-exception"], expected_revision=0)
+        meeting = _meeting(db, "hs201-settlement-exception")
+        route = project_route(db, invocation_id=f"meeting:{meeting.id}")
+        db.intel.enqueue_intel_job(
+            meeting.id,
+            transcript_hash=meeting.transcript_hash(),
+            reason="HS-201 settlement exception",
+            planned_route=route,
+        )
+    
+        calls: list[str] = []
+        _engine_leaf(monkeypatch, calls, set())
+    
+        def fail_after_kernel_receipt(*_args: Any, **_kwargs: Any) -> None:
+            raise RuntimeError("route settlement failed")
+    
+        monkeypatch.setattr(
+            broker.inference_adoption_service.controller,
+            "settle_attempt",
+            fail_after_kernel_receipt,
+        )
+    
+        from holdspeak.intel_queue import process_next_intel_job
+    
+        assert process_next_intel_job() is True
+        assert calls == ["settlement-exception"]
+        receipt = db.intel.get_run_receipt(meeting.id)
+        assert receipt is not None
+        assert receipt["outcome"] == "failed"
+>       assert len(receipt["attempts"]) == 1
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/e2e/test_hs201_dispatch_exception.py:96: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue:intel_queue.py:120 Deferred intel failed for meeting hs201-settlement-exception (attempt 1/6): retrying in 30s
+ERROR    holdspeak.intel_queue:intel_queue.py:626 Bound deferred intel failed for meeting hs201-settlement-exception: RuntimeError: route settlement failed
+=========================== short test summary info ============================
+FAILED tests/unit/test_hs201_refusal_history.py::test_failed_execution_survives_restart_and_later_refusals
+FAILED tests/e2e/test_hs201_dispatch_exception.py::test_finalize_failure_keeps_the_contacted_host_in_the_public_receipt
+FAILED tests/e2e/test_hs201_dispatch_exception.py::test_settlement_failure_projects_dispatch_intent_as_indeterminate
+3 failed, 1 passed in 3.78s
+```
+
+### Captured run — 2026-09-20T01:59:46Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.3n3wZC2cuq uv run --extra dev pytest -q tests/unit/test_hs201_refusal_history.py tests/e2e/test_hs201_dispatch_exception.py tests/unit/test_hs201_run_receipt.py tests/unit/test_hs201_route_contract.py tests/unit/test_hs201_route_counsel.py tests/unit/test_hs201_route_http.py tests/e2e/test_hs201_route_execution.py tests/unit/test_intel_queue.py tests/unit/test_phase200_intel_drain.py tests/unit/test_meeting_deferred_admission.py tests/unit/test_phase143_intel_queue_inventory.py tests/integration/test_web_server.py tests/integration/test_meeting_intel_recovery.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** ac86851de893f21dda446d9bad60bd0070aaddfc
+
+```text
+........................................................................ [ 33%]
+........................................................................ [ 66%]
+........................................................................ [ 99%]
+..                                                                       [100%]
+218 passed in 136.55s (0:02:16)
+```
+
+### Captured run — 2026-09-20T02:03:39Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.T90FzAFyEV uv run --extra dev pytest -q tests/unit/test_backend_density_guard.py tests/unit/test_phase143_surface_fallback_census.py tests/unit/test_phase143_inference_capability_census.py tests/unit/test_phase143_routing_authority_census.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** ac86851de893f21dda446d9bad60bd0070aaddfc
+
+```text
+..............................                                           [100%]
+30 passed in 29.86s
+```
+
+### Captured run — 2026-09-20T02:04:44Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.JqXRFPLt1r uv run --extra dev pytest --collect-only -q tests/unit/test_hs201_refusal_history.py tests/e2e/test_hs201_dispatch_exception.py tests/unit/test_hs201_live_analysis_truth.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** ac86851de893f21dda446d9bad60bd0070aaddfc
+
+```text
+tests/unit/test_hs201_refusal_history.py::test_failed_execution_survives_restart_and_later_refusals
+tests/e2e/test_hs201_dispatch_exception.py::test_finalize_failure_keeps_the_contacted_host_in_the_public_receipt
+tests/e2e/test_hs201_dispatch_exception.py::test_settlement_failure_projects_dispatch_intent_as_indeterminate
+tests/e2e/test_hs201_dispatch_exception.py::test_pre_send_refusal_keeps_the_receipt_empty_and_does_not_call_provider
+tests/unit/test_hs201_live_analysis_truth.py::test_settings_wire_reports_live_analysis_off
+tests/unit/test_hs201_live_analysis_truth.py::test_doctor_reports_live_analysis_off_for_record[runtime]
+tests/unit/test_hs201_live_analysis_truth.py::test_doctor_reports_live_analysis_off_for_record[egress]
+tests/unit/test_hs201_live_analysis_truth.py::test_doctor_reports_live_analysis_off_for_record[profiles]
+tests/unit/test_hs201_live_analysis_truth.py::test_doctor_reports_live_analysis_off_for_record[preflight]
+tests/unit/test_hs201_live_analysis_truth.py::test_setup_trust_and_inventory_scope_live_analysis_off
+tests/unit/test_hs201_live_analysis_truth.py::test_legacy_intel_write_is_ignored_and_dictation_settings_stay_intact
+tests/unit/test_hs201_live_analysis_truth.py::test_cloud_preflight_does_not_probe_legacy_meeting_endpoint
+
+12 tests collected in 1.22s
+```
+
+
+## Counsel follow-up — executed receipt history and dispatch exceptions
+
+`run_receipt` retains the latest receipt with actual/pending dispatch attempts;
+`last_refusal` carries the separate no-call refusal. The fields reach meeting
+detail/list/recovery and the 409 response. Restart, missing/stale hashes, a later
+successful receipt, and per-job identity are fenced. Post-provider projection
+failure retains the succeeded attempt; settlement failure retains an
+`indeterminate` dispatch intent. A pre-send refusal remains empty.
+
+Root archived `ae9edfde` run: three expected assertion failures and one pre-send
+control pass. The initial root baseline attempt also hit three unrelated asset
+setup errors; those are not the dispatch RED proof. The next captured baseline
+skipped only the irrelevant web build and reached both provider-contact fences.
+Current root receipt/queue/HTTP suite: 218 passed. Guards: 30 passed, with only
+source-line anchors and one retired display read updated. No new schema.
+
+Both follow-up shots were inspected: saved fixture transcript, RAN and THIS
+DEVICE at 1440 and 393 after a real isolated hub restart. The API retained the
+fixture summary and execution receipt. These are existing-face integration
+shots; B owns presentation of the new refusal field. No owner-desk or real
+model-quality claim is made.
+
+The archived baseline runner used for the raw red captures is reproduced here.
+It adds only the new tests to committed production code and prints its import
+path. It does not change the lane worktree.
+
+```python
+from pathlib import Path
+import io
+import os
+import shutil
+import subprocess
+import sys
+import tarfile
+import tempfile
+
+root = Path.cwd()
+baseline = Path(tempfile.mkdtemp(prefix="hs201-followup-red-"))
+head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+archive = subprocess.check_output(["git", "archive", head, "holdspeak", "tests", "pyproject.toml", "docs/trust-destinations.json"])
+with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
+    tar.extractall(baseline, filter="data")
+for test in sys.argv[1:]:
+    shutil.copyfile(root / test, baseline / test)
+env = {**os.environ, "HOME": tempfile.mkdtemp(prefix="hs201-red-home-"), "PYTHONPATH": str(baseline)}
+python = str(root / ".venv/bin/python")
+print(f"BASELINE_HEAD={head}\nBASELINE_DIRECTORY={baseline}", flush=True)
+subprocess.run([python, "-c", "import holdspeak; print('PRODUCT_IMPORT=' + holdspeak.__file__)"], cwd=baseline, env=env, check=True)
+runner = "import tests.e2e.glass_infra as glass; glass._build_done=True; import pytest, sys; raise SystemExit(pytest.main(['-q', *sys.argv[1:]]))"
+print("Backend-only baseline: skip unrelated automatic web asset build; no browser tests selected.", flush=True)
+result = subprocess.run([python, "-c", runner, *sys.argv[1:]], cwd=baseline, env=env)
+raise SystemExit(result.returncode)
+```
+
+The glass runner imports `tests.e2e.test_hs201_lane_a_glass`, sets its `SHOTS`
+to `assets/lane-a-followup` under this phase, and calls `pytest.main` on that
+module with `-q -s`. Its capture supplies isolated HOME and the browser cache.
+
+### Captured run — 2026-09-20T02:09:14Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.uJBYsIFdmz PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:/Users/karol/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run --extra dev pytest -q -n auto tests/unit/test_hs201_refusal_history.py tests/e2e/test_hs201_dispatch_exception.py tests/unit/test_hs201_run_receipt.py tests/unit/test_hs201_route_contract.py tests/unit/test_hs201_route_counsel.py tests/unit/test_hs201_route_http.py tests/e2e/test_hs201_route_execution.py tests/unit/test_intel_queue.py tests/unit/test_phase200_intel_drain.py tests/unit/test_meeting_deferred_admission.py tests/unit/test_phase143_intel_queue_inventory.py tests/integration/test_web_server.py tests/integration/test_meeting_intel_recovery.py tests/unit/test_hs201_live_analysis_truth.py tests/unit/test_doctor_command.py tests/unit/test_doctor_runtime_profiles.py tests/unit/test_doctor_config_honesty.py tests/unit/test_setup_status.py tests/unit/test_setup_status_doctor_drift.py tests/unit/test_trust_destinations.py tests/unit/test_hs201_record_speech_only.py tests/unit/test_hs201_record_stop_hook.py tests/e2e/test_hs201_record_transcript.py tests/unit/test_dictation_session_admission.py tests/unit/test_backend_density_guard.py tests/unit/test_phase143_surface_fallback_census.py tests/unit/test_phase143_inference_capability_census.py tests/unit/test_phase143_routing_authority_census.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 854e4ef205c41c86164395c5b8c11e9223d97bf0
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 17%]
+........................................................................ [ 35%]
+........................................................................ [ 53%]
+........................................................................ [ 71%]
+..........s.......s...........ss...s..................sssss.........s... [ 89%]
+.................................Meeting checkpoint failed: '_FixtureRecorder' object has no attribute 'trim_before'
+........                                [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:497: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:1196: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:924: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:993: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:1175: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2242: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2534: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [2] tests/unit/test_dictation_session_admission.py:2548: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2588: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2494: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+390 passed, 11 skipped in 35.91s
+```
+
+### Captured run — 2026-09-20T02:10:13Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.6hKNAfoUNs uv run --extra dev pytest -q tests/unit/test_doc_drift_guard.py tests/uat/test_build_ledger.py tests/uat/test_ledger.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 854e4ef205c41c86164395c5b8c11e9223d97bf0
+
+```text
+..................................                                       [100%]
+34 passed in 1.79s
+```
+
+
+Post-merge runs above use follow-up product commit `a07d4bb5` plus incoming
+main `675401a8`; the merge brings no product-source edits. The 390-test focused
+suite passed with 11 optional-engine skips. The 34 documentation/ledger tests
+also passed. No full-suite green is inferred from these focused runs.

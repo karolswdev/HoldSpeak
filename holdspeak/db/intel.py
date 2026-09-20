@@ -2317,26 +2317,55 @@ class IntelRepository(BaseRepository):
                 )
         return payload
 
-    def get_run_receipt(self, meeting_id: str) -> dict[str, Any] | None:
+    def _run_receipts_for_meeting(self, meeting_id: str) -> list[dict[str, Any]]:
+        """Read immutable job receipts in the order their jobs were requested."""
         with self._connection() as conn:
-            row = conn.execute(
-                _CURRENT_LINEAGE_CTE + """
-                SELECT run_receipt_json FROM current_jobs
-                WHERE meeting_id=? AND current_rank=1 AND run_receipt_json IS NOT NULL
-                LIMIT 1""",
+            rows = conn.execute(
+                """SELECT run_receipt_json FROM intel_jobs
+                   WHERE meeting_id=? AND run_receipt_json IS NOT NULL
+                   ORDER BY requested_at DESC, updated_at DESC, job_id DESC""",
                 (meeting_id,),
-            ).fetchone()
-            if row is None:
-                row = conn.execute(
-                    """SELECT run_receipt_json FROM intel_jobs
-                       WHERE meeting_id=? AND run_receipt_json IS NOT NULL
-                       ORDER BY requested_at DESC LIMIT 1""",
-                    (meeting_id,),
-                ).fetchone()
-        if row is None or not row["run_receipt_json"]:
+            ).fetchall()
+        receipts: list[dict[str, Any]] = []
+        for row in rows:
+            if not row["run_receipt_json"]:
+                continue
+            value = json.loads(str(row["run_receipt_json"]))
+            if isinstance(value, dict):
+                receipts.append(dict(value))
+        return receipts
+
+    @staticmethod
+    def _is_no_call_refusal(receipt: Mapping[str, Any]) -> bool:
+        """Identify a route refusal that has no provider attempt."""
+        return (
+            str(receipt.get("outcome") or "").strip().lower() == "refused"
+            and not receipt.get("attempts")
+        )
+
+    @staticmethod
+    def _has_execution(receipt: Mapping[str, Any]) -> bool:
+        """A receipt is executed only when it records a physical attempt."""
+        attempts = receipt.get("attempts")
+        return isinstance(attempts, list) and bool(attempts)
+
+    def get_run_receipt(self, meeting_id: str) -> dict[str, Any] | None:
+        """Return the newest executed receipt, retaining older work past refusal."""
+        receipts = self._run_receipts_for_meeting(meeting_id)
+        if not receipts:
             return None
-        value = json.loads(str(row["run_receipt_json"]))
-        return dict(value) if isinstance(value, dict) else None
+        for receipt in receipts:
+            if self._has_execution(receipt):
+                return receipt
+        # Preserve the established latest-receipt read model when no execution exists.
+        return receipts[0]
+
+    def get_last_refusal(self, meeting_id: str) -> dict[str, Any] | None:
+        """Return the newest durable no-call route refusal for this Meeting."""
+        for receipt in self._run_receipts_for_meeting(meeting_id):
+            if self._is_no_call_refusal(receipt):
+                return receipt
+        return None
 
     def get_run_receipt_for_job(self, job_id: str) -> dict[str, Any] | None:
         with self._connection() as conn:

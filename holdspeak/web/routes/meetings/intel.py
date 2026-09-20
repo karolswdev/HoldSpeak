@@ -53,6 +53,7 @@ def _conflict_response(service: MeetingIntelService, meeting_id: str, exc: Confl
             "planned_route": planned_route,
             "current_planned_route": planned_route,
             "run_receipt": context.get("run_receipt"),
+            "last_refusal": context.get("last_refusal"),
         },
         status_code=409,
     )

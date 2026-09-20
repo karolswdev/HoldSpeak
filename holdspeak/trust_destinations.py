@@ -47,14 +47,14 @@ def destination_inventory(config: Any, *, database: Any = None) -> list[dict[str
     meeting = config.meeting
     runtime = config.dictation.runtime
     pipeline = config.dictation.pipeline
-    provider = str(meeting.intel_provider or "local").strip().lower()
     backend = str(getattr(runtime, "backend", "local") or "local").strip().lower()
-    from .intel.providers import effective_dictation_llm, effective_intel_cloud
+    from .intel.providers import effective_dictation_llm
 
-    meeting_runtime = effective_intel_cloud(meeting)
     dictation_runtime = effective_dictation_llm(runtime)
     enabled = {
-        "meeting_intel": bool(meeting.intel_enabled and provider != "local"),
+        # HS-201: retained meeting intel config does not describe ordinary Web
+        # Record. A later manual summary owns its own disclosed route.
+        "meeting_intel": False,
         "dictation_runtime": bool(
             pipeline.enabled and (dictation_runtime.profile_id or backend == "openai_compatible")
         ),
@@ -68,10 +68,7 @@ def destination_inventory(config: Any, *, database: Any = None) -> list[dict[str
         "failure_webhook": _configured(meeting.intel_retry_failure_webhook_url),
     }
     names = {
-        "meeting_intel": (
-            meeting_runtime.profile_name or "Configured meeting runtime"
-            if enabled["meeting_intel"] else "This machine"
-        ),
+        "meeting_intel": "Live analysis is off for Record",
         "dictation_runtime": (
             dictation_runtime.profile_name or "Configured dictation runtime"
             if enabled["dictation_runtime"] else "This machine"

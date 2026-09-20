@@ -162,8 +162,8 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/services/inference_setup_service.py:650:inference_target_id",
     "holdspeak/services/inference_setup_service.py:654:intel_profile_id",
     "holdspeak/services/inference_setup_service.py:181:inference_target_id",
-    "holdspeak/services/settings_service.py:665:intel_profile_id",
-    "holdspeak/services/settings_service.py:916:inference_target_id",
+    "holdspeak/services/settings_service.py:673:intel_profile_id",
+    "holdspeak/services/settings_service.py:924:inference_target_id",
     "holdspeak/services/workbench_service.py:592:resolver_profile_id",
     # HS-172: resolve_meeting_placement pointer reads
     # HS-201-03: mcp/tools.py moved down three lines (see the reference set).
@@ -179,15 +179,16 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/config/core.py:215:profile_id", "holdspeak/config/core.py:246:profile_id",
         "holdspeak/config/integrations.py:269:profile_id", "holdspeak/config/model.py:80:profile_id",
         "holdspeak/plugins/dictation/assembly.py:327:profile_id",
-        "holdspeak/services/settings_service.py:817:profile_id",
-        "holdspeak/services/settings_service.py:889:profile_id",
+        "holdspeak/services/settings_service.py:825:profile_id",
+        "holdspeak/services/settings_service.py:897:profile_id",
         "holdspeak/services/sync_service.py:844:profile_id",
         "holdspeak/services/sync_service.py:859:profile_id",
     }},
     **{site: "display" for site in {
-        "holdspeak/commands/doctor.py:488:profile_id", "holdspeak/commands/doctor.py:787:profile_id",
-        "holdspeak/commands/doctor.py:795:profile_id", "holdspeak/commands/doctor.py:809:profile_id",
-        "holdspeak/commands/doctor.py:934:profile_id",
+        # HS-201: the inactive live-analysis endpoint display was retired.
+        "holdspeak/commands/doctor.py:525:profile_id",
+        "holdspeak/commands/doctor.py:533:profile_id", "holdspeak/commands/doctor.py:547:profile_id",
+        "holdspeak/commands/doctor.py:672:profile_id",
         "holdspeak/db/models/__init__.py:698:profile_id", "holdspeak/inference_targets.py:161:profile_id",
         # HS-162-03: front_door.py profile_id reads (display, Phase 156).
         "holdspeak/web/routes/front_door.py:416:profile_id",
@@ -195,7 +196,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/web/routes/front_door.py:444:profile_id",
         "holdspeak/services/ask_service.py:320:profile_id",
         "holdspeak/services/inference_setup_service.py:653:profile_id", "holdspeak/services/settings_service.py:103:profile_id",
-        "holdspeak/setup_status.py:151:profile_id",
+        "holdspeak/setup_status.py:134:profile_id",
         "holdspeak/services/model_profile_service.py:225:profile_id",
         "holdspeak/services/model_profile_service.py:264:profile_id",
         # HS-172: meetings host resolve display reads (HS-200-13: +2 lines).
@@ -361,10 +362,10 @@ def test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer() 
     assert pointers == ROUTING_POINTER_ATTRIBUTES
     assert profile_ids == set(PROFILE_ID_CLASSIFICATIONS)
     assert set(PROFILE_ID_CLASSIFICATIONS.values()) <= CLASSES
-    assert len(PROFILE_ID_CLASSIFICATIONS) == 38  # HS-172: +2 meetings host resolve display (36 -> 38)
+    assert len(PROFILE_ID_CLASSIFICATIONS) == 37  # HS-201: retired one inactive live-analysis display.
     assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 9
     assert sum(value == "migration source" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 4
-    assert sum(value == "display" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 18  # HS-172: +2 meetings host resolve display (16 -> 18)
+    assert sum(value == "display" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 17
     assert sum(value == "credential/provider identity" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 5
     assert sum(value == "immutable evidence" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 2
 
