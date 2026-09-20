@@ -653,8 +653,13 @@ export function useConciergeController(): ConciergeController {
     try {
       const result = await checkEndpoint(url);
       // The field moved on while this was in flight: the answer is about
-      // an address the owner is no longer looking at.
-      if (addEngineUrlRef.current.trim() !== url) return;
+      // an address the owner is no longer looking at. Drop the ANSWER —
+      // but end the flight, or `Check` stays disabled for ever and the
+      // corrected address can never be checked at all (round 2 residual).
+      if (addEngineUrlRef.current.trim() !== url) {
+        safe(() => setAddEngineChecking(false));
+        return;
+      }
       safe(() => {
         setAddEngineChecking(false);
         if (result.ok && result.models.length > 0) {
@@ -667,7 +672,10 @@ export function useConciergeController(): ConciergeController {
         setAddEngineReason(result.detail);
       });
     } catch (err) {
-      if (addEngineUrlRef.current.trim() !== url) return;
+      if (addEngineUrlRef.current.trim() !== url) {
+        safe(() => setAddEngineChecking(false));
+        return;
+      }
       safe(() => {
         setAddEngineChecking(false);
         setAddEngineState("UNREACHABLE");

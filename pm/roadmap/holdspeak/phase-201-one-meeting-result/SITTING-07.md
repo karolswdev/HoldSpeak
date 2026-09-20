@@ -45,11 +45,18 @@ Send that line. Then open http://127.0.0.1:8765 in your browser.
 | 4 | Open the meeting. Look beside "Run summary". | The host that WILL run it, before you click. | a shot |
 | 5 | Click "Run summary". Wait. | The host that DID run it, and the summary text under it. Read it. | a shot, and one line: useful, or not, and why |
 | 6 | Stop the product (Ctrl-C). Start it again with the same command. Find the summary. | The same summary, in two moves or less. | a shot, and the number of moves |
-| 7 | Dictate one sentence into another app. | Your words land. | one line |
+| 7 | Open a different app and click in a text box. Hold the Right Option key (⌥R), say one sentence, then release the key. | Your words become text in that app, at the cursor. | one line: what you said, and what landed |
 
 Your engine address is the one you use today. The Models field shows an
 example of the shape. A cloud engine from your configuration is also
 correct here.
+
+The key for step 7 is the one the product names at start:
+`Voice typing hotkey is active: hold ⌥R, speak, release.`
+(`holdspeak/web_runtime.py:580`; the default is Right Option,
+`holdspeak/config/ui.py:15`). If the start says the hotkey is not
+available, give HoldSpeak permission for Accessibility and Input
+Monitoring, then start it again.
 
 ## What the agent records
 

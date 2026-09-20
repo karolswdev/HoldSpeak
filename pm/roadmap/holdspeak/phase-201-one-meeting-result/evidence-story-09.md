@@ -415,3 +415,139 @@ catalog presets, so the **rig** never had a preset `Download` beside the
 other claimants. The three-way arbitration (two repairs + two presets + a
 READY Add-engine well) is measured in vitest, where those rows are present
 by construction, not in the browser walk.
+
+### Captured run — 2026-09-20T07:31:07Z
+
+- **Command:** `bash -c cd web && npx tsc --noEmit && echo TYPECHECK CLEAN && npx vitest run src/features/concierge 2>&1 | tail -6`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 9704e435d2c361e0e162399cd9305b96fc7bccd1
+
+```text
+TYPECHECK CLEAN
+
+ Test Files  3 passed (3)
+      Tests  58 passed (58)
+   Start at  01:31:21
+   Duration  1.91s (transform 774ms, setup 693ms, import 1.49s, tests 778ms, environment 1.19s)
+```
+
+### Captured run — 2026-09-20T07:31:23Z
+
+- **Command:** `bash -c HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q -s tests/e2e/test_hs201_09_connect_engine_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 9704e435d2c361e0e162399cd9305b96fc7bccd1
+
+```text
+[glass_infra] web bundle rebuilt in 8.5s
+ENGINE real LAN http://192.168.1.43:8080/v1 model=Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-cold-1440.png
+REFUSED REASON Nothing answers at this address.
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/add-engine-refused-1440.png
+STALE CHECK dropped on address edit
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/add-engine-ready-1440.png
+SUMMARY ASSIGNED {'schema': 'ConciergeSummaryAssignmentProjection@1', 'capabilityId': 'meeting.deferred_analysis', 'status': 'assigned', 'assignmentRevision': 1, 'profileId': 'engine-192-168-1-43-8080', 'profileRevision': 1, 'label': '192.168.1.43:8080', 'boundary': 'lan', 'readiness': 'ready'} (one gesture, no Use these)
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-engine-connected-1440.png
+WAITING GROUPS ['speech_recognition']
+SUMMARY OFF {'schema': 'ConciergeSummaryAssignmentProjection@1', 'capabilityId': 'meeting.deferred_analysis', 'status': 'off', 'assignmentRevision': 3, 'profileId': None, 'profileRevision': None, 'label': None, 'boundary': None, 'readiness': None} / roster no_assignment
+REPAIR REASON This engine cannot give a structured result.
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-summary-off-1440.png
+SUMMARY BACK ON {'schema': 'ConciergeSummaryAssignmentProjection@1', 'capabilityId': 'meeting.deferred_analysis', 'status': 'assigned', 'assignmentRevision': 4, 'profileId': 'engine-192-168-1-43-8080', 'profileRevision': 1, 'label': '192.168.1.43:8080', 'boundary': 'lan', 'readiness': 'ready'}
+FACE CENSUS presets=0 repairs=1
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-engine-back-on-1440.png
+DOOR Go > Models opened the Models window
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-from-the-go-menu-1440.png
+.GEOM ['line display=flex wrap=wrap w=337', 'surface-ledger-lead display=block flex=0 0 36px ovf=visible rect=28,36 scrollW=36 clientW=36', 'surface-ledger-primary display=block flex=1 1 calc(100% - 48px) ovf=visible rect=74,291 scrollW=291 clientW=291', 'concierge-set-cells display=contents flex=0 1 auto ovf=visible rect=0,0 scrollW=0 clientW=0', ' btn btn--ghost btn--sm concierge-picker-trigger display=flex flex=0 1 auto ovf=hidden rect=28,51 scrollW=49 clientW=49', ' concierge-set-state display=block flex=0 0 auto ovf=visible rect=287,78 scrollW=78 clientW=78', ' concierge-set-line2 display=flex flex=1 0 100% ovf=visible rect=28,337 scrollW=337 clientW=337']
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-cold-393.png
+REFUSED REASON Nothing answers at this address.
+GEOM ['line display=flex wrap=wrap w=337', 'surface-ledger-lead display=block flex=0 0 36px ovf=visible rect=28,36 scrollW=36 clientW=36', 'surface-ledger-primary display=block flex=1 1 calc(100% - 48px) ovf=visible rect=74,291 scrollW=291 clientW=291', 'concierge-set-cells display=contents flex=0 1 auto ovf=visible rect=0,0 scrollW=0 clientW=0', ' btn btn--ghost btn--sm concierge-picker-trigger display=flex flex=0 1 auto ovf=hidden rect=28,51 scrollW=49 clientW=49', ' concierge-set-state display=block flex=0 0 auto ovf=visible rect=287,78 scrollW=78 clientW=78', ' concierge-set-line2 display=flex flex=1 0 100% ovf=visible rect=28,337 scrollW=337 clientW=337']
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/add-engine-refused-393.png
+STALE CHECK dropped on address edit
+GEOM ['line display=flex wrap=wrap w=337', 'surface-ledger-lead display=block flex=0 0 36px ovf=visible rect=28,36 scrollW=36 clientW=36', 'surface-ledger-primary display=block flex=1 1 calc(100% - 48px) ovf=visible rect=74,291 scrollW=291 clientW=291', 'concierge-set-cells display=contents flex=0 1 auto ovf=visible rect=0,0 scrollW=0 clientW=0', ' btn btn--ghost btn--sm concierge-picker-trigger display=flex flex=0 1 auto ovf=hidden rect=28,51 scrollW=49 clientW=49', ' concierge-set-state display=block flex=0 0 auto ovf=visible rect=287,78 scrollW=78 clientW=78', ' concierge-set-line2 display=flex flex=1 0 100% ovf=visible rect=28,337 scrollW=337 clientW=337']
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/add-engine-ready-393.png
+SUMMARY ASSIGNED {'schema': 'ConciergeSummaryAssignmentProjection@1', 'capabilityId': 'meeting.deferred_analysis', 'status': 'assigned', 'assignmentRevision': 1, 'profileId': 'engine-192-168-1-43-8080', 'profileRevision': 1, 'label': '192.168.1.43:8080', 'boundary': 'lan', 'readiness': 'ready'} (one gesture, no Use these)
+GEOM ['line display=flex wrap=wrap w=337', 'surface-ledger-lead display=block flex=0 0 36px ovf=visible rect=28,36 scrollW=36 clientW=36', 'surface-ledger-primary display=block flex=1 1 calc(100% - 48px) ovf=visible rect=74,291 scrollW=291 clientW=291', 'concierge-set-cells display=contents flex=0 1 auto ovf=visible rect=0,0 scrollW=0 clientW=0', ' btn btn--ghost btn--sm concierge-picker-trigger display=flex flex=0 1 auto ovf=hidden rect=28,152 scrollW=150 clientW=150', ' concierge-set-state display=block flex=0 0 auto ovf=visible rect=301,64 scrollW=64 clientW=64', ' concierge-set-line2 display=flex flex=1 0 100% ovf=visible rect=28,337 scrollW=337 clientW=337']
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-engine-connected-393.png
+WAITING GROUPS ['speech_recognition']
+SUMMARY OFF {'schema': 'ConciergeSummaryAssignmentProjection@1', 'capabilityId': 'meeting.deferred_analysis', 'status': 'off', 'assignmentRevision': 3, 'profileId': None, 'profileRevision': None, 'label': None, 'boundary': None, 'readiness': None} / roster no_assignment
+REPAIR REASON This engine cannot give a structured result.
+GEOM ['line display=flex wrap=wrap w=337', 'surface-ledger-lead display=block flex=0 0 36px ovf=visible rect=28,36 scrollW=36 clientW=36', 'surface-ledger-primary display=block flex=1 1 calc(100% - 48px) ovf=visible rect=74,291 scrollW=291 clientW=291', 'concierge-set-cells display=contents flex=0 1 auto ovf=visible rect=0,0 scrollW=0 clientW=0', ' btn btn--ghost btn--sm concierge-picker-trigger display=flex flex=0 1 auto ovf=hidden rect=28,51 scrollW=49 clientW=49', ' concierge-set-state display=block flex=0 0 auto ovf=visible rect=314,51 scrollW=51 clientW=51', ' concierge-set-line2 display=flex flex=1 0 100% ovf=visible rect=28,337 scrollW=337 clientW=337']
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-summary-off-393.png
+SUMMARY BACK ON {'schema': 'ConciergeSummaryAssignmentProjection@1', 'capabilityId': 'meeting.deferred_analysis', 'status': 'assigned', 'assignmentRevision': 4, 'profileId': 'engine-192-168-1-43-8080', 'profileRevision': 1, 'label': '192.168.1.43:8080', 'boundary': 'lan', 'readiness': 'ready'}
+FACE CENSUS presets=0 repairs=1
+GEOM ['line display=flex wrap=wrap w=337', 'surface-ledger-lead display=block flex=0 0 36px ovf=visible rect=28,36 scrollW=36 clientW=36', 'surface-ledger-primary display=block flex=1 1 calc(100% - 48px) ovf=visible rect=74,291 scrollW=291 clientW=291', 'concierge-set-cells display=contents flex=0 1 auto ovf=visible rect=0,0 scrollW=0 clientW=0', ' btn btn--ghost btn--sm concierge-picker-trigger display=flex flex=0 1 auto ovf=hidden rect=28,152 scrollW=150 clientW=150', ' concierge-set-state display=block flex=0 0 auto ovf=visible rect=301,64 scrollW=64 clientW=64', ' concierge-set-line2 display=flex flex=1 0 100% ovf=visible rect=28,337 scrollW=337 clientW=337']
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-engine-back-on-393.png
+DOOR Go > Models opened the Models window
+GEOM ['line display=flex wrap=wrap w=337', 'surface-ledger-lead display=block flex=0 0 36px ovf=visible rect=28,36 scrollW=36 clientW=36', 'surface-ledger-primary display=block flex=1 1 calc(100% - 48px) ovf=visible rect=74,291 scrollW=291 clientW=291', 'concierge-set-cells display=contents flex=0 1 auto ovf=visible rect=0,0 scrollW=0 clientW=0', ' btn btn--ghost btn--sm concierge-picker-trigger display=flex flex=0 1 auto ovf=hidden rect=28,152 scrollW=150 clientW=150', ' concierge-set-state display=block flex=0 0 auto ovf=visible rect=301,64 scrollW=64 clientW=64', ' concierge-set-line2 display=flex flex=1 0 100% ovf=visible rect=28,337 scrollW=337 clientW=337']
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-from-the-go-menu-393.png
+.
+2 passed in 30.89s
+```
+
+## Round 2 residual
+
+Astra's second pass left one (b) product defect on 09 and one gap in the
+sitting script. Both are fixed; the captures immediately above this section
+are the green runs.
+
+### 1. A stale check left `Check` disabled for ever
+
+Round 1 taught `checkNewEngine` to DROP an answer whose address the owner
+had already corrected — but both stale branches returned before clearing
+`addEngineChecking`, so the verb stayed disabled
+(`web/src/features/concierge/ConciergeCore.tsx`, `disabled={ctrl.addEngineChecking || …}`)
+and the corrected address could never be checked at all. Dropping the
+answer is right; ending the flight was missing.
+
+Both branches — the resolved one and the thrown one — now clear the flag
+before returning (`web/src/features/concierge/useConciergeController.ts`,
+`checkNewEngine`). Nothing else changes: READY, the named model and the
+reason were already cleared by `editAddEngineUrl` when the address moved.
+
+Red first, both paths:
+
+```text
+× lets him check the corrected address after a stale ANSWER   1020ms
+× lets him check the corrected address after a stale FAILURE  1024ms
+
+ FAIL  …connectAnEngine.test.tsx > a changed address invalidates the check
+       (counsel 3) > lets him check the corrected address after a stale ANSWER
+Error: expect(element).not.toBeDisabled()
+Received element is disabled:
+  <button …
+ Test Files  1 failed (1)
+      Tests  2 failed | 21 passed (23)
+```
+
+Green — `web/src/features/concierge/__tests__/connectAnEngine.test.tsx`
+now drives a second Check on the replacement address through to its model:
+
+```text
+TYPECHECK CLEAN
+ Test Files  3 passed (3)
+      Tests  58 passed (58)
+```
+
+The glass walk is unchanged and still green at both widths against the real
+LAN engine (`2 passed`, capture above): `STALE CHECK dropped on address
+edit`, `SUMMARY BACK ON … assignmentRevision: 4`.
+
+### 2. The sitting's step 7 had no gesture
+
+`SITTING-07.md` step 7 said only "Dictate one sentence into another app". A
+stranger cannot start dictation from that. The step now names the product's
+own default gesture, read from the product, not invented:
+
+- `holdspeak/config/ui.py:15-16` — `key: str = "alt_r"`, `display: str = "⌥R"`.
+- `holdspeak/hotkey.py:63,71` — "Default hotkey is Right Option (Alt_R)";
+  press starts, release stops (`on_press` / `on_release`).
+- `holdspeak/web_runtime.py:580` — the hub prints
+  `Voice typing hotkey is active: hold ⌥R, speak, release.` at start, and
+  the unavailable case tells him to grant Accessibility / Input Monitoring
+  and restart (`:582`).
+
+Step 7 now reads: *"Open a different app and click in a text box. Hold the
+Right Option key (⌥R), say one sentence, then release the key."* → *"Your
+words become text in that app, at the cursor."* A note under the table
+points at the startup line and the permission repair.

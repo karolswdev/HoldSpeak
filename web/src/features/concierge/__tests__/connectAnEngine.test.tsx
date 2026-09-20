@@ -54,6 +54,7 @@ vi.mock("../../../desk/store", () => ({
 
 const LAN_URL = "http://192.168.1.43:8080/v1";
 const LAN_MODEL = "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf";
+const OTHER_URL = "http://192.168.1.44:8080/v1";
 
 const GROUPS: Array<[string, string]> = [
   ["thoughts_notes", "Thoughts & notes"],
@@ -467,7 +468,7 @@ describe("a changed address invalidates the check (counsel 3)", () => {
   it("drops READY and the named model when the address changes", async () => {
     await checkedAt(LAN_URL);
     fireEvent.change(screen.getByDisplayValue(LAN_URL), {
-      target: { value: "http://192.168.1.44:8080/v1" },
+      target: { value: OTHER_URL },
     });
     await waitFor(() =>
       expect(screen.queryByTestId("concierge-add-model")).toBeNull(),
@@ -491,13 +492,74 @@ describe("a changed address invalidates the check (counsel 3)", () => {
     fireEvent.click(screen.getByTestId("concierge-add-check"));
     // He edits the address while the first check is still in flight.
     fireEvent.change(screen.getByDisplayValue(LAN_URL), {
-      target: { value: "http://192.168.1.44:8080/v1" },
+      target: { value: OTHER_URL },
     });
     settled[0]?.({ ok: true, models: [LAN_MODEL], detail: "Found 1 model." });
     await waitFor(() =>
       expect(screen.getByTestId("concierge-add-submit")).toBeDisabled(),
     );
     expect(screen.queryByTestId("concierge-add-model")).toBeNull();
+  });
+
+  /* Round 2 residual: the stale branches returned BEFORE clearing the
+     in-flight flag, so `Check` stayed disabled (ConciergeCore.tsx) and the
+     corrected address could never be checked at all. */
+
+  async function openWithPendingCheck(
+    settled: Array<{ resolve: (v: unknown) => void; reject: (e: unknown) => void }>,
+  ) {
+    mocks.checkEndpoint.mockImplementation(
+      () =>
+        new Promise((resolve, reject) => {
+          settled.push({ resolve, reject });
+        }),
+    );
+    await open();
+    fireEvent.click(screen.getByTestId("concierge-add-engine"));
+    fireEvent.change(await screen.findByDisplayValue(""), {
+      target: { value: LAN_URL },
+    });
+    fireEvent.click(screen.getByTestId("concierge-add-check"));
+    // He corrects the address while the first check is still in flight.
+    fireEvent.change(screen.getByDisplayValue(LAN_URL), {
+      target: { value: OTHER_URL },
+    });
+  }
+
+  it("lets him check the corrected address after a stale ANSWER", async () => {
+    const settled: Array<{
+      resolve: (v: unknown) => void;
+      reject: (e: unknown) => void;
+    }> = [];
+    await openWithPendingCheck(settled);
+    settled[0]?.resolve({ ok: true, models: [LAN_MODEL], detail: "Found 1 model." });
+    await waitFor(() =>
+      expect(screen.getByTestId("concierge-add-check")).not.toBeDisabled(),
+    );
+    fireEvent.click(screen.getByTestId("concierge-add-check"));
+    settled[1]?.resolve({ ok: true, models: ["other-model"], detail: "Found 1 model." });
+    expect((await screen.findByTestId("concierge-add-model")).textContent).toBe(
+      "other-model",
+    );
+  });
+
+  it("lets him check the corrected address after a stale FAILURE", async () => {
+    const settled: Array<{
+      resolve: (v: unknown) => void;
+      reject: (e: unknown) => void;
+    }> = [];
+    await openWithPendingCheck(settled);
+    settled[0]?.reject(new Error("the first address threw"));
+    await waitFor(() =>
+      expect(screen.getByTestId("concierge-add-check")).not.toBeDisabled(),
+    );
+    // The thrown answer belonged to the old address: it says nothing here.
+    expect(screen.queryByTestId("concierge-add-reason")).toBeNull();
+    fireEvent.click(screen.getByTestId("concierge-add-check"));
+    settled[1]?.resolve({ ok: true, models: ["other-model"], detail: "Found 1 model." });
+    expect((await screen.findByTestId("concierge-add-model")).textContent).toBe(
+      "other-model",
+    );
   });
 });
 

@@ -36,3 +36,24 @@ UNKNOWN: No tests or live product actions were run during this review; the tree 
 Accepted in full. Findings 1–4 are (b) product defects under HS-201-09 and go back to its worker as one fix round: the summary selection fires the return signal like ordinary Apply and the walk proves the single gesture refreshes the arrival; OFF→ON uses the projected revision; an address edit invalidates READY; one filled primary with repairs and presets present, a plain reason instead of the raw urlopen text, an egress chip on the Check row. Stories 10 and 11 stand as ratified; the four import-test migrations are recorded (a). The three doc corrections (SITTING step 1 "No engine yet"; the paid import-enqueue debt line; story 10's "six red" sentence) ride with the fix round. The documentation drift on the PR and at the fork point is checked on main separately. Quiet-tree suite and CI are read before the merge.
 
 ## Round 2 — Astra
+
+VERDICT: DO-NOT-RATIFY
+
+FINDINGS:
+
+1. **Finding 3 remains partly open — Tenet 3.** Start Check, edit the address before it returns, then let the old request finish. Both stale-response branches return before clearing `addEngineChecking`: [controller:657](/Users/karol/dev/tools/wt-201-b/web/src/features/concierge/useConciergeController.ts:657). Check consequently stays disabled by [Core:536](/Users/karol/dev/tools/wt-201-b/web/src/features/concierge/ConciergeCore.tsx:536). The new [test:478](/Users/karol/dev/tools/wt-201-b/web/src/features/concierge/__tests__/connectAnEngine.test.tsx:478) verifies that stale results disappear, but never attempts another Check. Correcting an address can still strand step 2.
+
+2. **Findings 1, 2 and 4 are paid — Tenets 3–6.** The real-LAN walk now proves one gesture clears SETUP and OFF→ON advances revision 3→4. The re-shots at 1440 and 393 support the plain refusal, egress chip and primary arbitration. Mixed presets remain honestly identified as Vitest coverage, not glass evidence: [counsel evidence:322](/Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/evidence-story-09.md:322). The three doc corrections and Philo refresh do not widen product scope.
+
+3. **Every-step stranger walkability is not established — Tenets 2, 3, 7.** Step 2’s direct path is proved, with the correction defect above. [Step 7:48](/Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/SITTING-07.md:48) still says only “Dictate one sentence into another app”; it supplies no starting gesture and remains unobserved.
+
+CONDITIONS: Quiet-tree suite success alone does **not** clear #590. Restore Check recovery after an in-flight address edit; prove the replacement address can be checked after stale success and failure. Then read the suite and CI against main, distinguishing inherited failures from new regressions.
+
+MISSED: Keep the Check defect as **(b)** under 09. Close the other accepted defects. Keep import-test migrations **(a)** and import enqueue debt paid. Retain capture-recovery, sync/Record state limitations, parked follow-through and reproduced baseline failures in the ledger.
+
+TUESDAY: The normal setup path now works; correcting an address can still stop the stranger.
+
+UNKNOWN: Full-suite completion and remaining CI results; owner-observed usefulness, restart retrieval and dictation; story 10’s parent-HOME provenance. I ran no tests or live product actions and changed nothing.
+## Round 2 — Muad'Dib's ruling
+
+Finding 1 is a (b) under 09 and is paid before the merge: the in-flight flag clears on every stale branch and the replacement address is proven checkable after a stale success and a stale failure. Step 7 of SITTING-07.md gains its starting and stopping gesture. Findings 2 and 3 are accepted as recorded. Under TWO-BRAINS §3 the lane owner rules after one round each: #590 merges on verification when CI's failure set reads as main's own (the local suite cannot run on this machine tonight; CI is the full run), with this record beside it. The ledger stays as Astra lists it.
