@@ -30,9 +30,6 @@ from .intel_plan import (
     CAPABILITY_DEFERRED_ANALYSIS,
     CAPABILITY_LIVE_ANALYSIS,
     TRANSCRIPTION_CAPABILITIES,
-    DISPLACED_AUTO_TITLE,
-    DISPLACED_BOOKMARK_LABELS,
-    DISPLACED_FINAL_ANALYSIS,
     DISPLACED_LABELS,
     MeetingIntelRefused,
     PRINCIPAL_REQUIRED,
@@ -61,6 +58,9 @@ from .intel_routed_children import (
     ROUTE_AUTO_TITLE,
     ROUTE_BOOKMARK_LABEL,
     ROUTE_LIVE_ANALYSIS,
+    displaced_work_for_stop,
+    live_intel_budget_group,
+    live_intel_route_declarations,
     WINDOW_DEADLINE_SECONDS,
     WINDOW_SUPERSEDED,
 )
@@ -146,22 +146,16 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
             "candidate_material": [],
             "strategy_sequence": ["derive-from-frozen-transcription"],
         } if has_speech_head else None
-        intel_routes: list[dict[str, str]] = [
-            {"key": "live-analysis", "capability_id": ROUTE_LIVE_ANALYSIS, "invocation_id": self._state.id},
-            {"key": "bookmark-label", "capability_id": ROUTE_BOOKMARK_LABEL, "invocation_id": self._state.id},
-            {"key": "auto-title", "capability_id": ROUTE_AUTO_TITLE, "invocation_id": self._state.id},
-        ]
+        intel_routes: list[dict[str, str]] = []
+        if self.intel_enabled:
+            intel_routes.extend(live_intel_route_declarations(self._state.id))
         if has_speech_head:
             intel_routes.append(
                 {"key": "transcription", "capability_id": "speech.transcribe", "invocation_id": self._state.id},
             )
-        budget_groups_list: list[dict[str, object]] = [
-            {
-                "id": "meeting-intelligence",
-                "allocation": SESSION_CHILD_BUDGET,
-                "member_keys": ["live-analysis", "bookmark-label", "auto-title"],
-            },
-        ]
+        budget_groups_list: list[dict[str, object]] = []
+        if self.intel_enabled:
+            budget_groups_list.append(live_intel_budget_group())
         if has_speech_head:
             budget_groups_list.append({
                 "id": "meeting-transcription",
@@ -174,6 +168,13 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
                 "member_keys": ["preload"],
             })
         budget_groups = tuple(budget_groups_list)
+        if not intel_routes:
+            self._refuse_session(
+                "no_assignment",
+                "Meeting transcription refused: no_assignment. Recording continues.",
+            )
+            log.warning("meeting transcription refused: no_assignment")
+            return False
         try:
             from ..services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
 
@@ -464,18 +465,10 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
             self._intel_closed = True
             self._intel_live = False
 
-        # Preserve the pre-cutover product predicate independently of live route
-        # admission: segments request final analysis, bookmarks request labels,
-        # and an untitled Meeting requests an auto-title.  In particular, a
-        # record-only Meeting has no bundle yet still owns aftercare.
-        displaced: list[str] = []
-        if state.segments:
-            displaced.append(DISPLACED_FINAL_ANALYSIS)
-        if state.bookmarks:
-            displaced.append(DISPLACED_BOOKMARK_LABELS)
-        if not state.title:
-            displaced.append(DISPLACED_AUTO_TITLE)
-        self._intel_displaced_work = tuple(displaced)
+        # A speech-only recording has no text work to hand off, including the
+        # untitled-meeting auto-title path.
+        displaced = displaced_work_for_stop(state, self.intel_enabled)
+        self._intel_displaced_work = displaced
         detail = (
             "Meeting saved. Live intelligence stopped with the recording; "
             + ", ".join(DISPLACED_LABELS[slug] for slug in displaced)
@@ -545,6 +538,12 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
                 database.meetings.mark_route_fence_pending(
                     state.id, f"{type(fence_error).__name__}: {fence_error}"
                 )
+            elif not displaced:
+                # A speech-only bundle has no deferred adopter to settle the
+                # handoff fence.  Elect the ordinary cancelled parent receipt
+                # after the durable route fence, so speech ownership closes at
+                # Stop with a terminal parent outcome.
+                self._finish_cancelled_intel_session()
         elif displaced:
             try:
                 database.intel.enqueue_intel_job(

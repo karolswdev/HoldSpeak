@@ -1,0 +1,671 @@
+bringing up nodes...
+bringing up nodes...
+
+FFFFFFFFF                                                                [100%]
+=================================== FAILURES ===================================
+_________ test_docs_do_not_restore_retired_inference_setup_vocabulary __________
+[gw7] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+    def test_docs_do_not_restore_retired_inference_setup_vocabulary() -> None:
+        offenders: list[str] = []
+        for path in _all_docs_and_readme():
+            for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                match = _RETIRED_INFERENCE_VOCAB.search(line)
+                if match:
+                    offenders.append(f"{path.relative_to(_REPO)}:{lineno}: {match.group(0)!r}")
+    
+>       assert not offenders, (
+            "Retired inference setup vocabulary returned to docs/ or README. Use "
+            "Models for availability and Assignments for job selection instead:\n  "
+            + "\n  ".join(offenders)
+        )
+E       AssertionError: Retired inference setup vocabulary returned to docs/ or README. Use Models for availability and Assignments for job selection instead:
+E           docs/internal/inventory-2026-09-19/02-capabilities.md:500: 'inference_target_id'
+E           docs/internal/inventory-2026-09-19/02-capabilities.md:531: 'inference_target_id'
+E           docs/internal/inventory-2026-09-19/03-roadmap.md:75: 'Download & use'
+E       assert not ["docs/internal/inventory-2026-09-19/02-capabilities.md:500: 'inference_target_id'", "docs/internal/inventory-2026-09-...2-capabilities.md:531: 'inference_target_id'", "docs/internal/inventory-2026-09-19/03-roadmap.md:75: 'Download & use'"]
+
+tests/unit/test_doc_drift_guard.py:121: AssertionError
+________________ test_no_live_doc_has_a_dangling_relative_link _________________
+[gw8] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+    def test_no_live_doc_has_a_dangling_relative_link() -> None:
+        offenders: list[str] = []
+        for path in _maintained_docs():
+            for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                for target in _MD_LINK.findall(line):
+                    target = target.strip()
+                    # Skip external, anchor-only, and non-doc targets.
+                    if target.startswith(("http://", "https://", "mailto:", "#", "<")):
+                        continue
+                    # Drop any #fragment / ?query suffix.
+                    rel = target.split("#", 1)[0].split("?", 1)[0]
+                    if not rel:
+                        continue
+                    resolved = (path.parent / rel).resolve()
+                    if not resolved.exists():
+                        offenders.append(
+                            f"{path.relative_to(_REPO)}:{lineno}: -> {target}"
+                        )
+    
+>       assert not offenders, (
+            "A maintained doc links a path that does not exist (dangling relative link). "
+            "Fix the path or the move:\n  " + "\n  ".join(offenders)
+        )
+E       AssertionError: A maintained doc links a path that does not exist (dangling relative link). Fix the path or the move:
+E           docs/internal/checks/constitution-seven-tenets-astra.md:14: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:25
+E           docs/internal/checks/constitution-seven-tenets-astra.md:16: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/DOCS_STYLE.md:10
+E           docs/internal/checks/constitution-seven-tenets-astra.md:16: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:35
+E           docs/internal/checks/constitution-seven-tenets-astra.md:18: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:39
+E           docs/internal/checks/constitution-seven-tenets-astra.md:20: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:102
+E           docs/internal/checks/constitution-seven-tenets-astra.md:20: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:163
+E           docs/internal/checks/constitution-seven-tenets-astra.md:22: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:125
+E           docs/internal/checks/constitution-seven-tenets-astra.md:22: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/UX-CANON.md:27
+E           docs/internal/checks/constitution-seven-tenets-astra.md:24: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:134
+E           docs/internal/checks/constitution-seven-tenets-astra.md:24: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/UX-CANON.md:115
+E           docs/internal/checks/constitution-seven-tenets-astra.md:24: -> /Users/karol/dev/tools/HoldSpeak/AGENTS.md:33
+E           docs/internal/checks/constitution-seven-tenets-astra.md:26: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/06-check-astra.md:89
+E           docs/internal/checks/constitution-seven-tenets-astra.md:26: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/06-check-astra.md:109
+E           docs/internal/checks/constitution-seven-tenets-astra.md:26: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/INVENTORY-2026-09-19.md:13
+E           docs/internal/checks/constitution-seven-tenets-astra.md:28: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/ORCHESTRATION.md:51
+E           docs/internal/checks/constitution-seven-tenets-astra.md:28: -> /Users/karol/dev/tools/HoldSpeak/CLAUDE.md:33
+E           docs/internal/checks/constitution-seven-tenets-astra.md:28: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:194
+E           docs/internal/checks/constitution-seven-tenets-astra.md:88: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:24
+E           docs/internal/checks/constitution-seven-tenets-astra.md:88: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:39
+E           docs/internal/checks/constitution-seven-tenets-astra.md:90: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/checks/constitution-seven-tenets-astra.md:51
+E           docs/internal/checks/constitution-seven-tenets-astra.md:90: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/UX-CANON.md:23
+E           docs/internal/checks/constitution-seven-tenets-astra.md:90: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/ORCHESTRATION.md:234
+E           docs/internal/checks/constitution-seven-tenets-astra.md:92: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/checks/constitution-seven-tenets-astra.md:43
+E           docs/internal/checks/constitution-seven-tenets-astra.md:92: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/ORCHESTRATION.md:52
+E           docs/internal/checks/constitution-seven-tenets-astra.md:92: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:206
+E           docs/internal/checks/constitution-seven-tenets-astra.md:94: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/checks/constitution-seven-tenets-astra.md:66
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:15: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/05-desk-census.md:220
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:17: -> /Users/karol/dev/tools/HoldSpeak/holdspeak/services/meeting_deferred_queue_binding.py:126
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:17: -> /Users/karol/dev/tools/HoldSpeak/holdspeak/services/inference_service_route_policy.py:93
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:17: -> /Users/karol/dev/tools/HoldSpeak/holdspeak/db/intel.py:361
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:17: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:140
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:19: -> /Users/karol/dev/tools/HoldSpeak/holdspeak/services/meeting_intel_service.py:81
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:19: -> /Users/karol/dev/tools/HoldSpeak/web/src/desk/chair/ChairHome.tsx:614
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:19: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:45
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:21: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/05-desk-census.md:39
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:21: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/05-desk-census.md:67
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:21: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/05-desk-census.md:157
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:23: -> /Users/karol/dev/tools/HoldSpeak/web/src/features/project-room/recall/RecallFace.tsx:84
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:23: -> /Users/karol/dev/tools/HoldSpeak/web/src/desk/chair/ChairHome.tsx:1296
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:23: -> /Users/karol/dev/tools/HoldSpeak/web/src/features/project-room/useProjectRoomController.ts:33
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:23: -> /Users/karol/dev/tools/HoldSpeak/web/src/pages/cores/PeopleCore.tsx:456
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:25: -> /Users/karol/dev/tools/HoldSpeak/holdspeak/services/watch_service.py:102
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:25: -> /Users/karol/dev/tools/HoldSpeak/holdspeak/services/project_door_service.py:308
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:25: -> /Users/karol/dev/tools/HoldSpeak/holdspeak/services/reaction_service.py:219
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:27: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/05-desk-census.md:311
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:27: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/01-faces.md:410
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:29: -> /Users/karol/dev/tools/HoldSpeak/web/src/desk/verbRegistry.ts:581
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:29: -> /Users/karol/dev/tools/HoldSpeak/web/src/desk/verbRegistry.ts:232
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:29: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/05-desk-census.md:176
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:31: -> /Users/karol/dev/tools/HoldSpeak/web/src/desk/threads.ts:1083
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:31: -> /Users/karol/dev/tools/HoldSpeak/web/src/desk/pullouts/ThreadPullout.tsx:640
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:33: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/03-roadmap.md:140
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:33: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:106
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:33: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/INVENTORY-2026-09-19.md:361
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:89: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/06-check-astra.md:70
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:91: -> /Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/THE-TUESDAY-ARC.md:54
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:91: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/UX-CANON.md:30
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:91: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/06-check-astra.md:29
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:93: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/06-check-astra.md:54
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:93: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/06-check-astra.md:66
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:93: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/06-check-astra.md:75
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:95: -> /Users/karol/dev/tools/HoldSpeak/holdspeak/db/intel.py:361
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:97: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/06-check-astra.md:56
+E       assert not ['docs/internal/checks/constitution-seven-tenets-astra.md:14: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTI...cks/constitution-seven-tenets-astra.md:20: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:163', ...]
+
+tests/unit/test_doc_drift_guard.py:269: AssertionError
+________________________ test_command_deck_projects_393 ________________________
+[gw6] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8859/popen-gw6/test_command_deck_projects_3930')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ae329e0>
+
+    @pytest.mark.timeout(120)
+    def test_command_deck_projects_393(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+>       _run_projects_rig(tmp_path, monkeypatch, 393)
+
+tests/e2e/test_hs171_command_deck_glass.py:367: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8859/popen-gw6/test_command_deck_projects_3930')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ae329e0>
+width = 393
+
+    def _run_projects_rig(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
+    ) -> None:
+        """Seed three Rooms, assert PROJECTS group order + badge + open."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        errors: list[str] = []
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": width, "height": 900})
+                page.on("pageerror", lambda e: errors.append(str(e)))
+    
+                # Init desk
+                page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+                _api(page, "POST", "/api/desk/seed", token=TOKEN)
+                _api(page, "PUT", "/api/setup/onboarding",
+                     {"disposition": "completed"}, token=TOKEN)
+    
+                # Seed three Rooms
+                _seed_three_rooms()
+    
+                # Reload to pick up seeded data
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                _settle(page)
+    
+                # Verify needs-you aggregate is populated
+                ny = _api(page, "GET", "/api/desk/needs-you", token=TOKEN)
+                assert ny.get("count", 0) > 0, \
+                    f"Expected needs-you items, got count={ny.get('count')}"
+    
+                # Open the command deck
+                _open_deck(page)
+    
+                # ── PROJECTS band present ──
+                bands = page.locator(".desk-deck-band")
+                band_texts = [bands.nth(i).text_content() or ""
+                              for i in range(bands.count())]
+                assert "PROJECTS" in band_texts, \
+                    f"PROJECTS band not found; bands: {band_texts}"
+    
+                # ── Project rows in PROJECTS band ──
+                # The PROJECTS section rows have ids starting with
+                # "desk-palette-option-project.open."
+                project_rows = page.locator(
+                    "[id^='desk-palette-option-project\\.open\\.']"
+                )
+                row_count = project_rows.count()
+                assert row_count == 3, \
+                    f"Expected 3 project rows, got {row_count}"
+    
+                # ── Order: needs-you desc, then name ──
+                # Alpha (2 items) first, Beta (1 item) second, Gamma (0) third
+                labels = [
+                    (project_rows.nth(i).locator(".desk-deck-label").text_content() or "")
+                    for i in range(row_count)
+                ]
+                assert "Q4 Platform" in labels[0], \
+                    f"First row should be Q4 Platform (2 items): {labels}"
+                assert "Governance" in labels[1], \
+                    f"Second row should be Governance (1 item): {labels}"
+                assert "Data Platform" in labels[2], \
+                    f"Third row should be Data Platform (0 items): {labels}"
+    
+                # ── Badge present only on rows with items ──
+                badges = [
+                    project_rows.nth(i).locator(".desk-deck-badge")
+                    for i in range(row_count)
+                ]
+                # Alpha (2 items) should have badge
+                assert badges[0].count() == 1, "Alpha should have a badge"
+                badge_text_0 = badges[0].text_content() or ""
+                assert "NEED YOU" in badge_text_0, \
+                    f"Alpha badge should say NEED YOU: {badge_text_0}"
+                assert badge_text_0.startswith("2"), \
+                    f"Alpha badge should start with 2: {badge_text_0}"
+    
+                # Beta (1 item) should have badge
+                assert badges[1].count() == 1, "Beta should have a badge"
+                badge_text_1 = badges[1].text_content() or ""
+                assert "NEEDS YOU" in badge_text_1, \
+                    f"Beta badge should say NEEDS YOU (singular): {badge_text_1}"
+    
+                # Gamma (0 items) should have no badge
+>               assert badges[2].count() == 0, \
+                    "Gamma (0 items) should have no badge"
+E                   AssertionError: Gamma (0 items) should have no badge
+E                   assert 1 == 0
+E                    +  where 1 = count()
+E                    +    where count = <Locator frame=<Frame name= url='http://127.0.0.1:55812/'> selector="[id^='desk-palette-option-project\\.open\\.'] >> nth=2 >> .desk-deck-badge">.count
+
+tests/e2e/test_hs171_command_deck_glass.py:281: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_______________________ test_command_deck_projects_1440 ________________________
+[gw5] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8859/popen-gw5/test_command_deck_projects_1440')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1093de9e0>
+
+    @pytest.mark.timeout(120)
+    def test_command_deck_projects_1440(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+>       _run_projects_rig(tmp_path, monkeypatch, 1440)
+
+tests/e2e/test_hs171_command_deck_glass.py:362: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8859/popen-gw5/test_command_deck_projects_1440')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1093de9e0>
+width = 1440
+
+    def _run_projects_rig(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
+    ) -> None:
+        """Seed three Rooms, assert PROJECTS group order + badge + open."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        errors: list[str] = []
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": width, "height": 900})
+                page.on("pageerror", lambda e: errors.append(str(e)))
+    
+                # Init desk
+                page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+                _api(page, "POST", "/api/desk/seed", token=TOKEN)
+                _api(page, "PUT", "/api/setup/onboarding",
+                     {"disposition": "completed"}, token=TOKEN)
+    
+                # Seed three Rooms
+                _seed_three_rooms()
+    
+                # Reload to pick up seeded data
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                _settle(page)
+    
+                # Verify needs-you aggregate is populated
+                ny = _api(page, "GET", "/api/desk/needs-you", token=TOKEN)
+                assert ny.get("count", 0) > 0, \
+                    f"Expected needs-you items, got count={ny.get('count')}"
+    
+                # Open the command deck
+                _open_deck(page)
+    
+                # ── PROJECTS band present ──
+                bands = page.locator(".desk-deck-band")
+                band_texts = [bands.nth(i).text_content() or ""
+                              for i in range(bands.count())]
+                assert "PROJECTS" in band_texts, \
+                    f"PROJECTS band not found; bands: {band_texts}"
+    
+                # ── Project rows in PROJECTS band ──
+                # The PROJECTS section rows have ids starting with
+                # "desk-palette-option-project.open."
+                project_rows = page.locator(
+                    "[id^='desk-palette-option-project\\.open\\.']"
+                )
+                row_count = project_rows.count()
+                assert row_count == 3, \
+                    f"Expected 3 project rows, got {row_count}"
+    
+                # ── Order: needs-you desc, then name ──
+                # Alpha (2 items) first, Beta (1 item) second, Gamma (0) third
+                labels = [
+                    (project_rows.nth(i).locator(".desk-deck-label").text_content() or "")
+                    for i in range(row_count)
+                ]
+                assert "Q4 Platform" in labels[0], \
+                    f"First row should be Q4 Platform (2 items): {labels}"
+                assert "Governance" in labels[1], \
+                    f"Second row should be Governance (1 item): {labels}"
+                assert "Data Platform" in labels[2], \
+                    f"Third row should be Data Platform (0 items): {labels}"
+    
+                # ── Badge present only on rows with items ──
+                badges = [
+                    project_rows.nth(i).locator(".desk-deck-badge")
+                    for i in range(row_count)
+                ]
+                # Alpha (2 items) should have badge
+                assert badges[0].count() == 1, "Alpha should have a badge"
+                badge_text_0 = badges[0].text_content() or ""
+                assert "NEED YOU" in badge_text_0, \
+                    f"Alpha badge should say NEED YOU: {badge_text_0}"
+                assert badge_text_0.startswith("2"), \
+                    f"Alpha badge should start with 2: {badge_text_0}"
+    
+                # Beta (1 item) should have badge
+                assert badges[1].count() == 1, "Beta should have a badge"
+                badge_text_1 = badges[1].text_content() or ""
+                assert "NEEDS YOU" in badge_text_1, \
+                    f"Beta badge should say NEEDS YOU (singular): {badge_text_1}"
+    
+                # Gamma (0 items) should have no badge
+>               assert badges[2].count() == 0, \
+                    "Gamma (0 items) should have no badge"
+E                   AssertionError: Gamma (0 items) should have no badge
+E                   assert 1 == 0
+E                    +  where 1 = count()
+E                    +    where count = <Locator frame=<Frame name= url='http://127.0.0.1:55816/'> selector="[id^='desk-palette-option-project\\.open\\.'] >> nth=2 >> .desk-deck-badge">.count
+
+tests/e2e/test_hs171_command_deck_glass.py:281: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+______ test_a_sent_and_answered_request_is_never_reported_as_nothing_sent ______
+[gw3] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8859/popen-gw3/test_a_sent_and_answered_reque0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d47a9e0>
+
+    @pytest.mark.timeout(300)
+    def test_a_sent_and_answered_request_is_never_reported_as_nothing_sent(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """P0, the fence: the fake server answers prose.  The kernel operation
+        SUCCEEDED, so the face says `SENT · 127.0.0.1 · NOTHING USABLE RECEIVED`
+        in the head and the receipt, and the footer carries the target's egress
+        chip.  `NOTHING SENT` appears nowhere."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        llm = FakeLLM()
+        llm.reply = "Sure! Here is a brief in prose: decide the cut-over window today."
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                _init_desk(page, url)
+                project_id = _seed_project_room(page, "hs200-11-sent")
+                _define_route(tmp_path / "home", llm.endpoint, "probe-llm", 1)
+                _open_room(page, project_id)
+                _enter_prepare(page)
+                _purpose(page).fill(PURPOSE)
+                page.get_by_test_id("prepare-verb").click()
+                _wait_refused(page, timeout=60000)
+>               assert len(llm.posts) == 1, llm.requests
+E               AssertionError: [{'method': 'GET', 'path': '/v1/models'}]
+E               assert 0 == 1
+E                +  where 0 = len([])
+E                +    where [] = <tests.e2e.test_hs200_preparation_brief_glass.FakeLLM object at 0x11297de80>.posts
+
+tests/e2e/test_hs200_preparation_brief_glass.py:922: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_________ test_running_then_kept_brief_with_claims_and_not_read[1440] __________
+[gw1] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8859/popen-gw1/test_running_then_kept_brief_w0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b2629e0>
+width = 1440
+
+    @pytest.mark.timeout(300)
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_running_then_kept_brief_with_claims_and_not_read(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+    ) -> None:
+        """P3Brief / P3BriefPhone over a REAL dispatch to the fake server: the
+        document, `CLAIMS` on three axes with typed unknowns, `NO SOURCE` +
+        `Find support`, `SUPERSEDED 1` with its successor (P1-2), `NOT INCLUDED
+        2` (P1-3), `NOT READ 2` carrying the state chip and the repair, the
+        LAN egress and receipt from the wire, `Keep` -- then the kept brief
+        re-read by id with its manifest (AC2, AC3, AC4)."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        llm = FakeLLM()
+        llm.reply = _board_reply
+        llm.delay_s = 6.0
+        errors: list[str] = []
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": width, "height": 900 if width >= 1440 else 852})
+                page.on("pageerror", lambda e: errors.append(str(e)))
+                _init_desk(page, url)
+                project_id = _seed_project_room(page, f"hs200-11-brief-{width}")
+                _define_route(tmp_path / "home", llm.endpoint, "probe-llm", 1)
+                _open_room(page, project_id)
+                _enter_prepare(page)
+                _purpose(page).fill(PURPOSE)
+                page.get_by_test_id("prepare-verb").click()
+    
+                # The run: a real plan with `Stop` kept, the egress beside it.
+                page.get_by_test_id("prepare-running").wait_for(timeout=10000)
+>               assert page.get_by_role("button", name="Stop", exact=True).count() == 1
+E               assert 0 == 1
+E                +  where 0 = count()
+E                +    where count = <Locator frame=<Frame name= url='http://127.0.0.1:55817/'> selector='internal:role=button[name="Stop"s]'>.count
+E                +      where <Locator frame=<Frame name= url='http://127.0.0.1:55817/'> selector='internal:role=button[name="Stop"s]'> = get_by_role('button', name='Stop', exact=True)
+E                +        where get_by_role = <Page url='http://127.0.0.1:55817/'>.get_by_role
+
+tests/e2e/test_hs200_preparation_brief_glass.py:650: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_________________ test_guardrail_row_renders_and_deny_focused __________________
+[gw0] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+guardrail_hub = {'broker': <holdspeak.kernel.broker.Broker object at 0x10ded4ec0>, 'db': <holdspeak.db.core.Database object at 0x10dc9...s._ToolCallEngine object at 0x11013aa50>, 'server': <holdspeak.web_server.MeetingWebServer object at 0x10af26270>, ...}
+
+    def test_guardrail_row_renders_and_deny_focused(guardrail_hub: dict) -> None:
+        """Guardrail row visible, decision box Deny primary/focused, no overflow."""
+        from playwright.sync_api import sync_playwright
+    
+        url = guardrail_hub["url"]
+    
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+    
+            for width in (1440, 393):
+                # Fresh thread + engine state per width
+                guardrail_hub["engine"]._pass = 0
+                r = _api_direct(url, "POST", "/api/threads",
+                                {"title": f"Guardrail glass {width}",
+                                 "recipe_id": "hs-seed-mode-chase"})
+                assert r["status"] == 201, f"Failed to create thread: {r}"
+                thread_id = r["payload"]["id"]
+    
+                page = browser.new_page(viewport={"width": width, "height": 900})
+                _open_thread(page, url, thread_id)
+    
+                composer = page.locator("[data-testid='composer-input']")
+                composer.wait_for(state="visible", timeout=10000)
+    
+                def _type(text: str) -> None:
+                    page.evaluate("""([s,v])=>{const e=document.querySelector(s);if(!e)return;
+                        Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(e,v);
+                        e.dispatchEvent(new Event('input',{bubbles:true}));
+                        e.dispatchEvent(new Event('change',{bubbles:true}));
+                        e.selectionStart=e.selectionEnd=v.length}""",
+                        ["[data-testid='composer-input']", text])
+    
+                _type("Transition commitment to done")
+                page.wait_for_timeout(500)
+                send_btn = page.locator("[data-testid='send-button']")
+                if send_btn.count() > 0:
+                    send_btn.click()
+                else:
+                    composer.press("Enter")
+                page.wait_for_timeout(8000)
+    
+                _save_shot(page, "guardrail-row", width, shots_dir=SHOTS_03)
+    
+                guardrail_row = page.locator("[data-testid='guardrail-row']")
+                if guardrail_row.count() > 0:
+                    assert guardrail_row.is_visible(), f"Guardrail row not visible at {width}"
+                    violation = page.locator("[data-testid='guardrail-violation']")
+                    if violation.count() > 0:
+                        vtext = violation.first.inner_text().lower()
+                        assert "source" in vtext or "people" in vtext, (
+                            f"Violation text unexpected at {width}: {vtext}")
+    
+                decision_box = page.locator("[data-testid='decision-box']")
+                if decision_box.count() > 0:
+                    _save_shot(page, "guardrail-decision-box", width, shots_dir=SHOTS_03)
+                    dd = decision_box.first.get_attribute("data-default-decision")
+>                   assert dd == "deny", f"Expected deny, got '{dd}' at {width}"
+E                   AssertionError: Expected deny, got 'allow' at 1440
+E                   assert 'allow' == 'deny'
+E                     
+E                     - deny
+E                     + allow
+
+tests/e2e/test_hs153_practice_glass.py:578: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+__________ test_running_then_kept_brief_with_claims_and_not_read[393] __________
+[gw2] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8859/popen-gw2/test_running_then_kept_brief_w0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10cd129e0>
+width = 393
+
+    @pytest.mark.timeout(300)
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_running_then_kept_brief_with_claims_and_not_read(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+    ) -> None:
+        """P3Brief / P3BriefPhone over a REAL dispatch to the fake server: the
+        document, `CLAIMS` on three axes with typed unknowns, `NO SOURCE` +
+        `Find support`, `SUPERSEDED 1` with its successor (P1-2), `NOT INCLUDED
+        2` (P1-3), `NOT READ 2` carrying the state chip and the repair, the
+        LAN egress and receipt from the wire, `Keep` -- then the kept brief
+        re-read by id with its manifest (AC2, AC3, AC4)."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        llm = FakeLLM()
+        llm.reply = _board_reply
+        llm.delay_s = 6.0
+        errors: list[str] = []
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": width, "height": 900 if width >= 1440 else 852})
+                page.on("pageerror", lambda e: errors.append(str(e)))
+                _init_desk(page, url)
+                project_id = _seed_project_room(page, f"hs200-11-brief-{width}")
+                _define_route(tmp_path / "home", llm.endpoint, "probe-llm", 1)
+                _open_room(page, project_id)
+                _enter_prepare(page)
+                _purpose(page).fill(PURPOSE)
+                page.get_by_test_id("prepare-verb").click()
+    
+                # The run: a real plan with `Stop` kept, the egress beside it.
+>               page.get_by_test_id("prepare-running").wait_for(timeout=10000)
+
+tests/e2e/test_hs200_preparation_brief_glass.py:649: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:18080: in wait_for
+    self._sync(self._impl_obj.wait_for(timeout=timeout, state=state))
+../../.venv/lib/python3.13/site-packages/playwright/_impl/_locator.py:710: in wait_for
+    await self._frame.wait_for_selector(
+../../.venv/lib/python3.13/site-packages/playwright/_impl/_frame.py:369: in wait_for_selector
+    await self._channel.send(
+../../.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x1121b67b0>
+cb = <function Channel.send.<locals>.<lambda> at 0x1130ed940>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 10000ms exceeded.
+E           Call log:
+E             - waiting for get_by_test_id("prepare-running") to be visible
+
+../../.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: TimeoutError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_______________________ test_stop_leaves_no_orphan_draft _______________________
+[gw4] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8859/popen-gw4/test_stop_leaves_no_orphan_dra0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x108c8e9e0>
+
+    @pytest.mark.timeout(300)
+    def test_stop_leaves_no_orphan_draft(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """P1-4: the fake server takes 8 s; the owner presses Stop at 1 s.  The
+        hub cancels the operation under the attempt; if the run still completes,
+        it writes NO draft, and the face says the request had left."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        llm = FakeLLM()
+        llm.reply = _board_reply
+        llm.delay_s = 8.0
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                _init_desk(page, url)
+                project_id = _seed_project_room(page, "hs200-11-stop")
+                _define_route(tmp_path / "home", llm.endpoint, "probe-llm", 1)
+                _open_room(page, project_id)
+                _enter_prepare(page)
+                _purpose(page).fill(PURPOSE)
+                page.get_by_test_id("prepare-verb").click()
+                page.get_by_test_id("prepare-running").wait_for(timeout=10000)
+                page.wait_for_timeout(1000)
+>               page.get_by_role("button", name="Stop", exact=True).click()
+
+tests/e2e/test_hs200_preparation_brief_glass.py:1024: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:15637: in click
+    self._sync(
+../../.venv/lib/python3.13/site-packages/playwright/_impl/_locator.py:162: in click
+    return await self._frame._click(self._selector, strict=True, **params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../.venv/lib/python3.13/site-packages/playwright/_impl/_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+../../.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10e18e7b0>
+cb = <function Channel.send.<locals>.<lambda> at 0x10ec38220>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.TimeoutError: Locator.click: Timeout 30000ms exceeded.
+E           Call log:
+E             - waiting for get_by_role("button", name="Stop", exact=True)
+
+../../.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: TimeoutError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+FAILED tests/unit/test_doc_drift_guard.py::test_docs_do_not_restore_retired_inference_setup_vocabulary
+FAILED tests/unit/test_doc_drift_guard.py::test_no_live_doc_has_a_dangling_relative_link
+FAILED tests/e2e/test_hs171_command_deck_glass.py::test_command_deck_projects_393
+FAILED tests/e2e/test_hs171_command_deck_glass.py::test_command_deck_projects_1440
+FAILED tests/e2e/test_hs200_preparation_brief_glass.py::test_a_sent_and_answered_request_is_never_reported_as_nothing_sent
+FAILED tests/e2e/test_hs200_preparation_brief_glass.py::test_running_then_kept_brief_with_claims_and_not_read[1440]
+FAILED tests/e2e/test_hs153_practice_glass.py::test_guardrail_row_renders_and_deny_focused
+FAILED tests/e2e/test_hs200_preparation_brief_glass.py::test_running_then_kept_brief_with_claims_and_not_read[393]
+FAILED tests/e2e/test_hs200_preparation_brief_glass.py::test_stop_leaves_no_orphan_draft
+9 failed in 44.89s

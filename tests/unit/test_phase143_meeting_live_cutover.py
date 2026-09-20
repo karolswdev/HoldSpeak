@@ -1104,7 +1104,7 @@ def test_stop_discards_a_late_routed_live_result_and_signals_its_child(
 def test_stop_aftercare_upserts_one_legacy_deferred_row_for_bundle_and_record_only(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, bundle_backed: bool
 ) -> None:
-    """Aftercare remains the legacy Meeting-keyed queue authority in Phase B."""
+    """Only an admitted bundle may hand displaced work to legacy aftercare."""
     from holdspeak.kernel.runtime import _configure
     from holdspeak.meeting_session import MeetingSession
     from tests.unit.test_meeting_session_admission import FakeJournal, FakeRecorder, _bundle_session
@@ -1132,16 +1132,36 @@ def test_stop_aftercare_upserts_one_legacy_deferred_row_for_bundle_and_record_on
     )
     state.bookmarks.append(Bookmark(timestamp=0.5, label="Bookmark"))
     session.stop()
-    # A Stop retry/recovery uses the existing Meeting-keyed ON CONFLICT upsert.
+    # A repeated Stop handoff is idempotent for an admitted bundle and inert for
+    # a refused/unassigned recording.
     session._handoff_intel_at_stop(state)
 
     with db._connection() as conn:
         rows = conn.execute(
             "SELECT status,displaced_work FROM intel_jobs WHERE meeting_id=?", (state.id,)
         ).fetchall()
-    assert [(row["status"], row["displaced_work"]) for row in rows] == [(
-        "queued", '["final-analysis","bookmark-labels","auto-title"]'
-    )]
+        parent = (
+            conn.execute(
+                "SELECT state FROM kernel_parent_runs WHERE operation_id=?",
+                ((session._route_bundle or {}).get("parent_operation_id", ""),),
+            ).fetchone()
+            if bundle_backed
+            else None
+        )
+
+    if bundle_backed:
+        # An admitted live bundle still owns Stop aftercare and its parent seal.
+        assert [(row["status"], row["displaced_work"]) for row in rows] == [(
+            "queued", '["final-analysis","bookmark-labels","auto-title"]'
+        )]
+        assert parent is not None and parent["state"] == "CANCELLING"
+    else:
+        # A refused/unassigned recording has no bundle or text work to hand off.
+        assert rows == []
+        assert session._route_bundle is None
+        assert state.transcription_status == "record_only"
+        assert state.transcription_status_detail["reason_code"] == "no_assignment"
+        assert state.intel_status == "refused"
 
 
 def test_stop_aftercare_predicate_does_not_enqueue_empty_meeting(

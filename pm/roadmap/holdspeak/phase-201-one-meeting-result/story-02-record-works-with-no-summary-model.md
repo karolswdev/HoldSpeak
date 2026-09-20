@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 201
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** (optional)
-- **Owner:** unassigned
+- **Owner:** Astra (lane A)
 
 ## Problem
 
@@ -18,12 +18,13 @@ Recording is refused when the SUMMARY model is missing, because admission uncond
 
 ## Acceptance criteria
 
-- [ ] Isolated HOME, speech assigned, no text model: Record then Stop yields a SAVED, non-empty transcript with final transcription and parent closure intact; no `admission refused` line in the hub log.
-- [ ] With a text engine available, nothing is dispatched to it before the summary gesture (Stop queues no deferred analysis and no auto-title; fence on the queue and the binder, `intel_admission.py:467`, `meeting_deferred_queue_binding.py:69`), including for an untitled meeting.
-- [ ] The dictation regression (`tests/unit/test_transcriber_init_race.py`) is classified a/b/c in this story's evidence because it shares the transcription seam; a (b) is fixed here.
-- [ ] With no speech engine either: the Record verb carries a refusal token at the moment of refusal, and the record's refusal names the real reason.
-- [ ] The wrong-cause message ("transcript is empty" for `no_assignment`) can no longer be produced; a fence test proves it fails pre-fix.
-- [ ] Existing admission fences stay green.
+- [x] **A-proven:** Isolated HOME, speech assigned, no text model: Record then Stop yields a SAVED, non-empty transcript with final transcription and parent closure intact; no `admission refused` line in the hub log.
+- [x] **A-proven:** With a text engine available, nothing is dispatched to it before the summary gesture (Stop queues no deferred analysis and no auto-title; fence on the queue and the binder, `intel_admission.py:467`, `meeting_deferred_queue_binding.py:69`), including for an untitled meeting.
+- [x] **A-proven:** The dictation regression (`tests/unit/test_transcriber_init_race.py`) is classified a/b/c in this story's evidence because it shares the transcription seam; a (b) is fixed here.
+- [x] **A-proven:** With no speech engine, the Record response and saved record carry the immediate `transcription_status_detail` refusal and its real reason.
+- **Transferred to HS-201-01 (see status):** The Record verb renders that refusal token at the moment of refusal; shot at 1440.
+- [x] **A-proven:** The wrong-cause message ("transcript is empty" for `no_assignment`) can no longer be produced; a fence test proves it fails pre-fix.
+- [x] **A-proven:** The speech-only budget expectation in `test_meeting_transcription_children_join_the_existing_meeting_session` and the unassigned Stop expectation in `test_stop_aftercare_upserts_one_legacy_deferred_row_for_bundle_and_record_only` were updated to this posture. Other admission fences are unchanged and green.
 
 ## Test plan
 
@@ -34,3 +35,11 @@ Recording is refused when the SUMMARY model is missing, because admission uncond
 ## Notes / open questions
 
 Lane A (Astra to Luna). Serves exit criterion 2. The Record-verb refusal token is a FACE edit: lane A defines the read-model field, lane B (story 01) renders it. Do-not-touch for lane A: `web/src/desk/chair/*`.
+
+## Lane delivery boundary
+
+The owner assigned A the backend and B the token on the face. A completion
+means the backend criteria above; the transferred face criterion stays owed by
+HS-201-01. Evidence: `evidence-story-02.md`. The hard-coded speech-only Web
+Record and parked Stop auto-enqueue are explicit amendments in the phase
+status and peer check, not a claim that the old live-intelligence settings work.

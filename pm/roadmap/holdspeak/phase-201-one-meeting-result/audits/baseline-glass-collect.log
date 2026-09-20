@@ -1,0 +1,16 @@
+module_origin holdspeak: /Users/karol/dev/tools/wt-201-a/.tmp/hs201-baseline/holdspeak/__init__.py
+module_origin hs153: /Users/karol/dev/tools/wt-201-a/.tmp/hs201-baseline/tests/e2e/test_hs153_practice_glass.py
+module_origin hs200: /Users/karol/dev/tools/wt-201-a/.tmp/hs201-baseline/tests/e2e/test_hs200_preparation_brief_glass.py
+module_origin hs171: /Users/karol/dev/tools/wt-201-a/.tmp/hs201-baseline/tests/e2e/test_hs171_command_deck_glass.py
+module_origin doc_drift: /Users/karol/dev/tools/wt-201-a/.tmp/hs201-baseline/tests/unit/test_doc_drift_guard.py
+tests/e2e/test_hs153_practice_glass.py::test_guardrail_row_renders_and_deny_focused
+tests/e2e/test_hs200_preparation_brief_glass.py::test_running_then_kept_brief_with_claims_and_not_read[1440]
+tests/e2e/test_hs200_preparation_brief_glass.py::test_running_then_kept_brief_with_claims_and_not_read[393]
+tests/e2e/test_hs200_preparation_brief_glass.py::test_a_sent_and_answered_request_is_never_reported_as_nothing_sent
+tests/e2e/test_hs200_preparation_brief_glass.py::test_stop_leaves_no_orphan_draft
+tests/e2e/test_hs171_command_deck_glass.py::test_command_deck_projects_1440
+tests/e2e/test_hs171_command_deck_glass.py::test_command_deck_projects_393
+tests/unit/test_doc_drift_guard.py::test_docs_do_not_restore_retired_inference_setup_vocabulary
+tests/unit/test_doc_drift_guard.py::test_no_live_doc_has_a_dangling_relative_link
+
+9 tests collected in 0.07s

@@ -12,7 +12,14 @@ from ..logging_config import get_logger
 def _sha(value: Any) -> str:
     return "sha256:" + hashlib.sha256(str(value).encode("utf-8", "replace")).hexdigest()
 
-from .intel_plan import MeetingIntelRefused, SESSION_CLOSED, SESSION_NOT_ADMITTED
+from .intel_plan import (
+    DISPLACED_AUTO_TITLE,
+    DISPLACED_BOOKMARK_LABELS,
+    DISPLACED_FINAL_ANALYSIS,
+    MeetingIntelRefused,
+    SESSION_CLOSED,
+    SESSION_NOT_ADMITTED,
+)
 
 log = get_logger("meeting_session")
 
@@ -31,6 +38,38 @@ ROUTE_AUTO_TITLE = "meeting.auto_title"
 WINDOW_DEADLINE_SECONDS = 300.0
 LABEL_DEADLINE_SECONDS = 120.0
 WINDOW_SUPERSEDED = "meeting_live_window_superseded"
+
+
+def live_intel_route_declarations(invocation_id: str) -> list[dict[str, str]]:
+    """Declare the three optional text routes for a live intel session."""
+    return [
+        {"key": "live-analysis", "capability_id": ROUTE_LIVE_ANALYSIS, "invocation_id": invocation_id},
+        {"key": "bookmark-label", "capability_id": ROUTE_BOOKMARK_LABEL, "invocation_id": invocation_id},
+        {"key": "auto-title", "capability_id": ROUTE_AUTO_TITLE, "invocation_id": invocation_id},
+    ]
+
+
+def live_intel_budget_group() -> dict[str, object]:
+    """Return the fixed child budget for the optional live text routes."""
+    return {
+        "id": "meeting-intelligence",
+        "allocation": 4096,
+        "member_keys": ["live-analysis", "bookmark-label", "auto-title"],
+    }
+
+
+def displaced_work_for_stop(state: Any, intelligence_enabled: bool) -> tuple[str, ...]:
+    """Return text work to hand off only when intelligence was requested."""
+    if not intelligence_enabled:
+        return ()
+    displaced: list[str] = []
+    if state.segments:
+        displaced.append(DISPLACED_FINAL_ANALYSIS)
+    if state.bookmarks:
+        displaced.append(DISPLACED_BOOKMARK_LABELS)
+    if not state.title:
+        displaced.append(DISPLACED_AUTO_TITLE)
+    return tuple(displaced)
 
 class _MeetingRoutedAdapter:
     """One selected Meeting leg, with closed output before election."""
@@ -291,4 +330,3 @@ class IntelRoutedChildMixin:
             seed=_sha(transcript),
             deadline_seconds=LABEL_DEADLINE_SECONDS,
         )
-

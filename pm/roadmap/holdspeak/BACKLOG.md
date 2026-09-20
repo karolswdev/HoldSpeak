@@ -19,6 +19,32 @@ New portfolio surfaces, extra connectors, native parity, and additional worker a
 need a measured Phase 200 pilot gap before they take delivery capacity.
 The outcome review in HS-200-37 records each expansion decision.
 
+## Phase 201 parked summary follow-through
+
+**2026-09-19 — Astra, ratified by Muad'Dib.** The first-use summary gesture
+runs only the disclosed `meeting.deferred_analysis` route. Web Record and Stop
+no longer enqueue live/deferred intelligence. This deliberately removes the
+Phase 200 plugin chain → `ProposalBridgeService` → Review face production entry
+on that path. It is a regression accepted to make one truthful meeting result,
+not an inherited failure or deleted feature. All plugin/bridge code remains.
+
+The smallest return path is to admit a plugin member only when its frozen
+`deployment_revision_id` and `profile_revision` already occur among the
+disclosed legs, and map its actual attempts into the run receipt by deployment
+identity. Skip other members. If sequential destinations need a wider route
+contract, both brains must first settle a `capability_id` per leg. Do not add
+ambient destinations behind the existing summary gesture. Retained strict
+expected failures cover five proposals and partial-chain retry; their live
+summary-ready preconditions must continue to pass.
+
+Also parked: retire or reconcile old automatic-intelligence settings and their
+doctor/setup/trust projections. `meeting_import.py:_persist_import` and
+`db/meetings.py:recover_capture` retain old hashless enqueue paths
+for imports and historical displaced work. Fence or disclose these before
+restoring automatic summary behavior. The first-use Web Record/Stop path is
+fenced separately. Lane B must render an unexecuted Review chain as absent or
+“Not run”, never as “no proposals found”.
+
 ## Earlier backlog record
 
 The parking lot so good ideas do not get lost between phases. Each entry is a

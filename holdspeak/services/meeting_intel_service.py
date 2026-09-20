@@ -41,6 +41,15 @@ class MeetingIntelService:
         errors = {"missing": "Meeting not found", "empty": "Meeting transcript is empty; no intelligence can run" if recovery else "Meeting transcript is empty", "reserved": "Meeting intelligence is awaiting Stop settlement", "running": "Meeting intelligence is already running", "ready": "Meeting intelligence is already ready"}
         if outcome in errors:
             if outcome == "missing": raise NotFound("meeting", meeting_id)
+            if outcome == "empty":
+                meeting = self._db.meetings.get_meeting(meeting_id)
+                detail = getattr(meeting, "transcription_status_detail", None) if meeting else None
+                reason = str(detail.get("reason_code") or "").strip() if isinstance(detail, dict) else ""
+                if reason:
+                    raise ConflictError(
+                        f"Meeting transcription is not available: {reason.replace('_', ' ')}.",
+                        code=reason,
+                    )
             raise ConflictError(errors[outcome], code=outcome)
         self._broadcast_queue(); return {"success": True, **({"recovery": self.get_recovery(None, meeting_id)} if recovery else {})}
     def retry_job(self, principal: Principal, meeting_id: str) -> dict[str, Any]: return self._retry(meeting_id, recovery=False)
