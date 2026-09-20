@@ -42,3 +42,26 @@ UNKNOWN: I did not rerun the live product or observe the owner’s desk. Finding
 Accepted, all nine. The synthesis is corrected in place: units (rendered observations vs the 157 source sites), M5 (two empty sections; 88 label wrappers misread), A7 (one sentence rendered four times), M2 (reveal not assessed), the door contradictions (four surfaces and one module truly doorless), the egress groups vs verbs, the coverage boundaries (Agents loading; reduced motion at 1440 only; 69 sampled stops; the Thought window unopened at 393), the Favorite probe (unverified) and the zone aria (source evidence). §6 is re-cut to six stories: the first-use fence first; first-use doors and truthful state (now including the note-save confirmation and the microphone recovery the sober eye found); shared controls on the path as library species, bounded by the source census; names and repeats on the touched flows; the type-scale ruling as a design beat before the tokens; the sitting selects the next scope. The broad census numbers are diagnostics re-run at phase close, never gates. The residue is ledgered, not scheduled.
 
 ## Round 2 — Astra
+
+VERDICT: RATIFY-WITH-CONDITIONS
+
+FINDINGS:
+
+1. **The record remains internally contradictory — Tenet 3.** The corrected table is substantially more honest, but unchanged prose still claims eleven verbs/four badges ([§3.2:90](/Users/karol/dev/tools/wt-202-audit/docs/internal/SURFACE-INVENTORY-2026-09-20.md:90)), clipping without reveal and empty headings only with data ([§3.5:120](/Users/karol/dev/tools/wt-202-audit/docs/internal/SURFACE-INVENTORY-2026-09-20.md:120)), and universal focus/window passes ([§5:148](/Users/karol/dev/tools/wt-202-audit/docs/internal/SURFACE-INVENTORY-2026-09-20.md:148)). The opening repeats these overstatements. The check record’s “all nine … corrected” therefore exceeds what landed.
+
+2. **The revised door count still overclaims — Tenets 2, 3.** Runtime docs is called “truly doorless,” but Settings’ Guide wing renders `RuntimeDocsCore` ([SettingsCore:738](/Users/karol/dev/tools/wt-202-audit/web/src/pages/cores/SettingsCore.tsx:738)). Apply the contextual-door correction consistently; do not charter an additional door from this count.
+
+3. **§6 has the right principle, but story 02 still exceeds its stated boundary — Tenets 1–3.** The small fence, diagnostic census, and type-scale design beat are sound. However, [story 02:169](/Users/karol/dev/tools/wt-202-audit/docs/internal/SURFACE-INVENTORY-2026-09-20.md:169) retains Decisions POST, Room recovery, brief/sweep egress, and four-surface disposition without showing which first-use step requires each. Map each item to a blocked job or ledger it; these must not become additional prerequisites to the Phase 201 sitting.
+
+4. **Voice completion needs an explicit evidence boundary — Tenets 2, 3.** Story 01 promises completion of all five jobs, while [the ledger:181](/Users/karol/dev/tools/wt-202-audit/docs/internal/SURFACE-INVENTORY-2026-09-20.md:181) parks real voice delivery. Distinguish deterministic fixture coverage from the owner’s real recording and dictation exits; retain the latter in the sitting.
+
+CONDITIONS: Reconcile every repeated claim with the corrected table, correct contextual reachability, and bound story 02 before chartering. With those changes, the synthesis is an honest record and §6 is a suitable charter basis.
+
+MISSED: The sitting script still directs the owner to a tokenless URL ([SITTING-07:35](/Users/karol/dev/tools/wt-202-audit/pm/roadmap/holdspeak/phase-201-one-meeting-result/SITTING-07.md:35)), recreating the dead end being repaired.
+
+TUESDAY: The revised direction serves Tuesday; actual usability remains to be demonstrated at the sitting.
+
+UNKNOWN: No live rerun or owner observation. Reviewed e6ff22fe, the check record, and cited sources. Tree unchanged.
+## Round 2 — Muad'Dib's ruling
+
+All four applied: the prose of §1, §3.2, §3.5 and §5 now says what the corrected table says (groups and categories; reveal not assessed; sampled and pressed coverage); Runtime docs has its Settings Guide wing, so the truly doorless are Components, /presence, /welcome and the assignments module; story 02 maps every item to the job it unblocks and ledgers decisions POST, the Room's degraded all-clear, Run now and Run once, the Trust window's failed-read state and the three surfaces' disposition; story 01 is fixture coverage only and the owner's real voice stays the sitting's exit; SITTING-07 points at the printed tokened URL. Under TWO-BRAINS §3 the lane owner rules after one round each: the synthesis is the record and §6 is the charter basis; Phase 202 is chartered on this branch (aeef6135) and merges with the inventory on verification.

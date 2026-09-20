@@ -13,7 +13,7 @@ From the surface inventory of 2026-09-20 (`docs/internal/SURFACE-INVENTORY-2026-
 
 ## Scope
 
-- **In:** The dock fits at 393; the four menus open there; ⌘K commits the typed match; `Write a thought` opens a note and saving a note confirms; the microphone failure names the microphone and offers a recovery that can work; the two startup URLs carry the token; the meeting record refreshes on assignment and on run without a reload; one Ask AI door; the `assignments` module has a door; the four surfaces with no door get one or leave the product build; `<EgressChip/>` with no props renders NOT SET, never "This device"; the false badges on the path fixed; `Generate`, `Talk` and `Run now` badged and receipted; the Trust window truthful after a failed read; the Room never hides degraded work under an all-clear; Desk memory shows the desk's memory; decisions POST fixed; the owner's LAN address removed from the placeholder
+- **In:** each item names the job it unblocks (docs/internal/SURFACE-INVENTORY-2026-09-20.md §6 story 02, as re-cut after Astra's round two): job 1 the microphone recovery; job 2 the record refreshing on assignment and run, EgressChip NOT SET by default, the false badges on the path, tokened startup URLs; job 3 Write a thought opens a note and saving confirms; job 4 ⌘K commits the typed match, Desk memory shows the desk's memory; job 5 the assignments door, the LAN placeholder removed; all jobs at 393 the dock fits and the four menus open; the arrival's Generate badged and receipted, one Ask AI door.
 - **Out:** everything the inventory's §6 ledger records; faces the five owner jobs do not touch; the broad census numbers as gates (they are diagnostics re-run at phase close).
 
 ## Acceptance criteria

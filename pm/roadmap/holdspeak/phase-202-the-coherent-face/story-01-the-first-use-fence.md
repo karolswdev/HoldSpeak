@@ -14,7 +14,7 @@ From the surface inventory of 2026-09-20 (`docs/internal/SURFACE-INVENTORY-2026-
 ## Scope
 
 - **In:** One deterministic, isolated smoke at 1440 and 393: the doors to the five jobs, visible completion of each, the truthful host before and after a run, save and refind, restart; it requires the expected content to load (no green on a loading ellipsis). Reuses the existing source-button ratchet; adds no census gates
-- **Out:** everything the inventory's §6 ledger records; faces the five owner jobs do not touch; the broad census numbers as gates (they are diagnostics re-run at phase close).
+- **Out:** the owner's real recording and real dictation (the sitting's exits, story 06); everything the inventory's §6 ledger records; faces the five owner jobs do not touch; the broad census numbers as gates (they are diagnostics re-run at phase close).
 
 ## Acceptance criteria
 

@@ -32,7 +32,7 @@ The first lines say which build and which database this is:
 HoldSpeak runtime identity: backend_commit=<sha> frontend_build=<id> database_path=/Users/karol/.local/share/holdspeak/holdspeak.db
 ```
 
-Send that line. Then open http://127.0.0.1:8765 in your browser.
+Send that line. Then open the URL the product prints right after it (it carries a token; a bare http://127.0.0.1:8765 lands on a page that says principal_right_required, a defect Phase 202 repairs).
 
 ## The gate and the seven steps
 
