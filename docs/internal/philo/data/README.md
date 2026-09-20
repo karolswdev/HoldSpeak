@@ -1,0 +1,82 @@
+# Curated documentation metadata
+
+This directory adds product meaning and evidence references to existing domain
+registries. It does not replace HTTP, MCP, command, model or language registries.
+Research snapshot: `675401a857b85336d4acaa8c65383dfc9636e4c8`.
+
+Each lane owns one JSON shard: `runtime.json`, `voice.json`, `desk.json`, or
+`integrations.json`. All have this shape:
+
+```json
+{
+  "schema_version": 1,
+  "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+  "capabilities": [],
+  "components": [],
+  "integrations": [],
+  "domain_model": [],
+  "trust_boundaries": []
+}
+```
+
+Every capability has these required fields:
+
+```json
+{
+  "id": "domain.verb",
+  "name": "Canonical name",
+  "purpose": "User result",
+  "domain": "domain",
+  "status": "partial",
+  "status_reason": "Why this classification fits the evidence",
+  "exposure": "user",
+  "surfaces": ["actual surface"],
+  "entry_points": ["path::symbol"],
+  "platforms": {"macos": "unknown", "linux_x11": "unknown", "linux_wayland": "unknown", "ipad": "not_applicable", "aipi": "not_applicable"},
+  "inputs": [], "outputs": [], "persistence": [], "apis": [],
+  "configuration": [], "dependencies": [], "model_requirements": [],
+  "network_requirements": [], "trust_boundary": "Specific description",
+  "egress_possible": false, "egress": "What leaves, or why none",
+  "side_effect": "none", "authority": "Actual admission/approval basis",
+  "kernel_operations": [],
+  "sources": [{"path": "real/path.py", "symbol": "RealSymbol", "line": 1, "claim": "What these lines establish"}],
+  "tests": [{"path": "tests/unit/test_real.py", "node": "test_actual_name", "assertion": "What the inspected assertion proves", "execution": "not_run"}],
+  "docs": [], "limitations": [], "failure_states": [],
+  "replacement": null,
+  "evidence_level": "source_and_assertions_inspected",
+  "release_availability": "unverified",
+  "owner_observed": false
+}
+```
+
+Use the requested status vocabulary: stable, beta, experimental, partial,
+platform_limited, built_unreleased, planned, deprecated, internal, historical.
+The status is a summary for compatibility with the request. Keep platform,
+release, exposure and evidence fields independent; explain overlaps in
+status_reason. Do not set stable without owner observation and test evidence.
+Do not mislabel source-present but unrun code as partially implemented solely
+because it has not run; explain implementation versus verification explicitly.
+
+Exposure: user, operator, developer, integration, internal. Side effect: none,
+local_reversible, local_irreversible, external_reversible, external_irreversible.
+Platform values: supported, supported_with_setup, degraded, best_effort,
+unsupported, not_applicable, unknown. Cite the implementation for supported.
+
+Other records have `id`, `name`, `purpose`, `sources` (same shape), and `docs`.
+Add their domain-specific facts as structured fields:
+
+- components: `kind`, `owns`, `depends_on`, `interfaces`.
+- integrations: `direction`, `auth`, `secrets`, `data`, `authority`, `failure`, `tests`.
+- domain_model: `category` (database_entity/api_representation/frontend_projection/service/concept), `owner`, `storage`, `lifecycle`, `relationships`.
+- trust_boundaries: `from`, `to`, `data`, `compute`, `authority`, `secrets`, `audit`.
+
+Use actual paths and symbols. Empty lists mean no entry found in this bounded
+research, not a proof of absence; explain material unknowns in limitations.
+Never add placeholder routes or test names. A test reference requires reading
+its assertions. Only record passed after observing a matching run record.
+
+The generator will aggregate these shards into the six requested YAML views
+(including platforms), capability documentation and coverage. It must validate
+IDs, paths, enum values, evidence and reference ownership before generation.
+JSON serialization is permitted as a strict YAML subset, but outputs must be
+readable and clearly marked generated. No hand edits to generated projections.

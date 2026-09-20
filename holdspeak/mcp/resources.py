@@ -60,7 +60,7 @@ _PRIMITIVE_SCHEMA = [
     {"kind": "people", "product_noun": "People", "sync_class": "local"},
 ]
 
-# Mirrors web/src/desk/verbRegistry.ts, including verbs derived from DESK_TOOLS.
+# Curated subset of web/src/desk/verbRegistry.ts; it does not promise full parity.
 # ``server`` means the external MCP verb dispatcher can invoke it; all other
 # registered Desk verbs remain UI-owned presentation actions.
 _VERBS = [
@@ -159,7 +159,7 @@ _STATIC_RESOURCES = [
     {
         "uri": "holdspeak://desk/snapshot",
         "name": "Desk snapshot",
-        "description": "Canonical current Desk state, including its stored objects and layout.",
+        "description": "Saved Desk records: chains, decisions, directories, notes, profiles, workbenches and workflows.",
         "mimeType": _JSON_MIME,
     },
     {

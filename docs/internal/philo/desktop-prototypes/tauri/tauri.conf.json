@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "HoldSpeak Philo Probe",
+  "version": "0.0.0",
+  "identifier": "dev.holdspeak.philo-probe",
+  "build": {
+    "frontendDist": "../../../../../holdspeak/static/_built",
+    "devUrl": "http://127.0.0.1:18789"
+  },
+  "app": {
+    "windows": [],
+    "security": {
+      "capabilities": []
+    }
+  },
+  "bundle": {
+    "active": false,
+    "icon": [
+      "../../../../../web/public/holdspeak-mark.png"
+    ]
+  }
+}

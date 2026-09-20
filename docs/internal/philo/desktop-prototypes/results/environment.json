@@ -1,0 +1,24 @@
+{
+  "source_snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+  "bundle_tree_sha256": "602b54efb016e8fc70c235c86ecd901751ee0fd7f98cb8a53c70903fccf0dc58",
+  "build": "uv sync --extra test invoked existing Hatch web build",
+  "platform": "macOS Darwin25.2 ARM64",
+  "electron": "41.10.7",
+  "tauri": "2.11.6",
+  "rust": "1.98.1",
+  "server": "loopback static build only, /api and /ws return503",
+  "data": "temporary HOME and app profiles; no live hub or DB",
+  "observations": {
+    "electron": "renderer loaded HoldSpeak error surface at1440/393 CSS widths; no process/require globals; narrow readonly desktopHost",
+    "tauri": "cargo build passed; hidden WKWebView logged Started and Finished for same static URL; no native commands registered"
+  },
+  "not_proved": [
+    "populated Desk rendering parity",
+    "backend journey parity",
+    "startup/resource benchmark",
+    "Tauri screenshot comparison",
+    "packaging/signing/updater",
+    "global shortcuts/tray/dialog permissions",
+    "Linux/Windows behavior"
+  ]
+}

@@ -1,0 +1,2030 @@
+{
+  "schema_version": 1,
+  "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+  "capabilities": [
+    {
+      "id": "runtime.kernel_admit",
+      "name": "Admit bounded operation",
+      "purpose": "Turn a declared request into an idempotent, authority-bound operation record.",
+      "domain": "runtime",
+      "status": "experimental",
+      "status_reason": "Pre-first-use source capability; no release classification is inferred. The broker, journal and HTTP seams are implemented in the inspected source; this lane did not run them or establish owner observation.",
+      "exposure": "integration",
+      "surfaces": [
+        "kernel HTTP API",
+        "kernel Python API"
+      ],
+      "entry_points": [
+        "holdspeak/kernel/broker.py::submit",
+        "holdspeak/web/routes/system/kernel_routes.py::api_kernel_submit"
+      ],
+      "platforms": {
+        "macos": "unknown",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "not_applicable",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "operation name and version",
+        "target",
+        "placement",
+        "idempotency key",
+        "authenticated principal"
+      ],
+      "outputs": [
+        "operation id",
+        "admission or refusal",
+        "journal events"
+      ],
+      "persistence": [
+        "kernel_operations",
+        "kernel_journal",
+        "kernel_meta"
+      ],
+      "apis": [
+        "POST /api/kernel/submit",
+        "kernel.submit"
+      ],
+      "configuration": [
+        "registered operation specifications",
+        "policy version"
+      ],
+      "dependencies": [
+        "SQLite",
+        "principal derivation",
+        "operation policy",
+        "causality checks"
+      ],
+      "model_requirements": [],
+      "network_requirements": [
+        "HTTP edge only when called through the web API"
+      ],
+      "trust_boundary": "Authenticated caller crosses the edge into cooperating hub code; the hub persists the frozen envelope before any executor dispatch.",
+      "egress_possible": false,
+      "egress": "Admission itself does not dispatch to a provider; later operation-specific execution may egress.",
+      "side_effect": "local_reversible",
+      "authority": "Principal route right, declared capability, hard prerequisites and interruption policy.",
+      "kernel_operations": [
+        "generic admitted operation"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/kernel/broker.py",
+          "symbol": "submit",
+          "line": 69,
+          "claim": "Parses the request, checks specification/authority/causality, creates the operation and enters decision or refusal."
+        },
+        {
+          "path": "holdspeak/kernel/journal.py",
+          "symbol": "create_operation",
+          "line": 127,
+          "claim": "Scopes idempotency by principal identity and idempotency key and refuses an envelope mismatch."
+        },
+        {
+          "path": "holdspeak/web/routes/system/kernel_routes.py",
+          "symbol": "api_kernel_submit",
+          "line": 21,
+          "claim": "Exposes the kernel submit surface."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_kernel_broker.py",
+          "node": "test_codec_and_four_authority_layers_admit_in_order",
+          "assertion": "Admission follows the four authority layers in order.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_kernel_broker.py",
+          "node": "test_refused_submission_has_terminal_receipt_and_stream_content_is_forbidden",
+          "assertion": "Refusal leaves terminal evidence and prohibited stream content is rejected.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/KERNEL.md",
+        "docs/AUTHORITY_MODEL.md"
+      ],
+      "limitations": [
+        "No live HTTP or database run was performed.",
+        "Application-level admission is not an OS sandbox."
+      ],
+      "failure_states": [
+        "principal_right_required",
+        "unknown_operation",
+        "operation_envelope_mismatch",
+        "refused",
+        "indeterminate"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "runtime.kernel_recover",
+      "name": "Recover runtime work",
+      "purpose": "Resolve interrupted parent, liveness and publication state after startup.",
+      "domain": "runtime",
+      "status": "experimental",
+      "status_reason": "Pre-first-use source capability; no release classification is inferred. Startup ordering and recovery code are present; this lane did not run a restart or live recovery.",
+      "exposure": "operator",
+      "surfaces": [
+        "hub startup",
+        "reconcile route"
+      ],
+      "entry_points": [
+        "holdspeak/kernel/runtime.py::_build",
+        "holdspeak/kernel/runtime.py::reconcile"
+      ],
+      "platforms": {
+        "macos": "unknown",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "not_applicable",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "kernel operations",
+        "parent runs",
+        "liveness deadlines",
+        "projection stages"
+      ],
+      "outputs": [
+        "terminal refusal or indeterminate state",
+        "recovered projections"
+      ],
+      "persistence": [
+        "kernel_operations",
+        "kernel_receipts",
+        "kernel_parent_runs",
+        "kernel_projection_stages",
+        "kernel_journal"
+      ],
+      "apis": [
+        "GET /api/kernel/executor/operations/{operation_id}/reconcile"
+      ],
+      "configuration": [
+        "claim and execution liveness bounds"
+      ],
+      "dependencies": [
+        "SQLite write transactions",
+        "journal verification",
+        "projection materializers"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Startup trusts durable operation evidence before it repairs read projections; an absent completion proof remains uncertain.",
+      "egress_possible": false,
+      "egress": "Recovery does not call a provider; it may mark work for operator review.",
+      "side_effect": "local_reversible",
+      "authority": "Internal runtime recovery with liveness and publication guards; it cannot invent a success receipt.",
+      "kernel_operations": [
+        "parent run",
+        "child invocation"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/kernel/broker.py",
+          "symbol": "Broker.reap_and_recover_projections",
+          "line": 275,
+          "claim": "Reconciles parent state and liveness before repairing projections."
+        },
+        {
+          "path": "holdspeak/kernel/liveness.py",
+          "symbol": "reap_expired",
+          "line": 9,
+          "claim": "Expires unclaimed work as refusal and silent claimed work as indeterminate."
+        },
+        {
+          "path": "holdspeak/kernel/publication_transition.py",
+          "symbol": "transition",
+          "line": 12,
+          "claim": "Guards transitions while publication owns the fence."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_kernel_broker.py",
+          "node": "test_liveness_reaper_refuses_approved_work_that_was_never_claimed",
+          "assertion": "Approved work past claim deadline becomes a refusal.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_kernel_broker.py",
+          "node": "test_liveness_reaper_marks_silent_claimed_work_indeterminate",
+          "assertion": "Claimed work past execution deadline becomes indeterminate.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_kernel_real_hub.py",
+          "node": "test_real_http_executor_receipt_and_sigkill_cursor_replay",
+          "assertion": "Restart replay preserves journal cursor and receipt behavior.",
+          "execution": {
+            "status": "failed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/KERNEL.md",
+        "docs/TROUBLESHOOTING.md"
+      ],
+      "limitations": [
+        "Restart behavior was inferred from source and assertions, not observed.",
+        "Provider-side completion after a lost response remains unknown."
+      ],
+      "failure_states": [
+        "hub_restart_during_decision",
+        "execution_claim_expired",
+        "execution_liveness_expired",
+        "indeterminate"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "runtime.inference_attempt",
+      "name": "Run one physical inference attempt",
+      "purpose": "Bind one provider attempt to a deployment revision, route boundary and receipt.",
+      "domain": "runtime",
+      "status": "experimental",
+      "status_reason": "Pre-first-use source capability; no release classification is inferred. The one-child/one-receipt path and cancellation handling are implemented, but provider and platform readiness are external or unverified here.",
+      "exposure": "integration",
+      "surfaces": [
+        "inference runner",
+        "model route adapters",
+        "mesh node"
+      ],
+      "entry_points": [
+        "holdspeak/kernel/inference_invoke.py::InferenceInvokeCodec.validate",
+        "holdspeak/kernel/inference_invoke.py::InferenceInvokeCodec.authorize",
+        "holdspeak/kernel/inference_runner.py::InferenceRunner"
+      ],
+      "platforms": {
+        "macos": "unknown",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "not_applicable",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "content-free invocation descriptor",
+        "deployment revision",
+        "placement",
+        "deadline",
+        "provider adapter"
+      ],
+      "outputs": [
+        "native result reference",
+        "terminal receipt",
+        "inference attestation"
+      ],
+      "persistence": [
+        "inference_route_plans",
+        "inference_route_executions",
+        "inference_route_attempts",
+        "kernel_receipts",
+        "kernel_inference_receipt_attestations"
+      ],
+      "apis": [
+        "inference.invoke@1",
+        "mesh relay executor routes"
+      ],
+      "configuration": [
+        "model profiles and deployments",
+        "route target",
+        "egress policy"
+      ],
+      "dependencies": [
+        "provider adapter",
+        "executor claim",
+        "parent liveness",
+        "result staging"
+      ],
+      "model_requirements": [
+        "registered deployment revision",
+        "route capability"
+      ],
+      "network_requirements": [
+        "provider or mesh network when target is remote"
+      ],
+      "trust_boundary": "The runner dispatches only after a kernel warrant and exact deployment/target binding; provider output returns as evidence, not authority.",
+      "egress_possible": true,
+      "egress": "Prompt/context may leave the machine only through the selected provider route; the bound egress reference and destination are recorded without placing content in the kernel journal.",
+      "side_effect": "external_reversible",
+      "authority": "Admitted child operation, valid warrant, live parent, route policy and exact deployment revision.",
+      "kernel_operations": [
+        "inference.invoke@1"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/kernel/inference_invoke.py",
+          "symbol": "InferenceInvokeCodec.validate",
+          "line": 65,
+          "claim": "Validates exact fields, deadline and content-free invocation origin."
+        },
+        {
+          "path": "holdspeak/kernel/inference_invoke.py",
+          "symbol": "InferenceInvokeCodec.authorize",
+          "line": 88,
+          "claim": "Resolves deployment revision/target/placement and binds an egress reference."
+        },
+        {
+          "path": "holdspeak/kernel/inference_runner.py",
+          "symbol": "_finish",
+          "line": 819,
+          "claim": "Persists durable receipt before terminal publication and marks unknown dispatch outcome indeterminate."
+        },
+        {
+          "path": "holdspeak/kernel/executor.py",
+          "symbol": "ExecutorPlane.receipt",
+          "line": 89,
+          "claim": "Requires valid result reference and inference evidence for a terminal receipt."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_inference_runner.py",
+          "node": "test_fallback_is_two_invocations_not_one_logical_receipt",
+          "assertion": "Fallback is represented as a separate physical child and receipt.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_inference_runner.py",
+          "node": "test_journal_has_no_prompt_output_or_audio_bodies",
+          "assertion": "The inference-runner fixture journal omits its prompt, output and audio bodies; this does not cover parent snapshot storage.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_kernel_real_hub.py",
+          "node": "test_synthetic_admitted_reference_invocation_and_cancelled_stream",
+          "assertion": "A cancelled reference invocation cannot publish late stream output.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/KERNEL.md",
+        "docs/SECURITY_MODEL.md"
+      ],
+      "limitations": [
+        "Provider availability, model quality and actual egress depend on configured adapters.",
+        "No live provider call was made."
+      ],
+      "failure_states": [
+        "deadline_exceeded",
+        "provider_failed",
+        "cancelled",
+        "indeterminate",
+        "route_refused"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "authority.principal_routes",
+      "name": "Derive principals and route rights",
+      "purpose": "Authenticate owner, agent and node callers and apply route-specific rights.",
+      "domain": "authority",
+      "status": "experimental",
+      "status_reason": "Pre-first-use source capability; no release classification is inferred. Principal kinds, credential hashing, expiry/revocation and centralized route mapping are implemented; runtime deployment was not exercised.",
+      "exposure": "integration",
+      "surfaces": [
+        "HTTP",
+        "WebSocket",
+        "MCP transport",
+        "kernel executor routes"
+      ],
+      "entry_points": [
+        "holdspeak/principals.py::AgentCredentialStore",
+        "holdspeak/principals.py::required_right",
+        "holdspeak/principals.py::derive_owner"
+      ],
+      "platforms": {
+        "macos": "unknown",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "owner token",
+        "agent bearer token",
+        "node credential",
+        "HTTP method and path"
+      ],
+      "outputs": [
+        "Principal",
+        "route right",
+        "403/refusal"
+      ],
+      "persistence": [
+        "in-memory hashed agent credential store"
+      ],
+      "apis": [
+        "HTTP authorization middleware",
+        "agent credential issue/revoke routes"
+      ],
+      "configuration": [
+        "owner token",
+        "credential TTL",
+        "route policy"
+      ],
+      "dependencies": [
+        "constant-time hash comparison",
+        "web edge",
+        "credential issuer"
+      ],
+      "model_requirements": [],
+      "network_requirements": [
+        "HTTP/WebSocket transport when used remotely"
+      ],
+      "trust_boundary": "The edge derives identity from credentials; caller payloads cannot declare principal kind or rights.",
+      "egress_possible": false,
+      "egress": "Authentication and route authorization do not dispatch operation content.",
+      "side_effect": "local_reversible",
+      "authority": "Owner token or issued credential; route rights are deny-by-default and principal-specific.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/principals.py",
+          "symbol": "PrincipalKind",
+          "line": 20,
+          "claim": "Defines owner, agent, node, scheduler, service and none identities and their rights."
+        },
+        {
+          "path": "holdspeak/principals.py",
+          "symbol": "AgentCredentialStore",
+          "line": 103,
+          "claim": "Stores token hashes, caps TTL, checks expiry and compares hashes constant-time."
+        },
+        {
+          "path": "holdspeak/principals.py",
+          "symbol": "required_right",
+          "line": 275,
+          "claim": "Centralizes route rights and uses owner fallback for protected routes."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/integration/test_principal_separation.py",
+          "node": "test_agent_identity_is_derived_and_owner_only_rights_refuse_by_name",
+          "assertion": "Agent identity comes from the credential and owner-only rights refuse.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_principal_separation.py",
+          "node": "test_node_credential_derives_node_not_owner",
+          "assertion": "A node credential does not derive owner identity.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_principal_separation.py",
+          "node": "test_agent_credential_expires",
+          "assertion": "Expired agent credentials are rejected.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/AUTHORITY_MODEL.md",
+        "docs/SECURITY_MODEL.md"
+      ],
+      "limitations": [
+        "Credentials are in-memory and wiped on process restart.",
+        "Public route exceptions are explicit but deployment topology was not tested."
+      ],
+      "failure_states": [
+        "unauthenticated",
+        "expired_credential",
+        "revoked_credential",
+        "principal_right_required"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "authority.policy_resolution",
+      "name": "Resolve operation control mode",
+      "purpose": "Evaluate hard invariants, grants, control mode and feature defaults for a concrete effect.",
+      "domain": "authority",
+      "status": "experimental",
+      "status_reason": "Pre-first-use source capability; no release classification is inferred. Policy matrices and authority service are implemented and assertions were inspected; no live control-mode change was made.",
+      "exposure": "user",
+      "surfaces": [
+        "control-mode CLI",
+        "authority service",
+        "proposal flow"
+      ],
+      "entry_points": [
+        "holdspeak/operation_policy.py::resolve_policy",
+        "holdspeak/services/authority_service.py::evaluate",
+        "holdspeak/main.py::_run_control_mode_command"
+      ],
+      "platforms": {
+        "macos": "unknown",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "operation family",
+        "effect",
+        "destination",
+        "control mode",
+        "scoped grant",
+        "data classes"
+      ],
+      "outputs": [
+        "permit/review/refuse decision",
+        "authority basis",
+        "TTL"
+      ],
+      "persistence": [
+        "config control mode",
+        "authority_grants",
+        "authority_grant_uses",
+        "proposal policy snapshot"
+      ],
+      "apis": [
+        "holdspeak control-mode",
+        "authority service APIs"
+      ],
+      "configuration": [
+        "safe/neutral/yolo control mode",
+        "registered destinations"
+      ],
+      "dependencies": [
+        "config store",
+        "fixed destination registry",
+        "proposal store"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Policy resolves authority for exact scope; it cannot add a destination or loosen hard invariants.",
+      "egress_possible": false,
+      "egress": "Resolution is local; an allowed operation may egress later through its adapter.",
+      "side_effect": "local_reversible",
+      "authority": "Precedence is hard invariants, revocation, exact grant, control mode, feature default.",
+      "kernel_operations": [
+        "operation-specific admitted child"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/operation_policy.py",
+          "symbol": "HARD_INVARIANTS",
+          "line": 15,
+          "claim": "Defines hard invariants, modes and supported operation families."
+        },
+        {
+          "path": "holdspeak/services/authority_service.py",
+          "symbol": "evaluate",
+          "line": 105,
+          "claim": "Evaluates authority and issues/revokes bounded grants through the service."
+        },
+        {
+          "path": "holdspeak/operation_policy.py",
+          "symbol": "resolve_policy",
+          "line": 193,
+          "claim": "Refuses unsupported families and applies family-specific mode rules."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_operation_policy.py",
+          "node": "test_every_mode_preserves_identical_hard_invariants",
+          "assertion": "All modes preserve hard invariants.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 12
+          }
+        },
+        {
+          "path": "tests/unit/test_operation_policy.py",
+          "node": "test_sync_matrix_and_unsupported_fail_closed",
+          "assertion": "Unsupported families fail closed.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_authority_grants.py",
+          "node": "test_proposal_captures_policy_once_for_future_operations",
+          "assertion": "A proposal captures its policy snapshot for later operation decisions.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/AUTHORITY.md",
+        "docs/AUTHORITY_MODEL.md"
+      ],
+      "limitations": [
+        "Policy code presence is not owner observation.",
+        "Destination registration and external adapter readiness are separate checks."
+      ],
+      "failure_states": [
+        "unsupported_family",
+        "grant_scope_mismatch",
+        "destination_unregistered",
+        "revoked",
+        "review_required"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "storage.sqlite_reconcile",
+      "name": "Reconcile SQLite shape",
+      "purpose": "Bring an existing database toward the declared additive schema shape on open.",
+      "domain": "storage",
+      "status": "experimental",
+      "status_reason": "Pre-first-use source capability; no release classification is inferred. Shape-based reconciliation and focused assertions are present; this lane did not open a live database.",
+      "exposure": "operator",
+      "surfaces": [
+        "Database open",
+        "doctor database check"
+      ],
+      "entry_points": [
+        "holdspeak/db/reconcile.py::reconcile_schema",
+        "holdspeak/db/core.py::Database"
+      ],
+      "platforms": {
+        "macos": "unknown",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "not_applicable",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "SQLite database path",
+        "declared SCHEMA_SQL",
+        "existing tables and columns"
+      ],
+      "outputs": [
+        "created missing shape",
+        "added columns",
+        "idempotent backfills",
+        "informational schema stamp"
+      ],
+      "persistence": [
+        "SQLite database",
+        "schema_version"
+      ],
+      "apis": [
+        "Database(path)",
+        "holdspeak doctor database check"
+      ],
+      "configuration": [
+        "default database path",
+        "SCHEMA_SQL"
+      ],
+      "dependencies": [
+        "sqlite3",
+        "foreign keys",
+        "WAL connection"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "The reconciler mutates local schema additively and preserves existing rows; the informational version is not an authorization gate.",
+      "egress_possible": false,
+      "egress": "Schema reconciliation is local and does not send data.",
+      "side_effect": "local_reversible",
+      "authority": "Normal database-open path; additive general repair plus explicit legacy table/trigger rebuilds.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/db/schema.py",
+          "symbol": "SCHEMA_SQL",
+          "line": 1,
+          "claim": "Defines the declared schema and informational version 79."
+        },
+        {
+          "path": "holdspeak/db/reconcile.py",
+          "symbol": "reconcile_schema",
+          "line": 608,
+          "claim": "Creates missing shape, adds columns, runs idempotent repairs and stamps the database."
+        },
+        {
+          "path": "holdspeak/db/reconcile.py",
+          "symbol": "reconcile_schema",
+          "line": 608,
+          "claim": "General shape reconciliation preserves unknown tables but invokes explicit known legacy rebuilds before normal schema repair."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_db_schema_policy.py",
+          "node": "test_missing_table_self_heals",
+          "assertion": "A missing table is restored by reconciliation.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_db_schema_policy.py",
+          "node": "test_missing_column_self_heals",
+          "assertion": "A missing column is restored by reconciliation.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_db_schema_policy.py",
+          "node": "test_orphan_table_and_rows_survive",
+          "assertion": "Unknown existing tables and rows survive reconciliation.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_phase200_doc_claims.py",
+          "node": "test_registered_claim_matches_its_state",
+          "assertion": "The registered bookmarks claim invokes real reconcile and observes the table recreated before the backup callback.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 19
+          }
+        }
+      ],
+      "docs": [
+        "docs/STORAGE_AND_MIGRATIONS.md",
+        "docs/DATA_MODEL.md"
+      ],
+      "limitations": [
+        "Generated schema inventory is declared base shape, not a live DB census.",
+        "Historical rebuild/backfill paths require concrete old-shape inspection.",
+        "Automatic backup follows some schema changes and independent backfills; it is not a guaranteed pre-upgrade snapshot."
+      ],
+      "failure_states": [
+        "sqlite_error",
+        "locked_database",
+        "invalid_schema",
+        "unreadable_database"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "storage.backup_restore",
+      "name": "Back up and restore the database",
+      "purpose": "Create a timestamped SQLite backup and safely replace the database from a validated backup.",
+      "domain": "storage",
+      "status": "experimental",
+      "status_reason": "Pre-first-use source capability; no release classification is inferred. CLI and SQLite backup/restore primitives are implemented; no live backup or restore was run.",
+      "exposure": "operator",
+      "surfaces": [
+        "holdspeak backup",
+        "holdspeak restore"
+      ],
+      "entry_points": [
+        "holdspeak/commands/backup.py::run_backup_command",
+        "holdspeak/commands/backup.py::run_restore_command",
+        "holdspeak/db/core.py::backup_database"
+      ],
+      "platforms": {
+        "macos": "unknown",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "not_applicable",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "database path",
+        "backup path",
+        "confirmation flag"
+      ],
+      "outputs": [
+        "timestamped sibling backup",
+        "safety backup",
+        "restored database"
+      ],
+      "persistence": [
+        "SQLite database and .bak siblings"
+      ],
+      "apis": [
+        "holdspeak backup",
+        "holdspeak restore <file> [--yes]"
+      ],
+      "configuration": [
+        "default database path"
+      ],
+      "dependencies": [
+        "SQLite backup API",
+        "filesystem permissions",
+        "no live owner connection"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Restore replaces one local SQLite file only after validation and safety backup; other application stores are outside the snapshot.",
+      "egress_possible": false,
+      "egress": "Backup and restore are local filesystem operations.",
+      "side_effect": "local_irreversible",
+      "authority": "Explicit operator command and restore confirmation; active owner database is refused.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/commands/backup.py",
+          "symbol": "run_restore_command",
+          "line": 15,
+          "claim": "Implements backup listing, confirmation and restore reporting."
+        },
+        {
+          "path": "holdspeak/db/core.py",
+          "symbol": "restore_database",
+          "line": 72,
+          "claim": "Uses SQLite backup API, validates restore, makes safety backup and cleans sidecars."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/critical/test_journey_backup_restore.py",
+          "node": "test_backup_then_restore_reopens_the_same_kept_work",
+          "assertion": "Kept data survives backup and restore and the database reopens.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/critical/test_journey_backup_restore.py",
+          "node": "test_an_interrupted_restore_leaves_the_installation_openable",
+          "assertion": "An invalid/interrupted restore leaves the installation openable.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/OPERATIONS.md",
+        "docs/STORAGE_AND_MIGRATIONS.md"
+      ],
+      "limitations": [
+        "Does not snapshot config, audio, browser stores or People sidecar.",
+        "Restore is replacement and was not exercised here."
+      ],
+      "failure_states": [
+        "database_in_use",
+        "invalid_backup",
+        "unwritable_target",
+        "sqlite_error"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "operations.doctor",
+      "name": "Run operator diagnostics",
+      "purpose": "Report environment, database, connector, authority and host readiness with actionable fixes.",
+      "domain": "operations",
+      "status": "experimental",
+      "status_reason": "Pre-first-use source capability; no release classification is inferred. Doctor checks and CLI output are implemented; no local host or network was inspected by this lane.",
+      "exposure": "operator",
+      "surfaces": [
+        "holdspeak doctor",
+        "holdspeak doctor --strict",
+        "holdspeak doctor --connectors"
+      ],
+      "entry_points": [
+        "holdspeak/commands/doctor.py::collect_doctor_checks",
+        "holdspeak/commands/doctor.py::run_doctor_command"
+      ],
+      "platforms": {
+        "macos": "unknown",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "not_applicable",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "host environment",
+        "config",
+        "database",
+        "connector manifests",
+        "optional network endpoints"
+      ],
+      "outputs": [
+        "PASS/WARN/FAIL checks",
+        "suggested fixes",
+        "exit code"
+      ],
+      "persistence": [
+        "log file only where configured; check results are not a canonical DB record"
+      ],
+      "apis": [
+        "CLI doctor command",
+        "remote hub health helpers"
+      ],
+      "configuration": [
+        "config file",
+        "provider and connector settings",
+        "strict flag"
+      ],
+      "dependencies": [
+        "host tools",
+        "database readability",
+        "configured providers"
+      ],
+      "model_requirements": [],
+      "network_requirements": [
+        "Some configured endpoint and cloud preflight checks may use network."
+      ],
+      "trust_boundary": "Doctor observes configured host and service seams; it does not grant authority or repair every failure.",
+      "egress_possible": true,
+      "egress": "Selected health/preflight checks can contact configured endpoints; connector listing skips other checks.",
+      "side_effect": "none",
+      "authority": "Operator invocation; strict changes exit interpretation only.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/commands/doctor.py",
+          "symbol": "collect_doctor_checks",
+          "line": 1267,
+          "claim": "Collects runtime, config, DB, provider, host, connector, People and gate checks."
+        },
+        {
+          "path": "holdspeak/commands/doctor.py",
+          "symbol": "run_doctor_command",
+          "line": 1454,
+          "claim": "Prints checks and returns nonzero for failures or strict warnings."
+        },
+        {
+          "path": "holdspeak/doctor.py",
+          "symbol": "_get_json",
+          "line": 21,
+          "claim": "Remote health helpers use short-timeout configured HTTP calls."
+        }
+      ],
+      "tests": [],
+      "docs": [
+        "docs/OPERATIONS.md",
+        "docs/TROUBLESHOOTING.md"
+      ],
+      "limitations": [
+        "Output depends on the host, configuration and network.",
+        "Doctor is diagnostic and does not prove future provider success."
+      ],
+      "failure_states": [
+        "WARN",
+        "FAIL",
+        "network_timeout",
+        "unreadable_database",
+        "missing_dependency"
+      ],
+      "replacement": null,
+      "evidence_level": "source_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "negative.kernel_content_exclusion",
+      "name": "Reject named stream-content keys in generic kernel material",
+      "purpose": "Reject the named audio, PCM and token keys recursively; this is not semantic secret or prompt classification.",
+      "domain": "security",
+      "status": "internal",
+      "status_reason": "Pre-first-use source capability; no release classification is inferred. Forbidden content keys and runner assertions are present; no runtime probe was run.",
+      "exposure": "internal",
+      "surfaces": [
+        "kernel model",
+        "journal writer",
+        "inference runner"
+      ],
+      "entry_points": [
+        "holdspeak/kernel/model.py::FORBIDDEN_CONTENT_KEYS",
+        "holdspeak/kernel/journal.py::append",
+        "holdspeak/kernel/inference_runner.py::_finish"
+      ],
+      "platforms": {
+        "macos": "unknown",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "not_applicable",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "event refs and metadata"
+      ],
+      "outputs": [
+        "refusal for named forbidden fields",
+        "bounded journal records"
+      ],
+      "persistence": [
+        "kernel_journal metadata only"
+      ],
+      "apis": [
+        "kernel journal append"
+      ],
+      "configuration": [],
+      "dependencies": [
+        "journal codec",
+        "event validation"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Generic inference receipts and parent input snapshots have different data boundaries. Parent input_json can retain caller content.",
+      "egress_possible": false,
+      "egress": "This negative capability does not egress content.",
+      "side_effect": "none",
+      "authority": "Kernel event validation; no caller may opt out for convenience.",
+      "kernel_operations": [
+        "all generic operations"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/kernel/model.py",
+          "symbol": "FORBIDDEN_CONTENT_KEYS",
+          "line": 9,
+          "claim": "Names audio, PCM, token and token-stream keys forbidden in journal material."
+        },
+        {
+          "path": "holdspeak/kernel/journal.py",
+          "symbol": "JournalStore.append",
+          "line": 60,
+          "claim": "Appends hash-chained event records."
+        },
+        {
+          "path": "holdspeak/kernel/journal.py",
+          "symbol": "JournalStore.verify",
+          "line": 71,
+          "claim": "Verifies hash-chained event records."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_kernel_broker.py",
+          "node": "test_refused_submission_has_terminal_receipt_and_stream_content_is_forbidden",
+          "assertion": "Forbidden stream content causes refusal and terminal evidence.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_inference_runner.py",
+          "node": "test_journal_has_no_prompt_output_or_audio_bodies",
+          "assertion": "The inference-runner fixture journal omits its prompt, output and audio bodies; this does not cover parent snapshot storage.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_phase200_doc_claims.py",
+          "node": "test_registered_claim_matches_its_state",
+          "assertion": "The registered parent snapshot claim admits a real Sequence parent with a synthetic prompt and reads the same prompt back from input_json.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 19
+          }
+        }
+      ],
+      "docs": [
+        "docs/KERNEL.md",
+        "docs/SECURITY_MODEL.md"
+      ],
+      "limitations": [
+        "This is a cooperating-code control and not a same-user OS sandbox.",
+        "Native domain and provider stores have separate retention rules.",
+        "Prompt/transcript/completion strings are not all forbidden by the key filter; parent snapshots can contain request bodies."
+      ],
+      "failure_states": [
+        "forbidden_journal_content",
+        "journal_tamper"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "negative.authority.agent_no_decide",
+      "name": "Deny agent decision and posture authority",
+      "purpose": "Keep agent credentials limited to their submit/read/usage/self-revoke scope.",
+      "domain": "authority",
+      "status": "internal",
+      "status_reason": "Pre-first-use source capability; no release classification is inferred. Principal rights and HTTP decision guards are implemented and assertions were inspected.",
+      "exposure": "internal",
+      "surfaces": [
+        "kernel decision route",
+        "authority control mode",
+        "agent API"
+      ],
+      "entry_points": [
+        "holdspeak/principals.py::required_right",
+        "holdspeak/kernel/broker.py::decide"
+      ],
+      "platforms": {
+        "macos": "unknown",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "not_applicable",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "agent credential",
+        "decision or posture request"
+      ],
+      "outputs": [
+        "principal_right_required refusal"
+      ],
+      "persistence": [],
+      "apis": [
+        "POST /api/kernel/operations/{id}/decide",
+        "PUT /api/authority/control-mode"
+      ],
+      "configuration": [],
+      "dependencies": [
+        "principal derivation",
+        "route authorization"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Agent callers may propose bounded work, but owner-only decision and posture routes terminate before mutation.",
+      "egress_possible": false,
+      "egress": "The refusal path does not dispatch an effect.",
+      "side_effect": "none",
+      "authority": "Principal rights map explicitly excludes decide, posture and delegate for agents.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/principals.py",
+          "symbol": "_RIGHTS",
+          "line": 20,
+          "claim": "Agent rights omit decide, posture, delegate and node link."
+        },
+        {
+          "path": "holdspeak/kernel/broker.py",
+          "symbol": "decide",
+          "line": 183,
+          "claim": "Decision path checks owner decision authority and issues or rejects the warrant."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_kernel_broker.py",
+          "node": "test_agent_cannot_decide_and_http_decision_cannot_mutate_envelope",
+          "assertion": "Agent decision and caller envelope mutation are refused.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_principal_separation.py",
+          "node": "test_agent_identity_is_derived_and_owner_only_rights_refuse_by_name",
+          "assertion": "Agent calls cannot use owner-only rights.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/AUTHORITY_MODEL.md",
+        "docs/SECURITY_MODEL.md"
+      ],
+      "limitations": [
+        "Application route protection does not protect a compromised owner process.",
+        "No live HTTP authorization run was performed."
+      ],
+      "failure_states": [
+        "principal_right_required",
+        "expired_credential",
+        "revoked_credential"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "negative.storage_preserve_unknown_tables",
+      "name": "Preserve unknown tables during general reconciliation",
+      "purpose": "Retain unrecognized tables and their rows during the general shape repair.",
+      "domain": "storage",
+      "status": "internal",
+      "status_reason": "Internal preservation rule asserted for orphan tables; not a universal ban on DROP SQL.",
+      "exposure": "internal",
+      "surfaces": [
+        "database open",
+        "schema reconciliation"
+      ],
+      "entry_points": [
+        "holdspeak/db/reconcile.py::reconcile_schema"
+      ],
+      "platforms": {
+        "macos": "unknown",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "not_applicable",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "existing SQLite schema and rows",
+        "declared schema"
+      ],
+      "outputs": [
+        "added shape",
+        "preserved unknown objects"
+      ],
+      "persistence": [
+        "SQLite database"
+      ],
+      "apis": [
+        "Database open"
+      ],
+      "configuration": [
+        "SCHEMA_SQL"
+      ],
+      "dependencies": [
+        "sqlite3"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Reconciliation may add local shape and registered backfills; it does not treat an unknown row as disposable.",
+      "egress_possible": false,
+      "egress": "No egress.",
+      "side_effect": "local_reversible",
+      "authority": "General reconciliation does not sweep unknown tables; explicit legacy rebuilds are separate.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/db/reconcile.py",
+          "symbol": "reconcile_schema",
+          "line": 608,
+          "claim": "General shape reconciliation preserves unknown tables but invokes explicit known legacy rebuilds before normal schema repair."
+        },
+        {
+          "path": "holdspeak/db/reconcile.py",
+          "symbol": "reconcile_schema",
+          "line": 608,
+          "claim": "Applies shape and idempotent repairs."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_db_schema_policy.py",
+          "node": "test_orphan_table_and_rows_survive",
+          "assertion": "An orphan table and its rows survive reconciliation.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_db_schema_policy.py",
+          "node": "test_newer_stamped_db_opens_without_error",
+          "assertion": "An informational newer stamp does not block opening or discard data.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/STORAGE_AND_MIGRATIONS.md",
+        "docs/TROUBLESHOOTING.md"
+      ],
+      "limitations": [
+        "Additive policy does not make every historical table rebuild lossless without inspecting the concrete path.",
+        "Schema version is informational only.",
+        "Explicit known legacy tables and revised triggers are rebuilt. No universal no-DROP invariant is claimed."
+      ],
+      "failure_states": [
+        "sqlite_error",
+        "shape_reconcile_error",
+        "locked_database"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    }
+  ],
+  "components": [
+    {
+      "id": "runtime.kernel",
+      "name": "Kernel runtime and broker",
+      "purpose": "Own operation admission, journal, state transitions, claims, receipts and restart recovery.",
+      "sources": [
+        {
+          "path": "holdspeak/kernel/runtime.py",
+          "symbol": "_build",
+          "line": 53,
+          "claim": "Builds the trusted journal/codec/spec registry."
+        },
+        {
+          "path": "holdspeak/kernel/runtime.py",
+          "symbol": "_service",
+          "line": 198,
+          "claim": "Owns the startup broker service and recovery setup."
+        }
+      ],
+      "docs": [
+        "docs/KERNEL.md"
+      ],
+      "kind": "runtime",
+      "owns": [
+        "kernel_operations",
+        "kernel_journal",
+        "kernel_receipts",
+        "parent liveness",
+        "publication fences"
+      ],
+      "depends_on": [
+        "SQLite",
+        "principal derivation",
+        "operation policy",
+        "executor adapters"
+      ],
+      "interfaces": [
+        "kernel Python API",
+        "kernel HTTP routes",
+        "executor claim/receipt routes"
+      ]
+    },
+    {
+      "id": "runtime.inference",
+      "name": "Inference route and runner layer",
+      "purpose": "Bind physical model attempts to deployment revisions and receipt-gated results.",
+      "sources": [
+        {
+          "path": "holdspeak/kernel/inference_invoke.py",
+          "symbol": "InferenceInvokeCodec.authorize",
+          "line": 88,
+          "claim": "Resolves route target, placement, revision and egress reference."
+        }
+      ],
+      "docs": [
+        "docs/KERNEL.md",
+        "docs/SECURITY_MODEL.md"
+      ],
+      "kind": "runtime_adapter",
+      "owns": [
+        "inference_route_plans",
+        "inference_route_executions",
+        "inference_route_attempts",
+        "result staging"
+      ],
+      "depends_on": [
+        "kernel runtime",
+        "model deployment registry",
+        "provider adapter"
+      ],
+      "interfaces": [
+        "inference.invoke@1",
+        "mesh relay",
+        "native result materializers"
+      ]
+    },
+    {
+      "id": "authority.edge",
+      "name": "Principal and authority services",
+      "purpose": "Derive authenticated principals and resolve bounded operation policy and grants.",
+      "sources": [
+        {
+          "path": "holdspeak/principals.py",
+          "symbol": "required_right",
+          "line": 275,
+          "claim": "Maps HTTP route to centralized principal right."
+        }
+      ],
+      "docs": [
+        "docs/AUTHORITY_MODEL.md",
+        "docs/SECURITY_MODEL.md"
+      ],
+      "kind": "authority",
+      "owns": [
+        "principal derivation",
+        "agent credential lifecycle",
+        "control mode policy",
+        "authority grants"
+      ],
+      "depends_on": [
+        "config",
+        "web edge",
+        "proposal store"
+      ],
+      "interfaces": [
+        "HTTP authorization",
+        "authority service",
+        "control-mode CLI"
+      ]
+    },
+    {
+      "id": "storage.sqlite",
+      "name": "SQLite persistence and reconciliation",
+      "purpose": "Provide WAL database connections, declared schema repair, backup and restore.",
+      "sources": [
+        {
+          "path": "holdspeak/db/core.py",
+          "symbol": "Database",
+          "line": 205,
+          "claim": "Owns connection cache, schema ensure/reconcile and database lifecycle."
+        }
+      ],
+      "docs": [
+        "docs/DATA_MODEL.md",
+        "docs/STORAGE_AND_MIGRATIONS.md"
+      ],
+      "kind": "storage",
+      "owns": [
+        "SQLite file",
+        "SCHEMA_SQL",
+        "shape reconciliation",
+        "backup/restore"
+      ],
+      "depends_on": [
+        "sqlite3",
+        "filesystem permissions"
+      ],
+      "interfaces": [
+        "Database(path)",
+        "backup/restore CLI"
+      ]
+    },
+    {
+      "id": "operations.doctor",
+      "name": "Doctor and operator commands",
+      "purpose": "Observe configured runtime, database, host, connector, provider and custody seams.",
+      "sources": [
+        {
+          "path": "holdspeak/commands/doctor.py",
+          "symbol": "collect_doctor_checks",
+          "line": 1267,
+          "claim": "Collects the bounded local check set and summarizes status."
+        }
+      ],
+      "docs": [
+        "docs/OPERATIONS.md",
+        "docs/TROUBLESHOOTING.md"
+      ],
+      "kind": "operator",
+      "owns": [
+        "diagnostic output",
+        "doctor exit interpretation"
+      ],
+      "depends_on": [
+        "host tools",
+        "config",
+        "database",
+        "optional endpoints"
+      ],
+      "interfaces": [
+        "holdspeak doctor",
+        "remote health helper"
+      ]
+    }
+  ],
+  "integrations": [
+    {
+      "id": "runtime.sqlite",
+      "name": "SQLite runtime store",
+      "purpose": "Persist domain, authority, journal, receipt and projection state.",
+      "sources": [
+        {
+          "path": "holdspeak/db/connection.py",
+          "symbol": "ConnectionCache",
+          "line": 7,
+          "claim": "Configures WAL, foreign keys and busy timeout for SQLite connections."
+        }
+      ],
+      "docs": [
+        "docs/STORAGE_AND_MIGRATIONS.md"
+      ],
+      "direction": "local_read_write",
+      "auth": "Filesystem access and SQLite connection ownership",
+      "secrets": [
+        "Normal DB may contain sensitive local data; it is not generally encrypted by HoldSpeak."
+      ],
+      "data": [
+        "domain rows",
+        "operation metadata",
+        "receipts",
+        "schema shape"
+      ],
+      "authority": "Database-open and operator backup/restore paths",
+      "failure": [
+        "locked",
+        "unreadable",
+        "shape reconciliation error"
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_db_schema_policy.py",
+          "node": "test_newer_stamped_db_opens_without_error",
+          "assertion": "An informational newer stamp does not block opening or discard data.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/critical/test_journey_backup_restore.py",
+          "node": "test_an_interrupted_restore_leaves_the_installation_openable",
+          "assertion": "An invalid/interrupted restore leaves the installation openable.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "runtime.provider_routes",
+      "name": "Model and external destination adapters",
+      "purpose": "Carry an admitted operation to a selected deployment or configured effect destination.",
+      "sources": [
+        {
+          "path": "holdspeak/kernel/inference_invoke.py",
+          "symbol": "InferenceInvokeCodec.authorize",
+          "line": 88,
+          "claim": "Binds destination, placement, deployment revision and egress reference before dispatch."
+        }
+      ],
+      "docs": [
+        "docs/SECURITY_MODEL.md",
+        "docs/AUTHORITY_MODEL.md"
+      ],
+      "direction": "outbound_and_receipt_return",
+      "auth": "Kernel warrant plus adapter/provider credentials",
+      "secrets": [
+        "Provider credentials remain outside generic journal material; exact custody varies by adapter."
+      ],
+      "data": [
+        "operation-specific payload or model context",
+        "result reference",
+        "egress metadata"
+      ],
+      "authority": "Policy permit, exact destination binding, valid claim and live deadline",
+      "failure": [
+        "provider failure",
+        "timeout",
+        "cancellation",
+        "lost response",
+        "destination drift"
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_inference_runner.py",
+          "node": "test_journal_has_no_prompt_output_or_audio_bodies",
+          "assertion": "Runner tests assert generic journal material omits sensitive content.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_kernel_real_hub.py",
+          "node": "test_synthetic_admitted_reference_invocation_and_cancelled_stream",
+          "assertion": "A cancelled reference invocation cannot publish late stream output.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "operations.remote_health",
+      "name": "Configured hub health endpoints",
+      "purpose": "Allow doctor helpers to inspect a configured remote hub without starting the local application UI.",
+      "sources": [
+        {
+          "path": "holdspeak/doctor.py",
+          "symbol": "_get_json",
+          "line": 21,
+          "claim": "Uses short-timeout HTTP JSON health requests with optional token headers."
+        }
+      ],
+      "docs": [
+        "docs/OPERATIONS.md"
+      ],
+      "direction": "outbound_read",
+      "auth": "Optional configured token headers",
+      "secrets": [
+        "Configured hub token may be supplied to the helper."
+      ],
+      "data": [
+        "health and diagnostic responses"
+      ],
+      "authority": "Explicit operator doctor invocation",
+      "failure": [
+        "HTTP error",
+        "URL error",
+        "timeout",
+        "invalid JSON"
+      ],
+      "tests": []
+    }
+  ],
+  "domain_model": [
+    {
+      "id": "domain.meeting",
+      "name": "Meeting aggregate",
+      "purpose": "Own a captured or imported session and its transcript-linked records.",
+      "sources": [
+        {
+          "path": "holdspeak/db/schema.py",
+          "symbol": "SCHEMA_SQL",
+          "line": 24,
+          "claim": "Defines meeting capture fields and timed transcript segment relationships."
+        }
+      ],
+      "docs": [
+        "docs/DOMAIN_MODEL.md",
+        "docs/DATA_MODEL.md"
+      ],
+      "category": "database_entity",
+      "owner": "meeting capture and intelligence domain",
+      "storage": [
+        "meetings",
+        "segments",
+        "meeting_tags",
+        "bookmarks",
+        "topics",
+        "intel_snapshots"
+      ],
+      "lifecycle": [
+        "capture/import",
+        "transcribe",
+        "intelligence",
+        "retain or delete according to domain rules"
+      ],
+      "relationships": [
+        "meeting has segments",
+        "meeting queues intel jobs",
+        "meeting yields artifacts and action items"
+      ]
+    },
+    {
+      "id": "domain.actuator_proposal",
+      "name": "Actuator proposal",
+      "purpose": "Hold a candidate external effect across review, authorization and execution.",
+      "sources": [
+        {
+          "path": "holdspeak/db/schema.py",
+          "symbol": "SCHEMA_SQL",
+          "line": 424,
+          "claim": "Stores proposal content/destination hashes and separate lifecycle axes."
+        }
+      ],
+      "docs": [
+        "docs/DOMAIN_MODEL.md",
+        "docs/AUTHORITY_MODEL.md"
+      ],
+      "category": "database_entity",
+      "owner": "authority and actuator domain",
+      "storage": [
+        "actuator_proposals",
+        "proposal_audit",
+        "native actuator receipts"
+      ],
+      "lifecycle": [
+        "proposed",
+        "approved",
+        "executed",
+        "rejected",
+        "failed"
+      ],
+      "relationships": [
+        "proposal may consume authority grant",
+        "proposal execution is evidenced by receipt"
+      ]
+    },
+    {
+      "id": "domain.kernel_operation",
+      "name": "Kernel operation graph",
+      "purpose": "Represent one bounded operation, its parent/child relationship, journal evidence and terminal receipt.",
+      "sources": [
+        {
+          "path": "holdspeak/db/schema.py",
+          "symbol": "SCHEMA_SQL",
+          "line": 2118,
+          "claim": "Defines operation identity, envelope, principal, state, warrant and claim fields."
+        }
+      ],
+      "docs": [
+        "docs/KERNEL.md",
+        "docs/DATA_MODEL.md"
+      ],
+      "category": "database_entity",
+      "owner": "kernel runtime",
+      "storage": [
+        "kernel_operations",
+        "kernel_parent_runs",
+        "kernel_journal",
+        "kernel_receipts",
+        "kernel_parent_checkpoints"
+      ],
+      "lifecycle": [
+        "admitting",
+        "awaiting_decision",
+        "awaiting_execution",
+        "claimed",
+        "terminal state"
+      ],
+      "relationships": [
+        "parent wraps child operations",
+        "operation emits journal events",
+        "operation closes with one receipt"
+      ]
+    },
+    {
+      "id": "domain.process_view",
+      "name": "Process read view",
+      "purpose": "Expose current operation state and evidence to a caller or UI without becoming authority.",
+      "sources": [
+        {
+          "path": "holdspeak/kernel/broker.py",
+          "symbol": "read",
+          "line": 37,
+          "claim": "Provides scoped state, canonical, process, receipt and full read views."
+        }
+      ],
+      "docs": [
+        "docs/KERNEL.md",
+        "docs/DATA_MODEL.md"
+      ],
+      "category": "api_representation",
+      "owner": "kernel read API",
+      "storage": [
+        "derived from kernel_operations, journal and receipts"
+      ],
+      "lifecycle": [
+        "read current",
+        "stale after restart until recovery/projection repair"
+      ],
+      "relationships": [
+        "references operation and receipt",
+        "does not authorize or replace canonical rows"
+      ]
+    },
+    {
+      "id": "domain.inference_attempt",
+      "name": "Inference route attempt",
+      "purpose": "Record one physical model attempt, including deployment binding, disposition and result evidence.",
+      "sources": [
+        {
+          "path": "holdspeak/db/schema.py",
+          "symbol": "SCHEMA_SQL",
+          "line": 3060,
+          "claim": "Defines attempt state, outcome, disposition and result/receipt references."
+        }
+      ],
+      "docs": [
+        "docs/DOMAIN_MODEL.md",
+        "docs/KERNEL.md"
+      ],
+      "category": "database_entity",
+      "owner": "inference runtime",
+      "storage": [
+        "inference_route_plans",
+        "inference_route_executions",
+        "inference_route_attempts"
+      ],
+      "lifecycle": [
+        "planned",
+        "dispatched/claimed",
+        "succeeded",
+        "failed",
+        "cancelled",
+        "indeterminate"
+      ],
+      "relationships": [
+        "belongs to route execution",
+        "maps to child kernel operation",
+        "has receipt/result hashes"
+      ]
+    }
+  ],
+  "trust_boundaries": [
+    {
+      "id": "boundary.edge_to_kernel",
+      "name": "Authenticated edge to kernel",
+      "purpose": "Keep caller identity and authority separate from operation payloads.",
+      "sources": [
+        {
+          "path": "holdspeak/principals.py",
+          "symbol": "required_right",
+          "line": 275,
+          "claim": "Maps routes to principal rights with deny-by-default protected fallback."
+        }
+      ],
+      "docs": [
+        "docs/SECURITY_MODEL.md",
+        "docs/AUTHORITY_MODEL.md"
+      ],
+      "from": "owner, agent or node caller",
+      "to": "HTTP edge and kernel broker",
+      "data": [
+        "credential",
+        "declared request envelope"
+      ],
+      "compute": [
+        "principal derivation",
+        "route authorization",
+        "admission validation"
+      ],
+      "authority": "route right; operation capability; hard invariants",
+      "secrets": [
+        "owner token",
+        "credential hash",
+        "provider secrets excluded from generic envelope"
+      ],
+      "audit": [
+        "kernel journal",
+        "refusal/receipt",
+        "principal identity"
+      ]
+    },
+    {
+      "id": "boundary.kernel_to_executor",
+      "name": "Warranted kernel to executor",
+      "purpose": "Allow exactly the approved operation to be claimed and receipted.",
+      "sources": [
+        {
+          "path": "holdspeak/kernel/executor.py",
+          "symbol": "ExecutorPlane",
+          "line": 26,
+          "claim": "Validates warrant, envelope, revocation, expiry and live ancestor before claim and receipt."
+        }
+      ],
+      "docs": [
+        "docs/KERNEL.md",
+        "docs/SECURITY_MODEL.md"
+      ],
+      "from": "kernel broker",
+      "to": "local or node executor",
+      "data": [
+        "signed warrant",
+        "operation envelope",
+        "result reference"
+      ],
+      "compute": [
+        "claim CAS",
+        "deadline/liveness check",
+        "receipt validation"
+      ],
+      "authority": "owner-approved or policy-permitted warrant; node claim right",
+      "secrets": [
+        "warrant signing key remains kernel custody"
+      ],
+      "audit": [
+        "claim witness",
+        "kernel receipt",
+        "inference attestation"
+      ]
+    },
+    {
+      "id": "boundary.executor_to_provider",
+      "name": "Executor to provider or destination",
+      "purpose": "Constrain possible egress to the frozen route and preserve uncertainty when completion is lost.",
+      "sources": [
+        {
+          "path": "holdspeak/kernel/inference_invoke.py",
+          "symbol": "InferenceInvokeCodec.authorize",
+          "line": 88,
+          "claim": "Freezes deployment revision, target, placement and egress reference before dispatch."
+        }
+      ],
+      "docs": [
+        "docs/SECURITY_MODEL.md",
+        "docs/OPERATIONS.md"
+      ],
+      "from": "claimed executor",
+      "to": "model provider or external destination",
+      "data": [
+        "operation-specific payload",
+        "model context",
+        "result/error"
+      ],
+      "compute": [
+        "registered adapter",
+        "provider invocation",
+        "cancellation"
+      ],
+      "authority": "policy permit; exact destination; deadline; claim identity",
+      "secrets": [
+        "adapter/provider credentials are outside generic journal material"
+      ],
+      "audit": [
+        "egress reference",
+        "native receipt",
+        "kernel terminal receipt"
+      ]
+    }
+  ]
+}

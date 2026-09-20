@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.local/philo/platform.schema.json",
+  "title": "Philo capability platform row",
+  "type": "object", "additionalProperties": false,
+  "required": ["id", "capability_id", "platform", "availability", "status", "source_ids"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"},
+    "capability_id": {"type": "string", "minLength": 1},
+    "platform": {"type": "string", "enum": ["macos", "linux_x11", "linux_wayland", "ipad", "aipi"]},
+    "availability": {"type": "string", "enum": ["supported", "supported_with_setup", "degraded", "best_effort", "unsupported", "not_applicable", "unknown"]},
+    "status": {"type": "string", "minLength": 1},
+    "source_ids": {"type": "array", "items": {"type": "string"}}
+  }
+}

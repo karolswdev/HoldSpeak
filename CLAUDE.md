@@ -113,6 +113,10 @@ The `Tests ran` rule (PMO contract §3) requires you to actually run
 the relevant tests via these commands and read the output before
 flipping a story to `done`. Type-check is not validation.
 
+The repository `.mcp.json` declares only the `holdspeak` server; Delivery
+Workbench MCP is not enabled in that file. The managed instructions below
+describe how a client can configure it when needed.
+
 <!-- BEGIN DELIVERY WORKBENCH (managed by pmo-roadmap install.sh/update.sh — edits inside are overwritten) -->
 
 ## Delivery Workbench (PMO rails)
@@ -171,9 +175,8 @@ structural rules from pushed history alone — audit any range,
 no local contract needed.
 
 MCP-capable agents: prefer the MCP tools over shelling out —
-`.githooks/dw-mcp` (NOT wired in `.mcp.json`, which declares only the
-`holdspeak` server by intent; add it to your own client config) serves
-the same core as structured tools with identical refusals: orientation (`dw_context`,
+`.githooks/dw-mcp` (configure in `.mcp.json` when needed) serves the same core as
+structured tools with identical refusals: orientation (`dw_context`,
 `dw_next`, `dw_check`, `dw_doctor`), verification (`dw_verify`,
 `dw_gate`), guarded mutations (`dw_story_status`,
 `dw_evidence_capture`, `dw_contract_new`). Certification is never a

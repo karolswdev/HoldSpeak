@@ -1,0 +1,596 @@
+{
+  "generated": true,
+  "generator": "scripts/generate_capability_docs.py",
+  "missing_shards": [],
+  "records": [
+    {
+      "depends_on": [
+        "SQLite",
+        "principal derivation",
+        "operation policy",
+        "executor adapters"
+      ],
+      "docs": [
+        "docs/KERNEL.md"
+      ],
+      "id": "runtime.kernel",
+      "interfaces": [
+        "kernel Python API",
+        "kernel HTTP routes",
+        "executor claim/receipt routes"
+      ],
+      "kind": "runtime",
+      "name": "Kernel runtime and broker",
+      "owns": [
+        "kernel_operations",
+        "kernel_journal",
+        "kernel_receipts",
+        "parent liveness",
+        "publication fences"
+      ],
+      "purpose": "Own operation admission, journal, state transitions, claims, receipts and restart recovery.",
+      "sources": [
+        {
+          "claim": "Builds the trusted journal/codec/spec registry.",
+          "line": 53,
+          "path": "holdspeak/kernel/runtime.py",
+          "symbol": "_build"
+        },
+        {
+          "claim": "Owns the startup broker service and recovery setup.",
+          "line": 198,
+          "path": "holdspeak/kernel/runtime.py",
+          "symbol": "_service"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "kernel runtime",
+        "model deployment registry",
+        "provider adapter"
+      ],
+      "docs": [
+        "docs/KERNEL.md",
+        "docs/SECURITY_MODEL.md"
+      ],
+      "id": "runtime.inference",
+      "interfaces": [
+        "inference.invoke@1",
+        "mesh relay",
+        "native result materializers"
+      ],
+      "kind": "runtime_adapter",
+      "name": "Inference route and runner layer",
+      "owns": [
+        "inference_route_plans",
+        "inference_route_executions",
+        "inference_route_attempts",
+        "result staging"
+      ],
+      "purpose": "Bind physical model attempts to deployment revisions and receipt-gated results.",
+      "sources": [
+        {
+          "claim": "Resolves route target, placement, revision and egress reference.",
+          "line": 88,
+          "path": "holdspeak/kernel/inference_invoke.py",
+          "symbol": "InferenceInvokeCodec.authorize"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "config",
+        "web edge",
+        "proposal store"
+      ],
+      "docs": [
+        "docs/AUTHORITY_MODEL.md",
+        "docs/SECURITY_MODEL.md"
+      ],
+      "id": "authority.edge",
+      "interfaces": [
+        "HTTP authorization",
+        "authority service",
+        "control-mode CLI"
+      ],
+      "kind": "authority",
+      "name": "Principal and authority services",
+      "owns": [
+        "principal derivation",
+        "agent credential lifecycle",
+        "control mode policy",
+        "authority grants"
+      ],
+      "purpose": "Derive authenticated principals and resolve bounded operation policy and grants.",
+      "sources": [
+        {
+          "claim": "Maps HTTP route to centralized principal right.",
+          "line": 275,
+          "path": "holdspeak/principals.py",
+          "symbol": "required_right"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "sqlite3",
+        "filesystem permissions"
+      ],
+      "docs": [
+        "docs/DATA_MODEL.md",
+        "docs/STORAGE_AND_MIGRATIONS.md"
+      ],
+      "id": "storage.sqlite",
+      "interfaces": [
+        "Database(path)",
+        "backup/restore CLI"
+      ],
+      "kind": "storage",
+      "name": "SQLite persistence and reconciliation",
+      "owns": [
+        "SQLite file",
+        "SCHEMA_SQL",
+        "shape reconciliation",
+        "backup/restore"
+      ],
+      "purpose": "Provide WAL database connections, declared schema repair, backup and restore.",
+      "sources": [
+        {
+          "claim": "Owns connection cache, schema ensure/reconcile and database lifecycle.",
+          "line": 205,
+          "path": "holdspeak/db/core.py",
+          "symbol": "Database"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "host tools",
+        "config",
+        "database",
+        "optional endpoints"
+      ],
+      "docs": [
+        "docs/OPERATIONS.md",
+        "docs/TROUBLESHOOTING.md"
+      ],
+      "id": "operations.doctor",
+      "interfaces": [
+        "holdspeak doctor",
+        "remote health helper"
+      ],
+      "kind": "operator",
+      "name": "Doctor and operator commands",
+      "owns": [
+        "diagnostic output",
+        "doctor exit interpretation"
+      ],
+      "purpose": "Observe configured runtime, database, host, connector, provider and custody seams.",
+      "sources": [
+        {
+          "claim": "Collects the bounded local check set and summarizes status.",
+          "line": 1267,
+          "path": "holdspeak/commands/doctor.py",
+          "symbol": "collect_doctor_checks"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "holdspeak.speech_session.plan",
+        "holdspeak.kernel"
+      ],
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md"
+      ],
+      "id": "voice.speech_session",
+      "interfaces": [
+        "speech session plan",
+        "named refusal"
+      ],
+      "kind": "service",
+      "name": "Speech session",
+      "owns": [
+        "speech session admission",
+        "content-free speech plans"
+      ],
+      "purpose": "Admit and freeze voice capability children.",
+      "sources": [
+        {
+          "claim": "Speech plans freeze ordered capabilities and deployments.",
+          "line": 1,
+          "path": "holdspeak/speech_session/plan.py",
+          "symbol": "SpeechSessionPlan"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "holdspeak.plugins.dictation",
+        "holdspeak.operation_policy"
+      ],
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md"
+      ],
+      "id": "voice.dictation_runner",
+      "interfaces": [
+        "process_transcript",
+        "dispatch_voice_command"
+      ],
+      "kind": "service",
+      "name": "Dictation runner",
+      "owns": [
+        "dictation pipeline seam",
+        "command dispatch",
+        "delivery selection"
+      ],
+      "purpose": "Process a transcript and bind the final delivery policy.",
+      "sources": [
+        {
+          "claim": "The runner applies optional processing and preserves text on ordinary failure.",
+          "line": 253,
+          "path": "holdspeak/dictation_runner.py",
+          "symbol": "process_transcript"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "holdspeak.meeting_session.persistence",
+        "holdspeak.meeting_capture_journal"
+      ],
+      "docs": [
+        "docs/MEETING_ARCHITECTURE.md"
+      ],
+      "id": "meeting.session",
+      "interfaces": [
+        "MeetingSession.start",
+        "MeetingSession.stop"
+      ],
+      "kind": "service",
+      "name": "Meeting session",
+      "owns": [
+        "provisional state",
+        "recorder",
+        "transcription loop",
+        "stop handoff"
+      ],
+      "purpose": "Own live meeting capture lifecycle and deferred intelligence handoff.",
+      "sources": [
+        {
+          "claim": "The session persists before recording and admits intelligence before model construction.",
+          "line": 422,
+          "path": "holdspeak/meeting_session/session.py",
+          "symbol": "MeetingSession.start"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "holdspeak.plugins.contracts",
+        "holdspeak.inference_capabilities"
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ],
+      "id": "meeting.plugin_host",
+      "interfaces": [
+        "PluginHost",
+        "ArtifactLineage"
+      ],
+      "kind": "service",
+      "name": "Meeting plugin host",
+      "owns": [
+        "built-in registry",
+        "host-issued dispatch",
+        "plugin run status"
+      ],
+      "purpose": "Register, gate, dispatch, and persist meeting analysis plugins.",
+      "sources": [
+        {
+          "claim": "The host gates model plugins on issued dispatch and capability.",
+          "line": 252,
+          "path": "holdspeak/plugins/host.py",
+          "symbol": "PluginHost.execute"
+        }
+      ]
+    },
+    {
+      "depends_on": [],
+      "docs": [
+        "docs/MODEL_RUNTIME.md"
+      ],
+      "id": "model.capability_registry",
+      "interfaces": [
+        "InferenceCapabilityRegistry"
+      ],
+      "kind": "service",
+      "name": "Inference capability registry",
+      "owns": [
+        "capability definitions",
+        "retry policies",
+        "closed schemas"
+      ],
+      "purpose": "Supply canonical operation and result schema metadata.",
+      "sources": [
+        {
+          "claim": "The registry builds canonical capability metadata.",
+          "line": 1031,
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "process_inference_capability_registry"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "model.capability_registry",
+        "model profiles"
+      ],
+      "docs": [
+        "docs/MODEL_RUNTIME.md"
+      ],
+      "id": "model.assignment_service",
+      "interfaces": [
+        "InferenceAssignmentService"
+      ],
+      "kind": "service",
+      "name": "Inference assignment service",
+      "owns": [
+        "assignment rows",
+        "assignment heads",
+        "readiness projection"
+      ],
+      "purpose": "Store owner assignment configuration and projections.",
+      "sources": [
+        {
+          "claim": "Assignment service is owner-only and does not execute providers.",
+          "line": 90,
+          "path": "holdspeak/services/inference_assignment_service.py",
+          "symbol": "InferenceAssignmentService"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "model route plan",
+        "InferenceRunner",
+        "destination resolver"
+      ],
+      "docs": [
+        "docs/MODEL_RUNTIME.md",
+        "docs/EXECUTION_DESTINATIONS.md"
+      ],
+      "id": "model.route_execution",
+      "interfaces": [
+        "InferenceFallbackController",
+        "InferenceRunner"
+      ],
+      "kind": "service",
+      "name": "Inference route execution",
+      "owns": [
+        "route execution state",
+        "fallback authority",
+        "receipt reconstruction"
+      ],
+      "purpose": "Bind frozen route evidence to physical attempts and receipts.",
+      "sources": [
+        {
+          "claim": "The controller is the server-owned state machine above the kernel runner.",
+          "line": 41,
+          "path": "holdspeak/services/inference_fallback_controller.py",
+          "symbol": "InferenceFallbackController"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "RuntimeProfile",
+        "profile key store",
+        "mesh liveness"
+      ],
+      "docs": [
+        "docs/EXECUTION_DESTINATIONS.md"
+      ],
+      "id": "model.destination_resolver",
+      "interfaces": [
+        "InferenceTarget",
+        "PlacementResolution"
+      ],
+      "kind": "service",
+      "name": "Inference destination resolver",
+      "owns": [
+        "target identity",
+        "deployment identity",
+        "placement precedence"
+      ],
+      "purpose": "Resolve named targets and derive readiness without contacting them.",
+      "sources": [
+        {
+          "claim": "Placement resolves a target and winning source through one authority.",
+          "line": 562,
+          "path": "holdspeak/inference_targets.py",
+          "symbol": "resolve_placement"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "desk.world",
+        "desk.window",
+        "surface.library"
+      ],
+      "docs": [
+        "docs/DESK_ARCHITECTURE.md"
+      ],
+      "id": "desk.shell",
+      "interfaces": [
+        "DeskApp props",
+        "surface registry"
+      ],
+      "kind": "frontend",
+      "name": "Desk shell",
+      "owns": [
+        "shell composition",
+        "current Desk context"
+      ],
+      "purpose": "Compose route, world, list, windows and chrome.",
+      "sources": [
+        {
+          "claim": "DeskApp mounts the Desk composition.",
+          "line": 184,
+          "path": "web/src/desk/DeskApp.tsx",
+          "symbol": "DeskApp"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "web/src/lib/primitives.ts"
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "id": "desk.world",
+      "interfaces": [
+        "WorldObject",
+        "allObjects",
+        "objectByRef"
+      ],
+      "kind": "frontend_projection",
+      "name": "World projection",
+      "owns": [
+        "object census",
+        "placement projection"
+      ],
+      "purpose": "Project primitive records into Pixi world objects and list objects.",
+      "sources": [
+        {
+          "claim": "World descriptors contain stable object fields and placement.",
+          "line": 18,
+          "path": "web/src/desk/world.ts",
+          "symbol": "worldObjects"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "desk.persist",
+        "desk.window_geometry"
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "id": "desk.window",
+      "interfaces": [
+        "WindowSpec",
+        "WindowGeometry",
+        "DeskWindowFrame"
+      ],
+      "kind": "frontend",
+      "name": "Window system",
+      "owns": [
+        "window rects",
+        "focus order",
+        "park/max lifecycle"
+      ],
+      "purpose": "Manage frame chrome, focus, geometry, lifecycle and Dock/Expose views.",
+      "sources": [
+        {
+          "claim": "The shared frame owns window interactions.",
+          "line": 556,
+          "path": "web/src/desk/components/DeskWindow.tsx",
+          "symbol": "DeskWindowFrame"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "desk.shell",
+        "desk.runtime"
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "id": "desk.verb_registry",
+      "interfaces": [
+        "VerbDefinition",
+        "runVerb"
+      ],
+      "kind": "frontend",
+      "name": "Desk verb registry",
+      "owns": [
+        "verb definitions",
+        "ghost reasons"
+      ],
+      "purpose": "Define availability, labels, shortcuts and runners in one registry.",
+      "sources": [
+        {
+          "claim": "The registry enumerates Desk verbs.",
+          "line": 136,
+          "path": "web/src/desk/verbRegistry.ts",
+          "symbol": "VERBS"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "semantic tokens",
+        "Signal controls"
+      ],
+      "docs": [
+        "docs/internal/philo/DESIGN_SPECIFICATION.md"
+      ],
+      "id": "surface.library",
+      "interfaces": [
+        "surface component props"
+      ],
+      "kind": "frontend",
+      "name": "Surface library",
+      "owns": [
+        "surface component contract",
+        "semantic states"
+      ],
+      "purpose": "Render portable object surfaces, patterns and gadgets.",
+      "sources": [
+        {
+          "claim": "The barrel is the supported import path for surface components.",
+          "line": 3,
+          "path": "web/src/desk/surface/index.ts",
+          "symbol": "surface barrel"
+        }
+      ]
+    },
+    {
+      "depends_on": [
+        "WebSocket",
+        "apiFetch"
+      ],
+      "docs": [
+        "docs/DESK_ARCHITECTURE.md"
+      ],
+      "id": "desk.runtime",
+      "interfaces": [
+        "RuntimeBus state/context"
+      ],
+      "kind": "runtime",
+      "name": "Runtime bus",
+      "owns": [
+        "transport state",
+        "reconnect loop"
+      ],
+      "purpose": "Reflect WebSocket and API runtime health to consumers.",
+      "sources": [
+        {
+          "claim": "RuntimeBus owns one guarded runtime socket and connection state.",
+          "line": 13,
+          "path": "web/src/runtime/RuntimeBus.tsx",
+          "symbol": "RuntimeBusProvider"
+        }
+      ]
+    }
+  ],
+  "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+  "validation_errors_at_generation": 0,
+  "view": "components"
+}

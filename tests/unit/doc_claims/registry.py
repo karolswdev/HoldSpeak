@@ -328,7 +328,98 @@ def undelete_clears_unavailable() -> str:
 # The registry.
 # ---------------------------------------------------------------------------
 
+def reconcile_backup_follows_bookmarks_repair() -> bool:
+    """Observe the real reconcile call order on a disposable missing-table DB.
+
+    The backup spy reads the actual connection's shape at invocation. It does
+    not assume a source line order or turn a backup call into pre-change proof.
+    """
+    from unittest.mock import patch
+    from holdspeak.db.schema import SCHEMA_SQL
+    from holdspeak.db.reconcile import reconcile_schema
+
+    with tempfile.TemporaryDirectory(prefix="philo-reconcile-") as tmp:
+        path = Path(tmp) / "probe.db"
+        conn = sqlite3.connect(path)
+        try:
+            conn.executescript(SCHEMA_SQL)
+            conn.execute("DROP TABLE bookmarks")
+            conn.commit()
+            observed = []
+
+            def inspect_at_backup(_path):
+                observed.append(conn.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='bookmarks'"
+                ).fetchone() is not None)
+                return Path(tmp) / "probe.bak"
+
+            with patch("holdspeak.db.core.backup_database", inspect_at_backup):
+                reconcile_schema(conn, db_path=path)
+            return observed == [True]
+        finally:
+            conn.close()
+
+
+def gate_preview_preserves_short_secret_marker() -> bool:
+    from holdspeak.coder_gate import redact_args
+
+    payload = {"command": "TOKEN=philo-synthetic-marker echo ok"}
+    canonical = json.dumps(payload, separators=(",", ":"), sort_keys=True, ensure_ascii=False)
+    _digest, head = redact_args(payload)
+    return head == canonical and "philo-synthetic-marker" in head
+
+
+def kernel_parent_snapshot_retains_prompt() -> bool:
+    from holdspeak.db import Database
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.principals import Principal, PrincipalKind
+
+    with tempfile.TemporaryDirectory(prefix="philo-parent-") as tmp:
+        database = Database(Path(tmp) / "parent.db")
+        broker = _configure(database, clock=lambda: 1000.0)
+        try:
+            parent = broker.parent_run_controller.start(
+                Principal(PrincipalKind.OWNER, "philo-probe"), kind="sequence",
+                definition_ref="sequence:philo", definition_revision="1",
+                input_snapshot={"prompt": "philo synthetic prompt"},
+                deadline_at=2000.0, child_budget=0,
+            )
+            with database._connection() as conn:
+                row = conn.execute("SELECT input_json FROM kernel_parent_runs WHERE operation_id=?", (parent.operation_id,)).fetchone()
+            return json.loads(row["input_json"]) == {"prompt": "philo synthetic prompt"}
+        finally:
+            broker.parent_run_controller.shutdown()
+            database.close()
+
+
 CLAIMS: list[Claim] = [
+    Claim(
+        doc="docs/STORAGE_AND_MIGRATIONS.md",
+        anchor="`kernel_parent_runs.input_json` stores caller input",
+        sentence="kernel_parent_runs.input_json stores caller input snapshots.",
+        predicate=kernel_parent_snapshot_retains_prompt,
+        state="holds",
+        truth="A real admitted Sequence parent stores a synthetic prompt in input_json in a disposable database.",
+        story="PHILO-1-02",
+    ),
+    Claim(
+        doc="docs/SECURITY_MODEL.md",
+        anchor="Gate argument previews truncate canonical JSON; they do not remove secrets.",
+        sentence="Gate argument previews truncate canonical JSON; they do not remove secrets.",
+        predicate=gate_preview_preserves_short_secret_marker,
+        state="holds",
+        truth="A short synthetic tool input survives intact in the returned prefix, including its credential-like marker.",
+        story="PHILO-1-04",
+    ),
+    Claim(
+        doc="docs/STORAGE_AND_MIGRATIONS.md",
+        anchor="bookmarks table, the table is recreated before the automatic backup is called.",
+        sentence="For a missing bookmarks table, the table is recreated before the automatic backup is called.",
+        predicate=reconcile_backup_follows_bookmarks_repair,
+        state="holds",
+        truth="The actual reconciliation recreates bookmarks before invoking the backup spy; automatic backup is not an original-shape guarantee.",
+        story="PHILO-1-02",
+    ),
     # ── paid by HS-200-45 (2026-09-17) ───────────────────────────────
     Claim(
         doc="holdspeak/web/routes/mcp_http.py",
@@ -381,25 +472,12 @@ CLAIMS: list[Claim] = [
     # ── unowned: the remote bind is still decorative ───────────────────
     Claim(
         doc="docs/SECURITY.md",
-        anchor="it accepts connections on the tailnet address only",
-        sentence=(
-            "The Streamable HTTP listener (`POST /api/mcp`) is opt-in and off by "
-            "default for **remote** callers. When enabled, it accepts connections on "
-            "the tailnet address only."
-        ),
-        predicate=lambda: bool(
-            bind_host_references() - {"holdspeak/web/routes/mcp_http.py"}
-        ),
-        state="known_false",
-        truth=(
-            "bind_host is stored and echoed by the settings route in "
-            "holdspeak/web/routes/mcp_http.py and mentioned by no other module, so "
-            "nothing applies it to a bind or a peer check; the package's only "
-            "tailnet CIDR (100.64.0.0/10, concierge_service.py:297) is an "
-            "egress-advice helper, not a listener fence. HS-200-45 kept the remote "
-            "auth model out of scope; parked in BACKLOG"
-        ),
-        story="",
+        anchor="is stored without a listener or peer-address enforcement path.",
+        sentence="The configured bind_host is stored without a listener or peer-address enforcement path.",
+        predicate=lambda: bind_host_references() == {"holdspeak/web/routes/mcp_http.py"},
+        state="holds",
+        truth="Only the MCP settings route mentions bind_host; it stores and echoes the value without applying a network fence.",
+        story="PHILO-1-06",
     ),
     # ── owned by HS-200-44 ────────────────────────────────────────────
     Claim(
@@ -426,78 +504,39 @@ CLAIMS: list[Claim] = [
         ),
         story="HS-200-44",
     ),
-    # ── no story owns these ───────────────────────────────────────────
+    # Philo corrects known descriptive drift without adding missing behavior.
     Claim(
         doc="holdspeak/mcp/resources.py",
-        anchor="# Mirrors web/src/desk/verbRegistry.ts, including verbs derived from DESK_TOOLS.",
-        sentence=(
-            "Mirrors web/src/desk/verbRegistry.ts, including verbs derived from "
-            "DESK_TOOLS."
-        ),
-        predicate=lambda: mcp_verb_catalog_ids() == web_verb_registry_ids(),
-        state="known_false",
-        truth=(
-            "the face registers 67 verbs and the catalog publishes 45: 22 registry "
-            "verbs are missing from the catalog (the nine desk.* intelligence/thread/"
-            "project verbs, go.change-places, go.open-project-memory, "
-            "object.continue-in-thread and the ten thread.* verbs) and the catalog "
-            "holds no phantoms — the audit's '13 phantoms' were the DESK_TOOLS-derived "
-            "go.* verbs it did not resolve"
-        ),
-        story="",
+        anchor="# Curated subset of web/src/desk/verbRegistry.ts; it does not promise full parity.",
+        sentence="Curated subset of web/src/desk/verbRegistry.ts; it does not promise full parity.",
+        predicate=lambda: bool(mcp_verb_catalog_ids()) and mcp_verb_catalog_ids() <= web_verb_registry_ids(),
+        state="holds",
+        truth="The published MCP IDs are a subset of the resolved Web verb IDs; completeness is not claimed.",
+        story="PHILO-1-06",
     ),
     Claim(
         doc="holdspeak/mcp/resources.py",
-        anchor='"description": "Canonical current Desk state, including its stored objects and layout."',
-        sentence=(
-            "Canonical current Desk state, including its stored objects and layout."
-        ),
-        predicate=lambda: bool(
-            {
-                key
-                for key in desk_snapshot_keys()
-                if any(
-                    word in key.lower()
-                    for word in ("layout", "window", "focus", "panel", "geometry", "position", "stack")
-                )
-            }
-        ),
-        state="known_false",
-        truth=(
-            "the real resource returns seven lists of DB rows — chains, decisions, "
-            "directories, notes, profiles, workbenches, workflows — and no key "
-            "describing layout, windows, focus, panels, geometry or stacking"
-        ),
-        story="",
+        anchor="Saved Desk records: chains, decisions, directories, notes, profiles, workbenches and workflows.",
+        sentence="Saved Desk records: chains, decisions, directories, notes, profiles, workbenches and workflows.",
+        predicate=lambda: desk_snapshot_keys() == {"chains", "decisions", "directories", "notes", "profiles", "workbenches", "workflows"},
+        state="holds",
+        truth="The real snapshot contains those seven record lists; layout and window state are not advertised.",
+        story="PHILO-1-06",
     ),
     Claim(
         doc="docs/internal/DESKOS_COMPONENT_PATTERN.md",
-        anchor="The canon for how a surface on the iPad desk (DeskOS) should look and behave",
-        sentence=(
-            "The canon for how a surface on the iPad desk (DeskOS) should look and "
-            "behave, distilled from the one we got right: **the ambient recorder**."
-        ),
-        predicate=lambda: bool(deskos_component_pattern_web_references()),
-        state="known_false",
-        truth=(
-            "the doc names zero web/src faces; its reference implementation is "
-            "apple/App/MeetingCapture/DeskDioramaStage.swift, so it documents the "
-            "SwiftUI iPad desk while 'DeskOS' now means the web desk that is the spec"
-        ),
-        story="",
+        anchor="Status: SwiftUI iPad-specific guidance, not the current Web Desk contract.",
+        sentence="Status: SwiftUI iPad-specific guidance, not the current Web Desk contract.",
+        predicate=lambda: "apple/App/MeetingCapture/DeskDioramaStage.swift" in _read("docs/internal/DESKOS_COMPONENT_PATTERN.md") and not deskos_component_pattern_web_references(),
+        state="holds",
+        truth="The preserved pattern describes its SwiftUI iPad reference and is explicitly scoped away from the Web Desk.",
+        story="PHILO-1-06",
     ),
     Claim(
         doc="CLAUDE.md",
-        anchor="`.githooks/dw-mcp` (NOT wired in `.mcp.json`, which declares only the",
-        sentence=(
-            "MCP-capable agents: prefer the MCP tools over shelling out — "
-            "`.githooks/dw-mcp` (NOT wired in `.mcp.json`, which declares only the "
-            "`holdspeak` server by intent; add it to your own client config) serves "
-            "the same core as structured tools with identical refusals"
-        ),
-        predicate=lambda: not {
-            name for name in mcp_json_servers() if "dw" in name.lower()
-        },
+        anchor="The repository `.mcp.json` declares only the `holdspeak` server; Delivery",
+        sentence="The repository `.mcp.json` declares only the `holdspeak` server; Delivery Workbench MCP is not enabled in that file.",
+        predicate=lambda: set(mcp_json_servers()) == {"holdspeak"},
         state="holds",
         truth=(
             ".mcp.json declares exactly one server, 'holdspeak'; dw-mcp is not wired "
@@ -790,21 +829,14 @@ def _sidecar_counts_match_doc() -> bool:
 # NOT grow past this number without a commit that changes the reason string
 # below to name the new debt and why it is being admitted.
 #
-# Reason for the current ceiling (4: 7 -> 5 by HS-200-45, 5 -> 4 by HS-200-44,
-# both 2026-09-17):
-#   none is owned by an open story; four are
-#   unowned and need a code change rather than a prose correction — the
-#   SECURITY.md tailnet bind (bind_host is applied by nothing), the
-#   verb-catalog mirror and desk_snapshot's advertised shape, and
-#   DESKOS_COMPONENT_PATTERN (a whole doc describing the wrong desk).
-KNOWN_FALSE_RATCHET = 4
-KNOWN_FALSE_RATCHET_DATE = "2026-09-17"
+# Philo corrected the four remaining descriptions without claiming that the
+# missing listener fence, catalogue parity or layout projection was implemented.
+KNOWN_FALSE_RATCHET = 0
+KNOWN_FALSE_RATCHET_DATE = "2026-09-19"
 KNOWN_FALSE_RATCHET_REASON = (
-    "four are unowned and need a code change rather than a one-line doc "
-    "correction (the SECURITY tailnet bind, the verb-catalog mirror, "
-    "desk_snapshot's layout, DESKOS_COMPONENT_PATTERN). HS-200-44 paid the "
-    "UX-CANON A1 residue count on 2026-09-17 (5 -> 4); HS-200-45 paid the MCP "
-    "composition root and the WAL pragma sentence (7 -> 5)"
+    "Philo corrected the MCP listener, verb catalogue and snapshot descriptions "
+    "and scoped the SwiftUI iPad pattern away from the Web Desk. No missing runtime "
+    "capability was added or claimed. The known-false ceiling is now zero."
 )
 
 

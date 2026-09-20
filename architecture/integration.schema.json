@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.local/philo/integration.schema.json",
+  "title": "Philo integration",
+  "type": "object", "additionalProperties": true,
+  "required": ["id", "name", "purpose", "direction", "auth", "secrets", "data", "authority", "failure", "sources", "tests", "docs"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"},
+    "name": {"type": "string", "minLength": 1},
+    "purpose": {"type": "string", "minLength": 1},
+    "direction": {"type": "string", "enum": ["desk_to_host", "desk_to_http", "desk_to_local_storage", "local_read_write", "outbound", "outbound_and_receipt_return", "outbound_read", "runtime_to_desk"]},
+    "auth": {"type": "string", "minLength": 1},
+    "secrets": {"type": "array", "items": {"type": "string"}},
+    "data": {"type": "array", "items": {"type": "string"}},
+    "authority": {"type": "string", "minLength": 1},
+    "failure": {"type": ["string", "array"], "minItems": 1},
+    "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+    "tests": {"type": "array", "items": {"$ref": "#/$defs/test"}},
+    "docs": {"type": "array", "items": {"type": "string"}}
+  },
+  "$defs": {
+    "source": {"type": "object", "additionalProperties": true, "required": ["path", "symbol", "line", "claim"], "properties": {"path": {"type": "string", "minLength": 1}, "symbol": {"type": "string", "minLength": 1}, "line": {"type": "integer", "minimum": 1}, "claim": {"type": "string", "minLength": 1}}},
+    "test": {"oneOf": [{"type": "string", "pattern": "^[^:]+::[^:]+$"}, {"type": "object", "additionalProperties": true, "required": ["path", "node", "assertion"], "properties": {"path": {"type": "string", "minLength": 1}, "node": {"type": "string", "minLength": 1}, "assertion": {"type": "string", "minLength": 1}, "execution": {"type": ["string", "object", "null"]}}}]}
+  }
+}

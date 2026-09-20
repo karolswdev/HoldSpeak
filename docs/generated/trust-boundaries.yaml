@@ -1,0 +1,564 @@
+{
+  "generated": true,
+  "generator": "scripts/generate_capability_docs.py",
+  "missing_shards": [],
+  "records": [
+    {
+      "audit": [
+        "kernel journal",
+        "refusal/receipt",
+        "principal identity"
+      ],
+      "authority": "route right; operation capability; hard invariants",
+      "compute": [
+        "principal derivation",
+        "route authorization",
+        "admission validation"
+      ],
+      "data": [
+        "credential",
+        "declared request envelope"
+      ],
+      "docs": [
+        "docs/SECURITY_MODEL.md",
+        "docs/AUTHORITY_MODEL.md"
+      ],
+      "from": "owner, agent or node caller",
+      "id": "boundary.edge_to_kernel",
+      "name": "Authenticated edge to kernel",
+      "purpose": "Keep caller identity and authority separate from operation payloads.",
+      "secrets": [
+        "owner token",
+        "credential hash",
+        "provider secrets excluded from generic envelope"
+      ],
+      "sources": [
+        {
+          "claim": "Maps routes to principal rights with deny-by-default protected fallback.",
+          "line": 275,
+          "path": "holdspeak/principals.py",
+          "symbol": "required_right"
+        }
+      ],
+      "to": "HTTP edge and kernel broker"
+    },
+    {
+      "audit": [
+        "claim witness",
+        "kernel receipt",
+        "inference attestation"
+      ],
+      "authority": "owner-approved or policy-permitted warrant; node claim right",
+      "compute": [
+        "claim CAS",
+        "deadline/liveness check",
+        "receipt validation"
+      ],
+      "data": [
+        "signed warrant",
+        "operation envelope",
+        "result reference"
+      ],
+      "docs": [
+        "docs/KERNEL.md",
+        "docs/SECURITY_MODEL.md"
+      ],
+      "from": "kernel broker",
+      "id": "boundary.kernel_to_executor",
+      "name": "Warranted kernel to executor",
+      "purpose": "Allow exactly the approved operation to be claimed and receipted.",
+      "secrets": [
+        "warrant signing key remains kernel custody"
+      ],
+      "sources": [
+        {
+          "claim": "Validates warrant, envelope, revocation, expiry and live ancestor before claim and receipt.",
+          "line": 26,
+          "path": "holdspeak/kernel/executor.py",
+          "symbol": "ExecutorPlane"
+        }
+      ],
+      "to": "local or node executor"
+    },
+    {
+      "audit": [
+        "egress reference",
+        "native receipt",
+        "kernel terminal receipt"
+      ],
+      "authority": "policy permit; exact destination; deadline; claim identity",
+      "compute": [
+        "registered adapter",
+        "provider invocation",
+        "cancellation"
+      ],
+      "data": [
+        "operation-specific payload",
+        "model context",
+        "result/error"
+      ],
+      "docs": [
+        "docs/SECURITY_MODEL.md",
+        "docs/OPERATIONS.md"
+      ],
+      "from": "claimed executor",
+      "id": "boundary.executor_to_provider",
+      "name": "Executor to provider or destination",
+      "purpose": "Constrain possible egress to the frozen route and preserve uncertainty when completion is lost.",
+      "secrets": [
+        "adapter/provider credentials are outside generic journal material"
+      ],
+      "sources": [
+        {
+          "claim": "Freezes deployment revision, target, placement and egress reference before dispatch.",
+          "line": 88,
+          "path": "holdspeak/kernel/inference_invoke.py",
+          "symbol": "InferenceInvokeCodec.authorize"
+        }
+      ],
+      "to": "model provider or external destination"
+    },
+    {
+      "audit": [
+        "speech session admission",
+        "content-free route evidence"
+      ],
+      "authority": "frozen speech session plan",
+      "compute": "speech session and transcription runtime",
+      "data": [
+        "audio",
+        "transcript"
+      ],
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md"
+      ],
+      "from": "owner audio capture",
+      "id": "voice.local_capture_to_transcription",
+      "name": "Local capture to transcription",
+      "purpose": "Keep owner audio inside the admitted speech boundary until a transcription child is selected.",
+      "secrets": [],
+      "sources": [
+        {
+          "claim": "Speech transcription declares an audio input and local boundary.",
+          "line": 1063,
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "process_inference_capability_registry"
+        }
+      ],
+      "to": "local Whisper or admitted transcription destination"
+    },
+    {
+      "audit": [
+        "capture checkpoint",
+        "PluginRun",
+        "ArtifactLineage"
+      ],
+      "authority": "meeting intelligence parent and deferred job",
+      "compute": "meeting session, persistence, plugin host",
+      "data": [
+        "transcript window",
+        "speaker labels",
+        "source hash"
+      ],
+      "docs": [
+        "docs/MEETING_ARCHITECTURE.md",
+        "docs/MEETING_INTELLIGENCE.md"
+      ],
+      "from": "meeting capture journal and saved MeetingState",
+      "id": "meeting.capture_to_intelligence",
+      "name": "Meeting capture to intelligence",
+      "purpose": "Move only the saved and admitted meeting transcript into deferred analysis.",
+      "secrets": [
+        "provider key at destination"
+      ],
+      "sources": [
+        {
+          "claim": "Deferred intelligence is enqueued after a saved meeting state.",
+          "line": 58,
+          "path": "holdspeak/meeting_session/persistence.py",
+          "symbol": "PersistenceMixin.save"
+        }
+      ],
+      "to": "PluginHost and selected model destination"
+    },
+    {
+      "audit": [
+        "deployment identity",
+        "placement receipt"
+      ],
+      "authority": "frozen DeploymentIdentity",
+      "compute": "local engine and model file",
+      "data": [
+        "admitted model input"
+      ],
+      "docs": [
+        "docs/EXECUTION_DESTINATIONS.md"
+      ],
+      "from": "route execution controller",
+      "id": "model.local_boundary",
+      "name": "Same-device model boundary",
+      "purpose": "Ensure a local child loads only the frozen local deployment.",
+      "secrets": [],
+      "sources": [
+        {
+          "claim": "Same-device execution is built from the frozen revision and cannot become cloud inside the child.",
+          "line": 709,
+          "path": "holdspeak/inference_targets.py",
+          "symbol": "local_pinned_meeting_intel"
+        }
+      ],
+      "to": "this_machine or local dictation runtime"
+    },
+    {
+      "audit": [
+        "placement receipt",
+        "target readiness state",
+        "secret presence only"
+      ],
+      "authority": "named destination and frozen route leg",
+      "compute": "remote provider or node runtime",
+      "data": [
+        "admitted operation payload",
+        "route identity"
+      ],
+      "docs": [
+        "docs/EXECUTION_DESTINATIONS.md",
+        "docs/MODEL_RUNTIME.md"
+      ],
+      "from": "route execution controller",
+      "id": "model.remote_boundary",
+      "name": "Remote model boundary",
+      "purpose": "Name and audit private, cloud, paired, or mesh execution separately from local execution.",
+      "secrets": [
+        "destination-specific key or connector credential"
+      ],
+      "sources": [
+        {
+          "claim": "Destination kind, boundary, readiness, and key presence are derived from the named profile.",
+          "line": 369,
+          "path": "holdspeak/inference_targets.py",
+          "symbol": "target_from_profile"
+        }
+      ],
+      "to": "private endpoint, external service, paired device, or mesh node"
+    },
+    {
+      "audit": [
+        "required/present receipt field",
+        "secret boundary test"
+      ],
+      "authority": "destination-specific key slot",
+      "compute": "key store and model provider adapter",
+      "data": [
+        "key presence",
+        "provider credential at dispatch"
+      ],
+      "docs": [
+        "docs/MODEL_RUNTIME.md",
+        "docs/EXECUTION_DESTINATIONS.md"
+      ],
+      "from": "profile key store",
+      "id": "model.secret_boundary",
+      "name": "Model secret boundary",
+      "purpose": "Keep provider keys out of projections, prompts, logs, and receipts.",
+      "secrets": [
+        "provider key"
+      ],
+      "sources": [
+        {
+          "claim": "Provider dispatch keeps secret material at the model boundary.",
+          "line": 208,
+          "path": "holdspeak/mcp/families/model_library.py",
+          "symbol": "dispatch"
+        }
+      ],
+      "to": "provider adapter"
+    },
+    {
+      "audit": [
+        "actuator proposal",
+        "destination receipt"
+      ],
+      "authority": "separate actuator admission and connector policy",
+      "compute": "opt-in actuator connector",
+      "data": [
+        "owner-selected draft or artifact"
+      ],
+      "docs": [
+        "docs/MEETING_AFTERCARE.md",
+        "docs/MEETING_INTELLIGENCE.md"
+      ],
+      "from": "saved artifact or aftercare draft",
+      "id": "meeting.actuator_boundary",
+      "name": "Meeting actuator boundary",
+      "purpose": "Separate read-only aftercare and generated artifacts from external follow-up effects.",
+      "secrets": [
+        "connector credentials"
+      ],
+      "sources": [
+        {
+          "claim": "Actuator execution is a separate host boundary from deferred intelligence.",
+          "line": 280,
+          "path": "holdspeak/plugins/host.py",
+          "symbol": "PluginHost"
+        }
+      ],
+      "to": "ticket, webhook, pull request, or message connector"
+    },
+    {
+      "audit": "API error and operation logging; Desk receipt integration is incomplete.",
+      "authority": "API routes and auth context",
+      "compute": "API server validates and executes domain operation.",
+      "data": [
+        "authenticated request",
+        "domain payload",
+        "error status"
+      ],
+      "docs": [
+        "docs/DESK_ARCHITECTURE.md"
+      ],
+      "from": "Desk browser surface",
+      "id": "desk.browser_to_api",
+      "name": "Browser Desk to HTTP API",
+      "purpose": "Bound domain requests and responses at the HTTP seam.",
+      "secrets": [
+        "Auth token/cookie stays in existing auth seam"
+      ],
+      "sources": [
+        {
+          "claim": "The API helper is the browser HTTP boundary.",
+          "line": 14,
+          "path": "web/src/lib/api.ts",
+          "symbol": "apiFetch"
+        }
+      ],
+      "to": "HoldSpeak HTTP API"
+    },
+    {
+      "audit": "Connection states are observable; consumer refetch audit is incomplete.",
+      "authority": "RuntimeBus transport state",
+      "compute": "RuntimeBus validates frame shape and manages reconnect timers.",
+      "data": [
+        "frames",
+        "connection state"
+      ],
+      "docs": [
+        "docs/DESK_ARCHITECTURE.md"
+      ],
+      "from": "Runtime WebSocket",
+      "id": "desk.browser_to_runtime",
+      "name": "Browser Desk to runtime bus",
+      "purpose": "Guard WebSocket events and connection state before Desk consumption.",
+      "secrets": [
+        "Runtime auth is outside surface components"
+      ],
+      "sources": [
+        {
+          "claim": "Malformed frames are ignored and reconnect is bounded.",
+          "line": 80,
+          "path": "web/src/runtime/RuntimeBus.tsx",
+          "symbol": "RuntimeBusProvider"
+        }
+      ],
+      "to": "Desk RuntimeBus consumers"
+    },
+    {
+      "audit": "Corrupt-data fallback is tested; write failure telemetry is incomplete.",
+      "authority": "Desk store owns writes",
+      "compute": "Storage helper serializes and validates bounded shape.",
+      "data": [
+        "versioned arrangement metadata"
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "from": "Desk store",
+      "id": "desk.browser_to_storage",
+      "name": "Desk browser to local workspace",
+      "purpose": "Keep arrangement metadata in the browser origin boundary.",
+      "secrets": [
+        "No domain secrets are intended in workspace storage"
+      ],
+      "sources": [
+        {
+          "claim": "Invalid records are rejected and replaced by defaults.",
+          "line": 112,
+          "path": "web/src/desk/store/workspaceStorage.ts",
+          "symbol": "loadDeskWorkspace"
+        }
+      ],
+      "to": "Browser localStorage"
+    },
+    {
+      "audit": "Not implemented; no adapter tests or audit events exist.",
+      "authority": "Future host permissions and adapter policy",
+      "compute": "Host performs only allowlisted capability work.",
+      "data": [
+        "typed capability request/result"
+      ],
+      "docs": [
+        "docs/internal/philo/adr/desktop-host.md"
+      ],
+      "from": "Browser Desk adapter",
+      "id": "desk.browser_to_future_host",
+      "name": "Browser Desk to future native host",
+      "purpose": "Keep native capability authority behind a typed adapter.",
+      "secrets": [
+        "Native secret storage remains host-owned"
+      ],
+      "sources": [
+        {
+          "claim": "The ADR proposes a bounded host interface.",
+          "line": 1,
+          "path": "docs/internal/philo/adr/desktop-host.md",
+          "symbol": "DesktopHost"
+        }
+      ],
+      "to": "Future native host"
+    },
+    {
+      "audit": [
+        "thread message",
+        "child operation receipt",
+        "turn receipt"
+      ],
+      "authority": "owner principal, frozen route and tool decision",
+      "compute": "model completion and bounded tool loop",
+      "data": [
+        "frozen message path",
+        "grounding blocks",
+        "route plan"
+      ],
+      "docs": [
+        "docs/AGENTS_AND_THREADS.md"
+      ],
+      "from": "ThreadService",
+      "id": "trust.thread_model",
+      "name": "Thread to model boundary",
+      "purpose": "Freeze and redact conversation material before a model route receives it.",
+      "secrets": [
+        "provider credential remains at adapter boundary"
+      ],
+      "sources": [
+        {
+          "claim": "Cloud-bound payloads redact People-sensitive content before model dispatch.",
+          "line": 1850,
+          "path": "holdspeak/services/thread_service.py",
+          "symbol": "_m1_redactor"
+        }
+      ],
+      "to": "admitted model destination"
+    },
+    {
+      "audit": [
+        "connector run",
+        "warning/permission notes",
+        "output counts"
+      ],
+      "authority": "PermissionGate and enabled connector state",
+      "compute": "connector-specific read/derive operation",
+      "data": [
+        "manifest-declared input and bounded output"
+      ],
+      "docs": [
+        "docs/INTEGRATIONS.md",
+        "docs/CONNECTOR_DEVELOPMENT.md"
+      ],
+      "from": "connector pack",
+      "id": "trust.connector_runtime",
+      "name": "Connector runtime boundary",
+      "purpose": "Keep connector permissions explicit before subprocess, file, loopback or network effects.",
+      "secrets": [
+        "provider credentials held by CLI or host"
+      ],
+      "sources": [
+        {
+          "claim": "Declared permissions gate subprocess, network, loopback and file reads.",
+          "line": 115,
+          "path": "holdspeak/connector_runtime.py",
+          "symbol": "PermissionGate"
+        }
+      ],
+      "to": "CLI, file or socket"
+    },
+    {
+      "audit": [
+        "proposal transition",
+        "authority hashes",
+        "terminal receipt"
+      ],
+      "authority": "ActuatorExecutor and kernel operation admission",
+      "compute": "connector HTTP/CLI effect",
+      "data": [
+        "stored preview-equivalent payload",
+        "destination binding"
+      ],
+      "docs": [
+        "docs/ACTUATOR_DEVELOPMENT.md",
+        "docs/INTEGRATIONS.md"
+      ],
+      "from": "approved actuator proposal",
+      "id": "trust.actuator_egress",
+      "name": "Actuator egress boundary",
+      "purpose": "Bind approved payload, destination and policy immediately before an external effect.",
+      "secrets": [
+        "destination credential or webhook URL"
+      ],
+      "sources": [
+        {
+          "claim": "Authority parity is recomputed immediately before connector egress.",
+          "line": 120,
+          "path": "holdspeak/plugins/actuator_executor.py",
+          "symbol": "execute"
+        }
+      ],
+      "to": "GitHub, Slack or webhook"
+    },
+    {
+      "audit": [
+        "request identity",
+        "operation receipt",
+        "sync state"
+      ],
+      "authority": "Bearer/PSK authentication plus owner gesture or bounded grant",
+      "compute": "hub service and operation broker",
+      "data": [
+        "reviewed text",
+        "audio/control messages",
+        "status/projections"
+      ],
+      "docs": [
+        "docs/COMPANIONS_ARCHITECTURE.md",
+        "docs/IPAD.md",
+        "docs/AIPI_LITE.md"
+      ],
+      "from": "iPad or AIPI bridge",
+      "id": "trust.companion_hub",
+      "name": "Companion to hub boundary",
+      "purpose": "Authenticate iPad/AIPI clients while preserving hub-owned authority and receipts.",
+      "secrets": [
+        "Bearer token",
+        "AIPI PSK",
+        "Keychain/device credentials"
+      ],
+      "sources": [
+        {
+          "claim": "Native runtime WebSocket keeps bearer in the header and uses holdspeak.v1.",
+          "line": 101,
+          "path": "apple/Sources/Providers/Desktop/HTTPDesktopClient.swift",
+          "symbol": "runtimeWebSocketRequest"
+        },
+        {
+          "claim": "AIPI bridge settings module owns bridge configuration inputs.",
+          "line": 1,
+          "path": "aipi-lite/bridge/settings.py",
+          "symbol": "Settings"
+        }
+      ],
+      "to": "HoldSpeak hub"
+    }
+  ],
+  "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+  "validation_errors_at_generation": 0,
+  "view": "trust_boundaries"
+}

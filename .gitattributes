@@ -1,0 +1,3 @@
+# Mechanical inventories remain reviewable but collapse by default in GitHub diffs.
+docs/generated/*.json linguist-generated=true
+docs/generated/*.yaml linguist-generated=true

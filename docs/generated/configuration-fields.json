@@ -1,0 +1,1103 @@
+{
+  "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+  "generator": "scripts/philo_config_reference.py",
+  "limits": "Dataclass declarations only. Defaults are source expressions, not evaluated values. Load coercion, migrations, validation, environment variables and database-backed settings can change effective behavior. This is not a complete runtime configuration schema.",
+  "fields": [
+    {
+      "class": "Config",
+      "field": "config_version",
+      "type": "int",
+      "default_expression": "CONFIG_VERSION",
+      "path": "holdspeak/config/core.py",
+      "line": 281
+    },
+    {
+      "class": "Config",
+      "field": "machine_id",
+      "type": "str",
+      "default_expression": "''",
+      "path": "holdspeak/config/core.py",
+      "line": 285
+    },
+    {
+      "class": "Config",
+      "field": "control_mode",
+      "type": "str",
+      "default_expression": "'yolo'",
+      "path": "holdspeak/config/core.py",
+      "line": 289
+    },
+    {
+      "class": "Config",
+      "field": "hotkey",
+      "type": "HotkeyConfig",
+      "default_expression": "field(default_factory=HotkeyConfig)",
+      "path": "holdspeak/config/core.py",
+      "line": 290
+    },
+    {
+      "class": "Config",
+      "field": "model",
+      "type": "ModelConfig",
+      "default_expression": "field(default_factory=ModelConfig)",
+      "path": "holdspeak/config/core.py",
+      "line": 291
+    },
+    {
+      "class": "Config",
+      "field": "ui",
+      "type": "UIConfig",
+      "default_expression": "field(default_factory=UIConfig)",
+      "path": "holdspeak/config/core.py",
+      "line": 292
+    },
+    {
+      "class": "Config",
+      "field": "meeting",
+      "type": "MeetingConfig",
+      "default_expression": "field(default_factory=MeetingConfig)",
+      "path": "holdspeak/config/core.py",
+      "line": 293
+    },
+    {
+      "class": "Config",
+      "field": "dictation",
+      "type": "DictationConfig",
+      "default_expression": "field(default_factory=DictationConfig)",
+      "path": "holdspeak/config/core.py",
+      "line": 294
+    },
+    {
+      "class": "Config",
+      "field": "device",
+      "type": "DeviceConfig",
+      "default_expression": "field(default_factory=DeviceConfig)",
+      "path": "holdspeak/config/core.py",
+      "line": 295
+    },
+    {
+      "class": "Config",
+      "field": "presence",
+      "type": "PresenceConfig",
+      "default_expression": "field(default_factory=PresenceConfig)",
+      "path": "holdspeak/config/core.py",
+      "line": 296
+    },
+    {
+      "class": "Config",
+      "field": "wake_word",
+      "type": "WakeWordConfig",
+      "default_expression": "field(default_factory=WakeWordConfig)",
+      "path": "holdspeak/config/core.py",
+      "line": 297
+    },
+    {
+      "class": "Config",
+      "field": "mesh",
+      "type": "MeshConfig",
+      "default_expression": "field(default_factory=MeshConfig)",
+      "path": "holdspeak/config/core.py",
+      "line": 298
+    },
+    {
+      "class": "Config",
+      "field": "cadence",
+      "type": "CadenceConfig",
+      "default_expression": "field(default_factory=CadenceConfig)",
+      "path": "holdspeak/config/core.py",
+      "line": 299
+    },
+    {
+      "class": "Config",
+      "field": "cadence_telegram",
+      "type": "TelegramConfig",
+      "default_expression": "field(default_factory=TelegramConfig)",
+      "path": "holdspeak/config/core.py",
+      "line": 300
+    },
+    {
+      "class": "Config",
+      "field": "rails_observer",
+      "type": "RailsObserverConfig",
+      "default_expression": "field(default_factory=RailsObserverConfig)",
+      "path": "holdspeak/config/core.py",
+      "line": 301
+    },
+    {
+      "class": "Config",
+      "field": "thoughts",
+      "type": "ThoughtsConfig",
+      "default_expression": "field(default_factory=ThoughtsConfig)",
+      "path": "holdspeak/config/core.py",
+      "line": 302
+    },
+    {
+      "class": "Config",
+      "field": "calendar",
+      "type": "CalendarConfig",
+      "default_expression": "field(default_factory=CalendarConfig)",
+      "path": "holdspeak/config/core.py",
+      "line": 303
+    },
+    {
+      "class": "DeviceConfig",
+      "field": "psk",
+      "type": "str",
+      "default_expression": "''",
+      "path": "holdspeak/config/device.py",
+      "line": 20
+    },
+    {
+      "class": "PresenceConfig",
+      "field": "enabled",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/device.py",
+      "line": 34
+    },
+    {
+      "class": "PresenceConfig",
+      "field": "mascot",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/device.py",
+      "line": 38
+    },
+    {
+      "class": "MeshConfig",
+      "field": "device_name",
+      "type": "str",
+      "default_expression": "''",
+      "path": "holdspeak/config/device.py",
+      "line": 52
+    },
+    {
+      "class": "WakeWordConfig",
+      "field": "enabled",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/device.py",
+      "line": 70
+    },
+    {
+      "class": "WakeWordConfig",
+      "field": "model",
+      "type": "str",
+      "default_expression": "'hey_jarvis'",
+      "path": "holdspeak/config/device.py",
+      "line": 71
+    },
+    {
+      "class": "WakeWordConfig",
+      "field": "threshold",
+      "type": "float",
+      "default_expression": "0.5",
+      "path": "holdspeak/config/device.py",
+      "line": 72
+    },
+    {
+      "class": "WakeWordConfig",
+      "field": "armed_window_seconds",
+      "type": "float",
+      "default_expression": "8.0",
+      "path": "holdspeak/config/device.py",
+      "line": 73
+    },
+    {
+      "class": "WakeWordConfig",
+      "field": "action",
+      "type": "str",
+      "default_expression": "'preview'",
+      "path": "holdspeak/config/device.py",
+      "line": 74
+    },
+    {
+      "class": "CalendarSource",
+      "field": "id",
+      "type": "str",
+      "default_expression": "''",
+      "path": "holdspeak/config/integrations.py",
+      "line": 21
+    },
+    {
+      "class": "CalendarSource",
+      "field": "label",
+      "type": "str",
+      "default_expression": "''",
+      "path": "holdspeak/config/integrations.py",
+      "line": 22
+    },
+    {
+      "class": "CalendarSource",
+      "field": "url",
+      "type": "str",
+      "default_expression": "''",
+      "path": "holdspeak/config/integrations.py",
+      "line": 23
+    },
+    {
+      "class": "CalendarSource",
+      "field": "enabled",
+      "type": "bool",
+      "default_expression": "True",
+      "path": "holdspeak/config/integrations.py",
+      "line": 24
+    },
+    {
+      "class": "CalendarConfig",
+      "field": "sources",
+      "type": "list[CalendarSource]",
+      "default_expression": "field(default_factory=list)",
+      "path": "holdspeak/config/integrations.py",
+      "line": 37
+    },
+    {
+      "class": "ThoughtsConfig",
+      "field": "inference_target_id",
+      "type": "Optional[str]",
+      "default_expression": "None",
+      "path": "holdspeak/config/integrations.py",
+      "line": 187
+    },
+    {
+      "class": "CadenceConfig",
+      "field": "enabled",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/integrations.py",
+      "line": 205
+    },
+    {
+      "class": "CadenceConfig",
+      "field": "pressure",
+      "type": "str",
+      "default_expression": "'normal'",
+      "path": "holdspeak/config/integrations.py",
+      "line": 206
+    },
+    {
+      "class": "CadenceConfig",
+      "field": "use_llm",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/integrations.py",
+      "line": 207
+    },
+    {
+      "class": "CadenceConfig",
+      "field": "tick_interval_seconds",
+      "type": "int",
+      "default_expression": "300",
+      "path": "holdspeak/config/integrations.py",
+      "line": 208
+    },
+    {
+      "class": "CadenceConfig",
+      "field": "quiet_hours_start",
+      "type": "int",
+      "default_expression": "22",
+      "path": "holdspeak/config/integrations.py",
+      "line": 209
+    },
+    {
+      "class": "CadenceConfig",
+      "field": "quiet_hours_end",
+      "type": "int",
+      "default_expression": "8",
+      "path": "holdspeak/config/integrations.py",
+      "line": 210
+    },
+    {
+      "class": "CadenceConfig",
+      "field": "max_nudges_per_day",
+      "type": "int",
+      "default_expression": "12",
+      "path": "holdspeak/config/integrations.py",
+      "line": 211
+    },
+    {
+      "class": "TelegramConfig",
+      "field": "enabled",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/integrations.py",
+      "line": 233
+    },
+    {
+      "class": "TelegramConfig",
+      "field": "bot_token",
+      "type": "str",
+      "default_expression": "''",
+      "path": "holdspeak/config/integrations.py",
+      "line": 234
+    },
+    {
+      "class": "TelegramConfig",
+      "field": "allowed_chat_ids",
+      "type": "list[str]",
+      "default_expression": "field(default_factory=list)",
+      "path": "holdspeak/config/integrations.py",
+      "line": 235
+    },
+    {
+      "class": "TelegramConfig",
+      "field": "pairing_code",
+      "type": "str",
+      "default_expression": "''",
+      "path": "holdspeak/config/integrations.py",
+      "line": 236
+    },
+    {
+      "class": "RailsObserverConfig",
+      "field": "enabled",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/integrations.py",
+      "line": 261
+    },
+    {
+      "class": "RailsObserverConfig",
+      "field": "profile_id",
+      "type": "Optional[str]",
+      "default_expression": "None",
+      "path": "holdspeak/config/integrations.py",
+      "line": 264
+    },
+    {
+      "class": "RailsObserverConfig",
+      "field": "poll_seconds",
+      "type": "int",
+      "default_expression": "30",
+      "path": "holdspeak/config/integrations.py",
+      "line": 265
+    },
+    {
+      "class": "RailsObserverConfig",
+      "field": "tail",
+      "type": "int",
+      "default_expression": "20",
+      "path": "holdspeak/config/integrations.py",
+      "line": 266
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "mic_device",
+      "type": "Optional[str]",
+      "default_expression": "None",
+      "path": "holdspeak/config/meeting.py",
+      "line": 19
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "system_audio_device",
+      "type": "Optional[str]",
+      "default_expression": "None",
+      "path": "holdspeak/config/meeting.py",
+      "line": 20
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "mic_label",
+      "type": "str",
+      "default_expression": "'Me'",
+      "path": "holdspeak/config/meeting.py",
+      "line": 21
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "remote_label",
+      "type": "str",
+      "default_expression": "'Remote'",
+      "path": "holdspeak/config/meeting.py",
+      "line": 22
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "auto_export",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/meeting.py",
+      "line": 25
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "export_format",
+      "type": "str",
+      "default_expression": "'markdown'",
+      "path": "holdspeak/config/meeting.py",
+      "line": 26
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_enabled",
+      "type": "bool",
+      "default_expression": "True",
+      "path": "holdspeak/config/meeting.py",
+      "line": 29
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_provider",
+      "type": "str",
+      "default_expression": "'local'",
+      "path": "holdspeak/config/meeting.py",
+      "line": 33
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_realtime_model",
+      "type": "str",
+      "default_expression": "'~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf'",
+      "path": "holdspeak/config/meeting.py",
+      "line": 36
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_temperature",
+      "type": "float",
+      "default_expression": "0.2",
+      "path": "holdspeak/config/meeting.py",
+      "line": 37
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_summary_model",
+      "type": "Optional[str]",
+      "default_expression": "None",
+      "path": "holdspeak/config/meeting.py",
+      "line": 38
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_deferred_enabled",
+      "type": "bool",
+      "default_expression": "True",
+      "path": "holdspeak/config/meeting.py",
+      "line": 39
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intelligence_auto",
+      "type": "str",
+      "default_expression": "'room_linked'",
+      "path": "holdspeak/config/meeting.py",
+      "line": 44
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "auto_record",
+      "type": "str",
+      "default_expression": "'off'",
+      "path": "holdspeak/config/meeting.py",
+      "line": 49
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "auto_record_lead_minutes",
+      "type": "int",
+      "default_expression": "5",
+      "path": "holdspeak/config/meeting.py",
+      "line": 51
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_retry_base_seconds",
+      "type": "int",
+      "default_expression": "30",
+      "path": "holdspeak/config/meeting.py",
+      "line": 54
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_retry_max_seconds",
+      "type": "int",
+      "default_expression": "900",
+      "path": "holdspeak/config/meeting.py",
+      "line": 55
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_retry_max_attempts",
+      "type": "int",
+      "default_expression": "6",
+      "path": "holdspeak/config/meeting.py",
+      "line": 56
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_retry_failure_webhook_url",
+      "type": "Optional[str]",
+      "default_expression": "None",
+      "path": "holdspeak/config/meeting.py",
+      "line": 60
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_retry_failure_webhook_header_name",
+      "type": "Optional[str]",
+      "default_expression": "None",
+      "path": "holdspeak/config/meeting.py",
+      "line": 61
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_retry_failure_webhook_header_value",
+      "type": "Optional[str]",
+      "default_expression": "None",
+      "path": "holdspeak/config/meeting.py",
+      "line": 62
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_cloud_model",
+      "type": "str",
+      "default_expression": "'gpt-5-mini'",
+      "path": "holdspeak/config/meeting.py",
+      "line": 65
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_cloud_api_key_env",
+      "type": "str",
+      "default_expression": "'OPENAI_API_KEY'",
+      "path": "holdspeak/config/meeting.py",
+      "line": 66
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_cloud_base_url",
+      "type": "Optional[str]",
+      "default_expression": "None",
+      "path": "holdspeak/config/meeting.py",
+      "line": 67
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_cloud_reasoning_effort",
+      "type": "Optional[str]",
+      "default_expression": "None",
+      "path": "holdspeak/config/meeting.py",
+      "line": 68
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_cloud_store",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/meeting.py",
+      "line": 69
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intel_profile_id",
+      "type": "Optional[str]",
+      "default_expression": "None",
+      "path": "holdspeak/config/meeting.py",
+      "line": 73
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "web_auth_token",
+      "type": "str",
+      "default_expression": "''",
+      "path": "holdspeak/config/meeting.py",
+      "line": 81
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "mir_enabled",
+      "type": "bool",
+      "default_expression": "True",
+      "path": "holdspeak/config/meeting.py",
+      "line": 82
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "routing_profile",
+      "type": "str",
+      "default_expression": "'balanced'",
+      "path": "holdspeak/config/meeting.py",
+      "line": 87
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intent_router_enabled",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/meeting.py",
+      "line": 93
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intent_window_seconds",
+      "type": "int",
+      "default_expression": "90",
+      "path": "holdspeak/config/meeting.py",
+      "line": 94
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intent_step_seconds",
+      "type": "int",
+      "default_expression": "30",
+      "path": "holdspeak/config/meeting.py",
+      "line": 95
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intent_score_threshold",
+      "type": "float",
+      "default_expression": "0.6",
+      "path": "holdspeak/config/meeting.py",
+      "line": 96
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intent_hysteresis_windows",
+      "type": "int",
+      "default_expression": "1",
+      "path": "holdspeak/config/meeting.py",
+      "line": 97
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "disabled_plugins",
+      "type": "list[str]",
+      "default_expression": "field(default_factory=list)",
+      "path": "holdspeak/config/meeting.py",
+      "line": 102
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "intent_segment_probe_enabled",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/meeting.py",
+      "line": 110
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "allow_actuators",
+      "type": "bool",
+      "default_expression": "True",
+      "path": "holdspeak/config/meeting.py",
+      "line": 119
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "allowed_actuators",
+      "type": "list[str]",
+      "default_expression": "field(default_factory=lambda: ['*'])",
+      "path": "holdspeak/config/meeting.py",
+      "line": 120
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "webhook_allowed_hosts",
+      "type": "list[str]",
+      "default_expression": "field(default_factory=lambda: ['*'])",
+      "path": "holdspeak/config/meeting.py",
+      "line": 126
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "slack_webhook_url",
+      "type": "str",
+      "default_expression": "''",
+      "path": "holdspeak/config/meeting.py",
+      "line": 133
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "companion_webhook_url",
+      "type": "str",
+      "default_expression": "''",
+      "path": "holdspeak/config/meeting.py",
+      "line": 140
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "companion_github_repo",
+      "type": "str",
+      "default_expression": "''",
+      "path": "holdspeak/config/meeting.py",
+      "line": 146
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "diarization_enabled",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/meeting.py",
+      "line": 149
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "diarize_mic",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/meeting.py",
+      "line": 150
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "cross_meeting_recognition",
+      "type": "bool",
+      "default_expression": "True",
+      "path": "holdspeak/config/meeting.py",
+      "line": 151
+    },
+    {
+      "class": "MeetingConfig",
+      "field": "similarity_threshold",
+      "type": "float",
+      "default_expression": "0.75",
+      "path": "holdspeak/config/meeting.py",
+      "line": 152
+    },
+    {
+      "class": "DictationPipelineConfig",
+      "field": "enabled",
+      "type": "bool",
+      "default_expression": "True",
+      "path": "holdspeak/config/meeting.py",
+      "line": 376
+    },
+    {
+      "class": "DictationPipelineConfig",
+      "field": "stages",
+      "type": "list[str]",
+      "default_expression": "field(default_factory=lambda: ['intent-router', 'kb-enricher'])",
+      "path": "holdspeak/config/meeting.py",
+      "line": 377
+    },
+    {
+      "class": "DictationPipelineConfig",
+      "field": "max_total_latency_ms",
+      "type": "int",
+      "default_expression": "600",
+      "path": "holdspeak/config/meeting.py",
+      "line": 378
+    },
+    {
+      "class": "DictationPipelineConfig",
+      "field": "target_profile_override",
+      "type": "str",
+      "default_expression": "'auto'",
+      "path": "holdspeak/config/meeting.py",
+      "line": 379
+    },
+    {
+      "class": "DictationPipelineConfig",
+      "field": "rewrite_passes",
+      "type": "int",
+      "default_expression": "1",
+      "path": "holdspeak/config/meeting.py",
+      "line": 384
+    },
+    {
+      "class": "DictationPipelineConfig",
+      "field": "corrections_enabled",
+      "type": "bool",
+      "default_expression": "True",
+      "path": "holdspeak/config/meeting.py",
+      "line": 389
+    },
+    {
+      "class": "DictationPipelineConfig",
+      "field": "target_detect_llm_enabled",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/meeting.py",
+      "line": 395
+    },
+    {
+      "class": "DictationPipelineConfig",
+      "field": "target_detect_llm_below",
+      "type": "float",
+      "default_expression": "0.8",
+      "path": "holdspeak/config/meeting.py",
+      "line": 396
+    },
+    {
+      "class": "DictationPipelineConfig",
+      "field": "journal_enabled",
+      "type": "bool",
+      "default_expression": "True",
+      "path": "holdspeak/config/meeting.py",
+      "line": 401
+    },
+    {
+      "class": "DictationPipelineConfig",
+      "field": "journal_retention",
+      "type": "int",
+      "default_expression": "500",
+      "path": "holdspeak/config/meeting.py",
+      "line": 404
+    },
+    {
+      "class": "DictationConfig",
+      "field": "pipeline",
+      "type": "DictationPipelineConfig",
+      "default_expression": "field(default_factory=DictationPipelineConfig)",
+      "path": "holdspeak/config/meeting.py",
+      "line": 448
+    },
+    {
+      "class": "DictationConfig",
+      "field": "runtime",
+      "type": "LLMRuntimeConfig",
+      "default_expression": "field(default_factory=LLMRuntimeConfig)",
+      "path": "holdspeak/config/meeting.py",
+      "line": 449
+    },
+    {
+      "class": "DictationConfig",
+      "field": "macros",
+      "type": "MacrosConfig",
+      "default_expression": "field(default_factory=MacrosConfig)",
+      "path": "holdspeak/config/meeting.py",
+      "line": 450
+    },
+    {
+      "class": "DictationConfig",
+      "field": "spoken_symbols",
+      "type": "list",
+      "default_expression": "field(default_factory=list)",
+      "path": "holdspeak/config/meeting.py",
+      "line": 454
+    },
+    {
+      "class": "DictationConfig",
+      "field": "preview_before_type",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/meeting.py",
+      "line": 459
+    },
+    {
+      "class": "ModelConfig",
+      "field": "name",
+      "type": "str",
+      "default_expression": "'base'",
+      "path": "holdspeak/config/model.py",
+      "line": 14
+    },
+    {
+      "class": "ModelConfig",
+      "field": "warm_on_start",
+      "type": "bool",
+      "default_expression": "True",
+      "path": "holdspeak/config/model.py",
+      "line": 15
+    },
+    {
+      "class": "ModelConfig",
+      "field": "backend",
+      "type": "str",
+      "default_expression": "'auto'",
+      "path": "holdspeak/config/model.py",
+      "line": 16
+    },
+    {
+      "class": "ModelConfig",
+      "field": "language",
+      "type": "str",
+      "default_expression": "'auto'",
+      "path": "holdspeak/config/model.py",
+      "line": 22
+    },
+    {
+      "class": "ModelConfig",
+      "field": "transcribe_timeout_seconds",
+      "type": "float",
+      "default_expression": "120.0",
+      "path": "holdspeak/config/model.py",
+      "line": 28
+    },
+    {
+      "class": "ModelConfig",
+      "field": "local_model_preload_authority",
+      "type": "str",
+      "default_expression": "''",
+      "path": "holdspeak/config/model.py",
+      "line": 44
+    },
+    {
+      "class": "LLMRuntimeConfig",
+      "field": "backend",
+      "type": "str",
+      "default_expression": "'auto'",
+      "path": "holdspeak/config/model.py",
+      "line": 56
+    },
+    {
+      "class": "LLMRuntimeConfig",
+      "field": "mlx_model",
+      "type": "str",
+      "default_expression": "'~/Models/mlx/Qwen3.5-8B-MLX-4bit'",
+      "path": "holdspeak/config/model.py",
+      "line": 59
+    },
+    {
+      "class": "LLMRuntimeConfig",
+      "field": "llama_cpp_model_path",
+      "type": "str",
+      "default_expression": "'~/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf'",
+      "path": "holdspeak/config/model.py",
+      "line": 60
+    },
+    {
+      "class": "LLMRuntimeConfig",
+      "field": "openai_compatible_model",
+      "type": "str",
+      "default_expression": "'qwen3.5-8b-instruct'",
+      "path": "holdspeak/config/model.py",
+      "line": 63
+    },
+    {
+      "class": "LLMRuntimeConfig",
+      "field": "openai_compatible_base_url",
+      "type": "str",
+      "default_expression": "'http://127.0.0.1:8000/v1'",
+      "path": "holdspeak/config/model.py",
+      "line": 64
+    },
+    {
+      "class": "LLMRuntimeConfig",
+      "field": "openai_compatible_api_key_env",
+      "type": "str",
+      "default_expression": "'OPENAI_API_KEY'",
+      "path": "holdspeak/config/model.py",
+      "line": 65
+    },
+    {
+      "class": "LLMRuntimeConfig",
+      "field": "profile_id",
+      "type": "Optional[str]",
+      "default_expression": "None",
+      "path": "holdspeak/config/model.py",
+      "line": 70
+    },
+    {
+      "class": "LLMRuntimeConfig",
+      "field": "openai_compatible_timeout_seconds",
+      "type": "float",
+      "default_expression": "8.0",
+      "path": "holdspeak/config/model.py",
+      "line": 71
+    },
+    {
+      "class": "LLMRuntimeConfig",
+      "field": "n_ctx",
+      "type": "int",
+      "default_expression": "2048",
+      "path": "holdspeak/config/model.py",
+      "line": 72
+    },
+    {
+      "class": "LLMRuntimeConfig",
+      "field": "n_threads",
+      "type": "Optional[int]",
+      "default_expression": "None",
+      "path": "holdspeak/config/model.py",
+      "line": 73
+    },
+    {
+      "class": "LLMRuntimeConfig",
+      "field": "n_gpu_layers",
+      "type": "int",
+      "default_expression": "-1",
+      "path": "holdspeak/config/model.py",
+      "line": 74
+    },
+    {
+      "class": "LLMRuntimeConfig",
+      "field": "warm_on_start",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/model.py",
+      "line": 75
+    },
+    {
+      "class": "LLMRuntimeConfig",
+      "field": "eviction_idle_seconds",
+      "type": "int",
+      "default_expression": "0",
+      "path": "holdspeak/config/model.py",
+      "line": 76
+    },
+    {
+      "class": "HotkeyConfig",
+      "field": "key",
+      "type": "str",
+      "default_expression": "'alt_r'",
+      "path": "holdspeak/config/ui.py",
+      "line": 15
+    },
+    {
+      "class": "HotkeyConfig",
+      "field": "display",
+      "type": "str",
+      "default_expression": "'\u2325R'",
+      "path": "holdspeak/config/ui.py",
+      "line": 16
+    },
+    {
+      "class": "UIConfig",
+      "field": "desk_sounds",
+      "type": "bool",
+      "default_expression": "True",
+      "path": "holdspeak/config/ui.py",
+      "line": 27
+    },
+    {
+      "class": "VoiceMacroAction",
+      "field": "kind",
+      "type": "str",
+      "default_expression": null,
+      "path": "holdspeak/config/ui.py",
+      "line": 53
+    },
+    {
+      "class": "VoiceMacroAction",
+      "field": "payload",
+      "type": "str",
+      "default_expression": "''",
+      "path": "holdspeak/config/ui.py",
+      "line": 54
+    },
+    {
+      "class": "VoiceMacro",
+      "field": "keyword",
+      "type": "str",
+      "default_expression": null,
+      "path": "holdspeak/config/ui.py",
+      "line": 89
+    },
+    {
+      "class": "VoiceMacro",
+      "field": "action",
+      "type": "VoiceMacroAction",
+      "default_expression": null,
+      "path": "holdspeak/config/ui.py",
+      "line": 90
+    },
+    {
+      "class": "MacrosConfig",
+      "field": "enabled",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/ui.py",
+      "line": 119
+    },
+    {
+      "class": "MacrosConfig",
+      "field": "items",
+      "type": "list[VoiceMacro]",
+      "default_expression": "field(default_factory=list)",
+      "path": "holdspeak/config/ui.py",
+      "line": 120
+    }
+  ]
+}

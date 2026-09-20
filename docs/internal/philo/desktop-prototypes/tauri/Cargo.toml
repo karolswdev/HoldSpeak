@@ -1,0 +1,11 @@
+[package]
+name = "holdspeak-philo-tauri-probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }

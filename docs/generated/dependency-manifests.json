@@ -1,0 +1,219 @@
+{
+  "manifest_paths": [
+    "aipi-lite/requirements-dev.txt",
+    "aipi-lite/requirements.txt",
+    "apple/Package.resolved",
+    "apple/Package.swift",
+    "dogfood/repos/ledgerline/pyproject.toml",
+    "dogfood/repos/questline/package.json",
+    "extensions/firefox/manifest.json",
+    "pyproject.toml",
+    "tests/fixtures/dictation_demo_project/pyproject.toml",
+    "tests/fixtures/phase200/corpus/manifest.json",
+    "uat/web/package-lock.json",
+    "uat/web/package.json",
+    "uv.lock",
+    "web/package-lock.json",
+    "web/package.json"
+  ],
+  "node_manifests": {
+    "dogfood/repos/questline/package.json": {
+      "dependencies": {
+        "@prisma/client": "^5.18.0",
+        "@trpc/client": "^11.0.0",
+        "@trpc/server": "^11.0.0",
+        "next": "14.2.5",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "superjson": "^2.2.1",
+        "zod": "^3.23.8"
+      },
+      "description": "Gamified habit & quest tracker — turn real-life goals into quests, streaks, and XP.",
+      "devDependencies": {
+        "@types/node": "^20.14.0",
+        "@types/react": "^18.3.0",
+        "prisma": "^5.18.0",
+        "typescript": "^5.5.4",
+        "vitest": "^2.0.5"
+      },
+      "engines": {
+        "node": ">=20"
+      },
+      "name": "questline",
+      "private": true,
+      "scripts": {
+        "build": "prisma generate && next build",
+        "db:migrate": "prisma migrate dev",
+        "db:studio": "prisma studio",
+        "dev": "next dev",
+        "lint": "next lint",
+        "start": "next start",
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit"
+      },
+      "version": "1.4.0"
+    },
+    "uat/web/package.json": {
+      "dependencies": {
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "zustand": "^4.5.5"
+      },
+      "description": "The guided HoldSpeak UAT site — pick a pack, stage the world, walk it beat by beat, cast a verdict per surface.",
+      "devDependencies": {
+        "@testing-library/jest-dom": "^6.5.0",
+        "@testing-library/react": "^16.0.1",
+        "@vitejs/plugin-react": "^4.3.1",
+        "jsdom": "^25.0.1",
+        "vite": "^5.4.8",
+        "vitest": "^2.1.2"
+      },
+      "name": "holdspeak-uat-site",
+      "private": true,
+      "scripts": {
+        "build": "vite build",
+        "dev": "vite",
+        "preview": "vite preview",
+        "test": "vitest run"
+      },
+      "type": "module",
+      "version": "0.1.0"
+    },
+    "web/package.json": {
+      "dependencies": {
+        "@codemirror/commands": "^6.10.4",
+        "@codemirror/lang-markdown": "^6.5.1",
+        "@codemirror/language": "^6.12.4",
+        "@codemirror/language-data": "^6.5.2",
+        "@codemirror/state": "^6.7.1",
+        "@codemirror/view": "^6.43.7",
+        "@tanstack/react-query": "^5.102.8",
+        "@types/react": "^19.2.17",
+        "@types/react-dom": "^19.2.3",
+        "@use-gesture/react": "^10.3.1",
+        "@xterm/addon-fit": "^0.11.0",
+        "@xterm/addon-search": "^0.16.0",
+        "@xterm/xterm": "^6.0.0",
+        "motion": "^12.42.2",
+        "pixi.js": "^8.19.0",
+        "react": "^19.2.7",
+        "react-dom": "^19.2.7",
+        "react-router-dom": "^7.18.1",
+        "three": "^0.180.0",
+        "zustand": "^5.0.14"
+      },
+      "description": "HoldSpeak Web — one typed Vite/React DeskOS surface.",
+      "devDependencies": {
+        "@fontsource/inter": "^5.2.8",
+        "@fontsource/jetbrains-mono": "^5.2.8",
+        "@fontsource/space-grotesk": "^5.2.8",
+        "@testing-library/jest-dom": "^6.9.1",
+        "@testing-library/react": "^16.3.2",
+        "@testing-library/user-event": "^14.6.1",
+        "@types/node": "^22.20.1",
+        "@types/three": "^0.180.0",
+        "@vitejs/plugin-react": "^4.7.0",
+        "axe-core": "^4.12.1",
+        "jsdom": "^26.1.0",
+        "open-props": "^1.7.13",
+        "prettier": "^3.9.5",
+        "puppeteer": "^25.1.0",
+        "typescript": "^5.9.3",
+        "vite": "^7.3.6",
+        "vitest": "^4.1.9"
+      },
+      "name": "holdspeak-web",
+      "private": true,
+      "scripts": {
+        "build": "vite build",
+        "bundle:gate": "node scripts/check-bundle.mjs",
+        "check": "npm run tokens:check && npm run tokens:gate && npm run guard:architecture && npm run typecheck && npm run test:web && npm run build && npm run bundle:gate",
+        "dev": "vite",
+        "guard:architecture": "node scripts/guard-architecture.mjs",
+        "preview": "vite preview",
+        "shots": "vite build && node scripts/shoot.mjs",
+        "test:desk": "vitest run src/desk --maxWorkers=2",
+        "test:web": "vitest run --maxWorkers=2",
+        "tokens": "node scripts/generate-tokens.cjs",
+        "tokens:check": "node scripts/generate-tokens.cjs --check",
+        "tokens:gate": "node scripts/validate-tokens.cjs",
+        "typecheck": "tsc --noEmit"
+      },
+      "type": "module",
+      "version": "0.0.1"
+    }
+  },
+  "python_optional": {
+    "dev": [
+      "playwright>=1.40.0",
+      "pytest>=8.0",
+      "pytest-asyncio>=0.23",
+      "pytest-cov>=4.0",
+      "pytest-mock>=3.12",
+      "pytest-timeout>=2.2",
+      "pytest-xdist>=3.5",
+      "httpx>=0.26",
+      "jsonschema>=4.21",
+      "ruff>=0.1.0",
+      "scipy>=1.10.0"
+    ],
+    "dictation-llama": [
+      "llama-cpp-python>=0.3.34"
+    ],
+    "dictation-mlx": [
+      "mlx-lm>=0.19; sys_platform == 'darwin' and platform_machine == 'arm64'",
+      "outlines>=0.1.0; sys_platform == 'darwin' and platform_machine == 'arm64'"
+    ],
+    "dictation-openai": [
+      "openai>=1.0.0"
+    ],
+    "linux": [
+      "faster-whisper>=1.0.0"
+    ],
+    "meeting": [
+      "llama-cpp-python>=0.3.34",
+      "openai>=1.0.0",
+      "resemblyzer>=0.1.3",
+      "zeroconf>=0.131.0"
+    ],
+    "presence": [
+      "pyobjc-framework-Cocoa>=10.0; sys_platform == 'darwin'",
+      "pyobjc-framework-WebKit>=10.0; sys_platform == 'darwin'",
+      "PyGObject>=3.44; sys_platform == 'linux'"
+    ],
+    "test": [
+      "pytest>=8.0",
+      "pytest-asyncio>=0.23",
+      "pytest-cov>=4.0",
+      "pytest-mock>=3.12",
+      "pytest-timeout>=2.2",
+      "pytest-xdist>=3.5",
+      "httpx>=0.26",
+      "playwright>=1.40.0",
+      "jsonschema>=4.21",
+      "openai>=1.0.0"
+    ],
+    "tts": [
+      "kokoro-onnx>=0.4.0",
+      "soundfile>=0.12.0"
+    ],
+    "wakeword": [
+      "openwakeword>=0.6.0"
+    ]
+  },
+  "python_required": [
+    "mlx-whisper>=0.4.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "sounddevice>=0.4.6",
+    "numpy>=1.24.0",
+    "pynput>=1.7.6",
+    "pyperclip>=1.8.2",
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.20.0",
+    "PyYAML>=6.0",
+    "python-multipart>=0.0.9",
+    "cryptography>=42.0",
+    "keyring>=25.0",
+    "icalendar>=7.3.0"
+  ],
+  "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8"
+}

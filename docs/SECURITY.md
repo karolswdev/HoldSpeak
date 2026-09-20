@@ -135,9 +135,11 @@ per live session (`meeting.session@1`, `dictation.session@1`, or
 invocation child that rechecks liveness,
 revocation, deadline, budget, and exact revision. Pre-session Whisper preload
 requires narrow authority for the exact model-config revision; it is not a silent
-warmup exception. Prompts, transcripts, dictated text, audio, completions,
-credentials, and token streams stay out of kernel operation, journal, and receipt
-fields.
+warmup exception. Generic inference receipts use references and hashes rather
+than model bodies. This is not a content-free guarantee for all kernel storage:
+parent input snapshots can retain request content, and the generic recursive
+filter rejects specific audio/PCM/token keys rather than every sensitive string.
+See [the implementation boundary](SECURITY_MODEL.md#data-handling-and-egress).
 
 HoldSpeak is **local-first**. The design goal is that nothing leaves your
 machine unless you explicitly choose a feature that sends it. The sections below
@@ -283,7 +285,9 @@ footer's egress chip. The deterministic fallback has no egress.
 
 **The remote boundary.** The Streamable HTTP listener
 (`POST /api/mcp`) is opt-in and off by default for **remote** callers. When
-enabled, it accepts connections on the tailnet address only. An `OWNER`
+enabled, remote authentication rules apply, but the configured `bind_host`
+is stored without a listener or peer-address enforcement path. It does not
+currently provide a tailnet-only network fence. An `OWNER`
 principal is never derived from a non-loopback request on this route; the
 owner's web token presented from a remote address returns 403.
 `X-Forwarded-For` is never read for principal derivation on any route.
@@ -451,10 +455,11 @@ remain unsupported; they must not silently reuse the plaintext plane.
    - **Restart invalidation.** Hub startup flips every held proposal to
      `invalidated`; nothing held pre-restart is decidable post-restart. The
      agent proposes again by retrying, never resumes.
-   - **Redaction.** The hook sends a sha256 and the first 120 characters of
-     the canonical arguments; the full payload never crosses the wire, never
-     lands in a row, and the hub-side gate modules are grep-censused against
-     touching it. Deny reasons are bounded one-liners.
+   - **Bounded argument preview.** The hook sends a sha256 and the first 120
+     characters of canonical arguments. This truncates content; it does not
+     remove secrets. A short input can cross intact, and a secret in the prefix
+     can reach the retained row. Tests excluding the full `tool_input` field do
+     not prove secret removal. Deny reasons are bounded one-liners.
    - **The install never edits another app's config.** `holdspeak gate
      install` prints the hook block; adding it to `~/.claude/settings.json`
      is the user's own act. Arming is a second, separate opt-in

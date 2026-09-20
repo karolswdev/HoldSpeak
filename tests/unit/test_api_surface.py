@@ -96,3 +96,13 @@ def test_extractors_see_the_real_call_sites() -> None:
         "iOS extraction lost the coder-board calls — did the client move?")
     assert any(c.startswith("/api/dictation/") for c in web)
     assert len(ios) >= 15 and len(web) >= 60
+
+
+def test_committed_openapi_matches_reference_app() -> None:
+    """Declared schemas remain real; raw Request semantics remain outside them."""
+    declared = json.loads((REPO / "docs/generated/openapi.json").read_text())
+    live = gen.build_reference_app().openapi()
+    # Export provenance is documentation metadata, not a server schema field.
+    declared["info"].pop("x-philo-note")
+    declared["info"].pop("x-source-snapshot")
+    assert declared == live, "OpenAPI drift: run scripts/philo_openapi_reference.py with isolated HOME"

@@ -1,0 +1,21 @@
+[
+  { "id": "desk-spatial", "label": "Desk · spatial", "group": "Desk", "tone": "current", "requirement": "FR-DESK-002", "primary": true },
+  { "id": "desk-list", "label": "Desk · list", "group": "Desk", "tone": "current", "requirement": "FR-DESK-002", "primary": true },
+  { "id": "desk-context", "label": "Desk · selected + menu", "group": "Desk", "tone": "current", "requirement": "FR-OBJ-002", "primary": true },
+  { "id": "desk-drawer", "label": "Desk · drawer", "group": "Desk", "tone": "current", "requirement": "FR-WIN-001" },
+  { "id": "windows-two", "label": "Windows · coexist", "group": "Windows", "tone": "current", "requirement": "FR-WIN-001" },
+  { "id": "windows-expose", "label": "Windows · Exposé", "group": "Windows", "tone": "current", "requirement": "FR-WIN-003" },
+  { "id": "speak-ready", "label": "Speak · ready", "group": "Speak", "tone": "current", "requirement": "FR-STATE-001", "primary": true },
+  { "id": "speak-progress", "label": "Speak · progress", "group": "Speak", "tone": "current", "requirement": "FR-STATE-001", "primary": true },
+  { "id": "meeting-review", "label": "Meeting · review", "group": "Meetings", "tone": "current", "requirement": "FR-INFO-002", "primary": true },
+  { "id": "thread", "label": "Thread · retained", "group": "Threads", "tone": "current", "requirement": "FR-INFO-001", "primary": true },
+  { "id": "agents", "label": "Agents · workbench", "group": "Agents", "tone": "current", "requirement": "FR-OBJ-001", "primary": true },
+  { "id": "settings", "label": "Settings", "group": "Settings", "tone": "current", "requirement": "NFR-THEME-001" },
+  { "id": "info", "label": "Info", "group": "Desk", "tone": "current", "requirement": "FR-INFO-001" },
+  { "id": "drop-valid", "label": "Drop · valid", "group": "Drop", "tone": "current", "requirement": "FR-DND-001" },
+  { "id": "drop-refusal", "label": "Drop · refusal", "group": "Drop", "tone": "current", "requirement": "NFR-ERR-002" },
+  { "id": "command", "label": "Command palette", "group": "Chrome", "tone": "current", "requirement": "FR-MENU-001" },
+  { "id": "shade", "label": "System shade", "group": "Chrome", "tone": "current", "requirement": "FR-WIN-001" },
+  { "id": "high-contrast", "label": "High contrast", "group": "Variants", "tone": "proposed", "requirement": "NFR-THEME-002" },
+  { "id": "pseudo", "label": "Pseudo-locale", "group": "Variants", "tone": "proposed", "requirement": "NFR-I18N-001" }
+]

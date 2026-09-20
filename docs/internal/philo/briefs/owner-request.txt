@@ -1,0 +1,4504 @@
+Codex, could you please reason with me here. I want you to work this all out in a worktree, ok? Heck - honestly - need you to actually re-clone to ~/dev/tools/HoldSpeak-Philo/ - and work out of there. Main thing? Here's the two main things, honestly...:
+
+# HoldSpeak: Capability Audit, System Integration Map, and Documentation-Agent Specification
+
+## Executive reconstruction
+
+The most important conclusion is that **HoldSpeak is no longer merely a dictation application**. The repository currently describes a substantially broader local-first system whose unifying purpose is to turn human speech, meetings, project context, and agent activity into **reviewable work objects, durable knowledge, and explicitly approved actions**. Its original “hold a key, speak, release, type” loop still exists, but it now sits beside meeting intelligence, project memory, model routing, persistent agent conversations, coding-agent supervision, companion-device access, approval-gated external actions, a spatial “Desk” UI, and a runtime/process journal. citeturn1search0turn1search1
+
+That explains why the product has become difficult even for its creator to hold in one mental model: **the codebase appears to have crossed the boundary from “application with features” into “platform with several interacting subsystems.”** The public documentation itself now names Meetings, Notes, Artifacts, Projects, Agents, Workflows, Integrations, Coder sessions, attention, Receipts, Dictation, Studio, Settings, companions, model destinations, plugins, connectors, and approval mechanisms. citeturn1search0turn1search1
+
+There is even evidence of this identity transition in the package metadata. `pyproject.toml` still describes HoldSpeak primarily as “Voice typing for macOS and Linux,” while the README describes a system encompassing dictation, meetings, knowledge, agents, remote execution, approval-gated actions, coding-agent workflows, and companions. The package is currently version `0.4.0`, requires Python 3.10+, and is classified as Beta, while the README characterizes the project as “0.x, early but real,” with mature features but still-changing APIs, configuration, and defaults. citeturn1search0turn1search2
+
+I would therefore describe the current product this way:
+
+> **HoldSpeak is a local-first voice-work hub that converts spoken activity into typed output, structured meeting knowledge, grounded conversations, agent work, and human-approved external actions, while preserving provenance and making execution boundaries visible.**
+
+That framing reduces the system to four conceptual loops:
+
+| Loop | Human intent | HoldSpeak does | Durable result |
+|---|---|---|---|
+| **Speak → Type** | “Turn what I am saying into useful text.” | Transcribe, clean, route, contextualize, optionally rewrite, preview, inject. | Typed text + dictation journal + learning signal. |
+| **Meet → Understand** | “Turn this conversation into what matters next.” | Capture/import, transcribe, identify intent, run intelligence plugins, extract decisions/actions/risks/etc. | Meeting + transcript + typed artifacts + aftercare state. |
+| **Context → Think** | “Reason about the material I have accumulated.” | Ground a model on selected meetings, artifacts, notes, projects, or other records. | Cited answer/conversation + reusable Artifact. |
+| **Propose → Approve → Act** | “Let software help me do something without surrendering control.” | Generate a proposal, expose boundary and exact payload, require approval, execute, record a receipt. | Auditable external effect or denied action. |
+
+Those four loops are much easier to communicate than the complete feature list, while still encompassing most of what the present product does. The README strongly supports this interpretation: it repeatedly emphasizes local operation, typed artifacts rather than recordings alone, retained decisions, explicit approval before side effects, provenance, and visible execution destinations. citeturn1search0
+
+A second important conclusion is that **the Desk has become the product's organizing surface**. The canonical frontend architecture describes HoldSpeak Web as a single typed Vite/React 19 application whose principal surface is the Desk; Pixi v8 renders the world layer, Zustand supplies Desk state, DOM windows are composited above it, and FastAPI serves the SPA. Only `/`, `/welcome`, and `/presence` remain true routes; older product paths effectively deep-link into windows on the Desk. citeturn1search8
+
+That means the current product architecture is best understood as:
+
+**HoldSpeak Hub + execution kernel + durable store + work engines + policy/approval layer + Desk/companions**
+
+rather than as:
+
+**dictation app + many unrelated features**.
+
+---
+
+## Capability inventory
+
+The following is the most concrete inventory I can derive from the repository's current canonical/public documentation. I distinguish between **shipped/documented**, **optional**, **built but unreleased**, **platform-constrained**, and **deliberately prohibited** behavior rather than treating everything mentioned in the repository as equally mature.
+
+### Core runtime and product shell
+
+| Capability | Functional meaning | Apparent status |
+|---|---|---|
+| **Local HoldSpeak hub** | A single runtime serves both dictation and meeting-oriented functionality rather than maintaining two unrelated applications. | Core/shipped. citeturn1search0 |
+| **FastAPI application host** | The browser SPA is served through FastAPI, which also forms part of HoldSpeak's HTTP application boundary. | Core/shipped. citeturn1search8 |
+| **Desk** | Principal spatial workspace containing meetings, notes, knowledge, agents, artifacts and other work objects. | Canonical UI. citeturn1search0turn1search8 |
+| **Desk objects** | Meetings, Notes, Knowledge, Agents, Artifacts, Projects, Workflows, Integrations, Coder sessions, attention and Receipts are represented through the Desk system. | Documented product surface. citeturn1search0turn1search1 |
+| **Spatial interactions** | Select/open objects; contextual Info; drag objects onto agents/knowledge objects; lasso sets of objects; file objects into Zones. | Shipped/documented. citeturn1search0 |
+| **Specialized workrooms/windows** | Dictation, Meetings, Studio and Settings remain focused operational surfaces even though Desk is the front door. | Documented. citeturn1search1 |
+| **WebGL world layer** | Pixi v8 scene graph renders the Desk world. | Canonical frontend architecture. citeturn1search8 |
+| **DOM window layer** | Conventional application windows are composited above the world scene. | Canonical frontend architecture. citeturn1search8 |
+| **Zustand Desk state** | Frontend Desk state is maintained in a Zustand store. | Canonical frontend architecture. citeturn1search8 |
+| **SQLite persistence** | The complete HoldSpeak database is described as a single SQLite file. | Core/shipped. citeturn1search0 |
+| **Configuration store** | Main configuration is stored under `~/.config/holdspeak/config.json`, with user-facing settings exposed through the Desk. | Core/shipped. citeturn1search0 |
+
+### Dictation and voice interaction
+
+The dictation pipeline is considerably more than speech-to-text. Its documented flow is approximately `speech → Whisper transcript → punctuation cleanup → dictation pipeline → typed text`, with project context, Coder-session context, routing and optional LLM rewriting inserted into the intelligent portion of that pipeline. citeturn1search6
+
+| Capability | Functional meaning | Apparent status |
+|---|---|---|
+| **Hold-to-talk dictation** | Hold configured hotkey, speak, release, transcribe and insert into active application. | Foundational/shipped. citeturn1search0 |
+| **Local Whisper transcription** | Speech recognition can run locally instead of requiring cloud transcription. | Foundational/shipped. citeturn1search0turn1search2 |
+| **Cross-application text injection** | Final text is inserted into the currently active application. | Shipped; Wayland constrained. citeturn1search0 |
+| **Punctuation cleanup** | Raw transcription can be cleaned before higher-level dictation processing. | Pipeline stage. citeturn1search6 |
+| **Intent routing** | Speech can be routed according to what the utterance appears intended to accomplish. | Shipped/documented. citeturn1search0turn1search6 |
+| **Application/target-aware rewriting** | Output can be rewritten differently for Codex, Claude, a terminal, browser, editor, or another target. | Shipped/documented. citeturn1search0 |
+| **Project-grounded dictation** | Relevant project context can be incorporated before rewriting the utterance. | Shipped/documented. citeturn1search0turn1search6 |
+| **Coder-session context** | Active coding-agent/session information can participate in the dictation pipeline. | Documented. citeturn1search6 |
+| **Optional LLM rewrite** | User-controlled model can transform rough speech into target-appropriate text. | Optional. citeturn1search0turn1search6 |
+| **Preview-before-type** | Final transformed text can be shown before insertion; user explicitly chooses Type or Discard. | Optional. citeturn1search0turn1search6 |
+| **Wake-phrase mode** | Hands-free listening can be triggered by a wake phrase; the result is previewed rather than silently typed. | Optional/documented. citeturn1search0 |
+| **Language pinning** | Spoken-language setting can explicitly select any of Whisper's supported language choices described by HoldSpeak. | Shipped/documented. citeturn1search0 |
+| **Spoken-symbol dictionary** | Custom spoken phrases can be mapped to literal symbols, such as “double colon” → `::`. | Shipped/documented. citeturn1search0 |
+| **Voice commands** | Spoken keywords can trigger configured actions such as opening a URL, starting an application or running a command. | Shipped/documented. citeturn1search0 |
+| **Dictation journal** | Each run records utterance/output/routing/timing information. | Core learning/provenance mechanism. citeturn1search0 |
+| **Correction memory** | User can correct a bad result and retain that correction as learning context. | Shipped/documented. citeturn1search0 |
+| **Replay** | An older utterance can be re-run through the changed pipeline so routing/output changes can be observed. | Shipped/documented. citeturn1search0 |
+| **Learning digest** | Reports the actual number of similar corrections affecting behavior, including an honest zero. | Shipped/documented. citeturn1search0 |
+| **Activity pre-briefing** | Recently touched records can be suggested as cited context for a forthcoming dictation. | Documented. citeturn1search0 |
+| **Remote companion dictation** | An iPad can speak into the hub's full dictation path and cause approved text/actions on the desktop side. | Built/tested companion; iPad app not released. citeturn1search0 |
+
+The important architectural distinction is that **transcription and dictation transformation are separate responsibilities**. Whisper tells HoldSpeak approximately what was spoken; the dictation pipeline decides how that speech should become useful work. That separation is one of HoldSpeak's strongest product concepts. citeturn1search6
+
+### Meeting capture, intelligence, and aftercare
+
+| Capability | Functional meaning | Apparent status |
+|---|---|---|
+| **Live microphone capture** | Record meeting speech live. | Shipped/documented. citeturn1search0 |
+| **System-audio capture** | Capture system audio in addition to microphone audio. | Shipped with platform-specific backends. citeturn1search0 |
+| **Speaker labeling** | Live meeting results can include speaker distinctions. | Shipped/documented. citeturn1search0 |
+| **Audio import** | Existing recordings can be imported into meeting processing. | Shipped/documented. citeturn1search0 |
+| **WAV ingestion** | WAV import is available directly. | Shipped/documented. citeturn1search0 |
+| **Compressed-audio ingestion** | Other audio formats can be processed through `ffmpeg`. | Optional dependency/tooling path. citeturn1search0 |
+| **VTT import** | Existing caption transcript can become a HoldSpeak meeting while preserving source information such as timestamps/speaker data where available. | Shipped/documented. citeturn1search0 |
+| **SRT import** | Same general transcript-import flow for SRT. | Shipped/documented. citeturn1search0 |
+| **Plain-text transcript import** | Existing textual transcript can enter the meeting system. | Shipped/documented. citeturn1search0 |
+| **Meeting intent scoring** | Transcript is classified/scored across areas including architecture, delivery, product, incident and communications. | Documented. citeturn1search0 |
+| **Plugin intelligence pipeline** | A sequence of meeting-intelligence plugins runs against transcript material. | Core meeting-intelligence mechanism. citeturn1search0 |
+| **Built-in intelligence plugins** | Repository documentation says HoldSpeak ships 14 built-in LLM-backed plugins. | Shipped/documented. citeturn1search0 |
+| **Decision extraction** | Convert meeting evidence into typed decision records. | Shipped/documented. citeturn1search0 |
+| **Action-item extraction** | Extract actionable commitments and ownership. | Shipped/documented. citeturn1search0 |
+| **ADR generation** | Produce architecture decision record-like artifacts. | Shipped/documented. citeturn1search0 |
+| **Risk register generation** | Derive structured risks from meeting context. | Shipped/documented. citeturn1search0 |
+| **Incident timeline generation** | Create typed timeline artifacts for incident-oriented meetings. | Shipped/documented. citeturn1search0 |
+| **Typed artifacts** | Intelligence results are represented as structured artifact types rather than opaque prose only. | Core product concept. citeturn1search0 |
+| **Evidence/source linkage** | Artifacts can be associated with the transcript moments supporting them. | Shipped/documented. citeturn1search0 |
+| **Decision lifecycle** | Decisions can be accepted or superseded and durable decisions can be promoted to other records. | Documented. citeturn1search0 |
+| **Meeting aftercare** | Post-meeting view summarizes what remains open, what was decided and what changed since an earlier meeting. | Shipped/documented. citeturn1search0 |
+| **Open actions by owner** | Follow-up state can be organized around responsible people. | Documented. citeturn1search0 |
+| **Follow-up drafting** | Generate a follow-up draft based on meeting outcomes. | Shipped/documented. citeturn1search0 |
+| **Issue proposal** | Accepted action can become a proposed GitHub issue. | Approval-gated integration. citeturn1search0 |
+| **Slack delivery proposal** | Digest or follow-up can be proposed for Slack transmission. | Approval-gated integration. citeturn1search0 |
+| **Meeting archive** | Saved meetings are retained and revisitable. | Core. citeturn1search0 |
+| **Archive search/filter** | Filter/search by date, speaker, tag and open actions. | Shipped/documented. citeturn1search0 |
+
+This subsystem has a particularly strong product philosophy: **a meeting is not “done” when recording ends; it is done when the resulting knowledge and commitments are resolved into durable records and explicit next actions.** That philosophy is visible throughout the README's distinction between transcript storage and “closing the loop.” citeturn1search0
+
+### Knowledge, grounding, conversations, and artifacts
+
+| Capability | Functional meaning | Apparent status |
+|---|---|---|
+| **Project Memory** | Find material retained from earlier local project work. | Documented. citeturn1search0 |
+| **Ask this project** | Ask model-backed questions from local project material with cited sources. | Documented. citeturn1search0 |
+| **Match-count disclosure** | Project question-answering reports how much matching material fit the prompt instead of implying exhaustive inclusion. | Documented honesty/provenance feature. citeturn1search0 |
+| **Object grounding** | User can explicitly attach meetings and related records/artifacts to an AI request. | Shipped/documented. citeturn1search0 |
+| **Meeting expansion during attach** | A meeting can be expanded into its digest, transcript or generated artifacts for grounding. | Documented. citeturn1search0 |
+| **Context-window gauge** | UI measures selected grounding material against model context capacity. | Documented. citeturn1search0 |
+| **Lasso-grounded Ask AI** | Multiple Desk objects can be selected spatially and treated as one grounding set. | Documented. citeturn1search0 |
+| **Persisted answer cards** | An answer can become a retained Desk object rather than being transient chat output. | Documented. citeturn1search0 |
+| **Artifact provenance** | Retained answer records which objects it read and the user's instruction. | Documented. citeturn1search0 |
+| **Persistent Agent conversations** | Agent chat is multi-turn and survives page reload rather than being a one-shot prompt. | Shipped/documented. citeturn1search0 |
+| **Agent grounding** | Grounding attachments work in persistent Agent conversations. | Shipped/documented. citeturn1search0 |
+| **Save Agent reply as Artifact** | Individual model replies can be promoted into durable Desk artifacts. | Shipped/documented. citeturn1search0 |
+| **Model-pinned chat** | A user can open a conversation specifically tied to an available model. | Shipped/documented. citeturn1search0 |
+| **Interview composition** | The architecture describes Interview as composing existing Thread conversation, model routing and MCP services rather than introducing another model runtime. | Architecture-level capability. citeturn1search3 |
+| **Thread tool loop** | The Thread service is responsible for model conversation and its tool loop; the Thread UI/store carries messages, streamed replies, references and tool activity. | Architecture-level capability. citeturn1search3 |
+
+That last point is architecturally important: the repository explicitly says Interview **does not become another universal automation engine**. Instead, it composes established conversation, routing, and MCP services. That is the right kind of reuse boundary for a product that otherwise risks accumulating parallel orchestration systems. citeturn1search3
+
+### Models, execution destinations, and distributed inference
+
+| Capability | Functional meaning | Apparent status |
+|---|---|---|
+| **Model inventory** | Models can be added/downloaded/connected and then become available to the hub. | Documented. citeturn1search4 |
+| **Job assignments** | Available models are separately assigned to concrete HoldSpeak jobs. | Documented. citeturn1search4 |
+| **Capability validation** | Server checks that a model supports the capability required by a proposed assignment. | Documented invariant. citeturn1search4 |
+| **Readiness validation** | Unavailable or inadequately configured model cannot silently become a working assignment. | Documented invariant. citeturn1search4 |
+| **Boundary validation** | Saved execution boundary participates in assignment validation. | Documented invariant. citeturn1search4 |
+| **Named repair state** | Missing key/unsupported/unavailable state remains visible with a specific repair rather than being hidden. | Documented. citeturn1search4 |
+| **No silent model substitution** | HoldSpeak explicitly refuses to silently choose a different model when the selected one cannot satisfy an assignment. | Documented invariant. citeturn1search4 |
+| **Immutable execution plan** | Model assignment is frozen when a run starts; changing settings affects later work rather than mutating an active run. | Documented invariant. citeturn1search4 |
+| **Attempt/fallback receipts** | Receipt preserves selected primary, attempts, fallback reason, actual model/boundary and terminal result. | Documented. citeturn1search4 |
+| **On-device destination** | Work can execute on the current machine. | Core. citeturn1search0 |
+| **Paired-device destination** | Work can execute on another paired HoldSpeak node. | Documented. citeturn1search0 |
+| **Private endpoint destination** | Model/inference work can target a private endpoint. | Documented. citeturn1search0 |
+| **External OpenAI-compatible endpoint** | User can deliberately point intelligence at an external compatible service. | Optional egress path. citeturn1search0 |
+| **Reusable Runs on destinations** | Execution destinations are modeled as reusable named configuration entities. | Documented. citeturn1search0 |
+| **Agent-specific destination** | A destination can be assigned to an Agent. | Documented. citeturn1search0 |
+| **Mesh execution** | `holdspeak mesh serve` can expose another user's machine as an execution node. | Documented. citeturn1search0 |
+| **Per-device API keys** | Destination definition can synchronize while API secrets remain local to the machine holding them. | Documented trust-boundary behavior. citeturn1search0turn1search4 |
+| **Secret subresource** | Keys are written through an owner-only secret path and ordinary model/settings reads expose presence rather than secret value. | Documented security behavior. citeturn1search4 |
+| **Secret exclusion from receipts/database/sync** | The model-routing documentation explicitly says keys do not appear in ordinary responses, receipts or synchronization material. | Documented invariant. citeturn1search4 |
+
+This is sophisticated enough that I would treat **model execution routing as a first-class subsystem**, not merely “LLM settings.”
+
+### Human authority, security, and auditability
+
+HoldSpeak's security documentation explicitly presents itself as a living threat model defining stored data, trust boundaries, what can leave the machine and the intended at-rest posture. citeturn1search5
+
+| Capability | Functional meaning | Apparent status |
+|---|---|---|
+| **Visible execution boundary** | Operational work identifies whether execution occurs on this device, a paired device, private endpoint or external service. | Core security UX. citeturn1search0turn1search5 |
+| **Propose → approve → execute** | External side effects are represented as proposals rather than being silently executed. | Core authority model. citeturn1search0 |
+| **Actuators off by default** | Side-effect-capable integrations begin disabled. | Security invariant/documented. citeturn1search0 |
+| **Exact-action approval** | Approval applies to the concrete proposed action/payload rather than granting an indefinite capability. | Documented. citeturn1search0 |
+| **Audit receipts** | Actions and important execution facts leave provenance-bearing receipts. | Core concept. citeturn1search0 |
+| **Agent Gate** | A risky Claude Code Bash call can be held pending user approval in the Desk. | Optional/documented. citeturn1search0 |
+| **Two-step Gate arming** | Gate is off by default and deliberately armed. | Security-oriented UX. citeturn1search0 |
+| **Redacted action preview** | Held risky operation is shown through a redacted preview before authorization. | Documented. citeturn1search0 |
+| **Allow / deny with reason** | User can approve or reject the held tool invocation; denial reason goes back to the agent. | Documented. citeturn1search0 |
+| **Fail-closed Gate** | Once armed, inability to reach the hub causes denial rather than bypassing approval. | Explicit documented invariant. citeturn1search0 |
+| **Control modes** | Documentation names Secure, Normal and YOLO modes while stating that review/authority/execution remain conceptually separate and certain invariants cannot be relaxed. | Documented control surface; exact semantics should remain a dedicated specification. citeturn1search1 |
+| **No account / no telemetry design** | Main README states the ordinary local setup does not require a hosted HoldSpeak account or telemetry service. | Product posture. citeturn1search0 |
+
+This approval architecture may eventually become **the most strategically valuable part of HoldSpeak** because it provides a reusable answer to a rapidly growing problem: how a human supervises increasingly autonomous local coding and work agents without approving every harmless operation or surrendering control over consequential ones.
+
+### Coder, GitHub, Slack, companions, and ambient presence
+
+| Capability | Functional meaning | Apparent status |
+|---|---|---|
+| **Claude Code session presence** | Running Claude Code sessions can appear as Desk objects through hooks. | Documented. citeturn1search0 |
+| **Codex session presence** | Codex sessions can likewise appear in the Desk workflow. | Documented. citeturn1search0 |
+| **Session status/question visibility** | Companion/Desk can expose when a session is active or waiting for input. | Documented. citeturn1search0 |
+| **Human response to Coder session** | User can answer a waiting coding agent through typed or spoken input. | Documented. citeturn1search0 |
+| **Grounded response to Coder session** | Meeting/Note context can be attached to a response. | Documented. citeturn1search0 |
+| **AI-drafted response** | HoldSpeak can prepare a reply which remains editable before explicit transmission to the coding agent. | Documented. citeturn1search0 |
+| **PR observation** | Registered repositories' pull requests appear with state, CI conclusion, observation time and match provenance. | Documented. citeturn1search0 |
+| **Coder worktree launch** | Coder session can be directed into the worktree corresponding to matched PR work. | Documented. citeturn1search0 |
+| **Model-generated PR review Artifact** | HoldSpeak can retain an AI review as an Artifact. | Documented. citeturn1search0 |
+| **Proposed GitHub comment** | Complete proposed comment can await human approval before posting. | Documented. citeturn1search0 |
+| **No PR merge/close/force-push** | README explicitly places these operations outside HoldSpeak's available PR control surface. | Deliberate prohibition. citeturn1search0 |
+| **Slack send** | Meeting digest/follow-up can be transmitted after explicit approval. | Approval-gated. citeturn1search0 |
+| **Qlippy** | Optional desktop-presence mascot reflects runtime state and surfaces a small subset of approval/learning/follow-up moments. | Optional, off by default. citeturn1search0 |
+| **Non-focus-stealing presence panel** | Native panel is designed to accept pointer input when visible without stealing keyboard focus. | Documented. citeturn1search0 |
+| **Boundary badge in Qlippy** | Presence cards identify egress/execution posture. | Documented. citeturn1search0 |
+| **iPad Desk client** | First-class companion uses the hub's existing APIs for both dictation and meeting workflows. | Built and tested but explicitly unreleased. citeturn1search0 |
+| **iPad meeting review** | Companion can consume meeting artifacts, confidence/source information and aftercare. | Built/documented, unreleased client. citeturn1search0 |
+| **iPad proposal approval** | Pending proposals can be reviewed on the companion while preserving the separate approval step. | Built/documented, unreleased client. citeturn1search0 |
+| **iPad import** | Audio/transcript files can be pushed into hub intelligence processing. | Built/documented, unreleased client. citeturn1search0 |
+| **AIPI-Lite companion** | ESPHome-based portable device provides meeting controls/status and can participate in responding to waiting coding sessions. | Optional hardware companion. citeturn1search0 |
+| **LAN/Tailscale companion topology** | Companion traffic can use the user's own network rather than a HoldSpeak-hosted relay. | Documented network model. citeturn1search0 |
+
+### Platform and operational capabilities
+
+| Capability | Functional meaning | Apparent status |
+|---|---|---|
+| **macOS 14+ Apple Silicon** | Primary macOS environment in current support matrix. | Supported. citeturn1search0 |
+| **Linux X11** | Voice typing, global hotkeys and injection supported. | Supported. citeturn1search0 |
+| **Linux Wayland** | Core operation exists but global hooks/synthetic typing are constrained. | Best effort for those facilities. citeturn1search0 |
+| **Clipboard fallback** | Wayland can fall back to clipboard paste when direct synthetic typing is blocked. | Documented fallback. citeturn1search0 |
+| **BlackHole system-audio path** | macOS meeting audio capture can use BlackHole. | Platform integration. citeturn1search0 |
+| **Pulse/PipeWire capture** | Linux meeting system audio uses normal Linux audio facilities. | Platform integration. citeturn1search0 |
+| **PyPI packaging** | Installable with `pip install holdspeak`. | Shipped. citeturn1search0 |
+| **Feature extras** | Package extras split meeting and various dictation-model backends. | Shipped packaging model. citeturn1search0 |
+| **`holdspeak doctor`** | Diagnoses permissions/backends and reports configuration/schema conditions rather than merely checking installation. | Operational tool. citeturn1search0 |
+| **Backup** | Explicit database snapshot command. | Shipped. citeturn1search0 |
+| **Restore** | Restore an earlier HoldSpeak database snapshot. | Shipped. citeturn1search0 |
+| **Pre-migration backup** | Older database is backed up before an upgrade modifies it. | Documented safety invariant. citeturn1search0 |
+| **Forward-schema refusal** | Older HoldSpeak refuses to open a database produced by a newer build instead of risking destructive interpretation. | Documented safety invariant. citeturn1search0 |
+| **Plugin authoring** | Meeting intelligence/actuation architecture has an extension path for user-written plugins. | Developer feature. citeturn1search0turn1search1 |
+| **Connector development** | Repository exposes a separate extension route for integrations/connectors. | Developer feature. citeturn1search0 |
+| **Documentation render testing** | Architecture documentation says an E2E test verifies Mermaid diagrams continue to render. | Documentation engineering capability. citeturn1search3 |
+
+The overwhelming takeaway from this inventory is that HoldSpeak currently contains **at least nine meaningful systems**:
+
+**voice runtime, meeting engine, knowledge system, conversation/agent runtime, model-execution router, human-authority layer, integration/actuator framework, multi-device runtime, and Desk UI shell.**
+
+That is why it feels substantially larger than its origin.
+
+---
+
+## Functional architecture and the kernel
+
+The term **kernel** deserves special treatment because it can easily become architecturally vague.
+
+The main README explicitly describes a read-only **Process** window that displays what the **kernel journal** says is “running, waiting, unknown, or finished,” while emphasizing that Process observes rather than controls work. citeturn1search0
+
+From the public material I could verify, that is the strongest direct evidence for the kernel's role. I therefore would **not** describe it as an operating-system-like kernel, nor assume undocumented class boundaries. The defensible interpretation is:
+
+> **The HoldSpeak kernel is the runtime coordination/accounting layer that represents ongoing work and records its lifecycle into a journal which other UI surfaces can observe.**
+
+That appears consistent with the product's broader architecture of immutable execution plans, durable receipts, waiting approvals, model attempts, Coder states, and observable process status, although the exact mapping between those subsystems and the kernel implementation should be verified against source code before being made canonical. citeturn1search0turn1search4
+
+I would formalize the architecture into six layers:
+
+| Layer | Responsibility |
+|---|---|
+| **Experience layer** | Desk, specialized windows, Qlippy, browser presence, iPad, AIPI-Lite. |
+| **Ingress layer** | Hotkey/audio, browser/API calls, imports, companion calls, Coder hooks, connector events. |
+| **Work engines** | Dictation pipeline, meeting intelligence, Thread/Interview, search/knowledge, plugin processing. |
+| **Execution kernel** | Work identity, state transitions, waiting/running/completed/unknown state, journal, correlation/provenance. |
+| **Authority and routing layer** | Model assignment, destination choice, trust boundary, approval gates, actuators, control mode. |
+| **Persistence/integration layer** | SQLite, config/secrets, project memory, receipts, external services, remote nodes. |
+
+The kernel should ideally own **work lifecycle**, not business-specific semantics. For example:
+
+```text
+Created
+   |
+   v
+Planned
+   |
+   +---------------------+
+   |                     |
+   v                     v
+Ready                 Waiting
+   |                 for user /
+   |                 resource
+   |                     |
+   +----------<----------+
+   |
+   v
+Running
+   |
+   +----------+-------------+
+   |          |             |
+   v          v             v
+Succeeded   Failed       Unknown
+   |
+   v
+Recorded / Receipt finalized
+```
+
+The meeting engine should know what an `ActionItemArtifact` means. The model router should know what a model assignment means. The actuator layer should know what a Slack proposal means. **The kernel should only need to know that a unit of work has an identity, plan, state, dependencies, boundary, provenance and terminal outcome.**
+
+That separation would give HoldSpeak a very powerful common runtime:
+
+```text
+Dictation run ───────┐
+Meeting import ──────┤
+Plugin execution ────┤
+Model generation ────┤
+Agent turn ──────────┤
+Coder request ───────┼──> Kernel work model / journal
+Gate approval ───────┤
+GitHub proposal ─────┤
+Slack proposal ──────┤
+Mesh inference ──────┘
+```
+
+The current documentation is already moving in this direction through receipts, explicit destinations and frozen model execution plans. For model-backed work specifically, HoldSpeak freezes the assignment at run start and records the primary choice, attempts, fallback reasons, actual model, actual boundary and terminal result; that is exactly the sort of information a generalized kernel work record should correlate with. citeturn1search4
+
+I would make the following kernel invariants explicit in the future architecture specification:
+
+| Proposed invariant | Why it matters |
+|---|---|
+| Every meaningful asynchronous operation receives a stable `work_id`. | Enables end-to-end debugging and provenance. |
+| Parent/child relationships are explicit. | A meeting → plugin → model call → proposed action can be traced as one tree. |
+| State transitions are append-only events. | Journal remains trustworthy. |
+| Current state is derived from or reconcilable with the journal. | Prevents Process from disagreeing with reality. |
+| Boundary is recorded before execution. | Security decision is reconstructable. |
+| Approval and execution are different events. | Avoids accidental conflation of authority and work. |
+| Request payload hash / execution payload hash can be compared. | Proves “what you approved is what ran.” |
+| Terminal receipts are immutable. | Preserves auditability. |
+| Unknown is a valid state. | Better than lying about distributed or interrupted work. |
+| Recovery after restart is specified per work type. | Critical once the hub coordinates remote/model/agent processes. |
+
+This is not a claim that all those invariants already exist. It is the architectural contract I would recommend extracting from HoldSpeak's existing philosophy of honest state, receipts, immutable plans and explicit approvals. Those principles are already strongly represented in the current documentation. citeturn1search0turn1search4
+
+---
+
+## System integration map
+
+At the highest level, the system appears to be structured like this. The central-hub, Desk, model-destination, companion and approval relationships are directly reflected in current repository documentation; the explicit placement of the **kernel** below is a normalized architectural interpretation of the documented kernel journal and process model and should be verified against implementation before being declared canonical. citeturn1search0turn1search3turn1search4turn1search8
+
+```mermaid
+flowchart TB
+
+    subgraph Humans["Human interaction"]
+        HOTKEY["Global hotkey / microphone"]
+        BROWSER["Browser / Desk"]
+        IPAD["iPad companion"]
+        AIPI["AIPI-Lite"]
+        IMPORT["Audio / VTT / SRT / TXT import"]
+    end
+
+    subgraph Coding["Coding-agent world"]
+        CLAUDE["Claude Code"]
+        CODEX["Codex"]
+        REPOS["Registered repositories / PRs"]
+    end
+
+    subgraph Hub["HoldSpeak Hub"]
+        API["FastAPI / local HTTP API"]
+
+        subgraph UI["Experience layer"]
+            DESK["Desk — React / Pixi / Zustand"]
+            WINDOWS["Meetings / Dictation / Studio / Settings"]
+            PRESENCE["Qlippy / Presence"]
+            PROCESS["Process — read-only runtime view"]
+        end
+
+        subgraph Engines["Work engines"]
+            DICT["Dictation pipeline"]
+            MEET["Meeting intelligence"]
+            THREAD["Thread / Interview"]
+            MEMORY["Project Memory / grounded Ask"]
+            PLUGINS["Plugin runtime"]
+        end
+
+        subgraph Control["Execution and authority"]
+            KERNEL["Kernel / work journal"]
+            ROUTER["Model assignment + destination router"]
+            GATE["Gate / approval system"]
+            ACTUATORS["Actuator proposals"]
+            RECEIPTS["Receipts / provenance"]
+        end
+
+        subgraph State["Durable state"]
+            DB[("SQLite")]
+            CONFIG["Configuration"]
+            SECRETS["Local secrets"]
+            ARTIFACTS["Meetings / Notes / Artifacts / decisions / actions"]
+        end
+    end
+
+    subgraph Inference["Inference destinations"]
+        LOCAL["This device"]
+        PAIRED["Paired HoldSpeak node"]
+        PRIVATE["Private endpoint"]
+        EXTERNAL["External OpenAI-compatible service"]
+    end
+
+    subgraph External["Approved external effects"]
+        GITHUB["GitHub"]
+        SLACK["Slack"]
+        OS["OS / URL / app / command"]
+    end
+
+    HOTKEY --> API
+    BROWSER --> API
+    IPAD --> API
+    AIPI --> API
+    IMPORT --> API
+
+    CLAUDE --> API
+    CODEX --> API
+    REPOS --> API
+
+    API --> DICT
+    API --> MEET
+    API --> THREAD
+    API --> MEMORY
+
+    MEET --> PLUGINS
+
+    DICT --> KERNEL
+    MEET --> KERNEL
+    THREAD --> KERNEL
+    MEMORY --> KERNEL
+    PLUGINS --> KERNEL
+
+    KERNEL --> ROUTER
+    KERNEL --> GATE
+    KERNEL --> RECEIPTS
+    PROCESS --> KERNEL
+
+    ROUTER --> LOCAL
+    ROUTER --> PAIRED
+    ROUTER --> PRIVATE
+    ROUTER --> EXTERNAL
+
+    GATE --> ACTUATORS
+    ACTUATORS --> GITHUB
+    ACTUATORS --> SLACK
+    DICT --> OS
+
+    DICT --> DB
+    MEET --> DB
+    THREAD --> DB
+    MEMORY --> DB
+    RECEIPTS --> DB
+    DB --> ARTIFACTS
+
+    CONFIG --> ROUTER
+    SECRETS --> ROUTER
+
+    API --> DESK
+    API --> WINDOWS
+    API --> PRESENCE
+```
+
+There are really **two orthogonal axes** in this architecture.
+
+The first is the **work axis**:
+
+```text
+Input
+  ↓
+Normalize
+  ↓
+Understand / transform
+  ↓
+Produce durable object
+  ↓
+Optionally propose effect
+  ↓
+Human authority
+  ↓
+Execute
+  ↓
+Receipt
+```
+
+The second is the **boundary axis**:
+
+```text
+                 WHERE MAY THIS WORK RUN?
+
+     This device
+         │
+     Paired device
+         │
+    Private endpoint
+         │
+  External service
+
+Every operation should be able to answer:
+- what data was sent?
+- why?
+- where?
+- under which assignment?
+- under whose authority?
+- what actually ran?
+- what came back?
+```
+
+That boundary model is already visible in HoldSpeak's destination documentation and security posture. Models are not supposed to silently shift destinations; keys are treated separately from ordinary configuration; receipts record actual execution information; user-facing surfaces expose where work ran. citeturn1search0turn1search4turn1search5
+
+The complete dictation path can consequently be represented as:
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant H as Hotkey/Mic
+    participant STT as Whisper
+    participant DP as Dictation Pipeline
+    participant CTX as Context / Corrections
+    participant MR as Model Router
+    participant PV as Preview Gate
+    participant APP as Active App
+    participant J as Journal
+
+    U->>H: Hold and speak
+    U->>H: Release
+    H->>STT: Audio
+    STT->>DP: Transcript
+    DP->>DP: Cleanup + intent routing
+    DP->>CTX: Fetch project/session/learning context
+    CTX-->>DP: Relevant context
+    opt LLM rewrite enabled
+        DP->>MR: Grounded rewrite request
+        MR-->>DP: Rewritten text
+    end
+    opt Preview enabled
+        DP->>PV: Final candidate
+        PV-->>U: Type it / Discard
+    end
+    DP->>APP: Inject approved text
+    DP->>J: Record route/output/timing
+```
+
+That sequence follows the current documented pipeline, including transcription, cleanup, intelligent routing, project/Coder context, optional rewriting, preview and journaling. citeturn1search0turn1search6
+
+Meeting processing is structurally different:
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant C as Capture / Import
+    participant T as Transcript
+    participant I as Intent Analysis
+    participant P as Intelligence Plugins
+    participant M as Model Router
+    participant A as Artifact Store
+    participant AC as Aftercare
+    participant G as Approval Gate
+    participant X as External Actuator
+
+    U->>C: Record meeting / import file
+    C->>T: Audio or supplied transcript
+    T->>I: Normalized transcript
+    I->>P: Intent + meeting material
+    loop Applicable plugins
+        P->>M: Typed extraction request
+        M-->>P: Structured result
+        P->>A: Artifact + provenance
+    end
+    A->>AC: Decisions/actions/risks/etc.
+    AC-->>U: Open / decided / changed
+    opt Side effect requested
+        AC->>G: Proposed action
+        G-->>U: Exact action preview
+        U->>G: Approve / deny
+        G->>X: Execute only if approved
+    end
+```
+
+That is the essential meeting value proposition: **capture is only ingress; structured aftercare is the output.** citeturn1search0
+
+---
+
+## Primary workflows and use cases
+
+The feature inventory becomes much more comprehensible when expressed as a finite set of user jobs.
+
+**Developer dictation.** A developer holds the configured key and says something loosely structured such as “tell Claude to update the caching service so stale entries are evicted before the database lookup.” HoldSpeak transcribes it, identifies the target/context, incorporates project or Coder-session information, optionally rewrites it into something better suited to the destination and types the final text. The run enters the journal so the user can later see what was heard, routed and typed. citeturn1search0turn1search6
+
+**Learn from a bad dictation.** The resulting text is wrong. Instead of simply deleting it, the user corrects the result. That correction participates in the correction-memory mechanism; the learning digest reports actual similar reach, and an old utterance can subsequently be replayed through the updated pipeline to demonstrate whether routing or transformation improved. citeturn1search0
+
+**Vocabulary-heavy technical dictation.** A developer selects the spoken language and establishes spoken-symbol vocabulary so domain-specific utterances produce programming syntax or organization-specific terms more reliably. citeturn1search0
+
+**Command by voice.** A recognized keyword can map to a configured OS-level action: opening something, launching an application, executing a command or otherwise triggering one of the supported voice-command operations. citeturn1search0
+
+**Hands-free but controlled dictation.** Wake-phrase mode can listen without holding the conventional hotkey, while keeping the resulting text behind a confirmation experience rather than blindly committing it to an application. citeturn1search0
+
+**Meeting capture.** The user records microphone and system audio. HoldSpeak turns the meeting into a transcript with speaker information and passes the result into intelligence processing. citeturn1search0
+
+**Meeting import.** An existing audio recording, VTT, SRT or text transcript enters the same retained-meeting workflow rather than remaining a second-class file. Structured timestamp and speaker information from suitable transcript formats is retained where available. citeturn1search0
+
+**Architecture meeting → durable decisions.** Meeting intelligence identifies architecture-oriented material, plugins extract decisions, ADR-oriented content, actions and risks, and the user can inspect supporting transcript moments. Decisions can be accepted, superseded and ultimately promoted into enduring project documentation. citeturn1search0
+
+**Recurring project meeting.** Aftercare can answer a more useful question than “what was said?”: what remains open, who owns it, what was decided, and what changed relative to previous work. citeturn1search0
+
+**Meeting action → GitHub.** An accepted action becomes a proposed GitHub issue. The external effect remains distinct from extraction: HoldSpeak presents an approval-gated action rather than treating “AI thinks this is an action” as permission to create a ticket. citeturn1search0
+
+**Meeting result → Slack.** HoldSpeak can prepare the digest/follow-up and send it through its external-action mechanism only after the user approves the concrete proposal. citeturn1search0
+
+**Research the project's institutional memory.** Project Memory and Ask this project expose retained material to model-backed questioning while maintaining source citation and disclosing how much matching material fit within the prompt. citeturn1search0
+
+**Ad-hoc grounded reasoning.** The user lassos several Desk objects and asks a question specifically about that set. A valuable answer can be retained as a new Artifact whose provenance states the input objects and instruction that produced it. citeturn1search0
+
+**Persistent specialist agent.** Rather than invoking a one-off generation, a user opens an Agent, accumulates turns in a durable conversation, attaches relevant HoldSpeak records, and promotes useful replies into persistent artifacts. citeturn1search0
+
+**Choose exactly where AI runs.** A user can assign work to the local machine, another HoldSpeak node, a private endpoint or an explicitly configured external model service. The assignment is validated before being accepted and frozen into an execution plan when work starts. citeturn1search0turn1search4
+
+**Distributed private compute.** A more powerful machine can run `holdspeak mesh serve`; another HoldSpeak installation uses it as a named execution destination, allowing the local UX and data workflow to be separated from where model inference actually occurs. citeturn1search0
+
+**Monitor coding agents.** Claude Code or Codex hooks expose active sessions and questions into HoldSpeak. A human can respond by typing or voice, potentially grounded on a Note or Meeting rather than mentally reconstructing the context. citeturn1search0
+
+**Supervise a risky agent operation.** With Gate deliberately enabled, an agent's risky Bash call can pause, surface an appropriately redacted preview and require approval. If HoldSpeak cannot obtain that approval because the hub is unavailable, the armed gate fails closed. citeturn1search0
+
+**Follow pull-request work.** HoldSpeak observes a matched PR and its CI state, can enter the matching worktree with a Coder session, retain a model-generated review, and prepare an exact GitHub comment for approval. It deliberately does not expose merge, close or force-push operations as part of this workflow. citeturn1search0
+
+**Use HoldSpeak away from the workstation.** The iPad companion is described as a true client of the hub's APIs, not simply a remote control. It can participate in dictation, meeting review, proposals, imports, learning information, pre-briefing and Coder interaction, although the repository explicitly says the app itself has not yet been released. citeturn1search0
+
+**Ambient awareness without ambient autonomy.** Qlippy presents selected attention-worthy states such as approval requests, meaningful learning events or open meeting follow-up without independently acting. The current documentation stresses that dismissing these notifications does not itself authorize an action. citeturn1search0
+
+This gives HoldSpeak a much cleaner functional decomposition:
+
+```text
+                         HOLDSPEAK
+
+      Capture              Understand             Act
+        │                      │                   │
+        ▼                      ▼                   ▼
+   Speech / Audio       Context / Models       Proposals
+   Meetings             Plugins                Approval
+   Imports              Memory                 Execution
+   Agent events         Threads                Receipts
+        │                      │                   │
+        └─────────────── Durable Work ────────────┘
+                               │
+                               ▼
+                             Desk
+```
+
+---
+
+## Improvement opportunities
+
+The biggest opportunities are no longer primarily about adding functionality. **HoldSpeak already has more functionality than its current conceptual model comfortably communicates.** The next improvement phase should therefore optimize for coherence, contracts, discoverability and reduction of accidental complexity.
+
+| Priority | Opportunity | Concrete recommendation |
+|---|---|---|
+| **Critical** | Product identity has drifted beyond package description. | Rewrite the canonical product definition around “voice work → durable context → human-approved action.” Update package metadata, README synopsis, onboarding and screenshots from the same vocabulary. |
+| **Critical** | No human can reliably remember this capability surface. | Create a machine-readable capability registry and generate documentation/coverage views from it. |
+| **Critical** | “Kernel” can become an architectural catch-all. | Give the kernel a precise contract: entities, state machine, event/journal schema, APIs, invariants, crash recovery and explicit list of things the kernel does **not** own. |
+| **Critical** | Many workflows overlap through slightly different concepts. | Standardize Work, Artifact, Proposal, Approval, Execution, Receipt, Destination, Agent, Model, Project and Source as canonical domain terms. |
+| **High** | Advanced functionality overwhelms first-time experience. | Introduce progressive disclosure: initial product has Speak and Meet; Desk intelligence, Agents, Integrations, Mesh, Gate and companion features appear as users activate them. |
+| **High** | Feature implementation status is difficult to infer. | Give every capability one of: Stable, Beta, Experimental, Platform-limited, Built-unreleased, Deprecated, Internal. |
+| **High** | Model execution has mature semantics but risks living only in prose. | Define execution-plan and receipt schemas formally and generate diagrams/reference docs from them. |
+| **High** | Security concepts cross nearly every subsystem. | Produce one authoritative trust-boundary model covering browser, hub, paired node, endpoint, external service, connector, actuator and Coder hooks. |
+| **High** | Meetings, dictation and agents all create provenance differently. | Normalize source/provenance representation and let every Artifact expose “why does this exist?” |
+| **High** | Integrations can become an uncontrolled collection of special cases. | Require every integration to implement the same Connector / Proposal / Approval / Actuator / Receipt contract wherever possible. |
+| **High** | Distributed execution complicates debugging. | Give every run a correlation ID visible in UI, logs, kernel journal, model receipt and integration receipt. |
+| **High** | Frontend object vocabulary is expansive. | Establish an explicit Desk object ontology with allowed verbs and lifecycle states per object type. |
+| **Medium** | Internal planning documents coexist with canonical docs. | Generate an explicit docs-status index identifying canonical/current, historical, RFC, superseded and generated documents. |
+| **Medium** | Operational recovery becomes increasingly important. | Document restart semantics for active transcription, meeting processing, model calls, actuator approval and mesh work. |
+| **Medium** | Cross-platform behavior is necessarily uneven. | Generate a platform capability matrix from automated capability probes/E2E tests rather than maintaining it manually. |
+| **Medium** | The project already guards Mermaid rendering. | Extend documentation CI to link checking, capability-to-test traceability, API/schema freshness and stale-file detection. |
+
+The package-description mismatch is especially telling. The Python manifest still positions HoldSpeak as voice typing while the README presents an integrated voice/meeting/agent workspace. citeturn1search0turn1search2 Fixing that is not marketing polish—it forces an architectural decision about what the product **is**.
+
+My strongest recommendation is to establish a **Capability Registry** such as:
+
+```yaml
+capabilities:
+  - id: dictation.push_to_talk
+    name: Push-to-talk dictation
+    domain: dictation
+    status: stable
+    surfaces:
+      - desktop
+      - ipad
+    platforms:
+      macos: supported
+      linux_x11: supported
+      linux_wayland: best_effort
+    inputs:
+      - audio
+    outputs:
+      - typed_text
+      - dictation_run
+    boundaries:
+      default: this_device
+      external_allowed: false
+    depends_on:
+      - transcription.whisper
+      - text_injection
+    api:
+      - /api/...
+    config:
+      - dictation....
+    implementation:
+      - holdspeak/...
+    tests:
+      - tests/...
+    docs:
+      - docs/DICTATION_PIPELINE_GUIDE.md
+
+  - id: meeting.github_issue_proposal
+    name: Propose GitHub issue from action item
+    domain: meetings
+    status: beta
+    side_effecting: true
+    authority:
+      proposal_required: true
+      explicit_approval_required: true
+    boundaries:
+      default: external_service
+    depends_on:
+      - meeting.aftercare
+      - integration.github
+      - authority.actuators
+```
+
+Once that exists, HoldSpeak can automatically answer:
+
+```text
+What can HoldSpeak do?
+What is experimental?
+What works on Wayland?
+What can send data externally?
+Which features require a model?
+Which features can cause side effects?
+Which ones require explicit approval?
+Which APIs support them?
+Which tests prove them?
+Which docs explain them?
+What changed between releases?
+```
+
+That single registry would substantially reduce the confusion you are experiencing today.
+
+I would similarly define the core conceptual ontology as:
+
+```text
+Source
+  Something HoldSpeak can read or hear.
+
+Work
+  A tracked computation or operation.
+
+Artifact
+  A durable result of Work.
+
+Destination
+  Where computation occurs.
+
+Proposal
+  A requested side effect that has not been authorized.
+
+Approval
+  A human authority decision over one concrete Proposal.
+
+Execution
+  The actual performance of an approved side effect.
+
+Receipt
+  Immutable evidence describing what actually occurred.
+
+Agent
+  A durable conversational identity with an assigned model/destination.
+
+Project
+  A scope for context, memory, repositories and related objects.
+
+Kernel
+  The runtime mechanism tracking Work lifecycle and journal state.
+```
+
+Every feature should fit this vocabulary. When it cannot, that is a useful architecture signal.
+
+The simplicity goal should therefore **not** be “remove sophisticated capabilities.” It should be:
+
+> **Make sophisticated capabilities collapse into a very small number of reusable concepts.**
+
+That is how HoldSpeak can remain simultaneously simple and powerful.
+
+---
+
+## Ultimate documentation-agent prompt
+
+The following is the deliverable I would give directly to a strong coding/repository agent. It intentionally tells the agent **not to trust the existing documentation—including this report—and to prove every claim from the repository, tests, runtime contracts and history.**
+
+```text
+You are the principal technical archivist, systems architect, product analyst,
+developer-experience engineer, security-documentation engineer, and AI-agent
+tooling designer for the HoldSpeak project.
+
+Repository:
+  https://github.com/karolswdev/HoldSpeak
+
+MISSION
+=======
+
+Your task is not merely to "improve the README."
+
+Your task is to reconstruct HoldSpeak from first principles and leave behind the
+most complete, accurate, maintainable documentation and agent-knowledge system
+possible.
+
+HoldSpeak has grown from local voice typing into a significantly larger system.
+The repository appears to encompass at least:
+
+- push-to-talk dictation;
+- local speech recognition;
+- an intelligent dictation pipeline;
+- correction/learning/replay;
+- meeting capture and import;
+- meeting-intelligence plugins;
+- structured decisions/actions/ADRs/risks/etc.;
+- meeting aftercare;
+- a spatial Desk UI;
+- Notes, Meetings, Artifacts, Projects, Agents, Workflows, Integrations,
+  Coder sessions, attention and Receipts;
+- model registration and job assignments;
+- local / paired-device / private-endpoint / external model execution;
+- persistent model conversations;
+- grounding and project memory;
+- human approval and actuator semantics;
+- a kernel/process journal;
+- Claude Code/Codex integrations;
+- GitHub and Slack actions;
+- Qlippy/presence;
+- an iPad companion;
+- AIPI-Lite;
+- plugins/connectors;
+- backup/migration/doctor/recovery behavior.
+
+THIS LIST IS A RESEARCH HYPOTHESIS, NOT SOURCE OF TRUTH.
+
+You MUST verify it against the current repository.
+
+The final result must let a new engineer answer, without archaeology:
+
+1. What exactly is HoldSpeak?
+2. What can it do today?
+3. What cannot it do?
+4. Which capabilities are stable, experimental, partial, platform-limited,
+   built-but-unreleased, deprecated, historical, or merely planned?
+5. Which user-facing surface exposes each capability?
+6. Which backend components implement it?
+7. Which API routes participate?
+8. Which database entities persist it?
+9. Which configuration values affect it?
+10. Which models/services/devices does it depend on?
+11. Which data may leave the machine?
+12. Which actions can cause side effects?
+13. Where does human approval occur?
+14. What does the kernel actually own?
+15. What happens when something crashes, disconnects, times out, or is denied?
+16. Which tests prove each claim?
+17. Which documents are authoritative?
+18. How should another AI coding agent safely modify this subsystem?
+19. How can the project keep all of the above accurate automatically?
+
+NON-NEGOTIABLE PRINCIPLES
+=========================
+
+ACCURACY OVER NARRATIVE.
+
+Do not document functionality because README text says it exists.
+
+For every meaningful capability, inspect implementation, routes, schemas,
+configuration, tests and where useful git history.
+
+Existing docs are evidence, not authority.
+
+When docs and code disagree:
+- record the disagreement;
+- determine which behavior is actually executable;
+- inspect tests and recent changes;
+- classify the doc as stale if appropriate;
+- do not silently choose whichever version sounds nicer.
+
+Never transform a planned feature into a shipped feature.
+
+Never infer "working" merely because a class or route exists.
+
+Never infer "unused" merely because something is not called from one obvious
+entry point.
+
+Never call a capability local/private if an optional branch can transmit data
+externally.
+
+Never call an action approval-gated unless the actual execution path verifies
+that approval.
+
+Never claim a test proves behavior unless you inspect the test and its
+assertions.
+
+Every architectural assertion must be traceable to repository evidence.
+
+RESEARCH SNAPSHOT
+=================
+
+At the beginning:
+
+- record repository URL;
+- record branch;
+- record exact commit SHA;
+- record commit timestamp;
+- record HoldSpeak package/version information;
+- record relevant platform/runtime versions;
+- record whether the working tree was clean;
+- record documentation-generation date.
+
+Put this in:
+
+  docs/generated/REPOSITORY_SNAPSHOT.md
+
+No generated documentation may pretend to describe a newer commit.
+
+PHASE: REPOSITORY ARCHAEOLOGY
+=============================
+
+Inventory the entire repository.
+
+Produce a machine-readable tree classification identifying:
+
+- Python packages;
+- frontend packages;
+- Swift/iPad sources;
+- ESPHome/AIPI sources;
+- scripts;
+- tests;
+- API schemas;
+- migrations;
+- configuration;
+- packaging;
+- GitHub Actions;
+- docs;
+- internal plans;
+- PM/roadmap artifacts;
+- fixtures;
+- generated files;
+- static assets;
+- native/platform glue;
+- plugin code;
+- connector code;
+- model backends;
+- coding-agent hooks.
+
+Inspect every project manifest and dependency file.
+
+For each dependency that materially affects architecture, determine:
+- why it exists;
+- which subsystem consumes it;
+- whether it is required or optional;
+- which platform it applies to;
+- whether it creates an external/network boundary.
+
+Do not produce a useless package-by-package encyclopedia.
+Focus on architectural dependencies.
+
+Inspect git history strategically.
+
+Use history to answer:
+- Why was the Desk introduced?
+- When did the kernel appear?
+- When did model destinations/assignments appear?
+- When did meeting intelligence become a plugin system?
+- When did Coder/Gate/Receipts appear?
+- Which older architecture documents have been superseded?
+- Which terminology changed?
+
+Do NOT turn git history into a chronological dump.
+
+Produce:
+  docs/generated/REPOSITORY_MAP.md
+  docs/generated/ARCHITECTURE_HISTORY.md
+
+PHASE: CAPABILITY RECONSTRUCTION
+================================
+
+Create:
+
+  docs/CAPABILITIES.md
+  docs/generated/capabilities.yaml
+
+This is one of the most important deliverables.
+
+For EVERY user-visible or developer-visible capability, assign:
+
+- stable ID;
+- canonical name;
+- concise purpose;
+- domain;
+- status;
+- user-facing surfaces;
+- entry points;
+- supported platforms;
+- input types;
+- output types;
+- persistent entities created/modified;
+- APIs used;
+- configuration keys;
+- dependencies;
+- model requirements;
+- network requirements;
+- trust boundary;
+- whether external egress is possible;
+- whether it can cause a side effect;
+- approval requirements;
+- kernel/work types involved;
+- source-code implementation paths;
+- test evidence;
+- canonical docs;
+- known limitations;
+- known failure states;
+- deprecation/replacement information.
+
+Use a controlled status vocabulary:
+
+  stable
+  beta
+  experimental
+  partial
+  platform_limited
+  built_unreleased
+  planned
+  deprecated
+  internal
+  historical
+
+Use a controlled exposure vocabulary:
+
+  user
+  operator
+  developer
+  integration
+  internal
+
+Use a controlled side-effect vocabulary:
+
+  none
+  local_reversible
+  local_irreversible
+  external_reversible
+  external_irreversible
+
+Explicitly find NEGATIVE capabilities.
+
+Examples:
+- operations intentionally not exposed;
+- unsupported platforms;
+- actions integrations refuse to perform;
+- model fallbacks that are intentionally forbidden;
+- approval modes that cannot bypass hard invariants.
+
+"What HoldSpeak refuses to do" is first-class product documentation.
+
+Build a traceability matrix:
+
+  Capability
+      -> UI surface
+      -> API
+      -> service/domain implementation
+      -> persistence
+      -> integration
+      -> test
+      -> documentation
+
+No capability should be classified Stable without meaningful evidence.
+
+PHASE: DOMAIN MODEL
+===================
+
+Reverse-engineer the actual domain vocabulary.
+
+Investigate at least:
+
+- Meeting
+- Transcript
+- TranscriptSegment / source moment
+- Decision
+- ActionItem
+- Artifact
+- Note
+- Project
+- Knowledge
+- Agent
+- Thread
+- Interview
+- Workflow
+- Integration
+- Connector
+- Plugin
+- Actuator
+- Proposal
+- Approval
+- Receipt
+- CoderSession
+- Model
+- Assignment
+- Destination / Runs-on destination
+- Process / Work
+- Kernel journal entry
+- Attention
+- Zone
+- Desk object
+- correction-memory entities
+- dictation run/journal entities.
+
+Determine which are:
+- database entities;
+- API representations;
+- frontend-only projections;
+- derived read models;
+- domain services;
+- conceptual documentation terms only.
+
+DO NOT conflate these categories.
+
+Produce:
+
+  docs/DOMAIN_MODEL.md
+  docs/generated/domain-model.yaml
+
+Include:
+- glossary;
+- entity relationship diagram;
+- ownership;
+- lifecycle;
+- state transitions;
+- references/foreign relationships;
+- source-of-truth location.
+
+Identify aliases and competing terminology.
+Recommend ONE canonical term where the repository uses several.
+
+PHASE: KERNEL RECONSTRUCTION
+============================
+
+This is a mandatory deep dive.
+
+Search all source, schemas, migrations, tests and documentation for:
+
+  kernel
+  journal
+  process
+  work
+  run
+  task
+  job
+  state
+  receipt
+  waiting
+  running
+  unknown
+  completed
+  recovery
+  resume
+  cancellation
+  parent
+  child
+  dependency
+  correlation
+
+Determine WHAT THE KERNEL ACTUALLY IS.
+
+Do not accept a marketing interpretation.
+
+Answer:
+
+- Is "kernel" a concrete module/package?
+- Is it a service?
+- Is it an event journal?
+- Is it a scheduler?
+- Is it a workflow engine?
+- Is it primarily an accounting layer?
+- Is it persisted?
+- Does it launch work?
+- Does it merely observe work?
+- Does it recover work?
+- Does it model parent/child operations?
+- How does an operation acquire identity?
+- How does state change?
+- Who may change state?
+- What makes something Waiting?
+- What makes something Unknown?
+- What constitutes completion?
+- How are crashes represented?
+- What happens across HoldSpeak restarts?
+- What happens when a remote node disappears?
+- What happens when a model call times out?
+- What happens while waiting for human approval?
+- How does Process consume kernel information?
+- How do receipts relate to journal entries?
+- Do model plans participate directly?
+- Do dictation/meeting/plugin/agent/actuator runs share the same mechanism?
+
+Write:
+
+  docs/KERNEL.md
+
+The document MUST contain:
+
+1. Definition.
+2. Responsibilities.
+3. Explicit non-responsibilities.
+4. Component diagram.
+5. Data structures.
+6. State machine.
+7. Event/journal semantics.
+8. Work identity/correlation.
+9. Parent-child relationships.
+10. Persistence.
+11. Restart/recovery.
+12. Cancellation.
+13. Failure semantics.
+14. Unknown-state semantics.
+15. Approval interaction.
+16. Destination interaction.
+17. Receipt relationship.
+18. Public/internal APIs.
+19. Security implications.
+20. Extension guidance.
+21. Tests proving each invariant.
+
+If the current kernel is not internally coherent enough to document this way,
+say so and create:
+
+  docs/architecture/PROPOSED_KERNEL_CONTRACT.md
+
+Clearly mark proposal versus reality.
+
+PHASE: END-TO-END SYSTEM ARCHITECTURE
+=====================================
+
+Rewrite or supplement the architecture documentation so a contributor can see
+the entire product, not merely a selected flow.
+
+Create:
+
+  docs/SYSTEM_ARCHITECTURE.md
+  docs/SYSTEM_INTEGRATION_MAP.md
+  docs/generated/components.yaml
+  docs/generated/integrations.yaml
+
+At minimum map:
+
+INGRESS
+- desktop microphone
+- global hotkey
+- system audio
+- imported recordings
+- imported transcripts
+- browser microphone if implemented
+- iPad requests
+- AIPI-Lite
+- Claude/Codex hooks
+- GitHub observations
+- connector inputs
+
+SURFACES
+- Desk
+- focused windows/workrooms
+- Settings
+- presence/Qlippy
+- Process
+- companions
+
+ENGINES
+- transcription
+- dictation transformation/routing
+- meeting pipeline
+- meeting-intelligence plugin runtime
+- project memory/search
+- Thread
+- Interview
+- Agent conversations
+- model routing
+- Coder integration
+
+CONTROL
+- kernel
+- assignments
+- immutable execution plans
+- destinations
+- Gate
+- proposal/approval
+- actuators
+- control modes
+- receipts
+
+STATE
+- SQLite
+- migrations
+- config
+- secret store
+- local file/material stores
+- indices/search stores if applicable
+- companion state
+
+EXTERNAL
+- local model runtime(s)
+- paired HoldSpeak nodes
+- private endpoints
+- OpenAI-compatible endpoints
+- GitHub
+- Slack
+- operating-system actions
+- MCP services
+- any other connector found in code
+
+Use Mermaid diagrams.
+
+Every diagram must have accompanying prose so information is accessible even if
+the diagram does not render.
+
+Required diagrams:
+
+- complete component map;
+- deployment topology;
+- trust boundaries;
+- dictation sequence;
+- meeting sequence;
+- meeting-to-actuator sequence;
+- persistent Agent conversation sequence;
+- Coder/Gate sequence;
+- model-assignment execution sequence;
+- mesh execution sequence;
+- restart/recovery flow;
+- database/domain ERD;
+- Desk/frontend composition;
+- plugin lifecycle;
+- connector lifecycle.
+
+PHASE: DICTATION DOCUMENTATION
+==============================
+
+Produce a canonical document:
+
+  docs/DICTATION_ARCHITECTURE.md
+
+Reconstruct the complete flow from key-down to final insertion.
+
+Identify:
+
+- hotkey implementation;
+- microphone lifecycle;
+- buffering;
+- silence/end detection;
+- Whisper backend selection;
+- supported transcription engines;
+- language pinning;
+- text normalization;
+- punctuation;
+- symbol replacement;
+- intent classification;
+- application/target detection;
+- project context;
+- Coder context;
+- correction memory;
+- LLM rewriting;
+- preview;
+- text injection;
+- clipboard fallback;
+- Wayland behavior;
+- wake mode;
+- voice commands;
+- journaling;
+- replay;
+- learning digest;
+- activity pre-briefing;
+- remote dictation;
+- browser-based speech ingress if present.
+
+For each stage show:
+
+  INPUT -> TRANSFORMATION -> OUTPUT -> FAILURE -> FALLBACK
+
+Make clear which stages are mandatory and which are optional.
+
+Document exactly when audio or transcript data can leave the device.
+
+PHASE: MEETING DOCUMENTATION
+============================
+
+Produce:
+
+  docs/MEETING_ARCHITECTURE.md
+  docs/MEETING_INTELLIGENCE.md
+  docs/MEETING_AFTERCARE.md
+
+Trace:
+
+live capture
+  -> audio channels
+  -> transcription
+  -> diarization/speaker labels
+  -> normalized meeting
+  -> intent analysis
+  -> plugin selection
+  -> model requests
+  -> typed artifacts
+  -> source/provenance
+  -> aftercare
+  -> proposals
+  -> approval
+  -> actuators
+  -> receipts.
+
+Inventory ALL built-in meeting plugins from source.
+
+For each plugin include:
+
+- plugin ID;
+- purpose;
+- activation/selection;
+- expected input;
+- model interaction;
+- schema/output artifact;
+- source attribution;
+- failure behavior;
+- side effects, if any;
+- actuator proposals;
+- tests.
+
+Do not repeat an unverified claim that there are "14" if current source differs.
+
+Describe decision lifecycle:
+- proposed/extracted;
+- accepted;
+- superseded;
+- promoted/exported;
+- whatever states source code actually supports.
+
+Describe action-item lifecycle similarly.
+
+PHASE: MODEL AND INFERENCE DOCUMENTATION
+========================================
+
+Produce:
+
+  docs/MODEL_RUNTIME.md
+  docs/EXECUTION_DESTINATIONS.md
+
+Reverse-engineer:
+
+- model registry;
+- discovery;
+- local models;
+- downloads if present;
+- capabilities;
+- assignments;
+- readiness;
+- key/secret state;
+- destination definitions;
+- model choice validation;
+- execution-plan freezing;
+- attempts;
+- retry;
+- fallback;
+- explicit non-fallback behavior;
+- timeout;
+- cancellation;
+- token/context accounting;
+- result provenance;
+- receipts.
+
+Document all destination categories discovered in source:
+
+  this device
+  paired device
+  private endpoint
+  external service
+
+Do not assume these names if source has changed.
+
+For each destination answer:
+
+- What leaves the originating machine?
+- What remains local?
+- Where is authentication material stored?
+- What syncs?
+- What does not sync?
+- How is availability determined?
+- How does failure surface?
+- What receipt proves what actually happened?
+
+PHASE: SECURITY, AUTHORITY, AND TRUST
+====================================
+
+Read the existing security document, then prove it against implementation.
+
+Produce:
+
+  docs/SECURITY_MODEL.md
+  docs/AUTHORITY_MODEL.md
+  docs/generated/trust-boundaries.yaml
+
+Model these separately:
+
+  DATA BOUNDARY
+  Where information may flow.
+
+  COMPUTE BOUNDARY
+  Where work executes.
+
+  AUTHORITY BOUNDARY
+  Who can authorize a side effect.
+
+  SECRET BOUNDARY
+  Where credentials exist.
+
+  AUDIT BOUNDARY
+  What evidence is retained.
+
+Inventory every path capable of:
+
+- outbound HTTP;
+- WebSocket;
+- launching a process;
+- executing a shell command;
+- opening a URL;
+- manipulating an application;
+- typing/pasting;
+- touching GitHub;
+- touching Slack;
+- sending to an LLM endpoint;
+- communicating with paired nodes;
+- using MCP;
+- receiving remote commands.
+
+For every side-effect path prove:
+
+  REQUEST
+      ->
+  PROPOSAL, if required
+      ->
+  REVIEW
+      ->
+  AUTHORITY CHECK
+      ->
+  EXECUTION
+      ->
+  RECEIPT
+
+Where code does not follow this structure, highlight it.
+
+Document Secure / Normal / YOLO or whatever control modes currently exist.
+
+State precisely:
+- what each mode changes;
+- what each mode cannot change;
+- which invariants remain hard;
+- whether mode affects review, authority, execution, or all three.
+
+Create a table named:
+
+  "What can leave your machine?"
+
+with one row per data class and operation.
+
+PHASE: DESK AND FRONTEND
+========================
+
+Produce:
+
+  docs/DESK_ARCHITECTURE.md
+  docs/DESK_OBJECT_MODEL.md
+
+Reconstruct the canonical web architecture.
+
+Verify:
+- Vite;
+- React version;
+- React Router;
+- Pixi;
+- Zustand;
+- DOM/window composition;
+- actual canonical routes;
+- demoted/deep-link routes;
+- API client organization;
+- event/state flow.
+
+Inventory every Desk object type.
+
+For each object:
+- icon/visual identity;
+- backing domain entity;
+- current state indicators;
+- single click;
+- double click;
+- right click;
+- drag;
+- drop targets;
+- lasso behavior;
+- available verbs;
+- boundary badge;
+- attention state;
+- persistence;
+- deep-link/window.
+
+Create a verb matrix:
+
+                   Create Open Ask File Attach Run Approve Delete ...
+  Meeting
+  Note
+  Artifact
+  Agent
+  Knowledge
+  Project
+  Coder session
+  Receipt
+  ...
+
+Only mark a verb present if code proves it.
+
+This matrix should expose accidental inconsistencies in Desk interaction design.
+
+PHASE: AGENTS, THREADS, INTERVIEW, AND MCP
+=========================================
+
+Produce:
+
+  docs/AGENTS_AND_THREADS.md
+
+Clarify the difference between:
+
+- Model
+- Agent
+- Thread
+- Conversation
+- Interview
+- Coder session
+- Workflow
+- MCP server/tool
+- Artifact
+
+Explain which object owns:
+- model assignment;
+- destination;
+- conversation history;
+- attached grounding;
+- tool permissions;
+- artifacts;
+- receipts.
+
+Verify the architectural claim that Interview composes Thread, routing and MCP
+rather than introducing a parallel model runtime.
+
+Document the tool loop precisely.
+
+Show how references and tool activity become visible to the user.
+
+PHASE: CODER / CLAUDE / CODEX
+=============================
+
+Produce:
+
+  docs/CODER_INTEGRATION.md
+  docs/GATE.md
+
+Inventory every installed hook and its lifecycle.
+
+Show:
+
+Claude/Codex
+  -> hook
+  -> HoldSpeak session representation
+  -> Desk object
+  -> question/waiting state
+  -> user response
+  -> delivery back to session.
+
+For Gate show:
+
+agent requests operation
+  -> hook interception
+  -> risk/policy decision
+  -> redacted preview
+  -> HoldSpeak approval request
+  -> allow / deny
+  -> reason propagation
+  -> agent continuation.
+
+Prove fail-closed semantics through tests/source.
+
+Document:
+- timeout;
+- hub offline;
+- malformed request;
+- duplicate response;
+- stale approval;
+- hub restart;
+- concurrent approvals.
+
+Clearly separate:
+- coding-session observation;
+- human response;
+- AI-drafted response;
+- risky-operation authorization.
+
+PHASE: EXTERNAL INTEGRATIONS
+============================
+
+Produce:
+
+  docs/INTEGRATIONS.md
+  docs/CONNECTOR_DEVELOPMENT.md
+  docs/ACTUATOR_DEVELOPMENT.md
+  docs/generated/integrations.yaml
+
+For each integration:
+
+- purpose;
+- direction;
+- read/write;
+- auth;
+- secrets;
+- data boundary;
+- triggers;
+- API endpoints;
+- proposals;
+- approvals;
+- execution;
+- receipts;
+- error handling;
+- retries;
+- rate limits;
+- idempotency;
+- tests.
+
+Pay particular attention to:
+- GitHub;
+- Slack;
+- OS voice actions;
+- MCP;
+- paired HoldSpeak nodes;
+- external model endpoints.
+
+For GitHub explicitly document supported AND deliberately unsupported actions.
+
+Do not imply merge/close/force-push support unless implementation proves it.
+
+PHASE: COMPANIONS
+=================
+
+Produce:
+
+  docs/COMPANIONS_ARCHITECTURE.md
+  docs/IPAD.md
+  docs/AIPI_LITE.md
+
+For iPad:
+- determine exact release/readiness status;
+- map every typed client;
+- map every API consumed;
+- map its local store;
+- migrations;
+- secrets;
+- trust badges;
+- paired-hub identity;
+- failure when desktop disappears;
+- dictation flow;
+- meeting flow;
+- proposal approval;
+- Coder flow;
+- file import;
+- learning/pre-briefing.
+
+Clearly separate:
+  implemented and tested
+from:
+  publicly released.
+
+For AIPI-Lite:
+- firmware;
+- bridge;
+- transport;
+- remote audio protocol;
+- status/control messages;
+- authentication;
+- Coder reply behavior;
+- failure modes.
+
+PHASE: DATA MODEL AND STORAGE
+=============================
+
+Produce:
+
+  docs/DATA_MODEL.md
+  docs/STORAGE_AND_MIGRATIONS.md
+
+Reverse-engineer the actual SQLite schema and migration path.
+
+Create a real ERD.
+
+Document:
+- tables/entities;
+- ownership;
+- important indexes;
+- retention;
+- cascades;
+- artifact payloads;
+- transcript storage;
+- dictation journal;
+- corrections;
+- meetings;
+- decisions/actions;
+- model/destination configuration;
+- receipts;
+- kernel/process state;
+- conversations;
+- attachments;
+- projects;
+- integration state.
+
+Answer:
+- What is NOT in SQLite?
+- Where are large/audio artifacts stored?
+- Where are secrets stored?
+- Where are search indexes stored?
+- What is ephemeral?
+
+Document version compatibility.
+
+Prove:
+- backup-before-migration;
+- refusal of newer schema;
+- restore behavior;
+- integrity checks.
+
+PHASE: OPERATIONS
+=================
+
+Produce:
+
+  docs/OPERATIONS.md
+  docs/TROUBLESHOOTING.md
+
+Treat `holdspeak doctor` as a product.
+
+Inventory every check it performs.
+
+For each check:
+- condition;
+- success;
+- degraded state;
+- failure;
+- recommended repair;
+- platform applicability.
+
+Document:
+- installation;
+- upgrade;
+- rollback;
+- backup;
+- restore;
+- logs;
+- diagnostic collection;
+- model troubleshooting;
+- microphone troubleshooting;
+- system-audio troubleshooting;
+- hotkey troubleshooting;
+- injection troubleshooting;
+- Wayland;
+- database corruption;
+- schema mismatch;
+- mesh failure;
+- companion pairing;
+- external integration errors.
+
+Write troubleshooting as decision trees, not generic prose.
+
+PHASE: PLATFORM MATRIX
+======================
+
+Produce:
+
+  docs/PLATFORMS.md
+  docs/generated/platform-matrix.yaml
+
+For every capability record:
+
+              macOS Apple Silicon | Linux X11 | Linux Wayland | iPad | AIPI
+
+Classify:
+
+  supported
+  supported_with_setup
+  degraded
+  best_effort
+  unsupported
+  not_applicable
+  unknown
+
+Where possible, derive this automatically from capability metadata/tests.
+
+Call out platform-specific dependencies:
+- MLX;
+- BlackHole;
+- Pulse/PipeWire;
+- synthetic keyboard restrictions;
+- clipboard fallback;
+- permissions;
+- native presence implementation.
+
+PHASE: USER MENTAL MODEL
+========================
+
+Produce:
+
+  docs/WHAT_IS_HOLDSPEAK.md
+  docs/USE_CASES.md
+
+The product must be understandable in five minutes.
+
+Try this high-level model, but change it if repository evidence suggests a
+better one:
+
+  SPEAK -> TYPE
+  MEET -> UNDERSTAND
+  CONTEXT -> THINK
+  PROPOSE -> APPROVE -> ACT
+
+Explain HoldSpeak first through user outcomes, not architectural nouns.
+
+Then explain the deeper architecture.
+
+Create progressive onboarding levels:
+
+LEVEL: START
+- local dictation;
+- first meeting.
+
+LEVEL: ENHANCE
+- dictation pipeline;
+- corrections;
+- meeting intelligence;
+- project context.
+
+LEVEL: ORGANIZE
+- Desk;
+- Notes;
+- Artifacts;
+- Project Memory.
+
+LEVEL: DELEGATE
+- Agents;
+- models;
+- destinations;
+- Coder.
+
+LEVEL: CONNECT
+- GitHub;
+- Slack;
+- companions;
+- mesh.
+
+LEVEL: GOVERN
+- Gate;
+- control modes;
+- approval;
+- receipts.
+
+Do not expose everything to a beginner simultaneously.
+
+PHASE: MACHINE-READABLE ARCHITECTURE
+====================================
+
+The documentation must not become stale immediately.
+
+Create a directory:
+
+  architecture/
+
+or an appropriate repository-native equivalent containing:
+
+  capabilities.yaml
+  components.yaml
+  integrations.yaml
+  trust-boundaries.yaml
+  domain-model.yaml
+  platform-matrix.yaml
+
+Design JSON Schema or another validation schema for each.
+
+Implement a lightweight validation tool such as:
+
+  scripts/validate_architecture.py
+
+It should verify where practical:
+
+- IDs unique;
+- referenced capability IDs exist;
+- referenced component IDs exist;
+- referenced integration IDs exist;
+- docs paths exist;
+- source paths exist;
+- test paths exist;
+- status uses valid enumeration;
+- external side effect has declared authority model;
+- external boundary has declared egress information;
+- stable capability has test evidence or an explicit documented exemption.
+
+Do not introduce a huge framework for this.
+Keep it boring, inspectable and reliable.
+
+PHASE: DOCUMENTATION COVERAGE
+=============================
+
+Generate:
+
+  docs/generated/DOC_COVERAGE.md
+  docs/generated/doc-coverage.json
+
+For each capability calculate whether it has:
+
+- implementation evidence;
+- test evidence;
+- user docs;
+- architecture docs;
+- operational docs, where required;
+- security docs, where required;
+- platform status;
+- API documentation, where required.
+
+Use this to find undocumented capabilities and unsupported documentation claims.
+
+PHASE: AGENT SKILLS
+===================
+
+Create agent-oriented skills appropriate to the repository's existing agent
+skill format. If no format exists, create a simple and well-documented
+`agent/skills/` structure.
+
+At minimum provide:
+
+  agent/skills/holdspeak-repo-navigator/
+  agent/skills/holdspeak-capability-verifier/
+  agent/skills/holdspeak-kernel/
+  agent/skills/holdspeak-dictation/
+  agent/skills/holdspeak-meetings/
+  agent/skills/holdspeak-model-routing/
+  agent/skills/holdspeak-desk/
+  agent/skills/holdspeak-security-review/
+  agent/skills/holdspeak-plugin-author/
+  agent/skills/holdspeak-connector-author/
+  agent/skills/holdspeak-api-client/
+  agent/skills/holdspeak-troubleshooter/
+  agent/skills/holdspeak-release-auditor/
+  agent/skills/holdspeak-doc-maintainer/
+
+Each skill MUST tell an agent:
+
+1. When this skill applies.
+2. Canonical files to inspect first.
+3. Domain vocabulary.
+4. Architectural invariants.
+5. Typical change paths.
+6. Tests that must be run.
+7. Documentation that must be updated.
+8. Security/privacy traps.
+9. Platform-specific traps.
+10. Anti-patterns.
+11. How to prove completion.
+
+Example:
+
+A model-routing skill must warn:
+- never silently substitute a different model unless current policy explicitly
+  allows and records it;
+- preserve frozen execution-plan semantics;
+- never expose keys in ordinary APIs;
+- preserve actual-destination receipts.
+
+A meeting-actuator skill must warn:
+- extraction is not authorization;
+- a model-generated action item is not permission to call GitHub/Slack;
+- preserve exact proposal -> approval -> execution correspondence.
+
+A kernel skill must warn:
+- never invent parallel lifecycle state outside the kernel if the kernel owns
+  that state;
+- preserve journal/event semantics;
+- preserve Unknown rather than fabricating terminal success/failure.
+
+PHASE: API REFERENCE
+====================
+
+Generate or write:
+
+  docs/API_REFERENCE.md
+
+Inventory every backend endpoint.
+
+Group endpoints by domain.
+
+For each:
+- method;
+- route;
+- auth/trust assumptions;
+- request schema;
+- response schema;
+- error responses;
+- side effects;
+- idempotency;
+- approval requirements;
+- boundary;
+- primary clients;
+- implementation path;
+- tests.
+
+Distinguish:
+- stable API;
+- internal frontend API;
+- companion API;
+- integration webhook/hook API;
+- experimental/internal endpoints.
+
+If OpenAPI exists, compare docs against OpenAPI and preferably generate the
+mechanical portions.
+
+PHASE: DECISION RECORDS
+=======================
+
+Do not silently redesign architecture while documenting it.
+
+Where you find a real unresolved architectural issue, create a PROPOSED ADR.
+
+Potential topics may include:
+
+- canonical definition of Kernel;
+- canonical Work model;
+- Artifact ontology;
+- Proposal/Approval/Execution/Receipt contract;
+- Connector versus Actuator distinction;
+- model Destination taxonomy;
+- Desk object verb consistency;
+- capability registry as source of truth.
+
+Put proposals somewhere clearly separated from accepted architecture.
+
+Every proposed ADR must include:
+- context;
+- current reality;
+- problem;
+- options;
+- recommendation;
+- migration impact;
+- compatibility;
+- security impact;
+- alternatives rejected;
+- decision status = PROPOSED.
+
+PHASE: DOCUMENTATION INFORMATION ARCHITECTURE
+============================================
+
+Refactor documentation navigation so there are clear audiences:
+
+START
+  What is HoldSpeak?
+  Getting Started
+  Core workflows
+
+USE
+  Dictation
+  Meetings
+  Desk
+  Memory
+  Agents
+  Coder
+  Companions
+
+UNDERSTAND
+  System Architecture
+  Kernel
+  Domain Model
+  Data Model
+  Model Runtime
+  Security / Authority
+
+EXTEND
+  Plugins
+  Connectors
+  Actuators
+  API
+  Companion development
+
+OPERATE
+  Doctor
+  Models
+  Destinations
+  Backup / Restore
+  Troubleshooting
+  Platform behavior
+
+CONTRIBUTE
+  Repository map
+  Architecture rules
+  Testing
+  Docs maintenance
+  Release process
+
+REFERENCE
+  Capabilities
+  Configuration
+  API
+  Schemas
+  Glossary
+  Platform matrix
+
+HISTORY / INTERNAL
+  RFCs
+  superseded architecture
+  roadmaps
+  historical plans
+
+A new contributor should never accidentally treat an old Phase plan as current
+system documentation.
+
+PHASE: DOCUMENTATION STYLE
+==========================
+
+Use plain language.
+
+Prefer:
+  "The hub stores this in SQLite."
+
+over:
+  "Persistence semantics are facilitated by the storage abstraction."
+
+Prefer:
+  "Approving the proposal sends the Slack message."
+
+over:
+  "The approval mechanism provides an execution pathway."
+
+Use canonical domain vocabulary consistently.
+
+For every advanced feature include:
+
+  What it is
+  Why it exists
+  What the user sees
+  How it works
+  What it stores
+  What can leave the machine
+  What can go wrong
+  How to troubleshoot it
+  Where the implementation lives
+
+Avoid duplicate truth.
+
+When one document owns a contract, other documents should link to it rather
+than rewriting it differently.
+
+PHASE: DOC TESTING
+==================
+
+Extend the existing documentation quality approach.
+
+At minimum ensure CI can detect:
+
+- broken internal links;
+- missing files referenced by generated registries;
+- invalid YAML/JSON schemas;
+- broken Mermaid;
+- stale generated capability index;
+- references to deleted API routes;
+- invalid source/test paths;
+- conflicting capability IDs.
+
+Where feasible add executable examples.
+
+Do not make CI dependent on external cloud APIs merely to verify docs.
+
+FINAL DELIVERABLE TREE
+======================
+
+The exact repository layout may justify modifications, but the finished package
+should contain equivalents of:
+
+docs/
+  README.md
+  WHAT_IS_HOLDSPEAK.md
+  GETTING_STARTED.md
+  CAPABILITIES.md
+  USE_CASES.md
+  SYSTEM_ARCHITECTURE.md
+  SYSTEM_INTEGRATION_MAP.md
+  DOMAIN_MODEL.md
+  KERNEL.md
+  DATA_MODEL.md
+  STORAGE_AND_MIGRATIONS.md
+  DICTATION_ARCHITECTURE.md
+  MEETING_ARCHITECTURE.md
+  MEETING_INTELLIGENCE.md
+  MEETING_AFTERCARE.md
+  DESK_ARCHITECTURE.md
+  DESK_OBJECT_MODEL.md
+  AGENTS_AND_THREADS.md
+  CODER_INTEGRATION.md
+  GATE.md
+  MODEL_RUNTIME.md
+  EXECUTION_DESTINATIONS.md
+  SECURITY_MODEL.md
+  AUTHORITY_MODEL.md
+  INTEGRATIONS.md
+  COMPANIONS_ARCHITECTURE.md
+  IPAD.md
+  AIPI_LITE.md
+  API_REFERENCE.md
+  PLATFORMS.md
+  OPERATIONS.md
+  TROUBLESHOOTING.md
+  CONNECTOR_DEVELOPMENT.md
+  ACTUATOR_DEVELOPMENT.md
+  GLOSSARY.md
+
+docs/generated/
+  REPOSITORY_SNAPSHOT.md
+  REPOSITORY_MAP.md
+  ARCHITECTURE_HISTORY.md
+  DOC_COVERAGE.md
+  capabilities.yaml
+  components.yaml
+  integrations.yaml
+  trust-boundaries.yaml
+  domain-model.yaml
+  platform-matrix.yaml
+  doc-coverage.json
+
+agent/skills/
+  holdspeak-repo-navigator/
+  holdspeak-capability-verifier/
+  holdspeak-kernel/
+  holdspeak-dictation/
+  holdspeak-meetings/
+  holdspeak-model-routing/
+  holdspeak-desk/
+  holdspeak-security-review/
+  holdspeak-plugin-author/
+  holdspeak-connector-author/
+  holdspeak-api-client/
+  holdspeak-troubleshooter/
+  holdspeak-release-auditor/
+  holdspeak-doc-maintainer/
+
+architecture/ or equivalent:
+  schema definitions for the machine-readable registries
+
+scripts/
+  validate_architecture.py
+  generate_capability_docs.py
+  check_doc_coverage.py
+
+FINAL AUDIT
+===========
+
+Before finishing, perform a hostile accuracy review.
+
+Search the final documentation for absolute claims such as:
+
+  always
+  never
+  local
+  private
+  secure
+  supported
+  stable
+  automatic
+  encrypted
+  approved
+  immutable
+  exactly
+  all
+  no data leaves
+
+For every such word:
+- prove the claim;
+- qualify it;
+- or remove it.
+
+Search for every named product capability in UI labels, routes and tests.
+
+Find:
+- UI capability absent from docs;
+- docs capability absent from code;
+- API absent from docs;
+- side effect absent from security model;
+- secret absent from threat model;
+- platform conditional absent from platform matrix;
+- model request absent from boundary documentation;
+- background process absent from kernel/process documentation.
+
+Run all documentation validation.
+
+Run the relevant test suite.
+
+Do not declare success with failing tests unless the failure demonstrably
+predates your changes; if so, document it explicitly.
+
+FINAL EXECUTIVE REPORT
+======================
+
+Produce:
+
+  docs/generated/DOCUMENTATION_AUDIT_REPORT.md
+
+It must contain:
+
+A. What HoldSpeak actually is now.
+B. Complete subsystem list.
+C. Complete capability count by domain and status.
+D. Architecture summary.
+E. Kernel conclusion.
+F. Trust-boundary summary.
+G. Top architectural ambiguities discovered.
+H. Stale/incorrect documentation corrected.
+I. Undocumented functionality discovered.
+J. Planned functionality previously mistaken for shipped behavior.
+K. Missing tests discovered.
+L. Security-sensitive gaps discovered.
+M. Platform inconsistencies discovered.
+N. Documentation files created/changed.
+O. Agent skills created.
+P. Machine-readable registries created.
+Q. Validation tooling added.
+R. Remaining unknowns.
+S. Recommended next engineering actions, prioritized.
+
+QUALITY BAR
+===========
+
+A successful result should make all of these possible:
+
+A new USER can understand HoldSpeak without understanding its architecture.
+
+A new CONTRIBUTOR can identify where a feature lives without repository
+archaeology.
+
+A maintainer can answer "does HoldSpeak support X?" from a generated capability
+registry.
+
+A security reviewer can identify every intentional data-egress path.
+
+An agent can modify dictation without accidentally violating meeting or model
+routing invariants.
+
+An agent can modify actuators without accidentally bypassing human authority.
+
+A developer can understand the kernel without reading every implementation
+file.
+
+A release can state exactly which capabilities are Stable, Beta, Experimental,
+Platform-limited, or Unreleased.
+
+Documentation drift becomes detectable rather than dependent on memory.
+
+Most importantly:
+
+THE DOCUMENTATION MUST MAKE HOLDSPEAK FEEL SMALLER THAN THE CODEBASE.
+
+The system may be sophisticated.
+
+The mental model must not be.
+
+Do not achieve simplicity by omitting capabilities.
+
+Achieve simplicity by discovering and documenting the small number of
+consistent concepts from which those capabilities are built.
+```
+
+The agent prompt deliberately makes **verification and documentation tooling part of the same job**. That is crucial. A one-time heroic documentation pass would reproduce the same problem a year from now. The goal should instead be to make architecture, capability status and documentation coverage **machine-checkable properties of the repository**.
+
+---
+
+## Open questions and limitations
+
+There are several areas I would consider **especially important to resolve during the source-level audit**.
+
+**The exact kernel implementation remains the largest architectural unknown.** The indexed current README definitely names a kernel journal and a read-only Process view of running/waiting/unknown/finished state, but the material available in this research pass did not expose enough kernel source to responsibly identify its concrete classes, journal schema, ownership of execution, restart behavior or relationship to receipts. Any more specific claim here would risk manufacturing architecture from terminology. citeturn1search0
+
+**The exact inventory of the 14 meeting plugins should be generated from implementation rather than copied from marketing documentation.** The current README explicitly claims 14 built-in, LLM-backed plugins and gives representative outputs such as decisions, actions, ADRs, risks and incident timelines, but a definitive documentation package should name and trace every plugin from registration through its schema and tests. citeturn1search0
+
+**Control-mode semantics need a dedicated implementation audit.** The documentation index confirms Secure, Normal and YOLO modes and emphasizes that review, authority and execution are distinct and that hard invariants exist, but those invariants should be enumerated from the policy/authorization code rather than inferred from the index page. citeturn1search1
+
+**The relationship between Workflows, Agents, Interview, Thread, MCP and the kernel deserves normalization.** The architecture page makes one very helpful boundary explicit—Interview composes Thread, routing and MCP rather than becoming a separate runtime—but the complete cross-system orchestration model should be established from source. citeturn1search3
+
+**iPad needs explicit “implementation maturity versus release status” documentation.** The README is unusually clear that the screens and typed-client layer are built and tested while the application itself has not yet been released. That distinction should become a formal capability status so future docs never turn “implemented” into “available to users.” citeturn1search0
+
+**The public identity of HoldSpeak now lags its architecture.** `pyproject.toml` still frames it as a voice-typing application while the canonical README describes a much larger voice-work, meeting, knowledge, agent and governance environment. Resolving this is the highest-level product-design decision exposed by the audit. citeturn1search0turn1search2
+
+The key strategic insight is therefore not that HoldSpeak has accumulated “too many features.” It is that those features have **not yet been compressed into a sufficiently explicit architecture and vocabulary**.
+
+The architecture already contains the beginnings of that compression:
+
+```text
+Sources produce Work.
+Work produces Artifacts.
+Artifacts provide Context.
+Models execute at Destinations.
+Potential side effects become Proposals.
+Humans grant Approval.
+Approved work may Execute.
+Reality becomes a Receipt.
+The Kernel records what the system is doing.
+The Desk makes all of it visible.
+```
+
+If that model survives the source-level verification requested in the agent prompt, it can become the conceptual backbone of HoldSpeak.
+
+And that would make the product's ambition much easier to understand:
+
+> **HoldSpeak is the place where your voice becomes work—and where AI can help carry that work forward without obscuring the context, destination, authority, or evidence behind what happened.**
+
+--
+
+# Research Brief for the Ultimate HoldSpeak “Workbench 2.0 on Steroids” Design + SRS Specification
+
+## Executive summary
+
+The most important research finding is that this is **not a greenfield Amiga-inspired redesign**. HoldSpeak has already crossed that bridge.
+
+The current repository explicitly records the owner’s requirement that the Desk OS should feel like “Workbench 2.0 on steroids,” and Phase 105 was chartered specifically from that direction. That phase shipped a Workbench-derived icon system, drawers as real windows, Info on objects, contract-driven drop behavior, a registry-driven menu bar, persistence rules, and a written Desk grammar. Its own final summary identifies the remaining specification debt rather than treating the concept as aspirational. fileciteturn27file0L2-L2
+
+The correct mission for a developer/specification agent is therefore:
+
+> **Formalize, reconcile, complete, and harden the existing HoldSpeak Desk OS into an authoritative design specification and SRS, rather than inventing a replacement UI.**
+
+That distinction changes nearly every architectural recommendation.
+
+HoldSpeak Web is already a typed React/Vite application whose canonical operating surface is the Desk. The current architecture has only three rendered routes—Desk, arrival, and Presence—while other product destinations become windows on the Desk. The spatial world is a Pixi/WebGL scene backed by Zustand; ordinary application windows are DOM-composited above it; HTTP goes through a typed client; and one runtime WebSocket bus serves the React tree. fileciteturn18file0L2-L2 The current dependency set already includes React 19, React Router, TanStack Query, Zustand, Motion, `@use-gesture/react`, PixiJS, Three.js, CodeMirror, xterm, Vite, Vitest, Testing Library, axe-core, and Puppeteer. fileciteturn11file0L2-L2
+
+The existing design discipline is unusually mature. HoldSpeak already has:
+
+| Existing asset | Status and significance |
+|---|---|
+| `docs/internal/CONSTITUTION.md` | Governing product doctrine; other UI documents defer to it. |
+| `docs/internal/AGENT_BRIEF.md` | Required UI-development method and current OS-level ambition. |
+| `docs/internal/DESIGN_SYSTEM.md` | Token architecture, component states, window physics, material, motion, accessibility. |
+| `docs/internal/UX-CANON.md` | Face-level laws: library controls, no generic prose, no modal editing, honest states, owner-gated screenshots. |
+| `docs/internal/DESK_GRAMMAR.md` | Explicit “Workbench 2.0 on steroids” world-layer laws. |
+| `web/ICON-DISCIPLINE.md` | Pixel-art geometry, state-image rules, badges, system sprite grammar. |
+| `web/src/desk/surface/contract.md` | Component APIs, states, ARIA behavior, motion and responsive composition. |
+| `web/design-tokens.json` | Design-system source of truth, generated into CSS and TypeScript. |
+| `web/src/desk/components/DeskWindow.tsx` | One window shell and physics implementation. |
+| `web/src/desk/store/*` | Spatial/window/application lifecycle and persistence state. |
+| `web/public/desk/sprites/` | Existing Workbench-inspired object art with explicit selected/stale states. |
+
+The repository’s own standing agent brief says that the world layer already “speaks the Workbench grammar,” identifies `DESK_GRAMMAR.md` and `ICON-DISCIPLINE.md` as law, and directs future work toward native-feeling interiors, direct manipulation, meaningful motion, global keyboard grammar, universal context menus, cross-boundary drag-and-drop, a system shade, and Files-grade object browsing. fileciteturn30file0L2-L2
+
+The historical Amiga research strongly validates the direction HoldSpeak has already taken. Commodore’s 1991 *Amiga User Interface Style Guide* treats metaphor, object-before-action interaction, visible focus, immediate feedback, subdued/non-color-only signaling, user preferences, adaptable fonts, localization, physical-looking controls, drag operations, context-sensitive menus, window persistence, and multiple interoperable interface modes as core principles. citeturn9search1turn12view0turn12view1 Those are much more useful than copying a beige/grey palette or reproducing old bitmaps.
+
+The final specification should consequently pursue **Workbench behavior and Intuition philosophy rather than retro cosplay**:
+
+- Objects should look and behave like objects.
+- Selection must visibly change the object.
+- Actions should apply to the current object or selected group.
+- Windows should remember the user's arrangement.
+- Menus should disclose the available command vocabulary.
+- Disabled capability should be honest and comprehensible.
+- Direct manipulation should coexist with complete keyboard/pointer alternatives.
+- Small-scale clarity, restrained depth, and immediate feedback matter more than nostalgia.
+- Voice, keyboard, graphical interaction, automation/MCP, and desktop integration should all be alternate entrances to the **same product capabilities**, echoing the Amiga’s GUI/Shell/ARexx philosophy rather than creating independent state models. Commodore explicitly treated GUI, Shell, and ARexx/IPC as complementary interfaces and recommended supporting all three. citeturn11view0
+
+The strongest technical recommendation is likewise conservative: **retain React/Vite, the existing HoldSpeak design system, Pixi spatial world, Zustand Desk state, FastAPI integration, and registry-driven interaction grammar.** A desktop container should be specified as a thin host boundary, not as a second application architecture. Tauri and Electron deserve an ADR and prototype, but neither should own product state or visual components. Tauri uses an OS WebView with Rust/message-passing and a capability/permission model; Electron bundles Chromium and Node.js, producing a consistent rendering target but demanding careful context isolation, sandboxing, navigation restrictions, and IPC validation. citeturn8search8turn6search6turn8search0turn6search0
+
+Finally, accessibility cannot be treated as a “modern compromise” that weakens the Amiga metaphor. It actually strengthens it. WCAG 2.2 AA now explicitly requires a non-drag pointer alternative for functionality implemented through dragging, introduces minimum pointer-target constraints, and requires keyboard focus not to become obscured by authored content. citeturn7search0turn7search8turn7search9 These requirements map naturally to Workbench’s original commitment to multiple ways of acting on an object.
+
+## Repository reality and architectural constraints
+
+### The product architecture that the specification must preserve
+
+HoldSpeak describes itself as a Desk connecting voice typing, meetings, project records, and AI work. The Desk has an arrival surface, a Floor of records represented as objects, and application/tool windows such as Speak, Meetings, Settings, Threads, and project-related work. fileciteturn10file0L2-L2
+
+At the frontend level, the repository is already architected as an operating surface rather than a conventional route-centric web application:
+
+```mermaid
+flowchart TB
+    Hub["HoldSpeak WebRuntime / FastAPI"]
+    HTTP["Typed HTTP API"]
+    WS["Single RuntimeBus /ws"]
+    React["React 19 Desk application"]
+    Store["Zustand Desk store"]
+    GL["Pixi/WebGL world"]
+    Windows["DOM Desk windows"]
+    Surface["Surface component library"]
+    Tokens["design-tokens.json"]
+    Objects["Desk objects / drawers"]
+    Desktop["Future desktop host boundary"]
+
+    Hub --> HTTP
+    Hub --> WS
+    HTTP --> React
+    WS --> React
+    React --> Store
+    Store --> GL
+    Store --> Windows
+    Surface --> Windows
+    Tokens --> Surface
+    Tokens --> GL
+    GL --> Objects
+    Desktop -. "bounded host services only" .-> React
+```
+
+This is not merely a conceptual target. The canonical frontend architecture says the world layer is a Pixi v8 scene graph fed by the Desk store, windows are DOM-composited above it, `src/lib/api.ts` is the HTTP boundary, and `RuntimeBus.tsx` is the product WebSocket owner. It also mechanically guards the rule that product surfaces belong in Desk windows rather than becoming independent route-worlds. fileciteturn18file0L2-L2
+
+The HTTP abstraction is already narrow and useful: `apiRequest`, `apiFetch`, and `apiBlob` automatically pass authentication, standardize JSON handling, and surface an `ApiError` carrying status and backend payload. fileciteturn24file0L2-L2 The architecture document additionally states that provider credentials must not enter Web state or storage and that the runtime bus is shared rather than recreated per feature. fileciteturn18file0L2-L2
+
+The final specification should therefore define **interfaces around these boundaries**, not create new fetch clients, feature-local sockets, or desktop-specific duplicates.
+
+### Windowing is already a first-class subsystem
+
+`DeskWindowFrame` is explicitly documented as **the one window contract**. Its private physics layer already owns dragging by the title bar, resize, focus-to-front, remembered geometry, minimize/maximize/close state, clamping, snapping, compact bottom-sheet behavior, fit-content growth, origin-aware open/close motion, and reduced-motion handling. fileciteturn16file0L2-L2
+
+The Desk state model exposes the corresponding domain vocabulary. It includes:
+
+- `PanelRect {x,y,w,h}`
+- `WindowInstance`
+- spatial/list `DeskView`
+- per-zone view/sort preferences
+- pullout, drawer, repository, roadmap and Workbench windows
+- selected IDs
+- drag/hover state
+- persisted panel rectangles
+- saved geometry
+- panel order
+- minimized/maximized sets
+- normalized application windows
+- application-opening and object-opening commands
+
+and a very large set of product actions that mutate backend-backed primitives rather than merely altering presentation. fileciteturn23file0L2-L2
+
+That makes a critical SRS distinction possible:
+
+> **Visual window state is not application/business state.**
+
+The specification should formalize the current separation among:
+
+1. **Backend truth** — Notes, Meetings, Threads, Workbenches, Projects, receipts, model state, etc.
+2. **Workspace state** — open windows, rects, stacking, list/spatial preferences.
+3. **Ephemeral interaction state** — hover, drag candidate, focused object, open menu.
+4. **Host state** — future native tray, platform shortcuts, system notifications, file-dialog permissions.
+5. **Rendering state** — animation progress and GL/DOM presentation details, which must never become the authoritative record.
+
+### The Workbench concept is already implemented
+
+Phase 105 is perhaps the single most important repository source for this research. Its charter was exactly the user’s proposed vision. It shipped, among other things:
+
+- 64×64 pixel-art object sprites rendered 1:1.
+- Real rest/selected/stale image variants.
+- Deterministic grid placement.
+- Drawer windows with icon/list modes.
+- Persistent drawer view/sort/open state.
+- An Info contract for every object kind.
+- A data-driven drop matrix.
+- A unified verb registry.
+- Menus built from that registry.
+- A written Desk grammar.
+- Mechanical guards for these laws. fileciteturn27file0L2-L2
+
+`DESK_GRAMMAR.md` then turns these decisions into law. It says, for example, that default icon homes are deterministic while user placement is sacred; mouse single-click selects and double-click opens; windows coexist; zones are drawers; valid drops are declared by contract data rather than hardcoded by individual components; menus ghost unavailable operations with explanations; and menu bar, context menus, window-head menus and dock menus all derive from one verb vocabulary. fileciteturn28file0L2-L2
+
+The icon discipline is similarly explicit: each object uses a uniform cell, importance is expressed through state rather than arbitrary scaling, silhouettes must be distinct, selected/stale states are real generated assets, decorative badges are forbidden, and state badges may appear only when a named live field supplies the fact. fileciteturn29file0L2-L2
+
+The repository also contains the actual sprite family under `web/public/desk/sprites/`, including base, `_sel`, and `_stale` assets, so the specification agent should treat the current art directory as empirical source material, not merely prose documentation. fileciteturn32file0L2-L2
+
+### Existing design-system and accessibility infrastructure
+
+HoldSpeak’s surface library already defines a closed state vocabulary:
+
+`idle · active · working · success · warning · failure · unreachable`
+
+and requires states to be conveyed using icon plus text rather than color alone. Its component contract specifies roving tab stops for composites, ARIA-expanded disclosures, focus behavior for popovers, `aria-live` transitions, real radio inputs, tokenized motion, reduced-motion support, and container-based responsive layout. fileciteturn14file0L2-L2
+
+The UX Canon is even stricter. Its current laws include:
+
+- every verb uses the component library;
+- substantial UI is mocked before implementation;
+- generic explanatory prose is generally a defect;
+- editing happens in-world rather than in modal workflows;
+- names are not redundantly repeated;
+- zero-valued counters are omitted when they convey nothing;
+- network egress is indicated at the point at which egress occurs;
+- states and failure reasons must be honest;
+- dead verbs do not ship;
+- setup must be self-evident;
+- screenshots are part of the acceptance procedure;
+- scrolling and compact layout behavior are standardized. fileciteturn13file0L2-L2
+
+The current CI is unusually compatible with converting a design specification into executable law. `npm run check` already combines token-generation checks, token validation, architecture guards, strict TypeScript, frontend tests, the production build, and a bundle gate. The repository’s primary GitHub Actions workflow additionally runs documentation validation, critical journeys, unit tests with coverage, macOS integration tests, browser E2E tests, a required live runtime-bus test, Mermaid rendering validation, and Linux smoke coverage. fileciteturn11file0L2-L2 fileciteturn21file0L2-L2
+
+This leads to a core instruction for the final specification agent:
+
+> **Every normative UI rule that can be mechanically verified should name the guard that proves it.**
+
+### What remains genuinely unfinished
+
+The repository itself names several relevant debts.
+
+Phase 105 identifies behaviors that still existed only as TypeScript implementation rather than a portable written contract: drag thresholds and mechanics, clean-grid layout math, bob animation envelope, drawer-window fly-out motion, menu dismissal behavior, and Info-card composition order. It also lists cross-window re-filing, multi-object drops, object receipts, richer drawer arrangement and additional desktop/workspace behaviors as follow-up work. fileciteturn27file0L2-L2
+
+The current Desk grammar still records standing remainders including drawer rearrangement, cross-window drag refiling, the record orb as a drop target, multi-object drops, per-object receipts, and an artifact sprite that does not yet read well at its intended scale. fileciteturn28file0L2-L2
+
+There is also measurable design-system debt. The UX Canon’s ratchet records raw `<button>` violations as a dated down-only count of 175 on September 17, 2026, while maintaining hard-zero requirements for certain other rules. That does not invalidate the design system, but it means “all verbs use the library” remains a target invariant with known legacy residues. fileciteturn13file0L2-L2
+
+The design system also records a deliberate “dark-only” decision while noting that the semantic token layer is the attach point for a future light theme. fileciteturn19file5L70-L82 This is especially relevant because the requested SRS explicitly needs a theming requirement rather than merely a skin description.
+
+Finally, desktop wrapping is not current HoldSpeak doctrine. Earlier investigations explicitly chose the Web Desk as the specification and declined adding a Tauri shell or second UI kit in those scopes. fileciteturn34file0L2-L2 An earlier study likewise rejected an Electron shell as unnecessary scope for its problem. fileciteturn31file0L1-L10 Because the present assignment explicitly assumes web **and** a future Electron-or-Tauri desktop target, this is a **new architectural constraint that requires an ADR**, not something an agent should silently infer from the repository.
+
+## Amiga Workbench and Intuition principles to preserve, modernize, and reject
+
+### What “Workbench-inspired” should mean
+
+The original Amiga GUI was conceptually split between **Intuition**, the GUI system/tooling, and **Workbench**, the default graphical environment. Commodore’s style guide describes the combination as a system in which familiar metaphors, consistent interaction rules, and standard UI elements reduce the amount users must memorize. citeturn12view0
+
+That makes “Intuition-inspired Workbench 2.0+” a useful architectural concept rather than a visual theme:
+
+**Intuition inspiration** should govern the component and interaction system.
+
+**Workbench inspiration** should govern the desktop metaphor, object organization, windows, menus, drawers, selection and direct manipulation.
+
+**HoldSpeak** should supply the modern capabilities—voice, models, streaming, receipts, project context, synchronized data and automation.
+
+### Principle crosswalk
+
+| Amiga principle | Primary-source basis | HoldSpeak adoption | Required modernization |
+|---|---|---|---|
+| **Familiar physical metaphor** | Commodore says GUIs can expose complex systems as familiar objects and activities. citeturn12view0 | Desk objects, drawers, windows, Info, filing. | Do not force metaphor where it makes an AI/workflow task less clear. |
+| **Object → action** | User selects the thing first, then the action; this reduces modal interaction. citeturn12view0 | Selection + registry verbs + context menu. | Also expose keyboard and touch equivalents. |
+| **Avoid modes** | Original guide explicitly warns about confusing modes. citeturn12view0 | No modal edit workflows; in-place edits. | Explicit temporary states must remain visibly announced and escapable. |
+| **Visible focus** | Focus is described as a useful information channel. citeturn12view0 | Active window, selected object, focus ring. | WCAG focus-visible and focus-not-obscured become normative. citeturn7search0turn7search9 |
+| **Immediate feedback** | Every action should show an immediate reaction. citeturn12view0 | Selected sprite states, pressed controls, drag target lighting, progress. | Response must work with keyboard, screen readers and reduced motion too. |
+| **Raised/recessed geometry** | Release 2 introduced an upper-left-light 3D grammar; interactive controls visibly depress. citeturn12view0 | HoldSpeak bevel, etch and pressed-state tokens. | Keep subtle enough for long-duration work; do not reproduce low-resolution bevels literally. |
+| **Color is supplemental** | Commodore explicitly says not to use color as the sole cue. citeturn12view0 | `StateChip` icon + text; selected cell has multiple cues. | WCAG contrast and forced/high-contrast modes must also be tested. |
+| **Unavailable controls are clearly unavailable** | Original gadgets were ghosted, and selecting something that does nothing was discouraged. citeturn12view0turn9search7 | Menus ghost with a reason; dead body verbs are generally omitted. | Preserve that **jurisdiction distinction**: menus teach capabilities by ghosting; ordinary content should not accumulate useless controls. |
+| **One current selection context** | Commodore recommends one current object/group and one selection level at a time. citeturn12view0 | Desk `selectedIds`, current object context. | Define nested-selection boundaries explicitly for content inside windows. |
+| **Windows establish context** | Everything inside a window should share a meaningful bond. citeturn12view1 | Application and object windows. | Never use windows as arbitrary cards; every window gets identity, job and state lifetime. |
+| **Safe window activation** | Title bar is suggested as a click target that activates without altering content. citeturn12view1 | `DeskWindowFrame` head and focus-to-front. | First click on an inactive content window must not accidentally execute a destructive/material action. |
+| **Remember user geometry** | Commodore recommends remembering user-chosen position and size, temporarily and optionally persistently. citeturn12view1 | HoldSpeak already persists rect/order/max state. | Version the workspace schema and support viewport migration. |
+| **Zoom as reversible window state** | Original zoom toggles between alternate and previous geometry. citeturn12view1 | maximize/restore. | Support snapping, expose/switcher and compact layouts without losing original geometry. |
+| **Context-sensitive menus** | Active-window context determines available menu actions. citeturn9search2 | One verb registry and menu adapters. | Menus must also work through keyboard, context-menu key and touch equivalents. |
+| **Menus as discoverability** | Menus let users browse capabilities while keeping the normal surface uncluttered. citeturn13view1 | Desk/Object/Go/Window menus; ⌘K shelf. | Registry should generate shortcut sheet and command palette as well. |
+| **Icons communicate quickly** | Workbench icons are functional handles and visually change on selection. citeturn9search0turn9search4 | Real sprite state sets and consistent cells. | Original art must remain inspiration; HoldSpeak’s own coherent sprite family remains canonical. |
+| **AppWindows accept drops** | Workbench defined explicit areas into which objects could be dropped. citeturn12view1 | `dropMatrix.ts` declares target capabilities. | Every drag function also needs a non-drag pointer mechanism under WCAG 2.2. citeturn7search8 |
+| **Progress should remain usable** | Original guidance favors visible progress for measurable work with a stop action. citeturn12view0 | `ProgressPlan`, working states, receipts. | Support cancellation only where cancellation is truthful; never fabricate progress. |
+| **Respect user visual preferences** | Amiga applications were expected to honor user fonts, resolution and palettes. citeturn12view0turn13view2 | Semantic token system, reduced motion, container layout. | Add formal theme, contrast, text scaling and motion preference contracts. |
+| **Design for constrained environments** | Commodore recommended validating at a least-common-denominator 640×200/Topaz-8 configuration. citeturn12view0 | HoldSpeak already tests compact 393-width compositions. | Adopt the principle, not the literal resolution: test every surface at defined minimum containers and large text. |
+| **Internationalization from the start** | Commodore warns translated text can grow roughly 30–50% and recommends centralizing strings. citeturn12view0 | Not yet a strong visible part of the Desk contract. | Externalize user copy, stress-test expansion/Bidi, and format locale-sensitive data through a common service. |
+| **Multiple interfaces to one capability** | Amiga encouraged GUI, Shell and ARexx/IPC interfaces to coexist. citeturn11view0 | GUI, voice, API, MCP and automation already coexist in HoldSpeak. fileciteturn10file0L2-L2 | Define commands once, expose them through multiple adapters, and never fork policy or business semantics. |
+
+### Principles not to reproduce literally
+
+The final specification should explicitly reject several historical implementation details while preserving their intent.
+
+**Do not reproduce fixed low-resolution layouts.** The useful principle is “works at the least capable supported presentation,” not “pretend the display is 640×200.” Commodore itself framed that resolution as a compatibility test rather than a required default. citeturn12view0
+
+**Do not make double-click the only activation mechanism.** Workbench traditionally used single click for selection and double-click to open. citeturn9search0 HoldSpeak can preserve that for mouse spatial mode while using single tap on touch/pen, Enter for keyboard activation, and explicit Open verbs/context-menu items.
+
+**Do not make dragging mandatory.** WCAG 2.2 requires a simple pointer alternative to functionality implemented through dragging unless dragging is essential. citeturn7search8 Every “drag meeting into drawer,” “drop source on Thread,” or “pull result onto Desk” operation therefore also needs a menu, picker or other single-pointer command.
+
+**Do not make color, pixel art, or animation semantic dependencies.** HoldSpeak already uses multiple selected-state cues and icon-plus-text status, which is more faithful to the original guideline’s intent than a literal copy would be. fileciteturn29file0L2-L2 citeturn12view0
+
+**Do not resurrect requester-heavy modal UX.** The modernized analogue of an Amiga requester should be HoldSpeak’s existing in-flow well/disclosure/window vocabulary. The current product canon explicitly forbids modal editing and uses inline confirmation components such as `ConfirmVerb`. fileciteturn13file0L2-L2 fileciteturn14file0L2-L2 Native browser/OS permission prompts are external platform surfaces and should not be emulated.
+
+## Component system and interaction specification
+
+### Atomic taxonomy as an overlay, not a rewrite
+
+Brad Frost describes Atomic Design as a five-level mental model—atoms, molecules, organisms, templates and pages—not as a mandatory implementation architecture. Components should be considered both in isolation and in representative final contexts. citeturn14search0
+
+That makes it ideal for **documenting** HoldSpeak, but renaming directories or forcing all existing components into new code folders would be counterproductive. The final SRS should add an `atomicLevel` classification to the design-system catalogue while leaving the current `desk/surface`, `desk/components`, `pages/cores`, etc. boundaries intact.
+
+A useful HoldSpeak taxonomy is:
+
+| Level | HoldSpeak meaning | Candidate existing species | Required contract |
+|---|---|---|---|
+| **Foundation** | Not technically an Atomic Design level; values from which all visual components derive. | color, type, space, elevation, bevel, z-layer, duration, easing, density, icon-cell tokens | semantic token, theme alias, minimum contrast, generation source |
+| **Atom** | Smallest interactive/presentational unit with independent semantics. | `Button`, `VerbGlyph`, `StateChip`, `EgressChip`, `ProvenanceChip`, `MicButton`, checkbox/radio primitives, primitive token/chip | variant, size, tone, disabled/busy state, accessible name, events |
+| **Molecule** | A small group of atoms implementing one coherent task. | `ConfirmVerb`, `EditInPlace`, `FilterTokens`, `StringGadget`, `CycleGadget`, object icon cell, menu row, search field, window verb cluster | value, state machine, keyboard contract, emitted actions |
+| **Organism** | A distinct substantial region of an application. | `DeskWindowFrame`, `WorkMenu`, `SurfaceLedger`, `SurfaceFooter`, `SurfaceIdentity`, `SurfaceWings`, Dock, Exposé, Switcher, TaskResume list, drawer content | child composition, focus scope, loading/error/empty states, resizing behavior |
+| **Template** | Layout that expresses a product posture independent of specific content. | Working surface, Reviewing surface, Configuring surface, Drawer template, Thread template, Meeting-review template, Info template | regions, responsive reflow, allowed organisms, focus entry, primary action placement |
+| **Page** | Representative instantiated experience. | Spatial Desk, List Desk, Arrival, Presence; Speak window, Meeting window, Agents window, Settings window, Project window, Thread window | real data, roles, edge cases, screenshot fixtures, acceptance journey |
+
+The current Agent Brief independently arrives at a similar notion through **postures**: working surfaces should emphasize the main action; reviewing surfaces should use dense material and inline verdicts; configuring surfaces should use grouped settings rather than generic forms. fileciteturn30file0L2-L2 Those postures should become the Template layer of the formal specification.
+
+### Mandatory contract schema for every reusable component
+
+Every component entry in the ultimate specification should use the same schema:
+
+| Field | Required contents |
+|---|---|
+| **Name / level** | Canonical component and Atomic Design level |
+| **Purpose** | One-sentence responsibility |
+| **Composition** | Allowed children/dependencies |
+| **Props** | Name, type, required/default, semantic meaning |
+| **Visual variants** | Default, dense, primary, danger, selected, etc. |
+| **Interaction states** | Rest, hover, focus-visible, active/pressed, selected, disabled, busy, success, warning, failure, unreachable |
+| **Data states** | Loading, empty, partial, stale, error, offline/disconnected |
+| **Events** | Semantic commands emitted, not incidental DOM details |
+| **Keyboard** | Tab behavior, arrows, Enter/Space, Escape, shortcuts |
+| **Pointer/touch** | click/tap, context, drag or resize behavior |
+| **Accessibility** | native role, accessible name, ARIA only where necessary, live-region behavior |
+| **Theming** | semantic tokens consumed; no literal visual values |
+| **Motion** | trigger, property, duration token, reduced-motion equivalent |
+| **Responsive** | container thresholds and alternate composition |
+| **Localization** | expansion/wrapping constraints, truncation rule, locale formatting |
+| **Test oracle** | unit, interaction, axe, screenshot and journey assertions |
+| **Known consumers** | pages/templates using it |
+| **Status** | canonical / provisional / legacy / deprecated |
+
+The existing surface library already supplies much of this information. `EditInPlace`, for example, defines its value, commit callback, accessible label, disabled reason, multiline behavior and mic behavior; `ConfirmVerb` defines its resting/armed state and in-place destructive confirmation; `FilterTokens` defines its group semantics, state handling, active appearance and accessible naming. fileciteturn14file0L2-L2 The final spec should normalize these existing contracts rather than paraphrase them inconsistently.
+
+### Recommended component state machine
+
+A useful common lifecycle is:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Hover : pointer enter
+    Idle --> Focused : keyboard focus
+    Hover --> Pressed : pointer down
+    Focused --> Pressed : Space/Enter
+    Pressed --> Active : commit
+    Pressed --> Idle : cancel
+    Active --> Working : async command
+    Working --> Success : completed
+    Working --> Warning : completed with qualification
+    Working --> Failure : rejected/failed
+    Working --> Unreachable : transport unavailable
+    Success --> Idle : settle
+    Warning --> Idle : acknowledge/retry
+    Failure --> Idle : retry/recover
+    Unreachable --> Idle : connection restored
+```
+
+This does **not** mean every atom needs every state. It means the specification should use one shared vocabulary and explicitly declare the supported subset, which is already consistent with the repository’s closed `idle/active/working/success/warning/failure/unreachable` vocabulary. fileciteturn14file0L2-L2
+
+### Interaction grammar
+
+#### Selection and opening
+
+Mouse spatial mode should preserve the currently documented Desk grammar:
+
+`single click = select`  
+`double click = open`  
+`Shift/Ctrl/Primary-modifier click = extend/toggle selection where the surface supports multi-selection`  
+`Enter = open selected object`  
+`Space = select/toggle where semantically appropriate`  
+`Escape = close the front transient/card or clear the current transient mode according to priority`
+
+The single-click/double-click pattern is historically consistent with Workbench, where icons are selected first and opened by double-clicking. citeturn9search0 HoldSpeak already specifies mouse single-click selection, mouse double-click opening and single-tap touch opening. fileciteturn28file0L2-L2
+
+A crucial specification detail is **selection scope**. Commodore advised keeping one current object or selected group at one selection level rather than simultaneously selecting unrelated levels. citeturn12view0 For HoldSpeak, that should mean:
+
+- The Desk owns one world selection set.
+- A window may own an internal selection set only while keyboard focus is inside that application.
+- Menu/object commands identify which scope they target.
+- Moving focus from the world into a window does not need to destroy the Desk selection, but only one scope may be the **command target** at a time.
+- The active command context must be exposed visually and programmatically.
+
+#### Windows and focus
+
+A window must have one unique ID, one application/object identity, one persisted normal rectangle, one z-order entry and optional minimized/maximized status. Current code already follows that architecture. fileciteturn16file0L2-L2
+
+The formal focus rules should be:
+
+1. Opening a window brings it to the front.
+2. Opening from an object records the invoker so focus can return there on close.
+3. Focusing any meaningful element in a window activates that window.
+4. Clicking a title/head safe area activates without modifying window content, preserving the original Amiga safe-activation principle. citeturn12view1
+5. Closing returns focus to the opener when it remains valid; otherwise to the next frontmost window or Desk.
+6. Minimizing moves focus to the next available application/window target.
+7. Restoring brings the restored window front and moves focus predictably into it.
+8. Keyboard focus may never end up visually hidden behind another authored HoldSpeak surface, aligning with WCAG 2.2 Focus Not Obscured. citeturn7search9
+9. Ordinary Desk windows do **not** trap focus; only true transient composites such as menus/popovers may use bounded focus behavior. The existing Phase 96 accessibility decision already uses “focus without traps” for application windows. fileciteturn20file0L2-L2
+
+Window verbs should remain one shared grammar:
+
+`minimize · maximize/restore · close · snap · bring front · move/resize`
+
+with mouse, touch and keyboard entrances sharing the same command implementation.
+
+#### Keyboard/navigation
+
+The final specification should define abstract shortcuts using a `Primary` modifier and resolve it per host/platform rather than hardcoding macOS glyphs into business logic.
+
+Recommended canonical grammar:
+
+| Command | Proposed shortcut | Notes |
+|---|---|---|
+| Global search / command shelf | `Primary+K` | Already central in HoldSpeak. |
+| Application switch/open | `Primary+1…4` | Speak, Meetings, Agents, Settings; already a standing Agent Brief ambition. fileciteturn30file0L2-L2 |
+| Close front window | `Primary+W` | Host/browser conflicts must be resolved by desktop host policy. |
+| Minimize front window | `Primary+M` | Same command as window menu. |
+| Cycle windows forward | `Ctrl+\`` or platform mapping | Already present in Desk window grammar. fileciteturn20file0L2-L2 |
+| Cycle reverse | previous + `Shift` | MRU order. |
+| Exposé/window overview | configurable system shortcut | Existing implementation already has an Exposé concept. fileciteturn16file0L2-L2 |
+| Open context menu | context-menu key or `Shift+F10` | Enables right-click functionality from keyboard. |
+| Open selected object | `Enter` | Same semantic command as double click. |
+| Rename/edit current value | `F2` or explicit registry verb | Must use `EditInPlace`. |
+| Cancel current transient operation | `Escape` | Menu → drag → inline editor → front transient in defined priority. |
+| Shortcut map | `Primary+/` | Agent Brief already identifies a drawn shortcut sheet as desired OS territory. fileciteturn30file0L2-L2 |
+
+The menu itself should implement a complete ARIA menu keyboard model: arrow-key traversal, activation, submenu handling, Escape dismissal and focus return. The repository already records that its current menu implements the Radix keyboard **pattern** without importing Radix primitives. fileciteturn20file0L2-L2
+
+#### Drag and drop
+
+The current HoldSpeak drop model is one of its strongest design choices: allowed source-target combinations live in `dropMatrix.ts`; viable targets visibly light; a cursor-adjacent verb names what release means; and potentially consequential model actions are not triggered merely by a drop but instead receive held input awaiting an explicit run action. fileciteturn28file0L2-L2
+
+The ultimate specification should extend that grammar to five stages:
+
+```text
+candidate → armed → dragging → over-valid-target → commit/cancel
+```
+
+Each stage should specify pointer imagery, source state, target state, live announcement, cursor verb, cancellation behavior and whether the source returns home.
+
+Every drag operation must additionally have:
+
+- an Object/context menu command;
+- a keyboard-accessible destination picker or equivalent;
+- a simple non-drag pointer path.
+
+That last requirement follows directly from WCAG 2.2 SC 2.5.7. citeturn7search8
+
+The original Amiga’s ability to cancel window drag using the alternate mouse button is historically interesting, but HoldSpeak should modernize the principle to **Escape cancels any in-progress drag**, while pointer release commits only over an explicitly valid target. The original guide similarly emphasized actions on release so that users can move away and cancel before commitment. citeturn12view0
+
+#### Modal and dialog rules
+
+Product-level modal dialogs should remain prohibited.
+
+Use, in priority order:
+
+`inline edit → disclosure/well → dedicated Desk window → OS-native system prompt`
+
+Destructive actions should use HoldSpeak’s existing in-place two-stage `ConfirmVerb`, not a confirmation modal. fileciteturn14file0L2-L2
+
+A “dialog” in the SRS should mean one of two precisely named things:
+
+**Desk window** — movable, nonmodal, participates in normal z/focus/window lifecycle.
+
+**Platform dialog** — unavoidable OS/browser surface such as file selection, microphone permission, code signing, secure credential selection, etc.; owned by the host rather than rendered as fake HoldSpeak chrome.
+
+This distinction prevents an agent from satisfying a requirement for “dialog rules” by reintroducing modal SaaS patterns that the repository explicitly rejected.
+
+#### Motion and microinteractions
+
+Commodore treated visual response as an essential confirmation that input was accepted. citeturn12view0 HoldSpeak’s design canon turns that into a stronger modern rule: motion should communicate state changes rather than decorate idle UI, and reduced motion must eliminate nonessential animation. fileciteturn13file0L2-L2
+
+The specification should define named motion primitives rather than one-off animations:
+
+| Motion | Meaning | Reduced-motion behavior |
+|---|---|---|
+| **Press** | control accepted pointer/key down | state change only |
+| **Select** | object became current | selected imagery immediately |
+| **Window open/close** | spatial relationship to source object | appear/disappear without travel |
+| **Minimize/restore** | movement between work surface and Dock | instant state transition |
+| **Snap ghost** | previews final window geometry | static preview |
+| **Drop affordance** | target is valid and names operation | static selected target + verb |
+| **Materialize** | newly created object now exists | immediate appearance with `NEW` state |
+| **State settle** | working → outcome | chip/text state change only |
+| **Wing/posture switch** | same application changed work posture | instant content switch |
+| **Inline edit commit** | presented data became new data | text update only |
+
+The current canon’s guidance of at most four named motion moments per face is a useful complexity ceiling. fileciteturn13file0L2-L2
+
+### Responsive behavior
+
+The correct conceptual translation of Amiga’s “design against the least capable practical screen” is **container-first resilience**, not viewport-specific retro emulation. Commodore recommended designing so windows continued to work at constrained resolution and honoring user-selected font and resolution settings. citeturn12view0turn12view1
+
+HoldSpeak already uses `@container surface` as the interior reflow authority and explicitly discourages route/core-specific viewport media queries. fileciteturn14file0L2-L2
+
+The specification should define at least these presentation classes:
+
+| Container condition | Behavior |
+|---|---|
+| **Wide desktop** | Free spatial Desk, overlapping windows, full menubar + Dock, multi-column interiors where valuable |
+| **Standard desktop/laptop** | Same OS grammar, denser content, avoid unnecessary multi-column interior layouts |
+| **Narrow window** | Organisms stack; row metadata wraps or folds; wings stay within head |
+| **Compact/phone** | List mode may lead at high object density; application windows become sheet-like/full-height compositions; direct spatial arrangement is secondary |
+| **Large-text/high zoom** | Reflow rather than horizontal clipping; essential controls remain reachable |
+| **Reduced motion** | Same semantic states, instantaneous transitions |
+| **High contrast/forced colors** | status/selection still comprehensible without authored color dependency |
+
+The repository already defaults compact high-density desks to list mode beyond an explicit object threshold while retaining a saved user choice, demonstrating the right principle: responsive behavior may change presentation defaults, but it must not silently erase user preference. fileciteturn23file0L2-L2
+
+### Illustrative mockups
+
+These are **structural examples**, not final art direction. The agent’s ultimate deliverable should produce ratifiable high-fidelity artboards at minimum for wide and compact compositions.
+
+```text
+┌ HoldSpeak ─── Desk  Object  Go  Window ───── ◉ HERE  🔔  ⌘K  10:42 ┐
+│                                                                    │
+│   ┌──────────┐       ┌──────────┐          ┌──────────┐             │
+│   │  NOTE    │       │ MEETING  │          │ DRAWER   │             │
+│   │  sprite  │       │  sprite  │          │  sprite  │             │
+│   └──────────┘       └──────────┘          └──────────┘             │
+│     API plan          Arch sync             Project A               │
+│                                                                    │
+│              ┌ Architecture sync ────────────── ▢ — × ┐             │
+│              │ REVIEW                                   │             │
+│              │                                          │             │
+│              │ 09:31  DECISION                          │             │
+│              │ Move desktop host behind a bounded API   │ [Keep]     │
+│              │                                          │             │
+│              │ 09:47  ACTION                            │             │
+│              │ Prototype Tauri + Electron bridge        │ [Open]     │
+│              │                                          │             │
+│              │ RECEIPT · LOCAL        3 DECISIONS       │             │
+│              └──────────────────────────────────────────┘             │
+│                                                                    │
+│       [ Speak ] [ Meetings • ] [ Agents ] [ Settings ]      [● REC]│
+└────────────────────────────────────────────────────────────────────┘
+```
+
+A compact rendering should preserve the same concepts without attempting to miniaturize the desktop:
+
+```text
+┌ HoldSpeak                     ⌘K 10:42 ┐
+│ ARCHITECTURE SYNC                      │
+├────────────────────────────────────────┤
+│ REVIEW   OUTCOMES   INFO               │
+│                                        │
+│ DECISION                               │
+│ Move desktop host behind bounded API   │
+│ LOCAL                           [Keep]  │
+│                                        │
+│ ACTION                                 │
+│ Prototype desktop bridge               │
+│ PROJECT A                       [Open]  │
+│                                        │
+├────────────────────────────────────────┤
+│ Speak   Meetings   Agents   Settings   │
+└────────────────────────────────────────┘
+```
+
+The important continuity is semantic: the same window/application, same data, same verb registry and same states exist at both widths. Only composition changes.
+
+## SRS architecture, requirements, and technology decisions
+
+### Functional requirement structure
+
+The final specification should use RFC-style normative language and trace every requirement to design, implementation and verification artifacts.
+
+A strong initial requirement set is:
+
+| ID | Functional requirement | Acceptance intent |
+|---|---|---|
+| **FR-DESK-001** | The system SHALL expose the Desk as the primary operating surface. | Product capabilities do not spawn independent competing shell architectures. |
+| **FR-DESK-002** | The Desk SHALL provide spatial and semantic/list representations of the same objects. | Full task parity for users who cannot or do not want to operate spatially. |
+| **FR-OBJ-001** | Each Desk primitive SHALL have one registry-defined object kind, visual representation and supported verb set. | No feature-local invention of object semantics. |
+| **FR-OBJ-002** | Selection SHALL be visible through at least two non-color-only cues. | Selected state remains perceivable under grayscale/high-contrast conditions. |
+| **FR-OBJ-003** | The mouse grammar SHALL support select then open/action; equivalent keyboard and touch operations SHALL exist. | Preserve object-action without input-device dependence. |
+| **FR-WIN-001** | Every product window SHALL use the common window lifecycle. | Common move/resize/focus/minimize/maximize/close behavior. |
+| **FR-WIN-002** | User-arranged window geometry and order SHALL survive the defined workspace persistence lifetime. | Arrangement is treated as user-owned state. |
+| **FR-WIN-003** | Opening/closing SHALL preserve a deterministic focus-return relationship. | Keyboard users do not become stranded. |
+| **FR-WIN-004** | Window state SHALL be migrated/clamped when display geometry changes. | Persisted layouts remain recoverable across monitor/viewport changes. |
+| **FR-MENU-001** | All menu faces SHALL derive labels/availability/shortcuts from the canonical verb registry. | No divergent menu vocabulary. |
+| **FR-MENU-002** | An unavailable menu capability SHALL remain discoverable when appropriate and SHALL expose the reason it cannot run. | Amiga-style ghosting with modern explanatory semantics. |
+| **FR-CMD-001** | Every user action with side effects SHALL dispatch a semantic command rather than embedding side effects in view components. | GUI, keyboard and future desktop host use the same behavior. |
+| **FR-DND-001** | Drag targets SHALL be declared through contract data. | No component-local source/target matrices. |
+| **FR-DND-002** | Drag functionality SHALL have an equivalent non-drag pointer operation. | WCAG 2.2 compliance. citeturn7search8 |
+| **FR-DND-003** | A drop SHALL state the operation before commitment. | Cursor/target verb provides consent context. |
+| **FR-AI-001** | A drag/drop gesture SHALL NOT silently cause model execution where an explicit run decision is required. | Preserve current HoldSpeak consent grammar. |
+| **FR-VOICE-001** | Text-entry-capable product fields SHALL participate in the defined voice-input law unless explicitly exempted. | Voice remains first-class rather than a separate feature. |
+| **FR-STATE-001** | Long-running operations SHALL expose truthful working/outcome states. | No fake deterministic progress. |
+| **FR-DESK-003** | Destructive confirmation SHALL occur in-world using the canonical confirmation interaction rather than application-modal UI. | Preserve no-modal product grammar. |
+| **FR-INFO-001** | Object Info SHALL be contract-derived and SHALL expose only properties backed by real data/update contracts. | No decorative property panels. |
+| **FR-SEARCH-001** | Global search/command access SHALL reach every supported application/tool/object class. | One launcher/search grammar. |
+| **FR-HOST-001** | A desktop host SHALL expose platform features through a bounded typed bridge. | Renderer UI remains host-independent. |
+| **FR-HOST-002** | The web product SHALL remain functional without a desktop wrapper except for explicitly native-only capabilities. | Desktop is an adapter, not a rewrite. |
+
+### Nonfunctional requirements
+
+#### Accessibility
+
+The baseline should be **WCAG 2.2 AA**, with deliberate AAA-level choices where they cheaply strengthen desktop usability. W3C recommends WCAG 2.2 as the current conformance target; relevant additions include Focus Not Obscured, Dragging Movements, and Target Size Minimum. citeturn7search0
+
+Proposed acceptance requirements:
+
+- All product work is operable by keyboard.
+- Spatial manipulation has semantic alternatives.
+- Pointer targets meet WCAG 2.2 AA sizing/spacing; W3C defines the default minimum as 24×24 CSS px with specified exceptions. citeturn7search6
+- Primary/high-frequency touch actions should target the stricter 44×44 guidance where layout permits; W3C identifies 44×44 CSS px as the enhanced target size criterion. citeturn7search11
+- Focus is visible and not hidden behind authored UI.
+- Selection and status do not rely on color alone.
+- Screen-reader state announcements occur on meaningful transitions rather than continuous motion.
+- Spatial Desk behavior has a semantic DOM/list representation with equivalent commands.
+- Browser zoom and enlarged text do not cut off critical controls.
+- Reduced-motion preference results in functionally equivalent instantaneous states.
+- All generated keyboard shortcuts have programmatic labels and visible discoverability.
+
+Current HoldSpeak already has a substantial foundation for these requirements, including axe-core, Testing Library, explicit ARIA patterns, roving tabindex, and reduced-motion rules. fileciteturn11file0L2-L2 fileciteturn14file0L2-L2
+
+#### Performance
+
+The specification should define budgets as **acceptance thresholds**, not vague “fast enough” adjectives. Recommended initial budgets for benchmark hardware should include:
+
+| Metric | Proposed target |
+|---|---:|
+| Local press/select visual feedback | next rendered frame |
+| Drag/resize interaction | no sustained frames exceeding a 60 Hz frame budget during normal single-window manipulation |
+| Window focus/z-order change | one interaction frame, excluding requested content loading |
+| Menu/context-menu opening | perceptually immediate after invocation |
+| First usable Desk after shell/data prerequisites | explicit benchmark to be measured and frozen during baseline phase |
+| Runtime bus handling | no unbounded render cascade per incoming frame |
+| Idle CPU | no decorative continuous animation that materially keeps the application busy |
+| Bundle growth | existing bundle gate retained; any threshold change requires reasoned ADR |
+| GL object density | tested at representative normal, heavy and pathological fixtures |
+| Memory after repeated window open/close | bounded; no retained window/listener growth |
+
+The repository has historical evidence that its assembled material/window family passed a performance “storm” with an 8.3 ms median and 10.0 ms p95 in Phase 96, demonstrating that performance is already treated as a measurable design property. fileciteturn20file0L2-L2 The final agent should rerun and baseline current-main numbers rather than assume those July 2026 measurements remain current.
+
+#### Localization
+
+The specification should require:
+
+- all visible user-facing labels/messages to come from a localization-capable source rather than being scattered literals;
+- no localization of protocol identifiers, registry IDs or stable command IDs;
+- locale-sensitive date, time, number and measurement formatting;
+- expansion fixtures at +30%, +50% and pathological strings;
+- testing with long compound nouns;
+- Bidi/RTL analysis even if first rollout remains en-US;
+- accessible names localized with visible labels;
+- keyboard shortcut notation adapted to platform/locale where necessary;
+- icon-only controls never relying on English tooltip text as their sole accessible identity.
+
+The historical guide explicitly warned that English-to-German text could grow roughly 30–50% and recommended centralizing translatable strings rather than scattering text throughout applications. citeturn12view0 This is one of the most directly transferable principles from the original Amiga documentation.
+
+#### Theming
+
+The design token graph should be formalized as:
+
+```text
+primitive tokens
+    ↓
+semantic roles
+    ↓
+component tokens
+    ↓
+theme aliases
+    ↓
+renderers: DOM + WebGL + optional native host chrome
+```
+
+The current HoldSpeak design system already uses a three-layer token approach and generates both CSS and TypeScript representations. fileciteturn20file0L2-L2
+
+Required themes should be treated separately from “skins”:
+
+- **Signal Dark** — current default.
+- **High Contrast** — functional accessibility variant.
+- **System/automatic** — selects supported light/dark semantics once both exist.
+- **Signal Light** — future semantic parity target.
+- Optional **Workbench Tribute** appearance may change palette/material intensity only; it must not change interaction semantics.
+
+The repo currently explicitly keeps dark-only behavior while preserving the semantic layer as the future light-theme attach point, so the final SRS should make theme expansion a scoped roadmap item rather than pretending it already exists. fileciteturn19file5L70-L82
+
+#### Reliability and recoverability
+
+Workspace persistence should be versioned and tolerant of:
+
+- deleted/unknown window IDs;
+- application renames;
+- display-size changes;
+- stale rects;
+- corrupt local state;
+- rollout/rollback across schema versions.
+
+Backend data must never depend on successful workspace persistence. Losing local layout may reset arrangement; it must not lose Notes, Meetings, Threads or other hub records.
+
+#### Security
+
+The desktop host must expose the **minimum native authority needed per capability**.
+
+For Electron, official guidance includes context isolation, sandboxed renderers, restricted navigation/window creation, validating IPC senders, avoiding Node integration in web content and exposing only narrow APIs across `contextBridge`. citeturn6search0turn6search3turn6search13
+
+For Tauri, capabilities define which permissions a given window/webview receives, and the runtime authority verifies origin, capability and scope before a command is invoked. citeturn6search6turn6search8
+
+The SRS should therefore describe host interfaces such as:
+
+```ts
+interface DesktopHost {
+  readonly kind: "web" | "tauri" | "electron";
+
+  showOpenDialog?(request: OpenDialogRequest): Promise<FileHandleRef[]>;
+  showSaveDialog?(request: SaveDialogRequest): Promise<FileHandleRef | null>;
+
+  registerGlobalShortcut?(
+    commandId: CommandId,
+    accelerator: string
+  ): Promise<void>;
+
+  showNotification?(notice: SystemNotice): Promise<void>;
+
+  setTrayState?(state: TrayState): Promise<void>;
+
+  revealPath?(opaqueRef: LocalFileRef): Promise<void>;
+}
+```
+
+The renderer must **not** receive arbitrary filesystem, shell or process APIs.
+
+### Data models the final SRS should formalize
+
+The repository already has concrete window and Desk models, but the ultimate specification should publish portable schemas rather than make TypeScript implementation the only source of truth. Current examples such as `PanelRect`, `WindowInstance`, `DeskView` and `ZoneViewPref` are strong starting points. fileciteturn23file0L2-L2
+
+At minimum, formalize:
+
+```text
+WorkspaceLayout
+  schemaVersion
+  viewMode
+  windows[]
+  zonePreferences{}
+  spatialPositions{}
+  selectedTheme?
+  locale?
+
+WindowInstance
+  id
+  applicationKey
+  scope
+  rect
+  normalRect
+  zOrder
+  minimized
+  maximized
+  persistencePolicy
+
+SelectionContext
+  owner
+  selectedRefs[]
+  anchorRef?
+  commandTargetRef?
+
+VerbDefinition
+  id
+  labelKey
+  category
+  shortcut?
+  glyph?
+  applicability(context)
+  unavailableReason(context)
+  destructive
+  egressSemantics?
+
+DropCapability
+  sourceKinds[]
+  targetKind
+  commandId
+  visibleVerb
+  sideEffectClass
+  requiresExplicitRun
+
+ThemePreference
+  mode
+  contrast
+  motion
+  density
+
+DesktopCapability
+  id
+  platforms[]
+  permissionClass
+  bridgeMethod
+  gracefulWebFallback
+```
+
+For every model the SRS should label:
+
+**authority** — backend, local workspace or host  
+**persistence** — ephemeral, session, workspace, hub  
+**versioning** — schema revision strategy  
+**sync** — never, local only, hub synced  
+**privacy** — content, metadata, secret, public  
+**migration** — reader behavior for old fields  
+
+### API and integration specification
+
+The final SRS should generate a **surface → capability → API → event → receipt** matrix rather than documenting HTTP routes independently.
+
+Example:
+
+| Surface/verb | HTTP/API | Runtime event | Local state | Receipt/egress |
+|---|---|---|---|---|
+| Open Meeting | read meeting endpoint | optional live meeting frames | window geometry only | none |
+| Start recording | hub recording route | runtime activity | recording projection | hardware/local boundary |
+| File object into drawer | membership route | refresh/record event | object position remains separate | hub mutation |
+| Run Workbench | capability/run API | model/run frames | working state | model placement + receipt |
+| Rename drawer | update route | refreshed object state | editing flag ephemeral | hub mutation |
+| Desktop open file | host bridge | import progress on runtime bus | optional source window | local filesystem boundary |
+
+The Web architecture already mandates typed HTTP through one client and a single product WebSocket connection. fileciteturn18file0L2-L2 A desktop integration should preserve those boundaries and add a separate `DesktopHost` adapter rather than bypassing them.
+
+### Candidate framework and library tradeoffs
+
+#### Desktop shell
+
+| Option | Strengths | Costs/risks | HoldSpeak fit |
+|---|---|---|---|
+| **Web/PWA only** | Zero new native runtime; exactly current architecture | Cannot reliably supply every desired native desktop feature such as global shortcuts/tray/filesystem integration across platforms | Keep as mandatory baseline and fallback |
+| **Tauri 2** | Uses HTML in OS WebViews with a Rust core; explicit permissions/capabilities; does not bundle its own WebView. citeturn8search8turn6search21 | Adds Rust/native build expertise; system WebView creates more cross-platform rendering variability | **Strong thin-host candidate** if package footprint/security boundaries outrank rendering uniformity |
+| **Electron** | Bundles Chromium + Node and therefore offers a stable web rendering target across supported desktop OSes. citeturn8search0turn8search2 | Bundled Chromium/Node adds another runtime and demands disciplined IPC/security maintenance; official guidance is extensive. citeturn6search0 | **Strong thin-host candidate** if exact Desk rendering parity and JS expertise outrank footprint |
+| **Native rewrite** | Maximum platform integration | Duplicates the mature React Desk, design system and interaction model; extremely high semantic drift risk | Reject for this objective |
+
+**Recommendation:** specify the desktop boundary before choosing the container. Build a small Tauri and Electron host spike against the **same production web build** and score them on startup, install/update pipeline, signed packaging, global shortcut behavior, tray integration, microphone/global-hotkey coexistence, native dialogs, visual rendering parity, security review complexity, resource use and developer skill cost.
+
+This is particularly important because existing HoldSpeak design decisions previously declined a Tauri or Electron shell in other scopes. The new user-level requirement changes that assumption, so the wrapper choice must be an explicit new ADR rather than an accidental dependency. fileciteturn34file0L2-L2 fileciteturn31file0L1-L10
+
+#### UI primitive strategy
+
+| Candidate | Benefit | Conflict/cost | Recommendation |
+|---|---|---|---|
+| **Existing HoldSpeak Surface/Signal system** | Already tokenized, Workbench-specific, tested, repository-canonical | Some legacy violations and missing species remain | **Primary choice** |
+| **React Aria Components/hooks** | Unstyled accessible React primitives; accessibility, internationalization and cross-input behavior are built into the library. citeturn8search1 Its drag/drop support includes keyboard and screen-reader operation. citeturn6search1 | Introduces a second interaction abstraction and may conflict with hand-owned Desk semantics | Consider only for a new difficult composite after an ADR; skin through existing HoldSpeak components |
+| **Radix Primitives** | Accessible unstyled primitives with established keyboard patterns. citeturn6search22 | Repo has already explicitly chosen “patterns yes, primitives no.” fileciteturn20file0L2-L2 | Do not adopt wholesale without overturning the existing ADR |
+| **MUI/Chakra/full component kit** | Broad prebuilt UI coverage | Second visual/state vocabulary; encourages generic app/dashboard composition contrary to existing product canon | Reject as product-level foundation |
+| **Tailwind/shadcn replacement** | Utility speed and ecosystem | Repository design-system documentation explicitly records that the Tailwind/shadcn stack was not adopted. fileciteturn19file5L70-L82 | Reject as architectural replacement |
+| **Custom components for everything** | Maximum aesthetic control | Reimplements difficult accessibility mechanics repeatedly | Continue only under current rule: recurring patterns become library species with explicit tests |
+
+The best modernization path is therefore **not** “replace HoldSpeak controls with React Aria.” It is to permit a HoldSpeak component to use a headless accessibility primitive internally when there is a demonstrable need and no conflict with the existing semantics. That keeps the public design-system contract stable.
+
+## Risks, technical debt, testing, and rollout
+
+### Risk register
+
+| Risk | Evidence | Severity | Mitigation |
+|---|---|---:|---|
+| **Agent treats assignment as greenfield redesign** | Exact Workbench vision already shipped in Phase 105. fileciteturn27file0L2-L2 | Critical | First deliverable is a repo-to-spec traceability census; no new visual proposal until existing law is mapped. |
+| **Existing canon documents overlap or conflict** | Constitution, Agent Brief, Design System, UX Canon, Desk Grammar and Surface contract all govern different layers. | High | Produce source hierarchy + conflict ledger; every conflict resolved explicitly. |
+| **Implementation is more precise than documentation** | Phase 105 names TypeScript-only drag thresholds, layout math, motion and menu behaviors as spec debt. fileciteturn27file0L2-L2 | High | Extract them into portable normative contracts before new platform work. |
+| **Workbench becomes decorative nostalgia** | Original source focuses on behavior, consistency and feedback, not decorative retro styling. citeturn12view0 | High | Require rationale mapping each retro-inspired choice to a job/usability principle. |
+| **Spatial UI excludes keyboard/motor users** | Dragging is central to the metaphor; WCAG 2.2 requires alternatives. citeturn7search8 | Critical | Semantic list view, command registry alternatives, keyboard destination pickers. |
+| **WebGL world is less semantically accessible than DOM** | Spatial world is Pixi/WebGL while windows are DOM. fileciteturn18file0L2-L2 | High | Treat semantic/list representation as equal product surface; maintain state/verb parity tests. |
+| **Desktop shell becomes second architecture** | Current Web Desk is canonical; past shell proposals were explicitly rejected. fileciteturn34file0L2-L2 | Critical | Thin-host interface; no duplicate business store, component kit or networking path. |
+| **Electron privilege leakage** | Electron’s own security guidance requires isolation, sandboxing and restricted IPC. citeturn6search0 | Critical | Preload allowlist, sender validation, no generic Node bridge, CSP, sandbox. |
+| **Tauri capability overbreadth** | Multiple capability assignments can merge permission boundaries. citeturn6search8 | High | Capability-per-purpose review and integration tests for denied calls. |
+| **Legacy raw controls bypass species law** | UX ratchet records 175 raw-button residues as of Sept. 17, 2026. fileciteturn13file0L2-L2 | Medium | Ratchet to zero during touched-area migration, never raise baseline without explicit debt record. |
+| **Current dark-only system underdelivers requested theming** | Design-system record explicitly says dark-only remains. fileciteturn19file5L70-L82 | Medium | Make semantic-light/high-contrast variants roadmap milestones. |
+| **Localization breaks compact Workbench geometry** | Original guide explicitly notes potentially large translated-text growth. citeturn12view0 | High | Pseudo-localization and 50% expansion screenshots in CI. |
+| **Direct manipulation triggers consequential AI work** | Current Drop Law deliberately holds model input rather than running on drop. fileciteturn28file0L2-L2 | Critical | Preserve consent class on every registered drop command. |
+| **Motion degrades performance or accessibility** | Window/glass system is animation-heavy by nature. | Medium | Named motion budget, reduced-motion parity, performance storm gates. |
+| **Unfinished drag semantics expand combinatorially** | Cross-window refiling, multi-object drops and new drop targets remain standing remainders. fileciteturn28file0L2-L2 | High | Extend data-driven matrix rather than introducing feature-specific handlers. |
+
+### Test architecture
+
+The final specification should define five test layers.
+
+**Static contract tests** verify design tokens, vocabulary, component imports, prohibited raw controls, prohibited modal roles, registry completeness, no direct fetch/socket bypass and schema compatibility. Much of this already exists. fileciteturn18file0L2-L2
+
+**Component interaction tests** should exercise every supported state and keyboard path with Testing Library/user-event, including focus return, selected/disabled/working state, menu traversal, compact reflow and reduced motion. The current package already includes these libraries plus axe-core. fileciteturn11file0L2-L2
+
+**Accessibility tests** should combine axe with behavioral assertions. Axe alone cannot prove correct window focus, useful reading order or complete drag alternatives.
+
+**Visual/regression rigs** should render canonical fixtures at wide desktop, narrow desktop, 393-ish compact, large text, pseudo-localized copy, reduced motion and high contrast. Existing HoldSpeak process already uses 1440 and 393 screenshots and treats visual review as part of UI acceptance. fileciteturn13file0L2-L2
+
+**Real journey/E2E tests** should verify representative user jobs through the production FastAPI/React bundle and real runtime bus. Current CI already has critical journeys, integration testing, live bus gating and browser E2E on macOS plus Linux smoke coverage. fileciteturn21file0L2-L2
+
+Desktop builds add a sixth layer:
+
+**Host-contract tests**, executed against Tauri/Electron adapters, covering denied permissions, global shortcut lifecycle, navigation prevention, native file dialogs, app relaunch/workspace restore, updater rollback, microphone/hotkey coexistence and renderer compromise assumptions.
+
+### CI/CD changes
+
+A mature target pipeline would be:
+
+```text
+lint/format
+  ↓
+design-token generation + drift check
+  ↓
+architecture / UX canon / vocabulary guards
+  ↓
+typecheck
+  ↓
+unit + component + axe
+  ↓
+production web build + bundle gate
+  ↓
+visual fixtures / pseudo-locale / compact layouts
+  ↓
+backend unit + integration
+  ↓
+live runtime-bus browser test
+  ↓
+critical journeys
+  ↓
+desktop-host matrix
+  ├─ macOS
+  ├─ Linux
+  └─ Windows
+  ↓
+signed release candidate
+  ↓
+staged rollout + telemetry/diagnostic review
+```
+
+The first half already substantially exists in the repository; the major additions are cross-platform desktop packaging/host checks and systematic pseudo-localization/theme visual gates. fileciteturn21file0L2-L2
+
+### Rollout strategy
+
+The wrapper and expanded design contract should not land as one flag-day rewrite.
+
+**Stage A — spec only.** Freeze the normalized design/SRS baseline and trace every normative statement to code or an explicitly open requirement.
+
+**Stage B — web conformance.** Make the existing web Desk conform to that spec. Do not start desktop implementation while fundamental requirements are marked “unknown.”
+
+**Stage C — host abstraction.** Introduce `DesktopHost` with the pure Web implementation as the null/default adapter.
+
+**Stage D — internal desktop preview.** Run one chosen host against the production bundle with native capabilities disabled by default.
+
+**Stage E — capability-by-capability enablement.** Tray, global shortcuts, system notifications, file integration and updater each receive their own permission/security tests.
+
+**Stage F — opt-in beta.** Keep browser/web operation as recovery and parity reference.
+
+**Stage G — default desktop distribution**, only after critical journey parity, crash/relaunch behavior, upgrades and workspace migration have been proven.
+
+This preserves the existing “web Desk is the spec” principle while satisfying the new requirement for a desktop product.
+
+## Delivery roadmap, estimates, and required skills
+
+Because the repository is already far along, estimates should be based on **delta work**, not on building a desktop environment from zero. The ranges below are engineering effort estimates, not calendar promises; parallel specialist work can shorten elapsed time.
+
+| Milestone | Main output | Estimate | Core skills |
+|---|---|---:|---|
+| **Canon reconciliation** | Source hierarchy, UI/code census, requirement traceability matrix, contradiction/debt ledger | 1–2 person-weeks | senior frontend architect, product systems analysis |
+| **Ultimate design specification** | Atomic catalogue, tokens, window/selection/menu/drag/focus/motion rules, high-fidelity artboards, responsive matrices | 2–3 person-weeks | design systems, interaction design, React/Pixi expertise |
+| **Formal SRS** | FR/NFR, schemas, API/integration matrices, security, a11y, observability, testable acceptance criteria | 2–3 person-weeks | software architecture, SRS/requirements engineering, FastAPI/TypeScript |
+| **Portable contract extraction** | Turn Phase-105 TypeScript-only behavior into versioned normative schemas/contracts | 2–3 person-weeks | TypeScript, state machines, UI architecture |
+| **Accessibility hardening** | Spatial/list parity, keyboard drag alternatives, focus tests, target-size review, screen-reader verification | 2–4 person-weeks | accessibility specialist + frontend engineer |
+| **Direct-manipulation completion** | Cross-window refile, multi-select drops, desktop/file drops, result extraction | 3–5 person-weeks | gesture systems, Pixi, state architecture, backend APIs |
+| **Theme/localization hardening** | localized message architecture, pseudo-locale, light/high-contrast semantic themes | 3–5 person-weeks | CSS/token systems, i18n, accessibility |
+| **Desktop-host ADR + spike** | Tauri/Electron prototypes and measured comparison | 1–2 person-weeks | Rust/Tauri and/or Electron/Node, security |
+| **Desktop productization** | selected host, packaging, signing, updater, tray, shortcuts, native file bridge, CI matrix | 4–7 person-weeks | native packaging, DevSecOps, macOS/Linux/Windows |
+| **Rollout and stabilization** | staged release, migration tests, recovery path, final owner/UAT signoff | 2–3 person-weeks | QA, release engineering, product owner |
+
+The **specification package alone** is therefore approximately **5–8 focused person-weeks** if produced to the requested degree of rigor, including artboards and traceability. The highest-value implementation tranche after that is approximately **12–20 person-weeks** before full desktop productization, depending largely on how much direct manipulation, localization and theming are included. Desktop productization adds a separate cross-platform effort.
+
+A sensible sequencing is:
+
+```mermaid
+gantt
+    title HoldSpeak Workbench specification and delivery sequence
+    dateFormat  YYYY-MM-DD
+    axisFormat  %b %d
+
+    section Specification
+    Canon reconciliation            :a1, 2026-09-21, 10d
+    Design specification            :a2, after a1, 15d
+    Formal SRS                      :a3, 2026-09-28, 20d
+
+    section Contract hardening
+    Portable UI contracts           :b1, after a2, 15d
+    Accessibility hardening         :b2, after a2, 20d
+    Theme and localization          :b3, after a2, 20d
+
+    section OS completion
+    Direct manipulation completion  :c1, after b1, 25d
+    Desktop host ADR and spikes     :c2, after a3, 10d
+
+    section Desktop
+    Host productization             :d1, after c2, 35d
+    Cross-platform release gates    :d2, after d1, 15d
+
+    section Rollout
+    Beta and stabilization          :e1, after d2, 15d
+```
+
+The critical-path skills are not “generic frontend developer” alone. The effort needs:
+
+**A senior React/design-systems engineer** who can work inside an existing tokenized system instead of importing another kit.
+
+**A Pixi/WebGL interaction engineer** for the world/object layer and gesture performance.
+
+**An accessibility specialist** comfortable with composite desktop-like widgets, spatial alternatives and screen-reader testing beyond axe.
+
+**A product interaction designer** capable of producing high-fidelity, content-realistic 1440/393 artboards and reasoning in object-action/window metaphors rather than conventional dashboard components.
+
+**A backend/API architect** familiar with FastAPI, WebSockets and the HoldSpeak authority/receipt model.
+
+**A desktop/security engineer** for Tauri/Rust or Electron/Node packaging, native permissions, signing, update and IPC boundaries.
+
+**QA/release engineering** for cross-platform deterministic rigs and staged rollout.
+
+The existing CI and product architecture substantially reduce the need for basic frontend infrastructure work; the difficult work is **formalizing semantics and eliminating remaining ambiguity**.
+
+## Final developer-agent instruction
+
+The following is the recommended instruction to give the agent that will produce the ultimate design + SRS specification.
+
+```text
+ROLE
+
+You are the principal product UI architect, design-systems engineer, interaction
+designer, accessibility engineer, and requirements author for HoldSpeak.
+
+Your task is NOT to invent a new Amiga-themed frontend.
+
+Your task is to produce the authoritative final DESIGN SPECIFICATION + SOFTWARE
+REQUIREMENTS SPECIFICATION for HoldSpeak's existing Desk OS: a component-based,
+Intuition-inspired, Amiga Workbench 2.0+ "on steroids" operating surface that
+works on the Web and can be hosted by a future Electron or Tauri desktop shell.
+
+The specification must be precise enough that another engineering team can
+implement or recreate the UI without reading undocumented behavior out of the
+current TypeScript source.
+
+CORE PREMISE
+
+The repository already implemented a substantial Workbench-derived Desk OS.
+Treat that implementation and its current canon as source evidence.
+
+Do not greenfield-rewrite it.
+Do not import a generic dashboard design.
+Do not replace its design system merely because another UI kit is familiar.
+Do not treat "Amiga" as a skin.
+
+Your job is to:
+  1. discover the current truth,
+  2. reconcile it,
+  3. formalize it,
+  4. identify genuine gaps,
+  5. design missing behavior,
+  6. produce testable requirements for completing it.
+
+SOURCE PRIORITY
+
+Read sources in this order and create a source-hierarchy table before proposing
+anything:
+
+1. docs/internal/CONSTITUTION.md
+2. docs/internal/AGENT_BRIEF.md
+3. docs/internal/UX-CANON.md
+4. docs/internal/DESIGN_SYSTEM.md
+5. docs/internal/DESK_GRAMMAR.md
+6. web/ICON-DISCIPLINE.md
+7. web/src/desk/surface/contract.md
+8. docs/internal/ARCHITECTURE_WEB_FRONTEND.md
+9. README.md and web/README.md
+10. current production source code and tests
+11. current roadmap/final-summary material when it explains why shipped
+    behavior exists
+12. historical designer handoffs only as historical evidence, never as
+    authority over the current tree.
+
+Where prose and implementation conflict:
+- record the conflict,
+- determine which source has higher authority,
+- never silently choose one,
+- mark the result as either a code defect, specification defect, or open
+  product decision.
+
+PRIMARY EXTERNAL REFERENCES
+
+Use primary/original sources wherever possible.
+
+At minimum research and cite:
+- Commodore, Amiga User Interface Style Guide / ROM Kernel Reference Manual
+  User Interface Style Guide (1991).
+- AmigaOS documentation for Workbench fundamentals, Intuition windows,
+  gadgets, menus, mouse and icon behavior.
+- WCAG 2.2 and WAI Understanding documents.
+- official Electron documentation.
+- official Tauri 2 documentation.
+- official documentation of any proposed headless accessibility primitive.
+
+Separate:
+  HISTORICAL PRINCIPLE
+from
+  MODERN ADAPTATION
+from
+  HOLDSPEAK-SPECIFIC RULE.
+
+Do not reproduce Amiga implementation limitations merely for nostalgia.
+
+REPOSITORY FORENSICS
+
+Perform a complete UI census.
+
+Identify and document:
+- the React/Vite entry points and rendered routes;
+- Desk shell and spatial stage;
+- Pixi/WebGL world components;
+- DOM window components;
+- the common DeskWindowFrame and window-physics modules;
+- dock, menus, switcher, expose/snap behavior;
+- surface library components;
+- Signal/shared components;
+- design token source, generated CSS and generated TypeScript tokens;
+- sprites and generated sprite-state assets;
+- page cores and feature modules;
+- Zustand state slices;
+- persistence keys and schema/version rules;
+- HTTP abstraction;
+- authentication boundary;
+- RuntimeBus WebSocket ownership;
+- FastAPI integration points;
+- drag/drop matrix;
+- Info contract;
+- verb registry and all adapters that render it;
+- localization/product-language sources;
+- theme infrastructure;
+- accessibility tests;
+- screenshot/UAT rigs;
+- architecture/UX guards;
+- GitHub Actions and release workflows.
+
+Produce a table:
+  REPO PATH | RESPONSIBILITY | PUBLIC CONTRACT | STATE OWNER |
+  TEST/GUARD | SPEC STATUS | DEBT
+
+Do not assume a file is canonical just because of its name.
+Verify it against imports, tests, current docs, and production behavior.
+
+AMIGA / INTUITION RESEARCH
+
+Extract the original principles behind:
+- metaphor;
+- object-before-action interaction;
+- avoiding modes;
+- current object / selection group;
+- focus;
+- immediate feedback;
+- color as a secondary cue;
+- upper-left-light raised/recessed controls;
+- ghosted unavailable controls;
+- press/release/cancel semantics;
+- icons and selected imagery;
+- drawers;
+- AppWindow/drop areas;
+- title bars;
+- safe window activation;
+- window position/size persistence;
+- depth;
+- zoom;
+- sizing and scrolling;
+- menus as capability discovery;
+- keyboard equivalents;
+- preferences;
+- font adaptability;
+- resolution adaptability;
+- internationalization;
+- GUI + Shell + ARexx as complementary interfaces.
+
+For every principle classify it:
+  ADOPT
+  MODERNIZE
+  REJECT
+  ALREADY IMPLEMENTED
+
+Explain why.
+
+AESTHETIC DIRECTION
+
+Specify HoldSpeak's visual system as "Workbench behavior and Intuition logic
+through the existing Signal/Desk material", NOT a pixel-perfect Workbench copy.
+
+Preserve where current canon supports it:
+- disciplined small-footprint pixel-art objects;
+- one light source;
+- meaningful silhouette;
+- real selected/stale imagery;
+- restrained bevel/etch depth;
+- window-head mechanics;
+- explicit menu hierarchy;
+- direct manipulation;
+- visible selection;
+- honest state;
+- registry-driven commands.
+
+Avoid:
+- gratuitous fake-retro decoration;
+- random large "mascot" icons;
+- arbitrary neon glow;
+- excessive gradients;
+- generic SaaS cards;
+- modal wizard flows;
+- walls of helper prose;
+- decorative badges;
+- scaling objects by perceived importance;
+- per-feature control styling.
+
+ATOMIC DESIGN TAXONOMY
+
+Use Atomic Design as a documentation taxonomy, not a forced folder rewrite.
+
+Define:
+- Foundations
+- Atoms
+- Molecules
+- Organisms
+- Templates
+- Pages
+
+Map every existing canonical HoldSpeak component into this taxonomy.
+
+At minimum cover:
+Atoms:
+  Button
+  VerbGlyph
+  StateChip
+  EgressChip
+  ProvenanceChip
+  MicButton
+  fundamental checkbox/radio/text primitives
+
+Molecules:
+  ConfirmVerb
+  EditInPlace
+  StringGadget
+  CycleGadget
+  FilterTokens
+  menu row
+  object/icon cell
+  search/command field
+
+Organisms:
+  DeskWindowFrame
+  WorkMenu
+  SurfaceLedger
+  SurfaceIdentity
+  SurfaceFooter
+  SurfaceWings
+  Dock
+  Switcher
+  Expose
+  drawer contents
+  TaskResume
+  progress composition
+
+Templates:
+  working posture
+  reviewing posture
+  configuring posture
+  drawer window
+  Info window
+  Thread
+  Meeting review
+  Project/Workbench
+
+Pages/instances:
+  spatial Desk
+  list Desk
+  arrival
+  Presence
+  Speak
+  Meetings
+  Agents
+  Settings
+  Project/Workbench/Thread representative instances
+
+FOR EACH COMPONENT DEFINE
+
+- canonical name;
+- Atomic Design level;
+- one responsibility;
+- composition;
+- TypeScript-level props;
+- required/default props;
+- emitted semantic commands;
+- data dependencies;
+- rest state;
+- hover state;
+- focus-visible state;
+- pressed state;
+- selected state;
+- disabled state;
+- busy/working state;
+- success/warning/failure/unreachable states where relevant;
+- empty/loading/stale/error states;
+- keyboard behavior;
+- pointer/touch behavior;
+- screen-reader semantics;
+- accessible name rules;
+- ARIA rules;
+- focus-entry/exit behavior;
+- design tokens consumed;
+- theme behavior;
+- compact/container behavior;
+- long-text/localization behavior;
+- motion;
+- reduced-motion result;
+- test oracle;
+- known consumers;
+- prohibited uses;
+- migration/deprecation status.
+
+Do not say "accessible" without stating how it is verified.
+
+DESIGN TOKENS
+
+Document the full token graph:
+  primitive -> semantic -> component -> theme aliases.
+
+Specify at least:
+- palette;
+- text roles;
+- state roles;
+- border/bevel/etch;
+- elevation;
+- background/material;
+- spacing;
+- radius;
+- typography;
+- icon sizes;
+- object-cell geometry;
+- window geometry;
+- z-index ladder;
+- motion duration/easing;
+- target sizes;
+- density;
+- responsive container thresholds.
+
+No feature component should own arbitrary raw visual literals unless an explicit
+exception is documented and mechanically guarded.
+
+WINDOW MANAGER SPECIFICATION
+
+Treat windowing as an OS subsystem.
+
+Specify:
+- identity;
+- initial placement;
+- focus-to-front;
+- z-order;
+- safe activation;
+- drag;
+- resize;
+- min/max constraints;
+- snap;
+- snap preview;
+- maximize/restore;
+- minimize/restore;
+- Dock representation;
+- opening from a source object;
+- closing back toward the source;
+- Expose;
+- MRU switching;
+- persistence;
+- geometry migration;
+- multi-monitor behavior;
+- compact/phone adaptation;
+- focus entry;
+- focus return;
+- Escape behavior;
+- reduced motion;
+- collision/clamping;
+- application versus object windows.
+
+Convert all TypeScript-only window/drag thresholds and math that are currently
+spec debt into normative named constants or algorithms.
+
+SELECTION SPECIFICATION
+
+Define a state machine for:
+- no selection;
+- current object;
+- selected group;
+- anchor;
+- selection extension;
+- active command context;
+- world selection versus a window-internal selection.
+
+Respect the spirit of the Amiga rule that there is one current selection
+context at a time.
+
+Specify:
+- click;
+- double-click;
+- touch;
+- pen;
+- Shift selection;
+- modifier selection;
+- marquee;
+- keyboard range selection;
+- Select All;
+- context menus;
+- activation;
+- loss/retention of selection on window focus.
+
+KEYBOARD SPECIFICATION
+
+Produce one global shortcut registry.
+
+Include:
+- application open/switch shortcuts;
+- command palette/search;
+- close;
+- minimize;
+- maximize/restore;
+- window cycle;
+- reverse cycle;
+- expose;
+- context menu;
+- open;
+- rename/edit;
+- cancel;
+- shortcut sheet;
+- menu traversal;
+- drawer/list traversal;
+- multi-selection.
+
+Represent platform modifiers abstractly.
+Define macOS, Windows and Linux mappings separately.
+Resolve browser-reserved shortcuts explicitly.
+
+A capability must not have separate keyboard and pointer implementations;
+both dispatch the same semantic command.
+
+MENUS AND COMMANDS
+
+Make the verb/command registry authoritative.
+
+Specify all menu faces:
+- system menubar;
+- object context menu;
+- Desk context menu;
+- drawer context menu;
+- window-head menu;
+- Dock menu;
+- command palette;
+- shortcut sheet.
+
+For each command define:
+- stable ID;
+- localized label key;
+- applicability;
+- disabled/ghost reason;
+- category;
+- shortcut;
+- icon/glyph jurisdiction;
+- destructive class;
+- side-effect class;
+- egress class;
+- executor;
+- telemetry/audit implications.
+
+Preserve the HoldSpeak jurisdiction:
+- menus may ghost unavailable capabilities to teach the system vocabulary;
+- ordinary in-content dead verbs should not clutter the interface.
+
+DRAG AND DROP
+
+Treat drag/drop as a system-level command entrance.
+
+The drop matrix is contract data.
+
+Specify:
+- source kind;
+- target kind;
+- command;
+- release verb;
+- valid-target highlight;
+- cursor/tag feedback;
+- whether source returns home;
+- side effects;
+- whether user confirmation is needed;
+- whether AI/model execution is permitted immediately;
+- cancellation;
+- auto-scroll;
+- multi-object behavior;
+- cross-window behavior;
+- external OS file drops;
+- pulling objects/results out of windows.
+
+Every drag-only behavior MUST also have:
+- a keyboard-accessible operation,
+- and a single-pointer non-drag alternative,
+to meet WCAG 2.2 Dragging Movements.
+
+MODAL / REQUESTER RULE
+
+Product modal workflows are prohibited unless an explicit constitutional
+exception is approved.
+
+Preferred order:
+  inline edit
+  -> in-flow well/disclosure
+  -> separate nonmodal Desk window
+  -> unavoidable native OS/browser dialog.
+
+Use the existing inline destructive-confirmation species.
+Never add a generic modal confirmation dialog.
+
+Clearly distinguish:
+- HoldSpeak Desk windows,
+- transient menus/popovers,
+- OS-native dialogs.
+
+FOCUS
+
+Specify:
+- active window;
+- DOM focus;
+- selected spatial object;
+- command target;
+as related but non-identical concepts.
+
+Requirements:
+- visible keyboard focus;
+- no focus hidden behind authored UI;
+- predictable focus on window open;
+- focus restoration on close;
+- no focus trap in normal application windows;
+- correct trapping/roving pattern only for composites that require it;
+- GL selection represented to assistive technology through a semantic
+  equivalent;
+- live regions only for meaningful transitions.
+
+RESPONSIVE DESIGN
+
+Do not shrink the desktop metaphor blindly onto phones.
+
+Specify at least:
+- wide desktop;
+- ordinary desktop/laptop;
+- narrow window;
+- compact/phone;
+- 200% browser zoom / large text;
+- high contrast;
+- reduced motion;
+- pseudo-localized long text.
+
+Window INTERIORS respond to their container.
+Do not make each feature reason directly about the browser viewport.
+
+Preserve user choices over automatic density defaults.
+
+MOTION
+
+Every animation must name the meaning it communicates.
+
+Create a motion catalogue:
+- press;
+- selection;
+- window open;
+- window close;
+- minimize;
+- restore;
+- snap preview;
+- drop target;
+- materialization;
+- async outcome;
+- posture/wing transition;
+- inline edit commit.
+
+Specify:
+- trigger;
+- affected properties;
+- duration/easing token;
+- interrupt/cancel rule;
+- performance budget;
+- reduced-motion equivalent.
+
+Nothing should move merely to make the UI feel "alive."
+
+ACCESSIBILITY
+
+Target WCAG 2.2 AA.
+
+Explicitly cover:
+- Focus Visible;
+- Focus Not Obscured;
+- Dragging Movements;
+- Target Size;
+- Name/Role/Value;
+- Status Messages;
+- keyboard operation;
+- touch/pointer parity;
+- screen-reader semantics;
+- contrast;
+- color-independent state;
+- reduced motion;
+- zoom/reflow;
+- error identification.
+
+Set primary/high-frequency touch targets to a stronger target where practical,
+while at minimum satisfying WCAG 2.2.
+
+Do not rely on axe alone.
+Require keyboard walks and screen-reader/manual acceptance.
+
+LOCALIZATION
+
+Design localization in now.
+
+Specify:
+- string catalogue architecture;
+- stable nonlocalized internal IDs;
+- ICU/formatting strategy;
+- date/time/number formatting;
+- pseudo-localization;
+- 30-50% expansion stress;
+- long compound words;
+- wrapping/truncation;
+- RTL/Bidi readiness;
+- shortcut notation;
+- accessible-label localization.
+
+THEMING
+
+The existing dark Signal theme remains the current baseline.
+
+Design the contract for:
+- current dark;
+- high contrast;
+- future light;
+- system preference selection;
+- optional Workbench-tribute palette if desired.
+
+Themes may change semantic token values.
+Themes may NOT alter interaction semantics, component geometry contracts, state
+meaning, accessibility behavior or command availability.
+
+DATA MODELS
+
+Formalize portable schemas for at least:
+- WorkspaceLayout
+- WindowInstance
+- WindowRect
+- SelectionContext
+- VerbDefinition / CommandDefinition
+- DropCapability
+- ObjectVisualState
+- ZoneViewPreference
+- ThemePreference
+- AccessibilityPreference
+- LocalePreference
+- DesktopHostCapability
+
+For every model state:
+- authority;
+- lifetime;
+- persistence location;
+- schema revision;
+- sync behavior;
+- migration behavior;
+- privacy classification.
+
+Do not leave portable product behavior specified only in Zustand interfaces or
+TypeScript implementation.
+
+API / INTEGRATION
+
+Create a matrix:
+  SURFACE
+  -> USER VERB
+  -> COMMAND ID
+  -> HTTP/API
+  -> RUNTIME EVENT(S)
+  -> STATE OWNER
+  -> RECEIPT
+  -> EGRESS
+  -> FAILURE PRESENTATION
+  -> TEST
+
+Inventory every endpoint used by the canonical Desk.
+
+Preserve:
+- one typed HTTP boundary;
+- one product RuntimeBus;
+- provider secrets never entering web state;
+- backend authority for domain records.
+
+DESKTOP HOST
+
+The Web Desk remains the application specification.
+Electron/Tauri is a hosting decision, not a second UI.
+
+First define an implementation-neutral DesktopHost interface for:
+- file open/save;
+- open/reveal path;
+- global shortcuts;
+- tray;
+- notifications;
+- window attention;
+- startup/autostart if approved;
+- update/restart;
+- platform metadata.
+
+The interface must expose bounded operations, not arbitrary shell/filesystem
+authority.
+
+Then write an ADR comparing Tauri 2 and Electron.
+
+Tauri evaluation:
+- system WebView behavior;
+- Rust skill requirement;
+- capabilities/permissions;
+- sidecar/process orchestration;
+- updater/signing;
+- visual parity;
+- resource/startup behavior.
+
+Electron evaluation:
+- bundled Chromium rendering consistency;
+- packaging;
+- updater/signing;
+- renderer sandbox;
+- context isolation;
+- contextBridge;
+- IPC validation;
+- Node exposure;
+- resource/startup behavior.
+
+Build a minimal proof-of-concept for BOTH against the same production web bundle
+before recommending one.
+
+Do not add a desktop-only product store.
+
+NONFUNCTIONAL REQUIREMENTS
+
+Write measurable NFRs for:
+- response/perceived latency;
+- drag and resize frame performance;
+- startup;
+- idle CPU;
+- memory;
+- object-count scaling;
+- network degradation;
+- reconnect behavior;
+- offline/unreachable states;
+- accessibility;
+- localization;
+- theming;
+- privacy;
+- security;
+- reliability;
+- recoverability;
+- browser support;
+- desktop OS support;
+- logging/diagnostics;
+- bundle size;
+- maintainability.
+
+Every NFR requires:
+  METRIC
+  BENCHMARK ENVIRONMENT
+  THRESHOLD
+  TEST METHOD
+  FAILURE POLICY.
+
+TEST STRATEGY
+
+Define:
+1. static architecture/design guards;
+2. unit tests;
+3. component interaction tests;
+4. axe/accessibility automation;
+5. keyboard/manual accessibility walks;
+6. screenshot/visual regression;
+7. pseudo-locale regression;
+8. reduced-motion/high-contrast regression;
+9. FastAPI integration tests;
+10. live RuntimeBus tests;
+11. critical journeys;
+12. real browser E2E;
+13. performance/storm tests;
+14. desktop-host contract tests;
+15. packaging/update/recovery tests.
+
+Every normative design law that is mechanically testable should name a proposed
+guard.
+
+Reuse the repository's existing guards and CI before inventing new ones.
+
+CI/CD
+
+Audit the existing GitHub Actions first.
+
+Design a final matrix that covers:
+- web-quality contract;
+- backend tests;
+- critical journeys;
+- Linux;
+- macOS;
+- Windows once desktop shipping begins;
+- signed desktop artifacts;
+- security capability tests;
+- update/migration tests;
+- visual fixtures;
+- documentation/spec drift.
+
+Do not create parallel CI that duplicates existing jobs without reason.
+
+RISKS AND TECHNICAL DEBT
+
+At minimum investigate and disposition:
+- Phase-105 TypeScript-only specification debt;
+- remaining cross-window drag/refiling;
+- multi-object drops;
+- per-object receipts;
+- poor artifact sprite;
+- raw-button UX ratchet;
+- token allowlist/literal debt;
+- dark-only theme;
+- localization gap;
+- WebGL semantic accessibility;
+- command/menu completeness;
+- focus across GL and DOM;
+- compact-mode parity;
+- stale persistence keys/migrations;
+- desktop wrapper conflict with earlier repo decisions;
+- Electron/Tauri security boundary;
+- browser versus native shortcut conflicts.
+
+For each risk include:
+  probability
+  impact
+  evidence
+  mitigation
+  owner skill
+  acceptance/retirement criterion.
+
+VISUAL DELIVERABLES
+
+Produce high-fidelity representative mockups using real HoldSpeak vocabulary and
+realistic data, not lorem ipsum.
+
+At minimum:
+- populated Spatial Desk;
+- List Desk;
+- selected object + context menu;
+- drawer window;
+- two overlapping windows;
+- window switch/expose;
+- Speak;
+- Meeting review;
+- Thread;
+- Agents;
+- Settings/configuring posture;
+- Info;
+- drag valid target;
+- drag invalid target;
+- working/progress state;
+- refusal/failure state;
+- system shade if retained;
+- global command palette;
+- compact 393-style version of key applications;
+- high-contrast variant;
+- pseudo-localized long-copy stress case.
+
+For each important composition provide:
+- wide artboard;
+- compact artboard;
+- interaction annotations;
+- component callouts;
+- focus order;
+- token references.
+
+Use Mermaid for:
+- system architecture;
+- component hierarchy;
+- window/focus state machine;
+- drag/drop state machine;
+- API/event flow;
+- specification traceability;
+- implementation timeline.
+
+SRS FORMAT
+
+The final document must contain:
+
+Executive Summary
+Product Vision and Design Principles
+Source Hierarchy and Traceability
+Current Repository Architecture
+Amiga/Intuition Research and Modernization Matrix
+Information Architecture
+Design Foundations and Tokens
+Atomic Component Catalogue
+Window Manager Specification
+Selection and Object Model
+Menus and Command Registry
+Keyboard Grammar
+Pointer/Touch Grammar
+Drag-and-Drop System
+Focus and Accessibility
+Motion and Microinteractions
+Responsive/Compact Behavior
+Localization
+Theming
+Functional Requirements
+Nonfunctional Requirements
+Data Models
+HTTP/API Contracts
+Runtime Event Contracts
+Desktop Host Contract
+Electron vs Tauri ADR
+Security and Privacy
+Error/Recovery Model
+Testing Strategy
+CI/CD and Release
+Migration and Rollout
+Risk Register
+Technical Debt
+Implementation Roadmap
+Milestones / Estimates / Skills
+Open Decisions
+Acceptance Checklist
+Appendices with component/API/command inventories
+
+REQUIREMENT STYLE
+
+Give every normative requirement an ID, for example:
+
+FR-WIN-001
+FR-DND-004
+NFR-A11Y-003
+NFR-PERF-005
+SEC-HOST-002
+
+Each requirement includes:
+- SHALL / SHOULD / MAY wording;
+- rationale;
+- source(s);
+- implementation owner;
+- acceptance criteria;
+- automated test where possible.
+
+TRACEABILITY
+
+Create a matrix:
+
+REQUIREMENT
+-> DESIGN RULE
+-> SOURCE EVIDENCE
+-> CODE OWNER
+-> TEST/GUARD
+-> CURRENT STATUS
+-> GAP/MILESTONE
+
+Current status is one of:
+  IMPLEMENTED
+  PARTIAL
+  SPEC-DEBT
+  UNIMPLEMENTED
+  CONFLICT
+  DEPRECATED.
+
+IMPLEMENTATION ROADMAP
+
+Do not estimate the product as if starting from zero.
+
+Base estimates on the delta between current main and the final specification.
+
+Separate:
+- specification work;
+- contract extraction;
+- accessibility hardening;
+- direct-manipulation completion;
+- localization/theme;
+- desktop-host decision;
+- desktop productization;
+- rollout.
+
+Estimate in person-weeks and state staffing assumptions and confidence.
+
+QUALITY BAR
+
+The final specification fails if:
+- it could describe a generic SaaS dashboard;
+- it ignores existing HoldSpeak code;
+- it creates a second UI architecture;
+- it treats Amiga as visual decoration only;
+- it leaves interaction details to developer interpretation;
+- it says "accessible" without concrete behavior/tests;
+- it requires drag without alternatives;
+- it introduces modal workflows casually;
+- it introduces a second command/state model;
+- it lacks compact layouts;
+- it lacks real-content mockups;
+- it lacks measurable acceptance criteria;
+- it lacks source citations;
+- it lacks a traceability matrix;
+- it proposes Electron or Tauri without a bounded host abstraction;
+- it does not name the existing technical debt and standing remainders.
+
+FINAL DECISION PRINCIPLE
+
+When deciding whether a design belongs, ask:
+
+"Would a person accustomed to a real desktop environment understand what this
+object is, what is selected, what can be done to it, what is happening now,
+where the result went, and how to accomplish the same job without a mouse?"
+
+If the answer is no, the specification is not finished.
+
+The target is not an Amiga museum piece.
+
+It is HoldSpeak as a genuine personal operating surface:
+Workbench's object clarity, Intuition's interaction discipline, modern
+accessibility, HoldSpeak's voice/AI capabilities, and one coherent command and
+state model across web and desktop.
+```
+
+--
+
+How do you, working on that clone, enter all of this as a giant-ass PR into HoldSpeak...? I think this would do it so good, wouldn't it?

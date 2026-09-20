@@ -1,0 +1,1457 @@
+{
+  "schema_version": 1,
+  "requirements": [
+    {
+      "id": "FR-DESK-001",
+      "statement": "The web application SHALL route the primary Desk to / and SHALL redirect the /desk alias and demoted feature paths into that Desk shell.",
+      "rationale": "The Desk is the product shell and route ownership must be observable.",
+      "sources": [
+        {
+          "path": "web/src/routes.tsx",
+          "line": 20,
+          "symbol": "PRODUCT_ROUTES",
+          "claim": "/ is the primary Desk route and /welcome and /presence are the other real product routes."
+        },
+        {
+          "path": "web/src/App.tsx",
+          "line": 67,
+          "symbol": "App",
+          "claim": "/desk and unknown paths redirect to /."
+        }
+      ],
+      "owner": "Desk shell",
+      "acceptance": "Opening / mounts DeskApp; /desk and unknown paths reach /; demoted paths stage their surface and return to the shell.",
+      "test": "Actual: web/src/routes.test.ts asserts product routes and demoted-route declarations; App routing behavior is source-inspected.",
+      "status": "IMPLEMENTED",
+      "gap": "No product-level route telemetry is recorded."
+    },
+    {
+      "id": "FR-DESK-002",
+      "statement": "The Desk SHOULD keep spatial objects and the list view projections of the same object records consistent.",
+      "rationale": "The user needs to move between a Workbench view and inspectable rows without losing identity.",
+      "sources": [
+        {
+          "path": "web/src/desk/world.ts",
+          "line": 84,
+          "symbol": "worldObjects",
+          "claim": "World descriptors carry stable ids, kinds, labels and positions."
+        },
+        {
+          "path": "web/src/desk/DeskApp.tsx",
+          "line": 189,
+          "symbol": "DeskApp",
+          "claim": "DeskApp mounts world floor, list, windows and chrome from the same Desk surface."
+        }
+      ],
+      "owner": "Desk shell",
+      "acceptance": "A selected object has the same id and label in world and list projections.",
+      "test": "Proposed: add a projection parity assertion for every WORLD_OBJECTS descriptor.",
+      "status": "PARTIAL",
+      "gap": "No current assertion compares all projections."
+    },
+    {
+      "id": "FR-OBJ-001",
+      "statement": "The Desk SHALL represent each world object with a stable kind, id, label, subtitle, position, visual metadata and available verbs.",
+      "rationale": "Portable object records are the source of truth for rendering, menu availability and persistence.",
+      "sources": [
+        {
+          "path": "web/src/lib/primitives.ts",
+          "line": 419,
+          "symbol": "PrimitiveDescriptor",
+          "claim": "Primitive descriptors define the object kind and display/source fields."
+        },
+        {
+          "path": "web/src/desk/world.ts",
+          "line": 18,
+          "symbol": "WorldObject",
+          "claim": "World objects define id, kind, label, subtitle, position, tint, texture and verbs."
+        }
+      ],
+      "owner": "Desk domain",
+      "acceptance": "A descriptor can render in a world or list projection without inferred fields.",
+      "test": "Actual: web/src/desk/__tests__/desk.test.ts asserts canonical world ordering, filtering, deterministic placement and clamping.",
+      "status": "IMPLEMENTED",
+      "gap": "The descriptor type does not yet carry a persisted selection or receipt field."
+    },
+    {
+      "id": "FR-OBJ-002",
+      "statement": "The Desk SHALL communicate selection and state with geometry, labels or marks in addition to colour.",
+      "rationale": "A selected or waiting object must remain legible to colour-blind users and in reduced visual modes.",
+      "sources": [
+        {
+          "path": "docs/internal/DESK_GRAMMAR.md",
+          "line": 11,
+          "symbol": "selection grammar",
+          "claim": "Selection is a geometry/state treatment and never colour alone."
+        },
+        {
+          "path": "web/src/desk/world.ts",
+          "line": 91,
+          "symbol": "worldObjects",
+          "claim": "World descriptors provide labels and state-facing visual fields."
+        }
+      ],
+      "owner": "Desk surface",
+      "acceptance": "Selected, unavailable and pending records expose text or shape cues in snapshots.",
+      "test": "Proposed: accessibility snapshot checks selected, unavailable and pending states without colour inspection.",
+      "status": "PARTIAL",
+      "gap": "The Pixi object state parity is not exhaustively asserted."
+    },
+    {
+      "id": "FR-OBJ-003",
+      "statement": "Every actionable Desk object SHOULD have pointer, touch and keyboard ways to open its inspection surface.",
+      "rationale": "A spatial canvas cannot be the only access path for the first user or assistive technology.",
+      "sources": [
+        {
+          "path": "docs/internal/DESK_GRAMMAR.md",
+          "line": 20,
+          "symbol": "object actions",
+          "claim": "Object activation has an equivalent list or keyboard path."
+        },
+        {
+          "path": "web/src/desk/DeskApp.tsx",
+          "line": 189,
+          "symbol": "DeskApp",
+          "claim": "DeskApp mounts the list projection alongside the world."
+        }
+      ],
+      "owner": "Desk shell",
+      "acceptance": "The list projection opens the same object as a world click and a keyboard activation.",
+      "test": "Proposed: Playwright or RTL parity test for pointer, touch and Enter activation.",
+      "status": "PARTIAL",
+      "gap": "Touch-specific activation is not separately covered."
+    },
+    {
+      "id": "FR-WIN-001",
+      "statement": "A Desk window SHALL use the shared frame contract for title, focus, close, minimize, maximize, move and resize.",
+      "rationale": "Window verbs must feel like one Workbench system across all surfaces.",
+      "sources": [
+        {
+          "path": "web/src/desk/components/DeskWindow.tsx",
+          "line": 28,
+          "symbol": "DeskWindowFrame",
+          "claim": "DeskWindow composes the shared window frame and content slots."
+        },
+        {
+          "path": "web/src/desk/components/DeskWindow.tsx",
+          "line": 556,
+          "symbol": "DeskWindowFrame",
+          "claim": "The frame owns focus, chrome and geometry callbacks."
+        }
+      ],
+      "owner": "Desk windows",
+      "acceptance": "Every registered window renders the same frame controls and focus treatment.",
+      "test": "Actual: web/src/desk/__tests__/windows.test.tsx asserts frame controls and window lifecycle behavior.",
+      "status": "IMPLEMENTED",
+      "gap": "There is no catalogue assertion that every registry entry uses DeskWindowFrame."
+    },
+    {
+      "id": "FR-WIN-002",
+      "statement": "The Desk SHALL persist window order, panel geometry, open windows, zone placement and relevant preferences under a versioned workspace key.",
+      "rationale": "A workbench is useful when it restores the operator's arrangement without serializing transient runtime state.",
+      "sources": [
+        {
+          "path": "web/src/desk/store/workspaceStorage.ts",
+          "line": 8,
+          "symbol": "DESK_WORKSPACE_STORAGE_KEY",
+          "claim": "Workspace persistence uses hs.desk.workspace.v1 and an explicit version."
+        },
+        {
+          "path": "web/src/desk/store/workspaceStorage.ts",
+          "line": 67,
+          "symbol": "saveDeskWorkspace",
+          "claim": "The saved shape contains panel rectangle/order, windowsById, zoneWindows and prefs."
+        }
+      ],
+      "owner": "Desk store",
+      "acceptance": "Reload restores the saved arrangement and rejects a wrong version without throwing.",
+      "test": "Actual: web/src/desk/__tests__/windows.test.tsx asserts the v1 round-trip, reset removal and lifecycle persistence.",
+      "status": "IMPLEMENTED",
+      "gap": "No migration registry exists for a future v2 shape."
+    },
+    {
+      "id": "FR-WIN-003",
+      "statement": "Closing or focusing a Desk window SHALL return focus to a deterministic surviving target.",
+      "rationale": "Focus loss makes the Workbench unusable for keyboard and screen-reader operators.",
+      "sources": [
+        {
+          "path": "web/src/desk/components/DeskWindow.tsx",
+          "line": 556,
+          "symbol": "DeskWindowFrame",
+          "claim": "Window focus is assigned through the desk focus store and active id."
+        },
+        {
+          "path": "web/src/desk/__tests__/windows.test.tsx",
+          "line": 125,
+          "symbol": "exactly the front window wears is-front; raising moves it",
+          "claim": "The test asserts is-front follows the raised window. Other lifecycle tests cover close callbacks and minimized depth; opener focus return is not proved here."
+        }
+      ],
+      "owner": "Desk windows",
+      "acceptance": "After close, focus lands on the next registered window or the Desk focus target.",
+      "test": "Actual: web/src/desk/__tests__/windows.test.tsx asserts the active and closed window states.",
+      "status": "IMPLEMENTED",
+      "gap": "Focus restoration across a browser reload is not tested."
+    },
+    {
+      "id": "FR-WIN-004",
+      "statement": "Window movement and resize SHALL clamp to the available work rectangle and preserve minimum dimensions.",
+      "rationale": "The owner must always be able to recover a window and its controls.",
+      "sources": [
+        {
+          "path": "web/src/desk/components/window/windowGeometry.ts",
+          "line": 14,
+          "symbol": "MARGIN",
+          "claim": "Geometry constants define work margins, minimums and snap thresholds."
+        },
+        {
+          "path": "web/src/desk/components/window/windowGeometry.ts",
+          "line": 119,
+          "symbol": "clampRect",
+          "claim": "Rectangles are clamped to work bounds while respecting minimum dimensions."
+        }
+      ],
+      "owner": "Desk windows",
+      "acceptance": "A drag or resize beyond every edge produces a rect inside work bounds with minW/minH.",
+      "test": "Actual: web/src/desk/__tests__/shell.test.tsx asserts snap, placement, resize, Expose and clamp numerical boundaries.",
+      "status": "IMPLEMENTED",
+      "gap": "The algorithm is single-viewport; native multi-monitor work areas are outside the web contract."
+    },
+    {
+      "id": "FR-WIN-005",
+      "statement": "A future native host MAY persist and restore per-display work areas without changing the web workspace schema.",
+      "rationale": "Desktop displays can have separate coordinate spaces and device scale factors.",
+      "sources": [
+        {
+          "path": "docs/internal/philo/adr/desktop-host.md",
+          "line": 1,
+          "symbol": "DesktopHost ADR",
+          "claim": "The proposed native seam owns host capabilities and display-aware integration."
+        },
+        {
+          "path": "web/src/desk/store/workspaceStorage.ts",
+          "line": 8,
+          "symbol": "DESK_WORKSPACE_STORAGE_KEY",
+          "claim": "The current web schema has one viewport work rectangle."
+        }
+      ],
+      "owner": "Desktop host",
+      "acceptance": "A host adapter can supply a display work area while web persistence remains backward compatible.",
+      "test": "Proposed: host contract test with two display work areas and a web-schema round trip.",
+      "status": "UNIMPLEMENTED",
+      "gap": "No native host is installed or declared in this repository."
+    },
+    {
+      "id": "FR-SEL-001",
+      "statement": "The Desk SHALL maintain one current context and route primary keyboard verbs through that context.",
+      "rationale": "A single context prevents a canvas click, row focus and window focus from invoking different records.",
+      "sources": [
+        {
+          "path": "web/src/desk/keymap.ts",
+          "line": 19,
+          "symbol": "useKeymap",
+          "claim": "The Desk keymap binds one document handler and reads current context."
+        },
+        {
+          "path": "web/src/desk/store/types.ts",
+          "line": 1,
+          "symbol": "DeskState",
+          "claim": "Desk stores own selection and active window state."
+        }
+      ],
+      "owner": "Desk store",
+      "acceptance": "The active object and active window are the same context used by menu and shortcut actions.",
+      "test": "Actual: web/src/desk/__tests__/keymap.test.ts asserts the current context is used for primary actions.",
+      "status": "IMPLEMENTED",
+      "gap": "Cross-window selection history is not persisted."
+    },
+    {
+      "id": "FR-SEL-002",
+      "statement": "The Desk SHOULD support range, marquee and select-all semantics with a stable ordering rule.",
+      "rationale": "Batch work is required for a Workbench with many objects and should not depend on repeated single clicks.",
+      "sources": [
+        {
+          "path": "docs/internal/philo/briefs/workbench-design-srs.txt",
+          "line": 238,
+          "symbol": "selection requirements",
+          "claim": "The brief calls for selection, focus and keyboard behavior as explicit SRS concerns."
+        },
+        {
+          "path": "web/src/desk/keymap.ts",
+          "line": 19,
+          "symbol": "useKeymap",
+          "claim": "Current keymap covers single-context verbs but has no range or marquee command."
+        }
+      ],
+      "owner": "Desk interaction",
+      "acceptance": "Shift selection, marquee selection and a named select-all verb produce deterministic id order.",
+      "test": "Proposed: interaction tests for range, marquee and select-all with keyboard and pointer inputs.",
+      "status": "SPEC-DEBT",
+      "gap": "No current selection model or implementation for these gestures."
+    },
+    {
+      "id": "FR-MENU-001",
+      "statement": "The Desk SHALL derive context menu rows from the verb registry and expose a stable id, label, enabled state and runner for each row.",
+      "rationale": "One registry prevents menus, keyboard shortcuts and command surfaces from drifting.",
+      "sources": [
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "line": 28,
+          "symbol": "Verb",
+          "claim": "Verb definitions include id, label, availability and run behavior."
+        },
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "line": 136,
+          "symbol": "VERBS",
+          "claim": "The Desk verb registry is the source of menu actions."
+        }
+      ],
+      "owner": "Desk verbs",
+      "acceptance": "A registered verb renders once in a menu with its availability and executes its runner.",
+      "test": "Actual: web/src/desk/__tests__/verbRegistry.test.ts asserts registry ids, labels, availability and runner calls.",
+      "status": "IMPLEMENTED",
+      "gap": "The registry has no generated machine-readable catalogue artifact."
+    },
+    {
+      "id": "FR-MENU-002",
+      "statement": "Unavailable verbs SHALL remain inspectable with an explicit reason and SHALL not run.",
+      "rationale": "Ghost actions explain the next possible move without pretending that a blocked operation succeeded.",
+      "sources": [
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "line": 41,
+          "symbol": "Verb",
+          "claim": "Verb availability carries a reason and disabled state."
+        },
+        {
+          "path": "web/src/desk/__tests__/verbRegistry.test.ts",
+          "line": 42,
+          "symbol": "object verbs ghost WITH a reason when nothing is selected",
+          "claim": "The test asserts unselected object verbs carry ghost reasons; keyboard dispatch refusal is covered separately in keymap.test.ts."
+        }
+      ],
+      "owner": "Desk verbs",
+      "acceptance": "A blocked row displays its reason and its runner is not called.",
+      "test": "Actual: web/src/desk/__tests__/verbRegistry.test.ts asserts ghost reason and no runner invocation.",
+      "status": "IMPLEMENTED",
+      "gap": "Reason strings are not yet localized."
+    },
+    {
+      "id": "FR-MENU-003",
+      "statement": "A verb SHALL resolve execution in its owning interaction context; a metadata-only registry runner must not be treated as proof that the feature is unavailable.",
+      "rationale": "Thread slash IDs share command vocabulary while the composer and pullout own the actual handlers.",
+      "sources": [
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "line": 692,
+          "symbol": "VERBS",
+          "claim": "The registry comment assigns slash triggers to the composer and handlers to the pullout."
+        },
+        {
+          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "line": 603,
+          "symbol": "executeSlashCommand",
+          "claim": "The switch invokes keep/fork/stop/new callbacks and typed todo/compact requests."
+        }
+      ],
+      "owner": "Desk verbs",
+      "acceptance": "Keep, fork, stop and other slash commands reach their composer callbacks or typed API paths; generic menu availability respects the owning context.",
+      "test": "Source: ThreadComposer.executeSlashCommand dispatches callbacks and typed API requests. Existing registry tests check slash-ID parity; a complete callback execution matrix was not inspected.",
+      "status": "SPEC-DEBT",
+      "gap": "Document and test the executor ownership contract across every command adapter; do not disable functional Thread commands merely because registry run is empty."
+    },
+    {
+      "id": "FR-KEY-001",
+      "statement": "Desk keyboard handling SHALL use one guarded binder, reserve platform modifiers, and ignore shortcuts while typing in editable controls.",
+      "rationale": "Keyboard behavior must be predictable and must not corrupt text entry.",
+      "sources": [
+        {
+          "path": "web/src/desk/keymap.ts",
+          "line": 19,
+          "symbol": "useKeymap",
+          "claim": "The keymap uses one document listener, typing guards and primary meta-or-control matching."
+        },
+        {
+          "path": "web/src/desk/__tests__/keymap.test.ts",
+          "line": 16,
+          "symbol": "\u2318 means the primary modifier (meta OR ctrl, never both)",
+          "claim": "The test asserts primary modifier matching for meta or ctrl and rejection of both. Dispatch tests separately assert registry actions."
+        }
+      ],
+      "owner": "Desk interaction",
+      "acceptance": "Typing in input, textarea or contenteditable does not invoke Desk verbs; the same primary key works on platform modifier.",
+      "test": "Actual: web/src/desk/__tests__/keymap.test.ts asserts typing guard and primary shortcut behavior.",
+      "status": "IMPLEMENTED",
+      "gap": "The current map has no locale-aware shortcut label registry."
+    },
+    {
+      "id": "FR-KEY-002",
+      "statement": "Desk shortcuts SHOULD avoid browser, screen-reader and operating-system conflicts and expose their alternate label.",
+      "rationale": "A shortcut that conflicts with the host cannot be a dependable product verb.",
+      "sources": [
+        {
+          "path": "web/src/desk/keymap.ts",
+          "line": 24,
+          "symbol": "parseKey",
+          "claim": "parseKey reads registry chord strings; it has no host-specific reserved-shortcut conflict metadata."
+        }
+      ],
+      "owner": "Desk interaction",
+      "acceptance": "Each shortcut has a conflict review and an alternate command path.",
+      "test": "Proposed: static shortcut conflict matrix plus browser-level keyboard assertions.",
+      "status": "SPEC-DEBT",
+      "gap": "No conflict matrix or localized shortcut metadata is present."
+    },
+    {
+      "id": "FR-DND-001",
+      "statement": "Internal drag and drop SHALL use an explicit source-kind to target-kind matrix and reject unlisted pairs.",
+      "rationale": "Drop effects are domain operations and must not be inferred from a generic browser drop.",
+      "sources": [
+        {
+          "path": "web/src/desk/dropMatrix.ts",
+          "line": 9,
+          "symbol": "DROP_MATRIX",
+          "claim": "The drop matrix enumerates supported source and target kinds."
+        },
+        {
+          "path": "web/src/desk/__tests__/dropMatrix.test.ts",
+          "line": 6,
+          "symbol": "unlisted pairs refuse (inert, never a guess)",
+          "claim": "Tests assert allowed pairs and null for unlisted pairs."
+        }
+      ],
+      "owner": "Desk interaction",
+      "acceptance": "An allowed pair yields a named effect; any unlisted pair yields no operation.",
+      "test": "Actual: web/src/desk/__tests__/dropMatrix.test.ts asserts allowed effects and rejected pairs.",
+      "status": "IMPLEMENTED",
+      "gap": "The matrix is not yet shared with native file-drop adapters."
+    },
+    {
+      "id": "FR-DND-002",
+      "statement": "Every supported drag operation SHALL have an equivalent keyboard or menu action.",
+      "rationale": "Dragging is a pointer convenience and cannot be the only route to a domain operation.",
+      "sources": [
+        {
+          "path": "web/src/desk/dropMatrix.ts",
+          "line": 9,
+          "symbol": "DROP_MATRIX",
+          "claim": "The current matrix describes drag effects only."
+        },
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "line": 136,
+          "symbol": "VERBS",
+          "claim": "Verbs are the available non-drag command surface."
+        }
+      ],
+      "owner": "Desk interaction",
+      "acceptance": "For each matrix effect, a named verb is available from the source or target context.",
+      "test": "Proposed: matrix-to-verb coverage test requiring one registry id per effect.",
+      "status": "UNIMPLEMENTED",
+      "gap": "Some internal drop effects have no documented non-drag command."
+    },
+    {
+      "id": "FR-DND-003",
+      "statement": "A supported external file drop SHALL show a named release target and route the file to the importer; a hold action SHALL show its run target.",
+      "rationale": "Egress and destructive or consequential actions need visible destination feedback.",
+      "sources": [
+        {
+          "path": "web/src/desk/components/GlassDropLayer.tsx",
+          "line": 9,
+          "symbol": "GlassDropLayer",
+          "claim": "External file drops are accepted only over a registered release target."
+        },
+        {
+          "path": "web/src/desk/dropMatrix.ts",
+          "line": 25,
+          "symbol": "DROP_MATRIX",
+          "claim": "Allowed drops carry named effects such as Hold or Add to Knowledge."
+        }
+      ],
+      "owner": "Desk interaction",
+      "acceptance": "Dragover names the target and drop dispatches the importer/effect exactly once.",
+      "test": "Actual: web/src/desk/__tests__/dropMatrix.test.ts asserts effect naming; GlassDropLayer tests assert external drop dispatch.",
+      "status": "IMPLEMENTED",
+      "gap": "The external file importer has no full error receipt in the Desk surface."
+    },
+    {
+      "id": "FR-DND-004",
+      "statement": "The Desk SHOULD define multi-select, cross-window and orb drag semantics before exposing them in the face.",
+      "rationale": "Ambiguous transfer semantics create silent duplication or loss.",
+      "sources": [
+        {
+          "path": "docs/internal/philo/briefs/workbench-design-srs.txt",
+          "line": 238,
+          "symbol": "drop requirements",
+          "claim": "The brief requires drag/drop exceptions and recovery to be specified."
+        },
+        {
+          "path": "web/src/desk/dropMatrix.ts",
+          "line": 9,
+          "symbol": "DROP_MATRIX",
+          "claim": "The current matrix has no multi-select, cross-window or orb entries."
+        }
+      ],
+      "owner": "Desk interaction",
+      "acceptance": "Each new drag class has a source, target, effect, cancellation and receipt rule before implementation.",
+      "test": "Proposed: scenario matrix review with executable interaction tests after design settlement.",
+      "status": "UNIMPLEMENTED",
+      "gap": "No current contract for these drag classes."
+    },
+    {
+      "id": "FR-INFO-001",
+      "statement": "An object inspection surface SHALL expose identity, current state, source/provenance and available verbs through the shared surface contract.",
+      "rationale": "The operator needs to know what an object is, where it came from and what can happen next.",
+      "sources": [
+        {
+          "path": "web/src/desk/surface/contract.md",
+          "line": 1,
+          "symbol": "surface contract",
+          "claim": "The surface contract defines identity, state, provenance and verbs as the shared content grammar."
+        },
+        {
+          "path": "web/src/desk/surface/index.ts",
+          "line": 3,
+          "symbol": "surface barrel",
+          "claim": "Shared surface components are exported through one barrel."
+        }
+      ],
+      "owner": "Surface library",
+      "acceptance": "A registered window can render these sections without bespoke frame markup.",
+      "test": "Actual: web/src/desk/__tests__/shell.test.tsx asserts shared surface identity and verb rendering in a window.",
+      "status": "IMPLEMENTED",
+      "gap": "Not every existing window has a provenance row."
+    },
+    {
+      "id": "FR-INFO-002",
+      "statement": "A completed domain verb SHOULD produce a durable receipt with status, egress boundary, timestamp and inspectable source.",
+      "rationale": "An operator must distinguish accepted, running, failed and completed work after focus moves.",
+      "sources": [
+        {
+          "path": "web/src/desk/surface/patterns/ProvenanceChip.tsx",
+          "line": 36,
+          "symbol": "Receipt",
+          "claim": "Receipt currently renders status, label and optional timestamp."
+        },
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "line": 136,
+          "symbol": "VERBS",
+          "claim": "Verb runners currently return local actions rather than a unified receipt record."
+        }
+      ],
+      "owner": "Domain/runtime",
+      "acceptance": "Every async verb writes one receipt row that survives window close and has an inspect action.",
+      "test": "Proposed: verb-to-receipt integration test covering accepted, failed, retried and offline outcomes.",
+      "status": "SPEC-DEBT",
+      "gap": "The current Receipt component is presentational and not a persistence contract."
+    },
+    {
+      "id": "FR-STATE-001",
+      "statement": "Runtime-backed surfaces SHALL distinguish connecting, connected, reconnecting and offline states and SHALL not display offline data as current.",
+      "rationale": "Truthful freshness is part of the product contract.",
+      "sources": [
+        {
+          "path": "web/src/runtime/RuntimeBus.tsx",
+          "line": 13,
+          "symbol": "RuntimeBusProvider",
+          "claim": "RuntimeBus exposes connecting, connected, reconnecting and offline states."
+        },
+        {
+          "path": "web/src/runtime/RuntimeBus.tsx",
+          "line": 80,
+          "symbol": "RuntimeBusProvider",
+          "claim": "Malformed frames are ignored and reconnection is bounded."
+        }
+      ],
+      "owner": "Runtime",
+      "acceptance": "The chrome and affected surfaces show the current runtime state and preserve last-known data as stale.",
+      "test": "Actual: web/src/runtime/RuntimeBus.test.tsx asserts one socket, connection state and delivered frame behavior.",
+      "status": "IMPLEMENTED",
+      "gap": "Not every Desk window subscribes to freshness state."
+    },
+    {
+      "id": "FR-STATE-002",
+      "statement": "After reconnection, affected surfaces SHOULD refetch or reconcile their stale records and expose an outcome.",
+      "rationale": "Reconnecting a socket does not make records current by itself.",
+      "sources": [
+        {
+          "path": "web/src/runtime/RuntimeBus.tsx",
+          "line": 54,
+          "symbol": "RuntimeBusProvider",
+          "claim": "The bus reconnects the transport but does not own domain refetch."
+        },
+        {
+          "path": "web/src/lib/api.ts",
+          "line": 14,
+          "symbol": "apiRequest",
+          "claim": "Domain requests are separate from the runtime bus."
+        }
+      ],
+      "owner": "Domain/runtime",
+      "acceptance": "A reconnect event causes each subscribed surface to reconcile and records success or failure.",
+      "test": "Proposed: reconnect integration test with stale record, successful refetch and failed refetch receipt.",
+      "status": "PARTIAL",
+      "gap": "The current bus has no common subscriber/refetch protocol."
+    },
+    {
+      "id": "FR-HOST-001",
+      "statement": "A future native DesktopHost SHALL expose only typed capabilities required by the Desk and SHALL keep permissions explicit.",
+      "rationale": "Native integration must not turn a web surface into an ambient filesystem or process authority.",
+      "sources": [
+        {
+          "path": "docs/internal/philo/adr/desktop-host.md",
+          "line": 1,
+          "symbol": "DesktopHost ADR",
+          "claim": "The proposed host seam bounds desktop capabilities behind explicit interfaces."
+        },
+        {
+          "path": "docs/internal/ARCHITECTURE_WEB_FRONTEND.md",
+          "line": 1,
+          "symbol": "web architecture",
+          "claim": "The current product is a web application with browser APIs as its runtime boundary."
+        }
+      ],
+      "owner": "Desktop host",
+      "acceptance": "Host calls pass schema validation and deny capabilities not declared by the adapter.",
+      "test": "Proposed: contract tests for capability allowlist, invalid arguments and denied permission.",
+      "status": "UNIMPLEMENTED",
+      "gap": "No native host implementation is installed or declared."
+    },
+    {
+      "id": "FR-HOST-002",
+      "statement": "The web Desk SHALL remain usable when no native host is available.",
+      "rationale": "Browser delivery is the current product runtime and must remain a complete baseline.",
+      "sources": [
+        {
+          "path": "web/src/main.tsx",
+          "line": 1,
+          "symbol": "createRoot",
+          "claim": "The application mounts through the browser entry point."
+        },
+        {
+          "path": "docs/internal/philo/adr/desktop-host.md",
+          "line": 1,
+          "symbol": "DesktopHost ADR",
+          "claim": "Native hosting is a proposed integration seam, not a current dependency."
+        }
+      ],
+      "owner": "Web shell",
+      "acceptance": "No host object is required to load /desk, inspect local objects and use web-supported verbs.",
+      "test": "Actual: web/src/routes.test.tsx and web/src/desk/__tests__/shell.test.tsx exercise the browser path without a host adapter.",
+      "status": "IMPLEMENTED",
+      "gap": "The fallback boundary is not documented in a runtime capability manifest."
+    },
+    {
+      "id": "NFR-A11Y-001",
+      "statement": "Desk actions SHALL be reachable by keyboard with visible focus and semantic names.",
+      "rationale": "Keyboard access is a core path for a dense desktop surface.",
+      "sources": [
+        {
+          "path": "web/src/desk/keymap.ts",
+          "line": 19,
+          "symbol": "useKeymap",
+          "claim": "Desk shortcuts and typing guards are implemented."
+        },
+        {
+          "path": "web/src/desk/surface/gadgets.tsx",
+          "line": 684,
+          "symbol": "TransportKey",
+          "claim": "Transport keys render native buttons with aria labels and pressed state."
+        }
+      ],
+      "owner": "Accessibility + Desk",
+      "acceptance": "All interactive catalogue components have a semantic name, visible focus and keyboard activation.",
+      "test": "Actual: web/src/desk/__tests__/keymap.test.ts and component assertions cover current keyboard paths; Proposed: axe scan for the complete catalogue.",
+      "status": "PARTIAL",
+      "gap": "The full Desk route lacks a maintained WCAG assertion suite."
+    },
+    {
+      "id": "NFR-A11Y-002",
+      "statement": "The Desk SHALL keep the focused control at least not entirely hidden by windows, menus or the virtual keyboard; the product target SHOULD keep it fully visible.",
+      "rationale": "WCAG focus visibility and the product's dense window model require focus recovery after movement and resize.",
+      "sources": [
+        {
+          "path": "docs/internal/philo/EXTERNAL_RESEARCH.md",
+          "line": 1,
+          "symbol": "focus research",
+          "claim": "The research records the focus-not-obscured baseline and stronger full-visibility target."
+        },
+        {
+          "path": "web/src/desk/components/DeskWindow.tsx",
+          "line": 556,
+          "symbol": "DeskWindowFrame",
+          "claim": "The current frame manages focus target selection but not viewport reveal."
+        }
+      ],
+      "owner": "Accessibility + Desk windows",
+      "acceptance": "Moving/resizing a window or opening a menu never leaves the active control entirely hidden and returns it into view where possible.",
+      "test": "Proposed: browser focus-obscuration scenarios at 1440 and 393 viewport sizes.",
+      "status": "SPEC-DEBT",
+      "gap": "No scroll/reveal or overlap assertion exists."
+    },
+    {
+      "id": "NFR-A11Y-003",
+      "statement": "Every drag operation SHALL have both a keyboard-accessible path and a simple non-drag pointer path with equivalent result and feedback.",
+      "rationale": "Pointer drag is not an accessible interaction by itself.",
+      "sources": [
+        {
+          "path": "web/src/desk/dropMatrix.ts",
+          "line": 9,
+          "symbol": "DROP_MATRIX",
+          "claim": "The current interaction matrix only defines drag pairs."
+        },
+        {
+          "path": "docs/internal/UX-CANON.md",
+          "line": 1,
+          "symbol": "UX canon",
+          "claim": "Product actions must remain operable through named verbs and keyboard paths."
+        }
+      ],
+      "owner": "Accessibility + Desk interaction",
+      "acceptance": "Complete each supported drop effect by keyboard and separately by simple click/tap without dragging; both use the same semantic command and outcome.",
+      "test": "Proposed: keyboard-only scenario tests for every DROP_MATRIX effect.",
+      "status": "UNIMPLEMENTED",
+      "gap": "Drop-to-verb coverage is not implemented."
+    },
+    {
+      "id": "NFR-A11Y-004",
+      "statement": "Desk surfaces SHOULD reflow at compact widths without losing an action, state, source or egress indicator.",
+      "rationale": "The same object model must remain usable on narrow browser windows and touch devices.",
+      "sources": [
+        {
+          "path": "web/src/desk/surface/Surface.tsx",
+          "line": 289,
+          "symbol": "SurfaceColumns",
+          "claim": "Surface columns stack through surface CSS container rules."
+        },
+        {
+          "path": "docs/internal/philo/DESIGN_SPECIFICATION.md",
+          "line": 1,
+          "symbol": "design specification",
+          "claim": "The proposed compact target retains identity, state, action and egress information."
+        }
+      ],
+      "owner": "Surface library",
+      "acceptance": "At 393px, identity, state, primary verb and egress badge remain reachable without horizontal clipping.",
+      "test": "Proposed: visual and semantic assertions at 393px for each window family.",
+      "status": "SPEC-DEBT",
+      "gap": "No complete compact viewport evidence exists."
+    },
+    {
+      "id": "NFR-A11Y-005",
+      "statement": "State, selection, focus and egress SHALL have non-colour cues.",
+      "rationale": "Meaning must survive colour vision deficiency, forced colours and monochrome output.",
+      "sources": [
+        {
+          "path": "web/src/desk/surface/gadgets.tsx",
+          "line": 609,
+          "symbol": "LedMeter",
+          "claim": "Meters expose labels and ARIA values alongside segments."
+        },
+        {
+          "path": "web/src/desk/surface/gadgets.tsx",
+          "line": 654,
+          "symbol": "LampGadget",
+          "claim": "Lamp labels are rendered beside the visual indicator."
+        }
+      ],
+      "owner": "Surface library",
+      "acceptance": "State labels or symbols remain in the DOM when colour tokens are removed.",
+      "test": "Actual: component source and focused tests assert labels/ARIA; Proposed: forced-colours snapshot for all state chips.",
+      "status": "IMPLEMENTED",
+      "gap": "A whole-Desk forced-colours run is still needed."
+    },
+    {
+      "id": "NFR-A11Y-006",
+      "statement": "The spatial canvas SHALL have a semantic list or table parity view with equivalent names, states and actions.",
+      "rationale": "Canvas pixels are not a reliable semantic representation for assistive technology.",
+      "sources": [
+        {
+          "path": "web/src/desk/DeskApp.tsx",
+          "line": 189,
+          "symbol": "DeskApp",
+          "claim": "DeskApp mounts a list surface alongside the world surface."
+        },
+        {
+          "path": "web/src/desk/surface/Surface.tsx",
+          "line": 137,
+          "symbol": "SurfaceRow",
+          "claim": "Rows render semantic list items and optional open buttons."
+        }
+      ],
+      "owner": "Desk shell + accessibility",
+      "acceptance": "Every world object appears in a named semantic row with the same available verbs.",
+      "test": "Proposed: object census parity assertion between world descriptors and list rows.",
+      "status": "PARTIAL",
+      "gap": "The parity test is not currently present."
+    },
+    {
+      "id": "NFR-PERF-001",
+      "statement": "The Desk SHOULD keep interactive pointer and keyboard response within one 60 Hz frame under the documented object scale.",
+      "rationale": "Workbench manipulation must feel direct while windows and world objects are visible together.",
+      "sources": [
+        {
+          "path": "docs/internal/philo/briefs/workbench-design-srs.txt",
+          "line": 302,
+          "symbol": "performance requirements",
+          "claim": "The brief requires performance budgets and runtime measurement."
+        },
+        {
+          "path": "web/src/desk/DeskApp.tsx",
+          "line": 184,
+          "symbol": "DeskApp",
+          "claim": "DeskApp composes the world, windows, list and overlays in one runtime."
+        }
+      ],
+      "owner": "Desk runtime",
+      "acceptance": "Pointer move, drag and shortcut actions meet the recorded frame budget at the supported object count.",
+      "test": "Proposed: Playwright performance trace with 60 Hz frame and long-task assertions at 1440px.",
+      "status": "SPEC-DEBT",
+      "gap": "No baseline object count or trace exists."
+    },
+    {
+      "id": "NFR-PERF-002",
+      "statement": "Window motion SHALL update compositor-friendly transforms and SHALL avoid full object-tree recomputation per pointer move where the current implementation permits.",
+      "rationale": "The geometry loop is the most frequent Desk interaction.",
+      "sources": [
+        {
+          "path": "web/src/desk/components/DeskWindow.tsx",
+          "line": 556,
+          "symbol": "DeskWindowFrame",
+          "claim": "Window drag updates a positioned frame using geometry callbacks."
+        },
+        {
+          "path": "web/src/desk/components/window/windowGeometry.ts",
+          "line": 119,
+          "symbol": "clampRect",
+          "claim": "Geometry calculations are pure and bounded."
+        }
+      ],
+      "owner": "Desk windows",
+      "acceptance": "A drag trace shows transform/position updates without a long task for ordinary window counts.",
+      "test": "Proposed: browser performance trace around drag with long-task threshold and render count assertion.",
+      "status": "IMPLEMENTED",
+      "gap": "No automated frame-budget assertion is maintained."
+    },
+    {
+      "id": "NFR-PERF-003",
+      "statement": "The Desk SHOULD expose a measured first usable paint budget and lazy-load optional terminal/editor code.",
+      "rationale": "Core Workbench interaction should not wait for optional heavy surfaces.",
+      "sources": [
+        {
+          "path": "web/src/desk/surface/Surface.tsx",
+          "line": 438,
+          "symbol": "XtermPane",
+          "claim": "The terminal pane is lazy-loaded behind Suspense."
+        },
+        {
+          "path": "docs/internal/philo/briefs/workbench-design-srs.txt",
+          "line": 302,
+          "symbol": "performance requirements",
+          "claim": "The brief requests startup and runtime performance contracts."
+        }
+      ],
+      "owner": "Web runtime",
+      "acceptance": "The production build reports a first usable Desk mark and optional chunks are absent from the initial critical path.",
+      "test": "Proposed: Lighthouse or Playwright trace with a named first-usable mark and bundle assertion.",
+      "status": "SPEC-DEBT",
+      "gap": "No measured budget or mark is recorded in the current docs."
+    },
+    {
+      "id": "NFR-PERF-004",
+      "statement": "The Desk SHOULD document object, window and event-count limits with a degradation behavior.",
+      "rationale": "An explicit ceiling prevents a dense desktop from failing silently at scale.",
+      "sources": [
+        {
+          "path": "web/src/desk/world.ts",
+          "line": 18,
+          "symbol": "worldObjects",
+          "claim": "The current world has a finite descriptor list but no scale contract."
+        },
+        {
+          "path": "web/src/runtime/RuntimeBus.tsx",
+          "line": 54,
+          "symbol": "RuntimeBusProvider",
+          "claim": "The runtime bus bounds reconnect delay but not event volume."
+        }
+      ],
+      "owner": "Desk runtime",
+      "acceptance": "At the documented ceiling the Desk remains usable; above it the surface reports a named degraded state.",
+      "test": "Proposed: load test with object/window/event ceilings and a degraded-mode assertion.",
+      "status": "SPEC-DEBT",
+      "gap": "No capacity budget or degraded mode exists."
+    },
+    {
+      "id": "NFR-REL-001",
+      "statement": "Runtime bus reconnect SHALL use bounded backoff, a single socket and truthful connection states.",
+      "rationale": "Repeated sockets and unbounded retries can duplicate events or hide a dead backend.",
+      "sources": [
+        {
+          "path": "web/src/runtime/RuntimeBus.tsx",
+          "line": 13,
+          "symbol": "RuntimeBusProvider",
+          "claim": "The bus owns one socket, connection states, ping cadence and bounded reconnect."
+        },
+        {
+          "path": "web/src/runtime/RuntimeBus.tsx",
+          "line": 80,
+          "symbol": "RuntimeBusProvider",
+          "claim": "Backoff is capped and malformed frames are ignored."
+        }
+      ],
+      "owner": "Runtime",
+      "acceptance": "A disconnect produces one reconnect loop with a capped delay and a truthful connection state; disposal stops further attempts. No retry-exhaustion behavior is inferred.",
+      "test": "Actual: web/src/runtime/RuntimeBus.test.tsx asserts one socket and connection state transitions.",
+      "status": "IMPLEMENTED",
+      "gap": "The reconnect policy is not surfaced as a user-configurable setting."
+    },
+    {
+      "id": "NFR-REL-002",
+      "statement": "Corrupt or incompatible workspace data SHALL be ignored safely and SHALL leave a usable default Desk.",
+      "rationale": "A bad local record must not strand the operator in a blank or crashed Workbench.",
+      "sources": [
+        {
+          "path": "web/src/desk/store/workspaceStorage.ts",
+          "line": 112,
+          "symbol": "loadDeskWorkspace",
+          "claim": "Invalid JSON, wrong version and invalid shape return an empty workspace."
+        }
+      ],
+      "owner": "Desk store",
+      "acceptance": "Loading corrupt data yields defaults, no exception escapes, and the next save writes the current schema.",
+      "test": "Actual: web/src/desk/__tests__/windows.test.tsx asserts invalid/retired persisted slots are safely cut and reset to defaults.",
+      "status": "IMPLEMENTED",
+      "gap": "The recovery does not explain the discarded record to the user."
+    },
+    {
+      "id": "NFR-REL-003",
+      "statement": "Failed API, host and runtime operations SHALL preserve the last safe state and expose a named recovery action.",
+      "rationale": "Recovery should retain work and explain the next safe step.",
+      "sources": [
+        {
+          "path": "web/src/lib/api.ts",
+          "line": 14,
+          "symbol": "ApiError",
+          "claim": "API errors preserve status and payload message."
+        },
+        {
+          "path": "web/src/desk/surface/Surface.tsx",
+          "line": 202,
+          "symbol": "SurfaceState",
+          "claim": "SurfaceState renders error and an optional Try again action."
+        }
+      ],
+      "owner": "Domain/runtime + Surface library",
+      "acceptance": "A failed load keeps last-known data where safe and provides retry or export/park action.",
+      "test": "Actual: component tests assert SurfaceState error/retry rendering; Proposed: API failure integration test for last-known data.",
+      "status": "PARTIAL",
+      "gap": "Host failures and domain receipts do not share a recovery contract."
+    },
+    {
+      "id": "NFR-I18N-001",
+      "statement": "All user-facing Desk labels, states, errors, menu reasons and accessible names SHALL come from a locale message catalogue.",
+      "rationale": "Hard-coded English prevents reliable localization and produces inconsistent terminology.",
+      "sources": [
+        {
+          "path": "web/src/desk/surface/Surface.tsx",
+          "line": 202,
+          "symbol": "SurfaceState",
+          "claim": "Shared surfaces currently contain literal loading, error, retry and empty labels."
+        },
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "line": 136,
+          "symbol": "VERBS",
+          "claim": "Verb labels and reasons are currently defined as source literals."
+        }
+      ],
+      "owner": "Localization + Surface library",
+      "acceptance": "A locale switch changes every catalogue label without changing domain ids.",
+      "test": "Proposed: static extraction check plus locale snapshot for route, menu, state and error strings.",
+      "status": "UNIMPLEMENTED",
+      "gap": "No locale catalogue or extraction pipeline is present."
+    },
+    {
+      "id": "NFR-I18N-002",
+      "statement": "Desk layout SHALL tolerate at least 30 percent expansion in compact labels and 50 percent expansion in verbose labels.",
+      "rationale": "Translated labels must not clip actions or hide state.",
+      "sources": [
+        {
+          "path": "web/src/desk/surface/Surface.tsx",
+          "line": 289,
+          "symbol": "SurfaceColumns",
+          "claim": "Surface layout responds to its container but does not define text-expansion budgets."
+        },
+        {
+          "path": "docs/internal/philo/DESIGN_SPECIFICATION.md",
+          "line": 1,
+          "symbol": "design specification",
+          "claim": "The proposed design calls for localized, compact-safe surface layouts."
+        }
+      ],
+      "owner": "Localization + Surface library",
+      "acceptance": "Expanded pseudo-localized labels remain readable and actionable at 393px and 1440px.",
+      "test": "Proposed: pseudo-localization visual/semantic run with 30/50 percent expansion fixtures.",
+      "status": "UNIMPLEMENTED",
+      "gap": "No expansion fixtures or width budget are maintained."
+    },
+    {
+      "id": "NFR-I18N-003",
+      "statement": "Dates, times, numbers and byte/count values SHALL use locale-aware formatters while domain values remain canonical.",
+      "rationale": "Localized presentation must not alter sorting, ids or persistence.",
+      "sources": [
+        {
+          "path": "web/src/desk/surface/format.ts",
+          "line": 7,
+          "symbol": "humanTime",
+          "claim": "Current formatting helpers provide fixed human-readable values."
+        },
+        {
+          "path": "web/src/desk/store/workspaceStorage.ts",
+          "line": 67,
+          "symbol": "saveDeskWorkspace",
+          "claim": "Persistence stores canonical numeric and timestamp values."
+        }
+      ],
+      "owner": "Localization + Domain",
+      "acceptance": "Changing locale changes display formatting and leaves saved records byte-for-byte canonical.",
+      "test": "Proposed: locale formatter tests for date/time/number and persistence invariance.",
+      "status": "UNIMPLEMENTED",
+      "gap": "Format helpers do not accept locale or Intl options."
+    },
+    {
+      "id": "NFR-I18N-004",
+      "statement": "The Desk SHOULD support right-to-left layout and bidi-safe identifiers without changing object order or keyboard semantics.",
+      "rationale": "Direction changes must not corrupt source labels, paths or spatial actions.",
+      "sources": [
+        {
+          "path": "web/src/desk/surface/Surface.tsx",
+          "line": 51,
+          "symbol": "SurfaceIdentity",
+          "claim": "Identity currently renders labels without direction metadata."
+        },
+        {
+          "path": "docs/internal/philo/briefs/workbench-design-srs.txt",
+          "line": 302,
+          "symbol": "localization requirements",
+          "claim": "The brief requires localization and accessibility themes in the SRS."
+        }
+      ],
+      "owner": "Localization + Accessibility",
+      "acceptance": "An RTL fixture preserves readable mixed-direction labels and equivalent arrow/shortcut actions.",
+      "test": "Proposed: RTL visual and keyboard fixture with mixed Latin/path content.",
+      "status": "UNIMPLEMENTED",
+      "gap": "No RTL styles or tests are present."
+    },
+    {
+      "id": "NFR-THEME-001",
+      "statement": "Desk surfaces SHALL consume semantic theme tokens for material, text, state, focus and egress treatments.",
+      "rationale": "A shared token graph keeps the Workbench coherent and makes contrast review possible.",
+      "sources": [
+        {
+          "path": "web/src/styles/tokens.css",
+          "line": 240,
+          "symbol": "semantic tokens",
+          "claim": "Semantic color and surface variables are defined centrally."
+        },
+        {
+          "path": "web/src/lib/tokens.gen.ts",
+          "line": 6,
+          "symbol": "tokens",
+          "claim": "Generated tokens expose the typed token set."
+        }
+      ],
+      "owner": "Surface library",
+      "acceptance": "A surface does not introduce an unregistered colour for a state or material role.",
+      "test": "Actual: web/src/desk/__tests__/styles.test.ts asserts no forbidden ad-hoc surface colour literals.",
+      "status": "PARTIAL",
+      "gap": "Not every legacy Desk overlay uses semantic variables."
+    },
+    {
+      "id": "NFR-THEME-002",
+      "statement": "The Desk SHOULD provide a high-contrast theme that preserves state, focus, selection and egress distinctions.",
+      "rationale": "Contrast and forced-colour users need a first-class Workbench treatment.",
+      "sources": [
+        {
+          "path": "web/src/styles/tokens.css",
+          "line": 240,
+          "symbol": "semantic tokens",
+          "claim": "The current token file defines the baseline theme but no high-contrast mode."
+        },
+        {
+          "path": "docs/internal/philo/DESIGN_SPECIFICATION.md",
+          "line": 1,
+          "symbol": "design specification",
+          "claim": "High contrast is a proposed theme requirement."
+        }
+      ],
+      "owner": "Surface library + Accessibility",
+      "acceptance": "High-contrast snapshots retain all semantic distinctions and meet the adopted contrast target.",
+      "test": "Proposed: forced-colours/high-contrast browser snapshots with axe contrast assertions.",
+      "status": "UNIMPLEMENTED",
+      "gap": "No high-contrast token layer exists."
+    },
+    {
+      "id": "NFR-THEME-003",
+      "statement": "The Desk SHOULD provide light and system-selected themes using the same semantic roles.",
+      "rationale": "Theme choice must not fork object, verb or state semantics.",
+      "sources": [
+        {
+          "path": "web/src/styles/tokens.css",
+          "line": 240,
+          "symbol": "semantic tokens",
+          "claim": "The current baseline is dark-first and does not expose a complete light/system contract."
+        }
+      ],
+      "owner": "Surface library",
+      "acceptance": "Light and system modes render all catalogue components with equivalent state cues.",
+      "test": "Proposed: theme matrix snapshots for system dark, system light and explicit light.",
+      "status": "UNIMPLEMENTED",
+      "gap": "No complete light/system theme is present."
+    },
+    {
+      "id": "NFR-ERR-001",
+      "statement": "API failures SHALL preserve HTTP status and server payload where safe and SHALL map to a user-facing recovery state.",
+      "rationale": "Debuggable errors and safe recovery require the original failure boundary.",
+      "sources": [
+        {
+          "path": "web/src/lib/api.ts",
+          "line": 14,
+          "symbol": "ApiError",
+          "claim": "ApiError stores status and payload message."
+        },
+        {
+          "path": "web/src/desk/surface/Surface.tsx",
+          "line": 202,
+          "symbol": "SurfaceState",
+          "claim": "SurfaceState renders an error and optional retry."
+        }
+      ],
+      "owner": "API + Surface library",
+      "acceptance": "A non-2xx response retains status for logs and renders a named retry/park action.",
+      "test": "Actual: web/src/lib/api.test.ts asserts ApiError status/message; Proposed: SurfaceState test asserts recovery action.",
+      "status": "IMPLEMENTED",
+      "gap": "There is no common error code catalogue."
+    },
+    {
+      "id": "NFR-ERR-002",
+      "statement": "A rejected verb or drop SHALL explain the refusal in the same surface that offered the action.",
+      "rationale": "Silent refusal leaves the operator unable to correct the action.",
+      "sources": [
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "line": 41,
+          "symbol": "Verb",
+          "claim": "Unavailable verbs expose a reason."
+        },
+        {
+          "path": "web/src/desk/dropMatrix.ts",
+          "line": 9,
+          "symbol": "DROP_MATRIX",
+          "claim": "Unsupported drop pairs return null."
+        }
+      ],
+      "owner": "Desk interaction",
+      "acceptance": "A rejected action leaves a named reason or refusal receipt and does not mutate the target.",
+      "test": "Actual: verbRegistry and dropMatrix tests assert no runner/effect for rejected operations; Proposed: UI refusal receipt assertion.",
+      "status": "IMPLEMENTED",
+      "gap": "Unsupported drop UI feedback is not asserted end-to-end."
+    },
+    {
+      "id": "NFR-ERR-003",
+      "statement": "Workspace save failure SHALL preserve the in-memory arrangement and expose retry without clearing the operator's desk.",
+      "rationale": "A local persistence fault must not destroy current work.",
+      "sources": [
+        {
+          "path": "web/src/desk/store/workspaceStorage.ts",
+          "line": 67,
+          "symbol": "saveDeskWorkspace",
+          "claim": "Workspace save serializes a bounded shape but has no shared failure surface."
+        }
+      ],
+      "owner": "Desk store",
+      "acceptance": "A storage exception leaves in-memory state unchanged and exposes a retry or export path.",
+      "test": "Proposed: mock localStorage failure and assert store state plus recovery action.",
+      "status": "PARTIAL",
+      "gap": "Write failures are not surfaced through a user-facing receipt."
+    },
+    {
+      "id": "NFR-TEST-001",
+      "statement": "Repository quality checks SHALL guard product text, token usage, surface imports and other documented Desk invariants.",
+      "rationale": "The design system depends on static rules that are easy to regress in a large surface.",
+      "sources": [
+        {
+          "path": "scripts/check_docs.py",
+          "line": 1,
+          "symbol": "main",
+          "claim": "The repository has a documentation and invariant checker."
+        },
+        {
+          "path": "web/src/desk/surface/__tests__/scrollHint.test.ts",
+          "line": 41,
+          "symbol": "computeScrollHint is not defined outside desk/surface (re-exports allowed)",
+          "claim": "A focused test scans source for unsupported scroll helper exports."
+        }
+      ],
+      "owner": "Quality + Surface library",
+      "acceptance": "Scoped CI fails when an invariant is violated and reports the offending source path.",
+      "test": "Actual: scripts/check_docs.py and web/src/desk/surface/__tests__/scrollHint.test.ts are inspected checks; no whole-Desk token test was found.",
+      "status": "IMPLEMENTED",
+      "gap": "The complete Desk requirement set is not yet generated from this shard."
+    },
+    {
+      "id": "NFR-TEST-002",
+      "statement": "Geometry, drop, keymap, verb registry, storage and runtime bus behavior SHALL have assertion-bearing focused tests.",
+      "rationale": "These are the portable contracts with the highest regression cost.",
+      "sources": [
+        {
+          "path": "web/src/desk/__tests__/shell.test.tsx",
+          "line": 125,
+          "symbol": "snapForPointer",
+          "claim": "Shell tests assert numerical geometry and snap behavior."
+        },
+        {
+          "path": "web/src/desk/__tests__/dropMatrix.test.ts",
+          "line": 6,
+          "symbol": "every rule names a verb and an action (no silent drops)",
+          "claim": "Drop tests assert allowed and rejected effects."
+        },
+        {
+          "path": "web/src/desk/__tests__/verbRegistry.test.ts",
+          "line": 14,
+          "symbol": "every verb has a unique id, a label, and a closed scope",
+          "claim": "Verb tests assert registry behavior."
+        }
+      ],
+      "owner": "Desk quality",
+      "acceptance": "Each named contract has tests that assert behavior, not only module import or coverage.",
+      "test": "Actual: the cited focused tests contain numerical, state and runner assertions; reviewed for this specification.",
+      "status": "IMPLEMENTED",
+      "gap": "Runtime and storage assertion coverage must keep pace with new host and receipt seams."
+    },
+    {
+      "id": "NFR-TEST-003",
+      "statement": "Desk visual evidence SHALL include 1440px and 393px captures for the primary shell and each window family before merge.",
+      "rationale": "The Workbench must be reviewed at desktop and compact widths, including focus and clipping risks.",
+      "sources": [
+        {
+          "path": "docs/internal/TWO-BRAINS.md",
+          "line": 1,
+          "symbol": "evidence rule",
+          "claim": "The repository governance requires visual evidence at 1440 and 393 before merge."
+        },
+        {
+          "path": "pm/roadmap/holdspeak-philo/phase-1-audit-and-specification/story-05-desk.md",
+          "line": 1,
+          "symbol": "story acceptance",
+          "claim": "Desk acceptance requires source-backed scoped evidence."
+        }
+      ],
+      "owner": "Desk quality",
+      "acceptance": "Named captures exist for both widths and are linked from the phase evidence record.",
+      "test": "Proposed: Playwright screenshot matrix with dimensions asserted in file metadata.",
+      "status": "SPEC-DEBT",
+      "gap": "This documentation lane does not capture shots."
+    },
+    {
+      "id": "NFR-TEST-004",
+      "statement": "Desk acceptance SHOULD run reduced motion, high contrast, keyboard-only, RTL and pseudo-localized fixtures.",
+      "rationale": "The target behavior includes environmental modes that ordinary happy-path tests do not exercise.",
+      "sources": [
+        {
+          "path": "docs/internal/philo/briefs/workbench-design-srs.txt",
+          "line": 302,
+          "symbol": "quality requirements",
+          "claim": "The brief calls for accessibility, localization, performance and recovery testing."
+        }
+      ],
+      "owner": "Desk quality + Accessibility",
+      "acceptance": "The fixture matrix has named pass/fail assertions for each supported environment.",
+      "test": "Proposed: browser fixture matrix for reduced motion, forced colours, keyboard, RTL and pseudo-locale.",
+      "status": "SPEC-DEBT",
+      "gap": "No fixture matrix is implemented."
+    },
+    {
+      "id": "NFR-TEST-005",
+      "statement": "Any native host adapter SHALL have contract tests for capability denial, serialization, display geometry, focus return and web fallback.",
+      "rationale": "Host seams can fail outside the browser test environment.",
+      "sources": [
+        {
+          "path": "docs/internal/philo/adr/desktop-host.md",
+          "line": 1,
+          "symbol": "DesktopHost ADR",
+          "claim": "The proposed host architecture requires bounded adapter contracts."
+        }
+      ],
+      "owner": "Desktop host",
+      "acceptance": "The adapter test suite runs without a live OS desktop and covers every exposed capability.",
+      "test": "Proposed: host contract test suite with fake adapter and denied-capability cases.",
+      "status": "UNIMPLEMENTED",
+      "gap": "No native host adapter exists."
+    },
+    {
+      "id": "NFR-CI-001",
+      "statement": "CI SHALL run focused documentation, type, lint and product tests with an isolated HOME for Desk persistence tests.",
+      "rationale": "Desk tests can otherwise write to an operator's real local workspace and CI must reproduce the repository gate.",
+      "sources": [
+        {
+          "path": "CLAUDE.md",
+          "line": 1,
+          "symbol": "test commands",
+          "claim": "Repository instructions require an isolated HOME for pytest and scoped checks."
+        },
+        {
+          "path": ".github/workflows/test.yml",
+          "line": 1,
+          "symbol": "jobs",
+          "claim": "The repository CI defines quality and test jobs."
+        }
+      ],
+      "owner": "Quality + CI",
+      "acceptance": "CI logs show isolated HOME, focused docs checks and the required test command outcomes.",
+      "test": "Actual: repository CI configuration and scoped docs check are inspected; full suite is outside this lane.",
+      "status": "PARTIAL",
+      "gap": "The Desk requirement shard is not yet wired into CI drift checks."
+    },
+    {
+      "id": "NFR-CI-002",
+      "statement": "CI SHOULD detect stale source anchors and broken links in the Desk architecture, SRS and data shards.",
+      "rationale": "A source-anchored specification loses trust when code moves without an explicit update.",
+      "sources": [
+        {
+          "path": "scripts/check_docs.py",
+          "line": 1,
+          "symbol": "main",
+          "claim": "The existing check_docs tool checks Markdown navigation; the added validate_architecture tool checks the declared source anchors in this package."
+        },
+        {
+          "path": "docs/internal/philo/data/README.md",
+          "line": 1,
+          "symbol": "data contract",
+          "claim": "Data shards require source references and explicit status."
+        }
+      ],
+      "owner": "Quality + docs",
+      "acceptance": "A stale path, missing line or invalid source symbol fails the documentation job with a clear row id.",
+      "test": "Proposed: source-anchor validator for requirements and catalogue rows.",
+      "status": "SPEC-DEBT",
+      "gap": "No anchor validator is present."
+    },
+    {
+      "id": "ROAD-001",
+      "statement": "Desk delivery SHOULD proceed in the order: current contract audit, accessibility and localization seams, receipts/recovery, measured performance, then native host integration.",
+      "rationale": "The existing web contract must be made truthful and usable before adding a new runtime boundary.",
+      "sources": [
+        {
+          "path": "pm/roadmap/holdspeak-philo/phase-1-audit-and-specification/story-05-desk.md",
+          "line": 1,
+          "symbol": "story-05",
+          "claim": "The story orders source audit and specification before implementation."
+        },
+        {
+          "path": "docs/internal/philo/adr/desktop-host.md",
+          "line": 1,
+          "symbol": "DesktopHost ADR",
+          "claim": "Native hosting is a later proposed seam."
+        }
+      ],
+      "owner": "Desk program",
+      "acceptance": "Each stage has a ratified contract, focused tests and evidence before the next stage starts.",
+      "test": "Proposed: roadmap gate checklist linking each requirement status and evidence artifact.",
+      "status": "SPEC-DEBT",
+      "gap": "The sequence is documented here but not yet adopted into a phase tracker."
+    },
+    {
+      "id": "NFR-PERF-005",
+      "statement": "Idle renderer CPU SHOULD remain below 2 percent of one logical core on the reference fixture.",
+      "rationale": "Measurable acceptance criterion requested by the owner; not a current performance/support claim.",
+      "sources": [
+        {
+          "path": "docs/internal/philo/DELIVERY_ROADMAP.md",
+          "line": 1,
+          "symbol": "document",
+          "claim": "Defines the proposed reference environment, metrics, threshold and failure policy."
+        }
+      ],
+      "owner": "Desk frontend and QA",
+      "acceptance": "Measure a60-second idle sample after30seconds settling; record all process roles separately.",
+      "test": "PROPOSED fixture; not executed in this audit",
+      "status": "UNIMPLEMENTED",
+      "gap": "Implement the instrumentation and run the stated benchmark or accessibility fixture."
+    },
+    {
+      "id": "NFR-PERF-006",
+      "statement": "Repeated window open/close SHOULD retain less than10 MB extra JS heap after100cycles and test GC.",
+      "rationale": "Measurable acceptance criterion requested by the owner; not a current performance/support claim.",
+      "sources": [
+        {
+          "path": "docs/internal/philo/DELIVERY_ROADMAP.md",
+          "line": 1,
+          "symbol": "document",
+          "claim": "Defines the proposed reference environment, metrics, threshold and failure policy."
+        }
+      ],
+      "owner": "Desk frontend and QA",
+      "acceptance": "Three reference-fixture runs with heap snapshots must meet the bound.",
+      "test": "PROPOSED fixture; not executed in this audit",
+      "status": "UNIMPLEMENTED",
+      "gap": "Implement the instrumentation and run the stated benchmark or accessibility fixture."
+    },
+    {
+      "id": "NFR-REL-004",
+      "statement": "The Desk SHALL retain readable last-known content through a 30-second disconnect without duplicate command dispatch.",
+      "rationale": "Measurable acceptance criterion requested by the owner; not a current performance/support claim.",
+      "sources": [
+        {
+          "path": "docs/internal/philo/DELIVERY_ROADMAP.md",
+          "line": 1,
+          "symbol": "document",
+          "claim": "Defines the proposed reference environment, metrics, threshold and failure policy."
+        }
+      ],
+      "owner": "Desk frontend and QA",
+      "acceptance": "Cut/restart fixture server and inspect one socket loop, retained content and dispatch counter.",
+      "test": "PROPOSED fixture; not executed in this audit",
+      "status": "UNIMPLEMENTED",
+      "gap": "Implement the instrumentation and run the stated benchmark or accessibility fixture."
+    },
+    {
+      "id": "NFR-A11Y-007",
+      "statement": "Pointer targets SHALL meet WCAG2.2AA size/spacing with reviewed exceptions; primary touch targets SHOULD be44CSSpx.",
+      "rationale": "Measurable acceptance criterion requested by the owner; not a current performance/support claim.",
+      "sources": [
+        {
+          "path": "docs/internal/philo/DELIVERY_ROADMAP.md",
+          "line": 1,
+          "symbol": "document",
+          "claim": "Defines the proposed reference environment, metrics, threshold and failure policy."
+        }
+      ],
+      "owner": "Desk frontend and QA",
+      "acceptance": "Measure controls at1440/393; document each exception and alternate path.",
+      "test": "PROPOSED fixture; not executed in this audit",
+      "status": "UNIMPLEMENTED",
+      "gap": "Implement the instrumentation and run the stated benchmark or accessibility fixture."
+    },
+    {
+      "id": "NFR-A11Y-008",
+      "statement": "The Desk SHALL retain its key actions and states at200percent zoom and enlarged text.",
+      "rationale": "Measurable acceptance criterion requested by the owner; not a current performance/support claim.",
+      "sources": [
+        {
+          "path": "docs/internal/philo/DELIVERY_ROADMAP.md",
+          "line": 1,
+          "symbol": "document",
+          "claim": "Defines the proposed reference environment, metrics, threshold and failure policy."
+        }
+      ],
+      "owner": "Desk frontend and QA",
+      "acceptance": "Run zoom/text fixtures and keyboard walkthrough without clipped essential content.",
+      "test": "PROPOSED fixture; not executed in this audit",
+      "status": "UNIMPLEMENTED",
+      "gap": "Implement the instrumentation and run the stated benchmark or accessibility fixture."
+    }
+  ]
+}

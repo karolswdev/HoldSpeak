@@ -1,0 +1,94 @@
+:root {
+  --fixture-ink: var(--text);
+  --fixture-muted: var(--text-muted);
+  --fixture-line: var(--border);
+  --fixture-accent: var(--accent);
+}
+
+body { min-width: 320px; }
+.fixture-gallery { min-height: 100vh; background: var(--bg); color: var(--fixture-ink); }
+.fixture-gallery-head { display: flex; justify-content: space-between; gap: 24px; padding: 22px 28px 14px; border-bottom: 1px solid var(--fixture-line); }
+.fixture-gallery-head h1 { margin: 4px 0 3px; font: 650 clamp(22px, 3vw, 34px)/1.05 var(--font-display); letter-spacing: -0.03em; }
+.fixture-gallery-head p { margin: 0; color: var(--fixture-muted); font-size: 12px; }
+.fixture-kicker, .fixture-head-note, .fixture-gallery-meta, .fixture-artboard-badge, .fixture-focus-order, .fixture-world-caption, .fixture-expose-label { font: 500 10px/1.3 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; }
+.fixture-kicker { color: var(--fixture-accent); }
+.fixture-head-note { display: grid; align-content: center; gap: 3px; text-align: right; color: var(--fixture-muted); }
+.fixture-head-note strong { color: var(--fixture-ink); }
+.fixture-gallery-nav { display: flex; gap: 5px; flex-wrap: wrap; padding: 10px 28px; border-bottom: 1px solid var(--fixture-line); background: var(--surface-1); }
+.fixture-gallery-main { position: relative; min-height: calc(100vh - 150px); overflow: hidden; }
+.fixture-gallery-meta { display: flex; justify-content: space-between; gap: 10px; padding: 9px 28px 0; color: var(--fixture-muted); }
+.fixture-artboard-badge { position: absolute; z-index: 95; top: 36px; left: 28px; display: flex; align-items: center; gap: 9px; max-width: calc(100% - 56px); padding: 5px 8px; border: 1px solid var(--fixture-line); background: color-mix(in srgb, var(--surface-1) 94%, transparent); color: var(--fixture-muted); }
+.fixture-artboard-badge[data-tone="proposed"] { border-color: var(--warning); }
+.fixture-artboard-badge-main { color: var(--fixture-ink); }
+.fixture-desk-stage { position: relative; min-height: calc(100vh - 198px); overflow: hidden; isolation: isolate; }
+.fixture-world { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 70%, var(--accent) 8%), var(--bg)); }
+.fixture-world::before { content: ""; position: absolute; inset: 0; opacity: .22; background: url("/desk/atmospheres/rainy-city.webp") center / cover; mix-blend-mode: screen; }
+.fixture-world-caption { position: absolute; top: 54px; left: 28px; right: 28px; display: flex; justify-content: space-between; color: var(--text-muted); }
+.fixture-world-object { position: absolute; z-index: 2; display: grid; justify-items: center; gap: 3px; width: 120px; transform: translate(-50%, -50%); color: var(--text); font: 500 11px/1.2 var(--font-mono); text-align: center; }
+.fixture-world-object img { width: 64px; height: 64px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 3px 0 color-mix(in srgb, var(--bg) 70%, transparent)); }
+.fixture-world-object.is-selected { padding: 5px 4px; border: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--surface-1)); box-shadow: var(--desk-window-bevel); }
+.fixture-world-dock { position: absolute; z-index: 4; right: 28px; bottom: 24px; display: flex; gap: 4px; align-items: center; padding: 5px; border: 1px solid var(--border); background: var(--surface-2); box-shadow: var(--desk-window-bevel); font: 500 10px var(--font-mono); }
+.fixture-world-dock span { padding: 5px 7px; border: 1px solid var(--border-subtle); color: var(--text-muted); }
+.fixture-world-dock .fixture-dock-sprite { color: var(--accent); }
+.fixture-window { z-index: 44; }
+.fixture-window-back { z-index: 43; transform: translate(-7%, 11%) scale(.92); opacity: .88; }
+.fixture-closed { position: fixed; z-index: 44; left: 28px; top: 84px; display: flex; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--border); background: var(--surface-2); font: 500 11px var(--font-mono); }
+.desk-next .fixture-window .desk-surface-body { gap: var(--desk-surface-section-gap); }
+.fixture-control-row { display: flex; justify-content: flex-end; gap: 6px; }
+.fixture-value { font: 500 12px var(--font-mono); color: var(--text); }
+.fixture-context-menu { position: absolute; z-index: 84; top: 30%; left: 49%; display: grid; min-width: 220px; padding: 5px; border: 1px solid var(--border-strong); background: var(--surface-2); box-shadow: var(--desk-window-bevel); }
+.fixture-context-menu .btn { width: 100%; justify-content: flex-start; text-align: left; }
+.fixture-context-title { padding: 8px 9px 6px; color: var(--text-muted); font: 600 10px var(--font-mono); letter-spacing: .06em; }
+.fixture-transcript { display: grid; gap: 10px; }
+.fixture-transcript p { display: grid; grid-template-columns: 42px 92px minmax(0, 1fr); gap: 7px; margin: 0; font-size: 12px; }
+.fixture-transcript p > span { grid-column: 3; min-width: 0; }
+.fixture-transcript time { color: var(--text-muted); font: 500 11px var(--font-mono); }
+.fixture-transcript strong { color: var(--accent); font: 600 11px var(--font-mono); text-transform: uppercase; }
+.fixture-expose { position: absolute; z-index: 90; inset: 46px 18px 24px; display: grid; align-content: center; justify-items: center; gap: 18px; padding: 32px; background: color-mix(in srgb, var(--bg) 90%, transparent); border: 1px solid var(--border-strong); }
+.fixture-expose-label { color: var(--accent); }
+.fixture-expose-cards { display: grid; grid-template-columns: repeat(2, minmax(180px, 280px)); gap: 12px; width: min(100%, 590px); }
+.fixture-expose-cards > div { display: grid; gap: 5px; min-height: 110px; padding: 16px; border: 1px solid var(--border); background: var(--surface-2); box-shadow: var(--desk-window-bevel); }
+.fixture-expose-cards span { color: var(--text-muted); font: 500 10px var(--font-mono); }
+.fixture-expose-cards strong { align-self: end; font: 600 16px var(--font-display); }
+.fixture-shade { position: absolute; z-index: 80; inset: 0; display: grid; place-content: center; justify-items: center; gap: 10px; background: var(--bg); font: 500 11px var(--font-mono); color: var(--text-muted); }
+.fixture-shade strong { color: var(--text); font: 650 28px var(--font-display); }
+.fixture-shade-mark { color: var(--accent); letter-spacing: .18em; }
+.fixture-focus-order { position: absolute; z-index: 96; right: 28px; bottom: 13px; display: flex; gap: 10px; max-width: calc(100% - 56px); color: var(--text-muted); }
+.fixture-focus-order strong { color: var(--text); }
+.is-high-contrast { --border: var(--text); --border-strong: var(--text); --text-muted: var(--text); }
+.is-high-contrast .fixture-window, .is-high-contrast .fixture-artboard-badge { outline: 1px solid var(--text); }
+.fixture-pseudo .surface-row-text strong, .fixture-pseudo .surface-section-head h3, .fixture-pseudo .surface-identity-name { letter-spacing: .04em; }
+
+@container surface (max-width: 560px) {
+  .fixture-transcript p { grid-template-columns: 36px minmax(0, 1fr); }
+  .fixture-transcript strong { grid-column: 2; }
+  .fixture-transcript p > span { grid-column: 2; }
+}
+
+@media (max-width: 720px) {
+  .desk-next .fixture-window.desk-window-shell.is-sheet { max-height: min(78vh, calc(100dvh - 144px)); }
+  .fixture-gallery-head { padding: 12px 14px 10px; }
+  .fixture-gallery-head h1 { font-size: 21px; }
+  .fixture-head-note { display: none; }
+  .fixture-gallery-nav { padding: 7px 10px; max-height: 86px; overflow: auto; }
+  .fixture-gallery-meta { padding: 7px 14px 0; font-size: 9px; }
+  .fixture-artboard-badge { top: 30px; left: 14px; max-width: calc(100% - 28px); flex-wrap: wrap; gap: 4px 8px; }
+  .fixture-desk-stage { min-height: calc(100vh - 118px); }
+  .fixture-world-caption { top: 48px; left: 14px; right: 14px; }
+  .fixture-world-object { width: 90px; font-size: 9px; }
+  .fixture-world-object img { width: 48px; height: 48px; }
+  .fixture-world-dock { right: 12px; bottom: 12px; max-width: calc(100% - 24px); overflow: auto; }
+  .fixture-focus-order { position: relative; right: auto; bottom: auto; display: grid; padding: 7px 14px 12px; max-width: none; font-size: 9px; }
+  .fixture-expose { inset: 40px 10px 18px; padding: 14px; }
+  .fixture-expose-cards { grid-template-columns: 1fr; }
+  .fixture-context-menu { left: 37%; top: 27%; }
+  .fixture-transcript p { grid-template-columns: 38px minmax(0, 1fr); }
+  .fixture-transcript strong { grid-column: 2; }
+  .fixture-transcript p > span { grid-column: 2; }
+}
+
+.fixture-gallery.is-bare .fixture-gallery-main { min-height: 100vh; }
+.fixture-gallery.is-bare .fixture-desk-stage { min-height: 100vh; }
+.fixture-gallery.is-bare .fixture-artboard-badge { top: 12px; left: 12px; }
+.fixture-gallery.is-bare .fixture-world-caption { top: 54px; }
+.fixture-gallery.is-bare .fixture-focus-order { display: none; }

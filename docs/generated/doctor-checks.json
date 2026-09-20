@@ -1,0 +1,1747 @@
+{
+  "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+  "generator": "scripts/philo_doctor_reference.py",
+  "limits": "Static branches, not executed checks. Runtime status, platform applicability and dynamic repair interpolation depend on the condition_source. Some helpers supply additional results.",
+  "checks": [
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_runtime",
+      "line": 58,
+      "condition_source": "def _check_runtime() -> DoctorCheck:\n    from .. import __version__\n\n    return DoctorCheck(\n        name=\"Runtime\",\n        status=\"PASS\",\n        detail=(\n            f\"HoldSpeak {__version__} on {platform.system()} {platform.release()} \"\n            f\"({platform.machine()}), Python {sys.version.split()[0]}\"\n        ),\n    )",
+      "outcomes": [
+        {
+          "line": 61,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Runtime'",
+            "status": "'PASS'",
+            "detail": "f'HoldSpeak {__version__} on {platform.system()} {platform.release()} ({platform.machine()}), Python {sys.version.split()[0]}'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_database",
+      "line": 71,
+      "condition_source": "def _check_database() -> DoctorCheck:\n    \"\"\"Report database readability and schema shape.\n\n    Read-only: probes that the file is a readable SQLite database with\n    known HoldSpeak tables.  A missing database is normal before first\n    run, not a problem.  No version comparison -- the reconcile\n    (HS-137-01) brings any DB to the canonical shape on open.\n    \"\"\"\n    import sqlite3 as _sqlite3\n\n    from ..db import DEFAULT_DB_PATH\n\n    db_path = DEFAULT_DB_PATH.expanduser()\n\n    if not db_path.exists():\n        return DoctorCheck(\n            name=\"Database\",\n            status=\"PASS\",\n            detail=f\"No database yet at {db_path}; it is created on first use.\",\n        )\n\n    try:\n        conn = _sqlite3.connect(str(db_path))\n        try:\n            tables = [\n                row[0]\n                for row in conn.execute(\n                    \"SELECT name FROM sqlite_master WHERE type='table' ORDER BY name\"\n                )\n            ]\n        finally:\n            conn.close()\n    except _sqlite3.DatabaseError as exc:\n        return DoctorCheck(\n            name=\"Database\",\n            status=\"WARN\",\n            detail=f\"A file is present at {db_path} but it is not a readable SQLite database ({exc}).\",\n            fix=\"If this is not a HoldSpeak database, move it aside and let HoldSpeak create a fresh one.\",\n        )\n\n    if not tables:\n        return DoctorCheck(\n            name=\"Database\",\n            status=\"WARN\",\n            detail=f\"Database at {db_path} has no tables.\",\n            fix=\"HoldSpeak will reconcile the schema on next start.\",\n        )\n\n    return DoctorCheck(\n        name=\"Database\",\n        status=\"PASS\",\n        detail=f\"Schema OK at {db_path} ({len(tables)} tables).\",\n    )",
+      "outcomes": [
+        {
+          "line": 119,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Database'",
+            "status": "'PASS'",
+            "detail": "f'Schema OK at {db_path} ({len(tables)} tables).'"
+          }
+        },
+        {
+          "line": 86,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Database'",
+            "status": "'PASS'",
+            "detail": "f'No database yet at {db_path}; it is created on first use.'"
+          }
+        },
+        {
+          "line": 112,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Database'",
+            "status": "'WARN'",
+            "detail": "f'Database at {db_path} has no tables.'",
+            "fix": "'HoldSpeak will reconcile the schema on next start.'"
+          }
+        },
+        {
+          "line": 104,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Database'",
+            "status": "'WARN'",
+            "detail": "f'A file is present at {db_path} but it is not a readable SQLite database ({exc}).'",
+            "fix": "'If this is not a HoldSpeak database, move it aside and let HoldSpeak create a fresh one.'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_config",
+      "line": 126,
+      "condition_source": "def _check_config() -> tuple[DoctorCheck, Config]:\n    from ..config import CONFIG_VERSION\n\n    config = Config.load()\n    config_path = CONFIG_FILE.expanduser()\n    if not config_path.exists():\n        return DoctorCheck(\n            name=\"Config\",\n            status=\"WARN\",\n            detail=f\"Config file not found at {config_path}\",\n            fix=\"Run `holdspeak` once to create a default config file.\",\n        ), config\n\n    if config.config_version > CONFIG_VERSION:\n        return DoctorCheck(\n            name=\"Config\",\n            status=\"WARN\",\n            detail=(\n                f\"Config version {config.config_version} is newer than this build \"\n                f\"({CONFIG_VERSION}); some settings may be ignored. Loaded {config_path}.\"\n            ),\n            fix=\"Upgrade HoldSpeak so it understands this config.\",\n        ), config\n\n    return DoctorCheck(\n        name=\"Config\",\n        status=\"PASS\",\n        detail=f\"Loaded {config_path} (config version {config.config_version})\",\n    ), config",
+      "outcomes": [
+        {
+          "line": 150,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Config'",
+            "status": "'PASS'",
+            "detail": "f'Loaded {config_path} (config version {config.config_version})'"
+          }
+        },
+        {
+          "line": 132,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Config'",
+            "status": "'WARN'",
+            "detail": "f'Config file not found at {config_path}'",
+            "fix": "'Run `holdspeak` once to create a default config file.'"
+          }
+        },
+        {
+          "line": 140,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Config'",
+            "status": "'WARN'",
+            "detail": "f'Config version {config.config_version} is newer than this build ({CONFIG_VERSION}); some settings may be ignored. Loaded {config_path}.'",
+            "fix": "'Upgrade HoldSpeak so it understands this config.'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_microphone",
+      "line": 157,
+      "condition_source": "def _check_microphone() -> DoctorCheck:\n    try:\n        device = get_default_input_device()\n    except Exception as exc:\n        return DoctorCheck(\n            name=\"Microphone\",\n            status=\"FAIL\",\n            detail=f\"Unable to query input device: {exc}\",\n            fix=\"Install PortAudio and verify your mic is available to the OS.\",\n        )\n\n    if device is None:\n        return DoctorCheck(\n            name=\"Microphone\",\n            status=\"FAIL\",\n            detail=\"No input-capable audio device found.\",\n            fix=\"Connect/enable a microphone and retry.\",\n        )\n\n    return DoctorCheck(\n        name=\"Microphone\",\n        status=\"PASS\",\n        detail=f\"Default input: {device.name} (index {device.index})\",\n    )",
+      "outcomes": [
+        {
+          "line": 176,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Microphone'",
+            "status": "'PASS'",
+            "detail": "f'Default input: {device.name} (index {device.index})'"
+          }
+        },
+        {
+          "line": 169,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Microphone'",
+            "status": "'FAIL'",
+            "detail": "'No input-capable audio device found.'",
+            "fix": "'Connect/enable a microphone and retry.'"
+          }
+        },
+        {
+          "line": 161,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Microphone'",
+            "status": "'FAIL'",
+            "detail": "f'Unable to query input device: {exc}'",
+            "fix": "'Install PortAudio and verify your mic is available to the OS.'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_transcription_backend",
+      "line": 183,
+      "condition_source": "def _check_transcription_backend() -> DoctorCheck:\n    try:\n        backend = _resolve_backend(\"auto\")\n    except TranscriberError as exc:\n        if sys.platform.startswith(\"linux\"):\n            fix = \"Install Linux backend with `pip install 'holdspeak[linux]'`.\"\n        elif sys.platform == \"darwin\":\n            fix = \"Install supported backend dependencies, then rerun doctor.\"\n        else:\n            fix = \"Install `faster-whisper` and rerun doctor.\"\n        return DoctorCheck(\n            name=\"Transcription backend\",\n            status=\"FAIL\",\n            detail=str(exc),\n            fix=fix,\n        )\n\n    return DoctorCheck(\n        name=\"Transcription backend\",\n        status=\"PASS\",\n        detail=f\"`auto` resolves to `{backend}`\",\n    )",
+      "outcomes": [
+        {
+          "line": 200,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Transcription backend'",
+            "status": "'PASS'",
+            "detail": "f'`auto` resolves to `{backend}`'"
+          }
+        },
+        {
+          "line": 193,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Transcription backend'",
+            "status": "'FAIL'",
+            "detail": "str(exc)",
+            "fix": "fix"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_hotkey",
+      "line": 207,
+      "condition_source": "def _check_hotkey(hotkey_name: str, *, is_wayland: bool) -> DoctorCheck:\n    try:\n        _ = HotkeyListener(hotkey=hotkey_name)\n    except Exception as exc:\n        if is_wayland:\n            return DoctorCheck(\n                name=\"Global hotkey\",\n                status=\"WARN\",\n                detail=f\"Unavailable: {exc}\",\n                fix=\"On Wayland this is often expected; keep HoldSpeak focused and hold `v` to record.\",\n            )\n        return DoctorCheck(\n            name=\"Global hotkey\",\n            status=\"FAIL\",\n            detail=f\"Unavailable: {exc}\",\n            fix=\"Run inside a GUI desktop session with input permissions enabled.\",\n        )\n\n    return DoctorCheck(\n        name=\"Global hotkey\",\n        status=\"PASS\",\n        detail=f\"Hotkey listener initialized for `{hotkey_name}`\",\n    )",
+      "outcomes": [
+        {
+          "line": 225,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Global hotkey'",
+            "status": "'PASS'",
+            "detail": "f'Hotkey listener initialized for `{hotkey_name}`'"
+          }
+        },
+        {
+          "line": 218,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Global hotkey'",
+            "status": "'FAIL'",
+            "detail": "f'Unavailable: {exc}'",
+            "fix": "'Run inside a GUI desktop session with input permissions enabled.'"
+          }
+        },
+        {
+          "line": 212,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Global hotkey'",
+            "status": "'WARN'",
+            "detail": "f'Unavailable: {exc}'",
+            "fix": "'On Wayland this is often expected; keep HoldSpeak focused and hold `v` to record.'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_text_injection",
+      "line": 232,
+      "condition_source": "def _check_text_injection(*, is_wayland: bool) -> DoctorCheck:\n    try:\n        _ = TextTyper()\n    except Exception as exc:\n        if is_wayland:\n            return DoctorCheck(\n                name=\"Text injection\",\n                status=\"WARN\",\n                detail=f\"Unavailable: {exc}\",\n                fix=\"On Wayland this can be restricted. Use clipboard/manual paste when needed.\",\n            )\n        return DoctorCheck(\n            name=\"Text injection\",\n            status=\"FAIL\",\n            detail=f\"Unavailable: {exc}\",\n            fix=\"Ensure GUI automation/input permissions are available in your desktop session.\",\n        )\n\n    return DoctorCheck(\n        name=\"Text injection\",\n        status=\"PASS\",\n        detail=\"Keyboard injection backend initialized\",\n    )",
+      "outcomes": [
+        {
+          "line": 250,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Text injection'",
+            "status": "'PASS'",
+            "detail": "'Keyboard injection backend initialized'"
+          }
+        },
+        {
+          "line": 243,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Text injection'",
+            "status": "'FAIL'",
+            "detail": "f'Unavailable: {exc}'",
+            "fix": "'Ensure GUI automation/input permissions are available in your desktop session.'"
+          }
+        },
+        {
+          "line": 237,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Text injection'",
+            "status": "'WARN'",
+            "detail": "f'Unavailable: {exc}'",
+            "fix": "'On Wayland this can be restricted. Use clipboard/manual paste when needed.'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_clipboard_tools",
+      "line": 257,
+      "condition_source": "def _check_clipboard_tools(*, is_wayland: bool) -> DoctorCheck:\n    if not sys.platform.startswith(\"linux\"):\n        return DoctorCheck(\n            name=\"Clipboard backend\",\n            status=\"PASS\",\n            detail=\"Platform default clipboard backend\",\n        )\n\n    if is_wayland:\n        missing = [cmd for cmd in (\"wl-copy\", \"wl-paste\") if not _command_exists(cmd)]\n        if missing:\n            return DoctorCheck(\n                name=\"Clipboard backend\",\n                status=\"WARN\",\n                detail=f\"Missing tools: {', '.join(missing)}\",\n                fix=\"Install wl-clipboard (e.g., `sudo apt-get install wl-clipboard`).\",\n            )\n        return DoctorCheck(\n            name=\"Clipboard backend\",\n            status=\"PASS\",\n            detail=\"Wayland clipboard tools detected (wl-copy/wl-paste)\",\n        )\n\n    if _command_exists(\"xclip\") or _command_exists(\"xsel\"):\n        return DoctorCheck(\n            name=\"Clipboard backend\",\n            status=\"PASS\",\n            detail=\"X11 clipboard tool detected\",\n        )\n    return DoctorCheck(\n        name=\"Clipboard backend\",\n        status=\"WARN\",\n        detail=\"No X11 clipboard tool detected\",\n        fix=\"Install xclip (e.g., `sudo apt-get install xclip`).\",\n    )",
+      "outcomes": [
+        {
+          "line": 286,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Clipboard backend'",
+            "status": "'WARN'",
+            "detail": "'No X11 clipboard tool detected'",
+            "fix": "'Install xclip (e.g., `sudo apt-get install xclip`).'"
+          }
+        },
+        {
+          "line": 259,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Clipboard backend'",
+            "status": "'PASS'",
+            "detail": "'Platform default clipboard backend'"
+          }
+        },
+        {
+          "line": 274,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Clipboard backend'",
+            "status": "'PASS'",
+            "detail": "'Wayland clipboard tools detected (wl-copy/wl-paste)'"
+          }
+        },
+        {
+          "line": 281,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Clipboard backend'",
+            "status": "'PASS'",
+            "detail": "'X11 clipboard tool detected'"
+          }
+        },
+        {
+          "line": 268,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Clipboard backend'",
+            "status": "'WARN'",
+            "detail": "f\"Missing tools: {', '.join(missing)}\"",
+            "fix": "'Install wl-clipboard (e.g., `sudo apt-get install wl-clipboard`).'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_web_runtime",
+      "line": 294,
+      "condition_source": "def _check_web_runtime() -> DoctorCheck:\n    \"\"\"Verify deps for the default `holdspeak` web runtime are importable.\"\"\"\n    from importlib.util import find_spec\n\n    missing = [m for m in (\"fastapi\", \"uvicorn\", \"websockets\") if find_spec(m) is None]\n    if not missing:\n        return DoctorCheck(\n            name=\"Web runtime\",\n            status=\"PASS\",\n            detail=\"fastapi, uvicorn, and websockets are importable\",\n        )\n    return DoctorCheck(\n        name=\"Web runtime\",\n        status=\"FAIL\",\n        detail=f\"Missing modules: {', '.join(missing)}\",\n        fix=\"Reinstall HoldSpeak (these are core deps): `uv pip install -e .` or `pip install -e .`.\",\n    )",
+      "outcomes": [
+        {
+          "line": 305,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Web runtime'",
+            "status": "'FAIL'",
+            "detail": "f\"Missing modules: {', '.join(missing)}\"",
+            "fix": "'Reinstall HoldSpeak (these are core deps): `uv pip install -e .` or `pip install -e .`.'"
+          }
+        },
+        {
+          "line": 300,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Web runtime'",
+            "status": "'PASS'",
+            "detail": "'fastapi, uvicorn, and websockets are importable'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_ffmpeg",
+      "line": 313,
+      "condition_source": "def _check_ffmpeg() -> DoctorCheck:\n    if _command_exists(\"ffmpeg\"):\n        return DoctorCheck(\n            name=\"ffmpeg\",\n            status=\"PASS\",\n            detail=\"Detected in PATH\",\n        )\n    return DoctorCheck(\n        name=\"ffmpeg\",\n        status=\"WARN\",\n        detail=\"Not found in PATH\",\n        fix=\"Install ffmpeg (e.g., `sudo apt-get install ffmpeg` or `brew install ffmpeg`).\",\n    )",
+      "outcomes": [
+        {
+          "line": 320,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'ffmpeg'",
+            "status": "'WARN'",
+            "detail": "'Not found in PATH'",
+            "fix": "'Install ffmpeg (e.g., `sudo apt-get install ffmpeg` or `brew install ffmpeg`).'"
+          }
+        },
+        {
+          "line": 315,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'ffmpeg'",
+            "status": "'PASS'",
+            "detail": "'Detected in PATH'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_pactl",
+      "line": 328,
+      "condition_source": "def _check_pactl() -> DoctorCheck:\n    if not sys.platform.startswith(\"linux\"):\n        return DoctorCheck(\n            name=\"pactl\",\n            status=\"PASS\",\n            detail=\"Not required on this platform\",\n        )\n\n    if _command_exists(\"pactl\"):\n        return DoctorCheck(\n            name=\"pactl\",\n            status=\"PASS\",\n            detail=\"Detected in PATH\",\n        )\n    return DoctorCheck(\n        name=\"pactl\",\n        status=\"WARN\",\n        detail=\"Not found in PATH\",\n        fix=\"Install pulseaudio-utils (e.g., `sudo apt-get install pulseaudio-utils`).\",\n    )",
+      "outcomes": [
+        {
+          "line": 342,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'pactl'",
+            "status": "'WARN'",
+            "detail": "'Not found in PATH'",
+            "fix": "'Install pulseaudio-utils (e.g., `sudo apt-get install pulseaudio-utils`).'"
+          }
+        },
+        {
+          "line": 330,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'pactl'",
+            "status": "'PASS'",
+            "detail": "'Not required on this platform'"
+          }
+        },
+        {
+          "line": 337,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'pactl'",
+            "status": "'PASS'",
+            "detail": "'Detected in PATH'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_system_audio_capture",
+      "line": 350,
+      "condition_source": "def _check_system_audio_capture() -> DoctorCheck:\n    try:\n        status = check_blackhole_setup()\n    except Exception as exc:\n        return DoctorCheck(\n            name=\"System audio capture\",\n            status=\"WARN\",\n            detail=f\"Unable to verify setup: {exc}\",\n            fix=\"Run `holdspeak meeting --setup` for detailed setup guidance.\",\n        )\n\n    if status.get(\"installed\"):\n        device = status.get(\"device\")\n        device_name = getattr(device, \"name\", str(device) if device is not None else \"unknown\")\n        return DoctorCheck(\n            name=\"System audio capture\",\n            status=\"PASS\",\n            detail=f\"Detected: {device_name}\",\n        )\n\n    return DoctorCheck(\n        name=\"System audio capture\",\n        status=\"WARN\",\n        detail=\"System-audio capture source not configured\",\n        fix=\"Run `holdspeak meeting --setup` and follow the printed instructions.\",\n    )",
+      "outcomes": [
+        {
+          "line": 370,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'System audio capture'",
+            "status": "'WARN'",
+            "detail": "'System-audio capture source not configured'",
+            "fix": "'Run `holdspeak meeting --setup` and follow the printed instructions.'"
+          }
+        },
+        {
+          "line": 364,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'System audio capture'",
+            "status": "'PASS'",
+            "detail": "f'Detected: {device_name}'"
+          }
+        },
+        {
+          "line": 354,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'System audio capture'",
+            "status": "'WARN'",
+            "detail": "f'Unable to verify setup: {exc}'",
+            "fix": "'Run `holdspeak meeting --setup` for detailed setup guidance.'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_meeting_intel_runtime",
+      "line": 378,
+      "condition_source": "def _check_meeting_intel_runtime(config: Config) -> DoctorCheck:\n    meeting = config.meeting\n    if not meeting.intel_enabled:\n        return DoctorCheck(\n            name=\"Meeting intelligence runtime\",\n            status=\"PASS\",\n            detail=\"Disabled in config\",\n        )\n\n    from ..intel.providers import effective_intel_cloud\n\n    effective = effective_intel_cloud(meeting)\n    ok, reason = get_intel_runtime_status(\n        meeting.intel_realtime_model,\n        provider=meeting.intel_provider,\n        cloud_model=effective.model,\n        cloud_api_key_env=effective.api_key_env,\n        cloud_base_url=effective.base_url,\n    )\n    if ok:\n        return DoctorCheck(\n            name=\"Meeting intelligence runtime\",\n            status=\"PASS\",\n            detail=f\"Provider mode `{meeting.intel_provider}` is ready\",\n        )\n\n    fix = None\n    if meeting.intel_provider == \"cloud\":\n        fix = (\n            \"Set the key in Settings \u2192 Models \u2192 [destination], then verify \"\n            f\"cloud model '{effective.model}'. For a headless/service hub, set {effective.api_key_env}.\"\n        )\n    elif meeting.intel_provider == \"auto\":\n        fix = (\n            f\"Provide a local model at '{meeting.intel_realtime_model}' \"\n            \"or set the key in Settings \u2192 Models \u2192 [destination] for cloud fallback. \"\n            f\"For a headless/service hub, set {effective.api_key_env}.\"\n        )\n    else:\n        fix = f\"Set a valid local model path (currently '{meeting.intel_realtime_model}').\"\n\n    return DoctorCheck(\n        name=\"Meeting intelligence runtime\",\n        status=\"WARN\",\n        detail=reason or \"Meeting intelligence runtime is unavailable\",\n        fix=fix,\n    )",
+      "outcomes": [
+        {
+          "line": 419,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Meeting intelligence runtime'",
+            "status": "'WARN'",
+            "detail": "reason or 'Meeting intelligence runtime is unavailable'",
+            "fix": "fix"
+          }
+        },
+        {
+          "line": 381,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Meeting intelligence runtime'",
+            "status": "'PASS'",
+            "detail": "'Disabled in config'"
+          }
+        },
+        {
+          "line": 398,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Meeting intelligence runtime'",
+            "status": "'PASS'",
+            "detail": "f'Provider mode `{meeting.intel_provider}` is ready'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_meeting_intel_egress",
+      "line": 463,
+      "condition_source": "def _check_meeting_intel_egress(config: Config) -> DoctorCheck:\n    \"\"\"Surface, plainly, whether the active config can send transcripts off-machine.\"\"\"\n    meeting = config.meeting\n    if not meeting.intel_enabled:\n        return DoctorCheck(\n            name=\"Meeting intelligence egress\",\n            status=\"PASS\",\n            detail=\"Disabled \u2014 no transcript leaves this machine.\",\n        )\n\n    can_transmit, description = intel_egress_posture(\n        meeting.intel_provider, meeting_cfg=meeting\n    )\n    if not can_transmit:\n        return DoctorCheck(\n            name=\"Meeting intelligence egress\",\n            status=\"PASS\",\n            detail=description,\n        )\n\n    # HS-84-04: name where the cloud leg ACTUALLY goes \u2014 an assigned\n    # RuntimeProfile (HS-84-01) is the endpoint, not the raw legacy fields.\n    from ..intel.providers import effective_intel_cloud, endpoint_host\n\n    effective = effective_intel_cloud(meeting)\n    if effective.profile_id:\n        destination = (\n            f\" Runs on profile '{effective.profile_name}'\"\n            f\" ({endpoint_host(effective.base_url) or effective.base_url}).\"\n        )\n    elif effective.reason:\n        destination = f\" NOTE: {effective.reason}.\"\n    else:\n        destination = \"\"\n\n    # Cloud is a legitimate, user-chosen option; we surface it loudly so it is\n    # never a surprise, but it is not a failure.\n    return DoctorCheck(\n        name=\"Meeting intelligence egress\",\n        status=\"WARN\",\n        detail=f\"provider=`{meeting.intel_provider}`: {description}{destination}\",\n        fix=(\n            \"This is expected if you chose cloud intentionally. To keep all \"\n            \"transcripts local, set meeting.intel_provider to 'local'.\"\n        ),\n    )",
+      "outcomes": [
+        {
+          "line": 500,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Meeting intelligence egress'",
+            "status": "'WARN'",
+            "detail": "f'provider=`{meeting.intel_provider}`: {description}{destination}'",
+            "fix": "\"This is expected if you chose cloud intentionally. To keep all transcripts local, set meeting.intel_provider to 'local'.\""
+          }
+        },
+        {
+          "line": 467,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Meeting intelligence egress'",
+            "status": "'PASS'",
+            "detail": "'Disabled \u2014 no transcript leaves this machine.'"
+          }
+        },
+        {
+          "line": 477,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Meeting intelligence egress'",
+            "status": "'PASS'",
+            "detail": "description"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_trust_destinations",
+      "line": 511,
+      "condition_source": "def _check_trust_destinations(config: Config) -> DoctorCheck:\n    \"\"\"Render the canonical destination inventory used by both trust UIs.\"\"\"\n    from ..trust_destinations import destination_inventory\n\n    enabled = [row for row in destination_inventory(config) if row[\"enabled\"]]\n    if not enabled:\n        return DoctorCheck(\n            name=\"Trust destinations\",\n            status=\"PASS\",\n            detail=\"No external destination is enabled.\",\n        )\n    names = \", \".join(str(row[\"name\"]) for row in enabled)\n    return DoctorCheck(\n        name=\"Trust destinations\",\n        status=\"WARN\",\n        detail=f\"Enabled external destinations: {names}.\",\n        fix=\"Open Privacy & Trust to review boundaries, authority, and revoke actions.\",\n    )",
+      "outcomes": [
+        {
+          "line": 523,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Trust destinations'",
+            "status": "'WARN'",
+            "detail": "f'Enabled external destinations: {names}.'",
+            "fix": "'Open Privacy & Trust to review boundaries, authority, and revoke actions.'"
+          }
+        },
+        {
+          "line": 517,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Trust destinations'",
+            "status": "'PASS'",
+            "detail": "'No external destination is enabled.'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_web_auth",
+      "line": 531,
+      "condition_source": "def _check_web_auth(config: Config) -> DoctorCheck:\n    \"\"\"Report how the web runtime is bound and whether an auth token is set.\"\"\"\n    token_set = bool(getattr(config.meeting, \"web_auth_token\", \"\") or \"\")\n    # The runtime binds 127.0.0.1 today; the token activates the moment a\n    # non-loopback bind is introduced (Phase 15). Surface both facts plainly.\n    detail = (\n        \"Web runtime binds loopback (open to this machine). \"\n        f\"Auth token is {'set' if token_set else 'not set'} \u2014 \"\n        \"required automatically if a non-loopback bind is ever configured.\"\n    )\n    return DoctorCheck(\n        name=\"Web runtime auth\",\n        status=\"PASS\",\n        detail=detail,\n        fix=(\n            None\n            if token_set\n            else \"A token is generated on first web launch; no action needed.\"\n        ),\n    )",
+      "outcomes": [
+        {
+          "line": 541,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Web runtime auth'",
+            "status": "'PASS'",
+            "detail": "detail",
+            "fix": "None if token_set else 'A token is generated on first web launch; no action needed.'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_meeting_intel_cloud_preflight",
+      "line": 553,
+      "condition_source": "def _check_meeting_intel_cloud_preflight(\n    config: Config, *, timeout_seconds: float = 4.0, skip_network: bool = False\n) -> DoctorCheck:\n    meeting = config.meeting\n    if not meeting.intel_enabled:\n        return DoctorCheck(\n            name=\"Cloud intel preflight\",\n            status=\"PASS\",\n            detail=\"Skipped (meeting intelligence disabled)\",\n        )\n    if meeting.intel_provider == \"local\":\n        return DoctorCheck(\n            name=\"Cloud intel preflight\",\n            status=\"PASS\",\n            detail=\"Skipped (provider mode `local`)\",\n        )\n    if skip_network:\n        return DoctorCheck(\n            name=\"Cloud intel preflight\",\n            status=\"PASS\",\n            detail=\"Not run (network preflight skipped at setup load)\",\n            fix=\"Run `holdspeak doctor` for a live cloud-endpoint preflight.\",\n        )\n\n    from ..intel.providers import effective_intel_cloud\n\n    effective = effective_intel_cloud(meeting)\n    api_key_env = (effective.api_key_env or \"OPENAI_API_KEY\").strip() or \"OPENAI_API_KEY\"\n    try:\n        api_key = resolve_profile_key(api_key_env) or \"\"\n    except ProfileKeyStoreError:\n        api_key = \"\"\n    if not api_key:\n        return DoctorCheck(\n            name=\"Cloud intel preflight\",\n            status=\"WARN\",\n            detail=f\"Missing API key in ${api_key_env}\",\n            fix=(\n                \"Set the key in Settings \u2192 Models \u2192 [destination] before running cloud intel. \"\n                f\"For a headless/service hub, set {api_key_env}.\"\n            ),\n        )\n\n    base_url = _normalize_cloud_base_url(effective.base_url)\n    parsed = urlparse(base_url)\n    if parsed.scheme not in {\"http\", \"https\"} or not parsed.netloc:\n        return DoctorCheck(\n            name=\"Cloud intel preflight\",\n            status=\"WARN\",\n            detail=f\"Invalid cloud base URL: {base_url}\",\n            fix=\"Set the destination's endpoint URL to a valid http(s) URL, e.g. http://homelab.local:8000/v1.\",\n        )\n\n    models_url = f\"{base_url}/models\"\n    request = urlrequest.Request(\n        models_url,\n        headers={\n            \"Accept\": \"application/json\",\n            \"Authorization\": f\"Bearer {api_key}\",\n        },\n        method=\"GET\",\n    )\n\n    try:\n        with urlrequest.urlopen(request, timeout=timeout_seconds) as response:\n            payload_bytes = response.read()\n    except urlerror.HTTPError as exc:\n        body = exc.read().decode(\"utf-8\", errors=\"replace\").strip()\n        if exc.code in {401, 403}:\n            return DoctorCheck(\n                name=\"Cloud intel preflight\",\n                status=\"WARN\",\n                detail=f\"Auth rejected by `{models_url}` (HTTP {exc.code}).\",\n                fix=f\"Check token in ${api_key_env} and endpoint auth configuration.\",\n            )\n        if exc.code == 404:\n            return DoctorCheck(\n                name=\"Cloud intel preflight\",\n                status=\"WARN\",\n                detail=f\"`{models_url}` returned HTTP 404.\",\n                fix=\"Verify the destination's endpoint URL includes the correct API prefix (commonly `/v1`).\",\n            )\n        return DoctorCheck(\n            name=\"Cloud intel preflight\",\n            status=\"WARN\",\n            detail=f\"`{models_url}` returned HTTP {exc.code}: {body[:140] or 'no response body'}\",\n            fix=\"Confirm endpoint compatibility and API access policy.\",\n        )\n    except urlerror.URLError as exc:\n        host = parsed.hostname or parsed.netloc or base_url\n        detail, fix = _describe_preflight_network_error(host, exc.reason)\n        return DoctorCheck(\n            name=\"Cloud intel preflight\",\n            status=\"WARN\",\n            detail=detail,\n            fix=fix,\n        )\n    except TimeoutError:\n        host = parsed.hostname or parsed.netloc or base_url\n        return DoctorCheck(\n            name=\"Cloud intel preflight\",\n            status=\"WARN\",\n            detail=f\"Connection to `{host}` timed out.\",\n            fix=\"Check host reachability, firewall rules, and endpoint load.\",\n        )\n    except Exception as exc:\n        return DoctorCheck(\n            name=\"Cloud intel preflight\",\n            status=\"WARN\",\n            detail=f\"Unexpected preflight failure: {exc}\",\n            fix=\"Verify endpoint compatibility with the OpenAI `/models` API.\",\n        )\n\n    try:\n        payload = json.loads(payload_bytes.decode(\"utf-8\", errors=\"replace\"))\n    except Exception:\n        payload = None\n\n    configured_model = (effective.model or \"\").strip()\n    model_ids: list[str] = []\n    if isinstance(payload, dict):\n        data = payload.get(\"data\")\n        if isinstance(data, list):\n            for row in data:\n                if isinstance(row, dict):\n                    model_id = row.get(\"id\")\n                    if isinstance(model_id, str) and model_id.strip():\n                        model_ids.append(model_id.strip())\n\n    if model_ids and configured_model and configured_model not in model_ids:\n        sample = \", \".join(model_ids[:5])\n        return DoctorCheck(\n            name=\"Cloud intel preflight\",\n            status=\"WARN\",\n            detail=f\"Endpoint reachable, but model `{configured_model}` is unavailable.\",\n            fix=f\"Set the destination's model to a served model id (examples: {sample}).\",\n        )\n\n    if not model_ids:\n        return DoctorCheck(\n            name=\"Cloud intel preflight\",\n            status=\"PASS\",\n            detail=f\"Endpoint reachable at `{base_url}` (model list unavailable; model check skipped).\",\n        )\n\n    return DoctorCheck(\n        name=\"Cloud intel preflight\",\n        status=\"PASS\",\n        detail=f\"Endpoint reachable at `{base_url}` and model `{configured_model}` is available.\",\n    )",
+      "outcomes": [
+        {
+          "line": 698,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Cloud intel preflight'",
+            "status": "'PASS'",
+            "detail": "f'Endpoint reachable at `{base_url}` and model `{configured_model}` is available.'"
+          }
+        },
+        {
+          "line": 558,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Cloud intel preflight'",
+            "status": "'PASS'",
+            "detail": "'Skipped (meeting intelligence disabled)'"
+          }
+        },
+        {
+          "line": 564,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Cloud intel preflight'",
+            "status": "'PASS'",
+            "detail": "'Skipped (provider mode `local`)'"
+          }
+        },
+        {
+          "line": 570,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Cloud intel preflight'",
+            "status": "'PASS'",
+            "detail": "'Not run (network preflight skipped at setup load)'",
+            "fix": "'Run `holdspeak doctor` for a live cloud-endpoint preflight.'"
+          }
+        },
+        {
+          "line": 586,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Cloud intel preflight'",
+            "status": "'WARN'",
+            "detail": "f'Missing API key in ${api_key_env}'",
+            "fix": "f'Set the key in Settings \u2192 Models \u2192 [destination] before running cloud intel. For a headless/service hub, set {api_key_env}.'"
+          }
+        },
+        {
+          "line": 599,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Cloud intel preflight'",
+            "status": "'WARN'",
+            "detail": "f'Invalid cloud base URL: {base_url}'",
+            "fix": "\"Set the destination's endpoint URL to a valid http(s) URL, e.g. http://homelab.local:8000/v1.\""
+          }
+        },
+        {
+          "line": 684,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Cloud intel preflight'",
+            "status": "'WARN'",
+            "detail": "f'Endpoint reachable, but model `{configured_model}` is unavailable.'",
+            "fix": "f\"Set the destination's model to a served model id (examples: {sample}).\""
+          }
+        },
+        {
+          "line": 692,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Cloud intel preflight'",
+            "status": "'PASS'",
+            "detail": "f'Endpoint reachable at `{base_url}` (model list unavailable; model check skipped).'"
+          }
+        },
+        {
+          "line": 635,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Cloud intel preflight'",
+            "status": "'WARN'",
+            "detail": "f\"`{models_url}` returned HTTP {exc.code}: {body[:140] or 'no response body'}\"",
+            "fix": "'Confirm endpoint compatibility and API access policy.'"
+          }
+        },
+        {
+          "line": 644,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Cloud intel preflight'",
+            "status": "'WARN'",
+            "detail": "detail",
+            "fix": "fix"
+          }
+        },
+        {
+          "line": 652,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Cloud intel preflight'",
+            "status": "'WARN'",
+            "detail": "f'Connection to `{host}` timed out.'",
+            "fix": "'Check host reachability, firewall rules, and endpoint load.'"
+          }
+        },
+        {
+          "line": 659,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Cloud intel preflight'",
+            "status": "'WARN'",
+            "detail": "f'Unexpected preflight failure: {exc}'",
+            "fix": "'Verify endpoint compatibility with the OpenAI `/models` API.'"
+          }
+        },
+        {
+          "line": 622,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Cloud intel preflight'",
+            "status": "'WARN'",
+            "detail": "f'Auth rejected by `{models_url}` (HTTP {exc.code}).'",
+            "fix": "f'Check token in ${api_key_env} and endpoint auth configuration.'"
+          }
+        },
+        {
+          "line": 629,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Cloud intel preflight'",
+            "status": "'WARN'",
+            "detail": "f'`{models_url}` returned HTTP 404.'",
+            "fix": "\"Verify the destination's endpoint URL includes the correct API prefix (commonly `/v1`).\""
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_dictation_project_context",
+      "line": 705,
+      "condition_source": "def _check_dictation_project_context(config: Config) -> DoctorCheck:\n    \"\"\"Report cwd-based project detection (HS-3-02).\n\n    Always opt-in via dictation.pipeline.enabled \u2014 when disabled,\n    skips with PASS to keep `holdspeak doctor` quiet on the default\n    path. Never returns FAIL: a missing project just means the\n    `kb-enricher` stage has no context to inject (DIR-F-007 covers\n    that path).\n    \"\"\"\n    if not config.dictation.pipeline.enabled:\n        return DoctorCheck(\n            name=\"Project context\",\n            status=\"PASS\",\n            detail=\"dictation pipeline disabled (opt-in)\",\n        )\n\n    from ..plugins.dictation.project_root import detect_project_for_cwd\n\n    try:\n        project = detect_project_for_cwd()\n    except Exception as exc:  # pragma: no cover \u2014 defensive\n        return DoctorCheck(\n            name=\"Project context\",\n            status=\"WARN\",\n            detail=f\"detection raised {type(exc).__name__}: {exc}\",\n            fix=\"File a bug \u2014 `detect_project_for_cwd` should never raise on a normal cwd.\",\n        )\n\n    if project is None:\n        return DoctorCheck(\n            name=\"Project context\",\n            status=\"WARN\",\n            detail=f\"no project root detected from cwd={Path.cwd()}\",\n            fix=(\n                \"Launch holdspeak from inside a project directory, \"\n                \"or `mkdir <project>/.holdspeak` to mark a project root.\"\n            ),\n        )\n\n    return DoctorCheck(\n        name=\"Project context\",\n        status=\"PASS\",\n        detail=(\n            f\"detected {project['name']} (anchor={project['anchor']}) \"\n            f\"at {project['root']}\"\n            + (\" + KB\" if \"kb\" in project else \"\")\n        ),\n    )",
+      "outcomes": [
+        {
+          "line": 744,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Project context'",
+            "status": "'PASS'",
+            "detail": "f\"detected {project['name']} (anchor={project['anchor']}) at {project['root']}\" + (' + KB' if 'kb' in project else '')"
+          }
+        },
+        {
+          "line": 715,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Project context'",
+            "status": "'PASS'",
+            "detail": "'dictation pipeline disabled (opt-in)'"
+          }
+        },
+        {
+          "line": 734,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Project context'",
+            "status": "'WARN'",
+            "detail": "f'no project root detected from cwd={Path.cwd()}'",
+            "fix": "'Launch holdspeak from inside a project directory, or `mkdir <project>/.holdspeak` to mark a project root.'"
+          }
+        },
+        {
+          "line": 726,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Project context'",
+            "status": "'WARN'",
+            "detail": "f'detection raised {type(exc).__name__}: {exc}'",
+            "fix": "'File a bug \u2014 `detect_project_for_cwd` should never raise on a normal cwd.'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_runtime_profiles",
+      "line": 755,
+      "condition_source": "def _check_runtime_profiles(config: Config) -> DoctorCheck:\n    \"\"\"HS-84-04: name the RuntimeProfile each hub pipeline resolves to.\n\n    One honest line per enabled pipeline (meeting intel, dictation). A\n    dangling assignment is a WARN with the resolver's own reason; an adopted\n    profile that `requires_key` with no key in the hub's env is a WARN naming\n    the exact env var. Never FAIL \u2014 every fallback keeps the pipeline running.\n    \"\"\"\n    from ..intel.providers import (\n        _lookup_profile_record,\n        effective_dictation_llm,\n        effective_intel_cloud,\n        endpoint_host,\n        profile_key_env,\n    )\n\n    pipelines: list[tuple[str, object]] = []\n    if config.meeting.intel_enabled:\n        pipelines.append((\"meeting intel\", effective_intel_cloud(config.meeting)))\n    if config.dictation.pipeline.enabled:\n        pipelines.append((\"dictation\", effective_dictation_llm(config.dictation.runtime)))\n    if not pipelines:\n        return DoctorCheck(\n            name=\"Runtime profiles\",\n            status=\"PASS\",\n            detail=\"no pipeline enabled \u2014 nothing resolves through a profile\",\n        )\n\n    lines: list[str] = []\n    warns: list[str] = []\n    fixes: list[str] = []\n    for label, effective in pipelines:\n        if effective.profile_id:\n            where = (\n                f\"mesh node '{effective.node}'\"\n                if getattr(effective, \"node\", None)\n                else (endpoint_host(effective.base_url) or effective.base_url)\n            )\n            lines.append(f\"{label}: profile '{effective.profile_name}' ({where})\")\n            try:\n                record = _lookup_profile_record(effective.profile_id)\n            except Exception:\n                record = None\n            if (\n                record is not None\n                and bool(getattr(record, \"requires_key\", False))\n                and not _doctor_profile_key_present(effective.api_key_env)\n            ):\n                warns.append(\n                    f\"{label}: profile '{effective.profile_name}' requires a key\"\n                    f\" but ${effective.api_key_env} is unset\"\n                )\n                fixes.append(\n                    \"Set the key in Settings \u2192 Models \u2192 [destination]. \"\n                    f\"For a headless/service hub, export {profile_key_env(effective.profile_id)}=<key> \"\n                    \"(keys never sync; each device holds its own)\"\n                )\n        elif effective.reason:\n            warns.append(f\"{label}: {effective.reason}\")\n            fixes.append(\n                f\"Re-pick the {label} profile in Settings, or clear its profile id\"\n            )\n        else:\n            lines.append(f\"{label}: hub default (no profile assigned)\")\n\n    if warns:\n        return DoctorCheck(\n            name=\"Runtime profiles\",\n            status=\"WARN\",\n            detail=\"; \".join(warns + lines),\n            fix=\" \u00b7 \".join(dict.fromkeys(fixes)),\n        )\n    return DoctorCheck(\n        name=\"Runtime profiles\",\n        status=\"PASS\",\n        detail=\"; \".join(lines),\n    )",
+      "outcomes": [
+        {
+          "line": 827,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Runtime profiles'",
+            "status": "'PASS'",
+            "detail": "'; '.join(lines)"
+          }
+        },
+        {
+          "line": 777,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Runtime profiles'",
+            "status": "'PASS'",
+            "detail": "'no pipeline enabled \u2014 nothing resolves through a profile'"
+          }
+        },
+        {
+          "line": 821,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Runtime profiles'",
+            "status": "'WARN'",
+            "detail": "'; '.join(warns + lines)",
+            "fix": "' \u00b7 '.join(dict.fromkeys(fixes))"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_inference_targets",
+      "line": 834,
+      "condition_source": "def _check_inference_targets() -> DoctorCheck:\n    \"\"\"HS-92-07: list named destination readiness without probing a network.\"\"\"\n    try:\n        from ..db import get_database\n        from ..inference_targets import list_inference_targets\n\n        targets = list_inference_targets(get_database())\n    except Exception as exc:\n        return DoctorCheck(\n            name=\"Runs on destinations\",\n            status=\"WARN\",\n            detail=f\"destination inventory unavailable ({exc.__class__.__name__})\",\n            fix=\"Run `holdspeak doctor` after the database is available.\",\n        )\n    labels = {\n        \"this_device\": \"this device\",\n        \"paired_device\": \"paired device\",\n        \"private_endpoint\": \"private endpoint\",\n        \"mesh_node\": \"mesh node\",\n        \"external_service\": \"external service\",\n        \"unsupported\": \"unsupported destination\",\n    }\n    unavailable = [target for target in targets if not target.ready]\n    lines = [\n        f\"{target.name}: {labels.get(target.kind, target.kind)} \u00b7 {target.boundary}\"\n        + (f\" \u00b7 unavailable ({target.readiness_reason})\" if not target.ready else \" \u00b7 ready\")\n        for target in targets\n    ]\n    return DoctorCheck(\n        name=\"Runs on destinations\",\n        status=\"WARN\" if unavailable else \"PASS\",\n        detail=\"; \".join(lines),\n        fix=(\n            \"Choose another Runs on destination, or repair the named key, node, endpoint, or manifest.\"\n            if unavailable else None\n        ),\n    )",
+      "outcomes": [
+        {
+          "line": 862,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Runs on destinations'",
+            "status": "'WARN' if unavailable else 'PASS'",
+            "detail": "'; '.join(lines)",
+            "fix": "'Choose another Runs on destination, or repair the named key, node, endpoint, or manifest.' if unavailable else None"
+          }
+        },
+        {
+          "line": 842,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Runs on destinations'",
+            "status": "'WARN'",
+            "detail": "f'destination inventory unavailable ({exc.__class__.__name__})'",
+            "fix": "'Run `holdspeak doctor` after the database is available.'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_mesh_edges",
+      "line": 873,
+      "condition_source": "def _check_mesh_edges(config: Config) -> DoctorCheck:\n    \"\"\"HS-85-04: which mesh edges are alive right now.\n\n    Liveness is born from each worker's claim polling \u2014 this reports every\n    node that has EVER served, with its age, and flags nothing by itself\n    (an offline edge only matters when a profile points at it, which the\n    \"Runtime profiles\" check owns). Informational, always cheap.\n    \"\"\"\n    from datetime import datetime\n\n    from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS\n\n    try:\n        from ..db import get_database\n\n        workers = get_database().mesh_relay.list_workers()\n    except Exception as exc:\n        return DoctorCheck(\n            name=\"Mesh edges\",\n            status=\"PASS\",\n            detail=f\"not readable ({exc.__class__.__name__}) \u2014 no mesh serving on this hub\",\n        )\n    if not workers:\n        return DoctorCheck(\n            name=\"Mesh edges\",\n            status=\"PASS\",\n            detail=\"no node has ever served this mesh (start one: holdspeak mesh serve)\",\n        )\n    now = datetime.now()\n    parts: list[str] = []\n    for node, last_seen in sorted(workers.items()):\n        age = int((now - last_seen).total_seconds())\n        state = \"live\" if age <= DEFAULT_LIVENESS_WINDOW_SECONDS else \"offline\"\n        parts.append(f\"{node}: {state} ({age}s ago)\")\n    return DoctorCheck(name=\"Mesh edges\", status=\"PASS\", detail=\"; \".join(parts))",
+      "outcomes": [
+        {
+          "line": 907,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Mesh edges'",
+            "status": "'PASS'",
+            "detail": "'; '.join(parts)"
+          }
+        },
+        {
+          "line": 896,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Mesh edges'",
+            "status": "'PASS'",
+            "detail": "'no node has ever served this mesh (start one: holdspeak mesh serve)'"
+          }
+        },
+        {
+          "line": 890,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Mesh edges'",
+            "status": "'PASS'",
+            "detail": "f'not readable ({exc.__class__.__name__}) \u2014 no mesh serving on this hub'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_dictation_runtime",
+      "line": 910,
+      "condition_source": "def _check_dictation_runtime(config: Config) -> DoctorCheck:\n    \"\"\"DIR-DOC-001: report the resolved dictation LLM runtime + model availability.\n\n    Never returns `FAIL` \u2014 DIR-01 is opt-in (DIR-DOC-003), so a\n    misconfiguration is at most a `WARN`. The check does not load\n    the model; it inspects the configured path with `Path.exists()`\n    to keep `holdspeak doctor` cheap.\n    \"\"\"\n    cfg = config.dictation\n    if not cfg.pipeline.enabled:\n        return DoctorCheck(\n            name=\"LLM runtime\",\n            status=\"PASS\",\n            detail=\"dictation pipeline disabled (opt-in)\",\n        )\n\n    from ..intel.providers import effective_dictation_llm\n    from ..plugins.dictation.guidance import doctor_model_fix, doctor_runtime_install_fix\n    from ..plugins.dictation.runtime import RuntimeUnavailableError, resolve_backend\n\n    # HS-84-04: name the RuntimeProfile the pipeline resolves to. An adopted\n    # profile selects the endpoint backend (HS-84-02); a dangling assignment\n    # falls back to the configured backend and must say so loudly.\n    effective = effective_dictation_llm(cfg.runtime)\n    if effective.profile_id:\n        where = (\n            f\"mesh node '{effective.node}'\"\n            if effective.node\n            else f\"endpoint={effective.base_url}\"\n        )\n        return DoctorCheck(\n            name=\"LLM runtime\",\n            status=\"PASS\",\n            detail=(\n                f\"runs on profile '{effective.profile_name}'; {where}; \"\n                f\"model={effective.model}\"\n            ),\n        )\n    profile_note = f\" NOTE: {effective.reason}.\" if effective.reason else \"\"\n    profile_fix = (\n        \"Re-pick a profile in Dictation \u2192 Runtime (or clear \"\n        \"dictation.runtime.profile_id). \"\n        if effective.reason\n        else \"\"\n    )\n\n    requested = cfg.runtime.backend\n    try:\n        resolved, reason = resolve_backend(requested)\n    except RuntimeUnavailableError as exc:\n        return DoctorCheck(\n            name=\"LLM runtime\",\n            status=\"WARN\",\n            detail=f\"requested={requested!r}; resolution failed: {exc}{profile_note}\",\n            fix=f\"{profile_fix}{doctor_runtime_install_fix(requested)}\",\n        )\n\n    if resolved == \"openai_compatible\":\n        return DoctorCheck(\n            name=\"LLM runtime\",\n            status=\"WARN\" if effective.reason else \"PASS\",\n            detail=(\n                f\"resolved={resolved} ({reason}); endpoint=\"\n                f\"{effective.base_url or 'unset \u2014 pick a destination in Settings \u2192 Models'}; \"\n                f\"model={effective.model or 'unset'}{profile_note}\"\n            ),\n            fix=profile_fix or None,\n        )\n\n    target = (\n        Path(cfg.runtime.mlx_model).expanduser()\n        if resolved == \"mlx\"\n        else Path(cfg.runtime.llama_cpp_model_path).expanduser()\n    )\n    if not target.exists():\n        return DoctorCheck(\n            name=\"LLM runtime\",\n            status=\"WARN\",\n            detail=f\"resolved={resolved} ({reason}); model missing at {target}{profile_note}\",\n            fix=f\"{profile_fix}{doctor_model_fix(resolved, target)}\",\n        )\n\n    return DoctorCheck(\n        name=\"LLM runtime\",\n        status=\"WARN\" if effective.reason else \"PASS\",\n        detail=f\"resolved={resolved} ({reason}); model available at {target}{profile_note}\",\n        fix=profile_fix or None,\n    )",
+      "outcomes": [
+        {
+          "line": 992,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'LLM runtime'",
+            "status": "'WARN' if effective.reason else 'PASS'",
+            "detail": "f'resolved={resolved} ({reason}); model available at {target}{profile_note}'",
+            "fix": "profile_fix or None"
+          }
+        },
+        {
+          "line": 920,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'LLM runtime'",
+            "status": "'PASS'",
+            "detail": "'dictation pipeline disabled (opt-in)'"
+          }
+        },
+        {
+          "line": 940,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'LLM runtime'",
+            "status": "'PASS'",
+            "detail": "f\"runs on profile '{effective.profile_name}'; {where}; model={effective.model}\""
+          }
+        },
+        {
+          "line": 968,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'LLM runtime'",
+            "status": "'WARN' if effective.reason else 'PASS'",
+            "detail": "f\"resolved={resolved} ({reason}); endpoint={effective.base_url or 'unset \u2014 pick a destination in Settings \u2192 Models'}; model={effective.model or 'unset'}{profile_note}\"",
+            "fix": "profile_fix or None"
+          }
+        },
+        {
+          "line": 985,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'LLM runtime'",
+            "status": "'WARN'",
+            "detail": "f'resolved={resolved} ({reason}); model missing at {target}{profile_note}'",
+            "fix": "f'{profile_fix}{doctor_model_fix(resolved, target)}'"
+          }
+        },
+        {
+          "line": 960,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'LLM runtime'",
+            "status": "'WARN'",
+            "detail": "f'requested={requested!r}; resolution failed: {exc}{profile_note}'",
+            "fix": "f'{profile_fix}{doctor_runtime_install_fix(requested)}'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_dictation_constraint_compile",
+      "line": 1000,
+      "condition_source": "def _check_dictation_constraint_compile(config: Config) -> DoctorCheck:\n    \"\"\"DIR-DOC-002: compile the loaded `blocks.yaml` against the active backend.\n\n    Pure-Python compile (cheap), so the doctor runs it eagerly. Never\n    returns `FAIL` per DIR-DOC-003.\n    \"\"\"\n    cfg = config.dictation\n    if not cfg.pipeline.enabled:\n        return DoctorCheck(\n            name=\"Structured-output compilation\",\n            status=\"PASS\",\n            detail=\"dictation pipeline disabled (opt-in)\",\n        )\n\n    from ..plugins.dictation.assembly import DEFAULT_GLOBAL_BLOCKS_PATH\n    from ..plugins.dictation.blocks import BlockConfigError, resolve_blocks\n    from ..plugins.dictation.grammars import (\n        GrammarCompileError,\n        StructuredOutputSchema,\n        to_gbnf,\n        to_outlines,\n    )\n    from ..plugins.dictation.runtime import RuntimeUnavailableError, resolve_backend\n\n    try:\n        loaded = resolve_blocks(DEFAULT_GLOBAL_BLOCKS_PATH, None)\n    except BlockConfigError as exc:\n        return DoctorCheck(\n            name=\"Structured-output compilation\",\n            status=\"WARN\",\n            detail=f\"blocks.yaml failed to load: {exc}\",\n            fix=\"Run `holdspeak dictation blocks validate` for the full error.\",\n        )\n\n    if not loaded.blocks:\n        return DoctorCheck(\n            name=\"Structured-output compilation\",\n            status=\"PASS\",\n            detail=\"no blocks loaded; nothing to compile\",\n        )\n\n    try:\n        resolved, _reason = resolve_backend(cfg.runtime.backend)\n    except RuntimeUnavailableError:\n        # The runtime check already reported this; reporting again\n        # would be noise. Compile against both shapes so block\n        # authors still get a \"your YAML is structurally valid\"\n        # signal.\n        resolved = \"llama_cpp\"\n\n    try:\n        block_set = loaded.to_block_set()\n        schema = StructuredOutputSchema.from_block_set(block_set)\n        if resolved in {\"mlx\", \"openai_compatible\"}:\n            to_outlines(schema)\n        else:\n            to_gbnf(schema)\n    except (GrammarCompileError, Exception) as exc:\n        return DoctorCheck(\n            name=\"Structured-output compilation\",\n            status=\"WARN\",\n            detail=f\"{resolved} compile failed: {type(exc).__name__}: {exc}\",\n            fix=\"Run `holdspeak dictation blocks validate` to see the offending block.\",\n        )\n\n    return DoctorCheck(\n        name=\"Structured-output compilation\",\n        status=\"PASS\",\n        detail=f\"{resolved}: {len(loaded.blocks)} block(s) compiled cleanly\",\n    )",
+      "outcomes": [
+        {
+          "line": 1065,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Structured-output compilation'",
+            "status": "'PASS'",
+            "detail": "f'{resolved}: {len(loaded.blocks)} block(s) compiled cleanly'"
+          }
+        },
+        {
+          "line": 1008,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Structured-output compilation'",
+            "status": "'PASS'",
+            "detail": "'dictation pipeline disabled (opt-in)'"
+          }
+        },
+        {
+          "line": 1035,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Structured-output compilation'",
+            "status": "'PASS'",
+            "detail": "'no blocks loaded; nothing to compile'"
+          }
+        },
+        {
+          "line": 1027,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Structured-output compilation'",
+            "status": "'WARN'",
+            "detail": "f'blocks.yaml failed to load: {exc}'",
+            "fix": "'Run `holdspeak dictation blocks validate` for the full error.'"
+          }
+        },
+        {
+          "line": 1058,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Structured-output compilation'",
+            "status": "'WARN'",
+            "detail": "f'{resolved} compile failed: {type(exc).__name__}: {exc}'",
+            "fix": "'Run `holdspeak dictation blocks validate` to see the offending block.'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_dictation_runtime_counters",
+      "line": 1072,
+      "condition_source": "def _check_dictation_runtime_counters(config: Config) -> DoctorCheck:\n    \"\"\"DIR-O-002: surface the four LLM-runtime counters (HS-3-04).\n\n    Always PASS \u2014 counters are advisory observability, not a health\n    signal. Skipped with PASS when the dictation pipeline is disabled\n    so the default doctor output stays quiet.\n    \"\"\"\n    if not config.dictation.pipeline.enabled:\n        return DoctorCheck(\n            name=\"LLM runtime counters\",\n            status=\"PASS\",\n            detail=\"dictation pipeline disabled (opt-in)\",\n        )\n\n    from ..plugins.dictation.runtime_counters import (\n        get_counters,\n        get_session_status,\n    )\n\n    counters = get_counters()\n    session = get_session_status()\n    detail = (\n        f\"model_loads={counters['model_loads']} \"\n        f\"classify_calls={counters['classify_calls']} \"\n        f\"classify_failures={counters['classify_failures']} \"\n        f\"constrained_retries={counters['constrained_retries']} \"\n        f\"llm_disabled_for_session={session['llm_disabled_for_session']}\"\n    )\n    if session[\"llm_disabled_for_session\"]:\n        return DoctorCheck(\n            name=\"LLM runtime counters\",\n            status=\"WARN\",\n            detail=detail + f\" \u2014 {session['disabled_reason']}\",\n            fix=\"Restart `holdspeak` to retry. If it keeps tripping, raise `dictation.pipeline.max_total_latency_ms` or `warm_on_start: true`.\",\n        )\n    return DoctorCheck(\n        name=\"LLM runtime counters\",\n        status=\"PASS\",\n        detail=detail,\n    )",
+      "outcomes": [
+        {
+          "line": 1107,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'LLM runtime counters'",
+            "status": "'PASS'",
+            "detail": "detail"
+          }
+        },
+        {
+          "line": 1080,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'LLM runtime counters'",
+            "status": "'PASS'",
+            "detail": "'dictation pipeline disabled (opt-in)'"
+          }
+        },
+        {
+          "line": 1101,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'LLM runtime counters'",
+            "status": "'WARN'",
+            "detail": "detail + f\" \u2014 {session['disabled_reason']}\"",
+            "fix": "'Restart `holdspeak` to retry. If it keeps tripping, raise `dictation.pipeline.max_total_latency_ms` or `warm_on_start: true`.'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_mir_routing",
+      "line": 1114,
+      "condition_source": "def _check_mir_routing(config: Config) -> DoctorCheck:\n    \"\"\"MIR-O-001 / spec \u00a79.10: report MIR-01 routing-pipeline config posture.\n\n    Never returns `FAIL` \u2014 the pipeline is opt-in (mirrors DIR-DOC-003).\n    Validates the configured ``routing_profile`` against the pre-defined\n    profile set so a typo surfaces here rather than at meeting stop.\n    \"\"\"\n    cfg = config.meeting\n    if not cfg.intent_router_enabled:\n        return DoctorCheck(\n            name=\"MIR routing\",\n            status=\"PASS\",\n            detail=\"MIR-01 routing pipeline disabled (opt-in)\",\n        )\n\n    try:\n        from ..plugins.router import available_profiles\n    except Exception as exc:\n        return DoctorCheck(\n            name=\"MIR routing\",\n            status=\"WARN\",\n            detail=f\"router import failed: {type(exc).__name__}: {exc}\",\n            fix=\"Inspect holdspeak/plugins/router.py for import errors.\",\n        )\n\n    profiles = list(available_profiles())\n    # HS-130-05 / HS-134-08: doctor reports the ONE routing profile the\n    # runtime reads (`effective_routing_profile`).\n    from ..config.meeting import effective_routing_profile\n\n    routing_profile = effective_routing_profile(cfg)\n    if routing_profile not in profiles:\n        return DoctorCheck(\n            name=\"MIR routing\",\n            status=\"WARN\",\n            detail=(\n                f\"routing_profile={routing_profile!r} not in available profiles \"\n                f\"({', '.join(profiles)})\"\n            ),\n            fix=(\n                \"Set meeting.routing_profile to one of the available profiles \"\n                \"in your config.json.\"\n            ),\n        )\n\n    return DoctorCheck(\n        name=\"MIR routing\",\n        status=\"PASS\",\n        detail=(\n            f\"enabled; profile={routing_profile}, \"\n            f\"window={cfg.intent_window_seconds}s/step={cfg.intent_step_seconds}s, \"\n            f\"threshold={cfg.intent_score_threshold}, \"\n            f\"hysteresis_windows={cfg.intent_hysteresis_windows}\"\n        ),\n    )",
+      "outcomes": [
+        {
+          "line": 1159,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'MIR routing'",
+            "status": "'PASS'",
+            "detail": "f'enabled; profile={routing_profile}, window={cfg.intent_window_seconds}s/step={cfg.intent_step_seconds}s, threshold={cfg.intent_score_threshold}, hysteresis_windows={cfg.intent_hysteresis_windows}'"
+          }
+        },
+        {
+          "line": 1123,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'MIR routing'",
+            "status": "'PASS'",
+            "detail": "'MIR-01 routing pipeline disabled (opt-in)'"
+          }
+        },
+        {
+          "line": 1146,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'MIR routing'",
+            "status": "'WARN'",
+            "detail": "f\"routing_profile={routing_profile!r} not in available profiles ({', '.join(profiles)})\"",
+            "fix": "'Set meeting.routing_profile to one of the available profiles in your config.json.'"
+          }
+        },
+        {
+          "line": 1132,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'MIR routing'",
+            "status": "'WARN'",
+            "detail": "f'router import failed: {type(exc).__name__}: {exc}'",
+            "fix": "'Inspect holdspeak/plugins/router.py for import errors.'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_mir_telemetry",
+      "line": 1171,
+      "condition_source": "def _check_mir_telemetry() -> DoctorCheck:\n    \"\"\"MIR-O-002 / MIR-O-003 / spec \u00a79.10: smoke-check that the\n    router + plugin-host counter APIs are callable and return the\n    expected shape. Always PASS \u2014 the APIs are pure-Python and\n    exercising them costs microseconds.\"\"\"\n    try:\n        from ..plugins.host import PluginHost\n        from ..plugins.router import get_router_counters\n\n        router_counters = get_router_counters()\n        # Throwaway host purely to read the metrics-schema shape \u2014 it never\n        # executes a plugin, so it needs no capability wiring (HS-16-02).\n        host_metrics = PluginHost().get_metrics()\n    except Exception as exc:\n        return DoctorCheck(\n            name=\"MIR telemetry\",\n            status=\"WARN\",\n            detail=f\"telemetry API failed: {type(exc).__name__}: {exc}\",\n            fix=\"Inspect holdspeak/plugins/router.py + host.py for regressions.\",\n        )\n\n    router_keys = sorted(router_counters.keys())\n    host_keys = sorted(host_metrics.keys())\n    return DoctorCheck(\n        name=\"MIR telemetry\",\n        status=\"PASS\",\n        detail=(\n            f\"router_counters=[{', '.join(router_keys)}]; \"\n            f\"host_metrics=[{', '.join(host_keys)}]\"\n        ),\n    )",
+      "outcomes": [
+        {
+          "line": 1194,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'MIR telemetry'",
+            "status": "'PASS'",
+            "detail": "f\"router_counters=[{', '.join(router_keys)}]; host_metrics=[{', '.join(host_keys)}]\""
+          }
+        },
+        {
+          "line": 1185,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'MIR telemetry'",
+            "status": "'WARN'",
+            "detail": "f'telemetry API failed: {type(exc).__name__}: {exc}'",
+            "fix": "'Inspect holdspeak/plugins/router.py + host.py for regressions.'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_connector_packs",
+      "line": 1204,
+      "condition_source": "def _check_connector_packs() -> DoctorCheck:\n    \"\"\"HS-13-04: list every discovered connector pack and flag\n    user-pack discovery errors. The first-party packs are\n    statically enumerated; user packs come from\n    `~/.holdspeak/connector_packs/` (or whatever\n    `HOLDSPEAK_USER_PACKS_DIR` points at).\"\"\"\n    from ..activity_connectors import KNOWN_CONNECTORS, discovery_errors\n\n    by_source: dict[str, list[str]] = {}\n    for descriptor in KNOWN_CONNECTORS:\n        by_source.setdefault(descriptor.source, []).append(descriptor.id)\n    errors = discovery_errors()\n\n    parts = []\n    for source in (\"first-party\", \"user\"):\n        ids = sorted(by_source.get(source, []))\n        if ids:\n            parts.append(f\"{source}: {', '.join(ids)}\")\n    detail = \"; \".join(parts) if parts else \"no connectors\"\n    if errors:\n        detail += f\" (rejected: {len(errors)})\"\n\n    if errors:\n        return DoctorCheck(\n            name=\"Connector packs\",\n            status=\"WARN\",\n            detail=detail,\n            fix=(\n                \"Inspect rejected user packs:\\n  \"\n                + \"\\n  \".join(str(e) for e in errors)\n            ),\n        )\n    return DoctorCheck(\n        name=\"Connector packs\",\n        status=\"PASS\",\n        detail=detail,\n    )",
+      "outcomes": [
+        {
+          "line": 1236,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Connector packs'",
+            "status": "'PASS'",
+            "detail": "detail"
+          }
+        },
+        {
+          "line": 1227,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Connector packs'",
+            "status": "'WARN'",
+            "detail": "detail",
+            "fix": "'Inspect rejected user packs:\\n  ' + '\\n  '.join((str(e) for e in errors))"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_endpoint_health",
+      "line": 1243,
+      "condition_source": "def _check_endpoint_health() -> DoctorCheck:\n    \"\"\"HS-103-04: an honest circuit-open surface. PASS when nothing has\n    tripped the breaker (including a hub that has never called an endpoint\n    yet); WARN, naming every open circuit, when a dictation or meeting-intel\n    endpoint has failed enough consecutive times to be refusing fast.\"\"\"\n    from ..intel.endpoint_health import default_health\n\n    snapshot = default_health.snapshot()\n    open_endpoints = {key: row for key, row in snapshot.items() if row[\"circuit_open\"]}\n    if not open_endpoints:\n        detail = \"no endpoint circuits open\" if snapshot else \"no endpoint calls recorded yet\"\n        return DoctorCheck(name=\"Endpoint health\", status=\"PASS\", detail=detail)\n    names = \", \".join(\n        f\"{key} ({row['consecutive_failures']} consecutive failures)\"\n        for key, row in sorted(open_endpoints.items())\n    )\n    return DoctorCheck(\n        name=\"Endpoint health\",\n        status=\"WARN\",\n        detail=f\"circuit open: {names}\",\n        fix=\"The endpoint has been unreachable; it will retry automatically after its cooldown.\",\n    )",
+      "outcomes": [
+        {
+          "line": 1259,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Endpoint health'",
+            "status": "'WARN'",
+            "detail": "f'circuit open: {names}'",
+            "fix": "'The endpoint has been unreachable; it will retry automatically after its cooldown.'"
+          }
+        },
+        {
+          "line": 1254,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Endpoint health'",
+            "status": "'PASS'",
+            "detail": "detail"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_people_keystore",
+      "line": 1313,
+      "condition_source": "def _check_people_keystore() -> DoctorCheck:\n    \"\"\"HS-149-01: surface the People keystore mode and F4 both-worlds warning.\"\"\"\n    env = os.environ.get(\"HOLDSPEAK_PEOPLE_KEYSTORE_FILE\", \"\").strip()\n    if not env:\n        return DoctorCheck(\n            name=\"People keystore\",\n            status=\"PASS\",\n            detail=\"native (macOS Keychain / Secret Service)\",\n        )\n    # Dev file keystore is active -- always WARN so it is LOUD.\n    from ..people.store import DEFAULT_PEOPLE_DB_PATH, _dev_sidecar_path\n\n    keyfile = Path(env)\n    dev_sidecar = _dev_sidecar_path(keyfile)\n    prod_exists = DEFAULT_PEOPLE_DB_PATH.exists()\n    dev_exists = dev_sidecar.exists()\n\n    parts = [f\"DEV FILE keystore at {keyfile} -- not for real use\"]\n    if dev_exists:\n        parts.append(f\"dev sidecar: {dev_sidecar}\")\n    if prod_exists and dev_exists:\n        parts.append(\n            f\"BOTH WORLDS EXIST: production sidecar at {DEFAULT_PEOPLE_DB_PATH} \"\n            f\"and dev sidecar at {dev_sidecar} -- the dev store never opens the production sidecar\"\n        )\n    detail = \"; \".join(parts)\n    fix = (\n        \"Unset HOLDSPEAK_PEOPLE_KEYSTORE_FILE for production use. \"\n        \"The file keystore is for development and testing only.\"\n    )\n    return DoctorCheck(\n        name=\"People keystore\",\n        status=\"WARN\",\n        detail=detail,\n        fix=fix,\n    )",
+      "outcomes": [
+        {
+          "line": 1343,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'People keystore'",
+            "status": "'WARN'",
+            "detail": "detail",
+            "fix": "fix"
+          }
+        },
+        {
+          "line": 1317,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'People keystore'",
+            "status": "'PASS'",
+            "detail": "'native (macOS Keychain / Secret Service)'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_agent_capabilities",
+      "line": 1351,
+      "condition_source": "def _check_agent_capabilities() -> DoctorCheck:\n    \"\"\"HS-104-01: the capability-ledger census. Fails when any registered\n    ledger consumer requests a capability its adapter declares\n    ``unavailable`` \u2014 a lying surface caught before it renders.\"\"\"\n    from ..agent_capabilities import LEDGER, LEDGER_CONSUMERS, consumer_violations\n\n    violations = consumer_violations()\n    if violations:\n        return DoctorCheck(\n            name=\"Agent capabilities\",\n            status=\"FAIL\",\n            detail=f\"{len(violations)} consumer(s) outrun the ledger\",\n            fix=(\n                \"Align the consumer with holdspeak/agent_capabilities.py \"\n                \"(flip the standing in the same commit as the code, or drop \"\n                \"the consumer):\\n  \" + \"\\n  \".join(violations)\n            ),\n        )\n    return DoctorCheck(\n        name=\"Agent capabilities\",\n        status=\"PASS\",\n        detail=(\n            f\"{len(LEDGER)} adapters declared, \"\n            f\"{len(LEDGER_CONSUMERS)} consumers, all backed by the ledger\"\n        ),\n    )",
+      "outcomes": [
+        {
+          "line": 1369,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Agent capabilities'",
+            "status": "'PASS'",
+            "detail": "f'{len(LEDGER)} adapters declared, {len(LEDGER_CONSUMERS)} consumers, all backed by the ledger'"
+          }
+        },
+        {
+          "line": 1359,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Agent capabilities'",
+            "status": "'FAIL'",
+            "detail": "f'{len(violations)} consumer(s) outrun the ledger'",
+            "fix": "'Align the consumer with holdspeak/agent_capabilities.py (flip the standing in the same commit as the code, or drop the consumer):\\n  ' + '\\n  '.join(violations)"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "symbol": "_check_tool_call_gate",
+      "line": 1379,
+      "condition_source": "def _check_tool_call_gate() -> DoctorCheck:\n    \"\"\"HS-104-02: the gate's double opt-in, read plainly. Off is the\n    healthy default; armed names every held repo so the fail-closed\n    trade is always visible.\"\"\"\n    from ..coder_gate import load_gate_config\n\n    config = load_gate_config()\n    if not config.armed and not config.repos:\n        return DoctorCheck(\n            name=\"Tool-call gate\",\n            status=\"PASS\",\n            detail=\"off (default); `holdspeak gate install` + arm + allow to hold agent calls\",\n        )\n    if config.armed and config.repos:\n        held = \"; \".join(\n            f\"{', '.join(tools)} in {repo}\" for repo, tools in sorted(config.repos.items())\n        )\n        return DoctorCheck(\n            name=\"Tool-call gate\",\n            status=\"PASS\",\n            detail=f\"ARMED, fail-closed: {held}\",\n        )\n    missing = \"no repos held\" if config.armed else \"master switch off\"\n    present = \"master switch armed\" if config.armed else f\"{len(config.repos)} repo(s) held\"\n    return DoctorCheck(\n        name=\"Tool-call gate\",\n        status=\"WARN\",\n        detail=f\"half opted-in ({present}, but {missing}); the gate is inert\",\n        fix=\"Complete or clear the opt-in: `holdspeak gate arm` / `gate allow --repo <path>` / `gate disarm`\",\n    )",
+      "outcomes": [
+        {
+          "line": 1403,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Tool-call gate'",
+            "status": "'WARN'",
+            "detail": "f'half opted-in ({present}, but {missing}); the gate is inert'",
+            "fix": "'Complete or clear the opt-in: `holdspeak gate arm` / `gate allow --repo <path>` / `gate disarm`'"
+          }
+        },
+        {
+          "line": 1387,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Tool-call gate'",
+            "status": "'PASS'",
+            "detail": "'off (default); `holdspeak gate install` + arm + allow to hold agent calls'"
+          }
+        },
+        {
+          "line": 1396,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Tool-call gate'",
+            "status": "'PASS'",
+            "detail": "f'ARMED, fail-closed: {held}'"
+          }
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/doctor.py",
+      "symbol": "_check_hub_health",
+      "line": 85,
+      "condition_source": "def _check_hub_health(url: str, token: str) -> DoctorResult:\n    try:\n        status, payload = _get_json(url, \"/health\", token)\n        if status == 200 and payload == {\"status\": \"ok\"}:\n            return DoctorResult(\"PASS\", \"hub-health\", \"/health \u2192 ok\")\n        return DoctorResult(\"FAIL\", \"hub-health\", f\"unexpected response: {payload!r}\")\n    except Exception as exc:  # each doctor check must remain independent\n        return DoctorResult(\"FAIL\", \"hub-health\", _failure(exc))",
+      "outcomes": [
+        {
+          "line": 90,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'hub-health'",
+            "f'unexpected response: {payload!r}'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 89,
+          "constructor": "DoctorResult",
+          "args": [
+            "'PASS'",
+            "'hub-health'",
+            "'/health \u2192 ok'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 92,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'hub-health'",
+            "_failure(exc)"
+          ],
+          "fields": {}
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/doctor.py",
+      "symbol": "_check_runtime_status",
+      "line": 95,
+      "condition_source": "def _check_runtime_status(url: str, token: str) -> DoctorResult:\n    try:\n        status, payload = _get_json(url, \"/api/runtime/status\", token)\n        ready = isinstance(payload, dict) and (\n            payload.get(\"status\") in {\"ok\", \"ready\"}\n            or payload.get(\"runtime_status\") == \"ready\"\n        )\n        if status == 200 and ready:\n            return DoctorResult(\"PASS\", \"runtime-status\", \"ready\")\n        return DoctorResult(\"FAIL\", \"runtime-status\", f\"unexpected response: {payload!r}\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"runtime-status\", _failure(exc))",
+      "outcomes": [
+        {
+          "line": 104,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'runtime-status'",
+            "f'unexpected response: {payload!r}'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 103,
+          "constructor": "DoctorResult",
+          "args": [
+            "'PASS'",
+            "'runtime-status'",
+            "'ready'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 106,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'runtime-status'",
+            "_failure(exc)"
+          ],
+          "fields": {}
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/doctor.py",
+      "symbol": "_check_runtime_preflight",
+      "line": 109,
+      "condition_source": "def _check_runtime_preflight(url: str, token: str) -> DoctorResult:\n    \"\"\"Report the configured inference endpoint's actual reachability.\"\"\"\n    try:\n        status, payload = _post_json(url, \"/api/setup/runtime-test\", token)\n        if not isinstance(payload, dict):\n            return DoctorResult(\"FAIL\", \"runtime-preflight\", f\"unexpected response: {payload!r}\")\n        detail = str(payload.get(\"detail\") or payload.get(\"error\") or \"no detail\")\n        if status == 200 and payload.get(\"ok\") is True:\n            return DoctorResult(\"PASS\", \"runtime-preflight\", detail)\n        return DoctorResult(\"FAIL\", \"runtime-preflight\", detail)\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"runtime-preflight\", _failure(exc))",
+      "outcomes": [
+        {
+          "line": 118,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'runtime-preflight'",
+            "detail"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 114,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'runtime-preflight'",
+            "f'unexpected response: {payload!r}'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 117,
+          "constructor": "DoctorResult",
+          "args": [
+            "'PASS'",
+            "'runtime-preflight'",
+            "detail"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 120,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'runtime-preflight'",
+            "_failure(exc)"
+          ],
+          "fields": {}
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/doctor.py",
+      "symbol": "_check_websocket",
+      "line": 123,
+      "condition_source": "def _check_websocket(url: str, token: str) -> DoctorResult:\n    if not token:\n        return DoctorResult(\"SKIP\", \"websocket\", \"no token configured\")\n    try:\n        from websockets.sync.client import connect\n    except ImportError:\n        return DoctorResult(\"FAIL\", \"websocket\", \"websockets package unavailable\")\n\n    parsed = urlparse(url)\n    scheme = \"wss\" if parsed.scheme == \"https\" else \"ws\"\n    ws_url = f\"{scheme}://{parsed.netloc}{parsed.path.rstrip('/')}/ws\"\n    start = time.monotonic()\n    try:\n        with connect(\n            ws_url,\n            additional_headers=_headers(token),\n            open_timeout=_TIMEOUT_SECONDS,\n            close_timeout=_TIMEOUT_SECONDS,\n        ) as websocket:\n            websocket.send(\"ping\")\n            frame = websocket.recv(timeout=_TIMEOUT_SECONDS)\n        elapsed_ms = int((time.monotonic() - start) * 1000)\n        if frame == \"pong\":\n            return DoctorResult(\"PASS\", \"websocket\", f\"frame received in {elapsed_ms}ms\")\n        return DoctorResult(\"FAIL\", \"websocket\", f\"unexpected frame: {frame!r}\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"websocket\", _failure(exc))",
+      "outcomes": [
+        {
+          "line": 125,
+          "constructor": "DoctorResult",
+          "args": [
+            "'SKIP'",
+            "'websocket'",
+            "'no token configured'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 147,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'websocket'",
+            "f'unexpected frame: {frame!r}'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 129,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'websocket'",
+            "'websockets package unavailable'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 146,
+          "constructor": "DoctorResult",
+          "args": [
+            "'PASS'",
+            "'websocket'",
+            "f'frame received in {elapsed_ms}ms'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 149,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'websocket'",
+            "_failure(exc)"
+          ],
+          "fields": {}
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/doctor.py",
+      "symbol": "_check_desk_bootstrap",
+      "line": 152,
+      "condition_source": "def _check_desk_bootstrap(url: str, token: str) -> DoctorResult:\n    try:\n        status, body = _get_html(url)\n        if status == 200 and \"<html\" in body.lower():\n            return DoctorResult(\"PASS\", \"desk-bootstrap\", \"/ \u2192 200\")\n        return DoctorResult(\"FAIL\", \"desk-bootstrap\", \"response is not HTML\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"desk-bootstrap\", _failure(exc))",
+      "outcomes": [
+        {
+          "line": 157,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'desk-bootstrap'",
+            "'response is not HTML'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 156,
+          "constructor": "DoctorResult",
+          "args": [
+            "'PASS'",
+            "'desk-bootstrap'",
+            "'/ \u2192 200'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 159,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'desk-bootstrap'",
+            "_failure(exc)"
+          ],
+          "fields": {}
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/doctor.py",
+      "symbol": "_check_auth",
+      "line": 162,
+      "condition_source": "def _check_auth(url: str, token: str) -> DoctorResult:\n    if not token:\n        return DoctorResult(\"SKIP\", \"auth\", \"no token configured\")\n    try:\n        status, payload = _get_json(url, \"/api/runtime/status\", token)\n        if status == 200 and isinstance(payload, dict):\n            return DoctorResult(\"PASS\", \"auth\", \"principal: authenticated\")\n        return DoctorResult(\"FAIL\", \"auth\", f\"unexpected response: {payload!r}\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"auth\", _failure(exc))",
+      "outcomes": [
+        {
+          "line": 164,
+          "constructor": "DoctorResult",
+          "args": [
+            "'SKIP'",
+            "'auth'",
+            "'no token configured'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 169,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'auth'",
+            "f'unexpected response: {payload!r}'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 168,
+          "constructor": "DoctorResult",
+          "args": [
+            "'PASS'",
+            "'auth'",
+            "'principal: authenticated'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 171,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'auth'",
+            "_failure(exc)"
+          ],
+          "fields": {}
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/doctor.py",
+      "symbol": "_check_mcp_server",
+      "line": 174,
+      "condition_source": "def _check_mcp_server() -> DoctorResult:\n    executable = shutil.which(\"holdspeak-mcp\")\n    if executable is None:\n        return DoctorResult(\"SKIP\", \"mcp-server\", \"not available\")\n\n    process: subprocess.Popen[str] | None = None\n    try:\n        process = subprocess.Popen(\n            [executable],\n            stdin=subprocess.PIPE,\n            stdout=subprocess.PIPE,\n            stderr=subprocess.DEVNULL,\n            text=True,\n            bufsize=1,\n        )\n        assert process.stdin is not None and process.stdout is not None\n        process.stdin.write(\n            json.dumps(\n                {\n                    \"jsonrpc\": \"2.0\",\n                    \"id\": 1,\n                    \"method\": \"initialize\",\n                    \"params\": {\n                        \"protocolVersion\": \"2024-11-05\",\n                        \"capabilities\": {},\n                        \"clientInfo\": {\"name\": \"holdspeak-doctor\", \"version\": \"1\"},\n                    },\n                }\n            )\n            + \"\\n\"\n        )\n        process.stdin.flush()\n        executor = ThreadPoolExecutor(max_workers=1)\n        try:\n            line = executor.submit(process.stdout.readline).result(timeout=_TIMEOUT_SECONDS)\n        finally:\n            # Do not wait for readline before terminating the sidecar below:\n            # an unavailable sidecar must make doctor fail promptly.\n            executor.shutdown(wait=False, cancel_futures=True)\n        response = json.loads(line)\n        if response.get(\"id\") == 1 and \"result\" in response:\n            return DoctorResult(\"PASS\", \"mcp-server\", \"initialization received\")\n        return DoctorResult(\"FAIL\", \"mcp-server\", f\"unexpected response: {response!r}\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"mcp-server\", _failure(exc))\n    finally:\n        if process is not None:\n            process.terminate()\n            try:\n                process.wait(timeout=1)\n            except subprocess.TimeoutExpired:\n                process.kill()\n                process.wait()",
+      "outcomes": [
+        {
+          "line": 177,
+          "constructor": "DoctorResult",
+          "args": [
+            "'SKIP'",
+            "'mcp-server'",
+            "'not available'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 216,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'mcp-server'",
+            "f'unexpected response: {response!r}'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 215,
+          "constructor": "DoctorResult",
+          "args": [
+            "'PASS'",
+            "'mcp-server'",
+            "'initialization received'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 218,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'mcp-server'",
+            "_failure(exc)"
+          ],
+          "fields": {}
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/doctor.py",
+      "symbol": "_check_inference",
+      "line": 229,
+      "condition_source": "def _check_inference(url: str, token: str) -> DoctorResult:\n    if not token:\n        return DoctorResult(\"SKIP\", \"inference\", \"no token configured\")\n    try:\n        status, payload = _get_json(url, \"/api/inference-targets\", token)\n        targets = payload.get(\"targets\", []) if isinstance(payload, dict) else []\n        ready = [target for target in targets if target.get(\"readiness\", {}).get(\"available\")]\n        if status == 200 and ready:\n            return DoctorResult(\"PASS\", \"inference\", f\"target: {ready[0].get('id', 'ready')}\")\n        if status == 200:\n            return DoctorResult(\"SKIP\", \"inference\", \"no targets configured\")\n        return DoctorResult(\"FAIL\", \"inference\", f\"unexpected response: {payload!r}\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"inference\", _failure(exc))",
+      "outcomes": [
+        {
+          "line": 231,
+          "constructor": "DoctorResult",
+          "args": [
+            "'SKIP'",
+            "'inference'",
+            "'no token configured'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 240,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'inference'",
+            "f'unexpected response: {payload!r}'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 237,
+          "constructor": "DoctorResult",
+          "args": [
+            "'PASS'",
+            "'inference'",
+            "f\"target: {ready[0].get('id', 'ready')}\""
+          ],
+          "fields": {}
+        },
+        {
+          "line": 239,
+          "constructor": "DoctorResult",
+          "args": [
+            "'SKIP'",
+            "'inference'",
+            "'no targets configured'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 242,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'inference'",
+            "_failure(exc)"
+          ],
+          "fields": {}
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/doctor.py",
+      "symbol": "_check_database",
+      "line": 245,
+      "condition_source": "def _check_database() -> DoctorResult:\n    try:\n        from .db import get_database\n        from .principals import Principal, PrincipalKind\n        from .services.primitive_service import PrimitiveService\n\n        PrimitiveService(get_database()).list_notes(Principal(PrincipalKind.OWNER, \"doctor\"))\n        return DoctorResult(\"PASS\", \"database\", \"primitives readable\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"database\", _failure(exc))",
+      "outcomes": [
+        {
+          "line": 252,
+          "constructor": "DoctorResult",
+          "args": [
+            "'PASS'",
+            "'database'",
+            "'primitives readable'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 254,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'database'",
+            "_failure(exc)"
+          ],
+          "fields": {}
+        }
+      ]
+    },
+    {
+      "path": "holdspeak/doctor.py",
+      "symbol": "check_observer",
+      "line": 257,
+      "condition_source": "def check_observer() -> DoctorResult:\n    \"\"\"Verify the pipeline observer's event table can round-trip an event.\"\"\"\n    try:\n        from .db import get_database\n\n        database = get_database()\n        with database._connection() as conn:\n            table = conn.execute(\n                \"SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?\",\n                (\"pipeline_events\",),\n            ).fetchone()\n            if table is None:\n                return DoctorResult(\n                    \"FAIL\", \"observer\", \"unhealthy: pipeline_events table missing; 24h events: unavailable\"\n                )\n\n            recent_events = conn.execute(\n                \"SELECT COUNT(*) FROM pipeline_events WHERE timestamp >= ?\",\n                (time.time() - 86_400,),\n            ).fetchone()[0]\n            event_id = f\"doctor-probe-{uuid.uuid4()}\"\n            try:\n                conn.execute(\n                    \"\"\"\n                    INSERT INTO pipeline_events (\n                        event_id, timestamp, service, method, principal_kind\n                    ) VALUES (?, ?, ?, ?, ?)\n                    \"\"\",\n                    (event_id, time.time(), \"doctor\", \"check_observer\", \"system\"),\n                )\n                event = conn.execute(\n                    \"SELECT event_id FROM pipeline_events WHERE event_id = ?\", (event_id,)\n                ).fetchone()\n                if event is None:\n                    raise RuntimeError(\"probe event was not readable\")\n            finally:\n                conn.execute(\"DELETE FROM pipeline_events WHERE event_id = ?\", (event_id,))\n\n        return DoctorResult(\"PASS\", \"observer\", f\"healthy: 24h events: {recent_events}\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"observer\", f\"degraded: {_failure(exc)}; 24h events: unavailable\")",
+      "outcomes": [
+        {
+          "line": 295,
+          "constructor": "DoctorResult",
+          "args": [
+            "'PASS'",
+            "'observer'",
+            "f'healthy: 24h events: {recent_events}'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 297,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'observer'",
+            "f'degraded: {_failure(exc)}; 24h events: unavailable'"
+          ],
+          "fields": {}
+        },
+        {
+          "line": 269,
+          "constructor": "DoctorResult",
+          "args": [
+            "'FAIL'",
+            "'observer'",
+            "'unhealthy: pipeline_events table missing; 24h events: unavailable'"
+          ],
+          "fields": {}
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+# Philo — make HoldSpeak understandable
+
+This package reconstructs HoldSpeak from source and specifies the remaining
+Desk work. It belongs to one umbrella PR from the independent
+`~/dev/tools/HoldSpeak-Philo` clone, branch `docs/holdspeak-philo`.
+No owner data or main-checkout files are part of this work.
+
+**Authority:** the owner instructed Astra to finish the deliverable with Luna
+xhigh workers, without Muad'Dib. That instruction supersedes the two-brain
+procedure for this initiative. The [initial plan](INITIAL_PLAN.md) and earlier
+checks remain historical records, not the current execution gate.
+
+**Evidence boundary:** implementation claims describe
+`675401a857b85336d4acaa8c65383dfc9636e4c8`. Read the
+[snapshot](../../generated/REPOSITORY_SNAPSHOT.md) and
+[final audit record](../../generated/DOCUMENTATION_AUDIT_REPORT.md) for toolchain,
+verification and remaining unknowns. Source, inspected assertions, executed
+tests, public release and owner observations are separate facts.
+
+## Read in this order
+
+| Job | Document |
+| --- | --- |
+| Understand the product in five minutes | [What is HoldSpeak?](../../WHAT_IS_HOLDSPEAK.md) |
+| Follow a real user task | [Use cases](../../USE_CASES.md) |
+| Find a capability and its evidence | [Capabilities](../../CAPABILITIES.md) |
+| Find the owning subsystem | [System architecture](../../SYSTEM_ARCHITECTURE.md), [integration map](../../SYSTEM_INTEGRATION_MAP.md) |
+| Understand the operation runtime | [Kernel](../../KERNEL.md) |
+| Understand data and authority boundaries | [Security](../../SECURITY_MODEL.md), [authority](../../AUTHORITY_MODEL.md) |
+| Understand the existing Desk | [Desk architecture](../../DESK_ARCHITECTURE.md), [objects](../../DESK_OBJECT_MODEL.md) |
+| Implement the missing Desk contracts | [Design specification](DESIGN_SPECIFICATION.md), [SRS](SRS.md) |
+| See visual specifications | [Artboard gallery](visuals/README.md) |
+| Evaluate a desktop container | [Proposed host ADR](adr/desktop-host.md) |
+| Maintain the evidence system | [Metadata contract](data/README.md), [coverage](../../generated/DOC_COVERAGE.md), [repository skills](../../../agent/skills/README.md) |
+| Check conflicts and source priority | [Reconciliation](SOURCE_HIERARCHY.md) |
+
+## Product model
+
+Speak → Type. Meet → Understand. Context → Think. Propose → Act under the
+operation's authority rules. These four jobs explain the product without
+pretending every effect needs a separate confirmation click.
+
+The first useful audit slice is Meet → Understand: capture or import, request
+intelligence, distinguish queued work from an actual result, inspect retained
+outcomes, and find them again. This package documents that path. It does not
+claim the owner's first-use observation, and it does not close the independent
+[Phase 201](../../../pm/roadmap/holdspeak/phase-201-one-meeting-result/current-phase-status.md).
+
+## Scope and ownership
+
+The [Philo roadmap](../../../pm/roadmap/holdspeak-philo/README.md) separates
+source reconciliation, runtime, voice/models, integrations, Desk specification,
+maintenance and verification. Workers edit only their assigned paths. Astra
+owns integration, checks, commits and the PR. One story flips per commit.
+Product fixes, light themes, localization and desktop distribution remain
+implementation work unless an artifact explicitly says otherwise.
+
+The existing Constitution, UX Canon, Desk grammar and surface library govern
+the specification. Historical Amiga guidance supplies principles, not a new
+visual kit. [External research](EXTERNAL_RESEARCH.md) distinguishes the 1991
+transcription, later AmigaOS guidance and current accessibility/vendor sources.
+Atomic Design classifies components; it does not reorganize the application.
+
+## Research inputs and reproducibility
+
+The [complete owner request](briefs/owner-request.txt),
+[audit brief](briefs/capability-audit.txt) and
+[Desk brief](briefs/workbench-design-srs.txt) are preserved verbatim. Their
+hashes are in [snapshot.json](snapshot.json). Imported citation markers are
+archived text, not verified citations. The [source checklist](source-checklist.md)
+records the request sections; the final audit describes fulfillment and limits.
+
+Mechanical inventories classify tracked source files, manifests, routes and
+base-schema tables. Curated capability rows carry semantic claims and inspected
+assertions. A path check can detect drift; it cannot prove a capability works.
+The maintenance tools and CI retain that distinction.

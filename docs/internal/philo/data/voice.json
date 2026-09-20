@@ -1,0 +1,5415 @@
+{
+  "schema_version": 1,
+  "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+  "capabilities": [
+    {
+      "id": "voice.capture",
+      "name": "Voice capture",
+      "purpose": "Admit an owner speech session and collect an utterance for processing.",
+      "domain": "voice",
+      "status": "experimental",
+      "status_reason": "Hotkey, browser, and speech-session capture seams exist; platform-specific backend coverage remains bounded.",
+      "exposure": "user",
+      "surfaces": [
+        "hotkey dictation",
+        "browser text entry",
+        "speech session"
+      ],
+      "entry_points": [
+        "holdspeak/runtime/dictation_capture.py::_transcribe_and_type",
+        "holdspeak/speech_session/plan.py::SpeechSessionPlan"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "owner speech audio",
+        "capture context"
+      ],
+      "outputs": [
+        "admitted speech session",
+        "audio for transcription"
+      ],
+      "persistence": [
+        "speech session lifecycle",
+        "dictation journal when processing runs"
+      ],
+      "apis": [],
+      "configuration": [
+        "dictation capture settings",
+        "speech session plan"
+      ],
+      "dependencies": [
+        "speech session admission",
+        "capture backend"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Owner audio enters the local speech-session boundary before a transcription child is admitted.",
+      "egress_possible": false,
+      "egress": "The capture seam does not itself send audio to a network destination.",
+      "side_effect": "local_reversible",
+      "authority": "An admitted owner speech session and its frozen content-free plan.",
+      "kernel_operations": [
+        "speech session admission"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/runtime/dictation_capture.py",
+          "symbol": "_transcribe_and_type",
+          "line": 68,
+          "claim": "The hotkey capture path admits, transcribes, processes, delivers, and closes the session."
+        },
+        {
+          "path": "holdspeak/speech_session/plan.py",
+          "symbol": "SpeechSessionPlan",
+          "line": 1,
+          "claim": "The speech plan freezes capability and deployment facts without content or credentials."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_dictation_session_admission.py",
+          "node": "test_hold_press_admits_exactly_one_dictation_session",
+          "assertion": "A hold press admits exactly one dictation session.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md"
+      ],
+      "limitations": [
+        "No live capture or owner desk observation was made.",
+        "The platform map is source-based and does not establish release exposure."
+      ],
+      "failure_states": [
+        "speech_session_not_admitted",
+        "speech_session_not_live",
+        "speech_session_closed",
+        "speech_revision_target_unbindable"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "voice.transcribe",
+      "name": "Speech transcription",
+      "purpose": "Turn admitted local speech audio into a transcript.",
+      "domain": "voice",
+      "status": "experimental",
+      "status_reason": "The canonical speech capability and local Whisper destination are implemented; deployment readiness is a separate unresolved condition.",
+      "exposure": "user",
+      "surfaces": [
+        "dictation",
+        "meeting capture",
+        "audio import"
+      ],
+      "entry_points": [
+        "holdspeak/runtime/dictation_capture.py::_transcribe_and_type",
+        "holdspeak/meeting_session/transcribe_loop.py::TranscribeLoopMixin._transcribe_audio",
+        "holdspeak/meeting_import.py::import_meeting"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "admitted audio"
+      ],
+      "outputs": [
+        "transcript",
+        "meeting segments"
+      ],
+      "persistence": [
+        "meeting transcript segments",
+        "dictation journal"
+      ],
+      "apis": [],
+      "configuration": [
+        "Whisper deployment",
+        "speech route plan"
+      ],
+      "dependencies": [
+        "local Whisper runtime",
+        "admitted speech context"
+      ],
+      "model_requirements": [
+        "Whisper model artifact"
+      ],
+      "network_requirements": [],
+      "trust_boundary": "The canonical capability marks transcription local; audio import and live capture use an admitted local speech session.",
+      "egress_possible": false,
+      "egress": "The registered speech.transcribe capability has a local boundary; this audit did not run a provider.",
+      "side_effect": "local_reversible",
+      "authority": "The frozen speech plan must include the transcription capability and revision.",
+      "kernel_operations": [
+        "speech.transcribe",
+        "speech.preload"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "process_inference_capability_registry",
+          "line": 1063,
+          "claim": "speech.transcribe is audio input, transcript output, local-bound, and assigned the audio retry policy."
+        },
+        {
+          "path": "holdspeak/meeting_session/transcribe_loop.py",
+          "symbol": "TranscribeLoopMixin._transcribe_audio",
+          "line": 21,
+          "claim": "Live meeting audio requires an admitted session and is transcribed through one seam."
+        },
+        {
+          "path": "holdspeak/meeting_import.py",
+          "symbol": "import_meeting",
+          "line": 201,
+          "claim": "Audio import decodes windows and uses an admitted speech session without retaining source audio."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_meeting_import.py",
+          "node": "test_happy_path_windows_timestamps_and_persistence",
+          "assertion": "Audio import assertions inspect persisted timestamps, speakers, and queued intelligence.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_dictation_runtime.py",
+          "node": "test_auto_prefers_mlx_on_arm64_when_importable",
+          "assertion": "Runtime selection assertion inspects the auto backend preference.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md",
+        "docs/MEETING_ARCHITECTURE.md"
+      ],
+      "limitations": [
+        "A model file and readiness were not observed.",
+        "Meeting diarization is optional and import audio has one user speaker label."
+      ],
+      "failure_states": [
+        "local_capacity_unavailable",
+        "provider_permanent",
+        "whisper_transcription_context_required",
+        "speech_capability_not_planned"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "voice.command_dispatch",
+      "name": "Voice command dispatch",
+      "purpose": "Match a complete configured utterance and invoke its configured voice-command connector.",
+      "domain": "voice",
+      "status": "experimental",
+      "status_reason": "The command branch, whole-utterance match, proposal, and connector failure path are implemented; its connector inventory is configuration-owned.",
+      "exposure": "user",
+      "surfaces": [
+        "dictation voice command"
+      ],
+      "entry_points": [
+        "holdspeak/dictation_runner.py::dispatch_voice_command"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "complete transcript",
+        "configured command map"
+      ],
+      "outputs": [
+        "ActuatorProposal",
+        "connector result"
+      ],
+      "persistence": [
+        "command outcome or activity record"
+      ],
+      "apis": [],
+      "configuration": [
+        "voice command enablement",
+        "connector configuration"
+      ],
+      "dependencies": [
+        "text processor",
+        "configured connector"
+      ],
+      "model_requirements": [],
+      "network_requirements": [
+        "only when a configured connector egresses"
+      ],
+      "trust_boundary": "A local transcript crosses into the configured actuator connector only after whole-utterance match and proposal creation.",
+      "egress_possible": true,
+      "egress": "The connector may send an external effect; the concrete connector is configuration-owned and was not inventoried here.",
+      "side_effect": "external_reversible",
+      "authority": "The command path must be enabled and the complete utterance must match the configured command.",
+      "kernel_operations": [
+        "voice command dispatch"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/dictation_runner.py",
+          "symbol": "dispatch_voice_command",
+          "line": 49,
+          "claim": "Command dispatch is disabled by default, matches whole utterances, creates an ActuatorProposal, and invokes the configured connector."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_dictation_commit_boundary.py",
+          "node": "test_type_text_voice_command_effect_is_configured_payload_not_keyword",
+          "assertion": "The voice command effect uses configured payload rather than a keyword-derived effect.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md"
+      ],
+      "limitations": [
+        "The connector inventory and egress policy are outside this lane.",
+        "No command was dispatched."
+      ],
+      "failure_states": [
+        "voice_command_disabled",
+        "voice_command_failed",
+        "connector_unavailable"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "voice.dictation_pipeline",
+      "name": "Dictation processing pipeline",
+      "purpose": "Apply configured intent, project rewrite, and knowledge enrichment stages while preserving text on ordinary failure.",
+      "domain": "voice",
+      "status": "experimental",
+      "status_reason": "The stage assembly and fail-open behavior are implemented; target and project context determine which optional stages can run.",
+      "exposure": "user",
+      "surfaces": [
+        "dictation processing",
+        "browser text entry"
+      ],
+      "entry_points": [
+        "holdspeak/dictation_runner.py::process_transcript",
+        "holdspeak/dictation_runner.py::run_pipeline_corrections_only",
+        "holdspeak/plugins/dictation/assembly.py::build_pipeline"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "transcript",
+        "target context",
+        "project context"
+      ],
+      "outputs": [
+        "final text",
+        "intent",
+        "stage results",
+        "warnings"
+      ],
+      "persistence": [
+        "dictation journal"
+      ],
+      "apis": [],
+      "configuration": [
+        "pipeline stage ids",
+        "LLM enablement",
+        "runtime backend"
+      ],
+      "dependencies": [
+        "text processor",
+        "optional model runtime",
+        "knowledge context"
+      ],
+      "model_requirements": [
+        "intent and rewrite runtime when those stages are enabled"
+      ],
+      "network_requirements": [
+        "only for an OpenAI-compatible dictation backend"
+      ],
+      "trust_boundary": "The pipeline operates under an admitted dictation parent; its output is still private until the delivery policy commits it.",
+      "egress_possible": true,
+      "egress": "An OpenAI-compatible runtime may send prompt material to its selected model boundary; the local stages do not themselves publish text.",
+      "side_effect": "none",
+      "authority": "The frozen parent plan admits each model child; a fenced session cannot publish the result.",
+      "kernel_operations": [
+        "intent classify",
+        "rewrite",
+        "dictation pipeline journal"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/dictation_runner.py",
+          "symbol": "process_transcript",
+          "line": 253,
+          "claim": "The shared transcript seam preserves raw text when the pipeline is off or fails."
+        },
+        {
+          "path": "holdspeak/plugins/dictation/pipeline.py",
+          "symbol": "DictationPipeline.run",
+          "line": 68,
+          "claim": "Stages run in order and record final text, results, warnings, and short-circuit state."
+        },
+        {
+          "path": "holdspeak/plugins/dictation/assembly.py",
+          "symbol": "build_pipeline",
+          "line": 52,
+          "claim": "Configured stage ids are resolved and model stages are skipped when runtime is unavailable."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_dictation_pipeline.py",
+          "node": "test_disabled_pipeline_is_noop",
+          "assertion": "Disabled pipeline returns unchanged text.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_dictation_pipeline_admission.py",
+          "node": "test_a_cancelled_session_refuses_the_next_provider_child",
+          "assertion": "Cancellation prevents the next provider child.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md"
+      ],
+      "limitations": [
+        "No model or destination was invoked.",
+        "The browser path skips target detection and does not establish platform parity."
+      ],
+      "failure_states": [
+        "runtime_unavailable",
+        "pipeline_stage_failed",
+        "speech_capability_not_planned",
+        "speech_session_fenced"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "voice.delivery",
+      "name": "Dictation delivery",
+      "purpose": "Commit processed text to preview, focused input, or an admitted agent destination under one operation policy.",
+      "domain": "voice",
+      "status": "experimental",
+      "status_reason": "The policy and commit seams exist with separate preview, focused-input, and agent branches; destination binding remains platform-dependent.",
+      "exposure": "user",
+      "surfaces": [
+        "preview",
+        "focused input",
+        "agent input"
+      ],
+      "entry_points": [
+        "holdspeak/operation_policy.py::resolve_dictation_policy",
+        "holdspeak/runtime/dictation_capture.py::_transcribe_and_type"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "processed text",
+        "operation policy",
+        "bound target"
+      ],
+      "outputs": [
+        "preview",
+        "focused-input typing",
+        "agent process-input submission"
+      ],
+      "persistence": [
+        "content-free operation receipt"
+      ],
+      "apis": [],
+      "configuration": [
+        "review policy",
+        "focused-input or agent destination"
+      ],
+      "dependencies": [
+        "desktop typing or agent transport",
+        "owner gesture"
+      ],
+      "model_requirements": [],
+      "network_requirements": [
+        "only for a remote or agent destination"
+      ],
+      "trust_boundary": "Delivery is the final local or remote effect boundary after processing; model stages do not perform the desktop effect.",
+      "egress_possible": true,
+      "egress": "Remote focus or agent delivery can cross a destination boundary; preview has no desktop effect until owner commit.",
+      "side_effect": "local_reversible",
+      "authority": "The resolved operation policy and owner gesture bind one final effect; an unbindable target refuses.",
+      "kernel_operations": [
+        "dictation:next-commit",
+        "desktop type text",
+        "agent process-input"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/operation_policy.py",
+          "symbol": "resolve_dictation_policy",
+          "line": 377,
+          "claim": "The dictation commit operation and focused-input destination are resolved here."
+        },
+        {
+          "path": "holdspeak/runtime/dictation_capture.py",
+          "symbol": "_transcribe_and_type",
+          "line": 68,
+          "claim": "The capture seam selects preview, agent reply, or owner-gesture typing after processing."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_dictation_commit_boundary.py",
+          "node": "test_ordinary_commit_is_one_final_desktop_effect",
+          "assertion": "Ordinary commit produces one final desktop effect.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_dictation_commit_boundary.py",
+          "node": "test_preview_commits_only_when_one_shot_type_is_consumed",
+          "assertion": "Preview defers typing until a later owner commit.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_dictation_pipeline_admission.py",
+          "node": "test_a_backend_that_cannot_be_rebound_refuses_by_name",
+          "assertion": "An unbindable target is refused and cannot be retargeted.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md"
+      ],
+      "limitations": [
+        "No owner gesture, desktop effect, or remote delivery was run.",
+        "Receipts are inspected only from source assertions."
+      ],
+      "failure_states": [
+        "preview_required",
+        "target_unbindable",
+        "desktop_typing_failed",
+        "agent_delivery_failed"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.capture",
+      "name": "Meeting capture",
+      "purpose": "Persist a meeting before capture, transcribe live audio, checkpoint segments, and hand off a final record.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The live lifecycle and recovery journal are implemented; recorder backend coverage remains bounded.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting recorder",
+        "meeting transcript"
+      ],
+      "entry_points": [
+        "holdspeak/meeting_session/session.py::MeetingSession.start",
+        "holdspeak/meeting_session/session.py::MeetingSession.stop",
+        "holdspeak/meeting_session/transcribe_loop.py::TranscribeLoopMixin._transcribe_audio"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "microphone audio",
+        "system audio",
+        "device audio"
+      ],
+      "outputs": [
+        "MeetingState",
+        "transcript segments",
+        "capture journal",
+        "deferred intelligence job"
+      ],
+      "persistence": [
+        "meeting database row",
+        "JSON compatibility projection",
+        "capture journal",
+        "plugin queue state"
+      ],
+      "apis": [],
+      "configuration": [
+        "capture sources",
+        "diarization",
+        "meeting intelligence enablement"
+      ],
+      "dependencies": [
+        "recorder",
+        "transcriber",
+        "capture journal",
+        "meeting persistence"
+      ],
+      "model_requirements": [
+        "local speech transcriber for transcript segments"
+      ],
+      "network_requirements": [],
+      "trust_boundary": "Live audio is captured and checkpointed locally before deferred intelligence crosses its model boundary.",
+      "egress_possible": false,
+      "egress": "The capture lifecycle itself stores local state; a later intelligence provider may have its own egress.",
+      "side_effect": "local_reversible",
+      "authority": "Meeting start and stop own the lifecycle; intelligence parent admission occurs before the recorder starts.",
+      "kernel_operations": [
+        "meeting intelligence admission",
+        "meeting capture checkpoint"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/meeting_session/session.py",
+          "symbol": "MeetingSession.start",
+          "line": 422,
+          "claim": "The meeting persists provisionally, opens the capture journal, starts recording, and admits the transcriber."
+        },
+        {
+          "path": "holdspeak/meeting_session/transcribe_loop.py",
+          "symbol": "TranscribeLoopMixin._transcribe_audio",
+          "line": 21,
+          "claim": "Mic, system, and device segments use one admitted transcription seam and checkpoint after journal writes."
+        },
+        {
+          "path": "holdspeak/meeting_session/session.py",
+          "symbol": "MeetingSession.stop",
+          "line": 622,
+          "claim": "Stop finalizes remaining audio, cancels live intelligence, and enqueues deferred analysis."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_meeting_capture_durability.py",
+          "node": "test_provisional_meeting_round_trips_and_recovers_same_id",
+          "assertion": "Provisional meeting state is persisted before capture and recovery keeps its id.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_meeting_capture_durability.py",
+          "node": "test_recovery_converges_prefence_and_postfence_process_loss_to_one_aftercare_row",
+          "assertion": "Recovery does not duplicate the aftercare job.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_ARCHITECTURE.md"
+      ],
+      "limitations": [
+        "No live recorder or crash recovery was run.",
+        "Record-only mode may have no transcript until a later path supplies one."
+      ],
+      "failure_states": [
+        "transcriber_unavailable",
+        "capture_recoverable_failure",
+        "capture_journal_unreadable",
+        "meeting_intelligence_refused"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.import",
+      "name": "Meeting import",
+      "purpose": "Turn audio or a transcript file into a normal persisted meeting that can be searched, exported, and analyzed.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "Audio and transcript import share the normal MeetingState persistence tail; source audio disposal and decoder limits are explicit.",
+      "exposure": "user",
+      "surfaces": [
+        "audio import",
+        "transcript import"
+      ],
+      "entry_points": [
+        "holdspeak/meeting_import.py::import_meeting",
+        "holdspeak/meeting_import.py::import_transcript"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "audio file",
+        "VTT/SRT/TXT transcript"
+      ],
+      "outputs": [
+        "MeetingState",
+        "timestamped transcript segments",
+        "queued intelligence"
+      ],
+      "persistence": [
+        "meeting database row",
+        "JSON compatibility projection",
+        "plugin queue state"
+      ],
+      "apis": [],
+      "configuration": [
+        "ffmpeg availability",
+        "intelligence enablement"
+      ],
+      "dependencies": [
+        "audio decoder",
+        "speech session",
+        "meeting persistence"
+      ],
+      "model_requirements": [
+        "speech model for audio import only"
+      ],
+      "network_requirements": [],
+      "trust_boundary": "Import reads local source material, creates a normal meeting record, and can later send only the saved transcript to admitted intelligence.",
+      "egress_possible": true,
+      "egress": "Deferred intelligence may cross its configured model boundary; source audio is read and not retained by the import path.",
+      "side_effect": "local_reversible",
+      "authority": "The import command owns creation of the normal meeting record; downstream intelligence uses the saved-meeting admission path.",
+      "kernel_operations": [
+        "meeting import",
+        "speech transcription for audio import"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/meeting_import.py",
+          "symbol": "import_meeting",
+          "line": 201,
+          "claim": "Audio import decodes windows, transcribes through an admitted speech session, and does not retain source audio."
+        },
+        {
+          "path": "holdspeak/meeting_import.py",
+          "symbol": "import_transcript",
+          "line": 395,
+          "claim": "Transcript import parses VTT, SRT, and TXT cues and uses the normal persistence tail."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_meeting_import.py",
+          "node": "test_happy_path_windows_timestamps_and_persistence",
+          "assertion": "Audio import persists timestamps, a user speaker, and the intelligence queue state.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_meeting_import_parity.py",
+          "node": "test_imported_meeting_is_indistinguishable_downstream",
+          "assertion": "Imported meetings remain searchable/exportable and can queue intelligence.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_ARCHITECTURE.md"
+      ],
+      "limitations": [
+        "Compressed audio requires ffmpeg.",
+        "Audio import has one user speaker label and does not retain the source audio."
+      ],
+      "failure_states": [
+        "unsupported_audio_format",
+        "ffmpeg_unavailable",
+        "empty_audio",
+        "transcription_refused",
+        "meeting_persistence_failed"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.intelligence",
+      "name": "Meeting intelligence chain",
+      "purpose": "Run admitted profile-selected analysis plugins over a saved meeting and persist typed artifacts with lineage.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The registry, host gate, schemas, idempotency, and deferred persistence are implemented; semantic quality remains model-dependent.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting artifacts",
+        "meeting analysis"
+      ],
+      "entry_points": [
+        "holdspeak/meeting_plugins.py::run_meeting_plugin_chain",
+        "holdspeak/plugins/builtin/__init__.py::register_builtin_plugins",
+        "holdspeak/plugins/host.py::PluginHost.execute"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "saved meeting transcript",
+        "profile",
+        "intent window"
+      ],
+      "outputs": [
+        "PluginRun records",
+        "typed artifacts",
+        "ArtifactLineage"
+      ],
+      "persistence": [
+        "plugin runs",
+        "artifacts",
+        "intent windows",
+        "deferred job state"
+      ],
+      "apis": [],
+      "configuration": [
+        "profile plugin chain",
+        "LLM capability",
+        "model assignment"
+      ],
+      "dependencies": [
+        "saved meeting",
+        "route admission",
+        "LLM provider"
+      ],
+      "model_requirements": [
+        "LLM capability for every registered built-in plugin"
+      ],
+      "network_requirements": [
+        "selected model boundary when not local"
+      ],
+      "trust_boundary": "A saved transcript enters host-issued model dispatch; generated artifacts retain plugin and transcript-window lineage.",
+      "egress_possible": true,
+      "egress": "Model dispatch may egress according to the frozen destination; external actuators are separate opt-in registrations.",
+      "side_effect": "local_reversible",
+      "authority": "The saved-meeting route and host-issued dispatch admit each plugin child; missing llm blocks execution.",
+      "kernel_operations": [
+        "meeting live analysis",
+        "meeting deferred analysis",
+        "meeting.plugin.*"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/builtin/__init__.py",
+          "symbol": "_BUILTIN_PLUGIN_DEFS",
+          "line": 125,
+          "claim": "The built-in registry contains exactly 14 plugin ids and kinds."
+        },
+        {
+          "path": "holdspeak/meeting_plugins.py",
+          "symbol": "run_meeting_plugin_chain",
+          "line": 94,
+          "claim": "Saved-meeting plugin execution uses transcript/window/hash routing and persists runs and artifacts."
+        },
+        {
+          "path": "holdspeak/plugins/host.py",
+          "symbol": "PluginHost.execute",
+          "line": 252,
+          "claim": "LLM plugins require host-issued dispatch and cannot self-select a provider."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_meeting_plugins.py",
+          "node": "test_saved_meeting_gets_window_runs_and_artifacts",
+          "assertion": "A saved meeting produces persisted runs and typed artifacts.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_decision_capture_plugin.py",
+          "node": "test_host_blocks_without_llm_capability",
+          "assertion": "The host blocks a built-in plugin when llm capability is absent.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_meeting_intel_recovery.py",
+          "node": "test_partial_intel_names_retained_work_and_supports_retry_or_skip",
+          "assertion": "Partial intelligence recovery retains completed work and supports retry or skip.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ],
+      "limitations": [
+        "Schema success does not prove semantic correctness.",
+        "No queue worker or model call was run."
+      ],
+      "failure_states": [
+        "blocked",
+        "queued",
+        "error",
+        "timeout",
+        "deduped",
+        "skipped",
+        "intel_recovery_required"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.aftercare",
+      "name": "Meeting aftercare",
+      "purpose": "Compare current and previous meeting artifacts and return read-only decisions, actions, closures, and provenance.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The read-only rollup, provenance guards, project comparison, and quiet empty behavior are implemented; external follow-up remains a separate actuator.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting aftercare",
+        "follow-up draft data"
+      ],
+      "entry_points": [
+        "holdspeak/meeting_aftercare.py::compute_meeting_aftercare"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "current meeting artifacts",
+        "previous chronological meeting",
+        "project filter"
+      ],
+      "outputs": [
+        "decision diff",
+        "action diff",
+        "closed items",
+        "provenance",
+        "is_empty"
+      ],
+      "persistence": [],
+      "apis": [],
+      "configuration": [
+        "project context"
+      ],
+      "dependencies": [
+        "saved meeting",
+        "decision and action artifacts"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Aftercare reads saved local artifacts and does not itself cross a destination or mutate the meeting.",
+      "egress_possible": false,
+      "egress": "The computation is read-only; external follow-up is a separate actuator boundary.",
+      "side_effect": "none",
+      "authority": "Read access to saved meeting artifacts; sending or ticket creation requires a separate actuator admission.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/meeting_aftercare.py",
+          "symbol": "compute_meeting_aftercare",
+          "line": 309,
+          "claim": "Aftercare produces the read-only comparison and empty-state result."
+        },
+        {
+          "path": "holdspeak/meeting_aftercare.py",
+          "symbol": "resolve_provenance_segment",
+          "line": 44,
+          "claim": "Decision provenance is resolved to an observed transcript segment."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_meeting_aftercare.py",
+          "node": "test_unknown_meeting_returns_none",
+          "assertion": "Unknown meetings remain quiet.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_meeting_aftercare.py",
+          "node": "test_since_last_meeting_real_diff",
+          "assertion": "A real prior/current comparison returns the expected diff groups.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_meeting_aftercare.py",
+          "node": "test_no_change_since_last_meeting_is_quiet",
+          "assertion": "No change does not create a follow-up result.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_AFTERCARE.md"
+      ],
+      "limitations": [
+        "Queued or failed intelligence makes aftercare incomplete.",
+        "No owner-facing aftercare result was observed."
+      ],
+      "failure_states": [
+        "missing_artifact",
+        "unknown_meeting",
+        "provenance_drop",
+        "no_change"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "model.registry",
+      "name": "Inference capability registry",
+      "purpose": "Define canonical model operations, modalities, output kinds, revisions, retry policies, and fallback dispositions.",
+      "domain": "model",
+      "status": "internal",
+      "status_reason": "The process registry is source-backed and supplies voice, meeting, and plugin definitions; it is an internal control-plane component.",
+      "exposure": "developer",
+      "surfaces": [
+        "assignment and route services",
+        "owner projections"
+      ],
+      "entry_points": [
+        "holdspeak/inference_capabilities.py::process_inference_capability_registry"
+      ],
+      "platforms": {
+        "macos": "supported",
+        "linux_x11": "supported",
+        "linux_wayland": "supported",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "capability definitions",
+        "plugin schemas"
+      ],
+      "outputs": [
+        "canonical capability definitions",
+        "closed result schemas",
+        "retry policies"
+      ],
+      "persistence": [],
+      "apis": [],
+      "configuration": [
+        "retry policy rows",
+        "capability revisions"
+      ],
+      "dependencies": [
+        "plugin schema composition"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "The registry is local control-plane metadata; it does not contact a provider or contain credentials.",
+      "egress_possible": false,
+      "egress": "Registry metadata has no provider egress.",
+      "side_effect": "none",
+      "authority": "Canonical process registry consumed by assignments and route planning.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "process_inference_capability_registry",
+          "line": 1031,
+          "claim": "The registry defines voice, meeting, internal, and other capability entries with source, output, policy, and boundary facts."
+        },
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "_result_schema",
+          "line": 805,
+          "claim": "Built-in plugin result schemas are closed and typed."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_phase143_inference_assignments.py",
+          "node": "test_future_lexical_punctuation_is_not_owner_assignable",
+          "assertion": "Future punctuation is excluded from owner assignment eligibility.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MODEL_RUNTIME.md"
+      ],
+      "limitations": [
+        "Registry presence does not establish model readiness or release exposure."
+      ],
+      "failure_states": [
+        "unknown_capability",
+        "schema_not_installed",
+        "retry_policy_missing"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "model.assignment",
+      "name": "Inference assignment",
+      "purpose": "Store sparse owner assignments for capability groups without executing providers or selecting fallback at run time.",
+      "domain": "model",
+      "status": "internal",
+      "status_reason": "The owner-only assignment service and readiness projection are implemented as configuration control plane; execution remains a later route step.",
+      "exposure": "operator",
+      "surfaces": [
+        "model assignment settings",
+        "owner projection"
+      ],
+      "entry_points": [
+        "holdspeak/services/inference_assignment_service.py::InferenceAssignmentService"
+      ],
+      "platforms": {
+        "macos": "supported",
+        "linux_x11": "supported",
+        "linux_wayland": "supported",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "owner assignment command",
+        "capability and group rows"
+      ],
+      "outputs": [
+        "assignment head",
+        "content-free projection",
+        "readiness summary"
+      ],
+      "persistence": [
+        "inference assignment rows",
+        "assignment revisions"
+      ],
+      "apis": [],
+      "configuration": [
+        "writing_dictation",
+        "speech_recognition",
+        "meetings",
+        "background"
+      ],
+      "dependencies": [
+        "canonical capability registry",
+        "model profiles"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Assignments are hub-local configuration and do not contain prompt, transcript, or secret material.",
+      "egress_possible": false,
+      "egress": "Assignment writes do not contact a provider.",
+      "side_effect": "local_reversible",
+      "authority": "Owner-only assignment commands; route planning later freezes compatible assignment facts.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/services/inference_assignment_service.py",
+          "symbol": "InferenceAssignmentService",
+          "line": 90,
+          "claim": "Assignment commands are owner-only and separate from provider execution and fallback."
+        },
+        {
+          "path": "holdspeak/services/inference_assignment_service.py",
+          "symbol": "_CANONICAL_GROUPS",
+          "line": 52,
+          "claim": "The service defines canonical assignment groups including writing, speech recognition, and meetings."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_phase143_inference_assignments.py",
+          "node": "test_readiness_and_capacity_are_not_structural_save_blockers",
+          "assertion": "Assignment save does not require the destination to be ready.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_phase143_inference_assignments.py",
+          "node": "test_legacy_v1_and_v2_entries_share_one_chain_without_rewriting_v1",
+          "assertion": "Legacy chains are preserved at the assignment boundary.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MODEL_RUNTIME.md"
+      ],
+      "limitations": [
+        "An assignment can name a destination that is unavailable later.",
+        "No owner settings surface was observed."
+      ],
+      "failure_states": [
+        "owner_required",
+        "no_compatible_assignment",
+        "assignment_conflict",
+        "destination_unavailable"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "model.route_plan",
+      "name": "Frozen inference route",
+      "purpose": "Freeze ordered capability, deployment, retry, and boundary facts before a physical model child runs.",
+      "domain": "model",
+      "status": "internal",
+      "status_reason": "New route planning, immutable evidence, derived speech preload, and a legacy one-leg adapter are implemented; adoption by every caller is not observed.",
+      "exposure": "developer",
+      "surfaces": [
+        "route planner",
+        "speech session admission",
+        "meeting admission"
+      ],
+      "entry_points": [
+        "holdspeak/services/inference_route_plan_service.py::InferenceRoutePlanService.resolve_route_plan",
+        "holdspeak/services/inference_route_plan_service.py::InferenceRoutePlanService.freeze_route_plan",
+        "holdspeak/services/inference_route_plan_service.py::InferenceRoutePlanService.freeze_legacy_one_leg_plan"
+      ],
+      "platforms": {
+        "macos": "supported",
+        "linux_x11": "supported",
+        "linux_wayland": "supported",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "capability",
+        "assignment",
+        "deployment identity",
+        "retry policy"
+      ],
+      "outputs": [
+        "immutable route plan",
+        "ordered deployment revisions",
+        "content-free hashes"
+      ],
+      "persistence": [
+        "route plan rows",
+        "operation plan rows",
+        "assignment and deployment hashes"
+      ],
+      "apis": [],
+      "configuration": [
+        "assignment rows",
+        "deployment profiles",
+        "retry policies"
+      ],
+      "dependencies": [
+        "capability registry",
+        "assignment service",
+        "destination resolver"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "The plan records destination and boundary facts without content, prompt, endpoint secret, or credential material.",
+      "egress_possible": false,
+      "egress": "Planning does not contact the destination.",
+      "side_effect": "local_reversible",
+      "authority": "Route planning authority freezes the plan; physical execution can only reserve a child already in the plan.",
+      "kernel_operations": [
+        "route plan freeze"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/services/inference_route_plan_service.py",
+          "symbol": "InferenceRoutePlanService.freeze_route_plan",
+          "line": 405,
+          "claim": "Route plans freeze assignment, deployment, policy, and hash evidence."
+        },
+        {
+          "path": "holdspeak/services/inference_route_plan_service.py",
+          "symbol": "InferenceRoutePlanService.freeze_legacy_one_leg_plan",
+          "line": 729,
+          "claim": "Legacy profiles are translated into one replay-safe route leg."
+        },
+        {
+          "path": "holdspeak/speech_session/plan.py",
+          "symbol": "SpeechSessionPlan",
+          "line": 1,
+          "claim": "Speech plans use the same content-free frozen revision boundary."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_phase143_inference_route_plans.py",
+          "node": "test_pure_resolution_is_one_snapshot_zero_write_and_fast",
+          "assertion": "Resolution performs no writes and returns no private endpoint or secret material.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_phase143_inference_route_plans.py",
+          "node": "test_freeze_replay_and_restart_ignore_later_assignment_mutation",
+          "assertion": "A frozen plan is unchanged when assignment configuration mutates.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MODEL_RUNTIME.md",
+        "docs/EXECUTION_DESTINATIONS.md"
+      ],
+      "limitations": [
+        "The audit does not establish that every legacy caller has migrated.",
+        "A plan does not prove destination readiness."
+      ],
+      "failure_states": [
+        "no_assignment",
+        "no_compatible_assignment",
+        "legacy_profile_not_found",
+        "route_conflict"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "model.execution",
+      "name": "Inference route execution",
+      "purpose": "Reserve and run the next lawful physical model attempt from immutable route evidence, with bounded fallback.",
+      "domain": "model",
+      "status": "internal",
+      "status_reason": "The controller, runner, retry policies, and receipt boundaries are implemented; no physical provider run was observed.",
+      "exposure": "developer",
+      "surfaces": [
+        "model execution",
+        "meeting intelligence",
+        "dictation stages"
+      ],
+      "entry_points": [
+        "holdspeak/services/inference_fallback_controller.py::InferenceFallbackController.start_execution",
+        "holdspeak/services/inference_fallback_controller.py::InferenceFallbackController.reserve_next_attempt",
+        "holdspeak/kernel/inference_runner.py::InferenceRunner.invoke"
+      ],
+      "platforms": {
+        "macos": "supported",
+        "linux_x11": "supported",
+        "linux_wayland": "supported",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "frozen route plan",
+        "admitted operation",
+        "model adapter"
+      ],
+      "outputs": [
+        "model result",
+        "attempt outcome",
+        "route execution receipt"
+      ],
+      "persistence": [
+        "route execution state",
+        "attempt reservation",
+        "kernel receipt"
+      ],
+      "apis": [],
+      "configuration": [
+        "retry policy",
+        "destination readiness"
+      ],
+      "dependencies": [
+        "route plan",
+        "destination engine factory",
+        "receipt store"
+      ],
+      "model_requirements": [
+        "ready deployment for the reserved route leg"
+      ],
+      "network_requirements": [
+        "selected destination boundary"
+      ],
+      "trust_boundary": "Execution crosses exactly the destination boundary frozen for the reserved child; fallback cannot invent or retarget a leg.",
+      "egress_possible": true,
+      "egress": "The selected model destination may receive admitted operation material; receipts expose placement facts without secret values.",
+      "side_effect": "none",
+      "authority": "The fallback controller binds execution to frozen route and operation hashes and reserves each physical child transactionally.",
+      "kernel_operations": [
+        "inference dispatch",
+        "route attempt reservation",
+        "receipt persistence"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/services/inference_fallback_controller.py",
+          "symbol": "InferenceFallbackController.start_execution",
+          "line": 63,
+          "claim": "Execution starts only after reconstructing the frozen operation, route, and budgets."
+        },
+        {
+          "path": "holdspeak/services/inference_fallback_controller.py",
+          "symbol": "InferenceFallbackController.reserve_next_attempt",
+          "line": 161,
+          "claim": "The controller selects the next attempt from frozen evidence without caller-supplied deployment facts."
+        },
+        {
+          "path": "holdspeak/kernel/inference_runner.py",
+          "symbol": "InferenceRunner",
+          "line": 80,
+          "claim": "The kernel runs admitted invocation attempts, cancellation, streaming, and receipts."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_phase143_inference_fallback_controller.py",
+          "node": "test_typed_provider_permanent_failure_falls_back_to_exact_next_frozen_leg",
+          "assertion": "Fallback advances only to the exact next frozen leg.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_phase143_inference_fallback_controller.py",
+          "node": "test_permission_denied_is_terminal_and_never_falls_back",
+          "assertion": "Permission denial is terminal and does not trigger fallback.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_phase143_inference_fallback_controller.py",
+          "node": "test_local_capacity_pre_send_failure_falls_back_with_zero_physical_primary",
+          "assertion": "A pre-send local capacity failure can advance without a physical primary attempt.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MODEL_RUNTIME.md",
+        "docs/EXECUTION_DESTINATIONS.md"
+      ],
+      "limitations": [
+        "No provider success, outage, deadline, or fallback was observed.",
+        "A valid route can still fail when a deployment is unavailable."
+      ],
+      "failure_states": [
+        "provider_permanent",
+        "known_no_generation_transient",
+        "invalid_typed_output",
+        "context_overflow",
+        "local_capacity_unavailable",
+        "deadline_terminal"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "model.destination_readiness",
+      "name": "Inference destination readiness",
+      "purpose": "Resolve a named destination and derive readiness from its own model, endpoint, key, manifest, or worker facts.",
+      "domain": "model",
+      "status": "experimental",
+      "status_reason": "Local, private, cloud, paired, and mesh target mapping exists; paired execution is intentionally unsupported in this runner.",
+      "exposure": "operator",
+      "surfaces": [
+        "destination picker",
+        "placement projection",
+        "model doctor"
+      ],
+      "entry_points": [
+        "holdspeak/inference_targets.py::target_from_profile",
+        "holdspeak/inference_targets.py::resolve_inference_target",
+        "holdspeak/inference_targets.py::resolve_placement"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "RuntimeProfile",
+        "placement pointers",
+        "local model file",
+        "profile key presence",
+        "paired manifest",
+        "mesh liveness"
+      ],
+      "outputs": [
+        "InferenceTarget",
+        "readiness state",
+        "placement provenance",
+        "named refusal"
+      ],
+      "persistence": [
+        "profile and placement configuration"
+      ],
+      "apis": [],
+      "configuration": [
+        "onDevice",
+        "openAICompatible",
+        "desktop",
+        "meshNode"
+      ],
+      "dependencies": [
+        "profile store",
+        "key store",
+        "mesh liveness",
+        "model manifest"
+      ],
+      "model_requirements": [
+        "local model file or remote deployment facts according to target kind"
+      ],
+      "network_requirements": [
+        "none for readiness derivation; required by remote execution"
+      ],
+      "trust_boundary": "Readiness reports facts about a named destination without contacting it; execution later crosses the selected boundary.",
+      "egress_possible": false,
+      "egress": "Readiness derivation does not contact the target or send model input.",
+      "side_effect": "none",
+      "authority": "The target resolver and one placement authority choose the named destination; execution does not silently retarget unknown targets.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/inference_targets.py",
+          "symbol": "target_from_profile",
+          "line": 369,
+          "claim": "Profile kinds map to local, private, external, paired, or mesh targets with derived readiness."
+        },
+        {
+          "path": "holdspeak/inference_targets.py",
+          "symbol": "resolve_placement",
+          "line": 562,
+          "claim": "Placement precedence returns the winning source and effective target."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_inference_targets.py",
+          "node": "test_local_destinations_are_unavailable_without_their_model_files",
+          "assertion": "A local target without its model file is unavailable.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_inference_targets.py",
+          "node": "test_unknown_target_is_named_and_never_retargeted",
+          "assertion": "Unknown target ids are refused by name without silent retargeting.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_inference_targets.py",
+          "node": "test_thought_placement_uses_its_selected_target_and_blank_means_this_device",
+          "assertion": "Placement winner and precedence are explicit.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/EXECUTION_DESTINATIONS.md"
+      ],
+      "limitations": [
+        "Readiness is a configuration projection, not a live health check.",
+        "Paired execution is representable but unsupported in this runner."
+      ],
+      "failure_states": [
+        "unavailable",
+        "needs_key",
+        "stale_manifest",
+        "offline",
+        "unsupported",
+        "paired_execution_unsupported"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "model.cancel_receipts",
+      "name": "Inference cancellation and receipts",
+      "purpose": "Perform admitted cancellation and persist privacy-safe terminal outcomes for attempts and placement.",
+      "domain": "model",
+      "status": "internal",
+      "status_reason": "Cancellation disposition and receipt persistence are explicit kernel paths; no cancellation race or receipt was observed.",
+      "exposure": "developer",
+      "surfaces": [
+        "model operation state",
+        "owner-safe receipt"
+      ],
+      "entry_points": [
+        "holdspeak/kernel/inference_cancel_signal.py::perform_cancel",
+        "holdspeak/kernel/inference_runner.py::InferenceRunner.cancel",
+        "holdspeak/services/inference_fallback_controller.py::InferenceFallbackController.get_route_execution_receipt"
+      ],
+      "platforms": {
+        "macos": "supported",
+        "linux_x11": "supported",
+        "linux_wayland": "supported",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "admitted invocation",
+        "cancel signal",
+        "operation authority"
+      ],
+      "outputs": [
+        "cancelled",
+        "refused",
+        "indeterminate",
+        "privacy-safe receipt"
+      ],
+      "persistence": [
+        "kernel receipts",
+        "route execution receipt",
+        "cancellation transition"
+      ],
+      "apis": [],
+      "configuration": [
+        "cancel timeout",
+        "receipt retry count"
+      ],
+      "dependencies": [
+        "active inference runner",
+        "receipt store",
+        "route execution evidence"
+      ],
+      "model_requirements": [],
+      "network_requirements": [
+        "destination adapter cancellation may be remote"
+      ],
+      "trust_boundary": "Cancellation is admitted through the kernel; receipts expose outcomes and placement evidence without secret or content material.",
+      "egress_possible": true,
+      "egress": "A cancel signal may reach the selected adapter; receipt data is content-safe and secret-safe.",
+      "side_effect": "local_reversible",
+      "authority": "Only an admitted invocation and authorized owner/controller can cancel or inspect the route receipt.",
+      "kernel_operations": [
+        "inference.cancel",
+        "receipt persistence"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/kernel/inference_cancel_signal.py",
+          "symbol": "perform_cancel",
+          "line": 23,
+          "claim": "Cancellation submits an admitted signal and maps adapter dispositions to terminal outcomes."
+        },
+        {
+          "path": "holdspeak/kernel/inference_runner.py",
+          "symbol": "_persist_receipt",
+          "line": 131,
+          "claim": "Terminal receipt persistence retries and fails closed when closure cannot be recorded."
+        },
+        {
+          "path": "holdspeak/services/inference_fallback_controller.py",
+          "symbol": "get_route_execution_receipt",
+          "line": 161,
+          "claim": "Route receipts are reconstructed from immutable evidence under owner/controller authority."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_phase143_inference_fallback_controller.py",
+          "node": "test_stop_and_deadline_fence_reservation_claim",
+          "assertion": "Stop and deadline fencing preserve a terminal reservation claim.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_model_library_secret_boundary.py",
+          "node": "test_secret_is_absent_from_json_exceptions_logs_receipts_and_assignment_heads",
+          "assertion": "Secret values are absent from receipts and assignment heads.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MODEL_RUNTIME.md",
+        "docs/EXECUTION_DESTINATIONS.md"
+      ],
+      "limitations": [
+        "No cancellation or receipt inspection was performed.",
+        "Adapter behavior after a remote cancellation timeout is destination-specific."
+      ],
+      "failure_states": [
+        "cancelled",
+        "refused",
+        "indeterminate",
+        "receipt_persistence_failed",
+        "closure_failed"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "voice.correction_memory",
+      "name": "Dictation correction memory",
+      "purpose": "Store bounded user corrections and apply matching routing or text corrections to later dictation.",
+      "domain": "voice",
+      "status": "experimental",
+      "status_reason": "Session and optional durable correction stores, matching, and refusal checks are implemented; correction reach remains bounded by configured enablement.",
+      "exposure": "user",
+      "surfaces": [
+        "dictation corrections",
+        "dictation settings"
+      ],
+      "entry_points": [
+        "holdspeak/plugins/dictation/corrections.py::CorrectionStore",
+        "holdspeak/web/routes/dictation/pipeline.py::build_pipeline_router"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "correction kind",
+        "heard gist",
+        "corrected value"
+      ],
+      "outputs": [
+        "correction row",
+        "corrections_applied ids",
+        "routing nudge"
+      ],
+      "persistence": [
+        "dictation_corrections",
+        "dictation_journal.corrections_applied"
+      ],
+      "apis": [
+        "/api/dictation/corrections"
+      ],
+      "configuration": [
+        "corrections_enabled",
+        "bounded correction cap"
+      ],
+      "dependencies": [
+        "CorrectionStore",
+        "dictation journal"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Correction values are local gist data and are checked for secrets before optional durable storage.",
+      "egress_possible": false,
+      "egress": "The correction store does not send data to a network destination.",
+      "side_effect": "local_reversible",
+      "authority": "Owner correction route and enabled pipeline snapshot.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/dictation/corrections.py",
+          "symbol": "CorrectionStore",
+          "line": 266,
+          "claim": "The store is bounded, thread-safe, and optionally durable."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_dictation_selection.py",
+          "node": "test_set_then_consume_returns_id_once",
+          "assertion": "A bounded one-shot selection is consumed once; correction-store specific assertions are in the integration correction tests.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md"
+      ],
+      "limitations": [
+        "Matching is bounded and explainable; it is not semantic embedding memory.",
+        "No correction was recorded in this audit."
+      ],
+      "failure_states": [
+        "correction_refused_secret",
+        "correction_refused_empty",
+        "corrections_disabled"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "voice.replay",
+      "name": "Dictation journal replay",
+      "purpose": "Rerun a stored transcript through current processing without typing or creating a new journal row.",
+      "domain": "voice",
+      "status": "experimental",
+      "status_reason": "The replay route and target-correction behavior are implemented with a no-effect boundary.",
+      "exposure": "user",
+      "surfaces": [
+        "dictation journal"
+      ],
+      "entry_points": [
+        "holdspeak/web/routes/dictation/pipeline.py::build_pipeline_router"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "journal entry id",
+        "stored transcript",
+        "current correction snapshot"
+      ],
+      "outputs": [
+        "before/after replay result",
+        "target profile"
+      ],
+      "persistence": [
+        "existing journal row only"
+      ],
+      "apis": [
+        "/api/dictation/journal/{entry_id}/replay"
+      ],
+      "configuration": [
+        "corrections_enabled",
+        "current pipeline configuration"
+      ],
+      "dependencies": [
+        "dictation journal",
+        "dictation pipeline"
+      ],
+      "model_requirements": [
+        "same optional pipeline runtime as ordinary dictation"
+      ],
+      "network_requirements": [
+        "selected model destination if current pipeline uses one"
+      ],
+      "trust_boundary": "Replay reads stored transcript locally and must not perform desktop typing or create a new journal row.",
+      "egress_possible": true,
+      "egress": "A current model pipeline may egress according to its frozen route; replay itself has no delivery effect.",
+      "side_effect": "none",
+      "authority": "Owner journal route; no desktop commit is admitted by replay.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/web/routes/dictation/pipeline.py",
+          "symbol": "api_dictation_journal_replay",
+          "line": 1452,
+          "claim": "The route reprocesses a journal entry without typing."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/integration/test_dictation_journal_replay.py",
+          "node": "test_replay_reruns_transcript_without_typing_or_new_row",
+          "assertion": "Replay does not type and does not create a new row.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_dictation_journal_replay.py",
+          "node": "test_replay_after_target_correction_changes_routing",
+          "assertion": "A target correction changes replay routing.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md"
+      ],
+      "limitations": [
+        "Replay reflects current configuration and may use a different model route than the original.",
+        "No replay was run."
+      ],
+      "failure_states": [
+        "journal_entry_missing",
+        "replay_repository_missing",
+        "pipeline_runtime_unavailable"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "voice.learning_digest",
+      "name": "Dictation learning digest",
+      "purpose": "Summarize real correction and journal reach over a selected time window.",
+      "domain": "voice",
+      "status": "experimental",
+      "status_reason": "The digest computes bounded correction counts and reach; an empty store is represented honestly.",
+      "exposure": "user",
+      "surfaces": [
+        "dictation memory surface"
+      ],
+      "entry_points": [
+        "holdspeak/dictation_learning.py::build_learning_digest",
+        "holdspeak/web/routes/dictation/pipeline.py::api_dictation_learning_digest"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "journal rows",
+        "correction rows",
+        "window"
+      ],
+      "outputs": [
+        "windowed totals",
+        "correction rows",
+        "reach counts",
+        "enabled posture"
+      ],
+      "persistence": [],
+      "apis": [
+        "/api/dictation/learning-digest"
+      ],
+      "configuration": [
+        "corrections_enabled",
+        "window=week|all"
+      ],
+      "dependencies": [
+        "dictation journal",
+        "CorrectionStore",
+        "dictation_learning"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "The digest reads local journal and correction records and returns aggregate learning facts.",
+      "egress_possible": false,
+      "egress": "The digest route has no model or external destination call.",
+      "side_effect": "none",
+      "authority": "Read authority for the local dictation surface.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/dictation_learning.py",
+          "symbol": "build_learning_digest",
+          "line": 174,
+          "claim": "The digest aggregates journal and corrections into windowed JSON-ready counts."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/integration/test_web_dictation_learning_digest.py",
+          "node": "test_bare_server_returns_empty_digest",
+          "assertion": "A bare server returns an empty zeroed digest.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_web_dictation_learning_digest.py",
+          "node": "test_digest_counts_real_corrections_and_reach",
+          "assertion": "Real corrections and reach are counted.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [],
+      "limitations": [
+        "Counts describe stored correction reach; they do not prove model learning or weight updates.",
+        "No digest was observed."
+      ],
+      "failure_states": [
+        "empty_digest",
+        "correction_store_unavailable"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "voice.prebrief_selection",
+      "name": "Dictation pre-brief selection",
+      "purpose": "Park one recent activity record for the next dictation and consume it once.",
+      "domain": "voice",
+      "status": "experimental",
+      "status_reason": "The process-local one-shot selection closes the nudge-to-dictation context handoff with bounded age.",
+      "exposure": "user",
+      "surfaces": [
+        "activity nudge",
+        "dictation context"
+      ],
+      "entry_points": [
+        "holdspeak/dictation_selection.py::set_selected_record",
+        "holdspeak/dictation_selection.py::consume_selected_record"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "activity record id",
+        "age window"
+      ],
+      "outputs": [
+        "one selected record id or none"
+      ],
+      "persistence": [],
+      "apis": [],
+      "configuration": [
+        "max_age_seconds"
+      ],
+      "dependencies": [
+        "activity nudge surface",
+        "project rewriter context"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "The selection is process-local ephemeral intent and does not survive restart.",
+      "egress_possible": false,
+      "egress": "Only the selected id is consumed by local dictation context.",
+      "side_effect": "local_reversible",
+      "authority": "Owner nudge action; stale or second consumption returns none.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/dictation_selection.py",
+          "symbol": "consume_selected_record",
+          "line": 53,
+          "claim": "The selection is one-shot and drops stale records."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_dictation_selection.py",
+          "node": "test_set_then_consume_returns_id_once",
+          "assertion": "A selected record is consumed once.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_dictation_selection.py",
+          "node": "test_stale_pin_is_dropped_unused",
+          "assertion": "A stale selection is dropped.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [],
+      "limitations": [
+        "The pin is process-local and ephemeral by design.",
+        "No nudge or dictation context was observed."
+      ],
+      "failure_states": [
+        "selection_empty",
+        "selection_stale",
+        "invalid_record_id"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "voice.symbol_settings",
+      "name": "Spoken symbol settings",
+      "purpose": "Store normalized spoken-symbol replacements for dictation text processing.",
+      "domain": "voice",
+      "status": "experimental",
+      "status_reason": "Settings validation and normalized persistence are implemented; symbol use in every capture surface is not observed.",
+      "exposure": "user",
+      "surfaces": [
+        "voice settings",
+        "dictation text processing"
+      ],
+      "entry_points": [
+        "holdspeak/text_processor.py::TextProcessor",
+        "holdspeak/web/routes/system/settings.py::build_settings_router"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "spoken phrase",
+        "symbol",
+        "attach mode"
+      ],
+      "outputs": [
+        "normalized spoken-symbol rows",
+        "processed symbol text"
+      ],
+      "persistence": [
+        "settings model"
+      ],
+      "apis": [
+        "/api/settings"
+      ],
+      "configuration": [
+        "dictation.spoken_symbols"
+      ],
+      "dependencies": [
+        "Config",
+        "TextProcessor"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Symbol settings are local owner configuration and are applied before optional model stages.",
+      "egress_possible": false,
+      "egress": "The settings and text replacement path has no external egress.",
+      "side_effect": "local_reversible",
+      "authority": "Owner settings write with schema validation.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/text_processor.py",
+          "symbol": "TextProcessor",
+          "line": 60,
+          "claim": "TextProcessor accepts spoken symbol definitions."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/integration/test_settings_spoken_symbols.py",
+          "node": "test_symbols_round_trip_normalized",
+          "assertion": "Symbol rows round-trip normalized through settings.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_settings_spoken_symbols.py",
+          "node": "test_malformed_symbol_refused_with_400",
+          "assertion": "Malformed symbol input is refused.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [],
+      "limitations": [
+        "No symbol replacement was observed in a live dictation.",
+        "Settings route source symbol may be split across settings route composition."
+      ],
+      "failure_states": [
+        "malformed_symbol",
+        "empty_spoken_phrase"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "voice.language_settings",
+      "name": "Speech language settings",
+      "purpose": "Validate and normalize a Whisper language code, name, or auto-detect setting.",
+      "domain": "voice",
+      "status": "experimental",
+      "status_reason": "The vendored language registry and normalization are implemented; backend and surface exposure are deployment facts.",
+      "exposure": "user",
+      "surfaces": [
+        "model settings",
+        "speech session plan"
+      ],
+      "entry_points": [
+        "holdspeak/languages.py::normalize_language",
+        "holdspeak/languages.py::language_choices"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "language code",
+        "English language name",
+        "auto"
+      ],
+      "outputs": [
+        "normalized Whisper code or None",
+        "language choices"
+      ],
+      "persistence": [
+        "model.language setting"
+      ],
+      "apis": [
+        "/api/settings"
+      ],
+      "configuration": [
+        "model.language"
+      ],
+      "dependencies": [
+        "Whisper language registry"
+      ],
+      "model_requirements": [
+        "Whisper-compatible tokenizer"
+      ],
+      "network_requirements": [],
+      "trust_boundary": "Language selection is local configuration included in the frozen speech revision.",
+      "egress_possible": false,
+      "egress": "The registry itself does not contact a model.",
+      "side_effect": "local_reversible",
+      "authority": "Owner settings validation before speech plan admission.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/languages.py",
+          "symbol": "normalize_language",
+          "line": 53,
+          "claim": "Language values normalize to a Whisper code or auto None and reject unknown values."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/integration/test_web_server.py",
+          "node": "test_settings_get_and_put_apply_runtime_callback",
+          "assertion": "Settings round-trip stores and returns the configured language code.",
+          "execution": "not_run"
+        }
+      ],
+      "docs": [],
+      "limitations": [
+        "A valid language setting does not prove the loaded backend supports the model language.",
+        "No live transcription was run."
+      ],
+      "failure_states": [
+        "unknown_language",
+        "language_backend_mismatch"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "voice.wake",
+      "name": "Wake word capture",
+      "purpose": "Listen for a configured wake word and create a bounded preview typing path.",
+      "domain": "voice",
+      "status": "experimental",
+      "status_reason": "The wake listener, optional model download, one-shot preview token, and settings gate are implemented; wake backend availability is optional.",
+      "exposure": "user",
+      "surfaces": [
+        "wake listener",
+        "wake preview"
+      ],
+      "entry_points": [
+        "holdspeak/runtime/wake_glue.py::WakeWordGlueMixin._sync_wake_word",
+        "holdspeak/web/routes/system/voice.py::build_voice_router"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "microphone stream",
+        "wake word settings",
+        "one-shot preview token"
+      ],
+      "outputs": [
+        "wake preview",
+        "preview type result"
+      ],
+      "persistence": [
+        "wake settings"
+      ],
+      "apis": [
+        "/api/dictation/wake/type"
+      ],
+      "configuration": [
+        "wake_word.enabled",
+        "threshold",
+        "armed_window_seconds",
+        "action"
+      ],
+      "dependencies": [
+        "wake-word optional package",
+        "audio floor",
+        "preview token store"
+      ],
+      "model_requirements": [
+        "wake-word model when enabled"
+      ],
+      "network_requirements": [
+        "one-time wake model download when missing"
+      ],
+      "trust_boundary": "Wake audio is local listener input; preview typing requires a server-issued one-shot token.",
+      "egress_possible": false,
+      "egress": "Wake detection and preview do not send audio to an external service; model download is an explicit setup egress.",
+      "side_effect": "local_reversible",
+      "authority": "Owner wake settings and one-shot preview token.",
+      "kernel_operations": [
+        "wake.session",
+        "wake_preview_type"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/runtime/wake_glue.py",
+          "symbol": "WakeWordGlueMixin._sync_wake_word",
+          "line": 100,
+          "claim": "The listener follows enabled settings and can load a wake model."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/integration/test_settings_wake_word.py",
+          "node": "test_defaults_are_off_and_preview",
+          "assertion": "Wake defaults are off and preview behavior is exposed.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_wake_ux.py",
+          "node": "test_wake_preview_card_ships_with_the_safety_copy",
+          "assertion": "The wake preview surface includes its safety copy and route.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [],
+      "limitations": [
+        "Wake backend package and model are optional.",
+        "No wake listener or preview was run."
+      ],
+      "failure_states": [
+        "wake_backend_unavailable",
+        "wake_model_missing",
+        "wake_preview_token_invalid",
+        "wake_disabled"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "voice.browser_remote_dictation",
+      "name": "Browser and remote dictation",
+      "purpose": "Admit browser microphone intervals and deliver processed text through a remote focused or agent target.",
+      "domain": "voice",
+      "status": "experimental",
+      "status_reason": "Browser mic admission, remote stream, and destination branches are implemented with explicit session fences.",
+      "exposure": "user",
+      "surfaces": [
+        "browser open mic",
+        "remote dictation"
+      ],
+      "entry_points": [
+        "holdspeak/speech_session/browser_mic.py::BrowserMicSessions.open",
+        "holdspeak/web/routes/system/voice.py::build_voice_router",
+        "holdspeak/web/routes/dictation/pipeline.py::build_pipeline_router"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "browser microphone frames",
+        "remote target mode",
+        "browser mic handle"
+      ],
+      "outputs": [
+        "transcript",
+        "remote focused delivery",
+        "agent delivery"
+      ],
+      "persistence": [
+        "content-free operation receipt",
+        "dictation journal"
+      ],
+      "apis": [
+        "/api/dictation/mic/open",
+        "/api/dictation/mic/close",
+        "/api/dictation/remote",
+        "/ws/dictation/stream"
+      ],
+      "configuration": [
+        "browser inactivity lease",
+        "browser ceiling",
+        "remote target"
+      ],
+      "dependencies": [
+        "BrowserMicSessions",
+        "audio floor",
+        "dictation pipeline",
+        "remote delivery"
+      ],
+      "model_requirements": [
+        "admitted transcription runtime"
+      ],
+      "network_requirements": [
+        "browser-to-hub transport",
+        "selected remote destination"
+      ],
+      "trust_boundary": "Browser audio enters one admitted parent; remote delivery crosses a named destination boundary after processing.",
+      "egress_possible": true,
+      "egress": "Browser frames reach the local hub; remote focused or agent delivery can cross the selected destination.",
+      "side_effect": "external_reversible",
+      "authority": "Browser mic admission, lease, session plan, and remote delivery policy.",
+      "kernel_operations": [
+        "dictation.session",
+        "remote-delivery"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/speech_session/browser_mic.py",
+          "symbol": "BrowserMicSessions",
+          "line": 136,
+          "claim": "Browser intervals have one owner, lease, close, and reset lifecycle."
+        },
+        {
+          "path": "holdspeak/runtime/dictation_delivery.py",
+          "symbol": "DictationDeliveryMixin._deliver_remote_dictation",
+          "line": 67,
+          "claim": "Remote dictation selects focused or agent delivery."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/integration/test_speech_side_door_entrypoints.py",
+          "node": "test_browser_dry_run_owns_one_parent_child_revision_and_publication",
+          "assertion": "Browser synthetic entry owns one parent/child revision and publication.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_dictation_commit_boundary.py",
+          "node": "test_remote_focused_send_commits_without_submit",
+          "assertion": "Remote focused delivery commits without submit.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md",
+        "docs/EXECUTION_DESTINATIONS.md"
+      ],
+      "limitations": [
+        "Browser transport and remote target availability are not observed.",
+        "A remote effect requires the separate destination boundary."
+      ],
+      "failure_states": [
+        "browser_mic_handle_refused",
+        "browser_mic_inactivity_lapsed",
+        "browser_mic_ceiling_reached",
+        "remote_delivery_unavailable"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.decision_lifecycle",
+      "name": "Meeting decision lifecycle",
+      "purpose": "Read, accept, reject, supersede, promote, and draft artifacts from meeting decisions with receipts.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "Decision records, owner lifecycle transitions, provenance, and model draft admission are implemented.",
+      "exposure": "user",
+      "surfaces": [
+        "decision records",
+        "decision moment",
+        "promotion"
+      ],
+      "entry_points": [
+        "holdspeak/services/decision_lifecycle_service.py::DecisionLifecycleService",
+        "holdspeak/web/routes/decisions.py::build_decisions_router"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "decision id",
+        "owner lifecycle action",
+        "artifact type"
+      ],
+      "outputs": [
+        "decision record",
+        "lifecycle receipt",
+        "promoted artifact",
+        "model draft receipt"
+      ],
+      "persistence": [
+        "decision records",
+        "promotion artifacts",
+        "lifecycle receipt"
+      ],
+      "apis": [
+        "/api/decisions",
+        "/api/decisions/{decision_id}/accept",
+        "/api/decisions/{decision_id}/promote/{artifact_type}"
+      ],
+      "configuration": [
+        "owner authority",
+        "inference assignment for model draft"
+      ],
+      "dependencies": [
+        "decision repository",
+        "meeting provenance",
+        "route execution"
+      ],
+      "model_requirements": [
+        "only for draft-with-model promotion"
+      ],
+      "network_requirements": [
+        "selected model destination for draft"
+      ],
+      "trust_boundary": "Decision lifecycle changes are owner-only; a model draft is admitted separately and remains a draft artifact.",
+      "egress_possible": true,
+      "egress": "Only model draft generation may egress; lifecycle transition itself is local.",
+      "side_effect": "local_reversible",
+      "authority": "Owner lifecycle principal and decision repository transition rules.",
+      "kernel_operations": [
+        "decision.promotion-draft"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/services/decision_lifecycle_service.py",
+          "symbol": "DecisionLifecycleService.transition",
+          "line": 36,
+          "claim": "Owner transitions accept, reject, and supersede decisions with receipts."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/integration/test_decision_records.py",
+          "node": "test_decision_routes_require_read_authority_and_owner_lifecycle_principal",
+          "assertion": "Decision reads and lifecycle writes require their distinct authorities.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_decision_records.py",
+          "node": "test_promote_route_is_idempotent_and_queryable_both_ways",
+          "assertion": "Promotion is idempotent and queryable.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_AFTERCARE.md"
+      ],
+      "limitations": [
+        "The model draft is not an accepted decision or external publication.",
+        "No decision transition was run."
+      ],
+      "failure_states": [
+        "illegal_decision_lifecycle_transition",
+        "decision_not_found",
+        "promotion_refused",
+        "model_draft_unavailable"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.action_lifecycle",
+      "name": "Meeting action lifecycle",
+      "purpose": "List, review, edit, and triage meeting action items with owner and status fields.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "Action item routes and service transitions exist; external follow-through remains a separate integration.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting action items",
+        "project action items"
+      ],
+      "entry_points": [
+        "holdspeak/web/routes/meetings/action_items.py::build_action_items_router",
+        "holdspeak/services/meeting_service.py::MeetingService"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "action item id",
+        "owner",
+        "due",
+        "status",
+        "review state"
+      ],
+      "outputs": [
+        "action item row",
+        "review result",
+        "edited action item"
+      ],
+      "persistence": [
+        "action_items table",
+        "review state"
+      ],
+      "apis": [
+        "/api/action-items/{item_id}",
+        "/api/all-action-items"
+      ],
+      "configuration": [
+        "owner authority",
+        "meeting/project filter"
+      ],
+      "dependencies": [
+        "meeting plugin action_items output",
+        "action item repository"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Action item lifecycle changes are local owner actions; external follow-through is a separate actuator.",
+      "egress_possible": true,
+      "egress": "An action item may later be sent to a connector, but this lifecycle route does not send it.",
+      "side_effect": "local_reversible",
+      "authority": "Owner action-item route and review authority.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/web/routes/meetings/action_items.py",
+          "symbol": "build_action_items_router",
+          "line": 36,
+          "claim": "Action item list, patch, review, and edit routes are registered."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/integration/test_cadence_collector.py",
+          "node": "test_completing_an_action_closes_its_loop",
+          "assertion": "Completing an action closes its local cadence loop.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_AFTERCARE.md"
+      ],
+      "limitations": [
+        "The route allows review and edit; no action item was changed."
+      ],
+      "failure_states": [
+        "action_item_not_found",
+        "review_refused",
+        "triage_unavailable"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "model.download",
+      "name": "Model download",
+      "purpose": "Start an owner-authorized catalog-pinned model acquisition without changing assignments.",
+      "domain": "model",
+      "status": "experimental",
+      "status_reason": "Model Library and inference acquisition services provide a durable download boundary with replay-safe receipts.",
+      "exposure": "operator",
+      "surfaces": [
+        "Model Library",
+        "setup readiness"
+      ],
+      "entry_points": [
+        "holdspeak/services/inference_acquisition_service.py::InferenceAcquisitionApplicationService.download",
+        "holdspeak/web/routes/model_library.py::build_model_library_router"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "catalog model or preset id",
+        "owner command"
+      ],
+      "outputs": [
+        "acquisition job",
+        "download receipt",
+        "model file"
+      ],
+      "persistence": [
+        "inference_model_acquisitions",
+        "model library metadata"
+      ],
+      "apis": [
+        "/api/inference/model-library/download"
+      ],
+      "configuration": [
+        "model catalog",
+        "local model directory"
+      ],
+      "dependencies": [
+        "Model Library",
+        "inference acquisition worker",
+        "owner authority"
+      ],
+      "model_requirements": [],
+      "network_requirements": [
+        "catalog and model artifact source"
+      ],
+      "trust_boundary": "Owner-authorized acquisition crosses from the local hub to a model artifact source; downloaded files remain local until separately assigned.",
+      "egress_possible": true,
+      "egress": "The model artifact request egresses to the configured source; the download path does not send transcripts.",
+      "side_effect": "local_reversible",
+      "authority": "Owner Model Library command and acquisition receipt.",
+      "kernel_operations": [
+        "model acquisition"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/services/inference_acquisition_service.py",
+          "symbol": "InferenceAcquisitionApplicationService.download",
+          "line": 158,
+          "claim": "The acquisition service starts a durable model download plan."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_web_model_library_routes.py",
+          "node": "test_library_http_is_owner_before_body_and_closed",
+          "assertion": "Model Library download authorization is owner-first and the projection is closed.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_mcp_model_library_tools.py",
+          "node": "test_model_library_mcp_stages_base64_and_never_returns_secret_or_paths",
+          "assertion": "Model Library acquisition output does not expose secrets or paths.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/EXECUTION_DESTINATIONS.md"
+      ],
+      "limitations": [
+        "Catalog availability and artifact integrity were not contacted.",
+        "Download does not make a model assigned or ready."
+      ],
+      "failure_states": [
+        "inference_acquisition_unavailable",
+        "download_refused",
+        "download_failed",
+        "download_cancelled"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "model.inventory",
+      "name": "Model inventory",
+      "purpose": "List model library and connected destination metadata without exposing paths or secrets.",
+      "domain": "model",
+      "status": "experimental",
+      "status_reason": "The Model Library projection and destination target contract expose inventory metadata; no owner surface was observed.",
+      "exposure": "operator",
+      "surfaces": [
+        "Model Library",
+        "destination settings"
+      ],
+      "entry_points": [
+        "holdspeak/web/routes/model_library.py::build_model_library_router",
+        "holdspeak/mcp/families/model_library.py::dispatch"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "owner read request",
+        "model catalog and profile rows"
+      ],
+      "outputs": [
+        "model inventory projection",
+        "target readiness metadata"
+      ],
+      "persistence": [
+        "model profiles",
+        "model library metadata"
+      ],
+      "apis": [
+        "/api/inference/model-library"
+      ],
+      "configuration": [
+        "model profiles",
+        "destination targets"
+      ],
+      "dependencies": [
+        "Model Library service",
+        "InferenceTarget"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Inventory is owner-safe projection data; local paths, provider keys, and secret values stay outside the response.",
+      "egress_possible": false,
+      "egress": "Inventory reads local catalog and profile state without provider inference.",
+      "side_effect": "none",
+      "authority": "Owner read authority for model library metadata.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/web/routes/model_library.py",
+          "symbol": "get_model_library",
+          "line": 73,
+          "claim": "The Model Library GET route returns its inventory projection."
+        },
+        {
+          "path": "holdspeak/mcp/families/model_library.py",
+          "symbol": "dispatch",
+          "line": 221,
+          "claim": "MCP dispatch enforces owner authority before model library operations."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_web_model_library_routes.py",
+          "node": "test_library_http_is_owner_before_body_and_closed",
+          "assertion": "The route test inspects owner authority and the closed inventory projection.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_mcp_model_library_tools.py",
+          "node": "test_model_library_mcp_catalogue_is_closed_and_contains_all_http_twins",
+          "assertion": "The model library catalogue is closed and matches HTTP twins.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/EXECUTION_DESTINATIONS.md"
+      ],
+      "limitations": [
+        "Inventory does not prove the model can load or execute.",
+        "No inventory response was observed."
+      ],
+      "failure_states": [
+        "model_library_unavailable",
+        "owner_required",
+        "inventory_projection_error"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.plugin.requirements_extractor",
+      "name": "Requirements extractor",
+      "purpose": "Extract typed requirements from a meeting transcript window.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The registered plugin, closed result schema, and failure contract are implemented; semantic quality remains model-dependent.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting artifacts"
+      ],
+      "entry_points": [
+        "holdspeak/plugins/builtin/requirements_extractor.py::RequirementsExtractorPlugin"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "meeting transcript window"
+      ],
+      "outputs": [
+        "requirements[]: text, type",
+        "summary",
+        "confidence_hint",
+        "active_intents"
+      ],
+      "persistence": [
+        "PluginRun",
+        "ArtifactLineage"
+      ],
+      "apis": [],
+      "configuration": [
+        "profile plugin chain",
+        "llm capability"
+      ],
+      "dependencies": [
+        "PluginHost",
+        "meeting route plan"
+      ],
+      "model_requirements": [
+        "llm"
+      ],
+      "network_requirements": [
+        "selected model destination"
+      ],
+      "trust_boundary": "Host-issued LLM dispatch receives a bounded transcript window and returns a typed artifact.",
+      "egress_possible": true,
+      "egress": "The selected model destination may receive the admitted transcript window.",
+      "side_effect": "local_reversible",
+      "authority": "PluginHost capability gate and admitted meeting route.",
+      "kernel_operations": [
+        "meeting.plugin.requirements_extractor"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/builtin/__init__.py",
+          "symbol": "_BUILTIN_PLUGIN_DEFS",
+          "line": 126,
+          "claim": "requirements_extractor is registered as a synthesizer."
+        },
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "_result_schema",
+          "line": 805,
+          "claim": "The closed output is requirements[] with text and type."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_requirements_extractor_plugin.py",
+          "node": "test_run_success_extracts_and_classifies",
+          "assertion": "The plugin returns typed classified requirements.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_requirements_extractor_plugin.py",
+          "node": "test_host_blocks_without_llm_capability",
+          "assertion": "The host blocks the plugin without llm.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ],
+      "limitations": [
+        "No model call was run.",
+        "Schema validity does not prove requirement correctness."
+      ],
+      "failure_states": [
+        "blocked",
+        "empty_transcript",
+        "malformed_output",
+        "provider_failure"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.plugin.action_owner_enforcer",
+      "name": "Action owner enforcer",
+      "purpose": "Extract action items and identify missing owners or due dates.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The registered validator and typed action-item output are implemented; owner correctness still requires review.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting artifacts",
+        "action items"
+      ],
+      "entry_points": [
+        "holdspeak/plugins/builtin/action_owner_enforcer.py::ActionOwnerEnforcerPlugin"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "meeting transcript window"
+      ],
+      "outputs": [
+        "action_items[]: task, owner, due, gap",
+        "summary",
+        "confidence_hint",
+        "active_intents"
+      ],
+      "persistence": [
+        "PluginRun",
+        "ArtifactLineage",
+        "action_items"
+      ],
+      "apis": [],
+      "configuration": [
+        "profile plugin chain",
+        "llm capability"
+      ],
+      "dependencies": [
+        "PluginHost",
+        "action-item lifecycle"
+      ],
+      "model_requirements": [
+        "llm"
+      ],
+      "network_requirements": [
+        "selected model destination"
+      ],
+      "trust_boundary": "The plugin proposes typed action items; owner lifecycle review remains separate.",
+      "egress_possible": true,
+      "egress": "The selected model destination may receive the admitted transcript window.",
+      "side_effect": "local_reversible",
+      "authority": "PluginHost capability gate; action changes require owner lifecycle authority.",
+      "kernel_operations": [
+        "meeting.plugin.action_owner_enforcer"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/builtin/action_owner_enforcer.py",
+          "symbol": "ActionOwnerEnforcerPlugin",
+          "line": 144,
+          "claim": "The registered validator returns bounded action items and gap flags."
+        },
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "_result_schema",
+          "line": 805,
+          "claim": "The closed output is action_items[] with task, nullable owner/due, and gap."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_action_owner_enforcer_plugin.py",
+          "node": "test_run_success_flags_gaps",
+          "assertion": "Missing ownership is represented as a gap.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_action_owner_enforcer_plugin.py",
+          "node": "test_host_blocks_without_llm_capability",
+          "assertion": "The host blocks the plugin without llm.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md",
+        "docs/MEETING_AFTERCARE.md"
+      ],
+      "limitations": [
+        "The plugin does not prove that an owner accepted an item.",
+        "No model call was run."
+      ],
+      "failure_states": [
+        "blocked",
+        "empty_transcript",
+        "malformed_output",
+        "provider_failure"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.plugin.mermaid_architecture",
+      "name": "Mermaid architecture generator",
+      "purpose": "Generate a typed Mermaid architecture or sequence artifact from a meeting transcript.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The registered artifact generator and known diagram-kind parser are implemented; diagram correctness requires review.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting artifacts",
+        "architecture diagram"
+      ],
+      "entry_points": [
+        "holdspeak/plugins/builtin/mermaid_architecture.py::MermaidArchitecturePlugin"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "meeting transcript window"
+      ],
+      "outputs": [
+        "mermaid",
+        "diagram_kind",
+        "summary",
+        "confidence_hint",
+        "active_intents"
+      ],
+      "persistence": [
+        "PluginRun",
+        "ArtifactLineage"
+      ],
+      "apis": [],
+      "configuration": [
+        "profile plugin chain",
+        "llm capability"
+      ],
+      "dependencies": [
+        "PluginHost",
+        "diagram renderer or reader"
+      ],
+      "model_requirements": [
+        "llm"
+      ],
+      "network_requirements": [
+        "selected model destination"
+      ],
+      "trust_boundary": "Model output is stored as a typed artifact and is not an execution instruction.",
+      "egress_possible": true,
+      "egress": "The selected model destination may receive the admitted transcript window.",
+      "side_effect": "local_reversible",
+      "authority": "PluginHost capability gate; diagram use remains owner review.",
+      "kernel_operations": [
+        "meeting.plugin.mermaid_architecture"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/builtin/mermaid_architecture.py",
+          "symbol": "MermaidArchitecturePlugin",
+          "line": 191,
+          "claim": "The registered artifact generator returns diagram text and kind."
+        },
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "_result_schema",
+          "line": 842,
+          "claim": "The closed output includes mermaid and diagram_kind."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_mermaid_architecture_plugin.py",
+          "node": "test_run_success_path_returns_full_shape",
+          "assertion": "A successful diagram returns the full typed shape.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_mermaid_architecture_plugin.py",
+          "node": "test_run_no_fenced_block_returns_failure_shape",
+          "assertion": "Missing diagram block returns a failure shape.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ],
+      "limitations": [
+        "A valid Mermaid string does not prove the architecture is correct.",
+        "No model call was run."
+      ],
+      "failure_states": [
+        "blocked",
+        "empty_transcript",
+        "invalid_diagram",
+        "provider_failure"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.plugin.adr_drafter",
+      "name": "ADR drafter",
+      "purpose": "Draft typed architecture decision records from a meeting transcript.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The registered artifact generator and bounded ADR schema are implemented; acceptance remains owner work.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting artifacts",
+        "ADR draft"
+      ],
+      "entry_points": [
+        "holdspeak/plugins/builtin/adr_drafter.py::AdrDrafterPlugin"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "meeting transcript window"
+      ],
+      "outputs": [
+        "adrs[]: title, status, context, decision, consequences",
+        "common plugin fields"
+      ],
+      "persistence": [
+        "PluginRun",
+        "ArtifactLineage"
+      ],
+      "apis": [],
+      "configuration": [
+        "profile plugin chain",
+        "llm capability"
+      ],
+      "dependencies": [
+        "PluginHost",
+        "decision lifecycle"
+      ],
+      "model_requirements": [
+        "llm"
+      ],
+      "network_requirements": [
+        "selected model destination"
+      ],
+      "trust_boundary": "The plugin drafts an artifact; it does not accept or promote a decision.",
+      "egress_possible": true,
+      "egress": "The selected model destination may receive the admitted transcript window.",
+      "side_effect": "local_reversible",
+      "authority": "PluginHost capability gate; decision acceptance remains owner-only.",
+      "kernel_operations": [
+        "meeting.plugin.adr_drafter"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/builtin/adr_drafter.py",
+          "symbol": "AdrDrafterPlugin",
+          "line": 146,
+          "claim": "The registered generator drafts bounded ADR objects."
+        },
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "_result_schema",
+          "line": 805,
+          "claim": "The closed output is adrs[] with five required fields."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_adr_drafter_plugin.py",
+          "node": "test_run_success_drafts_adrs",
+          "assertion": "Successful output contains drafted ADRs.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_adr_drafter_plugin.py",
+          "node": "test_host_blocks_without_llm_capability",
+          "assertion": "The host blocks the plugin without llm.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ],
+      "limitations": [
+        "Draft output is not an accepted decision.",
+        "No model call was run."
+      ],
+      "failure_states": [
+        "blocked",
+        "empty_transcript",
+        "no_decisions",
+        "provider_failure"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.plugin.milestone_planner",
+      "name": "Milestone planner",
+      "purpose": "Extract typed milestones, deliverables, and dependencies from a meeting transcript.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The registered synthesizer and bounded milestone schema are implemented; target dates remain model output and owner review.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting artifacts",
+        "milestones"
+      ],
+      "entry_points": [
+        "holdspeak/plugins/builtin/milestone_planner.py::MilestonePlannerPlugin"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "meeting transcript window"
+      ],
+      "outputs": [
+        "milestones[]: name, target, deliverables, dependencies",
+        "common plugin fields"
+      ],
+      "persistence": [
+        "PluginRun",
+        "ArtifactLineage"
+      ],
+      "apis": [],
+      "configuration": [
+        "profile plugin chain",
+        "llm capability"
+      ],
+      "dependencies": [
+        "PluginHost"
+      ],
+      "model_requirements": [
+        "llm"
+      ],
+      "network_requirements": [
+        "selected model destination"
+      ],
+      "trust_boundary": "The plugin proposes milestone facts as an artifact and does not schedule external work.",
+      "egress_possible": true,
+      "egress": "The selected model destination may receive the admitted transcript window.",
+      "side_effect": "local_reversible",
+      "authority": "PluginHost capability gate; milestone adoption is owner review.",
+      "kernel_operations": [
+        "meeting.plugin.milestone_planner"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/builtin/milestone_planner.py",
+          "symbol": "MilestonePlannerPlugin",
+          "line": 131,
+          "claim": "The registered synthesizer extracts bounded milestones."
+        },
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "_result_schema",
+          "line": 805,
+          "claim": "The closed output is milestones[] with nullable target and string lists."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_milestone_planner_plugin.py",
+          "node": "test_run_success_extracts_milestones",
+          "assertion": "Successful output contains typed milestones.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_milestone_planner_plugin.py",
+          "node": "test_host_blocks_without_llm_capability",
+          "assertion": "The host blocks the plugin without llm.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ],
+      "limitations": [
+        "The plugin does not create a task schedule.",
+        "No model call was run."
+      ],
+      "failure_states": [
+        "blocked",
+        "empty_transcript",
+        "no_milestones",
+        "provider_failure"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.plugin.dependency_mapper",
+      "name": "Dependency mapper",
+      "purpose": "Extract typed dependency edges from a meeting transcript.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The registered synthesizer and endpoint-checked dependency schema are implemented.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting artifacts",
+        "dependency map"
+      ],
+      "entry_points": [
+        "holdspeak/plugins/builtin/dependency_mapper.py::DependencyMapperPlugin"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "meeting transcript window"
+      ],
+      "outputs": [
+        "dependencies[]: from, to, note",
+        "common plugin fields"
+      ],
+      "persistence": [
+        "PluginRun",
+        "ArtifactLineage"
+      ],
+      "apis": [],
+      "configuration": [
+        "profile plugin chain",
+        "llm capability"
+      ],
+      "dependencies": [
+        "PluginHost"
+      ],
+      "model_requirements": [
+        "llm"
+      ],
+      "network_requirements": [
+        "selected model destination"
+      ],
+      "trust_boundary": "The plugin creates a typed dependency artifact without changing project configuration.",
+      "egress_possible": true,
+      "egress": "The selected model destination may receive the admitted transcript window.",
+      "side_effect": "local_reversible",
+      "authority": "PluginHost capability gate; dependency adoption is owner review.",
+      "kernel_operations": [
+        "meeting.plugin.dependency_mapper"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/builtin/dependency_mapper.py",
+          "symbol": "DependencyMapperPlugin",
+          "line": 105,
+          "claim": "The registered synthesizer maps bounded dependency edges."
+        },
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "_result_schema",
+          "line": 805,
+          "claim": "The closed output is dependencies[] with from, to, and nullable note."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_dependency_mapper_plugin.py",
+          "node": "test_run_success_maps_edges",
+          "assertion": "Successful output maps dependency edges.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_dependency_mapper_plugin.py",
+          "node": "test_host_blocks_without_llm_capability",
+          "assertion": "The host blocks the plugin without llm.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ],
+      "limitations": [
+        "A typed edge does not prove a real dependency.",
+        "No model call was run."
+      ],
+      "failure_states": [
+        "blocked",
+        "empty_transcript",
+        "no_dependencies",
+        "provider_failure"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.plugin.scope_guard",
+      "name": "Scope guard",
+      "purpose": "Classify transcript items as in scope or out of scope with rationale.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The registered validator and bounded findings schema are implemented; scope verdicts require owner review.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting artifacts",
+        "scope findings"
+      ],
+      "entry_points": [
+        "holdspeak/plugins/builtin/scope_guard.py::ScopeGuardPlugin"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "meeting transcript window"
+      ],
+      "outputs": [
+        "findings[]: item, verdict, rationale",
+        "common plugin fields"
+      ],
+      "persistence": [
+        "PluginRun",
+        "ArtifactLineage"
+      ],
+      "apis": [],
+      "configuration": [
+        "profile plugin chain",
+        "llm capability"
+      ],
+      "dependencies": [
+        "PluginHost"
+      ],
+      "model_requirements": [
+        "llm"
+      ],
+      "network_requirements": [
+        "selected model destination"
+      ],
+      "trust_boundary": "Scope findings are proposed review data and do not block work by themselves.",
+      "egress_possible": true,
+      "egress": "The selected model destination may receive the admitted transcript window.",
+      "side_effect": "local_reversible",
+      "authority": "PluginHost capability gate; scope decisions remain owner review.",
+      "kernel_operations": [
+        "meeting.plugin.scope_guard"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/builtin/scope_guard.py",
+          "symbol": "ScopeGuardPlugin",
+          "line": 133,
+          "claim": "The registered validator returns bounded scope findings."
+        },
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "_result_schema",
+          "line": 805,
+          "claim": "The closed output is findings[] with item, verdict, and nullable rationale."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_scope_guard_plugin.py",
+          "node": "test_run_success_classifies",
+          "assertion": "Successful output classifies scope findings.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_scope_guard_plugin.py",
+          "node": "test_host_blocks_without_llm_capability",
+          "assertion": "The host blocks the plugin without llm.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ],
+      "limitations": [
+        "Scope verdicts can be wrong even when schema-valid.",
+        "No model call was run."
+      ],
+      "failure_states": [
+        "blocked",
+        "empty_transcript",
+        "no_findings",
+        "provider_failure"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.plugin.customer_signal_extractor",
+      "name": "Customer signal extractor",
+      "purpose": "Extract and classify customer signals from a meeting transcript.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The registered signals plugin and typed output are implemented; signal interpretation requires review.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting artifacts",
+        "customer signals"
+      ],
+      "entry_points": [
+        "holdspeak/plugins/builtin/customer_signal_extractor.py::CustomerSignalExtractorPlugin"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "meeting transcript window"
+      ],
+      "outputs": [
+        "signals[]: signal, type, quote",
+        "common plugin fields"
+      ],
+      "persistence": [
+        "PluginRun",
+        "ArtifactLineage"
+      ],
+      "apis": [],
+      "configuration": [
+        "profile plugin chain",
+        "llm capability"
+      ],
+      "dependencies": [
+        "PluginHost"
+      ],
+      "model_requirements": [
+        "llm"
+      ],
+      "network_requirements": [
+        "selected model destination"
+      ],
+      "trust_boundary": "Signal output is stored as a typed artifact and is not a customer communication.",
+      "egress_possible": true,
+      "egress": "The selected model destination may receive the admitted transcript window.",
+      "side_effect": "local_reversible",
+      "authority": "PluginHost capability gate; signal use remains owner review.",
+      "kernel_operations": [
+        "meeting.plugin.customer_signal_extractor"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/builtin/customer_signal_extractor.py",
+          "symbol": "CustomerSignalExtractorPlugin",
+          "line": 138,
+          "claim": "The registered signals plugin extracts bounded signal objects."
+        },
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "_result_schema",
+          "line": 805,
+          "claim": "The closed output is signals[] with signal, type, and nullable quote."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_customer_signal_extractor_plugin.py",
+          "node": "test_run_success_extracts_and_classifies",
+          "assertion": "Successful output extracts and classifies signals.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_customer_signal_extractor_plugin.py",
+          "node": "test_host_blocks_without_llm_capability",
+          "assertion": "The host blocks the plugin without llm.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ],
+      "limitations": [
+        "Signal type does not prove customer intent.",
+        "No model call was run."
+      ],
+      "failure_states": [
+        "blocked",
+        "empty_transcript",
+        "no_signals",
+        "provider_failure"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.plugin.incident_timeline",
+      "name": "Incident timeline",
+      "purpose": "Extract ordered incident events from a meeting transcript.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The registered synthesizer and event schema are implemented; timestamps and event correctness require review.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting artifacts",
+        "incident timeline"
+      ],
+      "entry_points": [
+        "holdspeak/plugins/builtin/incident_timeline.py::IncidentTimelinePlugin"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "meeting transcript window"
+      ],
+      "outputs": [
+        "events[]: time, event",
+        "common plugin fields"
+      ],
+      "persistence": [
+        "PluginRun",
+        "ArtifactLineage"
+      ],
+      "apis": [],
+      "configuration": [
+        "profile plugin chain",
+        "llm capability"
+      ],
+      "dependencies": [
+        "PluginHost"
+      ],
+      "model_requirements": [
+        "llm"
+      ],
+      "network_requirements": [
+        "selected model destination"
+      ],
+      "trust_boundary": "The timeline is a typed artifact and does not page or change incident state.",
+      "egress_possible": true,
+      "egress": "The selected model destination may receive the admitted transcript window.",
+      "side_effect": "local_reversible",
+      "authority": "PluginHost capability gate; incident response remains separate.",
+      "kernel_operations": [
+        "meeting.plugin.incident_timeline"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/builtin/incident_timeline.py",
+          "symbol": "IncidentTimelinePlugin",
+          "line": 106,
+          "claim": "The registered synthesizer extracts ordered incident events."
+        },
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "_result_schema",
+          "line": 805,
+          "claim": "The closed output is events[] with nullable time and event."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_incident_timeline_plugin.py",
+          "node": "test_run_success_preserves_order",
+          "assertion": "Successful output preserves event order.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_incident_timeline_plugin.py",
+          "node": "test_host_blocks_without_llm_capability",
+          "assertion": "The host blocks the plugin without llm.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ],
+      "limitations": [
+        "Timeline order does not prove incident chronology.",
+        "No model call was run."
+      ],
+      "failure_states": [
+        "blocked",
+        "empty_transcript",
+        "no_events",
+        "provider_failure"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.plugin.risk_heatmap",
+      "name": "Risk heatmap",
+      "purpose": "Extract typed risks with impact, likelihood, mitigation, and owner fields.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The registered synthesizer and bounded risk schema are implemented; risk ranking requires owner review.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting artifacts",
+        "risk heatmap"
+      ],
+      "entry_points": [
+        "holdspeak/plugins/builtin/risk_heatmap.py::RiskHeatmapPlugin"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "meeting transcript window"
+      ],
+      "outputs": [
+        "risks[]: risk, impact, likelihood, mitigation, owner",
+        "common plugin fields"
+      ],
+      "persistence": [
+        "PluginRun",
+        "ArtifactLineage"
+      ],
+      "apis": [],
+      "configuration": [
+        "profile plugin chain",
+        "llm capability"
+      ],
+      "dependencies": [
+        "PluginHost"
+      ],
+      "model_requirements": [
+        "llm"
+      ],
+      "network_requirements": [
+        "selected model destination"
+      ],
+      "trust_boundary": "Risk output is a typed review artifact and does not change project risk state.",
+      "egress_possible": true,
+      "egress": "The selected model destination may receive the admitted transcript window.",
+      "side_effect": "local_reversible",
+      "authority": "PluginHost capability gate; risk acceptance remains owner review.",
+      "kernel_operations": [
+        "meeting.plugin.risk_heatmap"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/builtin/risk_heatmap.py",
+          "symbol": "RiskHeatmapPlugin",
+          "line": 152,
+          "claim": "The registered synthesizer returns bounded risk objects."
+        },
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "_result_schema",
+          "line": 805,
+          "claim": "The closed output is risks[] with risk, impact, likelihood, nullable mitigation and owner."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_risk_heatmap_plugin.py",
+          "node": "test_run_success_builds_register",
+          "assertion": "Successful output builds the typed risk register.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_risk_heatmap_plugin.py",
+          "node": "test_host_blocks_without_llm_capability",
+          "assertion": "The host blocks the plugin without llm.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ],
+      "limitations": [
+        "Risk levels are model suggestions until reviewed.",
+        "No model call was run."
+      ],
+      "failure_states": [
+        "blocked",
+        "empty_transcript",
+        "no_risks",
+        "provider_failure"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.plugin.stakeholder_update_drafter",
+      "name": "Stakeholder update drafter",
+      "purpose": "Draft a typed stakeholder update from a meeting transcript.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The registered artifact generator and typed update object are implemented; sending remains a separate action.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting artifacts",
+        "stakeholder update draft"
+      ],
+      "entry_points": [
+        "holdspeak/plugins/builtin/stakeholder_update_drafter.py::StakeholderUpdateDrafterPlugin"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "meeting transcript window"
+      ],
+      "outputs": [
+        "update: headline, highlights, risks, next_steps",
+        "common plugin fields"
+      ],
+      "persistence": [
+        "PluginRun",
+        "ArtifactLineage"
+      ],
+      "apis": [],
+      "configuration": [
+        "profile plugin chain",
+        "llm capability"
+      ],
+      "dependencies": [
+        "PluginHost",
+        "separate message actuator if sent"
+      ],
+      "model_requirements": [
+        "llm"
+      ],
+      "network_requirements": [
+        "selected model destination; message destination only after separate action"
+      ],
+      "trust_boundary": "The plugin drafts local artifact content; no stakeholder message is sent by the plugin.",
+      "egress_possible": true,
+      "egress": "The model destination may receive the transcript window; later message delivery is a separate actuator.",
+      "side_effect": "local_reversible",
+      "authority": "PluginHost capability gate; sending requires separate owner action.",
+      "kernel_operations": [
+        "meeting.plugin.stakeholder_update_drafter"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/builtin/stakeholder_update_drafter.py",
+          "symbol": "StakeholderUpdateDrafterPlugin",
+          "line": 107,
+          "claim": "The registered generator returns one typed update object."
+        },
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "_result_schema",
+          "line": 846,
+          "claim": "The closed output includes update headline, highlights, risks, and next_steps."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_stakeholder_update_drafter_plugin.py",
+          "node": "test_run_success_drafts_update",
+          "assertion": "Successful output drafts a typed update.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_stakeholder_update_drafter_plugin.py",
+          "node": "test_host_blocks_without_llm_capability",
+          "assertion": "The host blocks the plugin without llm.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md",
+        "docs/MEETING_AFTERCARE.md"
+      ],
+      "limitations": [
+        "No message destination is implied by this draft.",
+        "No model call was run."
+      ],
+      "failure_states": [
+        "blocked",
+        "empty_transcript",
+        "empty_update",
+        "provider_failure"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.plugin.runbook_delta",
+      "name": "Runbook delta",
+      "purpose": "Draft typed runbook changes from a meeting transcript.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The registered artifact generator and change schema are implemented; applying a runbook change is outside the plugin.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting artifacts",
+        "runbook delta"
+      ],
+      "entry_points": [
+        "holdspeak/plugins/builtin/runbook_delta.py::RunbookDeltaPlugin"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "meeting transcript window"
+      ],
+      "outputs": [
+        "changes[]: change, type, detail",
+        "common plugin fields"
+      ],
+      "persistence": [
+        "PluginRun",
+        "ArtifactLineage"
+      ],
+      "apis": [],
+      "configuration": [
+        "profile plugin chain",
+        "llm capability"
+      ],
+      "dependencies": [
+        "PluginHost"
+      ],
+      "model_requirements": [
+        "llm"
+      ],
+      "network_requirements": [
+        "selected model destination"
+      ],
+      "trust_boundary": "The plugin drafts a runbook artifact and does not edit a runbook.",
+      "egress_possible": true,
+      "egress": "The selected model destination may receive the admitted transcript window.",
+      "side_effect": "local_reversible",
+      "authority": "PluginHost capability gate; runbook application is separate owner work.",
+      "kernel_operations": [
+        "meeting.plugin.runbook_delta"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/builtin/runbook_delta.py",
+          "symbol": "RunbookDeltaPlugin",
+          "line": 130,
+          "claim": "The registered generator returns bounded runbook changes."
+        },
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "_result_schema",
+          "line": 805,
+          "claim": "The closed output is changes[] with change, type, and nullable detail."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_runbook_delta_plugin.py",
+          "node": "test_run_success_classifies",
+          "assertion": "Successful output classifies runbook changes.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_runbook_delta_plugin.py",
+          "node": "test_host_blocks_without_llm_capability",
+          "assertion": "The host blocks the plugin without llm.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ],
+      "limitations": [
+        "Generated changes are not applied automatically.",
+        "No model call was run."
+      ],
+      "failure_states": [
+        "blocked",
+        "empty_transcript",
+        "no_changes",
+        "provider_failure"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.plugin.decision_announcement_drafter",
+      "name": "Decision announcement drafter",
+      "purpose": "Draft typed announcements for recorded meeting decisions.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The registered artifact generator and announcement schema are implemented; publication remains a separate actuator.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting artifacts",
+        "announcement draft"
+      ],
+      "entry_points": [
+        "holdspeak/plugins/builtin/decision_announcement_drafter.py::DecisionAnnouncementDrafterPlugin"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "meeting transcript window"
+      ],
+      "outputs": [
+        "announcements[]: title, audience, message",
+        "common plugin fields"
+      ],
+      "persistence": [
+        "PluginRun",
+        "ArtifactLineage"
+      ],
+      "apis": [],
+      "configuration": [
+        "profile plugin chain",
+        "llm capability"
+      ],
+      "dependencies": [
+        "PluginHost",
+        "decision capture"
+      ],
+      "model_requirements": [
+        "llm"
+      ],
+      "network_requirements": [
+        "selected model destination; publication destination only after separate action"
+      ],
+      "trust_boundary": "The plugin drafts announcement content and does not publish it.",
+      "egress_possible": true,
+      "egress": "The model destination may receive the transcript window; publication is a separate actuator.",
+      "side_effect": "local_reversible",
+      "authority": "PluginHost capability gate; publication requires separate owner action.",
+      "kernel_operations": [
+        "meeting.plugin.decision_announcement_drafter"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/builtin/decision_announcement_drafter.py",
+          "symbol": "DecisionAnnouncementDrafterPlugin",
+          "line": 104,
+          "claim": "The registered generator returns bounded announcement objects."
+        },
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "_result_schema",
+          "line": 805,
+          "claim": "The closed output is announcements[] with title, nullable audience, and message."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_decision_announcement_drafter_plugin.py",
+          "node": "test_run_success_drafts_announcements",
+          "assertion": "Successful output drafts announcements.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_decision_announcement_drafter_plugin.py",
+          "node": "test_host_blocks_without_llm_capability",
+          "assertion": "The host blocks the plugin without llm.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md",
+        "docs/MEETING_AFTERCARE.md"
+      ],
+      "limitations": [
+        "No announcement is sent by this plugin.",
+        "No model call was run."
+      ],
+      "failure_states": [
+        "blocked",
+        "empty_transcript",
+        "no_announcements",
+        "provider_failure"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "meeting.plugin.decision_capture",
+      "name": "Decision capture",
+      "purpose": "Capture typed decisions, open questions, and bounded transcript provenance.",
+      "domain": "meeting",
+      "status": "experimental",
+      "status_reason": "The registered synthesizer, timestamp guard, provenance drops, and closed output are implemented; acceptance remains owner work.",
+      "exposure": "user",
+      "surfaces": [
+        "meeting decisions",
+        "decision provenance"
+      ],
+      "entry_points": [
+        "holdspeak/plugins/builtin/decision_capture.py::DecisionCapturePlugin"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "meeting transcript window",
+        "segment time bounds"
+      ],
+      "outputs": [
+        "decisions[]: decision, rationale, source_timestamp",
+        "open_questions[]",
+        "provenance_drops[]",
+        "common plugin fields"
+      ],
+      "persistence": [
+        "PluginRun",
+        "ArtifactLineage",
+        "decision records"
+      ],
+      "apis": [],
+      "configuration": [
+        "profile plugin chain",
+        "llm capability"
+      ],
+      "dependencies": [
+        "PluginHost",
+        "meeting segments",
+        "decision lifecycle"
+      ],
+      "model_requirements": [
+        "llm"
+      ],
+      "network_requirements": [
+        "selected model destination"
+      ],
+      "trust_boundary": "A reported timestamp is retained only when it resolves inside observed meeting segment bounds.",
+      "egress_possible": true,
+      "egress": "The selected model destination may receive the admitted transcript window.",
+      "side_effect": "local_reversible",
+      "authority": "PluginHost capability gate; decision transitions require owner lifecycle authority.",
+      "kernel_operations": [
+        "meeting.plugin.decision_capture"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/builtin/decision_capture.py",
+          "symbol": "DecisionCapturePlugin",
+          "line": 179,
+          "claim": "The registered synthesizer captures decisions, open questions, and named provenance drops."
+        },
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "_result_schema",
+          "line": 852,
+          "claim": "The closed output includes decisions, open_questions, and provenance_drops."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_decision_capture_plugin.py",
+          "node": "test_source_timestamp_window_accepts_end_boundary_and_records_named_drop",
+          "assertion": "Out-of-range timestamps are named provenance drops.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_decision_capture_plugin.py",
+          "node": "test_host_blocks_without_llm_capability",
+          "assertion": "The host blocks the plugin without llm.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md",
+        "docs/MEETING_AFTERCARE.md"
+      ],
+      "limitations": [
+        "Decision capture does not accept or promote a decision.",
+        "No model call was run."
+      ],
+      "failure_states": [
+        "blocked",
+        "empty_transcript",
+        "no_decisions_or_questions",
+        "provenance_drop",
+        "provider_failure"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    }
+  ],
+  "components": [
+    {
+      "id": "voice.speech_session",
+      "name": "Speech session",
+      "purpose": "Admit and freeze voice capability children.",
+      "kind": "service",
+      "owns": [
+        "speech session admission",
+        "content-free speech plans"
+      ],
+      "depends_on": [
+        "holdspeak.speech_session.plan",
+        "holdspeak.kernel"
+      ],
+      "interfaces": [
+        "speech session plan",
+        "named refusal"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/speech_session/plan.py",
+          "symbol": "SpeechSessionPlan",
+          "line": 1,
+          "claim": "Speech plans freeze ordered capabilities and deployments."
+        }
+      ],
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md"
+      ]
+    },
+    {
+      "id": "voice.dictation_runner",
+      "name": "Dictation runner",
+      "purpose": "Process a transcript and bind the final delivery policy.",
+      "kind": "service",
+      "owns": [
+        "dictation pipeline seam",
+        "command dispatch",
+        "delivery selection"
+      ],
+      "depends_on": [
+        "holdspeak.plugins.dictation",
+        "holdspeak.operation_policy"
+      ],
+      "interfaces": [
+        "process_transcript",
+        "dispatch_voice_command"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/dictation_runner.py",
+          "symbol": "process_transcript",
+          "line": 253,
+          "claim": "The runner applies optional processing and preserves text on ordinary failure."
+        }
+      ],
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md"
+      ]
+    },
+    {
+      "id": "meeting.session",
+      "name": "Meeting session",
+      "purpose": "Own live meeting capture lifecycle and deferred intelligence handoff.",
+      "kind": "service",
+      "owns": [
+        "provisional state",
+        "recorder",
+        "transcription loop",
+        "stop handoff"
+      ],
+      "depends_on": [
+        "holdspeak.meeting_session.persistence",
+        "holdspeak.meeting_capture_journal"
+      ],
+      "interfaces": [
+        "MeetingSession.start",
+        "MeetingSession.stop"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/meeting_session/session.py",
+          "symbol": "MeetingSession.start",
+          "line": 422,
+          "claim": "The session persists before recording and admits intelligence before model construction."
+        }
+      ],
+      "docs": [
+        "docs/MEETING_ARCHITECTURE.md"
+      ]
+    },
+    {
+      "id": "meeting.plugin_host",
+      "name": "Meeting plugin host",
+      "purpose": "Register, gate, dispatch, and persist meeting analysis plugins.",
+      "kind": "service",
+      "owns": [
+        "built-in registry",
+        "host-issued dispatch",
+        "plugin run status"
+      ],
+      "depends_on": [
+        "holdspeak.plugins.contracts",
+        "holdspeak.inference_capabilities"
+      ],
+      "interfaces": [
+        "PluginHost",
+        "ArtifactLineage"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/host.py",
+          "symbol": "PluginHost.execute",
+          "line": 252,
+          "claim": "The host gates model plugins on issued dispatch and capability."
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ]
+    },
+    {
+      "id": "model.capability_registry",
+      "name": "Inference capability registry",
+      "purpose": "Supply canonical operation and result schema metadata.",
+      "kind": "service",
+      "owns": [
+        "capability definitions",
+        "retry policies",
+        "closed schemas"
+      ],
+      "depends_on": [],
+      "interfaces": [
+        "InferenceCapabilityRegistry"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "process_inference_capability_registry",
+          "line": 1031,
+          "claim": "The registry builds canonical capability metadata."
+        }
+      ],
+      "docs": [
+        "docs/MODEL_RUNTIME.md"
+      ]
+    },
+    {
+      "id": "model.assignment_service",
+      "name": "Inference assignment service",
+      "purpose": "Store owner assignment configuration and projections.",
+      "kind": "service",
+      "owns": [
+        "assignment rows",
+        "assignment heads",
+        "readiness projection"
+      ],
+      "depends_on": [
+        "model.capability_registry",
+        "model profiles"
+      ],
+      "interfaces": [
+        "InferenceAssignmentService"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/services/inference_assignment_service.py",
+          "symbol": "InferenceAssignmentService",
+          "line": 90,
+          "claim": "Assignment service is owner-only and does not execute providers."
+        }
+      ],
+      "docs": [
+        "docs/MODEL_RUNTIME.md"
+      ]
+    },
+    {
+      "id": "model.route_execution",
+      "name": "Inference route execution",
+      "purpose": "Bind frozen route evidence to physical attempts and receipts.",
+      "kind": "service",
+      "owns": [
+        "route execution state",
+        "fallback authority",
+        "receipt reconstruction"
+      ],
+      "depends_on": [
+        "model route plan",
+        "InferenceRunner",
+        "destination resolver"
+      ],
+      "interfaces": [
+        "InferenceFallbackController",
+        "InferenceRunner"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/services/inference_fallback_controller.py",
+          "symbol": "InferenceFallbackController",
+          "line": 41,
+          "claim": "The controller is the server-owned state machine above the kernel runner."
+        }
+      ],
+      "docs": [
+        "docs/MODEL_RUNTIME.md",
+        "docs/EXECUTION_DESTINATIONS.md"
+      ]
+    },
+    {
+      "id": "model.destination_resolver",
+      "name": "Inference destination resolver",
+      "purpose": "Resolve named targets and derive readiness without contacting them.",
+      "kind": "service",
+      "owns": [
+        "target identity",
+        "deployment identity",
+        "placement precedence"
+      ],
+      "depends_on": [
+        "RuntimeProfile",
+        "profile key store",
+        "mesh liveness"
+      ],
+      "interfaces": [
+        "InferenceTarget",
+        "PlacementResolution"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/inference_targets.py",
+          "symbol": "resolve_placement",
+          "line": 562,
+          "claim": "Placement resolves a target and winning source through one authority."
+        }
+      ],
+      "docs": [
+        "docs/EXECUTION_DESTINATIONS.md"
+      ]
+    }
+  ],
+  "integrations": [
+    {
+      "id": "voice.to_model",
+      "name": "Voice to model runtime",
+      "purpose": "Send admitted dictation child requests to a local or OpenAI-compatible runtime.",
+      "direction": "outbound",
+      "auth": "frozen route and provider credentials at destination boundary",
+      "secrets": [
+        "provider key remains in key store"
+      ],
+      "data": [
+        "admitted transcript or structured child payload"
+      ],
+      "authority": "speech session plan and route execution controller",
+      "failure": [
+        "runtime unavailable",
+        "provider failure",
+        "invalid typed output",
+        "cancellation"
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_dictation_runtime.py",
+          "node": "test_explicit_mlx_off_arm64_raises_with_remediation",
+          "assertion": "Explicit unavailable backend raises a named runtime failure.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/dictation/runtime.py",
+          "symbol": "build_runtime",
+          "line": 134,
+          "claim": "Runtime construction supports explicit MLX, llama.cpp, and OpenAI-compatible backends."
+        }
+      ],
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md",
+        "docs/MODEL_RUNTIME.md"
+      ]
+    },
+    {
+      "id": "meeting.to_model",
+      "name": "Meeting to model runtime",
+      "purpose": "Send an admitted live or deferred meeting analysis child to its frozen destination.",
+      "direction": "outbound",
+      "auth": "meeting parent admission and host-issued plugin dispatch",
+      "secrets": [
+        "provider credentials stay at model destination"
+      ],
+      "data": [
+        "saved transcript window",
+        "plugin prompt payload"
+      ],
+      "authority": "meeting intelligence parent and PluginHost",
+      "failure": [
+        "queued",
+        "blocked",
+        "timeout",
+        "provider failure",
+        "partial recovery"
+      ],
+      "tests": [
+        {
+          "path": "tests/integration/test_meeting_intel_recovery.py",
+          "node": "test_partial_intel_names_retained_work_and_supports_retry_or_skip",
+          "assertion": "Recovery retains completed work and retries unresolved work.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/meeting_plugins.py",
+          "symbol": "run_meeting_plugin_chain",
+          "line": 94,
+          "claim": "Saved-meeting analysis dispatches through the plugin route and persists artifacts."
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ]
+    },
+    {
+      "id": "model.to_destination",
+      "name": "Model destination boundary",
+      "purpose": "Bind a frozen model child to local, private, cloud, paired, or mesh execution.",
+      "direction": "outbound",
+      "auth": "destination-specific key or paired/mesh admission",
+      "secrets": [
+        "profile key slot",
+        "provider credentials"
+      ],
+      "data": [
+        "admitted model input",
+        "placement receipt"
+      ],
+      "authority": "InferenceTarget and route execution controller",
+      "failure": [
+        "unavailable",
+        "needs_key",
+        "offline",
+        "unsupported",
+        "paired execution unsupported"
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_inference_targets.py",
+          "node": "test_unknown_target_is_named_and_never_retargeted",
+          "assertion": "Unknown target refuses by name without silent local retargeting.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/inference_targets.py",
+          "symbol": "target_from_profile",
+          "line": 369,
+          "claim": "Profile kinds map to concrete boundaries and readiness states."
+        }
+      ],
+      "docs": [
+        "docs/EXECUTION_DESTINATIONS.md"
+      ]
+    },
+    {
+      "id": "meeting.external_actuators",
+      "name": "Meeting external actuators",
+      "purpose": "Provide opt-in follow-up, issue, webhook, or pull-request destinations after analysis.",
+      "direction": "outbound",
+      "auth": "connector-specific",
+      "secrets": [
+        "connector credentials"
+      ],
+      "data": [
+        "owner-approved artifact or draft"
+      ],
+      "authority": "separate actuator registration and destination policy",
+      "failure": [
+        "connector refusal",
+        "authentication failure",
+        "destination failure"
+      ],
+      "tests": [],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/host.py",
+          "symbol": "PluginHost",
+          "line": 280,
+          "claim": "Actuator and deferred execution are separate from the model plugin host."
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md",
+        "docs/MEETING_AFTERCARE.md"
+      ]
+    }
+  ],
+  "domain_model": [
+    {
+      "id": "voice.speech_session_plan",
+      "name": "Speech session plan",
+      "purpose": "Content-free frozen voice capability and deployment plan.",
+      "category": "concept",
+      "owner": "speech session",
+      "storage": "in-memory admission and persisted route evidence",
+      "lifecycle": "freeze before child, admit child, close session",
+      "relationships": [
+        "voice.capture",
+        "voice.transcribe",
+        "model.route_plan"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/speech_session/plan.py",
+          "symbol": "SpeechSessionPlan",
+          "line": 1,
+          "claim": "The plan carries ids, hashes, revisions, and capability names only."
+        }
+      ],
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md",
+        "docs/MODEL_RUNTIME.md"
+      ]
+    },
+    {
+      "id": "meeting.meeting_state",
+      "name": "Meeting state",
+      "purpose": "Durable meeting lifecycle and transcript record.",
+      "category": "database_entity",
+      "owner": "meeting session",
+      "storage": "meeting database and JSON compatibility projection",
+      "lifecycle": "provisional, recording or record-only, stopping, finalized",
+      "relationships": [
+        "meeting.capture",
+        "meeting.import",
+        "meeting.intelligence"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/meeting_session/models.py",
+          "symbol": "MeetingState",
+          "line": 115,
+          "claim": "Meeting state carries capture and intelligence statuses and queue state."
+        }
+      ],
+      "docs": [
+        "docs/MEETING_ARCHITECTURE.md"
+      ]
+    },
+    {
+      "id": "meeting.plugin_run",
+      "name": "Plugin run",
+      "purpose": "Record one meeting plugin execution status and result lineage.",
+      "category": "database_entity",
+      "owner": "meeting plugin host",
+      "storage": "plugin run persistence",
+      "lifecycle": "queued, running, success/proposed/error/timeout/blocked/deduped/skipped",
+      "relationships": [
+        "meeting.meeting_state",
+        "meeting.artifact_lineage",
+        "meeting.intelligence"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/contracts.py",
+          "symbol": "PluginRun",
+          "line": 74,
+          "claim": "PluginRun is the typed run contract with status and result fields."
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md"
+      ]
+    },
+    {
+      "id": "meeting.artifact_lineage",
+      "name": "Artifact lineage",
+      "purpose": "Link a generated artifact to its plugin, meeting window, and source hash.",
+      "category": "database_entity",
+      "owner": "meeting plugin host",
+      "storage": "artifact persistence",
+      "lifecycle": "created with plugin result, retained across idempotent reruns",
+      "relationships": [
+        "meeting.plugin_run",
+        "meeting.meeting_state",
+        "meeting.aftercare"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/contracts.py",
+          "symbol": "ArtifactLineage",
+          "line": 114,
+          "claim": "ArtifactLineage is the typed provenance link for plugin output."
+        }
+      ],
+      "docs": [
+        "docs/MEETING_INTELLIGENCE.md",
+        "docs/MEETING_AFTERCARE.md"
+      ]
+    },
+    {
+      "id": "model.runtime_profile",
+      "name": "Runtime profile",
+      "purpose": "Synced storage and wire primitive for a model destination.",
+      "category": "database_entity",
+      "owner": "destination resolver",
+      "storage": "profile store",
+      "lifecycle": "configured, readiness derived, resolved into deployment identity",
+      "relationships": [
+        "model.destination_readiness",
+        "model.route_plan"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/services/profile_service.py",
+          "symbol": "ProfileService",
+          "line": 1,
+          "claim": "Profile service manages persisted destination profiles; the transport name is not a Python RuntimeProfile class."
+        }
+      ],
+      "docs": [
+        "docs/EXECUTION_DESTINATIONS.md"
+      ]
+    },
+    {
+      "id": "model.inference_assignment",
+      "name": "Inference assignment",
+      "purpose": "Sparse owner-selected capability or group configuration.",
+      "category": "database_entity",
+      "owner": "assignment service",
+      "storage": "assignment rows and immutable head",
+      "lifecycle": "owner command, revision, projection, route snapshot",
+      "relationships": [
+        "model.registry",
+        "model.route_plan",
+        "model.destination_readiness"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/services/inference_assignment_service.py",
+          "symbol": "InferenceAssignmentService",
+          "line": 90,
+          "claim": "Assignment is configuration rather than execution."
+        }
+      ],
+      "docs": [
+        "docs/MODEL_RUNTIME.md"
+      ]
+    },
+    {
+      "id": "model.route_execution",
+      "name": "Route execution",
+      "purpose": "Durable execution head bound to frozen route and operation evidence.",
+      "category": "database_entity",
+      "owner": "fallback controller",
+      "storage": "route execution and receipt tables",
+      "lifecycle": "active, attempting, terminal, cancelled or indeterminate",
+      "relationships": [
+        "model.route_plan",
+        "model.cancel_receipts",
+        "model.destination_readiness"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/services/inference_fallback_controller.py",
+          "symbol": "InferenceFallbackController",
+          "line": 41,
+          "claim": "The controller binds execution to immutable route evidence."
+        }
+      ],
+      "docs": [
+        "docs/MODEL_RUNTIME.md"
+      ]
+    }
+  ],
+  "trust_boundaries": [
+    {
+      "id": "voice.local_capture_to_transcription",
+      "name": "Local capture to transcription",
+      "purpose": "Keep owner audio inside the admitted speech boundary until a transcription child is selected.",
+      "from": "owner audio capture",
+      "to": "local Whisper or admitted transcription destination",
+      "data": [
+        "audio",
+        "transcript"
+      ],
+      "compute": "speech session and transcription runtime",
+      "authority": "frozen speech session plan",
+      "secrets": [],
+      "audit": [
+        "speech session admission",
+        "content-free route evidence"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/inference_capabilities.py",
+          "symbol": "process_inference_capability_registry",
+          "line": 1063,
+          "claim": "Speech transcription declares an audio input and local boundary."
+        }
+      ],
+      "docs": [
+        "docs/DICTATION_ARCHITECTURE.md"
+      ]
+    },
+    {
+      "id": "meeting.capture_to_intelligence",
+      "name": "Meeting capture to intelligence",
+      "purpose": "Move only the saved and admitted meeting transcript into deferred analysis.",
+      "from": "meeting capture journal and saved MeetingState",
+      "to": "PluginHost and selected model destination",
+      "data": [
+        "transcript window",
+        "speaker labels",
+        "source hash"
+      ],
+      "compute": "meeting session, persistence, plugin host",
+      "authority": "meeting intelligence parent and deferred job",
+      "secrets": [
+        "provider key at destination"
+      ],
+      "audit": [
+        "capture checkpoint",
+        "PluginRun",
+        "ArtifactLineage"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/meeting_session/persistence.py",
+          "symbol": "PersistenceMixin.save",
+          "line": 58,
+          "claim": "Deferred intelligence is enqueued after a saved meeting state."
+        }
+      ],
+      "docs": [
+        "docs/MEETING_ARCHITECTURE.md",
+        "docs/MEETING_INTELLIGENCE.md"
+      ]
+    },
+    {
+      "id": "model.local_boundary",
+      "name": "Same-device model boundary",
+      "purpose": "Ensure a local child loads only the frozen local deployment.",
+      "from": "route execution controller",
+      "to": "this_machine or local dictation runtime",
+      "data": [
+        "admitted model input"
+      ],
+      "compute": "local engine and model file",
+      "authority": "frozen DeploymentIdentity",
+      "secrets": [],
+      "audit": [
+        "deployment identity",
+        "placement receipt"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/inference_targets.py",
+          "symbol": "local_pinned_meeting_intel",
+          "line": 709,
+          "claim": "Same-device execution is built from the frozen revision and cannot become cloud inside the child."
+        }
+      ],
+      "docs": [
+        "docs/EXECUTION_DESTINATIONS.md"
+      ]
+    },
+    {
+      "id": "model.remote_boundary",
+      "name": "Remote model boundary",
+      "purpose": "Name and audit private, cloud, paired, or mesh execution separately from local execution.",
+      "from": "route execution controller",
+      "to": "private endpoint, external service, paired device, or mesh node",
+      "data": [
+        "admitted operation payload",
+        "route identity"
+      ],
+      "compute": "remote provider or node runtime",
+      "authority": "named destination and frozen route leg",
+      "secrets": [
+        "destination-specific key or connector credential"
+      ],
+      "audit": [
+        "placement receipt",
+        "target readiness state",
+        "secret presence only"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/inference_targets.py",
+          "symbol": "target_from_profile",
+          "line": 369,
+          "claim": "Destination kind, boundary, readiness, and key presence are derived from the named profile."
+        }
+      ],
+      "docs": [
+        "docs/EXECUTION_DESTINATIONS.md",
+        "docs/MODEL_RUNTIME.md"
+      ]
+    },
+    {
+      "id": "model.secret_boundary",
+      "name": "Model secret boundary",
+      "purpose": "Keep provider keys out of projections, prompts, logs, and receipts.",
+      "from": "profile key store",
+      "to": "provider adapter",
+      "data": [
+        "key presence",
+        "provider credential at dispatch"
+      ],
+      "compute": "key store and model provider adapter",
+      "authority": "destination-specific key slot",
+      "secrets": [
+        "provider key"
+      ],
+      "audit": [
+        "required/present receipt field",
+        "secret boundary test"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/mcp/families/model_library.py",
+          "symbol": "dispatch",
+          "line": 208,
+          "claim": "Provider dispatch keeps secret material at the model boundary."
+        }
+      ],
+      "docs": [
+        "docs/MODEL_RUNTIME.md",
+        "docs/EXECUTION_DESTINATIONS.md"
+      ]
+    },
+    {
+      "id": "meeting.actuator_boundary",
+      "name": "Meeting actuator boundary",
+      "purpose": "Separate read-only aftercare and generated artifacts from external follow-up effects.",
+      "from": "saved artifact or aftercare draft",
+      "to": "ticket, webhook, pull request, or message connector",
+      "data": [
+        "owner-selected draft or artifact"
+      ],
+      "compute": "opt-in actuator connector",
+      "authority": "separate actuator admission and connector policy",
+      "secrets": [
+        "connector credentials"
+      ],
+      "audit": [
+        "actuator proposal",
+        "destination receipt"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/host.py",
+          "symbol": "PluginHost",
+          "line": 280,
+          "claim": "Actuator execution is a separate host boundary from deferred intelligence."
+        }
+      ],
+      "docs": [
+        "docs/MEETING_AFTERCARE.md",
+        "docs/MEETING_INTELLIGENCE.md"
+      ]
+    }
+  ]
+}

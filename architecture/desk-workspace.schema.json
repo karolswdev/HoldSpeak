@@ -1,0 +1,426 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.local/architecture/desk-workspace.schema.json",
+  "title": "Desk portable contract reference",
+  "description": "WorkspaceV1 describes the canonical saved shape, not every recoverable input accepted by the repairing loader. Other definitions explicitly marked proposed are SRS contracts, not shipped persistence. No runtime code consumes this schema.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/WorkspaceV1"
+    }
+  ],
+  "$defs": {
+    "WindowRect": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "w": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "h": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "w",
+        "h"
+      ],
+      "additionalProperties": false
+    },
+    "WindowInstance": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9:_-]+$"
+        },
+        "kind": {
+          "const": "surface"
+        },
+        "applicationKey": {
+          "type": "string"
+        },
+        "scope": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "persistence": {
+          "const": "workspace"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "applicationKey",
+        "scope",
+        "persistence"
+      ],
+      "additionalProperties": false
+    },
+    "ZoneViewPreference": {
+      "type": "object",
+      "properties": {
+        "view": {
+          "enum": [
+            "icons",
+            "list"
+          ]
+        },
+        "sort": {
+          "enum": [
+            "name",
+            "kind",
+            "modified"
+          ]
+        },
+        "dir": {
+          "enum": [
+            "asc",
+            "desc"
+          ]
+        }
+      },
+      "required": [
+        "view",
+        "sort",
+        "dir"
+      ],
+      "additionalProperties": false
+    },
+    "WorkspaceV1": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "windowsById": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9:_-]+$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/WindowInstance"
+          }
+        },
+        "panel": {
+          "type": "object",
+          "properties": {
+            "rects": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9:_-]+$"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/WindowRect"
+              }
+            },
+            "order": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9:_-]+$"
+              },
+              "maxItems": 100,
+              "uniqueItems": true
+            },
+            "max": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9:_-]+$"
+              },
+              "maxItems": 100,
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "rects",
+            "order",
+            "max"
+          ],
+          "additionalProperties": false
+        },
+        "zoneWindows": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9:_-]+$"
+          }
+        },
+        "zoneViewPrefs": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9:_-]+$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/ZoneViewPreference"
+          }
+        }
+      },
+      "required": [
+        "version",
+        "windowsById",
+        "panel",
+        "zoneWindows",
+        "zoneViewPrefs"
+      ],
+      "additionalProperties": false,
+      "description": "Saved shape from workspaceStorage.ts. The loader repairs partial/corrupt data and caps loaded zone IDs. Semantic check still needed: map key equals WindowInstance.id. Minimized state is intentionally absent."
+    },
+    "SelectionContext": {
+      "type": "object",
+      "properties": {
+        "selectedRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "commandTargetRef": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "owner": {
+          "enum": [
+            "desk",
+            "window"
+          ]
+        }
+      },
+      "required": [
+        "selectedRefs",
+        "commandTargetRef",
+        "owner"
+      ],
+      "additionalProperties": false,
+      "description": "PROPOSED portable command-target contract; current store fields differ."
+    },
+    "VerbDefinition": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "labelKey": {
+          "type": "string"
+        },
+        "scope": {
+          "enum": [
+            "floor",
+            "object",
+            "go",
+            "window",
+            "system",
+            "thread"
+          ]
+        },
+        "shortcut": {
+          "type": "string"
+        },
+        "glyph": {
+          "type": "string"
+        },
+        "destructive": {
+          "type": "boolean"
+        },
+        "applicability": {
+          "type": "string"
+        },
+        "unavailableReason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "labelKey",
+        "scope",
+        "applicability"
+      ],
+      "additionalProperties": false,
+      "description": "PROPOSED serializable vocabulary. Current VERBS contains executable functions, not these string predicates."
+    },
+    "DropCapability": {
+      "type": "object",
+      "properties": {
+        "sourceKinds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "targetKind": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "releaseLabel": {
+          "type": "string"
+        },
+        "requiresExplicitRun": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "sourceKinds",
+        "targetKind",
+        "action",
+        "releaseLabel",
+        "requiresExplicitRun"
+      ],
+      "additionalProperties": false,
+      "description": "PROPOSED portable shape, not replacement for current DROP_MATRIX."
+    },
+    "ObjectVisualState": {
+      "enum": [
+        "rest",
+        "selected",
+        "stale",
+        "new",
+        "editing",
+        "dragging",
+        "drop-ready"
+      ],
+      "description": "PROPOSED shared vocabulary; not every object supports every state."
+    },
+    "ThemePreference": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": [
+            "dark",
+            "light",
+            "system"
+          ]
+        },
+        "contrast": {
+          "enum": [
+            "normal",
+            "high"
+          ]
+        },
+        "motion": {
+          "enum": [
+            "full",
+            "reduced"
+          ]
+        },
+        "density": {
+          "enum": [
+            "normal",
+            "compact"
+          ]
+        }
+      },
+      "required": [
+        "mode",
+        "contrast",
+        "motion",
+        "density"
+      ],
+      "additionalProperties": false,
+      "description": "PROPOSED; current baseline is dark, not proof of light-theme implementation."
+    },
+    "AccessibilityPreference": {
+      "type": "object",
+      "properties": {
+        "motion": {
+          "enum": [
+            "system",
+            "full",
+            "reduced"
+          ]
+        },
+        "contrast": {
+          "enum": [
+            "system",
+            "normal",
+            "high"
+          ]
+        },
+        "representation": {
+          "enum": [
+            "spatial",
+            "list"
+          ]
+        }
+      },
+      "required": [
+        "motion",
+        "contrast",
+        "representation"
+      ],
+      "additionalProperties": false,
+      "description": "PROPOSED user preference model; no new persistence introduced."
+    },
+    "LocalePreference": {
+      "type": "object",
+      "properties": {
+        "locale": {
+          "type": "string"
+        },
+        "timeZone": {
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "ltr",
+            "rtl"
+          ]
+        }
+      },
+      "required": [
+        "locale"
+      ],
+      "additionalProperties": false,
+      "description": "PROPOSED localization model; protocol IDs remain nonlocalized."
+    },
+    "DesktopHostCapability": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "platforms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "permissionClass": {
+          "type": "string"
+        },
+        "webFallback": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "platforms",
+        "permissionClass",
+        "webFallback",
+        "method"
+      ],
+      "additionalProperties": false,
+      "description": "PROPOSED metadata; this record does not grant authority."
+    }
+  }
+}

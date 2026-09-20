@@ -93,10 +93,13 @@ their target size, focus, disabled, loading or status behavior. Primary actions
 are 44 px high. Dense subordinate actions are 36 px high and retain at least a
 24 px effective target.
 
-Use `Field` for associated labels, descriptions and errors; `Dialog` for modal
-focus containment/return; `InlineMessage` for live success/error feedback; and
-`StatusPill` for states that must not rely on color alone. Reduced-motion rules
-are global. The living contract is `/design/components`.
+Use the current surface library: `StringGadget` and `EditInPlace` for text
+entry, and `SurfaceState`/`StateChip` for status with text and icon cues.
+The old Signal `Dialog`, `InlineMessage` and `StatusPill` exports were retired;
+do not copy their historical usage. Product editing uses in-place controls or nonmodal Desk windows,
+as required by [UX Canon](UX-CANON.md). Use the surface contract for transient
+menu focus behavior; do not introduce a product modal to contain focus.
+Reduced-motion rules are global. The living contract is `/design/components`.
 
 ## API, authentication and secrets
 

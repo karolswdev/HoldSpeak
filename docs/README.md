@@ -1,12 +1,15 @@
 # HoldSpeak documentation
 
 Use these guides to install HoldSpeak, prepare work, and configure its tools.
-The guides describe `main`. Check your installed version when a control is absent.
+Guides follow their stated source revision. The Philo audit is pinned to a
+recorded snapshot. Check your installed version when a control is absent.
 
 ## Start here
 
 | You want to | Read |
 | --- | --- |
+| Understand the four main jobs | [What is HoldSpeak?](WHAT_IS_HOLDSPEAK.md) |
+| Follow a task from input to result | [Use cases](USE_CASES.md) |
 | Install HoldSpeak and capture a sentence | [Getting Started](GETTING_STARTED.md) |
 | Find a daily task or product control | [User Guide](USER_GUIDE.md) |
 | Use Desk objects and windows | [The Desk](WEB_DESK.md) |
@@ -70,6 +73,20 @@ Discovery and execution also depend on the caller's permissions.
 - [Release and recovery](RELEASING.md): backups, restore, packaging, and release checks.
 - [Inference placement](INFERENCE_TARGETS.md): current terminology and model routing references.
 
+## Understand and verify
+
+| You want to | Read |
+| --- | --- |
+| Find a capability and its evidence | [Capability registry](CAPABILITIES.md) |
+| See the system and its boundaries | [System architecture](SYSTEM_ARCHITECTURE.md), [integration map](SYSTEM_INTEGRATION_MAP.md) |
+| Understand runtime work and recovery | [Kernel](KERNEL.md), [storage and migrations](STORAGE_AND_MIGRATIONS.md) |
+| Find domain and database ownership | [Domain model](DOMAIN_MODEL.md), [data model](DATA_MODEL.md) |
+| Trace a model or external action | [Model runtime](MODEL_RUNTIME.md), [authority](AUTHORITY_MODEL.md), [security](SECURITY_MODEL.md) |
+| Diagnose a failed job | [Operations](OPERATIONS.md), [troubleshooting](TROUBLESHOOTING.md) |
+| Check platform limits | [Platform matrix](PLATFORMS.md) |
+| Read the existing Desk contract and proposed changes | [Desk architecture](DESK_ARCHITECTURE.md), [Philo specification](internal/philo/README.md) |
+| Check audit scope and remaining unknowns | [Documentation audit report](generated/DOCUMENTATION_AUDIT_REPORT.md) |
+
 ## Documentation and specifications
 
 User guides describe implemented behavior. Internal specifications can also describe planned behavior.
@@ -89,3 +106,4 @@ Historical evidence does not establish the current product state.
 - [Product overview](../README.md): capabilities and platform support.
 - [Getting Started](GETTING_STARTED.md): the first successful task.
 - [Glossary](GLOSSARY.md): product terms and their meanings.
+- [Configuration fields](CONFIGURATION_REFERENCE.md): declared types and defaults, with runtime limits.

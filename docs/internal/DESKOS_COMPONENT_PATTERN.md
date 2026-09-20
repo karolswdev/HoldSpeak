@@ -1,4 +1,8 @@
-# The DeskOS Component Pattern
+# SwiftUI iPad component pattern (scoped reference)
+
+Status: SwiftUI iPad-specific guidance, not the current Web Desk contract.
+Use [Desk grammar](DESK_GRAMMAR.md) and the [current Desk specification](philo/DESIGN_SPECIFICATION.md)
+for the Web product. The original iPad-specific text below is preserved; it does not govern Web windows.
 
 > The canon for how a surface on the iPad desk (DeskOS) should look and behave,
 > distilled from the one we got right: **the ambient recorder**. When you add a

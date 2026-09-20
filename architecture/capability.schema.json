@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.local/philo/capability.schema.json",
+  "title": "Philo capability",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "id", "name", "purpose", "domain", "status", "status_reason",
+    "exposure", "surfaces", "entry_points", "platforms", "inputs",
+    "outputs", "persistence", "apis", "configuration", "dependencies",
+    "model_requirements", "network_requirements", "trust_boundary",
+    "egress_possible", "egress", "side_effect", "authority",
+    "kernel_operations", "sources", "tests", "docs", "limitations",
+    "failure_states", "replacement", "evidence_level",
+    "release_availability", "owner_observed"
+  ],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"},
+    "name": {"type": "string", "minLength": 1},
+    "purpose": {"type": "string", "minLength": 1},
+    "domain": {"type": "string", "minLength": 1},
+    "status": {"type": "string", "enum": ["stable", "beta", "experimental", "partial", "platform_limited", "built_unreleased", "planned", "deprecated", "internal", "historical"]},
+    "status_reason": {"type": "string", "minLength": 1},
+    "exposure": {"type": "string", "enum": ["user", "operator", "developer", "integration", "internal"]},
+    "surfaces": {"type": "array", "items": {"type": "string"}},
+    "entry_points": {"type": "array", "items": {"type": "string", "pattern": "^[^:]+::[^:]+$"}},
+    "platforms": {"$ref": "#/$defs/platforms"},
+    "inputs": {"type": "array", "items": {"type": "string"}},
+    "outputs": {"type": "array", "items": {"type": "string"}},
+    "persistence": {"type": "array", "items": {"type": "string"}},
+    "apis": {"type": "array", "items": {"type": "string"}},
+    "configuration": {"type": "array", "items": {"type": "string"}},
+    "dependencies": {"type": "array", "items": {"type": "string"}},
+    "model_requirements": {"type": "array", "items": {"type": "string"}},
+    "network_requirements": {"type": "array", "items": {"type": "string"}},
+    "trust_boundary": {"type": "string", "minLength": 1},
+    "egress_possible": {"type": "boolean"},
+    "egress": {"type": "string", "minLength": 1},
+    "side_effect": {"type": "string", "enum": ["none", "local_reversible", "local_irreversible", "external_reversible", "external_irreversible"]},
+    "authority": {"type": "string", "minLength": 1},
+    "kernel_operations": {"type": "array", "items": {"type": "string"}},
+    "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+    "tests": {"type": "array", "items": {"$ref": "#/$defs/test"}},
+    "docs": {"type": "array", "items": {"type": "string"}},
+    "limitations": {"type": "array", "items": {"type": "string"}},
+    "failure_states": {"type": "array", "items": {"type": "string"}},
+    "replacement": {"type": ["string", "null"]},
+    "evidence_level": {"type": "string", "enum": ["source_inspected", "source_and_assertions_inspected", "tests_executed", "owner_observed"]},
+    "release_availability": {"type": "string", "enum": ["verified", "unverified", "unreleased", "not_applicable"]},
+    "owner_observed": {"type": "boolean"}
+  },
+  "$defs": {
+    "source": {
+      "type": "object", "additionalProperties": true,
+      "required": ["path", "symbol", "line", "claim"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "symbol": {"type": "string", "minLength": 1},
+        "line": {"type": "integer", "minimum": 1},
+        "claim": {"type": "string", "minLength": 1}
+      }
+    },
+    "test": {
+      "oneOf": [
+        {"type": "string", "pattern": "^[^:]+::[^:]+$"},
+        {
+          "type": "object", "additionalProperties": true,
+          "required": ["path", "node", "assertion"],
+          "properties": {
+            "path": {"type": "string", "minLength": 1},
+            "node": {"type": "string", "minLength": 1},
+            "assertion": {"type": "string", "minLength": 1},
+            "execution": {"type": ["string", "object", "null"]}
+          }
+        }
+      ]
+    },
+    "platforms": {
+      "type": "object", "additionalProperties": false,
+      "required": ["macos", "linux_x11", "linux_wayland", "ipad", "aipi"],
+      "properties": {
+        "macos": {"$ref": "#/$defs/platform"},
+        "linux_x11": {"$ref": "#/$defs/platform"},
+        "linux_wayland": {"$ref": "#/$defs/platform"},
+        "ipad": {"$ref": "#/$defs/platform"},
+        "aipi": {"$ref": "#/$defs/platform"}
+      }
+    },
+    "platform": {"type": "string", "enum": ["supported", "supported_with_setup", "degraded", "best_effort", "unsupported", "not_applicable", "unknown"]}
+  }
+}

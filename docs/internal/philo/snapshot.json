@@ -1,0 +1,43 @@
+{
+  "repository": "https://github.com/karolswdev/HoldSpeak",
+  "branch": "docs/holdspeak-philo",
+  "commit": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+  "commit_timestamp": "2026-09-19T18:26:30-06:00",
+  "recorded_utc": "2026-09-20T01:01:33.803111+00:00",
+  "working_tree_clean_before_authored_files": true,
+  "platform": "Darwin-25.2.0-arm64-arm-64bit-Mach-O",
+  "python": "3.14.6",
+  "scope": "Pinned source baseline for the capability audit and Desk specification; verification and limits are recorded in docs/generated/DOCUMENTATION_AUDIT_REPORT.md",
+  "owner_request_sources": [
+    {
+      "path": "briefs/owner-request.txt",
+      "sha256": "b98e2d3638a9a315fac28a230eca85675d40c0d6a2af2fdedfabe34e5fef04c0",
+      "bytes": 197952
+    },
+    {
+      "path": "briefs/capability-audit.txt",
+      "sha256": "f3226d25707a197fa2ba48bc50e4d59bc3c97fefc8029195773c42fcadb03bb5",
+      "bytes": 97264
+    },
+    {
+      "path": "briefs/workbench-design-srs.txt",
+      "sha256": "ae5606ee4bc8e4da30d6570a548f7c7ea0739fa458b2f381f0a06a347cde75f9",
+      "bytes": 100292
+    }
+  ],
+  "source_session": "01a0bc4d-502c-7170-a5bf-91ac6e6fd917",
+  "package": {
+    "name": "holdspeak",
+    "version": "0.4.0",
+    "requires_python": ">=3.10",
+    "classifier": "Development Status :: 4 - Beta",
+    "interpretation": "Packaging declaration; not a verified maturity claim"
+  },
+  "verification_toolchain": {
+    "node": "22.23.2 (isolated official Darwin ARM64 distribution)",
+    "npm": "10.9.8",
+    "python_environment": ".venv via uv sync --extra test",
+    "system_node": "25.9.0 failed before execution: missing libllhttp.9.3.dylib",
+    "system_modified": false
+  }
+}

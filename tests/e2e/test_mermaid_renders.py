@@ -34,7 +34,13 @@ import pytest
 _REPO = Path(__file__).resolve().parents[2]
 
 # The user-facing + internal docs that may carry diagrams, plus the README.
-_DOC_GLOBS = ["README.md", "docs/*.md", "docs/internal/*.md"]
+_DOC_GLOBS = [
+    "README.md",
+    "docs/*.md",
+    "docs/internal/*.md",
+    "docs/internal/philo/*.md",
+    "docs/internal/philo/adr/*.md",
+]
 
 _MERMAID_BLOCK = re.compile(r"```mermaid\n(.*?)```", re.DOTALL)
 

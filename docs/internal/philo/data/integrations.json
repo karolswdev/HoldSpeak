@@ -1,0 +1,2773 @@
+{
+  "schema_version": 1,
+  "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+  "capabilities": [
+    {
+      "id": "agents.thread_persistent",
+      "name": "Persistent Thread chat",
+      "purpose": "Save a multi-turn assistant conversation with branches, drafts, refs and kept results.",
+      "domain": "agents",
+      "status": "experimental",
+      "status_reason": "Thread CRUD, persistence and streaming orchestration are implemented and assertion-backed; provider and owner use were not observed.",
+      "exposure": "user",
+      "surfaces": [
+        "Thread window",
+        "MCP client"
+      ],
+      "entry_points": [
+        "holdspeak/services/thread_service.py::ThreadService",
+        "holdspeak/db/threads.py::ThreadRepository",
+        "holdspeak/web/routes/threads.py::build_threads_router"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "best_effort",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "owner text",
+        "qualified refs",
+        "thread mode"
+      ],
+      "outputs": [
+        "durable messages",
+        "stream frames",
+        "kept artifact/note"
+      ],
+      "persistence": [
+        "threads",
+        "thread_messages",
+        "thread_message_parts",
+        "thread_refs",
+        "draft annotations"
+      ],
+      "apis": [
+        "POST /api/threads",
+        "GET /api/threads",
+        "GET /api/threads/{thread_id}",
+        "PATCH /api/threads/{thread_id}",
+        "DELETE /api/threads/{thread_id}",
+        "POST /api/threads/{thread_id}/turns",
+        "POST /api/threads/{thread_id}/branch",
+        "POST /api/threads/{thread_id}/regenerate",
+        "POST /api/threads/{thread_id}/keep"
+      ],
+      "configuration": [
+        "profile override",
+        "mode recipe",
+        "control mode"
+      ],
+      "dependencies": [
+        "ThreadRepository",
+        "RuntimeBus",
+        "inference broker"
+      ],
+      "model_requirements": [
+        "configured admitted model route for assistant turns"
+      ],
+      "network_requirements": [
+        "only the selected model boundary"
+      ],
+      "trust_boundary": "Owner thread input is persisted and frozen before an admitted model child; kept output is a separate local write.",
+      "egress_possible": true,
+      "egress": "The frozen model route determines whether prompt material leaves the hub.",
+      "side_effect": "local_reversible",
+      "authority": "Authenticated owner thread operation and frozen route plan; tool effects use the separate tool gate.",
+      "kernel_operations": [
+        "thread turn",
+        "inference child"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/services/thread_service.py",
+          "symbol": "ThreadService",
+          "line": 118,
+          "claim": "ThreadService owns thread CRUD and turn orchestration."
+        },
+        {
+          "path": "holdspeak/db/threads.py",
+          "symbol": "ThreadRepository",
+          "line": 183,
+          "claim": "The repository persists threads, messages, refs, drafts and tool policy."
+        },
+        {
+          "path": "holdspeak/web/routes/threads.py",
+          "symbol": "build_threads_router",
+          "line": 68,
+          "claim": "The HTTP router serves concrete Thread routes."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/integration/test_threads_api.py",
+          "node": "test_create_thread",
+          "assertion": "Creating a thread returns 201 and a durable th_ id.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_threads_api.py",
+          "node": "test_import_threads",
+          "assertion": "Import is repeatable and returns the same result on replay.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/AGENTS_AND_THREADS.md"
+      ],
+      "limitations": [
+        "No model call, live stream or owner walk was run.",
+        "Published releases may expose fewer features."
+      ],
+      "failure_states": [
+        "thread_not_found",
+        "validation_error",
+        "model_route_failed",
+        "aborted",
+        "indeterminate_receipt"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "agents.thread_tool_loop",
+      "name": "Persistent Thread tool loop",
+      "purpose": "Offer a bounded MCP tool palette inside a Thread turn and retain tool results and receipts.",
+      "domain": "agents",
+      "status": "experimental",
+      "status_reason": "The pass loop, tool classification, deadlines, sensitive result marking and held decisions are implemented; no provider loop was run.",
+      "exposure": "user",
+      "surfaces": [
+        "Thread Actions",
+        "tool pending/result frames"
+      ],
+      "entry_points": [
+        "holdspeak/services/thread_service.py::ThreadService.start_turn",
+        "holdspeak/services/thread_tools.py::ThreadToolExecutor",
+        "holdspeak/services/thread_tools.py::resolve_tool_decision"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "best_effort",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "model tool call",
+        "thread palette",
+        "control mode"
+      ],
+      "outputs": [
+        "tool pending/result frames",
+        "tool message",
+        "child receipt"
+      ],
+      "persistence": [
+        "tool child operations",
+        "tool message parts",
+        "thread policy"
+      ],
+      "apis": [
+        "POST /api/threads/{thread_id}/decide"
+      ],
+      "configuration": [
+        "mode allow-list",
+        "thread tool policy",
+        "control mode"
+      ],
+      "dependencies": [
+        "MCP tool registry",
+        "kernel child admission",
+        "RuntimeBus"
+      ],
+      "model_requirements": [
+        "assistant route that can emit tool calls"
+      ],
+      "network_requirements": [
+        "tool/provider boundary when a tool egresses"
+      ],
+      "trust_boundary": "Each offered tool is classified and admitted as a child; an effect proposal can wait for a named owner decision.",
+      "egress_possible": true,
+      "egress": "Tool-specific providers and effect connectors may cross egress after the tool gate admits them.",
+      "side_effect": "external_reversible",
+      "authority": "Control-mode matrix, thread policy and owner decision handle determine admission; tool names do not grant rights.",
+      "kernel_operations": [
+        "tool child",
+        "tool receipt"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/services/thread_tools.py",
+          "symbol": "ThreadToolExecutor",
+          "line": 496,
+          "claim": "The executor owns tool admission, decision, execution and cancellation states."
+        },
+        {
+          "path": "holdspeak/services/thread_tools.py",
+          "symbol": "resolve_tool_decision",
+          "line": 407,
+          "claim": "The closed policy table maps policy, control mode and tool class to admit/hold/deny."
+        },
+        {
+          "path": "holdspeak/services/thread_service.py",
+          "symbol": "start_turn",
+          "line": 300,
+          "claim": "A turn persists input and starts the bounded streaming/tool loop."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_thread_tool_loop.py",
+          "node": "test_happy_path_frames_and_db",
+          "assertion": "The test asserts started, pending, result, delta and done frame order with a succeeded tool result.",
+          "execution": "not_run"
+        },
+        {
+          "path": "tests/unit/test_thread_tool_loop.py",
+          "node": "test_cap_exceeded",
+          "assertion": "The tenth-pass cap closes the turn with pass_cap_reached.",
+          "execution": "not_run"
+        },
+        {
+          "path": "tests/unit/test_thread_tool_gate.py",
+          "node": "test_hold_then_approve_executes",
+          "assertion": "A denied held call emits tool_denied and does not execute the effect.",
+          "execution": "not_run"
+        }
+      ],
+      "docs": [
+        "docs/AGENTS_AND_THREADS.md"
+      ],
+      "limitations": [
+        "No live external tool or provider call was made.",
+        "Tool palette is mode-specific and intentionally bounded."
+      ],
+      "failure_states": [
+        "awaiting_decision",
+        "tool_denied",
+        "tool_deadline",
+        "pass_cap_reached",
+        "cancelled",
+        "indeterminate"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "agents.interview",
+      "name": "Interview conversation",
+      "purpose": "Use one owner-only Thread mode to record sourced facts and reviewable suggestions.",
+      "domain": "agents",
+      "status": "experimental",
+      "status_reason": "The revisioned Interview reducer, section palette, exact quote provenance and MCP tools are source-present and assertion-backed.",
+      "exposure": "user",
+      "surfaces": [
+        "Interview Thread mode",
+        "Interview panel"
+      ],
+      "entry_points": [
+        "holdspeak/services/interview_service.py::InterviewService",
+        "holdspeak/services/interview_contracts.py::SECTIONS",
+        "holdspeak/mcp/families/interview.py::dispatch"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "degraded",
+        "ipad": "best_effort",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "owner answer",
+        "exact source quote",
+        "expected revision",
+        "command id"
+      ],
+      "outputs": [
+        "section state",
+        "facts",
+        "suggestions",
+        "promotion view"
+      ],
+      "persistence": [
+        "interview_sessions",
+        "interview_events",
+        "Thread messages"
+      ],
+      "apis": [
+        "POST /api/threads/{thread_id}/interview",
+        "GET /api/threads/{thread_id}/interview/promotions"
+      ],
+      "configuration": [
+        "Interview mode recipe",
+        "section palette"
+      ],
+      "dependencies": [
+        "ThreadService",
+        "MCP catalogue",
+        "owner principal"
+      ],
+      "model_requirements": [
+        "optional admitted Interview model turn"
+      ],
+      "network_requirements": [
+        "only selected model/provider read routes"
+      ],
+      "trust_boundary": "Interview state is owner-authored context; suggestions remain proposals and never install automation or confer authority.",
+      "egress_possible": true,
+      "egress": "An Interview model turn may use its selected route; recorded facts are local until another explicit capability reads them.",
+      "side_effect": "local_reversible",
+      "authority": "InterviewService.require_owner and expected revision; People content requires a protected handoff.",
+      "kernel_operations": [
+        "Interview model turn",
+        "Interview command"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/services/interview_contracts.py",
+          "symbol": "SECTIONS",
+          "line": 32,
+          "claim": "The seeded Interview mode defines eight sections and bounded tool palettes."
+        },
+        {
+          "path": "holdspeak/services/interview_service.py",
+          "symbol": "InterviewService",
+          "line": 58,
+          "claim": "InterviewService owns durable context and replay-safe commands."
+        },
+        {
+          "path": "holdspeak/mcp/families/interview.py",
+          "symbol": "dispatch",
+          "line": 44,
+          "claim": "The MCP family requires owner authority and dispatches structured Interview commands."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_interview_service.py",
+          "node": "test_command_replay_and_conflict_are_atomic",
+          "assertion": "Same command identity replays, while a conflicting command is refused atomically.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_interview_service.py",
+          "node": "test_people_handoff_refuses_before_input_persistence",
+          "assertion": "Protected People handoff refuses before the turn is persisted.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_interview_conversation.py",
+          "node": "test_llm_turn_calls_real_tools_saves_suggestion_keeps_result_and_revisits",
+          "assertion": "The conversation test checks tool calls, receipts, saved suggestion, Keep and revisiting state.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/AGENTS_AND_THREADS.md",
+        "docs/INTERVIEW.md"
+      ],
+      "limitations": [
+        "No owner Interview sitting was observed.",
+        "Unsupported integrations and general delegation remain ideas/manual recipes."
+      ],
+      "failure_states": [
+        "owner_required",
+        "interview_revision_conflict",
+        "interview_command_conflict",
+        "people_handoff_required",
+        "source_withdrawn"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "agents.mcp_http",
+      "name": "MCP HTTP and sidecar tools",
+      "purpose": "Expose the shared service/tool catalogue to MCP clients with authenticated dispatch.",
+      "domain": "agents",
+      "status": "experimental",
+      "status_reason": "HTTP transport and closed family schemas are implemented; remote configuration and live client use were not verified.",
+      "exposure": "integration",
+      "surfaces": [
+        "MCP sidecar",
+        "HTTP MCP client"
+      ],
+      "entry_points": [
+        "holdspeak/web/routes/mcp_http.py::mcp_http_endpoint",
+        "holdspeak/mcp/tools.py::TOOLS",
+        "holdspeak/mcp/families/ask.py::dispatch"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "supported_with_setup",
+        "aipi": "unsupported"
+      },
+      "inputs": [
+        "MCP JSON-RPC request",
+        "tool name",
+        "closed arguments"
+      ],
+      "outputs": [
+        "structured result or isError",
+        "operation receipt where applicable"
+      ],
+      "persistence": [
+        "service-owned records only"
+      ],
+      "apis": [
+        "POST /api/mcp"
+      ],
+      "configuration": [
+        "loopback/remote setting",
+        "owner or agent credential"
+      ],
+      "dependencies": [
+        "MCP families",
+        "principal authentication",
+        "composed runtime services"
+      ],
+      "model_requirements": [
+        "only model-invoking family tools"
+      ],
+      "network_requirements": [
+        "loopback or explicitly configured remote HTTP"
+      ],
+      "trust_boundary": "MCP schemas describe callable operations; principal authentication and service policy decide whether a call can run.",
+      "egress_possible": true,
+      "egress": "A dispatched family may invoke a configured model or connector; MCP transport itself is a hub boundary.",
+      "side_effect": "external_reversible",
+      "authority": "Authenticated Principal plus family/service authority; tool names never confer permission.",
+      "kernel_operations": [
+        "family-specific operation"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/web/routes/mcp_http.py",
+          "symbol": "mcp_http_endpoint",
+          "line": 84,
+          "claim": "The HTTP transport authenticates and dispatches MCP requests."
+        },
+        {
+          "path": "holdspeak/mcp/tools.py",
+          "symbol": "TOOLS",
+          "line": 40,
+          "claim": "The catalogue contains closed tool schemas and service dispatch names."
+        },
+        {
+          "path": "holdspeak/mcp/families/ask.py",
+          "symbol": "dispatch",
+          "line": 109,
+          "claim": "Ask family dispatch resolves grounding and model/keep operations through its service."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_mcp_tools.py",
+          "node": "test_tools_list_exposes_pipeline_mcp_tools_with_closed_schemas",
+          "assertion": "The catalogue exposes required pipeline tools with object schemas and no additional properties.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_mcp_phase133_ask.py",
+          "node": "test_dispatch_ask_run",
+          "assertion": "Ask dispatch returns output, model and egress receipt fields.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/AGENTS_AND_THREADS.md",
+        "docs/MCP_SIDECAR.md"
+      ],
+      "limitations": [
+        "The sidecar count in public docs is snapshot-specific.",
+        "No remote client or remote credential was exercised."
+      ],
+      "failure_states": [
+        "unauthenticated",
+        "unknown_tool",
+        "invalid_arguments",
+        "isError",
+        "service_refusal"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "knowledge.grounding",
+      "name": "Grounded evidence hydration",
+      "purpose": "Resolve explicit meetings, artifacts, projects, rails and optional memory matches into bounded evidence blocks.",
+      "domain": "knowledge",
+      "status": "experimental",
+      "status_reason": "The shared resolver, caps, qualified refs, project scope and rails refusal behavior are implemented and assertion-backed.",
+      "exposure": "user",
+      "surfaces": [
+        "Ask",
+        "Thread refs",
+        "Project memory",
+        "Coder steer"
+      ],
+      "entry_points": [
+        "holdspeak/grounding.py::hydrate_grounding_blocks_detailed",
+        "holdspeak/grounding_rails.py::hydrate_rails_refs"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "best_effort",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "qualified refs",
+        "meeting/artifact ids",
+        "query",
+        "expand mode"
+      ],
+      "outputs": [
+        "GroundingBlock list",
+        "unknown refs",
+        "matched/overflow counts"
+      ],
+      "persistence": [
+        "none; source records remain authoritative"
+      ],
+      "apis": [
+        "POST /api/grounding/resolve"
+      ],
+      "configuration": [
+        "16-ref cap",
+        "12,000-char transcript cap",
+        "project map for rails"
+      ],
+      "dependencies": [
+        "meeting/artifact stores",
+        "MemoryRepository",
+        "Delivery Workbench context for rails"
+      ],
+      "model_requirements": [],
+      "network_requirements": [
+        "rails may call local Delivery Workbench runner"
+      ],
+      "trust_boundary": "Only resolved, named and capped source material enters a model-bearing payload; an unknown ref is returned for refusal.",
+      "egress_possible": true,
+      "egress": "Hydrated blocks may be passed to a selected model by their caller; hydration alone does not send them.",
+      "side_effect": "none",
+      "authority": "Caller principal read authority and explicit refs/query; no evidence read grants effect authority.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/grounding.py",
+          "symbol": "hydrate_grounding_blocks_detailed",
+          "line": 602,
+          "claim": "The shared resolver returns bounded blocks and hydration statistics."
+        },
+        {
+          "path": "holdspeak/grounding_rails.py",
+          "symbol": "hydrate_rails_refs",
+          "line": 100,
+          "claim": "Rails refs use Workbench-named paths and refuse unknown/unreachable files."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_grounding_rails.py",
+          "node": "test_phase_evidence_roadmap_each_resolve_their_trace",
+          "assertion": "Phase, evidence and roadmap refs hydrate the expected block kinds.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_grounding_rails.py",
+          "node": "test_unknown_id_refuses_by_name",
+          "assertion": "An unknown story returns no block and a named unknown ref.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/AGENTS_AND_THREADS.md",
+        "docs/KERNEL.md"
+      ],
+      "limitations": [
+        "No live source hydration or model call was run.",
+        "The resolver does not prove semantic truth of source text."
+      ],
+      "failure_states": [
+        "unknown_ref",
+        "stale_project_ref",
+        "runner_unavailable",
+        "context_cap_overflow"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "knowledge.memory_search",
+      "name": "Long-horizon memory search",
+      "purpose": "Search retained notes, meetings, decisions, threads, projects and workbench items with principal-scoped filters.",
+      "domain": "knowledge",
+      "status": "experimental",
+      "status_reason": "SQLite memory indexing and service/MCP routes are implemented; no live database query was run in this audit.",
+      "exposure": "user",
+      "surfaces": [
+        "Desk memory",
+        "MCP memory.search",
+        "grounding fallback"
+      ],
+      "entry_points": [
+        "holdspeak/db/memory.py::MemoryRepository",
+        "holdspeak/services/memory_service.py::MemoryService.search",
+        "holdspeak/web/routes/memory.py::build_memory_router"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "best_effort",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "query",
+        "kind",
+        "project id",
+        "time bounds",
+        "limit/offset"
+      ],
+      "outputs": [
+        "MemorySearchResult",
+        "source refs and relationship context"
+      ],
+      "persistence": [
+        "memory FTS/index projections"
+      ],
+      "apis": [
+        "GET /api/memory/search",
+        "GET /api/memory/recall"
+      ],
+      "configuration": [
+        "result limit",
+        "project/time filters"
+      ],
+      "dependencies": [
+        "SQLite",
+        "principal read permission",
+        "source repositories"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Memory search is read-only evidence selection under principal permission; relevance never authorizes an action.",
+      "egress_possible": false,
+      "egress": "The search path returns local records; a caller may later use selected refs for model grounding.",
+      "side_effect": "none",
+      "authority": "PrincipalRight.READ is required; source rows retain their own lifecycle authority.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/db/memory.py",
+          "symbol": "MemoryRepository",
+          "line": 166,
+          "claim": "The repository owns indexed memory search and source row projections."
+        },
+        {
+          "path": "holdspeak/services/memory_service.py",
+          "symbol": "search",
+          "line": 18,
+          "claim": "MemoryService requires read permission and passes filters to the repository."
+        },
+        {
+          "path": "holdspeak/web/routes/memory.py",
+          "symbol": "build_memory_router",
+          "line": 1,
+          "claim": "The memory HTTP route module serves search and recall."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/integration/test_memory_retrieval.py",
+          "node": "test_cross_kind_route_requires_read_principal_and_returns_citable_hits",
+          "assertion": "Memory retrieval returns source records with relationship-aware context.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_mcp_phase133_coder_memory.py",
+          "node": "test_memory_search_dispatches",
+          "assertion": "The MCP memory family dispatches the query under the owner principal.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/AGENTS_AND_THREADS.md",
+        "docs/RELATIONSHIP_AWARE_MEMORY.md"
+      ],
+      "limitations": [
+        "No live DB was opened and result ranking was not observed.",
+        "Memory is not a semantic embedding claim."
+      ],
+      "failure_states": [
+        "read_forbidden",
+        "invalid_query",
+        "empty_result",
+        "index_missing"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "workflows.linear_run",
+      "name": "Linear Workflow run",
+      "purpose": "Run a validated linear workflow with frozen route evidence, child receipts and a retained artifact.",
+      "domain": "workflows",
+      "status": "experimental",
+      "status_reason": "Graph refusal, admitted child execution, cancellation and restart reconciliation are implemented and assertion-backed.",
+      "exposure": "user",
+      "surfaces": [
+        "Workflow editor",
+        "MCP workflow.run",
+        "iPad workflow client"
+      ],
+      "entry_points": [
+        "holdspeak/services/sequence_workflow_service.py::SequenceWorkflowService",
+        "holdspeak/web/routes/primitives/workflows.py::build_workflows_router",
+        "holdspeak/mcp/families/sequence.py::dispatch"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "supported_with_setup",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "workflow graph",
+        "input",
+        "variables",
+        "request id"
+      ],
+      "outputs": [
+        "parent receipt",
+        "child receipts",
+        "steps",
+        "artifact projection"
+      ],
+      "persistence": [
+        "workflow primitive",
+        "kernel parent/child rows",
+        "projection stage",
+        "artifact"
+      ],
+      "apis": [
+        "GET/POST /api/workflows",
+        "GET/PUT/DELETE /api/workflows/{workflow_id}",
+        "POST /api/workflows/{workflow_id}/run",
+        "POST /api/workflows/runs/{parent_operation_id}/cancel"
+      ],
+      "configuration": [
+        "node failure policy",
+        "runs_on placement",
+        "model route"
+      ],
+      "dependencies": [
+        "SequenceWorkflowService",
+        "kernel parent controller",
+        "projection stager"
+      ],
+      "model_requirements": [
+        "only model nodes require an admitted route"
+      ],
+      "network_requirements": [
+        "node-specific destination"
+      ],
+      "trust_boundary": "A parent run freezes all future routes before child admission; every child and the parent close with receipts.",
+      "egress_possible": true,
+      "egress": "Each model node uses its frozen destination; pure transform nodes stay local.",
+      "side_effect": "local_reversible",
+      "authority": "Authenticated principal, workflow definition and kernel parent context; cancellation fences late children.",
+      "kernel_operations": [
+        "workflow.run parent",
+        "workflow child",
+        "workflow receipt"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/services/sequence_workflow_service.py",
+          "symbol": "SequenceWorkflowService",
+          "line": 36,
+          "claim": "The service runs only trusted admitted children and stages a result artifact."
+        },
+        {
+          "path": "holdspeak/web/routes/primitives/workflows.py",
+          "symbol": "build_workflows_router",
+          "line": 16,
+          "claim": "The router exposes CRUD, run and cancel routes."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_workflow_graph.py",
+          "node": "test_linearize_refuses_branch",
+          "assertion": "Branching control flow is refused by linearization.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_sequence_workflow_runner_migration.py",
+          "node": "test_three_step_sequence_has_three_admitted_children_and_terminal_receipts",
+          "assertion": "A three-step run has three parent-linked succeeded child receipts.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_phase143_sequence_workflow_restart.py",
+          "node": "test_restart_reconstructs_the_same_frozen_sequence_node_attempt",
+          "assertion": "Restart reuses the same frozen route and operation plan.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/AGENTS_AND_THREADS.md",
+        "docs/ARCHITECTURE.md"
+      ],
+      "limitations": [
+        "No workflow provider was run.",
+        "Control-flow graphs are intentionally outside this linear runner."
+      ],
+      "failure_states": [
+        "unauthenticated",
+        "graph_not_linearizable",
+        "parent_route_missing",
+        "node_held",
+        "cancelled",
+        "indeterminate"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "coder.observation",
+      "name": "Coder session observation",
+      "purpose": "Show active Claude/Codex sessions and bounded, hash-gated pane output.",
+      "domain": "coder",
+      "status": "experimental",
+      "status_reason": "Session routes and bounded tmux observation are implemented; a live coder pane was not observed in this audit.",
+      "exposure": "user",
+      "surfaces": [
+        "Coder board",
+        "Companion board",
+        "MCP coder.get"
+      ],
+      "entry_points": [
+        "holdspeak/services/coder_service.py::CoderService.list_sessions",
+        "holdspeak/coder_steering.py::peek_pane",
+        "holdspeak/web/routes/system/coders.py::build_coders_router"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "best_effort",
+        "ipad": "best_effort",
+        "aipi": "best_effort"
+      },
+      "inputs": [
+        "session records",
+        "pane key",
+        "last content hash"
+      ],
+      "outputs": [
+        "session status",
+        "waiting state",
+        "bounded lines",
+        "content hash"
+      ],
+      "persistence": [
+        "coder session/steering audit rows"
+      ],
+      "apis": [
+        "GET /api/coders/status",
+        "GET /api/coders/sessions",
+        "GET /api/coders/{key}/peek",
+        "GET /api/coders/relay/{node}/peek"
+      ],
+      "configuration": [
+        "tmux availability",
+        "session stale age"
+      ],
+      "dependencies": [
+        "tmux",
+        "CoderService",
+        "session hooks"
+      ],
+      "model_requirements": [],
+      "network_requirements": [
+        "hub transport for remote companion"
+      ],
+      "trust_boundary": "Observation reads a bounded terminal projection; it does not grant process input or effect authority.",
+      "egress_possible": false,
+      "egress": "Pane observation is local to the Coder host; companion transport may carry the bounded projection to an authenticated client.",
+      "side_effect": "none",
+      "authority": "Read access to the authenticated Coder session and pane identity; no keystroke authority is implied.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/coder_steering.py",
+          "symbol": "peek_pane",
+          "line": 136,
+          "claim": "peek_pane strips ANSI, caps output and returns typed pane states."
+        },
+        {
+          "path": "holdspeak/services/coder_service.py",
+          "symbol": "list_sessions",
+          "line": 35,
+          "claim": "CoderService lists filtered live/ended session projections."
+        },
+        {
+          "path": "holdspeak/web/routes/system/coders.py",
+          "symbol": "build_coders_router",
+          "line": 71,
+          "claim": "The Coder router serves status, sessions and board routes."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_coder_steering.py",
+          "node": "test_peek_hash_gate_answers_not_modified_without_a_body",
+          "assertion": "An unchanged content hash returns not_modified without lines.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_coder_steering.py",
+          "node": "test_peek_dead_pane_is_pane_gone_not_an_exception",
+          "assertion": "A missing pane returns pane_gone data.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/CODER_INTEGRATION.md",
+        "docs/AGENT_HOOK_INSTALL.md"
+      ],
+      "limitations": [
+        "No real tmux pane, hook or owner Coder session was used.",
+        "Observation is bounded and may omit full transcript context."
+      ],
+      "failure_states": [
+        "tmux_absent",
+        "pane_gone",
+        "timeout",
+        "stale_session",
+        "not_modified"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "coder.reply_and_draft",
+      "name": "Coder reply and draft",
+      "purpose": "Draft, keep, edit and explicitly deliver a reply to one verified Coder process target.",
+      "domain": "coder",
+      "status": "experimental",
+      "status_reason": "Draft persistence, pane generation checks, scoped delivery and audits are source-present and assertion-backed.",
+      "exposure": "user",
+      "surfaces": [
+        "Coder pullout",
+        "iPad Coder board",
+        "AIPI spoken reply"
+      ],
+      "entry_points": [
+        "holdspeak/services/coder_service.py::CoderService.reply",
+        "holdspeak/coder_steering.py::deliver",
+        "holdspeak/coder_steering.py::deliver_keys"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "best_effort",
+        "ipad": "best_effort",
+        "aipi": "best_effort"
+      },
+      "inputs": [
+        "reviewed text",
+        "agent:session key",
+        "expected pane generation",
+        "submit flag"
+      ],
+      "outputs": [
+        "delivered process input",
+        "steering audit",
+        "kept Note"
+      ],
+      "persistence": [
+        "steering audit",
+        "Note when kept"
+      ],
+      "apis": [
+        "POST /api/coders/{key}/steer",
+        "POST /api/coders/{key}/keep-note",
+        "POST /api/coders/{key}/keys",
+        "POST /api/coders/{key}/arm",
+        "POST /api/coders/{key}/disarm"
+      ],
+      "configuration": [
+        "scoped grant TTL",
+        "control posture",
+        "target pane identity"
+      ],
+      "dependencies": [
+        "tmux",
+        "CoderService",
+        "operation policy",
+        "authenticated owner"
+      ],
+      "model_requirements": [
+        "optional model draft; explicit Send remains separate"
+      ],
+      "network_requirements": [
+        "hub/companion transport when remote"
+      ],
+      "trust_boundary": "Only the owner Send or matching bounded grant can write to the verified process pane; a draft has no process effect.",
+      "egress_possible": true,
+      "egress": "Text crosses to the selected local or remote Coder process as process.input after target verification.",
+      "side_effect": "local_irreversible",
+      "authority": "Owner gesture or scoped grant, exact pane id and expected generation; stale panes refuse before typing.",
+      "kernel_operations": [
+        "process.input",
+        "coder steering receipt"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/coder_steering.py",
+          "symbol": "deliver",
+          "line": 653,
+          "claim": "The delivery seam checks grant/posture, target identity and audits the result."
+        },
+        {
+          "path": "holdspeak/services/coder_service.py",
+          "symbol": "reply",
+          "line": 83,
+          "claim": "CoderService exposes reply as a service operation."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_coder_steering_deliver.py",
+          "node": "test_recycled_pane_refuses_revokes_audits_and_types_nothing",
+          "assertion": "A recycled pane refuses, revokes and sends no keystrokes.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_coder_steering_live.py",
+          "node": "test_live_keep_as_note_creates_a_real_openable_note",
+          "assertion": "A live keep operation creates an openable Note containing the coder prompt.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/CODER_INTEGRATION.md"
+      ],
+      "limitations": [
+        "No process input was sent for this audit.",
+        "The source does not prove a specific Coder client is installed."
+      ],
+      "failure_states": [
+        "unarmed",
+        "pane_identity_required",
+        "pane_mismatch",
+        "transport_error",
+        "empty_text",
+        "grant_expired"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "coder.gate",
+      "name": "Coder Gate held tool call",
+      "purpose": "Hold a matched risky Coder tool call for owner decision with bounded previews, idempotency and fail-closed recovery.",
+      "domain": "coder",
+      "status": "experimental",
+      "status_reason": "Agent hook, hub state machine, bounded previews, expiry and restart invalidation are implemented and assertion-backed; no armed hook was run here.",
+      "exposure": "operator",
+      "surfaces": [
+        "Gate shade",
+        "Claude Code PreToolUse hook",
+        "Gate audit"
+      ],
+      "entry_points": [
+        "holdspeak/coder_gate.py::run_hook",
+        "holdspeak/coder_gate.py::gate_matches",
+        "holdspeak/db/gate.py::GateProposalRepository",
+        "holdspeak/web/routes/system/gate_routes.py::build_gate_router"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "best_effort",
+        "ipad": "best_effort",
+        "aipi": "best_effort"
+      },
+      "inputs": [
+        "tool name",
+        "cwd",
+        "tool_use_id",
+        "argument hash and potentially sensitive prefix",
+        "agent credential"
+      ],
+      "outputs": [
+        "allow/deny hook decision",
+        "proposal state",
+        "gate audit",
+        "usage receipt"
+      ],
+      "persistence": [
+        "gate_proposals",
+        "gate_audit",
+        "session_usage"
+      ],
+      "apis": [
+        "POST /api/gate/proposals",
+        "GET /api/gate/proposals/{proposal_id}",
+        "POST /api/gate/proposals/{proposal_id}/decide",
+        "POST /api/gate/proposals/{proposal_id}/receipt",
+        "GET /api/gate/audit",
+        "GET /api/gate/config"
+      ],
+      "configuration": [
+        "~/.holdspeak/gate.json",
+        "armed flag",
+        "repo/tool matcher",
+        "TTL"
+      ],
+      "dependencies": [
+        "Claude Code hook",
+        "agent principal",
+        "GateProposalRepository"
+      ],
+      "model_requirements": [],
+      "network_requirements": [
+        "loopback hub when armed"
+      ],
+      "trust_boundary": "SHA-256 plus a 120-character canonical JSON prefix reaches the hub. This is truncation, not secret removal: short inputs and prefix secrets can be retained. Held approval requests are invalidated at restart.",
+      "egress_possible": true,
+      "egress": "Gate controls whether the Coder process may perform its own tool egress; the Gate hook itself sends a bounded but potentially sensitive argument prefix to the hub.",
+      "side_effect": "local_irreversible",
+      "authority": "Double opt-in matcher, authenticated agent principal and owner decision; expiry, outage and restart deny.",
+      "kernel_operations": [
+        "gate proposal",
+        "agent tool child"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/coder_gate.py",
+          "symbol": "run_hook",
+          "line": 273,
+          "claim": "The hook has inert, bounded-preview, idempotent and fail-closed paths."
+        },
+        {
+          "path": "holdspeak/db/gate.py",
+          "symbol": "GateProposalRepository",
+          "line": 102,
+          "claim": "The repository owns legal transitions, idempotent arrivals and audit rows."
+        },
+        {
+          "path": "holdspeak/web/routes/system/gate_routes.py",
+          "symbol": "build_gate_router",
+          "line": 39,
+          "claim": "The hub serves proposal, decision, receipt and audit routes."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_coder_gate.py",
+          "node": "test_unarmed_hook_is_inert_no_network",
+          "assertion": "Unarmed matching does not contact the hub or create a proposal.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_coder_gate.py",
+          "node": "test_armed_hub_unreachable_denies_by_name",
+          "assertion": "An armed unreachable hub produces a named deny.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_gate_threat_model.py",
+          "node": "test_item3_toctou_args_swap_refused_and_original_revoked",
+          "assertion": "An idempotency-key argument swap refuses and invalidates the original hold.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_phase200_doc_claims.py",
+          "node": "test_registered_claim_matches_its_state",
+          "assertion": "The registered Gate claim confirms a short synthetic credential-like marker survives in the canonical JSON prefix; it disproves secret-removal semantics.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 19
+          }
+        }
+      ],
+      "docs": [
+        "docs/GATE.md",
+        "docs/CODER_INTEGRATION.md"
+      ],
+      "limitations": [
+        "No gate was armed, no agent credential issued and no real Coder call was held.",
+        "The default matcher covers Bash only."
+      ],
+      "failure_states": [
+        "inert",
+        "authentication_failed",
+        "hub_unreachable",
+        "http_refused",
+        "expired",
+        "invalidated",
+        "args_mismatch"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "integration.activity_connectors",
+      "name": "Activity connector packs",
+      "purpose": "Preview and run local-first activity connector packs with explicit permissions and scoped rows.",
+      "domain": "integrations",
+      "status": "experimental",
+      "status_reason": "Manifest validation, first-party/user discovery, permission gates and dry-run fixtures are implemented; no provider command ran.",
+      "exposure": "developer",
+      "surfaces": [
+        "Activity window",
+        "connector registry",
+        "dry-run preview"
+      ],
+      "entry_points": [
+        "holdspeak/connector_sdk.py::validate_manifest",
+        "holdspeak/connector_pack_loader.py::build_registry",
+        "holdspeak/activity_connector_preview.py::dry_run",
+        "holdspeak/connector_runtime.py::PermissionGate"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "best_effort",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "ConnectorManifest",
+        "activity rows",
+        "connector settings",
+        "user pack files"
+      ],
+      "outputs": [
+        "dry-run payload",
+        "annotations",
+        "meeting candidates",
+        "discovery errors"
+      ],
+      "persistence": [
+        "activity_records",
+        "activity_annotations",
+        "activity_meeting_candidates",
+        "connector_runs"
+      ],
+      "apis": [
+        "GET /api/activity/enrichment/connectors",
+        "PUT /api/activity/enrichment/connectors/{connector_id}",
+        "GET /api/activity/enrichment/connectors/{connector_id}/dry-run",
+        "GET /api/activity/enrichment/connectors/{connector_id}/runs",
+        "POST /api/activity/enrichment/pipelines/{pipeline_id}/run"
+      ],
+      "configuration": [
+        "~/.holdspeak/connector_packs",
+        "enabled flag",
+        "settings schema",
+        "permission manifest"
+      ],
+      "dependencies": [
+        "activity database",
+        "local CLI or loopback source when declared"
+      ],
+      "model_requirements": [],
+      "network_requirements": [
+        "only if manifest declares network permission"
+      ],
+      "trust_boundary": "First-party packs and user pack Python execute with user permissions; manifest permissions are checked before connector runtime effects.",
+      "egress_possible": true,
+      "egress": "CLI and loopback/outbound connector kinds may cross egress; dry-run does not.",
+      "side_effect": "local_reversible",
+      "authority": "Manifest permission gate plus persisted connector enablement; dry-run is mutation-free.",
+      "kernel_operations": [
+        "connector run"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/connector_sdk.py",
+          "symbol": "validate_manifest",
+          "line": 251,
+          "claim": "Manifest validation enforces ids, kinds, capabilities, CLI and network permissions."
+        },
+        {
+          "path": "holdspeak/connector_pack_loader.py",
+          "symbol": "build_registry",
+          "line": 279,
+          "claim": "Registry merges first-party and user packs while reporting errors."
+        },
+        {
+          "path": "holdspeak/activity_connector_preview.py",
+          "symbol": "dry_run",
+          "line": 97,
+          "claim": "Dry-run builds bounded planned output without enrichment mutation."
+        },
+        {
+          "path": "holdspeak/connector_runtime.py",
+          "symbol": "PermissionGate",
+          "line": 115,
+          "claim": "Runtime checks declared shell, network, loopback and file permissions."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_connector_sdk.py",
+          "node": "test_validate_manifest_requires_network_perm_when_requires_network_true",
+          "assertion": "Network manifests without a network permission are rejected.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_connector_pack_loader.py",
+          "node": "test_build_registry_merges_first_party_and_user",
+          "assertion": "Registry includes first-party and a user pack with source labels.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_connector_fixture_harness.py",
+          "node": "test_fixture_dry_run_matches_expectation",
+          "assertion": "Dry-run fixtures match and leave annotations/candidates unchanged.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 6
+          }
+        }
+      ],
+      "docs": [
+        "docs/INTEGRATIONS.md",
+        "docs/CONNECTOR_DEVELOPMENT.md"
+      ],
+      "limitations": [
+        "No user pack or provider command was executed.",
+        "User packs are trusted in-process; sandboxing is not implemented."
+      ],
+      "failure_states": [
+        "manifest_invalid",
+        "id_collision_first_party",
+        "permission_denied",
+        "cli_unavailable",
+        "connector_disabled",
+        "dry_run_truncated"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "integration.github_readonly",
+      "name": "GitHub read-only activity",
+      "purpose": "Read imported GitHub PR/issue and CI activity through an allowlisted gh CLI.",
+      "domain": "integrations",
+      "status": "experimental",
+      "status_reason": "Read-only command allowlist and enrichment runner are implemented; gh installation/auth/provider reachability are unknown.",
+      "exposure": "integration",
+      "surfaces": [
+        "Activity enrichment",
+        "Project Watches",
+        "Coder PR context"
+      ],
+      "entry_points": [
+        "holdspeak/connector_packs/github_cli.py::is_command_allowed",
+        "holdspeak/activity_github.py::run_github_cli_enrichment",
+        "holdspeak/activity_github.py::github_cli_status"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "best_effort",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "local activity records",
+        "GitHub entity id",
+        "gh executable"
+      ],
+      "outputs": [
+        "activity annotations",
+        "typed snapshot data",
+        "CLI status"
+      ],
+      "persistence": [
+        "activity_annotations",
+        "connector_runs"
+      ],
+      "apis": [
+        "GET /api/activity/enrichment/github/preview",
+        "POST /api/activity/enrichment/github/run"
+      ],
+      "configuration": [
+        "gh path",
+        "timeout",
+        "max bytes",
+        "limit",
+        "connector enabled"
+      ],
+      "dependencies": [
+        "gh CLI",
+        "PermissionGate",
+        "GitHub auth outside HoldSpeak"
+      ],
+      "model_requirements": [],
+      "network_requirements": [
+        "GitHub network through gh"
+      ],
+      "trust_boundary": "Local gh subprocess is constrained to read-only argv prefixes before execution.",
+      "egress_possible": true,
+      "egress": "Read-only gh commands may send query metadata to GitHub; no write command is permitted by this pack.",
+      "side_effect": "external_reversible",
+      "authority": "Connector enabled state, manifest permissions, local gh auth and command allowlist.",
+      "kernel_operations": [
+        "connector enrichment"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/connector_packs/github_cli.py",
+          "symbol": "is_command_allowed",
+          "line": 78,
+          "claim": "Only pr view/list, issue view and run list prefixes are accepted."
+        },
+        {
+          "path": "holdspeak/activity_github.py",
+          "symbol": "run_github_cli_enrichment",
+          "line": 106,
+          "claim": "The enrichment runner plans and applies GitHub annotations under a principal."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_activity_github.py",
+          "node": "test_preview_github_cli_enrichment_plans_read_only_commands",
+          "assertion": "Mutating gh commands are rejected by the command policy.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_web_activity_api.py",
+          "node": "test_github_run_records_a_connector_run_row",
+          "assertion": "A GitHub connector run is recorded as a connector_runs row.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/INTEGRATIONS.md",
+        "docs/CONNECTOR_DEVELOPMENT.md"
+      ],
+      "limitations": [
+        "No gh process or network call was run.",
+        "GitHub write actions use separate opt-in actuators."
+      ],
+      "failure_states": [
+        "gh_missing",
+        "auth_missing",
+        "command_rejected",
+        "timeout",
+        "output_too_large",
+        "connector_disabled"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "integration.jira_confluence_calendar",
+      "name": "Jira, Confluence and calendar reads",
+      "purpose": "Read supported Jira/Confluence resources and derive calendar meeting candidates with explicit source boundaries.",
+      "domain": "integrations",
+      "status": "experimental",
+      "status_reason": "Separate read-only CLI packs, provider routes and local calendar candidate derivation exist; credentials and live provider state are unverified.",
+      "exposure": "integration",
+      "surfaces": [
+        "Project setup",
+        "Activity",
+        "Provider settings"
+      ],
+      "entry_points": [
+        "holdspeak/connector_packs/acli_jira.py::is_command_allowed",
+        "holdspeak/connector_packs/acli_confluence.py::is_command_allowed",
+        "holdspeak/connector_packs/calendar_activity.py::run",
+        "holdspeak/services/jira_provider.py::JiraProviderAdapter"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "best_effort",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "provider connection metadata",
+        "local activity records",
+        "acli/jira CLI"
+      ],
+      "outputs": [
+        "provider discovery projections",
+        "activity annotations",
+        "meeting candidates"
+      ],
+      "persistence": [
+        "provider connections",
+        "activity annotations",
+        "activity_meeting_candidates",
+        "connector runs"
+      ],
+      "apis": [
+        "GET /api/providers/jira/connections",
+        "POST /api/providers/jira/connections",
+        "GET /api/providers/confluence/connections",
+        "POST /api/providers/jira/connections/{ref}/recheck",
+        "POST /api/providers/confluence/connections/{ref}/recheck",
+        "GET /api/activity/enrichment/jira/preview",
+        "POST /api/activity/enrichment/jira/run",
+        "GET /api/calendar/events"
+      ],
+      "configuration": [
+        "site/email metadata",
+        "CLI path",
+        "timeout and byte caps",
+        "calendar source"
+      ],
+      "dependencies": [
+        "acli or jira CLI",
+        "provider auth",
+        "local activity ledger"
+      ],
+      "model_requirements": [],
+      "network_requirements": [
+        "provider CLI network for Jira/Confluence",
+        "none for calendar candidate derivation"
+      ],
+      "trust_boundary": "Jira/Confluence packs only admit read-only command prefixes; calendar candidates derive from local rows and do not contact a provider.",
+      "egress_possible": true,
+      "egress": "Atlassian CLI reads may cross to Atlassian; calendar pack has no network requirement.",
+      "side_effect": "external_reversible",
+      "authority": "Manifest permission gate and configured provider auth; candidate derivation writes only local candidate rows.",
+      "kernel_operations": [
+        "provider read",
+        "candidate derivation"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/connector_packs/acli_jira.py",
+          "symbol": "is_command_allowed",
+          "line": 51,
+          "claim": "The acli Jira pack admits auth status/switch and project/workitem read prefixes."
+        },
+        {
+          "path": "holdspeak/connector_packs/acli_confluence.py",
+          "symbol": "is_command_allowed",
+          "line": 53,
+          "claim": "The Confluence pack admits space/page/blog reads and refuses writes."
+        },
+        {
+          "path": "holdspeak/connector_packs/calendar_activity.py",
+          "symbol": "run",
+          "line": 35,
+          "claim": "Calendar pack reads activity records and persists derived candidates without network."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_activity_jira.py",
+          "node": "test_preview_jira_cli_enrichment_plans_read_only_commands",
+          "assertion": "Mutating Jira CLI verbs are rejected.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_hs174_confluence_wire.py",
+          "node": "test_page_create_rejected",
+          "assertion": "Confluence wire uses the read-only pack boundary.",
+          "execution": "not_run"
+        },
+        {
+          "path": "tests/unit/test_activity_connector_preview.py",
+          "node": "test_dry_run_calendar_emits_proposed_candidates",
+          "assertion": "Calendar connector dry run returns its uniform preview shape.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/INTEGRATIONS.md",
+        "docs/PROJECT_ROOMS.md"
+      ],
+      "limitations": [
+        "GitLab and Reaches were not found in this bounded source inventory.",
+        "No provider auth or network operation was run."
+      ],
+      "failure_states": [
+        "provider_unknown",
+        "auth_failed",
+        "cli_missing",
+        "command_rejected",
+        "candidate_empty",
+        "candidate_duplicate"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "integration.actuators",
+      "name": "Approval-gated external actuators",
+      "purpose": "Turn reviewed text or artifacts into owner-authorized GitHub, Slack or webhook effects with receipts.",
+      "domain": "integrations",
+      "status": "experimental",
+      "status_reason": "Proposal validation, idempotency, authority parity, grants, connector execution and terminal receipts are implemented and assertion-backed.",
+      "exposure": "user",
+      "surfaces": [
+        "Desk actuator card",
+        "companion proposal",
+        "meeting aftercare"
+      ],
+      "entry_points": [
+        "holdspeak/services/actuator_service.py::ActuatorProposalService",
+        "holdspeak/plugins/actuator_executor.py::ActuatorExecutor",
+        "holdspeak/web/routes/desk_actuators.py::build_desk_actuators_router"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "best_effort",
+        "aipi": "best_effort"
+      },
+      "inputs": [
+        "reviewed text",
+        "source ref",
+        "destination config",
+        "decision/grant"
+      ],
+      "outputs": [
+        "proposal",
+        "external result",
+        "terminal receipt",
+        "audit"
+      ],
+      "persistence": [
+        "actuator proposals",
+        "authority binding",
+        "grant use",
+        "receipt"
+      ],
+      "apis": [
+        "GET /api/desk/actuators/status",
+        "POST /api/desk/actuators/github/propose",
+        "POST /api/desk/actuators/github/{proposal_id}/decision",
+        "POST /api/desk/actuators/slack/propose",
+        "POST /api/desk/actuators/slack/{proposal_id}/decision",
+        "POST /api/desk/actuators/webhook/propose",
+        "POST /api/desk/actuators/webhook/{proposal_id}/decision"
+      ],
+      "configuration": [
+        "Slack/webhook URL",
+        "companion GitHub repo",
+        "control mode",
+        "actuator allow-list"
+      ],
+      "dependencies": [
+        "ActuatorProposalService",
+        "ActuatorExecutor",
+        "kernel operation broker",
+        "destination connector"
+      ],
+      "model_requirements": [],
+      "network_requirements": [
+        "destination-specific only after egress admission"
+      ],
+      "trust_boundary": "The stored preview, payload and authority hashes are recomputed immediately before a connector can cross egress.",
+      "egress_possible": true,
+      "egress": "Approved GitHub issue/comment, Slack webhook or configured HTTP webhook; destination URL and credentials stay out of responses.",
+      "side_effect": "external_irreversible",
+      "authority": "Owner decision or matching bounded control posture/grant, plus master and allow-list policy and authority parity.",
+      "kernel_operations": [
+        "actuator effect",
+        "external receipt"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/services/actuator_service.py",
+          "symbol": "ActuatorProposalService",
+          "line": 15,
+          "claim": "The service validates source/destination and records idempotent proposals."
+        },
+        {
+          "path": "holdspeak/plugins/actuator_executor.py",
+          "symbol": "ActuatorExecutor",
+          "line": 56,
+          "claim": "The executor gates status/policy/authority, invokes a connector and records terminal status."
+        },
+        {
+          "path": "holdspeak/web/routes/desk_actuators.py",
+          "symbol": "build_desk_actuators_router",
+          "line": 20,
+          "claim": "Desk routes expose concrete GitHub, Slack and webhook proposal/decision paths."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_actuator_executor.py",
+          "node": "test_any_authority_change_aborts_to_failed_no_call",
+          "assertion": "Authority drift fails before connector invocation and audits no side effect.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 10
+          }
+        },
+        {
+          "path": "tests/integration/test_web_companion_slack.py",
+          "node": "test_approval_posts_the_preview_byte_equal",
+          "assertion": "Approval posts the exact preview body and returns an executed receipt.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_web_companion_webhook.py",
+          "node": "test_the_url_never_rides_a_response_or_broadcast",
+          "assertion": "Webhook URL/secret material is absent from responses and broadcasts.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/ACTUATOR_DEVELOPMENT.md",
+        "docs/INTEGRATIONS.md",
+        "docs/PLUGIN_AUTHORING.md"
+      ],
+      "limitations": [
+        "No external connector was called in this audit.",
+        "Actuator readiness depends on destination credentials and policy."
+      ],
+      "failure_states": [
+        "not_configured",
+        "rejected",
+        "unapproved",
+        "authority_mismatch",
+        "grant_mismatch",
+        "connector_error",
+        "indeterminate"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "companion.ipad_client",
+      "name": "iPad hub client",
+      "purpose": "Capture, review, import, approve and inspect HoldSpeak work from a typed native client.",
+      "domain": "companions",
+      "status": "built_unreleased",
+      "status_reason": "Swift client, RuntimeCore companion seams and provider tests are present; no signed distribution or owner observation was established.",
+      "exposure": "user",
+      "surfaces": [
+        "native iPad/iPhone Desk",
+        "Companion board"
+      ],
+      "entry_points": [
+        "apple/Sources/Providers/Desktop/HTTPDesktopClient.swift::HTTPDesktopClient",
+        "apple/Sources/RuntimeCore/Companion/VoiceNoteComposer.swift::VoiceNoteComposer",
+        "apple/Sources/RuntimeCore/Companion/CompanionBoard.swift::CompanionBoard"
+      ],
+      "platforms": {
+        "macos": "not_applicable",
+        "linux_x11": "not_applicable",
+        "linux_wayland": "not_applicable",
+        "ipad": "supported_with_setup",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "audio",
+        "edited text",
+        "meeting import file",
+        "proposal decision",
+        "hub URL/token"
+      ],
+      "outputs": [
+        "remote dictation request",
+        "meeting review",
+        "Coder board action",
+        "proposal decision"
+      ],
+      "persistence": [
+        "local SQLite projection",
+        "hub-authoritative records and receipts"
+      ],
+      "apis": [
+        "POST /api/dictation/remote",
+        "POST /api/meetings/import",
+        "GET /api/meetings",
+        "GET /api/coders/status",
+        "GET /api/activity/nudges"
+      ],
+      "configuration": [
+        "paired hub URL",
+        "Bearer token",
+        "device timeout",
+        "local model/keychain"
+      ],
+      "dependencies": [
+        "Swift 6 package",
+        "hub HTTP/WebSocket routes",
+        "iOS 17 floor"
+      ],
+      "model_requirements": [
+        "optional on-device transcription/model"
+      ],
+      "network_requirements": [
+        "LAN/Tailscale/HTTPS hub reachability"
+      ],
+      "trust_boundary": "The native client is an authenticated authoring port; canonical state, authority and effect receipts remain hub-owned.",
+      "egress_possible": true,
+      "egress": "Reviewed text and proposal decisions cross to the hub; any external effect still uses hub-side actuator policy.",
+      "side_effect": "external_reversible",
+      "authority": "Bearer authenticates the client; explicit Send/decision and hub operation policy authorize effects.",
+      "kernel_operations": [
+        "remote dictation",
+        "meeting proposal decision",
+        "coder reply"
+      ],
+      "sources": [
+        {
+          "path": "apple/Sources/Providers/Desktop/HTTPDesktopClient.swift",
+          "symbol": "HTTPDesktopClient",
+          "line": 71,
+          "claim": "The typed native client owns base URL, bearer header, timeout, runtime and companion route calls."
+        },
+        {
+          "path": "apple/Sources/RuntimeCore/Companion/VoiceNoteComposer.swift",
+          "symbol": "VoiceNoteComposer",
+          "line": 30,
+          "claim": "VoiceNoteComposer captures, transcribes, edits and sends reviewed text."
+        },
+        {
+          "path": "apple/Sources/RuntimeCore/Companion/CompanionBoard.swift",
+          "symbol": "CompanionBoard",
+          "line": 15,
+          "claim": "CompanionBoard loads/selects/dismisses/pins Coder targets through the client."
+        }
+      ],
+      "tests": [
+        {
+          "path": "apple/Tests/ProvidersTests/DictationClientTests.swift",
+          "node": "testDryRunDecodesRealServerShape",
+          "assertion": "Decodes a fixture with the server dry-run target and final_text fields.",
+          "execution": "not_run"
+        },
+        {
+          "path": "apple/Tests/RuntimeCoreTests/CompanionBoardTests.swift",
+          "node": "testSelectMakesTheTargetActive",
+          "assertion": "Uses a mocked desktop client and refreshes the active target after select.",
+          "execution": "not_run"
+        }
+      ],
+      "docs": [
+        "docs/IPAD.md",
+        "apple/README.md",
+        "docs/COMPANIONS_ARCHITECTURE.md"
+      ],
+      "limitations": [
+        "No signed app, device, network, import, model or owner walk was observed.",
+        "Release distribution remains unverified."
+      ],
+      "failure_states": [
+        "offline",
+        "malformed_peer",
+        "http_error",
+        "malformed_payload",
+        "hub_auth_refused",
+        "receipt_unknown"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unreleased",
+      "owner_observed": false
+    },
+    {
+      "id": "companion.aipi_audio_control",
+      "name": "AIPI-Lite audio and control companion",
+      "purpose": "Forward device audio and expose meeting/status/Coder controls through a separate bridge.",
+      "domain": "companions",
+      "status": "experimental",
+      "status_reason": "Firmware, bridge, protocol contracts and focused tests are present; hardware and network execution were not observed.",
+      "exposure": "user",
+      "surfaces": [
+        "AIPI-Lite device",
+        "bridge",
+        "LCD/status"
+      ],
+      "entry_points": [
+        "aipi-lite/bridge/holdspeak.py::HoldSpeakLeg",
+        "aipi-lite/bridge/audio.py::synth_sine_pcm",
+        "aipi-lite/holdspeak_proto.py::Hello"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "not_applicable",
+        "aipi": "supported_with_setup"
+      },
+      "inputs": [
+        "device audio chunks",
+        "button gestures",
+        "hub status"
+      ],
+      "outputs": [
+        "hub audio frames",
+        "meeting controls",
+        "LCD status",
+        "Coder reply input"
+      ],
+      "persistence": [
+        "bridge settings and local protocol state"
+      ],
+      "apis": [
+        "device bridge protocol; hub endpoints configured by bridge"
+      ],
+      "configuration": [
+        "HOLDSPEAK_PORT",
+        "HOLDSPEAK_PSK",
+        "Wi-Fi/hotspot/VPN",
+        "ESPHome secrets"
+      ],
+      "dependencies": [
+        "ESPHome firmware",
+        "aioesphomeapi",
+        "separate bridge environment",
+        "hub"
+      ],
+      "model_requirements": [
+        "hub transcription/model route only"
+      ],
+      "network_requirements": [
+        "controlled LAN/hotspot/VPN/private tunnel"
+      ],
+      "trust_boundary": "The device and bridge carry audio/control messages; the hub remains the authenticated authority for model work and process effects.",
+      "egress_possible": true,
+      "egress": "Audio/control crosses the owner-controlled bridge path; a Coder reply crosses the hub's verified process-input boundary.",
+      "side_effect": "external_reversible",
+      "authority": "PSK authenticates bridge transport; explicit device gesture and hub operation policy authorize effects.",
+      "kernel_operations": [
+        "meeting control",
+        "remote audio",
+        "coder process input"
+      ],
+      "sources": [
+        {
+          "path": "aipi-lite/bridge/holdspeak.py",
+          "symbol": "HoldSpeakLeg",
+          "line": 44,
+          "claim": "The AIPI bridge maintains the device WebSocket leg and heartbeat/control loops."
+        },
+        {
+          "path": "aipi-lite/bridge/audio.py",
+          "symbol": "synth_sine_pcm",
+          "line": 40,
+          "claim": "The bridge has deterministic local PCM generation for audio tests."
+        },
+        {
+          "path": "aipi-lite/holdspeak_proto.py",
+          "symbol": "Hello",
+          "line": 26,
+          "claim": "Protocol models define the device handshake shape."
+        }
+      ],
+      "tests": [
+        {
+          "path": "aipi-lite/tests/test_protocol_sync.py",
+          "node": "test_hello_round_trip_validates_on_holdspeak",
+          "assertion": "The Hello frame round trips through the HoldSpeak protocol validator.",
+          "execution": "not_run"
+        },
+        {
+          "path": "aipi-lite/tests/test_reconnect.py",
+          "node": "test_backoff_caps_at_last_schedule_entry",
+          "assertion": "Reconnect backoff caps at the final schedule entry.",
+          "execution": "not_run"
+        }
+      ],
+      "docs": [
+        "docs/AIPI_LITE.md",
+        "docs/AIPI_LITE_DEV_WORKFLOW.md"
+      ],
+      "limitations": [
+        "No device flash, bridge process, Wi-Fi, audio or Coder reply was run.",
+        "Hardware availability and firmware distribution are unknown."
+      ],
+      "failure_states": [
+        "psk_missing",
+        "bridge_unreachable",
+        "hub_auth_refused",
+        "audio_format_error",
+        "device_api_unavailable",
+        "stale_coder_target",
+        "receipt_unknown"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "companion.qlippy_presence",
+      "name": "Qlippy presence",
+      "purpose": "Reflect selected attention states and egress posture through the optional mascot surface.",
+      "domain": "companions",
+      "status": "experimental",
+      "status_reason": "Bundled sprites and presence integration are source-present; optional enablement and owner observation were not established.",
+      "exposure": "user",
+      "surfaces": [
+        "native presence",
+        "web companion",
+        "Qlippy cards"
+      ],
+      "entry_points": [
+        "web/src/components/AmbientLayer.tsx::Qlippy"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "best_effort",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "runtime state",
+        "actuator proposed/result events",
+        "learning/follow-up attention"
+      ],
+      "outputs": [
+        "mascot glyph",
+        "projection review or learning card"
+      ],
+      "persistence": [
+        "none; event/projection state only"
+      ],
+      "apis": [
+        "RuntimeBus presence events"
+      ],
+      "configuration": [
+        "presence mascot mode",
+        "optional enablement"
+      ],
+      "dependencies": [
+        "bundled local assets",
+        "presence event projection"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Qlippy presents state and egress facts; dismissing a card never authorizes an effect.",
+      "egress_possible": false,
+      "egress": "Assets are bundled without a third-party CDN dependency. A remote browser fetches the hub over its configured connection; local bundling does not mean no network transport.",
+      "side_effect": "local_reversible",
+      "authority": "Projection review navigates to the source. A conditional decision handler delegates approval/rejection to the backend; its actuator-card branch is not fed by the current non-learning event path. Dismiss changes only local cards.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "web/src/components/AmbientLayer.tsx",
+          "symbol": "Qlippy",
+          "line": 196,
+          "claim": "Settings gate the component; runtime events refresh durable projections or queue learning cards. The projection action navigates to its source."
+        },
+        {
+          "path": "web/public/qlippy/README.md",
+          "symbol": "module",
+          "line": 1,
+          "claim": "Asset provenance and sprite inventory; this is not proof the current component renders those sprites."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/integration/test_web_companion_slack.py",
+          "node": "test_the_wire_events_ride_for_qlippy",
+          "assertion": "Actuator proposed/result events include preview-only data suitable for Qlippy without payload secrets.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/integration/test_presence_qlippy_shell.py",
+          "node": "test_qlippy_is_react_owned_and_never_autonomous",
+          "assertion": "A static-source test checks the Qlippy function, subscription, event/action labels, apiFetch and useEffect strings. It does not exercise reachable approval behavior.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/COMPANIONS_ARCHITECTURE.md",
+        "web/public/qlippy/README.md"
+      ],
+      "limitations": [
+        "No native overlay, web card or owner observation was run.",
+        "Presence state coverage is event-dependent.",
+        "The component renders a glyph; bundled sprite presence does not establish sprite use. The conditional actuator-card branch is not evidence of reachable inline approval in the current projection path."
+      ],
+      "failure_states": [
+        "asset_missing",
+        "presence_unreachable",
+        "state_unknown"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    }
+  ],
+  "components": [],
+  "integrations": [
+    {
+      "id": "integration.connector_registry",
+      "name": "Connector registry",
+      "purpose": "Load first-party and trusted local user connector packs.",
+      "direction": "local_read_write",
+      "auth": "local user trust plus manifest permission gate",
+      "secrets": [
+        "user pack process permissions",
+        "provider CLI credentials outside HoldSpeak"
+      ],
+      "data": [
+        "manifest",
+        "activity rows",
+        "discovery errors"
+      ],
+      "authority": "build_registry and PermissionGate",
+      "failure": [
+        "import_failed",
+        "no_manifest",
+        "id_collision_first_party",
+        "permission_denied"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/connector_pack_loader.py",
+          "symbol": "build_registry",
+          "line": 279,
+          "claim": "Registry discovery merges first-party and user packs with structured errors."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_connector_pack_loader.py",
+          "node": "test_pack_that_raises_at_import_does_not_crash",
+          "assertion": "Import failure is reported without crashing discovery.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/INTEGRATIONS.md",
+        "docs/CONNECTOR_DEVELOPMENT.md"
+      ]
+    },
+    {
+      "id": "integration.github_read",
+      "name": "GitHub read connector",
+      "purpose": "Read GitHub activity through allowlisted gh commands.",
+      "direction": "outbound_read",
+      "auth": "local gh authentication",
+      "secrets": [
+        "gh credential outside HoldSpeak"
+      ],
+      "data": [
+        "PR/issue/CI identifiers and returned annotations"
+      ],
+      "authority": "connector enabled state, shell/network manifest permissions, allowlisted argv",
+      "failure": [
+        "gh missing",
+        "auth failure",
+        "timeout",
+        "output cap",
+        "command refused"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/connector_packs/github_cli.py",
+          "symbol": "MANIFEST",
+          "line": 94,
+          "claim": "GitHub pack declares read-only commands and shell/network permissions."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_activity_github.py",
+          "node": "test_preview_github_cli_enrichment_plans_read_only_commands",
+          "assertion": "Mutating gh command prefixes are rejected.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/INTEGRATIONS.md"
+      ]
+    },
+    {
+      "id": "integration.jira_confluence_read",
+      "name": "Jira and Confluence read connectors",
+      "purpose": "Read bounded Atlassian resources through CLI packs and provider adapters.",
+      "direction": "outbound_read",
+      "auth": "acli/jira CLI account or configured provider",
+      "secrets": [
+        "CLI/provider credentials held outside connector payloads"
+      ],
+      "data": [
+        "project, work item, space, page and blog read results"
+      ],
+      "authority": "read-only command allowlists and provider connection policy",
+      "failure": [
+        "CLI missing",
+        "auth failed",
+        "scope unknown",
+        "timeout",
+        "unsupported command"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/connector_packs/acli_jira.py",
+          "symbol": "MANIFEST",
+          "line": 71,
+          "claim": "The Jira acli pack declares read-only commands and no stored credentials."
+        },
+        {
+          "path": "holdspeak/connector_packs/acli_confluence.py",
+          "symbol": "MANIFEST",
+          "line": 73,
+          "claim": "The Confluence acli pack declares read-only commands and no stored credentials."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_hs174_confluence_wire.py",
+          "node": "test_page_create_rejected",
+          "assertion": "The Confluence wire uses the read-only connector boundary.",
+          "execution": "not_run"
+        }
+      ],
+      "docs": [
+        "docs/INTEGRATIONS.md"
+      ]
+    },
+    {
+      "id": "integration.calendar_local",
+      "name": "Calendar candidate derivation",
+      "purpose": "Derive meeting candidates from local activity rows.",
+      "direction": "local_read_write",
+      "auth": "local activity ledger",
+      "secrets": [],
+      "data": [
+        "calendar/video-call activity rows",
+        "candidate title/time/url"
+      ],
+      "authority": "calendar connector manifest; local candidate persistence",
+      "failure": [
+        "empty ledger",
+        "malformed record",
+        "candidate duplicate"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/connector_packs/calendar_activity.py",
+          "symbol": "run",
+          "line": 35,
+          "claim": "Calendar pack reads local rows and persists candidates without network."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_activity_connector_preview.py",
+          "node": "test_dry_run_calendar_emits_proposed_candidates",
+          "assertion": "Calendar connector dry run returns its uniform preview shape.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/INTEGRATIONS.md"
+      ]
+    },
+    {
+      "id": "integration.actuator_external",
+      "name": "External actuator lifecycle",
+      "purpose": "Execute approved GitHub, Slack or webhook proposals and return receipts.",
+      "direction": "outbound_and_receipt_return",
+      "auth": "configured destination plus owner/control posture",
+      "secrets": [
+        "Slack webhook",
+        "companion webhook",
+        "GitHub credential"
+      ],
+      "data": [
+        "approved preview-equivalent payload",
+        "external response metadata",
+        "receipt"
+      ],
+      "authority": "ActuatorExecutor authority binding, allow-list, grant and kernel admission",
+      "failure": [
+        "not approved",
+        "policy disabled",
+        "authority mismatch",
+        "grant revoked",
+        "connector error",
+        "timeout",
+        "non-2xx"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/actuator_executor.py",
+          "symbol": "execute",
+          "line": 91,
+          "claim": "Execution checks approval and authority before egress and records executed/failed state."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_actuator_executor.py",
+          "node": "test_connector_error_marks_failed_and_audits",
+          "assertion": "Connector error becomes failed and is audited.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/generated/test-execution.json",
+            "run": "full-python-suite",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/ACTUATOR_DEVELOPMENT.md",
+        "docs/INTEGRATIONS.md"
+      ]
+    },
+    {
+      "id": "integration.ipad_hub",
+      "name": "Native companion hub transport",
+      "purpose": "Provide typed iPad HTTP/WebSocket access to hub capabilities.",
+      "direction": "desk_to_http",
+      "auth": "Bearer token in HTTP header; holdspeak.v1 WebSocket protocol",
+      "secrets": [
+        "hub bearer token",
+        "device-local Keychain material"
+      ],
+      "data": [
+        "dictation text",
+        "meeting/import/proposal data",
+        "Coder board state"
+      ],
+      "authority": "Hub principal plus operation-specific owner gesture/policy",
+      "failure": [
+        "offline",
+        "malformed peer",
+        "HTTP error",
+        "malformed response",
+        "receipt unknown"
+      ],
+      "sources": [
+        {
+          "path": "apple/Sources/Providers/Desktop/HTTPDesktopClient.swift",
+          "symbol": "HTTPDesktopClient",
+          "line": 71,
+          "claim": "The native client constructs authenticated typed requests with timeout and WebSocket auth."
+        }
+      ],
+      "tests": [
+        {
+          "path": "apple/Tests/ProvidersTests/DesktopClientTests.swift",
+          "node": "testHandshakeReachableAndRuntimeReady",
+          "assertion": "StubProtocol health/runtime responses produce reachable, runtimeReady and detail state.",
+          "execution": "not_run"
+        }
+      ],
+      "docs": [
+        "docs/IPAD.md",
+        "docs/COMPANIONS_ARCHITECTURE.md"
+      ]
+    },
+    {
+      "id": "integration.aipi_bridge",
+      "name": "AIPI bridge transport",
+      "purpose": "Connect ESPHome audio and controls to the HoldSpeak hub.",
+      "direction": "desk_to_host",
+      "auth": "bridge PSK and configured hub transport",
+      "secrets": [
+        "HOLDSPEAK_PSK",
+        "ESPHome Wi-Fi/API secrets"
+      ],
+      "data": [
+        "audio chunks",
+        "button/control events",
+        "status"
+      ],
+      "authority": "PSK authenticates transport; hub operation policy authorizes effects",
+      "failure": [
+        "PSK missing",
+        "bridge unreachable",
+        "format mismatch",
+        "hub auth refusal",
+        "device offline"
+      ],
+      "sources": [
+        {
+          "path": "aipi-lite/bridge/holdspeak.py",
+          "symbol": "HoldSpeakLeg",
+          "line": 44,
+          "claim": "The bridge owns the device leg."
+        }
+      ],
+      "tests": [
+        {
+          "path": "aipi-lite/tests/test_protocol_sync.py",
+          "node": "test_hello_round_trip_validates_on_holdspeak",
+          "assertion": "The Hello frame round trips through the HoldSpeak protocol validator.",
+          "execution": "not_run"
+        }
+      ],
+      "docs": [
+        "docs/AIPI_LITE.md",
+        "docs/AIPI_LITE_DEV_WORKFLOW.md"
+      ]
+    }
+  ],
+  "domain_model": [],
+  "trust_boundaries": [
+    {
+      "id": "trust.thread_model",
+      "name": "Thread to model boundary",
+      "purpose": "Freeze and redact conversation material before a model route receives it.",
+      "from": "ThreadService",
+      "to": "admitted model destination",
+      "data": [
+        "frozen message path",
+        "grounding blocks",
+        "route plan"
+      ],
+      "compute": "model completion and bounded tool loop",
+      "authority": "owner principal, frozen route and tool decision",
+      "secrets": [
+        "provider credential remains at adapter boundary"
+      ],
+      "audit": [
+        "thread message",
+        "child operation receipt",
+        "turn receipt"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/services/thread_service.py",
+          "symbol": "_m1_redactor",
+          "line": 1850,
+          "claim": "Cloud-bound payloads redact People-sensitive content before model dispatch."
+        }
+      ],
+      "docs": [
+        "docs/AGENTS_AND_THREADS.md"
+      ]
+    },
+    {
+      "id": "trust.connector_runtime",
+      "name": "Connector runtime boundary",
+      "purpose": "Keep connector permissions explicit before subprocess, file, loopback or network effects.",
+      "from": "connector pack",
+      "to": "CLI, file or socket",
+      "data": [
+        "manifest-declared input and bounded output"
+      ],
+      "compute": "connector-specific read/derive operation",
+      "authority": "PermissionGate and enabled connector state",
+      "secrets": [
+        "provider credentials held by CLI or host"
+      ],
+      "audit": [
+        "connector run",
+        "warning/permission notes",
+        "output counts"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/connector_runtime.py",
+          "symbol": "PermissionGate",
+          "line": 115,
+          "claim": "Declared permissions gate subprocess, network, loopback and file reads."
+        }
+      ],
+      "docs": [
+        "docs/INTEGRATIONS.md",
+        "docs/CONNECTOR_DEVELOPMENT.md"
+      ]
+    },
+    {
+      "id": "trust.actuator_egress",
+      "name": "Actuator egress boundary",
+      "purpose": "Bind approved payload, destination and policy immediately before an external effect.",
+      "from": "approved actuator proposal",
+      "to": "GitHub, Slack or webhook",
+      "data": [
+        "stored preview-equivalent payload",
+        "destination binding"
+      ],
+      "compute": "connector HTTP/CLI effect",
+      "authority": "ActuatorExecutor and kernel operation admission",
+      "secrets": [
+        "destination credential or webhook URL"
+      ],
+      "audit": [
+        "proposal transition",
+        "authority hashes",
+        "terminal receipt"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/plugins/actuator_executor.py",
+          "symbol": "execute",
+          "line": 120,
+          "claim": "Authority parity is recomputed immediately before connector egress."
+        }
+      ],
+      "docs": [
+        "docs/ACTUATOR_DEVELOPMENT.md",
+        "docs/INTEGRATIONS.md"
+      ]
+    },
+    {
+      "id": "trust.companion_hub",
+      "name": "Companion to hub boundary",
+      "purpose": "Authenticate iPad/AIPI clients while preserving hub-owned authority and receipts.",
+      "from": "iPad or AIPI bridge",
+      "to": "HoldSpeak hub",
+      "data": [
+        "reviewed text",
+        "audio/control messages",
+        "status/projections"
+      ],
+      "compute": "hub service and operation broker",
+      "authority": "Bearer/PSK authentication plus owner gesture or bounded grant",
+      "secrets": [
+        "Bearer token",
+        "AIPI PSK",
+        "Keychain/device credentials"
+      ],
+      "audit": [
+        "request identity",
+        "operation receipt",
+        "sync state"
+      ],
+      "sources": [
+        {
+          "path": "apple/Sources/Providers/Desktop/HTTPDesktopClient.swift",
+          "symbol": "runtimeWebSocketRequest",
+          "line": 101,
+          "claim": "Native runtime WebSocket keeps bearer in the header and uses holdspeak.v1."
+        },
+        {
+          "path": "aipi-lite/bridge/settings.py",
+          "symbol": "Settings",
+          "line": 1,
+          "claim": "AIPI bridge settings module owns bridge configuration inputs."
+        }
+      ],
+      "docs": [
+        "docs/COMPANIONS_ARCHITECTURE.md",
+        "docs/IPAD.md",
+        "docs/AIPI_LITE.md"
+      ]
+    }
+  ]
+}
