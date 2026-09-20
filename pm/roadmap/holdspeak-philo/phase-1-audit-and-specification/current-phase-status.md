@@ -35,7 +35,7 @@ Earlier Muad'Dib reviews remain historical planning evidence. No further Claude 
 | --- | --- | --- | --- | --- |
 | PHILO-1-01 | Reconcile the request and sources | done | [story-01-reconcile.md](story-01-reconcile.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-1-02 | Kernel, authority, storage and operations | done | [story-02-runtime.md](story-02-runtime.md) | [evidence-story-02](./evidence-story-02.md) |
-| PHILO-1-03 | Dictation, meetings and model execution | in-progress | [story-03-voice.md](story-03-voice.md) | - |
+| PHILO-1-03 | Dictation, meetings and model execution | done | [story-03-voice.md](story-03-voice.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-1-04 | Agents, integrations, companions and knowledge | in-progress | [story-04-integrations.md](story-04-integrations.md) | - |
 | PHILO-1-05 | Desk design specification and SRS | in-progress | [story-05-desk.md](story-05-desk.md) | - |
 | PHILO-1-06 | Registries, validation and repository skills | in-progress | [story-06-maintenance.md](story-06-maintenance.md) | - |
