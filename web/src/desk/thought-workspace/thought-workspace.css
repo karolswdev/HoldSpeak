@@ -299,12 +299,18 @@
   max-width: 100%;
 }
 
+/* Astra round 2 — the NAME is the thing the owner chooses by: it wraps to
+   as many lines as it needs and is never cut.  A hover title is no help on
+   a touch screen, so nothing here ellipsizes. */
 .desk-next .thought-reads-row .gadget-check-token-face {
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  height: auto;
+  min-height: 22px;
+  padding: 3px 8px;
   display: inline-block;
-  line-height: 20px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
 }
 
 .desk-next .thought-reads-error {
@@ -314,16 +320,19 @@
 
 /* ── Band 4: the foot ── */
 
-/* Astra finding 5 — a long context name must not push the verbs off the
-   glass: the READS token is the only slot that shrinks (its full text
-   rides its `title`), KEPT keeps a floor, the verbs keep their size. */
+/* Astra finding 5, corrected in round 2 — a long context name must not
+   push the verbs off the glass, AND it must stay readable: the READS slot
+   is the only one that gives width, and it WRAPS (two lines at narrow
+   width) instead of ellipsizing.  KEPT keeps its floor, the verbs keep
+   their size, and the foot grows by a line. */
 .desk-next .surface-footer-layout.thought-note-foot {
   grid-template-columns: minmax(0, 1fr) max-content max-content;
+  padding: 5px 0;
 }
 
 .desk-next .thought-note-foot .surface-footer-egress {
   min-width: 0;
-  flex-wrap: nowrap;
+  align-items: center;
 }
 
 .desk-next .thought-note-foot .surface-footer-receipt {
@@ -333,12 +342,14 @@
 
 .desk-next .thought-note-foot .thought-note-reads {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
 }
 
 .desk-next .surface-footer:has(.thought-note-foot) {
+  /* `auto` height: the foot grows by a line when the context name wraps. */
+  height: auto;
   min-height: 44px;
   padding: 0 12px;
 }

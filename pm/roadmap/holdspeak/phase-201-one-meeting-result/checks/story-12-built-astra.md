@@ -42,3 +42,32 @@ No live microphone, real-model or owner-desk verification. Full suites were not 
 All seven accepted; one fix round on the story's worker, proven on a real isolated hub, not mocks: the synthesis Add appends and reveals (never accept/replace); Finish re-reads the cursor after an unadded answer lands, then completes; Resume-instead-of-editable is accepted and the design text amended; the Change well gains a filter and the parking claims are corrected to the truth (original-capture disclosure and the portal picker have no owned-note route now, ledgered (a); the chained turn has no caller); the coordinator-unavailable state and the CHANGED ELSEWHERE recovery verb are made truthful; the foot and the open well never clip at either width, fenced, with a container query instead of a viewport query (UX-CANON D); the two lying doubles are replaced by real-hub assertions; the z-index lint and the doc drift are paid or classified. Merge only after CI reads clean against main.
 
 ## Round 2 — Astra
+
+VERDICT: RATIFY-WITH-CONDITIONS
+
+FINDINGS:
+
+1. **The two behavioral blockers are paid. Tenets 3, 7.** Synthesis appends through the writer; Finish uses the refreshed thought and cursor. The real-hub tests verify preserved title/body/tags and completed state without 409s. The red-then-green evidence supports closing both (b)s. Resume is now an honest, dated design amendment. [Evidence:234](/Users/karol/dev/tools/wt-201-thought/pm/roadmap/holdspeak/phase-201-one-meeting-result/evidence-story-12.md:234)
+
+2. **One part of the clipping finding remains. Tenets 3, 6.** Finish and KEPT now stay inside the window, but [long-context-open-well-393](/Users/karol/dev/tools/wt-201-thought/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-12-shots/long-context-open-well-393.png) hides the context name behind ellipses in both the chooser and READS. The chooser provides no full-name disclosure; the footer’s hover title does not resolve touch use. The test explicitly accepts ellipsis instead of proving readability ([rig:511](/Users/karol/dev/tools/wt-201-thought/tests/e2e/test_hs201_12_thought_note_glass.py:511)). This does not satisfy the recorded wrapping condition.
+
+3. **The remaining fixes and evidence are credible. Tenets 2, 3, 5.** Search, engine distinctions, conflict Reload, container queries and the token correction address their findings. Parking claims now state the actual removals. Captures show 2,645 web tests and ten glass tests passing. Documentation CI has passed; other checks remain running.
+
+CONDITIONS:
+
+**CI clean alone is insufficient.** Make full context names readable at 393—wrapping is sufficient—and replace the ellipsis-tolerant fence with a readability check. Then #592 may merge once CI is read against main with no unexplained regressions, and this counsel is recorded.
+
+MISSED:
+
+Keep ledgered: finding tomorrow’s note through the normal Desk route remains unproved; original-capture access, tags, default-context management and the chained turn remain explicitly unavailable from this thought flow. Do not count those as working elsewhere.
+
+TUESDAY:
+
+Yes, I would show the owner after-ask-1440 now. The note and optional question are clear.
+
+UNKNOWN:
+
+I reviewed the diff, captures and new shots; I did not rerun the hub tests this round. Live dictation, real-model behavior and the owner’s desk remain unverified. Tree unchanged.
+## Round 2 — Muad'Dib's ruling
+
+The residual is paid before the merge: context names wrap at 393 in the chooser and in READS, and the fence proves readability instead of tolerating an ellipsis. Ledger kept as Astra lists it: finding tomorrow's note through the normal Desk route is unproven here; original-capture access, tags, default-context management and the chained turn are unavailable from this flow and are not counted as working elsewhere. Under TWO-BRAINS §3 the lane owner rules after one round each: #592 merges on verification when CI reads clean against main, this record beside it. Astra would show the owner after-ask-1440 now; so would I.

@@ -88,6 +88,23 @@ def _no_horizontal_escape(page: Any) -> None:
     assert page.evaluate("document.body.scrollWidth <= innerWidth")
 
 
+def _squash(value: str) -> str:
+    return " ".join(value.split()).upper()
+
+
+def _reads_full(locator: Any, name: str) -> None:
+    """The whole name is ON the glass: no ellipsis, no hidden overflow."""
+    text = _squash(locator.inner_text())
+    assert _squash(name) in text, (name, text)
+    style = locator.evaluate(
+        "el => { const s = getComputedStyle(el); return {overflow: s.textOverflow, wrap: s.whiteSpace,"
+        " w: el.scrollWidth - el.clientWidth, h: el.scrollHeight - el.clientHeight}; }"
+    )
+    assert style["wrap"] not in ("nowrap", "pre"), style
+    assert style["w"] <= 1, style
+    assert style["h"] <= 1, style
+
+
 def _in_frame(box: dict[str, float] | None, window: dict[str, float], name: str) -> None:
     assert box, f"{name} has no box"
     assert box["y"] >= window["y"] - 1, (name, box, window)
@@ -506,10 +523,13 @@ def test_thought_note_long_context_and_open_well_never_clip(
             kept = workspace.locator(".thought-note-foot .surface-footer-receipt-line")
             kept_box = kept.bounding_box()
             assert kept_box and kept_box["width"] > 20, kept_box
-            # …the reads token truncates instead of widening the foot…
+            # …the whole context NAME is readable, at both widths: it wraps
+            # instead of ellipsizing (Astra round 2 — a hover title is no
+            # help on a touch screen), and nothing of it is cut off.
             reads = workspace.locator(".thought-note-reads")
-            assert reads.evaluate("el => el.scrollWidth <= el.clientWidth + 1 || getComputedStyle(el).textOverflow === 'ellipsis'")
-            assert LONG_CONTEXT[:40] in (reads.get_attribute("title") or "")
+            _reads_full(reads, LONG_CONTEXT)
+            token_face = well.locator("label.gadget-check-token .gadget-check-token-face").first
+            _reads_full(token_face, LONG_CONTEXT)
             # …and the OPEN well fits its own container at both widths.
             well_box = well.bounding_box()
             assert well_box and well_box["width"] <= window_box["width"] + 1, (well_box, window_box)
@@ -517,6 +537,20 @@ def test_thought_note_long_context_and_open_well_never_clip(
             _in_frame(well_box, window_box, "open well")
             _no_horizontal_escape(page)
             page.screenshot(path=str(SHOTS / f"long-context-open-well-{width}.png"), full_page=False)
+
+            # …and with the well closed, the ordinary face keeps the whole
+            # name readable in the foot, with the verbs in their places.
+            well.press("Escape")
+            assert page.get_by_role("region", name="What the AI reads").count() == 0
+            _reads_full(workspace.locator(".thought-note-reads"), LONG_CONTEXT)
+            window_box = workspace.bounding_box()
+            assert window_box
+            for name in ("Change", "Finish"):
+                _in_frame(workspace.get_by_role("button", name=name, exact=True).bounding_box(), window_box, name)
+            kept_box = workspace.locator(".thought-note-foot .surface-footer-receipt-line").bounding_box()
+            assert kept_box and kept_box["width"] > 20, kept_box
+            _no_horizontal_escape(page)
+            page.screenshot(path=str(SHOTS / f"long-context-{width}.png"), full_page=False)
             browser.close()
     finally:
         server.stop()

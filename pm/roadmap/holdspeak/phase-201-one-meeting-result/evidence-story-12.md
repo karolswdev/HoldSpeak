@@ -410,3 +410,77 @@ React architecture guard passed (792 source files; zero framework residue).
       Tests  2645 passed (2645)
 bundle gate passed (Desk JS 1306225 B; Desk CSS 315399 B; source maps 0)
 ```
+
+## Round 2 residual (Astra, 2026-09-20): the context NAME is readable at 393
+
+The name was hidden behind an ellipsis in both places, and a hover `title`
+is no help on a touch screen. Both now WRAP — the chooser row and the READS
+slot — and nothing of the name is cut at either width; KEPT and the verbs
+keep their places and the foot grows by a line:
+
+- `web/src/desk/thought-workspace/thought-workspace.css:305-316` — the
+  chooser token's face wraps (`white-space: normal`, `height: auto`,
+  `overflow-wrap: anywhere`); no `text-overflow` anywhere in this face.
+- `web/src/desk/thought-workspace/thought-workspace.css:325-348` — the
+  READS slot wraps instead of ellipsizing, the foot's height is `auto`,
+  KEPT keeps its 4ch floor, the verbs keep `max-content`.
+
+The ellipsis-tolerant assertion is replaced by a readability check that runs
+on BOTH the foot token and the chooser row, at both widths
+(`tests/e2e/test_hs201_12_thought_note_glass.py:95` `_reads_full`, called at
+`:530`, `:532` and `:545`): the full name is in the element's own
+`innerText`, its computed `white-space` is not `nowrap`, and neither
+`scrollWidth - clientWidth` nor `scrollHeight - clientHeight` exceeds 1px.
+
+Red first, with only the old ellipsis rule restored:
+
+```text
+>               _reads_full(reads, LONG_CONTEXT)
+>       assert style["wrap"] not in ("nowrap", "pre"), style
+E       AssertionError: {'h': 0, 'overflow': 'ellipsis', 'w': 699, 'wrap': 'nowrap'}
+E       assert 'nowrap' not in ('nowrap', 'pre')
+1 failed, 7 deselected in 9.34s
+```
+
+Re-shot at both widths: `long-context-open-well-{1440,393}.png` (the well
+open, the name whole in the chooser) and `long-context-{1440,393}.png` (the
+well closed, the name whole in the foot).
+
+### Captured run — 2026-09-20T17:16:58Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.IR603Wu92V PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run pytest -q tests/e2e/test_hs201_12_thought_note_glass.py tests/e2e/test_hs141_thought_workbench_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b4455dd31460bdd237cc8a3af9aa91eaa4d48b7a
+
+```text
+..........                                                               [100%]
+10 passed in 59.19s
+```
+
+### Captured run — 2026-09-20T17:18:14Z
+
+- **Command:** `bash -c cd web && npm run check 2>&1 | grep -E 'token gate|architecture guard|Test Files|  Tests |bundle gate' | tail -6`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b4455dd31460bdd237cc8a3af9aa91eaa4d48b7a
+
+```text
+token gate: clean (11 allow-listed exceptions, all in use)
+React architecture guard passed (792 source files; zero framework residue).
+ Test Files  279 passed (279)
+      Tests  2645 passed (2645)
+bundle gate passed (Desk JS 1306225 B; Desk CSS 315474 B; source maps 0)
+```
+
+### Captured run — 2026-09-20T17:19:50Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.zYnj4rzQHi uv run pytest -q tests/unit/test_ux_canon_ratchet.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b4455dd31460bdd237cc8a3af9aa91eaa4d48b7a
+
+```text
+....                                                                     [100%]
+4 passed in 0.61s
+```
