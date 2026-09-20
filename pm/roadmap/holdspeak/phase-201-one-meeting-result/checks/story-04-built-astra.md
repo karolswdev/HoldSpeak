@@ -36,3 +36,26 @@ UNKNOWN: Reviewed `c31a4da0` and all twelve committed shots; no tests or live de
 All eight accepted; one fix round on the story 04 worker (the tree's only worker; the overlapping full suite was stopped and will be re-run in a quiet tree): the displayed route is the request's route; the last executed receipt is retained beside a refusal; Review says NOT RUN after an analysis-only run and never EXTRACTED; the Chair receipt chip goes through the egress mapper and no constant chip stands in for a missing route; one filled primary per face; no `0 MIN`; one fact line on the refusal; the user-guide sentence made true; the batch-capture failure classified. Lane A's durable-receipt repair is in flight with Astra and integrates before the merge. PR #587's title and body are updated to name 04 and lane A.
 
 ## Round 2 — Astra
+
+VERDICT: RATIFY-WITH-CONDITIONS
+
+FINDINGS:
+
+1. **The route and receipt corrections hold — tenet 3.** The record and ledger pass their displayed route into the request ([HistoryCore.tsx:153](/Users/karol/dev/tools/wt-201-b/web/src/pages/cores/HistoryCore.tsx:153)). The deep-link fence exercises the missing-list-row case. The integrated capture shows the executed receipt retained beside a distinct, empty-attempt `last_refusal` ([evidence-story-04.md:638](/Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/evidence-story-04.md:638)). Reconciling the rig to that contract was correct.
+
+2. **The inspected first-use faces now tell the truth — tenets 3/4/6.** The committed shots show NOT RUN on Review, retained failed attempts beside the refusal, concise refusal wording, no `0 MIN`, and corrected primary treatment for the captured states. The guide correction and egress mapping also hold.
+
+3. **Verification provenance is candid — tenet 3, Article IX.** The original combined batch now reports 100 passing tests after fixing the singleton leak ([evidence-story-04.md:573](/Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/evidence-story-04.md:573)). The restore-loop mistake and replacement capture are explicitly recorded at :717. These support the focused claims, not full-suite success.
+
+4. **One primary-button residual remains — tenets 5/6.** [CatalogRail.tsx:158](/Users/karol/dev/tools/wt-201-b/web/src/pages/cores/history/CatalogRail.tsx:158) demotes only the selected row. A read-only probe of committed code with two unselected, summary-ready meetings produced **two primary Run summary buttons**. The new glass fixture has only one actionable row, so it misses this case.
+
+CONDITIONS: #587 can merge as the combined A+B delivery after completed quiet-tree and CI results establish zero unexplained branch regressions against main, **and finding 4 is fixed or explicitly dispositioned by Muad’Dib in the phase record**. Suite reading alone does not close that residual. Keep story 07 and the owner’s sitting open.
+
+MISSED: Ledger finding 4 under B/04; retain HS-170’s ineffective database patch, parked proposal follow-through and legacy automatic entry points, inherited failures and DW provenance debt. A’s receipt preservation, dispatch-exception reporting and inactive-live-analysis reporting are paid; stop listing them as outstanding.
+
+TUESDAY: Yes for the demonstrated record → summary → restart journey; multiple actionable meetings still compete visually.
+
+UNKNOWN: Full-suite/CI outcomes and the owner’s real sitting remain unverified. No suite rerun; the additional probe stubbed UI dependencies. Tree unchanged.
+## Round 2 — Muad'Dib's ruling
+
+Finding 4 is fixed, not dispositioned: in the ledger only the first actionable row carries the filled primary, fenced in vitest and measured on the glass with two summary-ready meetings. The rest of the ledger stands as Astra lists it (HS-170's ineffective patch, the parked proposal follow-through, legacy automatic entry points, inherited failures, DW provenance debt); lane A's three follow-ups are paid and leave the ledger. #587 merges as the combined A+B delivery once the quiet-tree suite and CI are read against main with zero unexplained branch regressions. Story 07 and the sitting stay open.

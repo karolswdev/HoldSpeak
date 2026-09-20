@@ -27,6 +27,31 @@ import {
 } from "./helpers";
 import type { ReactNode } from "react";
 
+/** HS-201-04 — true when this row would draw a verb that STARTS a summary
+ *  run: the verb is a run verb AND a route resolves for it. The rail uses
+ *  it to pick the ONE row that may carry the filled primary. */
+function rowStartsRun(row: Record<string, unknown>): boolean {
+  const verb = meetingRowState(row).verb;
+  if (verb !== "Run summary" && verb !== "Retry") return false;
+  return routeReady(readPlannedRoute(row));
+}
+
+/** The row that may wear the filled primary: the SELECTED row when it can
+ *  start a run, else the top-most row that can. Every other row's verb is
+ *  the default species (UX-CANON: one filled primary per window). */
+function leadRunRowId(
+  rows: Record<string, unknown>[],
+  selected: Record<string, unknown> | null,
+): string | null {
+  const selectedId = selected ? String(selected.id) : null;
+  if (selectedId) {
+    const row = rows.find((item) => String(item.id) === selectedId);
+    if (row && rowStartsRun(row)) return selectedId;
+  }
+  const first = rows.find(rowStartsRun);
+  return first ? String(first.id) : null;
+}
+
 /** Render a list of tokens joined by middle dots (U+00B7).
  *  Dots are sibling flex children for equal spacing on both sides. */
 function TokenLine({ parts }: { parts: ReactNode[] }) {
@@ -50,9 +75,12 @@ function MeetingStreamRow({
   runningId,
   drainerAbsent,
   refusal,
+  isLead,
 }: {
   row: Record<string, unknown>;
   isSelected: boolean;
+  /** HS-201-04 — the one row of the rail that may wear a filled primary. */
+  isLead: boolean;
   onSelect: () => void;
   onRunIntelligence: (id: string, route: PlannedRoute | null) => void;
   runningId: string | null;
@@ -151,11 +179,14 @@ function MeetingStreamRow({
   if ((verb === "Run summary" || verb === "Retry") && !canRun) {
     verb = null;
   }
-  // HS-201-04 (Astra's counsel finding 5; one filled primary per face):
-  // when this row's RECORD is open, the record carries the filled verb and
-  // the row's copy of it steps down to the default species. The rig counts
-  // `.btn--primary` inside the window and caught the pair.
-  if (isSelected && verbVariant === "primary") {
+  // HS-201-04 (Astra's counsel round 2; one filled primary per window).
+  // Two rules compose:
+  //   - only the LEAD row (the selected one when it can run, else the
+  //     top-most that can) may wear the filled species. Two summary-ready
+  //     meetings used to draw two filled `Run summary` verbs.
+  //   - and when that row's RECORD is open, the record carries the filled
+  //     verb, so the row's own copy steps down too.
+  if (verbVariant === "primary" && (!isLead || isSelected)) {
     verbVariant = "ghost";
   }
   // No transcript row: only ghost Open (no Run summary)
@@ -268,6 +299,7 @@ export function CatalogRail({
   /** When true, shown as the narrowed left side in SurfaceSplit. */
   narrowed?: boolean;
 }) {
+  const leadId = leadRunRowId(meetingRows, selected);
   return (
     <div className="meetings-stream" data-narrowed={narrowed || undefined}>
       <SurfaceState
@@ -292,6 +324,7 @@ export function CatalogRail({
                 setSelected(isOpen ? null : row);
               }}
               onRunIntelligence={onRunIntelligence}
+              isLead={leadId === String(row.id)}
               runningId={runningId}
               drainerAbsent={drainerAbsent}
               refusal={

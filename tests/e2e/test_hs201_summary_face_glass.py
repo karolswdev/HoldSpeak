@@ -141,11 +141,15 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
     # text, and text becomes a summary (glass_infra.seed_meeting_engines).
     seed_meeting_engines()
 
+    # Astra's counsel round 2: TWO summary-ready meetings, so the canon
+    # probe measures a rail that can draw more than one run verb. Only the
+    # lead row may wear the filled species.
+    spare_id = _record_fixture_meeting(monkeypatch)
     first_id = _record_fixture_meeting(monkeypatch)
     saved = db.meetings.get_meeting(first_id)
     assert saved is not None and saved.segments, "the fixture WAV produced no transcript"
     assert saved.intel is None, "recording must not run a summary"
-    print(f"RECORDED meeting={first_id} segments={len(saved.segments)}")
+    print(f"RECORDED meeting={first_id} spare={spare_id} segments={len(saved.segments)}")
 
     try:
         with sync_playwright() as pw:
@@ -449,19 +453,32 @@ def _assert_canon(page) -> None:
     """UX-CANON: one filled primary per face, and no counter of zero."""
     found = page.evaluate(
         """() => {
-            const out = {primaries: [], zeros: []};
+            const out = {primaries: [], zeros: [], runVerbs: []};
             for (const win of document.querySelectorAll('.desk-surface-window')) {
               for (const b of win.querySelectorAll('.btn--primary'))
                 out.primaries.push(b.textContent || '');
+              // How many run verbs the face offers at all: the probe must
+              // be measuring a rail that COULD draw more than one primary.
+              for (const b of win.querySelectorAll('.meetings-stream button')) {
+                const label = (b.textContent || '').trim();
+                if (label === 'Run summary' || label === 'Retry')
+                  out.runVerbs.push(label);
+              }
             }
             const body = document.body.innerText || '';
             for (const m of body.matchAll(/\b0 [A-Z]+\b/g)) out.zeros.push(m[0]);
             return out;
         }"""
     )
-    print(f"CANON primaries={found['primaries']} zeros={found['zeros']}")
+    print(
+        f"CANON primaries={found['primaries']} zeros={found['zeros']} "
+        f"run_verbs_in_rail={found['runVerbs']}"
+    )
     assert len(found["primaries"]) <= 1, found["primaries"]
     assert found["zeros"] == [], found["zeros"]
+    # The rail really does offer more than one run verb here, so the single
+    # primary above is the RULE working, not an empty face.
+    assert len(found["runVerbs"]) >= 2, found["runVerbs"]
 
 
 def _assert_facts_span_the_row(page) -> None:

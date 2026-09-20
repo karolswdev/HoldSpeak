@@ -1830,6 +1830,18 @@ function MeetingsSection({
   const sorted = [...meetings]
     .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
     .slice(0, 3);
+  // HS-201-04 (Astra's counsel round 2; one filled primary per face): the
+  // same rule the ledger keeps. Two summary-ready meetings on the arrival
+  // drew two filled `Run summary` verbs; only the top-most that can run
+  // wears the filled species.
+  const leadRunId =
+    sorted.find(
+      (m) =>
+        intelBadge(m.intelStatus) === "OFF" &&
+        m.transcriptWords != null &&
+        m.transcriptWords > 0 &&
+        routeReady(m.plannedRoute ?? null),
+    )?.id ?? null;
 
   return (
     <SurfaceSection label={countLabel("MEETINGS", sorted.length)}>
@@ -1907,7 +1919,7 @@ function MeetingsSection({
                     {/* UX-CANON A.11: withheld when nothing can run. */}
                     {canRun ? (
                       <Button
-                        variant="primary"
+                        variant={m.id === leadRunId ? "primary" : "ghost"}
                         dense
                         disabled={runningIntel === m.id}
                         onClick={() => onRunIntel(m.id, route)}

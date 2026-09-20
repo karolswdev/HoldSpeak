@@ -722,3 +722,123 @@ shots and one evidence capture to their committed versions. Nothing else
 was touched (it only walks `pm/roadmap`), and both were reproduced by
 re-running the rig and re-capturing. The loop now excludes this story's own
 directory and restores only OTHER phases' assets.
+
+### Captured run — 2026-09-20T02:40:42Z
+
+- **Command:** `bash -c cd web && npx vitest run src/pages/cores/history/__tests__/catalogRailOnePrimary.test.tsx src/meetings/__tests__/summaryRun.test.tsx src/pages/cores/__tests__/summaryDeepLink.test.tsx && npx tsc --noEmit`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 1fc5ee500e74a1ebcceb0f7999535266c48b3ed0
+
+```text
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-201-b/web
+
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Start at  20:40:43
+   Duration  1.02s (transform 744ms, setup 278ms, import 1.18s, tests 253ms, environment 887ms)
+```
+
+### Captured run — 2026-09-20T02:41:02Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.hC9fbfPYwY PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run pytest -q -s tests/e2e/test_hs201_summary_face_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 1fc5ee500e74a1ebcceb0f7999535266c48b3ed0
+
+```text
+RECORDED meeting=64e54f78 spare=81b29616 segments=1
+PLANNED host=same_device hash=sha256:412b165607862151b9b81d690ca0bb5dbd30b90b1c5b1210fa527b12251a09ff
+ROW 64e54f78 MeetingSEP 19 · OFFSEP 19·3 WORDS·OFFTHIS DEVICERun summary
+CANON primaries=['Run summary'] zeros=[] run_verbs_in_rail=['Run summary', 'Run summary']
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-before-run-1440.png
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-before-run-393.png
+RUN POST {'path': '/api/meetings/64e54f78/intelligence/run', 'body': '{"expected_selection_hash":"sha256:412b165607862151b9b81d690ca0bb5dbd30b90b1c5b1210fa527b12251a09ff"}'}
+RECEIPT {'attempts': [{'host': 'same_device', 'leg_ordinal': 1, 'operation_id': 'op_24caf14497b3479fa70f899dad6d3ccd', 'outcome': 'succeeded'}], 'job_id': 'ij_da09b1020bad0076315369cb0ff867e2ed7c70e71c191ac5a62d65e5e9d9b95e', 'meeting_id': '64e54f78', 'outcome': 'succeeded', 'receipt_id': 'rr_8b9b18c30bf500f06411cfdf09419e9a', 'selection_hash': 'sha256:412b165607862151b9b81d690ca0bb5dbd30b90b1c5b1210fa527b12251a09ff'}
+ROW 64e54f78 MeetingSEP 19 · RANSEP 19·3 WORDS·RANTHIS DEVICEOpen
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-after-run-1440.png
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-after-run-393.png
+REVIEW 'PROPOSALS · NOT RUN'
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/review-not-run-1440.png
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/review-not-run-393.png
+FAILED job attempts=1 state=failed
+ROW 79854df6 MeetingSEP 19 · FAILEDSEP 19·3 WORDS·FAILEDTHIS DEVICEFAILEDTHIS DEVICERetry
+FACTS width=243 of row=366
+REFUSAL REFUSED · ROUTE CHANGED
+AFTER REFUSAL run_receipt={'attempts': [{'host': 'same_device', 'leg_ordinal': 1, 'operation_id': 'op_aac81ed111ba46378ee22452063b3a79', 'outcome': 'failed'}], 'job_id': 'ij_0e49ff750ba9a06c0e025cac01b867aa70601cc47b6827a7e393cfbd37dbc51d', 'meeting_id': '79854df6', 'outcome': 'failed', 'receipt_id': 'rr_a1baf9e4cf92533527466caa4b3a13c3', 'selection_hash': 'sha256:412b165607862151b9b81d690ca0bb5dbd30b90b1c5b1210fa527b12251a09ff'}
+AFTER REFUSAL last_refusal={'attempts': [], 'job_id': 'ij_c0cb15534dab159aae511969f480e30d6a235c5ae7dd30591cc9c0e0486252cd', 'meeting_id': '79854df6', 'outcome': 'refused', 'receipt_id': 'rr_d846fbc8a5f447f98104fc04e0d41ef8', 'selection_hash': 'sha256:412b165607862151b9b81d690ca0bb5dbd30b90b1c5b1210fa527b12251a09ff'}
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/refusal-stale-hash-1440.png
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/refusal-stale-hash-393.png
+CANON primaries=['Retry'] zeros=[] run_verbs_in_rail=['Retry', 'Run summary']
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/ledger-retry-1440.png
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/ledger-retry-393.png
+RETRY POST {'path': '/api/meetings/79854df6/intelligence/run', 'body': '{"expected_selection_hash":"sha256:d7034cd90ea209b55de04b0b58bb5030c833c60b4226b9a72f65241cf066e86a"}'}
+FOOTER CHIP 'THIS DEVICE'
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/meetings-chip-1440.png
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/meetings-chip-393.png
+FOUND AFTER RESTART moves=1
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/after-restart-1440.png
+SHOT /Users/karol/dev/tools/wt-201-b/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/after-restart-393.png
+.
+1 passed in 30.44s
+```
+
+## Round 2 residual
+
+Astra's residual: the first canon fix demoted only the SELECTED row's verb
+(`CatalogRail.tsx:158`), so a desk with two summary-ready meetings drew two
+filled `Run summary` primaries side by side and the face had no lead action.
+
+RED first, against `73fc30b7` (`CatalogRail` written beside itself from
+HEAD, deleted after):
+
+```text
+     × gives the filled verb to the TOP-MOST summary-ready row only 29ms
+     × moves the filled verb to the SELECTED row when it can run 6ms
+     × keeps the lead on the first runnable row when the selection cannot run 5ms
+AssertionError: expected [ 'Run summary', 'Run summary' ] to deeply equal [ 'Run summary' ]
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+```
+
+**The rule, in two composing parts** (`CatalogRail.tsx:26-52`, `:158`):
+
+- the LEAD row — the selected row when it can start a run, else the
+  top-most row that can — is the only row that may wear the filled species
+  (`leadRunRowId`, over the shared `rowStartsRun` predicate: a run verb AND
+  a resolvable route);
+- and when that row's RECORD is open, the record carries the filled verb,
+  so the row's own copy steps down as well.
+
+Every other run verb stays on the row in the default species: withheld
+would be a lie, filled would be a second lead.
+
+**The Chair had the identical defect** and is fixed with the same rule
+(`ChairHome.tsx:1834-1845`, `:1906`): its arrival rows drew a filled
+`Run summary` on every summary-ready meeting. It is not the ledger, but it
+is the same face rule, it is four lines, and it is visible in this story's
+own shots.
+
+Green, and the glass probe now proves the case is REAL rather than empty —
+it reports how many run verbs the rail offers beside how many are filled:
+
+```text
+CANON primaries=['Run summary'] zeros=[] run_verbs_in_rail=['Run summary', 'Run summary']
+CANON primaries=['Retry']       zeros=[] run_verbs_in_rail=['Retry', 'Run summary']
+1 passed in 18.51s
+```
+
+The rig seeds a second summary-ready meeting for exactly this
+(`test_hs201_summary_face_glass.py:141`), and `_assert_canon` now refuses to
+pass on a rail offering fewer than two run verbs.
+
+```text
+ Test Files  3 passed (3)
+      Tests  22 passed (22)
+```
+
+`ledger-retry` re-shot at both widths: three rows — `Retry` filled on the
+top-most actionable row, `Run summary` in the default species on the third,
+`Open` on the one that ran.
