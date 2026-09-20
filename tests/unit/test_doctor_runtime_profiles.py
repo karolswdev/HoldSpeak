@@ -12,8 +12,6 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-import pytest
-
 from holdspeak.commands import doctor
 from holdspeak.db.models import ProfileRecord
 from holdspeak.intel.providers import endpoint_egress, profile_key_env
@@ -135,14 +133,14 @@ def test_runtime_profiles_pass_names_dictation_pipeline(monkeypatch) -> None:
     check = doctor._check_runtime_profiles(_config(dictation_profile_id="p-43"))
     assert check.status == "PASS"
     assert "dictation: profile 'LAN box' (192.168.1.43)" in check.detail
-    assert "meeting intel: live analysis is off for Record" in check.detail
+    assert "Live analysis is off for Record." in check.detail
 
 
 def test_runtime_profiles_unset_reports_hub_default() -> None:
     check = doctor._check_runtime_profiles(_config())
     assert check.status == "PASS"
     assert "dictation: hub default" in check.detail
-    assert "meeting intel: live analysis is off for Record" in check.detail
+    assert "Live analysis is off for Record." in check.detail
 
 
 def test_runtime_profiles_dangling_is_a_visible_warn(monkeypatch) -> None:

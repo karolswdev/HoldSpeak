@@ -326,6 +326,55 @@ class RecipeEngine:
                 "status": resp.status_code,
                 "secret_rejected_status": rejected_status,
             }
+        if kind == "assign_summary_route":
+            # This action is reserved for the isolated cloud-egress fixture.
+            # Its product subprocess stubs endpoint discovery; a normal recipe
+            # invocation must refuse before it can contact a provider.
+            if os.environ.get("UAT_SUMMARY_ROUTE_DISCOVERY_STUB") != "1":
+                raise RecipeError(
+                    "assign_summary_route requires the isolated UAT discovery stub"
+                )
+            opts = arg if isinstance(arg, dict) else {}
+            profile_id = str(opts.get("profile_id", "uat-summary-cloud"))
+            endpoint = str(opts.get("endpoint", "https://api.openai.com/v1"))
+            model = str(opts.get("model", "uat-never-invoked"))
+            profile = client.post_json(
+                "/api/inference/model-library/define-endpoint",
+                {
+                    "draft": {
+                        "request_id": str(opts.get("request_id", "uat-summary-cloud-define")),
+                        "profile_id": profile_id,
+                        "expected_profile_revision": 0,
+                        "label": str(opts.get("label", "UAT summary cloud")),
+                        "provider_family": "openai_compatible",
+                        "model": model,
+                        "endpoint": endpoint,
+                        "requires_key": False,
+                    },
+                    "secret": None,
+                },
+            )
+            if profile.status_code not in (200, 201):
+                return {
+                    "action": "assign_summary_route",
+                    "profile_status": profile.status_code,
+                    "assignment_status": None,
+                }
+            assignment = client.post_json(
+                "/api/inference/assignments/set",
+                {
+                    "command_id": str(opts.get("command_id", "uat-summary-route-set")),
+                    "expected_revision": 0,
+                    "scope": {"kind": "capability", "capability_id": "meeting.deferred_analysis"},
+                    "entries": [{"profile_id": profile_id, "profile_revision": 1}],
+                    "retry_policy_id": None,
+                },
+            )
+            return {
+                "action": "assign_summary_route",
+                "profile_status": profile.status_code,
+                "assignment_status": assignment.status_code,
+            }
         if kind == "dispatch_run":
             # The handoff arc's verb: drive a real ask ONTO the mesh worker via
             # the hub's own /api/ask (profile_id → meshNode → relay). A mesh run

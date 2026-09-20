@@ -131,6 +131,40 @@ def project_route(db: Any, *, invocation_id: str | None = "preview") -> dict[str
     }
 
 
+def summary_route_display(db: Any) -> dict[str, Any]:
+    """Add display metadata to the assigned summary route.
+
+    ``project_route`` is the selection authority and its public leg/hash shape
+    is intentionally closed.  Trust and Doctor need two safe labels from the
+    same immutable revisions, so this adapter enriches a copy for display.
+    It does not persist, resolve a second route, or contact a destination.
+    """
+    route = project_route(db)
+    if route.get("status") != "ready":
+        return route
+
+    display_legs: list[dict[str, Any]] = []
+    with db._connection() as conn:
+        for leg in route.get("legs", ()):
+            profile = conn.execute(
+                "SELECT label FROM model_profile_revisions "
+                "WHERE profile_id=? AND revision=?",
+                (str(leg.get("profile_id") or ""), int(leg.get("profile_revision") or 0)),
+            ).fetchone()
+            deployment = conn.execute(
+                "SELECT node FROM deployment_revisions WHERE id=?",
+                (str(leg.get("deployment_revision_id") or ""),),
+            ).fetchone()
+            display_legs.append(
+                {
+                    **leg,
+                    "profile_label": "" if profile is None else str(profile["label"] or ""),
+                    "node": "" if deployment is None else str(deployment["node"] or ""),
+                }
+            )
+    return {**route, "legs": display_legs}
+
+
 def route_from_job(job: Any) -> dict[str, Any] | None:
     """Return the immutable route stored on a job, if one exists."""
     value = getattr(job, "planned_route", None)
@@ -159,5 +193,6 @@ def require_expected_selection(route: Mapping[str, Any], expected: Any) -> None:
 
 
 __all__ = [
-    "project_route", "route_from_job", "require_expected_selection", "selection_hash_for_route_plan", "unavailable",
+    "project_route", "summary_route_display", "route_from_job", "require_expected_selection",
+    "selection_hash_for_route_plan", "unavailable",
 ]

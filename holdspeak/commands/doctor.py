@@ -391,9 +391,18 @@ def _check_meeting_intel_egress(config: Config) -> DoctorCheck:
 
 def _check_trust_destinations(config: Config) -> DoctorCheck:
     """Render the canonical destination inventory used by both trust UIs."""
+    from ..db import get_database
     from ..trust_destinations import destination_inventory
 
-    enabled = [row for row in destination_inventory(config) if row["enabled"]]
+    try:
+        database = get_database()
+    except Exception:
+        database = None
+    enabled = [
+        row
+        for row in destination_inventory(config, database=database)
+        if row["enabled"]
+    ]
     if not enabled:
         return DoctorCheck(
             name="Trust destinations",
@@ -494,10 +503,11 @@ def _check_dictation_project_context(config: Config) -> DoctorCheck:
 
 
 def _check_runtime_profiles(config: Config) -> DoctorCheck:
-    """HS-84-04: name the RuntimeProfile each hub pipeline resolves to.
+    """Name the assigned summary route and each enabled dictation profile.
 
-    One honest line per enabled pipeline (dictation). A
-    dangling assignment is a WARN with the resolver's own reason; an adopted
+    The summary line reads the current SERVICE route. The legacy meeting config
+    pointer is deliberately not a source of truth for that route. A dangling
+    dictation assignment is a WARN with the resolver's own reason; an adopted
     profile that `requires_key` with no key in the hub's env is a WARN naming
     the exact env var. Never FAIL — every fallback keeps the pipeline running.
     """
@@ -508,6 +518,41 @@ def _check_runtime_profiles(config: Config) -> DoctorCheck:
         profile_key_env,
     )
 
+    lines: list[str] = []
+    try:
+        from ..db import get_database
+        from ..services.meeting_route_projection import summary_route_display
+
+        summary_route = summary_route_display(get_database())
+    except Exception:
+        # Doctor must remain readable while the database is unavailable. The
+        # route helper owns the detailed unavailable reason when it can run.
+        summary_route = {
+            "status": "unavailable",
+            "reason_code": "route unavailable",
+            "legs": [],
+        }
+    if summary_route.get("status") == "ready" and summary_route.get("legs"):
+        for leg in summary_route["legs"]:
+            profile_label = str(
+                leg.get("profile_label") or leg.get("profile_id") or "unknown"
+            )
+            node = str(leg.get("node") or "").strip()
+            host = str(leg.get("host") or "unavailable").strip()
+            if node:
+                destination = f"mesh node '{node}'"
+            elif str(leg.get("boundary") or "") == "local":
+                destination = "This device"
+            else:
+                destination = host
+            lines.append(
+                f"Meeting summary: profile '{profile_label}' ({destination})"
+            )
+    else:
+        reason = str(summary_route.get("reason_code") or "route unavailable")
+        lines.append(f"Meeting summary: unavailable ({reason})")
+    lines.append("Live analysis is off for Record.")
+
     pipelines: list[tuple[str, object]] = []
     if config.dictation.pipeline.enabled:
         pipelines.append(("dictation", effective_dictation_llm(config.dictation.runtime)))
@@ -515,10 +560,9 @@ def _check_runtime_profiles(config: Config) -> DoctorCheck:
         return DoctorCheck(
             name="Runtime profiles",
             status="PASS",
-            detail="Live analysis is off for Record; no dictation pipeline is enabled.",
+            detail="; ".join(lines + ["no dictation pipeline is enabled"]),
         )
 
-    lines: list[str] = ["meeting intel: live analysis is off for Record"]
     warns: list[str] = []
     fixes: list[str] = []
     for label, effective in pipelines:

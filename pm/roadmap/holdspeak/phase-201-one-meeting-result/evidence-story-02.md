@@ -1136,3 +1136,20 @@ Follow-up source is committed as `a07d4bb5`; `origin/main` at `675401a8`
 integrated without conflict. Story 03 holds the combined post-merge capture
 at `2026-09-20T02:09:14Z`: **390 passed, 11 optional-engine skips**, including
 all recording/reporting tests named above. No story status was flipped.
+
+
+## Follow-up 2 — retain summary disclosure while live analysis stays off
+
+The caller found that the previous retirement also hid the manual summary
+route. Both regressions are **b**, with **a** fixture/copy migrations; no **c**
+claim. The same SERVICE projection now feeds Trust and doctor. Record still
+has live analysis off. No story status changes.
+
+The root captured the untouched two-failure red run before product edits in
+[evidence story 03](evidence-story-03.md), `2026-09-20T03:43:08Z`; the quiet
+focused run at `2026-09-20T04:06:08Z` passed **184 tests**, including live-off
+reporters, both caller-named regressions, and route/receipt fences. The real
+hub Trust walk at `2026-09-20T04:06:33Z` passed with zero route executions.
+See [the audit](audits/followup2-astra.md) for the a/b/c table, tails, scope,
+and 1440/393 shots. The 393 badge clips its label; the full destination is
+readable in Trust. No fresh full-suite green is claimed.

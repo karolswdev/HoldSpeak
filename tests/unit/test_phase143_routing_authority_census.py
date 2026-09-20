@@ -186,9 +186,9 @@ PROFILE_ID_CLASSIFICATIONS = {
     }},
     **{site: "display" for site in {
         # HS-201: the inactive live-analysis endpoint display was retired.
-        "holdspeak/commands/doctor.py:525:profile_id",
-        "holdspeak/commands/doctor.py:533:profile_id", "holdspeak/commands/doctor.py:547:profile_id",
-        "holdspeak/commands/doctor.py:672:profile_id",
+        "holdspeak/commands/doctor.py:569:profile_id",
+        "holdspeak/commands/doctor.py:577:profile_id", "holdspeak/commands/doctor.py:591:profile_id",
+        "holdspeak/commands/doctor.py:716:profile_id",
         "holdspeak/db/models/__init__.py:698:profile_id", "holdspeak/inference_targets.py:161:profile_id",
         # HS-162-03: front_door.py profile_id reads (display, Phase 156).
         "holdspeak/web/routes/front_door.py:416:profile_id",
@@ -196,7 +196,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/web/routes/front_door.py:444:profile_id",
         "holdspeak/services/ask_service.py:320:profile_id",
         "holdspeak/services/inference_setup_service.py:653:profile_id", "holdspeak/services/settings_service.py:103:profile_id",
-        "holdspeak/setup_status.py:134:profile_id",
+        "holdspeak/setup_status.py:160:profile_id",
         "holdspeak/services/model_profile_service.py:225:profile_id",
         "holdspeak/services/model_profile_service.py:264:profile_id",
         # HS-172: meetings host resolve display reads (HS-200-13: +2 lines).
@@ -216,7 +216,7 @@ PROFILE_ID_CLASSIFICATIONS = {
     **{site: "credential/provider identity" for site in {
         "holdspeak/intel/providers.py:687:profile_id", "holdspeak/intel/providers.py:694:profile_id",
         "holdspeak/intel/providers.py:703:profile_id", "holdspeak/setup_runtime.py:198:profile_id",
-        "holdspeak/trust_destinations.py:59:profile_id",
+        "holdspeak/trust_destinations.py:69:profile_id",
     }},
 }
 
