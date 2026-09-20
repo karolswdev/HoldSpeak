@@ -1,6 +1,6 @@
 # Phase 201 - One Meeting Result
 
-**Last updated:** 2026-09-20, 01:40 — six of seven stories done; the combined PR #587 (lanes A+B) awaits CI; story 07 is the sitting. Chartered from the inventory of 2026-09-19 and
+**Last updated:** 2026-09-20 UTC — seven of eight stories verified done in this lane; HS-201-08 has a green full suite and awaits its gated delivery. Story 07 remains the owner sitting; no merge is authorized. Chartered from the inventory of 2026-09-19 and
 two Astra checks (`docs/internal/inventory-2026-09-19/06-check-astra.md`,
 `docs/internal/checks/constitution-seven-tenets-astra.md`). Stories and
 lanes follow the two read-only audits (runtime by Astra, live face walk by
@@ -66,6 +66,7 @@ over claim). Faces obey UX-CANON. Orchestration: TWO-BRAINS.md.
 | HS-201-05 | One engine and one assignment from the face | done | [story-05-one-engine-and-one-assignment-from-the-face](./story-05-one-engine-and-one-assignment-from-the-face.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-201-06 | Plain words on the path | done | [story-06-plain-words-on-the-path](./story-06-plain-words-on-the-path.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-201-07 | Run it from main and the sitting | backlog | [story-07-run-it-from-main-and-the-sitting](./story-07-run-it-from-main-and-the-sitting.md) | - |
+| HS-201-08 | Main is green | done | [story-08-main-is-green](./story-08-main-is-green.md) | [evidence-story-08](./evidence-story-08.md) |
 
 ## Lanes (TWO-BRAINS.md §4)
 
@@ -73,6 +74,7 @@ over claim). Faces obey UX-CANON. Orchestration: TWO-BRAINS.md.
 |---|---|---|---|---|---|
 | A (runtime truth) | 02, 03, 05, and 07's backend edits (startup identity line, any conditional loop gate) | Astra, Luna xhigh workers | Muad'Dib | `../wt-201-a` | `feat/hs-201-a` |
 | B (the face and the sitting) | 01, 04, 06, 07 (verification and the sitting) | Muad'Dib, Opus 4.6 workers | Astra | `../wt-201-b` | `feat/hs-201-b` |
+| Green baseline | 08 | Astra, Luna xhigh workers | Muad'Dib | `../wt-201-a` | `feat/hs-201-green` |
 
 Order: 03's API contract (`planned_route`, the receipt) is settled and checked by both brains FIRST; then 02 and 01 (independent; the dictation classification rides with 02); then 05; then 03 and 04 integrate; 06 with 04; 07 last. File ownership: lane A owns `holdspeak/**` on this path; lane B owns `web/**`; a field one lane needs from the other travels as a settled contract, never a cross-lane edit.
 
@@ -94,9 +96,9 @@ its conflict and partial-result rendering, not labels alone.
 
 ## Where we are
 
-Six of seven stories done through the gate, both lanes checked by the other brain (checks/), the combined delivery on PR #587 (lane A's #588 merged in), a quiet-tree full suite and CI read against main before the merge. Story 07 is the sitting: the owner starts the product from main, records one real meeting, asks for its summary, reads it, restarts, finds it, dictates one sentence (SITTING-07.md). Nothing closes on "accepted, not observed".
+Seven of eight stories are verified done in this lane. Story 08 passes the complete isolated full suite: 11,264 passed, 116 skipped, four existing strict xfails, zero failures/errors. Web has 2,601 passing tests; eleven documentation CI commands pass. Its branch goes through the gate and a PR, with no merge authorized. PR #587 remains the previous merged work; main is not changed by this local verification. Story 07 is the sitting: the owner starts the product from main, records one real meeting, asks for its summary, reads it, restarts, finds it, dictates one sentence (SITTING-07.md). Nothing closes on "accepted, not observed".
 
-Ledger (never deleted): the 393 egress badge clips its label (Trust shows the full host; lane B face item); xdist pollution in tests/unit/test_phase200_attention.py TestNotificationTransitions (serial-green twice); HS-170's faces-wire test patches a name its route never reads; the parked Phase 200 proposal chain (BACKLOG); the five off-path red tests on main; DW roadmap bookkeeping (Z6).
+Ledger (never deleted): **Day 2 continuity is proven from a seeded day-1 state. The current first-use summary path does not create the decision or commitment that day 2 carries. No current owner creation path is proven by this rig.** The parked follow-through remains in BACKLOG. Other open items: the 393 egress badge clips its label (Trust shows the full host; lane B face item); HS-170's faces-wire test patches a name its route never reads; DW roadmap bookkeeping (Z6); story-08 follow-ups below and in BACKLOG. The historical notification “xdist pollution” diagnosis was disproved by the 02:30 UTC falsifier and repaired as a clock precondition. The six inherited CI tests and all 12 charter-audit red nodes now pass locally; branch CI remains required.
 
 ## Active risks
 
@@ -139,14 +141,17 @@ Ledger (never deleted): the 393 egress badge clips its label (Trust shows the fu
 
 ## Lane A debt ledger
 
+- **Current creation gap:** Day 2 continuity in story 08 is proven from a seeded day-1 state. The current first-use summary path does not create the decision or commitment that day 2 carries. No current owner creation path is proven by that rig. The production return path remains BACKLOG, “Phase 201 parked summary follow-through”; a green suite does not restore it.
+
 - **b — fixed:** the actual Web Stop hook could enqueue a hashless job under
   `every_meeting` or `room_linked`; both red fences are recorded in 02 evidence.
 - **a — tests of the former posture:** the Phase 200 proposal pipeline on
   manual summary runs. Return path and retained code: `../BACKLOG.md`,
   “Phase 201 parked summary follow-through”.
-- **c — historical, not reproduced:** dictation initialization race. Two
-  pristine charter-baseline runs and current scoped runs pass; original cause
-  remains unknown (02 evidence).
+- **a — historical classification corrected in story 08:** the inherited warm-start
+  test assumed auto always resolved to MLX. A Linux-like resolver probe reproduced
+  the red; platform/backend states are now pinned and pass. This supersedes the
+  charter's unproven (c) diagnosis in 02 evidence; no runtime transcriber fix is claimed.
 - **Paid in lane A follow-up:** Settings, doctor, setup trust, and destination
   inventory now report live analysis off for Record. The retained config byte
   is ignored on this path; it does not enable live analysis. Dictation and
@@ -158,9 +163,11 @@ Ledger (never deleted): the 393 egress badge clips its label (Trust shows the fu
   Fence or disclose these before restoring their automatic summary behavior;
   parked with follow-through in BACKLOG. `meeting_session/persistence.py` is
   inactive for ordinary Web Record because that session has intel disabled.
-- Inherited suite baseline: both widths of `test_phase200_daily_loop.py` fail
-  at the brief before meeting creation, including on unmodified charter
-  production code (raw baseline `.tmp/hs201-daily-loop-baseline.log`).
+- Historical suite baseline: both widths of `test_phase200_daily_loop.py` failed
+  at the brief before meeting creation on charter production code. Story 08 later
+  reproduced the current-law proposal wait failure and now passes both widths,
+  with the explicitly seeded day-1 creation and artifact-envelope limits above.
+  The original baseline record remains unchanged.
 - Delivery Workbench capture stamps describe the index at capture time, not
   pytest import provenance; the gate checks the referenced passing capture but
   does not compare its index tree. Framework follow-up belongs to `pmo-roadmap`.
@@ -168,11 +175,22 @@ Ledger (never deleted): the 393 egress badge clips its label (Trust shows the fu
 - Full-suite classification: nine stale contract assertions updated; two legacy
   integration callers migrated under Muad'Dib's closure assignment (98 tests
   passed);
-  twelve inherited failures reproduced on the charter baseline; one no-write
-  scanner failure passes twice with the tree quiet. Raw logs and per-group
-  homes: `audits/full-suite-astra.md`.
+  twelve inherited failures reproduced on the charter baseline. All 12 node IDs
+  pass in story 08's final full run; the historical audit stays unchanged. The
+  no-write scanner also passes in the quiet tree; its speculative isolation fix
+  was not made. Raw baseline: `audits/full-suite-astra.md`; current proof: story 08.
 - Inherited DW orientation issues: stale CLAUDE managed block; phase 101
   evidence/story status mismatch; missing final summaries 152/153/154/156/200.
+
+## HS-201-08 — Main is green
+
+Owner: Astra; checker: Muad’Dib; worktree `../wt-201-a`; branch `feat/hs-201-green`. One story repairs the six inherited CI failures and the notification clock defect. Main and wt-201-b remain outside this lane. No merge is authorized.
+
+Decision, 2026-09-19: the historical xdist pollution classification is withdrawn after the 02:30 UTC falsifier reproduced exactly eight failures. HS-201-08 pins the clock instead; explicit quiet-hours states remain. The two restart failures are first-boot connection refusals, so the repair targets listener readiness. Design check and accepted conditions: `checks/story-08-design-muaddib.md`. Owner may overrule at the sitting.
+
+Scope additions, 2026-09-20 UTC: the completed-project roadmap list crash (b), stale Philo/OpenAPI references (a), and a final full run with xdist work stealing. Each has a peer check beside story 08. The interrupted default-load diagnostic is not full-suite proof.
+
+Late scope additions: the first complete worksteal run reached 100% with six failures. Peer-ratified test repairs address the invalid zero-counter proxy (a), low-descriptor wait assumption (a), a named credential-store polluter (c), and the deliberately parked daily-loop creation entry (a). No new skip or xfail is added. The final complete run passes: 11,264 passed, 116 skipped, four existing strict xfails, zero failures/errors. The normalized skip list is unchanged. Final docs input tree: `6c8c47bdfeeae64d3246cd592aa309a3a0e9f645`; all eleven commands passed at 07:17:48Z. Built check: `checks/story-08-late-built-muaddib.md`.
 
 ## Open dissents
 

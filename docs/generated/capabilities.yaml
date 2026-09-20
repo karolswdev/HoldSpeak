@@ -1040,13 +1040,13 @@
       "sources": [
         {
           "claim": "Collects runtime, config, DB, provider, host, connector, People and gate checks.",
-          "line": 1267,
+          "line": 1049,
           "path": "holdspeak/commands/doctor.py",
           "symbol": "collect_doctor_checks"
         },
         {
           "claim": "Prints checks and returns nonzero for failures or strict warnings.",
-          "line": 1454,
+          "line": 1236,
           "path": "holdspeak/commands/doctor.py",
           "symbol": "run_doctor_command"
         },

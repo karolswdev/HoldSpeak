@@ -91,6 +91,59 @@ const briefWithUnavailablePeople = {
   person_sections_state: "unavailable",
 };
 
+// These are deliberately timezone-less ISO values: generated_at is a source
+// wall clock in the viewer's local time, so the test must exercise 00:33 and
+// 08:00 without depending on the machine's UTC offset.
+const localGeneratedCases = [
+  { label: "hour 00", generatedAt: "2026-09-20T00:33:00", expected: "GENERATED SEP 20 00:33" },
+  { label: "minute 00", generatedAt: "2026-09-20T08:00:00", expected: "GENERATED SEP 20 08:00" },
+] as const;
+
+function briefWithThisWeek(generatedAt: string) {
+  return {
+    ...briefWithPeople,
+    id: `brief-this-week-${generatedAt}`,
+    generated_at: generatedAt,
+    sections: {
+      ...briefWithPeople.sections,
+      this_week: [
+        {
+          id: "week-meetings",
+          section: "this_week" as const,
+          text: "2 meetings this week",
+          detail: null,
+          source_ref: "calendar:week",
+          priority: 60,
+        },
+        {
+          id: "week-next",
+          section: "this_week" as const,
+          text: "Next: Sprint Planning at 09:00",
+          detail: null,
+          source_ref: "calendar:event:next",
+          priority: 55,
+        },
+        {
+          id: "week-armed",
+          section: "this_week" as const,
+          text: "0 armed",
+          detail: null,
+          source_ref: "calendar:armed",
+          priority: 53,
+        },
+        {
+          id: "week-due",
+          section: "this_week" as const,
+          text: "1 commitment due",
+          detail: "Ania owns the API spec | 2026-09-20",
+          source_ref: "meeting_watch:commitments_due",
+          priority: 51,
+        },
+      ],
+    },
+  };
+}
+
 function mockBrief(brief: unknown = briefWithPeople) {
   apiFetch.mockImplementation((path: string) => {
     if (path === "/api/brief/latest") return Promise.resolve(brief);
@@ -245,4 +298,28 @@ describe("BriefView person sections", () => {
     // HS-175: now a StateChip token, not prose.
     expect(screen.getByText(/PEOPLE.*UNAVAILABLE/)).toBeInTheDocument();
   });
+});
+
+describe("BriefView THIS WEEK counters and generated clock", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it.each(localGeneratedCases)(
+    "keeps a $label generated clock separate from zero counters",
+    async ({ generatedAt, expected }) => {
+      mockBrief(briefWithThisWeek(generatedAt));
+      renderBriefView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("brief-generated-label")).toHaveTextContent(expected);
+      });
+
+      // These are actual BriefView labels from real this_week inputs. The
+      // zero ARMED row is omitted while positive MEETINGS and DUE rows remain.
+      expect(screen.getByTestId("brief-tw-meetings")).toHaveTextContent("2 MEETINGS");
+      expect(screen.queryByTestId("brief-tw-armed")).not.toBeInTheDocument();
+      expect(screen.getByTestId("brief-tw-due")).toHaveTextContent("1 DUE");
+    },
+  );
 });

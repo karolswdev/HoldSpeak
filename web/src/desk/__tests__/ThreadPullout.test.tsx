@@ -238,4 +238,36 @@ describe("ThreadPullout rows", () => {
     renderPullout();
     expect(screen.getByText("Provider unreachable: fake engine error")).toBeTruthy();
   });
+
+  it("hydrates a persisted deny as primary and focused", () => {
+    seedStore([
+      makeMsg({
+        id: "asst-guardrail",
+        parts: [{
+          id: "p-tool-call",
+          messageId: "asst-guardrail",
+          ordinal: 0,
+          kind: "tool_call",
+          text: "",
+          sensitive: false,
+          metaJson: {
+            id: "call-guardrail",
+            name: "people.commitment.transition",
+            arguments: "{}",
+            class: "effect_proposal",
+            state: "awaiting_decision",
+            default_decision: "deny",
+          },
+        }],
+      }),
+    ]);
+    useThreadStore.getState().hydrateToolRows("t-1");
+
+    renderPullout();
+
+    const deny = screen.getByTestId("deny");
+    expect(screen.getByTestId("decision-box")).toHaveAttribute("data-default-decision", "deny");
+    expect(deny.classList.contains("btn--primary")).toBe(true);
+    expect(deny).toHaveFocus();
+  });
 });

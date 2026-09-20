@@ -17,6 +17,9 @@ from typing import Any
 
 import pytest
 
+import holdspeak.principals as principals
+from holdspeak.principals import AgentCredentialStore
+
 from .glass_infra import (
     _boot,
     _api,
@@ -61,10 +64,20 @@ class TestSettingsRemoteAccess:
     """HS-174 -- the Settings System Remote Access face."""
 
     @pytest.fixture(autouse=True)
-    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         _ensure_build()
-        self.server, self.base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        # The real hub intentionally keeps credentials in a process-global
+        # in-memory store.  Give this glass hub its own store before app
+        # creation so another HS-174 hub in the same worker cannot add rows
+        # to this ledger.
+        monkeypatch.setattr(principals, "agent_credentials", AgentCredentialStore())
+        server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        self.server, self.base = server, base
         self.tmp_path = tmp_path
+        try:
+            yield
+        finally:
+            server.stop()
 
     @pytest.mark.e2e
     @pytest.mark.parametrize("width", [1440, 393])
@@ -230,6 +243,22 @@ class TestSettingsRemoteAccess:
                 ".surface-ledger-primary", has_text="test-glass-runner"
             ).count() >= 1, f"Credential row absent at {width}"
 
+            # Seed a second credential through the real API.  The revoke leg
+            # below must target the named row and leave this one usable.
+            other = _api(
+                page,
+                "POST",
+                "/api/settings/remote/credentials",
+                {
+                    "identity": "other-glass-runner",
+                    "palette": "PROJECT",
+                    "ttl_seconds": 3600,
+                },
+                token=TOKEN,
+            )
+            other_token = str(other["token"])
+            assert len(other_token) > 10
+
             # Reload the page -> no token shown again
             _navigate_to_settings_hub(page, self.base)
             _open_system_module(page)
@@ -242,10 +271,21 @@ class TestSettingsRemoteAccess:
                 toggle2.select_option("ON")
                 page.locator(".btn", has_text="Issue credential").wait_for(timeout=8_000)
 
-            # Wait for the credential row to load
-            page.locator(
-                ".surface-ledger-primary", has_text="test-glass-runner"
-            ).wait_for(timeout=8_000)
+            # Wait for both credential rows to load.
+            target_row = page.locator(
+                ".surface-ledger-row",
+                has=page.locator(
+                    ".surface-ledger-primary", has_text="test-glass-runner"
+                ),
+            )
+            other_row = page.locator(
+                ".surface-ledger-row",
+                has=page.locator(
+                    ".surface-ledger-primary", has_text="other-glass-runner"
+                ),
+            )
+            target_row.wait_for(timeout=8_000)
+            other_row.wait_for(timeout=8_000)
 
             # Token should NOT be visible after reload
             assert page.locator("[data-testid='token-value']").count() == 0, (
@@ -258,19 +298,49 @@ class TestSettingsRemoteAccess:
                 f"NEVER USED absent after reload at {width}"
             )
 
-            # Revoke the credential
-            revoke_btn = page.locator(".btn", has_text="Revoke").first
-            revoke_btn.click()
+            # Revoke the named credential, even when the ledger has more rows.
+            target_row.locator(".btn", has_text="Revoke").click()
 
-            # Wait for the row to disappear
-            page.locator(
-                ".surface-ledger-primary", has_text="test-glass-runner"
-            ).wait_for(state="detached", timeout=8_000)
+            # Wait for that row to disappear; the other row must remain.
+            target_row.wait_for(state="detached", timeout=8_000)
+            other_row.wait_for(state="attached", timeout=8_000)
 
-            # Credential row gone
+            # The target is gone and the unrelated credential remains.
             final_text = page.locator(".desk-surface-body").text_content() or ""
             assert "test-glass-runner" not in final_text, (
                 f"Credential row still present after revoke at {width}"
+            )
+            assert "other-glass-runner" in final_text, (
+                f"Unrelated credential row disappeared at {width}"
+            )
+
+            # The unrelated bearer still derives an AGENT principal through
+            # the real Streamable HTTP route after the targeted revoke.
+            other_probe = _api(
+                page,
+                "POST",
+                "/api/mcp",
+                {
+                    "jsonrpc": "2.0",
+                    "id": "other-credential-still-valid",
+                    "method": "initialize",
+                    "params": {
+                        "protocolVersion": "2025-03-26",
+                        "capabilities": {},
+                        "clientInfo": {"name": "hs174-glass", "version": "1.0"},
+                    },
+                },
+                token=other_token,
+            )
+            assert other_probe.get("result"), (
+                f"Unrelated credential was not usable after targeted revoke: {other_probe}"
+            )
+
+            # Evidence: the surviving credential remains visible after revoke.
+            _settle(page)
+            page.screenshot(
+                path=str(SHOTS / f"build-remote-revoked-{width}.png"),
+                full_page=True,
             )
 
             _assert_clean(page, errors)

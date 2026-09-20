@@ -170,7 +170,7 @@
       "sources": [
         {
           "claim": "Collects the bounded local check set and summarizes status.",
-          "line": 1267,
+          "line": 1049,
           "path": "holdspeak/commands/doctor.py",
           "symbol": "collect_doctor_checks"
         }

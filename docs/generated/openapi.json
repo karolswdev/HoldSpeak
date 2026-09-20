@@ -1681,7 +1681,7 @@
   "info": {
     "title": "FastAPI",
     "version": "0.1.0",
-    "x-philo-note": "Declared FastAPI schemas only; raw Request validation, authorization and WS contracts are not fully represented. Do not infer approval from OpenAPI.",
+    "x-philo-note": "Declared FastAPI schemas only; raw Request validation, authorization and WS contracts are not fully represented. Do not infer approval from OpenAPI. The x-source-snapshot value is the Philo census baseline; schemas are generated from the current working tree.",
     "x-source-snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8"
   },
   "openapi": "3.1.0",
@@ -7340,6 +7340,28 @@
           }
         },
         "summary": "Post Propose",
+        "tags": [
+          "concierge"
+        ]
+      }
+    },
+    "/api/concierge/summary-selection": {
+      "post": {
+        "description": "Commit the owner's one explicit summary-engine selection.",
+        "operationId": "post_summary_selection_api_concierge_summary_selection_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Post Summary Selection Api Concierge Summary Selection Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Post Summary Selection",
         "tags": [
           "concierge"
         ]

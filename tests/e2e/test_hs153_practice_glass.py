@@ -17,12 +17,15 @@ from typing import Any
 
 import pytest
 
+from .glass_infra import _normal_chair, _settle
+
 pytest.importorskip("playwright.sync_api", reason="Glass needs Playwright")
 
 REPO = Path(__file__).resolve().parents[2]
 TOKEN = "hs153-practice-glass"
 SHOTS_01 = REPO / "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-01-shots"
 SHOTS_02 = REPO / "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots"
+SHOTS_08 = REPO / "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-08-shots"
 
 pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting]
 
@@ -514,7 +517,22 @@ def guardrail_hub(tmp_path, monkeypatch):
         "warnings": [],
     })
 
-    yield {"server": server, "url": url, "db": db, "broker": broker, "engine": engine}
+    live_pending: list[dict[str, Any]] = []
+    real_broadcast = server.broadcast
+
+    def capture_broadcast(message_type: str, data: Any) -> None:
+        if message_type == "thread_tool_pending":
+            live_pending.append(dict(data))
+        real_broadcast(message_type, data)
+
+    # The service resolves this method at broadcast time. Capture the actual
+    # producer frame before the browser can hydrate and overwrite its row.
+    server.broadcast = capture_broadcast
+
+    yield {
+        "server": server, "url": url, "db": db, "broker": broker,
+        "engine": engine, "live_pending": live_pending,
+    }
     server.stop()
     reset_database()
 
@@ -558,28 +576,60 @@ def test_guardrail_row_renders_and_deny_focused(guardrail_hub: dict) -> None:
                 send_btn.click()
             else:
                 composer.press("Enter")
-            page.wait_for_timeout(8000)
+            page.locator("[data-testid='decision-box']").wait_for(
+                state="visible", timeout=10000,
+            )
 
-            _save_shot(page, "guardrail-row", width, shots_dir=SHOTS_03)
+            _save_shot(page, "guardrail-row", width, shots_dir=SHOTS_08)
+
+            live_frames = [
+                frame for frame in guardrail_hub["live_pending"]
+                if frame.get("thread_id") == thread_id
+            ]
+            assert live_frames, "The live pending frame was not captured"
+            assert live_frames[-1].get("default_decision") == "deny", (
+                "The live safe-mode violation must produce default_decision=deny"
+            )
 
             guardrail_row = page.locator("[data-testid='guardrail-row']")
-            if guardrail_row.count() > 0:
-                assert guardrail_row.is_visible(), f"Guardrail row not visible at {width}"
-                violation = page.locator("[data-testid='guardrail-violation']")
-                if violation.count() > 0:
-                    vtext = violation.first.inner_text().lower()
-                    assert "source" in vtext or "people" in vtext, (
-                        f"Violation text unexpected at {width}: {vtext}")
+            assert guardrail_row.count() == 1, f"Guardrail row missing at {width}"
+            assert guardrail_row.is_visible(), f"Guardrail row not visible at {width}"
+            violation = page.locator("[data-testid='guardrail-violation']")
+            assert violation.count() == 1, f"Guardrail violation missing at {width}"
+            vtext = violation.first.inner_text().lower()
+            assert "source" in vtext or "people" in vtext, (
+                f"Violation text unexpected at {width}: {vtext}")
 
             decision_box = page.locator("[data-testid='decision-box']")
-            if decision_box.count() > 0:
-                _save_shot(page, "guardrail-decision-box", width, shots_dir=SHOTS_03)
-                dd = decision_box.first.get_attribute("data-default-decision")
-                assert dd == "deny", f"Expected deny, got '{dd}' at {width}"
-                deny_btn = page.locator("[data-testid='deny']")
-                if deny_btn.count() > 0:
-                    cls = deny_btn.first.get_attribute("class") or ""
-                    assert ("is-primary" in cls or "btn--primary" in cls), f"Deny not primary at {width}: {cls}"  # HS-170-02: the library Button
+            assert decision_box.count() == 1, f"Decision box missing at {width}"
+            dd = decision_box.first.get_attribute("data-default-decision")
+            assert dd == "deny", f"Expected live deny, got '{dd}' at {width}"
+            deny_btn = page.locator("[data-testid='deny']")
+            assert deny_btn.count() == 1, f"Deny button missing at {width}"
+            cls = deny_btn.first.get_attribute("class") or ""
+            assert ("is-primary" in cls or "btn--primary" in cls), f"Deny not primary at {width}: {cls}"  # HS-170-02: the library Button
+            assert deny_btn.evaluate("element => document.activeElement === element"), (
+                f"Deny is not focused at {width}"
+            )
+
+            # Force the persisted path: the held call remains open while the
+            # Desk reloads, then hydration must restore the same posture.
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            _settle(page)
+            decision_box = page.locator("[data-testid='decision-box']")
+            decision_box.wait_for(state="visible", timeout=10000)
+            _save_shot(page, "guardrail-decision-box", width, shots_dir=SHOTS_08)
+            assert decision_box.get_attribute("data-default-decision") == "deny", (
+                f"Expected hydrated deny, got '{decision_box.get_attribute('data-default-decision')}' at {width}"
+            )
+            deny_btn = page.locator("[data-testid='deny']")
+            assert deny_btn.is_visible(), f"Hydrated Deny missing at {width}"
+            cls = deny_btn.get_attribute("class") or ""
+            assert ("is-primary" in cls or "btn--primary" in cls), f"Hydrated Deny not primary at {width}: {cls}"
+            assert deny_btn.evaluate("element => document.activeElement === element"), (
+                f"Hydrated Deny is not focused at {width}"
+            )
 
             body_w = page.evaluate("document.body.scrollWidth")
             vp_w = page.evaluate("window.innerWidth")

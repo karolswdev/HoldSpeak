@@ -700,19 +700,9 @@ def test_a_saved_ask_survives_a_hub_restart(
               f"{after.get('custody')}")
 
         # F1 — this leg used to RECORD the defect instead of refusing it.
-        # `refinement_coordinator.host_id` is `refhost_<uuid4>` minted per
-        # process (holdspeak/services/refinement_coordinator.py:45), so custody
-        # keyed off the process lease flipped to `elsewhere` on the same desk
-        # after every restart — the exact event this story exists for — and the
-        # face then printed the raw uuid. Custody is now stamped with
-        # HS-200-02's `database_identity` (resolved path + device + inode), so
-        # the SAME desk stays `here` and no id is emitted at all.
-        #
-        # HONEST SCOPE, on top of the fixture's own: `current_runtime_identity`
-        # caches per interpreter, so within one process this cannot separate
-        # "stable because cached" from "stable because derived from the file".
-        # Two real interpreters are compared in
-        # tests/unit/test_phase200_task_resume.py's identity test.
+        # The durable machine identity is persisted beside the hub's settings.
+        # A new coordinator and a reopened database therefore keep custody on
+        # the same desk without sending the opaque identity to the face.
         assert after["custody"] == "here", (
             "the same desk must still read SAVED HERE after a restart"
         )
@@ -727,10 +717,11 @@ def test_a_saved_ask_survives_a_hub_restart(
 
 
 @pytest.mark.timeout(300)
+@pytest.mark.parametrize("width", [1440, 393])
 def test_the_custody_token_after_a_restart_at_1440(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
 ) -> None:
-    """What the FACE draws for a row that outlived the process that wrote it."""
+    """What the FACE draws after restart at the wide and narrow widths."""
     _ensure_build()
     from holdspeak.db import reset_database
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
@@ -763,14 +754,18 @@ def test_the_custody_token_after_a_restart_at_1440(
         from playwright.sync_api import sync_playwright
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
-            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page = browser.new_page(
+                viewport={"width": width, "height": 900 if width >= 1440 else 852}
+            )
             page.on("pageerror", lambda e: errors.append(str(e)))
             _init_desk(page, second_url)
             _open_room(page, project_id)
             page.get_by_test_id("room-unfinished").wait_for(timeout=15000)
             tokens = _row_tokens(page)
             print(f"[hs200-41] custody token after restart: {tokens}")
-            _shot_room(page, "taskresume-after-restart-1440")
+            assert "SAVED HERE" in tokens, tokens
+            assert "SAVED ON ANOTHER DESK" not in tokens, tokens
+            _shot_room(page, f"taskresume-after-restart-{width}")
             assert _rows(page).first.locator(
                 ".surface-task-resume-purpose"
             ).inner_text().strip() == purpose

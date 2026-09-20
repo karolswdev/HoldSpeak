@@ -21,7 +21,7 @@ def extract(path:Path):
 def main():
     p=argparse.ArgumentParser();p.add_argument('--check',action='store_true');args=p.parse_args()
     rows=extract(ROOT/'holdspeak/commands/doctor.py')+extract(ROOT/'holdspeak/doctor.py')
-    obj={'snapshot':json.loads((ROOT/'docs/internal/philo/snapshot.json').read_text())['commit'],'generator':'scripts/philo_doctor_reference.py','limits':'Static branches, not executed checks. Runtime status, platform applicability and dynamic repair interpolation depend on the condition_source. Some helpers supply additional results.','checks':rows}
+    obj={'snapshot':json.loads((ROOT/'docs/internal/philo/snapshot.json').read_text())['commit'],'generator':'scripts/philo_doctor_reference.py','limits':'Static branches, not executed checks. Runtime status, platform applicability and dynamic repair interpolation depend on the condition_source. Some helpers supply additional results. The snapshot is the Philo census baseline; checks and source anchors are read from the current working tree at generation.','checks':rows}
     text=json.dumps(obj,indent=2)+'\n';out=ROOT/'docs/generated/doctor-checks.json'
     if args.check:
         if not out.exists() or out.read_text()!=text:raise SystemExit('doctor reference drift')

@@ -694,6 +694,7 @@ def test_custody_survives_the_database_file_being_recreated(tmp_path, monkeypatc
     flake. `database_identity` moves here — correctly, for its own question —
     and custody must not.
     """
+    import os
     import shutil
 
     from holdspeak.runtime_identity import database_identity
@@ -712,15 +713,19 @@ def test_custody_survives_the_database_file_being_recreated(tmp_path, monkeypatc
 
     # Same path, brand-new inode, same rows — a restore.
     backup = tmp_path / "backup.db"
+    replacement = tmp_path / "restored.db"
     shutil.copy2(db_path, backup)
-    db_path.unlink()
+    # Keep the original live while the replacement is created. Unlinking the
+    # target first lets Linux reuse its inode, which made this test assert an
+    # allocator detail instead of a replacement.
+    shutil.copy2(backup, replacement)
     # HS-200-45 R5: under WAL, sidecars left beside a replaced main file
     # resurrect pre-restore pages. `restore_database` removes them; this
     # hand-rolled restore must do the same or it is simulating a restore the
     # product no longer performs.
     for _suffix in ("-wal", "-shm"):
         db_path.with_name(db_path.name + _suffix).unlink(missing_ok=True)
-    shutil.copy2(backup, db_path)
+    os.replace(replacement, db_path)
 
     restored = Database(db_path)
     try:

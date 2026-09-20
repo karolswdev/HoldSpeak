@@ -481,6 +481,11 @@ def _service(db: Database, calls: list[tuple[str, str]], *, clock: _Clock | None
              quiet: tuple[int, int] = (2, 3)):
     from holdspeak.services.heartbeat_service import HeartbeatService
 
+    # Keep implicit sweeps outside the test's quiet window. Tests that prove
+    # quiet-hours behavior inject their own clock below.
+    if clock is None:
+        clock = _Clock(datetime(2026, 9, 7, 12, 0, tzinfo=timezone.utc))
+
     def notifier(title: str, body: str, *, click_url=None) -> bool:
         calls.append((title, body))
         return True

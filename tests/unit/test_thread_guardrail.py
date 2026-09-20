@@ -495,6 +495,14 @@ class TestRealCoordinatorGuardrail:
                 f"Safe mode + violation should give 'deny', got: {pf.get('default_decision')}"
             )
 
+            # The live decision must be recorded on the assistant tool-call
+            # part before the held turn can be reloaded by the Desk.
+            parts = hub["db"].threads.get_parts(result["assistant_message_id"])
+            tool_call_parts = [p for p in parts if p.kind == "tool_call"]
+            assert len(tool_call_parts) == 1
+            tool_call_meta = json.loads(tool_call_parts[0].meta_json)
+            assert tool_call_meta.get("default_decision") == "deny"
+
             # Also check the guardrail frame was emitted
             guardrail_frames = [
                 d for t, d in hub["broadcasts"] if t == "thread_guardrail"

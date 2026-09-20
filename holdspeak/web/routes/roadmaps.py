@@ -144,7 +144,7 @@ def _project(repo_root: Path, slug: str, include_phases: bool = True) -> dict[st
         next_data = json.loads(next_output)
     except (TypeError, json.JSONDecodeError):
         next_data = {}
-    next_story = next_data.get("story_id") or next_data.get("id") or next_data.get("next_story", {}).get("story_id")
+    next_story = next_data.get("story_id") or next_data.get("id") or (next_data.get("next_story") or {}).get("story_id")
     result: dict[str, Any] = {
         "slug": slug,
         "name": name_match.group(1).strip() if name_match else _title(slug),

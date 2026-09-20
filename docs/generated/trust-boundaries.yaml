@@ -442,7 +442,7 @@
       "sources": [
         {
           "claim": "Cloud-bound payloads redact People-sensitive content before model dispatch.",
-          "line": 1850,
+          "line": 1855,
           "path": "holdspeak/services/thread_service.py",
           "symbol": "_m1_redactor"
         }

@@ -1324,16 +1324,6 @@ class ThreadService:
                         error_code = "tool_unknown"
                         continue
 
-                    # -- Persist tool_call part on the assistant message --
-                    self._threads.append_part(
-                        assistant_msg_id, kind="tool_call",
-                        tool_call_id=call_id,
-                        meta_json=json.dumps(
-                            {"id": call_id, "name": name, "arguments": args_str,
-                             "class": handle.tool_class, "state": handle.state},
-                            separators=(",", ":")),
-                    )
-
                     # -- HS-153-03: compute default_decision from guardrail --
                     tc_default_decision: str | None = None
                     if guardrail_ran and guardrail_result is not None:
@@ -1343,6 +1333,21 @@ class ThreadService:
                             tc_default_decision = "deny"
                         else:
                             tc_default_decision = "allow"
+
+                    # -- Persist tool_call part on the assistant message --
+                    # Compute the guardrail posture first so a reload sees the
+                    # same decision as the live pending frame.
+                    tool_call_meta: dict[str, Any] = {
+                        "id": call_id, "name": name, "arguments": args_str,
+                        "class": handle.tool_class, "state": handle.state,
+                    }
+                    if tc_default_decision is not None:
+                        tool_call_meta["default_decision"] = tc_default_decision
+                    self._threads.append_part(
+                        assistant_msg_id, kind="tool_call",
+                        tool_call_id=call_id,
+                        meta_json=json.dumps(tool_call_meta, separators=(",", ":")),
+                    )
 
                     # -- Emit thread_tool_pending --
                     emit_thread_tool_pending(

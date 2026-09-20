@@ -74,3 +74,12 @@ Mechanical inventories classify tracked source files, manifests, routes and
 base-schema tables. Curated capability rows carry semantic claims and inspected
 assertions. A path check can detect drift; it cannot prove a capability works.
 The maintenance tools and CI retain that distinction.
+
+## Maintenance baseline
+
+`snapshot.json` identifies the Philo census baseline and audit scope. Generated
+API, boundary, doctor and OpenAPI references read handlers, checks and schemas
+from the current working tree at generation. After product or route changes,
+regenerate the current-tree outputs with an isolated `HOME`, then run the
+generator checks. Routine refreshes do not change the snapshot, repository
+census or audit report.

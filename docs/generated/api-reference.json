@@ -3,7 +3,7 @@
   "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
   "route_owner": "scripts/gen_api_surface.py",
   "generator": "scripts/philo_api_reference.py",
-  "limits": "Complete membership from committed API manifest; static handler evidence is not full semantic endpoint verification. Test candidates are search leads only.",
+  "limits": "Complete membership from committed API manifest; static handler evidence is not full semantic endpoint verification. Test candidates are search leads only. The snapshot is the Philo census baseline; handler evidence and test candidates are read from the current working tree at generation.",
   "routes": [
     {
       "path": "/",
@@ -7343,6 +7343,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_hs170_speak_glass.py",
+        "tests/e2e/test_hs201_summary_assignment.py",
         "tests/integration/test_phase200_readiness.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -7422,6 +7423,36 @@
       "source": "holdspeak/web/routes/concierge.py",
       "handler_evidence": [],
       "test_candidates": [],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
+      "path": "/api/concierge/summary-selection",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.concierge",
+      "consumers": [
+        "web"
+      ],
+      "source": "holdspeak/web/routes/concierge.py",
+      "handler_evidence": [],
+      "test_candidates": [
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_assignment.py",
+        "tests/e2e/test_hs201_summary_producer_chain.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py"
+      ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
         "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
@@ -11198,6 +11229,9 @@
         "tests/e2e/test_hs200_runtime_identity_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_hs200_voice_custody_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_one_thing_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_phase200_readiness_glass.py",
         "tests/unit/test_desk_seed.py"
@@ -16422,6 +16456,7 @@
       "test_candidates": [
         "tests/e2e/test_hs143_assignments_glass.py",
         "tests/e2e/test_hs156_front_door_glass.py",
+        "tests/e2e/test_hs201_one_thing_glass.py",
         "tests/unit/test_phase143_transport_parity.py",
         "tests/unit/test_web_inference_assignment_routes.py"
       ],
@@ -17279,7 +17314,7 @@
             "GET"
           ],
           "symbol": "api_list_intel_jobs",
-          "line": 34,
+          "line": 64,
           "parameters": [
             {
               "name": "request",
@@ -17349,7 +17384,7 @@
             "POST"
           ],
           "symbol": "api_process_intel_jobs",
-          "line": 42,
+          "line": 72,
           "parameters": [
             {
               "name": "request",
@@ -17413,7 +17448,7 @@
             "POST"
           ],
           "symbol": "api_retry_intel_job",
-          "line": 48,
+          "line": 78,
           "parameters": [
             {
               "name": "meeting_id",
@@ -17430,19 +17465,27 @@
           "literal_error_statuses": [],
           "calls": [
             "JSONResponse",
+            "_conflict_response",
             "_error",
+            "_json_body",
             "_principal",
             "_svc",
             "_svc(ctx).retry_job",
+            "body.get",
+            "isinstance",
             "router.post"
           ],
-          "body_access_keys": [],
+          "body_access_keys": [
+            "expected_selection_hash"
+          ],
           "raw_request": true,
           "docstring": null
         }
       ],
       "test_candidates": [
         "tests/integration/test_web_server.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_phase143_intel_queue_inventory.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -17475,7 +17518,7 @@
             "GET"
           ],
           "symbol": "api_intel_queue_summary",
-          "line": 38,
+          "line": 68,
           "parameters": [
             {
               "name": "request",
@@ -19032,6 +19075,9 @@
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_device_meeting_session.py",
@@ -19059,7 +19105,10 @@
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
         "tests/unit/test_api_surface.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19296,6 +19345,9 @@
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -19318,7 +19370,10 @@
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
         "tests/unit/test_api_surface.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19545,6 +19600,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -19566,7 +19624,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19633,6 +19694,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -19654,7 +19718,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19727,6 +19794,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -19748,7 +19818,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19811,6 +19884,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -19832,7 +19908,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19899,6 +19978,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -19920,7 +20002,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19988,6 +20073,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -20009,7 +20097,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20071,6 +20162,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -20092,7 +20186,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20164,6 +20261,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -20185,7 +20285,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20252,6 +20355,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -20273,7 +20379,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20338,6 +20447,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -20359,7 +20471,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20419,6 +20534,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -20440,7 +20558,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20472,7 +20593,7 @@
             "GET"
           ],
           "symbol": "api_get_meeting_intel_recovery",
-          "line": 67,
+          "line": 103,
           "parameters": [
             {
               "name": "meeting_id",
@@ -20502,6 +20623,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -20523,7 +20647,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20555,7 +20682,7 @@
             "POST"
           ],
           "symbol": "api_retry_meeting_intel_recovery",
-          "line": 71,
+          "line": 107,
           "parameters": [
             {
               "name": "meeting_id",
@@ -20572,10 +20699,13 @@
           "literal_error_statuses": [],
           "calls": [
             "JSONResponse",
+            "_conflict_response",
             "_error",
+            "_json_body",
             "_principal",
             "_svc",
             "_svc(ctx).retry_recovery",
+            "isinstance",
             "router.post"
           ],
           "body_access_keys": [],
@@ -20585,6 +20715,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -20606,7 +20739,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20638,7 +20774,7 @@
             "POST"
           ],
           "symbol": "api_skip_meeting_intel_recovery",
-          "line": 75,
+          "line": 116,
           "parameters": [
             {
               "name": "meeting_id",
@@ -20668,6 +20804,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -20689,7 +20828,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20721,7 +20863,7 @@
             "POST"
           ],
           "symbol": "api_run_meeting_intelligence",
-          "line": 52,
+          "line": 87,
           "parameters": [
             {
               "name": "meeting_id",
@@ -20735,25 +20877,30 @@
           "return_annotation": "Any",
           "declared_response_model": null,
           "declared_responses": {},
-          "literal_error_statuses": [
-            409
-          ],
+          "literal_error_statuses": [],
           "calls": [
             "JSONResponse",
+            "_conflict_response",
             "_error",
+            "_json_body",
             "_principal",
             "_svc",
             "_svc(ctx).run_intelligence",
-            "router.post",
-            "str"
+            "body.get",
+            "router.post"
           ],
-          "body_access_keys": [],
+          "body_access_keys": [
+            "expected_selection_hash"
+          ],
           "raw_request": true,
           "docstring": "HS-170-04: enqueue a fresh intelligence job for a meeting.\n\nThe face's Run intelligence verb. Returns {jobId, state, host}.\n409 with plainReason when the meeting has no transcript."
         }
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -20775,7 +20922,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20843,6 +20993,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -20864,7 +21017,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20927,6 +21083,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -20948,7 +21107,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21018,6 +21180,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -21039,7 +21204,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21101,6 +21269,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -21122,7 +21293,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21189,6 +21363,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -21210,7 +21387,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21274,6 +21454,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -21295,7 +21478,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21367,6 +21553,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -21388,7 +21577,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21453,6 +21645,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -21474,7 +21669,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21551,6 +21749,9 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -21572,7 +21773,10 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -32538,7 +32742,9 @@
           "docstring": null
         }
       ],
-      "test_candidates": [],
+      "test_candidates": [
+        "tests/unit/test_roadmaps_api.py"
+      ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
         "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
@@ -33067,6 +33273,7 @@
         "tests/e2e/test_hs170_arrival_glass.py",
         "tests/e2e/test_hs171_rhythm_glass.py",
         "tests/e2e/test_hs171_shade_glass.py",
+        "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/e2e/test_hs174_rhythm_runs_on_glass.py",
         "tests/integration/test_calendar_settings.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -33174,6 +33381,7 @@
         "tests/e2e/test_hs170_arrival_glass.py",
         "tests/e2e/test_hs171_rhythm_glass.py",
         "tests/e2e/test_hs171_shade_glass.py",
+        "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/e2e/test_hs174_rhythm_runs_on_glass.py",
         "tests/integration/test_calendar_settings.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -33538,6 +33746,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py"
       ],
@@ -33603,6 +33812,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py"
       ],
@@ -33676,6 +33886,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py"
       ],
@@ -34367,6 +34578,10 @@
         "tests/e2e/test_hs200_runtime_identity_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_hs200_voice_custody_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_one_thing_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/e2e/test_hs526_desk_memory_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_setup_first_value_journey.py",
@@ -34529,6 +34744,8 @@
       ],
       "test_candidates": [
         "tests/critical/test_journey_identity.py",
+        "tests/e2e/test_hs201_one_thing_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
         "tests/integration/test_actuator_kernel_real_hub.py",
         "tests/integration/test_phase200_runtime_identity.py",
         "tests/integration/test_setup_first_value_journey.py",
