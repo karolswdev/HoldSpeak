@@ -45,6 +45,7 @@ import {
   heldReason,
   isPriorRevision,
   jobHandle,
+  extractionRan,
   reviewHeadline,
   spanLabel,
   stamp,
@@ -356,8 +357,17 @@ export function MeetingReview({
         <span key="dismissed" className="surface-token">{`DISMISSED ${dismissed}`}</span>,
       );
     }
+    // HS-201-04: `EXTRACTED <time>` reads as "extraction ran at 12:04",
+    // but its stamp is the SUMMARY's completion. Only a real proposal
+    // proves the chain ran; otherwise the token says NOT RUN.
     const extracted = stamp(model.extractedAt);
-    if (extracted) {
+    if (!extractionRan(model)) {
+      headTokens.push(
+        <span key="not-run" className="surface-token" data-testid="review-not-run">
+          PROPOSALS · NOT RUN
+        </span>,
+      );
+    } else if (extracted) {
       headTokens.push(
         <span key="extracted" className="surface-token">{`EXTRACTED ${extracted}`}</span>,
       );
@@ -406,7 +416,15 @@ export function MeetingReview({
     },
     {
       id: "proposals",
-      label: countLabel("PROPOSALS", proposalCount),
+      // HS-201-04: a disclosed summary request runs ANALYSIS only — it does
+      // not run the Phase 200 plugin proposal chain (the lane A handoff,
+      // "Merge interlock and summary-only scope"). With no proposals and
+      // nothing that will make them, the step says NOT RUN. It never says
+      // `0 PROPOSALS` (UX-CANON A.8) and never implies extraction ran.
+      label:
+        proposalCount > 0
+          ? countLabel("PROPOSALS", proposalCount)
+          : "PROPOSALS · NOT RUN",
       status: proposalCount > 0 ? "done" : coverage.state === "failed" ? "failed" : "queued",
     },
   ];
@@ -741,14 +759,15 @@ export function MeetingReview({
       </div>
       <SurfaceFooter
         egress={
+          // HS-201-04 (Astra's counsel finding 4, applied to this wing's own
+          // footer): with no recorded host the constant `⌂ This device` is a
+          // claim about execution this face cannot make. It says nothing.
           eg.label ? (
             <>
               <EgressChip label={eg.label} scope={eg.scope} />
               {modelLabel ? <span className="surface-token">{modelLabel.toUpperCase()}</span> : null}
             </>
-          ) : (
-            <EgressChip />
-          )
+          ) : null
         }
         receipt={
           <span

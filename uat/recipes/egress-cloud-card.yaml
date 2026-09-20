@@ -1,14 +1,20 @@
 title: A cloud-egress proposal card, queued and unexecuted
 description: >
-  Select the named cloud posture, seed the ordinary local desk, push a
-  deterministic accepted meeting action through the product's sync ingress,
-  and turn it into a GitHub-issue proposal through the real aftercare route.
-  The probe reads the per-card target and exact repo back through the proposal
-  API and requires the card to remain proposed/unexecuted.
+  This fixture requires the isolated discovery stub used by test_egress_cloud.
+  Select the named cloud posture, assign the summary route, seed the ordinary
+  local desk, push a deterministic accepted meeting action through the
+  product's sync ingress, and turn it into a GitHub-issue proposal through the
+  real aftercare route. The probe reads the per-card target and exact repo back
+  through the proposal API and requires the card to remain proposed/unexecuted.
 deck: cloud-egress
 requires: []
 includes: [seeded-desk]
 actions:
+  - assign_summary_route:
+      profile_id: uat-summary-cloud
+      label: UAT summary cloud
+      model: uat-never-invoked
+      endpoint: https://api.openai.com/v1
   - sync_meeting:
       id: uat-egress-meeting
       title: Cloud egress review (UAT seed)

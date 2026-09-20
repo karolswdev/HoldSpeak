@@ -5,7 +5,20 @@ import { Button } from "../../../components/signal/Signal";
 import {
   SurfaceState,
 } from "../../../desk/surface/Surface";
-import { EgressChip } from "../../../desk/surface/gadgets";
+import {
+  RefusalToken,
+  RouteDisclosure,
+  RunAttempts,
+} from "../../../meetings/RouteDisclosure";
+import {
+  executedReceipt,
+  readLastRefusal,
+  readPlannedRoute,
+  readRunReceipt,
+  routeReady,
+  type PlannedRoute,
+  type SummaryRefusal,
+} from "../../../meetings/summaryRoute";
 import { rowId } from "../../pageSupport";
 import { countToken } from "../../../desk/surface";
 import {
@@ -13,6 +26,31 @@ import {
   meetingRowState, stateToken,
 } from "./helpers";
 import type { ReactNode } from "react";
+
+/** HS-201-04 — true when this row would draw a verb that STARTS a summary
+ *  run: the verb is a run verb AND a route resolves for it. The rail uses
+ *  it to pick the ONE row that may carry the filled primary. */
+function rowStartsRun(row: Record<string, unknown>): boolean {
+  const verb = meetingRowState(row).verb;
+  if (verb !== "Run summary" && verb !== "Retry") return false;
+  return routeReady(readPlannedRoute(row));
+}
+
+/** The row that may wear the filled primary: the SELECTED row when it can
+ *  start a run, else the top-most row that can. Every other row's verb is
+ *  the default species (UX-CANON: one filled primary per window). */
+function leadRunRowId(
+  rows: Record<string, unknown>[],
+  selected: Record<string, unknown> | null,
+): string | null {
+  const selectedId = selected ? String(selected.id) : null;
+  if (selectedId) {
+    const row = rows.find((item) => String(item.id) === selectedId);
+    if (row && rowStartsRun(row)) return selectedId;
+  }
+  const first = rows.find(rowStartsRun);
+  return first ? String(first.id) : null;
+}
 
 /** Render a list of tokens joined by middle dots (U+00B7).
  *  Dots are sibling flex children for equal spacing on both sides. */
@@ -35,17 +73,21 @@ function MeetingStreamRow({
   onSelect,
   onRunIntelligence,
   runningId,
-  runHost,
   drainerAbsent,
+  refusal,
+  isLead,
 }: {
   row: Record<string, unknown>;
   isSelected: boolean;
+  /** HS-201-04 — the one row of the rail that may wear a filled primary. */
+  isLead: boolean;
   onSelect: () => void;
-  onRunIntelligence: (id: string) => void;
+  onRunIntelligence: (id: string, route: PlannedRoute | null) => void;
   runningId: string | null;
-  runHost: string | null;
   /** The `runtime_queue` frame says no hub drainer will execute the queue. */
   drainerAbsent?: boolean;
+  /** HS-201-04 — the hub's 409 on THIS row's last run gesture. */
+  refusal?: SummaryRefusal | null;
 }) {
   const state = meetingRowState(row);
   const words = wordsToken(row.transcriptWords);
@@ -114,6 +156,16 @@ function MeetingStreamRow({
     );
   }
 
+  // HS-201-04 — the disclosed route (before the click) and the receipt's
+  // destinations (after the run), both from this row's read model.
+  const plannedRoute = refusal?.route ?? readPlannedRoute(row);
+  const runReceipt = executedReceipt(
+    String(row.id ?? ""),
+    refusal?.receipt,
+    readRunReceipt(row),
+  );
+  const canRun = routeReady(plannedRoute);
+
   // Determine verb
   let verb = state.verb;
   let verbVariant = state.verbVariant;
@@ -121,7 +173,23 @@ function MeetingStreamRow({
     verb = null;
     verbVariant = "ghost";
   }
-  // No transcript row: only ghost Open (no Run intelligence)
+  // UX-CANON A.11: `Run summary` and `Retry` both start a summary
+  // run. With no resolvable route there is nothing to run, so the verb is
+  // withheld and the disclosure says why.
+  if ((verb === "Run summary" || verb === "Retry") && !canRun) {
+    verb = null;
+  }
+  // HS-201-04 (Astra's counsel round 2; one filled primary per window).
+  // Two rules compose:
+  //   - only the LEAD row (the selected one when it can run, else the
+  //     top-most that can) may wear the filled species. Two summary-ready
+  //     meetings used to draw two filled `Run summary` verbs.
+  //   - and when that row's RECORD is open, the record carries the filled
+  //     verb, so the row's own copy steps down too.
+  if (verbVariant === "primary" && (!isLead || isSelected)) {
+    verbVariant = "ghost";
+  }
+  // No transcript row: only ghost Open (no Run summary)
   if (noTranscript && token.label === "OFF") {
     verb = "Open";
     verbVariant = "ghost";
@@ -160,22 +228,44 @@ function MeetingStreamRow({
         </div>
       </div>
       <div className="meetings-stream-row-verb">
-        {isRunning && runHost ? (
-          <EgressChip label={runHost} />
+        {/* Article III — after the run: every destination contacted, in
+            order. Before the click (and while it is in flight): the route
+            the run WILL use.
+            HS-201-04: this REPLACES the old in-flight chip, which took the
+            POST response's `host` straight to the glass and printed the
+            wire word `same_device` at a person (caught by the HS-170 S-3
+            rig). One egress chip per row, through the one mapper. */}
+        <RunAttempts receipt={runReceipt} testId="row-attempts" />
+        {state.verb === "Run summary" || state.verb === "Retry" || isRunning ? (
+          <RouteDisclosure route={plannedRoute} testId="row-route" />
         ) : null}
+        <RefusalToken
+          refusal={refusal}
+          durable={readLastRefusal(row)}
+          testId="row-refusal"
+        />
         {verb ? (
           <Button
             dense
             variant={verbVariant === "primary" ? "primary" : "ghost"}
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
-              if (verb === "Run intelligence") {
-                onRunIntelligence(String(row.id));
+              // HS-201-04 (audit defect 2): `Retry` used to fall through to
+              // `onSelect` and issue ZERO requests. Both run verbs dispatch.
+              if (verb === "Run summary" || verb === "Retry") {
+                // The route this row DISCLOSED is the route that travels.
+                onRunIntelligence(String(row.id), plannedRoute);
               } else {
                 onSelect();
               }
             }}
-            data-testid={verb === "Run intelligence" ? "run-intelligence-btn" : undefined}
+            data-testid={
+              verb === "Run summary"
+                ? "run-intelligence-btn"
+                : verb === "Retry"
+                  ? "retry-intelligence-btn"
+                  : undefined
+            }
           >
             {verb}
           </Button>
@@ -192,22 +282,24 @@ export function CatalogRail({
   setSelected,
   onRunIntelligence,
   runningId,
-  runHost,
   drainerAbsent,
+  runRefusal,
   narrowed,
 }: {
   meetingRows: Record<string, unknown>[];
   meetings: { loading: boolean; error: string; reload(): Promise<unknown> };
   selected: Record<string, unknown> | null;
   setSelected: (row: Record<string, unknown> | null) => void;
-  onRunIntelligence: (id: string) => void;
+  onRunIntelligence: (id: string, route: PlannedRoute | null) => void;
   runningId: string | null;
-  runHost: string | null;
   /** The `runtime_queue` frame says no hub drainer will execute the queue. */
   drainerAbsent?: boolean;
+  /** HS-201-04 — the hub's 409 on the last run gesture, with its row. */
+  runRefusal?: { meetingId: string; refusal: SummaryRefusal } | null;
   /** When true, shown as the narrowed left side in SurfaceSplit. */
   narrowed?: boolean;
 }) {
+  const leadId = leadRunRowId(meetingRows, selected);
   return (
     <div className="meetings-stream" data-narrowed={narrowed || undefined}>
       <SurfaceState
@@ -232,9 +324,14 @@ export function CatalogRail({
                 setSelected(isOpen ? null : row);
               }}
               onRunIntelligence={onRunIntelligence}
+              isLead={leadId === String(row.id)}
               runningId={runningId}
-              runHost={runHost}
               drainerAbsent={drainerAbsent}
+              refusal={
+                runRefusal && runRefusal.meetingId === String(row.id)
+                  ? runRefusal.refusal
+                  : null
+              }
             />
           ))}
         </div>

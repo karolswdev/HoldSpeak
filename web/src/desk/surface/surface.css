@@ -2632,6 +2632,86 @@ button.surface-edit-in-place:hover {
   text-overflow: ellipsis;
 }
 
+/* HS-201-04 (audit defect 6) — the summary slab's facts SPAN the row.
+   The default gadget row keeps a 96-200px label column, which squeezed
+   `NOT DONE: ...` into a seven-character column that broke mid-word at
+   1440. This face's row has no label column: the facts take the width
+   and the verbs take exactly what they need. It is not a species bug —
+   every other gadget row legitimately wants its label column. */
+.meeting-intel-recovery .gadget-row {
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: start;
+}
+/* The label cell is a column flex box that does NOT stretch its child,
+   so a long fact line kept its max-content width and ran UNDER the
+   verbs (the first 201-04 shot caught it). Stretch the cell, and let
+   the facts wrap inside it. */
+.meeting-intel-recovery .gadget-row-label {
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+}
+.meeting-intel-recovery-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  width: 100%;
+  min-width: 0;
+}
+.meeting-intel-recovery-facts > * {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+/* A refusal carries the hub's plain reason. Token chips are nowrap by
+   species, which ran the reason out of the window's right edge (caught
+   by the second 201-04 shot); this one wraps inside its row. */
+.summary-refusal {
+  white-space: normal;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.meeting-intel-recovery .gadget-row-gadget {
+  align-items: start;
+  padding-top: 1px;
+}
+
+/* HS-201-04 — the route disclosure beside a verb: chips on one line
+   that wrap rather than push the verb off the pane. */
+.summary-route {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* HS-201-04 — the summary on the record, with its meeting. */
+.summary-well-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+}
+.summary-text {
+  margin: 0;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.summary-topics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  min-width: 0;
+}
+
 /* A textarea riding the string-gadget well (the route preview): same
    sunken geometry, docked mic. */
 .gadget-string textarea {

@@ -827,7 +827,7 @@ and their lifetimes:
 | Heartbeat | `HoldSpeakHeartbeat` | `runtime/heartbeat.py` (HeartbeatMixin) | Always on | try/except per tick; logs and continues |
 | Recording ticker | (per-meeting thread) | `device_recording_tick.py` via `runtime/meeting_glue.py:346` | Per-meeting lifecycle (start/stop) | Independent; started by `_start_meeting`, stopped by `_stop_active_meeting` |
 | Transcriber warm | (one-shot thread) | `runtime/transcriber_state.py:202` | One-shot at startup | Independent; no restart on failure |
-| Intel queue drainer | `HoldSpeakIntelQueue` | `intel_queue_conductor.py` → `intel_queue.IntelQueueWorker` | Started by the hub lifespan, stopped by it; only in the process that owns the database | try/except per drain iteration; logs and continues. Polls every 15s and is woken immediately by `Run intelligence` |
+| Intel queue drainer | `HoldSpeakIntelQueue` | `intel_queue_conductor.py` → `intel_queue.IntelQueueWorker` | Started by the hub lifespan, stopped by it; only in the process that owns the database | try/except per drain iteration; logs and continues. Polls every 15s and is woken immediately by the face's `Run summary` verb |
 
 ### The Heartbeat sweep
 

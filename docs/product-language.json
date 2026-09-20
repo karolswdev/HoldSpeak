@@ -20,6 +20,12 @@
       "category": "meeting_projection",
       "meaning": "Speaker and time material owned by a Meeting."
     },
+    "summary": {
+      "singular": "Summary",
+      "plural": "Summaries",
+      "category": "meeting_projection",
+      "meaning": "What a Meeting produced for a person to read. The wire calls it meeting intelligence. Every face says Summary (HS-201-06, Constitution tenet 4)."
+    },
     "action_item": {
       "singular": "Action item",
       "plural": "Action items",

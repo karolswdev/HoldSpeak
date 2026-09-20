@@ -1,4 +1,4 @@
-// HS-170-04 -- CatalogRail tests: Run intelligence verb appears only
+// HS-170-04 -- CatalogRail tests: the run-summary verb appears only
 // on OFF rows with a transcript, never on no-transcript rows.
 
 import { render, screen } from "@testing-library/react";
@@ -13,12 +13,11 @@ function baseProps(rows: Record<string, unknown>[]) {
     setSelected: vi.fn(),
     onRunIntelligence: vi.fn(),
     runningId: null,
-    runHost: null,
   };
 }
 
-describe("CatalogRail Run intelligence verb (HS-170-04)", () => {
-  it("shows Run intelligence on OFF row with transcript", () => {
+describe("CatalogRail Run summary verb (HS-170-04)", () => {
+  it("shows Run summary on OFF row with transcript", () => {
     const rows = [
       {
         id: "m-off-words",
@@ -28,13 +27,21 @@ describe("CatalogRail Run intelligence verb (HS-170-04)", () => {
         capture_status: "finalized",
         intel_status: "disabled",
         transcriptWords: 1204,
+        // HS-201-04: a run verb needs a disclosed route to run on; the
+        // hub serves one on every row of this read model.
+        planned_route: {
+          status: "ready",
+          reason_code: null,
+          selection_hash: "sha256:rail",
+          legs: [{ ordinal: 1, host: "local", boundary: "local" }],
+        },
       },
     ];
     render(<CatalogRail {...baseProps(rows)} />);
-    expect(screen.getByText("Run intelligence")).toBeInTheDocument();
+    expect(screen.getByText("Run summary")).toBeInTheDocument();
   });
 
-  it("does not show Run intelligence on no-transcript row", () => {
+  it("does not show Run summary on no-transcript row", () => {
     const rows = [
       {
         id: "m-no-transcript",
@@ -47,7 +54,7 @@ describe("CatalogRail Run intelligence verb (HS-170-04)", () => {
       },
     ];
     render(<CatalogRail {...baseProps(rows)} />);
-    expect(screen.queryByText("Run intelligence")).not.toBeInTheDocument();
+    expect(screen.queryByText("Run summary")).not.toBeInTheDocument();
     expect(screen.getByText("NO TRANSCRIPT")).toBeInTheDocument();
   });
 

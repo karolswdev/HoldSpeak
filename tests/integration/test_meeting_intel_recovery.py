@@ -22,6 +22,10 @@ from holdspeak.meeting_session import (  # noqa: E402
     TranscriptSegment,
 )
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks  # noqa: E402
+from tests.unit.test_hs201_route_contract import (  # noqa: E402
+    assign_summary,
+    summary_profile,
+)
 
 
 @pytest.fixture
@@ -76,6 +80,8 @@ def _seed_failed_partial_intel(db) -> MeetingState:
         intel_completed_at=datetime(2026, 7, 11, 9, 19, 0),
     )
     db.meetings.save_meeting(meeting)
+    summary_profile(db, "partial-recovery-summary")
+    assign_summary(db, ["partial-recovery-summary"])
     db.plugins.record_artifact(
         artifact_id="artifact-retained",
         meeting_id=meeting.id,
@@ -140,7 +146,15 @@ def test_partial_intel_names_retained_work_and_supports_retry_or_skip(
     assert db.plugins.list_artifacts(meeting.id)[0].id == "artifact-retained"
     assert db.intel.list_intel_job_attempts(meeting.id)[0].outcome == "skipped"
 
-    retried = client.post(f"/api/meetings/{meeting.id}/intel-recovery/retry")
+    retry_read = client.get(f"/api/meetings/{meeting.id}/intel-recovery")
+    assert retry_read.status_code == 200
+    planned_route = retry_read.json()["planned_route"]
+    assert planned_route["status"] == "ready"
+    assert planned_route["selection_hash"]
+    retried = client.post(
+        f"/api/meetings/{meeting.id}/intel-recovery/retry",
+        json={"expected_selection_hash": planned_route["selection_hash"]},
+    )
     assert retried.status_code == 200
     assert retried.json()["recovery"]["state"] == "queued"
     assert retried.json()["recovery"]["actions"] == {

@@ -1,0 +1,1747 @@
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  0%]
+........................................................................ [  1%]
+........................................................................ [  1%]
+........................................................................ [  2%]
+........................................................................ [  3%]
+........................................................................ [  3%]
+........................................................................ [  4%]
+........................................................................ [  5%]
+........................................................................ [  5%]
+........................................................................ [  6%]
+........................................................................ [  7%]
+ssssssssssssssssssssssssssss..........................ss......ss........ [  7%]
+........................................................................ [  8%]
+........................................................................ [  8%]
+........................................................................ [  9%]
+.........................ssssssss.................F..................... [ 10%]
+.......................................................ss....F.......... [ 10%]
+........................................................................ [ 11%]
+........................................................................ [ 12%]
+..............................................................s......... [ 12%]
+........................................................................ [ 13%]
+....s................................................................... [ 14%]
+........................................................................ [ 14%]
+...............s........................................................ [ 15%]
+........................................................................ [ 15%]
+.........................................................s.............. [ 16%]
+...................................................ss..............ss... [ 17%]
+.......................F................................................ [ 17%]
+..........................................................s............. [ 18%]
+........................................................................ [ 19%]
+........................................................................ [ 19%]
+...................................s.................................... [ 20%]
+........................................................................ [ 21%]
+........................................................................ [ 21%]
+.....................................sssss.............................. [ 22%]
+..................................................................s..... [ 22%]
+........................................................................ [ 23%]
+...........................................................F............ [ 24%]
+.........................................F.............................. [ 24%]
+........................................................................ [ 25%]
+..........................................s............................. [ 26%]
+........................................................................ [ 26%]
+............................................................ss.......... [ 27%]
+........................................................................ [ 28%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+.......................................sss.............................. [ 29%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+........s............................................................... [ 33%]
+........................................................................ [ 33%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 36%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+........................................................................ [ 38%]
+........................................................................ [ 39%]
+........................................................................ [ 40%]
+........................................................................ [ 40%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+........................................................................ [ 42%]
+........................................................F............... [ 43%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+........................................................................ [ 45%]
+........................................................................ [ 45%]
+..F..................................................................... [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 47%]
+........................................................................ [ 48%]
+........................................................................ [ 49%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+......................s................................................. [ 52%]
+........................................................................ [ 52%]
+...............F........................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 54%]
+...................................s.................................... [ 55%]
+........................................................................ [ 56%]
+........................................................................ [ 56%]
+......F................................................................. [ 57%]
+.......................................................................F [ 57%]
+........................................................................ [ 58%]
+........................................................F............... [ 59%]
+......s......................sss........................................ [ 59%]
+........................................................................ [ 60%]
+....................................................................F... [ 61%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 63%]
+........................................................................ [ 63%]
+........................................................................ [ 64%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+........................................................................ [ 66%]
+........................................................................ [ 66%]
+.......F................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 68%]
+........................................................................ [ 69%]
+..........................F............................................. [ 70%]
+........................................................................ [ 70%]
+................................F....................................... [ 71%]
+........................................................................ [ 71%]
+........................................................................ [ 72%]
+........................................................................ [ 73%]
+........................................................................ [ 73%]
+........................................................................ [ 74%]
+........................................................................ [ 75%]
+.......................................................s................ [ 75%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 77%]
+......................................................s................. [ 78%]
+........................................................................ [ 78%]
+........................................................................ [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 80%]
+........................................................................ [ 81%]
+........................................................................ [ 82%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 84%]
+........................................................................ [ 84%]
+........................................................................ [ 85%]
+........................................................................ [ 85%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+........................................................................ [ 87%]
+........................................................................ [ 88%]
+........................................................................ [ 89%]
+........................................................................ [ 89%]
+........................................................................ [ 90%]
+........................................................................ [ 91%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+.................................s...................................... [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 94%]
+........................................................................ [ 94%]
+........................................................................ [ 95%]
+....................s................................................... [ 96%]
+........................................................................ [ 96%]
+.......................F.......................x.......x..ssssssssssss.. [ 97%]
+..sssssssss.......x...............ssss....ssssss.x.........FF......F.... [ 98%]
+.....F..................................................ssssssssss.s.F.. [ 98%]
+F..........F.F.......................................................... [ 99%]
+........................................................................ [100%]
+=================================== FAILURES ===================================
+_________________ test_committed_manifest_matches_the_live_app _________________
+[gw8] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+committed = {'note': 'Generated by scripts/gen_api_surface.py. Do not edit by hand.', 'routes': [{'consumers': [], 'methods': ['GE...web.routes.activity.enrichment', 'path': '/api/activity/annotations'}, ...], 'unmatched_calls': {'ios': [], 'web': []}}
+live = {'note': 'Generated by scripts/gen_api_surface.py. Do not edit by hand.', 'routes': [{'consumers': [], 'methods': ['GE...web.routes.activity.enrichment', 'path': '/api/activity/annotations'}, ...], 'unmatched_calls': {'ios': [], 'web': []}}
+
+    def test_committed_manifest_matches_the_live_app(committed, live) -> None:
+>       assert committed["routes"] == live["routes"], (
+            "the committed API-surface manifest drifted from the live app/call "
+            "sites — regenerate: uv run python scripts/gen_api_surface.py"
+        )
+E       AssertionError: the committed API-surface manifest drifted from the live app/call sites — regenerate: uv run python scripts/gen_api_surface.py
+E       assert [{'consumers'...ations'}, ...] == [{'consumers'...ations'}, ...]
+E         
+E         At index 139 diff: {'path': '/api/connections', 'methods': ['GET'], 'module': 'web.routes.connections', 'consumers': ['web']} != {'path': '/api/concierge/summary-selection', 'methods': ['POST'], 'module': 'web.routes.concierge', 'consumers': ['web']}
+E         Right contains one more item: {'consumers': ['web'], 'methods': ['WS'], 'module': 'web.routes.system.voice_stream', 'path': '/ws/dictation/stream'}
+E         Use -v to get more diff
+
+tests/unit/test_api_surface.py:52: AssertionError
+________ TestDatabaseShape.test_fresh_schema_matches_canonical_snapshot ________
+[gw10] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+self = <tests.unit.test_db.TestDatabaseShape object at 0x113f86850>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8847/popen-gw10/test_fresh_schema_matches_cano0')
+project_root = PosixPath('/Users/karol/dev/tools/wt-201-a')
+
+    def test_fresh_schema_matches_canonical_snapshot(self, tmp_path, project_root: Path):
+        """HS-31-04: the migration ladder was squashed to one canonical schema.
+        A fresh build must match the committed snapshot exactly — any intended
+        schema change must update tests/fixtures/db_schema_canonical.txt in the
+        same commit, keeping the schema honest without a version ladder."""
+        import re
+        import sqlite3
+        from holdspeak.db import Database
+    
+        Database(tmp_path / "schema_check.db")
+        conn = sqlite3.connect(str(tmp_path / "schema_check.db"))
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT type, name, sql FROM sqlite_master "
+            "WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name"
+        ).fetchall()
+        actual = "\n".join(
+            f"{r['type']} {r['name']}: {re.sub(r'\s+', ' ', (r['sql'] or '').strip())}"
+            for r in rows
+        ) + "\n"
+        conn.close()
+    
+        snapshot = project_root / "tests" / "fixtures" / "db_schema_canonical.txt"
+        expected = snapshot.read_text()
+>       assert actual == expected, (
+            "Fresh DB schema diverged from the canonical snapshot. If this change is "
+            f"intended, regenerate {snapshot.relative_to(project_root)}."
+        )
+E       AssertionError: Fresh DB schema diverged from the canonical snapshot. If this change is intended, regenerate tests/fixtures/db_schema_canonical.txt.
+E       assert "index idx_ac...ease'); END\n" == "index idx_ac...ease'); END\n"
+E         
+E         Skipping 76032 identical leading characters in diff, use -v to show
+E         - ost TEXT, requested_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')), attempts INTEGER NOT NULL DEFAULT 0, last_error TEXT )
+E         + ost TEXT, planned_route_json TEXT, run_receipt_json TEXT, requested_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')), attempts INTEGER NOT NULL DEFAULT 0, last_error TEXT )
+E         ?          ++++++++++++++++++++++++++++++++++++++++++++++++
+E           table intel_snapshots: CREATE TABLE intel_snapshots ( id...
+E         
+E         ...Full output truncated (217 lines hidden), use '-vv' to show
+
+tests/unit/test_db.py:1755: AssertionError
+____ test_meeting_transcription_children_join_the_existing_meeting_session _____
+[gw8] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8847/popen-gw8/test_meeting_transcription_chi0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1154ab0e0>
+
+    def test_meeting_transcription_children_join_the_existing_meeting_session(
+        tmp_path, monkeypatch
+    ):
+        """A transcription interval is a child of the LIVE meeting.session parent."""
+        from holdspeak.meeting_session.intel_admission import (
+            SESSION_CHILD_BUDGET,
+            SESSION_DEADLINE_SECONDS,
+        )
+        from holdspeak.meeting_session.transcribe_admission import session_child_budget
+    
+        def _budget() -> int:
+            return session_child_budget(
+                transcription=True,
+                session_seconds=SESSION_DEADLINE_SECONDS,
+                intelligence_budget=SESSION_CHILD_BUDGET,
+            )
+    
+        db = Database(tmp_path / "meeting.db")
+        # A Phase-B meeting parent freezes its live+speech route bundle before an
+        # interval can become an admitted transcription child.
+        from tests.unit.test_meeting_session_admission import _assign_bundle_routes
+    
+        _assign_bundle_routes(db)
+        monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+        _configure(db)
+        # HS-131-17 removed the session's provider preflight entirely; this session
+        # runs with intelligence disabled anyway, so there is nothing left to stub.
+        # Capture is outside this test's boundary and must not open host audio on CI.
+        _silence_meeting_capture(monkeypatch)
+    
+        from holdspeak.meeting_session import MeetingSession
+    
+        impl = FakeImpl()
+        session = MeetingSession(
+            _transcriber(impl),
+            intel_enabled=False,
+            principal=Principal(PrincipalKind.OWNER, "meeting-owner"),
+        )
+        monkeypatch.setattr(session, "_transcribe_loop", lambda: None)
+        state = session.start()
+        assert state is not None
+    
+        parents = _parents(db, "meeting.session")
+        assert len(parents) == 1
+        # Phase B reserves the complete frozen live bundle: intelligence (4096),
+        # speech preload (1), and its routed transcription allocation (17,286).
+        # Keep the legacy helper's 8,418 calculation visible as historical-reader
+        # coverage, but the new parent must carry the aggregate bundle budget.
+        assert _budget() == 8418
+>       assert int(parents[0]["child_budget"]) == 21_383
+E       assert 17287 == 21383
+E        +  where 17287 = int(17287)
+
+tests/unit/test_dictation_session_admission.py:1324: AssertionError
+_________ test_docs_do_not_restore_retired_inference_setup_vocabulary __________
+[gw10] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+    def test_docs_do_not_restore_retired_inference_setup_vocabulary() -> None:
+        offenders: list[str] = []
+        for path in _all_docs_and_readme():
+            for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                match = _RETIRED_INFERENCE_VOCAB.search(line)
+                if match:
+                    offenders.append(f"{path.relative_to(_REPO)}:{lineno}: {match.group(0)!r}")
+    
+>       assert not offenders, (
+            "Retired inference setup vocabulary returned to docs/ or README. Use "
+            "Models for availability and Assignments for job selection instead:\n  "
+            + "\n  ".join(offenders)
+        )
+E       AssertionError: Retired inference setup vocabulary returned to docs/ or README. Use Models for availability and Assignments for job selection instead:
+E           docs/internal/inventory-2026-09-19/02-capabilities.md:500: 'inference_target_id'
+E           docs/internal/inventory-2026-09-19/02-capabilities.md:531: 'inference_target_id'
+E           docs/internal/inventory-2026-09-19/03-roadmap.md:75: 'Download & use'
+E       assert not ["docs/internal/inventory-2026-09-19/02-capabilities.md:500: 'inference_target_id'", "docs/internal/inventory-2026-09-...2-capabilities.md:531: 'inference_target_id'", "docs/internal/inventory-2026-09-19/03-roadmap.md:75: 'Download & use'"]
+
+tests/unit/test_doc_drift_guard.py:121: AssertionError
+________________ test_no_live_doc_has_a_dangling_relative_link _________________
+[gw10] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+    def test_no_live_doc_has_a_dangling_relative_link() -> None:
+        offenders: list[str] = []
+        for path in _maintained_docs():
+            for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                for target in _MD_LINK.findall(line):
+                    target = target.strip()
+                    # Skip external, anchor-only, and non-doc targets.
+                    if target.startswith(("http://", "https://", "mailto:", "#", "<")):
+                        continue
+                    # Drop any #fragment / ?query suffix.
+                    rel = target.split("#", 1)[0].split("?", 1)[0]
+                    if not rel:
+                        continue
+                    resolved = (path.parent / rel).resolve()
+                    if not resolved.exists():
+                        offenders.append(
+                            f"{path.relative_to(_REPO)}:{lineno}: -> {target}"
+                        )
+    
+>       assert not offenders, (
+            "A maintained doc links a path that does not exist (dangling relative link). "
+            "Fix the path or the move:\n  " + "\n  ".join(offenders)
+        )
+E       AssertionError: A maintained doc links a path that does not exist (dangling relative link). Fix the path or the move:
+E           docs/internal/checks/constitution-seven-tenets-astra.md:14: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:25
+E           docs/internal/checks/constitution-seven-tenets-astra.md:16: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/DOCS_STYLE.md:10
+E           docs/internal/checks/constitution-seven-tenets-astra.md:16: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:35
+E           docs/internal/checks/constitution-seven-tenets-astra.md:18: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:39
+E           docs/internal/checks/constitution-seven-tenets-astra.md:20: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:102
+E           docs/internal/checks/constitution-seven-tenets-astra.md:20: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:163
+E           docs/internal/checks/constitution-seven-tenets-astra.md:22: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:125
+E           docs/internal/checks/constitution-seven-tenets-astra.md:22: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/UX-CANON.md:27
+E           docs/internal/checks/constitution-seven-tenets-astra.md:24: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:134
+E           docs/internal/checks/constitution-seven-tenets-astra.md:24: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/UX-CANON.md:115
+E           docs/internal/checks/constitution-seven-tenets-astra.md:24: -> /Users/karol/dev/tools/HoldSpeak/AGENTS.md:33
+E           docs/internal/checks/constitution-seven-tenets-astra.md:26: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/06-check-astra.md:89
+E           docs/internal/checks/constitution-seven-tenets-astra.md:26: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/06-check-astra.md:109
+E           docs/internal/checks/constitution-seven-tenets-astra.md:26: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/INVENTORY-2026-09-19.md:13
+E           docs/internal/checks/constitution-seven-tenets-astra.md:28: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/ORCHESTRATION.md:51
+E           docs/internal/checks/constitution-seven-tenets-astra.md:28: -> /Users/karol/dev/tools/HoldSpeak/CLAUDE.md:33
+E           docs/internal/checks/constitution-seven-tenets-astra.md:28: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:194
+E           docs/internal/checks/constitution-seven-tenets-astra.md:88: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:24
+E           docs/internal/checks/constitution-seven-tenets-astra.md:88: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:39
+E           docs/internal/checks/constitution-seven-tenets-astra.md:90: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/checks/constitution-seven-tenets-astra.md:51
+E           docs/internal/checks/constitution-seven-tenets-astra.md:90: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/UX-CANON.md:23
+E           docs/internal/checks/constitution-seven-tenets-astra.md:90: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/ORCHESTRATION.md:234
+E           docs/internal/checks/constitution-seven-tenets-astra.md:92: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/checks/constitution-seven-tenets-astra.md:43
+E           docs/internal/checks/constitution-seven-tenets-astra.md:92: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/ORCHESTRATION.md:52
+E           docs/internal/checks/constitution-seven-tenets-astra.md:92: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:206
+E           docs/internal/checks/constitution-seven-tenets-astra.md:94: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/checks/constitution-seven-tenets-astra.md:66
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:15: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/05-desk-census.md:220
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:17: -> /Users/karol/dev/tools/HoldSpeak/holdspeak/services/meeting_deferred_queue_binding.py:126
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:17: -> /Users/karol/dev/tools/HoldSpeak/holdspeak/services/inference_service_route_policy.py:93
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:17: -> /Users/karol/dev/tools/HoldSpeak/holdspeak/db/intel.py:361
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:17: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:140
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:19: -> /Users/karol/dev/tools/HoldSpeak/holdspeak/services/meeting_intel_service.py:81
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:19: -> /Users/karol/dev/tools/HoldSpeak/web/src/desk/chair/ChairHome.tsx:614
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:19: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:45
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:21: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/05-desk-census.md:39
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:21: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/05-desk-census.md:67
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:21: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/05-desk-census.md:157
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:23: -> /Users/karol/dev/tools/HoldSpeak/web/src/features/project-room/recall/RecallFace.tsx:84
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:23: -> /Users/karol/dev/tools/HoldSpeak/web/src/desk/chair/ChairHome.tsx:1296
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:23: -> /Users/karol/dev/tools/HoldSpeak/web/src/features/project-room/useProjectRoomController.ts:33
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:23: -> /Users/karol/dev/tools/HoldSpeak/web/src/pages/cores/PeopleCore.tsx:456
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:25: -> /Users/karol/dev/tools/HoldSpeak/holdspeak/services/watch_service.py:102
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:25: -> /Users/karol/dev/tools/HoldSpeak/holdspeak/services/project_door_service.py:308
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:25: -> /Users/karol/dev/tools/HoldSpeak/holdspeak/services/reaction_service.py:219
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:27: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/05-desk-census.md:311
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:27: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/01-faces.md:410
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:29: -> /Users/karol/dev/tools/HoldSpeak/web/src/desk/verbRegistry.ts:581
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:29: -> /Users/karol/dev/tools/HoldSpeak/web/src/desk/verbRegistry.ts:232
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:29: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/05-desk-census.md:176
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:31: -> /Users/karol/dev/tools/HoldSpeak/web/src/desk/threads.ts:1083
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:31: -> /Users/karol/dev/tools/HoldSpeak/web/src/desk/pullouts/ThreadPullout.tsx:640
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:33: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/03-roadmap.md:140
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:33: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:106
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:33: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/INVENTORY-2026-09-19.md:361
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:89: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/06-check-astra.md:70
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:91: -> /Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/THE-TUESDAY-ARC.md:54
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:91: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/UX-CANON.md:30
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:91: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/06-check-astra.md:29
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:93: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/06-check-astra.md:54
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:93: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/06-check-astra.md:66
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:93: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/06-check-astra.md:75
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:95: -> /Users/karol/dev/tools/HoldSpeak/holdspeak/db/intel.py:361
+E           docs/internal/inventory-2026-09-19/06-check-astra.md:97: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/inventory-2026-09-19/06-check-astra.md:56
+E       assert not ['docs/internal/checks/constitution-seven-tenets-astra.md:14: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTI...cks/constitution-seven-tenets-astra.md:20: -> /Users/karol/dev/tools/HoldSpeak/docs/internal/CONSTITUTION.md:163', ...]
+
+tests/unit/test_doc_drift_guard.py:269: AssertionError
+______ TestIntelQueueApiEndpoints.test_intel_jobs_list_retry_and_process _______
+[gw6] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+self = <tests.integration.test_web_server.TestIntelQueueApiEndpoints object at 0x10faa60d0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11630a4a0>
+isolated_db = <holdspeak.db.core.Database object at 0x116f88f50>
+test_client = <starlette.testclient.TestClient object at 0x116042cf0>
+
+    def test_intel_jobs_list_retry_and_process(self, monkeypatch, isolated_db, test_client):
+        # Three REAL queue rows: one due now, one scheduled into the future,
+        # one failed. The status filter, the aggregate summary and the retry
+        # verb are all answered by the queue the hub actually reads.
+        def _meeting(meeting_id: str, minute: int, title: str) -> None:
+            isolated_db.meetings.save_meeting(
+                MeetingState(
+                    id=meeting_id,
+                    started_at=datetime(2025, 1, 11, 10, minute, 0),
+                    ended_at=datetime(2025, 1, 11, 10, minute + 20, 0),
+                    title=title,
+                    segments=[
+                        TranscriptSegment(
+                            text=f"{title} transcript", speaker="Me", start_time=0.0, end_time=6.0
+                        )
+                    ],
+                )
+            )
+    
+        _meeting("m-001", 0, "Weekly sync")
+        _meeting("m-002", 5, "Design review")
+        _meeting("m-003", 10, "Retro")
+    
+        # C1 retries and failures mutate an owned immutable descriptor, then
+        # create a successor where appropriate. Arrange claims before their
+        # lifecycle transitions instead of using the retired queued-row verbs.
+        isolated_db.intel.enqueue_intel_job("m-002", transcript_hash="def456")
+        assert isolated_db.intel.claim_next_intel_job() is not None
+        isolated_db.intel.retry_intel_job(
+            "m-002",
+            "transient issue",
+            retry_at=datetime.now() + timedelta(hours=1),
+            attempt=1,
+            max_attempts=3,
+        )
+    
+        isolated_db.intel.enqueue_intel_job("m-003", transcript_hash="ghi789")
+        assert isolated_db.intel.claim_next_intel_job() is not None
+        isolated_db.intel.fail_intel_job("m-003", "permanent failure")
+    
+        isolated_db.intel.enqueue_intel_job("m-001", transcript_hash="abc123", reason="transient issue")
+        isolated_db.intel.record_intel_job_attempt(
+            "m-001",
+            attempt=2,
+            outcome="scheduled_retry",
+            error="transient issue",
+            retry_at=datetime(2025, 1, 11, 10, 35, 0),
+        )
+    
+        # The drain seam is bound INTO the service at import
+        # (`meeting_intel_service.py:9`), so that is the name to replace —
+        # patching `holdspeak.intel_queue` never reached the caller.
+        import holdspeak.services.meeting_intel_service as intel_service_module
+    
+        monkeypatch.setattr(intel_service_module, "drain_intel_queue", lambda *args, **kwargs: 3)
+    
+        jobs_response = test_client.get("/api/intel/jobs?status=queued&limit=5")
+        assert jobs_response.status_code == 200
+        jobs_data = jobs_response.json()
+        # The status filter is real: the failed job never appears.
+        assert {job["meeting_id"] for job in jobs_data["jobs"]} == {"m-001", "m-002"}
+        assert all(job["status"] == "queued" for job in jobs_data["jobs"])
+        due = next(job for job in jobs_data["jobs"] if job["meeting_id"] == "m-001")
+        assert due["status"] == "queued"
+        assert due["retry_scheduled"] is False
+        assert "retries_remaining" in due
+        assert len(due["retry_history"]) == 1
+        assert due["retry_history"][0]["outcome"] == "scheduled_retry"
+        scheduled = next(job for job in jobs_data["jobs"] if job["meeting_id"] == "m-002")
+        assert scheduled["retry_scheduled"] is True
+        assert scheduled["next_retry_at"] is not None
+    
+        summary_response = test_client.get("/api/intel/summary")
+        assert summary_response.status_code == 200
+        summary_data = summary_response.json()
+        assert summary_data["total_jobs"] == 3
+        assert summary_data["queued_jobs"] == 2
+        assert summary_data["failed_jobs"] == 1
+        assert summary_data["scheduled_retry_jobs"] == 1
+        assert summary_data["next_retry_at"] is not None
+    
+        retry_response = test_client.post("/api/intel/retry/m-001")
+>       assert retry_response.status_code == 200
+E       assert 409 == 200
+E        +  where 409 = <Response [409 Conflict]>.status_code
+
+tests/integration/test_web_server.py:2263: AssertionError
+______ test_partial_intel_names_retained_work_and_supports_retry_or_skip _______
+[gw2] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+client = <starlette.testclient.TestClient object at 0x1179825f0>
+db = <holdspeak.db.core.Database object at 0x116716710>
+
+    def test_partial_intel_names_retained_work_and_supports_retry_or_skip(
+        client, db
+    ) -> None:
+        meeting = _seed_failed_partial_intel(db)
+    
+        response = client.get(f"/api/meetings/{meeting.id}/intel-recovery")
+        assert response.status_code == 200
+        recovery = response.json()
+        assert recovery["headline"] == "Meeting saved · intelligence incomplete"
+        assert recovery["state"] == "partial"
+        assert recovery["actions"] == {"retry": True, "skip": True}
+        assert recovery["remaining"] == {
+            "label": "Routed meeting intelligence",
+            "detail": "Decision extraction timed out.",
+        }
+        assert recovery["completed"] == [
+            {"label": "Meeting", "detail": "Saved"},
+            {"label": "Transcript", "detail": "2 saved segments"},
+            {
+                "label": "Meeting analysis",
+                "detail": "Summary, topics, and action items saved",
+            },
+            {"label": "Artifacts", "detail": "1 saved artifact"},
+        ]
+    
+        skipped = client.post(f"/api/meetings/{meeting.id}/intel-recovery/skip")
+        assert skipped.status_code == 200
+        skipped_recovery = skipped.json()["recovery"]
+        assert skipped_recovery["headline"] == "Meeting saved · intelligence skipped"
+        assert skipped_recovery["actions"] == {"retry": True, "skip": False}
+    
+        retained = db.meetings.get_meeting(meeting.id)
+        assert retained is not None
+        assert retained.id == meeting.id
+        assert retained.intel_status == "skipped"
+        assert retained.intel_completed_at is None
+        assert len(retained.segments) == 2
+        assert retained.intel is not None
+        assert db.plugins.list_artifacts(meeting.id)[0].id == "artifact-retained"
+        assert db.intel.list_intel_job_attempts(meeting.id)[0].outcome == "skipped"
+    
+        retried = client.post(f"/api/meetings/{meeting.id}/intel-recovery/retry")
+>       assert retried.status_code == 200
+E       assert 409 == 200
+E        +  where 409 = <Response [409 Conflict]>.status_code
+
+tests/integration/test_meeting_intel_recovery.py:144: AssertionError
+_ test_stop_aftercare_upserts_one_legacy_deferred_row_for_bundle_and_record_only[False] _
+[gw8] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8847/popen-gw8/test_stop_aftercare_upserts_on0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x115c665f0>
+bundle_backed = False
+
+    @pytest.mark.parametrize("bundle_backed", [True, False])
+    def test_stop_aftercare_upserts_one_legacy_deferred_row_for_bundle_and_record_only(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, bundle_backed: bool
+    ) -> None:
+        """Aftercare remains the legacy Meeting-keyed queue authority in Phase B."""
+        from holdspeak.kernel.runtime import _configure
+        from holdspeak.meeting_session import MeetingSession
+        from tests.unit.test_meeting_session_admission import FakeJournal, FakeRecorder, _bundle_session
+    
+        if bundle_backed:
+            db, _broker, session = _bundle_session(tmp_path, monkeypatch)
+        else:
+            db = Database(tmp_path / "record-only-stop.db")
+            _configure(db)
+            monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+            monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", FakeRecorder)
+            monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
+    
+            class _Transcriber:
+                model_name = "meeting-profile"
+    
+                def transcribe(self, *_args: Any, **_kwargs: Any) -> str:
+                    return ""
+    
+            session = MeetingSession(_Transcriber(), principal=OWNER, intel_enabled=True)  # type: ignore[arg-type]
+    
+        state = session.start()
+        state.segments.append(
+            TranscriptSegment(text="Deferred aftercare", speaker="Me", start_time=0.0, end_time=1.0)
+        )
+        state.bookmarks.append(Bookmark(timestamp=0.5, label="Bookmark"))
+        session.stop()
+        # A Stop retry/recovery uses the existing Meeting-keyed ON CONFLICT upsert.
+        session._handoff_intel_at_stop(state)
+    
+        with db._connection() as conn:
+            rows = conn.execute(
+                "SELECT status,displaced_work FROM intel_jobs WHERE meeting_id=?", (state.id,)
+            ).fetchall()
+>       assert [(row["status"], row["displaced_work"]) for row in rows] == [(
+            "queued", '["final-analysis","bookmark-labels","auto-title"]'
+        )]
+E       assert [] == [('queued', '...uto-title"]')]
+E         
+E         Right contains one more item: ('queued', '["final-analysis","bookmark-labels","auto-title"]')
+E         Use -v to get more diff
+
+tests/unit/test_phase143_meeting_live_cutover.py:1142: AssertionError
+------------------------------ Captured log call -------------------------------
+ERROR    holdspeak.meeting_session:intel_admission.py:212 meeting session admission refused: no_assignment (No model assignment can be frozen.)
+________________ test_a_plain_run_writes_nothing_under_the_repo ________________
+[gw7] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+    def test_a_plain_run_writes_nothing_under_the_repo() -> None:
+        before = _tree_fingerprint()
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT), "--root", str(REPO_ROOT)],
+            capture_output=True, text=True, timeout=120, cwd=str(REPO_ROOT),
+        )
+        assert result.returncode == 0, result.stderr
+        after = _tree_fingerprint()
+        changed = sorted(k for k in set(before) | set(after)
+                         if before.get(k) != after.get(k))
+>       assert not changed, (
+            "a plain scanner run changed the tree: " + ", ".join(changed)
+            + "\n(every write must sit behind --write-census / --json / --md / "
+              "--ranking / --write-ceiling)"
+        )
+E       AssertionError: a plain scanner run changed the tree: git status --porcelain
+E         (every write must sit behind --write-census / --json / --md / --ranking / --write-ceiling)
+E       assert not ['git status --porcelain']
+
+tests/unit/test_phase200_canon_guard.py:353: AssertionError
+_____________________ test_committed_ledger_is_up_to_date ______________________
+[gw6] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+    def test_committed_ledger_is_up_to_date():
+        # The generator proposes; the committed YAML is canon — but they must agree,
+        # so a drifted inventory can't leave the ledger silently stale.
+>       assert build_ledger.main(["--check"]) == 0
+E       AssertionError: assert 1 == 0
+E        +  where 1 = <function main at 0x10f94b2e0>(['--check'])
+E        +    where <function main at 0x10f94b2e0> = build_ledger.main
+
+tests/uat/test_build_ledger.py:11: AssertionError
+----------------------------- Captured stderr call -----------------------------
+features.yaml is stale — re-run: uv run python -m uat.tools.build_ledger
+__ test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer ___
+[gw8] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+    def test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer() -> None:
+        definitions, references, pointers, profile_ids = _routing_ast_inventory(REPO)
+        assert definitions == ROUTING_RESOLVER_DEFINITIONS
+>       assert references == ROUTING_RESOLVER_REFERENCES
+E       AssertionError: assert {'holdspeak/d...acement', ...} == {'holdspeak/d...acement', ...}
+E         
+E         Extra items in the left set:
+E         'holdspeak/mcp/tools.py:867:import:resolve_meeting_placement'
+E         Extra items in the right set:
+E         'holdspeak/services/meeting_intel_service.py:79:import:resolve_meeting_placement'
+E         'holdspeak/services/meeting_intel_service.py:81:ref:resolve_meeting_placement'
+E         'holdspeak/mcp/tools.py:864:import:resolve_meeting_placement'
+E         Use -v to get more diff
+
+tests/unit/test_phase143_routing_authority_census.py:368: AssertionError
+_______ test_private_backend_route_and_recovery_decisions_are_classified _______
+[gw8] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+    def test_private_backend_route_and_recovery_decisions_are_classified() -> None:
+        """A new private selector/retry/fallback helper fails closed until reviewed."""
+        found = _private_decisions()
+>       assert found == set(BACKEND_PRIVATE_DECISIONS), (
+            "Unclassified private route/recovery decision(s): "
+            f"{sorted(found - set(BACKEND_PRIVATE_DECISIONS))}; stale classifications: "
+            f"{sorted(set(BACKEND_PRIVATE_DECISIONS) - found)}"
+        )
+E       AssertionError: Unclassified private route/recovery decision(s): [('holdspeak/services/concierge_service.py', '_detected_profile_fields'), ('holdspeak/services/concierge_service.py', '_model_profile_revision')]; stale classifications: []
+E       assert {('holdspeak/...resent'), ...} == {('holdspeak/...resent'), ...}
+E         
+E         Extra items in the left set:
+E         ('holdspeak/services/concierge_service.py', '_model_profile_revision')
+E         ('holdspeak/services/concierge_service.py', '_detected_profile_fields')
+E         Use -v to get more diff
+
+tests/unit/test_phase143_surface_fallback_census.py:203: AssertionError
+_________ test_phase143_call_site_fixture_is_complete_and_fail_closed __________
+[gw6] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+    def test_phase143_call_site_fixture_is_complete_and_fail_closed() -> None:
+        live = {_key(site) for site in one_path.census()}
+>       assert live == EXPECTED_CALL_SITES, (
+            "Phase 143 inference/capability census changed; register every new site "
+            "with exactly one proposed capability and source owner.\n"
+            f"unregistered={sorted(live - EXPECTED_CALL_SITES)}\n"
+            f"stale={sorted(EXPECTED_CALL_SITES - live)}"
+        )
+E       AssertionError: Phase 143 inference/capability census changed; register every new site with exactly one proposed capability and source owner.
+E         unregistered=['holdspeak/meeting_session/intel_routed_children.py:239|IntelRoutedChildMixin._admitted_live_window.call|analyze|call', 'holdspeak/meeting_session/intel_routed_children.py:284|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call', 'holdspeak/meeting_session/intel_routed_children.py:314|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call']
+E         stale=['holdspeak/meeting_session/intel_routed_children.py:200|IntelRoutedChildMixin._admitted_live_window.call|analyze|call', 'holdspeak/meeting_session/intel_routed_children.py:245|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call', 'holdspeak/meeting_session/intel_routed_children.py:275|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call']
+E       assert {'holdspeak/c...on|call', ...} == frozenset({'h...n|call', ...})
+E         
+E         Extra items in the left set:
+E         'holdspeak/meeting_session/intel_routed_children.py:239|IntelRoutedChildMixin._admitted_live_window.call|analyze|call'
+E         'holdspeak/meeting_session/intel_routed_children.py:314|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call'
+E         'holdspeak/meeting_session/intel_routed_children.py:284|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call'
+E         Extra items in the right set:
+E         'holdspeak/meeting_session/intel_routed_children.py:200|IntelRoutedChildMixin._admitted_live_window.call|analyze|call'...
+E         
+E         ...Full output truncated (3 lines hidden), use '-vv' to show
+
+tests/unit/test_phase143_inference_capability_census.py:617: AssertionError
+______________ test_phase143_shared_helpers_have_semantic_callers ______________
+[gw6] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+    def test_phase143_shared_helpers_have_semantic_callers() -> None:
+        live = set(_semantic_helper_calls())
+>       assert live == set(SEMANTIC_HELPER_CALLERS), (
+            "shared Ask/Recipe helper callers changed; classify the public semantic "
+            "operation rather than assigning the helper one false capability.\n"
+            f"unregistered={sorted(live - set(SEMANTIC_HELPER_CALLERS))}\n"
+            f"stale={sorted(set(SEMANTIC_HELPER_CALLERS) - live)}"
+        )
+E       AssertionError: shared Ask/Recipe helper callers changed; classify the public semantic operation rather than assigning the helper one false capability.
+E         unregistered=['holdspeak/mcp/tools.py:736|dispatch|run']
+E         stale=['holdspeak/mcp/tools.py:733|dispatch|run']
+E       assert {'holdspeak/m...dispatch|ask'} == {'holdspeak/m...dispatch|ask'}
+E         
+E         Extra items in the left set:
+E         'holdspeak/mcp/tools.py:736|dispatch|run'
+E         Extra items in the right set:
+E         'holdspeak/mcp/tools.py:733|dispatch|run'
+E         Use -v to get more diff
+
+tests/unit/test_phase143_inference_capability_census.py:647: AssertionError
+____ test_phase143_every_censused_site_has_one_capability_and_source_owner _____
+[gw6] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+    def test_phase143_every_censused_site_has_one_capability_and_source_owner() -> None:
+        live = {_key(site) for site in one_path.census()}
+        declared_keys = [key for _, keys in EXPLICIT_ROUTE_GROUPS for key in keys]
+>       assert set(PROPOSED_ROUTES) == live == EXPECTED_CALL_SITES
+E       AssertionError: assert {'holdspeak/c...on|call', ...} == {'holdspeak/c...on|call', ...}
+E         
+E         Extra items in the left set:
+E         'holdspeak/meeting_session/intel_routed_children.py:200|IntelRoutedChildMixin._admitted_live_window.call|analyze|call'
+E         'holdspeak/meeting_session/intel_routed_children.py:245|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call'
+E         'holdspeak/meeting_session/intel_routed_children.py:275|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call'
+E         Extra items in the right set:
+E         'holdspeak/meeting_session/intel_routed_children.py:239|IntelRoutedChildMixin._admitted_live_window.call|analyze|call'...
+E         
+E         ...Full output truncated (3 lines hidden), use '-vv' to show
+
+tests/unit/test_phase143_inference_capability_census.py:723: AssertionError
+_________________ test_guardrail_row_renders_and_deny_focused __________________
+[gw0] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+guardrail_hub = {'broker': <holdspeak.kernel.broker.Broker object at 0x11a77ad50>, 'db': <holdspeak.db.core.Database object at 0x11a66...s._ToolCallEngine object at 0x1198f8ec0>, 'server': <holdspeak.web_server.MeetingWebServer object at 0x11a664190>, ...}
+
+    def test_guardrail_row_renders_and_deny_focused(guardrail_hub: dict) -> None:
+        """Guardrail row visible, decision box Deny primary/focused, no overflow."""
+        from playwright.sync_api import sync_playwright
+    
+        url = guardrail_hub["url"]
+    
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+    
+            for width in (1440, 393):
+                # Fresh thread + engine state per width
+                guardrail_hub["engine"]._pass = 0
+                r = _api_direct(url, "POST", "/api/threads",
+                                {"title": f"Guardrail glass {width}",
+                                 "recipe_id": "hs-seed-mode-chase"})
+                assert r["status"] == 201, f"Failed to create thread: {r}"
+                thread_id = r["payload"]["id"]
+    
+                page = browser.new_page(viewport={"width": width, "height": 900})
+                _open_thread(page, url, thread_id)
+    
+                composer = page.locator("[data-testid='composer-input']")
+                composer.wait_for(state="visible", timeout=10000)
+    
+                def _type(text: str) -> None:
+                    page.evaluate("""([s,v])=>{const e=document.querySelector(s);if(!e)return;
+                        Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(e,v);
+                        e.dispatchEvent(new Event('input',{bubbles:true}));
+                        e.dispatchEvent(new Event('change',{bubbles:true}));
+                        e.selectionStart=e.selectionEnd=v.length}""",
+                        ["[data-testid='composer-input']", text])
+    
+                _type("Transition commitment to done")
+                page.wait_for_timeout(500)
+                send_btn = page.locator("[data-testid='send-button']")
+                if send_btn.count() > 0:
+                    send_btn.click()
+                else:
+                    composer.press("Enter")
+                page.wait_for_timeout(8000)
+    
+                _save_shot(page, "guardrail-row", width, shots_dir=SHOTS_03)
+    
+                guardrail_row = page.locator("[data-testid='guardrail-row']")
+                if guardrail_row.count() > 0:
+                    assert guardrail_row.is_visible(), f"Guardrail row not visible at {width}"
+                    violation = page.locator("[data-testid='guardrail-violation']")
+                    if violation.count() > 0:
+                        vtext = violation.first.inner_text().lower()
+                        assert "source" in vtext or "people" in vtext, (
+                            f"Violation text unexpected at {width}: {vtext}")
+    
+                decision_box = page.locator("[data-testid='decision-box']")
+                if decision_box.count() > 0:
+                    _save_shot(page, "guardrail-decision-box", width, shots_dir=SHOTS_03)
+                    dd = decision_box.first.get_attribute("data-default-decision")
+>                   assert dd == "deny", f"Expected deny, got '{dd}' at {width}"
+E                   AssertionError: Expected deny, got 'allow' at 1440
+E                   assert 'allow' == 'deny'
+E                     
+E                     - deny
+E                     + allow
+
+tests/e2e/test_hs153_practice_glass.py:578: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_________ test_running_then_kept_brief_with_claims_and_not_read[1440] __________
+[gw1] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8847/popen-gw1/test_running_then_kept_brief_w0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x12f3e6d60>
+width = 1440
+
+    @pytest.mark.timeout(300)
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_running_then_kept_brief_with_claims_and_not_read(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+    ) -> None:
+        """P3Brief / P3BriefPhone over a REAL dispatch to the fake server: the
+        document, `CLAIMS` on three axes with typed unknowns, `NO SOURCE` +
+        `Find support`, `SUPERSEDED 1` with its successor (P1-2), `NOT INCLUDED
+        2` (P1-3), `NOT READ 2` carrying the state chip and the repair, the
+        LAN egress and receipt from the wire, `Keep` -- then the kept brief
+        re-read by id with its manifest (AC2, AC3, AC4)."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        llm = FakeLLM()
+        llm.reply = _board_reply
+        llm.delay_s = 6.0
+        errors: list[str] = []
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": width, "height": 900 if width >= 1440 else 852})
+                page.on("pageerror", lambda e: errors.append(str(e)))
+                _init_desk(page, url)
+                project_id = _seed_project_room(page, f"hs200-11-brief-{width}")
+                _define_route(tmp_path / "home", llm.endpoint, "probe-llm", 1)
+                _open_room(page, project_id)
+                _enter_prepare(page)
+                _purpose(page).fill(PURPOSE)
+                page.get_by_test_id("prepare-verb").click()
+    
+                # The run: a real plan with `Stop` kept, the egress beside it.
+                page.get_by_test_id("prepare-running").wait_for(timeout=10000)
+>               assert page.get_by_role("button", name="Stop", exact=True).count() == 1
+E               assert 0 == 1
+E                +  where 0 = count()
+E                +    where count = <Locator frame=<Frame name= url='http://127.0.0.1:51965/'> selector='internal:role=button[name="Stop"s]'>.count
+E                +      where <Locator frame=<Frame name= url='http://127.0.0.1:51965/'> selector='internal:role=button[name="Stop"s]'> = get_by_role('button', name='Stop', exact=True)
+E                +        where get_by_role = <Page url='http://127.0.0.1:51965/'>.get_by_role
+
+tests/e2e/test_hs200_preparation_brief_glass.py:650: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+__________ test_running_then_kept_brief_with_claims_and_not_read[393] __________
+[gw1] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8847/popen-gw1/test_running_then_kept_brief_w1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x138cb3b60>
+width = 393
+
+    @pytest.mark.timeout(300)
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_running_then_kept_brief_with_claims_and_not_read(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+    ) -> None:
+        """P3Brief / P3BriefPhone over a REAL dispatch to the fake server: the
+        document, `CLAIMS` on three axes with typed unknowns, `NO SOURCE` +
+        `Find support`, `SUPERSEDED 1` with its successor (P1-2), `NOT INCLUDED
+        2` (P1-3), `NOT READ 2` carrying the state chip and the repair, the
+        LAN egress and receipt from the wire, `Keep` -- then the kept brief
+        re-read by id with its manifest (AC2, AC3, AC4)."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        llm = FakeLLM()
+        llm.reply = _board_reply
+        llm.delay_s = 6.0
+        errors: list[str] = []
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": width, "height": 900 if width >= 1440 else 852})
+                page.on("pageerror", lambda e: errors.append(str(e)))
+                _init_desk(page, url)
+                project_id = _seed_project_room(page, f"hs200-11-brief-{width}")
+                _define_route(tmp_path / "home", llm.endpoint, "probe-llm", 1)
+                _open_room(page, project_id)
+                _enter_prepare(page)
+                _purpose(page).fill(PURPOSE)
+                page.get_by_test_id("prepare-verb").click()
+    
+                # The run: a real plan with `Stop` kept, the egress beside it.
+                page.get_by_test_id("prepare-running").wait_for(timeout=10000)
+>               assert page.get_by_role("button", name="Stop", exact=True).count() == 1
+E               assert 0 == 1
+E                +  where 0 = count()
+E                +    where count = <Locator frame=<Frame name= url='http://127.0.0.1:51990/'> selector='internal:role=button[name="Stop"s]'>.count
+E                +      where <Locator frame=<Frame name= url='http://127.0.0.1:51990/'> selector='internal:role=button[name="Stop"s]'> = get_by_role('button', name='Stop', exact=True)
+E                +        where get_by_role = <Page url='http://127.0.0.1:51990/'>.get_by_role
+
+tests/e2e/test_hs200_preparation_brief_glass.py:650: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+______ test_a_sent_and_answered_request_is_never_reported_as_nothing_sent ______
+[gw1] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8847/popen-gw1/test_a_sent_and_answered_reque0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x138b53150>
+
+    @pytest.mark.timeout(300)
+    def test_a_sent_and_answered_request_is_never_reported_as_nothing_sent(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """P0, the fence: the fake server answers prose.  The kernel operation
+        SUCCEEDED, so the face says `SENT · 127.0.0.1 · NOTHING USABLE RECEIVED`
+        in the head and the receipt, and the footer carries the target's egress
+        chip.  `NOTHING SENT` appears nowhere."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        llm = FakeLLM()
+        llm.reply = "Sure! Here is a brief in prose: decide the cut-over window today."
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                _init_desk(page, url)
+                project_id = _seed_project_room(page, "hs200-11-sent")
+                _define_route(tmp_path / "home", llm.endpoint, "probe-llm", 1)
+                _open_room(page, project_id)
+                _enter_prepare(page)
+                _purpose(page).fill(PURPOSE)
+                page.get_by_test_id("prepare-verb").click()
+                _wait_refused(page, timeout=60000)
+>               assert len(llm.posts) == 1, llm.requests
+E               AssertionError: [{'method': 'GET', 'path': '/v1/models'}]
+E               assert 0 == 1
+E                +  where 0 = len([])
+E                +    where [] = <tests.e2e.test_hs200_preparation_brief_glass.FakeLLM object at 0x137d71a70>.posts
+
+tests/e2e/test_hs200_preparation_brief_glass.py:922: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_______________________ test_stop_leaves_no_orphan_draft _______________________
+[gw1] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8847/popen-gw1/test_stop_leaves_no_orphan_dra0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x13abede80>
+
+    @pytest.mark.timeout(300)
+    def test_stop_leaves_no_orphan_draft(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """P1-4: the fake server takes 8 s; the owner presses Stop at 1 s.  The
+        hub cancels the operation under the attempt; if the run still completes,
+        it writes NO draft, and the face says the request had left."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        llm = FakeLLM()
+        llm.reply = _board_reply
+        llm.delay_s = 8.0
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                _init_desk(page, url)
+                project_id = _seed_project_room(page, "hs200-11-stop")
+                _define_route(tmp_path / "home", llm.endpoint, "probe-llm", 1)
+                _open_room(page, project_id)
+                _enter_prepare(page)
+                _purpose(page).fill(PURPOSE)
+                page.get_by_test_id("prepare-verb").click()
+                page.get_by_test_id("prepare-running").wait_for(timeout=10000)
+                page.wait_for_timeout(1000)
+>               page.get_by_role("button", name="Stop", exact=True).click()
+
+tests/e2e/test_hs200_preparation_brief_glass.py:1024: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:15637: in click
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_locator.py:162: in click
+    return await self._frame._click(self._selector, strict=True, **params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/playwright/_impl/_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x136db8a50>
+cb = <function Channel.send.<locals>.<lambda> at 0x130963380>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.TimeoutError: Locator.click: Timeout 30000ms exceeded.
+E           Call log:
+E             - waiting for get_by_role("button", name="Stop", exact=True)
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: TimeoutError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+__________ test_a_project_carries_work_across_two_working_days[1440] ___________
+[gw1] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8847/popen-gw1/test_a_project_carries_work_ac0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x13b098d70>
+width = 1440
+
+    @pytest.mark.timeout(1800)
+    @pytest.mark.parametrize("width", [WIDE, NARROW])
+    def test_a_project_carries_work_across_two_working_days(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+    ) -> None:
+        from holdspeak.runtime_lock import claim_database, current_lock, release_database
+        from playwright.sync_api import sync_playwright
+    
+        from .test_hs200_preparation_brief_glass import FakeLLM, _define_route
+    
+        _ensure_build()
+        walk = Walk(width)
+        home = tmp_path / "home"
+        home.mkdir(exist_ok=True)
+        (home / ".holdspeak").mkdir(parents=True, exist_ok=True)
+        monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(home / "people-dev-key.json"))
+    
+        llm = FakeLLM()
+        llm.reply = _brief_reply
+        engine = _scripted_engine()
+    
+        # The owner claim: the intel drainer is scheduled work that runs in the
+        # owner alone (HS-200-42); the in-process glass server does not run the
+        # hub command's claim step.
+        assert current_lock() is None, "this process already owns a database"
+        lock = claim_database(tmp_path / "holdspeak.db")
+        assert lock.held, "the rig could not claim its own tmp database"
+    
+        state: dict[str, Any] = {}
+        try:
+            # ══ DAY 1 ══════════════════════════════════════════════════════
+            server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+            try:
+                from holdspeak import intel_queue_conductor as conductor
+    
+                assert conductor.drainer_state() == "running", "the hub lifespan started no drainer"
+    
+                with sync_playwright() as pw:
+                    browser = pw.chromium.launch()
+                    page = browser.new_page(viewport={"width": width, "height": 1000 if width >= WIDE else 852})
+                    page.on("pageerror", lambda e: walk.errors.append(f"day1: {e}"))
+                    _arrive(page, url)
+    
+                    # The runtime identity of THIS process, read from the product.
+                    identity = _api(page, "GET", "/api/system/identity", token=TOKEN)
+                    # R16-7, the honest identity block.  `capture_runtime_identity`
+                    # caches `_IDENTITY` for the OS PROCESS and returns the first
+                    # capture forever after (holdspeak/runtime_identity.py:204,
+                    # 214-222).  This rig boots both hubs -- and both
+                    # parametrizations -- inside ONE pytest process, so every
+                    # product-reported identity field below describes the FIRST
+                    # capture in this process, not necessarily this run.  The
+                    # fields that are genuinely per-build (version, revision,
+                    # bundle, schema, config) are the same either way; the
+                    # database is NOT, so it is measured separately through the
+                    # uncached seam.
+                    walk.identity = {
+                        "backend_version": identity["identity"]["backend_version"],
+                        "backend_revision": identity["identity"]["backend_revision"],
+                        "frontend_build": identity["identity"]["frontend_build"],
+                        "schema_version_loaded": identity["identity"]["schema_version_loaded"],
+                        "config_revision": identity["identity"]["config_revision"],
+                        "repair": identity["repair"],
+                        "process_start_reported": identity["identity"]["process_start"],
+                        "database_id_reported": identity["identity"]["database_id"],
+                        "capture_caveat": (
+                            "process_start_reported and database_id_reported come "
+                            "from a capture cached once per OS PROCESS "
+                            "(holdspeak/runtime_identity.py:204,214-222); with both "
+                            "viewport runs in one pytest process they describe the "
+                            "first run, NOT necessarily this one. The database this "
+                            "run actually used is database_id_this_run below, taken "
+                            "from the uncached `database_identity()`."
+                        ),
+                    }
+                    assert identity["repair"] == [], identity["repair"]
+    
+                    # The uncached seam: a pure function of the resolved path plus
+                    # the file's device+inode, so a replaced file reads as a
+                    # different database (runtime_identity.py:96-112).
+                    from holdspeak.runtime_identity import database_identity
+    
+                    db_path = tmp_path / "holdspeak.db"
+                    other_path = tmp_path / "not-the-database.db"
+                    other_path.write_bytes(b"")
+                    day1_db_id = database_identity(db_path)
+                    walk.identity["database_id_this_run"] = day1_db_id
+                    # The instrument must DISCRIMINATE, which is exactly what the
+                    # cached `database_id` failed to do: counsel found both
+                    # viewport runs reporting one id over two different files.
+                    walk.fact("day1-identity", "database_identity_discriminates",
+                              "a different file yields a different identity",
+                              "different" if database_identity(other_path) != day1_db_id
+                              else "SAME -- the instrument is a constant",
+                              "MATCH" if database_identity(other_path) != day1_db_id
+                              else "MISMATCH",
+                              "an identity that cannot tell two files apart proves "
+                              "nothing about which file was opened")
+                    assert database_identity(other_path) != day1_db_id
+                    other_path.unlink()
+    
+                    project_id = _api(page, "POST", "/api/projects", {
+                        "name": PROJECT_NAME,
+                        "description": "The HS-200-16 two-day loop.",
+                        "command_id": f"hs200-16-{uuid.uuid4().hex[:8]}",
+                    }, token=TOKEN)["project"]["id"]
+                    state["project_id"] = project_id
+                    _seed_gh_source(project_id)
+                    _define_route(home, llm.endpoint, "loop-llm", 1)
+                    _api(page, "POST", "/api/people/setup", {}, token=TOKEN)
+                    person = _api(page, "POST", "/api/people/relationships",
+                                  {"display_name": PERSON_NAME}, token=TOKEN)["relationship"]["id"]
+                    _api(page, "POST", f"/api/people/relationships/{person}/owner-aliases",
+                         {"alias": OWNER_HINT.lower()}, token=TOKEN)
+                    _api(page, "POST", f"/api/people/relationships/{person}/projects/{project_id}",
+                         {}, token=TOKEN)
+                    state["person"] = person
+    
+                    route = _api(page, "GET", f"/api/projects/{project_id}/briefs/route",
+                                 token=TOKEN)["route"]
+                    walk.model = {
+                        "brief_route_state": route["state"],
+                        "brief_model": route["model"],
+                        "brief_host": route["host"],
+                        "brief_boundary": route["boundary"],
+                        "brief_adapter": "controlled OpenAI-compatible probe on 127.0.0.1 (R16-1)",
+                        "meeting_extractor_provider": type(engine).__name__,
+                        "meeting_extractor_model": getattr(engine, "active_model", "unknown"),
+                        "live_model": False,
+                    }
+                    assert route["state"] == "ready", route
+    
+                    # ── S1: the preparation brief (11) ─────────────────────
+                    walk.begin("day1-brief", 1, "prepare and keep the preparation brief")
+                    _open_room(page, project_id)
+                    _enter_prepare(page)
+                    coverage_chip = (page.get_by_test_id("prepare-coverage")
+                                     .locator(".surface-state-chip").first)
+                    chip_words = (coverage_chip.get_attribute("aria-label")
+                                  or coverage_chip.inner_text()).strip()
+                    walk.fact("day1-brief", "coverage_chip", "COVERAGE · 1 OF 2", chip_words,
+                              "MATCH" if chip_words == "COVERAGE · 1 OF 2" else "MISMATCH",
+                              "the Jira Watch cannot check; the face says so before the run")
+                    assert chip_words == "COVERAGE · 1 OF 2", chip_words
+                    page.get_by_role("textbox", name="Purpose").fill(PURPOSE_D1)
+                    page.get_by_test_id("prepare-verb").click()
+>                   _wait_for_document(page, llm)
+
+tests/e2e/test_phase200_daily_loop.py:879: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+page = <Page url='http://127.0.0.1:53399/'>
+llm = <tests.e2e.test_hs200_preparation_brief_glass.FakeLLM object at 0x13b0585a0>
+timeout = 90.0
+
+    def _wait_for_document(page: Any, llm: Any, timeout: float = 90.0) -> None:
+        """Wait for the drafted brief, and name the refusal if one comes instead.
+    
+        A bare ``wait_for`` on the document reports "not visible" and hides the
+        reason the hub gave; a failing rig must name its mechanism.
+        """
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if page.get_by_test_id("prepare-document").count():
+                page.get_by_test_id("prepare-document").wait_for(timeout=5000)
+                return
+            posture = page.locator('[data-testid="prepare-posture"]').first
+            if (posture.get_attribute("data-posture") or "") == "refused":
+                head = page.get_by_test_id("prepare-head").inner_text()
+>               raise AssertionError(
+                    "the brief was refused instead of drafted:\n"
+                    f"  head: {head!r}\n"
+                    f"  llm posts: {len(llm.posts)}\n"
+                    f"  last body: {(llm.posts[-1]['body'][:1500] if llm.posts else '(none)')!r}"
+                )
+E               AssertionError: the brief was refused instead of drafted:
+E                 head: 'Cannot draft\nQ4 PLATFORM\n⚠\nCOVERAGE · 1 OF 2\nPURPOSE KEPT\nSENT · 127.0.0.1 · NOT ANSWERED'
+E                 llm posts: 0
+E                 last body: '(none)'
+
+tests/e2e/test_phase200_daily_loop.py:457: AssertionError
+___________ test_a_project_carries_work_across_two_working_days[393] ___________
+[gw1] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8847/popen-gw1/test_a_project_carries_work_ac1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x13b0980c0>
+width = 393
+
+    @pytest.mark.timeout(1800)
+    @pytest.mark.parametrize("width", [WIDE, NARROW])
+    def test_a_project_carries_work_across_two_working_days(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+    ) -> None:
+        from holdspeak.runtime_lock import claim_database, current_lock, release_database
+        from playwright.sync_api import sync_playwright
+    
+        from .test_hs200_preparation_brief_glass import FakeLLM, _define_route
+    
+        _ensure_build()
+        walk = Walk(width)
+        home = tmp_path / "home"
+        home.mkdir(exist_ok=True)
+        (home / ".holdspeak").mkdir(parents=True, exist_ok=True)
+        monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(home / "people-dev-key.json"))
+    
+        llm = FakeLLM()
+        llm.reply = _brief_reply
+        engine = _scripted_engine()
+    
+        # The owner claim: the intel drainer is scheduled work that runs in the
+        # owner alone (HS-200-42); the in-process glass server does not run the
+        # hub command's claim step.
+        assert current_lock() is None, "this process already owns a database"
+        lock = claim_database(tmp_path / "holdspeak.db")
+        assert lock.held, "the rig could not claim its own tmp database"
+    
+        state: dict[str, Any] = {}
+        try:
+            # ══ DAY 1 ══════════════════════════════════════════════════════
+            server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+            try:
+                from holdspeak import intel_queue_conductor as conductor
+    
+                assert conductor.drainer_state() == "running", "the hub lifespan started no drainer"
+    
+                with sync_playwright() as pw:
+                    browser = pw.chromium.launch()
+                    page = browser.new_page(viewport={"width": width, "height": 1000 if width >= WIDE else 852})
+                    page.on("pageerror", lambda e: walk.errors.append(f"day1: {e}"))
+                    _arrive(page, url)
+    
+                    # The runtime identity of THIS process, read from the product.
+                    identity = _api(page, "GET", "/api/system/identity", token=TOKEN)
+                    # R16-7, the honest identity block.  `capture_runtime_identity`
+                    # caches `_IDENTITY` for the OS PROCESS and returns the first
+                    # capture forever after (holdspeak/runtime_identity.py:204,
+                    # 214-222).  This rig boots both hubs -- and both
+                    # parametrizations -- inside ONE pytest process, so every
+                    # product-reported identity field below describes the FIRST
+                    # capture in this process, not necessarily this run.  The
+                    # fields that are genuinely per-build (version, revision,
+                    # bundle, schema, config) are the same either way; the
+                    # database is NOT, so it is measured separately through the
+                    # uncached seam.
+                    walk.identity = {
+                        "backend_version": identity["identity"]["backend_version"],
+                        "backend_revision": identity["identity"]["backend_revision"],
+                        "frontend_build": identity["identity"]["frontend_build"],
+                        "schema_version_loaded": identity["identity"]["schema_version_loaded"],
+                        "config_revision": identity["identity"]["config_revision"],
+                        "repair": identity["repair"],
+                        "process_start_reported": identity["identity"]["process_start"],
+                        "database_id_reported": identity["identity"]["database_id"],
+                        "capture_caveat": (
+                            "process_start_reported and database_id_reported come "
+                            "from a capture cached once per OS PROCESS "
+                            "(holdspeak/runtime_identity.py:204,214-222); with both "
+                            "viewport runs in one pytest process they describe the "
+                            "first run, NOT necessarily this one. The database this "
+                            "run actually used is database_id_this_run below, taken "
+                            "from the uncached `database_identity()`."
+                        ),
+                    }
+                    assert identity["repair"] == [], identity["repair"]
+    
+                    # The uncached seam: a pure function of the resolved path plus
+                    # the file's device+inode, so a replaced file reads as a
+                    # different database (runtime_identity.py:96-112).
+                    from holdspeak.runtime_identity import database_identity
+    
+                    db_path = tmp_path / "holdspeak.db"
+                    other_path = tmp_path / "not-the-database.db"
+                    other_path.write_bytes(b"")
+                    day1_db_id = database_identity(db_path)
+                    walk.identity["database_id_this_run"] = day1_db_id
+                    # The instrument must DISCRIMINATE, which is exactly what the
+                    # cached `database_id` failed to do: counsel found both
+                    # viewport runs reporting one id over two different files.
+                    walk.fact("day1-identity", "database_identity_discriminates",
+                              "a different file yields a different identity",
+                              "different" if database_identity(other_path) != day1_db_id
+                              else "SAME -- the instrument is a constant",
+                              "MATCH" if database_identity(other_path) != day1_db_id
+                              else "MISMATCH",
+                              "an identity that cannot tell two files apart proves "
+                              "nothing about which file was opened")
+                    assert database_identity(other_path) != day1_db_id
+                    other_path.unlink()
+    
+                    project_id = _api(page, "POST", "/api/projects", {
+                        "name": PROJECT_NAME,
+                        "description": "The HS-200-16 two-day loop.",
+                        "command_id": f"hs200-16-{uuid.uuid4().hex[:8]}",
+                    }, token=TOKEN)["project"]["id"]
+                    state["project_id"] = project_id
+                    _seed_gh_source(project_id)
+                    _define_route(home, llm.endpoint, "loop-llm", 1)
+                    _api(page, "POST", "/api/people/setup", {}, token=TOKEN)
+                    person = _api(page, "POST", "/api/people/relationships",
+                                  {"display_name": PERSON_NAME}, token=TOKEN)["relationship"]["id"]
+                    _api(page, "POST", f"/api/people/relationships/{person}/owner-aliases",
+                         {"alias": OWNER_HINT.lower()}, token=TOKEN)
+                    _api(page, "POST", f"/api/people/relationships/{person}/projects/{project_id}",
+                         {}, token=TOKEN)
+                    state["person"] = person
+    
+                    route = _api(page, "GET", f"/api/projects/{project_id}/briefs/route",
+                                 token=TOKEN)["route"]
+                    walk.model = {
+                        "brief_route_state": route["state"],
+                        "brief_model": route["model"],
+                        "brief_host": route["host"],
+                        "brief_boundary": route["boundary"],
+                        "brief_adapter": "controlled OpenAI-compatible probe on 127.0.0.1 (R16-1)",
+                        "meeting_extractor_provider": type(engine).__name__,
+                        "meeting_extractor_model": getattr(engine, "active_model", "unknown"),
+                        "live_model": False,
+                    }
+                    assert route["state"] == "ready", route
+    
+                    # ── S1: the preparation brief (11) ─────────────────────
+                    walk.begin("day1-brief", 1, "prepare and keep the preparation brief")
+                    _open_room(page, project_id)
+                    _enter_prepare(page)
+                    coverage_chip = (page.get_by_test_id("prepare-coverage")
+                                     .locator(".surface-state-chip").first)
+                    chip_words = (coverage_chip.get_attribute("aria-label")
+                                  or coverage_chip.inner_text()).strip()
+                    walk.fact("day1-brief", "coverage_chip", "COVERAGE · 1 OF 2", chip_words,
+                              "MATCH" if chip_words == "COVERAGE · 1 OF 2" else "MISMATCH",
+                              "the Jira Watch cannot check; the face says so before the run")
+                    assert chip_words == "COVERAGE · 1 OF 2", chip_words
+                    page.get_by_role("textbox", name="Purpose").fill(PURPOSE_D1)
+                    page.get_by_test_id("prepare-verb").click()
+>                   _wait_for_document(page, llm)
+
+tests/e2e/test_phase200_daily_loop.py:879: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+page = <Page url='http://127.0.0.1:53445/'>
+llm = <tests.e2e.test_hs200_preparation_brief_glass.FakeLLM object at 0x139502140>
+timeout = 90.0
+
+    def _wait_for_document(page: Any, llm: Any, timeout: float = 90.0) -> None:
+        """Wait for the drafted brief, and name the refusal if one comes instead.
+    
+        A bare ``wait_for`` on the document reports "not visible" and hides the
+        reason the hub gave; a failing rig must name its mechanism.
+        """
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if page.get_by_test_id("prepare-document").count():
+                page.get_by_test_id("prepare-document").wait_for(timeout=5000)
+                return
+            posture = page.locator('[data-testid="prepare-posture"]').first
+            if (posture.get_attribute("data-posture") or "") == "refused":
+                head = page.get_by_test_id("prepare-head").inner_text()
+>               raise AssertionError(
+                    "the brief was refused instead of drafted:\n"
+                    f"  head: {head!r}\n"
+                    f"  llm posts: {len(llm.posts)}\n"
+                    f"  last body: {(llm.posts[-1]['body'][:1500] if llm.posts else '(none)')!r}"
+                )
+E               AssertionError: the brief was refused instead of drafted:
+E                 head: 'Cannot draft\nQ4 PLATFORM\n⚠\nCOVERAGE · 1 OF 2\nPURPOSE KEPT\nSENT · 127.0.0.1 · NOT ANSWERED'
+E                 llm posts: 0
+E                 last body: '(none)'
+
+tests/e2e/test_phase200_daily_loop.py:457: AssertionError
+_______________________ test_command_deck_projects_1440 ________________________
+[gw0] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8847/popen-gw0/test_command_deck_projects_1440')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x119ec03d0>
+
+    @pytest.mark.timeout(120)
+    def test_command_deck_projects_1440(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+>       _run_projects_rig(tmp_path, monkeypatch, 1440)
+
+tests/e2e/test_hs171_command_deck_glass.py:362: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8847/popen-gw0/test_command_deck_projects_1440')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x119ec03d0>
+width = 1440
+
+    def _run_projects_rig(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
+    ) -> None:
+        """Seed three Rooms, assert PROJECTS group order + badge + open."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        errors: list[str] = []
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": width, "height": 900})
+                page.on("pageerror", lambda e: errors.append(str(e)))
+    
+                # Init desk
+                page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+                _api(page, "POST", "/api/desk/seed", token=TOKEN)
+                _api(page, "PUT", "/api/setup/onboarding",
+                     {"disposition": "completed"}, token=TOKEN)
+    
+                # Seed three Rooms
+                _seed_three_rooms()
+    
+                # Reload to pick up seeded data
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                _settle(page)
+    
+                # Verify needs-you aggregate is populated
+                ny = _api(page, "GET", "/api/desk/needs-you", token=TOKEN)
+                assert ny.get("count", 0) > 0, \
+                    f"Expected needs-you items, got count={ny.get('count')}"
+    
+                # Open the command deck
+                _open_deck(page)
+    
+                # ── PROJECTS band present ──
+                bands = page.locator(".desk-deck-band")
+                band_texts = [bands.nth(i).text_content() or ""
+                              for i in range(bands.count())]
+                assert "PROJECTS" in band_texts, \
+                    f"PROJECTS band not found; bands: {band_texts}"
+    
+                # ── Project rows in PROJECTS band ──
+                # The PROJECTS section rows have ids starting with
+                # "desk-palette-option-project.open."
+                project_rows = page.locator(
+                    "[id^='desk-palette-option-project\\.open\\.']"
+                )
+                row_count = project_rows.count()
+                assert row_count == 3, \
+                    f"Expected 3 project rows, got {row_count}"
+    
+                # ── Order: needs-you desc, then name ──
+                # Alpha (2 items) first, Beta (1 item) second, Gamma (0) third
+                labels = [
+                    (project_rows.nth(i).locator(".desk-deck-label").text_content() or "")
+                    for i in range(row_count)
+                ]
+                assert "Q4 Platform" in labels[0], \
+                    f"First row should be Q4 Platform (2 items): {labels}"
+                assert "Governance" in labels[1], \
+                    f"Second row should be Governance (1 item): {labels}"
+                assert "Data Platform" in labels[2], \
+                    f"Third row should be Data Platform (0 items): {labels}"
+    
+                # ── Badge present only on rows with items ──
+                badges = [
+                    project_rows.nth(i).locator(".desk-deck-badge")
+                    for i in range(row_count)
+                ]
+                # Alpha (2 items) should have badge
+                assert badges[0].count() == 1, "Alpha should have a badge"
+                badge_text_0 = badges[0].text_content() or ""
+                assert "NEED YOU" in badge_text_0, \
+                    f"Alpha badge should say NEED YOU: {badge_text_0}"
+                assert badge_text_0.startswith("2"), \
+                    f"Alpha badge should start with 2: {badge_text_0}"
+    
+                # Beta (1 item) should have badge
+                assert badges[1].count() == 1, "Beta should have a badge"
+                badge_text_1 = badges[1].text_content() or ""
+                assert "NEEDS YOU" in badge_text_1, \
+                    f"Beta badge should say NEEDS YOU (singular): {badge_text_1}"
+    
+                # Gamma (0 items) should have no badge
+>               assert badges[2].count() == 0, \
+                    "Gamma (0 items) should have no badge"
+E                   AssertionError: Gamma (0 items) should have no badge
+E                   assert 1 == 0
+E                    +  where 1 = count()
+E                    +    where count = <Locator frame=<Frame name= url='http://127.0.0.1:53587/'> selector="[id^='desk-palette-option-project\\.open\\.'] >> nth=2 >> .desk-deck-badge">.count
+
+tests/e2e/test_hs171_command_deck_glass.py:281: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+________________________ test_command_deck_projects_393 ________________________
+[gw0] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-201-a/.venv/bin/python3
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8847/popen-gw0/test_command_deck_projects_3930')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11dcf4d00>
+
+    @pytest.mark.timeout(120)
+    def test_command_deck_projects_393(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+>       _run_projects_rig(tmp_path, monkeypatch, 393)
+
+tests/e2e/test_hs171_command_deck_glass.py:367: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-8847/popen-gw0/test_command_deck_projects_3930')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11dcf4d00>
+width = 393
+
+    def _run_projects_rig(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
+    ) -> None:
+        """Seed three Rooms, assert PROJECTS group order + badge + open."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        errors: list[str] = []
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": width, "height": 900})
+                page.on("pageerror", lambda e: errors.append(str(e)))
+    
+                # Init desk
+                page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+                _api(page, "POST", "/api/desk/seed", token=TOKEN)
+                _api(page, "PUT", "/api/setup/onboarding",
+                     {"disposition": "completed"}, token=TOKEN)
+    
+                # Seed three Rooms
+                _seed_three_rooms()
+    
+                # Reload to pick up seeded data
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                _settle(page)
+    
+                # Verify needs-you aggregate is populated
+                ny = _api(page, "GET", "/api/desk/needs-you", token=TOKEN)
+                assert ny.get("count", 0) > 0, \
+                    f"Expected needs-you items, got count={ny.get('count')}"
+    
+                # Open the command deck
+                _open_deck(page)
+    
+                # ── PROJECTS band present ──
+                bands = page.locator(".desk-deck-band")
+                band_texts = [bands.nth(i).text_content() or ""
+                              for i in range(bands.count())]
+                assert "PROJECTS" in band_texts, \
+                    f"PROJECTS band not found; bands: {band_texts}"
+    
+                # ── Project rows in PROJECTS band ──
+                # The PROJECTS section rows have ids starting with
+                # "desk-palette-option-project.open."
+                project_rows = page.locator(
+                    "[id^='desk-palette-option-project\\.open\\.']"
+                )
+                row_count = project_rows.count()
+                assert row_count == 3, \
+                    f"Expected 3 project rows, got {row_count}"
+    
+                # ── Order: needs-you desc, then name ──
+                # Alpha (2 items) first, Beta (1 item) second, Gamma (0) third
+                labels = [
+                    (project_rows.nth(i).locator(".desk-deck-label").text_content() or "")
+                    for i in range(row_count)
+                ]
+                assert "Q4 Platform" in labels[0], \
+                    f"First row should be Q4 Platform (2 items): {labels}"
+                assert "Governance" in labels[1], \
+                    f"Second row should be Governance (1 item): {labels}"
+                assert "Data Platform" in labels[2], \
+                    f"Third row should be Data Platform (0 items): {labels}"
+    
+                # ── Badge present only on rows with items ──
+                badges = [
+                    project_rows.nth(i).locator(".desk-deck-badge")
+                    for i in range(row_count)
+                ]
+                # Alpha (2 items) should have badge
+                assert badges[0].count() == 1, "Alpha should have a badge"
+                badge_text_0 = badges[0].text_content() or ""
+                assert "NEED YOU" in badge_text_0, \
+                    f"Alpha badge should say NEED YOU: {badge_text_0}"
+                assert badge_text_0.startswith("2"), \
+                    f"Alpha badge should start with 2: {badge_text_0}"
+    
+                # Beta (1 item) should have badge
+                assert badges[1].count() == 1, "Beta should have a badge"
+                badge_text_1 = badges[1].text_content() or ""
+                assert "NEEDS YOU" in badge_text_1, \
+                    f"Beta badge should say NEEDS YOU (singular): {badge_text_1}"
+    
+                # Gamma (0 items) should have no badge
+>               assert badges[2].count() == 0, \
+                    "Gamma (0 items) should have no badge"
+E                   AssertionError: Gamma (0 items) should have no badge
+E                   assert 1 == 0
+E                    +  where 1 = count()
+E                    +    where count = <Locator frame=<Frame name= url='http://127.0.0.1:53597/'> selector="[id^='desk-palette-option-project\\.open\\.'] >> nth=2 >> .desk-deck-badge">.count
+
+tests/e2e/test_hs171_command_deck_glass.py:281: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+SKIPPED [1] tests/e2e/test_dictation_learning_digest_spoken_e2e.py:33: opt-in: set HOLDSPEAK_SPOKEN_DICTATION_E2E=1 to run the spoken-dictation learning-digest e2e (uses macOS `say` + the Whisper base model)
+SKIPPED [1] tests/e2e/test_hs141_models_setup_glass.py:21: HS-170: Settings -> Models module PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge (web/src/features/concierge/ConciergeCore.tsx, open-concierge window)
+SKIPPED [1] tests/e2e/test_hs142_model_acquisition_glass.py:26: HS-170: Model Library front-door PARKED (HS-170-03, settled-design-four-faces.md Face 3); download-verify-add now at the Concierge's preset Download (ConciergeCore.tsx)
+SKIPPED [1] tests/e2e/test_hs143_assignments_glass.py:17: HS-170: Settings -> Assignments PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge's THE SET section + Adjust well (ConciergeCore.tsx)
+SKIPPED [1] tests/e2e/test_hs143_model_library_glass.py:19: HS-170: ModelLibraryCore PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge's FOUND section (ConciergeCore.tsx)
+SKIPPED [1] tests/e2e/test_spoken_meeting_e2e.py:41: opt-in: set HOLDSPEAK_SPOKEN_E2E=1 to run the spoken-meeting e2e
+SKIPPED [1] tests/e2e/test_workbench_walk.py:46: no hub listening at http://localhost:8778
+SKIPPED [1] tests/unit/test_mesh_discovery.py:21: could not import 'zeroconf': No module named 'zeroconf'
+SKIPPED [1] tests/e2e/test_dictation_enrichment_e2e.py:57: set HOLDSPEAK_DICTATION_E2E_BASE_URL + HOLDSPEAK_DICTATION_E2E_MODEL to a reachable OpenAI-compatible endpoint to run the real dictation enrichment e2e
+SKIPPED [1] tests/e2e/test_dictation_journal_e2e.py:57: set HOLDSPEAK_DICTATION_E2E_BASE_URL + HOLDSPEAK_DICTATION_E2E_MODEL to a reachable OpenAI-compatible endpoint to run the real dictation journal e2e
+SKIPPED [1] tests/e2e/test_dogfood_plumbing_e2e.py:44: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [3] tests/e2e/test_dogfood_plumbing_e2e.py:52: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [12] tests/e2e/test_dogfood_plumbing_e2e.py:66: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [1] tests/e2e/test_dogfood_plumbing_e2e.py:85: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [3] tests/e2e/test_dogfood_plumbing_e2e.py:95: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [2] tests/e2e/test_hs14104_refinement_glass.py:58: superseded by the Thought Workbench real-path glass
+SKIPPED [2] tests/e2e/test_hs14105_context_glass.py:109: superseded by the Thought Workbench real-path glass
+SKIPPED [2] tests/e2e/test_hs14105a_default_context_glass.py:99: superseded by the Thought Workbench real-path glass
+SKIPPED [1] tests/uat/test_induction_integration_43.py:107: live .43 model proof is opt-in: set HOLDSPEAK_UAT_LIVE_43=1 (it runs a real extraction on the LAN model and takes minutes)
+SKIPPED [1] tests/uat/test_induction_integration_43.py:118: the UAT node harness cannot pair a mesh worker: since HS-131-16 `mesh serve` requires an imported node pairing (hub pin + node token) and refuses the owner token, but nodes.py still spawns it with --token-env HOLDSPEAK_HUB_TOKEN and never pairs
+SKIPPED [1] tests/integration/test_rails_observer_live.py:37: no rail events on this machine to summarize
+SKIPPED [1] tests/integration/test_rails_observer_live.py:72: no rail events on this machine
+SKIPPED [7] tests/integration/test_phase200_semantic_evaluation.py: the `openai` client package is not installed on this machine; it is an optional extra (`meeting` / `dictation-openai`) and the product has no other transport for an OpenAI-compatible endpoint
+SKIPPED [1] tests/integration/test_phase200_semantic_evaluation.py:162: the `openai` client package is not installed on this machine; it is an optional extra (`meeting` / `dictation-openai`) and the product has no other transport for an OpenAI-compatible endpoint
+SKIPPED [1] tests/integration/test_runtime_llama_cpp.py:38: llama-cpp-python and /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.2RT3WhsEiF/xdist-gw3/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf are required for this integration test
+SKIPPED [1] tests/integration/test_runtime_mlx.py:38: mlx-lm + outlines + /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.2RT3WhsEiF/xdist-gw3/Models/mlx/Qwen3.5-8B-MLX-4bit are required for this integration test
+SKIPPED [1] tests/integration/test_phase200_semantic_evaluation.py:235: the `openai` client package is not installed on this machine; it is an optional extra (`meeting` / `dictation-openai`) and the product has no other transport for an OpenAI-compatible endpoint
+SKIPPED [1] tests/unit/test_dictation_grammars.py:91: could not import 'llama_cpp': No module named 'llama_cpp'
+SKIPPED [1] tests/uat/test_mesh_dispatch.py:85: the UAT node harness cannot pair a mesh worker: since HS-131-16 `mesh serve` requires an imported node pairing (hub pin + node token) and refuses the owner token, but nodes.py still spawns it with --token-env HOLDSPEAK_HUB_TOKEN and never pairs
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:497: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:924: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:993: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:1175: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:1196: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2226: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_delta_schema.py:640: Owner's real DB not found (CI or isolated HOME)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2478: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2518: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [2] tests/unit/test_dictation_session_admission.py:2532: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2572: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/integration/test_dictation_llama_cpp_e2e.py:72: llama-cpp-python and /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.2RT3WhsEiF/xdist-gw2/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf are required for this integration test
+SKIPPED [1] tests/integration/test_update_drafter_live_43.py:110: live .43 model proof is opt-in: set HOLDSPEAK_UAT_LIVE_43=1 (runs a real model call on the LAN endpoint)
+SKIPPED [1] tests/unit/test_github_provider.py:526: gh CLI not authenticated or not installed
+SKIPPED [1] tests/unit/test_github_provider.py:537: gh CLI not authenticated or not installed
+SKIPPED [1] tests/integration/test_grounding_rails_live.py:35: holdspeak not in the project map on this machine
+SKIPPED [1] tests/integration/test_grounding_rails_live.py:54: holdspeak not in the project map on this machine
+SKIPPED [1] tests/integration/test_grounding_rails_live.py:71: holdspeak not in the project map on this machine
+SKIPPED [1] tests/unit/test_hs166_walk_fixes.py:183: No proposals generated
+SKIPPED [1] tests/e2e/test_hs145_door_polish_glass.py:179: HS-170: door-board scroll-hint PARKED (HS-170-04); the arrival has no horizontal-scroll viewport -- capability intentionally gone
+SKIPPED [1] tests/e2e/test_hs147_one_tap_glass.py:160: HS-170: door-rail one-tap arm PARKED (HS-170-04); per-event RECORD THIS gone; Schedule + Cancel at the arrival's capture bar covered by test_hs144_door_glass::test_upcoming_rail_schedule_create_round_trip_and_form_cancel
+SKIPPED [1] tests/unit/test_phase143_speech_lifecycle_adoption.py:84: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_phase143_speech_lifecycle_adoption.py:139: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_phase143_speech_lifecycle_adoption.py:169: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_phase143_speech_lifecycle_adoption.py:207: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_project_updates_schema.py:576: Owner's real DB not found (CI or isolated HOME)
+SKIPPED [1] tests/unit/test_project_room_schema.py:390: Owner's real DB not found (CI or isolated HOME)
+SKIPPED [1] tests/unit/test_watch_graduation_schema.py:493: Owner's real DB not found (CI or isolated HOME)
+SKIPPED [1] tests/unit/test_web_runtime.py:269: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/e2e/test_hs156_front_door_glass.py:552: HS-170: front-door pack cards PARKED (HS-170-03); capability now at the Concierge's FOUND section (ConciergeCore.tsx)
+SKIPPED [1] tests/e2e/test_hs156_front_door_glass.py:618: HS-170: front-door candidate picker PARKED (HS-170-03); capability now at the Concierge's picker ChoiceCards (ConciergeCore.tsx)
+SKIPPED [2] tests/e2e/test_hs158_room_glass.py:171: HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs158_room_glass.py:232: HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig
+SKIPPED [1] tests/e2e/test_hs158_room_glass.py:281: HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs159_interview_glass.py:149: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [1] tests/e2e/test_hs159_interview_glass.py:396: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [1] tests/e2e/test_hs159_interview_glass.py:461: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); blank leg ported to test_hs169_door_legs_glass.py
+SKIPPED [1] tests/e2e/test_hs159_interview_glass.py:554: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); abandon leg ported to test_hs169_door_legs_glass.py
+SKIPPED [2] tests/e2e/test_hs161_github_glass.py:270: HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs161_github_glass.py:521: HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs161_github_glass.py:673: HS-169-07 retired the interview entry point this leg used for project creation; evaluation/delta review is a live capability noted in the close ledger for re-pointing
+SKIPPED [2] tests/e2e/test_hs161_github_glass.py:921: HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [1] tests/e2e/test_hs161_github_glass.py:1090: gh CLI not authenticated or not installed (skip-clean)
+SKIPPED [2] tests/e2e/test_hs166_jira_glass.py:327: HS-169-07 retired the interview + Jira wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs166_jira_walk.py:1636: acli jira auth status failed (exit 1): ✗ Error: unauthorized: use 'acli jira auth login' to authenticate
+SKIPPED [2] tests/e2e/test_hs168_connections_glass.py:318: gh auth status failed (exit 1): You are not logged into any GitHub hosts. To log in, run: gh auth login
+SKIPPED [2] tests/e2e/test_hs168_sources_glass.py:281: HS-169-02 retired the Sources step (ProgressPlan, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs168_sources_glass.py:367: HS-169-02 retired the Sources step (ProgressPlan, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [10] tests/e2e/test_meeting_transcription.py: Mock meeting fixture not found: /Users/karol/dev/tools/wt-201-a/tests/fixtures/mock_meeting.wav
+SKIPPED [1] tests/e2e/test_mermaid_renders.py:112: mermaid renderer unavailable in this env: core/lib/esm/puppeteer/node/BrowserLauncher.js:55:28)
+    at async run (file:///Users/karol/.npm/_npx/668c188756b835f3/node_modules/@mermaid-js/mermaid-cli/src/index.js:862:19)
+    at async cli (file:///Users/karol/.npm/_npx/668c188756b835f3/node_modules/@mermaid-js/mermaid-cli/src/index.js:374:3)
+XFAIL tests/e2e/test_hs200_meeting_outcomes_glass.py::test_meeting_review_proposals_stay_live_under_amendment[1440-1200] - HS-201 ratified analysis-only summary amendment; parked proposal pipeline
+XFAIL tests/e2e/test_hs200_meeting_outcomes_glass.py::test_meeting_review_proposals_stay_live_under_amendment[393-900] - HS-201 ratified analysis-only summary amendment; parked proposal pipeline
+XFAIL tests/e2e/test_hs200_meeting_outcomes_glass.py::test_meeting_partial_chain_retry_stays_live_under_amendment[1440-1200] - HS-201 ratified analysis-only summary amendment; parked proposal pipeline
+XFAIL tests/e2e/test_hs200_meeting_outcomes_glass.py::test_meeting_partial_chain_retry_stays_live_under_amendment[393-900] - HS-201 ratified analysis-only summary amendment; parked proposal pipeline
+FAILED tests/unit/test_api_surface.py::test_committed_manifest_matches_the_live_app
+FAILED tests/unit/test_db.py::TestDatabaseShape::test_fresh_schema_matches_canonical_snapshot
+FAILED tests/unit/test_dictation_session_admission.py::test_meeting_transcription_children_join_the_existing_meeting_session
+FAILED tests/unit/test_doc_drift_guard.py::test_docs_do_not_restore_retired_inference_setup_vocabulary
+FAILED tests/unit/test_doc_drift_guard.py::test_no_live_doc_has_a_dangling_relative_link
+FAILED tests/integration/test_web_server.py::TestIntelQueueApiEndpoints::test_intel_jobs_list_retry_and_process
+FAILED tests/integration/test_meeting_intel_recovery.py::test_partial_intel_names_retained_work_and_supports_retry_or_skip
+FAILED tests/unit/test_phase143_meeting_live_cutover.py::test_stop_aftercare_upserts_one_legacy_deferred_row_for_bundle_and_record_only[False]
+FAILED tests/unit/test_phase200_canon_guard.py::test_a_plain_run_writes_nothing_under_the_repo
+FAILED tests/uat/test_build_ledger.py::test_committed_ledger_is_up_to_date - ...
+FAILED tests/unit/test_phase143_routing_authority_census.py::test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer
+FAILED tests/unit/test_phase143_surface_fallback_census.py::test_private_backend_route_and_recovery_decisions_are_classified
+FAILED tests/unit/test_phase143_inference_capability_census.py::test_phase143_call_site_fixture_is_complete_and_fail_closed
+FAILED tests/unit/test_phase143_inference_capability_census.py::test_phase143_shared_helpers_have_semantic_callers
+FAILED tests/unit/test_phase143_inference_capability_census.py::test_phase143_every_censused_site_has_one_capability_and_source_owner
+FAILED tests/e2e/test_hs153_practice_glass.py::test_guardrail_row_renders_and_deny_focused
+FAILED tests/e2e/test_hs200_preparation_brief_glass.py::test_running_then_kept_brief_with_claims_and_not_read[1440]
+FAILED tests/e2e/test_hs200_preparation_brief_glass.py::test_running_then_kept_brief_with_claims_and_not_read[393]
+FAILED tests/e2e/test_hs200_preparation_brief_glass.py::test_a_sent_and_answered_request_is_never_reported_as_nothing_sent
+FAILED tests/e2e/test_hs200_preparation_brief_glass.py::test_stop_leaves_no_orphan_draft
+FAILED tests/e2e/test_phase200_daily_loop.py::test_a_project_carries_work_across_two_working_days[1440]
+FAILED tests/e2e/test_phase200_daily_loop.py::test_a_project_carries_work_across_two_working_days[393]
+FAILED tests/e2e/test_hs171_command_deck_glass.py::test_command_deck_projects_1440
+FAILED tests/e2e/test_hs171_command_deck_glass.py::test_command_deck_projects_393
+24 failed, 11159 passed, 125 skipped, 4 xfailed in 1642.14s (0:27:22)

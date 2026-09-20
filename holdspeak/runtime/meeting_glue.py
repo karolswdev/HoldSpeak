@@ -271,7 +271,10 @@ class MeetingGlueMixin:
                 on_intel=self._on_meeting_intel,
                 on_settings_applied=self._apply_updated_config,
                 on_broadcast=self._on_meeting_broadcast,
-                intel_enabled=self.config.meeting.intel_enabled and not effective_cloud.reason,
+                # Record is the speech capture gesture.  Text intelligence is
+                # requested later by the explicit summary verb; the configured
+                # destination is still passed through for that later run.
+                intel_enabled=False,
                 intel_model_path=self.config.meeting.intel_realtime_model,
                 intel_provider=self.config.meeting.intel_provider,
                 cloud_model=effective_cloud.model,
@@ -286,9 +289,6 @@ class MeetingGlueMixin:
                 principal=principal,
             )
             state = session.start()
-            if self.config.meeting.intel_enabled and effective_cloud.reason:
-                session._set_intel_status("error", effective_cloud.reason)
-                state = session.state or state
             with self.state_lock:
                 title_override = self.pending_title
                 calendar_event_id_override = self.pending_calendar_event_id
@@ -445,10 +445,11 @@ class MeetingGlueMixin:
                 project_result = self._associate_meeting_with_projects(meeting_id)
                 save_payload["projects_associated"] = int(project_result.get("projects_associated") or 0)
                 save_payload["project_association_error"] = project_result.get("error")
-                # HS-172-02: auto-intel trigger after project association.
-                auto_intel = self._maybe_auto_enqueue_intel(meeting_id, session)
-                save_payload["auto_intel_enqueued"] = auto_intel.get("enqueued", False)
-                save_payload["auto_intel_error"] = auto_intel.get("error")
+                # HS-201: Record ends with a saved transcript. The summary
+                # gesture supplies its disclosed route later. Keep the legacy
+                # automatic-intelligence helper parked outside this Stop path.
+                save_payload["auto_intel_enqueued"] = False
+                save_payload["auto_intel_error"] = None
         except Exception as exc:
             save_error = str(exc)
             log.error(f"Failed to save meeting from web runtime: {exc}")

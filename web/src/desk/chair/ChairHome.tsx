@@ -14,7 +14,10 @@ import { apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { intelBadge } from "./intelBadge";
-import { useRuntimeFrame } from "../../runtime/RuntimeBus";
+import { meetingPathBlockers, type AssignmentRead } from "./meetingPathBlocker";
+import { onReturnToTask } from "../returnToTask";
+import { getAssignmentSummary, type AssignmentSummary } from "../../pages/cores/assignmentExperience";
+import { useRuntimeBus, useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { labelFor, supportsDoorVerb, commandForDoorVerb } from "./doorVerbs";
 import {
   SurfaceSection,
@@ -49,6 +52,19 @@ import {
 } from "../attention";
 import { unfinishedThoughts, type UnfinishedThought } from "../thoughts";
 import type { Meeting } from "../../lib/primitives";
+import {
+  RefusalToken,
+  RouteDisclosure,
+  RunAttempts,
+} from "../../meetings/RouteDisclosure";
+import { egressFor } from "../surface/egress";
+import {
+  executedReceipt,
+  postSummaryRun,
+  routeReady,
+  type PlannedRoute,
+  type SummaryRefusal,
+} from "../../meetings/summaryRoute";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -202,7 +218,12 @@ function ledgerDate(iso: string): string {
 
 function durationMin(seconds: number | null | undefined): string {
   if (!seconds || seconds <= 0) return "";
-  return `${Math.round(seconds / 60)} MIN`;
+  // UX-CANON A.8 (Astra's counsel finding 5): a 30-second meeting rounded
+  // to `0 MIN` on the Chair. A zero token says nothing, so it is omitted —
+  // the same rule the ledger's `durationToken` already keeps.
+  const minutes = Math.round(seconds / 60);
+  if (minutes <= 0) return "";
+  return `${minutes} MIN`;
 }
 
 /** Source emblem token: GH for github, J for jira, MTG for proposals, etc. */
@@ -289,8 +310,20 @@ function whySeverityTone(severity: string): string {
  *  coverage; an empty PARTIAL result names the coverage instead.
  *  HS-200-15 (verdict): the display line is the TRUE total; the Project
  *  clause is withheld when there is exactly one Project (`3 need you`). */
-export function headlineFor(count: number, projectCount: number, complete = true): string {
-  if (count <= 0) return complete ? "Nothing needs you" : "Coverage incomplete";
+export function headlineFor(
+  count: number,
+  projectCount: number,
+  complete = true,
+  pending = 0,
+): string {
+  // HS-201-01: `pending` is what needs the owner but is not an attention
+  // row -- the meeting-path blocker and every FAILED meeting on the face.
+  // The all-clear is never spoken over one (audits/face-walk-opus.md
+  // defect 8: `Nothing needs you` above a FAILED meeting).
+  if (count <= 0) {
+    if (pending > 0) return String(pending) + " need you";
+    return complete ? "Nothing needs you" : "Coverage incomplete";
+  }
   const n = String(count);
   if (projectCount > 1) {
     return n + " need you across " + String(projectCount) + " projects";
@@ -433,6 +466,55 @@ function Arrival() {
   // ── meetings ──
   const meetings = useDesk((s) => s.items.meeting);
 
+  // ── the meeting-path blockers (HS-201-01) ──
+  // The assignment roster, re-read whenever it can have changed. Counsel
+  // fix round (Astra finding 1): a mount-only read left the repaired row
+  // on an OPEN desk until the owner navigated -- the product knew the
+  // path was clear and the face still asked for an engine. So the Chair
+  // re-reads on the hub's `desk_changed` frame (the burst is debounced,
+  // as `useDeskChangedRefresh` does) and when the window takes focus
+  // again (the owner comes back from Models, or from anywhere else).
+  // A read that has not landed is an UNKNOWN, never a clear desk.
+  const [assignments, setAssignments] = useState<AssignmentSummary | null>(null);
+  const [assignmentRead, setAssignmentRead] = useState<AssignmentRead>("pending");
+  const readAssignments = useCallback(async () => {
+    try {
+      const summary = await getAssignmentSummary();
+      setAssignments(summary);
+      setAssignmentRead("ok");
+    } catch {
+      setAssignments(null);
+      setAssignmentRead("failed");
+    }
+  }, []);
+  useEffect(() => { void readAssignments(); }, [readAssignments]);
+  // Counsel round 2 (condition 1): the product's OWN return signal. Models
+  // announces `holdspeak:settings-updated` the moment it applies a set
+  // (`features/concierge/useConciergeController.ts:507` ->
+  // `desk/returnToTask.ts:113`), and every face holding an unfinished task
+  // re-reads on it. The Chair is such a face: its SETUP row IS the
+  // unfinished task the owner left to repair.
+  useEffect(() => onReturnToTask(() => { void readAssignments(); }), [readAssignments]);
+  const { subscribe: subscribeFrames } = useRuntimeBus();
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const unsubscribe = subscribeFrames("desk_changed", () => {
+      if (timer !== null) clearTimeout(timer);
+      timer = setTimeout(() => { timer = null; void readAssignments(); }, 300);
+    });
+    const onFocus = () => { void readAssignments(); };
+    window.addEventListener("focus", onFocus);
+    return () => {
+      if (timer !== null) clearTimeout(timer);
+      unsubscribe();
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [subscribeFrames, readAssignments]);
+  const blockers = useMemo(
+    () => meetingPathBlockers(assignments, assignmentRead),
+    [assignments, assignmentRead],
+  );
+
   // HS-200-42 (counsel N1): WHO will execute the queue. The `runtime_queue`
   // frame (the same one the ambient HUD chip reads) now carries the hub
   // drainer's state, so "queued with nothing to run it" is a durable fact on
@@ -524,8 +606,23 @@ function Arrival() {
     () => readCoverage(needsYou?.coverage, needsYou?.complete, needsYouUnread),
     [needsYou, needsYouUnread],
   );
-  const headline = headlineFor(count, projectCount, coverage.complete);
-  const headlineAccent = count > 0;
+  // HS-201-01: what needs the owner but is not an attention row -- the
+  // meeting-path blocker and every FAILED meeting. `Nothing needs you`
+  // is never spoken over one (audits/face-walk-opus.md defect 8).
+  const failedMeetings = meetings.filter(
+    (m) => intelBadge(m.intelStatus) === "FAILED",
+  ).length;
+  const pending = blockers.length + failedMeetings;
+  // Counsel fix round, second pass (ruling 1): a roster read still in
+  // flight draws no row, and the all-clear waits for it -- an unknown is
+  // never spoken as a clear desk.
+  const headline = headlineFor(
+    count,
+    projectCount,
+    coverage.complete && assignmentRead !== "pending",
+    pending,
+  );
+  const headlineAccent = count > 0 || pending > 0;
   const mutedCount = mutedItems.length > 0 ? mutedItems.length : 0;
   // HS-200-15 (D1): the head states coverage only when it is COMPLETE;
   // an incomplete read is stated by the COVERAGE section, once.
@@ -607,28 +704,41 @@ function Arrival() {
   const [intelReceipt, setIntelReceipt] = useState<
     { meetingId: string; host: string; drainer: string } | null
   >(null);
-  const runIntelligence = async (meetingId: string) => {
+  // HS-201-04: the hub's 409, kept as a refusal with its plain reason.
+  const [intelRefusal, setIntelRefusal] = useState<
+    { meetingId: string; refusal: SummaryRefusal } | null
+  >(null);
+  const runIntelligence = async (meetingId: string, route: PlannedRoute | null) => {
     setRunningIntel(meetingId);
     setIntelReceipt(null);
+    setIntelRefusal(null);
     try {
-      const result = await apiFetch<{
+      // The disclosed selection travels with the gesture (story 03's
+      // contract): the hub binds this exact selection, or refuses.
+      const outcome = await postSummaryRun<{
         jobId: string;
         state: string;
         host: string;
         drainer?: string;
       }>(
         `/api/meetings/${encodeURIComponent(meetingId)}/intelligence/run`,
-        { method: "POST" },
+        route,
       );
+      if (!outcome.ok) {
+        setIntelRefusal({ meetingId, refusal: outcome.refusal });
+        void useDesk.getState().refresh();
+        clearWriteFailure();
+        return;
+      }
       setIntelReceipt({
         meetingId,
-        host: result.host || "THIS DEVICE",
-        drainer: result.drainer === "running" ? "running" : "absent",
+        host: outcome.route?.legs?.[0]?.host || outcome.result.host || "THIS DEVICE",
+        drainer: outcome.result.drainer === "running" ? "running" : "absent",
       });
       void useDesk.getState().refresh();
       clearWriteFailure();
     } catch (error) {
-      reportWriteFailure("Run intelligence", error, () => void runIntelligence(meetingId));
+      reportWriteFailure("Run summary", error, () => void runIntelligence(meetingId, route));
     }
     finally { setRunningIntel(null); }
   };
@@ -817,6 +927,46 @@ function Arrival() {
         ) : null}
       </div>
 
+      {/* ── The one thing the meeting path needs (HS-201-01) ──
+          ONE row, ONE library Button, and it is gone the moment an
+          engine is assigned to the summary capability. */}
+      {blockers.length > 0 ? (
+        <div data-testid="arrival-blocker">
+          <SurfaceSection label="SETUP">
+            <SurfaceLedger count={null} cols="room">
+              {blockers.map((blocker) => (
+                <SurfaceLedgerRow
+                  key={blocker.key}
+                  primary={blocker.label}
+                  trailing={
+                    // HS-201-01 (full-suite fallout): the SETUP verb is
+                    // the library Button, never a second FILLED primary.
+                    // The ratified face law is one filled primary on a
+                    // face with attention work and ZERO on a quiet one
+                    // (test_hs200_attention_glass.py:463, :694), and the
+                    // first attention row's Open owns it.
+                    <Button
+                      dense
+                      onClick={
+                        blocker.key === "unknown"
+                          ? () => void readAssignments()
+                          : () => openSurfaceOr("open-concierge", "/models")
+                      }
+                      data-testid={`arrival-blocker-verb-${blocker.key}`}
+                    >
+                      {blocker.verb}
+                    </Button>
+                  }
+                  expands={false}
+                  wrap
+                  data-testid="arrival-blocker-row"
+                />
+              ))}
+            </SurfaceLedger>
+          </SurfaceSection>
+        </div>
+      ) : null}
+
       {/* ── Week Strip (HS-175-02) ── */}
       {week && week.has_calendar && week.total > 0 ? (
         <WeekStripSection week={week} />
@@ -945,6 +1095,7 @@ function Arrival() {
             meetings={meetings}
             runningIntel={runningIntel}
             intelReceipt={intelReceipt}
+            intelRefusal={intelRefusal}
             drainerAbsent={drainerAbsent}
             onRunIntel={runIntelligence}
           />
@@ -1649,24 +1800,48 @@ function BriefSection({
   );
 }
 
+/** HS-201-04 — the click's egress receipt, said the ONE way the product
+ *  says a host (`egressFor`). Never the raw wire word, never "cloud" by
+ *  default (Article III; Astra's counsel finding 4). */
+function ReceiptChip({ host }: { host: string }) {
+  const eg = egressFor(host);
+  if (!eg.label) return null;
+  return <EgressChip label={eg.label} scope={eg.scope} />;
+}
+
 function MeetingsSection({
   meetings,
   runningIntel,
   intelReceipt,
+  intelRefusal,
   drainerAbsent,
   onRunIntel,
 }: {
   meetings: Meeting[];
   runningIntel: string | null;
   intelReceipt: { meetingId: string; host: string; drainer: string } | null;
+  /** HS-201-04 — the hub's 409 on the last run gesture, with its row. */
+  intelRefusal: { meetingId: string; refusal: SummaryRefusal } | null;
   /** The `runtime_queue` frame says no hub drainer will execute the queue. */
   drainerAbsent: boolean;
-  onRunIntel: (id: string) => void;
+  onRunIntel: (id: string, route: PlannedRoute | null) => void;
 }) {
   // Sort by startedAt descending, limit to 3.
   const sorted = [...meetings]
     .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
     .slice(0, 3);
+  // HS-201-04 (Astra's counsel round 2; one filled primary per face): the
+  // same rule the ledger keeps. Two summary-ready meetings on the arrival
+  // drew two filled `Run summary` verbs; only the top-most that can run
+  // wears the filled species.
+  const leadRunId =
+    sorted.find(
+      (m) =>
+        intelBadge(m.intelStatus) === "OFF" &&
+        m.transcriptWords != null &&
+        m.transcriptWords > 0 &&
+        routeReady(m.plannedRoute ?? null),
+    )?.id ?? null;
 
   return (
     <SurfaceSection label={countLabel("MEETINGS", sorted.length)}>
@@ -1690,11 +1865,17 @@ function MeetingsSection({
           const hasTranscript = m.transcriptWords != null && m.transcriptWords > 0;
           const isOff = badge === "OFF";
           const isComplete = badge === "RAN" || badge === "SAVED";
+          // HS-201-04 (Article III): the route this row's Run WILL use,
+          // read before the click; the refusal's fresh route wins.
+          const rowRefusal =
+            intelRefusal?.meetingId === m.id ? intelRefusal.refusal : null;
+          const route = rowRefusal?.route ?? m.plannedRoute ?? null;
+          const canRun = routeReady(route);
           return (
             <SurfaceLedgerRow
               key={m.id}
               time={ledgerDate(m.startedAt)}
-              primary={m.title || "Untitled meeting"}
+              primary={m.title || "Meeting with no title"}
               cells={
                 <>
                   {durationMin(m.durationSeconds) ? (
@@ -1713,34 +1894,50 @@ function MeetingsSection({
                       {badge}
                     </span>
                   )}
-                  {receipt ? (
-                    <EgressChip
-                      label={receipt.host === "local" ? "THIS DEVICE" : receipt.host}
-                      scope={receipt.host === "local" ? "local" : "cloud"}
-                    />
-                  ) : null}
+                  {/* HS-201-04 (Astra's counsel finding 4): the click's own
+                      receipt goes through the ONE egress mapper the ledger
+                      uses. It printed the wire word `same_device` verbatim
+                      and called every host but "local" a cloud host. */}
+                  {receipt ? <ReceiptChip host={receipt.host} /> : null}
+                  {/* After the run: the destinations actually contacted. */}
+                  <RunAttempts
+                    receipt={executedReceipt(m.id, rowRefusal?.receipt, m.runReceipt)}
+                    testId="arrival-attempts"
+                  />
+                  <RefusalToken
+                    refusal={rowRefusal}
+                    durable={m.lastRefusal ?? null}
+                    testId="arrival-refusal"
+                  />
                 </>
               }
               trailing={
                 isOff && hasTranscript ? (
-                  <Button
-                    variant="primary"
-                    dense
-                    disabled={runningIntel === m.id}
-                    onClick={() => onRunIntel(m.id)}
-                    data-testid="arrival-run-intel"
-                  >
-                    {/* In flight: the same label, disabled. Nothing is queued
-                        until the route answers 2xx, and the badge says the
-                        rest. */}
-                    Run intelligence
-                  </Button>
+                  <>
+                    {/* Before the click: where this run will go. */}
+                    <RouteDisclosure route={route} testId="arrival-route" />
+                    {/* UX-CANON A.11: withheld when nothing can run. */}
+                    {canRun ? (
+                      <Button
+                        variant={m.id === leadRunId ? "primary" : "ghost"}
+                        dense
+                        disabled={runningIntel === m.id}
+                        onClick={() => onRunIntel(m.id, route)}
+                        data-testid="arrival-run-intel"
+                      >
+                        {/* In flight: the same label, disabled. Nothing is
+                            queued until the route answers 2xx, and the badge
+                            says the rest. */}
+                        Run summary
+                      </Button>
+                    ) : null}
+                  </>
                 ) : isComplete ? (
                   <Button
                     variant="ghost"
                     dense
                     onClick={() =>
-                      openSurfaceOr("review-meetings", "/meetings", m.id)
+                      openSurfaceOr("review-meetings", "/meetings", `meeting:${m.id}`)
                     }
                   >
                     Open
@@ -1748,7 +1945,7 @@ function MeetingsSection({
                 ) : null
               }
               onToggle={() =>
-                openSurfaceOr("review-meetings", "/meetings", m.id)
+                openSurfaceOr("review-meetings", "/meetings", `meeting:${m.id}`)
               }
               expands={false}
               wrap
@@ -2075,7 +2272,7 @@ function CaptureBar() {
         onClick={() => openSurfaceOr("dictate", "/dictation")}
         data-testid="arrival-develop-thought"
       >
-        Develop a thought
+        Write a thought
       </Button>
       <Button
         variant="ghost"

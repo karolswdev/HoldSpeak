@@ -3,6 +3,18 @@
 import { SurfaceSection } from "../../../desk/surface/Surface";
 import { MeetingConflictRecovery } from "../../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../../meetings/MeetingIntelRecovery";
+import {
+  MeetingSummarySlab,
+  readMeetingIntel,
+} from "../../../meetings/MeetingSummarySlab";
+import {
+  executedReceipt,
+  readLastRefusal,
+  readPlannedRoute,
+  readRunReceipt,
+  type PlannedRoute,
+  type SummaryRefusal,
+} from "../../../meetings/summaryRoute";
 import { apiFetch } from "../../../lib/api";
 import type { DetailView, Receipt } from "./helpers";
 import { MeetingReview } from "./MeetingReview";
@@ -25,6 +37,7 @@ export function MeetingDetail({
   onRunIntelligence,
   onReview,
   onOpenEvidence,
+  runRefusal,
 }: {
   meeting: Record<string, unknown> | null;
   /** "outcomes" (the face), "review" (HS-200-12, posture 4) or "artifacts". */
@@ -35,11 +48,15 @@ export function MeetingDetail({
   onDeleted(): void;
   /** HS-111-03 — outcomes land on the footer receipt bar. */
   onReceipt(receipt: Receipt): void;
-  onRunIntelligence?: () => void;
+  /** HS-201-04 — called with the route this RECORD displays, so the
+   *  disclosure and the request are the same object. */
+  onRunIntelligence?: (route: PlannedRoute | null) => void;
   /** HS-200-12 — the way to the review wing from NEEDS YOU. */
   onReview?: () => void;
   /** HS-200-12 — `Open evidence`: the outcomes face, scrolled to a segment. */
   onOpenEvidence?: (segmentIndex: number | null) => void;
+  /** HS-201-04 — the hub's 409 on this record's last run gesture. */
+  runRefusal?: SummaryRefusal | null;
 }) {
   const id = String(meeting?.id ?? "");
   const data = useMeetingData(meeting, onReceipt);
@@ -61,6 +78,15 @@ export function MeetingDetail({
   } = data;
 
   if (!meeting) return null;
+
+  // HS-201-04: the summary the hub persisted, and the route facts that
+  // belong beside every verb that starts a run. The detail read model is
+  // the source for all three (`intel`, `planned_route`, `run_receipt`).
+  const summaryIntel = readMeetingIntel(detail ?? meeting);
+  const plannedRoute = readPlannedRoute(detail ?? meeting);
+  // The route the record DISPLAYS: a refusal's fresh route wins over it.
+  const displayedRoute = runRefusal?.route ?? plannedRoute;
+  const runReceipt = executedReceipt(id, readRunReceipt(detail ?? meeting));
 
   const meetingTitle = String(detail?.title ?? meeting.title ?? "Meeting");
   const hasTranscript = segments.length > 0 || (
@@ -99,7 +125,9 @@ export function MeetingDetail({
           meetingId={id}
           onOpenEvidence={(segmentIndex) => onOpenEvidence?.(segmentIndex)}
           onOpenTranscript={() => onOpenEvidence?.(null)}
-          onRunIntelligence={onRunIntelligence}
+          onRunIntelligence={
+            onRunIntelligence ? () => onRunIntelligence(displayedRoute) : undefined
+          }
           onChanged={onDeleted}
         />
       ) : (
@@ -110,15 +138,23 @@ export function MeetingDetail({
             intelOff={intelOff}
             intelState={intelState}
             hasTranscript={hasTranscript}
+            plannedRoute={displayedRoute}
+            refusal={runRefusal}
+            durableRefusal={readLastRefusal(detail ?? meeting)}
             onReview={onReview}
-            onRunIntelligence={onRunIntelligence}
+            onRunIntelligence={
+              onRunIntelligence ? () => onRunIntelligence(displayedRoute) : undefined
+            }
             onRetryIntelligence={
               (intelState === "error" || intelState === "failed") && onRunIntelligence
-                ? onRunIntelligence
+                ? () => onRunIntelligence(displayedRoute)
                 : undefined
             }
             onSkipIntelligence={
-              (intelState === "queued" || intelState === "pending" || intelState === "error" || intelState === "failed")
+              // HS-201-04: error/failed belong to the summary slab, which
+              // already carries Retry and Skip. Only the QUEUED state (the
+              // slab suppresses itself there) keeps its Skip here.
+              (intelState === "queued" || intelState === "pending")
                 ? async () => {
                     try {
                       await apiFetch(
@@ -132,6 +168,9 @@ export function MeetingDetail({
                 : undefined
             }
           />
+          {/* HS-201-04: the summary is shown on the record, with its
+              meeting — the result first, the transcript under it. */}
+          <MeetingSummarySlab intel={summaryIntel} receipt={runReceipt} />
           <TranscriptWell
             id={id}
             segments={segments}

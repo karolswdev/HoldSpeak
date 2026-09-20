@@ -51,11 +51,53 @@ export interface EgressBadge {
   title: string;
 }
 
+/** Who may REACH this hub, stated as its own token (HS-201-01).
+ *
+ * Counsel fix round, Astra finding 4. The chip used to fold the
+ * off-loopback-without-token fact into `External reach enabled`, and the
+ * 201-01 destination rule then suppressed it: a hub bound to `0.0.0.0`
+ * with no token and no destinations read `This device`, which is true of
+ * egress and false of exposure. Inbound is not egress, so it is its own
+ * token and no destination count decides it. `web_bind` and
+ * `auth_token_set` come straight from the hub
+ * (`holdspeak/setup_status.py:176-177`). */
+export interface InboundBadge {
+  text: string;
+  title: string;
+  /** The hub answers machines other than this one. */
+  open: boolean;
+  /** A token is required of them. */
+  tokenSet: boolean;
+}
+
+const LOOPBACK = ["127.0.0.1", "localhost", "::1"];
+
+/** The inbound token, or `null` when the hub is not open without a token. */
+export function inboundBadge(setup: SetupStatus | null): InboundBadge | null {
+  const t = setup?.trust || {};
+  const bind = (t.web_bind || "").trim();
+  const open = Boolean(bind) && !LOOPBACK.includes(bind);
+  const tokenSet = Boolean(t.auth_token_set);
+  if (!open || tokenSet) return null;
+  return {
+    text: "OPEN TO NETWORK",
+    title: `The hub answers other machines on ${bind}. No token is set.`,
+    open,
+    tokenSet,
+  };
+}
+
+/** The Trust window's one line for the same fact. */
+export function inboundLine(
+  trust: { web_bind?: string; auth_token_set?: boolean } | null | undefined,
+): string {
+  const bind = (trust?.web_bind || "").trim();
+  const open = Boolean(bind) && !LOOPBACK.includes(bind);
+  return `${open ? "yes" : "no"} \u00b7 Token: ${trust?.auth_token_set ? "set" : "not set"}`;
+}
+
 export function egressBadge(setup: SetupStatus | null): EgressBadge {
   const t = setup?.trust || {};
-  const bind = t.web_bind;
-  const offLoopback =
-    bind && bind !== "127.0.0.1" && bind !== "localhost" && bind !== "::1";
   if (t.last_egress?.name) {
     return {
       scope: "mixed",
@@ -63,7 +105,13 @@ export function egressBadge(setup: SetupStatus | null): EgressBadge {
       title: `Last receipted egress: ${t.last_egress.receipt}`,
     };
   }
-  if (t.actuators_enabled || (offLoopback && !t.auth_token_set)) {
+  // HS-201-01: the chip and the Trust window state the same thing. The
+  // Trust window reads the DESTINATIONS (`components/TrustWindow.tsx:59`,
+  // `:79-81`), so `actuators_enabled` alone -- a permission with nothing
+  // switched on to use it -- must not read as reach. Zero enabled
+  // destinations = this device, on both faces.
+  const enabledDestinations = (t.destinations ?? []).filter((d) => d.enabled);
+  if (enabledDestinations.length > 0 && t.actuators_enabled) {
     return {
       scope: "mixed",
       text: "→ External reach enabled",

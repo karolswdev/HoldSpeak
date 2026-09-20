@@ -146,6 +146,12 @@ def redacted_settings(
         else calendar_subscription_summary("")
     )
     payload[CALENDAR_SOURCES_KEY] = calendar_sources_summary(config.calendar.sources)
+    # HS-201: ordinary Web Record does not run live meeting analysis. Keep the
+    # legacy persisted knob out of the wire's active posture; a later explicit
+    # summary route owns any analysis request.
+    meeting_payload = payload.get("meeting")
+    if isinstance(meeting_payload, dict):
+        meeting_payload["intel_enabled"] = False
     if include_meeting_placement:
         # The provenance rides both the read and the write's echo, so a surface
         # that changes the dial sees the new placement without a reload.
@@ -360,6 +366,8 @@ class SettingsService:
         # client echoing them back gets the value silently dropped so
         # the pinned default governs.
         _DEFAULTED_MODEL = {"name", "warm_on_start"}
+        # HS-201: ordinary Web Record ignores this retained config byte. It is
+        # still a defaulted, non-writable key for stale Settings clients.
         _DEFAULTED_MEETING = {
             "mic_label", "remote_label", "cross_meeting_recognition",
             "web_auto_open", "intel_enabled", "intel_deferred_enabled",

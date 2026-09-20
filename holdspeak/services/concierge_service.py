@@ -17,6 +17,7 @@ Laws (settled design D3 + D4):
 """
 from __future__ import annotations
 
+import json
 import time
 import uuid
 from datetime import datetime, timezone
@@ -54,6 +55,10 @@ ASSIGNMENT_GROUPS: tuple[tuple[str, str], ...] = (
     ("agents_tools", "Agents & tools"),
     ("background", "Background"),
 )
+
+SUMMARY_CAPABILITY_ID = "meeting.deferred_analysis"
+SUMMARY_ASSIGNMENT_RECEIPT_SCHEMA = "ConciergeSummaryAssignmentReceipt@1"
+SUMMARY_ASSIGNMENT_PROJECTION_SCHEMA = "ConciergeSummaryAssignmentProjection@1"
 
 
 # ---- Engine display name ----------------------------------------------------
@@ -310,6 +315,71 @@ def _cloud_host(provider_family: str) -> str:
     return hosts.get(provider_family, provider_family)
 
 
+def _model_profile_revision(db: Any, profile_id: str) -> tuple[str, int] | None:
+    """Resolve a detected engine to its immutable model-library revision."""
+    candidates = [str(profile_id)]
+    if str(profile_id).startswith("library_provider_"):
+        candidates.append(str(profile_id).removeprefix("library_provider_"))
+    try:
+        with db._connection() as conn:
+            for candidate in candidates:
+                row = conn.execute(
+                    "SELECT MAX(revision) AS revision FROM model_profile_revisions WHERE profile_id=?",
+                    (candidate,),
+                ).fetchone()
+                revision = int(row["revision"] or 0) if row is not None else 0
+                if revision > 0:
+                    return candidate, revision
+    except Exception:
+        # Detection still returns the known engine.  The assignment authority
+        # will reject a missing immutable profile if the owner selects it.
+        return None
+    return None
+
+
+def _engine_assignment_reference(db: Any, engine: dict[str, Any]) -> tuple[str, int]:
+    """Choose the actual profile revision carried by one detected engine."""
+    profile_id = str(engine.get("profileId") or "").strip()
+    if not profile_id:
+        return "", 0
+    revision = engine.get("profileRevision")
+    if type(revision) is int and revision > 0:
+        return profile_id, revision
+    resolved = _model_profile_revision(db, profile_id)
+    if resolved is not None:
+        return resolved
+    # A v1 endpoint has no immutable profile revision.  Do not turn its
+    # mutable id into an invented ``@1`` assignment reference: the exact
+    # summary gesture must either carry a producer revision or refuse.
+    return "", 0
+
+
+def _detected_profile_fields(db: Any, profile_id: str) -> dict[str, Any]:
+    """Attach the model-library id and immutable revision to a detected row."""
+    resolved = _model_profile_revision(db, profile_id)
+    fields: dict[str, Any] = {"profileId": str(profile_id)}
+    if resolved is not None:
+        fields.update({"profileId": resolved[0], "profileRevision": resolved[1]})
+    # Keep the speech proposal tied to the immutable profile contract.  Legacy
+    # endpoint rows have no profile revision and retain the old name heuristic;
+    # a canonical profile with language/text modalities is explicitly not an
+    # audio engine, even if its display label happens to contain "Whisper".
+    try:
+        with db._connection() as conn:
+            row = conn.execute(
+                "SELECT supported_modalities_json FROM model_profile_revisions WHERE profile_id=? AND revision=?",
+                (resolved[0], resolved[1]) if resolved is not None else ("", 0),
+            ).fetchone()
+        if row is not None:
+            modalities = json.loads(str(row["supported_modalities_json"]))
+            fields["audioCapable"] = isinstance(modalities, list) and "audio" in {
+                str(item).lower() for item in modalities
+            }
+    except Exception:
+        pass
+    return fields
+
+
 # ---- Detect -----------------------------------------------------------------
 
 def detect(
@@ -317,6 +387,8 @@ def detect(
     db: Any,
     home: Path | None = None,
     http_get: Optional[Callable[..., tuple[int, bytes]]] = None,
+    assignment_service: Any = None,
+    principal: Any = None,
 ) -> dict[str, Any]:
     """Every engine found: LAN endpoints, local files, cloud keys, presets.
 
@@ -401,7 +473,7 @@ def detect(
                 "host": host,
                 "state": STATE_READY if key_set else STATE_NOT_SET,
                 "keySet": key_set,
-                "profileId": profile.id,
+                **_detected_profile_fields(db, str(profile.id)),
                 # HS-200-04: the probe needs the endpoint it is meant to reach.
                 # Without it `probe()` fell through to its local-file branch and
                 # answered "No probe target available" for every endpoint row.
@@ -442,7 +514,7 @@ def detect(
                 "legacyLabel": raw_label,
                 "host": host,
                 "state": STATE_READY,
-                "profileId": profile.id,
+                **_detected_profile_fields(db, str(profile.id)),
                 "baseUrl": base,
             })
 
@@ -468,7 +540,7 @@ def detect(
             "legacyLabel": raw_label,
             "host": node,
             "state": STATE_READY,
-            "profileId": profile.id,
+            **_detected_profile_fields(db, str(profile.id)),
         })
 
     # 3. Local files (MLX dirs + GGUF files)
@@ -549,7 +621,7 @@ def detect(
 
     checked_at = datetime.now(timezone.utc).isoformat()
 
-    return {
+    result = {
         "engines": engines,
         "hardware": hardware,
         "runtimes": [
@@ -558,6 +630,15 @@ def detect(
         ],
         "checkedAt": checked_at,
     }
+    # The summary row is an exact capability read.  It is optional here so
+    # older transport callers can keep using detection as a pure engine scan;
+    # the owner-facing route supplies the canonical assignment authority.
+    if assignment_service is not None and principal is not None:
+        result["summaryAssignment"] = summary_assignment_projection(
+            assignment_service=assignment_service,
+            principal=principal,
+        )
+    return result
 
 
 # ---- Propose ----------------------------------------------------------------
@@ -578,7 +659,26 @@ def propose(
     ready_lan = [e for e in engines if e["kind"] == KIND_LAN and e["state"] == STATE_READY]
     ready_local = [e for e in engines if e["kind"] == KIND_LOCAL and e["state"] == STATE_READY]
     ready_all = ready_lan + ready_local
-    whisper_engines = [e for e in engines if e["kind"] == KIND_LOCAL and "whisper" in e.get("name", "").lower()]
+    # A Whisper-shaped label is only a legacy hint.  Detection callers that
+    # know the profile's modalities carry the authoritative audio fence; a
+    # text-only profile must never become a speech proposal merely because it
+    # contains the word "whisper" in its display name.
+    def _speech_capable(engine: dict[str, Any]) -> bool:
+        if engine.get("audioCapable") is False:
+            return False
+        modalities = engine.get("supportedModalities")
+        if modalities is not None:
+            if not isinstance(modalities, (list, tuple, set)):
+                return False
+            return "audio" in {str(item).lower() for item in modalities}
+        return True
+
+    whisper_engines = [
+        e for e in engines
+        if e["kind"] == KIND_LOCAL
+        and "whisper" in e.get("name", "").lower()
+        and _speech_capable(e)
+    ]
     preset_engines = [e for e in engines if e["kind"] == KIND_PRESET]
 
     # Smallest local engine for writing_dictation
@@ -597,7 +697,10 @@ def propose(
     best_whisper = whisper_engines[0] if whisper_engines else None
     if not best_whisper:
         # Check for any local model that could serve as whisper
-        best_whisper_local = [e for e in ready_local if "whisper" in e.get("name", "").lower()]
+        best_whisper_local = [
+            e for e in ready_local
+            if "whisper" in e.get("name", "").lower() and _speech_capable(e)
+        ]
         if best_whisper_local:
             best_whisper = best_whisper_local[0]
 
@@ -605,6 +708,16 @@ def propose(
     best_preset = preset_engines[0] if preset_engines else None
 
     rows: list[dict[str, Any]] = []
+
+    def _profile_fields(engine: dict[str, Any] | None) -> dict[str, Any]:
+        if not engine or not engine.get("profileId"):
+            return {}
+        revision = engine.get("profileRevision")
+        return {
+            "profileId": str(engine["profileId"]),
+            **({"profileRevision": int(revision)} if type(revision) is int and revision > 0 else {}),
+        }
+
     for group_id, label in ASSIGNMENT_GROUPS:
         if group_id == "speech_recognition":
             # Speech recognition = local Whisper ONLY
@@ -615,6 +728,7 @@ def propose(
                     "engineId": best_whisper["id"],
                     "host": best_whisper.get("host", "THIS DEVICE"),
                     "state": STATE_READY,
+                    **_profile_fields(best_whisper),
                 })
             else:
                 rows.append({
@@ -635,6 +749,7 @@ def propose(
                     "engineId": chosen["id"],
                     "host": chosen.get("host", "THIS DEVICE"),
                     "state": STATE_READY,
+                    **_profile_fields(chosen),
                 })
             elif best_preset:
                 rows.append({
@@ -662,6 +777,7 @@ def propose(
                     "engineId": best_lan["id"],
                     "host": best_lan.get("host", "THIS DEVICE"),
                     "state": STATE_READY,
+                    **_profile_fields(best_lan),
                 })
             elif best_preset:
                 rows.append({
@@ -1072,6 +1188,231 @@ def repairs(
     )
 
 
+# ---- Summary assignment -----------------------------------------------------
+
+def _summary_assignment_scope() -> dict[str, str]:
+    """Return the one capability scope the deferred queue is allowed to read."""
+    return {"kind": "capability", "capability_id": SUMMARY_CAPABILITY_ID}
+
+
+def _summary_entry_projection(entry: dict[str, Any]) -> dict[str, Any]:
+    """Project one assignment entry without exposing provider private material."""
+    boundary = str(entry.get("boundary") or "unknown")
+    # The assignment authority uses its transport boundary vocabulary.  The
+    # Concierge keeps the smaller face vocabulary for the egress badge.
+    boundary = {"private_network": "lan", "mesh": "lan"}.get(boundary, boundary)
+    return {
+        "profileId": str(entry.get("profile_id") or ""),
+        "profileRevision": int(entry.get("profile_revision") or 0),
+        "label": str(entry.get("label") or "Missing model"),
+        "boundary": boundary,
+        "readiness": str(entry.get("readiness") or "unknown"),
+    }
+
+
+def summary_assignment_projection(*, assignment_service: Any, principal: Any) -> dict[str, Any]:
+    """Read the exact summary assignment that the SERVICE route will consume."""
+    from .errors import NotFound
+
+    assignment = None
+    try:
+        assignment = assignment_service.get_assignment(
+            principal,
+            _summary_assignment_scope(),
+        )
+    except NotFound:
+        pass
+
+    if not isinstance(assignment, dict):
+        return {
+            "schema": SUMMARY_ASSIGNMENT_PROJECTION_SCHEMA,
+            "capabilityId": SUMMARY_CAPABILITY_ID,
+            "status": "unassigned",
+            "assignmentRevision": 0,
+            "profileId": None,
+            "profileRevision": None,
+            "label": None,
+            "boundary": None,
+            "readiness": None,
+        }
+
+    entries = assignment.get("entries") or []
+    if not entries:
+        return {
+            "schema": SUMMARY_ASSIGNMENT_PROJECTION_SCHEMA,
+            "capabilityId": SUMMARY_CAPABILITY_ID,
+            "status": "unassigned",
+            "assignmentRevision": int(assignment.get("revision") or 0),
+            "profileId": None,
+            "profileRevision": None,
+            "label": None,
+            "boundary": None,
+            "readiness": None,
+        }
+    entry = entries[0] if entries and isinstance(entries[0], dict) else {}
+    projected = _summary_entry_projection(entry)
+    issues = [issue for issue in assignment.get("issues") or [] if isinstance(issue, dict)]
+    status = "attention" if any(issue.get("severity") == "blocking" for issue in issues) else "assigned"
+    return {
+        "schema": SUMMARY_ASSIGNMENT_PROJECTION_SCHEMA,
+        "capabilityId": SUMMARY_CAPABILITY_ID,
+        "status": status,
+        "assignmentRevision": int(assignment.get("revision") or 0),
+        **projected,
+    }
+
+
+def _summary_assignment_revision(assignment_service: Any, principal: Any) -> int:
+    from .errors import NotFound
+
+    try:
+        assignment = assignment_service.get_assignment(
+            principal,
+            _summary_assignment_scope(),
+        )
+    except NotFound:
+        return 0
+    return int(assignment.get("revision") or 0)
+
+
+def _summary_result(
+    *,
+    state: str,
+    profile_id: str,
+    profile_revision: int,
+    code: str | None = None,
+    plain_reason: str | None = None,
+    assignment: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    result: dict[str, Any] = {
+        "capabilityId": SUMMARY_CAPABILITY_ID,
+        "state": state,
+        "profileId": profile_id,
+        "profileRevision": profile_revision,
+    }
+    if code:
+        result["code"] = code
+    if plain_reason:
+        result["plainReason"] = plain_reason
+    if assignment is not None:
+        result["assignment"] = assignment
+    return result
+
+
+def assign_summary(
+    *,
+    assignment_service: Any,
+    principal: Any,
+    db: Any,
+    profile_id: str,
+    profile_revision: int,
+    expected_assignment_revision: int,
+    command_id: str,
+    write_receipt: bool = True,
+) -> dict[str, Any]:
+    """Apply one explicit summary selection through the canonical CAS seam.
+
+    A model connection is deliberately absent from this function.  The caller
+    must provide the selected immutable profile revision; merely adding a
+    provider therefore cannot change the queue route.  The assignment service
+    remains the authority for owner access, profile existence, compatibility,
+    and revision conflicts.
+    """
+    from .errors import ConflictError, ServiceError, ValidationError
+
+    if not isinstance(profile_id, str) or not profile_id.strip():
+        raise ValidationError("profileId is required.", code="concierge_summary_selection_invalid")
+    if type(profile_revision) is not int or profile_revision < 1:
+        raise ValidationError("profileRevision is invalid.", code="concierge_summary_selection_invalid")
+    if type(expected_assignment_revision) is not int or expected_assignment_revision < 0:
+        raise ValidationError(
+            "expectedAssignmentRevision is invalid.",
+            code="concierge_summary_selection_invalid",
+        )
+    if not isinstance(command_id, str) or not command_id.strip():
+        raise ValidationError("commandId is required.", code="concierge_summary_selection_invalid")
+
+    body = {
+        "command_id": command_id.strip(),
+        "expected_revision": expected_assignment_revision,
+        "scope": _summary_assignment_scope(),
+        "entries": [{"profile_id": profile_id.strip(), "profile_revision": profile_revision}],
+    }
+    assignment: dict[str, Any] | None = None
+    try:
+        assignment = assignment_service.set_assignment(principal, body)
+        entry = (assignment.get("entries") or [{}])[0]
+        projected = _summary_entry_projection(entry)
+        public_assignment = {
+            "revision": int(assignment.get("revision") or 0),
+            "entries": [projected],
+        }
+        result = _summary_result(
+            state="READY",
+            profile_id=profile_id.strip(),
+            profile_revision=profile_revision,
+            assignment=public_assignment,
+        )
+        status = "succeeded"
+    except ConflictError as exc:
+        result = _summary_result(
+            state="CONFLICT",
+            profile_id=profile_id.strip(),
+            profile_revision=profile_revision,
+            code=exc.code,
+            plain_reason=exc.detail,
+        )
+        if exc.code == "inference_assignment_revision_conflict":
+            result["expectedAssignmentRevision"] = exc.context.get("expected_revision")
+            result["currentAssignmentRevision"] = exc.context.get("current_revision")
+        status = "conflict" if exc.code == "inference_assignment_revision_conflict" else "partial"
+    except ServiceError as exc:
+        result = _summary_result(
+            state="FAILED",
+            profile_id=profile_id.strip(),
+            profile_revision=profile_revision,
+            code=exc.code,
+            plain_reason=exc.detail,
+        )
+        status = "partial"
+    except Exception:
+        # Do not serialize implementation exception text or provider material.
+        result = _summary_result(
+            state="FAILED",
+            profile_id=profile_id.strip(),
+            profile_revision=profile_revision,
+            code="concierge_summary_selection_failed",
+            plain_reason="The summary engine could not be selected.",
+        )
+        status = "partial"
+
+    receipt_id = None
+    if write_receipt:
+        receipt_id = _write_kernel_receipt(
+            db,
+            [
+                {
+                    "state": "READY" if result["state"] == "READY" else "FAILED",
+                    "group": SUMMARY_CAPABILITY_ID,
+                    "plainReason": result.get("plainReason", ""),
+                }
+            ],
+            operation_kind="concierge_summary_selection",
+            receipt_prefix="concierge-summary",
+        )
+    return {
+        "schema": SUMMARY_ASSIGNMENT_RECEIPT_SCHEMA,
+        "status": status,
+        "capabilityId": SUMMARY_CAPABILITY_ID,
+        "result": result,
+        "receipt": {"id": receipt_id, "visible": bool(write_receipt)},
+        "summaryAssignment": summary_assignment_projection(
+            assignment_service=assignment_service,
+            principal=principal,
+        ),
+    }
+
+
 # ---- Apply ------------------------------------------------------------------
 
 def apply(
@@ -1132,6 +1473,71 @@ def apply(
             })
             continue
 
+        # The Meetings group is an explicit summary-selection gesture.  The
+        # queue SERVICE principal cannot consume a group row, so bind the
+        # selected immutable profile to the exact deferred-analysis capability.
+        if group_id == "meetings":
+            selected_profile_id, selected_revision = _engine_assignment_reference(db, engine)
+            if not selected_profile_id or selected_revision < 1:
+                results.append(
+                    {
+                        "group": group_id,
+                        "capabilityId": SUMMARY_CAPABILITY_ID,
+                        "state": "FAILED",
+                        "code": "concierge_summary_profile_revision_missing",
+                        "plainReason": "This engine has no immutable model profile revision.",
+                    }
+                )
+                continue
+            try:
+                summary_result = assign_summary(
+                    assignment_service=assignment_service,
+                    principal=principal,
+                    db=db,
+                    profile_id=selected_profile_id,
+                    profile_revision=selected_revision,
+                    expected_assignment_revision=_summary_assignment_revision(
+                        assignment_service, principal
+                    ),
+                    command_id=uuid.uuid4().hex,
+                    write_receipt=False,
+                )
+                if summary_result["status"] == "succeeded":
+                    results.append(
+                        {
+                            "group": group_id,
+                            "capabilityId": SUMMARY_CAPABILITY_ID,
+                            "state": STATE_READY,
+                            "profileId": selected_profile_id,
+                            "profileRevision": selected_revision,
+                        }
+                    )
+                else:
+                    failed = dict(summary_result.get("result") or {})
+                    results.append(
+                        {
+                            "group": group_id,
+                            "capabilityId": SUMMARY_CAPABILITY_ID,
+                            "state": "FAILED",
+                            "profileId": selected_profile_id,
+                            "profileRevision": selected_revision,
+                            "code": failed.get("code"),
+                            "plainReason": failed.get("plainReason", "Summary selection failed."),
+                        }
+                    )
+            except Exception as exc:
+                results.append(
+                    {
+                        "group": group_id,
+                        "capabilityId": SUMMARY_CAPABILITY_ID,
+                        "state": "FAILED",
+                        "profileId": selected_profile_id,
+                        "profileRevision": selected_revision,
+                        "plainReason": str(exc),
+                    }
+                )
+            continue
+
         # Use the existing set_assignment for this group
         try:
             # Read current revision
@@ -1145,13 +1551,21 @@ def apply(
                 expected_revision = 0
 
             command_id = uuid.uuid4().hex
+            entry = {"profile_id": str(profile_id)}
+            # A canonical profile carries its immutable revision in detection.
+            # If an older caller has only a profile id, let the assignment
+            # authority resolve its current canonical head; never invent @1.
+            resolved_profile_id, resolved_revision = _engine_assignment_reference(db, engine)
+            if resolved_profile_id and resolved_revision > 0:
+                entry = {
+                    "profile_id": resolved_profile_id,
+                    "profile_revision": resolved_revision,
+                }
             body = {
                 "command_id": command_id,
                 "expected_revision": expected_revision,
                 "scope": {"kind": "group", "group_id": group_id},
-                "entries": [
-                    {"profile_id": profile_id, "profile_revision": 1},
-                ],
+                "entries": [entry],
             }
             assignment_service.set_assignment(principal, body)
             results.append({
@@ -1184,10 +1598,17 @@ def apply(
     }
 
 
-def _write_kernel_receipt(db: Any, results: list[dict[str, Any]]) -> str:
+def _write_kernel_receipt(
+    db: Any,
+    results: list[dict[str, Any]],
+    *,
+    operation_kind: str = "concierge_apply",
+    receipt_prefix: str = "concierge-apply",
+) -> str:
     """Write a kernel receipt for the concierge apply."""
-    receipt_id = f"concierge-apply-{uuid.uuid4().hex[:12]}"
+    receipt_id = f"{receipt_prefix}-{uuid.uuid4().hex[:12]}"
     operation_id = f"concierge-{uuid.uuid4().hex[:12]}"
+    idempotency_key = f"concierge:{receipt_id}"
     now = datetime.now(timezone.utc).timestamp()
 
     all_ready = all(r["state"] in (STATE_READY, "OFF", "SKIPPED") for r in results)
@@ -1199,9 +1620,29 @@ def _write_kernel_receipt(db: Any, results: list[dict[str, Any]]) -> str:
             # Insert the kernel operation
             conn.execute(
                 """INSERT OR IGNORE INTO kernel_operations
-                   (operation_id, kind, state, created_at, updated_at)
-                   VALUES (?, ?, ?, ?, ?)""",
-                (operation_id, "concierge_apply", state, now, now),
+                   (operation_id, request_id, idempotency_key, name, version,
+                    principal_kind, principal_identity, target_ref, placement,
+                    envelope_sha256, policy_version, authority_basis,
+                    state, revision, native_id, created_at, updated_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,?)""",
+                (
+                    operation_id,
+                    idempotency_key,
+                    idempotency_key,
+                    operation_kind,
+                    1,
+                    "owner",
+                    "concierge",
+                    f"concierge:{operation_kind}",
+                    "local",
+                    "",
+                    "",
+                    "concierge",
+                    state,
+                    operation_id,
+                    now,
+                    now,
+                ),
             )
             # Insert the kernel receipt
             conn.execute(

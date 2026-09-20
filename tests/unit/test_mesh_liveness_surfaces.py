@@ -9,7 +9,10 @@ every edge with its age and the Runtime-profiles line names the node.
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import datetime, timedelta
+import hashlib
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -19,7 +22,11 @@ from fastapi.testclient import TestClient
 import holdspeak.db as hsdb
 from holdspeak.commands import doctor
 from holdspeak.db import Database, reset_database
+from holdspeak.deployment_revisions import DeploymentIdentity, DeploymentRevision
+from holdspeak.inference_capabilities import process_inference_capability_registry
 from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+from holdspeak.services.model_profile_service import ModelProfileService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_primitives_router
 
@@ -53,6 +60,148 @@ def _mesh_profile(db, **overrides):
     )
     fields.update(overrides)
     return db.profiles.upsert(**fields)
+
+
+def _modern_mesh_summary_assignment(db):
+    """Create the exact v2 summary assignment and its immutable mesh binding."""
+    profile_id = "summary-pocket4b"
+    capability = process_inference_capability_registry().require(
+        "meeting.deferred_analysis"
+    )
+    claims = [
+        "language",
+        "structured_output",
+        f"result_schema:{capability.output_schema_sha256}",
+    ]
+    manifest_material = {"claims": claims, "revision": "mesh-fixture-v1"}
+    manifest = {
+        **manifest_material,
+        "sha256": "sha256:"
+        + hashlib.sha256(
+            json.dumps(
+                manifest_material, sort_keys=True, separators=(",", ":")
+            ).encode()
+        ).hexdigest(),
+    }
+    profiles = ModelProfileService(db)
+    profiles.create_profile(
+        Principal(PrincipalKind.OWNER, "mesh-test-owner"),
+        {
+            "profile_id": profile_id,
+            "expected_revision": 0,
+            "label": "Pocket 4B",
+            "provider_family": "mesh",
+            "runtime_family": "mesh_relay_v1",
+            "model_or_artifact_identity": "qwen3.5-4b",
+            "supported_modalities": ["language"],
+            "context_support": "bounded",
+            "tokenizer_template_requirements": {},
+            "capability_manifest": manifest,
+            "safe_presentation": {"summary": "Mesh fixture"},
+        },
+    )
+    deployment = replace(
+        DeploymentRevision.from_identity(
+            DeploymentIdentity(
+                destination_id=profile_id,
+                kind="mesh_node",
+                engine="node_runtime",
+                model="qwen3.5-4b",
+                node="walk-edge",
+                boundary="private_mesh",
+                model_path=None,
+                endpoint="",
+                secret_slot="",
+            )
+        ),
+        context_ceiling=32768,
+    )
+    db.deployment_revisions.upsert(deployment)
+    head_id = f"head-{profile_id}"
+    artifact_id = f"artifact-{profile_id}"
+    now = "2026-09-19T00:00:00Z"
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT INTO inference_model_artifacts
+               (artifact_id,format,source_kind,source_repository,source_revision,
+                manifest_json,manifest_sha256,installed_bytes,state,local_locator,
+                created_at,verified_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                artifact_id,
+                "gguf",
+                "fixture",
+                "fixture",
+                "r1",
+                "{}",
+                "sha256:" + "0" * 64,
+                1,
+                "verified",
+                "/private/mesh-fixture.gguf",
+                now,
+                now,
+            ),
+        )
+        conn.execute(
+            """INSERT INTO inference_deployments
+               (deployment_id,destination_id,runtime_id,runtime_revision,artifact_id,
+                model_identity,context_ceiling,recommended_context,capability_json,
+                capability_sha256,execution_revision_id,configuration_revision,active,
+                created_at,updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                head_id,
+                profile_id,
+                "node_runtime",
+                "1",
+                artifact_id,
+                "qwen3.5-4b",
+                32768,
+                32768,
+                "{}",
+                "",
+                deployment.id,
+                1,
+                1,
+                now,
+                now,
+            ),
+        )
+        observation_id = f"ready-{profile_id}"
+        conn.execute(
+            """INSERT INTO model_profile_readiness_observations
+               (observation_id,deployment_head_id,deployment_configuration_revision,
+                deployment_revision_id,state,reason_code,observed_at)
+               VALUES (?,?,?,?,?,?,?)""",
+            (observation_id, head_id, 1, deployment.id, "ready", "fixture_ready", now),
+        )
+    profiles.bind_profile(
+        Principal(PrincipalKind.OWNER, "mesh-test-owner"),
+        {
+            "binding_id": f"binding-{profile_id}",
+            "profile_id": profile_id,
+            "profile_revision": 1,
+            "deployment_head_id": head_id,
+            "expected_binding_revision": 0,
+            "expected_deployment_configuration_revision": 1,
+            "expected_deployment_revision_id": deployment.id,
+            "enabled": True,
+            "readiness_observation_id": observation_id,
+        },
+    )
+    InferenceAssignmentService(db).set_assignment(
+        Principal(PrincipalKind.OWNER, "mesh-test-owner"),
+        {
+            "command_id": "mesh-summary-assignment",
+            "expected_revision": 0,
+            "scope": {
+                "kind": "capability",
+                "capability_id": "meeting.deferred_analysis",
+            },
+            "entries": [{"profile_id": profile_id, "profile_revision": 1}],
+        },
+    )
+    return profile_id
 
 
 # ── /api/models: liveness, not existence ─────────────────────────────────
@@ -172,12 +321,9 @@ def test_doctor_mesh_edges_states(env, monkeypatch) -> None:
     assert "attic-mac: offline (300s ago)" in check.detail
 
 
-def test_doctor_runtime_profiles_names_the_mesh_node(env, monkeypatch) -> None:
+def test_doctor_runtime_profiles_names_the_mesh_node(env) -> None:
     db, _ = env
-    prof = _mesh_profile(db)
-    monkeypatch.setattr(
-        "holdspeak.intel.providers._lookup_profile_record", lambda pid: prof
-    )
+    _modern_mesh_summary_assignment(db)
     cfg = SimpleNamespace(
         meeting=SimpleNamespace(
             intel_enabled=True, intel_provider="cloud",
@@ -191,4 +337,6 @@ def test_doctor_runtime_profiles_names_the_mesh_node(env, monkeypatch) -> None:
     )
     check = doctor._check_runtime_profiles(cfg)
     assert check.status == "PASS"
-    assert "meeting intel: profile 'Pocket 4B' (mesh node 'walk-edge')" in check.detail
+    assert "Meeting summary: profile 'Pocket 4B' (mesh node 'walk-edge')" in check.detail
+    assert "p-phone" not in check.detail
+    assert "Live analysis is off for Record." in check.detail

@@ -12,8 +12,6 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-import pytest
-
 from holdspeak.commands import doctor
 from holdspeak.db.models import ProfileRecord
 from holdspeak.intel.providers import endpoint_egress, profile_key_env
@@ -127,33 +125,31 @@ def test_run_egress_default_cloud_reports_the_effective_endpoint(monkeypatch) ->
 # ── doctor: the Runtime profiles check ───────────────────────────────────
 
 
-def test_runtime_profiles_pass_names_both_pipelines(monkeypatch) -> None:
+def test_runtime_profiles_pass_names_dictation_pipeline(monkeypatch) -> None:
     monkeypatch.setattr(
         "holdspeak.intel.providers._lookup_profile_record", lambda pid: _profile()
     )
     monkeypatch.delenv(profile_key_env("p-43"), raising=False)
-    check = doctor._check_runtime_profiles(
-        _config(intel_profile_id="p-43", dictation_profile_id="p-43")
-    )
+    check = doctor._check_runtime_profiles(_config(dictation_profile_id="p-43"))
     assert check.status == "PASS"
-    assert "meeting intel: profile 'LAN box' (192.168.1.43)" in check.detail
     assert "dictation: profile 'LAN box' (192.168.1.43)" in check.detail
+    assert "Live analysis is off for Record." in check.detail
 
 
 def test_runtime_profiles_unset_reports_hub_default() -> None:
     check = doctor._check_runtime_profiles(_config())
     assert check.status == "PASS"
-    assert "meeting intel: hub default" in check.detail
     assert "dictation: hub default" in check.detail
+    assert "Live analysis is off for Record." in check.detail
 
 
 def test_runtime_profiles_dangling_is_a_visible_warn(monkeypatch) -> None:
     monkeypatch.setattr(
         "holdspeak.intel.providers._lookup_profile_record", lambda pid: None
     )
-    check = doctor._check_runtime_profiles(_config(intel_profile_id="gone"))
+    check = doctor._check_runtime_profiles(_config(dictation_profile_id="gone"))
     assert check.status == "WARN"
-    assert "meeting intel: assigned profile missing: gone" in check.detail
+    assert "dictation: assigned profile missing: gone" in check.detail
     assert "Re-pick" in (check.fix or "")
 
 
@@ -164,7 +160,7 @@ def test_runtime_profiles_requires_key_without_key_names_the_env(monkeypatch) ->
     )
     monkeypatch.delenv(profile_key_env("p-43"), raising=False)
     monkeypatch.delenv("LEGACY_KEY_ENV", raising=False)
-    check = doctor._check_runtime_profiles(_config(intel_profile_id="p-43"))
+    check = doctor._check_runtime_profiles(_config(dictation_profile_id="p-43"))
     assert check.status == "WARN"
     assert "requires a key" in check.detail
     assert profile_key_env("p-43") in (check.fix or "")
@@ -185,26 +181,25 @@ def test_runtime_profiles_nothing_enabled_is_a_quiet_pass() -> None:
         _config(intel_enabled=False, pipeline_enabled=False)
     )
     assert check.status == "PASS"
-    assert "no pipeline enabled" in check.detail
+    assert "no dictation pipeline is enabled" in check.detail
 
 
 # ── doctor: the per-pipeline checks name the profile ─────────────────────
 
 
-def test_intel_egress_warn_names_the_adopted_profile(monkeypatch) -> None:
+def test_intel_egress_is_off_for_ordinary_web_record(monkeypatch) -> None:
     monkeypatch.setattr(
         "holdspeak.intel.providers._lookup_profile_record", lambda pid: _profile()
     )
     check = doctor._check_meeting_intel_egress(_config(intel_profile_id="p-43"))
-    assert check.status == "WARN"  # cloud egress stays loud, as ever
-    assert "Runs on profile 'LAN box' (192.168.1.43)" in check.detail
+    assert check.status == "PASS"
+    assert "live analysis is off for record" in check.detail.lower()
 
 
-def test_intel_egress_unset_detail_is_unchanged() -> None:
+def test_intel_egress_unset_detail_is_off() -> None:
     check = doctor._check_meeting_intel_egress(_config())
-    assert check.status == "WARN"
-    assert check.detail.startswith("provider=`cloud`: Cloud — transcripts are sent")
-    assert "profile" not in check.detail
+    assert check.status == "PASS"
+    assert "live analysis is off for record" in check.detail.lower()
 
 
 def test_dictation_runtime_adopted_profile_reports_it(monkeypatch) -> None:

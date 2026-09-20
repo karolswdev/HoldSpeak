@@ -7,18 +7,24 @@ lifespan-started intel drainer (HS-200-42), the REAL import route, the REAL
 proposal bridge.  The ONLY fake is the provider engine's completion text
 (``ScriptedIntel``): the JSON a model returns for each extractor.
 
-Two meetings, two faces, both at 1440 and 393:
+The summary path and the parked proposal path are exercised separately, both
+at 1440 and 393:
 
-  1. REVIEW.  A transcript is imported (``POST /api/meetings/import``),
-     linked to a Room, run; the drainer produces five proposals.  The Review
-     wing shows them on three axes with their spans and typed unknowns.  One
-     is edited in place (LINKED · EDITED); one is confirmed (the receipt names
-     the durable record).
-  2. PROCESSING.  A second meeting's first attempt loses the action extractor
-     (the provider fails), so the job is retried.  The two decisions attempt
-     1 produced are on the face NOW; the owner keeps both; the face reads
-     `ATTEMPT 2 · SAME JOB` with `ALREADY KEPT 2` (a verb that opens the kept
-     rows).  Attempt 2 then succeeds and mints nothing twice.
+  1. SUMMARY.  A transcript is imported, run with the disclosed selection
+     hash, and reaches a real drainer-backed summary-ready state.
+  2. REVIEW.  After the summary precondition, the old proposal assertions stay
+     live.  A transcript linked to a Room should produce five proposals.  The
+     Review wing shows them on three axes with their spans and typed unknowns.
+     One is edited in place and one is confirmed.
+  3. PROCESSING.  After the same summary precondition, a second meeting's first
+     attempt loses the action extractor, so the job is retried.  The two
+     decisions attempt 1 produced are on the face NOW; the owner keeps both;
+     the face reads `ATTEMPT 2 · SAME JOB` with `ALREADY KEPT 2`.  Attempt 2
+     then succeeds and mints nothing twice.
+
+The proposal scenarios carry a strict xfail only after the live summary
+precondition.  The ratified HS-201 analysis-only amendment deliberately parks
+the old plugin-to-proposal pipeline; a future return makes these XPASS loudly.
 
 Shots to: pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-12-shots/
 """
@@ -221,6 +227,21 @@ def _review(page: Any, meeting_id: str) -> dict[str, Any]:
     return _api(page, "GET", f"/api/meetings/{meeting_id}/outcome-review", token=TOKEN)
 
 
+def _run_intelligence(page: Any, meeting_id: str) -> dict[str, Any]:
+    """Post the hash the existing SERVICE route fixture discloses."""
+    detail = _api(page, "GET", f"/api/meetings/{meeting_id}", token=TOKEN)
+    planned = detail["planned_route"]
+    assert planned["status"] == "ready" and planned["legs"], planned
+    assert planned["selection_hash"], planned
+    return _api(
+        page,
+        "POST",
+        f"/api/meetings/{meeting_id}/intelligence/run",
+        {"expected_selection_hash": planned["selection_hash"]},
+        token=TOKEN,
+    )
+
+
 def _diagnose(meeting_id: str) -> dict[str, Any]:
     """Everything the hub knows about one meeting's read, for a failing
     assertion: the job lineage with its errors, the attempt ledger, the
@@ -324,24 +345,38 @@ def _no_raw_buttons(page: Any, width: int) -> None:
 # ── the rig ─────────────────────────────────────────────────────────
 
 
-@pytest.mark.e2e
-@pytest.mark.requires_meeting
-@pytest.mark.timeout(420)
-@pytest.mark.parametrize("width,height", [(1440, 1200), (393, 900)])
-def test_meeting_to_reviewed_outcomes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int, height: int) -> None:
+SUMMARY_AMENDMENT_XFAIL = (
+    "HS-201 ratified analysis-only summary amendment; parked proposal pipeline"
+)
+
+
+@pytest.fixture
+def meeting_outcomes_rig(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    width: int,
+    height: int,
+) -> Any:
+    """Boot one real hub and prove its summary path before proposal tests run.
+
+    The fixture intentionally owns the precondition for the two proposal
+    scenarios.  A failure before ``yield`` is an ERROR, so a broken import,
+    route disclosure, queue admission, drainer, or summary cannot be hidden by
+    the strict xfail marker on the parked proposal assertions.
+    """
     _ensure_build()
     server, url = _boot_with_fast_retry(tmp_path, monkeypatch)
     engine = _scripted_engine()
+    from holdspeak import intel_queue_conductor as conductor
+    from holdspeak.db import get_database
+    from playwright.sync_api import sync_playwright
+
+    _wire_provider(monkeypatch, engine)
+    assert conductor.drainer_state() == "running", "the hub lifespan started no drainer"
+
+    errors: list[str] = []
+    browser: Any = None
     try:
-        from holdspeak import intel_queue_conductor as conductor
-        from holdspeak.db import get_database
-
-        _wire_provider(monkeypatch, engine)
-        assert conductor.drainer_state() == "running", "the hub lifespan started no drainer"
-
-        from playwright.sync_api import sync_playwright
-
-        errors: list[str] = []
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
             page = browser.new_page(viewport={"width": width, "height": height})
@@ -350,151 +385,61 @@ def test_meeting_to_reviewed_outcomes(tmp_path: Path, monkeypatch: pytest.Monkey
             _init_desk(page, url)
             project_id = _create_project(page, "Q4 platform", f"hs200-12-proj-{width}")
 
-            # ── 1. REVIEW: the real import, the real trigger, the drainer ──
-            m1 = _import_transcript(page, "Architecture review")
-            _api(page, "POST", f"/api/projects/{project_id}/meetings/{m1}", token=TOKEN)
-            run = _api(page, "POST", f"/api/meetings/{m1}/intelligence/run", token=TOKEN)
+            # The fixture's live precondition: import all six transcript
+            # segments, post the exact disclosed selection hash, and let the
+            # hub's real drainer publish the base summary.
+            summary_meeting = _import_transcript(page, "Summary-ready meeting")
+            _api(page, "POST", f"/api/projects/{project_id}/meetings/{summary_meeting}", token=TOKEN)
+            before = _api(page, "GET", f"/api/meetings/{summary_meeting}", token=TOKEN)
+            assert len(before["segments"]) == 6, before
+            planned = before["planned_route"]
+            assert planned["status"] == "ready" and planned["legs"], planned
+            assert planned["selection_hash"], planned
+            run = _run_intelligence(page, summary_meeting)
             assert run["state"] == "queued" and run["drainer"] == "running", run
-            assert _wait(lambda: len(_review(page, m1)["proposals"]) == 5, timeout=90.0), (
-                _review(page, m1), engine.plugin_calls, _diagnose(m1),
-            )
-            review = _review(page, m1)
-            assert review["job"]["status"] == "succeeded" and review["job"]["attempt"] == 1, review["job"]
-            assert review["coverage"] == {
-                "turns": 6, "read": 6, "state": "available",
-                "observed_at": review["coverage"]["observed_at"],
-            }
-            kinds = sorted(p["kind"] for p in review["proposals"])
-            assert kinds == ["action", "action", "action", "decision", "decision"], kinds
-            assert all(p["job_id"] == review["job"]["job_id"] for p in review["proposals"])
-            assert {p["support"] for p in review["proposals"]} == {"supported", "source_linked", "unknown"}
-
-            _open_review_wing(page, url, m1)
-            headline = page.locator("[data-testid='review-headline']")
-            assert headline.text_content() == "5 to review", headline.text_content()
-            assert page.locator("[data-testid='review-confirm']").count() == 5
-            assert page.locator("[data-testid='review-more']").count() == 5
-            assert page.get_by_role("button", name="Open the Project: Q4 platform").count() == 1
-            coverage = page.locator("[data-testid='review-coverage']").text_content() or ""
-            assert "6 OF 6 TURNS" in coverage and "AVAILABLE" in coverage, coverage
-            supports = [
-                (el.text_content() or "").strip() for el in page.query_selector_all("[data-testid='review-support']")
-            ]
-            assert sorted(supports) == sorted([
-                "✓SUPPORTED", "○LINKED", "✓SUPPORTED", "○LINKED", "⚠UNSUPPORTED",
-            ]), supports
-            spans = [(el.text_content() or "") for el in page.query_selector_all("[data-testid='review-span']")]
-            assert "MTG 09-07 · 11:18–11:21" in spans, spans
-            assert page.locator("[data-testid='review-no-source']").count() == 1
-            unknowns = [(el.text_content() or "") for el in page.query_selector_all("[data-testid='review-unknown']")]
-            assert sum("OWNER · UNKNOWN" in u for u in unknowns) == 2, unknowns
-            assert sum("DUE · UNKNOWN" in u for u in unknowns) == 2, unknowns
-            # Counsel P2-ii: the meeting's name is the window TITLE BAR while
-            # the review is open, and appears nowhere in the window body.
-            window = page.locator(".desk-surface-window").first
-            _title_visible(page, "Architecture review")
-            body_text = window.locator(".desk-surface-body").text_content() or ""
-            assert "Architecture review" not in body_text, body_text[:300]
-            assert " 0 " not in body_text
-            _no_raw_buttons(page, width)
-            _shot(page, "review-five", width)
-
-            # Edit one in place: the sentence, through MORE → Edit.
-            first_decision = page.locator("[data-testid='review-row-decision']").first
-            first_decision.locator("[data-testid='review-more']").click()
-            first_decision.locator("[data-testid='review-edit']").click()
-            editor = first_decision.get_by_role("textbox").first
-            editor.wait_for(timeout=5000)
-            editor.fill("Cut-over runs on the read replica first, writes stay frozen")
-            editor.press("Enter")
-            page.locator("[data-testid='review-receipt']").filter(has_text="EDITED").wait_for(timeout=10_000)
-            assert first_decision.locator("[data-testid='review-support'] .surface-state-chip").get_attribute("aria-label") == "LINKED · EDITED"
-            assert (first_decision.locator("[data-testid='review-was']").text_content() or "").startswith("WAS · ")
-            _shot(page, "review-edited", width)
-            edited = [p for p in _review(page, m1)["proposals"] if p["text"].endswith("writes stay frozen")]
-            assert len(edited) == 1 and edited[0]["support"] == "source_linked", edited
-            assert edited[0]["support_record"]["invalidation_reason"] == "text_edited"
-
-            # Confirm it: the durable result, rendered in place and in the receipt.
-            first_decision.locator("[data-testid='review-confirm']").click()
-            page.locator("[data-testid='review-receipt']").filter(has_text="CONFIRMED").wait_for(timeout=10_000)
-            assert first_decision.get_attribute("data-state") == "confirmed"
-            assert first_decision.locator("[data-testid='review-acceptance'] .surface-state-chip").get_attribute("aria-label") == "ACCEPTED"
-            assert "DECISION RECORD · KEPT" in (first_decision.locator("[data-testid='review-kept']").text_content() or "")
-            assert page.locator("[data-testid='review-headline']").text_content() == "4 to review"
-            assert page.locator("[data-testid='review-accepted']").text_content() == "ACCEPTED 1"
-            _shot(page, "review-confirmed", width)
-            kept = [p for p in _review(page, m1)["proposals"] if p["state"] == "confirmed"]
-            assert len(kept) == 1 and kept[0]["decision_record_id"] and kept[0]["commitment_id"], kept
-            with get_database()._connection() as conn:
-                assert conn.execute("SELECT COUNT(*) FROM decision_records").fetchone()[0] == 1
-                record = conn.execute(
-                    "SELECT decision_text FROM decision_records WHERE id = ?",
-                    (kept[0]["decision_record_id"],),
-                ).fetchone()
-            assert record["decision_text"].endswith("writes stay frozen")
-
-            # ── 2. PROCESSING: attempt 1 loses the action extractor ──
-            engine.fail_plugins = {ACT}
-            m2 = _import_transcript(page, "Architecture review, take two")
-            _api(page, "POST", f"/api/projects/{project_id}/meetings/{m2}", token=TOKEN)
-            _api(page, "POST", f"/api/meetings/{m2}/intelligence/run", token=TOKEN)
+            assert run["planned_route"]["selection_hash"] == planned["selection_hash"], run
             assert _wait(
-                lambda: len(_review(page, m2)["proposals"]) == 2
-                and _review(page, m2)["job"]["status"] == "queued",
+                lambda: (
+                    (detail := _api(page, "GET", f"/api/meetings/{summary_meeting}", token=TOKEN))
+                    .get("intel_status", {}).get("state") == "ready"
+                    and detail.get("intel")
+                ),
                 timeout=90.0,
-            ), (_review(page, m2), engine.plugin_calls, _diagnose(m2))
-            # Now the provider recovers -- but the successor waits out its
-            # backoff and the poll, so the face is caught mid-retry.
-            engine.fail_plugins = set()
-            review2 = _review(page, m2)
-            assert review2["job"]["attempt"] == 2 and review2["job"]["same_job"] is True, review2["job"]
-            assert all(p["job_attempt"] == 1 and p["kind"] == "decision" for p in review2["proposals"])
-            for p in review2["proposals"]:
-                _api(page, "POST", f"/api/proposals/{p['id']}/confirm", {}, token=TOKEN)
+            ), (_api(page, "GET", f"/api/meetings/{summary_meeting}", token=TOKEN), _diagnose(summary_meeting))
+            summary_detail = _api(page, "GET", f"/api/meetings/{summary_meeting}", token=TOKEN)
+            assert len(summary_detail["segments"]) == 6, summary_detail
+            assert summary_detail["intel_status"]["state"] == "ready", summary_detail
+            assert summary_detail["intel"]["summary"] == engine.result.summary
+            summary_review = _review(page, summary_meeting)
+            assert summary_review["job"]["status"] == "succeeded", summary_review
+            assert summary_review["coverage"]["turns"] == 6
+            assert summary_review["coverage"]["read"] == 6
+            assert summary_review["coverage"]["state"] == "available"
 
-            _open_review_wing(page, url, m2)
-            _title_visible(page, "Architecture review, take two")
-            assert page.locator("[data-testid='review-headline']").text_content() == "Reading the meeting"
-            assert page.locator("[data-testid='review-attempt']").text_content() == "ATTEMPT 2 · SAME JOB"
-            assert page.locator("[data-testid='review-job']").text_content().startswith("JOB ")
-            kept_verb = page.get_by_role("button", name="ALREADY KEPT")
-            assert kept_verb.count() == 1
-            assert page.locator("[data-testid='review-kept-row']").count() == 2
-            assert page.locator("[data-testid='review-kept-open']").count() == 2   # counsel P2-iii
-            assert page.locator("[data-testid='review-confirm']").count() == 0
-            assert page.get_by_role("button", name="Accept reviewed").is_disabled()
-            coverage2 = page.locator("[data-testid='review-coverage']").text_content() or ""
-            assert "NOT YET READ" in coverage2 and "OF 6" not in coverage2, coverage2
-            _no_raw_buttons(page, width)
-            _shot(page, "processing-attempt-2", width)
-
-            # Attempt 2 runs (the drainer is woken rather than waited for its
-            # 15s poll) and mints nothing twice.
-            conductor.wake_intel_queue_conductor()
-            assert _wait(lambda: _review(page, m2)["job"]["status"] == "succeeded", timeout=90.0), (
-                _review(page, m2)["job"], _diagnose(m2),
-            )
-            final = _review(page, m2)
-            assert len(final["proposals"]) == 5, [(p["kind"], p["text"], p["state"]) for p in final["proposals"]]
-            assert sorted(p["state"] for p in final["proposals"]) == ["confirmed", "confirmed", "proposed", "proposed", "proposed"]
-            assert all(p["job_attempt"] == 2 for p in final["proposals"] if p["kind"] == "action")
-            with get_database()._connection() as conn:
-                assert conn.execute("SELECT COUNT(*) FROM decision_records").fetchone()[0] == 3
-                assert conn.execute(
-                    "SELECT COUNT(*) FROM follow_through_proposals WHERE meeting_id = ?", (m2,)
-                ).fetchone()[0] == 5
-
+            rig = {
+                "page": page,
+                "url": url,
+                "engine": engine,
+                "conductor": conductor,
+                "db": get_database(),
+                "project_id": project_id,
+                "width": width,
+                "summary_meeting": summary_meeting,
+                "summary_run": run,
+                "summary_detail": summary_detail,
+                "errors": errors,
+            }
+            yield rig
             _assert_clean(page, errors)
             browser.close()
+            browser = None
     finally:
-        from holdspeak import intel_queue_conductor as conductor
+        if browser is not None:
+            browser.close()
+        # ``server.stop()`` joins the hub thread for 10s; hold the thread until
+        # it is really gone before releasing this fixture's database claim.
         from holdspeak.runtime_lock import release_database
 
-        # `server.stop()` joins the hub thread for 10s (web_server.py) and
-        # returns whether or not the lifespan shutdown finished; on a slow
-        # runner the hub's 1s kernel liveness loop kept ticking into the NEXT
-        # leg's database.  Hold the thread until it is really gone.
         hub_thread = server._thread
         server.stop()
         if hub_thread is not None:
@@ -502,3 +447,190 @@ def test_meeting_to_reviewed_outcomes(tmp_path: Path, monkeypatch: pytest.Monkey
             assert not hub_thread.is_alive(), "the hub thread outlived its stop"
         conductor.stop_intel_queue_conductor()
         release_database()
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+@pytest.mark.timeout(420)
+@pytest.mark.parametrize("width,height", [(1440, 1200), (393, 900)])
+def test_meeting_summary_ready(
+    meeting_outcomes_rig: dict[str, Any],
+    width: int,
+) -> None:
+    """The disclosed run produces a six-segment summary on both glasses."""
+    detail = meeting_outcomes_rig["summary_detail"]
+    run = meeting_outcomes_rig["summary_run"]
+    assert len(detail["segments"]) == 6
+    assert run["state"] == "queued" and run["drainer"] == "running"
+    assert run["planned_route"]["selection_hash"]
+    assert detail["intel_status"]["state"] == "ready"
+    assert detail["intel"]["summary"]
+    assert meeting_outcomes_rig["width"] == width
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+@pytest.mark.timeout(420)
+@pytest.mark.parametrize("width,height", [(1440, 1200), (393, 900)])
+def test_meeting_review_proposals_stay_live_under_amendment(
+    meeting_outcomes_rig: dict[str, Any],
+    request: pytest.FixtureRequest,
+) -> None:
+    """Keep the complete m1 Review assertions live behind a strict xfail."""
+    page = meeting_outcomes_rig["page"]
+    url = meeting_outcomes_rig["url"]
+    engine = meeting_outcomes_rig["engine"]
+    project_id = meeting_outcomes_rig["project_id"]
+    db = meeting_outcomes_rig["db"]
+    width = meeting_outcomes_rig["width"]
+
+    # ── REVIEW: the real import, the real trigger, the drainer ──
+    m1 = _import_transcript(page, "Architecture review")
+    _api(page, "POST", f"/api/projects/{project_id}/meetings/{m1}", token=TOKEN)
+    run = _run_intelligence(page, m1)
+    assert run["state"] == "queued" and run["drainer"] == "running", run
+    request.node.add_marker(pytest.mark.xfail(strict=True, reason=SUMMARY_AMENDMENT_XFAIL))
+    assert _wait(lambda: len(_review(page, m1)["proposals"]) == 5, timeout=90.0), (
+        _review(page, m1), engine.plugin_calls, _diagnose(m1),
+    )
+    review = _review(page, m1)
+    assert review["job"]["status"] == "succeeded" and review["job"]["attempt"] == 1, review["job"]
+    assert review["coverage"] == {
+        "turns": 6, "read": 6, "state": "available",
+        "observed_at": review["coverage"]["observed_at"],
+    }
+    kinds = sorted(p["kind"] for p in review["proposals"])
+    assert kinds == ["action", "action", "action", "decision", "decision"], kinds
+    assert all(p["job_id"] == review["job"]["job_id"] for p in review["proposals"])
+    assert {p["support"] for p in review["proposals"]} == {"supported", "source_linked", "unknown"}
+
+    _open_review_wing(page, url, m1)
+    headline = page.locator("[data-testid='review-headline']")
+    assert headline.text_content() == "5 to review", headline.text_content()
+    assert page.locator("[data-testid='review-confirm']").count() == 5
+    assert page.locator("[data-testid='review-more']").count() == 5
+    assert page.get_by_role("button", name="Open the Project: Q4 platform").count() == 1
+    coverage = page.locator("[data-testid='review-coverage']").text_content() or ""
+    assert "6 OF 6 TURNS" in coverage and "AVAILABLE" in coverage, coverage
+    supports = [(el.text_content() or "").strip() for el in page.query_selector_all("[data-testid='review-support']")]
+    assert sorted(supports) == sorted(["✓SUPPORTED", "○LINKED", "✓SUPPORTED", "○LINKED", "⚠UNSUPPORTED"]), supports
+    spans = [(el.text_content() or "") for el in page.query_selector_all("[data-testid='review-span']")]
+    assert "MTG 09-07 · 11:18–11:21" in spans, spans
+    assert page.locator("[data-testid='review-no-source']").count() == 1
+    unknowns = [(el.text_content() or "") for el in page.query_selector_all("[data-testid='review-unknown']")]
+    assert sum("OWNER · UNKNOWN" in u for u in unknowns) == 2, unknowns
+    assert sum("DUE · UNKNOWN" in u for u in unknowns) == 2, unknowns
+    window = page.locator(".desk-surface-window").first
+    _title_visible(page, "Architecture review")
+    body_text = window.locator(".desk-surface-body").text_content() or ""
+    assert "Architecture review" not in body_text, body_text[:300]
+    assert " 0 " not in body_text
+    _no_raw_buttons(page, width)
+    _shot(page, "review-five", width)
+
+    first_decision = page.locator("[data-testid='review-row-decision']").first
+    first_decision.locator("[data-testid='review-more']").click()
+    first_decision.locator("[data-testid='review-edit']").click()
+    editor = first_decision.get_by_role("textbox").first
+    editor.wait_for(timeout=5000)
+    editor.fill("Cut-over runs on the read replica first, writes stay frozen")
+    editor.press("Enter")
+    page.locator("[data-testid='review-receipt']").filter(has_text="EDITED").wait_for(timeout=10_000)
+    assert first_decision.locator("[data-testid='review-support'] .surface-state-chip").get_attribute("aria-label") == "LINKED · EDITED"
+    assert (first_decision.locator("[data-testid='review-was']").text_content() or "").startswith("WAS · ")
+    _shot(page, "review-edited", width)
+    edited = [p for p in _review(page, m1)["proposals"] if p["text"].endswith("writes stay frozen")]
+    assert len(edited) == 1 and edited[0]["support"] == "source_linked", edited
+    assert edited[0]["support_record"]["invalidation_reason"] == "text_edited"
+
+    first_decision.locator("[data-testid='review-confirm']").click()
+    page.locator("[data-testid='review-receipt']").filter(has_text="CONFIRMED").wait_for(timeout=10_000)
+    assert first_decision.get_attribute("data-state") == "confirmed"
+    assert first_decision.locator("[data-testid='review-acceptance'] .surface-state-chip").get_attribute("aria-label") == "ACCEPTED"
+    assert "DECISION RECORD · KEPT" in (first_decision.locator("[data-testid='review-kept']").text_content() or "")
+    assert page.locator("[data-testid='review-headline']").text_content() == "4 to review"
+    assert page.locator("[data-testid='review-accepted']").text_content() == "ACCEPTED 1"
+    _shot(page, "review-confirmed", width)
+    kept = [p for p in _review(page, m1)["proposals"] if p["state"] == "confirmed"]
+    assert len(kept) == 1 and kept[0]["decision_record_id"] and kept[0]["commitment_id"], kept
+    with db._connection() as conn:
+        assert conn.execute(
+            "SELECT COUNT(*) FROM decision_record_sources WHERE source_type = 'meeting' AND source_ref = ?",
+            (m1,),
+        ).fetchone()[0] == 1
+        record = conn.execute(
+            "SELECT decision_text FROM decision_records WHERE id = ?",
+            (kept[0]["decision_record_id"],),
+        ).fetchone()
+    assert record["decision_text"].endswith("writes stay frozen")
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+@pytest.mark.timeout(420)
+@pytest.mark.parametrize("width,height", [(1440, 1200), (393, 900)])
+def test_meeting_partial_chain_retry_stays_live_under_amendment(
+    meeting_outcomes_rig: dict[str, Any],
+    request: pytest.FixtureRequest,
+) -> None:
+    """Keep the complete m2 retry assertions live behind a strict xfail."""
+    page = meeting_outcomes_rig["page"]
+    url = meeting_outcomes_rig["url"]
+    engine = meeting_outcomes_rig["engine"]
+    conductor = meeting_outcomes_rig["conductor"]
+    project_id = meeting_outcomes_rig["project_id"]
+    db = meeting_outcomes_rig["db"]
+    width = meeting_outcomes_rig["width"]
+
+    engine.fail_plugins = {ACT}
+    m2 = _import_transcript(page, "Architecture review, take two")
+    _api(page, "POST", f"/api/projects/{project_id}/meetings/{m2}", token=TOKEN)
+    run = _run_intelligence(page, m2)
+    assert run["state"] == "queued" and run["drainer"] == "running", run
+    request.node.add_marker(pytest.mark.xfail(strict=True, reason=SUMMARY_AMENDMENT_XFAIL))
+    assert _wait(
+        lambda: len(_review(page, m2)["proposals"]) == 2
+        and _review(page, m2)["job"]["status"] == "queued",
+        timeout=90.0,
+    ), (_review(page, m2), engine.plugin_calls, _diagnose(m2))
+    engine.fail_plugins = set()
+    review2 = _review(page, m2)
+    assert review2["job"]["attempt"] == 2 and review2["job"]["same_job"] is True, review2["job"]
+    assert all(p["job_attempt"] == 1 and p["kind"] == "decision" for p in review2["proposals"])
+    for p in review2["proposals"]:
+        _api(page, "POST", f"/api/proposals/{p['id']}/confirm", {}, token=TOKEN)
+
+    _open_review_wing(page, url, m2)
+    _title_visible(page, "Architecture review, take two")
+    assert page.locator("[data-testid='review-headline']").text_content() == "Reading the meeting"
+    assert page.locator("[data-testid='review-attempt']").text_content() == "ATTEMPT 2 · SAME JOB"
+    assert page.locator("[data-testid='review-job']").text_content().startswith("JOB ")
+    kept_verb = page.get_by_role("button", name="ALREADY KEPT")
+    assert kept_verb.count() == 1
+    assert page.locator("[data-testid='review-kept-row']").count() == 2
+    assert page.locator("[data-testid='review-kept-open']").count() == 2
+    assert page.locator("[data-testid='review-confirm']").count() == 0
+    assert page.get_by_role("button", name="Accept reviewed").is_disabled()
+    coverage2 = page.locator("[data-testid='review-coverage']").text_content() or ""
+    assert "NOT YET READ" in coverage2 and "OF 6" not in coverage2, coverage2
+    _no_raw_buttons(page, width)
+    _shot(page, "processing-attempt-2", width)
+
+    conductor.wake_intel_queue_conductor()
+    assert _wait(lambda: _review(page, m2)["job"]["status"] == "succeeded", timeout=90.0), (
+        _review(page, m2)["job"], _diagnose(m2),
+    )
+    final = _review(page, m2)
+    assert len(final["proposals"]) == 5, [(p["kind"], p["text"], p["state"]) for p in final["proposals"]]
+    assert sorted(p["state"] for p in final["proposals"]) == ["confirmed", "confirmed", "proposed", "proposed", "proposed"]
+    assert all(p["job_attempt"] == 2 for p in final["proposals"] if p["kind"] == "action")
+    with db._connection() as conn:
+        assert conn.execute(
+            """SELECT COUNT(*) FROM decision_records AS r
+               JOIN decision_record_sources AS s ON s.record_id = r.id
+               WHERE s.source_type = 'meeting' AND s.source_ref = ?""",
+            (m2,),
+        ).fetchone()[0] == 2
+        assert conn.execute(
+            "SELECT COUNT(*) FROM follow_through_proposals WHERE meeting_id = ?", (m2,)
+        ).fetchone()[0] == 5

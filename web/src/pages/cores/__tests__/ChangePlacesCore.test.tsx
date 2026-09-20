@@ -83,7 +83,7 @@ describe("Change places", () => {
   });
   it("settles without implicitly turning on motion, sound or capture", () => {
     render(<ChangePlacesCore />);
-    fireEvent.click(screen.getByRole("button", { name: "Settle in" }));
+    fireEvent.click(screen.getByRole("button", { name: "Hide the menus" }));
     expect(useSettleState.getState().settled).toBe(true);
     expect(localStorage.getItem("hs.desk.atmosphere.sound")).toBeNull();
   });

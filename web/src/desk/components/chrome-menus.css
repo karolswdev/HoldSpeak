@@ -912,6 +912,19 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  /* HS-201-01: the inbound token is a fact, not prose. On the phone bar
+     it keeps its lamp and drops its words (they stay in the title and
+     the accessible name), so the bar still holds Search and the clock. */
+  .desk-next .desk-menubar .desk-chrome-inbound .gadget-lamp {
+    font-size: 0;
+    gap: 0;
+    letter-spacing: 0;
+  }
+  /* ...and the lamp's own width is paid back by the badge beside it, so
+     the bar is no wider than it is without the token. */
+  .desk-next .desk-menubar .desk-chrome-inbound + .egress-badge {
+    max-width: 80px;
+  }
 }
 
 @media (max-width: 420px) {

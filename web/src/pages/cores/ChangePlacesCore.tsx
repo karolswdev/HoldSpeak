@@ -52,7 +52,9 @@ export function ChangePlacesCore(_props: CoreProps) {
             useSettleState.getState().setSettled(true);
           }}
         >
-          Settle in
+          {/* HS-201-06: "Settle in" was an idiom; the verb hides the
+              navigation chrome (Constitution tenet 4, ASD-STE100). */}
+          Hide the menus
         </Button>
       </SurfaceVerbs>
       <WallpaperModule showFavorites favoritesOnly={favoritesOnly} />

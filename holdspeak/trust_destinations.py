@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 def _registry_path() -> Path:
     source = Path(__file__).resolve().parents[1] / "docs" / "trust-destinations.json"
@@ -42,19 +42,29 @@ def _configured(value: Any) -> bool:
     return bool(str(value or "").strip())
 
 
-def destination_inventory(config: Any, *, database: Any = None) -> list[dict[str, Any]]:
+def destination_inventory(
+    config: Any,
+    *,
+    database: Any = None,
+    summary_route: Mapping[str, Any] | None = None,
+) -> list[dict[str, Any]]:
     """Join disclosure language to current state without exposing credentials."""
+    if summary_route is None and database is not None:
+        from .services.meeting_route_projection import summary_route_display
+
+        try:
+            summary_route = summary_route_display(database)
+        except Exception:
+            summary_route = None
     meeting = config.meeting
     runtime = config.dictation.runtime
     pipeline = config.dictation.pipeline
-    provider = str(meeting.intel_provider or "local").strip().lower()
     backend = str(getattr(runtime, "backend", "local") or "local").strip().lower()
-    from .intel.providers import effective_dictation_llm, effective_intel_cloud
+    from .intel.providers import effective_dictation_llm
 
-    meeting_runtime = effective_intel_cloud(meeting)
     dictation_runtime = effective_dictation_llm(runtime)
     enabled = {
-        "meeting_intel": bool(meeting.intel_enabled and provider != "local"),
+        "meeting_intel": False,
         "dictation_runtime": bool(
             pipeline.enabled and (dictation_runtime.profile_id or backend == "openai_compatible")
         ),
@@ -67,10 +77,25 @@ def destination_inventory(config: Any, *, database: Any = None) -> list[dict[str
         ),
         "failure_webhook": _configured(meeting.intel_retry_failure_webhook_url),
     }
+    summary_ready = bool(summary_route and summary_route.get("status") == "ready")
+    summary_legs = list(summary_route.get("legs") or ()) if summary_ready else []
+    summary_hosts = [
+        "This device"
+        if str(leg.get("boundary") or "") == "local"
+        else str(leg.get("host") or "").strip()
+        for leg in summary_legs
+        if str(leg.get("host") or "").strip()
+    ]
+    summary_boundaries = [
+        str(leg.get("boundary") or "").strip()
+        for leg in summary_legs
+        if str(leg.get("boundary") or "").strip()
+    ]
     names = {
         "meeting_intel": (
-            meeting_runtime.profile_name or "Configured meeting runtime"
-            if enabled["meeting_intel"] else "This machine"
+            " -> ".join(summary_hosts)
+            if summary_ready and summary_hosts
+            else "Summary route unavailable"
         ),
         "dictation_runtime": (
             dictation_runtime.profile_name or "Configured dictation runtime"
@@ -99,13 +124,32 @@ def destination_inventory(config: Any, *, database: Any = None) -> list[dict[str
                 journal.last_receipt_for_ref(f"egress:{target}")
                 or actuators.last_execution_receipt(target)
             )
-    return [
-        {
-            **row, "enabled": enabled[row["id"]], "destination": names[row["id"]],
-            "last_receipt": receipts.get(row["id"]),
+    rows: list[dict[str, Any]] = []
+    for row in destination_registry():
+        registry_id = row["id"]
+        value = {
+            **row,
+            "enabled": (
+                summary_ready
+                and any(str(leg.get("boundary") or "") != "local" for leg in summary_legs)
+                if registry_id == "meeting_intel"
+                else enabled[registry_id]
+            ),
+            "destination": names[registry_id],
+            "last_receipt": receipts.get(registry_id),
         }
-        for row in destination_registry()
-    ]
+        if registry_id == "meeting_intel":
+            value.update(
+                name="Meeting summary",
+                operation="Generate meeting summary",
+                boundary=(" -> ".join(summary_boundaries) if summary_ready else "unavailable"),
+                data_class="Meeting transcript",
+                authority_basis="Assigned summary route",
+                background_ability="Only runs for an explicit summary request",
+                revoke_action="Change the summary assignment",
+            )
+        rows.append(value)
+    return rows
 
 
 __all__ = ["REGISTRY_PATH", "destination_inventory", "destination_registry"]

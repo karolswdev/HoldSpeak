@@ -3,7 +3,7 @@
 Seeds two active projects with needs-you items, one unfinished thought,
 one meeting with a transcript and intelligence off. Asserts at 1440 and
 393: the headline equals the needs-you count and project count; sections
-with zero items are absent from the DOM; `Run intelligence` appears only
+with zero items are absent from the DOM; `Run summary` appears only
 on the meeting with words; the capture bar is at the foot; no raw
 `<button>` in the arrival; no text node > 60 chars outside content rows;
 nothing overflows at 393. Also the QUIET state (empty hub): only the
@@ -28,6 +28,7 @@ from .glass_infra import (
     _normal_chair,
     _ensure_build,
     _settle,
+    seed_meeting_engines,
 )
 
 pytest.importorskip("playwright.sync_api", reason="Arrival glass needs Playwright")
@@ -341,6 +342,10 @@ def _run_needs_you_rig(
                  {"disposition": "completed"}, token=TOKEN)
 
             # Seed data
+            # HS-201-04: the arrival's run verb needs a disclosed route to
+            # run on, or it is withheld (UX-CANON A.11). This rig's subject
+            # is the needs-you arrival, not setup.
+            seed_meeting_engines()
             _seed_two_projects_with_needs_you()
             _seed_scheduled_recording(page)
             _seed_thought(page)
@@ -388,11 +393,11 @@ def _run_needs_you_rig(
             meetings_section = page.get_by_test_id("arrival-meetings")
             assert meetings_section.count() == 1, "MEETINGS section should be present"
 
-            # ── Run intelligence button: only on meeting with transcript ──
+            # ── Run summary button: only on meeting with transcript ──
             run_intel = page.get_by_test_id("arrival-run-intel")
             # Should appear exactly once (on the meeting with transcript+OFF)
             assert run_intel.count() == 1, \
-                f"Expected 1 Run intelligence button, got {run_intel.count()}"
+                f"Expected 1 Run summary button, got {run_intel.count()}"
 
             # ── CAPTURE BAR present at the foot ──
             capture_bar = page.get_by_test_id("arrival-capture-bar")
@@ -467,7 +472,10 @@ def _run_quiet_rig(
             page = browser.new_page(viewport={"width": width, "height": 900})
             page.on("pageerror", lambda e: errors.append(str(e)))
 
-            # Init desk -- no extra seeding
+            # Init desk -- no extra seeding beyond the meeting path.
+            # HS-201-01: a cold HOME has no engine and the Chair says so
+            # in a SETUP row; this rig's subject is the quiet arrival.
+            seed_meeting_engines()
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
             _api(page, "POST", "/api/desk/seed", token=TOKEN)
             _api(page, "PUT", "/api/setup/onboarding",

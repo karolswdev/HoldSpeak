@@ -148,6 +148,10 @@ class BoundDeferredIntelJob:
         self._members = {str(key): dict(value) for key, value in members.items()}
         self._principal = queue_service_principal()
         self._closed = False
+        # Set immediately after route admission.  If a later provider or
+        # projection boundary raises, this lets the queue recover the durable
+        # controller evidence instead of manufacturing an empty receipt.
+        self._execution_id = ""
 
     @classmethod
     def reconstruct(cls, db: Any, job: Any, *, broker: Any = None) -> "BoundDeferredIntelJob":
@@ -265,6 +269,48 @@ class BoundDeferredIntelJob:
             raise MeetingIntelRefused("frozen_plugin_capability_drift", capability)
         return definition
 
+    def durable_route_receipt(self) -> Mapping[str, Any] | None:
+        """Read this execution's durable route evidence for exception recovery.
+
+        The controller's public projection intentionally leaves ``send_phase``
+        null while an attempt is only reserved or has a persisted dispatch
+        intent.  A dispatch intent is possible contact, however, so derive the
+        pending/indeterminate phase from the durable attempt row.  A reservation
+        without ``dispatch_intent_at`` remains pre-send and is left alone.
+        """
+        if not self._execution_id:
+            return None
+        from ..services.inference_fallback_controller import INFERENCE_FALLBACK_AUTHORITY
+
+        controller = self._broker.inference_adoption_service.controller
+        receipt = controller.get_route_execution_receipt(
+            INFERENCE_FALLBACK_AUTHORITY,
+            execution_id=self._execution_id,
+        )
+        if not isinstance(receipt, Mapping):
+            return None
+        db = self._broker.database
+        with db._connection() as conn:
+            rows = conn.execute(
+                """SELECT id,send_phase,dispatch_intent_at
+                     FROM inference_route_attempts
+                    WHERE execution_id=?""",
+                (self._execution_id,),
+            ).fetchall()
+        durable = {str(row["id"]): row for row in rows}
+        attempts = []
+        for raw in receipt.get("attempts", ()):
+            if not isinstance(raw, Mapping):
+                continue
+            attempt = dict(raw)
+            if not attempt.get("send_phase"):
+                row = durable.get(str(attempt.get("attempt_id") or ""))
+                if row is not None and row["dispatch_intent_at"]:
+                    attempt["send_phase"] = "dispatch_intent"
+                    attempt["outcome"] = "indeterminate"
+            attempts.append(attempt)
+        return {**dict(receipt), "attempts": attempts}
+
     def execute(
         self,
         *,
@@ -308,6 +354,7 @@ class BoundDeferredIntelJob:
             parent_operation_id=self.parent_operation_id,
             executor_lease=executor_lease,
         )
+        self._execution_id = str(admitted["execution"]["id"])
         definition = adoption._frozen_capability_definition(str(member["route_plan_id"]))
         provider_adapter = BoundMeetingAdapter(capability, call)
         adapter = adapter_for_frozen_definition(definition, provider_adapter.dispatch)
@@ -339,12 +386,12 @@ class BoundDeferredIntelJob:
         # while the old dispatch has unknown settlement.
         if int(executor_lease["epoch"]) > 1:
             adoption.recover_route_executions(
-                execution_id=str(admitted["execution"]["id"]),
+                execution_id=self._execution_id,
                 parent_operation_id=self.parent_operation_id,
             )
         routed = adoption.execute(
             self._principal,
-            execution_id=str(admitted["execution"]["id"]),
+            execution_id=self._execution_id,
             adapter=adapter,
             publish=publish,
             before_physical_dispatch=require_current_executor,
@@ -381,5 +428,3 @@ class BoundDeferredIntelJob:
             # but may never bind a second parent in this window.
             log.error("bound deferred intel close failed: %s", type(exc).__name__)
             return False
-
-

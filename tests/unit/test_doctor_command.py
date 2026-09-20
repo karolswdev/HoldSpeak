@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 from urllib import error as urlerror
+from urllib import request as urlrequest
 
 import pytest
 
@@ -90,17 +91,19 @@ def _wire_homelab_target(monkeypatch, *, model: str = "qwen2.5-32b-instruct") ->
     )
 
 
-def test_cloud_preflight_warns_when_api_key_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cloud_preflight_is_off_without_an_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
     _wire_homelab_target(monkeypatch)
     monkeypatch.delenv(HOMELAB_KEY_ENV, raising=False)
 
     result = doctor._check_meeting_intel_cloud_preflight(_cloud_config())
 
-    assert result.status == "WARN"
-    assert "Missing API key" in result.detail
+    assert result.status == "PASS"
+    assert "live analysis is off for record" in result.detail.lower()
 
 
-def test_cloud_preflight_warns_on_dns_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cloud_preflight_is_off_when_the_legacy_endpoint_is_unreachable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _wire_homelab_target(monkeypatch)
     monkeypatch.setenv(HOMELAB_KEY_ENV, "test-key")
 
@@ -108,15 +111,15 @@ def test_cloud_preflight_warns_on_dns_failure(monkeypatch: pytest.MonkeyPatch) -
         _ = timeout
         raise urlerror.URLError(OSError("temporary failure in name resolution"))
 
-    monkeypatch.setattr(doctor.urlrequest, "urlopen", _fail_urlopen)
+    monkeypatch.setattr(urlrequest, "urlopen", _fail_urlopen)
 
     result = doctor._check_meeting_intel_cloud_preflight(_cloud_config())
 
-    assert result.status == "WARN"
-    assert "Unable to reach" in result.detail or "DNS lookup failed" in result.detail
+    assert result.status == "PASS"
+    assert "live analysis is off for record" in result.detail.lower()
 
 
-def test_cloud_preflight_warns_when_model_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cloud_preflight_does_not_check_the_legacy_model(monkeypatch: pytest.MonkeyPatch) -> None:
     _wire_homelab_target(monkeypatch)
     monkeypatch.setenv(HOMELAB_KEY_ENV, "test-key")
 
@@ -131,15 +134,17 @@ def test_cloud_preflight_warns_when_model_missing(monkeypatch: pytest.MonkeyPatc
         def read(self):
             return json.dumps({"data": [{"id": "mixtral-8x7b"}, {"id": "llama-3.1-8b"}]}).encode("utf-8")
 
-    monkeypatch.setattr(doctor.urlrequest, "urlopen", lambda _request, timeout: _FakeResponse())
+    monkeypatch.setattr(urlrequest, "urlopen", lambda _request, timeout: _FakeResponse())
 
     result = doctor._check_meeting_intel_cloud_preflight(_cloud_config())
 
-    assert result.status == "WARN"
-    assert "unavailable" in result.detail
+    assert result.status == "PASS"
+    assert "live analysis is off for record" in result.detail.lower()
 
 
-def test_cloud_preflight_passes_when_model_available(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cloud_preflight_stays_off_when_the_legacy_model_is_available(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _wire_homelab_target(monkeypatch)
     monkeypatch.setenv(HOMELAB_KEY_ENV, "test-key")
 
@@ -154,12 +159,12 @@ def test_cloud_preflight_passes_when_model_available(monkeypatch: pytest.MonkeyP
         def read(self):
             return json.dumps({"data": [{"id": "qwen2.5-32b-instruct"}]}).encode("utf-8")
 
-    monkeypatch.setattr(doctor.urlrequest, "urlopen", lambda _request, timeout: _FakeResponse())
+    monkeypatch.setattr(urlrequest, "urlopen", lambda _request, timeout: _FakeResponse())
 
     result = doctor._check_meeting_intel_cloud_preflight(_cloud_config())
 
     assert result.status == "PASS"
-    assert "reachable" in result.detail
+    assert "live analysis is off for record" in result.detail.lower()
 
 
 # ---------------------------------------------------------------------------

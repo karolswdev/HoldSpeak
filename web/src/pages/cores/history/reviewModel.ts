@@ -270,5 +270,18 @@ export function reviewHeadline(model: MeetingReviewModel): { text: string; accen
   if (open > 0) return { text: `${open} to review`, accent: true };
   const decided = model.proposals.length - open;
   if (decided > 0) return { text: "Reviewed", accent: false };
+  // HS-201-04 (Astra's counsel finding 3): a disclosed summary request runs
+  // ANALYSIS only — it does not run the plugin proposal chain (the lane A
+  // handoff, "summary-only scope"). With no proposal at all, nothing looked,
+  // so the face must not say it looked and found nothing.
+  if (!extractionRan(model)) return { text: "Not run", accent: false };
   return { text: "Nothing to review", accent: false };
+}
+
+/** True only when the proposal chain left something of its own behind.
+ *  The review read model's `job` is the SUMMARY job and `extracted_at` is
+ *  the SUMMARY's completion stamp (`proposal_bridge_service.py:1046`,
+ *  `:1048`) — neither says extraction ran. A proposal does. */
+export function extractionRan(model: MeetingReviewModel): boolean {
+  return model.proposals.length > 0;
 }

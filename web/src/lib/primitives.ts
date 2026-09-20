@@ -15,6 +15,7 @@
  * unchanged so existing hubs and clients keep syncing.
  */
 import { productLabel } from "./productLanguage";
+import type { PlannedRoute, RunReceipt } from "../meetings/summaryRoute";
 
 /** How the desktop hub reconciles a primitive across devices. */
 export type SyncClass =
@@ -108,6 +109,13 @@ export interface Meeting {
   calendarSourceLabel?: string | null;
   /** HS-170-04: word count of the transcript (null when no transcript). */
   transcriptWords?: number | null;
+  /** HS-201-03 contract: the SERVICE route the next summary run will use
+   *  (ordered legs with host), resolved by the hub before any POST. */
+  plannedRoute?: PlannedRoute | null;
+  /** HS-201-03 contract: every destination the last run contacted. */
+  runReceipt?: RunReceipt | null;
+  /** Lane A `a07d4bb5`: the newest durable no-call route refusal. */
+  lastRefusal?: RunReceipt | null;
 }
 
 /** 15 server artifact types — synthesized from a meeting's intel. */

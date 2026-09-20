@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 201
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-201-02
 - **Unblocks:** (optional)
-- **Owner:** unassigned
+- **Owner:** Astra (lane A)
 
 ## Problem
 
@@ -18,11 +18,11 @@ The displayed host and the executing route come from different stacks. `run_inte
 
 ## Acceptance criteria
 
-- [ ] A meeting's run read model carries `planned_route` (ordered legs, each with host, profile, revision) computed by the SERVICE resolver before any POST, from every entry point.
-- [ ] After a run, the receipt lists every destination contacted in order, failed attempts included; a forced fallback to a DISCLOSED leg shows that leg; a fallback to an undisclosed destination is impossible (fence).
-- [ ] The receipt is readable after a hub restart on the same DB.
-- [ ] With no resolvable route the read model says `unavailable`; the string `local` is impossible in that state (fence proven red pre-fix).
-- [ ] A drift between planned and bound route refuses the run BEFORE provider dispatch, with a receipt (fence asserts no provider call).
+- [x] **A-proven:** A meeting's run read model carries `planned_route` (ordered legs, each with host, profile, revision) computed by the SERVICE resolver before any POST, from every entry point.
+- [x] **A-proven:** After a run, the receipt lists every destination contacted in order, failed attempts included; a forced fallback to a DISCLOSED leg shows that leg; a fallback to an undisclosed destination is impossible (fence).
+- [x] **A-proven:** The receipt is readable after a hub restart on the same DB.
+- [x] **A-proven:** With no resolvable route the read model says `unavailable`; the string `local` is impossible in that state (fence proven red pre-fix).
+- [x] **A-proven:** A drift between planned and bound route refuses the run BEFORE provider dispatch, with a receipt (fence asserts no provider call).
 
 ## Test plan
 
@@ -44,3 +44,12 @@ Muad'Dib's check: accepted as written. One rule added for lane B: the face shows
 ## Notes / open questions
 
 Lane A (Astra to Luna). Serves exit criterion 3.
+
+## Lane delivery boundary
+
+Backend proof is in `evidence-story-03.md`: real queue and kernel with a stub
+provider, distinct primary/fallback destinations, a refusal before dispatch
+after assignment drift, and a real isolated hub restart. The face and egress
+chips are B's HS-201-04. A must not merge before B supplies the hash on all
+three gestures. Analysis-only scope and the parked proposal chain are recorded
+in `checks/lane-a-muaddib.md`, the phase status, and BACKLOG.

@@ -1,0 +1,18 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____________________ test_committed_ledger_is_up_to_date ______________________
+
+    def test_committed_ledger_is_up_to_date():
+        # The generator proposes; the committed YAML is canon — but they must agree,
+        # so a drifted inventory can't leave the ledger silently stale.
+>       assert build_ledger.main(["--check"]) == 0
+E       AssertionError: assert 1 == 0
+E        +  where 1 = <function main at 0x10a5a6fc0>(['--check'])
+E        +    where <function main at 0x10a5a6fc0> = build_ledger.main
+
+tests/uat/test_build_ledger.py:11: AssertionError
+----------------------------- Captured stderr call -----------------------------
+features.yaml is stale — re-run: uv run python -m uat.tools.build_ledger
+=========================== short test summary info ============================
+FAILED tests/uat/test_build_ledger.py::test_committed_ledger_is_up_to_date - ...
+1 failed in 0.36s

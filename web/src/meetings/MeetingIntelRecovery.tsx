@@ -1,12 +1,24 @@
 // HS-111-03 — intel recovery is a one-row attention slab (audit §3.5):
-// a GadgetGroup labeled INTEL, one row of tokens (state · retained ·
-// remaining) with the RETRY/SKIP verbs on the row. The warn reads as
-// the token's color only; the transcript well stays the spine.
+// a GadgetGroup, one row of tokens (state · kept · not done) with the
+// RETRY/SKIP verbs on the row. The warn reads as the token's color
+// only; the transcript well stays the spine.
+// HS-201-06 — every word on the row is a plain one (tenet 4).
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "../components/signal/Signal";
 import { SurfaceState } from "../desk/surface/Surface";
 import { GadgetGroup, GadgetRow } from "../desk/surface/gadgets";
 import { apiFetch, readableError } from "../lib/api";
+import { countToken } from "../desk/surface/count";
+import { RefusalToken, RouteDisclosure, RunAttempts } from "./RouteDisclosure";
+import {
+  executedReceipt,
+  postSummaryRun,
+  readLastRefusal,
+  readPlannedRoute,
+  readRunReceipt,
+  routeReady,
+  type SummaryRefusal,
+} from "./summaryRoute";
 
 type RecoveryFact = {
   label: string;
@@ -30,6 +42,9 @@ export type MeetingIntelRecoveryState = {
     retry: boolean;
     skip: boolean;
   };
+  /** HS-201-03's settled contract, served by the recovery read model. */
+  planned_route?: unknown;
+  run_receipt?: unknown;
 };
 
 type RecoveryResponse = {
@@ -38,14 +53,47 @@ type RecoveryResponse = {
 };
 
 /** The wire speaks sentences ("3 saved segments"); the slab speaks
- * tokens ("3 SEG"). Facts that carry no count stay off the line. */
-function retainedToken(completed: RecoveryFact[]): string {
+ * tokens. Facts that carry no count stay off the line.
+ *
+ * HS-201-06 (Constitution tenet 4, ASD-STE100): the words are whole and
+ * common — `KEPT 3 SEGMENTS · 2 ARTIFACTS`, never the clipped `RETAINED
+ * 3 SEG / 2 ART` (audit row 2). A count of zero says nothing at all
+ * (UX-CANON A8: no counters of zero), so `RETAINED 0 SEG` is gone. */
+function keptToken(completed: RecoveryFact[]): string {
   const tokens: string[] = [];
   for (const fact of completed) {
     const match = /(\d+)\s+saved\s+(segment|artifact)/i.exec(fact.detail);
-    if (match) tokens.push(`${match[1]} ${match[2] === "segment" ? "SEG" : "ART"}`);
+    if (!match) continue;
+    const token = countToken(
+      Number(match[1]),
+      match[2].toLowerCase() === "segment" ? "SEGMENT" : "ARTIFACT",
+    );
+    if (token) tokens.push(token);
   }
-  return tokens.join(" / ");
+  return tokens.join(" · ");
+}
+
+/** HS-201-06: the hub names the remaining work in its own vocabulary
+ * ("routed meeting intelligence"). The face says it in plain words: a
+ * summary is a summary, and "routed artifacts" is dropped — the user
+ * never asked for a route (audit rows 3 and 4). */
+function remainingWords(label: string): string {
+  return label
+    .replace(/,?\s*and\s+routed\s+artifacts/i, "")
+    .replace(/routed\s+meeting\s+intelligence/i, "artifacts")
+    .replace(/remaining\s+meeting\s+intelligence/i, "the rest of the summary")
+    .replace(/intelligence/gi, "summary")
+    .trim()
+    .toUpperCase();
+}
+
+/** HS-201-06 (audit row 5): the hub's refusal is one sentence and the
+ * face adds a second. Without a full stop between them they read as one
+ * run-on line. End the first sentence before the second begins. */
+function twoSentences(first: string, second: string): string {
+  const head = first.trim();
+  const closed = /[.!?]$/.test(head) ? head : `${head}.`;
+  return `${closed} ${second}`;
 }
 
 export function MeetingIntelRecovery({
@@ -61,6 +109,9 @@ export function MeetingIntelRecovery({
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<"retry" | "skip" | "">("");
   const [error, setError] = useState("");
+  // HS-201-04: a refused run is a REFUSAL with its plain reason, not an
+  // error surface. It never replaces the receipt of an earlier real run.
+  const [refusal, setRefusal] = useState<SummaryRefusal | null>(null);
 
   const load = useCallback(async () => {
     if (!meetingId) return;
@@ -74,7 +125,10 @@ export function MeetingIntelRecovery({
       );
     } catch (reason) {
       setError(
-        `${readableError(reason)} The Meeting and completed work remain saved.`,
+        twoSentences(
+          readableError(reason),
+          "The Meeting and completed work remain saved.",
+        ),
       );
     } finally {
       setLoading(false);
@@ -85,19 +139,49 @@ export function MeetingIntelRecovery({
     void load();
   }, [load]);
 
+  // HS-201-04 (Article III, the point of decision): the route the next run
+  // WILL use, and the destinations the last run DID contact. Both come from
+  // the recovery read model; neither is composed from configuration. The
+  // refusal's fresh route wins while a refusal stands.
+  const route = refusal?.route ?? readPlannedRoute(recovery);
+  // The last run that actually contacted something wins over a bare
+  // refusal receipt (pickRunReceipt): a refusal never erases the hosts.
+  const receipt = executedReceipt(
+    meetingId,
+    refusal?.receipt,
+    readRunReceipt(recovery),
+    readRunReceipt(recovery?.job),
+  );
+  const canRun = routeReady(route);
+
   const choose = async (action: "retry" | "skip") => {
     setBusy(action);
     setError("");
+    setRefusal(null);
+    const path = `/api/meetings/${encodeURIComponent(meetingId)}/intel-recovery/${action}`;
     try {
-      const result = await apiFetch<RecoveryResponse>(
-        `/api/meetings/${encodeURIComponent(meetingId)}/intel-recovery/${action}`,
-        { method: "POST" },
-      );
+      // HS-201-04: Retry starts a summary run, so it carries the disclosed
+      // selection hash (lane A's interlock). Skip starts no run.
+      if (action === "retry") {
+        const outcome = await postSummaryRun<RecoveryResponse>(path, route);
+        if (!outcome.ok) {
+          setRefusal(outcome.refusal);
+          await load();
+          return;
+        }
+        setRecovery(outcome.result.recovery);
+        await onChanged?.(outcome.result.recovery);
+        return;
+      }
+      const result = await apiFetch<RecoveryResponse>(path, { method: "POST" });
       setRecovery(result.recovery);
       await onChanged?.(result.recovery);
     } catch (reason) {
       setError(
-        `${readableError(reason)} The Meeting and completed work remain saved.`,
+        twoSentences(
+          readableError(reason),
+          "The Meeting and completed work remain saved.",
+        ),
       );
     } finally {
       setBusy("");
@@ -111,7 +195,7 @@ export function MeetingIntelRecovery({
   const st = recovery?.state?.toLowerCase() ?? "";
   if (st === "queued" || st === "running" || st === "pending") return null;
 
-  const retained = recovery ? retainedToken(recovery.completed) : "";
+  const kept = recovery ? keptToken(recovery.completed) : "";
   const running = recovery?.state === "running";
   return (
     <section
@@ -119,25 +203,47 @@ export function MeetingIntelRecovery({
       aria-label="Meeting intelligence recovery"
     >
       {error ? <SurfaceState error={error} onRetry={() => void load()} /> : null}
-      {/* "Intelligence", never "intel" — the HS-100-05 vocabulary
-          guard bans the abbreviation in rendered copy. */}
+      {/* HS-201-06: the group is the meeting SUMMARY. "Intelligence" is
+          the wire's word for it, and a summary is what the user asked
+          for (Constitution tenet 4, audit row 4). */}
       {recovery?.visible ? (
-        <GadgetGroup label="Intelligence">
+        <GadgetGroup label="Summary">
+          {/* HS-201-04 (audit defects 6 and 7): the facts span the row and
+              the verbs sit at its trailing edge, so nothing is pushed under
+              the window footer and no fact is clipped into a column of
+              seven characters. */}
           <GadgetRow
             label={
-              <span
-                className="surface-token"
-                data-tone={running ? undefined : "warn"}
-              >
-                {recovery.state.toUpperCase()}
+              <span className="meeting-intel-recovery-facts">
+                <span
+                  className="surface-token"
+                  data-tone={running ? undefined : "warn"}
+                >
+                  {recovery.state.toUpperCase()}
+                </span>
+                {kept ? (
+                  <span className="gadget-fact">{`KEPT ${kept}`}</span>
+                ) : null}
+                <span className="gadget-fact" title={recovery.remaining.detail}>
+                  {`NOT DONE: ${remainingWords(recovery.remaining.label)}`}
+                </span>
+                {/* Article III: the destinations of the LAST run, then the
+                    route the NEXT run will use. */}
+                <RunAttempts receipt={receipt} testId="recovery-attempts" />
+                {recovery.actions.retry ? (
+                  <RouteDisclosure route={route} testId="recovery-route" />
+                ) : null}
+                <RefusalToken
+                  refusal={refusal}
+                  durable={readLastRefusal(recovery)}
+                  testId="recovery-refusal"
+                />
               </span>
             }
-            fact={retained ? `RETAINED ${retained}` : undefined}
           >
-            <span className="gadget-fact" title={recovery.remaining.detail}>
-              {`REMAINING: ${recovery.remaining.label.toUpperCase()}`}
-            </span>
-            {recovery.actions.retry ? (
+            {/* UX-CANON A.11: a verb that cannot run is withheld, and the
+                reason stands in its place (RouteDisclosure says it). */}
+            {recovery.actions.retry && canRun ? (
               <Button
                 dense
                 loading={busy === "retry"}

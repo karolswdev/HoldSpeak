@@ -180,8 +180,11 @@ class TestIntelligenceRunRoute:
         called = {}
 
         class FakeIntelService:
-            def run_intelligence(self, principal, meeting_id):
+            def run_intelligence(
+                self, principal, meeting_id, *, expected_selection_hash=None
+            ):
                 called["id"] = meeting_id
+                called["expected_selection_hash"] = expected_selection_hash
                 raise ConflictError("Meeting has no transcript", code="empty")
 
         fake = FakeIntelService()
@@ -196,20 +199,27 @@ class TestIntelligenceRunRoute:
         app.include_router(build_intel_router(ctx))
 
         client = TestClient(app)
-        resp = client.post("/api/meetings/test-meeting/intelligence/run")
+        resp = client.post(
+            "/api/meetings/test-meeting/intelligence/run",
+            json={"expected_selection_hash": "sha256:test-route"},
+        )
         assert resp.status_code == 409
         body = resp.json()
         assert "plainReason" in body
         assert "no transcript" in body["plainReason"].lower()
         assert called["id"] == "test-meeting"
+        assert called["expected_selection_hash"] == "sha256:test-route"
 
     def test_enqueues_with_transcript(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Run intelligence returns {jobId, state, host} on success."""
         called = {}
 
         class FakeIntelService:
-            def run_intelligence(self, principal, meeting_id):
+            def run_intelligence(
+                self, principal, meeting_id, *, expected_selection_hash=None
+            ):
                 called["id"] = meeting_id
+                called["expected_selection_hash"] = expected_selection_hash
                 return {"jobId": "job-123", "state": "queued", "host": "local"}
 
         fake = FakeIntelService()
@@ -224,13 +234,17 @@ class TestIntelligenceRunRoute:
         app.include_router(build_intel_router(ctx))
 
         client = TestClient(app)
-        resp = client.post("/api/meetings/test-meeting/intelligence/run")
+        resp = client.post(
+            "/api/meetings/test-meeting/intelligence/run",
+            json={"expected_selection_hash": "sha256:test-route"},
+        )
         assert resp.status_code == 200
         body = resp.json()
         assert body["jobId"] == "job-123"
         assert body["state"] == "queued"
         assert body["host"] == "local"
         assert called["id"] == "test-meeting"
+        assert called["expected_selection_hash"] == "sha256:test-route"
 
 
 # ── test: needs-you aggregate ────────────────────────────────────────

@@ -39,7 +39,7 @@ from .glass_infra import (
     _boot,
     _ensure_build,
     _normal_chair,
-    _settle,
+    _settle,    seed_meeting_engines,
 )
 
 pytest.importorskip("playwright.sync_api", reason="Attention glass needs Playwright")
@@ -309,6 +309,10 @@ def _seed_quiet(page: Any) -> str:
 
 
 def _arrive(page: Any, url: str) -> None:
+    # HS-201-01: the meeting path is pinned before every arrival in this
+    # rig. A cold HOME has no engine, and the Chair now names that in a
+    # SETUP row; this rig's subject is the attention band and coverage.
+    seed_meeting_engines()
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
     _api(page, "POST", "/api/desk/seed", token=TOKEN)
     _api(page, "PUT", "/api/setup/onboarding",

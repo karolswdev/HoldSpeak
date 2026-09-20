@@ -148,7 +148,7 @@ def test_trust_default_is_local_only(isolated_config, monkeypatch) -> None:
     assert trust["actuators_enabled"] is True
 
 
-def test_trust_reflects_cloud_endpoint_and_actuators(isolated_config, monkeypatch) -> None:
+def test_trust_keeps_legacy_cloud_off_and_preserves_actuators(isolated_config, monkeypatch) -> None:
     _stub_checks(monkeypatch, _checks(("Mic", "PASS")))
     # HS-112-01: the endpoint reads through the assigned target.
     from holdspeak.db.models import ProfileRecord
@@ -166,8 +166,9 @@ def test_trust_reflects_cloud_endpoint_and_actuators(isolated_config, monkeypatc
     cfg.meeting.intel_profile_id = "p-homelab"
     cfg.meeting.allow_actuators = True
     trust = setup_status.build_setup_status(config=cfg)["trust"]
-    assert trust["transcript_egress"] == "configured"
-    assert "http://homelab.local:8000/v1" in trust["configured_endpoints"]
+    assert trust["transcript_egress"] == "none"
+    assert "http://homelab.local:8000/v1" not in trust["configured_endpoints"]
+    assert "homelab.local" not in trust["egress_detail"]
     assert trust["actuators_enabled"] is True
 
 

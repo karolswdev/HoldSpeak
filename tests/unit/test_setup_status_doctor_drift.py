@@ -48,9 +48,8 @@ def test_a_failing_check_surfaces_as_a_blocking_section(isolated_config, monkeyp
     assert status["primary_action"]["id"] == "text-insertion"
 
 
-def test_skip_network_returns_cloud_preflight_as_not_run(monkeypatch) -> None:
-    """The cheap path returns the cloud-preflight check as a neutral 'not run'
-    instead of probing the endpoint (so a page load never blocks on HTTP)."""
+def test_skip_network_returns_cloud_preflight_as_record_off(monkeypatch) -> None:
+    """The setup path keeps the retired live-analysis check off."""
     from holdspeak.commands.doctor import _check_meeting_intel_cloud_preflight
 
     cfg = Config()
@@ -61,4 +60,4 @@ def test_skip_network_returns_cloud_preflight_as_not_run(monkeypatch) -> None:
 
     check = _check_meeting_intel_cloud_preflight(cfg, skip_network=True)
     assert check.status == "PASS"
-    assert "Not run" in check.detail
+    assert "Live analysis is off for Record" in check.detail

@@ -1,6 +1,6 @@
 # Phase 201 - One Meeting Result
 
-**Last updated:** 2026-09-19. Chartered from the inventory of 2026-09-19 and
+**Last updated:** 2026-09-20, 01:40 — six of seven stories done; the combined PR #587 (lanes A+B) awaits CI; story 07 is the sitting. Chartered from the inventory of 2026-09-19 and
 two Astra checks (`docs/internal/inventory-2026-09-19/06-check-astra.md`,
 `docs/internal/checks/constitution-seven-tenets-astra.md`). Stories and
 lanes follow the two read-only audits (runtime by Astra, live face walk by
@@ -59,12 +59,12 @@ over claim). Faces obey UX-CANON. Orchestration: TWO-BRAINS.md.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-201-01 | The desk names the one thing it needs | backlog | [story-01-the-desk-names-the-one-thing-it-needs](./story-01-the-desk-names-the-one-thing-it-needs.md) | - |
-| HS-201-02 | Record works with no summary model | backlog | [story-02-record-works-with-no-summary-model](./story-02-record-works-with-no-summary-model.md) | - |
-| HS-201-03 | The host is disclosed before the run and truthful after | backlog | [story-03-the-host-is-disclosed-before-the-run-and-truthful-after](./story-03-the-host-is-disclosed-before-the-run-and-truthful-after.md) | - |
-| HS-201-04 | Ask for the summary and find it again | backlog | [story-04-ask-for-the-summary-and-find-it-again](./story-04-ask-for-the-summary-and-find-it-again.md) | - |
-| HS-201-05 | One engine and one assignment from the face | backlog | [story-05-one-engine-and-one-assignment-from-the-face](./story-05-one-engine-and-one-assignment-from-the-face.md) | - |
-| HS-201-06 | Plain words on the path | backlog | [story-06-plain-words-on-the-path](./story-06-plain-words-on-the-path.md) | - |
+| HS-201-01 | The desk names the one thing it needs | done | [story-01-the-desk-names-the-one-thing-it-needs](./story-01-the-desk-names-the-one-thing-it-needs.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-201-02 | Record works with no summary model | done | [story-02-record-works-with-no-summary-model](./story-02-record-works-with-no-summary-model.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-201-03 | The host is disclosed before the run and truthful after | done | [story-03-the-host-is-disclosed-before-the-run-and-truthful-after](./story-03-the-host-is-disclosed-before-the-run-and-truthful-after.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-201-04 | Ask for the summary and find it again | done | [story-04-ask-for-the-summary-and-find-it-again](./story-04-ask-for-the-summary-and-find-it-again.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-201-05 | One engine and one assignment from the face | done | [story-05-one-engine-and-one-assignment-from-the-face](./story-05-one-engine-and-one-assignment-from-the-face.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-201-06 | Plain words on the path | done | [story-06-plain-words-on-the-path](./story-06-plain-words-on-the-path.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-201-07 | Run it from main and the sitting | backlog | [story-07-run-it-from-main-and-the-sitting](./story-07-run-it-from-main-and-the-sitting.md) | - |
 
 ## Lanes (TWO-BRAINS.md §4)
@@ -76,9 +76,27 @@ over claim). Faces obey UX-CANON. Orchestration: TWO-BRAINS.md.
 
 Order: 03's API contract (`planned_route`, the receipt) is settled and checked by both brains FIRST; then 02 and 01 (independent; the dictation classification rides with 02); then 05; then 03 and 04 integrate; 06 with 04; 07 last. File ownership: lane A owns `holdspeak/**` on this path; lane B owns `web/**`; a field one lane needs from the other travels as a settled contract, never a cross-lane edit.
 
+## Owed by lane B
+
+Muad'Dib accepts these criteria as lane B's owner in the closure check
+(`checks/lane-a-muaddib.md`). He will add them to the B story files in
+`wt-201-b`. The table is the authoritative transfer record until then.
+A's done status proves the backend only; it does not prove these faces.
+
+| From | Receiving story | Transferred criterion |
+|---|---|---|
+| HS-201-02 | HS-201-01 | The Record verb renders that refusal token at the moment of refusal; shot at 1440. |
+| HS-201-05 | HS-201-06 | Models renders these results and the assigned engine at both widths. |
+| HS-201-05 | HS-201-06 | The face uses one gesture with no modal; Models shots after accept at both widths. |
+
+The HS-201-06 transfer includes the Models summary-selection control and
+its conflict and partial-result rendering, not labels alone.
+
 ## Where we are
 
-Chartered: seven stories from two read-only audits (`audits/`), shots in `assets/charter-walk/`. Astra's check: RATIFY-WITH-CONDITIONS, seven conditions applied (`checks/charter-astra.md`). Round two applied and the 03 contract settled. Next: commit through the gate, brief lanes.
+Six of seven stories done through the gate, both lanes checked by the other brain (checks/), the combined delivery on PR #587 (lane A's #588 merged in), a quiet-tree full suite and CI read against main before the merge. Story 07 is the sitting: the owner starts the product from main, records one real meeting, asks for its summary, reads it, restarts, finds it, dictates one sentence (SITTING-07.md). Nothing closes on "accepted, not observed".
+
+Ledger (never deleted): the 393 egress badge clips its label (Trust shows the full host; lane B face item); xdist pollution in tests/unit/test_phase200_attention.py TestNotificationTransitions (serial-green twice); HS-170's faces-wire test patches a name its route never reads; the parked Phase 200 proposal chain (BACKLOG); the five off-path red tests on main; DW roadmap bookkeeping (Z6).
 
 ## Active risks
 
@@ -96,6 +114,65 @@ Chartered: seven stories from two read-only audits (`audits/`), shots in `assets
   (RATIFY-WITH-CONDITIONS, conditions absorbed).
 - 2026-09-19 - Restoring the owner's Room from the retired DB (Z0) is
   parked: one meeting result does not need it - tenet 3 - Muad'Dib.
+
+- 2026-09-19 — Astra's lane A amendment, ratified by Muad'Dib (see
+  `checks/lane-a-muaddib.md`): ordinary Web Record forces capture/transcription
+  without live summary work; its Stop hook cannot auto-enqueue analysis or
+  auto-title, even when legacy config enables them. A later disclosed summary
+  gesture runs analysis only. The Phase 200 plugin → proposal bridge → Review
+  pipeline therefore loses its production entry on this first-use path. This
+  is a deliberately accepted regression of shipped product, not an inherited
+  failure. The implementation stays parked; proposal expectations remain as
+  strict expected failures with summary-ready preconditions still live.
+- 2026-09-19 — Lane A and B have a merge interlock: no A-only merge while any
+  face Run/Retry omits `expected_selection_hash`. B uses “summary” and must
+  distinguish an unexecuted proposal chain from an empty extraction result.
+
+- 2026-09-19 — The Model Library producer may declare the closed result schema
+  supported by the existing meeting adapter, through a new immutable manifest
+  revision for supported provider families. Muad'Dib ratified this narrow fix
+  after the real producer chain failed summary selection. It is adapter support,
+  not observed model quality; invalid output must fail with a contacted-host
+  receipt and no partial summary. Old profile revisions stay unchanged. Deferred
+  and live analysis share the schema hash, so both become compatible, but
+  connect creates no assignment and summary selection creates no live assignment.
+
+## Lane A debt ledger
+
+- **b — fixed:** the actual Web Stop hook could enqueue a hashless job under
+  `every_meeting` or `room_linked`; both red fences are recorded in 02 evidence.
+- **a — tests of the former posture:** the Phase 200 proposal pipeline on
+  manual summary runs. Return path and retained code: `../BACKLOG.md`,
+  “Phase 201 parked summary follow-through”.
+- **c — historical, not reproduced:** dictation initialization race. Two
+  pristine charter-baseline runs and current scoped runs pass; original cause
+  remains unknown (02 evidence).
+- **Paid in lane A follow-up:** Settings, doctor, setup trust, and destination
+  inventory now report live analysis off for Record. The retained config byte
+  is ignored on this path; it does not enable live analysis. Dictation and
+  explicit summary routes remain separate. Proof: `evidence-story-02.md`.
+- Hashless legacy entry points remain outside the first-use Record path:
+  `meeting_import.py:_persist_import` can enqueue under old config;
+  `db/meetings.py:recover_capture` can enqueue historical displaced
+  work without a route bundle. Neither is proof of the new disclosure contract.
+  Fence or disclose these before restoring their automatic summary behavior;
+  parked with follow-through in BACKLOG. `meeting_session/persistence.py` is
+  inactive for ordinary Web Record because that session has intel disabled.
+- Inherited suite baseline: both widths of `test_phase200_daily_loop.py` fail
+  at the brief before meeting creation, including on unmodified charter
+  production code (raw baseline `.tmp/hs201-daily-loop-baseline.log`).
+- Delivery Workbench capture stamps describe the index at capture time, not
+  pytest import provenance; the gate checks the referenced passing capture but
+  does not compare its index tree. Framework follow-up belongs to `pmo-roadmap`.
+  See the peer correction in `checks/lane-a-muaddib.md`.
+- Full-suite classification: nine stale contract assertions updated; two legacy
+  integration callers migrated under Muad'Dib's closure assignment (98 tests
+  passed);
+  twelve inherited failures reproduced on the charter baseline; one no-write
+  scanner failure passes twice with the tree quiet. Raw logs and per-group
+  homes: `audits/full-suite-astra.md`.
+- Inherited DW orientation issues: stale CLAUDE managed block; phase 101
+  evidence/story status mismatch; missing final summaries 152/153/154/156/200.
 
 ## Open dissents
 

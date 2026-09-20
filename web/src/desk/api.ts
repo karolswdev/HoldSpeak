@@ -29,6 +29,11 @@ import type {
   Workbench,
   Workflow,
 } from "../lib/primitives";
+import {
+  readLastRefusal,
+  readPlannedRoute,
+  readRunReceipt,
+} from "../meetings/summaryRoute";
 import { fetchRoadmaps, type RoadmapProject } from "./roadmap";
 import { fetchRepositories } from "./repository";
 import {
@@ -433,7 +438,8 @@ const fromWireMeeting = (m: unknown): Meeting | null => {
   return {
     kind: "meeting",
     id,
-    title: wireString(m, "title", "Untitled meeting"),
+    // HS-201-06 (tenet 4, ASD-STE100): plain words, no un- prefix.
+    title: wireString(m, "title", "Meeting with no title"),
     startedAt: wireString(m, "started_at"),
     endedAt: wireStringOrNull(m, "ended_at"),
     segmentCount: wireNumber(m, "segment_count"),
@@ -445,6 +451,11 @@ const fromWireMeeting = (m: unknown): Meeting | null => {
     calendarEventTitle: wireStringOrNull(m, "calendar_event_title"),
     calendarSourceLabel: wireStringOrNull(m, "calendar_source_label"),
     transcriptWords: wireRaw(m, "transcriptWords") as number | null | undefined,
+    // HS-201-04: the disclosed route and the run receipt travel with the
+    // row, so the Chair's Run verb never composes a host from config.
+    plannedRoute: readPlannedRoute(m),
+    runReceipt: readRunReceipt(m),
+    lastRefusal: readLastRefusal(m),
   };
 };
 

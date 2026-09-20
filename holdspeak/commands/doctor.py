@@ -6,23 +6,16 @@ Performs lightweight environment checks and prints actionable remediation.
 from __future__ import annotations
 
 from dataclasses import dataclass
-import json
 import os
 import platform
-import socket
 import shutil
-import ssl
 import sys
-from urllib import error as urlerror
-from urllib import request as urlrequest
-from urllib.parse import urlparse
 
 from pathlib import Path
 
 from ..audio_devices import check_blackhole_setup, get_default_input_device
 from ..config import CONFIG_FILE, Config
 from ..hotkey import HotkeyListener
-from ..intel import get_intel_runtime_status, intel_egress_posture
 from ..profile_key_store import ProfileKeyStoreError, resolve_profile_key
 from ..transcribe import TranscriberError, _resolve_backend
 from ..typer import TextTyper
@@ -376,148 +369,45 @@ def _check_system_audio_capture() -> DoctorCheck:
 
 
 def _check_meeting_intel_runtime(config: Config) -> DoctorCheck:
-    meeting = config.meeting
-    if not meeting.intel_enabled:
-        return DoctorCheck(
-            name="Meeting intelligence runtime",
-            status="PASS",
-            detail="Disabled in config",
-        )
-
-    from ..intel.providers import effective_intel_cloud
-
-    effective = effective_intel_cloud(meeting)
-    ok, reason = get_intel_runtime_status(
-        meeting.intel_realtime_model,
-        provider=meeting.intel_provider,
-        cloud_model=effective.model,
-        cloud_api_key_env=effective.api_key_env,
-        cloud_base_url=effective.base_url,
-    )
-    if ok:
-        return DoctorCheck(
-            name="Meeting intelligence runtime",
-            status="PASS",
-            detail=f"Provider mode `{meeting.intel_provider}` is ready",
-        )
-
-    fix = None
-    if meeting.intel_provider == "cloud":
-        fix = (
-            "Set the key in Settings → Models → [destination], then verify "
-            f"cloud model '{effective.model}'. For a headless/service hub, set {effective.api_key_env}."
-        )
-    elif meeting.intel_provider == "auto":
-        fix = (
-            f"Provide a local model at '{meeting.intel_realtime_model}' "
-            "or set the key in Settings → Models → [destination] for cloud fallback. "
-            f"For a headless/service hub, set {effective.api_key_env}."
-        )
-    else:
-        fix = f"Set a valid local model path (currently '{meeting.intel_realtime_model}')."
-
+    # HS-201: ordinary Web Record is capture-only until the owner asks for a
+    # summary. The retained config flag does not enable live analysis here.
     return DoctorCheck(
         name="Meeting intelligence runtime",
-        status="WARN",
-        detail=reason or "Meeting intelligence runtime is unavailable",
-        fix=fix,
-    )
-
-
-def _normalize_cloud_base_url(base_url: str | None) -> str:
-    from ..intel.models import DEFAULT_CLOUD_BASE_URL
-
-    value = (base_url or "").strip()
-    if value:
-        return value.rstrip("/")
-    return DEFAULT_CLOUD_BASE_URL
-
-
-def _describe_preflight_network_error(host: str, reason: object) -> tuple[str, str]:
-    if isinstance(reason, socket.gaierror):
-        return (
-            f"DNS lookup failed for `{host}`.",
-            "Verify hostname/IP and local DNS routing (VPN/LAN).",
-        )
-    if isinstance(reason, (socket.timeout, TimeoutError)):
-        return (
-            f"Connection to `{host}` timed out.",
-            "Check host reachability, firewall rules, and network latency.",
-        )
-    if isinstance(reason, ConnectionRefusedError):
-        return (
-            f"Connection refused by `{host}`.",
-            "Ensure the intel API service is running and listening on the configured port.",
-        )
-    if isinstance(reason, ssl.SSLError):
-        return (
-            f"TLS handshake failed for `{host}`: {reason}",
-            "Fix certificate chain/hostname, or use a trusted LAN cert.",
-        )
-    return (
-        f"Unable to reach `{host}`: {reason}",
-        "Verify endpoint address, network routing, and service availability.",
+        status="PASS",
+        detail="Live analysis is off for Record.",
     )
 
 
 def _check_meeting_intel_egress(config: Config) -> DoctorCheck:
     """Surface, plainly, whether the active config can send transcripts off-machine."""
-    meeting = config.meeting
-    if not meeting.intel_enabled:
-        return DoctorCheck(
-            name="Meeting intelligence egress",
-            status="PASS",
-            detail="Disabled — no transcript leaves this machine.",
-        )
-
-    can_transmit, description = intel_egress_posture(
-        meeting.intel_provider, meeting_cfg=meeting
-    )
-    if not can_transmit:
-        return DoctorCheck(
-            name="Meeting intelligence egress",
-            status="PASS",
-            detail=description,
-        )
-
-    # HS-84-04: name where the cloud leg ACTUALLY goes — an assigned
-    # RuntimeProfile (HS-84-01) is the endpoint, not the raw legacy fields.
-    from ..intel.providers import effective_intel_cloud, endpoint_host
-
-    effective = effective_intel_cloud(meeting)
-    if effective.profile_id:
-        destination = (
-            f" Runs on profile '{effective.profile_name}'"
-            f" ({endpoint_host(effective.base_url) or effective.base_url})."
-        )
-    elif effective.reason:
-        destination = f" NOTE: {effective.reason}."
-    else:
-        destination = ""
-
-    # Cloud is a legitimate, user-chosen option; we surface it loudly so it is
-    # never a surprise, but it is not a failure.
+    # HS-201: this check describes ordinary Web Record. Dictation and a later
+    # manual summary can have their own route and egress posture.
     return DoctorCheck(
         name="Meeting intelligence egress",
-        status="WARN",
-        detail=f"provider=`{meeting.intel_provider}`: {description}{destination}",
-        fix=(
-            "This is expected if you chose cloud intentionally. To keep all "
-            "transcripts local, set meeting.intel_provider to 'local'."
-        ),
+        status="PASS",
+        detail="Live analysis is off for Record.",
     )
 
 
 def _check_trust_destinations(config: Config) -> DoctorCheck:
     """Render the canonical destination inventory used by both trust UIs."""
+    from ..db import get_database
     from ..trust_destinations import destination_inventory
 
-    enabled = [row for row in destination_inventory(config) if row["enabled"]]
+    try:
+        database = get_database()
+    except Exception:
+        database = None
+    enabled = [
+        row
+        for row in destination_inventory(config, database=database)
+        if row["enabled"]
+    ]
     if not enabled:
         return DoctorCheck(
             name="Trust destinations",
             status="PASS",
-            detail="No external destination is enabled.",
+            detail="No listed destination is enabled.",
         )
     names = ", ".join(str(row["name"]) for row in enabled)
     return DoctorCheck(
@@ -553,152 +443,12 @@ def _check_web_auth(config: Config) -> DoctorCheck:
 def _check_meeting_intel_cloud_preflight(
     config: Config, *, timeout_seconds: float = 4.0, skip_network: bool = False
 ) -> DoctorCheck:
-    meeting = config.meeting
-    if not meeting.intel_enabled:
-        return DoctorCheck(
-            name="Cloud intel preflight",
-            status="PASS",
-            detail="Skipped (meeting intelligence disabled)",
-        )
-    if meeting.intel_provider == "local":
-        return DoctorCheck(
-            name="Cloud intel preflight",
-            status="PASS",
-            detail="Skipped (provider mode `local`)",
-        )
-    if skip_network:
-        return DoctorCheck(
-            name="Cloud intel preflight",
-            status="PASS",
-            detail="Not run (network preflight skipped at setup load)",
-            fix="Run `holdspeak doctor` for a live cloud-endpoint preflight.",
-        )
-
-    from ..intel.providers import effective_intel_cloud
-
-    effective = effective_intel_cloud(meeting)
-    api_key_env = (effective.api_key_env or "OPENAI_API_KEY").strip() or "OPENAI_API_KEY"
-    try:
-        api_key = resolve_profile_key(api_key_env) or ""
-    except ProfileKeyStoreError:
-        api_key = ""
-    if not api_key:
-        return DoctorCheck(
-            name="Cloud intel preflight",
-            status="WARN",
-            detail=f"Missing API key in ${api_key_env}",
-            fix=(
-                "Set the key in Settings → Models → [destination] before running cloud intel. "
-                f"For a headless/service hub, set {api_key_env}."
-            ),
-        )
-
-    base_url = _normalize_cloud_base_url(effective.base_url)
-    parsed = urlparse(base_url)
-    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        return DoctorCheck(
-            name="Cloud intel preflight",
-            status="WARN",
-            detail=f"Invalid cloud base URL: {base_url}",
-            fix="Set the destination's endpoint URL to a valid http(s) URL, e.g. http://homelab.local:8000/v1.",
-        )
-
-    models_url = f"{base_url}/models"
-    request = urlrequest.Request(
-        models_url,
-        headers={
-            "Accept": "application/json",
-            "Authorization": f"Bearer {api_key}",
-        },
-        method="GET",
-    )
-
-    try:
-        with urlrequest.urlopen(request, timeout=timeout_seconds) as response:
-            payload_bytes = response.read()
-    except urlerror.HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="replace").strip()
-        if exc.code in {401, 403}:
-            return DoctorCheck(
-                name="Cloud intel preflight",
-                status="WARN",
-                detail=f"Auth rejected by `{models_url}` (HTTP {exc.code}).",
-                fix=f"Check token in ${api_key_env} and endpoint auth configuration.",
-            )
-        if exc.code == 404:
-            return DoctorCheck(
-                name="Cloud intel preflight",
-                status="WARN",
-                detail=f"`{models_url}` returned HTTP 404.",
-                fix="Verify the destination's endpoint URL includes the correct API prefix (commonly `/v1`).",
-            )
-        return DoctorCheck(
-            name="Cloud intel preflight",
-            status="WARN",
-            detail=f"`{models_url}` returned HTTP {exc.code}: {body[:140] or 'no response body'}",
-            fix="Confirm endpoint compatibility and API access policy.",
-        )
-    except urlerror.URLError as exc:
-        host = parsed.hostname or parsed.netloc or base_url
-        detail, fix = _describe_preflight_network_error(host, exc.reason)
-        return DoctorCheck(
-            name="Cloud intel preflight",
-            status="WARN",
-            detail=detail,
-            fix=fix,
-        )
-    except TimeoutError:
-        host = parsed.hostname or parsed.netloc or base_url
-        return DoctorCheck(
-            name="Cloud intel preflight",
-            status="WARN",
-            detail=f"Connection to `{host}` timed out.",
-            fix="Check host reachability, firewall rules, and endpoint load.",
-        )
-    except Exception as exc:
-        return DoctorCheck(
-            name="Cloud intel preflight",
-            status="WARN",
-            detail=f"Unexpected preflight failure: {exc}",
-            fix="Verify endpoint compatibility with the OpenAI `/models` API.",
-        )
-
-    try:
-        payload = json.loads(payload_bytes.decode("utf-8", errors="replace"))
-    except Exception:
-        payload = None
-
-    configured_model = (effective.model or "").strip()
-    model_ids: list[str] = []
-    if isinstance(payload, dict):
-        data = payload.get("data")
-        if isinstance(data, list):
-            for row in data:
-                if isinstance(row, dict):
-                    model_id = row.get("id")
-                    if isinstance(model_id, str) and model_id.strip():
-                        model_ids.append(model_id.strip())
-
-    if model_ids and configured_model and configured_model not in model_ids:
-        sample = ", ".join(model_ids[:5])
-        return DoctorCheck(
-            name="Cloud intel preflight",
-            status="WARN",
-            detail=f"Endpoint reachable, but model `{configured_model}` is unavailable.",
-            fix=f"Set the destination's model to a served model id (examples: {sample}).",
-        )
-
-    if not model_ids:
-        return DoctorCheck(
-            name="Cloud intel preflight",
-            status="PASS",
-            detail=f"Endpoint reachable at `{base_url}` (model list unavailable; model check skipped).",
-        )
-
+    # HS-201: no legacy cloud probe belongs to ordinary Web Record. This
+    # remains a named check so setup and doctor keep their stable shape.
     return DoctorCheck(
         name="Cloud intel preflight",
         status="PASS",
-        detail=f"Endpoint reachable at `{base_url}` and model `{configured_model}` is available.",
+        detail="Live analysis is off for Record.",
     )
 
 
@@ -753,34 +503,66 @@ def _check_dictation_project_context(config: Config) -> DoctorCheck:
 
 
 def _check_runtime_profiles(config: Config) -> DoctorCheck:
-    """HS-84-04: name the RuntimeProfile each hub pipeline resolves to.
+    """Name the assigned summary route and each enabled dictation profile.
 
-    One honest line per enabled pipeline (meeting intel, dictation). A
-    dangling assignment is a WARN with the resolver's own reason; an adopted
+    The summary line reads the current SERVICE route. The legacy meeting config
+    pointer is deliberately not a source of truth for that route. A dangling
+    dictation assignment is a WARN with the resolver's own reason; an adopted
     profile that `requires_key` with no key in the hub's env is a WARN naming
     the exact env var. Never FAIL — every fallback keeps the pipeline running.
     """
     from ..intel.providers import (
         _lookup_profile_record,
         effective_dictation_llm,
-        effective_intel_cloud,
         endpoint_host,
         profile_key_env,
     )
 
+    lines: list[str] = []
+    try:
+        from ..db import get_database
+        from ..services.meeting_route_projection import summary_route_display
+
+        summary_route = summary_route_display(get_database())
+    except Exception:
+        # Doctor must remain readable while the database is unavailable. The
+        # route helper owns the detailed unavailable reason when it can run.
+        summary_route = {
+            "status": "unavailable",
+            "reason_code": "route unavailable",
+            "legs": [],
+        }
+    if summary_route.get("status") == "ready" and summary_route.get("legs"):
+        for leg in summary_route["legs"]:
+            profile_label = str(
+                leg.get("profile_label") or leg.get("profile_id") or "unknown"
+            )
+            node = str(leg.get("node") or "").strip()
+            host = str(leg.get("host") or "unavailable").strip()
+            if node:
+                destination = f"mesh node '{node}'"
+            elif str(leg.get("boundary") or "") == "local":
+                destination = "This device"
+            else:
+                destination = host
+            lines.append(
+                f"Meeting summary: profile '{profile_label}' ({destination})"
+            )
+    else:
+        reason = str(summary_route.get("reason_code") or "route unavailable")
+        lines.append(f"Meeting summary: unavailable ({reason})")
+    lines.append("Live analysis is off for Record.")
+
     pipelines: list[tuple[str, object]] = []
-    if config.meeting.intel_enabled:
-        pipelines.append(("meeting intel", effective_intel_cloud(config.meeting)))
     if config.dictation.pipeline.enabled:
         pipelines.append(("dictation", effective_dictation_llm(config.dictation.runtime)))
     if not pipelines:
         return DoctorCheck(
             name="Runtime profiles",
             status="PASS",
-            detail="no pipeline enabled — nothing resolves through a profile",
+            detail="; ".join(lines + ["no dictation pipeline is enabled"]),
         )
 
-    lines: list[str] = []
     warns: list[str] = []
     fixes: list[str] = []
     for label, effective in pipelines:

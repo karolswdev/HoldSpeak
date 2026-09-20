@@ -16,6 +16,8 @@ import pytest
 pytest.importorskip("playwright.sync_api", reason="glass walk needs Playwright")
 pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependencies")
 
+from .glass_infra import seed_meeting_engines
+
 SHOT_DIR = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-145-the-door-polish/assets/story-03-shots"
 TOKEN = "hs145-door-polish"
 
@@ -319,6 +321,9 @@ def test_hs145_connect_calendar_affordance_and_quiet_state(
             page.emulate_media(reduced_motion="reduce")
             page.on("pageerror", lambda error: errors.append(f"page: {error}"))
             page.on("console", lambda message: _record_console(errors, message))
+            # HS-201-01: the calendar rail is the subject, not setup; pin
+            # the meeting path so the quiet arrival can be quiet.
+            seed_meeting_engines()
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
             _normal_chair(page)
 

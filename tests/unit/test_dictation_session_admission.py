@@ -1316,12 +1316,28 @@ def test_meeting_transcription_children_join_the_existing_meeting_session(
 
     parents = _parents(db, "meeting.session")
     assert len(parents) == 1
-    # Phase B reserves the complete frozen live bundle: intelligence (4096),
-    # speech preload (1), and its routed transcription allocation (17,286).
-    # Keep the legacy helper's 8,418 calculation visible as historical-reader
-    # coverage, but the new parent must carry the aggregate bundle budget.
+    # HS-201-02 Record is speech-only: reserve the speech preload (1) and its
+    # routed transcription allocation (17,286), with no live-intelligence
+    # reservation. Keep the legacy helper's 8,418 calculation visible as
+    # historical-reader coverage, but the new parent carries the speech-only
+    # aggregate bundle budget.
     assert _budget() == 8418
-    assert int(parents[0]["child_budget"]) == 21_383
+    assert int(parents[0]["child_budget"]) == 17_287
+    bundle = session._route_bundle
+    assert bundle is not None
+    assert bundle["parent_child_budget"] == 17_287
+    assert bundle["budget_groups"] == [
+        {"id": "meeting-preload", "allocation": 1, "member_keys": ["preload"]},
+        {
+            "id": "meeting-transcription",
+            "allocation": 17_286,
+            "member_keys": ["transcription"],
+        },
+    ]
+    assert {member["capability_id"] for member in bundle["members"]} == {
+        "speech.preload",
+        "speech.transcribe",
+    }
 
     text = session._transcribe_audio(np.full(16000, AUDIO_SENTINEL, dtype=np.float32))
     assert text == TEXT_SENTINEL

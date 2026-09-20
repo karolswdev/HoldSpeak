@@ -7,6 +7,7 @@ SERVICE policy, parent/bundle service, and later frozen-route execution.
 from __future__ import annotations
 
 import time
+import json
 from dataclasses import dataclass
 from typing import Any, Mapping
 
@@ -15,6 +16,7 @@ from ..meeting_session.deferred_bound import PARENT_KIND, queue_service_principa
 from ..meeting_session.intel_plan import DISPLACED_AUTO_TITLE, DISPLACED_BOOKMARK_LABELS
 from .inference_parent_route_bundle_service import InferenceParentRouteBundleService
 from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
+from .errors import ConflictError
 
 # The lawful bound queue owner is the only remaining consumer of this envelope.
 JOB_DEADLINE_SECONDS = 30 * 60
@@ -124,6 +126,31 @@ class MeetingDeferredQueueBinder:
         if job_id in self._pending:
             return
         principal = queue_service_principal()
+        expected_route = getattr(job, "planned_route", None)
+        if isinstance(expected_route, Mapping):
+            # Claim-time drift fence: the route disclosed by the HTTP gesture
+            # must still be the route the SERVICE resolver would bind.  This is
+            # before parent admission and therefore before any provider call.
+            from .meeting_route_projection import project_route
+            current_route = project_route(
+                self._broker.database,
+                invocation_id=f"meeting:{job.meeting_id}",
+            )
+            if (
+                current_route.get("status") != "ready"
+                or current_route.get("selection_hash")
+                != expected_route.get("selection_hash")
+            ):
+                try:
+                    self._broker.database.intel.record_run_receipt(
+                        str(job.meeting_id), str(job.job_id),
+                        expected_route.get("selection_hash"), "refused", None,
+                    )
+                finally:
+                    raise ConflictError(
+                        "The disclosed route changed before queue claim.",
+                        code="selection_drift",
+                    )
         deadline = float(self._clock()) + JOB_DEADLINE_SECONDS
         routes = self._routes(job)
         child_budget = 0
@@ -219,6 +246,7 @@ class MeetingDeferredQueueBinder:
         pending = self._pending.pop(job_id, None)
         if pending is None:
             raise ValueError("bound queue parent was not prepared")
+        expected_route = getattr(job, "planned_route", None)
         try:
             started = self._bundles.start_in_transaction(
                 conn,
@@ -244,12 +272,49 @@ class MeetingDeferredQueueBinder:
                 admitted_child_budget=pending.admitted_child_budget,
                 admitted_policy_fingerprints=pending.admitted_policy_fingerprints,
             )
+            bundle = started["bundle"]
+            if isinstance(expected_route, Mapping):
+                # ``prepare`` only checked a mutable preview.  Reconstruct the exact
+                # frozen plan that start_in_transaction committed and compare its full
+                # authority material, including assignment identity, entries, policy,
+                # and deployment revisions.  A same-policy assignment swap therefore
+                # cannot retarget this queued job between shell admission and claim.
+                from .meeting_route_projection import selection_hash_for_route_plan
+
+                analysis_member = next(
+                    (
+                        member for member in bundle["members"]
+                        if str(member["capability_id"]) == "meeting.deferred_analysis"
+                    ),
+                    None,
+                )
+                if analysis_member is None:
+                    raise ConflictError(
+                        "The frozen deferred route is missing.",
+                        code="selection_drift",
+                    )
+                row = conn.execute(
+                    "SELECT payload_json FROM inference_route_plans WHERE id=?",
+                    (str(analysis_member["route_plan_id"]),),
+                ).fetchone()
+                frozen = json.loads(str(row["payload_json"])) if row is not None else None
+                actual_hash, frozen_legs = (
+                    selection_hash_for_route_plan(conn, frozen)
+                    if isinstance(frozen, Mapping) else (None, [])
+                )
+                if (
+                    actual_hash != expected_route.get("selection_hash")
+                    or list(expected_route.get("legs") or ()) != frozen_legs
+                ):
+                    raise ConflictError(
+                        "The disclosed route changed before queue claim.",
+                        code="selection_drift",
+                    )
         except Exception:
             # The repository rolls back its writer before calling discard(), which
             # then has the pending shell available for a durable refusal receipt.
             self._pending[job_id] = pending
             raise
-        bundle = started["bundle"]
         return {
             "parent_operation_id": str(started["parent"].operation_id),
             "bundle_id": str(bundle["id"]),

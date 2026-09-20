@@ -197,7 +197,7 @@ left column is the name; do not alternate with the synonyms.
 | the sweep (one Heartbeat evaluation pass) | "the tick", "the poll", "the check" |
 | Rhythm (the Settings module for the Heartbeat) | "cadence settings", "heartbeat config" |
 | the shade (the system pull-down) | "the tray", "the notification panel", "the dropdown" |
-| Run intelligence (the verb on an OFF meeting) | "process", "analyze", "run AI" |
+| Run summary (the verb on an OFF meeting) | "process", "analyze", "run AI", "Run intelligence" |
 | a proposal (an extracted decision or action item awaiting Confirm) | "suggestion", "recommendation", "finding" |
 | Confirm (the verb that commits a proposal) | "accept", "approve", "apply" |
 | the loop (capture to confirmed decision) | "the pipeline", "the workflow", "the auto-intel flow" |

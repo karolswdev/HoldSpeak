@@ -215,6 +215,13 @@ def _boot(
     monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
     monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
     reset_database()
+    # HS-201-04 (counsel item 7): `reset_database()` runs on the way IN and
+    # never on the way out, so the singleton this rig creates — pointing at
+    # its own seeded tmp database — outlived the module and was read by the
+    # next one in the same process. `monkeypatch` restores these to the
+    # `None` they hold right now, so the next module builds its own.
+    monkeypatch.setattr(db_core, "_db", None, raising=False)
+    monkeypatch.setattr(db_core, "_observer", None, raising=False)
 
     kwargs: dict[str, Any] = {}
     if gh_runner is not None:
@@ -354,3 +361,79 @@ def _normal_chair(page: Any) -> None:
     if chair.evaluate("element => element.classList.contains('chair-first-value')"):
         page.get_by_role("button", name="Continue later", exact=True).click()
     page.locator(".chair:not(.chair-first-value)").wait_for()
+
+
+# ── seed_meeting_engines: pin the meeting path so a rig can be quiet ──
+#
+# HS-201-01: the Chair names the ONE thing the meeting path needs. On a
+# cold HOME nothing is assigned, so `Nothing needs you` is no longer the
+# truth of an empty desk -- a SETUP row says `No engine yet`. A rig whose
+# subject is NOT setup (the Door, the arrival's quiet state, the
+# attention band, coverage) pins both halves of the path first, and then
+# asserts the same quiet face it always did.
+
+SUMMARY_CAPABILITY = "meeting.deferred_analysis"
+SPEECH_CAPABILITY = "speech.transcribe"
+ENGINE_PROFILE = "hs201-meeting-engine"
+
+
+def engine_profile(profile_id: str = ENGINE_PROFILE) -> None:
+    """One real local profile that can serve BOTH halves of the path.
+
+    The summary capability declares structured output and its own result
+    schema (`holdspeak/inference_capabilities.py:1068`), so the profile
+    must claim both or the assignment is refused as incompatible;
+    `speech.transcribe` admits audio (`:1063`), so the profile carries the
+    audio modality and that capability's result claim too.
+    """
+    from holdspeak.db import get_database
+    from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+
+    _profile(
+        get_database(),
+        profile_id,
+        claims=(
+            "language",
+            "structured_output",
+            _result_claim(SUMMARY_CAPABILITY),
+            _result_claim(SPEECH_CAPABILITY),
+        ),
+        modalities=("language", "text", "audio"),
+    )
+
+
+def assign_engine(capability: str, ordinal: int, *, profile_id: str = ENGINE_PROFILE) -> None:
+    """Assign that engine to ONE capability, the product's way.
+
+    The real InferenceAssignmentService at `capability:` scope — the only
+    scope the meeting queue's service route policy may read
+    (`inference_service_route_policy.py:43`, `:93`).
+    """
+    from holdspeak.db import get_database
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+
+    db = get_database()
+    owner = Principal(PrincipalKind.OWNER, "hs201-owner")
+    # The head's own revision, exactly as the service reads it
+    # (`inference_assignment_service.py:402`): a cleared head keeps its
+    # revision ledger, so 0 would collide on the next save.
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT revision FROM inference_assignment_heads WHERE assignment_key=?",
+            (f"capability:{capability}",),
+        ).fetchone()
+    expected = int(row["revision"]) if row is not None else 0
+    InferenceAssignmentService(db).set_assignment(owner, {
+        "command_id": f"hs201-assign-{capability.replace('.', '-')}-{ordinal}",
+        "expected_revision": expected,
+        "scope": {"kind": "capability", "capability_id": capability},
+        "entries": [{"profile_id": profile_id, "profile_revision": 1}],
+    })
+
+
+def seed_meeting_engines() -> None:
+    """Both halves of the meeting path assigned: no SETUP row on the Chair."""
+    engine_profile()
+    assign_engine(SUMMARY_CAPABILITY, 1)
+    assign_engine(SPEECH_CAPABILITY, 2)
