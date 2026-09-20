@@ -1,0 +1,4773 @@
+{
+  "walk": "interaction",
+  "date": "2026-09-20",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 900,
+      "reduced_motion": false,
+      "menus": {
+        "menus": [
+          {
+            "menu": "Desk",
+            "count": 13,
+            "entries": [
+              {
+                "label": "New Note \u2318 N",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "New Decision \u2318 \u21e7 N",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "New Knowledge",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "New Agent",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "New Workflow",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "New Workbench",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "New Zone",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "New Thread",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "New Project",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "Hide the menus \u2318 \u21e7 F",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "List view",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "Open Intelligence",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "Open People",
+                "disabled": false,
+                "role": "menuitem"
+              }
+            ]
+          },
+          {
+            "menu": "Object",
+            "count": 10,
+            "entries": [
+              {
+                "label": "Open",
+                "disabled": true,
+                "role": "menuitem"
+              },
+              {
+                "label": "Get Info",
+                "disabled": true,
+                "role": "menuitem"
+              },
+              {
+                "label": "Ask this project \u00b7 Select a Project",
+                "disabled": true,
+                "role": "menuitem"
+              },
+              {
+                "label": "Ask AI",
+                "disabled": true,
+                "role": "menuitem"
+              },
+              {
+                "label": "Continue in thread",
+                "disabled": true,
+                "role": "menuitem"
+              },
+              {
+                "label": "Edit",
+                "disabled": true,
+                "role": "menuitem"
+              },
+              {
+                "label": "Rename F2",
+                "disabled": true,
+                "role": "menuitem"
+              },
+              {
+                "label": "Duplicate",
+                "disabled": true,
+                "role": "menuitem"
+              },
+              {
+                "label": "Move to Zone",
+                "disabled": true,
+                "role": "menuitem"
+              },
+              {
+                "label": "Delete Delete",
+                "disabled": true,
+                "role": "menuitem"
+              }
+            ]
+          },
+          {
+            "menu": "Go",
+            "count": 15,
+            "entries": [
+              {
+                "label": "\u2301 Speak \u2318 1",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "\u2726 Ask AI \u2318 I",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "\u25a3 Meetings \u2318 2",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "\u2699 Settings \u2318 4",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "\u25a7 Change places \u2318 \u21e7 P",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "\u25c9 Agents and coder sessions \u2318 3",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "\u25f7 Rhythm",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "\u00a7 Context",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "\u2692 Workbenches",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "\u224b Activity",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "\u25a4 Desk memory",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "\u2237 Processes",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "\u2318 Commands",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "\u25a3 Models",
+                "disabled": false,
+                "role": "menuitem"
+              },
+              {
+                "label": "\u2197 Connections",
+                "disabled": false,
+                "role": "menuitem"
+              }
+            ]
+          },
+          {
+            "menu": "Window",
+            "count": 8,
+            "entries": [
+              {
+                "label": "Overview \u2303 \u2191",
+                "disabled": true,
+                "role": "menuitem"
+              },
+              {
+                "label": "Close window \u2318 W",
+                "disabled": true,
+                "role": "menuitem"
+              },
+              {
+                "label": "Minimize window \u2318 M",
+                "disabled": true,
+                "role": "menuitem"
+              },
+              {
+                "label": "Cycle windows \u2303 `",
+                "disabled": true,
+                "role": "menuitem"
+              },
+              {
+                "label": "Cycle windows (reverse) \u2303 \u21e7 `",
+                "disabled": true,
+                "role": "menuitem"
+              },
+              {
+                "label": "Snap left",
+                "disabled": true,
+                "role": "menuitem"
+              },
+              {
+                "label": "Snap right",
+                "disabled": true,
+                "role": "menuitem"
+              },
+              {
+                "label": "Maximize",
+                "disabled": true,
+                "role": "menuitem"
+              }
+            ]
+          }
+        ],
+        "presses": [
+          {
+            "menu": "Desk",
+            "verb": "New Note \u2318 N",
+            "effect": "WINDOW:Edit New note PULLOUT:Edit New note REQUEST:39",
+            "requests": [
+              "POST /api/notes",
+              "GET /api/meetings",
+              "GET /api/sync/pull",
+              "GET /api/notes",
+              "GET /api/decisions",
+              "GET /api/recipes"
+            ],
+            "errors": [],
+            "egress": [
+              "GET /api/models",
+              "GET /api/sync/pull"
+            ]
+          },
+          {
+            "menu": "Desk",
+            "verb": "New Decision \u2318 \u21e7 N",
+            "effect": "REQUEST:20 STATE",
+            "requests": [
+              "POST /api/decisions",
+              "GET /api/meetings",
+              "GET /api/sync/pull",
+              "GET /api/notes",
+              "GET /api/decisions",
+              "GET /api/recipes"
+            ],
+            "errors": [],
+            "egress": [
+              "GET /api/models",
+              "GET /api/sync/pull"
+            ]
+          },
+          {
+            "menu": "Desk",
+            "verb": "New Knowledge",
+            "effect": "REQUEST:38 STATE",
+            "requests": [
+              "POST /api/kbs",
+              "GET /api/meetings",
+              "GET /api/sync/pull",
+              "GET /api/notes",
+              "GET /api/decisions",
+              "GET /api/recipes"
+            ],
+            "errors": [],
+            "egress": [
+              "GET /api/models",
+              "GET /api/sync/pull"
+            ]
+          },
+          {
+            "menu": "Desk",
+            "verb": "New Agent",
+            "effect": "WINDOW:Edit New Agent PULLOUT:Edit New Agent REQUEST:20",
+            "requests": [
+              "POST /api/recipes",
+              "GET /api/meetings",
+              "GET /api/sync/pull",
+              "GET /api/notes",
+              "GET /api/decisions",
+              "GET /api/recipes"
+            ],
+            "errors": [],
+            "egress": [
+              "GET /api/models",
+              "GET /api/sync/pull"
+            ]
+          },
+          {
+            "menu": "Desk",
+            "verb": "New Workflow",
+            "effect": "REQUEST:38 STATE",
+            "requests": [
+              "POST /api/workflows",
+              "GET /api/meetings",
+              "GET /api/sync/pull",
+              "GET /api/notes",
+              "GET /api/decisions",
+              "GET /api/recipes"
+            ],
+            "errors": [],
+            "egress": [
+              "GET /api/models",
+              "GET /api/sync/pull"
+            ]
+          },
+          {
+            "menu": "Desk",
+            "verb": "New Workbench",
+            "effect": "WINDOW:New Workbench PULLOUT:New Workbench REQUEST:1",
+            "requests": [
+              "GET /api/workbench-templates"
+            ],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "menu": "Desk",
+            "verb": "New Zone",
+            "effect": "REQUEST:38 STATE",
+            "requests": [
+              "POST /api/directories",
+              "GET /api/meetings",
+              "GET /api/sync/pull",
+              "GET /api/notes",
+              "GET /api/decisions",
+              "GET /api/recipes"
+            ],
+            "errors": [],
+            "egress": [
+              "GET /api/models",
+              "GET /api/sync/pull"
+            ]
+          },
+          {
+            "menu": "Desk",
+            "verb": "New Thread",
+            "effect": "WINDOW:th_de8dbb31e019 PULLOUT:th_de8dbb31e019 REQUEST:21",
+            "requests": [
+              "POST /api/threads",
+              "GET /api/meetings",
+              "GET /api/sync/pull",
+              "GET /api/notes",
+              "GET /api/decisions",
+              "GET /api/recipes"
+            ],
+            "errors": [],
+            "egress": [
+              "GET /api/models",
+              "GET /api/sync/pull"
+            ]
+          },
+          {
+            "menu": "Desk",
+            "verb": "New Project",
+            "effect": "WINDOW:New Project REQUEST:1",
+            "requests": [
+              "GET /api/connections"
+            ],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "menu": "Desk",
+            "verb": "Hide the menus \u2318 \u21e7 F",
+            "effect": "STATE",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "menu": "Desk",
+            "verb": "List view",
+            "effect": "STATE",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "menu": "Desk",
+            "verb": "Open Intelligence",
+            "effect": "WINDOW:Intelligence PULLOUT:Intelligence REQUEST:1",
+            "requests": [
+              "GET /api/brief/latest"
+            ],
+            "errors": [],
+            "egress": [
+              "GET /api/brief/latest"
+            ]
+          },
+          {
+            "menu": "Desk",
+            "verb": "Open People",
+            "effect": "WINDOW:People REQUEST:1",
+            "requests": [
+              "GET /api/people/readiness"
+            ],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "menu": "Object",
+            "verb": "Open",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Object",
+            "verb": "Get Info",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Object",
+            "verb": "Ask this project \u00b7 Select a Project",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Object",
+            "verb": "Ask AI",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Object",
+            "verb": "Continue in thread",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Object",
+            "verb": "Edit",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Object",
+            "verb": "Rename F2",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Object",
+            "verb": "Duplicate",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Object",
+            "verb": "Move to Zone",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Object",
+            "verb": "Delete Delete",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Go",
+            "verb": "\u2301 Speak \u2318 1",
+            "effect": "NOT ASSESSED",
+            "detail": "microphone (a mic gadget on a field)"
+          },
+          {
+            "menu": "Go",
+            "verb": "\u2726 Ask AI \u2318 I",
+            "effect": "WINDOW:Ask AI PULLOUT:Ask AI REQUEST:2",
+            "requests": [
+              "POST /api/inference/assignments/editor",
+              "GET /api/projects"
+            ],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "menu": "Go",
+            "verb": "\u25a3 Meetings \u2318 2",
+            "effect": "WINDOW:Meetings REQUEST:7",
+            "requests": [
+              "GET /api/meetings/facets",
+              "GET /api/meetings",
+              "GET /api/all-action-items",
+              "GET /api/speakers",
+              "GET /api/projects",
+              "GET /api/intel/jobs"
+            ],
+            "errors": [],
+            "egress": [
+              "GET /api/intel/jobs"
+            ]
+          },
+          {
+            "menu": "Go",
+            "verb": "\u2699 Settings \u2318 4",
+            "effect": "WINDOW:Settings REQUEST:4",
+            "requests": [
+              "GET /api/settings",
+              "GET /api/authority/policy",
+              "GET /api/settings/hub",
+              "GET /api/calendar/sources"
+            ],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "menu": "Go",
+            "verb": "\u25a7 Change places \u2318 \u21e7 P",
+            "effect": "WINDOW:Change places",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "menu": "Go",
+            "verb": "\u25c9 Agents and coder sessions \u2318 3",
+            "effect": "WINDOW:Agents REQUEST:2",
+            "requests": [
+              "GET /api/recipes",
+              "GET /api/coders/status"
+            ],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "menu": "Go",
+            "verb": "\u25f7 Rhythm",
+            "effect": "WINDOW:Rhythm REQUEST:7",
+            "requests": [
+              "GET /api/settings/heartbeat",
+              "GET /api/brief/latest",
+              "GET /api/door",
+              "GET /api/projects",
+              "GET /api/cadence/status",
+              "GET /api/cadence/loops"
+            ],
+            "errors": [],
+            "egress": [
+              "GET /api/brief/latest"
+            ]
+          },
+          {
+            "menu": "Go",
+            "verb": "\u00a7 Context",
+            "effect": "WINDOW:Context REQUEST:2",
+            "requests": [
+              "GET /api/constitutional-context",
+              "GET /api/constitutional-context/history"
+            ],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "menu": "Go",
+            "verb": "\u2692 Workbenches",
+            "effect": "WINDOW:Workbenches REQUEST:1",
+            "requests": [
+              "GET /api/workbenches"
+            ],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "menu": "Go",
+            "verb": "\u224b Activity",
+            "effect": "WINDOW:Activity REQUEST:5",
+            "requests": [
+              "GET /api/activity/status",
+              "GET /api/activity/records",
+              "GET /api/activity/project-rules",
+              "GET /api/activity/meeting-candidates",
+              "GET /api/activity/enrichment/connectors"
+            ],
+            "errors": [],
+            "egress": [
+              "GET /api/activity/enrichment/connectors"
+            ]
+          },
+          {
+            "menu": "Go",
+            "verb": "\u25a4 Desk memory",
+            "effect": "WINDOW:Desk memory",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "menu": "Go",
+            "verb": "\u2237 Processes",
+            "effect": "WINDOW:Processes REQUEST:1",
+            "requests": [
+              "GET /api/kernel/events"
+            ],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "menu": "Go",
+            "verb": "\u2318 Commands",
+            "effect": "WINDOW:Commands REQUEST:1",
+            "requests": [
+              "GET /api/settings"
+            ],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "menu": "Go",
+            "verb": "\u25a3 Models",
+            "effect": "WINDOW:Models REQUEST:2",
+            "requests": [
+              "GET /api/concierge/detect",
+              "POST /api/concierge/propose"
+            ],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "menu": "Go",
+            "verb": "\u2197 Connections",
+            "effect": "REQUEST:1 STATE",
+            "requests": [
+              "GET /api/connections"
+            ],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "menu": "Window",
+            "verb": "Overview \u2303 \u2191",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Window",
+            "verb": "Close window \u2318 W",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Window",
+            "verb": "Minimize window \u2318 M",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Window",
+            "verb": "Cycle windows \u2303 `",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Window",
+            "verb": "Cycle windows (reverse) \u2303 \u21e7 `",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Window",
+            "verb": "Snap left",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Window",
+            "verb": "Snap right",
+            "effect": "DISABLED"
+          },
+          {
+            "menu": "Window",
+            "verb": "Maximize",
+            "effect": "DISABLED"
+          }
+        ],
+        "menubar_present": true,
+        "menu_names": [
+          "Desk",
+          "Object",
+          "Go",
+          "Window"
+        ]
+      },
+      "dock": {
+        "items": [
+          {
+            "label": "Intelligence, 1 overdue",
+            "iconOnly": false,
+            "cls": "desk-dock-launch desk-dock-app is-attention",
+            "w": 142,
+            "h": 37
+          },
+          {
+            "label": "Speak",
+            "iconOnly": false,
+            "cls": "desk-dock-launch desk-dock-app",
+            "w": 95,
+            "h": 42
+          },
+          {
+            "label": "Meetings",
+            "iconOnly": false,
+            "cls": "desk-dock-launch desk-dock-app is-run",
+            "w": 111,
+            "h": 44
+          },
+          {
+            "label": "Agents",
+            "iconOnly": false,
+            "cls": "desk-dock-launch desk-dock-app is-run",
+            "w": 98,
+            "h": 44
+          },
+          {
+            "label": "Settings",
+            "iconOnly": false,
+            "cls": "desk-dock-launch desk-dock-app is-run is-front",
+            "w": 105,
+            "h": 44
+          },
+          {
+            "label": "Floor",
+            "iconOnly": false,
+            "cls": "desk-dock-launch",
+            "w": 88,
+            "h": 42
+          },
+          {
+            "label": "Desk memory",
+            "iconOnly": false,
+            "cls": "desk-dock-launch",
+            "w": 119,
+            "h": 30
+          },
+          {
+            "label": "Delivery",
+            "iconOnly": false,
+            "cls": "desk-dock-launch",
+            "w": 84,
+            "h": 26
+          },
+          {
+            "label": "Panes",
+            "iconOnly": false,
+            "cls": "desk-dock-launch",
+            "w": 73,
+            "h": 26
+          },
+          {
+            "label": "\u25cc Hide the menus",
+            "iconOnly": false,
+            "cls": "btn btn--secondary ",
+            "w": 139,
+            "h": 36
+          },
+          {
+            "label": "Change places",
+            "iconOnly": false,
+            "cls": "btn btn--secondary ",
+            "w": 77,
+            "h": 36
+          },
+          {
+            "label": "Record a meeting",
+            "iconOnly": true,
+            "cls": "desk-orb is-idle",
+            "w": 40,
+            "h": 40
+          },
+          {
+            "label": "Focus Change places",
+            "iconOnly": false,
+            "cls": "desk-dock-main",
+            "w": 106,
+            "h": 23
+          },
+          {
+            "label": "Close Change places",
+            "iconOnly": true,
+            "cls": "desk-dock-x",
+            "w": 0,
+            "h": 11
+          },
+          {
+            "label": "Focus Rhythm",
+            "iconOnly": false,
+            "cls": "desk-dock-main",
+            "w": 64,
+            "h": 23
+          },
+          {
+            "label": "Close Rhythm",
+            "iconOnly": true,
+            "cls": "desk-dock-x",
+            "w": 0,
+            "h": 11
+          },
+          {
+            "label": "Focus Context",
+            "iconOnly": false,
+            "cls": "desk-dock-main",
+            "w": 70,
+            "h": 23
+          },
+          {
+            "label": "Close Context",
+            "iconOnly": true,
+            "cls": "desk-dock-x",
+            "w": 0,
+            "h": 11
+          },
+          {
+            "label": "Focus Workbenches",
+            "iconOnly": false,
+            "cls": "desk-dock-main",
+            "w": 94,
+            "h": 23
+          },
+          {
+            "label": "Close Workbenches",
+            "iconOnly": true,
+            "cls": "desk-dock-x",
+            "w": 0,
+            "h": 11
+          },
+          {
+            "label": "Focus Activity",
+            "iconOnly": false,
+            "cls": "desk-dock-main",
+            "w": 76,
+            "h": 23
+          },
+          {
+            "label": "Close Activity",
+            "iconOnly": true,
+            "cls": "desk-dock-x",
+            "w": 0,
+            "h": 11
+          },
+          {
+            "label": "Focus Desk memory",
+            "iconOnly": false,
+            "cls": "desk-dock-main",
+            "w": 94,
+            "h": 23
+          },
+          {
+            "label": "Close Desk memory",
+            "iconOnly": true,
+            "cls": "desk-dock-x",
+            "w": 0,
+            "h": 11
+          },
+          {
+            "label": "Focus Models",
+            "iconOnly": false,
+            "cls": "desk-dock-main",
+            "w": 64,
+            "h": 23
+          },
+          {
+            "label": "Close Models",
+            "iconOnly": true,
+            "cls": "desk-dock-x",
+            "w": 0,
+            "h": 11
+          },
+          {
+            "label": "Focus New Project",
+            "iconOnly": false,
+            "cls": "desk-dock-main",
+            "w": 94,
+            "h": 23
+          },
+          {
+            "label": "Close New Project",
+            "iconOnly": true,
+            "cls": "desk-dock-x",
+            "w": 0,
+            "h": 11
+          },
+          {
+            "label": "Focus Processes",
+            "iconOnly": false,
+            "cls": "desk-dock-main",
+            "w": 82,
+            "h": 23
+          },
+          {
+            "label": "Close Processes",
+            "iconOnly": true,
+            "cls": "desk-dock-x",
+            "w": 0,
+            "h": 11
+          },
+          {
+            "label": "Focus Commands",
+            "iconOnly": false,
+            "cls": "desk-dock-main",
+            "w": 76,
+            "h": 23
+          },
+          {
+            "label": "Close Commands",
+            "iconOnly": true,
+            "cls": "desk-dock-x",
+            "w": 0,
+            "h": 11
+          },
+          {
+            "label": "Focus People",
+            "iconOnly": false,
+            "cls": "desk-dock-main",
+            "w": 64,
+            "h": 23
+          },
+          {
+            "label": "Close People",
+            "iconOnly": true,
+            "cls": "desk-dock-x",
+            "w": 0,
+            "h": 11
+          },
+          {
+            "label": "Overview",
+            "iconOnly": true,
+            "cls": "desk-dock-reset",
+            "w": 26,
+            "h": 22
+          },
+          {
+            "label": "Reset layout",
+            "iconOnly": true,
+            "cls": "desk-dock-reset",
+            "w": 26,
+            "h": 22
+          }
+        ],
+        "presses": [
+          {
+            "verb": "Intelligence, 1 overdue",
+            "effect": "CLICK-FAILED",
+            "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-dock button\").first\\n    - locator resolved to <button type=\"bu"
+          },
+          {
+            "verb": "Speak",
+            "effect": "CLICK-FAILED",
+            "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-dock button\").nth(1)\\n    - locator resolved to <button type=\"b"
+          },
+          {
+            "verb": "Meetings",
+            "effect": "CLICK-FAILED",
+            "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-dock button\").nth(2)\\n    - locator resolved to <button type=\"b"
+          },
+          {
+            "verb": "Agents",
+            "effect": "STATE",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "verb": "Settings",
+            "effect": "STATE",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "verb": "Floor",
+            "effect": "REQUEST:1 STATE",
+            "requests": [
+              "GET /api/delivery/prs"
+            ],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "verb": "Desk memory",
+            "effect": "REQUEST:5 STATE",
+            "requests": [
+              "GET /api/gate/proposals",
+              "GET /api/desk/projections",
+              "GET /api/dictation/corrections",
+              "GET /api/desk/needs-you",
+              "GET /api/brief/latest"
+            ],
+            "errors": [],
+            "egress": [
+              "GET /api/brief/latest"
+            ]
+          },
+          {
+            "verb": "Delivery",
+            "effect": "WINDOW:Delivery REQUEST:6",
+            "requests": [
+              "GET /api/settings",
+              "GET /api/delivery/factory/profiles",
+              "GET /api/delivery/snapshot",
+              "GET /api/delivery/factory/discover",
+              "GET /api/delivery/nodes",
+              "GET /api/delivery/attempts"
+            ],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "verb": "Panes",
+            "effect": "REQUEST:1 STATE",
+            "requests": [
+              "GET /api/coders/steering/panes"
+            ],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "verb": "\u25cc Hide the menus",
+            "effect": "STATE",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "verb": "Change places",
+            "effect": "STATE",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "verb": "Record a meeting",
+            "effect": "NOT ASSESSED",
+            "detail": "microphone"
+          },
+          {
+            "verb": "Focus Change places",
+            "effect": "NOTHING",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "verb": "Close Change places",
+            "effect": "STATE",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "verb": "Focus Rhythm",
+            "effect": "STATE",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "verb": "Close Rhythm",
+            "effect": "STATE",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "verb": "Focus Context",
+            "effect": "STATE",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "verb": "Close Context",
+            "effect": "STATE",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "verb": "Focus Workbenches",
+            "effect": "STATE",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "verb": "Close Workbenches",
+            "effect": "STATE",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "verb": "Focus Activity",
+            "effect": "STATE",
+            "requests": [],
+            "errors": [],
+            "egress": []
+          },
+          {
+            "verb": "Close Activity",
+            "effect": "CLICK-FAILED",
+            "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-dock button\").nth(21)\\n    - locator resolved to <button type=\""
+          },
+          {
+            "verb": "Focus Desk memory",
+            "effect": "CLICK-FAILED",
+            "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-dock button\").nth(22)\\n    - locator resolved to <button type=\""
+          },
+          {
+            "verb": "Close Desk memory",
+            "effect": "CLICK-FAILED",
+            "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-dock button\").nth(23)\\n    - locator resolved to <button type=\""
+          }
+        ],
+        "present": true
+      },
+      "shelf": {
+        "opens_by_keyboard": true,
+        "rows": [
+          {
+            "label": "Speak Search tools and Desk items",
+            "role": null
+          },
+          {
+            "label": "\u25a3 Open Finish the desk rewrite PROJECT",
+            "role": "option"
+          },
+          {
+            "label": "\u25a3 Open Ship the payments platform cutover PROJECT",
+            "role": "option"
+          },
+          {
+            "label": "\u25b8 New Note VERB \u2318N",
+            "role": "option"
+          },
+          {
+            "label": "\u25b8 New Decision VERB \u2318\u21e7N",
+            "role": "option"
+          },
+          {
+            "label": "\u25b8 New Knowledge VERB",
+            "role": "option"
+          },
+          {
+            "label": "\u25b8 New Agent VERB",
+            "role": "option"
+          },
+          {
+            "label": "\u25b8 New Workflow VERB",
+            "role": "option"
+          },
+          {
+            "label": "\u25b8 New Workbench VERB",
+            "role": "option"
+          },
+          {
+            "label": "\u2301 Speak PROGRAM \u23181",
+            "role": "option"
+          },
+          {
+            "label": "\u2726 Ask AI PROGRAM \u2318I",
+            "role": "option"
+          },
+          {
+            "label": "\u25a3 Meetings PROGRAM \u23182",
+            "role": "option"
+          },
+          {
+            "label": "\u2699 Settings PROGRAM \u23184",
+            "role": "option"
+          },
+          {
+            "label": "\u25a7 Change places PROGRAM \u2318\u21e7P",
+            "role": "option"
+          },
+          {
+            "label": "\u25c9 Agents and coder sessions PROGRAM \u23183",
+            "role": "option"
+          },
+          {
+            "label": "\u25f7 Rhythm PROGRAM",
+            "role": "option"
+          },
+          {
+            "label": "\u00a7 Context PROGRAM",
+            "role": "option"
+          },
+          {
+            "label": "\u2692 Workbenches PROGRAM",
+            "role": "option"
+          },
+          {
+            "label": "\u224b Activity PROGRAM",
+            "role": "option"
+          },
+          {
+            "label": "\u25a4 Desk memory PROGRAM",
+            "role": "option"
+          },
+          {
+            "label": "\u2237 Processes PROGRAM",
+            "role": "option"
+          },
+          {
+            "label": "\u2318 Commands PROGRAM",
+            "role": "option"
+          },
+          {
+            "label": "\u25a3 Models PROGRAM",
+            "role": "option"
+          },
+          {
+            "label": "\u2197 Connections PROGRAM",
+            "role": "option"
+          },
+          {
+            "label": "\u25a4 Delivery DRAWER",
+            "role": "option"
+          },
+          {
+            "label": "\u29c9 Panes DRAWER",
+            "role": "option"
+          },
+          {
+            "label": "S Voice SETTINGS",
+            "role": "option"
+          },
+          {
+            "label": "S Sounds & Presence SETTINGS",
+            "role": "option"
+          },
+          {
+            "label": "S Wallpaper SETTINGS",
+            "role": "option"
+          },
+          {
+            "label": "S Meetings SETTINGS",
+            "role": "option"
+          },
+          {
+            "label": "S Rhythm SETTINGS",
+            "role": "option"
+          },
+          {
+            "label": "S Models SETTINGS",
+            "role": "option"
+          }
+        ],
+        "row_count": 32,
+        "escape_closes": true,
+        "enter_opens_something": true,
+        "after_enter_windows": [
+          "Meetings",
+          "Agents",
+          "Settings",
+          "Rhythm",
+          "Workbenches",
+          "Ship the payments platform cutover"
+        ]
+      },
+      "keyboard": {
+        "tab_stops": 32,
+        "no_focus_ring": [],
+        "offscreen_stops": [],
+        "order_inversions": 35,
+        "order_pairs": 496,
+        "first_ten": [
+          "Close People",
+          "Minimize People",
+          "Maximize People",
+          "Set up People",
+          "\u25c8 Intelligence 1",
+          "Speak",
+          "Meetings",
+          "Agents",
+          "Settings",
+          "Floor"
+        ],
+        "escape_closes_window": true,
+        "escape_before": [
+          "Change places"
+        ],
+        "escape_after": []
+      },
+      "owner_jobs": {
+        "jobs": [
+          {
+            "job": "dictate",
+            "query": "Speak",
+            "reached_by_keyboard": true,
+            "windows": [
+              "Speak"
+            ],
+            "shot": "job-speak-1440.png",
+            "first_tab_inside": "Close Speak",
+            "focus_ring": true,
+            "completion": "NOT ASSESSED: the walk never presses the microphone"
+          },
+          {
+            "job": "record to summary",
+            "query": "Meetings",
+            "reached_by_keyboard": true,
+            "windows": [
+              "Meetings"
+            ],
+            "shot": "job-meetings-1440.png",
+            "first_tab_inside": "Close Meetings",
+            "focus_ring": true,
+            "completion": "NOT ASSESSED: needs a real recording; the walk never presses the microphone"
+          },
+          {
+            "job": "write a thought",
+            "query": "Thoughts",
+            "reached_by_keyboard": true,
+            "windows": [
+              "Intelligence"
+            ],
+            "shot": "job-thoughts-1440.png",
+            "first_tab_inside": "Close Intelligence",
+            "focus_ring": true,
+            "completion": "surface reached; verb presses measured separately"
+          },
+          {
+            "job": "find a note later",
+            "query": "Notes",
+            "reached_by_keyboard": true,
+            "windows": [
+              "Change places"
+            ],
+            "shot": "job-notes-1440.png",
+            "first_tab_inside": "Close Change places",
+            "focus_ring": true,
+            "completion": "surface reached; verb presses measured separately"
+          },
+          {
+            "job": "set up an engine",
+            "query": "Models",
+            "reached_by_keyboard": true,
+            "windows": [
+              "Models"
+            ],
+            "shot": "job-models-1440.png",
+            "first_tab_inside": "Close Models",
+            "focus_ring": true,
+            "completion": "surface reached; verb presses measured separately"
+          }
+        ]
+      },
+      "touch": {
+        "desk": {
+          "total": 74,
+          "small": [
+            {
+              "label": "HoldSpeak",
+              "cls": "desk-mark",
+              "w": 106,
+              "h": 22,
+              "x": 12,
+              "y": 2
+            },
+            {
+              "label": "Desk",
+              "cls": "desk-verbbar-title",
+              "w": 47,
+              "h": 22,
+              "x": 120,
+              "y": 3
+            },
+            {
+              "label": "Object",
+              "cls": "desk-verbbar-title",
+              "w": 61,
+              "h": 22,
+              "x": 171,
+              "y": 3
+            },
+            {
+              "label": "Go",
+              "cls": "desk-verbbar-title",
+              "w": 32,
+              "h": 22,
+              "x": 236,
+              "y": 3
+            },
+            {
+              "label": "Window",
+              "cls": "desk-verbbar-title",
+              "w": 61,
+              "h": 22,
+              "x": 272,
+              "y": 3
+            },
+            {
+              "label": "\u2302 THIS DEVICE",
+              "cls": "gadget-chip gadget-chip-egress egress-badge is-local egress-badge-button",
+              "w": 133,
+              "h": 24,
+              "x": 345,
+              "y": 2
+            },
+            {
+              "label": "Desk memory",
+              "cls": "desk-bell",
+              "w": 34,
+              "h": 22,
+              "x": 1118,
+              "y": 3
+            },
+            {
+              "label": "Search \u2318K",
+              "cls": "desk-chip desk-tools-launch",
+              "w": 117,
+              "h": 24,
+              "x": 1154,
+              "y": 2
+            },
+            {
+              "label": "RANKED",
+              "cls": "btn btn--secondary btn--sm surface-filter-token",
+              "w": 70,
+              "h": 26,
+              "x": 256,
+              "y": 104
+            },
+            {
+              "label": "OVERDUE",
+              "cls": "btn btn--ghost btn--sm surface-filter-token",
+              "w": 77,
+              "h": 26,
+              "x": 325,
+              "y": 104
+            },
+            {
+              "label": "DUE TODAY",
+              "cls": "btn btn--ghost btn--sm surface-filter-token",
+              "w": 91,
+              "h": 26,
+              "x": 400,
+              "y": 104
+            },
+            {
+              "label": "NOT RUN",
+              "cls": "btn btn--ghost btn--sm surface-filter-token",
+              "w": 77,
+              "h": 26,
+              "x": 491,
+              "y": 104
+            },
+            {
+              "label": "NO DUE DATE",
+              "cls": "btn btn--ghost btn--sm surface-filter-token",
+              "w": 106,
+              "h": 26,
+              "x": 567,
+              "y": 104
+            },
+            {
+              "label": "WAITING",
+              "cls": "btn btn--ghost btn--sm surface-filter-token",
+              "w": 77,
+              "h": 26,
+              "x": 671,
+              "y": 104
+            },
+            {
+              "label": "Connect calendar",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 124,
+              "h": 24,
+              "x": 348,
+              "y": 136
+            },
+            {
+              "label": "Choose an engine",
+              "cls": "btn btn--secondary btn--sm ",
+              "w": 124,
+              "h": 24,
+              "x": 1054,
+              "y": 234
+            },
+            {
+              "label": "Done",
+              "cls": "btn btn--primary btn--sm ",
+              "w": 44,
+              "h": 24,
+              "x": 1134,
+              "y": 342
+            },
+            {
+              "label": "Name an owner",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 104,
+              "h": 24,
+              "x": 1074,
+              "y": 387
+            },
+            {
+              "label": "Done",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 44,
+              "h": 24,
+              "x": 1134,
+              "y": 432
+            },
+            {
+              "label": "Ack",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 38,
+              "h": 24,
+              "x": 1089,
+              "y": 540
+            },
+            {
+              "label": "Defer",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 51,
+              "h": 24,
+              "x": 1127,
+              "y": 540
+            },
+            {
+              "label": "Ack",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 38,
+              "h": 24,
+              "x": 1089,
+              "y": 585
+            },
+            {
+              "label": "Defer",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 51,
+              "h": 24,
+              "x": 1127,
+              "y": 585
+            },
+            {
+              "label": "Ack",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 38,
+              "h": 24,
+              "x": 1089,
+              "y": 630
+            },
+            {
+              "label": "Defer",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 51,
+              "h": 24,
+              "x": 1127,
+              "y": 630
+            },
+            {
+              "label": "Answer",
+              "cls": "btn btn--primary btn--sm ",
+              "w": 58,
+              "h": 24,
+              "x": 1120,
+              "y": 846
+            },
+            {
+              "label": "Close Models",
+              "cls": "desk-light desk-light-close",
+              "w": 16,
+              "h": 14,
+              "x": 37,
+              "y": 86
+            },
+            {
+              "label": "Minimize Models",
+              "cls": "desk-light desk-light-min",
+              "w": 16,
+              "h": 14,
+              "x": 57,
+              "y": 86
+            },
+            {
+              "label": "Maximize Models",
+              "cls": "desk-light desk-light-max",
+              "w": 16,
+              "h": 14,
+              "x": 77,
+              "y": 86
+            },
+            {
+              "label": "Connections",
+              "cls": "btn btn--primary btn--sm ",
+              "w": 91,
+              "h": 24,
+              "x": 154,
+              "y": 230
+            },
+            {
+              "label": "Add an engine",
+              "cls": "btn btn--ghost btn--sm concierge-add-engine",
+              "w": 104,
+              "h": 24,
+              "x": 85,
+              "y": 334
+            },
+            {
+              "label": "Adjust",
+              "cls": "btn btn--ghost btn--sm concierge-adjust-trigger",
+              "w": 58,
+              "h": 24,
+              "x": 591,
+              "y": 376
+            },
+            {
+              "label": "\u2022 Thoughts & notes \u2014 \u25cb WAITING",
+              "cls": "surface-ledger-line",
+              "w": 584,
+              "h": 33,
+              "x": 52,
+              "y": 419
+            },
+            {
+              "label": "\u2014",
+              "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+              "w": 51,
+              "h": 27,
+              "x": 235,
+              "y": 419
+            },
+            {
+              "label": "\u25a0 Chat \u2014 \u25cb WAITING",
+              "cls": "surface-ledger-line",
+              "w": 584,
+              "h": 33,
+              "x": 52,
+              "y": 478
+            },
+            {
+              "label": "\u2014",
+              "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+              "w": 51,
+              "h": 27,
+              "x": 142,
+              "y": 478
+            },
+            {
+              "label": "\u2013 Writing & dictation \u2014 \u25cb WAITING",
+              "cls": "surface-ledger-line",
+              "w": 584,
+              "h": 33,
+              "x": 52,
+              "y": 537
+            },
+            {
+              "label": "\u2014",
+              "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+              "w": 51,
+              "h": 27,
+              "x": 242,
+              "y": 537
+            },
+            {
+              "label": "\u2215 Speech recognition \u2014 \u25cb WAITING",
+              "cls": "surface-ledger-line",
+              "w": 584,
+              "h": 33,
+              "x": 52,
+              "y": 596
+            },
+            {
+              "label": "\u2014",
+              "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+              "w": 51,
+              "h": 27,
+              "x": 249,
+              "y": 596
+            },
+            {
+              "label": "\u25a0 Meetings \u2014 \u25cb WAITING",
+              "cls": "surface-ledger-line",
+              "w": 584,
+              "h": 33,
+              "x": 52,
+              "y": 654
+            },
+            {
+              "label": "\u2014",
+              "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+              "w": 51,
+              "h": 27,
+              "x": 176,
+              "y": 654
+            },
+            {
+              "label": "\u25e6 Agents & tools \u2014 \u25cb WAITING",
+              "cls": "surface-ledger-line",
+              "w": 584,
+              "h": 33,
+              "x": 52,
+              "y": 713
+            },
+            {
+              "label": "\u2014",
+              "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+              "w": 51,
+              "h": 27,
+              "x": 213,
+              "y": 713
+            },
+            {
+              "label": "\u25cb Background \u2014 \u25cb WAITING",
+              "cls": "surface-ledger-line",
+              "w": 584,
+              "h": 33,
+              "x": 52,
+              "y": 772
+            },
+            {
+              "label": "\u2014",
+              "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+              "w": 51,
+              "h": 27,
+              "x": 195,
+              "y": 772
+            },
+            {
+              "label": "Test",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 44,
+              "h": 24,
+              "x": 592,
+              "y": 839
+            },
+            {
+              "label": "Cancel",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 58,
+              "h": 24,
+              "x": 516,
+              "y": 802
+            },
+            {
+              "label": "Use these",
+              "cls": "btn btn--secondary btn--sm ",
+              "w": 77,
+              "h": 24,
+              "x": 578,
+              "y": 802
+            },
+            {
+              "label": "\u25c8 Intelligence 1",
+              "cls": "desk-dock-launch desk-dock-app is-attention",
+              "w": 142,
+              "h": 37,
+              "x": 43,
+              "y": 857
+            },
+            {
+              "label": "Speak",
+              "cls": "desk-dock-launch desk-dock-app",
+              "w": 95,
+              "h": 42,
+              "x": 189,
+              "y": 854
+            },
+            {
+              "label": "Meetings",
+              "cls": "desk-dock-launch desk-dock-app",
+              "w": 111,
+              "h": 42,
+              "x": 288,
+              "y": 854
+            },
+            {
+              "label": "Agents",
+              "cls": "desk-dock-launch desk-dock-app",
+              "w": 98,
+              "h": 42,
+              "x": 403,
+              "y": 854
+            },
+            {
+              "label": "Settings",
+              "cls": "desk-dock-launch desk-dock-app",
+              "w": 105,
+              "h": 42,
+              "x": 505,
+              "y": 854
+            },
+            {
+              "label": "Floor",
+              "cls": "desk-dock-launch",
+              "w": 88,
+              "h": 42,
+              "x": 614,
+              "y": 854
+            },
+            {
+              "label": "\u25ce Desk memory",
+              "cls": "desk-dock-launch",
+              "w": 119,
+              "h": 30,
+              "x": 706,
+              "y": 860
+            },
+            {
+              "label": "\u25a4 Delivery",
+              "cls": "desk-dock-launch",
+              "w": 84,
+              "h": 26,
+              "x": 829,
+              "y": 862
+            },
+            {
+              "label": "\u29c9 Panes",
+              "cls": "desk-dock-launch",
+              "w": 73,
+              "h": 26,
+              "x": 917,
+              "y": 862
+            },
+            {
+              "label": "\u25cc Hide the menus",
+              "cls": "btn btn--secondary ",
+              "w": 139,
+              "h": 36,
+              "x": 994,
+              "y": 857
+            },
+            {
+              "label": "\u25a7 Places",
+              "cls": "btn btn--secondary ",
+              "w": 77,
+              "h": 36,
+              "x": 1141,
+              "y": 857
+            },
+            {
+              "label": "Record a meeting",
+              "cls": "desk-orb is-idle",
+              "w": 40,
+              "h": 40,
+              "x": 1222,
+              "y": 855
+            },
+            {
+              "label": "\u25a3 Models",
+              "cls": "desk-dock-main",
+              "w": 64,
+              "h": 23,
+              "x": 1272,
+              "y": 864
+            },
+            {
+              "label": "Overview",
+              "cls": "desk-dock-reset",
+              "w": 26,
+              "h": 22,
+              "x": 1341,
+              "y": 864
+            },
+            {
+              "label": "Reset layout",
+              "cls": "desk-dock-reset",
+              "w": 26,
+              "h": 22,
+              "x": 1371,
+              "y": 864
+            }
+          ],
+          "tight": [
+            {
+              "a": "HoldSpeak",
+              "b": "Desk",
+              "gap": 2
+            },
+            {
+              "a": "Desk",
+              "b": "Object",
+              "gap": 4
+            },
+            {
+              "a": "Object",
+              "b": "Go",
+              "gap": 4
+            },
+            {
+              "a": "Go",
+              "b": "Window",
+              "gap": 4
+            },
+            {
+              "a": "Desk memory",
+              "b": "Search \u2318K",
+              "gap": 2
+            },
+            {
+              "a": "OVERDUE",
+              "b": "Connect calendar",
+              "gap": 6
+            },
+            {
+              "a": "DUE TODAY",
+              "b": "Connect calendar",
+              "gap": 6
+            },
+            {
+              "a": "MTG Land the write-receipt channel OVERDUE \u00b7 6 DAY",
+              "b": "MTG Decide the streaming-partials question NO DUE ",
+              "gap": 1
+            },
+            {
+              "a": "MTG Decide the streaming-partials question NO DUE ",
+              "b": "MTG Photograph the placement dial states WAITING O",
+              "gap": 1
+            },
+            {
+              "a": "Meeting recorded: Phase 132 desk review Ack Defer",
+              "b": "Overdue: Land the write-receipt channel Ack Defer",
+              "gap": 1
+            },
+            {
+              "a": "Overdue: Land the write-receipt channel Ack Defer",
+              "b": "Unassigned: Decide the streaming-partials question",
+              "gap": 1
+            },
+            {
+              "a": "Overdue: Land the write-receipt channel Ack Defer",
+              "b": "\u2013 Writing & dictation \u2014 \u25cb WAITING",
+              "gap": 5
+            },
+            {
+              "a": "SEP 18 Phase 132 desk review OFF",
+              "b": "\u25cb Background \u2014 \u25cb WAITING",
+              "gap": 0
+            },
+            {
+              "a": "Close Models",
+              "b": "Minimize Models",
+              "gap": 4
+            },
+            {
+              "a": "Minimize Models",
+              "b": "Maximize Models",
+              "gap": 4
+            },
+            {
+              "a": "Cancel",
+              "b": "Use these",
+              "gap": 4
+            },
+            {
+              "a": "\u25c8 Intelligence 1",
+              "b": "Speak",
+              "gap": 4
+            },
+            {
+              "a": "Speak",
+              "b": "Meetings",
+              "gap": 4
+            },
+            {
+              "a": "Meetings",
+              "b": "Agents",
+              "gap": 4
+            },
+            {
+              "a": "Agents",
+              "b": "Settings",
+              "gap": 4
+            },
+            {
+              "a": "Settings",
+              "b": "Floor",
+              "gap": 4
+            },
+            {
+              "a": "Floor",
+              "b": "\u25ce Desk memory",
+              "gap": 4
+            },
+            {
+              "a": "\u25ce Desk memory",
+              "b": "\u25a4 Delivery",
+              "gap": 4
+            },
+            {
+              "a": "\u25a4 Delivery",
+              "b": "\u29c9 Panes",
+              "gap": 4
+            },
+            {
+              "a": "\u29c9 Panes",
+              "b": "\u25cc Hide the menus",
+              "gap": 4
+            },
+            {
+              "a": "\u25a7 Places",
+              "b": "Record a meeting",
+              "gap": 4
+            },
+            {
+              "a": "\u25a3 Models",
+              "b": "Overview",
+              "gap": 5
+            },
+            {
+              "a": "Overview",
+              "b": "Reset layout",
+              "gap": 4
+            }
+          ],
+          "hoverOnly": [
+            {
+              "label": "Desk memory",
+              "cls": "desk-bell",
+              "w": 34,
+              "h": 22,
+              "x": 1118,
+              "y": 3
+            },
+            {
+              "label": "Record a meeting",
+              "cls": "desk-orb is-idle",
+              "w": 40,
+              "h": 40,
+              "x": 1222,
+              "y": 855
+            },
+            {
+              "label": "Overview",
+              "cls": "desk-dock-reset",
+              "w": 26,
+              "h": 22,
+              "x": 1341,
+              "y": 864
+            },
+            {
+              "label": "Reset layout",
+              "cls": "desk-dock-reset",
+              "w": 26,
+              "h": 22,
+              "x": 1371,
+              "y": 864
+            }
+          ],
+          "iconNoName": [],
+          "docScrollW": 1440,
+          "clientW": 1440
+        },
+        "meetings_window": {
+          "total": 64,
+          "small": [
+            {
+              "label": "HoldSpeak",
+              "cls": "desk-mark",
+              "w": 106,
+              "h": 22,
+              "x": 12,
+              "y": 2
+            },
+            {
+              "label": "Desk",
+              "cls": "desk-verbbar-title",
+              "w": 47,
+              "h": 22,
+              "x": 120,
+              "y": 3
+            },
+            {
+              "label": "Object",
+              "cls": "desk-verbbar-title",
+              "w": 61,
+              "h": 22,
+              "x": 171,
+              "y": 3
+            },
+            {
+              "label": "Go",
+              "cls": "desk-verbbar-title",
+              "w": 32,
+              "h": 22,
+              "x": 236,
+              "y": 3
+            },
+            {
+              "label": "Window",
+              "cls": "desk-verbbar-title",
+              "w": 61,
+              "h": 22,
+              "x": 272,
+              "y": 3
+            },
+            {
+              "label": "\u2302 THIS DEVICE",
+              "cls": "gadget-chip gadget-chip-egress egress-badge is-local egress-badge-button",
+              "w": 133,
+              "h": 24,
+              "x": 345,
+              "y": 2
+            },
+            {
+              "label": "Desk memory",
+              "cls": "desk-bell",
+              "w": 34,
+              "h": 22,
+              "x": 1118,
+              "y": 3
+            },
+            {
+              "label": "Search \u2318K",
+              "cls": "desk-chip desk-tools-launch",
+              "w": 117,
+              "h": 24,
+              "x": 1154,
+              "y": 2
+            },
+            {
+              "label": "RANKED",
+              "cls": "btn btn--secondary btn--sm surface-filter-token",
+              "w": 70,
+              "h": 26,
+              "x": 256,
+              "y": 104
+            },
+            {
+              "label": "OVERDUE",
+              "cls": "btn btn--ghost btn--sm surface-filter-token",
+              "w": 77,
+              "h": 26,
+              "x": 325,
+              "y": 104
+            },
+            {
+              "label": "DUE TODAY",
+              "cls": "btn btn--ghost btn--sm surface-filter-token",
+              "w": 91,
+              "h": 26,
+              "x": 400,
+              "y": 104
+            },
+            {
+              "label": "NOT RUN",
+              "cls": "btn btn--ghost btn--sm surface-filter-token",
+              "w": 77,
+              "h": 26,
+              "x": 491,
+              "y": 104
+            },
+            {
+              "label": "NO DUE DATE",
+              "cls": "btn btn--ghost btn--sm surface-filter-token",
+              "w": 106,
+              "h": 26,
+              "x": 567,
+              "y": 104
+            },
+            {
+              "label": "WAITING",
+              "cls": "btn btn--ghost btn--sm surface-filter-token",
+              "w": 77,
+              "h": 26,
+              "x": 671,
+              "y": 104
+            },
+            {
+              "label": "Connect calendar",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 124,
+              "h": 24,
+              "x": 348,
+              "y": 136
+            },
+            {
+              "label": "Choose an engine",
+              "cls": "btn btn--secondary btn--sm ",
+              "w": 124,
+              "h": 24,
+              "x": 1054,
+              "y": 234
+            },
+            {
+              "label": "Done",
+              "cls": "btn btn--primary btn--sm ",
+              "w": 44,
+              "h": 24,
+              "x": 1134,
+              "y": 342
+            },
+            {
+              "label": "Name an owner",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 104,
+              "h": 24,
+              "x": 1074,
+              "y": 387
+            },
+            {
+              "label": "Done",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 44,
+              "h": 24,
+              "x": 1134,
+              "y": 432
+            },
+            {
+              "label": "Ack",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 38,
+              "h": 24,
+              "x": 1089,
+              "y": 540
+            },
+            {
+              "label": "Defer",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 51,
+              "h": 24,
+              "x": 1127,
+              "y": 540
+            },
+            {
+              "label": "Ack",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 38,
+              "h": 24,
+              "x": 1089,
+              "y": 585
+            },
+            {
+              "label": "Defer",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 51,
+              "h": 24,
+              "x": 1127,
+              "y": 585
+            },
+            {
+              "label": "Ack",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 38,
+              "h": 24,
+              "x": 1089,
+              "y": 630
+            },
+            {
+              "label": "Defer",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 51,
+              "h": 24,
+              "x": 1127,
+              "y": 630
+            },
+            {
+              "label": "Answer",
+              "cls": "btn btn--primary btn--sm ",
+              "w": 58,
+              "h": 24,
+              "x": 1120,
+              "y": 846
+            },
+            {
+              "label": "Close Meetings",
+              "cls": "desk-light desk-light-close",
+              "w": 16,
+              "h": 14,
+              "x": 37,
+              "y": 86
+            },
+            {
+              "label": "Minimize Meetings",
+              "cls": "desk-light desk-light-min",
+              "w": 16,
+              "h": 14,
+              "x": 57,
+              "y": 86
+            },
+            {
+              "label": "Maximize Meetings",
+              "cls": "desk-light desk-light-max",
+              "w": 16,
+              "h": 14,
+              "x": 77,
+              "y": 86
+            },
+            {
+              "label": "OUTCOMES",
+              "cls": "desk-wing is-on",
+              "w": 79,
+              "h": 23,
+              "x": 247,
+              "y": 82
+            },
+            {
+              "label": "REVIEW",
+              "cls": "desk-wing",
+              "w": 66,
+              "h": 23,
+              "x": 325,
+              "y": 82
+            },
+            {
+              "label": "RECORD",
+              "cls": "desk-wing",
+              "w": 66,
+              "h": 23,
+              "x": 389,
+              "y": 82
+            },
+            {
+              "label": "ARTIFACTS",
+              "cls": "desk-wing",
+              "w": 85,
+              "h": 23,
+              "x": 454,
+              "y": 82
+            },
+            {
+              "label": "\u2699\ufe0e",
+              "cls": "desk-wing desk-wing-door",
+              "w": 27,
+              "h": 24,
+              "x": 543,
+              "y": 81
+            },
+            {
+              "label": "Record meeting",
+              "cls": "btn btn--secondary btn--sm ",
+              "w": 110,
+              "h": 24,
+              "x": 473,
+              "y": 177
+            },
+            {
+              "label": "Import",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 58,
+              "h": 24,
+              "x": 591,
+              "y": 177
+            },
+            {
+              "label": "Search meetings",
+              "cls": "",
+              "w": 587,
+              "h": 20,
+              "x": 40,
+              "y": 228
+            },
+            {
+              "label": "Speak Search meetings",
+              "cls": "desk-mic is-idle",
+              "w": 20,
+              "h": 20,
+              "x": 627,
+              "y": 228
+            },
+            {
+              "label": "HAS OPEN ACTIONS",
+              "cls": "",
+              "w": 134,
+              "h": 36,
+              "x": 39,
+              "y": 268
+            },
+            {
+              "label": "Open",
+              "cls": "btn btn--ghost btn--sm ",
+              "w": 44,
+              "h": 24,
+              "x": 605,
+              "y": 330
+            },
+            {
+              "label": "\u25c8 Intelligence 1",
+              "cls": "desk-dock-launch desk-dock-app is-attention",
+              "w": 142,
+              "h": 37,
+              "x": 80,
+              "y": 856
+            },
+            {
+              "label": "Speak",
+              "cls": "desk-dock-launch desk-dock-app",
+              "w": 95,
+              "h": 42,
+              "x": 227,
+              "y": 853
+            },
+            {
+              "label": "Agents",
+              "cls": "desk-dock-launch desk-dock-app",
+              "w": 98,
+              "h": 42,
+              "x": 440,
+              "y": 853
+            },
+            {
+              "label": "Settings",
+              "cls": "desk-dock-launch desk-dock-app",
+              "w": 105,
+              "h": 42,
+              "x": 543,
+              "y": 853
+            },
+            {
+              "label": "Floor",
+              "cls": "desk-dock-launch",
+              "w": 88,
+              "h": 42,
+              "x": 652,
+              "y": 853
+            },
+            {
+              "label": "\u25ce Desk memory",
+              "cls": "desk-dock-launch",
+              "w": 119,
+              "h": 30,
+              "x": 743,
+              "y": 859
+            },
+            {
+              "label": "\u25a4 Delivery",
+              "cls": "desk-dock-launch",
+              "w": 84,
+              "h": 26,
+              "x": 867,
+              "y": 861
+            },
+            {
+              "label": "\u29c9 Panes",
+              "cls": "desk-dock-launch",
+              "w": 73,
+              "h": 26,
+              "x": 955,
+              "y": 861
+            },
+            {
+              "label": "\u25cc Hide the menus",
+              "cls": "btn btn--secondary ",
+              "w": 139,
+              "h": 36,
+              "x": 1032,
+              "y": 856
+            },
+            {
+              "label": "\u25a7 Places",
+              "cls": "btn btn--secondary ",
+              "w": 77,
+              "h": 36,
+              "x": 1179,
+              "y": 856
+            },
+            {
+              "label": "Record a meeting",
+              "cls": "desk-orb is-idle",
+              "w": 40,
+              "h": 40,
+              "x": 1260,
+              "y": 854
+            },
+            {
+              "label": "Overview",
+              "cls": "desk-dock-reset",
+              "w": 26,
+              "h": 22,
+              "x": 1304,
+              "y": 863
+            },
+            {
+              "label": "Reset layout",
+              "cls": "desk-dock-reset",
+              "w": 26,
+              "h": 22,
+              "x": 1334,
+              "y": 863
+            }
+          ],
+          "tight": [
+            {
+              "a": "HoldSpeak",
+              "b": "Desk",
+              "gap": 2
+            },
+            {
+              "a": "Desk",
+              "b": "Object",
+              "gap": 4
+            },
+            {
+              "a": "Object",
+              "b": "Go",
+              "gap": 4
+            },
+            {
+              "a": "Go",
+              "b": "Window",
+              "gap": 4
+            },
+            {
+              "a": "Desk memory",
+              "b": "Search \u2318K",
+              "gap": 2
+            },
+            {
+              "a": "OVERDUE",
+              "b": "Connect calendar",
+              "gap": 6
+            },
+            {
+              "a": "DUE TODAY",
+              "b": "Connect calendar",
+              "gap": 6
+            },
+            {
+              "a": "MTG Land the write-receipt channel OVERDUE \u00b7 6 DAY",
+              "b": "MTG Decide the streaming-partials question NO DUE ",
+              "gap": 1
+            },
+            {
+              "a": "MTG Decide the streaming-partials question NO DUE ",
+              "b": "MTG Photograph the placement dial states WAITING O",
+              "gap": 1
+            },
+            {
+              "a": "Meeting recorded: Phase 132 desk review Ack Defer",
+              "b": "Overdue: Land the write-receipt channel Ack Defer",
+              "gap": 1
+            },
+            {
+              "a": "Overdue: Land the write-receipt channel Ack Defer",
+              "b": "Unassigned: Decide the streaming-partials question",
+              "gap": 1
+            },
+            {
+              "a": "Answer",
+              "b": "\u25a7 Places",
+              "gap": 1
+            },
+            {
+              "a": "Close Meetings",
+              "b": "Minimize Meetings",
+              "gap": 4
+            },
+            {
+              "a": "Minimize Meetings",
+              "b": "Maximize Meetings",
+              "gap": 4
+            },
+            {
+              "a": "ARTIFACTS",
+              "b": "\u2699\ufe0e",
+              "gap": 4
+            },
+            {
+              "a": "\u25c8 Intelligence 1",
+              "b": "Speak",
+              "gap": 4
+            },
+            {
+              "a": "Speak",
+              "b": "Meetings",
+              "gap": 4
+            },
+            {
+              "a": "Meetings",
+              "b": "Agents",
+              "gap": 4
+            },
+            {
+              "a": "Agents",
+              "b": "Settings",
+              "gap": 4
+            },
+            {
+              "a": "Settings",
+              "b": "Floor",
+              "gap": 4
+            },
+            {
+              "a": "Floor",
+              "b": "\u25ce Desk memory",
+              "gap": 4
+            },
+            {
+              "a": "\u25ce Desk memory",
+              "b": "\u25a4 Delivery",
+              "gap": 4
+            },
+            {
+              "a": "\u25a4 Delivery",
+              "b": "\u29c9 Panes",
+              "gap": 4
+            },
+            {
+              "a": "\u29c9 Panes",
+              "b": "\u25cc Hide the menus",
+              "gap": 4
+            },
+            {
+              "a": "\u25a7 Places",
+              "b": "Record a meeting",
+              "gap": 4
+            },
+            {
+              "a": "Record a meeting",
+              "b": "Overview",
+              "gap": 4
+            },
+            {
+              "a": "Overview",
+              "b": "Reset layout",
+              "gap": 4
+            }
+          ],
+          "hoverOnly": [
+            {
+              "label": "Desk memory",
+              "cls": "desk-bell",
+              "w": 34,
+              "h": 22,
+              "x": 1118,
+              "y": 3
+            },
+            {
+              "label": "Speak Search meetings",
+              "cls": "desk-mic is-idle",
+              "w": 20,
+              "h": 20,
+              "x": 627,
+              "y": 228
+            },
+            {
+              "label": "Record a meeting",
+              "cls": "desk-orb is-idle",
+              "w": 40,
+              "h": 40,
+              "x": 1260,
+              "y": 854
+            },
+            {
+              "label": "Overview",
+              "cls": "desk-dock-reset",
+              "w": 26,
+              "h": 22,
+              "x": 1304,
+              "y": 863
+            },
+            {
+              "label": "Reset layout",
+              "cls": "desk-dock-reset",
+              "w": 26,
+              "h": 22,
+              "x": 1334,
+              "y": 863
+            }
+          ],
+          "iconNoName": [],
+          "docScrollW": 1440,
+          "clientW": 1440
+        },
+        "shot": "touch-meetings-1440.png"
+      },
+      "motion": {
+        "longTransitions": [],
+        "geometryTransitions": [],
+        "running": [
+          {
+            "dur": 200
+          },
+          {
+            "dur": 200
+          },
+          {
+            "dur": 200
+          },
+          {
+            "dur": 200
+          },
+          {
+            "dur": 200
+          }
+        ],
+        "reducedMotionMatches": false
+      },
+      "surfaces": {
+        "Intelligence": {
+          "query": "Intelligence",
+          "opened_windows": [
+            "Intelligence"
+          ],
+          "status": "open",
+          "title_matches_query": true,
+          "unrequested_windows": [],
+          "cleared_before_probe": 0,
+          "shot": "surface-intelligence-1440.png",
+          "window_grammar": [
+            {
+              "name": "Intelligence",
+              "title": "Intelligence",
+              "sheet": false,
+              "max": false,
+              "lights": [
+                "Close Intelligence",
+                "Minimize Intelligence",
+                "Maximize Intelligence"
+              ],
+              "hasHead": true,
+              "hasFoot": true,
+              "scrollers": 0,
+              "scrollerCls": [],
+              "overflowX": 3,
+              "rect": {
+                "x": 1022,
+                "y": 64,
+                "w": 400,
+                "h": 588
+              },
+              "outsideViewport": false
+            }
+          ],
+          "verb_count": 12,
+          "raw_buttons": [
+            "BRIEF",
+            "FOLLOW-THROUGH",
+            "DECISIONS"
+          ],
+          "icon_no_name": [],
+          "presses": [
+            {
+              "verb": "Close Intelligence",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Minimize Intelligence",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Maximize Intelligence",
+              "disabled": false,
+              "effect": "CLICK-FAILED",
+              "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-window[aria-label=\\\\\"Intelligence\\\\\"] button, .desk-window[aria",
+              "cleanup_closed": 0
+            },
+            {
+              "verb": "BRIEF",
+              "disabled": false,
+              "effect": "CLICK-FAILED",
+              "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-window[aria-label=\\\\\"Intelligence\\\\\"] button, .desk-window[aria",
+              "cleanup_closed": 0
+            },
+            {
+              "verb": "FOLLOW-THROUGH",
+              "disabled": false,
+              "effect": "CLICK-FAILED",
+              "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-window[aria-label=\\\\\"Intelligence\\\\\"] button, .desk-window[aria",
+              "cleanup_closed": 0
+            },
+            {
+              "verb": "DECISIONS",
+              "disabled": false,
+              "effect": "CLICK-FAILED",
+              "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-window[aria-label=\\\\\"Intelligence\\\\\"] button, .desk-window[aria",
+              "cleanup_closed": 0
+            },
+            {
+              "verb": "Phase 132 desk review",
+              "disabled": false,
+              "effect": "CLICK-FAILED",
+              "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-window[aria-label=\\\\\"Intelligence\\\\\"] button, .desk-window[aria",
+              "cleanup_closed": 0
+            },
+            {
+              "verb": "Land the write-receipt channel",
+              "disabled": false,
+              "effect": "CLICK-FAILED",
+              "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-window[aria-label=\\\\\"Intelligence\\\\\"] button, .desk-window[aria",
+              "cleanup_closed": 0
+            },
+            {
+              "verb": "Decide the streaming-partials question",
+              "disabled": false,
+              "effect": "CLICK-FAILED",
+              "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-window[aria-label=\\\\\"Intelligence\\\\\"] button, .desk-window[aria",
+              "cleanup_closed": 0
+            },
+            {
+              "verb": "Acknowledge",
+              "disabled": true,
+              "effect": "DISABLED"
+            },
+            {
+              "verb": "Defer",
+              "disabled": true,
+              "effect": "DISABLED"
+            },
+            {
+              "verb": "Speak",
+              "disabled": true,
+              "effect": "DISABLED"
+            }
+          ],
+          "dead_verbs": []
+        },
+        "Speak": {
+          "query": "Speak",
+          "opened_windows": [
+            "Speak"
+          ],
+          "status": "open",
+          "title_matches_query": true,
+          "unrequested_windows": [],
+          "cleared_before_probe": 0,
+          "shot": "surface-speak-1440.png",
+          "window_grammar": [
+            {
+              "name": "Speak",
+              "title": "Speak",
+              "sheet": false,
+              "max": false,
+              "lights": [
+                "Close Speak",
+                "Minimize Speak",
+                "Maximize Speak"
+              ],
+              "hasHead": true,
+              "hasFoot": true,
+              "scrollers": 0,
+              "scrollerCls": [],
+              "overflowX": 3,
+              "rect": {
+                "x": 24,
+                "y": 72,
+                "w": 640,
+                "h": 560
+              },
+              "outsideViewport": false
+            }
+          ],
+          "verb_count": 15,
+          "raw_buttons": [
+            "SPEAK",
+            "JOURNAL",
+            "BLOCKS",
+            "LEARNED",
+            "\u2699\ufe0e",
+            "TALK",
+            "\u25c9 OPEN",
+            "\u25b8 Details"
+          ],
+          "icon_no_name": [],
+          "presses": [
+            {
+              "verb": "Close Speak",
+              "disabled": false,
+              "effect": "REQUEST:2 STATE",
+              "requests": [
+                "POST /api/dictation/mic/close",
+                "POST /api/dictation/floor/release"
+              ],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Minimize Speak",
+              "disabled": false,
+              "effect": "REQUEST:2 STATE",
+              "requests": [
+                "POST /api/dictation/mic/close",
+                "POST /api/dictation/floor/release"
+              ],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Maximize Speak",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "SPEAK",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "JOURNAL",
+              "disabled": false,
+              "effect": "REQUEST:4 STATE",
+              "requests": [
+                "POST /api/dictation/mic/close",
+                "POST /api/dictation/floor/release",
+                "GET /api/dictation/readiness",
+                "GET /api/dictation/journal"
+              ],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "BLOCKS",
+              "disabled": false,
+              "effect": "REQUEST:1 STATE",
+              "requests": [
+                "GET /api/dictation/blocks"
+              ],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "LEARNED",
+              "disabled": false,
+              "effect": "REQUEST:3 STATE",
+              "requests": [
+                "GET /api/dictation/readiness",
+                "GET /api/dictation/blocks",
+                "GET /api/dictation/corrections"
+              ],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Configure dictation",
+              "disabled": false,
+              "effect": "REQUEST:6 STATE",
+              "requests": [
+                "GET /api/dictation/readiness",
+                "GET /api/dictation/learning-digest",
+                "GET /api/dictation/project-kb",
+                "GET /api/dictation/project-hs",
+                "GET /api/dictation/agent-hooks",
+                "GET /api/activity/nudges"
+              ],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Talk",
+              "disabled": false,
+              "effect": "NOT ASSESSED",
+              "detail": "microphone"
+            },
+            {
+              "verb": "Open mic",
+              "disabled": false,
+              "effect": "NOT ASSESSED",
+              "detail": "microphone"
+            },
+            {
+              "verb": "Choose",
+              "disabled": false,
+              "effect": "REQUEST:2",
+              "requests": [
+                "GET /api/dictation/project-kb",
+                "GET /api/dictation/project-hs"
+              ],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Re-check",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "\u25b8 Details",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Review",
+              "disabled": false,
+              "effect": "REQUEST:9 STATE",
+              "requests": [
+                "GET /api/missioncontrol/state",
+                "GET /api/missioncontrol/sessions",
+                "GET /api/missioncontrol/events",
+                "GET /api/missioncontrol/receipts",
+                "GET /api/coders/steering/grants",
+                "GET /api/desk/projections"
+              ],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Export",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            }
+          ],
+          "dead_verbs": [
+            "SPEAK"
+          ]
+        },
+        "Meetings": {
+          "query": "Meetings",
+          "opened_windows": [
+            "Meetings"
+          ],
+          "status": "open",
+          "title_matches_query": true,
+          "unrequested_windows": [],
+          "cleared_before_probe": 0,
+          "shot": "surface-meetings-1440.png",
+          "window_grammar": [
+            {
+              "name": "Meetings",
+              "title": "Meetings",
+              "sheet": false,
+              "max": false,
+              "lights": [
+                "Close Meetings",
+                "Minimize Meetings",
+                "Maximize Meetings"
+              ],
+              "hasHead": true,
+              "hasFoot": true,
+              "scrollers": 0,
+              "scrollerCls": [],
+              "overflowX": 3,
+              "rect": {
+                "x": 24,
+                "y": 72,
+                "w": 640,
+                "h": 619
+              },
+              "outsideViewport": false
+            }
+          ],
+          "verb_count": 13,
+          "raw_buttons": [
+            "OUTCOMES",
+            "REVIEW",
+            "RECORD",
+            "ARTIFACTS",
+            "\u2699\ufe0e",
+            "Speak Search meetings"
+          ],
+          "icon_no_name": [],
+          "presses": [
+            {
+              "verb": "Close Meetings",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Minimize Meetings",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Maximize Meetings",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "OUTCOMES",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "REVIEW",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "RECORD",
+              "disabled": false,
+              "effect": "NOT ASSESSED",
+              "detail": "microphone"
+            },
+            {
+              "verb": "ARTIFACTS",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Meeting plumbing",
+              "disabled": false,
+              "effect": "REQUEST:1 STATE",
+              "requests": [
+                "GET /api/settings"
+              ],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Record meeting",
+              "disabled": false,
+              "effect": "NOT ASSESSED",
+              "detail": "microphone"
+            },
+            {
+              "verb": "Import",
+              "disabled": false,
+              "effect": "WINDOW:Ship the payments platform cutover REQUEST:13",
+              "requests": [
+                "GET /api/projects/proj-ed8fe2cf4c42/room",
+                "GET /api/ask-tasks",
+                "GET /api/projects/proj-ed8fe2cf4c42/briefs",
+                "GET /api/projects/proj-ed8fe2cf4c42/meetings",
+                "GET /api/decisions",
+                "GET /api/projects/proj-ed8fe2cf4c42/artifacts"
+              ],
+              "errors": [],
+              "egress": [
+                "GET /api/ask-tasks",
+                "GET /api/projects/proj-ed8fe2cf4c42/briefs"
+              ],
+              "cleanup_closed": 1
+            },
+            {
+              "verb": "Speak Search meetings",
+              "disabled": false,
+              "effect": "NOT ASSESSED",
+              "detail": "microphone"
+            },
+            {
+              "verb": "Phase 132 desk review SEP 18 \u00b7 NO TRANSCRIPT",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Open",
+              "disabled": false,
+              "effect": "REQUEST:9 STATE",
+              "requests": [
+                "GET /api/meetings/walk-meeting-1/sync-conflicts",
+                "GET /api/meetings/walk-meeting-1/intel-recovery",
+                "GET /api/meetings/walk-meeting-1",
+                "GET /api/meetings/walk-meeting-1/artifacts",
+                "GET /api/meetings/walk-meeting-1/aftercare",
+                "GET /api/meetings/walk-meeting-1/intent-timeline"
+              ],
+              "errors": [],
+              "egress": [
+                "GET /api/meetings/walk-meeting-1/intel-recovery",
+                "GET /api/meetings/walk-meeting-1/sync-conflicts"
+              ]
+            }
+          ],
+          "dead_verbs": [
+            "OUTCOMES",
+            "ARTIFACTS"
+          ]
+        },
+        "Agents": {
+          "query": "Agents",
+          "opened_windows": [
+            "Agents"
+          ],
+          "status": "open",
+          "title_matches_query": true,
+          "unrequested_windows": [],
+          "cleared_before_probe": 0,
+          "shot": "surface-agents-1440.png",
+          "window_grammar": [
+            {
+              "name": "Agents",
+              "title": "Agents",
+              "sheet": false,
+              "max": false,
+              "lights": [
+                "Close Agents",
+                "Minimize Agents",
+                "Maximize Agents"
+              ],
+              "hasHead": true,
+              "hasFoot": true,
+              "scrollers": 0,
+              "scrollerCls": [],
+              "overflowX": 3,
+              "rect": {
+                "x": 24,
+                "y": 72,
+                "w": 640,
+                "h": 619
+              },
+              "outsideViewport": false
+            }
+          ],
+          "verb_count": 9,
+          "raw_buttons": [
+            "ROSTER",
+            "DELIVERY",
+            "\u2699\ufe0e"
+          ],
+          "icon_no_name": [],
+          "presses": [
+            {
+              "verb": "Close Agents",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Minimize Agents",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Maximize Agents",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "ROSTER",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "DELIVERY",
+              "disabled": false,
+              "effect": "REQUEST:1 STATE",
+              "requests": [
+                "GET /api/delivery/prs"
+              ],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "How it connects",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "/Users/karol/dev/tools/wt-202-audit BLOCKED",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Answer",
+              "disabled": false,
+              "effect": "WINDOW:th_7ac5a7368c4b PULLOUT:th_7ac5a7368c4b REQUEST:23",
+              "requests": [
+                "POST /api/threads",
+                "GET /api/meetings",
+                "GET /api/sync/pull",
+                "GET /api/notes",
+                "GET /api/decisions",
+                "GET /api/recipes"
+              ],
+              "errors": [],
+              "egress": [
+                "GET /api/models",
+                "GET /api/sync/pull"
+              ],
+              "cleanup_closed": 8
+            },
+            {
+              "verb": "New Agent OK",
+              "disabled": false,
+              "effect": "WINDOW:th_c05e7848fdf6 PULLOUT:th_c05e7848fdf6 REQUEST:23",
+              "requests": [
+                "POST /api/threads",
+                "GET /api/meetings",
+                "GET /api/sync/pull",
+                "GET /api/notes",
+                "GET /api/decisions",
+                "GET /api/recipes"
+              ],
+              "errors": [],
+              "egress": [
+                "GET /api/models",
+                "GET /api/sync/pull"
+              ],
+              "cleanup_closed": 8
+            }
+          ],
+          "dead_verbs": [
+            "ROSTER",
+            "How it connects"
+          ]
+        },
+        "Settings": {
+          "query": "Settings",
+          "opened_windows": [
+            "Settings"
+          ],
+          "status": "open",
+          "title_matches_query": true,
+          "unrequested_windows": [],
+          "cleared_before_probe": 0,
+          "shot": "surface-settings-1440.png",
+          "window_grammar": [
+            {
+              "name": "Settings",
+              "title": "Settings",
+              "sheet": false,
+              "max": false,
+              "lights": [
+                "Close Settings",
+                "Minimize Settings",
+                "Maximize Settings"
+              ],
+              "hasHead": true,
+              "hasFoot": true,
+              "scrollers": 1,
+              "scrollerCls": [
+                "desk-surface-body"
+              ],
+              "overflowX": 3,
+              "rect": {
+                "x": 24,
+                "y": 72,
+                "w": 1392,
+                "h": 600
+              },
+              "outsideViewport": false
+            }
+          ],
+          "verb_count": 21,
+          "raw_buttons": [
+            "SETTINGS",
+            "GUIDE"
+          ],
+          "icon_no_name": [],
+          "presses": [
+            {
+              "verb": "Close Settings",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Minimize Settings",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Maximize Settings",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "SETTINGS",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "GUIDE",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Models \u26a0 NO DEFAULT Open",
+              "disabled": false,
+              "effect": "WINDOW:New Project REQUEST:1",
+              "requests": [
+                "GET /api/connections"
+              ],
+              "errors": [],
+              "egress": [],
+              "cleanup_closed": 1
+            },
+            {
+              "verb": "Open",
+              "disabled": false,
+              "effect": "WINDOW:Speak REQUEST:7",
+              "requests": [
+                "GET /api/dictation/readiness",
+                "GET /api/dictation/corrections",
+                "GET /api/dictation/blocks",
+                "POST /api/inference/assignments/editor",
+                "GET /api/concierge/detect",
+                "GET /api/inference-targets"
+              ],
+              "errors": [],
+              "egress": [],
+              "cleanup_closed": 1
+            },
+            {
+              "verb": "Connections 1 CONNECTED Open",
+              "disabled": false,
+              "effect": "REQUEST:1 STATE",
+              "requests": [
+                "GET /api/connections"
+              ],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Open",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Voice \u2713 LIVE AUTO Open",
+              "disabled": false,
+              "effect": "CLICK-FAILED",
+              "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-window[aria-label=\\\\\"Settings\\\\\"] button, .desk-window[aria-lab",
+              "cleanup_closed": 0
+            },
+            {
+              "verb": "Open",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Meetings \u2713 INTELLIGENCE ON \u00b7 AFTER ROOM MEETINGS Open",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Open",
+              "disabled": false,
+              "effect": "CLICK-FAILED",
+              "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-window[aria-label=\\\\\"Settings\\\\\"] button, .desk-window[aria-lab",
+              "cleanup_closed": 0
+            },
+            {
+              "verb": "Rhythm EVERY 15 MIN Open",
+              "disabled": false,
+              "effect": "CLICK-FAILED",
+              "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-window[aria-label=\\\\\"Settings\\\\\"] button, .desk-window[aria-lab",
+              "cleanup_closed": 0
+            },
+            {
+              "verb": "Open",
+              "disabled": false,
+              "effect": "CLICK-FAILED",
+              "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-window[aria-label=\\\\\"Settings\\\\\"] button, .desk-window[aria-lab",
+              "cleanup_closed": 0
+            },
+            {
+              "verb": "Sounds & Presence \u2713 ON Open",
+              "disabled": false,
+              "effect": "CLICK-FAILED",
+              "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-window[aria-label=\\\\\"Settings\\\\\"] button, .desk-window[aria-lab",
+              "cleanup_closed": 0
+            },
+            {
+              "verb": "Open",
+              "disabled": false,
+              "effect": "CLICK-FAILED",
+              "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-window[aria-label=\\\\\"Settings\\\\\"] button, .desk-window[aria-lab",
+              "cleanup_closed": 0
+            },
+            {
+              "verb": "Wallpaper RAINY CITY Open",
+              "disabled": false,
+              "effect": "CLICK-FAILED",
+              "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-window[aria-label=\\\\\"Settings\\\\\"] button, .desk-window[aria-lab",
+              "cleanup_closed": 0
+            }
+          ],
+          "dead_verbs": [
+            "SETTINGS",
+            "Meetings \u2713 INTELLIGENCE ON \u00b7 AFTER ROOM MEETINGS Open"
+          ]
+        },
+        "Change places": {
+          "query": "Change places",
+          "opened_windows": [
+            "Change places"
+          ],
+          "status": "open",
+          "title_matches_query": true,
+          "unrequested_windows": [],
+          "cleared_before_probe": 0,
+          "shot": "surface-change-places-1440.png",
+          "window_grammar": [
+            {
+              "name": "Change places",
+              "title": "Change places",
+              "sheet": false,
+              "max": false,
+              "lights": [
+                "Close Change places",
+                "Minimize Change places",
+                "Maximize Change places"
+              ],
+              "hasHead": true,
+              "hasFoot": true,
+              "scrollers": 1,
+              "scrollerCls": [
+                "desk-surface-body"
+              ],
+              "overflowX": 3,
+              "rect": {
+                "x": 24,
+                "y": 72,
+                "w": 640,
+                "h": 620
+              },
+              "outsideViewport": false
+            }
+          ],
+          "verb_count": 25,
+          "raw_buttons": [],
+          "icon_no_name": [],
+          "presses": [
+            {
+              "verb": "Close Change places",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Minimize Change places",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Maximize Change places",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "All places",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Favorites",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "View on Floor",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Hide the menus",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "RAINY CITY A cinematic night storm above a lamplit city street. IN USE",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Favorite Rainy City",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "LANTERN GARDEN A rain-dark flagstone path lit through a fine garden drizzle. CHO",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Favorite Lantern Garden",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "AFTER-HOURS RADIO Walnut, warm meters, and rain over a sleeping city. CHOOSE",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Favorite After-Hours Radio",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "MIDNIGHT ARCHIVE Green reading lamps in a long hall of wooden drawers. CHOOSE",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Favorite Midnight Archive",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "NIGHT TRAIN A lamplit compartment. Forests passing in the rain. CHOOSE",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Favorite Night Train",
+              "disabled": false,
+              "effect": "REQUEST:9",
+              "requests": [
+                "GET /api/missioncontrol/state",
+                "GET /api/missioncontrol/sessions",
+                "GET /api/missioncontrol/events",
+                "GET /api/missioncontrol/receipts",
+                "GET /api/coders/steering/grants",
+                "GET /api/desk/projections"
+              ],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "DEEP-SEA STATION Brass instruments, blue water, and distant silhouettes. CHOOSE",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            }
+          ],
+          "dead_verbs": [
+            "All places",
+            "RAINY CITY A cinematic night storm above a lamplit city street. IN USE",
+            "Favorite Rainy City",
+            "Favorite Lantern Garden",
+            "Favorite After-Hours Radio",
+            "Favorite Midnight Archive"
+          ]
+        },
+        "Rhythm": {
+          "query": "Rhythm",
+          "opened_windows": [
+            "Rhythm"
+          ],
+          "status": "open",
+          "title_matches_query": true,
+          "unrequested_windows": [],
+          "cleared_before_probe": 0,
+          "shot": "surface-rhythm-1440.png",
+          "window_grammar": [
+            {
+              "name": "Rhythm",
+              "title": "Rhythm",
+              "sheet": false,
+              "max": false,
+              "lights": [
+                "Close Rhythm",
+                "Minimize Rhythm",
+                "Maximize Rhythm"
+              ],
+              "hasHead": true,
+              "hasFoot": true,
+              "scrollers": 1,
+              "scrollerCls": [
+                "desk-surface-body"
+              ],
+              "overflowX": 3,
+              "rect": {
+                "x": 24,
+                "y": 72,
+                "w": 640,
+                "h": 520
+              },
+              "outsideViewport": false
+            }
+          ],
+          "verb_count": 9,
+          "raw_buttons": [],
+          "icon_no_name": [],
+          "presses": [
+            {
+              "verb": "Close Rhythm",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Minimize Rhythm",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Maximize Rhythm",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Sweep \u21bb EVERY 5 MIN EVERY 15 MIN EVERY 30 MIN EVERY 1 HR Run now",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Run now",
+              "disabled": false,
+              "effect": "REQUEST:2 STATE",
+              "requests": [
+                "POST /api/settings/heartbeat/run-now",
+                "GET /api/settings/heartbeat"
+              ],
+              "errors": [],
+              "egress": [
+                "POST /api/settings/heartbeat/run-now"
+              ]
+            },
+            {
+              "verb": "Runs on \u21bb THIS DEVICE",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Monday brief DAILY 08:00 \u2713 LAST SEP 20 Generate",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Generate",
+              "disabled": false,
+              "effect": "REQUEST:2",
+              "requests": [
+                "POST /api/brief/generate",
+                "GET /api/brief/latest"
+              ],
+              "errors": [],
+              "egress": [
+                "GET /api/brief/latest",
+                "POST /api/brief/generate"
+              ]
+            },
+            {
+              "verb": "Notify \u21bb OFF ON THE EDGE EVERY SWEEP \u21bb COUNT ONLY ROOM NAMES",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            }
+          ],
+          "dead_verbs": [
+            "Sweep \u21bb EVERY 5 MIN EVERY 15 MIN EVERY 30 MIN EVERY 1 HR Run now",
+            "Runs on \u21bb THIS DEVICE",
+            "Monday brief DAILY 08:00 \u2713 LAST SEP 20 Generate",
+            "Notify \u21bb OFF ON THE EDGE EVERY SWEEP \u21bb COUNT ONLY ROOM NAMES"
+          ]
+        },
+        "Context": {
+          "query": "Context",
+          "opened_windows": [
+            "Context"
+          ],
+          "status": "open",
+          "title_matches_query": true,
+          "unrequested_windows": [],
+          "cleared_before_probe": 0,
+          "shot": "surface-context-1440.png",
+          "window_grammar": [
+            {
+              "name": "Context",
+              "title": "Context",
+              "sheet": false,
+              "max": false,
+              "lights": [
+                "Close Context",
+                "Minimize Context",
+                "Maximize Context"
+              ],
+              "hasHead": true,
+              "hasFoot": true,
+              "scrollers": 0,
+              "scrollerCls": [],
+              "overflowX": 3,
+              "rect": {
+                "x": 24,
+                "y": 72,
+                "w": 640,
+                "h": 619
+              },
+              "outsideViewport": false
+            }
+          ],
+          "verb_count": 5,
+          "raw_buttons": [
+            "Speak Constitutional context"
+          ],
+          "icon_no_name": [],
+          "presses": [
+            {
+              "verb": "Close Context",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Minimize Context",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Maximize Context",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Save",
+              "disabled": true,
+              "effect": "DISABLED"
+            },
+            {
+              "verb": "Speak Constitutional context",
+              "disabled": false,
+              "effect": "NOT ASSESSED",
+              "detail": "microphone"
+            }
+          ],
+          "dead_verbs": []
+        },
+        "Workbenches": {
+          "query": "Workbenches",
+          "opened_windows": [
+            "Workbenches"
+          ],
+          "status": "open",
+          "title_matches_query": true,
+          "unrequested_windows": [],
+          "cleared_before_probe": 0,
+          "shot": "surface-workbenches-1440.png",
+          "window_grammar": [
+            {
+              "name": "Workbenches",
+              "title": "Workbenches",
+              "sheet": false,
+              "max": false,
+              "lights": [
+                "Close Workbenches",
+                "Minimize Workbenches",
+                "Maximize Workbenches"
+              ],
+              "hasHead": true,
+              "hasFoot": true,
+              "scrollers": 0,
+              "scrollerCls": [],
+              "overflowX": 3,
+              "rect": {
+                "x": 24,
+                "y": 72,
+                "w": 640,
+                "h": 619
+              },
+              "outsideViewport": false
+            }
+          ],
+          "verb_count": 4,
+          "raw_buttons": [],
+          "icon_no_name": [],
+          "presses": [
+            {
+              "verb": "Close Workbenches",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Minimize Workbenches",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Maximize Workbenches",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "+ Create",
+              "disabled": false,
+              "effect": "WINDOW:New Workbench PULLOUT:New Workbench REQUEST:1",
+              "requests": [
+                "GET /api/workbench-templates"
+              ],
+              "errors": [],
+              "egress": [],
+              "cleanup_closed": 1
+            }
+          ],
+          "dead_verbs": []
+        },
+        "Activity": {
+          "query": "Activity",
+          "opened_windows": [
+            "Activity"
+          ],
+          "status": "open",
+          "title_matches_query": true,
+          "unrequested_windows": [],
+          "cleared_before_probe": 0,
+          "shot": "surface-activity-1440.png",
+          "window_grammar": [
+            {
+              "name": "Activity",
+              "title": "Activity",
+              "sheet": false,
+              "max": false,
+              "lights": [
+                "Close Activity",
+                "Minimize Activity",
+                "Maximize Activity"
+              ],
+              "hasHead": true,
+              "hasFoot": true,
+              "scrollers": 0,
+              "scrollerCls": [],
+              "overflowX": 3,
+              "rect": {
+                "x": 24,
+                "y": 72,
+                "w": 640,
+                "h": 619
+              },
+              "outsideViewport": false
+            }
+          ],
+          "verb_count": 9,
+          "raw_buttons": [
+            "RECORDS",
+            "RULES",
+            "\u2699\ufe0e",
+            "Speak Filter this view"
+          ],
+          "icon_no_name": [],
+          "presses": [
+            {
+              "verb": "Close Activity",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Minimize Activity",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Maximize Activity",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "RECORDS",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "RULES",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Candidates and connectors",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Refresh now",
+              "disabled": false,
+              "effect": "REQUEST:4",
+              "requests": [
+                "POST /api/activity/refresh",
+                "GET /api/activity/meeting-candidates",
+                "GET /api/activity/enrichment/connectors",
+                "GET /api/activity/status"
+              ],
+              "errors": [],
+              "egress": [
+                "GET /api/activity/enrichment/connectors"
+              ]
+            },
+            {
+              "verb": "Clear records",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Speak Filter this view",
+              "disabled": false,
+              "effect": "NOT ASSESSED",
+              "detail": "microphone"
+            }
+          ],
+          "dead_verbs": [
+            "RECORDS"
+          ]
+        },
+        "Desk memory": {
+          "query": "Desk memory",
+          "opened_windows": [
+            "Desk memory"
+          ],
+          "status": "open",
+          "title_matches_query": true,
+          "unrequested_windows": [],
+          "cleared_before_probe": 0,
+          "shot": "surface-desk-memory-1440.png",
+          "window_grammar": [
+            {
+              "name": "Desk memory",
+              "title": "Desk memory",
+              "sheet": false,
+              "max": false,
+              "lights": [
+                "Close Desk memory",
+                "Minimize Desk memory",
+                "Maximize Desk memory"
+              ],
+              "hasHead": true,
+              "hasFoot": true,
+              "scrollers": 0,
+              "scrollerCls": [],
+              "overflowX": 3,
+              "rect": {
+                "x": 24,
+                "y": 72,
+                "w": 800,
+                "h": 619
+              },
+              "outsideViewport": false
+            }
+          ],
+          "verb_count": 10,
+          "raw_buttons": [
+            "Dictate into the search"
+          ],
+          "icon_no_name": [],
+          "presses": [
+            {
+              "verb": "Close Desk memory",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Minimize Desk memory",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Maximize Desk memory",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Dictate into the search",
+              "disabled": false,
+              "effect": "NOT ASSESSED",
+              "detail": "microphone"
+            },
+            {
+              "verb": "Search desk memory",
+              "disabled": true,
+              "effect": "DISABLED"
+            },
+            {
+              "verb": "Filter: All",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Filter: Decisions",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Filter: Commitments",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Filter: Briefs",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Filter: Meetings",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            }
+          ],
+          "dead_verbs": [
+            "Filter: All",
+            "Filter: Decisions",
+            "Filter: Commitments",
+            "Filter: Briefs",
+            "Filter: Meetings"
+          ]
+        },
+        "Processes": {
+          "query": "Processes",
+          "opened_windows": [
+            "Processes"
+          ],
+          "status": "open",
+          "title_matches_query": true,
+          "unrequested_windows": [],
+          "cleared_before_probe": 0,
+          "shot": "surface-processes-1440.png",
+          "window_grammar": [
+            {
+              "name": "Processes",
+              "title": "Processes",
+              "sheet": false,
+              "max": false,
+              "lights": [
+                "Close Processes",
+                "Minimize Processes",
+                "Maximize Processes"
+              ],
+              "hasHead": true,
+              "hasFoot": true,
+              "scrollers": 0,
+              "scrollerCls": [],
+              "overflowX": 3,
+              "rect": {
+                "x": 24,
+                "y": 72,
+                "w": 640,
+                "h": 619
+              },
+              "outsideViewport": false
+            }
+          ],
+          "verb_count": 3,
+          "raw_buttons": [],
+          "icon_no_name": [],
+          "presses": [
+            {
+              "verb": "Close Processes",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Minimize Processes",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Maximize Processes",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            }
+          ],
+          "dead_verbs": []
+        },
+        "Commands": {
+          "query": "Commands",
+          "opened_windows": [
+            "Commands"
+          ],
+          "status": "open",
+          "title_matches_query": true,
+          "unrequested_windows": [],
+          "cleared_before_probe": 0,
+          "shot": "surface-commands-1440.png",
+          "window_grammar": [
+            {
+              "name": "Commands",
+              "title": "Commands",
+              "sheet": false,
+              "max": false,
+              "lights": [
+                "Close Commands",
+                "Minimize Commands",
+                "Maximize Commands"
+              ],
+              "hasHead": true,
+              "hasFoot": true,
+              "scrollers": 0,
+              "scrollerCls": [],
+              "overflowX": 3,
+              "rect": {
+                "x": 24,
+                "y": 72,
+                "w": 640,
+                "h": 619
+              },
+              "outsideViewport": false
+            }
+          ],
+          "verb_count": 6,
+          "raw_buttons": [],
+          "icon_no_name": [],
+          "presses": [
+            {
+              "verb": "Close Commands",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Minimize Commands",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Maximize Commands",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Add command",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Enable in Settings",
+              "disabled": false,
+              "effect": "WINDOW:Settings REQUEST:4",
+              "requests": [
+                "GET /api/settings",
+                "GET /api/authority/policy",
+                "GET /api/settings/hub",
+                "GET /api/calendar/sources"
+              ],
+              "errors": [],
+              "egress": [],
+              "cleanup_closed": 1
+            },
+            {
+              "verb": "Add command",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            }
+          ],
+          "dead_verbs": []
+        },
+        "Models": {
+          "query": "Models",
+          "opened_windows": [
+            "Models"
+          ],
+          "status": "open",
+          "title_matches_query": true,
+          "unrequested_windows": [],
+          "cleared_before_probe": 0,
+          "shot": "surface-models-1440.png",
+          "window_grammar": [
+            {
+              "name": "Models",
+              "title": "Models",
+              "sheet": false,
+              "max": false,
+              "lights": [
+                "Close Models",
+                "Minimize Models",
+                "Maximize Models"
+              ],
+              "hasHead": true,
+              "hasFoot": true,
+              "scrollers": 1,
+              "scrollerCls": [
+                "desk-surface-body"
+              ],
+              "overflowX": 3,
+              "rect": {
+                "x": 24,
+                "y": 72,
+                "w": 640,
+                "h": 760
+              },
+              "outsideViewport": false
+            }
+          ],
+          "verb_count": 24,
+          "raw_buttons": [],
+          "icon_no_name": [],
+          "presses": [
+            {
+              "verb": "Close Models",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Minimize Models",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Maximize Models",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "\u26a0 github Connections \u2717 CREDENTIAL EXPIRED GITHUB authentication_required",
+              "disabled": false,
+              "effect": "NOTHING",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Connections",
+              "disabled": false,
+              "effect": "WINDOW:Settings REQUEST:5",
+              "requests": [
+                "GET /api/settings",
+                "GET /api/authority/policy",
+                "GET /api/settings/hub",
+                "GET /api/calendar/sources",
+                "GET /api/connections"
+              ],
+              "errors": [],
+              "egress": [],
+              "cleanup_closed": 1
+            },
+            {
+              "verb": "Add an engine",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "Adjust",
+              "disabled": false,
+              "effect": "CLICK-FAILED",
+              "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-window[aria-label=\\\\\"Models\\\\\"] button, .desk-window[aria-label",
+              "cleanup_closed": 0
+            },
+            {
+              "verb": "\u2022 Thoughts & notes \u2014 \u25cb WAITING",
+              "disabled": false,
+              "effect": "CLICK-FAILED",
+              "detail": "TimeoutError('Locator.click: Timeout 4000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-window[aria-label=\\\\\"Models\\\\\"] button, .desk-window[aria-label",
+              "cleanup_closed": 0
+            },
+            {
+              "verb": "\u2014",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "\u25a0 Chat \u2014 \u25cb WAITING",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "\u2014",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "\u2013 Writing & dictation \u2014 \u25cb WAITING",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "\u2014",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "\u2215 Speech recognition \u2014 \u25cb WAITING",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "\u2014",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "\u25a0 Meetings \u2014 \u25cb WAITING",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "\u2014",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            },
+            {
+              "verb": "\u25e6 Agents & tools \u2014 \u25cb WAITING",
+              "disabled": false,
+              "effect": "STATE",
+              "requests": [],
+              "errors": [],
+              "egress": []
+            }
+          ],
+          "dead_verbs": [
+            "\u26a0 github Connections \u2717 CREDENTIAL EXPIRED GITHUB authentication_required"
+          ]
+        },
+        "Ask AI": {
+          "leg_error": "TimeoutError('Locator.click: Timeout 30000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-tool-shelf [role=\\'option\\']\").first\\n    - locator resolved to <button type=\"button\" role=\"option\" aria-disabled=\"true\" aria-selected=\"false\" class=\"desk-deck-row is-ghost\" id=\"desk-palette-option-obje"
+        }
+      },
+      "first_words_gate": {
+        "seen_on_every_load": 1,
+        "shot": "first-words-gate-1440.png",
+        "surface_registry_state_behind_it": "recovery-only",
+        "verbs_on_the_gate": [
+          {
+            "label": "Click to dictate",
+            "disabled": false,
+            "cls": "desk-first-talk is-idle",
+            "w": 546,
+            "h": 58
+          },
+          {
+            "label": "Speak Your dictated text",
+            "disabled": false,
+            "cls": "desk-mic is-idle",
+            "w": 20,
+            "h": 20
+          },
+          {
+            "label": "Copy",
+            "disabled": true,
+            "cls": "btn btn--secondary ",
+            "w": 55,
+            "h": 28
+          },
+          {
+            "label": "Keep as Note",
+            "disabled": true,
+            "cls": "btn btn--secondary ",
+            "w": 112,
+            "h": 28
+          },
+          {
+            "label": "Continue later",
+            "disabled": false,
+            "cls": "btn btn--ghost ",
+            "w": 127,
+            "h": 28
+          }
+        ],
+        "escaped_by_continue_later": true
+      },
+      "console_errors": []
+    }
+  ],
+  "notes": [
+    "@1440 surface Ask AI failed: TimeoutError('Locator.click: Timeout 30000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-tool-shelf [role=\\'option\\']\").first\\n    - locator resolved to <button type=\"button\" role=\"option\" aria-disabled=\"true\" aria-selected=\"false\" class=\"desk-deck-row is-ghost\" id=\"desk-palette-option-object.ask\">\u2026</button>\\n  - attempting click action\\n    2 \u00d7 waiting for element to be visible, enabled and stable\\n      - element is not enabled\\n    - retrying click action\\n    - waiting 20ms\\n    2 \u00d7 waiting for element to be visible, enabled and stable\\n      - element is not enabled\\n    - retrying click action\\n      - waiting 100ms\\n    58 \u00d7 waiting for element to be visible, enabled and stable\\n       - element is not enabled\\n     - retrying click action\\n       - waiting 500ms\\n')"
+  ],
+  "seed": {
+    "project_alpha": {
+      "path": "/api/projects/door",
+      "status": 200,
+      "reply": "{\"projectId\": \"proj-ed8fe2cf4c42\"}"
+    },
+    "project_beta": {
+      "path": "/api/projects/door",
+      "status": 200,
+      "reply": "{\"projectId\": \"proj-15d4357893c1\"}"
+    },
+    "note_1": {
+      "path": "/api/notes",
+      "status": 201,
+      "reply": "{\"note\": {\"id\": \"note_294c72cc861e\", \"title\": \"Walk note\", \"body_markdown\": \"A note the walk can find later. Payments cutover risk.\", \"tags\": [], \"created_at\": \"2026-09-20T23:01:06Z\", \"updated_at\": \"2026-09-20T23:01:06Z\", \"last_modified\": \"2026-09-20T23:01:06Z\", \"deleted\": false}}"
+    },
+    "note_2": {
+      "path": "/api/notes",
+      "status": 201,
+      "reply": "{\"note\": {\"id\": \"note_f4f2bb9ef998\", \"title\": \"Grammar of the dock\", \"body_markdown\": \"Second note so Desk search has two hits.\", \"tags\": [], \"created_at\": \"2026-09-20T23:01:06Z\", \"updated_at\": \"2026-09-20T23:01:06Z\", \"last_modified\": \"2026-09-20T23:01:06Z\", \"deleted\": false}}"
+    },
+    "people": {
+      "status": "NOT SEEDED",
+      "reply": "people/setup touches the Keychain; a walk never does"
+    },
+    "model_library": {
+      "path": "/api/inference/model-library",
+      "status": 200,
+      "reply": "{\"schema\": \"ModelLibraryProjection@1\", \"catalog_revision\": 4, \"artifact_detection\": {\"state\": \"complete\"}, \"summary\": {\"state\": \"attention\", \"label\": \"Needs attention\", \"ready_count\": 0, \"attention_count\": 1}, \"rows\": [{\"id\": \"catalog:preset_openrouter_qwen3_8b\", \"source\": \"catalog\", \"label\": \"OpenR"
+    },
+    "engine": {
+      "status": "NOT ASSESSED",
+      "reply": "no profile head to bind an endpoint to"
+    },
+    "setup": {
+      "path": "/api/setup/status",
+      "status": 200,
+      "reply": "{\"version\": \"0.4.0\", \"runtime_identity\": {\"identity\": {\"backend_version\": \"0.4.0\", \"backend_revision\": \"93f9524f682aacf2fdb6138fa259506a338a1e2f\", \"backend_revision_source\": \"git\", \"process_start\": \"2026-09-20T17:01:07.085029\", \"frontend_build\": \"f818c13f80fd4d93\", \"database_id\": \"43e72feee4c1ab8a\","
+    }
+  },
+  "reduced_motion_pass": {
+    "width": 1440,
+    "height": 900,
+    "reduced_motion": true,
+    "motion": {
+      "longTransitions": [],
+      "geometryTransitions": [],
+      "running": [],
+      "reducedMotionMatches": true
+    },
+    "first_words_gate": {
+      "seen_on_every_load": 0,
+      "shot": null,
+      "surface_registry_state_behind_it": null,
+      "verbs_on_the_gate": [],
+      "escaped_by_continue_later": null
+    },
+    "console_errors": []
+  }
+}
