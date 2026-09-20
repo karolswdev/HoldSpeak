@@ -1,0 +1,49 @@
+{
+  "title": "HoldSpeak",
+  "text": "Artifacts: No runtime in host rendering probe\n\nRetry",
+  "nodeAvailable": false,
+  "host": {
+    "kind": "electron",
+    "capabilities": {
+      "files": false,
+      "shortcuts": false,
+      "tray": false,
+      "notifications": false
+    }
+  },
+  "loadAndSettleMs": 2892.536292,
+  "versions": {
+    "node": "24.18.0",
+    "acorn": "8.16.0",
+    "ada": "3.4.4",
+    "amaro": "1.1.9",
+    "ares": "1.34.6",
+    "brotli": "1.0.9",
+    "cldr": "47.0",
+    "icu": "77.1",
+    "llhttp": "9.4.2",
+    "merve": "1.2.2",
+    "modules": "145",
+    "napi": "10",
+    "nbytes": "0.1.4",
+    "ncrypto": "0.0.1",
+    "nghttp2": "1.69.0",
+    "nghttp3": "",
+    "ngtcp2": "",
+    "openssl": "0.0.0",
+    "simdjson": "4.6.4",
+    "simdutf": "7.7.0",
+    "sqlite": "3.53.1",
+    "tz": "2025b",
+    "undici": "7.28.0",
+    "unicode": "16.0",
+    "uv": "1.52.1",
+    "uvwasi": "0.0.23",
+    "v8": "14.6.202.34-electron.0",
+    "zlib": "1.3.1",
+    "zstd": "1.6.0",
+    "electron": "41.10.7",
+    "chrome": "146.0.7680.216"
+  },
+  "scope": "Static production bundle; no hub or user data; timing includes 2500ms settle, not startup benchmark"
+}

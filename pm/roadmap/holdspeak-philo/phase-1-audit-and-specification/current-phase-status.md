@@ -37,7 +37,7 @@ Earlier Muad'Dib reviews remain historical planning evidence. No further Claude 
 | PHILO-1-02 | Kernel, authority, storage and operations | done | [story-02-runtime.md](story-02-runtime.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-1-03 | Dictation, meetings and model execution | done | [story-03-voice.md](story-03-voice.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-1-04 | Agents, integrations, companions and knowledge | done | [story-04-integrations.md](story-04-integrations.md) | [evidence-story-04](./evidence-story-04.md) |
-| PHILO-1-05 | Desk design specification and SRS | in-progress | [story-05-desk.md](story-05-desk.md) | - |
+| PHILO-1-05 | Desk design specification and SRS | done | [story-05-desk.md](story-05-desk.md) | [evidence-story-05](./evidence-story-05.md) |
 | PHILO-1-06 | Registries, validation and repository skills | in-progress | [story-06-maintenance.md](story-06-maintenance.md) | - |
 | PHILO-1-07 | Integrated audit and final verification | in-progress | [story-07-verification.md](story-07-verification.md) | - |
 

@@ -1,0 +1,1356 @@
+{
+  "schema_version": 1,
+  "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+  "capabilities": [
+    {
+      "id": "desk.open",
+      "name": "Open Desk",
+      "purpose": "Open the Workbench surface and its current workspace.",
+      "domain": "desk",
+      "status": "built_unreleased",
+      "status_reason": "The root route and DeskApp are present in source; /desk is an alias redirect and this documentation lane did not establish owner observation.",
+      "exposure": "user",
+      "surfaces": [
+        "/desk",
+        "DeskApp"
+      ],
+      "entry_points": [
+        "web/src/routes.tsx::routes",
+        "web/src/desk/DeskApp.tsx::DeskApp"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "best_effort",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "browser route",
+        "saved workspace"
+      ],
+      "outputs": [
+        "Desk shell",
+        "world and list projections"
+      ],
+      "persistence": [
+        "hs.desk.workspace.v1"
+      ],
+      "apis": [],
+      "configuration": [
+        "route registry",
+        "workspace preferences"
+      ],
+      "dependencies": [
+        "React",
+        "Pixi world",
+        "Zustand desk store"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Browser route enters the Desk shell; no native host is required.",
+      "egress_possible": false,
+      "egress": "Opening the Desk does not itself send data off device.",
+      "side_effect": "local_reversible",
+      "authority": "The route registry admits the Desk shell.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "web/src/routes.tsx",
+          "symbol": "PRODUCT_ROUTES",
+          "line": 20,
+          "claim": "/ is registered as the primary Desk route."
+        },
+        {
+          "path": "web/src/App.tsx",
+          "symbol": "App",
+          "line": 67,
+          "claim": "/desk and unknown paths redirect to /."
+        },
+        {
+          "path": "web/src/desk/DeskApp.tsx",
+          "symbol": "DeskApp",
+          "line": 184,
+          "claim": "DeskApp composes the Workbench shell."
+        }
+      ],
+      "tests": [
+        {
+          "path": "web/src/desk/__tests__/shell.test.tsx",
+          "node": "routes a registered surface and reports unregistered ones",
+          "assertion": "The tested dispatcher renders the registered surface path and reports an unregistered surface.",
+          "execution": "not_run"
+        }
+      ],
+      "docs": [
+        "docs/DESK_ARCHITECTURE.md",
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "limitations": [
+        "No owner observation recorded in this lane.",
+        "No native host is declared."
+      ],
+      "failure_states": [
+        "unknown route",
+        "corrupt saved workspace",
+        "runtime offline"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "desk.arrange",
+      "name": "Arrange windows",
+      "purpose": "Move, resize, snap, minimize, maximize and restore Desk windows.",
+      "domain": "desk",
+      "status": "built_unreleased",
+      "status_reason": "Window frame, geometry algorithms and focused assertions are present; run and owner observation remain outside this lane.",
+      "exposure": "user",
+      "surfaces": [
+        "DeskWindowFrame",
+        "Dock",
+        "Expose"
+      ],
+      "entry_points": [
+        "web/src/desk/components/DeskWindow.tsx::DeskWindowFrame",
+        "web/src/desk/components/window/windowGeometry.ts::clampRect"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "best_effort",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "pointer drag",
+        "resize edge",
+        "window verbs",
+        "keyboard focus"
+      ],
+      "outputs": [
+        "window rectangle",
+        "focus order",
+        "parked/maximized state"
+      ],
+      "persistence": [
+        "panel rect",
+        "window order",
+        "windowsById",
+        "zoneWindows"
+      ],
+      "apis": [],
+      "configuration": [
+        "minW 320",
+        "minH 220",
+        "snapEdge 26",
+        "snapCorner 150"
+      ],
+      "dependencies": [
+        "Desk store",
+        "window geometry",
+        "surface registry"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Pointer and keyboard events remain in the browser Desk frame and update local store state.",
+      "egress_possible": false,
+      "egress": "Window arrangement is local state.",
+      "side_effect": "local_reversible",
+      "authority": "The focused window and geometry reducer admit arrangement changes.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/window/windowGeometry.ts",
+          "symbol": "clampRect",
+          "line": 119,
+          "claim": "Window rectangles are clamped to the work band and minimum dimensions."
+        },
+        {
+          "path": "web/src/desk/components/DeskWindow.tsx",
+          "symbol": "DeskWindowFrame",
+          "line": 556,
+          "claim": "The shared frame owns geometry and focus callbacks."
+        }
+      ],
+      "tests": [
+        {
+          "path": "web/src/desk/__tests__/shell.test.tsx",
+          "node": "four windows tile 2x2 inside the working band, no overlap",
+          "assertion": "Expose layout assertions verify bounded non-overlapping rectangles."
+        },
+        {
+          "path": "web/src/desk/__tests__/windows.test.tsx",
+          "node": "minimize parks the window (mounted but hidden) and the dock restores it",
+          "assertion": "The lifecycle test asserts park and restore behavior.",
+          "execution": "not_run"
+        }
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md",
+        "docs/DESK_ARCHITECTURE.md"
+      ],
+      "limitations": [
+        "One browser viewport; no native multi-display geometry.",
+        "No measured frame budget."
+      ],
+      "failure_states": [
+        "off-viewport persisted rect",
+        "minimum-size pressure",
+        "missing active window"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "desk.inspect",
+      "name": "Inspect Desk object",
+      "purpose": "Open a selected object in a named window surface with identity, state, provenance and verbs.",
+      "domain": "desk",
+      "status": "partial",
+      "status_reason": "The surface contract and shared components exist, but object/projection parity and provenance coverage are incomplete.",
+      "exposure": "user",
+      "surfaces": [
+        "surface registry",
+        "list rows",
+        "object windows"
+      ],
+      "entry_points": [
+        "web/src/desk/surface/index.ts::SurfaceIdentity",
+        "web/src/desk/surface/index.ts::SurfaceVerbs",
+        "web/src/desk/surface/index.ts::SurfaceRow"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "best_effort",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "object id",
+        "selection context",
+        "window route"
+      ],
+      "outputs": [
+        "surface content",
+        "available verbs",
+        "state and provenance"
+      ],
+      "persistence": [
+        "open windows",
+        "active window"
+      ],
+      "apis": [
+        "surface registry"
+      ],
+      "configuration": [
+        "surface definitions",
+        "window menu registry"
+      ],
+      "dependencies": [
+        "world objects",
+        "Desk windows",
+        "surface library"
+      ],
+      "model_requirements": [
+        "stable object id",
+        "kind",
+        "label",
+        "state"
+      ],
+      "network_requirements": [
+        "only for runtime-backed surface data"
+      ],
+      "trust_boundary": "A Desk object id selects a browser surface; backend data enters through the API/runtime seams.",
+      "egress_possible": true,
+      "egress": "A surface may display runtime-backed data and an explicit egress chip; inspection alone does not send data.",
+      "side_effect": "none",
+      "authority": "The selected object and registered surface determine the inspection scope.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "web/src/desk/surface/contract.md",
+          "symbol": "surface contract",
+          "line": 1,
+          "claim": "The shared surface grammar requires identity, state, provenance and verbs."
+        },
+        {
+          "path": "web/src/desk/surface/index.ts",
+          "symbol": "surface barrel",
+          "line": 3,
+          "claim": "The library exports the supported surface components from one path."
+        }
+      ],
+      "tests": [
+        {
+          "path": "web/src/desk/__tests__/shell.test.tsx",
+          "node": "routes a registered surface and reports unregistered ones",
+          "assertion": "Surface dispatch distinguishes a registered surface from an unregistered one.",
+          "execution": "not_run"
+        },
+        {
+          "path": "web/src/desk/__tests__/infoContract.test.ts",
+          "node": "declares properties only where a real update path backs them",
+          "assertion": "The inspected suite asserts information contract fields.",
+          "execution": "not_run"
+        }
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md",
+        "docs/internal/philo/DESIGN_SPECIFICATION.md"
+      ],
+      "limitations": [
+        "No whole-world parity assertion.",
+        "Some windows have no provenance receipt."
+      ],
+      "failure_states": [
+        "unknown object",
+        "unregistered surface",
+        "stale runtime data"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "desk.execute",
+      "name": "Run a Desk verb",
+      "purpose": "Offer and run a named operation for the current Desk context.",
+      "domain": "desk",
+      "status": "partial",
+      "status_reason": "Registry availability, ghost reasons and local runners are implemented; async receipts and several backend runners remain incomplete.",
+      "exposure": "user",
+      "surfaces": [
+        "window menu",
+        "floor menu",
+        "command deck",
+        "keyboard"
+      ],
+      "entry_points": [
+        "web/src/desk/verbRegistry.ts::VERBS",
+        "web/src/desk/keymap.ts::useKeymap"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "best_effort",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "verb id",
+        "current context",
+        "primary key chord"
+      ],
+      "outputs": [
+        "local state change",
+        "ghost reason",
+        "pending or completed outcome"
+      ],
+      "persistence": [
+        "workspace state when a verb changes it"
+      ],
+      "apis": [
+        "verb registry"
+      ],
+      "configuration": [
+        "verb definitions",
+        "shortcut map"
+      ],
+      "dependencies": [
+        "Desk store",
+        "surface registry",
+        "runtime/API for backend verbs"
+      ],
+      "model_requirements": [
+        "verb id",
+        "scope",
+        "availability",
+        "runner"
+      ],
+      "network_requirements": [
+        "only for backend-dependent verbs"
+      ],
+      "trust_boundary": "A user gesture enters the registry; only a registered available runner can mutate state or call a backend.",
+      "egress_possible": true,
+      "egress": "Backend verbs may egress according to their API and egress receipt; local verbs do not.",
+      "side_effect": "local_reversible",
+      "authority": "Verb availability and current context are the admission checks.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "symbol": "Verb",
+          "line": 28,
+          "claim": "Definitions include ids, labels, availability and runner behavior."
+        },
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "symbol": "VERBS",
+          "line": 136,
+          "claim": "The registry enumerates Desk verbs."
+        }
+      ],
+      "tests": [
+        {
+          "path": "web/src/desk/__tests__/verbRegistry.test.ts",
+          "node": "object verbs ghost WITH a reason when nothing is selected",
+          "assertion": "A missing selection yields a reasoned ghost verb."
+        },
+        {
+          "path": "web/src/desk/__tests__/keymap.test.ts",
+          "node": "a ghosted verb refuses quietly (\u2318W with no window open)",
+          "assertion": "The keymap does not run a ghosted verb.",
+          "execution": "not_run"
+        }
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md",
+        "docs/internal/philo/SRS.md"
+      ],
+      "limitations": [
+        "Thread registry runners are metadata-only; ThreadComposer and its pullout callbacks own execution.",
+        "No durable unified receipt contract."
+      ],
+      "failure_states": [
+        "ghost/unavailable",
+        "backend error",
+        "offline",
+        "stale context"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "desk.drop",
+      "name": "Drop Desk object or file",
+      "purpose": "Apply a named internal or external drop effect only when the source and target contract allows it.",
+      "domain": "desk",
+      "status": "partial",
+      "status_reason": "The internal matrix and glass file-drop seam are present and tested; keyboard equivalents, multi-select and full importer receipts remain gaps.",
+      "exposure": "user",
+      "surfaces": [
+        "world",
+        "list",
+        "GlassDropLayer"
+      ],
+      "entry_points": [
+        "web/src/desk/dropMatrix.ts::DROP_MATRIX",
+        "web/src/desk/components/GlassDropLayer.tsx::GlassDropLayer"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "degraded",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "source kind",
+        "target kind",
+        "drag payload",
+        "external file"
+      ],
+      "outputs": [
+        "named effect",
+        "release target",
+        "import dispatch",
+        "refusal"
+      ],
+      "persistence": [
+        "domain effect persistence when importer accepts"
+      ],
+      "apis": [
+        "drop matrix",
+        "file importer"
+      ],
+      "configuration": [
+        "source/target rules",
+        "release target"
+      ],
+      "dependencies": [
+        "Desk object kind",
+        "browser DragEvent",
+        "importer"
+      ],
+      "model_requirements": [
+        "source kind",
+        "target kind",
+        "effect"
+      ],
+      "network_requirements": [
+        "none for classification; importer may call API"
+      ],
+      "trust_boundary": "Browser drag payload is classified by a local matrix before an importer or domain effect is invoked.",
+      "egress_possible": true,
+      "egress": "An importer may send the accepted file/content to a backend; the matrix itself does not.",
+      "side_effect": "local_reversible",
+      "authority": "Only explicit DROP_MATRIX rules and registered release targets admit a drop.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "web/src/desk/dropMatrix.ts",
+          "symbol": "DROP_MATRIX",
+          "line": 9,
+          "claim": "The matrix enumerates supported kind pairs and named effects."
+        },
+        {
+          "path": "web/src/desk/components/GlassDropLayer.tsx",
+          "symbol": "GlassDropLayer",
+          "line": 9,
+          "claim": "External files are accepted only over a release target."
+        }
+      ],
+      "tests": [
+        {
+          "path": "web/src/desk/__tests__/dropMatrix.test.ts",
+          "node": "unlisted pairs refuse (inert, never a guess)",
+          "assertion": "Unlisted source/target pairs return no effect."
+        },
+        {
+          "path": "web/src/desk/__tests__/glassDrop.test.tsx",
+          "node": "every hub-supported suffix imports; junk refuses by name",
+          "assertion": "The inspected suite asserts external dragover/drop handling.",
+          "execution": "not_run"
+        }
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md",
+        "docs/internal/philo/SRS.md"
+      ],
+      "limitations": [
+        "No keyboard equivalent for every effect.",
+        "No multi-select or cross-window contract."
+      ],
+      "failure_states": [
+        "unsupported pair",
+        "cancelled file",
+        "import failure",
+        "offline"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "desk.persist",
+      "name": "Persist workspace",
+      "purpose": "Restore and save the local Desk arrangement with a bounded versioned shape.",
+      "domain": "desk",
+      "status": "built_unreleased",
+      "status_reason": "The v1 storage key, shape, caps and corrupt-data fallback are implemented and assertion-tested; owner observation is not established.",
+      "exposure": "user",
+      "surfaces": [
+        "Desk reload",
+        "Reset layout"
+      ],
+      "entry_points": [
+        "web/src/desk/store/workspaceStorage.ts::loadDeskWorkspace",
+        "web/src/desk/store/workspaceStorage.ts::saveDeskWorkspace"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "supported_with_setup",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "workspace arrangement",
+        "localStorage record"
+      ],
+      "outputs": [
+        "restored arrangement",
+        "default workspace on invalid input"
+      ],
+      "persistence": [
+        "hs.desk.workspace.v1"
+      ],
+      "apis": [
+        "localStorage"
+      ],
+      "configuration": [
+        "schema version 1",
+        "order cap 100"
+      ],
+      "dependencies": [
+        "browser localStorage",
+        "Desk store"
+      ],
+      "model_requirements": [
+        "panel rect",
+        "window rect/order/max",
+        "zoneWindows",
+        "prefs"
+      ],
+      "network_requirements": [],
+      "trust_boundary": "The browser's localStorage boundary holds arrangement metadata; domain records remain outside this workspace slot.",
+      "egress_possible": false,
+      "egress": "Workspace layout is not sent to a network destination by this module.",
+      "side_effect": "local_reversible",
+      "authority": "The current Desk store owns writes; invalid external storage is rejected.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "web/src/desk/store/workspaceStorage.ts",
+          "symbol": "DESK_WORKSPACE_STORAGE_KEY",
+          "line": 8,
+          "claim": "The key is hs.desk.workspace.v1."
+        },
+        {
+          "path": "web/src/desk/store/workspaceStorage.ts",
+          "symbol": "loadDeskWorkspace",
+          "line": 112,
+          "claim": "Wrong version, invalid JSON and invalid shape return an empty workspace."
+        }
+      ],
+      "tests": [
+        {
+          "path": "web/src/desk/__tests__/windows.test.tsx",
+          "node": "round-trips rects + order + max through one slot; min stays out (HS-97-03)",
+          "assertion": "The persistence test asserts the v1 record fields and excludes minimum dimensions.",
+          "execution": "not_run"
+        }
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md",
+        "docs/internal/philo/SRS.md"
+      ],
+      "limitations": [
+        "Write failure is not a user receipt.",
+        "No migration registry beyond v1."
+      ],
+      "failure_states": [
+        "corrupt JSON",
+        "wrong version",
+        "storage quota/write error"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "desk.runtime",
+      "name": "Reflect runtime state",
+      "purpose": "Keep Desk surfaces truthful while the single runtime bus connects, reconnects or is offline.",
+      "domain": "desk",
+      "status": "partial",
+      "status_reason": "RuntimeBus has bounded reconnect states and malformed-frame handling; domain surface reconciliation is not universal.",
+      "exposure": "user",
+      "surfaces": [
+        "runtime chrome",
+        "runtime-backed windows"
+      ],
+      "entry_points": [
+        "web/src/runtime/RuntimeBus.tsx::RuntimeBusProvider",
+        "web/src/lib/api.ts::apiFetch"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "supported_with_setup",
+        "linux_wayland": "supported_with_setup",
+        "ipad": "best_effort",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "WebSocket frames",
+        "HTTP responses",
+        "network events"
+      ],
+      "outputs": [
+        "connecting/connected/reconnecting/offline",
+        "last-known data",
+        "error state"
+      ],
+      "persistence": [],
+      "apis": [
+        "WebSocket",
+        "HTTP API"
+      ],
+      "configuration": [
+        "ping 15s",
+        "reconnect cap 8",
+        "backoff cap 12000ms"
+      ],
+      "dependencies": [
+        "browser WebSocket",
+        "API auth"
+      ],
+      "model_requirements": [
+        "runtime connection state",
+        "ApiError"
+      ],
+      "network_requirements": [
+        "Hub WebSocket and API availability"
+      ],
+      "trust_boundary": "Network frames cross into a guarded browser bus; malformed frames are ignored before consumers receive state.",
+      "egress_possible": false,
+      "egress": "The bus receives runtime data; downstream operations may egress according to their own API contracts.",
+      "side_effect": "none",
+      "authority": "The bus owns transport state; domain consumers own refetch and mutation authority.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "web/src/runtime/RuntimeBus.tsx",
+          "symbol": "RuntimeBusProvider",
+          "line": 13,
+          "claim": "RuntimeBus owns the socket, states, ping and bounded reconnect policy."
+        },
+        {
+          "path": "web/src/lib/api.ts",
+          "symbol": "ApiError",
+          "line": 14,
+          "claim": "ApiError preserves status and payload message."
+        }
+      ],
+      "tests": [
+        {
+          "path": "web/src/runtime/RuntimeBus.test.tsx",
+          "node": "owns one socket and removes it with the provider",
+          "assertion": "The inspected test asserts one socket, protocol, token omission and provider cleanup.",
+          "execution": "not_run"
+        },
+        {
+          "path": "web/src/lib/api.test.ts",
+          "node": "turns a server detail into a user-readable typed error",
+          "assertion": "The API test asserts status and message survive a non-2xx response.",
+          "execution": "not_run"
+        }
+      ],
+      "docs": [
+        "docs/DESK_ARCHITECTURE.md",
+        "docs/internal/philo/SRS.md"
+      ],
+      "limitations": [
+        "No shared reconnect/refetch protocol.",
+        "No complete receipt lifecycle."
+      ],
+      "failure_states": [
+        "connecting",
+        "reconnecting",
+        "offline",
+        "malformed frame",
+        "HTTP error"
+      ],
+      "replacement": null,
+      "evidence_level": "source_and_assertions_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "desk.native_host",
+      "name": "Native Desk host seam",
+      "purpose": "Provide bounded display, filesystem and host integration capabilities when a native adapter is later adopted.",
+      "domain": "desk",
+      "status": "planned",
+      "status_reason": "The desktop ADR defines a proposed seam; no Electron, Tauri or other native host is installed or declared.",
+      "exposure": "integration",
+      "surfaces": [
+        "future DesktopHost adapter"
+      ],
+      "entry_points": [
+        "docs/internal/philo/adr/desktop-host.md::DesktopHost"
+      ],
+      "platforms": {
+        "macos": "unknown",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "unknown",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "typed host requests"
+      ],
+      "outputs": [
+        "host result or denied capability"
+      ],
+      "persistence": [],
+      "apis": [
+        "future bounded DesktopHost interface"
+      ],
+      "configuration": [
+        "adapter capability allowlist"
+      ],
+      "dependencies": [
+        "future native host",
+        "web fallback"
+      ],
+      "model_requirements": [
+        "capability id",
+        "validated request",
+        "receipt"
+      ],
+      "network_requirements": [],
+      "trust_boundary": "A future native adapter is a separate authority boundary; the browser surface must receive only typed, permitted results.",
+      "egress_possible": true,
+      "egress": "Host file/process/network capabilities could egress; each capability must declare its boundary and receipt.",
+      "side_effect": "external_reversible",
+      "authority": "Future host permission and adapter allowlist; no current implementation authority.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "docs/internal/philo/adr/desktop-host.md",
+          "symbol": "DesktopHost",
+          "line": 1,
+          "claim": "The parent-owned ADR proposes a bounded native seam."
+        }
+      ],
+      "tests": [],
+      "docs": [
+        "docs/internal/philo/adr/desktop-host.md",
+        "docs/internal/philo/SRS.md"
+      ],
+      "limitations": [
+        "No native host implementation.",
+        "No installed host declared."
+      ],
+      "failure_states": [
+        "host unavailable",
+        "capability denied",
+        "invalid request",
+        "display geometry unavailable"
+      ],
+      "replacement": null,
+      "evidence_level": "source_inspected",
+      "release_availability": "unverified",
+      "owner_observed": false
+    }
+  ],
+  "components": [
+    {
+      "id": "desk.shell",
+      "name": "Desk shell",
+      "purpose": "Compose route, world, list, windows and chrome.",
+      "sources": [
+        {
+          "path": "web/src/desk/DeskApp.tsx",
+          "symbol": "DeskApp",
+          "line": 184,
+          "claim": "DeskApp mounts the Desk composition."
+        }
+      ],
+      "docs": [
+        "docs/DESK_ARCHITECTURE.md"
+      ],
+      "kind": "frontend",
+      "owns": [
+        "shell composition",
+        "current Desk context"
+      ],
+      "depends_on": [
+        "desk.world",
+        "desk.window",
+        "surface.library"
+      ],
+      "interfaces": [
+        "DeskApp props",
+        "surface registry"
+      ]
+    },
+    {
+      "id": "desk.world",
+      "name": "World projection",
+      "purpose": "Project primitive records into Pixi world objects and list objects.",
+      "sources": [
+        {
+          "path": "web/src/desk/world.ts",
+          "symbol": "worldObjects",
+          "line": 18,
+          "claim": "World descriptors contain stable object fields and placement."
+        }
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "kind": "frontend_projection",
+      "owns": [
+        "object census",
+        "placement projection"
+      ],
+      "depends_on": [
+        "web/src/lib/primitives.ts"
+      ],
+      "interfaces": [
+        "WorldObject",
+        "allObjects",
+        "objectByRef"
+      ]
+    },
+    {
+      "id": "desk.window",
+      "name": "Window system",
+      "purpose": "Manage frame chrome, focus, geometry, lifecycle and Dock/Expose views.",
+      "sources": [
+        {
+          "path": "web/src/desk/components/DeskWindow.tsx",
+          "symbol": "DeskWindowFrame",
+          "line": 556,
+          "claim": "The shared frame owns window interactions."
+        }
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "kind": "frontend",
+      "owns": [
+        "window rects",
+        "focus order",
+        "park/max lifecycle"
+      ],
+      "depends_on": [
+        "desk.persist",
+        "desk.window_geometry"
+      ],
+      "interfaces": [
+        "WindowSpec",
+        "WindowGeometry",
+        "DeskWindowFrame"
+      ]
+    },
+    {
+      "id": "desk.verb_registry",
+      "name": "Desk verb registry",
+      "purpose": "Define availability, labels, shortcuts and runners in one registry.",
+      "sources": [
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "symbol": "VERBS",
+          "line": 136,
+          "claim": "The registry enumerates Desk verbs."
+        }
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "kind": "frontend",
+      "owns": [
+        "verb definitions",
+        "ghost reasons"
+      ],
+      "depends_on": [
+        "desk.shell",
+        "desk.runtime"
+      ],
+      "interfaces": [
+        "VerbDefinition",
+        "runVerb"
+      ]
+    },
+    {
+      "id": "surface.library",
+      "name": "Surface library",
+      "purpose": "Render portable object surfaces, patterns and gadgets.",
+      "sources": [
+        {
+          "path": "web/src/desk/surface/index.ts",
+          "symbol": "surface barrel",
+          "line": 3,
+          "claim": "The barrel is the supported import path for surface components."
+        }
+      ],
+      "docs": [
+        "docs/internal/philo/DESIGN_SPECIFICATION.md"
+      ],
+      "kind": "frontend",
+      "owns": [
+        "surface component contract",
+        "semantic states"
+      ],
+      "depends_on": [
+        "semantic tokens",
+        "Signal controls"
+      ],
+      "interfaces": [
+        "surface component props"
+      ]
+    },
+    {
+      "id": "desk.runtime",
+      "name": "Runtime bus",
+      "purpose": "Reflect WebSocket and API runtime health to consumers.",
+      "sources": [
+        {
+          "path": "web/src/runtime/RuntimeBus.tsx",
+          "symbol": "RuntimeBusProvider",
+          "line": 13,
+          "claim": "RuntimeBus owns one guarded runtime socket and connection state."
+        }
+      ],
+      "docs": [
+        "docs/DESK_ARCHITECTURE.md"
+      ],
+      "kind": "runtime",
+      "owns": [
+        "transport state",
+        "reconnect loop"
+      ],
+      "depends_on": [
+        "WebSocket",
+        "apiFetch"
+      ],
+      "interfaces": [
+        "RuntimeBus state/context"
+      ]
+    }
+  ],
+  "integrations": [
+    {
+      "id": "desk.api",
+      "name": "Desk to HTTP API",
+      "purpose": "Fetch and mutate domain records from Desk surfaces.",
+      "sources": [
+        {
+          "path": "web/src/lib/api.ts",
+          "symbol": "apiFetch",
+          "line": 14,
+          "claim": "The API helper issues requests and maps non-2xx responses to ApiError."
+        }
+      ],
+      "docs": [
+        "docs/DESK_ARCHITECTURE.md"
+      ],
+      "direction": "desk_to_http",
+      "auth": "web auth token/cookie through existing auth seam",
+      "secrets": [
+        "auth token handled by auth module"
+      ],
+      "data": [
+        "domain JSON",
+        "status and error payload"
+      ],
+      "authority": "API routes remain authoritative for persisted domain state.",
+      "failure": "ApiError with status/message; surface retry or recovery is caller-owned.",
+      "tests": [
+        {
+          "path": "web/src/lib/api.test.ts",
+          "node": "turns a server detail into a user-readable typed error",
+          "assertion": "See matching capability row and inspected test assertion.",
+          "execution": "not_run"
+        }
+      ]
+    },
+    {
+      "id": "desk.runtime_bus",
+      "name": "Desk to RuntimeBus",
+      "purpose": "Receive runtime events and connection health.",
+      "sources": [
+        {
+          "path": "web/src/runtime/RuntimeBus.tsx",
+          "symbol": "RuntimeBusProvider",
+          "line": 13,
+          "claim": "The bus owns WebSocket connection state and event delivery."
+        }
+      ],
+      "docs": [
+        "docs/DESK_ARCHITECTURE.md"
+      ],
+      "direction": "runtime_to_desk",
+      "auth": "existing runtime authentication path",
+      "secrets": [
+        "runtime auth handled outside Desk surface"
+      ],
+      "data": [
+        "runtime frames",
+        "connection state"
+      ],
+      "authority": "RuntimeBus owns transport truth; Desk consumers own domain reconciliation.",
+      "failure": "bounded reconnect, offline state, malformed frames ignored",
+      "tests": [
+        {
+          "path": "web/src/runtime/RuntimeBus.test.tsx",
+          "node": "owns one socket and removes it with the provider",
+          "assertion": "See matching capability row and inspected test assertion.",
+          "execution": "not_run"
+        }
+      ]
+    },
+    {
+      "id": "desk.local_workspace",
+      "name": "Desk to browser localStorage",
+      "purpose": "Persist local arrangement metadata.",
+      "sources": [
+        {
+          "path": "web/src/desk/store/workspaceStorage.ts",
+          "symbol": "DESK_WORKSPACE_STORAGE_KEY",
+          "line": 8,
+          "claim": "Workspace arrangement uses the versioned localStorage key."
+        }
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "direction": "desk_to_local_storage",
+      "auth": "browser origin boundary",
+      "secrets": [],
+      "data": [
+        "window rect/order/max",
+        "zoneWindows",
+        "prefs"
+      ],
+      "authority": "Desk store owns the arrangement; localStorage is storage only.",
+      "failure": "wrong version/corrupt input returns defaults; write failures are not surfaced uniformly",
+      "tests": [
+        {
+          "path": "web/src/desk/__tests__/windows.test.tsx",
+          "node": "round-trips rects + order + max through one slot; min stays out (HS-97-03)",
+          "assertion": "See matching capability row and inspected test assertion.",
+          "execution": "not_run"
+        }
+      ]
+    },
+    {
+      "id": "desk.native_future",
+      "name": "Desk to future DesktopHost",
+      "purpose": "Provide bounded native display/filesystem capabilities when adopted.",
+      "sources": [
+        {
+          "path": "docs/internal/philo/adr/desktop-host.md",
+          "symbol": "DesktopHost",
+          "line": 1,
+          "claim": "The ADR defines a proposed host seam."
+        }
+      ],
+      "docs": [
+        "docs/internal/philo/adr/desktop-host.md"
+      ],
+      "direction": "desk_to_host",
+      "auth": "future explicit capability allowlist",
+      "secrets": [
+        "host-managed secrets remain behind adapter"
+      ],
+      "data": [
+        "typed capability requests/results"
+      ],
+      "authority": "Future host grants only declared capabilities; current browser path has no host authority.",
+      "failure": "adapter unavailable/denied/invalid request",
+      "tests": []
+    }
+  ],
+  "domain_model": [
+    {
+      "id": "desk.world_object",
+      "name": "World object",
+      "purpose": "Stable primitive projected into a spatial/list Desk view.",
+      "sources": [
+        {
+          "path": "web/src/desk/world.ts",
+          "symbol": "WorldObject",
+          "line": 18,
+          "claim": "World objects carry id, kind, label, subtitle, position and visual fields."
+        }
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "category": "frontend_projection",
+      "owner": "desk.world",
+      "storage": "derived from primitive records; arrangement metadata in workspace storage",
+      "lifecycle": "derive, select, inspect, mutate through named verb, refresh",
+      "relationships": [
+        "primitive descriptor",
+        "window surface",
+        "selection context"
+      ]
+    },
+    {
+      "id": "desk.window_state",
+      "name": "Window state",
+      "purpose": "Local frame geometry and lifecycle state for an open Desk surface.",
+      "sources": [
+        {
+          "path": "web/src/desk/store/workspaceStorage.ts",
+          "symbol": "DeskWorkspaceDocumentV1",
+          "line": 67,
+          "claim": "Persisted workspace includes panel rect, window rect/order/max, zones and preferences."
+        }
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "category": "frontend_projection",
+      "owner": "desk.window",
+      "storage": "hs.desk.workspace.v1 plus in-memory store",
+      "lifecycle": "open, focus, move/resize, park/maximize, restore, close",
+      "relationships": [
+        "surface registry",
+        "active context",
+        "workspace persistence"
+      ]
+    },
+    {
+      "id": "desk.verb",
+      "name": "Desk verb",
+      "purpose": "Named user operation with scope, availability and runner.",
+      "sources": [
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "symbol": "Verb",
+          "line": 28,
+          "claim": "Verb definitions encode id, label, scope, availability and runner."
+        }
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "category": "concept",
+      "owner": "desk.verb_registry",
+      "storage": "source registry; outcomes are not uniformly persisted",
+      "lifecycle": "registered, available/ghost, invoked, pending/completed/failed where runner supports it",
+      "relationships": [
+        "current context",
+        "window menu",
+        "keyboard map",
+        "receipt"
+      ]
+    },
+    {
+      "id": "desk.receipt",
+      "name": "Operation receipt",
+      "purpose": "Durable explanation of accepted, running, completed or failed work.",
+      "sources": [
+        {
+          "path": "web/src/desk/surface/patterns/ProvenanceChip.tsx",
+          "symbol": "Receipt",
+          "line": 36,
+          "claim": "Receipt renders status, label and timestamp fields."
+        }
+      ],
+      "docs": [
+        "docs/internal/philo/SRS.md"
+      ],
+      "category": "concept",
+      "owner": "domain/runtime (proposed)",
+      "storage": "presentational today; durable storage proposed",
+      "lifecycle": "accepted, running, succeeded, failed, retried, parked",
+      "relationships": [
+        "verb",
+        "egress boundary",
+        "source/provenance",
+        "recovery"
+      ]
+    }
+  ],
+  "trust_boundaries": [
+    {
+      "id": "desk.browser_to_api",
+      "name": "Browser Desk to HTTP API",
+      "purpose": "Bound domain requests and responses at the HTTP seam.",
+      "sources": [
+        {
+          "path": "web/src/lib/api.ts",
+          "symbol": "apiFetch",
+          "line": 14,
+          "claim": "The API helper is the browser HTTP boundary."
+        }
+      ],
+      "docs": [
+        "docs/DESK_ARCHITECTURE.md"
+      ],
+      "from": "Desk browser surface",
+      "to": "HoldSpeak HTTP API",
+      "data": [
+        "authenticated request",
+        "domain payload",
+        "error status"
+      ],
+      "compute": "API server validates and executes domain operation.",
+      "authority": "API routes and auth context",
+      "secrets": [
+        "Auth token/cookie stays in existing auth seam"
+      ],
+      "audit": "API error and operation logging; Desk receipt integration is incomplete."
+    },
+    {
+      "id": "desk.browser_to_runtime",
+      "name": "Browser Desk to runtime bus",
+      "purpose": "Guard WebSocket events and connection state before Desk consumption.",
+      "sources": [
+        {
+          "path": "web/src/runtime/RuntimeBus.tsx",
+          "symbol": "RuntimeBusProvider",
+          "line": 80,
+          "claim": "Malformed frames are ignored and reconnect is bounded."
+        }
+      ],
+      "docs": [
+        "docs/DESK_ARCHITECTURE.md"
+      ],
+      "from": "Runtime WebSocket",
+      "to": "Desk RuntimeBus consumers",
+      "data": [
+        "frames",
+        "connection state"
+      ],
+      "compute": "RuntimeBus validates frame shape and manages reconnect timers.",
+      "authority": "RuntimeBus transport state",
+      "secrets": [
+        "Runtime auth is outside surface components"
+      ],
+      "audit": "Connection states are observable; consumer refetch audit is incomplete."
+    },
+    {
+      "id": "desk.browser_to_storage",
+      "name": "Desk browser to local workspace",
+      "purpose": "Keep arrangement metadata in the browser origin boundary.",
+      "sources": [
+        {
+          "path": "web/src/desk/store/workspaceStorage.ts",
+          "symbol": "loadDeskWorkspace",
+          "line": 112,
+          "claim": "Invalid records are rejected and replaced by defaults."
+        }
+      ],
+      "docs": [
+        "docs/DESK_OBJECT_MODEL.md"
+      ],
+      "from": "Desk store",
+      "to": "Browser localStorage",
+      "data": [
+        "versioned arrangement metadata"
+      ],
+      "compute": "Storage helper serializes and validates bounded shape.",
+      "authority": "Desk store owns writes",
+      "secrets": [
+        "No domain secrets are intended in workspace storage"
+      ],
+      "audit": "Corrupt-data fallback is tested; write failure telemetry is incomplete."
+    },
+    {
+      "id": "desk.browser_to_future_host",
+      "name": "Browser Desk to future native host",
+      "purpose": "Keep native capability authority behind a typed adapter.",
+      "sources": [
+        {
+          "path": "docs/internal/philo/adr/desktop-host.md",
+          "symbol": "DesktopHost",
+          "line": 1,
+          "claim": "The ADR proposes a bounded host interface."
+        }
+      ],
+      "docs": [
+        "docs/internal/philo/adr/desktop-host.md"
+      ],
+      "from": "Browser Desk adapter",
+      "to": "Future native host",
+      "data": [
+        "typed capability request/result"
+      ],
+      "compute": "Host performs only allowlisted capability work.",
+      "authority": "Future host permissions and adapter policy",
+      "secrets": [
+        "Native secret storage remains host-owned"
+      ],
+      "audit": "Not implemented; no adapter tests or audit events exist."
+    }
+  ]
+}

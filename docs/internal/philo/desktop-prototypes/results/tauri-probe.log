@@ -1,0 +1,3 @@
+PHILO_PAGE_EVENT Started http://127.0.0.1:18789/
+PHILO_PAGE_EVENT Finished http://127.0.0.1:18789/
+PHILO_EXIT static bundle probe; no native capability commands registered
