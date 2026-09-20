@@ -372,19 +372,20 @@ class ModelLibraryApplicationService:
     @staticmethod
     def _profile_body(draft: dict[str, Any]) -> dict[str, Any]:
         claims = ["language"]
-        evidence = {"revision": "model-library-provider-v1", "claims": claims}
+        runtime = ModelLibraryApplicationService._provider_runtime_family(draft["provider_family"])
+        # The existing OpenAI-compatible execution adapter accepts the closed
+        # Meeting result schema.  Carry that adapter support as a manifest
+        # claim; readiness remains the separate endpoint observation below.
+        if runtime == "openai_compatible_v1" and ModelLibraryApplicationService._provider_readiness_reason(draft["provider_family"]) is None:
+            from ..inference_capabilities import process_inference_capability_registry
+
+            schema = process_inference_capability_registry().require("meeting.deferred_analysis")
+            claims.append(f"result_schema:{schema.output_schema_sha256}")
+        evidence = {
+            "revision": "model-library-meeting-adapter-v2" if len(claims) > 1 else "model-library-provider-v1",
+            "claims": claims,
+        }
         manifest = {**evidence, "sha256": _digest(evidence)}
-        runtime = {
-            "openrouter": "openai_compatible_v1",
-            # Custody may understand Anthropic before execution does. It still
-            # uses the existing endpoint deployment grammar; projection below
-            # is what enforces the no-false-Ready runtime truth.
-            "anthropic": "openai_compatible_v1",
-            "openai_compatible": "openai_compatible_v1",
-            "private_endpoint": "openai_compatible_v1",
-            "paired_device": "paired_device_v1",
-            "future_backend": "future_backend_v1",
-        }[draft["provider_family"]]
         return {
             "profile_id": draft["profile_id"],
             "expected_revision": draft["expected_profile_revision"],
@@ -392,7 +393,7 @@ class ModelLibraryApplicationService:
             "provider_family": draft["provider_family"],
             "runtime_family": runtime,
             "model_or_artifact_identity": draft["model"],
-            "supported_modalities": claims,
+            "supported_modalities": ["language"],
             "context_support": "bounded",
             "tokenizer_template_requirements": {},
             "capability_manifest": manifest,
@@ -530,12 +531,13 @@ class ModelLibraryApplicationService:
             ).fetchone()
         if existing is not None:
             return str(existing["observation_id"])
-        if draft["provider_family"] == "anthropic":
+        reason = self._provider_readiness_reason(draft["provider_family"])
+        if reason == "anthropic_runtime_missing":
             # There is no Anthropic execution adapter in this product yet. A
             # key may be durably held, but it never turns this row into Ready.
-            return self._record_readiness(deployment_id, deployment_revision_id, "unavailable", "anthropic_runtime_missing")
-        if draft["provider_family"] == "future_backend":
-            return self._record_readiness(deployment_id, deployment_revision_id, "unavailable", "runtime_unavailable")
+            return self._record_readiness(deployment_id, deployment_revision_id, "unavailable", reason)
+        if reason == "runtime_unavailable":
+            return self._record_readiness(deployment_id, deployment_revision_id, "unavailable", reason)
         observation = self._profiles.probe_profile(principal, {
             "profile_id": draft["profile_id"],
             "profile_revision": profile_revision,
@@ -544,6 +546,29 @@ class ModelLibraryApplicationService:
             "expected_deployment_revision_id": deployment_revision_id,
         })
         return str(observation["observation_id"])
+
+    @staticmethod
+    def _provider_runtime_family(provider_family: str) -> str:
+        """Return the runtime adapter family used by this producer seam."""
+        return {
+            "openrouter": "openai_compatible_v1",
+            # Custody may understand Anthropic before execution does. Readiness
+            # keeps that family unavailable until an execution adapter exists.
+            "anthropic": "openai_compatible_v1",
+            "openai_compatible": "openai_compatible_v1",
+            "private_endpoint": "openai_compatible_v1",
+            "paired_device": "paired_device_v1",
+            "future_backend": "future_backend_v1",
+        }[provider_family]
+
+    @staticmethod
+    def _provider_readiness_reason(provider_family: str) -> str | None:
+        """Share the existing execution exclusions with manifest minting."""
+        if provider_family == "anthropic":
+            return "anthropic_runtime_missing"
+        if provider_family == "future_backend":
+            return "runtime_unavailable"
+        return None
 
     def _record_readiness(self, deployment_id: str, revision_id: str, state: str, reason_code: str) -> str:
         observation_id = "ready_" + uuid.uuid4().hex

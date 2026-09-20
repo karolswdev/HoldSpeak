@@ -1358,6 +1358,16 @@
       ]
     },
     {
+      "path": "/api/concierge/summary-selection",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.concierge",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/connections",
       "methods": [
         "GET"
