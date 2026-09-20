@@ -2,8 +2,9 @@
 
 **Status:** canon since Phase 96 (owner-directed; built with the vendored
 `design-system` and `ui-styling` skills). Governed by the
-[Constitution](CONSTITUTION.md), Articles VII (the interface serves) and
-VIII (native-grade craft). Every value in this document is a token name;
+[Constitution](CONSTITUTION.md): the Seven Tenets (5, a component
+framework in the manner of Intuition; 6, Workbench 2.0+ on steroids),
+then Articles VII (the interface serves) and VIII (native-grade craft). Every value in this document is a token name;
 raw values live only in `web/design-tokens.json`.
 
 ## The token architecture (HS-96-01)

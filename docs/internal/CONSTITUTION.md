@@ -15,6 +15,50 @@ types anywhere and learns how you work; your meetings end with their loops
 closed; your agents, terminals, and delivery work sit on the same surface
 you do. All of it local, all of it yours, all of it through the Desk.
 
+## The Seven Tenets (the owner's charter, 2026-09-19)
+
+Spoken by the owner as the product's brain creator, to Muad'Dib and Astra
+as its co-creators, and ratified by his word under Article X.1. They sit
+above the articles: an article, a story, a design, a check, or a merge
+that fails a tenet is wrong, whatever else it satisfies. **The tenets are
+his words, verbatim. Nothing else in this section is law.** Each "Reading"
+is the co-creators' interpretation, checked by both brains, and yields to
+the owner's sentence wherever they differ.
+
+1. **"Do not over-engineer for safety."**
+   *Reading:* safety machinery is not free; it must earn its place by what
+   it gives the user. Article V and Article XI stay; their cost is
+   reviewed at the first sitting (see the amendment record).
+2. **"Do not forget that this is not even pre-alpha. I, as creator,
+   haven't even used it once yet, because it's been so complex from a
+   functional surface."**
+   *Reading:* the current priority is the creator's first real use.
+   Complexity of the functional surface is the blocker to remove.
+3. **"It's meant to help, and to accelerate. Not to throw a million
+   interfaces at the user with vague instructions."**
+   *Reading:* faces help the user complete a job and show a clear next
+   action where needed. Unnecessary interfaces are removed or parked.
+4. **"Product's main language specification is ASD-DTE-100. Extremely
+   simple English that will be understood by everyone."**
+   *Reading:* ASD-STE100 (Simplified Technical English), confirmed by
+   the owner ("yes, ASD-STE100", 2026-09-19); DOCS_STYLE.md is the
+   editing policy. It binds product-authored interface text and user
+   documentation.
+5. **"The interface? It has to be modular. It has to be based on a
+   component framework, much like Intuition for the Amiga."**
+   *Reading:* faces compose system components; none reinvents them.
+   Which library is that framework is an implementation rule in UX-CANON.
+6. **"The main inspiration? Amiga Workbench 2.0+ on steroids."**
+   *Reading:* design guidance, elaborated in DESIGN_SYSTEM and UX-CANON.
+7. **"Me, the first user of this? Senior Software Architect. I have
+   reports."**
+   *Reading:* the first user's jobs come first in every charter; this
+   names the priority, not a boundary on who may use it later.
+
+Every canon doc (UX-CANON, POSITIONING, DESIGN_SYSTEM, ORCHESTRATION,
+TWO-BRAINS), both orchestrators' charters (`CLAUDE.md`, `AGENTS.md`) and
+every phase charter cite the tenets.
+
 ## Article I — The Desk is the operating surface
 
 1. The Desk is not a feature, a view, or a tier. It is the product's
@@ -153,6 +197,17 @@ zero. Its former text and sunset are preserved in the amendment record.
 
 ## Amendment record
 
+- **2026-09-19 — The Seven Tenets ratified**, placed above the articles
+  by the owner's direct charter ("I want to make sure that we understand
+  the constitution of the product… referenced everywhere, and
+  established"). The tenets are verbatim; the readings are the
+  co-creators' and are not law. Checked by Astra under TWO-BRAINS §3;
+  record at `docs/internal/checks/constitution-seven-tenets-astra.md`,
+  which also carries four article amendments PROPOSED for the owner
+  under Article X.1 (V.1 to reference XI.4; VII.1 to permit the shortest
+  necessary instruction; IX.2 and UX-CANON E to reconcile owner
+  observation with verification-based merges; VIII.1/3 to charter no new
+  platform scope before the first sitting). Proposed, not enacted.
 - **2026-07-26 — Article XI (The Kernel) ratified**, and Article V gained
   clause 5 pointing to it. Proposed in
   `PLAN_KERNEL_OPERATION_BROKER.md` §10, amended by the fourth council

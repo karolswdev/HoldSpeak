@@ -24,6 +24,27 @@ git config core.hooksPath .githooks
 **Methodology:** `pm/roadmap/roadmap-builder.md`.
 **Rules canon:** `pm/roadmap/PMO-CONTRACT.md`.
 
+## The Seven Tenets (owner's charter 2026-09-19)
+
+`docs/internal/CONSTITUTION.md` opens with the owner's Seven Tenets; they
+outrank every article and every rule in this file. Measure every brief,
+check and merge against them first: no over-engineering for safety; not
+even pre-alpha (the creator has not used it once); help and accelerate,
+never a million interfaces; ASD-STE100 (confirmed 2026-09-19) on product text and user docs; a component
+framework in the manner of Intuition; Workbench 2.0+ on steroids; the
+first user is a Senior Software Architect with reports.
+
+## Two brains (owner ruling 2026-09-19)
+
+This repo has two orchestrators of equal standing: Muad'Dib (Claude,
+this harness) and Astra (`gpt-6-astra` via `codex exec --yolo`). Each
+checks the other before anything either authored is acted on; each
+orchestrates down to its own workers (Muad'Dib → Opus 4.6 via
+`.claude/agents/opus-worker.md`; Astra → `gpt-5.6-luna` at `xhigh`).
+Canon: `docs/internal/TWO-BRAINS.md`. Astra's side of the same rules:
+`AGENTS.md` (repo root; codex reads it). Channel: `scripts/astra <role>
+<brief.md>` (roles check | lane | counsel | ask), or `/astra`.
+
 ## Roadmap
 
 - **Project README:** `pm/roadmap/holdspeak/README.md`.

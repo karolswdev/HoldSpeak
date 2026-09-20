@@ -1,9 +1,10 @@
 # Orchestration — the Muad'Dib method
 
-How multi-agent phases run in this repository. The orchestrator is
-Muad'Dib; the implementation agents are the Fedaykin — every one a
-`claude-opus-4-6[1m]` session ("Opus workers" hereafter); the spice
-is the pipeline. Written after Phase 129 (One Grammar: two bug
+How multi-agent phases run in this repository. There are two
+orchestrators, Muad'Dib and Astra, equals ([TWO-BRAINS.md](TWO-BRAINS.md));
+Muad'Dib's implementation agents are the Fedaykin (Opus 4.6 sessions,
+"Opus workers" hereafter), Astra's are the Luna lanes; the spice is
+the pipeline. Written after Phase 129 (One Grammar: two bug
 screenshots → four audits → eleven stories → thirteen workers → merged,
 in one day), which is used throughout as the worked example. Revised
 2026-08-17 after the reckoning: the day the owner ruled the engine
@@ -11,29 +12,47 @@ great and the product unusable, and the method learned to gate on
 usability, seat a sober eye, ask the Tuesday question, and put the
 owner's nod before every merge.
 
-## The model rule (owner ruling, 2026-09-05 — the Fedaykin boosted)
+## The model rule (owner rulings 2026-09-18 and 2026-09-19)
 
-**All research, audit, implementation, test-writing, verification, and
-counsel work delegated to agents runs on `claude-fable-5-1`.** The
-owner's words (2026-09-05): "what I'd like for you to do is for your
-Fedaykin to actually be boosted. Let them be fable-5-1 models. Let's
-show Arrakis how much we can push HoldSpeak forward." This supersedes
-the 2026-08-15 ruling that pinned delegated work to
-`claude-opus-4-6[1m]`. The role structure is unchanged: the
-orchestrator decides, briefs, reads every shot and makes the done call;
-implementer, verifier and counsel are separate sessions; workers run
-scoped tests only and never restore churn outside their paths. The
-repo's `.claude/agents/opus-worker.md` (the name kept for the
-harness's references) carries the model line; any orchestration
-harness (Workflow, Agent) routes through it.
+**Two orchestrators, equals: Muad'Dib (`claude-fable-5-1`, this
+harness) and Astra (`gpt-6-astra` at reasoning `xhigh`, via `codex
+exec`).** Each checks the other; nothing one authors is acted on until
+the other has checked it. The protocol is canon in
+[TWO-BRAINS.md](TWO-BRAINS.md) and wins over this section where they
+differ.
+
+**Each orchestrates down to its own workers, never the other's.**
+Muad'Dib's Fedaykin are Opus 4.6 (1M) sessions through
+`.claude/agents/opus-worker.md` (`model: opus`; the owner's 2026-09-18
+ruling "all your workers must also be Opus 4-6 workers"; the file is
+gitignored and re-applied per clone). Astra's lanes are
+`gpt-5.6-luna` at `xhigh` via `spawn_agent` (the owner's 2026-09-19
+ruling "codex will be told to orchestrate down to luna-xhigh").
+This supersedes the 2026-09-05 Fable boost and the 2026-09-17
+Fable-Fedaykin ruling.
+
+The role structure is unchanged: an orchestrator decides, briefs, reads
+every shot and makes the done call; implementer, verifier and counsel
+are separate sessions; workers run scoped tests only and never restore
+churn outside their paths. The counsel of §6 below is, by default, the
+other brain (TWO-BRAINS.md §4 "counsel on built"); an Opus counsel or
+the sober eye remains available as a third opinion.
 
 One carve-out exists and only the owner can invoke it: the owner may
-explicitly order a specific task onto a different model (the 2026-08-17
-sober-eye audit ran on a fresh Fable at the owner's word). The order is
+explicitly order a specific task onto a different model. The order is
 per-task, never a precedent; the default rule resumes the moment the
 task ends.
 
 ## The stance
+
+Above everything below sit the Constitution's Seven Tenets (2026-09-19).
+An orchestrator briefs, checks, and merges against them first: is this
+over-engineered for safety; does it move the creator toward his first
+real use; does it help and accelerate, or add an unnecessary interface; is it in
+ASD-STE100; is it composed from the component framework; is it
+Workbench 2.0+ on steroids; is it one of a Senior Software Architect's
+jobs.
+
 
 The orchestrator **decides, briefs, and verifies — it does not write
 product code** during phase execution. Its hands touch: roadmap files
