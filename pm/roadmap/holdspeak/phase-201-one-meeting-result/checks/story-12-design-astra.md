@@ -44,6 +44,13 @@ I reviewed committed design and code only. The owner’s shot is described but n
 1. Job confirmed.
 2. A synthesis draft shows in band 3 in the question's shape ("A draft from your note", the text, "Add to note"); after Add the band folds and the appended text is revealed in the note.
 3. Finish = keep, not lock: an unadded answer is added first; a finished note reopens editable; a save failure is one line with Try again; the e2e closes, finds and reopens the note.
+   **AMENDED 2026-09-20** (counsel on built, finding 2, accepted): "reopens
+   editable" is withdrawn — the hub refuses working-note writes on a
+   completed Thought (`refinement_thought_service.py:1147`). The settled
+   rule: a finished note names `FINISHED` and `Resume` is one press. The
+   save-failure verb is `Try again` only where a retry works; a conflict
+   ("changed elsewhere") carries `Reload`, because `writer.retry` returns
+   during a conflict (`useThoughtNoteWriter.ts:238`).
 4. Change is an in-window well for this note's context, library species; default-context management is parked.
 5. An egress chip beside Ask with the intended destination.
 6. "No engine yet" only for an absent assignment; unreachable engine and failed ask have their own one-line truths and a recovery verb; stale context stays visible in Reads.

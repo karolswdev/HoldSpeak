@@ -121,6 +121,7 @@ function WorkspaceReady({
   const answerRef = useRef<HTMLLabelElement | null>(null);
   const focusAnswer = () => answerRef.current?.querySelector("textarea")?.focus();
   const readsRef = useRef<HTMLButtonElement | null>(null);
+  const reloading = useRef(false);
   const writer = useThoughtNoteWriter({
     thought: documentThought,
     onThought: setDocumentThought,
@@ -220,15 +221,36 @@ function WorkspaceReady({
     return succeeded;
   };
 
-  const addDraft = () => {
-    const reviewId = review?.id;
-    if (!reviewId) return;
-    return afterFlush(async (latest) => {
-      const key = `hs.thought.review.${reviewId}.accept`;
-      const result = await actOnReview({ thought: latest, reviewId, action: "accept", request_id: stableId(key), workspace_cursor: projection.workspace_cursor });
-      sessionStorage.removeItem(key);
-      return result;
-    }, true);
+  /* HS-201-12 counsel round (Astra finding 1, a (b) defect) — a draft is
+     APPENDED, never accepted: the hub's `accept` REPLACES title, body and
+     tags (refinement_thought_service.py:1060), which would delete the
+     owner's own words.  The append goes through the sole writer, and that
+     durable edit supersedes the frozen review by itself ("owner_edited",
+     refinement_thought_service.py:509), so the band folds with no second
+     command.  The reveal lands on the appended range. */
+  const addDraft = async (): Promise<boolean> => {
+    const text = draftBody;
+    if (!text || busy) return false;
+    const body = writer.draft.body;
+    const gap = !body ? "" : body.endsWith("\n\n") ? "" : body.endsWith("\n") ? "\n" : "\n\n";
+    const next = `${body}${gap}${text}`;
+    const start = body.length + gap.length;
+    setBusy(true);
+    setMessage("");
+    try {
+      writer.edit({ body: next });
+      const saved = await writer.flush({ fence: true });
+      setDocumentThought(saved);
+      setRevealRange({ start, end: next.length, focus: false });
+      await reload(false).catch(() => undefined);
+      return true;
+    } catch (cause) {
+      setMessage(readableError(cause));
+      return false;
+    } finally {
+      writer.release();
+      setBusy(false);
+    }
   };
 
   const ask = () => afterFlush(async (latest) => {
@@ -238,9 +260,17 @@ function WorkspaceReady({
     return result;
   });
 
-  const keep = () => afterFlush(async (latest) => {
-    const key = `hs.thought.complete.${latest.id}`;
-    const result = await completeThought({ thought: latest, request_id: stableId(key), workspace_cursor: projection.workspace_cursor });
+  const keep = (fresh?: ThoughtWorkspaceProjection | null) => afterFlush(async (latest) => {
+    /* The answer that just landed advanced BOTH the revisions and the
+       workspace cursor; completing against the stale pair is the 409
+       `workspace_cursor_conflict` Astra's probe recorded (finding 2). */
+    const source = fresh?.thought ?? latest;
+    const key = `hs.thought.complete.${source.id}`;
+    const result = await completeThought({
+      thought: source,
+      request_id: stableId(key),
+      workspace_cursor: fresh?.workspace_cursor ?? projection.workspace_cursor,
+    });
     sessionStorage.removeItem(key);
     return result;
   });
@@ -249,10 +279,12 @@ function WorkspaceReady({
      answer that is not in the note yet joins it first, then the Thought is
      kept.  No prompt, no second press. */
   const finish = async () => {
-    if (question && answer.trim()) {
-      if (!await addAnswer()) return;
+    if (!(question && answer.trim())) {
+      await keep();
+      return;
     }
-    await keep();
+    if (!await addAnswer()) return;
+    await keep(await reload(false).catch(() => null));
   };
 
   const resume = () => afterFlush(async (latest) => ({ thought: await resumeThought(latest, projection.workspace_cursor) }));
@@ -306,14 +338,18 @@ function WorkspaceReady({
       : projection.workspace_state === "stale" && stale
         ? { token: stale.state === "missing" ? "CONTEXT MISSING" : "CONTEXT CHANGED", label: stale.state === "missing" ? "Remove it" : "Update it", act: () => void repair(stale) }
         : !ready
-          /* HS-201-12 (design condition 5) — the two truthful states the
-             projection distinguishes: THIS DEVICE is never unreachable, it
-             is only missing its model (`_this_machine_readiness`,
-             inference_targets.py:243), so that reads "no engine yet"; a
-             target on another machine that is not ready cannot be reached. */
-          ? remoteEngine
-            ? { token: "ENGINE NOT REACHABLE", label: "Check", act: setupAI }
-            : { token: "NO ENGINE YET", label: "Choose an engine", act: setupAI }
+          /* HS-201-12 (design condition 5, corrected by Astra finding 4) —
+             three truthful states, and the projection distinguishes all
+             three: a READY target with unavailable inference is the
+             coordinator, not the engine (refinement_application_service.py:80);
+             THIS DEVICE is never unreachable, only missing its model
+             (`_this_machine_readiness`, inference_targets.py:243); a target
+             on another machine that is not ready cannot be reached. */
+          ? placement?.readiness === "ready"
+            ? { token: "ENGINE BUSY", label: "Try again", act: () => void ask() }
+            : remoteEngine
+              ? { token: "ENGINE NOT REACHABLE", label: "Check", act: setupAI }
+              : { token: "NO ENGINE YET", label: "Choose an engine", act: setupAI }
           : projection.workspace_state === "named_failure"
             ? { token: "", label: projection.terminal_status?.retryable === false ? "Ask" : "Try again", act: () => void ask() }
             : open
@@ -329,6 +365,30 @@ function WorkspaceReady({
     : "NOTHING";
 
   const saveFailed = writer.failed || writer.conflicted;
+  /* Astra finding 4 — `writer.retry` returns during a conflict
+     (useThoughtNoteWriter.ts:238), so "Try again" there was a verb that
+     does nothing (A.11).  The honest verb re-reads the note: the hub's
+     text replaces the draft through the sole writer, which also clears the
+     conflict fence (`edit`, useThoughtNoteWriter.ts:213). */
+  const reloadNote = async () => {
+    /* A ref, not `busy`: `busy` raises the writer's command fence, and the
+       fence would swallow the very `edit` that re-seats the note
+       (useThoughtNoteWriter.ts:212). */
+    if (busy || reloading.current) return;
+    reloading.current = true;
+    setMessage("");
+    try {
+      const fresh = await reload(false);
+      const note = fresh.thought.working_note;
+      setDocumentThought(fresh.thought);
+      setRevealRange(null);
+      writer.edit({ title: note.title, body: note.body_markdown, tags: note.tags.join(", ") });
+    } catch (cause) {
+      setMessage(readableError(cause));
+    } finally {
+      reloading.current = false;
+    }
+  };
   /* The well writes against the workspace cursor, so the sole writer drains
      first — a dirty note under an attach is a cursor conflict (HS-141-05). */
   const openReads = async () => {
@@ -409,12 +469,14 @@ function WorkspaceReady({
 
     <SurfaceFooter
       className="thought-note-foot"
-      egress={<span className="thought-note-reads">READS · {readsToken}</span>}
+      egress={<span className="thought-note-reads" title={`Reads ${readsToken}`}>READS · {readsToken}</span>}
       receipt={saveFailed
         ? <span className="surface-footer-receipt-line" data-tone="danger">{writer.conflicted ? "CHANGED ELSEWHERE" : "THE NOTE DID NOT SAVE"}</span>
         : <span className="surface-footer-receipt-line">{documentThought.filing_status === "filed" ? "KEPT" : "NOT IN A DRAWER"}{completed ? " · FINISHED" : ""}</span>}
       verbs={<>
-        {saveFailed ? <Button dense onClick={writer.retry}>Try again</Button> : null}
+        {writer.conflicted
+          ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button>
+          : writer.failed ? <Button dense onClick={writer.retry}>Try again</Button> : null}
         <Button ref={readsRef} dense aria-expanded={reads} disabled={busy} onClick={() => void openReads()}>Change</Button>
         {completed
           ? <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={() => void resume()}>Resume</Button>

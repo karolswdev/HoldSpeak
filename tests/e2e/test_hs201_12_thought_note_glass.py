@@ -94,7 +94,7 @@ def _in_frame(box: dict[str, float] | None, window: dict[str, float], name: str)
     assert box["y"] + box["height"] <= window["y"] + window["height"] + 1, (name, box, window)
 
 
-def _boot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def _boot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, engine: Any = None):
     import holdspeak.config as config_module
     import holdspeak.db.core as db_core
     from holdspeak.db import reset_database
@@ -114,7 +114,7 @@ def _boot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr("holdspeak.intel.providers.configured_local_meeting_model_path", lambda: provider["path"])
     reset_database()
     database = db_core.get_database()
-    engine = _OneQuestionEngine()
+    engine = engine or _OneQuestionEngine()
     broker = _configure(database)
     monkeypatch.setattr(broker.inference_runner, "_engine_factory", lambda _revision, **_kw: engine)
     callbacks = WebRuntimeCallbacks(on_bookmark=lambda *_: None, on_stop=lambda: None, get_state=lambda: {})
@@ -132,6 +132,7 @@ def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.Monk
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
     console_errors: list[str] = []
+    responses: list[tuple[str, int]] = []
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
@@ -139,6 +140,7 @@ def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.Monk
             page.emulate_media(reduced_motion="reduce")
             page.on("pageerror", lambda error: errors.append(str(error)))
             page.on("console", lambda message: console_errors.append(message.text) if message.type == "error" else None)
+            page.on("response", lambda response: responses.append((response.url, response.status)) if "/api/thoughts/" in response.url else None)
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
             _api(page, "POST", "/api/desk/seed")
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
@@ -256,15 +258,28 @@ def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.Monk
             _no_empty_heading(page)
             page.screenshot(path=str(SHOTS / f"after-add-{width}.png"), full_page=False)
 
-            # ── Finish keeps it; the note is found again, and reopens ──
+            # ── Astra finding 2 on the real hub: Finish with an UNADDED
+            #    answer adds it first and then keeps, with no cursor conflict ──
+            band.get_by_role("button", name="Ask", exact=True).click()
+            page.get_by_text(QUESTION, exact=True).wait_for(timeout=20000)
+            second = page.get_by_role("textbox", name="Your answer")
+            second.fill("The freeze date is the fact that settles it.")
+            responses.clear()
             workspace.locator(".btn--primary:visible").click()
             workspace.get_by_role("button", name="Resume", exact=True).wait_for(timeout=20000)
-            assert page.get_by_text("KEPT · FINISHED", exact=False).count() == 1
-            assert page.get_by_role("region", name="One question", exact=True).count() == 0
-            page.reload(wait_until="load")
+            completions = [status for path, status in responses if path.endswith("/complete")]
+            assert completions and all(status < 300 for status in completions), (completions, responses)
+            assert not [status for _p, status in responses if status == 409], responses
+            kept_note = _api(page, "GET", f"/api/thoughts/{thought['id']}")["thought"]
+            assert "The freeze date is the fact that settles it." in kept_note["working_note"]["body_markdown"]
+            assert kept_note["state"] == "completed", kept_note["state"]
+
+            # ── …and the finished note is found again, and reopens ──
             page.goto(f"{url}/?token={TOKEN}&open=note%3A{note_id}", wait_until="load")
             workspace = page.get_by_role("region", name="Thought", exact=True)
             workspace.wait_for(timeout=15000)
+            assert page.get_by_text("KEPT · FINISHED", exact=False).count() == 1
+            assert page.get_by_role("region", name="One question", exact=True).count() == 0
             workspace.get_by_role("region", name="Note", exact=True).get_by_text(
                 "Mina reads the plan differently.", exact=False
             ).wait_for(timeout=15000)
@@ -355,6 +370,153 @@ def test_thought_note_long_note_and_long_question_never_clip(
             assert band.get_by_role("button", name="Add to note", exact=True).is_visible()
             _no_horizontal_escape(page)
             _no_empty_heading(page)
+            browser.close()
+    finally:
+        server.stop()
+
+
+class _DraftEngine:
+    """The prompt permits a synthesis instead of a question (refinement_coordinator.py:581)."""
+
+    active_provider = "deterministic-thought-interview"
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def run_prompt(self, *, user_prompt: str, **_kwargs: object) -> str:
+        self.calls += 1
+        return ('{"kind":"synthesis","title":"A TIDIER TITLE FROM THE AI",'
+                '"body_markdown":"The team disagrees about the freeze date.",'
+                '"tags":["ai"]}')
+
+
+OWNER_WORDS = "OWNER WORDS THAT MUST SURVIVE."
+DRAFT_TEXT = "The team disagrees about the freeze date."
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+@pytest.mark.parametrize("width", [1440, 393])
+def test_thought_note_draft_is_appended_never_replaced(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
+) -> None:
+    """Astra finding 1: `accept` REPLACES title, body and tags. Add appends."""
+    from playwright.sync_api import sync_playwright
+
+    server, url, _provider, engine = _boot(tmp_path, monkeypatch, engine=_DraftEngine())
+    SHOTS.mkdir(parents=True, exist_ok=True)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _api(page, "POST", "/api/desk/seed")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+            thought = _seed(page, OWNER_TITLE, OWNER_WORDS)
+            page.goto(f"{url}/?token={TOKEN}&open=note%3A{thought['working_note']['id']}", wait_until="load")
+
+            workspace = page.get_by_role("region", name="Thought", exact=True)
+            workspace.wait_for(timeout=15000)
+            band = page.get_by_role("region", name="One question", exact=True)
+            band.wait_for(timeout=15000)
+            band.get_by_role("button", name="Ask", exact=True).click()
+
+            page.get_by_text(DRAFT_TEXT, exact=True).wait_for(timeout=20000)
+            assert "A DRAFT FROM YOUR NOTE" in band.inner_text().upper()
+            assert page.get_by_role("textbox", name="Your answer").count() == 0
+            assert band.get_by_role("button", name="Add to note", exact=True).count() == 1
+            _no_empty_heading(page)
+            page.screenshot(path=str(SHOTS / f"after-draft-{width}.png"), full_page=False)
+
+            band.get_by_role("button", name="Add to note", exact=True).click()
+            band.get_by_role("button", name="Ask", exact=True).wait_for(timeout=20000)
+            kept = _api(page, "GET", f"/api/thoughts/{thought['id']}")["thought"]
+            # The owner's words survive; the draft joins them; the title and
+            # the tags are HIS, never the AI's.
+            assert OWNER_WORDS in kept["working_note"]["body_markdown"], kept["working_note"]
+            assert DRAFT_TEXT in kept["working_note"]["body_markdown"], kept["working_note"]
+            assert kept["working_note"]["title"] == OWNER_TITLE, kept["working_note"]["title"]
+            assert kept["working_note"]["tags"] == ["team"], kept["working_note"]["tags"]
+            assert workspace.locator(".cm-thought-answer-reveal").count() >= 1
+            assert engine.calls == 1
+            _no_empty_heading(page)
+            page.screenshot(path=str(SHOTS / f"after-draft-added-{width}.png"), full_page=False)
+            browser.close()
+    finally:
+        server.stop()
+
+
+LONG_CONTEXT = (
+    "A very long piece of everyday context that the owner keeps for his team "
+    "and for its many standing decisions about the freeze"
+)
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+@pytest.mark.parametrize("width", [1440, 393])
+def test_thought_note_long_context_and_open_well_never_clip(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
+) -> None:
+    """Astra finding 5: a long context name pushed Finish off the window."""
+    from playwright.sync_api import sync_playwright
+
+    server, url, _provider, _engine = _boot(tmp_path, monkeypatch)
+    SHOTS.mkdir(parents=True, exist_ok=True)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _api(page, "POST", "/api/desk/seed")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+            _api(page, "POST", "/api/notes", {"title": LONG_CONTEXT, "body_markdown": "The freeze holds.", "tags": []})
+            thought = _seed(page, OWNER_TITLE, OWNER_BODY)
+            page.goto(f"{url}/?token={TOKEN}&open=note%3A{thought['working_note']['id']}", wait_until="load")
+
+            workspace = page.get_by_role("region", name="Thought", exact=True)
+            workspace.wait_for(timeout=15000)
+            workspace.get_by_role("button", name="Change", exact=True).click()
+            well = page.get_by_role("region", name="What the AI reads")
+            well.wait_for(timeout=10000)
+
+            # The well SEARCHES the desk, not just six recent notes.
+            find = well.get_by_role("textbox", name="Find a note")
+            find.fill("standing decisions")
+            token = well.locator("label.gadget-check-token", has_text="standing decisions")
+            token.first.wait_for(timeout=10000)
+            token.first.click()
+            page.wait_for_function(
+                "name => document.querySelector('.thought-note-reads')?.title?.includes(name)",
+                arg="standing decisions",
+                timeout=10000,
+            )
+
+            window_box = workspace.bounding_box()
+            assert window_box
+            # Nothing the owner must press leaves the window…
+            for name in ("Change", "Finish"):
+                box = workspace.get_by_role("button", name=name, exact=True).bounding_box()
+                assert box, name
+                assert box["x"] + box["width"] <= window_box["x"] + window_box["width"] + 1, (name, box, window_box)
+                _in_frame(box, window_box, name)
+            # …the kept state keeps its width…
+            kept = workspace.locator(".thought-note-foot .surface-footer-receipt-line")
+            kept_box = kept.bounding_box()
+            assert kept_box and kept_box["width"] > 20, kept_box
+            # …the reads token truncates instead of widening the foot…
+            reads = workspace.locator(".thought-note-reads")
+            assert reads.evaluate("el => el.scrollWidth <= el.clientWidth + 1 || getComputedStyle(el).textOverflow === 'ellipsis'")
+            assert LONG_CONTEXT[:40] in (reads.get_attribute("title") or "")
+            # …and the OPEN well fits its own container at both widths.
+            well_box = well.bounding_box()
+            assert well_box and well_box["width"] <= window_box["width"] + 1, (well_box, window_box)
+            assert well.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+            _in_frame(well_box, window_box, "open well")
+            _no_horizontal_escape(page)
+            page.screenshot(path=str(SHOTS / f"long-context-open-well-{width}.png"), full_page=False)
             browser.close()
     finally:
         server.stop()

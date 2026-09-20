@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { readableError } from "../../lib/api";
-import { CheckGadget, countToken } from "../surface";
+import { CheckGadget, countToken, StringGadget } from "../surface";
 import {
   attachThoughtContext,
   detachThoughtContext,
@@ -36,6 +36,7 @@ export function ThoughtReadsWell({
 }) {
   const [attachments, setAttachments] = useState<ThoughtAttachment[]>(thought.attachments || []);
   const [candidates, setCandidates] = useState<ThoughtContextCandidate[]>([]);
+  const [query, setQuery] = useState("");
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState("");
   const wellRef = useRef<HTMLDivElement | null>(null);
@@ -56,23 +57,36 @@ export function ThoughtReadsWell({
     return () => node?.removeEventListener("keydown", close);
   }, [onClose]);
 
+  /* Astra finding 3 — six pinned/recent rows is not a chooser on a desk
+     with many notes: the well searches the real listing (the same endpoint
+     the picker uses), debounced, and the mic rides the field (voice law). */
   useEffect(() => {
     let live = true;
-    void (async () => {
+    const run = async () => {
       try {
-        const listing = await listThoughtContext(thought.id, { view: "compact", limit: CANDIDATE_CAP });
+        const search = query.trim();
+        const listing = await listThoughtContext(thought.id, {
+          view: search ? "browse" : "compact",
+          query: search || undefined,
+          limit: CANDIDATE_CAP,
+        });
         if (!live) return;
         setAttachments(listing.attachments || []);
+        setError("");
         const held = new Set((listing.attachments || []).map((item) => item.ref));
-        setCandidates([...(listing.pinned || []), ...(listing.recent || [])]
+        const pool = search
+          ? listing.results || []
+          : [...(listing.pinned || []), ...(listing.recent || [])];
+        setCandidates(pool
           .filter((row, index, all) => !held.has(row.ref) && all.findIndex((item) => item.ref === row.ref) === index)
           .slice(0, CANDIDATE_CAP));
       } catch (cause) {
         if (live) setError(readableError(cause));
       }
-    })();
-    return () => { live = false; };
-  }, [thought.id, thought.attachment_revision]);
+    };
+    const timer = window.setTimeout(() => { void run(); }, query ? 160 : 0);
+    return () => { live = false; window.clearTimeout(timer); };
+  }, [thought.id, thought.attachment_revision, query]);
 
   const change = async (ref: string, next: boolean) => {
     if (pending || disabled) return;
@@ -111,9 +125,14 @@ export function ThoughtReadsWell({
   };
 
   return <div ref={wellRef} className="thought-reads-well" role="region" aria-label="What the AI reads" tabIndex={-1}>
-    {attachments.map((item) => row(item.ref, item.title, item.leaf_count, true))}
-    {candidates.map((item) => row(item.ref, item.title, item.leaf_count, false))}
-    {!attachments.length && !candidates.length && !error ? <span className="surface-token">Nothing to read yet</span> : null}
+    <span className="thought-reads-find">
+      <StringGadget label="Find a note" micLabel="Speak the note name" value={query} onChange={setQuery} placeholder="Find a note…" />
+    </span>
+    <span className="thought-reads-rows">
+      {attachments.map((item) => row(item.ref, item.title, item.leaf_count, true))}
+      {candidates.map((item) => row(item.ref, item.title, item.leaf_count, false))}
+      {!attachments.length && !candidates.length && !error ? <span className="surface-token">{query.trim() ? "No match" : "Nothing to read yet"}</span> : null}
+    </span>
     {error ? <span className="thought-reads-error" role="alert">{error}</span> : null}
   </div>;
 }

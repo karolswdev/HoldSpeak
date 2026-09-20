@@ -40,10 +40,49 @@ One window, one column, four bands, top to bottom. Every verb is the library But
 
 Rules: band 3 is folded (one row: "ONE QUESTION · Ask") until the owner asks, and never renders an empty heading; with no engine assigned the row reads "ONE QUESTION · No engine yet" with the Choose an engine Button and nothing else. The context receipt ("Attached …") is the Reads line itself; it is never stated twice. Tags, Info, the toolbar, the Note/Interview tab nav, the synthesis draft state and the inserted-marker chips leave this window (parked, not deleted: the code stays behind a flag or in the pullout editor). At 393 the same four bands stack; nothing is hidden behind a tab. Finish is the one filled primary; Ask and Add to note and Change are default species. "Filed" becomes "Kept"; "Saved" is not shown (a save failure is shown, once, as a line).
 
+### Amendments (counsel on built, 2026-09-20)
+
+Astra's counsel on PR #592 (`checks/story-12-built-astra.md`) carried three
+corrections to the settled text; Muad'Dib accepted all of them.
+
+- **A finished note does NOT reopen editable.** The hub refuses every
+  working-note write on a completed Thought
+  (`holdspeak/services/refinement_thought_service.py:1147`, code
+  `thought_completed`), so an editable field would be a save that always
+  fails. The settled rule is: a finished note names `FINISHED` on the title
+  and in the foot, and `Resume` is the one filled primary — one press, then
+  it is editable.
+- **A returned draft is APPENDED, never accepted.** The hub's `accept`
+  replaces title, body and tags with the AI's
+  (`refinement_thought_service.py:1060`), which deletes the owner's own
+  words. Band 3's `Add to note` appends the draft through the working-note
+  writer and never calls `accept`; the durable edit supersedes the review by
+  itself, so the band folds with no second command.
+- **The parked things are parked, not reachable.** See Scope below: the
+  original-capture disclosure, the tag row and the default-context picker
+  have no route from a thought-owned note today. They are deliberate
+  removals (a), ledgered with their reason, not "still available elsewhere".
+
 ## Scope
 
 - **In:** `ThoughtWorkspaceWindow.tsx` and `ThoughtDocumentPane.tsx` recomposed to the four bands from library species only (SurfaceFooter, EditInPlace, PadGadget with micLabel, FoldGadget or a single ledger row for band 3, Button); the CSS for this window only; the two plain bugs (title wrap; empty question never a heading); the labels above; the existing controller and services untouched except where a label or a receipt string lives.
-- **Out:** the Interview's synthesis/draft mode (parked); the pullout editor; new AI behaviour; the correction loop.
+- **Out:** the pullout editor; new AI behaviour; the correction loop.
+- **Removed from this window, ledgered (a) with the reason** (counsel on
+  built, finding 3 — the earlier "parked in the pullout" claim was false:
+  `desk/components/Pullout.tsx:123` sends a thought-owned note to THIS
+  window, so nothing reaches the legacy pullout's copies):
+  - the formatting rail — a dictated note is prose, not markup; `DeskEditor`
+    keeps the rail for every other host;
+  - the tag row — no tag is read by anything on this path today;
+  - `Info` / the original-capture disclosure — the raw capture stays in
+    custody on the hub and this window never fetches it (fenced);
+  - the default-context picker — this window's `Change` settles THIS note's
+    context only; default policy has no owned-note route now;
+  - the Note/Interview tab nav, `Filed`/`Saved`, the duplicate `Attached …`
+    receipt and the inserted-marker chips.
+- **Not removed, but with no caller from this window:** the chained turn
+  (`answer_and_continue`, `desk/thoughts.ts:423`) — band 3 has one verb by
+  the settled design, so nothing in the product calls it today.
 
 ## Acceptance criteria
 

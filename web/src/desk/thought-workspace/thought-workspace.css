@@ -11,7 +11,15 @@
   max-width: calc(100vw - 24px);
   max-height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
   overflow: hidden;
+  /* HS-201-12 counsel round — UX-CANON D: this window's bands reflow
+     against the WINDOW, never the viewport.  `surface` is the one public
+     window-body container name (window-chrome.css:381); declaring it here
+     makes the library's own narrow rules (SurfaceFooter) answer to this
+     window too.  The only viewport rule left is the shell one below, which
+     sizes the window element itself — an element cannot query its own
+     container. */
   container-type: inline-size;
+  container-name: surface;
 }
 
 .desk-next .thought-workspace-window > .desk-pullout-head {
@@ -103,7 +111,7 @@
   position: absolute;
   right: 0;
   bottom: 0;
-  z-index: 1;
+  z-index: var(--desk-z-local);
 }
 
 .desk-next .thought-note-field-mic .desk-mic {
@@ -259,10 +267,44 @@
   background: var(--surface-2);
 }
 
+.desk-next .thought-reads-find {
+  flex: 1 0 100%;
+  display: block;
+}
+
+.desk-next .thought-reads-find .gadget-string {
+  width: 100%;
+}
+
+.desk-next .thought-reads-rows {
+  flex: 1 1 100%;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
 .desk-next .thought-reads-row {
+  min-width: 0;
+  max-width: 100%;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+/* A long note name truncates inside the well instead of widening it. */
+.desk-next .thought-reads-row .gadget-check-token {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.desk-next .thought-reads-row .gadget-check-token-face {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  line-height: 20px;
 }
 
 .desk-next .thought-reads-error {
@@ -271,6 +313,23 @@
 }
 
 /* ── Band 4: the foot ── */
+
+/* Astra finding 5 — a long context name must not push the verbs off the
+   glass: the READS token is the only slot that shrinks (its full text
+   rides its `title`), KEPT keeps a floor, the verbs keep their size. */
+.desk-next .surface-footer-layout.thought-note-foot {
+  grid-template-columns: minmax(0, 1fr) max-content max-content;
+}
+
+.desk-next .thought-note-foot .surface-footer-egress {
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+.desk-next .thought-note-foot .surface-footer-receipt {
+  min-width: 4ch;
+  padding-inline: 12px;
+}
 
 .desk-next .thought-note-foot .thought-note-reads {
   min-width: 0;
@@ -288,20 +347,27 @@
   min-height: 30px;
 }
 
-@container surface (max-width: 420px) {
-  .desk-next .thought-note-foot .thought-note-reads {
-    white-space: normal;
-    overflow: visible;
+/* The shell rule — and the ONLY viewport rule here: it sizes the window
+   ELEMENT, which no container query can style (the file's allowlist entry
+   in `containerQueryLaw.test.ts` names exactly this). */
+@media (max-width: 720px) {
+  .desk-next .desk-pullout.thought-workspace-window {
+    inset: var(--desk-work-top) 0 var(--desk-work-bottom) 0 !important;
+    width: 100vw;
+    height: auto;
+    min-width: 0;
+    min-height: 0;
+    max-width: none;
+    max-height: none;
+    border-left: 0;
+    border-right: 0;
   }
 }
 
-/* Astra condition 7 — at 393 the foot STACKS and the Reads line wraps
-   instead of ellipsizing: a long context name must stay readable, and it
-   must never push the kept state off the glass (the 393 shot caught that).
-   The library's own narrow rule rides `@container surface`, which this
-   window's container does not answer to; `className` is the sanctioned
-   face hook for the footer layout (contract.md, SurfaceFooter). */
-@media (max-width: 720px) {
+/* Astra finding 5 — the narrow bands answer to the WINDOW (UX-CANON D):
+   the foot stacks so a long context name never pushes KEPT or the verbs
+   off the glass, and every verb keeps a touch target. */
+@container surface (max-width: 560px) {
   .desk-next .surface-footer:has(.thought-note-foot) {
     height: auto;
     padding: 4px 12px;
@@ -315,23 +381,6 @@
 
   .desk-next .thought-note-foot .surface-footer-receipt {
     justify-content: flex-start;
-  }
-
-  .desk-next .thought-note-foot .thought-note-reads {
-    white-space: normal;
-    overflow: visible;
-  }
-
-  .desk-next .desk-pullout.thought-workspace-window {
-    inset: var(--desk-work-top) 0 var(--desk-work-bottom) 0 !important;
-    width: 100vw;
-    height: auto;
-    min-width: 0;
-    min-height: 0;
-    max-width: none;
-    max-height: none;
-    border-left: 0;
-    border-right: 0;
   }
 
   .desk-next .thought-note-document {

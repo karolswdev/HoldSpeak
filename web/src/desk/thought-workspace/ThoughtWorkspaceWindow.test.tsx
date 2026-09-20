@@ -199,13 +199,20 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     expect(second[0].answer).toBe("Mina owns it.");
   });
 
-  it("adds a typed answer before it keeps, in one gesture", async () => {
-    vi.mocked(thoughtWorkbench).mockResolvedValue(questionProjection("Who owns launch?"));
-    vi.mocked(actOnReview).mockResolvedValue({ thought, workbench: projection() });
+  it("adds a typed answer, then keeps against the cursor that answer advanced", async () => {
+    // Astra finding 2: completing against the pre-answer cursor is the 409
+    // `workspace_cursor_conflict` her isolated-hub probe recorded.
+    const answered = { ...thought, aggregate_revision: 4, working_revision: 3 };
+    const answeredCursor = { ...cursor, aggregate_revision: 4, continuity_revision: 6 };
+    const afterAnswer = projection({ thought: answered, workspace_cursor: answeredCursor });
+    vi.mocked(thoughtWorkbench)
+      .mockResolvedValueOnce(questionProjection("Who owns launch?"))
+      .mockResolvedValue(afterAnswer);
+    vi.mocked(actOnReview).mockResolvedValue({ thought: answered, workbench: afterAnswer });
     vi.mocked(completeThought).mockResolvedValue({
-      thought: { ...thought, state: "completed" },
-      receipt: { id: "receipt-1", kind: "thought_completed", thought_id: thought.id, note_ref: "note:note-1", aggregate_revision: 4, lifecycle_revision: 2, created_at: "2026-09-20T09:50:00Z" },
-      workbench: projection({ workspace_state: "completed" }),
+      thought: { ...answered, state: "completed" },
+      receipt: { id: "receipt-1", kind: "thought_completed", thought_id: thought.id, note_ref: "note:note-1", aggregate_revision: 5, lifecycle_revision: 2, created_at: "2026-09-20T09:50:00Z" },
+      workbench: projection({ thought: { ...answered, state: "completed" }, workspace_state: "completed" }),
     });
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
 
@@ -213,31 +220,62 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     fireEvent.click(screen.getByRole("button", { name: "Finish" }));
 
     await waitFor(() => expect(completeThought).toHaveBeenCalledTimes(1));
-    expect(actOnReview).toHaveBeenCalledTimes(1);
     expect(vi.mocked(actOnReview).mock.calls[0][0].answer).toBe("Mina owns it.");
     expect(vi.mocked(actOnReview).mock.invocationCallOrder[0])
       .toBeLessThan(vi.mocked(completeThought).mock.invocationCallOrder[0]);
+    const completion = vi.mocked(completeThought).mock.calls[0][0];
+    expect(completion.workspace_cursor).toEqual(answeredCursor);
+    expect(completion.thought.aggregate_revision).toBe(4);
+    expect(completion.thought.working_revision).toBe(3);
   });
 
-  it("draws a returned draft in the same shape, with the same one verb", async () => {
+  it("appends a returned draft to the note instead of replacing it", async () => {
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection({
       workspace_state: "synthesis",
       actions: { primary: { kind: "accept_review", review_result_id: "review-draft" }, state: [{ kind: "accept_review", review_result_id: "review-draft" }], ambient: ["complete"] },
-      review: { id: "review-draft", kind: "synthesis", title: "Launch ownership", body_markdown: "Mina owns the launch date.", frozen_aggregate_revision: 3, frozen_working_revision: 2, frozen_attachment_revision: 1 },
+      review: { id: "review-draft", kind: "synthesis", title: "A tidier title", body_markdown: "Mina owns the launch date.", frozen_aggregate_revision: 3, frozen_working_revision: 2, frozen_attachment_revision: 1 },
     }));
-    vi.mocked(actOnReview).mockResolvedValue({ thought, workbench: projection() });
+    vi.mocked(saveThoughtWorkingInWorkspace).mockImplementation(async (current, patch) => ({
+      thought: { ...current, aggregate_revision: current.aggregate_revision + 1, working_revision: current.working_revision + 1, working_note: { ...current.working_note, title: patch.title ?? current.working_note.title, body_markdown: patch.body_markdown ?? current.working_note.body_markdown } },
+      workbench: projection(),
+    }));
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
 
     const band = await screen.findByRole("region", { name: "One question" });
     expect(band).toHaveTextContent("A draft from your note");
     expect(band).toHaveTextContent("Mina owns the launch date.");
     expect(screen.queryByRole("textbox", { name: "Your answer" })).not.toBeInTheDocument();
+    expect(document.querySelectorAll("h1, h2, h3, h4")).toHaveLength(0);
     const add = screen.getAllByRole("button", { name: "Add to note" });
     expect(add).toHaveLength(1);
-    expect(document.querySelectorAll("h1, h2, h3, h4")).toHaveLength(0);
     fireEvent.click(add[0]);
-    await waitFor(() => expect(actOnReview).toHaveBeenCalledTimes(1));
-    expect(vi.mocked(actOnReview).mock.calls[0][0].action).toBe("accept");
+
+    // The hub's `accept` REPLACES title, body and tags — this window must
+    // never call it; the draft joins the note through the sole writer.
+    await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1));
+    expect(actOnReview).not.toHaveBeenCalled();
+    const patch = vi.mocked(saveThoughtWorkingInWorkspace).mock.calls[0][1];
+    expect(patch.body_markdown).toBe(`${thought.working_note.body_markdown}\n\nMina owns the launch date.`);
+    expect(patch.title).toBe(thought.working_note.title);
+  });
+
+  it("offers Reload — not a dead Try again — when the note changed elsewhere", async () => {
+    // `writer.retry` returns during a conflict (useThoughtNoteWriter.ts:238),
+    // so the conflict recovery verb must re-read the note and work.
+    const elsewhere = { ...thought, aggregate_revision: 9, working_revision: 7, working_note: { ...thought.working_note, body_markdown: "The version the hub holds" } };
+    vi.mocked(thoughtWorkbench).mockResolvedValueOnce(projection()).mockResolvedValue(projection({ thought: elsewhere }));
+    vi.mocked(saveThoughtWorkingInWorkspace).mockRejectedValue(new ApiError(409, "conflict", { context: { current: elsewhere } }));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    const body = await screen.findByRole("textbox", { name: "Note body" });
+    fireEvent.change(body, { target: { value: "My own edit" } });
+    await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalled());
+    await screen.findByText("CHANGED ELSEWHERE");
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reload" }));
+    await waitFor(() => expect(body).toHaveValue("The version the hub holds"));
+    await waitFor(() => expect(screen.queryByText("CHANGED ELSEWHERE")).not.toBeInTheDocument());
   });
 
   it("says a save failure once, in the foot, with its own Try again", async () => {
@@ -294,6 +332,27 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     expect(screen.getByText("WORKSTATION")).toBeInTheDocument();
     // …and no destination chip stands beside "no engine yet" (nowhere to go).
     expect(document.querySelectorAll(".gadget-chip-egress")).toHaveLength(1);
+  });
+
+  it("does not call a ready engine missing when the coordinator is the blocker", async () => {
+    // refinement_application_service.py:80 — inference_available is
+    // (coordinator accepting) AND (target ready); a ready target with
+    // unavailable inference is a BUSY coordinator, not an absent engine.
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({
+      actions: { primary: { kind: "refine" }, state: [{ kind: "refine" }], ambient: ["complete"] },
+      inference: {
+        availability: "unavailable",
+        continuation_admission: "unavailable",
+        intended_placement: { target_id: "this_machine", target_name: "This device", target_kind: "this_device", boundary: "same_device", readiness: "ready" },
+      },
+    }));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    const band = await screen.findByRole("region", { name: "One question" });
+    expect(band).toHaveTextContent("ENGINE BUSY");
+    expect(band).not.toHaveTextContent("NO ENGINE YET");
+    expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Choose an engine" })).not.toBeInTheDocument();
   });
 
   it("rechecks the engine after Settings saves", async () => {
