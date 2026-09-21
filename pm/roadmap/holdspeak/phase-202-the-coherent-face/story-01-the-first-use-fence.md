@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 202
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** (optional)
-- **Owner:** unassigned
+- **Owner:** Astra (lane A; Muad'Dib checks the built fence)
 
 ## Problem
 
@@ -18,16 +18,47 @@ From the surface inventory of 2026-09-20 (`docs/internal/SURFACE-INVENTORY-2026-
 
 ## Acceptance criteria
 
-- [ ] the smoke is red on main today at the doors it names, then green as the stories land
-- [ ] Every change has a fence proven red first on a real isolated hub; shots at 1440 and 393 in this story's assets; the first-use smoke (story 01) green after the change.
-- [ ] Every verb the library Button; no prose; no modal; no counter of zero; one filled primary per window; labels in ASD-STE100.
+- [x] The normal smoke reports the observed inventory defects on this branch, with the failed step in plain words, at 1440×900 and 393×852.
+- [x] An explicit expected-failure verification runs the same assertions, requires the exact named failures, and proves the working Phase 201 pieces. Setup, loading, import, save, or backend errors cannot count as an expected final-state failure.
+- [x] Fixture audio, a stub engine, visible completion, planned and actual hosts, note save confirmation, and note/meeting recovery after a hub restart are checked. Surfaces must load their own content markers. Shots from both widths ship with the evidence.
+- [x] The existing source-button ratchet is unchanged. No product controls or census gates are added; the owner's real voice remains the sitting's exit.
 
 ## Test plan
 
-- **Unit:** the fences the story names; vitest for face rules.
-- **Integration:** the first-use smoke at both widths; the focused rigs the story touches.
-- **Manual / device:** shots; story 06 is the owner's sitting.
+- **Focused:** collect and run `tests/e2e/test_hs202_first_use_smoke.py` normally and with `HS202_EXPECTED_FAILURES=1`; run the unchanged `tests/unit/test_ux_canon_ratchet.py`.
+- **Full:** the isolated-HOME suite in `CLAUDE.md`, excluding `tests/e2e/test_metal.py`; name the expected failure mode when used. Read the output and restore unrelated generated evidence before staging.
+- **Glass:** inspect the fence's screenshots at both widths. The owner's real recording and dictation remain story 06 / Phase 201 story 07.
 
 ## Notes / open questions
 
 Lanes are assigned at build time under TWO-BRAINS §4 (default: Astra takes the backend and verification-harness work, Muad'Dib the faces; either brain checks the other's built lane before merge).
+
+## Delivery boundary — owner's lane brief, 2026-09-20
+
+This story ships the fence before repairs. The owner explicitly requires a
+RED run on `50ca0dd6` plus a GREEN verification run with named expected
+failures, proving that the assertions fire and that the working Phase 201
+pieces pass. The unmarked smoke remains red until the repair stories land;
+the phase's green-on-main exit remains open. This is fixture coverage,
+never evidence of the owner's real voice or his sitting.
+
+The acceptance list above makes the owner's explicit lane delivery order
+concrete. It replaces the scaffold's generic repair-story requirement for a
+green product smoke and its face-control checklist. Those remain obligations
+of the repair stories and phase exit; no product repair is claimed here.
+
+The built walk also found stale state after import: the transcript loads,
+but the selected row withholds Run summary until reopened. The fence names
+this `import-refresh` separately from the post-run `record-refresh` check.
+It belongs to HS-202-02. Generic Notes search is also classified precisely:
+Enter commits the highlighted row, but the typed query highlights an
+unrelated program. Exact-title note search works. The owner may overrule
+these amendments at the sitting.
+
+## Delivery record
+
+Astra verified the fixture fence; Muad'Dib checked it in two rounds.
+Normal RED and strict GREEN are captured in [the evidence](evidence-story-01.md).
+The full suite is not green: all eight failures have a classification and
+follow-up in [the verification ledger](verification-ledger-story-01.md).
+This done call covers the owner's RED-fence delivery boundary only.
