@@ -359,8 +359,8 @@ style.
 
 **3. The contrast rule.** Small text makes 4.5:1 on the background
 that it is really on, not on the nominal window fill. Faint text is
-`--text-faint` (`#8b93a3`); muted text stays `--text-muted`
-(`#9ba2b0`). A disabled control keeps `--disabled-fg`, its `disabled`
+`--text-faint`; muted text stays `--text-muted` (both values live in
+`web/design-tokens.json`, never in this text). A disabled control keeps `--disabled-fg`, its `disabled`
 attribute, its `not-allowed` cursor and its flat treatment
 (`global.css`, the `:where(.btn):disabled` family). Gray alone never
 states the disabled position.
