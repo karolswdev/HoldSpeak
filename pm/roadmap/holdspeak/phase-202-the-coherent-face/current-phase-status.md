@@ -41,6 +41,9 @@ Chartered from the surface inventory after Astra's check (two rounds). Order: 01
 
 - 2026-09-20 - Phase scaffolded with `dw phase create` - keeps roadmap structure consistent - CLI.
 
+## Ledger
+
+- 2026-09-20: `tests/unit/test_hs175_calendar_sources.py::test_matched_this_week` and `test_hs175_calendar_wire.py::test_week_strip_with_events` fail at a week boundary (Sunday evening local, Monday UTC) on pristine main 93f9524f; a clock time bomb like the one HS-201-08 paid for HS-171; not this phase's change. Owner: the next green lane.
 - 2026-09-20: the first-run card (FirstWords) mixes four button species and three type stacks on one 620 px card marooned on a black screen, hiding the Workbench instead of introducing it (shot story-02-shots/first-run-mic-refused-1440.png). A design beat for the canvas (the desk visible behind one real window; one scale, one species; the mic as the field's own affordance), after story 05 settles the scale. Not a patch.
 - 2026-09-20: `FIRST_VALUE_FAILURES` (holdspeak/db/onboarding.py) refuses three names the face can send (`mic_interval_closed`, `provider_failure`, `audio_floor_held`); pinned as a named gap by tests/unit/test_hs202_first_value_failure_vocabulary.py; one line, next lane.
 
