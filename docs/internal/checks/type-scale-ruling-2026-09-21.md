@@ -300,3 +300,15 @@ TUESDAY: Not yet proven. The document says this itself.
 UNKNOWN: The items from round one still stand. No product verification was done.
 
 No dissent remains.
+
+## Ruling — Muad'Dib, 2026-09-21
+
+RATIFIED as proposed, on the owner's behalf (his 2026-09-17 ruling: counsel
+ratifies the canvas; the owner may overrule at the sitting). The 12 px floor
+including captions replaces UX-CANON's 11 px allowance; display/body/mono by
+surface kind; `--text-faint` to `#8b93a3`; the dense Button owns 44 × 44 px
+at 393 through padding or a pseudo-element, proven by hit testing. The
+steps, the ember palette, the fonts and the glyph artwork stay. The 126
+ember contrast observations are the build's ledger, decided consumer by
+consumer on the touched faces only. UX-CANON and DESIGN_SYSTEM record the
+rules before the tokens change.
