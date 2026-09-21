@@ -364,6 +364,10 @@ owning its nine points at 44x44; 27 skipped as occluded by a window in
 front
 ```
 
+**This claim was wrong; Round 2 below replaces it.** One of those 42
+does not own all nine points, and the reader that produced the line
+could not fail on a body hit.
+
 Two readings are facts, not defects, and the rig says which is which:
 
 - **Occluded** — 27 Chair Buttons sit behind an open Desk window. They
@@ -376,3 +380,119 @@ Two readings are facts, not defects, and the rig says which is which:
 
 A point lost to an ANCESTOR CLIP or to an ADJACENT CONTROL in the same
 layer still fails. Both of those are what the ruling rejects.
+
+
+## Round 2
+
+Astra's second verdict was **DO-NOT-RATIFY on two instrument defects**,
+under the scar this repo already carries: a check that cannot fail
+proves nothing. Both were real. Both are repaired, each proven by
+reintroducing the exact defect and watching the fence go red.
+
+### 1. The hit reader filed a lost point as coverage
+
+The live reader split a lost point two ways — same layer meant a
+neighbour stole it (fail), a different layer meant a window covered it
+(ledger). `document.body` has no layer ancestor, so for any Button
+inside a window a BODY hit landed in the ledger. A body hit means
+nothing is painted there: the halo is absent, not covered. The reader
+could not go red on the one condition it exists to catch.
+
+Both readers now share ONE classifier
+(`tests/e2e/test_hs202_05_button_hit_ownership.py`, `OWNERSHIP_JS`),
+and every outcome is named:
+
+| Outcome | Meaning | Verdict |
+| --- | --- | --- |
+| `own` | the Button, or something inside it, answered | pass |
+| `miss:nothing` | no element at the point | fail |
+| `miss:body` | the body or root answered — the halo is absent | fail |
+| `miss:ancestor` | an ancestor answered — it CLIPPED the halo | fail |
+| `miss:sibling` | a box in the SAME layer answered | fail |
+| `covered` | a box in a DIFFERENT layer, in front, answered | ledger |
+
+Two permanent negative controls in the fixture rig (a halo clipped by a
+short `overflow: hidden` well, and a halo suppressed with only the page
+behind it) must lose their points, must never lose them as `covered`,
+and between them must exercise BOTH `miss:body` and `miss:ancestor`, or
+a branch is unproven. The live rig plants the same two shapes INSIDE
+the front window every run — the exact layer condition that hid the
+defect — and asserts they are caught.
+
+RED, with the defect reintroduced:
+
+```
+NEGATIVE CONTROL: no control produced 'miss:body' (saw ['miss:sibling']); that branch is unproven
+NEGATIVE CONTROL: no control produced 'miss:ancestor' (saw ['miss:sibling']); that branch is unproven
+1 failed, 1 passed
+```
+
+GREEN, live:
+
+```
+SELF-TEST: hit probes lost their points as {'clipped': ['own', 'miss:ancestor'],
+'bare': ['miss:ancestor']}
+```
+
+### 2. The ember gate did not cover the plate this story added
+
+The gate's accent list was four hardcoded hexes written before
+`--accent-ink` existed, so a failing pair on the NEW plate fell into
+ungated `other`. Astra reproduced 2.22:1; the exact pair is
+`--text-muted` `#9ba2b0` on `--accent-ink` `#8a5a3d` = **2.27:1**.
+
+The list is now read from the running token layer — `--accent`,
+`--accent-hover`, `--accent-press`, `--accent-ink`,
+`--accent-ink-hover`, `--accent-ink-press` and the gradient head — so
+it cannot drift from `design-tokens.json` again. Seven fills.
+
+The self-test paints a muted label on `--accent-ink` every run and
+asserts the gate classifies it `ember` and fails it.
+
+RED, with the hardcoded list restored:
+
+```
+SELF-TEST ink: a muted label on --accent-ink classified as 'other' at 2.27:1
+(accent fills seen: ['#a86e4a', '#bc8058', '#936041', '#da9868']); the ember
+gate does not cover the new plate, so it cannot fail on it
+```
+
+GREEN:
+
+```
+SELF-TEST: ember probe rgb(155, 162, 176) on rgb(138, 90, 61) classified
+ember at 2.27:1 (gate covers 7 accent fills)
+```
+
+**Withheld, not fixed:** no real muted-on-ink pair exists on the six
+first-use screens today — the probe is synthetic. The gate now catches
+one the moment a face paints it. `--text-muted` and `--text-faint` must
+never sit on an accent fill; only `--text-on-accent` may.
+
+### 3. The hit claim, corrected
+
+The counsel round said "42 reachable plated Button observations, every
+one owning its nine points". That was false for one of them, and the
+reader could not have seen a body hit anyway. The repaired reader
+computes the line instead of asserting it:
+
+```
+HIT CONTRACT 393: 69 visible plated Button observations = 27 occluded
+(centre not owned, skipped) + 42 probed. Of the probed: 41 own ALL nine
+points of their 44x44 area, 1 owns fewer because a layer in front covers
+the rest (ledgered below). Misses (body, ancestor clip, same-layer
+neighbour): 0 — any would have failed.
+```
+
+The one is `meetings-ledger@393 'Generate'`: three of its nine points
+sit on the Meetings window's title bar.
+
+### 4. The PR and the ruling document
+
+PR #597 is retitled `HS-202-05: the type-scale ruling, then the tokens`
+and its body now describes the build, the ember decision for the
+sitting, the ledgers and the verification. The ruling document's status
+moved from `PROPOSAL` to `RATIFIED AND BUILT`, points at the canon that
+now holds the rules, and records the two places the build departed from
+§3 and §4 (plated versus chrome; the first-use ember pairs gated rather
+than ledgered).

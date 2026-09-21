@@ -37,6 +37,7 @@ from .glass_infra import (
     seed_meeting_engines,
 )
 from .test_hs201_one_thing_glass import _quiet_concierge
+from .test_hs202_05_button_hit_ownership import OWNERSHIP_JS
 
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(600, method="thread")]
 
@@ -179,7 +180,7 @@ _FAINT_JS = "getComputedStyle(document.documentElement).getPropertyValue('--text
 
 # The M7/M8 reader. Kept deliberately close to the census's own code so a
 # number here means the same thing a number in census.json means.
-_MEASURE = """(faintHex) => {
+_MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + """
   const parse = (s) => {
     const m = /rgba?\\(([^)]+)\\)/.exec(s || "");
     if (!m) return null;
@@ -250,8 +251,16 @@ _MEASURE = """(faintHex) => {
   };
 
   const faint = hex(faintHex);
-  // The ember family, exactly as design-tokens.json spells it.
-  const EMBER = ['#a86e4a', '#bc8058', '#936041', '#da9868'];
+  // EVERY accent fill, read from the running token layer so the list can
+  // never drift from design-tokens.json. Round 2 of Astra's counsel: the
+  // hardcoded list predated --accent-ink and --accent-ink-press, so a
+  // 2.27:1 pair on the NEW plate fell into ungated `other`.
+  const rootCs = getComputedStyle(document.documentElement);
+  const EMBER = ['--accent', '--accent-hover', '--accent-press', '--accent-ink',
+                 '--accent-ink-hover', '--accent-ink-press',
+                 '--p-color-orange-300']
+    .map((n) => rootCs.getPropertyValue(n).trim())
+    .filter((v) => /^#[0-9a-f]{6}$/i.test(v));
   const small = [], contrast = [];
   for (const el of leaves) {
     const cs = getComputedStyle(el);
@@ -353,10 +362,10 @@ _MEASURE = """(faintHex) => {
       // not own its own middle, it is OCCLUDED and this probe has no
       // claim on it. Counting it would make the rig report a layering
       // fact as a hit-area defect.
-      const centre = document.elementFromPoint(cx, cy);
-      if (!centre || !(centre === el || el.contains(centre))) {
+      const centreSeen = hs202Classify(el, cx, cy);
+      if (centreSeen.outcome !== 'own') {
         plated.push({ label: (el.textContent || '').trim().slice(0, 24),
-                      occluded: true, by: centre ? (centre.className || centre.tagName) : 'null',
+                      occluded: true, by: centreSeen.owner,
                       w: Math.round(halfW*2), h: Math.round(halfH*2), covered: [],
                       painted: Math.round(r.height), path: path(el), bad: [] });
         continue;
@@ -366,18 +375,16 @@ _MEASURE = """(faintHex) => {
       // Chair is neither -- it is the layer order doing its job. Split
       // the two, so a real clip is never excused and a layering fact is
       // never reported as a hit-area defect.
-      const LAYER = '.desk-surface-window, .desk-pullout, .desk-window, .desk-next-window,'
-                  + ' [role=dialog], [role=menu], .desk-dock, .desk-verbbar';
-      const ourLayer = el.closest(LAYER);
       const bad = [], covered = [];
       for (const [fx, fy] of [[0,0],[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]]) {
         const x = cx + fx * (halfW - 1), y = cy + fy * (halfH - 1);
         if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) continue;  // off-screen edge
-        const top = document.elementFromPoint(x, y);
-        if (!top || top === el || el.contains(top)) continue;
-        const where = `(${fx},${fy})->` + (top.className || top.tagName);
-        if (top.closest(LAYER) !== ourLayer) covered.push(where);
-        else bad.push(where);
+        const seen = hs202Classify(el, x, y);
+        if (seen.outcome === 'own') continue;
+        const where = `(${fx},${fy})[${seen.outcome}]->` + seen.owner;
+        // ONLY a box in another layer, in front, is coverage. A body hit,
+        // an ancestor clip or a neighbour in the same layer is a MISS.
+        if (seen.outcome === 'covered') covered.push(where); else bad.push(where);
       }
       plated.push({ label: (el.textContent || '').trim().slice(0, 24), occluded: false,
                     w: Math.round(halfW*2), h: Math.round(halfH*2), covered,
@@ -400,6 +407,87 @@ _MEASURE = """(faintHex) => {
   }
 
   return { leaves: leaves.length, small, contrast, plated, chromeRows };
+}"""
+
+
+
+# ── the self-test: two probes that MUST be caught, every run ─────────
+#
+# Astra's round two: "a check that cannot fail proves nothing." Both
+# defects she found were invisible because the reader filed the loss
+# under a name that does not fail. So each run plants the two shapes
+# INSIDE the front window -- the layer condition that made a body hit
+# look like coverage -- reads them with the shipping readers, and
+# asserts they were caught. Then it removes them.
+_SELFTEST = """() => {
+""" + OWNERSHIP_JS + """
+  const host = document.querySelector(
+    '.desk-surface-window, .desk-pullout, .desk-window') || document.body;
+  const probe = document.createElement('div');
+  probe.id = 'hs202-05-selftest';
+  probe.style.cssText = 'position:fixed;left:8px;top:60px;z-index:60000;'
+    + 'display:flex;gap:24px;align-items:flex-start';
+  probe.innerHTML =
+      '<div style="height:24px;overflow:hidden"><button class="btn btn--sm"'
+    + ' id="hs202-clipped">Clipped</button></div>'
+    + '<button class="btn btn--sm" id="hs202-bare" style="position:relative">Bare</button>'
+    + '<span id="hs202-ink" style="background:var(--accent-ink);'
+    + 'color:var(--text-muted);font-size:12px;padding:2px 6px">MUTED ON INK</span>';
+  host.appendChild(probe);
+  const bare = probe.querySelector('#hs202-bare');
+  bare.style.setProperty('--desk-button-hit-size', '44px');
+  // Suppress the halo so only the page is behind the outer points.
+  const kill = document.createElement('style');
+  kill.textContent = '#hs202-bare::after{content:none!important}';
+  document.head.appendChild(kill);
+
+  const read = (el) => {
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const out = new Set();
+    for (const [fx, fy] of [[0,-1],[0,1],[-1,-1],[1,1]])
+      out.add(hs202Classify(el, cx + fx * (Math.max(44, r.width)/2 - 1),
+                                cy + fy * (Math.max(44, r.height)/2 - 1)).outcome);
+    return [...out];
+  };
+  const hit = { clipped: read(probe.querySelector('#hs202-clipped')), bare: read(bare) };
+
+  // The ember probe, read exactly the way the gate reads a text leaf.
+  const ink = probe.querySelector('#hs202-ink');
+  const cs = getComputedStyle(ink);
+  const rootCs = getComputedStyle(document.documentElement);
+  const inkFill = rootCs.getPropertyValue('--accent-ink').trim();
+  const bgNow = cs.backgroundColor;
+  const parse = (s) => {
+    const m = /rgba?\(([^)]+)\)/.exec(s || '');
+    if (!m) return null;
+    const p = m[1].split(/[,\s\/]+/).filter(Boolean).map(Number);
+    return { r: p[0], g: p[1], b: p[2] };
+  };
+  const hx = (h) => ({ r: parseInt(h.slice(1,3),16), g: parseInt(h.slice(3,5),16),
+                       b: parseInt(h.slice(5,7),16) });
+  const a = parse(bgNow), b = hx(inkFill);
+  const fgNow = cs.color;
+
+  // Run the probe through the SAME classification the gate uses: is a
+  // muted label on the new ink plate an `ember` pair, and does it fail?
+  const EMBER = ['--accent', '--accent-hover', '--accent-press', '--accent-ink',
+                 '--accent-ink-hover', '--accent-ink-press', '--p-color-orange-300']
+    .map((n) => rootCs.getPropertyValue(n).trim())
+    .filter((v) => /^#[0-9a-f]{6}$/i.test(v));
+  const lum = (c) => {
+    const f = (v) => { v /= 255; return v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); };
+    return 0.2126*f(c.r) + 0.7152*f(c.g) + 0.0722*f(c.b);
+  };
+  const same = (p, q) => p && q && p.r === q.r && p.g === q.g && p.b === q.b;
+  const fgC = parse(fgNow), bgC = parse(bgNow);
+  const l1 = lum(fgC), l2 = lum(bgC);
+  const inkRatio = Math.round(((Math.max(l1,l2)+0.05)/(Math.min(l1,l2)+0.05))*100)/100;
+  const inkKind = EMBER.some((e) => same(bgC, hx(e)) || same(fgC, hx(e))) ? 'ember' : 'other';
+
+  probe.remove(); kill.remove();
+  return { hit, inkPaints: !!a && a.r === b.r && a.g === b.g && a.b === b.b,
+           inkFill, bgNow, fg: fgNow, inkKind, inkRatio, emberList: EMBER };
 }"""
 
 
@@ -513,6 +601,8 @@ def test_first_use_screens_hold_the_floor_and_the_contrast(
     plated_seen = [0]
     occluded = [0]
     halo_covered: list[str] = []
+    selftested = [False]
+    partly = [0]
     chrome_seen: dict[str, list[float]] = {}
     chrome_short: list[str] = []
     failures: list[str] = []
@@ -531,6 +621,40 @@ def test_first_use_screens_hold_the_floor_and_the_contrast(
                 f"{name} never loaded at {width}; a screen that did not open "
                 "proves nothing"
             )
+            if not selftested[0]:
+                selftested[0] = True
+                probe = page.evaluate(_SELFTEST)
+                for control, kinds in probe["hit"].items():
+                    lost = [k for k in kinds if k != "own"]
+                    if not lost:
+                        failures.append(
+                            f"SELF-TEST {control}: a Button with no reachable halo "
+                            "read as owning its area; this reader cannot fail"
+                        )
+                    if "covered" in lost:
+                        failures.append(
+                            f"SELF-TEST {control}: a lost point was filed as "
+                            "'covered' inside the front window; coverage is a "
+                            "ledger line, so this reader cannot fail"
+                        )
+                if probe["inkKind"] != "ember" or probe["inkRatio"] >= 4.5:
+                    failures.append(
+                        "SELF-TEST ink: a muted label on --accent-ink classified as "
+                        f"{probe['inkKind']!r} at {probe['inkRatio']}:1 "
+                        f"(accent fills seen: {probe['emberList']}); the ember gate "
+                        "does not cover the new plate, so it cannot fail on it"
+                    )
+                if not probe["inkPaints"]:
+                    failures.append(
+                        f"SELF-TEST ink: the probe did not paint --accent-ink "
+                        f"({probe['inkFill']} vs {probe['bgNow']}); the ember gate "
+                        "was not exercised"
+                    )
+                print(f"SELF-TEST: hit probes lost their points as {probe['hit']}; "
+                      f"ember probe {probe['fg']} on {probe['bgNow']} classified "
+                      f"{probe['inkKind']} at {probe['inkRatio']}:1 "
+                      f"(gate covers {len(probe['emberList'])} accent fills)")
+
             if os.environ.get("HS202_05_ACCENT_OVERRIDE") == "1":
                 # The BEFORE leg for the counsel round: paint the ember
                 # ink steps back to the plate they replaced, on the real
@@ -579,6 +703,7 @@ def test_first_use_screens_hold_the_floor_and_the_contrast(
                     occluded[0] += 1
                     continue
                 if b.get("covered"):
+                    partly[0] += 1
                     halo_covered.append(
                         f"{name}@{width} {b['label']!r} halo runs under the layer in "
                         f"front at {', '.join(b['covered'])} ({b['path']})"
@@ -633,9 +758,15 @@ def test_first_use_screens_hold_the_floor_and_the_contrast(
                 json.dumps(report, indent=2) + "\n", encoding="utf-8"
             )
         if width <= 420:
-            print(f"HIT CONTRACT {width}: {plated_seen[0]} reachable plated Button "
-                  f"observations, every one owning its nine points at 44x44; "
-                  f"{occluded[0]} skipped as occluded by a window in front")
+            whole = plated_seen[0] - partly[0]
+            print(
+                f"HIT CONTRACT {width}: {plated_seen[0] + occluded[0]} visible plated "
+                f"Button observations = {occluded[0]} occluded (centre not owned, "
+                f"skipped) + {plated_seen[0]} probed. Of the probed: {whole} own ALL "
+                f"nine points of their 44x44 area, {partly[0]} own fewer because a "
+                f"layer in front covers the rest (ledgered below). Misses (body, "
+                f"ancestor clip, same-layer neighbour): 0 — any would have failed."
+            )
             for line in halo_covered:
                 print("HALO UNDER A LAYER IN FRONT (ledger, not a clip):", line)
             for kind, heights in sorted(chrome_seen.items()):

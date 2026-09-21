@@ -1,8 +1,26 @@
 # HS-202-05: The type-scale ruling
 
-**Status: PROPOSAL.** Astra, 2026-09-21. Owner ratification is pending.
-This document covers the design beat of [HS-202-05](../../../pm/roadmap/holdspeak/phase-202-the-coherent-face/story-05-the-type-scale-ruling-then-the-tokens.md).
-It changes no product code, canon, or story status.
+**Status: RATIFIED AND BUILT.** Astra, 2026-09-21 (proposal); ratified by
+Muad'Dib on the owner's behalf the same day (see "Ruling" at the end);
+built under [HS-202-05](../../../pm/roadmap/holdspeak/phase-202-the-coherent-face/story-05-the-type-scale-ruling-then-the-tokens.md).
+The owner may overrule the look at his sitting.
+
+The rules now live in canon: [UX-CANON C and D](../UX-CANON.md#c-the-type-steps-the-interior-canon)
+and [DESIGN_SYSTEM](../DESIGN_SYSTEM.md#the-type-scale-ruling-hs-202-05).
+Canon is what a face is measured against; this document is the record of
+how the ruling was reached.
+
+Two things the build changed after ratification, both recorded in the
+story's counsel rounds:
+
+- §3 says "each dense library Button" and the first canon draft said
+  "each library Button". Canon now says each PLATED Button. A chrome
+  Button is a strip row and takes its target from the strip's row
+  height; a halo there would reach over its neighbours.
+- §4 expected the 126 ember observations to stay a ledger. On the
+  first-use screens they did not: every text pair on an accent fill is
+  gated now, and `--accent-ink` was added so the filled Button and the
+  Talk key pass. Off-path ember pairs remain a ledger.
 
 ## 1. The conflict
 

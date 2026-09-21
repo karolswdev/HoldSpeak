@@ -276,3 +276,100 @@ surface.css:3016 .model-library-repair           13px / 400 / Inter             
 surface.css:2984 .model-library-row-copy small   12px / 500 / "JetBrains Mono"                12px / 500 / "JetBrains Mono"  same
 surface.css:3109 .model-library-add-choices > button 13px / 400 / Inter                           13px / 600 / Inter  CHANGED
 ```
+
+### Captured run — 2026-09-21T19:44:39Z
+
+- **Command:** `./.tmp/r2-red-hit.sh`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 935133c5a4e9ee571ca7b2c390de1038b48dab00
+
+```text
+ROUND 2 RED -- reintroduce BOTH instrument defects and watch the fences fail
+both defects reintroduced
+                        f"NEGATIVE CONTROL {control}: {why} appeared to own its whole "
+                        f"NEGATIVE CONTROL {control}: {why} filed a lost point as "
+                        f"NEGATIVE CONTROL: no control produced {branch!r} "
+NEGATIVE CONTROL: no control produced 'miss:body' (saw ['miss:sibling']); that branch is unproven
+NEGATIVE CONTROL: no control produced 'miss:ancestor' (saw ['miss:sibling']); that branch is unproven
+assert not ["NEGATIVE CONTROL: no control produced 'miss:body' (saw ['miss:sibling']); that branch is unproven", "NEGATIVE CONTROL: no control produced 'miss:ancestor' (saw ['miss:sibling']); that branch is unproven"]
+                                f"SELF-TEST {control}: a Button with no reachable halo "
+                                f"SELF-TEST {control}: a lost point was filed as "
+                            "SELF-TEST ink: a muted label on --accent-ink classified as "
+                            f"SELF-TEST ink: the probe did not paint --accent-ink "
+(repaired readers restored)
+```
+
+### Captured run — 2026-09-21T19:45:21Z
+
+- **Command:** `./.tmp/r2-red-hit.sh`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 935133c5a4e9ee571ca7b2c390de1038b48dab00
+
+```text
+ROUND 2 RED -- reintroduce BOTH instrument defects and watch the fences fail
+both defects reintroduced
+NEGATIVE CONTROL: no control produced 'miss:body' (saw ['miss:sibling']); that branch is unproven
+NEGATIVE CONTROL: no control produced 'miss:ancestor' (saw ['miss:sibling']); that branch is unproven
+assert not ["NEGATIVE CONTROL: no control produced 'miss:body' (saw ['miss:sibling']); that branch is unproven", "NEGATIVE CONTROL: no control produced 'miss:ancestor' (saw ['miss:sibling']); that bra
+                    f"ancestor clip, same-layer neighbour): 0 — any would have failed."
+SELF-TEST ink: a muted label on --accent-ink classified as 'other' at 2.27:1 (accent fills seen: ['#a86e4a', '#bc8058', '#936041', '#da9868']); the ember gate does not cover the new plate, so it canno
+assert not ["SELF-TEST ink: a muted label on --accent-ink classified as 'other' at 2.27:1 (accent fills seen: ['#a86e4a', '#bc8058', '#936041', '#da9868']); the ember gate does not cover the new plate
+HIT CONTRACT 393: 69 visible plated Button observations = 27 occluded (centre not owned, skipped) + 42 probed. Of the probed: 41 own ALL nine points of their 44x44 area, 1 own fewer because a layer in
+                    f"ancestor clip, same-layer neighbour): 0 — any would have failed."
+SELF-TEST ink: a muted label on --accent-ink classified as 'other' at 2.27:1 (accent fills seen: ['#a86e4a', '#bc8058', '#936041', '#da9868']); the ember gate does not cover the new plate, so it canno
+assert not ["SELF-TEST ink: a muted label on --accent-ink classified as 'other' at 2.27:1 (accent fills seen: ['#a86e4a', '#bc8058', '#936041', '#da9868']); the ember gate does not cover the new plate
+3 failed, 1 passed, 2 warnings in 29.71s
+(repaired readers restored)
+```
+
+### Captured run — 2026-09-21T19:46:01Z
+
+- **Command:** `./.tmp/r2-green.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 935133c5a4e9ee571ca7b2c390de1038b48dab00
+
+```text
+ROUND 2 GREEN -- the six tests with the repaired readers and their self-tests
+....SELF-TEST: hit probes lost their points as {'clipped': ['own', 'miss:ancestor'], 'bare': ['miss:ancestor']}; ember probe rgb(155, 162, 176) on rgb(138, 90, 61) classified ember at 2.27:1 (gate covers 7 accent fills)
+HIT CONTRACT 393: 69 visible plated Button observations = 27 occluded (centre not owned, skipped) + 42 probed. Of the probed: 41 own ALL nine points of their 44x44 area, 1 own fewer because a layer in front covers the rest (ledgered below). Misses (body, ances
+HALO UNDER A LAYER IN FRONT (ledger, not a clip): meetings-ledger@393 'Generate' halo runs under the layer in front at (0,1)[covered]->desk-pullout-head desk-window-handle has-wings, (-1,1)[covered]->desk-pullout-head desk-window-handle has-wings, (1,1)[covere
+CHROME ROWS 393: dock chip x86 min 22px max 44px
+CHROME ROWS 393: wing tab x10 min 23px max 23px
+FLOOR LEDGER 393: 51 of 51 recorded consumers still under 12.0px; 0 healed
+.SELF-TEST: hit probes lost their points as {'clipped': ['miss:sibling'], 'bare': ['miss:sibling']}; ember probe rgb(155, 162, 176) on rgb(138, 90, 61) classified ember at 2.27:1 (gate covers 7 accent fills)
+FLOOR LEDGER 1440: 58 of 58 recorded consumers still under 12.0px; 0 healed
+6 passed, 2 warnings in 30.51s
+```
+
+### Captured run — 2026-09-21T19:46:44Z
+
+- **Command:** `./.tmp/r2-rigs.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 935133c5a4e9ee571ca7b2c390de1038b48dab00
+
+```text
+ROUND 2 -- the four named rigs + HS-202-01's first-use smoke, on the repaired revision
+.............................                                            [100%]
+29 passed in 246.55s (0:04:06)
+(HS-202-01 fence removed again)
+```
+
+### Captured run — 2026-09-21T19:51:01Z
+
+- **Command:** `./.tmp/r2-check.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 935133c5a4e9ee571ca7b2c390de1038b48dab00
+
+```text
+tokens.css and tokens.gen.ts match design-tokens.json
+token gate: clean (11 allow-listed exceptions, all in use)
+React architecture guard passed (808 source files; zero framework residue).
+ Test Files  290 passed (290)
+      Tests  2722 passed (2722)
+bundle gate passed (Desk JS 1310819 B; Desk CSS 316091 B; source maps 0)
+```

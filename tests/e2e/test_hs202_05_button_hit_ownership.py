@@ -83,13 +83,20 @@ def _fixture_html() -> str:
   body {{ margin: 0; padding: 16px; }}
   .fixture-row {{ display: flex; gap: var(--space-2); align-items: center; }}
   .fixture-col {{ display: grid; gap: var(--space-2); justify-items: start; }}
-  /* The negative control: a well too short for the area to fit inside. */
+  /* NEGATIVE CONTROL A: a well too short for the area to fit inside, so
+     an ANCESTOR answers the clipped points. */
   .fixture-clip {{ height: 24px; overflow: hidden; }}
+  /* NEGATIVE CONTROL B: the halo suppressed outright, with nothing but
+     the page behind it, so the BODY answers. Round 2 of Astra's counsel:
+     the live reader filed that as "covered" and reported no miss. */
+  .fixture-bare {{ margin-top: 40px; }}
+  .fixture-bare .btn::after {{ content: none; }}
 </style></head>
 <body>
   <div class="fixture-row">{row}</div>
   <div class="fixture-col">{column}</div>
   <div class="fixture-clip"><button type="button" class="btn btn--sm" id="clipped">Clipped</button></div>
+  <div class="fixture-bare"><button type="button" class="btn btn--sm" id="bare">No halo</button></div>
   <script>
     window.__fired = [];
     for (const b of document.querySelectorAll('button')) {{
@@ -118,11 +125,44 @@ _GEOMETRY = """(id) => {
   };
 }"""
 
+# The ONE classifier both HS-202-05 hit readers use. Round 2 of Astra's
+# counsel found the live reader calling a BODY hit "covered by a layer in
+# front" -- a check that cannot fail proves nothing. A point belongs to
+# the Button or it does not; everything else is a MISS, and the label
+# says which kind so a layering fact is still distinguishable from a clip.
+#
+#   own            the Button, or something inside it, answered
+#   miss:nothing   elementFromPoint found no element at all
+#   miss:body      the body/root answered -- nothing is painted there, so
+#                  the halo is absent, not covered
+#   miss:ancestor  an ancestor answered -- it CLIPPED the halo
+#   miss:sibling   a box in the SAME layer answered -- a neighbour owns it
+#   covered        a box in a DIFFERENT layer, in front, answered
+#
+# Only `own` passes. Only `covered` is a ledger line. The rest fail.
+OWNERSHIP_JS = """
+  const HS202_LAYER = '.desk-surface-window, .desk-pullout, .desk-window,'
+    + ' .desk-next-window, [role=dialog], [role=menu], .desk-dock, .desk-verbbar';
+  const hs202Classify = (el, x, y) => {
+    const top = document.elementFromPoint(x, y);
+    if (!top) return { outcome: 'miss:nothing', owner: null };
+    if (top === el || el.contains(top)) return { outcome: 'own', owner: null };
+    const owner = top.id
+      || (typeof top.className === 'string' && top.className.trim())
+      || top.tagName;
+    if (top === document.body || top === document.documentElement)
+      return { outcome: 'miss:body', owner };
+    if (top.contains(el)) return { outcome: 'miss:ancestor', owner };
+    return { outcome: top.closest(HS202_LAYER) === el.closest(HS202_LAYER)
+               ? 'miss:sibling' : 'covered', owner };
+  };
+"""
+
 _OWNS = """([id, x, y]) => {
+""" + OWNERSHIP_JS + """
   const el = document.getElementById(id);
-  const top = document.elementFromPoint(x, y);
-  return { owner: top ? (top.closest('button') || top).id || top.tagName : null,
-           ours: !!top && (top === el || el.contains(top)) };
+  const seen = hs202Classify(el, x, y);
+  return { owner: seen.owner, outcome: seen.outcome, ours: seen.outcome === 'own' };
 }"""
 
 
@@ -184,7 +224,7 @@ def test_button_owns_44px_at_393(tmp_path: Path) -> None:
                 if not seen["ours"]:
                     failures.append(
                         f"{i}: elementFromPoint at {name} ({x:.1f},{y:.1f}) "
-                        f"returned {seen['owner']!r}, not this Button"
+                        f"returned {seen['owner']!r} [{seen['outcome']}], not this Button"
                     )
                     continue
                 page.evaluate("window.__fired = []")
@@ -205,12 +245,13 @@ def test_button_owns_44px_at_393(tmp_path: Path) -> None:
                         f"{ga['area']} overlaps {gb['area']}"
                     )
 
-        # ── CLIPPED: the fence must SEE a clipped area ───────────────
-        clipped = page.evaluate(_GEOMETRY, "clipped")
-        owned = [
-            page.evaluate(_OWNS, ["clipped", x, y])["ours"]
-            for x, y, _ in _points(clipped)
-        ]
+        # ── the two negative controls: the fence must SEE a lost area ─
+        controls = {}
+        for control in ("clipped", "bare"):
+            g = page.evaluate(_GEOMETRY, control)
+            controls[control] = [
+                page.evaluate(_OWNS, [control, x, y]) for x, y, _ in _points(g)
+            ]
         if os.environ.get("HS202_05_EXPORT_SHOTS") == "1":
             # The debug overlay: one outline per owned area, drawn from the
             # SAME geometry the assertions probe.
@@ -229,12 +270,39 @@ def test_button_owns_44px_at_393(tmp_path: Path) -> None:
             page.screenshot(path=str(SHOTS / "button-hit-areas-393.png"),
                             clip={"x": 0, "y": 0, "width": 393, "height": 260})
 
-        if all(owned):
-            failures.append(
-                "NEGATIVE CONTROL: a Button inside a 24px overflow:hidden well "
-                "appeared to own its whole 44px area, so this fence cannot see a "
-                "clipped hit area and proves nothing about the others"
-            )
+        lost_kinds: set[str] = set()
+        for control, why in (
+            ("clipped", "a Button inside a 24px overflow:hidden well"),
+            ("bare", "a Button whose halo is suppressed, with only the page behind it"),
+        ):
+            seen = controls[control]
+            outcomes = {o["outcome"] for o in seen}
+            lost = outcomes - {"own"}
+            lost_kinds |= lost
+            if not lost:
+                failures.append(
+                    f"NEGATIVE CONTROL {control}: {why} appeared to own its whole "
+                    "44px area, so this fence cannot see a lost hit area and proves "
+                    "nothing about the others"
+                )
+            # THE round-2 contract. `covered` is a ledger line, not a
+            # failure, so a reader that files a lost point there can never
+            # go red. A control that loses its area must lose it as a
+            # `miss:*`, never as coverage.
+            if "covered" in lost:
+                failures.append(
+                    f"NEGATIVE CONTROL {control}: {why} filed a lost point as "
+                    "'covered'; coverage is a ledger line, so this reader cannot fail"
+                )
+
+        # Both miss branches must be exercised by the pair, or one of them
+        # is dead code that has never been shown to work.
+        for branch in ("miss:body", "miss:ancestor"):
+            if branch not in lost_kinds:
+                failures.append(
+                    f"NEGATIVE CONTROL: no control produced {branch!r} "
+                    f"(saw {sorted(lost_kinds)}); that branch is unproven"
+                )
 
         browser.close()
 
