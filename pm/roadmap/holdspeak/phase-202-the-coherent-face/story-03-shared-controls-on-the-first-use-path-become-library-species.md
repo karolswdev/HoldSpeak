@@ -19,8 +19,8 @@ From the surface inventory of 2026-09-20 (`docs/internal/SURFACE-INVENTORY-2026-
 ## Acceptance criteria
 
 - [x] the source-button ratchet moves down by the migrated sites; no raw control on the five jobs' screens — A1 **174 -> 106** across 68 sites in 31 files; `A1_RATCHET` and `tests/ux_canon_ceiling.json` both carry 106.
-- [x] Every change has a fence proven red first on a real isolated hub; shots at 1440 and 393 in this story's assets; the first-use smoke (story 01) green after the change — the source fence red at 18 files, the lowered ratchet red at 174 on `main`'s tree, both green here; 8 shots; the smoke green at both widths.
-- [x] Every verb the library Button; no prose; no modal; no counter of zero; one filled primary per window; labels in ASD-STE100 — no label string was touched (story 04 owns those); the species change is ink-neutral by construction (no stylesheet defines `.btn--chrome`, fenced).
+- [x] Every change has a fence proven red first on a real isolated hub; shots at 1440 and 393 in this story's assets; the first-use smoke (story 01) green after the change — the source fence red at 18 files, the lowered ratchet red at 174 on `main`'s tree, both green here; 8 shots; the smoke green at both widths. **Scope of the glass rig, exactly:** it presses the keys listed in its docstring on four strips and asserts those results; it is not a proof of complete keyboard equivalence, and nothing in this story compares images.
+- [x] Every verb the library Button; no prose; no modal; no counter of zero; one filled primary per window; labels in ASD-STE100 — no label string was touched (story 04 owns those). The ink argument is **by construction, not by image comparison**: no stylesheet in the product defines `.btn--chrome` (fenced in `web/src/desk/__tests__/hs202ChromeSpecies.test.tsx`), so the marker cannot paint; the one site that changed element type (`CatalogRail`) has its computed box read back off the glass. **Pixel identity is not claimed.**
 
 ## Test plan
 
@@ -73,24 +73,87 @@ the census found unreachable), `WorkbenchResourceful` 2,
 dossier and list sections, `DirectoryPullout`, `RecipeEditor`,
 `FollowThroughView`, `DeskSortableTable`, `StewardPosture`).
 
-### Found on the way, NOT fixed (each is someone else's story)
+### Found on the way, NOT fixed (each has an owner below)
 
-1. **Escape from a menu-bar menu drops focus to the body.** `WorkMenu`
-   accepts `returnFocus` and `DeskMenuBar.tsx` has never passed it — on
-   `main` as well as here (`git show HEAD:…/DeskMenuBar.tsx | grep
-   returnFocus` finds nothing). The rig asserts Escape CLOSES the panel and
-   records where focus lands as NOT ASSESSED.
-2. **Under `prefers-reduced-motion: reduce` the desk-chrome controls report
-   `outline-width: 0px` while `outline-style` stays `solid`.** The plated
-   `.btn` verbs keep their 2px ring in the same page. It reproduces on
-   controls this story never touched (`.desk-mark`,
-   `.desk-verbbar-title`, the egress badge) and I could not explain it — no
-   stylesheet in `web/src` declares an outline for those classes and the
-   `--focus-outline-width` token reads `2px` on the element itself. The
-   census measured its 69 tab stops without reduced motion, which is why it
-   reported zero ringless stops. **UNKNOWN, not broken** — it belongs with
-   story 05 (the tokens). The ring assertions here run in the default motion
-   state; reduced motion is emulated only for the shots.
-3. `NotePullout.test.tsx > scrolls a successful Original reveal…` failed
-   once in three full web-suite runs and passed 3/3 in isolation and on the
+1. **Escape from a menu-bar menu drops focus to the body — INHERITED.**
+   `WorkMenu` accepts `returnFocus` (`web/src/desk/components/DeskMenu.tsx:455`,
+   consumed at `:559` and `:562`) and `DeskMenuBar` renders it without that
+   prop (`web/src/desk/components/DeskMenuBar.tsx:134-144`; the same call site
+   at the base commit is `73758ef3:web/src/desk/components/DeskMenuBar.tsx:133-143`
+   and `git show 73758ef3:…/DeskMenuBar.tsx | grep -c returnFocus` returns 0).
+   The rig asserts Escape CLOSES the panel and says in its docstring that the
+   landing spot is deliberately unasserted. Ledgered in the phase status with
+   an owner.
+
+2. **Reduced-motion focus-ring loss — INHERITED, by paired reproduction.**
+   Counsel was right that "untouched controls" proves nothing (`.desk-mark`
+   IS migrated, `web/src/desk/components/DeskChrome.tsx:161`), so the claim
+   is now measured instead of argued.
+   `assets/story-03-shots/reduced-motion-paired-baseline.json` holds it: the
+   same hub, the same cold seeded desk at 1440, the same 26 Tab stops, the
+   same `prefers-reduced-motion: reduce`, three rounds, with ONLY the built
+   bundle swapped — built from `git archive 73758ef3 -- web` for the base and
+   from this branch for the branch. (`web/src` is byte-identical between this
+   branch's base 10e22669 and 73758ef3, so the base bundle IS main's.)
+
+   | round | ringless rows, base 73758ef3 | ringless rows, branch | ringless ONLY on branch |
+   |---|---|---|---|
+   | 1 | 18 / 26 | 17 / 26 | none |
+   | 2 | 18 / 26 | 17 / 26 | none |
+   | 3 | 18 / 26 | 18 / 26 | none |
+
+   **Zero controls lose a ring only on this branch.** The one stop that
+   varies is the FIRST Tab target (`.desk-mark`): 2px/2px/0px across the
+   three branch rounds against 0px/0px/0px on the base — unstable at stop 0,
+   so it is claimed as neither a heal nor a regression.
+
+   Mechanism **UNKNOWN**, with what was ruled out recorded: no
+   `@media (prefers-reduced-motion: reduce)` block in the built CSS resets an
+   outline; `--focus-outline-width` computes to `2px` on the ringless
+   elements themselves; and those elements compute
+   `outline-color: currentColor` — the INITIAL value — so the single global
+   `:focus-visible { outline: var(--focus-outline-width) solid var(--accent) }`
+   rule did not apply to them at all. It is a cascade question, not a token
+   question, which is why parking it on story 05 (the tokens) would not have
+   resolved it. Ledgered in the phase status with an owner.
+
+3. `NotePullout.test.tsx > scrolls a successful Original reveal…` failed once
+   in three full web-suite runs and passed 3/3 in isolation and on the
    re-run. Reported as a flake, not a regression.
+
+### For the combined revision (counsel, combined section, finding 2)
+
+Story 05's type rig records EVERY class on a wing tab
+(`tests/e2e/test_hs202_05_first_use_type_floor.py:245`), so the twelve
+recorded wing signatures will not match once `btn--chrome` is present. The
+marker name is load-bearing here — the contract, the library comment, two
+vitest fences and the glass rig all key on it — so **it is not renamed**;
+05's worker normalizes that one marker out of its recorded signature, or
+re-records the twelve entries, keeping the semantic classes and the size
+checks. Told to 05 separately.
+
+Real file overlaps with the sibling lanes, for the integrator:
+`web/src/pages/cores/LiveCore.tsx` and
+`web/src/pages/cores/history/CatalogRail.tsx` with 04 (03 changed only the
+element and its variant on those two; every label string is 04's), distant
+hunks in `web/src/desk/surface/surface.css` with 05, and
+`current-phase-status.md` with every lane. `web/src/components/signal/Signal.tsx`
+is 03's alone.
+
+### Counsel round (#598, RATIFY-WITH-CONDITIONS)
+
+Read at `.tmp/two-brains/20260921-123218-counsel-202-345-counsel/last.md`.
+
+- Condition "correct the overclaims" — done: the rig docstring now states
+  what it presses and what it does not prove, the contradiction between its
+  opening claim and its Escape exclusion is gone, and both acceptance lines
+  above are re-worded. Pixel identity is not claimed anywhere.
+- Condition "paired baseline reproduction" — done, INHERITED (table above).
+- Condition "ledger Escape's `returnFocus` with file:line" — done (item 1).
+- Condition "regenerate the Philo inventories" — done: all six scripts
+  regenerated then `--check`ed clean; `docs/generated/api-reference.json`
+  (+2 rows: this story's new rig registering as a caller) and
+  `docs/generated/boundary-candidates.json` (16 line-number shifts in the
+  files whose imports moved) ship with this round.
+- MISSED, "give the reduced-motion item a surviving home" — done: it is a
+  phase-status ledger row with an owner, no longer parked on story 05.

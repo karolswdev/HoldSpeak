@@ -39,7 +39,14 @@ through the library `Button`, most of them through its new `chrome` variant
 stylesheet defines `btn--chrome`, and a vitest fences that). 68 sites, 31
 files. Story 01's fence is green at both widths on this tree. 04 is in a
 sibling lane (labels and repeats) and does not overlap 03's files by design:
-03 touched species, never a label string.
+03 touched species, never a label string. Counsel #598 returned
+RATIFY-WITH-CONDITIONS on 03 and all four conditions are closed in the same
+worktree: the rig's overclaims corrected (it proves the keys it presses, not
+complete keyboard or pixel identity), the reduced-motion ring loss settled as
+INHERITED by a paired reproduction against 73758ef3, Escape's missing
+`returnFocus` ledgered with file:line, and all six Philo inventories
+regenerated and re-checked. Two ledger rows below carry owners inside this
+phase rather than riding on story 05.
 
 ## Active risks
 
@@ -55,8 +62,8 @@ sibling lane (labels and repeats) and does not overlap 03's files by design:
 
 - 2026-09-20: `tests/unit/test_hs175_calendar_sources.py::test_matched_this_week` and `test_hs175_calendar_wire.py::test_week_strip_with_events` fail at a week boundary (Sunday evening local, Monday UTC) on pristine main 93f9524f; a clock time bomb like the one HS-201-08 paid for HS-171; not this phase's change. Owner: the next green lane.
 - 2026-09-20: the first-run card (FirstWords) mixes four button species and three type stacks on one 620 px card marooned on a black screen, hiding the Workbench instead of introducing it (shot story-02-shots/first-run-mic-refused-1440.png). A design beat for the canvas (the desk visible behind one real window; one scale, one species; the mic as the field's own affordance), after story 05 settles the scale. Not a patch.
-- 2026-09-21 (HS-202-03): Escape from a menu-bar menu drops focus to the body — `WorkMenu` accepts `returnFocus` and `DeskMenuBar.tsx` has never passed it, on main as well. One prop, next face lane.
-- 2026-09-21 (HS-202-03): under `prefers-reduced-motion: reduce` the desk-chrome controls (`.desk-mark`, `.desk-verbbar-title`, the dock chips, the egress badge) report `outline-width: 0px` with `outline-style: solid`, while the plated `.btn` verbs keep their 2px ring on the same page. Reproduces on controls 03 never touched; no stylesheet in `web/src` declares an outline for those classes and `--focus-outline-width` reads 2px on the element itself. **UNKNOWN, not explained.** The 2026-09-20 census measured its 69 tab stops without reduced motion, which is why it reported zero ringless stops. Owner: story 05 (the tokens).
+- 2026-09-21 (found by HS-202-03, **INHERITED at 73758ef3**) — **Escape from a menu-bar menu drops focus to the body.** `WorkMenu` accepts `returnFocus` (`web/src/desk/components/DeskMenu.tsx:455`, consumed at `:559`/`:562`); `DeskMenuBar` renders it without the prop (`web/src/desk/components/DeskMenuBar.tsx:134-144`; at the base, `73758ef3:…/DeskMenuBar.tsx:133-143`, `grep -c returnFocus` = 0). One prop plus a rig assertion. **Owner: the next face lane in this phase** (04 if it reopens the menus, otherwise 06's follow-up charter) — not story 05, which is tokens.
+- 2026-09-21 (found by HS-202-03, **INHERITED at 73758ef3 by paired measurement**) — **under `prefers-reduced-motion: reduce` 18 of 26 keyboard stops on the cold desk compute a zero focus outline**: the desk-chrome controls (`.desk-mark`, `.desk-verbbar-title`, `.desk-bell`, the egress badge, every dock chip, `.surface-ledger-line`, the mic) while the plated `.btn` verbs keep 2px on the same page. Paired reproduction in `phase-202-the-coherent-face/assets/story-03-shots/reduced-motion-paired-baseline.json`: same hub, same page, same controls, same emulation, three rounds, only the built bundle swapped between `73758ef3` and the branch — **base 18/26 ringless, branch 17-18/26, and ZERO controls ringless only on the branch**. Mechanism **UNKNOWN**; ruled out are a reduced-motion outline reset (none in the built CSS) and the token (`--focus-outline-width` computes to `2px` on the ringless elements). The ringless elements compute `outline-color: currentColor`, the initial value, so the one global `:focus-visible` outline rule did not apply to them at all — a **cascade** question, not a token question. The 2026-09-20 census measured its 69 tab stops WITHOUT reduced motion, which is why it reported zero ringless stops; its "focus rings on every tab stop" pass therefore does not cover this state. **Owner: a chartered fix lane in this phase before story 06's sitting** — explicitly NOT story 05, whose tokens do not reach a cascade defect.
 - 2026-09-20: `FIRST_VALUE_FAILURES` (holdspeak/db/onboarding.py) refuses three names the face can send (`mic_interval_closed`, `provider_failure`, `audio_floor_held`); pinned as a named gap by tests/unit/test_hs202_first_value_failure_vocabulary.py; one line, next lane.
 
 ## Decisions deferred

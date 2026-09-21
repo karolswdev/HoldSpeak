@@ -1,0 +1,979 @@
+{
+ "what": "PAIRED reduced-motion focus-ring reproduction (HS-202-03, counsel #598 condition 2)",
+ "method": "Same hub, same page (cold seeded desk at 1440), same controls, prefers-reduced-motion: reduce, 26 Tab stops, three rounds. ONLY the built web bundle differs: holdspeak/static/_built was built from `git archive 73758ef3 -- web` for the base and from this branch's web/src for the branch. web/src is byte-identical between this branch's base 10e22669 and 73758ef3 (`git diff --stat 10e22669 73758ef3 -- web/src` is empty), so the base bundle IS main's.",
+ "base_commit": "73758ef3",
+ "branch": "feat/hs-202-03-species",
+ "verdict": "INHERITED. Zero controls are ringless only on the branch, in all three rounds. The base measures 18/26 ringless stops, the branch 17-18/26. The single varying stop is the FIRST Tab target (.desk-mark), which read 2px/2px/0px across the three branch rounds and 0px in all three base rounds: unstable measurement at stop 0, claimed as neither a heal nor a regression.",
+ "mechanism": "UNKNOWN. Ruled out: no `@media (prefers-reduced-motion: reduce)` block in the built CSS resets an outline (searched the concatenated bundle); `--focus-outline-width` computes to 2px on the ringless elements themselves. The ringless controls compute `outline-color: currentColor` -- the INITIAL value -- so the global `:focus-visible {outline: var(--focus-outline-width) solid var(--accent)}` rule (one definition in the bundle) did not apply to them at all. A cascade question, not a token one.",
+ "rounds": [
+  {
+   "round": 1,
+   "stops": 26,
+   "base_ringless_rows": 18,
+   "branch_ringless_rows": 17,
+   "ringless_only_on_branch": [],
+   "base": [
+    {
+     "label": "HoldSpeak",
+     "classes": "desk-mark",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Desk",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Object",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Go",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Window",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Privacy and trust: \u2302 This devi",
+     "classes": "egress-badge egress-badge-button gadget-chip gadget-chip-egress is-local",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Desk memory",
+     "classes": "desk-bell",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Search \u2318K",
+     "classes": "desk-chip desk-tools-launch",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Connect calendar",
+     "classes": "btn btn--ghost btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "No engine for summariesChoose ",
+     "classes": "surface-ledger-line",
+     "outline": "0px/none",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Choose an engine",
+     "classes": "btn btn--secondary btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Generate",
+     "classes": "btn btn--ghost btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Talk",
+     "classes": "desk-mic gadget-transport-key is-idle",
+     "outline": "0px/none",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Write a thought",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Record meeting",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Schedule",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Intelligence",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Speak",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Meetings",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Agents",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Settings",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Floor",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Desk memory",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Delivery",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Panes",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "\u25ccHide the menus",
+     "classes": "btn btn--secondary",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    }
+   ],
+   "branch": [
+    {
+     "label": "HoldSpeak",
+     "classes": "desk-mark",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Desk",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Object",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Go",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Window",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Privacy and trust: \u2302 This devi",
+     "classes": "egress-badge egress-badge-button gadget-chip gadget-chip-egress is-local",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Desk memory",
+     "classes": "desk-bell",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Search \u2318K",
+     "classes": "desk-chip desk-tools-launch",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Connect calendar",
+     "classes": "btn btn--ghost btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "No engine for summariesChoose ",
+     "classes": "surface-ledger-line",
+     "outline": "0px/none",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Choose an engine",
+     "classes": "btn btn--secondary btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Generate",
+     "classes": "btn btn--ghost btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Talk",
+     "classes": "desk-mic gadget-transport-key is-idle",
+     "outline": "0px/none",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Write a thought",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Record meeting",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Schedule",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Intelligence",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Speak",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Meetings",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Agents",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Settings",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Floor",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Desk memory",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Delivery",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Panes",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "\u25ccHide the menus",
+     "classes": "btn btn--secondary",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    }
+   ]
+  },
+  {
+   "round": 2,
+   "stops": 26,
+   "base_ringless_rows": 18,
+   "branch_ringless_rows": 17,
+   "ringless_only_on_branch": [],
+   "base": [
+    {
+     "label": "HoldSpeak",
+     "classes": "desk-mark",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Desk",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Object",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Go",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Window",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Privacy and trust: \u2302 This devi",
+     "classes": "egress-badge egress-badge-button gadget-chip gadget-chip-egress is-local",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Desk memory",
+     "classes": "desk-bell",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Search \u2318K",
+     "classes": "desk-chip desk-tools-launch",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Connect calendar",
+     "classes": "btn btn--ghost btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "No engine for summariesChoose ",
+     "classes": "surface-ledger-line",
+     "outline": "0px/none",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Choose an engine",
+     "classes": "btn btn--secondary btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Generate",
+     "classes": "btn btn--ghost btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Talk",
+     "classes": "desk-mic gadget-transport-key is-idle",
+     "outline": "0px/none",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Write a thought",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Record meeting",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Schedule",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Intelligence",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Speak",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Meetings",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Agents",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Settings",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Floor",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Desk memory",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Delivery",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Panes",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "\u25ccHide the menus",
+     "classes": "btn btn--secondary",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    }
+   ],
+   "branch": [
+    {
+     "label": "HoldSpeak",
+     "classes": "desk-mark",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Desk",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Object",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Go",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Window",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Privacy and trust: \u2302 This devi",
+     "classes": "egress-badge egress-badge-button gadget-chip gadget-chip-egress is-local",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Desk memory",
+     "classes": "desk-bell",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Search \u2318K",
+     "classes": "desk-chip desk-tools-launch",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Connect calendar",
+     "classes": "btn btn--ghost btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "No engine for summariesChoose ",
+     "classes": "surface-ledger-line",
+     "outline": "0px/none",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Choose an engine",
+     "classes": "btn btn--secondary btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Generate",
+     "classes": "btn btn--ghost btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Talk",
+     "classes": "desk-mic gadget-transport-key is-idle",
+     "outline": "0px/none",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Write a thought",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Record meeting",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Schedule",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Intelligence",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Speak",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Meetings",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Agents",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Settings",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Floor",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Desk memory",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Delivery",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Panes",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "\u25ccHide the menus",
+     "classes": "btn btn--secondary",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    }
+   ]
+  },
+  {
+   "round": 3,
+   "stops": 26,
+   "base_ringless_rows": 18,
+   "branch_ringless_rows": 18,
+   "ringless_only_on_branch": [],
+   "base": [
+    {
+     "label": "HoldSpeak",
+     "classes": "desk-mark",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Desk",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Object",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Go",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Window",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Privacy and trust: \u2302 This devi",
+     "classes": "egress-badge egress-badge-button gadget-chip gadget-chip-egress is-local",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Desk memory",
+     "classes": "desk-bell",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Search \u2318K",
+     "classes": "desk-chip desk-tools-launch",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Connect calendar",
+     "classes": "btn btn--ghost btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "No engine for summariesChoose ",
+     "classes": "surface-ledger-line",
+     "outline": "0px/none",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Choose an engine",
+     "classes": "btn btn--secondary btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Generate",
+     "classes": "btn btn--ghost btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Talk",
+     "classes": "desk-mic gadget-transport-key is-idle",
+     "outline": "0px/none",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Write a thought",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Record meeting",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Schedule",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Intelligence",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Speak",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Meetings",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Agents",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Settings",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Floor",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Desk memory",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Delivery",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Panes",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "\u25ccHide the menus",
+     "classes": "btn btn--secondary",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    }
+   ],
+   "branch": [
+    {
+     "label": "HoldSpeak",
+     "classes": "desk-mark",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Desk",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Object",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Go",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Window",
+     "classes": "desk-verbbar-title",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Privacy and trust: \u2302 This devi",
+     "classes": "egress-badge egress-badge-button gadget-chip gadget-chip-egress is-local",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Desk memory",
+     "classes": "desk-bell",
+     "outline": "0px/solid",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Search \u2318K",
+     "classes": "desk-chip desk-tools-launch",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Connect calendar",
+     "classes": "btn btn--ghost btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "No engine for summariesChoose ",
+     "classes": "surface-ledger-line",
+     "outline": "0px/none",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Choose an engine",
+     "classes": "btn btn--secondary btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Generate",
+     "classes": "btn btn--ghost btn--sm",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Talk",
+     "classes": "desk-mic gadget-transport-key is-idle",
+     "outline": "0px/none",
+     "color": "rgb(242, 243, 245)"
+    },
+    {
+     "label": "Write a thought",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Record meeting",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Schedule",
+     "classes": "btn btn--ghost",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    },
+    {
+     "label": "Intelligence",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Speak",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Meetings",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Agents",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Settings",
+     "classes": "desk-dock-app desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Floor",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Desk memory",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Delivery",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "Panes",
+     "classes": "desk-dock-launch",
+     "outline": "0px/solid",
+     "color": "rgb(155, 162, 176)"
+    },
+    {
+     "label": "\u25ccHide the menus",
+     "classes": "btn btn--secondary",
+     "outline": "2px/solid",
+     "color": "rgb(168, 110, 74)"
+    }
+   ]
+  }
+ ]
+}

@@ -207,3 +207,79 @@ VERDICT: baseline-subset, zero branch-new
 ......................................                                   [100%]
 38 passed in 1.39s
 ```
+
+## Counsel round
+
+Astra's counsel on #598 returned **RATIFY-WITH-CONDITIONS**
+(`.tmp/two-brains/20260921-123218-counsel-202-345-counsel/last.md`). The runs
+below close its four conditions: the Philo inventories regenerated and
+re-checked, the PAIRED reduced-motion reproduction against the base commit
+73758ef3 (verdict INHERITED — zero controls ringless only on this branch),
+and the re-runs of every fence and rig after the docstring/story corrections.
+The overclaim corrections and the two ledger rows with owners are text, not
+runs: see the story file and `current-phase-status.md`.
+
+### Captured run — 2026-09-21T18:51:52Z
+
+- **Command:** `bash -c set -o pipefail; for s in philo_repository_census philo_api_reference philo_boundary_census philo_doctor_reference philo_config_reference philo_openapi_reference; do printf "%-26s " "$s"; HOME=$(mktemp -d) uv run python scripts/$s.py --check 2>&1 | tail -1; done`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 7ead226b9c7b7dd0d352384946bc9c7931180206
+
+```text
+philo_repository_census    Repository census: 5 outputs verified.
+philo_api_reference        API reference checked
+philo_boundary_census      Boundary candidate census checked
+philo_doctor_reference     Doctor reference: 41 check functions
+philo_config_reference     Configuration declaration reference is current
+philo_openapi_reference    OpenAPI: 569 paths
+```
+
+### Captured run — 2026-09-21T18:52:10Z
+
+- **Command:** `bash -c set -o pipefail; python3 -c "
+import json
+d=json.load(open(\"pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-03-shots/reduced-motion-paired-baseline.json\"))
+print(\"PAIRED reduced-motion reproduction, base\", d[\"base_commit\"], \"vs\", d[\"branch\"])
+for r in d[\"rounds\"]:
+    print(\"  round %d: base %d/%d ringless | branch %d/%d ringless | ringless ONLY on branch: %s\" % (r[\"round\"], r[\"base_ringless_rows\"], r[\"stops\"], r[\"branch_ringless_rows\"], r[\"stops\"], r[\"ringless_only_on_branch\"] or \"none\"))
+print(\"VERDICT:\", d[\"verdict\"].split(\".\")[0] + \".\")
+"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 7ead226b9c7b7dd0d352384946bc9c7931180206
+
+```text
+PAIRED reduced-motion reproduction, base 73758ef3 vs feat/hs-202-03-species
+  round 1: base 18/26 ringless | branch 17/26 ringless | ringless ONLY on branch: none
+  round 2: base 18/26 ringless | branch 17/26 ringless | ringless ONLY on branch: none
+  round 3: base 18/26 ringless | branch 18/26 ringless | ringless ONLY on branch: none
+VERDICT: INHERITED.
+```
+
+### Captured run — 2026-09-21T18:52:23Z
+
+- **Command:** `bash -c set -o pipefail; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q tests/e2e/test_hs202_03_species_glass.py tests/e2e/test_hs202_first_use_smoke.py tests/e2e/test_hs201_one_thing_glass.py tests/e2e/test_hs201_summary_face_glass.py tests/e2e/test_hs201_09_connect_engine_glass.py tests/e2e/test_hs201_12_thought_note_glass.py tests/e2e/test_hs202_02_first_use_glass.py 2>&1 | tail -6`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 7ead226b9c7b7dd0d352384946bc9c7931180206
+
+```text
+...................................                                      [100%]
+35 passed in 299.39s (0:04:59)
+```
+
+### Captured run — 2026-09-21T18:57:41Z
+
+- **Command:** `bash -c set -o pipefail; HOME=$(mktemp -d) uv run pytest -q tests/unit/test_ux_canon_ratchet.py tests/unit/test_ux_canon_scan.py -p no:cacheprovider 2>&1 | tail -2; HOME=$(mktemp -d) uv run python scripts/check_web_baseline.py --run 2>&1 | tail -3`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 7ead226b9c7b7dd0d352384946bc9c7931180206
+
+```text
+......................................                                   [100%]
+38 passed in 1.14s
+Suite totals: 2745 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+```

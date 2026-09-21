@@ -8,14 +8,30 @@ makes them the library `Button` through the new `chrome` variant — the
 species without the plate, because their material is drawn by the strip they
 ride.
 
-Two things must be true at once, and only real glass can say both:
+WHAT THIS RIG PROVES, exactly (counsel #598, finding 2 — the earlier
+docstring claimed "the keyboard is UNCHANGED" and "returns focus on
+Escape", and both were overclaims):
 
   1. Every verb on the shared strips is now the library species: a real
-     `<button>` stamped `btn--chrome`, with NO `.btn` plate class (the plate
-     would repaint a menu row at 28px with a bevel).
-  2. The keyboard is UNCHANGED. The menus still rove with arrows and return
-     focus on Escape; the dock still tab-walks in DOM order; the wings still
-     carry ONE roving Tab stop; and every stop still draws a focus ring.
+     `<button>` carrying a library mark — `btn--chrome` on the strips whose
+     material is their own, the `.btn` plate elsewhere. A control wearing
+     neither was drawn by a raw `<button>`.
+  2. The SPECIFIC keyboard interactions it presses still behave: the dock's
+     Tab order equals its DOM order and each of those stops computes a
+     non-zero outline; ArrowDown/ArrowUp rove the open menu and Escape
+     closes it; the wing strip holds exactly one Tab stop and ArrowRight
+     moves the selected wing; one rail stop computes a non-zero outline.
+  3. The Meetings row body computes the same box the `div` computed
+     (background, border, padding, text-align, display).
+
+WHAT IT DOES NOT PROVE. Not complete keyboard equivalence: only the keys
+listed above are pressed, on these four strips, on a cold seeded desk. Not
+pixel identity: nothing here compares images, and the ink argument rests on
+the separate fact that no stylesheet defines `.btn--chrome`
+(`web/src/desk/__tests__/hs202ChromeSpecies.test.tsx`). Where focus LANDS
+after Escape is deliberately not asserted — `DeskMenuBar.tsx:134-144` has
+never passed `returnFocus` to `WorkMenu`, at the base commit as well, so
+focus falls to the body; that gap is ledgered, not fixed here.
 
 Both widths, 1440 and 393. Shots into this story's assets.
 """
@@ -62,12 +78,13 @@ _SPECIES_JS = """(selector) => {
 #: assertion below is reached by pressing Tab, never by calling focus().
 #:
 #: The rings are measured with the browser in its DEFAULT motion state.
-#: Under `prefers-reduced-motion: reduce` the chrome controls report
-#: `outline-width: 0px` with `outline-style: solid` while the plated `.btn`
-#: verbs still report 2px -- on `main` as well as here, and on controls this
-#: story never touched (`.desk-mark`, `.desk-verbbar-title`, the egress
-#: badge). It is NOT ASSESSED by this rig and is recorded in the story's
-#: notes; reduced motion is emulated only for the shots.
+#: Under `prefers-reduced-motion: reduce` the desk-chrome controls report
+#: `outline-width: 0px` while the plated `.btn` verbs still report 2px. A
+#: PAIRED reproduction against the base commit 73758ef3 (same page, same
+#: controls, same emulation, three rounds) measured 18/26 ringless stops on
+#: the base and 17-18/26 here, with ZERO controls ringless only on this
+#: branch: INHERITED, ledgered with an owner, not introduced. Reduced motion
+#: is emulated only for the shots.
 _RING_JS = """() => {
   const el = document.activeElement;
   if (!el || el === document.body) return null;
@@ -241,6 +258,11 @@ class TestSharedControlsAreSpecies:
             assert walked == order, (
                 f"the dock's Tab order left DOM order: {walked} != {order}"
             )
+            # Measured in the browser's DEFAULT motion state. Under
+            # `prefers-reduced-motion: reduce` these same controls compute a
+            # zero outline — on the base commit 73758ef3 identically (paired
+            # reproduction in the story's assets), so it is inherited and
+            # ledgered, not this story's to assert here.
             ringless = [
                 r for r in rings
                 if r["outlineWidth"] <= 0 or r["outlineStyle"] == "none"
@@ -283,10 +305,11 @@ class TestSharedControlsAreSpecies:
                 state="detached"
             )
             # Escape closes the whole panel. Where focus LANDS afterwards is
-            # NOT ASSESSED here: `DeskMenuBar` never passed `returnFocus` to
-            # `WorkMenu` (it does not on `main` either), so focus falls to the
-            # body — a pre-existing gap this story did not cause and does not
-            # fix. It is ledgered in the story's notes.
+            # NOT ASSESSED here: `DeskMenuBar.tsx:134-144` renders `WorkMenu`
+            # without `returnFocus` (`DeskMenu.tsx:455` accepts it), at the
+            # base commit 73758ef3 as well, so focus falls to the body — a
+            # pre-existing gap this story did not cause and does not fix. It
+            # is ledgered in the phase status with an owner.
             assert page.evaluate(
                 "() => !document.querySelector('.desk-verbbar-menu')"
             ), f"the {name} menu survived Escape"
