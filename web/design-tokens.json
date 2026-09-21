@@ -34,8 +34,8 @@
           "doc": "muted text (~7.1:1 AAA)"
         },
         "2": {
-          "value": "#767e8d",
-          "doc": "faint text (~4.7:1 AA)"
+          "value": "#8b93a3",
+          "doc": "faint text (HS-202-05 type-scale ruling: raised from #767e8d; \u22654.64:1 on every recorded dark ground)"
         }
       },
       "orange": {
@@ -367,6 +367,11 @@
       {
         "name": "--font-mono",
         "value": "{primitive.font.mono}"
+      },
+      {
+        "name": "--font-sans",
+        "value": "var(--font-ui)",
+        "doc": "HS-202-05: the project alias UX-CANON C names; consumers already spell --font-sans (surface.css, chair.css, intelligence.css)"
       },
       {
         "name": "--canvas",
@@ -1084,6 +1089,11 @@
         "doc": "HS-98: surface row horizontal padding"
       },
       {
+        "name": "--desk-button-hit-size",
+        "value": "44px",
+        "doc": "HS-202-05: the area a library Button owns at the narrow desk. A transparent halo carries it (global.css); the painted face keeps --size-btn. --size-touch (40px) is the row glyph and is unchanged."
+      },
+      {
         "name": "--desk-surface-gap",
         "value": "2px",
         "doc": "HS-98: gap between surface rows"
@@ -1095,8 +1105,8 @@
       },
       {
         "name": "--desk-surface-label-size",
-        "value": "0.6875rem",
-        "doc": "HS-98: quiet section label size (11px)"
+        "value": "0.75rem",
+        "doc": "HS-98 / HS-202-05: quiet section label size (12px \u2014 the readable floor; was 0.6875rem)"
       },
       {
         "name": "--desk-surface-body-size",

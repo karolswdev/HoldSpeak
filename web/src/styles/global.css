@@ -149,7 +149,53 @@ body {
 :where(.btn--sm) {
   min-height: 24px;
   padding-inline: var(--space-2);
-  font-size: 11px;
+  /* HS-202-05 (the type-scale ruling, §4): the readable floor. The raw
+     11px here was the last sub-floor size on the library Button. */
+  font-size: var(--font-size-xs);
+}
+
+/* HS-202-05 (the type-scale ruling, §3 rule 4): at the narrow desk every
+ * library Button owns a 44 x 44 px area. A transparent ::after halo
+ * carries the area, so the painted face keeps its 24/28px height; the
+ * block margin reserves the halo's room so nothing clips it, and half a
+ * --space-2 on each side keeps two halos from meeting on one point. The
+ * halo never reaches wider than the painted face, so a neighbour in the
+ * same row can never lose its own points; --desk-button-hit-size on
+ * min-inline-size carries the horizontal half of the target.
+ *
+ * Viewport media, not @container: most library Buttons at 393 (the dock,
+ * the menu bar, the Chair shell, the first-use pages) sit outside any
+ * named `surface` container, so a container query cannot reach them.
+ * chair.css:566 records the same limit for the same reason. */
+@media (max-width: 420px) {
+  :where(.btn) {
+    --btn-painted-h: var(--size-btn);
+
+    position: relative;
+    min-inline-size: var(--desk-button-hit-size);
+    margin-block: calc(
+      (var(--desk-button-hit-size) - var(--btn-painted-h)) / 2 + var(--space-2) / 2
+    );
+  }
+
+  :where(.btn--sm) {
+    --btn-painted-h: 24px;
+  }
+
+  :where(.btn)::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    /* An absolutely positioned child resolves its insets against the
+       PADDING box, so 0 would leave the Button's own 1px border outside
+       the halo and the four corners of the area would fall to the row
+       behind it. -1px lands the halo exactly on the painted border box,
+       and never wider than it. */
+    right: -1px;
+    left: -1px;
+    height: var(--desk-button-hit-size);
+    transform: translateY(-50%);
+  }
 }
 
 :where(.btn--primary, .btn.primary) {
@@ -613,18 +659,26 @@ input[type="file"]::file-selector-button:hover {
  * stroke + the glass inner highlight): controls read as MADE objects,
  * not flat HTML fills.
  * ============================================================ */
-.btn--secondary,
-.btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger) {
+/* HS-202-05: `:not(:disabled)` on every selector here. These three rules
+ * carry real specificity (`.btn:not(…)` is 0-4-0), so they outranked the
+ * canonical `:where(.btn):disabled` family above and a disabled Button
+ * kept the enabled fill, the enabled border and the gleam — only the
+ * cursor and the gray label were left to state the position. The
+ * type-scale ruling lightens `--text-faint`, and `--disabled-fg` IS
+ * `--text-faint`, so gray alone had to stop carrying it. The enabled
+ * faces are untouched: the guard only steps aside for `:disabled`. */
+.btn--secondary:not(:disabled),
+.btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger):not(:disabled) {
   background: var(--wash-2);
   border: 1px solid var(--wash-2);
   border-bottom-color: var(--shade-1);
   box-shadow: inset 0 1px 0 var(--gleam-1);
 }
-.btn--secondary:hover,
-.btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger):hover {
+.btn--secondary:not(:disabled):hover,
+.btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger):not(:disabled):hover {
   background: var(--gleam-2);
 }
-.btn--primary {
+.btn--primary:not(:disabled) {
   box-shadow:
     inset 0 1px 0 var(--gleam-3),
     0 1px 2px var(--shade-1);

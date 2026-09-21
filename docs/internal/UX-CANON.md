@@ -76,9 +76,33 @@ documented in contract.md, then used — never invented inline.
 
 display 26/650 `--font-display` — ONCE per face, the one big fact ·
 primary 15/600 `--font-sans` — the thing's name · body 13 · secondary
-12 mono — counts, times, hosts · caption 11 mono uppercase 0.06em —
+12 mono — counts, times, hosts · caption 12 mono uppercase 0.06em —
 section labels, chips. A face uses at least three steps; a face that
 collapses to one is a defect (the geometry probe).
+
+The four rules below are the type-scale ruling of 2026-09-21
+(`docs/internal/checks/type-scale-ruling-2026-09-21.md`, §3). They
+replace the earlier 11 px caption allowance.
+
+- **The 12 px floor.** Readable text is 12 px or more. Captions, chips
+  and verbs obey the floor. Only a nontext glyph goes below it, and
+  only when a readable word or an accessible control name says the
+  same thing. A word is not a glyph. A number is not a glyph.
+- **The three roles by surface kind.** Display is the leading fact on
+  a Chair face, an application face or an object face. Use it once.
+  Use body and mono for editors, settings, lists, menus and chrome.
+  Caption and secondary share 12 px; weight and letter-spacing keep
+  them apart.
+- **Contrast.** Small text makes 4.5:1 on the background that it is
+  really on. Faint gray is `--text-faint` (`#8b93a3`); muted gray
+  stays `#9ba2b0`. A disabled control stays different through its
+  disabled state and its flat treatment, not through gray alone.
+- **Hit ownership at 393.** Each library Button owns a 44 × 44 px area
+  (`--desk-button-hit-size`). A transparent halo carries the area; the
+  painted face keeps its height. Layout can grow. A clipped area is a
+  defect, and two controls must not own the same point. Prove it with
+  `elementFromPoint` and a real pointer at the center, the edges and
+  the corners. A rectangle measurement is not proof.
 
 ## D. Grammar rules the scars taught
 

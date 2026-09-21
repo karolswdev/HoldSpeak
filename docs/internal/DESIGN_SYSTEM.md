@@ -326,12 +326,53 @@ captions. The ratified scale, five steps, all component tokens:
 | primary | `--desk-type-primary-size/-weight/-lh` (15px/600/1.4) | what the material IS: the journal entry's text, the block's name, a destination's name |
 | body | `--desk-surface-body-size` (13px) | continuous copy and dense-row titles (HS-98, unchanged) |
 | secondary | `--desk-surface-detail-size` (12px) | metadata: times, sources, counts |
-| caption | `--desk-surface-label-size` (11px) | section labels, eyebrows, keycaps |
+| caption | `--desk-surface-label-size` (12px) | section labels, eyebrows, keycaps |
 
 Rules: a window face uses at least THREE steps; display appears at
 most once per face (it is the headline, not a heading style); numbers
 at display scale ride `--font-display`. A face whose computed text
 sizes collapse to one step is a defect the geometry walk catches.
+
+### The type-scale ruling (HS-202-05)
+
+Ratified 2026-09-21; the record is
+[the type-scale ruling](checks/type-scale-ruling-2026-09-21.md) and
+[UX-CANON C](UX-CANON.md#c-the-type-steps-the-interior-canon). The
+caption step moved from 11px to 12px here. The four rules:
+
+**1. The 12 px floor.** Readable text is 12 px or more. Captions,
+chips and verbs obey the floor. Only a nontext glyph goes below it,
+and only when a readable word or an accessible control name says the
+same thing. A word is not a glyph. A number is not a glyph.
+
+**2. The three roles by surface kind.**
+
+| Role | Token family | Surface kind |
+|---|---|---|
+| display | `--desk-type-display-*`, `--font-display` | the leading fact on a Chair face, an application face or an object face; once per face |
+| body | `--desk-surface-body-size`, `--desk-surface-detail-size`, `--desk-surface-label-size`, `--font-ui` (alias `--font-sans`) | editors, settings, lists, menus, chrome |
+| mono | `--font-mono` | counts, times, hosts, keycaps, chips |
+
+Caption and secondary share 12 px. Weight and letter-spacing keep the
+two roles apart. Display is a leading fact, not a repeated heading
+style.
+
+**3. The contrast rule.** Small text makes 4.5:1 on the background
+that it is really on, not on the nominal window fill. Faint text is
+`--text-faint` (`#8b93a3`); muted text stays `--text-muted`
+(`#9ba2b0`). A disabled control keeps `--disabled-fg`, its `disabled`
+attribute, its `not-allowed` cursor and its flat treatment
+(`global.css`, the `:where(.btn):disabled` family). Gray alone never
+states the disabled position.
+
+**4. Hit ownership at 393.** `--desk-button-hit-size` (44px) is the
+area each library Button owns at the narrow desk. A transparent halo
+carries the area, so the painted face keeps its 24/28 px height
+(`--size-btn`); `--size-touch` (40px) still serves the row glyph and
+does not change. Layout can grow. A clipped area is a defect, and two
+controls must not own the same point. `elementFromPoint` plus a real
+pointer at the center, the edges and the corners is the proof; a
+rectangle measurement is not.
 
 ### The composition rules
 

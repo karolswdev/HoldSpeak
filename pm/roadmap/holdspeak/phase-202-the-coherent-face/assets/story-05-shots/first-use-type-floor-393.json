@@ -1,0 +1,32 @@
+{
+  "arrival@393": {
+    "leaves": 28,
+    "under_floor": 5,
+    "faint_contrast_fails": 0
+  },
+  "meetings-ledger@393": {
+    "leaves": 44,
+    "under_floor": 13,
+    "faint_contrast_fails": 0
+  },
+  "meetings-record@393": {
+    "leaves": 50,
+    "under_floor": 15,
+    "faint_contrast_fails": 0
+  },
+  "thought@393": {
+    "leaves": 43,
+    "under_floor": 11,
+    "faint_contrast_fails": 0
+  },
+  "models@393": {
+    "leaves": 46,
+    "under_floor": 13,
+    "faint_contrast_fails": 0
+  },
+  "settings@393": {
+    "leaves": 72,
+    "under_floor": 21,
+    "faint_contrast_fails": 0
+  }
+}
