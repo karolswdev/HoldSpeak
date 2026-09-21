@@ -41,6 +41,10 @@ Chartered from the surface inventory after Astra's check (two rounds). Order: 01
 
 - 2026-09-20 - Phase scaffolded with `dw phase create` - keeps roadmap structure consistent - CLI.
 
+## Ledger
+
+- 2026-09-20: `tests/unit/test_hs175_calendar_sources.py::test_matched_this_week` and `test_hs175_calendar_wire.py::test_week_strip_with_events` fail at a week boundary (Sunday evening local, Monday UTC) on pristine main 93f9524f; a clock time bomb like the one HS-201-08 paid for HS-171; not this phase's change. Owner: the next green lane.
+
 ## Decisions deferred
 
 - Detailed story breakdown - trigger before implementation begins - default is no code changes without stories.
