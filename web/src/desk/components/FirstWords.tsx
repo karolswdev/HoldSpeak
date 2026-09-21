@@ -455,17 +455,22 @@ export function FirstWords({
           Keep as Note
         </Button>
         {failureContract?.setup && !handoffPending && !saving && !handoffRunning ? (
-          <button
-            type="button"
-            className="btn btn--secondary"
+          /* HS-202-02 — a library Button, never a raw one (UX-CANON: every
+             verb is the library Button). A missing microphone goes to the
+             READINESS face, whose sections carry the doctor's own
+             microphone check; every other setup failure keeps the
+             one-screen Door (HS-169-03 N-1). */
+          <Button
+            variant="secondary"
             onClick={() => {
               void tracker.current?.event("setup_selected");
-              // HS-169-03 N-1: open the one-screen Door, not the old setup wizard.
-              openSurfaceOr("project-setup", "/");
+              if (failure === "no_microphone")
+                openSurfaceOr("configure-setup", "/");
+              else openSurfaceOr("project-setup", "/");
             }}
           >
-            Setup
-          </button>
+            {failure === "no_microphone" ? "Check the microphone" : "Setup"}
+          </Button>
         ) : null}
       </div>
       <div className="button-row">
@@ -486,7 +491,11 @@ export function FirstWords({
             disabled={saving || handoffPending || handoffRunning}
             onClick={() => void dismiss("needs_help")}
           >
-            {needsDraftCustody ? "Save draft & get help" : "I need help"}
+            {/* HS-202-02 — it gave no help: it closed the card and dropped
+                the owner on the Desk (04-sober-eye.md, Job 1). The label
+                says what the verb does. The hub's `needs_help` disposition
+                is untouched — it is data about where the owner left. */}
+            {needsDraftCustody ? "Save draft & skip" : "Skip for now"}
           </Button>
         ) : null}
       </div>

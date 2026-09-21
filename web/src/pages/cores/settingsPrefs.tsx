@@ -441,21 +441,36 @@ export function PrefsFace({
         {headline.text}
       </span>
       <SurfaceLedger count="" cols="hub">
-        {/* Models: NO DEFAULT warning or N GROUPS SET + N ENGINES */}
+        {/* Models: N ENGINES. HS-202-02 — the DEFAULT/GROUPS facts moved
+            to the Assignments row below, where they are named; they were
+            printed on both rows before (M6, the same fact twice). */}
         <SurfaceLedgerRow
           primary="Models"
           expands={false}
           onToggle={() => onOpen("models")}
           trailing={openVerb("models")}
           cells={<>
+            {hub.models.engines > 0
+              ? <span className="surface-token" data-chip>{countToken(hub.models.engines, "ENGINE", "ENGINES")}</span>
+              : null}
+          </>}
+        />
+        {/* Assignments: Models' peer — which compatible chain each job
+            uses. HS-202-02: PREF_MODULES declared this module and the
+            ledger rendered eight rows, so it had no door at any width
+            (SURFACE-INVENTORY-2026-09-20.md §4). The groups fact lives
+            HERE, on the row it names, and no longer beside Models. */}
+        <SurfaceLedgerRow
+          primary="Assignments"
+          expands={false}
+          onToggle={() => onOpen("assignments")}
+          trailing={openVerb("assignments")}
+          cells={<>
             {!hub.models.defaultSet
               ? <StateChip state="warning" label="NO DEFAULT" />
               : null}
             {hub.models.defaultSet && hub.models.groupsSet > 0
               ? <span className="surface-token" data-chip>{countToken(hub.models.groupsSet, "GROUP SET", "GROUPS SET")}</span>
-              : null}
-            {hub.models.engines > 0
-              ? <span className="surface-token" data-chip>{countToken(hub.models.engines, "ENGINE", "ENGINES")}</span>
               : null}
           </>}
         />

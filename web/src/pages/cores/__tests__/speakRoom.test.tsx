@@ -417,7 +417,13 @@ describe("Speak refusals land in-flow", () => {
 });
 
 describe("HS-170-04 Speak footer composition", () => {
-  it("publishes EgressChip THIS DEVICE, Review, and Export through one foot", async () => {
+  /* HS-202-02 — this test pinned the defect. The footer's `THIS DEVICE`
+     was a hardcoded literal on a face whose own engine row can read a LAN
+     IP or CLOUD (03-interaction-walk.md Appendix B.2: "A wrong badge is
+     worse than a missing one: it is a reassurance."). The badge that pays
+     Article III sits beside the verb, on the engine row; the foot now
+     carries the receipt and the two verbs and claims no placement. */
+  it("publishes Review and Export through one foot, and claims no placement", async () => {
     mockRoutes({
       "/api/dictation/readiness": () =>
         Promise.resolve({
@@ -432,12 +438,11 @@ describe("HS-170-04 Speak footer composition", () => {
       </MemoryRouter>,
     );
 
-    // The footer carries THIS DEVICE
-    await waitFor(() => {
-      expect(screen.getAllByText("THIS DEVICE").length).toBeGreaterThan(0);
-    });
-    expect(screen.getByRole("button", { name: "Review" })).toBeVisible();
+    expect(await screen.findByRole("button", { name: "Review" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Export" })).toBeVisible();
+    const foot = container.querySelector(".speak-footer");
+    expect(foot).toBeTruthy();
+    expect(foot?.querySelector(".gadget-chip-egress")).toBeNull();
   });
 });
 
@@ -487,8 +492,10 @@ describe("the footer's N TODAY counts today (counsel C4)", () => {
       </MemoryRouter>,
     );
 
+    // The face has settled once its verbs are up (HS-202-02: the foot no
+    // longer prints a placement to wait on).
     await waitFor(() =>
-      expect(screen.getAllByText("THIS DEVICE").length).toBeGreaterThan(0),
+      expect(screen.getByRole("button", { name: "Export" })).toBeVisible(),
     );
     expect(screen.queryByText(/\d+ TODAY/)).toBeNull();
   });

@@ -53,10 +53,16 @@ def test_dashboard_owns_first_value_without_redirecting() -> None:
 
 
 def _nudge_output(monkeypatch, status: dict) -> str:
+    from holdspeak.config import Config
     from holdspeak.web_runtime import WebRuntime
 
     rt = WebRuntime.__new__(WebRuntime)
     rt.runtime_url = "http://127.0.0.1:9999"
+    # HS-202-02: the nudge now tokens its URLs, so it reads the config the
+    # way every real runtime has one.
+    config = Config()
+    config.meeting.web_auth_token = "NUDGETOKEN"
+    rt.config = config
     monkeypatch.setattr("holdspeak.setup_status.build_setup_status", lambda **_: status)
     buf = io.StringIO()
     with redirect_stdout(buf):
@@ -99,10 +105,12 @@ def test_cli_nudge_is_silent_for_a_healthy_returning_user(monkeypatch) -> None:
 
 
 def test_cli_nudge_never_raises(monkeypatch) -> None:
+    from holdspeak.config import Config
     from holdspeak.web_runtime import WebRuntime
 
     rt = WebRuntime.__new__(WebRuntime)
     rt.runtime_url = "http://127.0.0.1:9999"
+    rt.config = Config()
 
     def _boom(**_):
         raise RuntimeError("status unavailable")
@@ -110,3 +118,63 @@ def test_cli_nudge_never_raises(monkeypatch) -> None:
     monkeypatch.setattr("holdspeak.setup_status.build_setup_status", _boom)
     # Must not raise — a nudge can never block boot.
     rt._print_setup_nudge()
+
+
+# ── HS-202-02 job 2: every printed URL carries the tab-scoped token ────
+#
+# The surface inventory (04-sober-eye.md, rank 1) found the first-run nudge
+# and the setup nudge printing bare URLs: a user who opens one lands on
+# `principal_right_required`, because the runtime needs `?token=` even on
+# loopback. Every OTHER printed URL in the same block already goes through
+# `authenticated_browser_url` (web_runtime.py:567-577).
+
+
+def _nudge_output_with_token(monkeypatch, status: dict, token: str = "TESTTOKEN123") -> str:
+    from holdspeak.config import Config
+    from holdspeak.web_runtime import WebRuntime
+
+    rt = WebRuntime.__new__(WebRuntime)
+    rt.runtime_url = "http://127.0.0.1:9999"
+    config = Config()
+    config.meeting.web_auth_token = token
+    rt.config = config
+    monkeypatch.setattr("holdspeak.setup_status.build_setup_status", lambda **_: status)
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        rt._print_setup_nudge()
+    return buf.getvalue()
+
+
+def test_first_run_nudge_url_carries_the_token(monkeypatch) -> None:
+    out = _nudge_output_with_token(
+        monkeypatch,
+        {"first_run": True, "arrival_required": True, "overall": "needs_attention", "primary_action": None, "sections": []},
+    )
+    assert "token=TESTTOKEN123" in out, out
+    assert "9999/ " not in out and not out.rstrip().endswith("9999/"), out
+
+
+def test_blocked_setup_nudge_url_carries_the_token(monkeypatch) -> None:
+    out = _nudge_output_with_token(
+        monkeypatch,
+        {
+            "first_run": False,
+            "overall": "blocked",
+            "primary_action": {"label": "Enable microphone access"},
+            "sections": [{"status": "fail"}],
+        },
+    )
+    assert "/setup?token=TESTTOKEN123" in out, out
+
+
+def test_optional_setup_nudge_url_carries_the_token(monkeypatch) -> None:
+    out = _nudge_output_with_token(
+        monkeypatch,
+        {
+            "first_run": False,
+            "overall": "needs_attention",
+            "primary_action": None,
+            "sections": [{"status": "warn"}],
+        },
+    )
+    assert "/setup?token=TESTTOKEN123" in out, out

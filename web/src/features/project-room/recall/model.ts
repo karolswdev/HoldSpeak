@@ -97,6 +97,8 @@ export interface MemoryHitRow {
 
 export interface RecallResult {
   query: string;
+  /** HS-202-02 — this result is the desk's RECENT memory, not a search. */
+  recent: boolean;
   filter: RecallFilter;
   searched_at: string;
   projects_searched: number;
@@ -158,6 +160,7 @@ export function displayLine(remembered: number): string {
 
 export const EMPTY_RESULT: RecallResult = {
   query: "",
+  recent: false,
   filter: "all",
   searched_at: "",
   projects_searched: 0,
@@ -178,6 +181,7 @@ export function decodeRecall(raw: unknown): RecallResult {
   const filter = String(r.filter || "all") as RecallFilter;
   return {
     query: String(r.query || ""),
+    recent: r.recent === true,
     filter: RECALL_FILTERS.some((f) => f.value === filter) ? filter : "all",
     searched_at: String(r.searched_at || ""),
     projects_searched: Number(r.projects_searched || 0),

@@ -2,6 +2,10 @@ import { ApiError, type JsonRecord } from "./api";
 
 export type DictationFailure =
   | "permission_denied"
+  /* HS-202-02 — the device itself is absent. Before this it fell to
+     "unknown", which said neither "microphone" nor anything a person
+     could do. */
+  | "no_microphone"
   | "missing_model"
   | "rejected_token"
   | "unreachable_hub"
@@ -32,6 +36,17 @@ export const DICTATION_FAILURES: Record<
       "Microphone access is blocked in your browser or operating system. Your draft remains editable. Allow microphone access there, then retry.",
     retry: true,
     setup: false,
+    alternateRunsOn: false,
+  },
+  /* HS-202-02 — no input device. Two recoveries, both of which can work:
+     `Check the microphone` opens the readiness face, whose sections carry
+     the doctor's own microphone check (holdspeak/commands/doctor.py:1064
+     → setup_status.py:254-260); Retry works once a device is attached. */
+  no_microphone: {
+    message:
+      "No microphone was found on this device. Your draft remains editable. Connect a microphone, then retry.",
+    retry: true,
+    setup: true,
     alternateRunsOn: false,
   },
   missing_model: {
@@ -107,8 +122,12 @@ export const DICTATION_FAILURES: Record<
     alternateRunsOn: false,
   },
   unknown: {
+    /* HS-202-02 — "Retry the capture" was the sentence a person with no
+       microphone read (04-sober-eye.md, rank 7). The named device failures
+       above now take that traffic; what is left is genuinely unnamed, so
+       this says what is true and offers the keyboard as well. */
     message:
-      "Dictation did not finish. Your draft remains editable. Retry the capture.",
+      "Dictation did not finish. Your draft remains editable. Retry, or type below.",
     retry: true,
     setup: false,
     alternateRunsOn: false,
@@ -182,7 +201,32 @@ export function refusalCode(refusal: StreamRefusal): string | null {
 
 export function dictationFailure(error: unknown): DictationFailure {
   if (error instanceof DOMException) {
-    if (error.name === "NotAllowedError") return "permission_denied";
+    /* HS-202-02 — the getUserMedia refusals, by their DOMException names.
+       Legacy aliases (`DevicesNotFoundError`, `PermissionDeniedError`,
+       `TrackStartError`) are still emitted by some builds. */
+    if (
+      error.name === "NotAllowedError" ||
+      error.name === "PermissionDeniedError" ||
+      error.name === "SecurityError"
+    )
+      return "permission_denied";
+    /* `NotSupportedError` is what Chromium raises when the platform can
+       give no audio capture at all — measured on this tree's own walk
+       host: `getUserMedia({audio:true})` on the hub origin
+       (secure, mediaDevices present) rejects
+       `DOMException name=NotSupportedError "Not supported"`. To a person
+       that is the same fact as NotFoundError: this machine has no
+       microphone to offer. */
+    if (
+      error.name === "NotFoundError" ||
+      error.name === "DevicesNotFoundError" ||
+      error.name === "NotSupportedError" ||
+      error.name === "OverconstrainedError" ||
+      error.name === "ConstraintNotSatisfiedError"
+    )
+      return "no_microphone";
+    if (error.name === "NotReadableError" || error.name === "TrackStartError")
+      return "audio_floor_held";
     if (error.name === "AbortError" || error.name === "TimeoutError")
       return "timeout";
   }

@@ -1,6 +1,6 @@
 // Dock — the application launcher + running window toolbar.
 // Extracted from DeskWindow.tsx (HS-117-04).
-import { useEffect, useState, useCallback, type ReactNode } from "react";
+import { useEffect, useRef, useState, useCallback, type ReactNode } from "react";
 import { apiFetch } from "../../../lib/api";
 import { useIntelligenceAttention } from "../../intelligenceAttention";
 import { openIntelligence } from "../../intelligenceNavigation";
@@ -87,6 +87,28 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
     return () => window.removeEventListener("pointerdown", close);
   }, [chipMenu]);
 
+  // HS-202-02 — publish the dock's own height as `--desk-dock-h`. At
+  // phone width the dock wraps, so its height is not a constant any
+  // stylesheet can guess; the sheets read this to stop above it instead
+  // of burying the only persistent door the phone has.
+  const dockRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = dockRef.current;
+    const root = document.documentElement;
+    if (!el) return;
+    const publish = () => {
+      root.style.setProperty("--desk-dock-h", `${Math.ceil(el.offsetHeight)}px`);
+    };
+    publish();
+    if (typeof ResizeObserver !== "function") return;
+    const observer = new ResizeObserver(publish);
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--desk-dock-h");
+    };
+  });
+
   // The front chip mirrors the shell's is-front rule: the last id in
   // the order that is open here and not minimized (HS-97-04).
   let front: string | undefined;
@@ -102,6 +124,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const shown = launchers.filter((l) => !windows.some((w) => w.id === l.id));
   return (
     <div
+      ref={dockRef}
       className="desk-dock"
       role="toolbar"
       aria-label="Dock"

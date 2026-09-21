@@ -32,15 +32,22 @@ def build_memory_router(ctx: WebContext) -> APIRouter:
 
     @router.get("/recall")
     async def recall_memory(
-        request: Request, query: str = "", filter: Optional[str] = "all", limit: int = 50,
+        request: Request, query: str = "", filter: Optional[str] = "all",
+        limit: int = 50, recent: str = "",
     ) -> Any:
         """HS-200-13: the Desk memory face's one read -- CURRENT / SUPERSEDED /
-        DISPUTED / OWED over one query (holdspeak/services/recall_service.py)."""
+        DISPUTED / OWED over one query (holdspeak/services/recall_service.py).
+
+        HS-202-02: `recent=1` with no query answers the desk's newest memory,
+        so the face named "Desk memory" is not a blank field on a desk that
+        holds a meeting, decisions and a brief."""
         from ...db import get_database
         from ...services.recall_service import RecallService
+        newest = str(recent or "").strip().lower() in {"1", "true", "yes", "on"}
         try:
             payload = RecallService(get_database()).recall(
-                request.state.principal, query, filter=filter or "all", limit=limit,
+                request.state.principal, query, filter=filter or "all",
+                limit=limit, recent=newest,
             )
             return JSONResponse(payload)
         except ValidationError as exc:

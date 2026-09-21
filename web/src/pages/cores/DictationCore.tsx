@@ -1,7 +1,8 @@
 // HS-95-05 — the Dictation surface's core, hosted anywhere.
 // HS-170-04 — rebuilt to the settled artboards: one screen (talk, see
 // it land, teach); the old cockpit strip folds behind > Details; the
-// footer carries EgressChip THIS DEVICE + receipt + Review/Export.
+// footer carries the receipt + Review/Export; the egress badge lives
+// beside the verb, on the SPEAK wing's engine row (HS-202-02).
 import "../../desk/components/speak.css";
 import { useCallback, useMemo, useState } from "react";
 import { apiFetch } from "../../lib/api";
@@ -10,7 +11,6 @@ import type { CoreProps, DictationJournalResponse } from "./core-types";
 import { useCoreWings } from "./core-hooks";
 import { renderHeroSlot } from "./core-layout";
 import { Button } from "../../components/signal/Signal";
-import { EgressChip } from "../../desk/surface/gadgets";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { countToken } from "../../desk/surface";
 import { useResource } from "../pageSupport";
@@ -147,11 +147,15 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
       <ReceiptContext.Provider value={announce}>
         {current}
       </ReceiptContext.Provider>
-      {/* HS-170-04 — the footer: EgressChip THIS DEVICE · receipt ·
-          Review (ghost) · Export (ghost). */}
+      {/* HS-170-04 — the footer: receipt · Review (ghost) · Export (ghost).
+          HS-202-02 — the egress slot carried a hardcoded `THIS DEVICE` on a
+          face whose own engine row reads a LAN IP or CLOUD
+          (03-interaction-walk.md Appendix B.2). The badge that pays
+          Article III is the one beside the verb — the SPEAK wing's engine
+          row (dictation/SpeakFace.tsx:753) — so the footer states nothing
+          it has not read. */}
       <SurfaceFooter
         className="speak-footer"
-        egress={<EgressChip label="THIS DEVICE" />}
         receipt={
           receiptSlot || (journalToken ? (
             <span className="surface-footer-readiness" role="status">

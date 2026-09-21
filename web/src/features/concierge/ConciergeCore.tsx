@@ -519,7 +519,10 @@ export function ConciergeCore({ scope }: CoreProps) {
               label="Server address"
               value={ctrl.addEngineUrl}
               onChange={ctrl.setAddEngineUrl}
-              placeholder="http://192.168.1.43:8080/v1"
+              /* HS-202-02 — the shipped placeholder was the owner's own
+                 private LAN address (04-sober-eye.md, rank 8). It shows
+                 the SHAPE of an address now, not a real host. */
+              placeholder="http://<host>:<port>/v1"
               autoFocus
             />
             {/* Article III / UX-CANON A9: the host is named ON the row that

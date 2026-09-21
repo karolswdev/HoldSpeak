@@ -38,6 +38,7 @@ describe("dictation recovery contract", () => {
   it("maps every failure to its only-applicable actions", () => {
     const expected: Record<DictationFailure, string[]> = {
       permission_denied: ["retry", "copy", "keep_as_note"],
+      no_microphone: ["retry", "copy", "keep_as_note", "setup"],
       missing_model: ["copy", "keep_as_note", "alternate_runs_on", "setup"],
       rejected_token: ["copy", "keep_as_note", "setup"],
       unreachable_hub: ["retry", "copy", "keep_as_note"],
@@ -154,5 +155,70 @@ describe("named server refusals (HS-132-05)", () => {
       "AUDIO FLOOR LOST",
     );
     expect(refusalCode({ error: "Connection lost." })).toBeNull();
+  });
+});
+
+/* HS-202-02 job 1 — the microphone failure names the microphone.
+   The sober eye (docs/internal/surface-inventory-2026-09-20/04-sober-eye.md,
+   Job 1 and rank 7) clicked "Click to speak" on a machine with no microphone
+   and read: "Dictation did not finish. Your draft remains editable. Retry the
+   capture." The word microphone was missing and the offered recovery could
+   never work. `getUserMedia` rejects with a DOMException the mapper never
+   read: NotFoundError (no device), NotReadableError (the device is held),
+   SecurityError (the origin is refused). */
+describe("the microphone failures are named (HS-202-02)", () => {
+  it("names a missing device instead of falling to unknown", () => {
+    expect(dictationFailure(new DOMException("no device", "NotFoundError"))).toBe(
+      "no_microphone",
+    );
+    expect(
+      dictationFailure(new DOMException("no device", "DevicesNotFoundError")),
+    ).toBe("no_microphone");
+    expect(
+      dictationFailure(new DOMException("constraints", "OverconstrainedError")),
+    ).toBe("no_microphone");
+    // Measured on the walk host: headless Chromium with no audio device
+    // rejects `getUserMedia` with this name, not NotFoundError.
+    expect(
+      dictationFailure(new DOMException("Not supported", "NotSupportedError")),
+    ).toBe("no_microphone");
+  });
+
+  it("names a device another application holds", () => {
+    expect(
+      dictationFailure(new DOMException("in use", "NotReadableError")),
+    ).toBe("audio_floor_held");
+    expect(
+      dictationFailure(new DOMException("in use", "TrackStartError")),
+    ).toBe("audio_floor_held");
+  });
+
+  it("reads a refused origin as a permission refusal", () => {
+    expect(dictationFailure(new DOMException("insecure", "SecurityError"))).toBe(
+      "permission_denied",
+    );
+  });
+
+  it("says the word microphone on every device failure", () => {
+    for (const failure of [
+      "no_microphone",
+      "permission_denied",
+      "audio_floor_held",
+      "mic_interval_closed",
+    ] as const) {
+      expect(DICTATION_FAILURES[failure].message).toMatch(/microphone/i);
+    }
+  });
+
+  it("offers a recovery that can work for a missing device", () => {
+    const contract = DICTATION_FAILURES.no_microphone;
+    expect(contract.retry).toBe(true);
+    expect(contract.message).toMatch(/connect a microphone/i);
+    expect(applicableActions("no_microphone", { draftPresent: true })).toEqual([
+      "retry",
+      "copy",
+      "keep_as_note",
+      "setup",
+    ]);
   });
 });

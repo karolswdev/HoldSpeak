@@ -420,6 +420,14 @@ class WebRuntime(
             from .setup_status import build_setup_status
 
             setup = build_setup_status(database=get_database())
+            # HS-202-02 job 2: a printed URL that a browser cannot open is a
+            # dead end, not a nudge. The runtime needs `?token=` even on
+            # loopback and the token lives in tab-scoped storage, so a bare
+            # URL renders `principal_right_required` for a bookmark, a second
+            # tab, and tomorrow morning (04-sober-eye.md, rank 1). Every other
+            # printed URL in this block already goes through
+            # `authenticated_browser_url`; these two now do too.
+            token = ensure_web_token(self.config)
             url = self.runtime_url
             unmet = sum(
                 1 for s in setup.get("sections", []) if s.get("status") in ("fail", "warn")
@@ -427,15 +435,18 @@ class WebRuntime(
             if setup.get("arrival_required"):
                 # HS-92-03: first value starts on the Desk; /welcome remains a
                 # compatibility route to the same atom, never a wizard loop.
-                print(f"  → Welcome! Say your first words on the Desk: open {url}/")
+                desk_url = authenticated_browser_url(f"{url}/", token)
+                print(f"  → Welcome! Say your first words on the Desk: open {desk_url}")
             elif setup.get("overall") == "blocked":
                 suffix = f" — {unmet} thing{'' if unmet == 1 else 's'} need{'s' if unmet == 1 else ''} attention" if unmet else ""
-                print(f"  → Setup needs attention: open {url}/setup{suffix}")
+                setup_url = authenticated_browser_url(f"{url}/setup", token)
+                print(f"  → Setup needs attention: open {setup_url}{suffix}")
                 action = (setup.get("primary_action") or {}).get("label")
                 if action:
                     print(f"    Next: {action}")
             elif setup.get("overall") == "needs_attention":
-                print(f"  → Setup ready (some optional items to review): {url}/setup")
+                setup_url = authenticated_browser_url(f"{url}/setup", token)
+                print(f"  → Setup ready (some optional items to review): {setup_url}")
         except Exception as exc:  # pragma: no cover - a nudge must never block boot
             log.debug(f"setup nudge skipped: {exc}")
 

@@ -743,8 +743,13 @@ export function TransportRow({ children }: { children: ReactNode }) {
 /* ── the ONE egress badge chip: a token, never prose ── */
 
 export function EgressChip({
-  label = "⌂ This device",
-  title = "Transcript processing stays on this device.",
+  /* HS-202-02 — a badge given nothing states NOTHING. The old defaults
+     ("⌂ This device" + the on-device promise) turned every forgotten prop
+     into a reassurance on a face whose verbs reach the network
+     (03-interaction-walk.md Appendix B.2). A caller that knows the route
+     passes it; a caller that has not read one says NOT SET. */
+  label = "NOT SET",
+  title = "The route for this face is not set.",
   scope,
   className,
   ariaLabel,

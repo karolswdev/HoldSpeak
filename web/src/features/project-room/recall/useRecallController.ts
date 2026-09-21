@@ -63,29 +63,43 @@ export function useRecallController(initialQuery = "") {
   const searchedOnce = useRef(false);
   const generation = useRef(0);
 
-  const run = useCallback(async (q: string, f: RecallFilter) => {
-    const trimmed = q.trim();
-    if (!trimmed) return;
-    const mine = ++generation.current;
-    setStatus("searching");
-    setError("");
-    try {
-      const raw = await apiFetch<Record<string, unknown>>(
-        `/api/memory/recall?${new URLSearchParams({ query: trimmed, filter: f })}`,
-      );
-      if (mine !== generation.current) return;
-      const decoded = decodeRecall(raw);
-      previous.current = decoded;
-      setResult(decoded);
-      setStatus("ready");
-      searchedOnce.current = true;
-      writeResume(trimmed, f);
-    } catch (reason) {
-      if (mine !== generation.current) return;
-      setError(readableError(reason));
-      setStatus("failed");
-    }
-  }, []);
+  /* HS-202-02 — `recent` is the zero-query read. A window named "Desk
+     memory" showed a blank body on a desk that held a meeting, two
+     decision records and a brief, because the only read it had needed a
+     query and nobody had typed one yet (03-interaction-walk.md finding
+     7). A search still needs words; this does not. */
+  const run = useCallback(
+    async (q: string, f: RecallFilter, { recent = false } = {}) => {
+      const trimmed = q.trim();
+      if (!trimmed && !recent) return;
+      const mine = ++generation.current;
+      // The recent read is QUIET: it must not put the face in the
+      // searching state, or the Search verb (which goes `loading` there)
+      // is inert while the desk's own memory is arriving.
+      if (trimmed) setStatus("searching");
+      setError("");
+      try {
+        const params = trimmed
+          ? new URLSearchParams({ query: trimmed, filter: f })
+          : new URLSearchParams({ recent: "1", filter: f });
+        const raw = await apiFetch<Record<string, unknown>>(
+          `/api/memory/recall?${params}`,
+        );
+        if (mine !== generation.current) return;
+        const decoded = decodeRecall(raw);
+        previous.current = decoded;
+        setResult(decoded);
+        setStatus("ready");
+        searchedOnce.current = Boolean(trimmed);
+        if (trimmed) writeResume(trimmed, f);
+      } catch (reason) {
+        if (mine !== generation.current) return;
+        setError(readableError(reason));
+        setStatus("failed");
+      }
+    },
+    [],
+  );
 
   const search = useCallback(() => run(query, filter), [run, query, filter]);
 
@@ -93,7 +107,12 @@ export function useRecallController(initialQuery = "") {
     (next: RecallFilter) => {
       setFilterState(next);
       if (searchedOnce.current && query.trim()) void run(query, next);
-      else writeResume(query, next);
+      else {
+        writeResume(query, next);
+        // The recent read is filtered too: the chips were inert before
+        // any search had run (03-interaction-walk.md rows 67-71).
+        if (!query.trim()) void run("", next, { recent: true });
+      }
     },
     [query, run],
   );
@@ -120,7 +139,12 @@ export function useRecallController(initialQuery = "") {
       return;
     }
     const saved = resumed.current;
-    if (saved?.query?.trim()) void run(saved.query, saved.filter);
+    if (saved?.query?.trim()) {
+      void run(saved.query, saved.filter);
+      return;
+    }
+    // Nothing asked for and nothing resumed: show what the desk holds.
+    void run("", saved?.filter ?? "all", { recent: true });
   }, [run]);
   // A later `Find support` on the same open window re-points the well.
   useEffect(() => {

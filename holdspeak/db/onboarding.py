@@ -14,8 +14,17 @@ from .base import BaseRepository
 
 ONBOARDING_DISPOSITIONS = {"completed", "dismissed", "needs_help"}
 FIRST_VALUE_DESTINATIONS = {"this_machine", "paired_desktop"}
+# The client sends its own `DictationFailure` name here
+# (web/src/lib/dictationRecovery.ts); a name this set does not hold makes
+# `finish_attempt` raise and the receipt POST answer 400, so the first
+# value attempt is never closed.
 FIRST_VALUE_FAILURES = {
     "permission_denied",
+    # HS-202-02: the missing-device failure. Before this story it fell to
+    # "unknown"; naming it on the face made the receipt 400 until the hub
+    # knew the name too (measured on the walk: `400 POST
+    # /api/setup/first-value/<id>/finish`).
+    "no_microphone",
     "missing_model",
     "rejected_token",
     "unreachable_hub",

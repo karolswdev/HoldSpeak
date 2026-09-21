@@ -885,9 +885,9 @@
     border-inline: 1px solid var(--border);
     box-shadow: inset 1px 0 var(--bevel-light), inset -1px 0 var(--shade-1);
   }
-  .desk-verbbar-item:not([data-menu-id="go"]) {
-    display: none;
-  }
+  /* HS-202-02 — Desk, Object and Window are NOT RENDERED at phone width
+     (DeskMenuBar folds their verbs into Go). Nothing is hidden here any
+     more: a title in the DOM that no press can open was the defect. */
   .desk-verbbar-item[data-menu-id="go"] {
     display: inline-flex;
     align-items: stretch;

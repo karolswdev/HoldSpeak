@@ -206,7 +206,8 @@ describe("FirstWords", () => {
     });
     expect(screen.getByDisplayValue("Typed instead.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save draft & continue" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Save draft & get help" })).toBeEnabled();
+    // HS-202-02: "Save draft & get help" gave no help; the verb says what it does.
+    expect(screen.getByRole("button", { name: "Save draft & skip" })).toBeEnabled();
 
     view.unmount();
     const timeout = vi.fn().mockRejectedValue(new DOMException("slow", "TimeoutError"));
@@ -603,5 +604,61 @@ describe("FirstWords", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry finishing your Desk" }));
     await waitFor(() => expect(mocks.refresh).toHaveBeenCalledTimes(3));
     expect(notePosts.map((post) => post.id)).toEqual([notePosts[0].id]);
+  });
+});
+
+/* HS-202-02 job 1 (coordinator ruling, 2026-09-20) — the microphone
+ * failure offers a recovery that can WORK.
+ *
+ * 04-sober-eye.md Job 1: a browser with no microphone read "Dictation did
+ * not finish. Your draft remains editable. Retry the capture." — the word
+ * microphone was missing and the only offer was the identical gesture.
+ * The readiness face is the product's doctor row: its sections come 1:1
+ * from `collect_doctor_checks`, `_check_microphone()` among them
+ * (holdspeak/commands/doctor.py:1064, holdspeak/setup_status.py:254-260).
+ */
+describe("the missing-microphone recovery (HS-202-02)", () => {
+  async function failWithNoDevice() {
+    mocks.startStreamSession.mockRejectedValueOnce(
+      new DOMException("no device", "NotFoundError"),
+    );
+    render(<FirstWords />);
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await screen.findByText(/No microphone was found/i);
+  }
+
+  it("names the microphone instead of the capture", async () => {
+    await failWithNoDevice();
+    expect(screen.getByText(/No microphone was found/i)).toBeVisible();
+    expect(screen.queryByText(/Retry the capture/i)).toBeNull();
+  });
+
+  it("offers both recoveries: Check the microphone and a retry", async () => {
+    await failWithNoDevice();
+    expect(
+      screen.getByRole("button", { name: "Check the microphone" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Click to retry dictation" }),
+    ).toBeVisible();
+  });
+
+  it("opens the readiness face, not the New Project door", async () => {
+    await failWithNoDevice();
+    fireEvent.click(screen.getByRole("button", { name: "Check the microphone" }));
+    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-setup", "/");
+  });
+
+  it("uses the library Button, never a raw one", async () => {
+    await failWithNoDevice();
+    expect(
+      screen.getByRole("button", { name: "Check the microphone" }).className,
+    ).toContain("btn");
+  });
+
+  it("names the leaving verb for what it does", async () => {
+    await failWithNoDevice();
+    expect(screen.getByRole("button", { name: "Skip for now" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "I need help" })).toBeNull();
   });
 });

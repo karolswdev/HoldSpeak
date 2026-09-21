@@ -8,6 +8,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chair } from "./Chair";
 import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
+import { openNewThought } from "../newThought";
+import { BriefEgress, briefReceipt, type GeneratedBrief } from "./briefEgress";
 import { openSurface, openSurfaceOr, openCoderSession } from "../shell";
 import { reportWriteFailure, clearWriteFailure } from "../hooks/useWriteReceipt";
 import { apiFetch, readableError } from "../../lib/api";
@@ -546,11 +548,17 @@ function Arrival() {
 
   // ── brief generate ──
   const [generating, setGenerating] = useState(false);
+  /* HS-202-02 — Article III on this verb: the badge before (BriefEgress,
+     beside the verb) and the receipt after (this line). The walk fired
+     this exact POST and the screen said nothing either way
+     (03-interaction-walk.md finding 4). */
+  const [briefKept, setBriefKept] = useState<string | null>(null);
   const generateBrief = async () => {
     setGenerating(true);
     try {
       const data = await apiFetch<MondayBrief>("/api/brief/generate", { method: "POST" });
       setBrief(data);
+      setBriefKept(briefReceipt(data as unknown as GeneratedBrief));
       clearWriteFailure();
     } catch (error) {
       reportWriteFailure("Generate brief", error, () => void generateBrief());
@@ -1074,18 +1082,33 @@ function Arrival() {
           <SurfaceSection
             label="BRIEF"
             actions={
-              <Button
-                variant="ghost"
-                dense
-                disabled={generating}
-                onClick={() => void generateBrief()}
-                data-testid="arrival-brief-generate"
-              >
-                {generating ? "Generating..." : "Generate"}
-              </Button>
+              <>
+                {/* Article III / UX-CANON A.9 — the destination is named
+                    ON the row, BEFORE the verb that reaches it. */}
+                <BriefEgress />
+                <Button
+                  variant="ghost"
+                  dense
+                  disabled={generating}
+                  onClick={() => void generateBrief()}
+                  data-testid="arrival-brief-generate"
+                >
+                  {generating ? "Generating..." : "Generate"}
+                </Button>
+              </>
             }
           >
-            <span className="arrival-brief-empty">No brief yet</span>
+            {briefKept ? (
+              <span
+                className="surface-receipt-line"
+                role="status"
+                data-testid="arrival-brief-receipt"
+              >
+                {briefKept}
+              </span>
+            ) : (
+              <span className="arrival-brief-empty">No brief yet</span>
+            )}
           </SurfaceSection>
         </div>
       ) : !briefLoading && untriagedBrief.length > 0 ? (
@@ -2277,9 +2300,12 @@ function CaptureBar() {
           onState={(state) => setDictating(state === "listening")}
         />
       </span>
+      {/* HS-202-02 job 3 — this verb opened the Speak dictation router.
+          It opens a new note in the Thought window now (HS-201-12's
+          face), which is what its name says (04-sober-eye.md rank 3). */}
       <Button
         variant="ghost"
-        onClick={() => openSurfaceOr("dictate", "/dictation")}
+        onClick={() => void openNewThought()}
         data-testid="arrival-develop-thought"
       >
         Write a thought

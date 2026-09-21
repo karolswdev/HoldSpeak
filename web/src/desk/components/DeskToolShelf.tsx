@@ -84,6 +84,23 @@ function recordRecent(id: string): void {
   }
 }
 
+/** One word, one form.
+ *
+ * HS-202-02 — a person types the plural the screen shows them ("Notes",
+ * "Thoughts", "Meetings"); the row that carries the verb is singular
+ * ("New Note", "New Thought"). Without this fold the typed word scored
+ * ZERO against its own row, so `Notes` highlighted `Telegram control` and
+ * `Thoughts` highlighted `Intelligence` — and Enter opened those
+ * (03-interaction-walk.md finding 6: two of the five owner jobs could not
+ * be started by keyboard). */
+function stem(word: string): string {
+  if (word.length > 3 && word.endsWith("ies")) return `${word.slice(0, -3)}y`;
+  if (word.length > 4 && /(s|x|z|ch|sh)es$/.test(word)) return word.slice(0, -2);
+  if (word.length > 2 && word.endsWith("s") && !word.endsWith("ss"))
+    return word.slice(0, -1);
+  return word;
+}
+
 export function fuzzyScore(query: string, target: string): number {
   const q = query.toLowerCase();
   const t = target.toLowerCase();
@@ -91,6 +108,16 @@ export function fuzzyScore(query: string, target: string): number {
   if (t.startsWith(q)) return 80;
   const words = t.split(/[\s\-_]+/);
   if (words.some((word) => word.startsWith(q))) return 60;
+  // The fold is tried ONLY when the literal forms did not already meet at
+  // a word boundary, so every rank the deck already proved is unchanged.
+  const qs = stem(q);
+  if (qs !== q || words.some((word) => stem(word) !== word)) {
+    const stemmed = words.map(stem);
+    const ts = stemmed.join(" ");
+    if (ts === qs) return 90;
+    if (ts.startsWith(qs)) return 75;
+    if (qs.length > 2 && stemmed.some((word) => word.startsWith(qs))) return 65;
+  }
   let qi = 0;
   for (let ti = 0; ti < t.length && qi < q.length; ti++) {
     if (t[ti] === q[qi]) qi++;
@@ -113,6 +140,26 @@ export function rankRow(
     fuzzyScore(query, row.terms ?? ""),
   );
   return score ? score + (recent ? 10 : 0) : 0;
+}
+
+/** One door per name.
+ *
+ * HS-202-02 — `Ask AI` appeared in ⌘K twice: the object-scoped verb
+ * (ghosted "Select an object" whenever nothing is selected) and the live
+ * PROGRAM launcher. Two doors to one name, and the walk pressed the dead
+ * one (03-interaction-walk.md finding 8). The Object menu stays the
+ * registry face that ghosts a verb with its reason; the palette is a way
+ * THERE, so a ghost whose name a live row already carries is dropped.
+ */
+export function oneDoorPerName<
+  T extends { label: string; ghost?: string | null },
+>(rows: T[]): T[] {
+  const live = new Set(
+    rows.filter((row) => !row.ghost).map((row) => row.label.toLocaleLowerCase()),
+  );
+  return rows.filter(
+    (row) => !(row.ghost && live.has(row.label.toLocaleLowerCase())),
+  );
 }
 
 export function DeskToolShelf() {
@@ -406,8 +453,11 @@ export function DeskToolShelf() {
         run: () => void createThread({ title: model.name, profile_override: model.name }).then((t) => { openPullout(`thread:${t.id}`); void refresh(); }),
       });
 
+    // ── one door per name (HS-202-02) ──
+    const openDoors = oneDoorPerName(out);
+
     // ── rank, cut, and settle into section bands ──
-    const ranked = out
+    const ranked = openDoors
       .map((row, i) => ({
         row,
         i,

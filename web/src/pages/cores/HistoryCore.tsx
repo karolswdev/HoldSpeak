@@ -21,7 +21,8 @@ import {
 } from "../../meetings/summaryRoute";
 import { egressFor } from "../../desk/surface/egress";
 import { useCoreWings } from "./core-hooks";
-import { useRuntimeFrame } from "../../runtime/RuntimeBus";
+import { useRuntimeBus, useRuntimeFrame } from "../../runtime/RuntimeBus";
+import { onReturnToTask } from "../../desk/returnToTask";
 import { renderHeroSlot } from "./core-layout";
 import {
   WINGS, clockTime, download, needsIntelligence, meetingsHeadline,
@@ -160,6 +161,59 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     requestedMeetingId,
   ]);
 
+  /* ── the face re-reads itself (HS-202-02 job 2) ──
+     The sober eye set the engine and the record did not change; he ran
+     the summary and the record did not change; a browser reload was the
+     only thing that moved either (04-sober-eye.md, rank 2). This face
+     subscribed to one frame, `runtime_queue`, which names neither event,
+     and the open record is a snapshot object that only a click replaced —
+     so even a ledger reload could not repaint it.
+
+     What actually carries the news:
+      - an assignment write publishes NO server frame
+        (holdspeak/services/inference_assignment_service.py), so the
+        signal is the client's `holdspeak:settings-updated` return event,
+        the one ChairHome has read since HS-201-01;
+      - a deferred intel job's completion publishes `aftercare_ready`
+        (holdspeak/intel_queue_conductor.py:96).
+     `desk_changed` and window focus cover everything else. */
+  const selectedId = selected ? String(selected.id ?? "") : "";
+  const reloadMeetings = meetings.reload;
+  const refreshFace = useCallback(async () => {
+    void reloadMeetings();
+    if (!selectedId) return;
+    try {
+      const fresh = await apiFetch<MeetingDetailResponse>(
+        `/api/meetings/${encodeURIComponent(selectedId)}`,
+      );
+      setSelected(fresh as Record<string, unknown>);
+    } catch {
+      // The ledger still reloaded; the record keeps what it has and the
+      // next signal tries again. A failed re-read is never an error face.
+    }
+  }, [reloadMeetings, selectedId]);
+
+  const { subscribe: subscribeFrames } = useRuntimeBus();
+  useEffect(() => {
+    let timer = 0;
+    const bump = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => void refreshFace(), 300);
+    };
+    const offDeskChanged = subscribeFrames("desk_changed", bump);
+    const offAftercare = subscribeFrames("aftercare_ready", bump);
+    const offReturn = onReturnToTask(() => void refreshFace());
+    const onFocus = () => void refreshFace();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.clearTimeout(timer);
+      offDeskChanged();
+      offAftercare();
+      offReturn();
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [subscribeFrames, refreshFace]);
+
   // Run the summary of a meeting
   const handleRunIntelligence = useCallback(async (
     meetingId: string,
@@ -193,7 +247,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           text: `REFUSED · ${outcome.refusal.plainReason}`,
           tone: "danger",
         });
-        void meetings.reload();
+        void refreshFace();
         return;
       }
       const result = outcome.result;
@@ -209,7 +263,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       // one egress mapper instead of echoing the POST response's raw host.
       // The row's token stays honest: NOT DRAINING rather than RUNNING.
       if (result.drainer !== "running") {
-        void meetings.reload();
+        void refreshFace();
         return;
       }
       // Poll for completion
@@ -225,7 +279,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           if (state !== "queued" && state !== "running" && state !== "pending") {
             clearInterval(poll);
             setRunningId(null);
-            void meetings.reload();
+            void refreshFace();
           }
         } catch {
           clearInterval(poll);
@@ -237,7 +291,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         clearInterval(poll);
         setRunningId((current) => {
           if (current === meetingId) {
-            void meetings.reload();
+            void refreshFace();
             return null;
           }
           return current;
