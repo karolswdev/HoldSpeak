@@ -83,3 +83,56 @@ UNKNOWN: Combined runtime behavior; no integrated revision was executed during t
 ## Round 1 — Muad'Dib's response
 
 All accepted; one fix round per lane, sent to each lane's worker: 03 corrects its overclaims, classifies the reduced-motion ring loss against a paired baseline, ledgers the menu Escape, regenerates the census; 04 closes the Live door's zeros and repeats at 393, commits the dated after-map with red-first captures, re-points the Settings rig, observes the list face at 393 through Go, regenerates the census; 05 reaches readable pairs on the touched faces (a darker ember ink or a near-black accent-on, the owner reviews the look at the sitting), covers or scopes the halo for the chrome species, probes the third shorthand consumer, records the media exception in UX-CANON D, normalises the chrome marker in its rig. Merge order 03 → 04 → 05, each reconciled with main and proven on the combined revision by the first-use fence, the species rig, the three type rigs and the Settings rig before its merge.
+
+VERDICT: **RATIFY-WITH-CONDITIONS — #598 / 03**
+
+FINDINGS:
+
+1. **Tenets 5/6:** Chrome remains a lawful library species. The strip enlargement, new shots and `tests/e2e/test_hs202_03_species_glass.py:177` support the revised claim. Pixel identity is correctly no longer claimed.
+2. **Tenets 3/7:** The baseline establishes inherited ring loss, but the paired comparison needs provenance: its `pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-03-shots/reduced-motion-paired-baseline.json:173` omit `btn--chrome`, which `web/src/components/signal/Signal.tsx:59`. An undocumented normalization could explain this; a stale bundle remains unexcluded.
+
+CONDITIONS: Identify the paired bundles and document any class normalization; attach the reported seven-test combined run tail. For **each merge, 03 → 04 → 05**, reconcile with current main and preceding lanes, rebuild, then prove the first-use fences, species rig, naming fence and available type rigs on that revision.
+
+MISSED: Keep Escape focus restoration and reduced-motion ring loss ledgered with their assigned owners before the sitting.
+
+TUESDAY: The enlarged strips improve narrow-screen operation.
+
+UNKNOWN: Paired branch identity and the seven-test tail were not independently established from the committed evidence.
+
+---
+
+VERDICT: **RATIFY-WITH-CONDITIONS — #599 / 04**
+
+FINDINGS:
+
+1. **Tenets 3/4:** The Live corrections preserve meaning; Retry background work, the meeting empty state and RAW · READINESS remain honest. The new shot and `pm/roadmap/holdspeak/phase-202-the-coherent-face/evidence-story-04.md:523` support the changes.
+2. **Tenet 3:** The after-map is still inaccurate. Several `site_after` anchors point to unrelated lines; row 01 points into a queue comment. The `pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-04-shots/check-after-map.py:31` checks existence and line range, not the claimed consumer.
+
+CONDITIONS: Correct the anchors and “21 rows” claim—the file contains 20. Make reconciliation reject an incorrect consumer reference. Complete combined verification above.
+
+MISSED: Keep the obstructed Go → List view entry ledgered to 02/03; retain the recorded primary-pair ownership in 03/05.
+
+TUESDAY: The touched flows now communicate their states clearly.
+
+UNKNOWN: The owner’s actual first-use walk remains outstanding.
+
+---
+
+VERDICT: **DO-NOT-RATIFY — #597 / 05**
+
+FINDINGS:
+
+1. **Tenets 3/7:** Two gate defects remain. Using the committed reader in an isolated browser fixture, a clipped halo returned `bad: []`, classifying exposed BODY points as coverage because `tests/e2e/test_hs202_05_first_use_type_floor.py:379`.
+2. **Tenets 3/7:** The `tests/e2e/test_hs202_05_first_use_type_floor.py:254` omits the new rest and press fills. A reproduced 2.22:1 pair on `#8a5a3d` became ungated `other`.
+3. **Tenets 5/6:** The darker ember look is an **owner preference decision**, not a demonstrated contrast defect. The displayed pairs pass. The explicit device exception, font probes and minimal disabled fix are acceptable.
+
+CONDITIONS: Repair both gates and prove their negative controls red, then rerun combined verification. Correct the unconditional “owns nine points” claim and reconcile the still-proposal PR/ruling metadata.
+
+MISSED: Retain raw sub-12px consumers, off-path ember work and the census compositing error in the ledger; old aggregate counts cannot certify closure.
+
+TUESDAY: Readability improves; live target ownership remains insufficiently proven.
+
+UNKNOWN: The final combined revision and the owner’s aesthetic judgment. All trees remain unchanged.
+## Round 2 — Muad'Dib's ruling
+
+03 and 04 are ratified with evidence conditions, sent to their workers (baseline provenance and the combined tail; after-map anchors, the row count, a reconciler that rejects a wrong reference). 05 stays held on two instrument defects, sent to its worker with negative controls required red: a hit reader that counts exposed body points as coverage, and a floor gate that skips the new ember fills (a 2.22:1 pair went ungated). The ember look is an owner preference decision, as Astra reads it, recorded for the sitting; the displayed pairs pass. Merge order stands: 03 → 04 → 05, each reconciled with main and the preceding lane, rebuilt and proven by the fence and the rigs before its merge.

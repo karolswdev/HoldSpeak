@@ -327,7 +327,15 @@
      "outline": "2px/solid",
      "color": "rgb(168, 110, 74)"
     }
-   ]
+   ],
+   "bundle_base": {
+    "commit": "73758ef3",
+    "sha256_excluding_build_id": "375f9e5e6a2fa25a189c1c4ff090f1fe8bda54ebb3a44001a4b0d334e0d47483"
+   },
+   "bundle_branch": {
+    "commit": "e86715bc",
+    "sha256_excluding_build_id": "96c18904ee9ade38217688883b48fc0877da3761525696d7f9fd4a37a2c50bfc"
+   }
   },
   {
    "round": 2,
@@ -650,7 +658,15 @@
      "outline": "2px/solid",
      "color": "rgb(168, 110, 74)"
     }
-   ]
+   ],
+   "bundle_base": {
+    "commit": "73758ef3",
+    "sha256_excluding_build_id": "375f9e5e6a2fa25a189c1c4ff090f1fe8bda54ebb3a44001a4b0d334e0d47483"
+   },
+   "bundle_branch": {
+    "commit": "e86715bc",
+    "sha256_excluding_build_id": "96c18904ee9ade38217688883b48fc0877da3761525696d7f9fd4a37a2c50bfc"
+   }
   },
   {
    "round": 3,
@@ -973,7 +989,64 @@
      "outline": "2px/solid",
      "color": "rgb(168, 110, 74)"
     }
-   ]
+   ],
+   "bundle_base": {
+    "commit": "73758ef3",
+    "sha256_excluding_build_id": "375f9e5e6a2fa25a189c1c4ff090f1fe8bda54ebb3a44001a4b0d334e0d47483"
+   },
+   "bundle_branch": {
+    "commit": "e86715bc",
+    "sha256_excluding_build_id": "96c18904ee9ade38217688883b48fc0877da3761525696d7f9fd4a37a2c50bfc"
+   }
   }
- ]
+ ],
+ "provenance": {
+  "how_the_hash_is_taken": "sha256 over every file in the built bundle, in sorted relative-path order, hashing `<relative path>\\0<bytes>` for each. `sha256_all_files` covers all 406 files; `sha256_excluding_build_id` omits `build-id.json`, which carries a per-build stamp and is the ONLY file that is not reproducible.",
+  "bundles": {
+   "base": {
+    "role": "base",
+    "commit": "73758ef3",
+    "commit_subject": "Merge pull request #596 from karolswdev/feat/hs-202-01-fence",
+    "source": "git archive 73758ef3 web | tar -x  ->  npx vite build",
+    "git_tree_web": "dccd319d536e598dcb5bc59af1309b146b916e13",
+    "git_tree_web_src": "082fd239075a19b44fbe33020cf71c6631679a85",
+    "files": 406,
+    "sha256_all_files": "39176c8dd0cc936d88b6d802033218660510c10c567bf3670dcdbd896a98bd10",
+    "sha256_excluding_build_id": "375f9e5e6a2fa25a189c1c4ff090f1fe8bda54ebb3a44001a4b0d334e0d47483",
+    "scratch_dir_at_run_time": "scratchpad/paired/built-base (ephemeral; the digests above are the durable identity)"
+   },
+   "branch": {
+    "role": "branch",
+    "commit": "e86715bc",
+    "commit_subject": "HS-202-03: shared controls on the first-use path become library species",
+    "source": "the worktree as committed at e86715bc  ->  npm --prefix web run build",
+    "git_tree_web": "b8599f5f725ae17c3668762e820b8c04f0332ef8",
+    "git_tree_web_src": "7577a324834a56b45b8f47219a90088c81df08b2",
+    "files": 406,
+    "sha256_all_files": "a29349ec0e65b8b05e41f50d37f43c3dd0de1d0569d28b9aa4d1fd1837429d4e",
+    "sha256_excluding_build_id": "96c18904ee9ade38217688883b48fc0877da3761525696d7f9fd4a37a2c50bfc",
+    "scratch_dir_at_run_time": "scratchpad/paired/built-branch (ephemeral; the digests above are the durable identity)"
+   }
+  },
+  "verification": {
+   "method": "Each bundle was rebuilt from its named commit (`git archive <commit> web` into a clean scratch dir, the repo's own node_modules symlinked, `npx vite build`) and hashed the same way.",
+   "result": "406 files each; ZERO files present on one side only; exactly ONE file differs by bytes -- `build-id.json`. Every JS chunk and every CSS file is byte-identical, so `sha256_excluding_build_id` MATCHES the rebuild on both sides. The bundle that was measured is therefore proven to be the bundle the named commit produces.",
+   "base_rebuild_sha256_excluding_build_id": "375f9e5e6a2fa25a189c1c4ff090f1fe8bda54ebb3a44001a4b0d334e0d47483",
+   "base_match": true,
+   "branch_rebuild_sha256_excluding_build_id": "96c18904ee9ade38217688883b48fc0877da3761525696d7f9fd4a37a2c50bfc",
+   "branch_match": true
+  },
+  "why_the_base_bundle_is_main": "`web/src` is the SAME git tree object at this branch's base 10e22669 and at 73758ef3 (`git rev-parse 10e22669:web/src 73758ef3:web/src` both print 082fd239075a19b44fbe33020cf71c6631679a85), so the base bundle is main's own, not a reconstruction.",
+  "swap_procedure": "For every round, `holdspeak/static/_built` was deleted and replaced by a copy of the bundle named for that side, then every file in it was `touch`ed so `_ensure_build` (tests/e2e/glass_infra.py:137) saw the bundle as newer than the sources and did not rebuild over it. Nothing else on the page, the hub, the database or the browser differed between the two sides. `holdspeak/static/_built` is gitignored, so no tracked file moved. After the last round the bundle was rebuilt from source.",
+  "staleness": "Neither bundle can be a stale leftover: each was deleted and re-copied before every round, and each rebuilds byte-identically from its named commit apart from `build-id.json` (see `verification`). The digests were taken from the very directories the rounds copied from."
+ },
+ "normalisation": {
+  "applied_to": "the `classes` field only",
+  "rule": "The measuring harness read each stop's classes as `Array.from(el.classList).filter(c => c !== 'btn--chrome').sort().join(' ')`. The harness itself was a throwaway script outside the repo; that one line IS the whole of the normalisation, quoted here so this record stands alone.",
+  "btn--chrome_removed": "The branch stamps `btn--chrome` on every migrated control and the base has it nowhere, so leaving it in would make EVERY row differ by construction and the identity match would be vacuous. Removing it is what lets a row on one side be recognised as the same row on the other.",
+  "sorted": "`classList` order follows the DOM's class attribute order, which the migration can reorder; sorting makes the key stable.",
+  "what_is_NOT_normalised": "Every measured value is raw and unaltered: `outlineWidth`, `outlineStyle`, `outlineColor`, `focusVisible`, the `--focus-outline-width` token, the stop order and the labels. The ringless counts are raw row counts.",
+  "where_the_key_is_used": "`ringless_only_on_branch` is the set difference of (label, normalised classes) pairs over the ringless rows of each side. It is empty in all three rounds.",
+  "effect_on_the_verdict": "None that could hide a regression: removing a class the branch ADDS can only make MORE rows match across the two sides, never fewer. A control that lost its ring on the branch alone would still appear in the difference."
+ }
 }

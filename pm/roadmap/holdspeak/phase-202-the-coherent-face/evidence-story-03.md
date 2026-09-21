@@ -375,3 +375,62 @@ VERDICT: baseline-subset, zero branch-new
 ......................................                                   [100%]
 38 passed in 1.06s
 ```
+
+### Captured run — 2026-09-21T19:38:58Z
+
+- **Command:** `bash -c set -o pipefail; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q tests/e2e/test_hs202_03_species_glass.py tests/e2e/test_hs202_first_use_smoke.py tests/e2e/test_hs202_02_first_use_glass.py 2>&1 | tail -8`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 221f358a5da696ab81f974e630799cabc171602e
+
+```text
+.......                                                                  [100%]
+7 passed in 88.61s (0:01:28)
+```
+
+### Captured run — 2026-09-21T19:40:43Z
+
+- **Command:** `bash -c set -o pipefail; python3 -c "
+import json
+d=json.load(open(\"pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-03-shots/reduced-motion-paired-baseline.json\"))
+p=d[\"provenance\"]; v=p[\"verification\"]
+for side in (\"base\",\"branch\"):
+    b=p[\"bundles\"][side]
+    print(\"%-7s commit %s  web/ tree %s\" % (side, b[\"commit\"], b[\"git_tree_web\"][:12]))
+    print(\"        bundle sha256 (all %d files)      %s\" % (b[\"files\"], b[\"sha256_all_files\"]))
+    print(\"        bundle sha256 (minus build-id)    %s\" % b[\"sha256_excluding_build_id\"])
+print(\"REBUILD CHECK:\", v[\"result\"].split(\". Every\")[0] + \".\")
+print(\"  base match:\", v[\"base_match\"], \"| branch match:\", v[\"branch_match\"])
+print(\"NORMALISATION:\", d[\"normalisation\"][\"rule\"])
+print(\"  applied to:\", d[\"normalisation\"][\"applied_to\"])
+print(\"  not normalised:\", d[\"normalisation\"][\"what_is_NOT_normalised\"][:96])
+"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 221f358a5da696ab81f974e630799cabc171602e
+
+```text
+base    commit 73758ef3  web/ tree dccd319d536e
+        bundle sha256 (all 406 files)      39176c8dd0cc936d88b6d802033218660510c10c567bf3670dcdbd896a98bd10
+        bundle sha256 (minus build-id)    375f9e5e6a2fa25a189c1c4ff090f1fe8bda54ebb3a44001a4b0d334e0d47483
+branch  commit e86715bc  web/ tree b8599f5f725a
+        bundle sha256 (all 406 files)      a29349ec0e65b8b05e41f50d37f43c3dd0de1d0569d28b9aa4d1fd1837429d4e
+        bundle sha256 (minus build-id)    96c18904ee9ade38217688883b48fc0877da3761525696d7f9fd4a37a2c50bfc
+REBUILD CHECK: 406 files each; ZERO files present on one side only; exactly ONE file differs by bytes -- `build-id.json`.
+  base match: True | branch match: True
+NORMALISATION: `Array.from(el.classList).filter(c => c !== 'btn--chrome').sort().join(' ')` (scratchpad/paired/measure.py, WALK_JS).
+  applied to: the `classes` field only
+  not normalised: Every measured value is raw and unaltered: `outlineWidth`, `outlineStyle`, `outlineColor`, `focu
+```
+
+### Captured run — 2026-09-21T19:41:30Z
+
+- **Command:** `bash -c set -o pipefail; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q tests/e2e/test_hs202_03_species_glass.py tests/e2e/test_hs202_first_use_smoke.py tests/e2e/test_hs202_02_first_use_glass.py 2>&1 | tail -4`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 221f358a5da696ab81f974e630799cabc171602e
+
+```text
+.......                                                                  [100%]
+7 passed in 88.28s (0:01:28)
+```

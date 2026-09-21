@@ -202,3 +202,48 @@ the second time with a window open, because `Overview` and `Reset layout` do
 not exist until then. Proven red on the pre-fix bundle:
 `the dock: rows under 44px at 393 … 'Hide the menus' 36px, 'Change places'
 36px, 'Record a meeting' 40px`. `wings-393.png` and `dock-393.png` re-shot.
+
+### Counsel round two (#598, RATIFY-WITH-CONDITIONS, evidence only)
+
+Both conditions are evidence, not code; no product file moved.
+
+1. **Provenance for the paired baseline.** `reduced-motion-paired-baseline.json`
+   now carries a `provenance` block naming, for each side and on every round,
+   the commit, its `web/` git tree object, the scratch directory, and two
+   sha256 digests of the built bundle (all 406 files, and the same minus
+   `build-id.json`), plus the swap procedure. Crucially it carries a
+   **rebuild check**: each bundle was rebuilt from its named commit
+   (`git archive <commit> web` into a clean dir, `npx vite build`) and
+   re-hashed — 406 files each, none present on one side only, and **exactly
+   one file differs by bytes, `build-id.json`** (a per-build stamp). Every JS
+   chunk and every CSS file is byte-identical, so the digest minus that one
+   file MATCHES on both sides. The bundle that was measured is *proven* to be
+   the one its commit produces, not merely labelled.
+
+   | side | commit | `web/` tree | sha256 (minus `build-id.json`) | rebuild |
+   |---|---|---|---|---|
+   | base | `73758ef3` | `dccd319d536e` | `375f9e5e6a2fa25a…` | match |
+   | branch | `e86715bc` | `b8599f5f725a` | `96c18904ee9ade38…` | match |
+
+   The "the base bundle IS main's" claim is now a git object id rather than a
+   diff: `git rev-parse 10e22669:web/src 73758ef3:web/src` prints
+   `082fd239075a19b44fbe33020cf71c6631679a85` twice.
+
+2. **The class normalisation is now declared**, in a `normalisation` block.
+   The comparison read
+   `Array.from(el.classList).filter(c => c !== 'btn--chrome').sort().join(' ')`.
+   `btn--chrome` is removed because the branch stamps it on every migrated
+   control and the base has it nowhere, so leaving it in would make every row
+   differ by construction and the identity match would be vacuous; the list is
+   sorted because `classList` follows the class-attribute order, which the
+   migration can reorder. **Nothing measured is normalised** — `outlineWidth`,
+   `outlineStyle`, `outlineColor`, `focusVisible`, the token, the stop order
+   and the labels are all raw, and the ringless counts are raw row counts. The
+   normalisation cannot hide a regression: dropping a class the branch ADDS
+   can only make more rows match across the two sides, never fewer, so a
+   control that lost its ring on the branch alone would still show up in the
+   difference.
+
+3. **The seven-test combined run** on the merge (captured at `8c5687d3`, on
+   top of `be024c77`): species rig 4 + story 01's fence 2 + story 02's fence 1
+   — `7 passed in 88.61s`.
