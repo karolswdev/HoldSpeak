@@ -124,8 +124,18 @@ class RecallService:
 
     def recall(
         self, principal: Any, query: str, *, filter: str = "all",
-        limit: int = 50, now: datetime | None = None,
+        limit: int = 50, now: datetime | None = None, recent: bool = False,
     ) -> dict[str, Any]:
+        """HS-202-02 — `recent=True` with no query is the DESK MEMORY read.
+
+        The face named "Desk memory" opened on a desk that held a meeting,
+        two decision records and a brief, and showed an empty body, because
+        its only read needs a query and it had not been given one
+        (03-interaction-walk.md finding 7). `recent` answers the newest of
+        each kind in the same shape a search answers. A bare blank query is
+        still refused: a search with no words is still a search with no
+        words.
+        """
         if not principal.permits(PrincipalRight.READ):
             status = 401 if principal.kind is PrincipalKind.NONE else 403
             raise ServiceError(
@@ -133,16 +143,18 @@ class RecallService:
                 context={"status": status, "response": refusal(principal, PrincipalRight.READ)},
             )
         q = str(query or "").strip()
-        if not q:
-            raise ValidationError("query is required")
         chosen = str(filter or "all").strip().lower() or "all"
         if chosen not in FILTERS:
             raise ValidationError(f"unknown filter: {filter}")
+        newest = bool(recent) and not q
+        if not q and not newest:
+            raise ValidationError("query is required")
         clock = now or datetime.now()
         bounded = max(1, min(int(limit), 200))
 
         result: dict[str, Any] = {
             "query": q,
+            "recent": newest,
             "filter": chosen,
             "searched_at": clock.isoformat(),
             "projects_searched": self._projects_searched(),
@@ -152,21 +164,23 @@ class RecallService:
 
         cards: list[dict[str, Any]] = []
         if chosen in ("all", "decisions", "commitments"):
-            cards = self._decision_cards(principal, q, bounded)
+            cards = self._decision_cards(principal, q, bounded, recent=newest)
         if chosen in ("all", "decisions"):
             for card in cards:
                 result[card["state"]].append(card)
         if chosen in ("all", "commitments"):
-            result["owed"] = self._owed(q, cards, clock, bounded)
+            result["owed"] = self._owed(q, cards, clock, bounded, recent=newest)
         if chosen == "meetings":
-            result["meetings"] = self._memory_hits(q, ("meeting",), bounded)
+            result["meetings"] = self._memory_hits(
+                q, ("meeting",), bounded, recent=newest)
         if chosen in ("all", "briefs"):
-            result["briefs"] = self._brief_hits(q, bounded)
+            result["briefs"] = self._brief_hits(q, bounded, recent=newest)
         if chosen == "all":
             # ONE memory read over every drawn kind, so a hit reached over a
             # durable relationship edge (a meeting's artifact) still arrives
             # beside its seed; the hits are then split by kind.
-            hits = self._memory_hits(q, ("meeting",) + _ALSO_KINDS, bounded)
+            hits = self._memory_hits(
+                q, ("meeting",) + _ALSO_KINDS, bounded, recent=newest)
             result["meetings"] = [h for h in hits if h.get("kind") == "meeting"]
             result["also"] = [h for h in hits if h.get("kind") != "meeting"]
 
@@ -178,8 +192,10 @@ class RecallService:
 
     # ── decisions ────────────────────────────────────────────────────
 
-    def _decision_cards(self, principal: Any, query: str, limit: int) -> list[dict[str, Any]]:
-        found = self._records.search(principal, query, limit=limit)
+    def _decision_cards(
+        self, principal: Any, query: str, limit: int, *, recent: bool = False
+    ) -> list[dict[str, Any]]:
+        found = self._records.search(principal, query, limit=limit, recent=recent)
         if not found:
             return []
         cards: list[dict[str, Any]] = []
@@ -371,7 +387,10 @@ class RecallService:
 
     # ── commitments ──────────────────────────────────────────────────
 
-    def _owed(self, query: str, cards: list[dict[str, Any]], clock: datetime, limit: int) -> list[dict[str, Any]]:
+    def _owed(
+        self, query: str, cards: list[dict[str, Any]], clock: datetime, limit: int,
+        *, recent: bool = False,
+    ) -> list[dict[str, Any]]:
         terms = [t for t in query.split() if t.strip()]
         rows: list[dict[str, Any]] = []
         seen: set[str] = set()
@@ -391,8 +410,15 @@ class RecallService:
                         ORDER BY c.due_at ASC NULLS LAST, c.created_at ASC""",
                     record_ids,
                 ).fetchall())
-            if terms:
-                predicate = " AND ".join("ai.task LIKE ? COLLATE NOCASE" for _ in terms)
+            if terms or recent:
+                # HS-202-02 — the recent read drops the word predicate and
+                # keeps the order the owed list already has: soonest due
+                # first, then oldest.
+                predicate = (
+                    " AND ".join("ai.task LIKE ? COLLATE NOCASE" for _ in terms)
+                    if terms
+                    else "1 = 1"
+                )
                 fetched.extend(conn.execute(
                     f"""SELECT c.*, ai.task AS text, ai.status AS action_status, r.id AS record_id,
                                (SELECT p.kind FROM follow_through_proposals p WHERE p.commitment_id = c.id LIMIT 1) AS proposal_kind
@@ -450,21 +476,38 @@ class RecallService:
 
     # ── the other kinds ──────────────────────────────────────────────
 
-    def _memory_hits(self, query: str, kinds: tuple[str, ...], limit: int) -> list[dict[str, Any]]:
+    def _memory_hits(
+        self, query: str, kinds: tuple[str, ...], limit: int, *, recent: bool = False
+    ) -> list[dict[str, Any]]:
+        """Lexical hits, or — with no query — the newest of each kind.
+
+        HS-202-02 (Astra's counsel finding 5): a wordless query raised
+        inside the FTS matcher and was swallowed into `[]`, so a desk
+        holding only meetings, or only notes, read EMPTY.
+        """
+        if recent:
+            return self._db.memory.recent(kinds=list(kinds), limit=limit)
         try:
             found = self._db.memory.search(query, kinds=list(kinds), limit=limit)
         except ValueError:
             return []
         return [hit.to_dict() if hasattr(hit, "to_dict") else dict(hit) for hit in found.hits]
 
-    def _brief_hits(self, query: str, limit: int) -> list[dict[str, Any]]:
+    def _brief_hits(
+        self, query: str, limit: int, *, recent: bool = False
+    ) -> list[dict[str, Any]]:
         terms = [t for t in query.split() if t.strip()]
-        if not terms:
+        if not terms and not recent:
             return []
-        predicate = " AND ".join("(i.text LIKE ? COLLATE NOCASE OR COALESCE(i.detail,'') LIKE ? COLLATE NOCASE)" for _ in terms)
         params: list[Any] = []
-        for t in terms:
-            params.extend([f"%{t}%", f"%{t}%"])
+        if terms:
+            predicate = " AND ".join("(i.text LIKE ? COLLATE NOCASE OR COALESCE(i.detail,'') LIKE ? COLLATE NOCASE)" for _ in terms)
+            for t in terms:
+                params.extend([f"%{t}%", f"%{t}%"])
+        else:
+            # HS-202-02 — the recent read: the newest brief's items, in the
+            # order the brief itself ranked them.
+            predicate = "1 = 1"
         params.append(limit)
         with self._db._connection() as conn:
             rows = conn.execute(

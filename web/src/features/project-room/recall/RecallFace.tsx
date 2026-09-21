@@ -421,7 +421,11 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string } = {}
           <div
             ref={resultsRef}
             role="region"
-            aria-label={`Results for ${result.query}`}
+            aria-label={
+              result.recent
+                ? "Recent on this desk"
+                : `Results for ${result.query}`
+            }
             tabIndex={-1}
             className="recall-results"
             data-dimmed={dimmed || undefined}

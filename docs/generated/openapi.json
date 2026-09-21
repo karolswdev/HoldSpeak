@@ -16120,7 +16120,7 @@
     },
     "/api/memory/recall": {
       "get": {
-        "description": "HS-200-13: the Desk memory face's one read -- CURRENT / SUPERSEDED /\nDISPUTED / OWED over one query (holdspeak/services/recall_service.py).",
+        "description": "HS-200-13: the Desk memory face's one read -- CURRENT / SUPERSEDED /\nDISPUTED / OWED over one query (holdspeak/services/recall_service.py).\n\nHS-202-02: `recent=1` with no query answers the desk's newest memory,\nso the face named \"Desk memory\" is not a blank field on a desk that\nholds a meeting, decisions and a brief.",
         "operationId": "recall_memory_api_memory_recall_get",
         "parameters": [
           {
@@ -16158,6 +16158,16 @@
               "default": 50,
               "title": "Limit",
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "recent",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Recent",
+              "type": "string"
             }
           }
         ],

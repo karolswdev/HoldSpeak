@@ -44,6 +44,7 @@ export type DeskSlice = Pick<
   | "divedZone"
   | "draggingId"
   | "newIds"
+  | "keptAt"
   | "editingId"
   | "editorOrigin"
   | "hoverZoneId"
@@ -77,6 +78,7 @@ export const createDeskSlice: SliceCreator<DeskSlice> = (set, get) => ({
   divedZone: null,
   draggingId: null,
   newIds: [],
+  keptAt: {},
   editingId: null,
   editorOrigin: null,
   hoverZoneId: null,

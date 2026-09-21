@@ -88,35 +88,50 @@ export function useMeetingData(
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     if (!id) return;
+    /* HS-202-02 (Astra's counsel finding 3 on PR #595, one layer deeper
+       than it pointed) — every read here is for THIS record. A response
+       that lands after the owner opened another meeting must be dropped,
+       or the record on the glass wears another meeting's facts. The
+       rendered fence in `__tests__/meetingRefresh202.test.tsx` catches
+       exactly that: without this guard a stalled `/api/meetings/m-1`
+       overwrote the open m-2. */
+    let live = true;
+    const mine = <T,>(apply: (value: T) => void) => (value: T) => {
+      if (live) apply(value);
+    };
     setDetail(meeting);
     setError("");
     void Promise.all([
       apiFetch<MeetingDetailResponse>(`/api/meetings/${encodeURIComponent(id)}`).then(
-        setDetail,
+        mine(setDetail),
       ),
       apiFetch<MeetingArtifactsResponse>(`/api/meetings/${encodeURIComponent(id)}/artifacts`)
-        .then(setArtifacts)
-        .catch(() => setArtifacts({})),
+        .then(mine(setArtifacts))
+        .catch(() => { if (live) setArtifacts({}); }),
       apiFetch<MeetingAftercareResponse>(`/api/meetings/${encodeURIComponent(id)}/aftercare`)
-        .then(setAftercare)
-        .catch(() => setAftercare({})),
+        .then(mine(setAftercare))
+        .catch(() => { if (live) setAftercare({}); }),
       apiFetch<MeetingTimelineResponse>(
         `/api/meetings/${encodeURIComponent(id)}/intent-timeline`,
       )
-        .then(setTimeline)
-        .catch(() => setTimeline({})),
+        .then(mine(setTimeline))
+        .catch(() => { if (live) setTimeline({}); }),
       apiFetch<MeetingProposalsResponse>(`/api/meetings/${encodeURIComponent(id)}/proposals`)
-        .then(setProposals)
-        .catch(() => setProposals({})),
+        .then(mine(setProposals))
+        .catch(() => { if (live) setProposals({}); }),
       apiFetch<AuthorityPolicyResponse>("/api/authority/policy")
-        .then(setAuthority)
-        .catch(() => setAuthority({})),
+        .then(mine(setAuthority))
+        .catch(() => { if (live) setAuthority({}); }),
       apiFetch<{ proposals: FollowThroughProposal[] }>(
         `/api/meetings/${encodeURIComponent(id)}/follow-through-proposals`,
       )
-        .then((res) => setFtProposals(res.proposals ?? []))
-        .catch(() => setFtProposals([])),
-    ]).catch((reason) => setError(readableError(reason)));
+        .then(mine((res: { proposals?: FollowThroughProposal[] }) =>
+          setFtProposals(res.proposals ?? [])))
+        .catch(() => { if (live) setFtProposals([]); }),
+    ]).catch((reason) => { if (live) setError(readableError(reason)); });
+    return () => {
+      live = false;
+    };
   }, [id, meeting]);
   const { subscribe } = useRuntimeBus();
   useEffect(

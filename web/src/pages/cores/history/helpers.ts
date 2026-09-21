@@ -190,6 +190,15 @@ export function wordsToken(transcriptWords: unknown): string | null {
 
 /** HS-170-04 — true when the meeting is OFF (intel disabled) AND has a
  *  transcript (words > 0): the Run summary verb is honest. */
+/** HS-202-02 — the summary is OFF for this meeting, whatever the list
+ *  happens to know about its transcript yet. `needsIntelligence` also
+ *  requires `transcriptWords`, which only the LIST carries; a record
+ *  opened while its import was still running has a stale zero there long
+ *  after the transcript is on the glass. */
+export function summaryIsOff(row: Record<string, unknown>): boolean {
+  return stateToken(row).label === "OFF";
+}
+
 export function needsIntelligence(row: Record<string, unknown>): boolean {
   const token = stateToken(row);
   if (token.label !== "OFF") return false;

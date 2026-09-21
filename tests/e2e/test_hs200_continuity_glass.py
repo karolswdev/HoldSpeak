@@ -279,8 +279,16 @@ def _run_recall(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> 
             _normal_chair(page)
             page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
             _open_desk_memory(page)
-            assert page.get_by_test_id("recall-empty-token").text_content() == "SEARCH THE DESK"
-            assert page.get_by_test_id("recall-display").count() == 0, "no display line before a search"
+            # HS-202-02 (03-interaction-walk.md finding 7): Desk memory no
+            # longer opens on a blank field. With no query it reads the
+            # desk's RECENT memory, so the body is populated before any
+            # search and the pre-search token has gone with the void it
+            # labelled. A typed search still answers exactly as before.
+            page.get_by_test_id("recall-results").wait_for(timeout=15000)
+            assert (
+                page.get_by_test_id("recall-results").get_attribute("aria-label")
+                == "Recent on this desk"
+            )
             _search(page, "freeze window")
             cards = page.locator("[data-testid='recall-card']")
             assert cards.count() == 2, cards.count()

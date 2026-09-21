@@ -58,8 +58,15 @@ const SURFACES: SurfaceRow[] = SURFACE_APPLICATIONS.map((application) => ({
 /** Alias keys open an existing window with a default scope (e.g. the
  * shelf's Integrations entry is the Settings window scoped to
  * integrations). */
-const FIRST_VALUE_RECOVERY_SURFACES = SURFACES.filter(
-  (row) => row.key === "project-setup",
+/* HS-202-02 (Astra's counsel finding 1 on PR #595): the cold desk's
+   recovery set. `Check the microphone` on the first-run card calls
+   `configure-setup`; with only `project-setup` admitted here the
+   dispatcher found no surface and fell back to `/`, so the one recovery
+   the card offers did nothing. Both Setup doors are registered during
+   first use, and nothing else is. */
+const FIRST_VALUE_RECOVERY_KEYS = new Set(["project-setup", "configure-setup"]);
+const FIRST_VALUE_RECOVERY_SURFACES = SURFACES.filter((row) =>
+  FIRST_VALUE_RECOVERY_KEYS.has(row.key),
 );
 
 export function SurfaceWindows({
