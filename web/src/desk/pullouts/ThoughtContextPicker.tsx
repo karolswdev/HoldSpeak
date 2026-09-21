@@ -160,11 +160,12 @@ export function ThoughtContextPicker({
         const disabled = Boolean(row.disabled || row.selected || pending);
         const noteCount = row.kind === "knowledge" ? (countToken(row.leaf_count, "note", "notes") ?? "Note") : "Note";
         const state = row.selected ? "Attached" : row.disabled_reason || noteCount;
-        return <li key={row.ref}><button type="button"
+        return <li key={row.ref}><Button
+          variant="ghost" dense
           ref={(node: HTMLButtonElement | null) => { if (node) rowRefs.current.set(row.ref, node); else rowRefs.current.delete(row.ref); }}
-          className="btn btn--ghost btn--sm thought-context-choice" disabled={disabled}
+          className="thought-context-choice" disabled={disabled}
           aria-label={`${row.title}, ${state}`} onClick={() => void attach(row)}
-        ><span className="thought-context-choice-title">{row.title}</span><span className="thought-context-choice-meta">{pending === row.ref ? "Attaching…" : state}</span></button></li>;
+        ><span className="thought-context-choice-title">{row.title}</span><span className="thought-context-choice-meta">{pending === row.ref ? "Attaching…" : state}</span></Button></li>;
       })}
     </ul>
   );

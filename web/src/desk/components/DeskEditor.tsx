@@ -1,4 +1,5 @@
 import "./inline-editor.css";
+import { Button } from "../../components/signal/Signal";
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from "react";
 import {
   defaultKeymap,
@@ -327,8 +328,8 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
             role="toolbar"
             aria-label="Markdown formatting"
           >
-            <button
-              type="button"
+            <Button
+              variant="chrome"
               className="desk-chip quiet"
               aria-label="Bold"
               title="Bold (⌘B)"
@@ -336,9 +337,9 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
               onClick={useView((view) => toggleInlineWrap(view, "**"))}
             >
               <strong>B</strong>
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="chrome"
               className="desk-chip quiet"
               aria-label="Italic"
               title="Italic (⌘I)"
@@ -346,9 +347,9 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
               onClick={useView((view) => toggleInlineWrap(view, "*"))}
             >
               <em>I</em>
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="chrome"
               className="desk-chip quiet"
               aria-label="Underline"
               title="Underline"
@@ -356,79 +357,79 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
               onClick={useView((view) => toggleInlineWrap(view, "<u>", "</u>"))}
             >
               <u>U</u>
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="chrome"
               className="desk-chip quiet"
               title="Heading 1"
               onMouseDown={(event) => event.preventDefault()}
               onClick={useView((view) => setHeading(view, 1))}
             >
               H1
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="chrome"
               className="desk-chip quiet"
               title="Heading 2"
               onMouseDown={(event) => event.preventDefault()}
               onClick={useView((view) => setHeading(view, 2))}
             >
               H2
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="chrome"
               className="desk-chip quiet"
               title="Heading 3"
               onMouseDown={(event) => event.preventDefault()}
               onClick={useView((view) => setHeading(view, 3))}
             >
               H3
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="chrome"
               className="desk-chip quiet"
               title="Bulleted list"
               onMouseDown={(event) => event.preventDefault()}
               onClick={useView((view) => togglePrefix(view, /^-\s/, "- "))}
             >
               List
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="chrome"
               className="desk-chip quiet"
               title="Numbered list"
               onMouseDown={(event) => event.preventDefault()}
               onClick={useView((view) => togglePrefix(view, /^\d+\.\s/, "1. "))}
             >
               1.
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="chrome"
               className="desk-chip quiet"
               title="Code"
               onMouseDown={(event) => event.preventDefault()}
               onClick={useView(toggleCode)}
             >
               &lt;/&gt;
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="chrome"
               className="desk-chip quiet"
               title="Link"
               onMouseDown={(event) => event.preventDefault()}
               onClick={useView(insertLink)}
             >
               Link
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="chrome"
               className="desk-chip quiet"
               title="Quote"
               onMouseDown={(event) => event.preventDefault()}
               onClick={useView((view) => togglePrefix(view, /^>\s/, "> "))}
             >
               Quote
-            </button>
+            </Button>
           </div>
         ) : null}
         <div

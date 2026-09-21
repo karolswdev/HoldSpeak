@@ -66,7 +66,7 @@ def _assert_library_only(page: Any) -> None:
         const group = row.closest('.gadget-group') || document;
         let raw = 0;
         for (const btn of group.querySelectorAll('button')) {
-            if (!btn.classList.contains('btn') &&
+            if (!btn.classList.contains('btn') && !btn.classList.contains('btn--chrome') &&
                 !btn.classList.contains('surface-ledger-line') &&
                 !btn.classList.contains('gadget-cycle')) raw++;
         }

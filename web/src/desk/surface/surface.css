@@ -3790,6 +3790,13 @@ button.surface-edit-in-place:hover {
   align-items: flex-start;
   color: inherit;
   font: inherit;
+  /* HS-202-03 — the row body became the library Button; the UA button
+     plate (buttonface fill, outset border, 1px 6px padding) is erased so
+     the row draws exactly what the div drew. */
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
 }
 .meetings-stream-row-body:focus-visible {
   outline: 2px solid var(--accent);

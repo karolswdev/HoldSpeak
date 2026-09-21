@@ -3,6 +3,7 @@
  *  Tone variants: ok, warn, danger, info. */
 import type { ReactNode } from "react";
 import "./action-notice.css";
+import { Button } from "../../../components/signal/Signal";
 
 export function ActionNotice({
   tone,
@@ -30,13 +31,13 @@ export function ActionNotice({
       ) : null}
       <div className="surface-action-notice-body">{children}</div>
       {action ? (
-        <button
-          type="button"
+        <Button
+          variant="chrome"
           className="surface-action-notice-btn"
           onClick={action.onClick}
         >
           {action.label}
-        </button>
+        </Button>
       ) : null}
     </div>
   );

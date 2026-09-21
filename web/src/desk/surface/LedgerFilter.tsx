@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { MicButton } from "./controls/MicButton";
 import { SPARSE_THRESHOLD } from "./sparse";
 import "./surface-footer.css";
+import { Button } from "../../components/signal/Signal";
 
 export interface LedgerFilterToken {
   field: string;
@@ -126,14 +127,14 @@ export function LedgerFilterBar({
           {isActive ? `${matchCount}/${total}` : String(total)}
         </span>
         {isActive ? (
-          <button
-            type="button"
+          <Button
+            variant="chrome"
             className="ledger-filter-clear"
             onClick={onClear}
             aria-label="Clear filters"
           >
             Clear
-          </button>
+          </Button>
         ) : null}
       </div>
       {tokens.length > 0 ? (
@@ -149,14 +150,14 @@ export function LedgerFilterBar({
                 <span className="ledger-filter-token-sep">&middot;</span>
                 <span className="ledger-filter-token-value">{token.value}</span>
               </span>
-              <button
-                type="button"
+              <Button
+                variant="chrome"
                 className="ledger-filter-token-remove"
                 onClick={() => onRemoveToken(token.field, token.value)}
                 aria-label={`Remove ${token.field} filter: ${token.value}`}
               >
                 &times;
-              </button>
+              </Button>
             </span>
           ))}
         </div>

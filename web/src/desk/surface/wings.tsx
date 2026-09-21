@@ -15,6 +15,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
+import { Button } from "../../components/signal/Signal";
 
 export interface WingSpec {
   id: string;
@@ -91,12 +92,12 @@ export function SurfaceWings({
         aria-label="Window faces"
       >
       {wings.map((w, index) => (
-        <button
+        <Button
           key={w.id}
+          variant="chrome"
           ref={(element) => {
             refs.current[index] = element;
           }}
-          type="button"
           role="tab"
           aria-selected={active === w.id}
           tabIndex={active === w.id || (!hasActive && index === 0) ? 0 : -1}
@@ -119,12 +120,12 @@ export function SurfaceWings({
           }}
         >
           {w.label}
-        </button>
+        </Button>
       ))}
       </span>
       {door ? (
-        <button
-          type="button"
+        <Button
+          variant="chrome"
           className={`desk-wing desk-wing-door${doorOpen ? " is-on" : ""}`}
           aria-label={door}
           title={door}
@@ -132,7 +133,7 @@ export function SurfaceWings({
           onClick={onDoor}
         >
           <span aria-hidden="true">⚙︎</span>
-        </button>
+        </Button>
       ) : null}
     </span>
   );

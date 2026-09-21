@@ -5,6 +5,7 @@ import { useDesk } from "../store";
 import { FoldGadget } from "../surface/gadgets";
 import { SurfaceCode, SurfaceState } from "../surface/Surface";
 import { play as sfx } from "../../lib/sfx";
+import { Button } from "../../components/signal/Signal";
 
 interface DeskFilingStripProps {
   objectRef: string;
@@ -134,9 +135,9 @@ export function DeskFilingStrip({
                   const members = zone.memberIds || [];
                   const inZone = members.includes(objectId) || members.includes(objectRef);
                   return (
-                    <button
+                    <Button
+                      variant="chrome"
                       key={String(zone.id)}
-                      type="button"
                       className={`desk-chip quiet${inZone ? " in-zone" : ""}`}
                       aria-pressed={inZone}
                       onClick={() =>
@@ -147,7 +148,7 @@ export function DeskFilingStrip({
                     >
                       {inZone ? <><span aria-hidden="true">✓</span>{" "}</> : "+ "}
                       {String(zone.name || zone.id)}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -162,16 +163,16 @@ export function DeskFilingStrip({
                     (row: any) => row.knowledge_id === knowledge.id,
                   );
                   return (
-                    <button
+                    <Button
+                      variant="chrome"
                       key={knowledge.id}
-                      type="button"
                       className={`desk-chip quiet${active ? " in-zone" : ""}`}
                       aria-pressed={active}
                       onClick={() => void toggleRelationship("knowledge", knowledge.id, active)}
                     >
                       {active ? <><span aria-hidden="true">✓</span>{" "}</> : "+ "}
                       {knowledge.name}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -187,8 +188,8 @@ export function DeskFilingStrip({
                   );
                   return (
                     <span className="desk-project-choice" key={project.id}>
-                      <button
-                        type="button"
+                      <Button
+                        variant="chrome"
                         className={`desk-chip quiet${active ? " in-zone" : ""}`}
                         aria-label={`${active ? "Remove from" : "Assign to"} ${project.name} Project`}
                         aria-pressed={active}
@@ -196,15 +197,15 @@ export function DeskFilingStrip({
                       >
                         {active ? <><span aria-hidden="true">✓</span>{" "}</> : "+ "}
                         {project.name}
-                      </button>
-                      <button
-                        type="button"
+                      </Button>
+                      <Button
+                        variant="chrome"
                         className="desk-chip quiet"
                         aria-label={`Inspect ${project.name} Project`}
                         onClick={() => useDesk.getState().openToolInspector("project", String(project.id))}
                       >
                         Inspect
-                      </button>
+                      </Button>
                     </span>
                   );
                 })}

@@ -206,10 +206,14 @@ function MeetingStreamRow({
       data-selected={isSelected || undefined}
       data-testid={`meeting-row-${String(row.id)}`}
     >
-      {/* Clickable body: a div with role/tabindex, not a <button> */}
-      <div
-        role="button"
-        tabIndex={0}
+      {/* HS-202-03 — the clickable body IS the library Button (UX-CANON
+          A.1): it was a `div role="button" tabIndex={0}`, the last raw
+          control on the Meetings stream. The chrome variant withholds the
+          plate so `.meetings-stream-row-body` keeps drawing the row, and
+          the explicit Enter/Space handler stays so the keyboard behaviour
+          is the one the 201 rigs recorded. */}
+      <Button
+        variant="chrome"
         className="meetings-stream-row-body"
         onClick={onSelect}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(); } }}
@@ -226,7 +230,7 @@ function MeetingStreamRow({
         <div className="meetings-stream-tokens">
           <TokenLine parts={tokenParts} />
         </div>
-      </div>
+      </Button>
       <div className="meetings-stream-row-verb">
         {/* Article III — after the run: every destination contacted, in
             order. Before the click (and while it is in flight): the route

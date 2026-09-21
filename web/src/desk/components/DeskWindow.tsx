@@ -68,6 +68,7 @@ import {
 } from "./window/windowCommands";
 import { VerbGlyph } from "./window/VerbGlyph";
 import { Dock } from "./window/Dock";
+import { Button } from "../../components/signal/Signal";
 
 // -- Re-exports: zero consumer edits (HS-117-04) --
 export { placeWindow, clampIntoBand, snapForPointer, resizeEdge, exposeLayout };
@@ -820,31 +821,31 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         }}
       >
         <span className="desk-traffic">
-          <button
-            type="button"
+          <Button
+            variant="chrome"
             className="desk-light desk-light-close"
             aria-label={`Close ${name}`}
             onClick={requestClose}
           >
             <VerbGlyph kind="light-close" />
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="chrome"
             className="desk-light desk-light-min"
             aria-label={`Minimize ${name}`}
             onClick={requestMinimize}
           >
             <VerbGlyph kind="light-min" />
-          </button>
+          </Button>
           {!compact ? (
-            <button
-              type="button"
+            <Button
+              variant="chrome"
               className="desk-light desk-light-max"
               aria-label={maximized ? `Restore ${name}` : `Maximize ${name}`}
               onClick={() => useDesk.getState().toggleMaximizePanel(id)}
             >
               <VerbGlyph kind={maximized ? "light-restore" : "light-max"} />
-            </button>
+            </Button>
           ) : (
             <span aria-hidden="true" />
           )}

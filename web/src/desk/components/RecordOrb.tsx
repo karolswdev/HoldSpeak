@@ -12,6 +12,7 @@ import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { SYSTEM } from "../systemSprites";
+import { Button } from "../../components/signal/Signal";
 
 export function RecordOrb() {
   const state = useDesk((s) => s.recording);
@@ -55,8 +56,8 @@ export function RecordOrb() {
       {recording && elapsed && (
         <span className="desk-orb-elapsed">{elapsed}</span>
       )}
-      <button
-        type="button"
+      <Button
+        variant="chrome"
         className={`desk-orb is-${state}`}
         onClick={() => {
           if (recording) {
@@ -83,7 +84,7 @@ export function RecordOrb() {
           className="desk-orb-face desk-chrome-sprite"
           draggable={false}
         />
-      </button>
+      </Button>
     </div>
   );
 }

@@ -1,0 +1,62 @@
+{
+  "capture": "2026-09-21T02:28:51Z",
+  "product_commit": "3595fcb696c07ce8d01fad0da58396fb4fc5ef9e",
+  "product_build": "0f04df137f7aa599",
+  "smoke_sha256": "1529454a786f613e1555df1091ffce3cd83f9b288a8936b74a0988ed66f6b530",
+  "result": "RED: 2 failed, 4 passed in 72.14s; 1440 import-refresh; 393 import-refresh, menu-Object, menu-Window",
+  "receipt_assertion": "The edit has a new visible Kept receipt in its editor before Save",
+  "limits": "Autosave before Save; no after-click receipt. Fixture WAV and stub engine. No owner voice. Earlier FirstWords handoff timeouts remain in evidence; final run completed both widths.",
+  "files": [
+    {
+      "file": "editor-kept-before-save-1440.png",
+      "sha256": "168d02fbbeebccf7afdad52c1fb46d9598c0f628f1c337ed71905f98335130ba"
+    },
+    {
+      "file": "editor-kept-before-save-393.png",
+      "sha256": "97ff1f27133abcbd2162bb8a49f7eedaf6f606ef2b17068649b48463b3efd7bc"
+    },
+    {
+      "file": "folded-go-menu-393.png",
+      "sha256": "8cbf1a7afb087fb65dfddecad751c5642a8b02c987694429d6aa9f6bec1d4490"
+    },
+    {
+      "file": "menu-Object-393.png",
+      "sha256": "8cbf1a7afb087fb65dfddecad751c5642a8b02c987694429d6aa9f6bec1d4490"
+    },
+    {
+      "file": "menu-Window-393.png",
+      "sha256": "8cbf1a7afb087fb65dfddecad751c5642a8b02c987694429d6aa9f6bec1d4490"
+    },
+    {
+      "file": "import-refresh-1440.png",
+      "sha256": "c6a5f9ddc0656f18c2330412e95a82f4be71d8b3a087d15b96d3391ff4ac7dd6"
+    },
+    {
+      "file": "import-refresh-393.png",
+      "sha256": "17b22933de53195fe2feb0b9b41ab29a48083bda09961f8b8642789af9149743"
+    },
+    {
+      "file": "note-after-restart-1440.png",
+      "sha256": "1136aa790c7865834820d3be750eaeb9ce2a6f9b14ec8a4935a8fed08515f90b"
+    },
+    {
+      "file": "note-after-restart-393.png",
+      "sha256": "128db517dfbf1a54fa372fdacfd4a64fe6fd808d82abdc31dc0dcff71a588813"
+    },
+    {
+      "file": "meeting-after-restart-1440.png",
+      "sha256": "286f6f9947ade9449111d41a3d4b5a523aeaabbfa77cb694e949d893b592678c"
+    },
+    {
+      "file": "meeting-after-restart-393.png",
+      "sha256": "4fa1db030e94b7b439dcf152121bd7ca4caa8bc39f77d59afda86f7afb3284f6"
+    }
+  ],
+  "inventory_verification": {
+    "product_commit": "50ca0dd6",
+    "default": "2 failed in 87.76s; original five/nine defects only",
+    "strict": "6 passed in 92.95s; both widths require exact original failure sets; four unchanged ratchet tests",
+    "capture_default": "2026-09-21T02:27:13Z",
+    "capture_strict": "2026-09-21T02:30:40Z"
+  }
+}

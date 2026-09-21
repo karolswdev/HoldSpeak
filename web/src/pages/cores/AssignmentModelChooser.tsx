@@ -3,6 +3,7 @@ import { EgressChip } from "../../desk/surface/gadgets";
 import { useRovingRows } from "../../desk/surface/roving";
 import { StateChip, ProvenanceChip, type ChipState } from "../../desk/surface";
 import type { AssignmentCandidate } from "./assignmentExperience";
+import { Button } from "../../components/signal/Signal";
 
 function isCloud(candidate: Pick<AssignmentCandidate, "boundary">): boolean {
   return candidate.boundary === "cloud";
@@ -67,8 +68,8 @@ export function AssignmentModelChooser({
       const added = draftProfileIds.has(candidate.profile_id);
       const selected = activeId === candidate.profile_id;
       const chip = health(candidate);
-      return <button
-        type="button"
+      return <Button
+        variant="chrome"
         role="radio"
         aria-checked={selected}
         aria-label={`${candidate.label}, ${candidate.readiness}${added ? ", in draft" : ""}`}
@@ -87,7 +88,7 @@ export function AssignmentModelChooser({
         <span className="assignment-candidate-added" aria-hidden="true">
           {added ? "In the chain" : "Add to the chain"}
         </span>
-      </button>;
+      </Button>;
     })}
   </div>;
 }

@@ -162,7 +162,7 @@ def _check_raw_buttons(page: Any, face_name: str) -> str | None:
         const allBtns = win.querySelectorAll('button');
         let raw = 0;
         for (const btn of allBtns) {
-            if (btn.classList.contains('btn')) continue;
+            if ((btn.classList.contains('btn') || btn.classList.contains('btn--chrome'))) continue;
             if (btn.closest('[role="tablist"]')) continue;
             if (btn.closest('.cycle-gadget')) continue;
             if (btn.closest('.fold-gadget')) continue;
@@ -580,7 +580,7 @@ def _step_room(page: Any, out_dir: Path, w: int, token: str,
         const allBtns = body.querySelectorAll('button');
         let rawBtnCount = 0;
         for (const btn of allBtns) {
-            if (btn.classList.contains('btn') ||
+            if ((btn.classList.contains('btn') || btn.classList.contains('btn--chrome')) ||
                 btn.classList.contains('signal-button') ||
                 btn.classList.contains('surface-ledger-line') ||
                 btn.classList.contains('surface-edit-in-place') ||
@@ -736,7 +736,7 @@ def _step_meeting_detail(page: Any, out_dir: Path, w: int, token: str,
 
             const btns = detailBody.querySelectorAll('button');
             for (const b of btns) {
-                if (b.classList.contains('btn') || b.classList.contains('desk-mic') ||
+                if ((b.classList.contains('btn') || b.classList.contains('btn--chrome')) || b.classList.contains('desk-mic') ||
                     b.closest('.desk-traffic') || b.closest('.desk-wings')) continue;
                 rawBtns++;
             }
@@ -1194,7 +1194,7 @@ def _step_settings_meetings(page: Any, out_dir: Path, w: int, token: str,
         if (body) {
             const btns = body.querySelectorAll('button');
             for (const b of btns) {
-                if (b.classList.contains('btn') || b.classList.contains('desk-mic') ||
+                if ((b.classList.contains('btn') || b.classList.contains('btn--chrome')) || b.classList.contains('desk-mic') ||
                     b.closest('.gadget-stepper') || b.closest('.gadget-table') ||
                     b.closest('.gadget-cycle') || b.closest('.fold-gadget') ||
                     b.closest('.check-gadget') || b.closest('.desk-traffic') ||

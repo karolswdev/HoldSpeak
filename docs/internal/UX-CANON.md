@@ -177,10 +177,10 @@ counts must not exceed the committed ceiling file
 `tests/ux_canon_ceiling.json`; a regression names the rule, the delta,
 and the faces that rose.  (ii) *Hard zeros*: DS6 (accent rail) and A9
 (missing egress) must stay at 0; A1 (raw `<button>`) is held to a
-dated, down-only ratchet of 175, measured on 2026-09-17 by HS-200-44
-once the matcher could see a multi-line opening tag (the earlier "4
-residues" was an artifact of a per-line regex, not a fact about the
-code).  That number can only shrink; the ruling itself is unchanged:
+dated, down-only ratchet of 106, measured on 2026-09-21 by HS-202-03
+(175 on 2026-09-17 by HS-200-44, once the matcher could see a
+multi-line opening tag; the earlier "4 residues" was an artifact of a
+per-line regex, not a fact about the code).  That number can only shrink; the ruling itself is unchanged:
 every verb is the library Button, and a raw `<button>` is a species
 bug that face stories pay down file by file.  (iii) *Healing*: when a
 count drops below the ceiling, the test passes with a notice to lower

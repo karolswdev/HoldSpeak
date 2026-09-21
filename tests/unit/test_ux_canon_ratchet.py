@@ -98,26 +98,31 @@ def test_ratchet():
 # Test 2: hard zeros (+ A1 allowlist)
 # ---------------------------------------------------------------------------
 
-# HS-200-44, 2026-09-17 — the dated, down-only A1 ratchet.
+# HS-202-03, 2026-09-21 — the dated, down-only A1 ratchet.
 #
-# Until this story the guard held A1 to a four-entry allowlist ("4 residues
-# with reasons").  That number was an artifact of the matcher: `<button[\s>/]`
-# ran per line over `content.splitlines()`, so a tag Prettier wrote as
-# `<button` alone on its line never matched, and the guard certified a tree
-# it could not read (2026-09-13 audit §10 defect 4).  The matcher now reads
-# the file as written; the measured count on that date is the ceiling.  The
-# owner's ruling stands unchanged: every verb is the library Button, and a
-# raw `<button>` is a species bug.  This number may only shrink; raising it
+# HS-200-44 measured 175 raw `<button>` elements once the A1 matcher could see
+# a multi-line opening tag (the previous ceiling of 4 was an artifact of a
+# per-line regex, not a fact about the code).  HS-202-03 pays 68 of them:
+# the surface inventory of 2026-09-20 (§3.3) found the worst sites were the
+# SHARED species themselves — every menu item, every wing tab, the dock, the
+# editor's rail — so the product's first five minutes were raw HTML at every
+# turn.  Those, and every raw control on the five first-use jobs' screens,
+# now draw through the library Button.
+#
+# The owner's ruling stands unchanged: every verb is the library Button, and
+# a raw `<button>` is a species bug.  This number may only shrink; raising it
 # requires changing A1_RATCHET_REASON in the same commit to name the debt
 # being admitted (the HS-200-03 / HS-200-46 shape).
-A1_RATCHET = 175
-A1_RATCHET_DATE = "2026-09-17"
+A1_RATCHET = 106
+A1_RATCHET_DATE = "2026-09-21"
 A1_RATCHET_REASON = (
-    "HS-200-44: 175 raw <button> elements measured across the scanner's scope "
+    "HS-202-03: 106 raw <button> elements remain across the scanner's scope "
     "(features/, pages/cores/, desk/; not Signal.tsx, gadgets.tsx, tests or "
-    "_parked) once the A1 matcher could see a multi-line opening tag; the "
-    "previous ceiling of 4 was an artifact of a per-line regex, not a fact "
-    "about the code. Face stories pay this down file by file."
+    "_parked) after the shared controls on the first-use path became library "
+    "species — 174 before the story, 175 at HS-200-44. The residue is the "
+    "inventory's own ledger: WorkbenchWindow (23), the tool inspector (10), "
+    "the Session/Coder/Thread pullouts, GroundingSection — faces the five "
+    "owner jobs do not touch. Face stories pay this down file by file."
 )
 
 

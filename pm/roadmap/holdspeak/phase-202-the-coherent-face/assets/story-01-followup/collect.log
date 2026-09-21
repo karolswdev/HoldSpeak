@@ -1,0 +1,8 @@
+tests/e2e/test_hs202_first_use_smoke.py::test_first_use_fence[1440-900]
+tests/e2e/test_hs202_first_use_smoke.py::test_first_use_fence[393-852]
+tests/unit/test_ux_canon_ratchet.py::test_ratchet
+tests/unit/test_ux_canon_ratchet.py::test_hard_zeros
+tests/unit/test_ux_canon_ratchet.py::test_ceiling_carries_its_date_and_reason
+tests/unit/test_ux_canon_ratchet.py::test_healing
+
+6 tests collected in 1.93s

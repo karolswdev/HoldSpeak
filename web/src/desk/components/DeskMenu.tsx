@@ -19,6 +19,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "../../components/signal/Signal";
 import { VerbGlyph } from "./window/VerbGlyph";
 
 /** HS-148-01: selector that finds ALL menu-item roles (menuitem,
@@ -151,13 +152,13 @@ export function DeskMenuItem({
         : false
       : undefined;
   return (
-    <button
-      type="button"
+    <Button
+      variant="chrome"
       role={role}
       aria-label={ariaLabel}
       aria-disabled={disabled || undefined}
       aria-checked={ariaChecked}
-      className={disabled ? "is-ghost" : undefined}
+      className={disabled ? "is-ghost" : ""}
       onClick={() => {
         if (!disabled) onSelect();
       }}
@@ -165,7 +166,7 @@ export function DeskMenuItem({
       {glyph}
       {children}
       {keycap ? <kbd className="desk-menu-key">{keycap}</kbd> : null}
-    </button>
+    </Button>
   );
 }
 
@@ -319,13 +320,13 @@ function WorkMenuRows({
           return <WorkMenuSep key={entry.id ?? `sep-${i}`} />;
         if (entry.type === "sub") {
           return (
-            <button
+            <Button
               key={entry.id}
-              type="button"
+              variant="chrome"
               role="menuitem"
               aria-haspopup="menu"
               aria-expanded={openSub === entry.id}
-              className={openSub === entry.id ? "is-subopen" : undefined}
+              className={openSub === entry.id ? "is-subopen" : ""}
               onPointerEnter={(e) => {
                 const el = e.currentTarget;
                 if (intent.current) clearTimeout(intent.current);
@@ -358,7 +359,7 @@ function WorkMenuRows({
               <span className="desk-menu-submark" aria-hidden="true">
                 {"»"}
               </span>
-            </button>
+            </Button>
           );
         }
         const ghost = entry.ghost ?? null;
@@ -399,13 +400,13 @@ function WorkMenuRows({
         // when it matches the collapsed majority; different reasons stay.
         const showPerRowReason = ghost && ghost !== collapsedReason;
         return (
-          <button
+          <Button
             key={entry.id}
-            type="button"
+            variant="chrome"
             role={role}
             aria-disabled={ghost ? true : undefined}
             aria-checked={ariaChecked}
-            className={ghost ? "is-ghost" : undefined}
+            className={ghost ? "is-ghost" : ""}
             onPointerEnter={() => {
               if (intent.current) clearTimeout(intent.current);
               // Sliding onto a plain item retires an open submenu.
@@ -433,7 +434,7 @@ function WorkMenuRows({
             {/* HS-148-01: keycaps render on ghosted rows too (stippled with
                 the row) — the `&& !ghost` suppression is removed. */}
             {entry.keycap ? <KeycapWells keycap={entry.keycap} /> : null}
-          </button>
+          </Button>
         );
       })}
     </>
@@ -564,8 +565,8 @@ export function WorkMenu({
       {narrow && sub ? (
         // 393: the submenu REPLACES the panel; a back row leads.
         <>
-          <button
-            type="button"
+          <Button
+            variant="chrome"
             role="menuitem"
             className="desk-menu-back"
             onClick={() => setOpenSub(null)}
@@ -575,7 +576,7 @@ export function WorkMenu({
               {"◂"}
             </span>
             <span className="desk-menu-label">{sub.label}</span>
-          </button>
+          </Button>
           <WorkMenuSep />
           <WorkMenuRows
             entries={sub.entries}
