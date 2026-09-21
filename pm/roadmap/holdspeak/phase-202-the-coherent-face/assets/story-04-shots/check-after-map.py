@@ -1,6 +1,19 @@
-"""Astra's counsel condition 2: the dated after-map must reconcile, and
-every row it claims must name a fence that exists and a site that holds
-the new text."""
+"""The dated after-map must reconcile, and every row it claims must name a
+fence that exists and a site that HOLDS the changed string.
+
+Astra's round-two condition 3: the first version of this checker only asked
+whether `site_after`'s line number was IN RANGE. In-range is not a
+reference — it let row 01 point into a comment about the deferred queue
+while claiming to anchor the Summary section label, and it would have gone
+on passing as every later edit shifted the file. A consumer reference that
+cannot be wrong proves nothing.
+
+Each row now carries `anchor_text`: the exact text that must be ON the
+anchored line. A drifted anchor, a renamed string or a moved line is a hard
+failure naming what it found instead.
+
+`site_before` is deliberately NOT checked: it anchors the PRE-change tree
+(the census at 93f9524f) and no line of it survives here."""
 import csv, json, re, sys
 from pathlib import Path
 
@@ -28,13 +41,29 @@ for row in rows:
         candidates = [REPO / fence, REPO / "web" / fence]
         if not any(c.exists() for c in candidates):
             problems.append(f"fence missing: {fence}")
-    # the site_after names a file that exists and a line that is in range
+    # `site_after` must name a file that exists AND a line that carries the
+    # changed string -- not merely a line that exists.
     path, _, line = row["site_after"].rpartition(":")
     target = REPO / path
-    if not target.exists():
+    anchor = row.get("anchor_text", "").strip()
+    if not anchor:
+        problems.append("no anchor_text: the reference cannot be checked")
+    elif not target.exists():
         problems.append(f"site_after missing: {path}")
-    elif line.isdigit() and int(line) > len(target.read_text().splitlines()):
-        problems.append(f"site_after line out of range: {row['site_after']}")
+    elif not line.isdigit():
+        problems.append(f"site_after has no line: {row['site_after']}")
+    else:
+        src = target.read_text().splitlines()
+        n = int(line)
+        if n < 1 or n > len(src):
+            problems.append(
+                f"site_after line out of range: {row['site_after']}"
+                f" (the file has {len(src)} lines)")
+        elif anchor not in src[n - 1]:
+            problems.append(
+                f"site_after does NOT carry its string: {row['site_after']}\n"
+                f"            wanted: {anchor}\n"
+                f"            found:  {src[n - 1].strip()[:110]}")
     # every shot named exists
     for shot in row["shot"].split(";"):
         shot = shot.strip()

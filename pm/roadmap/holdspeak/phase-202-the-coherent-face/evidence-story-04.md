@@ -230,8 +230,8 @@ and one integration finding. What each condition asked, and what closed it:
    The fence now hosts the wing slot and presses the door.
 2. **"Eighteen-row closure is not demonstrated."** The dated after-maps are
    `docs/internal/surface-inventory-2026-09-20/02-verbs-after-2026-09-21.csv`
-   (21 rows, each with its rule, its before and after names, its site
-   before and after, its fence and its shot) and
+   (20 rows, each with its rule, its before and after names, its site
+   before and after, its anchor text, its fence and its shot) and
    `02-nouns-after-2026-09-21.csv` (the checked-collision table, with what
    is closed on the touched faces and what is ledgered and why).
    **"…and red-first capture"**: several rows carried only a green tail.
@@ -989,4 +989,99 @@ VERDICT PASS
 ```text
  Test Files  297 passed (297)
       Tests  2752 passed (2752)
+```
+
+### Counsel round two — RATIFY-WITH-CONDITIONS, evidence only
+
+1. **"The after-map's `site_after` anchors are inaccurate."** Correct, and
+   worse than stale: row 01 pointed at
+   `web/src/pages/cores/LiveCore.tsx:375`, which is a COMMENT inside the
+   deferred-queue filter, while claiming to anchor the Summary section
+   label. Seven anchors had drifted under the counsel-round edits (01, 02,
+   04, 05, 06, 06b, 10). Every anchor is now the exact line of its changed
+   string, verified against the tree before it was written, and each row
+   carries a new `anchor_text` column holding that string.
+   `site_before` is deliberately NOT anchored to this tree: it names the
+   PRE-change census at `93f9524f`, where no line of this file survives.
+2. **"The claim says 21 rows while the CSV holds 20."** Corrected above.
+   The counts that are genuinely different, so no one has to reconcile
+   them: the verb after-map holds **20** face rows; `red-first.py` proves
+   **22**, because it also proves the two registry rows (the `Segment`
+   term and the `seg`/`mtg` aliases), which are registry entries rather
+   than faces and belong to the noun map instead.
+3. **"Make the checker REJECT an incorrect consumer reference."** Done:
+   `check-after-map.py` now requires `anchor_text` to be present ON the
+   anchored line and prints what it found instead. In-range was never a
+   reference — it is exactly what let row 01 pass. The rejection is proved
+   rather than asserted: `prove-anchor-check.py` puts the stale anchor
+   back, requires the checker to fail AND to name the mismatch, restores
+   the file (SHA-256 verified) and requires green.
+
+### Captured run — 2026-09-21T19:38:46Z
+
+- **Command:** `bash -c set -o pipefail; python3 pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-04-shots/prove-anchor-check.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 15cd9bbb3bb902200e46b275844e288485dbfd24
+
+```text
+  the stale anchor web/src/pages/cores/LiveCore.tsx:375 points at:
+      looking non-empty and the shot showed a header with a lone verb
+  the true anchor  web/src/pages/cores/LiveCore.tsx:401 points at:
+      label="Summary"
+
+  -- with the stale anchor back --
+    01   BAD a meeting result (Live, the result section)    Summary | Intelligence       -> Summary
+         !! site_after does NOT carry its string: web/src/pages/cores/LiveCore.tsx:375
+              wanted: label="Summary"
+              found:  looking non-empty and the shot showed a header with a lone verb
+  VERDICT FAIL
+
+  -- restored: docs/internal/surface-inventory-2026-09-20/02-verbs-after-2026-09-21.csv 1aab36323c82 (identical) --
+  -- with the true anchor --
+  VERDICT PASS
+VERDICT PASS — a wrong reference is rejected, a right one passes
+```
+
+### Captured run — 2026-09-21T19:38:46Z
+
+- **Command:** `bash -c set -o pipefail; python3 pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-04-shots/check-after-map.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 15cd9bbb3bb902200e46b275844e288485dbfd24
+
+```text
+after-map rows: 20
+  01   OK  a meeting result (Live, the result section)    Summary | Intelligence       -> Summary
+  02   OK  a meeting result (Live gear door run state)    Summary | Intelligence       -> Summary
+  03   OK  the capture state (Live row vs footer receipt) connected · ready + READY    -> Link · connected + READY
+  04   OK  the segment count (Live footer receipt)        N SEG                        -> (withheld; the stream head cou
+  05   OK  action items on a Summary with none            0 action items               -> (withheld)
+  06   OK  the deferred queue on an idle desk             total/queued/running/failed/ -> No jobs waiting
+  06b  OK  the deferred queue section on the real idle wi header + a lone verb (next_r -> No jobs waiting
+  07   OK  recover a failed meeting Summary               Retry | Retry intelligence   -> Retry
+  08   OK  the cold Meetings all-clear                    No meetings yet (twice)      -> No meetings yet + Record or im
+  09   OK  edit a saved Sequence                          Edit chain                   -> Edit Sequence
+  10   OK  a commitment's provenance line                 MTG · X · SEG 4              -> Meeting · X · Segment 4
+  11   OK  a meeting result (Settings hub Meetings row)   INTELLIGENCE ON/OFF          -> SUMMARY ON/OFF
+  12   OK  a meeting result (Settings meetings module)    Intelligence / Auto-run inte -> Summary / Auto-run the summary
+  12b  OK  a meeting result (Settings advanced sheet)     Intelligence                 -> Summary
+  13   OK  an empty zone (list face)                      <name> zone, 0 items         -> <name> zone
+  14   OK  an empty zone cell (list face)                 0 ITEMS                      -> EMPTY
+  15   OK  an empty zone (spatial Floor)                  <name> zone, 0 items         -> <name> zone
+  16   OK  a fresh Ask session                            SESSION · 0 TURNS            -> SESSION
+  17   OK  the Speak gear door's run count                Runs 0                       -> (row withheld)
+  18   OK  the Speak gear door's wire fold                Wire details                 -> RAW · READINESS
+
+noun collisions: 7
+  closed-on-touched-faces    Meeting result
+  closed-on-touched-faces    Saved sequence
+  closed-on-touched-faces    Transcript segment
+  closed-on-touched-faces    Meeting (provenance token)
+  not-this-story             Primary operating surface
+  not-this-story             Named service connection
+  not-this-story             The Project Room
+
+collapsed on the touched faces: 4 of 7; the rest carry a recorded reason
+VERDICT PASS
 ```
