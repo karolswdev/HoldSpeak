@@ -147,9 +147,17 @@ function dueToken(dueAt: string | null): string | null {
   return `DUE ${day.slice(5)}`;
 }
 
-function sourceToken(source: RoomPersonCommitment["source"]): string {
-  const seg = source.segment_index != null ? ` · SEG ${source.segment_index + 1}` : "";
-  return `MTG · ${source.label}${seg}`;
+/** HS-202-04 (F21, Constitution tenet 4) — the provenance LINE speaks
+ *  whole words: `Meeting · <title> · Segment 4`. `MTG` and `SEG` were
+ *  abbreviations no face ever defined, and HS-201-06 already paid the same
+ *  debt one face over (`meetings/MeetingIntelRecovery.tsx:57-61`). The
+ *  three-letter LEAD EMBLEM in the 52px ledger slot
+ *  (`desk/surface/contract.md:265`) is a species contract with a fixed
+ *  width and keeps its glyph — this is a full line, where the word fits. */
+export function sourceToken(source: RoomPersonCommitment["source"]): string {
+  const seg =
+    source.segment_index != null ? ` · Segment ${source.segment_index + 1}` : "";
+  return `Meeting · ${source.label}${seg}`;
 }
 
 /* ── Sub-ledger: a person's commitments and facts ── */

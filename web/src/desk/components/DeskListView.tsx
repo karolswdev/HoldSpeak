@@ -211,7 +211,13 @@ export function DeskListView() {
       render: (row) => {
         if (row.type === "zone") {
           return (
-            <Button variant="ghost" dense className="desk-sortable-table-open" aria-label={`${row.title} zone, ${row.count} ${row.count === 1 ? "item" : "items"}`}>
+            /* HS-202-04 (UX-CANON A.8) — an empty zone announced
+               "<name> zone, 0 items" to a screen reader and printed
+               `0 ITEMS` in its own cell. A counter of zero is a bounce in
+               text AND in an accessible name; `countToken` is the one way
+               a face says "N things" and it withholds the zero
+               (`desk/surface/count.ts:39`). */
+            <Button variant="ghost" dense className="desk-sortable-table-open" aria-label={[`${row.title} zone`, countToken(row.count, "item", "items")].filter(Boolean).join(", ")}>
               {row.title}
             </Button>
           );
@@ -240,7 +246,9 @@ export function DeskListView() {
       key: "zone",
       label: "Zone",
       sortable: true,
-      render: (row) => row.type === "zone" ? `${row.count} ${row.count === 1 ? "ITEM" : "ITEMS"}` : row.zoneName.toUpperCase(),
+      // HS-202-04 (UX-CANON A.8): `0 ITEMS` is a counter of zero. The
+      // zone's own cell says the true thing instead.
+      render: (row) => row.type === "zone" ? (countToken(row.count, "ITEM") ?? "EMPTY") : row.zoneName.toUpperCase(),
     },
     {
       key: "attention",

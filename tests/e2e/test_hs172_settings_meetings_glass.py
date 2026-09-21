@@ -95,14 +95,28 @@ class TestSettingsMeetingsAutoRun:
                 f"No CycleGadget at {width}"
             )
 
-            # NO MODEL warning on the Intelligence row: no egress chip
-            # Scope to the Intelligence gadget-row (not footer/calendar chips).
+            # NO MODEL warning on the Summary row: no egress chip.
+            #
+            # HS-202-04 (F06) re-points the SELECTOR, not the assertions.
+            # The row is the same row and the warning is the same warning;
+            # only its name changed, because the registry rules that a
+            # meeting's result is a Summary on every face
+            # (`docs/product-language.json:23`, HS-201-06) and this module
+            # still said the wire's word `Intelligence`
+            # (`web/src/pages/cores/SettingsCore.tsx:1473`). Left alone,
+            # this rig would have gone green against a row that no longer
+            # exists: `has=` matches nothing, `count() == 0` passes, and
+            # the NO MODEL check would have been the only thing that
+            # failed — a rig proving a face it can no longer find.
             intel_row = page.locator(".gadget-row", has=page.locator(
-                ".gadget-row-label", has_text="Intelligence"
+                ".gadget-row-label", has_text="Summary"
             ))
+            assert intel_row.count() >= 1, (
+                f"Summary row absent at {width} (the meeting-result row)"
+            )
             intel_egress = intel_row.locator(".gadget-chip-egress")
             assert intel_egress.count() == 0, (
-                f"EgressChip on Intelligence row should be absent at {width} with no model"
+                f"EgressChip on Summary row should be absent at {width} with no model"
             )
 
             # NO MODEL token present
@@ -121,6 +135,18 @@ class TestSettingsMeetingsAutoRun:
             module_text = page.locator(".desk-surface-body").text_content() or ""
             assert "Mic device" in module_text, f"Mic device missing at {width}"
             assert "Auto export" in module_text, f"Auto export missing at {width}"
+
+            # HS-202-04 (F06): the whole module says Summary for a
+            # meeting's result — the visible row AND the advanced sheet's
+            # own group inside the RAW fold (a <details> keeps its
+            # children in the DOM when closed, so this reads both).
+            # `Intelligence` is the durable-ledger application's name and
+            # belongs to no setting on this face.
+            assert "Summary" in module_text, f"Summary missing at {width}"
+            assert "Intelligence" not in module_text, (
+                f"the wire's word `Intelligence` reached the Meetings "
+                f"module at {width}: {module_text[:300]}"
+            )
 
             # No raw <button> outside the surface kit
             raw_buttons = page.evaluate("""() => {

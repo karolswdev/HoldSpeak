@@ -1,0 +1,274 @@
+{
+  "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.T3S4FSrkwO",
+  "hubs": {
+    "1440": "http://127.0.0.1:61906",
+    "393": "http://127.0.0.1:62175"
+  },
+  "live": {
+    "1440": {
+      "window": 1,
+      "facts_line": "Link \u00b7 connected",
+      "footer_receipt": "REC 00:00",
+      "section_labels": [
+        "SUMMARY",
+        "TRANSCRIPT"
+      ],
+      "body_has_SEG": false,
+      "door_labels": [
+        "INTENT ROUTING",
+        "SUMMARY",
+        "DEFERRED PLUGIN JOBS",
+        "DEVICES"
+      ]
+    },
+    "393": {
+      "window": 1,
+      "facts_line": "Link \u00b7 connected",
+      "footer_receipt": "REC 00:00",
+      "section_labels": [
+        "SUMMARY",
+        "TRANSCRIPT"
+      ],
+      "body_has_SEG": false,
+      "door_labels": [
+        "INTENT ROUTING",
+        "SUMMARY",
+        "DEFERRED PLUGIN JOBS",
+        "DEVICES"
+      ]
+    }
+  },
+  "settings_hub": {
+    "1440": {
+      "window": 1,
+      "chips": [
+        "\u26a0\nNO DEFAULT",
+        "\u2713\nLIVE",
+        "\u2713\nSUMMARY ON \u00b7 AFTER ROOM MEETINGS",
+        "\u2713\nON"
+      ],
+      "body_has_INTELLIGENCE": false,
+      "meetings_module_rows": [
+        "Summary",
+        "Mic device\ndevice name",
+        "System audio\ndevice name",
+        "Auto export",
+        "Format",
+        "Allow actuators",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "393": {
+      "window": 1,
+      "chips": [
+        "\u26a0\nNO DEFAULT",
+        "\u2713\nLIVE",
+        "\u2713\nSUMMARY ON \u00b7 AFTER ROOM MEETINGS",
+        "\u2713\nON"
+      ],
+      "body_has_INTELLIGENCE": false,
+      "meetings_module_rows": [
+        "Summary",
+        "Mic device\ndevice name",
+        "System audio\ndevice name",
+        "Auto export",
+        "Format",
+        "Allow actuators",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    }
+  },
+  "ask": {
+    "1440": {
+      "panel": 1,
+      "session_head": "SESSION"
+    },
+    "393": {
+      "panel": 1,
+      "session_head": "SESSION"
+    }
+  },
+  "speak_door": {
+    "1440": {
+      "window": 1,
+      "rows": [
+        "Dictation pipeline\nauto \u00b7 600 MS",
+        "Delivery target",
+        "Confidence",
+        "Project root",
+        "Capture messages\nhook template option",
+        "Claude\n~/.claude/settings.json or project .claude/settings.json",
+        "Codex\n~/.codex/hooks.json or project .codex/hooks.json"
+      ],
+      "folds": [
+        "RAW \u00b7 READINESS",
+        "RAW \u00b7 READINESS",
+        "Raw trace",
+        "Raw trace"
+      ],
+      "has_runs_row": false,
+      "has_wire_details": false,
+      "has_raw_readiness": true
+    },
+    "393": {
+      "window": 1,
+      "rows": [
+        "Dictation pipeline\nauto \u00b7 600 MS",
+        "Delivery target",
+        "Confidence",
+        "Project root",
+        "Capture messages\nhook template option",
+        "Claude\n~/.claude/settings.json or project .claude/settings.json",
+        "Codex\n~/.codex/hooks.json or project .codex/hooks.json"
+      ],
+      "folds": [
+        "RAW \u00b7 READINESS",
+        "RAW \u00b7 READINESS",
+        "Raw trace",
+        "Raw trace"
+      ],
+      "has_runs_row": false,
+      "has_wire_details": false,
+      "has_raw_readiness": true
+    }
+  },
+  "sequence_minted": {
+    "1440": 201,
+    "393": 201
+  },
+  "sequence": {
+    "1440": {
+      "pullout": 1,
+      "has_edit_sequence": true,
+      "has_edit_chain": false
+    },
+    "393": {
+      "pullout": 1,
+      "has_edit_sequence": true,
+      "has_edit_chain": false
+    }
+  },
+  "zone_minted": {
+    "1440": 201,
+    "393": 201
+  },
+  "floor_opened": {
+    "1440": 1,
+    "393": 2
+  },
+  "menu_door_used": {
+    "1440": {
+      "List view": "desk",
+      "Spatial view": "desk"
+    },
+    "393": {
+      "Spatial view": "go"
+    }
+  },
+  "list_view_opened": {
+    "1440": true,
+    "393": true
+  },
+  "floor_list": {
+    "1440": {
+      "list_view": 1,
+      "rows": 35
+    },
+    "393": {
+      "list_view": 1,
+      "rows": 35
+    }
+  },
+  "floor_zone": {
+    "1440": {
+      "zone_aria_names": [
+        "Decisions zone",
+        "Inbox zone, 1 item",
+        "Launch zone",
+        "Meetings zone, 1 item",
+        "Personal zone, 2 items",
+        "Reference zone, 1 item",
+        "Work zone, 1 item"
+      ],
+      "zero_item_names": [],
+      "zero_item_cells": [],
+      "empty_cells": [
+        "EMPTY",
+        "EMPTY"
+      ]
+    },
+    "393": {
+      "zone_aria_names": [
+        "Decisions zone",
+        "Inbox zone, 1 item",
+        "Launch zone",
+        "Meetings zone, 1 item",
+        "Personal zone, 2 items",
+        "Reference zone, 1 item",
+        "Work zone, 1 item"
+      ],
+      "zero_item_names": [],
+      "zero_item_cells": [],
+      "empty_cells": [
+        "EMPTY",
+        "EMPTY"
+      ]
+    }
+  },
+  "meetings_cleared": {
+    "1440": 1,
+    "393": 1
+  },
+  "meetings_empty": {
+    "1440": {
+      "window": 1,
+      "headline": "No meetings yet",
+      "empty_lines": [
+        "\u25cb Record or import a meeting"
+      ],
+      "no_meetings_yet_count": 1
+    },
+    "393": {
+      "window": 1,
+      "headline": "No meetings yet",
+      "empty_lines": [
+        "\u25cb Record or import a meeting"
+      ],
+      "no_meetings_yet_count": 1
+    }
+  }
+}

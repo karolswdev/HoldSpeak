@@ -124,9 +124,18 @@ export function DoorSection({
                           })
                         }
                       >
-                        {row.meeting_id
-                          ? "Retry intelligence"
-                          : "Retry background work"}
+                        {/* HS-202-04 (F07) — one job, one verb. This row
+                            and the record's own recovery
+                            (`history/NeedsYouTable.tsx:107`,
+                            `meetings/MeetingIntelRecovery.tsx:246`) repair
+                            the SAME failed meeting Summary, and two names
+                            made one repair look like two jobs. The second
+                            label also said `intelligence`, the wire's word
+                            for a Summary, which the registry forbids on a
+                            face (`docs/product-language.json:23`).
+                            `Retry background work` stays: a deferred
+                            plugin job is a different object. */}
+                        {row.meeting_id ? "Retry" : "Retry background work"}
                       </Button>
                     ) : undefined
                   }

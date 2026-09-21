@@ -126,11 +126,22 @@ export function Readiness() {
             <span className="speak-token-line">{confidencePct}%</span>
           </GadgetRow>
         ) : null}
-        <GadgetRow label="Runs">
-          <span className="speak-token-line">{runs}</span>
-        </GadgetRow>
+        {/* HS-202-04 (UX-CANON A.8: no counters of zero) — the gear door
+            printed `Runs 0` on a machine that had never run the pipeline,
+            on all four walked legs (`01-measured-walk.md`, leg
+            `door-speak`). A count that is zero says nothing, so the row
+            stands only once there is a run to name. */}
+        {runs > 0 ? (
+          <GadgetRow label="Runs">
+            <span className="speak-token-line">{runs}</span>
+          </GadgetRow>
+        ) : null}
       </GadgetGroup>
-      <FoldGadget title="Wire details">
+      {/* HS-202-04 — this fold shows the readiness WIRE verbatim, zeros
+          and all; a raw fold that edits the wire is a lie. It now says so
+          in the owner's own word (debug hides behind RAW), which is the
+          same title grammar Live uses (`LiveCore.tsx` RAW · ROUTE). */}
+      <FoldGadget title="RAW · READINESS">
         <SurfaceFacts value={config} />
         <SurfaceFacts value={target} />
         <SurfaceFacts value={depth} />

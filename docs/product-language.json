@@ -20,6 +20,12 @@
       "category": "meeting_projection",
       "meaning": "Speaker and time material owned by a Meeting."
     },
+    "segment": {
+      "singular": "Segment",
+      "plural": "Segments",
+      "category": "meeting_projection",
+      "meaning": "One timed span of a Transcript. Every face says Segment; SEG is an abbreviation no face defines (HS-202-04, Constitution tenet 4)."
+    },
     "summary": {
       "singular": "Summary",
       "plural": "Summaries",
@@ -144,6 +150,8 @@
     "kb": "knowledge",
     "knowledge_base": "knowledge",
     "chain": "sequence",
+    "seg": "segment",
+    "mtg": "meeting",
     "connector": "integration",
     "plugin": "integration",
     "profile": "runs_on"

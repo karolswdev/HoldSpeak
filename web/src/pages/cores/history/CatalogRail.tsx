@@ -310,7 +310,13 @@ export function CatalogRail({
         loading={meetings.loading}
         error={meetings.error}
         empty={!meetingRows.length}
-        emptyLabel="No meetings yet"
+        /* HS-202-04 (M6; UX-CANON A.7 "the name is said once per face",
+           A.3 "an empty state is ONE true line with the next time
+           something happens") — the display headline already says `No
+           meetings yet` (`history/helpers.ts:223`), and the walk caught
+           the cold Meetings face saying it twice on one screen. The
+           headline keeps the state; the rail states the next move. */
+        emptyLabel="Record or import a meeting"
         onRetry={() => void meetings.reload()}
       >
         <div className="meetings-stream-rows">

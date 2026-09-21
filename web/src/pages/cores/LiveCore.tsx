@@ -61,6 +61,7 @@ import {
 } from "../../desk/surface/gadgets";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { presentValue } from "../../desk/surface/format";
+import { countToken } from "../../desk/surface/count";
 import { intelEgressBadge } from "./liveEgress";
 import { onReturnToTask } from "../../desk/returnToTask";
 
@@ -347,9 +348,39 @@ export function LiveCore({ hero }: CoreProps) {
       state.intel_status ??
       "idle",
   );
-  const factsLine = active
-    ? `Recording · ${duration}${segments.length ? ` · ${segments.length} segment${segments.length === 1 ? "" : "s"}` : ""}`
-    : `${connection || "This device"} · ready`;
+  /* HS-202-04 (M6, UX-CANON A.7) — one fact, one place. This row printed
+     the running clock that the footer receipt already carries, and the
+     segment count that the stream head already counts, so the same two
+     facts stood three times on one screen.
+     Astra's counsel on #599, finding 2: the row's remaining state word
+     still repeated the footer receipt (`ready` beside `READY`). The two
+     slots hold DIFFERENT facts and now say so: this row is the LINK to
+     the hub (`runtime/RuntimeBus.tsx:14` — connecting/connected/
+     reconnecting/offline), the footer receipt is the CAPTURE. The axis is
+     named, per the copy contract's `unqualified-state` rule. */
+  const factsLine = `Link · ${connection || "unknown"}`;
+
+  /** HS-202-04 — the queue summary with its zero counts dropped. A
+   *  non-count value (a timestamp, a state word) is kept as it is; only a
+   *  number that counts nothing is withheld (UX-CANON A.8). */
+  const jobFacts = useMemo(() => {
+    const wire = (pluginJobs.data ?? {}) as Record<string, unknown>;
+    const kept: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(wire)) {
+      /* Keep only what `SurfaceFacts` would actually DRAW
+         (`desk/surface/Surface.tsx:381-393`: string | number | boolean,
+         minus anything that presents as nothing). The idle wire carries
+         `next_retry_at: null` (`holdspeak/services/plugin_job_service.py:29`),
+         which draws nothing — counted as a fact it left the section
+         looking non-empty and the shot showed a header with a lone verb
+         under it (M5). */
+      if (!["string", "number", "boolean"].includes(typeof value)) continue;
+      if (typeof value === "number" && value <= 0) continue;
+      if (typeof value === "string" && !value.trim()) continue;
+      kept[key] = value;
+    }
+    return kept;
+  }, [pluginJobs.data]);
 
   const intelSummary = String(intelResult?.summary ?? "");
   const intelTopics = Array.isArray(intelResult?.topics)
@@ -360,8 +391,14 @@ export function LiveCore({ hero }: CoreProps) {
     : Number(intelResult?.action_item_count ?? 0);
   const intelFace =
     intelResult ? (
+      /* HS-202-04 (F06) — a meeting result is a SUMMARY on every face.
+         The registry ruled it already (`docs/product-language.json:23`:
+         "The wire calls it meeting intelligence… Every face says
+         Summary") and Live was the one face that disobeyed its own
+         registry. `Intelligence` stays the name of the durable ledger
+         application, never of a meeting's result. */
       <SurfaceSection
-        label="Intelligence"
+        label="Summary"
         actions={<LampGadget on tone="ok" label="READY" />}
       >
         {intelResult ? (
@@ -376,10 +413,17 @@ export function LiveCore({ hero }: CoreProps) {
                 ))}
               </div>
             ) : null}
+            {/* HS-202-04 (UX-CANON A.8; Astra's counsel on #599, finding
+                2) — a Summary with nothing to do printed `0 action
+                items`. `countToken` withholds the zero, and the line is
+                omitted entirely when it would carry no fact. */}
             <SurfaceFacts
-              value={`${intelActionCount} action item${intelActionCount === 1 ? "" : "s"}${
-                intelResult.final ? " · final" : ""
-              }`}
+              value={[
+                countToken(intelActionCount, "action item", "action items"),
+                intelResult.final ? "final" : "",
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             />
           </div>
         ) : null}
@@ -473,7 +517,9 @@ export function LiveCore({ hero }: CoreProps) {
           </>
         ) : null}
       </SurfaceSection>
-      <SurfaceSection label="Intelligence">
+      {/* HS-202-04 (F06) — the gear door's run-state section names the
+          same thing the result section does: the Summary. */}
+      <SurfaceSection label="Summary">
         <div className="surface-actions">
           <span
             className="surface-token"
@@ -488,9 +534,17 @@ export function LiveCore({ hero }: CoreProps) {
         <SurfaceState
           loading={pluginJobs.loading}
           error={pluginJobs.error}
+          empty={!Object.keys(jobFacts).length}
+          emptyLabel="No jobs waiting"
+          emptyGlyph="○"
           onRetry={() => void pluginJobs.reload()}
         >
-          <SurfaceFacts value={pluginJobs.data} />
+          {/* HS-202-04 (UX-CANON A.8; Astra's counsel on #599, finding 2)
+              — the hub's queue summary is all counts, so an idle desk drew
+              SIX counters of zero in this one section
+              (`assets/story-04-shots/live-door-summary-393.png`). A count
+              of zero says nothing; the section says the true thing. */}
+          <SurfaceFacts value={jobFacts} />
           <div className="surface-actions">
             <Button
               dense
@@ -687,13 +741,16 @@ export function LiveCore({ hero }: CoreProps) {
           </SurfaceSection>
         </>
       )}
-      {/* HS-129-05 — the readiness fact rides the shared receipt slot. */}
+      {/* HS-129-05 — the readiness fact rides the shared receipt slot.
+          HS-202-04 (F21, M6) — the receipt carries the clock and nothing
+          else: the segment count belongs to the stream head that counts
+          them, and `SEG` was an abbreviation no face ever defined (the
+          recovery slab spelled it out in HS-201-06). */}
       <SurfaceFooter
         egress={intelEgressChip}
         receipt={
           <span className="surface-footer-receipt-line" role="status">
             {active ? `REC ${duration}` : "READY"}
-            {segments.length ? ` · ${segments.length} SEG` : ""}
           </span>
         }
       />
