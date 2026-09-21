@@ -30,4 +30,71 @@ From the surface inventory of 2026-09-20 (`docs/internal/SURFACE-INVENTORY-2026-
 
 ## Notes / open questions
 
+### Counsel fix round 2 — what changed and what is still open
+
+- **Fixed, each fenced red-then-green:** the cold-desk recovery registry
+  (`SurfaceWindows.tsx:61`), the brief receipt surviving success
+  (`ChairHome.tsx:1114`) and its count reading the brief's real
+  `sections`, the stale-selection guards in `HistoryCore` AND
+  `useMeetingData`, `LiveCore`'s runtime-status subscription, the visible
+  failure on a refused note create, the RECENT read over every memory
+  kind (`db/memory.py` `recent()`), one live row per name in ⌘K, the
+  microphone wording, the first-value vocabulary debt paid in full, the
+  import announcing itself (`meeting_service.py`), and the folded Go menu
+  scrolling so its Object and Window entries are reachable at 393.
+- **Found by this story's own walk and fixed:** opening the doctor from
+  the cold card and then pressing `Continue later` left the card spinning
+  forever — a recovery window was still on glass when first value handed
+  over. `FirstWords.dismiss` clears surface windows first.
+- **STILL RED:** the first-use smoke's `import-refresh` leg at both
+  widths. The hub now emits `desk_changed` on import completion (proved
+  in-process, and traced live inside the smoke's own hub with
+  `root=True`), and the face merges rather than replaces, but the open
+  record still does not expose `Run summary` inside the fence's 2.5 s
+  window without a reopen. Every other leg of that smoke passes (35 PASS
+  lines). Next step for whoever picks it up: instrument the client's
+  `desk_changed` handler in the smoke's browser — the frame leaves the
+  hub, so the remaining gap is between the bus and `refreshFace`.
+- **Inherited, not mine (evidence in the report):**
+  `tests/unit/test_doc_drift_guard.py` (dangling links in
+  `docs/internal/checks/surface-inventory-astra.md`, present unchanged at
+  the base commit), `tests/e2e/test_hs154_call_glass.py` (the `tts` extra
+  IS installed in this worktree's venv, so the "not installed" copy is
+  correctly absent), `tests/unit/test_hs175_calendar_sources.py` (a
+  local-week boundary case on a Sunday evening),
+  `tests/e2e/test_hs170_meetings_glass.py::test_meetings_face` (needs an
+  open action item to draw the facet; my diff touches no line of that
+  path).
+
+### Ledger — classifications and homes (Astra's counsel on PR #595)
+
+- **PAID HERE, not deferred:** the first-value failure vocabulary
+  (`holdspeak/db/onboarding.py:17-33`). Naming `no_microphone` on the face
+  made `POST /api/setup/first-value/<id>/finish` answer 400; the same gap
+  already existed for the three HS-132-05 streaming refusals
+  (`mic_interval_closed`, `provider_failure`, `audio_floor_held`), which
+  the face has been able to send since that story. All five names are now
+  accepted and fenced against drift in
+  `tests/unit/test_hs202_first_value_failure_vocabulary.py`. Nothing is
+  left with "next lane" as its home.
+- **(a) honest test updates** (the behaviour changed, so the fence did):
+  `web/src/pages/cores/__tests__/speakRoom.test.tsx:420` (the footer no
+  longer claims a placement), `web/src/desk/__tests__/menuGlyphs.test.tsx:174`
+  (4/11 -> 4/12 Go tools, because `configure-setup` was unparked and given
+  a door), `web/src/lib/dictationRecovery.test.ts` and
+  `web/src/desk/components/FirstWords.test.tsx` (the microphone wording
+  now claims only what the exception supports),
+  `web/src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx` (the
+  receipt counts the brief's real `sections`, not an `items` field
+  `MondayBrief` never had).
+- **(a) rig change, opt-in:** `scripts/walk_working_desk.py` gained
+  `HOLDSPEAK_WALK_SKIP_BRIEF=1`, so a walk can photograph the arrival's
+  `No brief yet` + `Generate` branch. Unset, the seed is byte-identical.
+- **Design debt, named not scheduled:** the first-run card's species
+  mixing (four button species, three font stacks, a 20x20 orphan mic on
+  the pad) — the owner raised it on 2026-09-20. It is a design beat that
+  needs the canvas and his ratification first (UX-CANON A: design before
+  build); story 05 settles the type scale it depends on.
+
+
 Lanes are assigned at build time under TWO-BRAINS §4 (default: Astra takes the backend and verification-harness work, Muad'Dib the faces; either brain checks the other's built lane before merge).

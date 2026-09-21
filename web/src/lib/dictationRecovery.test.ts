@@ -39,6 +39,7 @@ describe("dictation recovery contract", () => {
     const expected: Record<DictationFailure, string[]> = {
       permission_denied: ["retry", "copy", "keep_as_note"],
       no_microphone: ["retry", "copy", "keep_as_note", "setup"],
+      microphone_unavailable: ["retry", "copy", "keep_as_note", "setup"],
       missing_model: ["copy", "keep_as_note", "alternate_runs_on", "setup"],
       rejected_token: ["copy", "keep_as_note", "setup"],
       unreachable_hub: ["retry", "copy", "keep_as_note"],
@@ -184,13 +185,24 @@ describe("the microphone failures are named (HS-202-02)", () => {
     ).toBe("no_microphone");
   });
 
-  it("names a device another application holds", () => {
+  /* Astra's counsel finding 7 on PR #595: `NotReadableError` covers a
+     hardware failure as well as another owner, so it must not be reported
+     as `audio_floor_held` — a name that asserts an owner the exception
+     never established (and one the hub's first-value vocabulary
+     rejects). */
+  it("names a device that would not start, without naming a culprit", () => {
     expect(
       dictationFailure(new DOMException("in use", "NotReadableError")),
-    ).toBe("audio_floor_held");
+    ).toBe("microphone_unavailable");
     expect(
       dictationFailure(new DOMException("in use", "TrackStartError")),
-    ).toBe("audio_floor_held");
+    ).toBe("microphone_unavailable");
+    expect(DICTATION_FAILURES.microphone_unavailable.message).toMatch(
+      /could not start/i,
+    );
+    expect(DICTATION_FAILURES.microphone_unavailable.message).not.toMatch(
+      /another (source|application) holds/i,
+    );
   });
 
   it("reads a refused origin as a permission refusal", () => {
@@ -202,6 +214,7 @@ describe("the microphone failures are named (HS-202-02)", () => {
   it("says the word microphone on every device failure", () => {
     for (const failure of [
       "no_microphone",
+      "microphone_unavailable",
       "permission_denied",
       "audio_floor_held",
       "mic_interval_closed",
@@ -210,10 +223,14 @@ describe("the microphone failures are named (HS-202-02)", () => {
     }
   });
 
-  it("offers a recovery that can work for a missing device", () => {
+  it("offers a recovery that can work, and claims only what was observed", () => {
     const contract = DICTATION_FAILURES.no_microphone;
     expect(contract.retry).toBe(true);
-    expect(contract.message).toMatch(/connect a microphone/i);
+    expect(contract.setup).toBe(true);
+    // The browser handed back no device; that is NOT proof the hardware
+    // is absent, so the copy does not say so (counsel finding 7).
+    expect(contract.message).toMatch(/browser gave no microphone/i);
+    expect(contract.message).not.toMatch(/was found on this device/i);
     expect(applicableActions("no_microphone", { draftPresent: true })).toEqual([
       "retry",
       "copy",

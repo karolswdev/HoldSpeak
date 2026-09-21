@@ -21,34 +21,36 @@ from holdspeak.db.onboarding import FIRST_VALUE_FAILURES
 _REPO = Path(__file__).resolve().parents[2]
 _RECOVERY = _REPO / "web" / "src" / "lib" / "dictationRecovery.ts"
 
-# The three HS-132-05 streaming refusals the hub has never accepted. They
-# are a REAL gap with the same shape (a face that names one of them cannot
-# close its first-value receipt), found while fixing `no_microphone` and
-# reported rather than silently widened into this story.
-KNOWN_GAP = {"mic_interval_closed", "provider_failure", "audio_floor_held"}
+# Astra's counsel finding 7 on PR #595 ruled the debt gets a concrete
+# home or is paid here. It is PAID here: the three HS-132-05 streaming
+# refusals the face has been able to send since that story now round-trip
+# too, so no failure name the owner can see leaves its receipt open.
+KNOWN_GAP: set[str] = set()
 
 
 def _client_failures() -> set[str]:
     """The `DictationFailure` union, read from the client's own source."""
     text = _RECOVERY.read_text()
+    # Strip comments FIRST: they quote words and carry semicolons, either
+    # of which corrupts the union's boundary or its member list.
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    text = re.sub(r"//[^\n]*", "", text)
     union = text[text.index("export type DictationFailure ="):]
     union = union[: union.index(";")]
-    # Comments inside the union quote words too; only the members count.
-    union = re.sub(r"/\*.*?\*/", "", union, flags=re.S)
-    union = re.sub(r"//[^\n]*", "", union)
     return set(re.findall(r'"([a-z_]+)"', union))
 
 
-def test_the_face_and_the_hub_agree_on_no_microphone() -> None:
-    assert "no_microphone" in _client_failures()
-    assert "no_microphone" in FIRST_VALUE_FAILURES
+def test_the_face_and_the_hub_agree_on_the_microphone_names() -> None:
+    for name in ("no_microphone", "microphone_unavailable"):
+        assert name in _client_failures(), name
+        assert name in FIRST_VALUE_FAILURES, name
 
 
-def test_no_failure_name_drifts_except_the_reported_gap() -> None:
+def test_every_failure_the_face_can_send_closes_its_receipt() -> None:
     missing = _client_failures() - FIRST_VALUE_FAILURES
     assert missing == KNOWN_GAP, (
-        "a failure name the face can send that the hub refuses; "
-        f"unexpected: {sorted(missing - KNOWN_GAP)}"
+        "a failure name the face can send that the hub refuses, so the "
+        f"first-value receipt answers 400: {sorted(missing)}"
     )
 
 

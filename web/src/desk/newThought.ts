@@ -18,6 +18,7 @@
  */
 import { apiFetch } from "../lib/api";
 import { useDesk } from "./store";
+import { reportWriteFailure, clearWriteFailure } from "./hooks/useWriteReceipt";
 import { adoptThought, thoughtForNote } from "./thoughts";
 
 export async function openNewThought(): Promise<void> {
@@ -28,9 +29,13 @@ export async function openNewThought(): Promise<void> {
       json: { title: "Thought", body_markdown: "", tags: [] },
     });
     noteId = String(created.note?.id ?? "");
-  } catch {
-    // The hub refused the create. The desk's own write-failure channel
-    // names a refused write; there is nothing to open.
+    clearWriteFailure();
+  } catch (cause) {
+    /* HS-202-02 (Astra's counsel finding 4) — a refused create used to
+       return in silence: `apiFetch` only throws, so nothing reached the
+       desk's failure channel and the owner pressed a verb that did
+       nothing, with no line and no retry. */
+    reportWriteFailure("Write a thought", cause, () => void openNewThought());
     return;
   }
   if (!noteId) return;

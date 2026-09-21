@@ -130,6 +130,31 @@ describe("the phone menu bar has one door that carries every verb", () => {
     ).toBeInTheDocument();
   });
 
+  /* Coordinator item 10 / Astra's first-use fence: the folded Go menu
+     carries about forty rows. Unscrolled, everything after the Desk group
+     sits below an 852px viewport and no pointer can reach it. */
+  it("carries Desk, Object and Window entries, in that order", () => {
+    compact = true;
+    render(<DeskMenuBar />);
+    fireEvent.click(screen.getByRole("button", { name: "Go" }), { detail: 0 });
+    const labels = screen.getAllByRole("menuitem").map((el) => el.textContent ?? "");
+    const at = (needle: string) =>
+      labels.findIndex((label) => label.includes(needle));
+    expect(at("New Note"), "a Desk entry").toBeGreaterThan(-1);
+    expect(at("Get Info"), "an Object entry").toBeGreaterThan(-1);
+    expect(at("Close window"), "a Window entry").toBeGreaterThan(-1);
+    expect(at("Cycle windows"), "a Window entry").toBeGreaterThan(-1);
+    expect(at("New Note")).toBeLessThan(at("Get Info"));
+    expect(at("Get Info")).toBeLessThan(at("Close window"));
+  });
+
+  it("lets the folded menu scroll, so its tail is reachable at 393", () => {
+    const block = phoneBlock(chromeMenusCss);
+    const panel = rule(block, ".desk-next .desk-work-menu {");
+    expect(panel).toMatch(/max-height:/);
+    expect(panel).toMatch(/overflow-y:\s*auto/);
+  });
+
   it("no longer hides a rendered menu title behind CSS", () => {
     const block = phoneBlock(chromeMenusCss);
     expect(block).not.toMatch(

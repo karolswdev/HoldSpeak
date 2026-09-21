@@ -24,7 +24,7 @@
  * `desk_changed` and window focus are subscribed too, for everything else
  * that moves the desk.
  */
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../lib/api";
 import { announceTaskReturn } from "../../../desk/returnToTask";
@@ -152,5 +152,102 @@ describe("the open meeting record re-reads itself (HS-202-02)", () => {
     });
 
     await waitFor(() => expect(detailReads).toBeGreaterThan(before));
+  });
+});
+
+/* ── Astra's counsel finding 3 on PR #595 ──
+ * "Start refreshing A, select B, then resolve A: the unconditional
+ * `setSelected(fresh)` restores A." The refresh must answer only for the
+ * record that is open NOW. */
+describe("a slow refresh never restores a record the owner left", () => {
+  it("drops a response for a record that is no longer selected", async () => {
+    let releaseA: ((value: unknown) => void) | null = null;
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const url = String(path);
+      if (url.startsWith("/api/meetings?"))
+        return { meetings: [detail(), { ...detail(), id: "m-2", title: "The other meeting" }] } as never;
+      if (url === "/api/meetings/m-1")
+        // A's re-read hangs until the test lets it go.
+        return new Promise((resolve) => {
+          releaseA = resolve;
+        }) as never;
+      if (url === "/api/meetings/m-2")
+        return { ...detail(), id: "m-2", title: "The other meeting" } as never;
+      return {} as never;
+    });
+
+    render(<HistoryCore scope="meeting:m-1" />);
+    await screen.findByTestId("detail-route-unavailable");
+
+    // A refresh for A starts and stalls.
+    act(() => {
+      emit("desk_changed");
+    });
+    await waitFor(() => expect(releaseA).not.toBeNull());
+
+    // The owner opens B while A is still in flight.
+    const rowB = document.querySelector(
+      '[data-testid="meeting-row-m-2"] .meetings-stream-row-body',
+    );
+    expect(rowB, "the ledger draws the second meeting").toBeTruthy();
+    fireEvent.click(rowB as Element);
+    const openTitle = () =>
+      document.querySelector(".meetings-detail-head .surface-display")
+        ?.textContent ?? "";
+    await waitFor(() => expect(openTitle()).toBe("The other meeting"));
+
+    // A finally answers. B must stay on the glass.
+    await act(async () => {
+      releaseA?.({ ...detail(), id: "m-1", title: "Imported meeting" });
+    });
+
+    expect(openTitle()).toBe("The other meeting");
+  });
+});
+
+/* ── coordinator item 9 / the first-use smoke's `import-refresh` leg ──
+ * An import lands a transcript on a row the owner already opened. The
+ * refresh must not COST the record anything: the ledger row and
+ * `/api/meetings/{id}` are different shapes, and replacing one with the
+ * other withdrew `Run summary` from the meeting that had just earned it. */
+describe("a refresh never withdraws what the record had", () => {
+  it("keeps Run summary when the detail payload omits transcriptWords", async () => {
+    const importing = {
+      ...detail(),
+      intel_status: { state: "disabled" },
+      transcriptWords: 0,
+      planned_route: READY_ROUTE,
+    };
+    const transcribed = { ...importing, transcriptWords: 9 };
+    let listRow: Record<string, unknown> = importing;
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const url = String(path);
+      if (url.startsWith("/api/meetings?")) return { meetings: [listRow] } as never;
+      if (url === "/api/meetings/m-1") {
+        detailReads += 1;
+        // The detail path carries raw dicts: NO transcriptWords.
+        const { transcriptWords: _drop, ...raw } = transcribed;
+        return raw as never;
+      }
+      return {} as never;
+    });
+
+    render(<HistoryCore scope="meeting:m-1" />);
+    await waitFor(() =>
+      expect(
+        document.querySelector(".meetings-detail-head .surface-display"),
+      ).toBeTruthy(),
+    );
+    expect(screen.queryByTestId("detail-run-intelligence-btn")).toBeNull();
+
+    // The import finishes: the hub announces the desk change.
+    listRow = transcribed;
+    act(() => {
+      emit("desk_changed");
+    });
+
+    expect(
+      await screen.findByTestId("detail-run-intelligence-btn"),
+    ).toBeVisible();
   });
 });

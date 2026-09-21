@@ -60,3 +60,41 @@ once-per-desk state, so a shared hub can never show it twice.
 (`configure-setup` → `pages/cores/SetupCore.tsx`), whose sections carry
 the doctor's own `_check_microphone()` row 1:1
 (`holdspeak/commands/doctor.py:1064` → `holdspeak/setup_status.py:254-260`).
+
+## Astra's counsel round (PR #595) + the coordinator's items 9-10
+
+Every verb PRESSED, on a real isolated hub, at both widths. One hub per
+viewport with its own `HOME`; the seeded brief is skipped
+(`HOLDSPEAK_WALK_SKIP_BRIEF=1`) so the `No brief yet` + `Generate`
+branch exists to press; the transcript arrives through the product's
+own `.txt` import door, never the microphone.
+
+| Condition | 1440 | 393 |
+|---|---|---|
+| counsel 1 — pressing `Check the microphone` opens the DOCTOR, not New Project | setup=1, new-project=0 | setup=1, new-project=0 |
+| counsel 2 — `Generate` badged BEFORE | THIS DEVICE | THIS DEVICE |
+| counsel 2 — receipted AFTER, surviving the brief that replaces the branch | Brief ready · 3 items · 9:49 PM | Brief ready · 3 items · 9:53 PM |
+| counsel 3 — the record re-reads on the product's own return signal, no reload | 1 re-read | 1 re-read |
+| counsel 5 — Desk memory on open | 2 rows, `Recent on this desk` | 2 rows, `Recent on this desk` |
+| counsel 9 — every dock launcher PRESSED (geometry is not pressability) | 9/9, refused none | 9/9, refused none |
+| dock buttons inside the viewport | 9/9 | 9/9 |
+| the note editor's keep receipt | KEPT · 9:50 PM | KEPT · 9:53 PM |
+| HTTP >= 400 / console / page / step errors | none / none / none / none | same |
+
+`run_verb` stays 0: this hub has no engine, so the route is
+`no_assignment` and the disclosure says the reason in the verb's place
+(`NeedsYouTable.tsx:51-61`). Designed state, not a gap.
+
+The walk also caught a defect THIS round introduced: opening the doctor
+from the cold card and then pressing `Continue later` left the card
+spinning forever, because a recovery window was still on glass when
+first value handed over. `FirstWords.dismiss` now clears surface
+windows before the handoff; the shot that caught it is
+`arrival-1440.png` from the failing run.
+
+Shots: `first-run-*`, `first-run-mic-refused-*`,
+`first-run-microphone-checked-*`, `arrival-*`, `dock-*`, `go-menu-*`,
+`shelf-notes-*`, `write-a-thought-*`, `note-kept-*`, `desk-memory-*`,
+`concierge-address-*`, `settings-hub-*`, `generate-before-*`,
+`generate-after-*`, `meeting-record-*`, `meeting-record-refreshed-*`,
+`speak-face-*` — each at `-1440` and `-393`.

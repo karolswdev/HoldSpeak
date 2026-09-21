@@ -1118,6 +1118,34 @@ function Arrival() {
             busyId={busyBriefId}
             onShelf={doBriefShelf}
           />
+          {/* HS-202-02 (Astra's counsel finding 2) — the receipt lived
+              ONLY under `!brief`, so success replaced the branch that
+              held it and the owner saw no receipt at all. Article III
+              wants the receipt AFTER the click, wherever the click
+              leaves the face. */}
+          {briefKept ? (
+            <span
+              className="surface-receipt-line"
+              role="status"
+              data-testid="arrival-brief-receipt"
+            >
+              {briefKept}
+            </span>
+          ) : null}
+        </div>
+      ) : briefKept ? (
+        /* A generated brief with nothing untriaged still happened: the
+           section survives to say so, and never disappears mid-gesture. */
+        <div data-testid="arrival-brief">
+          <SurfaceSection label="BRIEF">
+            <span
+              className="surface-receipt-line"
+              role="status"
+              data-testid="arrival-brief-receipt"
+            >
+              {briefKept}
+            </span>
+          </SurfaceSection>
         </div>
       ) : null}
 

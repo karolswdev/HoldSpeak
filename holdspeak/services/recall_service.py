@@ -171,14 +171,16 @@ class RecallService:
         if chosen in ("all", "commitments"):
             result["owed"] = self._owed(q, cards, clock, bounded, recent=newest)
         if chosen == "meetings":
-            result["meetings"] = self._memory_hits(q, ("meeting",), bounded)
+            result["meetings"] = self._memory_hits(
+                q, ("meeting",), bounded, recent=newest)
         if chosen in ("all", "briefs"):
             result["briefs"] = self._brief_hits(q, bounded, recent=newest)
         if chosen == "all":
             # ONE memory read over every drawn kind, so a hit reached over a
             # durable relationship edge (a meeting's artifact) still arrives
             # beside its seed; the hits are then split by kind.
-            hits = self._memory_hits(q, ("meeting",) + _ALSO_KINDS, bounded)
+            hits = self._memory_hits(
+                q, ("meeting",) + _ALSO_KINDS, bounded, recent=newest)
             result["meetings"] = [h for h in hits if h.get("kind") == "meeting"]
             result["also"] = [h for h in hits if h.get("kind") != "meeting"]
 
@@ -474,7 +476,17 @@ class RecallService:
 
     # ── the other kinds ──────────────────────────────────────────────
 
-    def _memory_hits(self, query: str, kinds: tuple[str, ...], limit: int) -> list[dict[str, Any]]:
+    def _memory_hits(
+        self, query: str, kinds: tuple[str, ...], limit: int, *, recent: bool = False
+    ) -> list[dict[str, Any]]:
+        """Lexical hits, or — with no query — the newest of each kind.
+
+        HS-202-02 (Astra's counsel finding 5): a wordless query raised
+        inside the FTS matcher and was swallowed into `[]`, so a desk
+        holding only meetings, or only notes, read EMPTY.
+        """
+        if recent:
+            return self._db.memory.recent(kinds=list(kinds), limit=limit)
         try:
             found = self._db.memory.search(query, kinds=list(kinds), limit=limit)
         except ValueError:

@@ -32,6 +32,168 @@ _KIND_ORDER = {
     "cadence": 10,
 }
 _VALID_KINDS = frozenset(_KIND_ORDER)
+
+_ECOSYSTEM_SPECS: dict[str, dict[str, str]] = {
+    "decision_record": {
+        "table": "decision_records",
+        "alias": "r",
+        "id": "r.id",
+        "title": "r.decision_text",
+        "body": "COALESCE(r.rationale,'')||' '||COALESCE(r.alternatives,'')||' '||COALESCE(r.owner,'')",
+        "time": "r.updated_at",
+        "active": "r.deleted=0",
+        "project_id": "(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='decision_record:'||r.id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1)",
+        "project": """(EXISTS (SELECT 1 FROM project_resources pr
+                             WHERE pr.project_id=?
+                               AND pr.resource_ref='decision_record:'||r.id
+                               AND pr.deleted=0)
+                      OR EXISTS (
+                          SELECT 1 FROM decision_record_sources drs
+                          WHERE drs.record_id=r.id AND (
+                              (drs.source_type IN ('meeting','transcript')
+                               AND EXISTS (SELECT 1 FROM meeting_projects mp
+                                   WHERE mp.project_id=? AND
+                                     drs.source_ref IN (mp.meeting_id,'meeting:'||mp.meeting_id,'transcript:'||mp.meeting_id)))
+                              OR (drs.source_type='artifact' AND (
+                                  EXISTS (SELECT 1 FROM project_resources apr
+                                      WHERE apr.project_id=? AND apr.deleted=0 AND
+                                        drs.source_ref IN (substr(apr.resource_ref,10),'artifact:'||substr(apr.resource_ref,10))
+                                        AND apr.resource_ref LIKE 'artifact:%')
+                                  OR EXISTS (SELECT 1 FROM artifacts a
+                                      JOIN meeting_projects mp ON mp.meeting_id=a.meeting_id
+                                      WHERE mp.project_id=? AND
+                                        drs.source_ref IN (a.id,'artifact:'||a.id))
+                              ))
+                          )
+                      ))""",
+    },
+    "desk_decision": {
+        "table": "desk_decisions",
+        "alias": "d",
+        "id": "d.id",
+        "title": "CASE WHEN d.title='' THEN d.decision_markdown ELSE d.title END",
+        "body": "d.context_markdown||' '||d.decision_markdown||' '||d.consequences_markdown||' '||d.alternatives_json",
+        "time": "d.updated_at",
+        "active": "d.deleted=0",
+        "project_id": "(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='desk_decision:'||d.id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1)",
+        "project": "EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=? AND pr.resource_ref='desk_decision:'||d.id AND pr.deleted=0)",
+    },
+    "action": {
+        "table": "action_items",
+        "alias": "a",
+        "id": "a.id",
+        "title": "a.task",
+        "body": "COALESCE(a.owner,'')||' '||COALESCE(a.due,'')||' '||a.status",
+        "time": "COALESCE(a.completed_at,a.created_at)",
+        "active": "1=1",
+        "project_id": "COALESCE((SELECT mp.project_id FROM meeting_projects mp WHERE mp.meeting_id=a.meeting_id ORDER BY mp.project_id LIMIT 1),(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='action:'||a.id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1))",
+        "project": "(EXISTS (SELECT 1 FROM meeting_projects mp WHERE mp.project_id=? AND mp.meeting_id=a.meeting_id) OR EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=? AND pr.resource_ref='action:'||a.id AND pr.deleted=0))",
+    },
+    "project_item": {
+        "table": "project_items",
+        "alias": "p",
+        "id": "p.id",
+        "title": "p.title",
+        "body": "COALESCE(p.summary,'')||' '||COALESCE(p.details_json,'')||' '||p.item_type||' '||p.lifecycle||' '||COALESCE(p.severity,'')",
+        "time": "p.updated_at",
+        "active": "1=1",
+        "project_id": "p.project_id",
+        "project": "p.project_id=?",
+    },
+    "workbench_item": {
+        "table": "workbench_items",
+        "alias": "w",
+        "id": "w.id",
+        "title": "w.title",
+        "body": "w.body||' '||COALESCE(w.result,'')",
+        "time": "w.last_modified",
+        "active": "w.status!='dismissed'",
+        "project_id": "COALESCE((SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='workbench_item:'||w.id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1),(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='workbench:'||w.workbench_id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1))",
+        "project": "EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=? AND pr.deleted=0 AND pr.resource_ref IN ('workbench_item:'||w.id,'workbench:'||w.workbench_id))",
+    },
+    "cadence": {
+        "table": "cadence_loops",
+        "alias": "c",
+        "id": "c.id",
+        "title": "c.title",
+        "body": "c.summary||' '||c.status||' '||c.priority||' '||COALESCE(c.owner,'')",
+        "time": "c.updated_at",
+        "active": "c.status!='killed'",
+        "project_id": "COALESCE(c.project,(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='cadence:'||c.id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1))",
+        "project": "(c.project=? OR EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=? AND pr.resource_ref='cadence:'||c.id AND pr.deleted=0))",
+    },
+}
+
+# HS-202-02 (Astra's counsel finding 5 on PR #595) — the RECENT read.
+#
+# `search()` is lexical: it needs words, and `_match_expression` raises on
+# a wordless query. The Desk-memory face opens with NO query, so every
+# kind that only has a lexical path read EMPTY on a desk that plainly had
+# meetings or notes on it. These specs are the same canonical stores the
+# lexical passes join, read by RECENCY instead of by relevance.
+_RECENT_SPECS: dict[str, dict[str, str]] = {
+    "meeting": {
+        "table": "meetings",
+        "alias": "m",
+        "id": "m.id",
+        "title": "COALESCE(NULLIF(m.title,''),m.id)",
+        "body": (
+            "COALESCE((SELECT group_concat(s.text,' ') FROM ("
+            "SELECT text FROM segments WHERE meeting_id=m.id"
+            " ORDER BY start_time LIMIT 4) s),'')"
+        ),
+        "time": "m.started_at",
+        "active": "1=1",
+        "project_id": (
+            "(SELECT mp.project_id FROM meeting_projects mp"
+            " WHERE mp.meeting_id=m.id ORDER BY mp.project_id LIMIT 1)"
+        ),
+    },
+    "note": {
+        "table": "notes",
+        "alias": "n",
+        "id": "n.id",
+        "title": "COALESCE(NULLIF(n.title,''),n.id)",
+        "body": "COALESCE(n.body_markdown,'')",
+        "time": "n.updated_at",
+        # The same promotion belt the lexical note pass wears: a note
+        # promoted into context is not desk memory.
+        "active": (
+            "n.deleted=0 AND NOT EXISTS (SELECT 1 FROM context_promotions cp"
+            " WHERE cp.target_ref='note:'||n.id)"
+        ),
+        "project_id": (
+            "(SELECT pr.project_id FROM project_resources pr"
+            " WHERE pr.resource_ref='note:'||n.id AND pr.deleted=0"
+            " ORDER BY pr.project_id LIMIT 1)"
+        ),
+    },
+    "artifact": {
+        "table": "artifacts",
+        "alias": "a",
+        "id": "a.id",
+        "title": "COALESCE(NULLIF(a.title,''),a.id)",
+        "body": "COALESCE(a.body_markdown,'')",
+        "time": "a.updated_at",
+        "active": "1=1",
+        "project_id": (
+            "(SELECT pr.project_id FROM project_resources pr"
+            " WHERE pr.resource_ref='artifact:'||a.id AND pr.deleted=0"
+            " ORDER BY pr.project_id LIMIT 1)"
+        ),
+    },
+    "decision": {
+        "table": "decisions",
+        "alias": "d",
+        "id": "d.id",
+        "title": "d.text",
+        "body": "COALESCE(d.text,'')",
+        "time": "d.decided_at",
+        "active": "1=1",
+        "project_id": "d.project_key",
+    },
+}
+
 _RELATION_SEED_LIMIT = 32
 _RELATION_RESULT_LIMIT = 64
 _RELATION_NEIGHBOURS_PER_SEED = 2
@@ -195,6 +357,52 @@ class MemoryRepository(BaseRepository):
         """The promoted-ref set, for the belt at grounding's relevance call sites."""
         with self._connection() as conn:
             return self._promoted_refs(conn)
+
+    def recent(
+        self, *, kinds: Optional[Iterable[str]] = None, limit: int = 50
+    ) -> list[dict[str, Any]]:
+        """The newest rows per kind, with no query.
+
+        HS-202-02 — the wordless read `search()` cannot serve. Same row
+        shape the lexical hits carry (kind, source_ref, title, snippet,
+        occurred_at, project_id), so the recall face draws them
+        identically; `bm25` is absent because nothing was ranked.
+        """
+        selected = self._normalize_kinds(kinds)
+        bounded = max(1, min(int(limit), 500))
+        rows: list[dict[str, Any]] = []
+        with self._connection() as conn:
+            for kind in selected:
+                spec = _RECENT_SPECS.get(kind) or _ECOSYSTEM_SPECS.get(kind)
+                if spec is None:
+                    # A kind with no canonical recency source is reported by
+                    # ABSENCE, never by a silent empty list that reads like
+                    # "this desk holds none".
+                    continue
+                try:
+                    found = conn.execute(
+                        f"""SELECT '{kind}' kind,
+                                   '{kind}:'||{spec["id"]} source_ref,
+                                   {spec["title"]} title,
+                                   substr(COALESCE({spec["body"]},''),1,420) snippet,
+                                   {spec["time"]} occurred_at,
+                                   {spec["project_id"]} project_id
+                            FROM {spec["table"]} {spec["alias"]}
+                            WHERE {spec["active"]}
+                            ORDER BY occurred_at DESC,{spec["id"]} DESC
+                            LIMIT ?""",
+                        (bounded,),
+                    ).fetchall()
+                except sqlite3.Error:  # pragma: no cover - schema drift
+                    # A store this database does not carry is simply not a
+                    # source of recent memory; it is never a lie about one.
+                    continue
+                rows.extend(dict(row) for row in found)
+        rows.sort(
+            key=lambda row: (str(row.get("occurred_at") or ""), str(row.get("source_ref") or "")),
+            reverse=True,
+        )
+        return rows[:bounded]
 
     def search(
         self,
@@ -628,96 +836,7 @@ class MemoryRepository(BaseRepository):
         source grows large enough to justify its own FTS corpus; its score is
         still normalized and interleaved by the same ranking contract.
         """
-        specs: dict[str, dict[str, str]] = {
-            "decision_record": {
-                "table": "decision_records",
-                "alias": "r",
-                "id": "r.id",
-                "title": "r.decision_text",
-                "body": "COALESCE(r.rationale,'')||' '||COALESCE(r.alternatives,'')||' '||COALESCE(r.owner,'')",
-                "time": "r.updated_at",
-                "active": "r.deleted=0",
-                "project_id": "(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='decision_record:'||r.id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1)",
-                "project": """(EXISTS (SELECT 1 FROM project_resources pr
-                                     WHERE pr.project_id=?
-                                       AND pr.resource_ref='decision_record:'||r.id
-                                       AND pr.deleted=0)
-                              OR EXISTS (
-                                  SELECT 1 FROM decision_record_sources drs
-                                  WHERE drs.record_id=r.id AND (
-                                      (drs.source_type IN ('meeting','transcript')
-                                       AND EXISTS (SELECT 1 FROM meeting_projects mp
-                                           WHERE mp.project_id=? AND
-                                             drs.source_ref IN (mp.meeting_id,'meeting:'||mp.meeting_id,'transcript:'||mp.meeting_id)))
-                                      OR (drs.source_type='artifact' AND (
-                                          EXISTS (SELECT 1 FROM project_resources apr
-                                              WHERE apr.project_id=? AND apr.deleted=0 AND
-                                                drs.source_ref IN (substr(apr.resource_ref,10),'artifact:'||substr(apr.resource_ref,10))
-                                                AND apr.resource_ref LIKE 'artifact:%')
-                                          OR EXISTS (SELECT 1 FROM artifacts a
-                                              JOIN meeting_projects mp ON mp.meeting_id=a.meeting_id
-                                              WHERE mp.project_id=? AND
-                                                drs.source_ref IN (a.id,'artifact:'||a.id))
-                                      ))
-                                  )
-                              ))""",
-            },
-            "desk_decision": {
-                "table": "desk_decisions",
-                "alias": "d",
-                "id": "d.id",
-                "title": "CASE WHEN d.title='' THEN d.decision_markdown ELSE d.title END",
-                "body": "d.context_markdown||' '||d.decision_markdown||' '||d.consequences_markdown||' '||d.alternatives_json",
-                "time": "d.updated_at",
-                "active": "d.deleted=0",
-                "project_id": "(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='desk_decision:'||d.id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1)",
-                "project": "EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=? AND pr.resource_ref='desk_decision:'||d.id AND pr.deleted=0)",
-            },
-            "action": {
-                "table": "action_items",
-                "alias": "a",
-                "id": "a.id",
-                "title": "a.task",
-                "body": "COALESCE(a.owner,'')||' '||COALESCE(a.due,'')||' '||a.status",
-                "time": "COALESCE(a.completed_at,a.created_at)",
-                "active": "1=1",
-                "project_id": "COALESCE((SELECT mp.project_id FROM meeting_projects mp WHERE mp.meeting_id=a.meeting_id ORDER BY mp.project_id LIMIT 1),(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='action:'||a.id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1))",
-                "project": "(EXISTS (SELECT 1 FROM meeting_projects mp WHERE mp.project_id=? AND mp.meeting_id=a.meeting_id) OR EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=? AND pr.resource_ref='action:'||a.id AND pr.deleted=0))",
-            },
-            "project_item": {
-                "table": "project_items",
-                "alias": "p",
-                "id": "p.id",
-                "title": "p.title",
-                "body": "COALESCE(p.summary,'')||' '||COALESCE(p.details_json,'')||' '||p.item_type||' '||p.lifecycle||' '||COALESCE(p.severity,'')",
-                "time": "p.updated_at",
-                "active": "1=1",
-                "project_id": "p.project_id",
-                "project": "p.project_id=?",
-            },
-            "workbench_item": {
-                "table": "workbench_items",
-                "alias": "w",
-                "id": "w.id",
-                "title": "w.title",
-                "body": "w.body||' '||COALESCE(w.result,'')",
-                "time": "w.last_modified",
-                "active": "w.status!='dismissed'",
-                "project_id": "COALESCE((SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='workbench_item:'||w.id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1),(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='workbench:'||w.workbench_id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1))",
-                "project": "EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=? AND pr.deleted=0 AND pr.resource_ref IN ('workbench_item:'||w.id,'workbench:'||w.workbench_id))",
-            },
-            "cadence": {
-                "table": "cadence_loops",
-                "alias": "c",
-                "id": "c.id",
-                "title": "c.title",
-                "body": "c.summary||' '||c.status||' '||c.priority||' '||COALESCE(c.owner,'')",
-                "time": "c.updated_at",
-                "active": "c.status!='killed'",
-                "project_id": "COALESCE(c.project,(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='cadence:'||c.id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1))",
-                "project": "(c.project=? OR EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=? AND pr.resource_ref='cadence:'||c.id AND pr.deleted=0))",
-            },
-        }
+        specs = _ECOSYSTEM_SPECS
         spec = specs[kind]
         haystack = (
             f"lower(COALESCE({spec['title']},'')||' '||COALESCE({spec['body']},''))"

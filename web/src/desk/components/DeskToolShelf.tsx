@@ -152,14 +152,26 @@ export function rankRow(
  * THERE, so a ghost whose name a live row already carries is dropped.
  */
 export function oneDoorPerName<
-  T extends { label: string; ghost?: string | null },
+  T extends { label: string; ghost?: string | null; section?: string },
 >(rows: T[]): T[] {
   const live = new Set(
     rows.filter((row) => !row.ghost).map((row) => row.label.toLocaleLowerCase()),
   );
-  return rows.filter(
-    (row) => !(row.ghost && live.has(row.label.toLocaleLowerCase())),
-  );
+  /* HS-202-02 (Astra's counsel finding 6) — dropping ghosts is only half
+     of it. With an askable object SELECTED the object verb stops being a
+     ghost, so `Ask AI` came back as TWO live rows. One name, one door:
+     the row that acts on the selection wins when it can run, and the
+     launcher wins otherwise. */
+  const kept = new Set<string>();
+  const out: T[] = [];
+  for (const row of rows) {
+    const name = row.label.toLocaleLowerCase();
+    if (row.ghost && live.has(name)) continue;
+    if (kept.has(name)) continue;
+    kept.add(name);
+    out.push(row);
+  }
+  return out;
 }
 
 export function DeskToolShelf() {

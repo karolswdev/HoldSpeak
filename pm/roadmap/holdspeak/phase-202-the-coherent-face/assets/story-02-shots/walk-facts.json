@@ -1,12 +1,12 @@
 {
-  "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.bDHO4Syopi",
+  "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.YfaunetiDJ",
   "hubs": {
-    "1440": "http://127.0.0.1:62254",
-    "393": "http://127.0.0.1:62456"
+    "1440": "http://127.0.0.1:61718",
+    "393": "http://127.0.0.1:62241"
   },
   "mic_refusal": {
     "1440": {
-      "message": "\u26a0\ufe0e\nNo microphone was found on this device. Your draft remains editable. Connect a microphone, then retry.",
+      "message": "\u26a0\ufe0e\nThe browser gave no microphone. Your draft remains editable. Check the microphone, then retry.",
       "verbs": [
         "Click to retry",
         "",
@@ -18,7 +18,7 @@
       ]
     },
     "393": {
-      "message": "\u26a0\ufe0e\nNo microphone was found on this device. Your draft remains editable. Connect a microphone, then retry.",
+      "message": "\u26a0\ufe0e\nThe browser gave no microphone. Your draft remains editable. Check the microphone, then retry.",
       "verbs": [
         "Click to retry",
         "",
@@ -30,9 +30,21 @@
       ]
     }
   },
+  "mic_recovery_opens": {
+    "1440": {
+      "setup_window": 1,
+      "new_project_window": 0,
+      "readiness_face": 3
+    },
+    "393": {
+      "setup_window": 1,
+      "new_project_window": 0,
+      "readiness_face": 3
+    }
+  },
   "brief_badge": {
-    "1440": "ABSENT",
-    "393": "ABSENT"
+    "1440": "THIS DEVICE",
+    "393": "THIS DEVICE"
   },
   "dock_box": {
     "1440": {
@@ -70,6 +82,18 @@
       "y": 806,
       "width": 40,
       "height": 40
+    }
+  },
+  "generate": {
+    "1440": {
+      "verb_present": 1,
+      "badge_before": "THIS DEVICE",
+      "receipt_after": "Brief ready \u00b7 3 items \u00b7 9:49 PM"
+    },
+    "393": {
+      "verb_present": 1,
+      "badge_before": "THIS DEVICE",
+      "receipt_after": "Brief ready \u00b7 3 items \u00b7 9:53 PM"
     }
   },
   "menu_titles": {
@@ -120,8 +144,8 @@
     }
   },
   "note_keep_receipt": {
-    "1440": "KEPT \u00b7 7:42 PM",
-    "393": "KEPT \u00b7 7:44 PM"
+    "1440": "KEPT \u00b7 9:50 PM",
+    "393": "KEPT \u00b7 9:53 PM"
   },
   "desk_memory": {
     "1440": {
@@ -185,18 +209,48 @@
       "System"
     ]
   },
+  "transcript_import": {
+    "1440": 202,
+    "393": 202
+  },
+  "record_reads": [
+    1440,
+    1440,
+    1440,
+    1440,
+    393,
+    393,
+    393,
+    393
+  ],
   "meeting_record": {
     "1440": {
-      "route_disclosed": 0,
-      "run_verb": 0
+      "title": "HS-202-02 transcript",
+      "route_disclosed": 1,
+      "run_verb": 0,
+      "record_rereads_on_signal": 1
     },
     "393": {
-      "route_disclosed": 0,
-      "run_verb": 0
+      "title": "HS-202-02 transcript",
+      "route_disclosed": 1,
+      "run_verb": 0,
+      "record_rereads_on_signal": 1
     }
   },
   "speak_footer_chips": {
     "1440": [],
     "393": []
+  },
+  "dock_presses": {
+    "1440": {
+      "total": 9,
+      "pressed": 9,
+      "refused": []
+    },
+    "393": {
+      "total": 9,
+      "pressed": 9,
+      "refused": []
+    }
   }
 }

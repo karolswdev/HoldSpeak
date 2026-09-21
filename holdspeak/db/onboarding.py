@@ -20,11 +20,20 @@ FIRST_VALUE_DESTINATIONS = {"this_machine", "paired_desktop"}
 # value attempt is never closed.
 FIRST_VALUE_FAILURES = {
     "permission_denied",
-    # HS-202-02: the missing-device failure. Before this story it fell to
-    # "unknown"; naming it on the face made the receipt 400 until the hub
-    # knew the name too (measured on the walk: `400 POST
-    # /api/setup/first-value/<id>/finish`).
+    # HS-202-02: the two microphone failures this story names on the face.
+    # Naming one without naming it here made the receipt 400 (measured on
+    # the walk: `400 POST /api/setup/first-value/<id>/finish`).
     "no_microphone",
+    "microphone_unavailable",
+    # HS-202-02 (Astra's counsel finding 7 on PR #595): the three HS-132-05
+    # streaming refusals the face has been able to send since that story
+    # and the hub has never accepted. Found while adding `no_microphone`;
+    # paid here rather than left as a debt with no home, because the defect
+    # is identical — a named failure the owner sees, and a receipt that
+    # cannot close behind it.
+    "mic_interval_closed",
+    "provider_failure",
+    "audio_floor_held",
     "missing_model",
     "rejected_token",
     "unreachable_hub",

@@ -23,6 +23,12 @@ vi.mock("../../lib/api", () => ({
   apiFetch: (...args: unknown[]) => apiFetch(...args),
   readableError: (e: unknown) => String(e),
 }));
+const reportWriteFailure = vi.fn();
+const clearWriteFailure = vi.fn();
+vi.mock("../hooks/useWriteReceipt", () => ({
+  reportWriteFailure: (...args: unknown[]) => reportWriteFailure(...args),
+  clearWriteFailure: (...args: unknown[]) => clearWriteFailure(...args),
+}));
 vi.mock("../thoughts", () => ({
   adoptThought: (...args: unknown[]) => adoptThought(...args),
   thoughtForNote: (...args: unknown[]) => thoughtForNote(...args),
@@ -72,6 +78,36 @@ describe("Write a thought opens a note in the Thought window", () => {
     );
     expect(verb).not.toMatch(/openSurfaceOr\("dictate"/);
     expect(verb).toMatch(/openNewThought/);
+  });
+
+  /* Astra's counsel finding 4 on PR #595: "Its catch returns without
+     reporting anything… A refused POST therefore produces no visible
+     result or retry." */
+  it("names a refused create on the desk's failure channel, with a retry", async () => {
+    reportWriteFailure.mockReset();
+    apiFetch.mockRejectedValue(new Error("hub refused the write"));
+    const { openNewThought } = await import("../newThought");
+
+    await openNewThought();
+
+    expect(reportWriteFailure).toHaveBeenCalledTimes(1);
+    const [verb, cause, retry] = reportWriteFailure.mock.calls[0];
+    expect(verb).toBe("Write a thought");
+    expect(String(cause)).toContain("hub refused the write");
+    expect(typeof retry).toBe("function");
+    // Nothing is opened over a note that was never made.
+    expect(openPullout).not.toHaveBeenCalled();
+  });
+
+  it("clears a standing failure once the create lands", async () => {
+    clearWriteFailure.mockReset();
+    apiFetch.mockResolvedValue({ note: { id: "note_3" } });
+    thoughtForNote.mockRejectedValue(new Error("offline"));
+    const { openNewThought } = await import("../newThought");
+
+    await openNewThought();
+
+    expect(clearWriteFailure).toHaveBeenCalled();
   });
 
   it("still opens the note when the adoption is refused", async () => {

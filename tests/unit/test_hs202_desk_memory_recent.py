@@ -162,3 +162,94 @@ def test_the_recent_read_states_an_empty_desk_honestly(client) -> None:
     assert body["recent"] is True
     assert body["remembered"] == 0
     assert body["searched_at"]
+
+
+# ── Astra's counsel finding 5 (PR #595): a desk of only meetings, or only
+# notes, read EMPTY. `_memory_hits` sent an empty query into the FTS
+# matcher, which raises `ValueError("query must contain searchable text")`
+# (holdspeak/db/memory.py:101-105) and was swallowed into `[]`
+# (recall_service.py:477-482). Decisions and briefs had a recent path;
+# every other kind did not.
+
+
+def _seed_meeting(db, meeting_id: str = "m-recent") -> None:
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT INTO meetings (id, title, started_at)
+               VALUES (?, ?, ?)""",
+            (meeting_id, "Architecture review", "2026-09-19T11:00:00"),
+        )
+        conn.execute(
+            """INSERT INTO segments
+               (meeting_id, text, speaker, start_time, end_time)
+               VALUES (?, ?, ?, ?, ?)""",
+            (
+                meeting_id,
+                "We agreed the freeze window moves to Sunday.",
+                "Karol",
+                0.0,
+                6.0,
+            ),
+        )
+
+
+def _seed_note(db, note_id: str = "note-recent") -> None:
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT INTO notes (id, title, body_markdown, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?)""",
+            (
+                note_id,
+                "A thought I want kept",
+                "The reader flag needs two reviews.",
+                "2026-09-19T12:00:00",
+                "2026-09-19T12:00:00",
+            ),
+        )
+
+
+def test_a_desk_of_only_meetings_is_not_empty(client) -> None:
+    db, http = client
+    _seed_meeting(db)
+
+    body = http.get("/api/memory/recall", params={"recent": "1"}).json()
+
+    assert body["remembered"] > 0, body
+    assert [m["title"] for m in body["meetings"]] == ["Architecture review"]
+    assert body["meetings"][0]["source_ref"] == "meeting:m-recent"
+
+
+def test_a_desk_of_only_notes_is_not_empty(client) -> None:
+    db, http = client
+    _seed_note(db)
+
+    body = http.get("/api/memory/recall", params={"recent": "1"}).json()
+
+    assert body["remembered"] > 0, body
+    assert [n["title"] for n in body["also"]] == ["A thought I want kept"]
+    assert body["also"][0]["source_ref"] == "note:note-recent"
+
+
+def test_the_meetings_filter_reads_recent_meetings(client) -> None:
+    db, http = client
+    _seed_meeting(db)
+    _seed_note(db)
+
+    body = http.get(
+        "/api/memory/recall", params={"recent": "1", "filter": "meetings"}
+    ).json()
+    assert [m["title"] for m in body["meetings"]] == ["Architecture review"]
+    assert body["also"] == []
+
+
+def test_recent_memory_is_newest_first(client) -> None:
+    db, http = client
+    _seed_meeting(db, "m-old")
+    with db._connection() as conn:
+        conn.execute("UPDATE meetings SET started_at=? WHERE id=?",
+                     ("2026-01-01T09:00:00", "m-old"))
+    _seed_meeting(db, "m-new")
+
+    body = http.get("/api/memory/recall", params={"recent": "1"}).json()
+    refs = [m["source_ref"] for m in body["meetings"]]
+    assert refs.index("meeting:m-new") < refs.index("meeting:m-old"), refs

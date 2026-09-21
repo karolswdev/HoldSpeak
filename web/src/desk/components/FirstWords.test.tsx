@@ -9,6 +9,7 @@ import {
 import { readDurableDraft } from "../../lib/durableDraft";
 
 const mocks = vi.hoisted(() => ({
+  clearSurfaceWindows: vi.fn(),
   apiFetch: vi.fn(),
   retryPendingTranscription: vi.fn(),
   startStreamSession: vi.fn(),
@@ -19,10 +20,20 @@ const mocks = vi.hoisted(() => ({
   streamSupported: true,
 }));
 
-vi.mock("../store", () => ({
-  useDesk: (selector: (state: { refresh: typeof mocks.refresh }) => unknown) =>
-    selector({ refresh: mocks.refresh }),
-}));
+vi.mock("../store", () => {
+  // HS-202-02: the card can open a recovery window now, so leaving clears
+  // surface windows before the handoff (FirstWords.tsx:265).
+  const state = {
+    refresh: mocks.refresh,
+    clearSurfaceWindows: mocks.clearSurfaceWindows,
+  };
+  return {
+    useDesk: Object.assign(
+      (selector: (s: typeof state) => unknown) => selector(state),
+      { getState: () => state },
+    ),
+  };
+});
 
 vi.mock("../../lib/api", () => {
   class ApiError extends Error {
@@ -624,13 +635,16 @@ describe("the missing-microphone recovery (HS-202-02)", () => {
     );
     render(<FirstWords />);
     fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
-    await screen.findByText(/No microphone was found/i);
+    await screen.findByText(/The browser gave no microphone/i);
   }
 
-  it("names the microphone instead of the capture", async () => {
+  it("names the microphone instead of the capture, and claims no more", async () => {
     await failWithNoDevice();
-    expect(screen.getByText(/No microphone was found/i)).toBeVisible();
+    expect(screen.getByText(/The browser gave no microphone/i)).toBeVisible();
     expect(screen.queryByText(/Retry the capture/i)).toBeNull();
+    // Astra's counsel finding 7: the exception does not establish that no
+    // microphone is physically attached, so the card does not say so.
+    expect(screen.queryByText(/was found on this device/i)).toBeNull();
   });
 
   it("offers both recoveries: Check the microphone and a retry", async () => {

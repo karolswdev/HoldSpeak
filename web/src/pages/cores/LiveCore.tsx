@@ -62,6 +62,7 @@ import {
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { presentValue } from "../../desk/surface/format";
 import { intelEgressBadge } from "./liveEgress";
+import { onReturnToTask } from "../../desk/returnToTask";
 
 type Segment = Record<string, unknown>;
 
@@ -72,6 +73,28 @@ export function LiveCore({ hero }: CoreProps) {
   const pluginJobs = useResource<PluginJobsSummaryResponse>("/api/plugin-jobs/summary", {});
   const devices = useResource<DevicesHealthResponse>("/api/devices/health", {});
   const { state: connection, subscribe } = useRuntimeBus();
+  /* HS-202-02 (Astra's counsel finding 3) — the Intelligence badge maps
+     the hub's real posture, but only what it read ONCE on mount. Set an
+     engine in the Concierge and this face kept the old placement until it
+     remounted. It rides the same signals the Meetings face does. */
+  const reloadRuntimeStatus = runtimeStatus.reload;
+  useEffect(() => {
+    let timer = 0;
+    const bump = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => void reloadRuntimeStatus(), 300);
+    };
+    const offDeskChanged = subscribe("desk_changed", bump);
+    const offReturn = onReturnToTask(() => void reloadRuntimeStatus());
+    const onFocus = () => void reloadRuntimeStatus();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.clearTimeout(timer);
+      offDeskChanged();
+      offReturn();
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [subscribe, reloadRuntimeStatus]);
   const [state, setState] = useState<Record<string, unknown>>({});
   const [segments, setSegments] = useState<Segment[]>([]);
   const action = useAction();

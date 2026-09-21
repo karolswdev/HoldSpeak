@@ -49,6 +49,9 @@ class Hub:
         env = dict(os.environ)
         env["HOME"] = self.home
         env["HOLDSPEAK_WEB_PORT"] = str(self.port)
+        # The arrival's `No brief yet` + `Generate` branch only exists on a
+        # desk without one (HS-202-02, Astra's condition 8).
+        env["HOLDSPEAK_WALK_SKIP_BRIEF"] = "1"
         env.setdefault("PYTHONUNBUFFERED", "1")
         self.proc = subprocess.Popen(
             [
@@ -102,6 +105,38 @@ class Hub:
                     return resp.status, raw[:400]
         except urllib.error.HTTPError as exc:
             return exc.code, exc.read().decode()[:400]
+        except Exception as exc:  # noqa: BLE001
+            return 0, repr(exc)
+
+    def api_multipart_txt(
+        self, path: str, filename: str, text: str, *, title: str = ""
+    ) -> tuple[int, Any]:
+        """POST one .txt as a multipart upload (the product's own import
+        door for a transcript; no audio, no microphone)."""
+        boundary = "----hs202boundary"
+        parts = [
+            f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\";"
+            f" filename=\"{filename}\"\r\nContent-Type: text/plain\r\n\r\n{text}\r\n"
+        ]
+        if title:
+            parts.append(
+                f"--{boundary}\r\nContent-Disposition: form-data;"
+                f" name=\"title\"\r\n\r\n{title}\r\n"
+            )
+        parts.append(f"--{boundary}--\r\n")
+        data = "".join(parts).encode()
+        req = urllib.request.Request(
+            f"{self.url}{path}", data=data, method="POST",
+            headers={
+                "X-HoldSpeak-Token": self.token,
+                "Content-Type": f"multipart/form-data; boundary={boundary}",
+            },
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                return resp.status, resp.read().decode()[:300]
+        except urllib.error.HTTPError as exc:
+            return exc.code, exc.read().decode()[:300]
         except Exception as exc:  # noqa: BLE001
             return 0, repr(exc)
 
@@ -205,9 +240,38 @@ def goto_desk(page, hub: Hub, width: int, facts: dict[str, Any] | None = None) -
                           page.locator(".desk-first-words button").all()],
             }
             shoot(page, "first-run-mic-refused", width)
+            # Astra's counsel finding 1 + condition 8: PRESS it. A photo of
+            # a verb is not proof the verb works; the cold-desk registry
+            # admitted only `project-setup`, so this press used to fall
+            # back to `/` and open nothing.
+            check = page.get_by_role("button", name="Check the microphone")
+            if check.count():
+                try:
+                    check.first.click(timeout=8000)
+                    page.wait_for_timeout(4000)
+                except Exception:  # noqa: BLE001
+                    pass
+                (facts if facts is not None else {}).setdefault(
+                    "mic_recovery_opens", {})[width] = {
+                    "setup_window": page.locator("#surface-setup").count(),
+                    "new_project_window": page.locator(
+                        "#surface-project-setup").count(),
+                    "readiness_face": page.locator(
+                        "#surface-setup .surface-section, #surface-setup").count(),
+                }
+                shoot(page, "first-run-microphone-checked", width)
+                # The doctor window now sits over the card; close it so the
+                # card's own way out is reachable again.
+                close_windows(page)
         escape = page.locator(".desk-first-words .btn--ghost")
         if escape.count():
-            escape.first.click()
+            try:
+                escape.first.click(timeout=15000, force=True)
+            except Exception:  # noqa: BLE001
+                # The card's escape is the one door out of first value; if
+                # it is covered, say so rather than leaving a half-walk.
+                (facts if facts is not None else {}).setdefault(
+                    "gate_escape_failed", {})[width] = True
             settle(page, 3000)
 
 
@@ -346,13 +410,30 @@ def walk(page, width: int, hub: Hub, facts: dict[str, Any]) -> None:
         if rows.count():
             rows.first.click(timeout=8000)
             settle(page, 4000)
+        before = len([r for r in facts.get("record_reads", []) if r == width])
+        # The product's own return signal — the one the Concierge fires
+        # after it applies a set (desk/returnToTask.ts:37).
+        page.evaluate(
+            "() => window.dispatchEvent("
+            "new CustomEvent('holdspeak:settings-updated'))"
+        )
+        settle(page, 3000)
+        after = len([r for r in facts.get("record_reads", []) if r == width])
         facts.setdefault("meeting_record", {})[width] = {
+            "title": (
+                page.locator(".meetings-detail-head .surface-display")
+                .first.inner_text().strip()
+                if page.locator(".meetings-detail-head .surface-display").count()
+                else "NONE"
+            ),
             "route_disclosed": page.locator(
                 "[data-testid='detail-route'], [data-testid='detail-route-unavailable']"
             ).count(),
             "run_verb": page.locator(
                 "[data-testid='detail-run-intelligence-btn']").count(),
+            "record_rereads_on_signal": after - before,
         }
+        shoot(page, "meeting-record-refreshed", width)
 
     def speak_facts() -> None:
         chips = page.locator("#surface-dictation .gadget-chip-egress")
@@ -360,7 +441,45 @@ def walk(page, width: int, hub: Hub, facts: dict[str, Any]) -> None:
             chips.nth(i).inner_text().strip() for i in range(chips.count())
         ]
 
+    def generate_brief() -> None:
+        """Astra's condition 8: RUN Generate, on a desk with no brief."""
+        section = page.locator('[data-testid="arrival-brief"]')
+        verb = page.locator('[data-testid="arrival-brief-generate"]')
+        facts.setdefault("generate", {})[width] = {
+            "verb_present": verb.count(),
+            "badge_before": (
+                section.locator(".gadget-chip-egress").first.inner_text().strip()
+                if section.locator(".gadget-chip-egress").count() else "ABSENT"
+            ),
+        }
+        if not verb.count():
+            return
+        shoot(page, "generate-before", width)
+        verb.first.click(timeout=8000)
+        page.wait_for_timeout(6000)
+        receipt = page.locator('[data-testid="arrival-brief-receipt"]')
+        facts["generate"][width]["receipt_after"] = (
+            receipt.first.inner_text().strip() if receipt.count() else "ABSENT"
+        )
+        shoot(page, "generate-after", width)
+
+    def meeting_refresh() -> None:
+        """Astra's condition 8: a record with a REAL transcript, refreshed
+        by the product's own return signal — no browser reload."""
+        status, body = hub.api_multipart_txt(
+            "/api/meetings/import",
+            "hs-202-02-transcript.txt",
+            "Karol: The freeze window moves to Sunday.\n"
+            "Priya: I will confirm with payments before Friday.\n",
+            title="HS-202-02 transcript",
+        )
+        facts.setdefault("transcript_import", {})[width] = status
+        page.reload(wait_until="domcontentloaded")
+        page.wait_for_timeout(3000)
+        surface("Meetings", "meeting-record", meeting_facts)
+
     step("arrival", facts, width, arrival)
+    step("generate", facts, width, generate_brief)
     step("menus", facts, width, menus)
     step("shelf", facts, width, shelf)
     step("write-a-thought", facts, width, write_a_thought)
@@ -396,10 +515,48 @@ def walk(page, width: int, hub: Hub, facts: dict[str, Any]) -> None:
          lambda: surface("Models", "concierge-address", concierge_facts))
     step("settings", facts, width,
          lambda: surface("Settings", "settings-hub", settings_facts))
-    step("meetings", facts, width,
-         lambda: surface("Meetings", "meeting-record", meeting_facts))
+    step("meetings", facts, width, meeting_refresh)
     step("speak", facts, width,
          lambda: surface("Speak", "speak-face", speak_facts))
+
+    def dock_presses() -> None:
+        """Astra's counsel finding 9: geometry is not pressability. This
+        step is LAST because it is destructive — it opens every window and
+        toggles the Floor, which no arrival-dependent step survives."""
+        goto_desk(page, hub, width, facts)
+        buttons = page.locator(".desk-dock .desk-dock-launch")
+        # Astra's counsel finding 9: geometry is not pressability. PRESS
+        # every dock launcher and record what answered. The inventory's
+        # 393 measure was 0 of 11 clickable.
+        # Snapshot the names FIRST: pressing a launcher folds it into a
+        # window chip, so an index-based loop goes stale mid-walk.
+        names = [
+            buttons.nth(i).get_attribute("aria-label") or f"#{i}"
+            for i in range(buttons.count())
+        ]
+        pressed, refused = [], []
+        for name in names:
+            target = page.locator(
+                f'.desk-dock .desk-dock-launch[aria-label="{name}"]')
+            try:
+                if not target.count():
+                    # Already open, so it wears a chip rather than a
+                    # launcher — reached, not refused.
+                    pressed.append(name)
+                    continue
+                target.first.click(timeout=4000)
+                pressed.append(name)
+                page.wait_for_timeout(250)
+            except Exception:  # noqa: BLE001
+                refused.append(name)
+            close_shelf(page)
+        facts.setdefault("dock_presses", {})[width] = {
+            "total": len(names), "pressed": len(pressed), "refused": refused,
+        }
+        close_windows(page)
+
+    step("dock-presses", facts, width, dock_presses)
+
 
 
 def main() -> int:
@@ -435,6 +592,10 @@ def main() -> int:
             page.on("console", lambda m: (
                 facts.setdefault("console_errors", []).append(m.text[:300])
                 if m.type == "error" else None))
+            page.on("request", lambda rq: (
+                facts.setdefault("record_reads", []).append(width)
+                if "/api/meetings/" in rq.url and "?" not in rq.url
+                and rq.url.rstrip("/").count("/") == 5 else None))
             page.on("response", lambda r: (
                 facts.setdefault("bad_responses", []).append(
                     f"{r.status} {r.request.method} {r.url.split('?')[0]}")

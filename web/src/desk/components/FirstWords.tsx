@@ -253,6 +253,13 @@ export function FirstWords({
   const dismiss = async (disposition: "dismissed" | "needs_help") => {
     if (disposition === "dismissed") void tracker.current?.event("continue_later_selected");
     if (actionRef.current || handoffRef.current) return;
+    /* HS-202-02 — leave nothing open across the handoff. The card can now
+       open the readiness face (`Check the microphone`), and a recovery
+       window still on glass when first value hands over to the real Desk
+       left the card spinning on `Continue later` forever (caught by this
+       story's own shot walk). The way out is never conditional on what
+       the recovery opened. */
+    useDesk.getState().clearSurfaceWindows?.();
     let noteId = keptNoteId;
     if (text.trim() && !noteId) {
       actionRef.current = "dismiss";

@@ -271,6 +271,19 @@
     padding: 4px 8px calc(4px + env(safe-area-inset-bottom, 0px));
     z-index: var(--desk-z-dock);
   }
+  /* HS-202-02: the Chair keeps its own hands clear of the dock. The
+     phone dock wraps, so it is taller than the 52px the desktop work
+     band reserves, and the arrival's capture bar sat UNDER it (caught by
+     tests/e2e/test_hs141_chair_geometry.py). The work-band token is a
+     shell-wide invariant and is left alone; the Chair pads itself by the
+     dock's own measured height (`--desk-dock-h`, published by Dock.tsx),
+     minus the band already reserved. */
+  .desk-next .chair:not(.chair-first-value) {
+    padding-bottom: calc(
+      var(--space-4) +
+        max(0px, var(--desk-dock-h, var(--desk-snap-bottom)) - var(--desk-snap-bottom))
+    );
+  }
   /* Icon-only at phone width. Every launcher already carries an
      `aria-label`, so the name stays in the accessibility tree while the
      printed word folds away and eleven doors fit the screen. */

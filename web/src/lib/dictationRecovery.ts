@@ -2,10 +2,14 @@ import { ApiError, type JsonRecord } from "./api";
 
 export type DictationFailure =
   | "permission_denied"
-  /* HS-202-02 — the device itself is absent. Before this it fell to
+  /* HS-202-02 — the browser gave no microphone. Before this it fell to
      "unknown", which said neither "microphone" nor anything a person
-     could do. */
+     could do. The name states what was OBSERVED (the browser handed back
+     no device); it does not claim the hardware is absent. */
   | "no_microphone"
+  /* HS-202-02 (Astra's counsel finding 7) — the device exists and would
+     not start: another owner, or the hardware itself. */
+  | "microphone_unavailable"
   | "missing_model"
   | "rejected_token"
   | "unreachable_hub"
@@ -38,13 +42,27 @@ export const DICTATION_FAILURES: Record<
     setup: false,
     alternateRunsOn: false,
   },
-  /* HS-202-02 — no input device. Two recoveries, both of which can work:
-     `Check the microphone` opens the readiness face, whose sections carry
-     the doctor's own microphone check (holdspeak/commands/doctor.py:1064
-     → setup_status.py:254-260); Retry works once a device is attached. */
+  /* HS-202-02 — the browser handed back no microphone. Two recoveries,
+     both of which can work: `Check the microphone` opens the readiness
+     face, whose sections carry the doctor's own microphone check
+     (holdspeak/commands/doctor.py:1064 → setup_status.py:254-260); Retry
+     works once a device is there.
+     Astra's counsel finding 7: the WORDING says what the exception
+     supports. `NotFoundError` and `NotSupportedError` both mean the
+     browser produced no device — not that no microphone is plugged in. */
   no_microphone: {
     message:
-      "No microphone was found on this device. Your draft remains editable. Connect a microphone, then retry.",
+      "The browser gave no microphone. Your draft remains editable. Check the microphone, then retry.",
+    retry: true,
+    setup: true,
+    alternateRunsOn: false,
+  },
+  /* HS-202-02 — `NotReadableError` / `TrackStartError`: the device is
+     there and refused to start. Another application may hold it, or the
+     hardware itself failed; the message claims neither. */
+  microphone_unavailable: {
+    message:
+      "The microphone could not start. Your draft remains editable. Close anything else using it, then retry.",
     retry: true,
     setup: true,
     alternateRunsOn: false,
@@ -225,8 +243,11 @@ export function dictationFailure(error: unknown): DictationFailure {
       error.name === "ConstraintNotSatisfiedError"
     )
       return "no_microphone";
+    /* Astra's counsel finding 7: this is NOT `audio_floor_held` — that
+       name asserts another owner, which the exception does not establish,
+       and the hub's first-value vocabulary rejects it besides. */
     if (error.name === "NotReadableError" || error.name === "TrackStartError")
-      return "audio_floor_held";
+      return "microphone_unavailable";
     if (error.name === "AbortError" || error.name === "TimeoutError")
       return "timeout";
   }

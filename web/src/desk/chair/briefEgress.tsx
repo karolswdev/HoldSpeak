@@ -25,14 +25,25 @@ export function BriefEgress() {
 }
 
 export type GeneratedBrief = {
-  items?: unknown[];
+  /** The hub's shape: `{changed, broke, waiting, decisions}` of items. */
+  sections?: Record<string, unknown[]>;
+  is_empty?: boolean;
   generated_at?: string;
 };
 
-/** The receipt after the press: what was built, and when. */
+/** The receipt after the press: what was built, and when.
+ *
+ * HS-202-02 (Astra's counsel finding 2 on PR #595) — the first round
+ * counted `brief.items`, a field `MondayBrief` does not have
+ * (`ChairHome.tsx:136-142`), so every receipt silently dropped its count.
+ * The helper-only test could not see it; the rendered fence did.
+ */
 export function briefReceipt(brief: GeneratedBrief | null): string | null {
   if (!brief) return null;
-  const count = Array.isArray(brief.items) ? brief.items.length : 0;
+  const count = Object.values(brief.sections ?? {}).reduce(
+    (total, rows) => total + (Array.isArray(rows) ? rows.length : 0),
+    0,
+  );
   const when = new Date(String(brief.generated_at ?? ""));
   const time = Number.isNaN(when.getTime())
     ? ""

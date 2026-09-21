@@ -92,6 +92,18 @@ class _MeetingPersonRedactor:
 
 
 @observe_service
+def notify_desk_changed(kind: str, obj_id: str, op: str) -> None:
+    """Announce a desk write from the import worker (HS-202-02).
+
+    Indirected through the composition root the same way the other
+    no-``on_changed`` writers do; a no-op outside a hub. Kept as a module
+    attribute so a test can observe the announcement.
+    """
+    from holdspeak.runtime.composition import notify_desk_changed as notify
+
+    notify(kind, obj_id, op)
+
+
 class MeetingService:
     """One service boundary for meeting capture and persisted meeting data."""
 
@@ -267,6 +279,14 @@ class MeetingService:
             )
         finally:
             tmp_path.unlink(missing_ok=True)
+            # HS-202-02 (coordinator item 9): the import worker finished in
+            # SILENCE. The route answers 202 and this thread does the work,
+            # so an open Meetings face had nothing to listen to and the
+            # record only showed the transcript after a browser reload.
+            # The desk really did change; say so on the frame the face
+            # already subscribes to. Success and failure both change the
+            # row the owner is looking at.
+            notify_desk_changed("meeting", meeting_id, "update")
 
     def _set_import_status(self, meeting_id: str, status: str, detail: str) -> None:
         state = self._db.meetings.get_meeting(meeting_id)

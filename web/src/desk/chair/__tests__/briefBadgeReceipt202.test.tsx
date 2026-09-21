@@ -38,7 +38,7 @@ describe("the brief's receipt (HS-202-02)", () => {
 
   it("names what was built and when", () => {
     const line = briefReceipt({
-      items: [{ id: "a" }, { id: "b" }],
+      sections: { changed: [{ id: "a" }], waiting: [{ id: "b" }] },
       generated_at: "2026-09-20T15:41:00",
     });
     expect(line).toBe("Brief ready · 2 items · 3:41 PM");
@@ -46,13 +46,16 @@ describe("the brief's receipt (HS-202-02)", () => {
 
   it("never counts zero (UX-CANON A.8)", () => {
     expect(
-      briefReceipt({ items: [], generated_at: "2026-09-20T15:41:00" }),
+      briefReceipt({ sections: {}, generated_at: "2026-09-20T15:41:00" }),
     ).toBe("Brief ready · 3:41 PM");
   });
 
   it("states one item in the singular", () => {
     expect(
-      briefReceipt({ items: [{ id: "a" }], generated_at: "2026-09-20T15:41:00" }),
+      briefReceipt({
+        sections: { changed: [{ id: "a" }] },
+        generated_at: "2026-09-20T15:41:00",
+      }),
     ).toBe("Brief ready · 1 item · 3:41 PM");
   });
 });

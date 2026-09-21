@@ -25,7 +25,7 @@ import { useRuntimeBus, useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { onReturnToTask } from "../../desk/returnToTask";
 import { renderHeroSlot } from "./core-layout";
 import {
-  WINGS, clockTime, download, needsIntelligence, meetingsHeadline,
+  WINGS, clockTime, download, needsIntelligence, summaryIsOff, meetingsHeadline,
   hasOpenMeetingActions,
   type Receipt, type DetailView,
   MeetingDetail, ImportSection, CatalogRail, DoorSection,
@@ -179,19 +179,49 @@ export function HistoryCore({ hero, scope }: CoreProps) {
      `desk_changed` and window focus cover everything else. */
   const selectedId = selected ? String(selected.id ?? "") : "";
   const reloadMeetings = meetings.reload;
+  /* HS-202-02 (Astra's counsel finding 3) — two rules here, both learned
+     the hard way:
+
+     1. the response is only for the record still OPEN. Start refreshing A,
+        select B, let A resolve, and an unconditional `setSelected` put A
+        back on the glass under B's row.
+     2. MERGE, never replace. The ledger row and `/api/meetings/{id}` are
+        different shapes — the detail path carries raw dicts and no
+        `transcriptWords` (`services/meeting_service.py:788`), which the
+        face's own `needsIntelligence` gate reads. Replacing the row with
+        the detail silently withdrew `Run summary` from a meeting that had
+        just gained a transcript (caught by the first-use smoke's
+        `import-refresh` leg). The reloaded LIST row is the same shape the
+        click put there, so it is preferred; the detail read is the
+        fallback for a deep-linked meeting the list does not hold. */
+  const keepOpen = useCallback(
+    (id: string, patch: Record<string, unknown>) =>
+      setSelected((current) => {
+        if (!current || String(current.id ?? "") !== id) return current;
+        return { ...current, ...patch };
+      }),
+    [],
+  );
   const refreshFace = useCallback(async () => {
-    void reloadMeetings();
+    const list = await reloadMeetings();
     if (!selectedId) return;
+    const row = asRows(list ?? {}, ["meetings"]).find(
+      (item) => String(item.id) === selectedId,
+    );
+    if (row) {
+      keepOpen(selectedId, row);
+      return;
+    }
     try {
       const fresh = await apiFetch<MeetingDetailResponse>(
         `/api/meetings/${encodeURIComponent(selectedId)}`,
       );
-      setSelected(fresh as Record<string, unknown>);
+      keepOpen(selectedId, fresh as Record<string, unknown>);
     } catch {
       // The ledger still reloaded; the record keeps what it has and the
       // next signal tries again. A failed re-read is never an error face.
     }
-  }, [reloadMeetings, selectedId]);
+  }, [keepOpen, reloadMeetings, selectedId]);
 
   const { subscribe: subscribeFrames } = useRuntimeBus();
   useEffect(() => {
@@ -439,7 +469,15 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         // (`MeetingIntelRecovery`), which runs it through the recovery
         // route with the same disclosed hash. NEEDS YOU must not draw a
         // SECOND Retry/Skip pair beside it (tenet 3, one verb per job).
-        selected && (needsIntelligence(selected) || paneView === "review")
+        /* HS-202-02 (coordinator item 9): `needsIntelligence` reads
+           `transcriptWords`, a LIST-only field. The open record's own
+           transcript comes from the detail read, so a row clicked while
+           its import was still running withheld `Run summary` even after
+           the transcript was plainly on the glass. The gate here asks
+           only whether the summary is OFF; `NeedsYouTable` owns the
+           `hasTranscript` half and reads the real segments
+           (`history/NeedsYouTable.tsx:51-56`). */
+        selected && (summaryIsOff(selected) || paneView === "review")
           ? (displayed: PlannedRoute | null) =>
               void handleRunIntelligence(String(selected.id), displayed)
           : undefined

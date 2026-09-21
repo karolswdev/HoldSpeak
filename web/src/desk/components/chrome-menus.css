@@ -888,6 +888,17 @@
   /* HS-202-02 — Desk, Object and Window are NOT RENDERED at phone width
      (DeskMenuBar folds their verbs into Go). Nothing is hidden here any
      more: a title in the DOM that no press can open was the defect. */
+  /* HS-202-02 (coordinator item 10): Go is the ONE door at phone width,
+     so it carries Desk, Object and Window as well as its own launchers —
+     about forty rows. Unscrolled that panel runs off the bottom of an
+     852px screen and everything after the Desk group is unreachable by
+     any pointer, which is what Astra's first-use fence caught. The panel
+     scrolls, inside the viewport, above the dock. */
+  .desk-next .desk-work-menu {
+    max-height: calc(100dvh - var(--desk-snap-top) - var(--desk-dock-h, 52px) - 16px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
   .desk-verbbar-item[data-menu-id="go"] {
     display: inline-flex;
     align-items: stretch;

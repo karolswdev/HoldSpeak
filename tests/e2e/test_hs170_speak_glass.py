@@ -5,7 +5,7 @@ Artboard assertions on the settled face at 1440 and 393:
 - typed utterance -> land (dry run) -> RESULT row with OK/Wrong
 - Wrong unfolds the teach row (no dialog) -> Teach posts a correction
 - Details folded by default
-- Footer chip reads THIS DEVICE
+- Footer carries Review and Export and claims NO placement (HS-202-02)
 - At 393 nothing overflows
 
 Shots land in assets/story-04-shots/build-speak-*.png.
@@ -121,7 +121,13 @@ def _type_and_land(page: Any) -> None:
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 def test_speak_idle_1440(tmp_path, monkeypatch):
-    """Idle at 1440: placeholder, ENGINE row, Details folded, THIS DEVICE footer."""
+    """Idle at 1440: placeholder, ENGINE row, Details folded, bare footer.
+
+    HS-202-02: the footer's `THIS DEVICE` was a hardcoded literal on a face
+    whose own engine row can read a LAN IP or CLOUD
+    (03-interaction-walk.md Appendix B.2). The badge that pays Article III
+    is the one beside the verb, on the ENGINE row; the foot claims nothing
+    it has not read."""
     _ensure_build()
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     errors: list[str] = []
@@ -159,9 +165,11 @@ def test_speak_idle_1440(tmp_path, monkeypatch):
             body = page.locator(".surface-disclosure-body")
             assert body.count() == 0, "Details should be folded by default"
 
-            # Footer shows THIS DEVICE
+            # HS-202-02: the foot claims no placement; the ENGINE row above
+            # carries the badge that was actually read.
             footer_text = page.locator(".surface-footer-layout").inner_text()
-            assert "THIS DEVICE" in footer_text, f"Footer: {footer_text}"
+            assert "THIS DEVICE" not in footer_text, f"Footer: {footer_text}"
+            assert "Review" in footer_text and "Export" in footer_text
 
             _shot(page, "idle", 1440)
             _assert_clean(page, errors)
@@ -403,7 +411,11 @@ def test_speak_details_folded(tmp_path, monkeypatch):
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 def test_speak_footer_this_device(tmp_path, monkeypatch):
-    """The footer EgressChip reads THIS DEVICE."""
+    """The footer states no placement (HS-202-02).
+
+    It used to print a hardcoded `THIS DEVICE`; a wrong badge is worse
+    than a missing one, so the foot carries the verbs and the receipt and
+    the engine row carries the host."""
     _ensure_build()
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     errors: list[str] = []
@@ -423,7 +435,7 @@ def test_speak_footer_this_device(tmp_path, monkeypatch):
             footer = page.locator(".surface-footer-layout")
             assert footer.count() > 0
             text = footer.inner_text()
-            assert "THIS DEVICE" in text, f"Footer: {text}"
+            assert "THIS DEVICE" not in text, f"Footer: {text}"
 
             _assert_clean(page, errors)
             browser.close()
