@@ -79,3 +79,26 @@ ordinary environment and its existing build.
 No product code, source-button ratchet, or CI command changed. The default
 CI E2E job will be RED until the repair lane removes the named defects.
 The PR is to remain unmerged as the owner ordered.
+
+
+## Follow-up — ruled-design alignment, 2026-09-21 UTC
+
+No new full-suite run. The same candidate is default RED on inventory 50ca
+with the original five/nine keys, strict GREEN plus ratchet (6 passed in 92.95s),
+and default RED on 3595fcb6 (2 failed, 4 passed in 72.14s). Both story 02 widths
+complete all jobs. [Final evidence and shots](evidence-story-01.md#follow-up-result--partial-2026-09-21-utc).
+
+| Finding | Class / proof | Home and action |
+|---|---|---|
+| Premature whole-page receipt guard; separate phone menu assumption | (a), corrected in this follow-up; editor receipt passes at both widths, Go → New Note passes393 | HS-202-01. Receipt freshness spans the edit, before Save closes the status region; no after-click receipt claim. |
+| Resting pointer can change the highlighted palette row when results reorder | (b); before isolation Notes highlighted Custom webhook on story 02; parking the pointer makes keyboard Notes select the note | HS-202-02. Decide how keyboard selection and incidental hover should interact. The harness now parks the pointer before Meta+K, explicitly narrowing this leg to keyboard selection. |
+| Folded Object/Open and Window/Close outside phone viewport | (b); Go 1404px high, overflow visible; rows y=877.5/y=1221.5 after attempted scroll | HS-202-02. Make the folded groups reachable; keep the existing named fence failures. |
+| Import completion leaves stale selected meeting row | (b); transcript loads, no Run summary until reopen; no completion publication in the real import worker | HS-202-02, existing import-refresh. Add truthful refresh; the fence will pass when the loaded record changes within its existing bound. |
+| FirstWords handoff intermittently never opens kept note | (c), unresolved; early hard content timeouts, later both widths complete on both product trees with unchanged speech leg | HS-202-01/02. Capture browser state/request ordering if it recurs; no root cause or flake repair claim, no KNOWN exception. |
+| Editor's text is clipped horizontally at 393 | (b); editor-kept-before-save-393.png; receipt itself is visible | HS-202-02. Correct editor layout. This follow-up does not claim whole-editor layout coverage. |
+| Save inside 450ms can close before any receipt; Cancel also keeps | (b), source counsel; not exercised by this walk | HS-202-02. The fence waits for successful autosave and its receipt before Save. |
+| Opt-in HS202_EXPORT_SHOTS writes to the prior delivery folder | (b), existing source line 37; default runs use temporary shots | HS-202-01. Add run-specific export destination in a separate harness follow-up. Here export ran only in scratch; new proof copied to story-01-followup, original 26 untouched. |
+
+`dw doctor` remains healthy. `dw check holdspeak` still names the same six
+inherited errors: phase 101 evidence 04 not paired to done; missing phase
+summaries 152, 153, 154, 156, 200. No unrelated roadmap cleanup is included.

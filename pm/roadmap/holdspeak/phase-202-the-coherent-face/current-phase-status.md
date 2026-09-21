@@ -31,6 +31,15 @@ Every face on the owner's first-use path has a door at every width, tells the tr
 
 Chartered from the surface inventory after Astra's check (two rounds). Order: 01 → 02 → 03 and 04 together → 05 → 06. HS-202-01 has built and verified the fixture fence: normal RED names five desktop and nine narrow defects; strict verification and the unchanged ratchet pass six tests in 86.83s. It does not claim that the first-use path is repaired. Astra owns the delivery; Muad'Dib checked it twice with RATIFY-WITH-CONDITIONS, whose source and proof closure is recorded in [the check](checks/story-01-muaddib.md). The PR is to remain unmerged; inventory PR #594 goes first.
 
+Follow-up, 2026-09-21: the fence now follows editor autosave and Go's phone
+menu fold. Pinned inventory still reports the exact five/nine defects;
+strict mode plus the ratchet passes six tests in 92.95s. Story 02 at
+3595fcb6 completes both widths but remains default RED: import refresh at
+both widths and off-screen Object/Window entries in Go at 393. The receipt,
+summary refresh and restart legs pass. The requested compatibility result
+is partial, recorded in [the follow-up evidence](evidence-story-01.md#follow-up-result--partial-2026-09-21-utc).
+The story remains done and PR #596 remains unmerged.
+
 ## Lanes
 
 | Lane | Stories | Owner | Checker | Worktree | Branch |
@@ -64,8 +73,19 @@ classification and follow-up. No full-suite GREEN or real-voice claim.
 
 ## Open dissents
 
-None on the settled harness. Both verdicts and Astra's bounded proof ruling
-are preserved in [the built check](checks/story-01-muaddib.md).
+The original delivery's verdicts and Astra's bounded proof ruling are
+preserved in [the built check](checks/story-01-muaddib.md). The follow-up
+records the wording interpretation below.
+
+Follow-up wording distinction, 2026-09-21: the owner asked to “record the
+editor-scoped receipt text before Save, click Save, and assert a NEW
+receipt,” while requiring default GREEN on story 02 with no product repair.
+At 3595fcb6, Save only closes the editor and its receipt. Astra and Muad'Dib
+therefore interpret freshness across the edit: absent before typing,
+visible Kept after the successful autosave, then Save closes and the exact
+text persists. No new after-click receipt is claimed. This interpretation,
+the pending clarification and the owner's right to overrule are explicit in
+[the follow-up check](checks/story-01-followup-muaddib.md).
 
 ## Decisions deferred
 

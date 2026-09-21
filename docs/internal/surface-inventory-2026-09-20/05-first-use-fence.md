@@ -12,7 +12,8 @@ walk at 1440×900 and 393×852 on a real hub in a temporary HOME.
    Require the completed summary and actual host without a reload.
 3. **Write and save:** check Write a thought's destination. Create a note
    through the real command, write title and body, verify persistence, and
-   require a new visible confirmation after Save.
+   require a new visible Kept receipt in that editor before Save closes it.
+   The editor autosaves; after Save, verify closure and the exact saved text.
 4. **Find it again:** restart the in-process hub on the same HOME and database. In a
    fresh tab, find the note body and meeting summary in two navigation
    gestures each: open Search with its button, then select the exact result.
@@ -21,7 +22,9 @@ walk at 1440×900 and 393×852 on a real hub in a temporary HOME.
    against a localhost stub. Require the setup row to clear without reload.
    Only the speech adapter is assigned by the fixture.
 
-The dock and four menus are checked at both widths. Dock doors must fit;
+The dock and four desktop menus are checked. At 393, Go must carry New Note
+and the Object and Window entries, with no inaccessible separate menu titles
+announced. New Note uses Go at that width. Dock doors must fit;
 Search needs an owned, visible pointer target. Each surface must load its
 own content marker. Recovery after a recorded failure is labelled and
 cannot make that check pass.

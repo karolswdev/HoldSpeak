@@ -5,6 +5,88 @@ Lane A, Astra. Base `50ca0dd6`, branch `feat/hs-202-01-fence`, worktree
 the done call. This story ships a failing regression fence before repairs;
 it does not close the phase or the owner's sitting.
 
+## Follow-up — the two ruled-design seams
+
+The same revised smoke is verified against two product trees: an isolated
+baseline worktree at the inventory product (`50ca0dd6`, also `3595fcb6^`), and an isolated
+scratch worktree pinned to story 02 at `3595fcb6`. The scratch tree adds only
+this smoke file; it has its own synced environment and web build. Each run
+uses a fresh HOME and the fixture audio device. Neither lane B nor the main
+checkout is used. The capture prints the tree commit and smoke SHA-256.
+
+At 393, Go carries New Note and the Object and Window entries. The fence
+requires those rows on screen after menu scroll and no inaccessible
+separate titles announced. New Note is opened through Go. At 1440 the four
+menus are checked as before. The inventory failure names stay unchanged.
+
+The edit has a new visible Kept receipt in its editor before Save. A new
+editor must have no such status before typing; after the body PUT succeeds,
+only its own visible `Kept` status can pass. Save then closes the editor and
+the exact title/body remain in the API. This is autosave confirmation,
+**not a receipt emitted by the Save click**. The source, literal wording
+distinction, two-brain check and remaining limits are in
+[the follow-up check](checks/story-01-followup-muaddib.md).
+
+The original full-suite capture and its ledger below remain historical
+proof from the delivery commit; this bounded harness follow-up does not
+claim a new full-suite run. Its verification is the same smoke on both
+trees plus the unchanged source-button ratchet and relevant metadata checks.
+
+### Follow-up result — partial, 2026-09-21 UTC
+
+| Capture | Result read by Astra |
+|---|---|
+| Inventory default, 02:27:13Z | 2 failed in 87.76s; exactly the original five desktop and nine phone failures |
+| Inventory strict plus unchanged ratchet, 02:30:40Z | 6 passed in 92.95s; both widths verify the exact unchanged KNOWN sets |
+| Story 02 default plus unchanged ratchet, 02:28:51Z | **2 failed, 4 passed in 72.14s**; `import-refresh` at both widths; `menu-Object` and `menu-Window` also fail at 393 |
+| Collection | 6 tests collected in 1.93s |
+| Generated API reference | `API reference checked` |
+| Documentation links and generated ledger, 02:36:58Z | 2 passed in 1.40s |
+
+All three runs use smoke SHA-256
+`1529454a786f613e1555df1091ffce3cd83f9b288a8936b74a0988ed66f6b530`.
+The completed story-02 run passes the editor receipt, note persistence,
+desktop menus, phone New Note through Go, summary completion, Notes query,
+and both restart/refind legs. Its default result is **not GREEN**. The Go
+menu is 1,404 px high with visible overflow: Object/Open remains at y=877.5
+and Window/Close at y=1221.5 in an 852 px viewport after attempted scroll.
+The import transcript loads, but Run summary still requires reopening.
+These findings stay in HS-202-02; the fence does not add exceptions for them.
+
+[The follow-up manifest](assets/story-01-followup/manifest.json) identifies
+11 shots from that single story-02 run, their hashes, and the receipt timing.
+Astra inspected the receipts at both widths, folded Go, the stale import,
+and the refound content on glass. Raw final logs and collection output sit
+beside it; the original delivery's 26 shots are unchanged.
+
+Earlier captures below are retained as failed exploratory runs, not hidden:
+some abort on FirstWords handoff; one trial used the root URL and was
+reverted. The unchanged speech leg later completes on both product trees.
+The intermittent handoff cause is unproved and remains a follow-up in the
+[ledger](verification-ledger-story-01.md). No loading timeout is accepted
+by strict mode. No full-suite rerun, product GREEN, or real-voice claim.
+Story 01 stays done; this follow-up has no status flip and no merge.
+Luna `fence_followup` (gpt-5.6-luna, xhigh) implemented the phone menu
+branch and supplied bounded source diagnosis. Astra refined the selectors,
+receipt and pointer checks, then ran and inspected the final proof.
+Muad'Dib returned RATIFY-WITH-CONDITIONS for this partial shipment;
+[the recorded response](checks/story-01-followup-muaddib.md) closes each
+condition and corrects the parent-commit claim with Git evidence.
+
+The keyboard leg also parks the pointer at (0,0) before Meta+K. A resting
+pointer had selected a different result as the list reordered. This isolates
+keyboard selection and discloses a separate hover behavior for HS-202-02;
+it does not prove how a resting pointer and keyboard selection should mix.
+
+Final capture blocks are **02:27:13Z**, **02:28:51Z**, **02:30:40Z**, all
+at SHA 1529454a above. The other follow-up blocks, including SHA 9654ff79
+and SHA a17bb05f, are exploratory. The raw commands' `story02-green` label
+was a target, never a passing result; the archived final log is named
+`assets/story-01-followup/story02-default-RED.log`. Its SHOT paths name the
+scratch tree's `story-01-fence/` export directory. Eleven selected files
+were copied to `story-01-followup/`; the original 26 shots in this lane were
+not modified. The manifest ties the copied files to this exact final run.
+
 ## Verification boundary
 
 The normal smoke must report the observed first-use defects. The explicit
@@ -1141,4 +1223,673 @@ COMPARISON EXIT lane-after-fence 1
 ```text
 ..                                                                       [100%]
 2 passed in 0.81s
+```
+
+### Captured run — 2026-09-21T02:07:47Z
+
+- **Command:** `python3 .tmp/hs202-followup/run-proof.py story02-green`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 4df98eee75e3b1160a8903745689c11d834a2ba1
+
+```text
+PROOF LEG story02-green
+ROOT /Users/karol/dev/tools/wt-202-01/.tmp/hs202-followup/story02
+HEAD 3595fcb696c07ce8d01fad0da58396fb4fc5ef9e
+SMOKE SHA256 9654ff79571d95dd17c59920c18891ca75ab7ecfb951442c73485e708d3ba548
+ISOLATED HOME /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs202-followup-v_f7xeh2
+COMMAND ['uv', 'run', 'pytest', '-q', '-s', '--tb=short', 'tests/e2e/test_hs202_first_use_smoke.py', 'tests/unit/test_ux_canon_ratchet.py']
+FSHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/fixture-speech-kept-393.png
+PASS: fixture speech became visible text and a kept note; PCM samples 10239
+PASS: engine setup completed visibly without a reload
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/engine-set-393.png
+PASS: Speak dock door fits and owns its hit target
+PASS: Meetings dock door fits and owns its hit target
+PASS: Desk memory dock door fits and owns its hit target
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/folded-go-menu-393.png
+PASS: New Note is visible and reachable in the folded Go menu
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/folded-menu-Desk-393.png
+FAIL: Open is visible and reachable as an Object entry in Go (missing from Go)
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/menu-Object-393.png
+FAIL: Close window is visible and reachable as a Window entry in Go
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/menu-Window-393.png
+PASS: Write a thought opens a note authoring surface
+PASS: The edit has a new visible Kept receipt in its editor before Save
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/editor-kept-before-save-393.png
+PLANNED 127.0.0.1 sha256:8351954f3e5fcb04558b08d7b0971a79f51c7e60dbaf3c6450fc59e936b078d2
+FAIL: The imported transcript exposes Run summary without a reload
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/import-refresh-393.png
+RECOVERY: reopen the imported meeting after the recorded import refresh failure.
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/planned-host-393.png
+RECEIPT succeeded sha256:8351954f3e5fcb04558b08d7b0971a79f51c7e60dbaf3c6450fc59e936b078d2 127.0.0.1
+PASS: The open record shows the completed summary and actual host without a reload
+PASS: the persisted summary and run receipt agree with the planned host
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/summary-reopened-393.png
+Notes query highlighted: ↗ / Custom webhook / NOT CONFIGURED
+F...ratchet: A1 175 -> 174 -- lower the ceiling
+ratchet: A3-prose 48 -> 43 -- lower the ceiling
+ratchet: B 32 -> 30 -- lower the ceiling
+.
+=================================== FAILURES ===================================
+________________________ test_first_use_fence[1440-900] ________________________
+tests/e2e/test_hs202_first_use_smoke.py:248: in test_first_use_fence
+    _loaded(first_note.get_by_text(WORDS, exact=True))
+tests/e2e/test_hs202_first_use_smoke.py:50: in _loaded
+    locator.wait_for(state="visible", timeout=10_000)
+.venv/lib/python3.12/site-packages/playwright/sync_api/_generated.py:18080: in wait_for
+    self._sync(self._impl_obj.wait_for(timeout=timeout, state=state))
+.venv/lib/python3.12/site-packages/playwright/_impl/_locator.py:710: in wait_for
+    await self._frame.wait_for_selector(
+.venv/lib/python3.12/site-packages/playwright/_impl/_frame.py:369: in wait_for_selector
+    await self._channel.send(
+.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 10000ms exceeded.
+E   Call log:
+E     - waiting for get_by_role("region", name="First dictation", exact=True).get_by_text("The quick brown fox jumps over the lazy dog.", exact=True) to be visible
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+________________________ test_first_use_fence[393-852] _________________________
+tests/e2e/test_hs202_first_use_smoke.py:536: in test_first_use_fence
+    _loaded(page.locator(".prefs-wallpaper-grid"))
+tests/e2e/test_hs202_first_use_smoke.py:50: in _loaded
+    locator.wait_for(state="visible", timeout=10_000)
+.venv/lib/python3.12/site-packages/playwright/sync_api/_generated.py:18080: in wait_for
+    self._sync(self._impl_obj.wait_for(timeout=timeout, state=state))
+.venv/lib/python3.12/site-packages/playwright/_impl/_locator.py:710: in wait_for
+    await self._frame.wait_for_selector(
+.venv/lib/python3.12/site-packages/playwright/_impl/_frame.py:369: in wait_for_selector
+    await self._channel.send(
+.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 10000ms exceeded.
+E   Call log:
+E     - waiting for locator(".prefs-wallpaper-grid") to be visible
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+FAILED tests/e2e/test_hs202_first_use_smoke.py::test_first_use_fence[1440-900]
+FAILED tests/e2e/test_hs202_first_use_smoke.py::test_first_use_fence[393-852]
+2 failed, 4 passed in 74.45s (0:01:14)
+PYTEST EXIT 1
+```
+
+### Captured run — 2026-09-21T02:12:17Z
+
+- **Command:** `python3 .tmp/hs202-followup/run-proof.py story02-green`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 4df98eee75e3b1160a8903745689c11d834a2ba1
+
+```text
+PROOF LEG story02-green
+ROOT /Users/karol/dev/tools/wt-202-01/.tmp/hs202-followup/story02
+HEAD 3595fcb696c07ce8d01fad0da58396fb4fc5ef9e
+SMOKE SHA256 1529454a786f613e1555df1091ffce3cd83f9b288a8936b74a0988ed66f6b530
+ISOLATED HOME /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs202-followup-jtfrpx90
+COMMAND ['uv', 'run', 'pytest', '-q', '-s', '--tb=short', 'tests/e2e/test_hs202_first_use_smoke.py', 'tests/unit/test_ux_canon_ratchet.py']
+FSHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/fixture-speech-kept-393.png
+PASS: fixture speech became visible text and a kept note; PCM samples 10922
+PASS: engine setup completed visibly without a reload
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/engine-set-393.png
+PASS: Speak dock door fits and owns its hit target
+PASS: Meetings dock door fits and owns its hit target
+PASS: Desk memory dock door fits and owns its hit target
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/folded-go-menu-393.png
+PASS: New Note is visible and reachable in the folded Go menu
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/folded-menu-Desk-393.png
+FAIL: Open is visible and reachable as an Object entry in Go
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/menu-Object-393.png
+MENU GEOMETRY menu-Object {'x': 11, 'y': 877.5, 'width': 371, 'height': 28} {'height': 1404, 'scrollHeight': 1404, 'overflow': 'visible'}
+FAIL: Close window is visible and reachable as a Window entry in Go
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/menu-Window-393.png
+MENU GEOMETRY menu-Window {'x': 11, 'y': 1221.5, 'width': 371, 'height': 28} {'height': 1404, 'scrollHeight': 1404, 'overflow': 'visible'}
+PASS: Write a thought opens a note authoring surface
+PASS: The edit has a new visible Kept receipt in its editor before Save
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/editor-kept-before-save-393.png
+PLANNED 127.0.0.1 sha256:95876410ed92d840920425e3168c8370554ddd0703222eca1c6a548113e7e425
+FAIL: The imported transcript exposes Run summary without a reload
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/import-refresh-393.png
+RECOVERY: reopen the imported meeting after the recorded import refresh failure.
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/planned-host-393.png
+RECEIPT succeeded sha256:95876410ed92d840920425e3168c8370554ddd0703222eca1c6a548113e7e425 127.0.0.1
+PASS: The open record shows the completed summary and actual host without a reload
+PASS: the persisted summary and run receipt agree with the planned host
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/summary-reopened-393.png
+Notes query highlighted: ○ / Fence architecture note / NOTE
+PASS: Typing Notes and Enter reaches notes
+PASS: refind the saved note and its body in two navigation moves
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/note-after-restart-393.png
+PASS: refind the meeting summary in two navigation moves; its receipt survives in the hub
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/meeting-after-restart-393.png
+F...ratchet: A1 175 -> 174 -- lower the ceiling
+ratchet: A3-prose 48 -> 43 -- lower the ceiling
+ratchet: B 32 -> 30 -- lower the ceiling
+.
+=================================== FAILURES ===================================
+________________________ test_first_use_fence[1440-900] ________________________
+tests/e2e/test_hs202_first_use_smoke.py:251: in test_first_use_fence
+    _loaded(first_note.get_by_text(WORDS, exact=True))
+tests/e2e/test_hs202_first_use_smoke.py:50: in _loaded
+    locator.wait_for(state="visible", timeout=10_000)
+.venv/lib/python3.12/site-packages/playwright/sync_api/_generated.py:18080: in wait_for
+    self._sync(self._impl_obj.wait_for(timeout=timeout, state=state))
+.venv/lib/python3.12/site-packages/playwright/_impl/_locator.py:710: in wait_for
+    await self._frame.wait_for_selector(
+.venv/lib/python3.12/site-packages/playwright/_impl/_frame.py:369: in wait_for_selector
+    await self._channel.send(
+.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 10000ms exceeded.
+E   Call log:
+E     - waiting for get_by_role("region", name="First dictation", exact=True).get_by_text("The quick brown fox jumps over the lazy dog.", exact=True) to be visible
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+________________________ test_first_use_fence[393-852] _________________________
+tests/e2e/test_hs202_first_use_smoke.py:579: in test_first_use_fence
+    assert not failures, f"{width}: first-use steps failed: {', '.join(sorted(failures))}"
+E   AssertionError: 393: first-use steps failed: import-refresh, menu-Object, menu-Window
+E   assert not {'import-refresh', 'menu-Object', 'menu-Window'}
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+FAILED tests/e2e/test_hs202_first_use_smoke.py::test_first_use_fence[1440-900]
+FAILED tests/e2e/test_hs202_first_use_smoke.py::test_first_use_fence[393-852]
+2 failed, 4 passed in 92.13s (0:01:32)
+PYTEST EXIT 1
+```
+
+### Captured run — 2026-09-21T02:14:39Z
+
+- **Command:** `python3 .tmp/hs202-followup/run-proof.py inventory-red`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 4df98eee75e3b1160a8903745689c11d834a2ba1
+
+```text
+PROOF LEG inventory-red
+ROOT /Users/karol/dev/tools/wt-202-01
+HEAD 6f73788308b8309cdd5ade5aa9ead98d31857fbe
+SMOKE SHA256 1529454a786f613e1555df1091ffce3cd83f9b288a8936b74a0988ed66f6b530
+ISOLATED HOME /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs202-followup-geg6adwa
+COMMAND ['uv', 'run', 'pytest', '-q', '-s', '--tb=short', 'tests/e2e/test_hs202_first_use_smoke.py']
+FF
+=================================== FAILURES ===================================
+________________________ test_first_use_fence[1440-900] ________________________
+tests/e2e/test_hs202_first_use_smoke.py:251: in test_first_use_fence
+    _loaded(first_note.get_by_text(WORDS, exact=True))
+tests/e2e/test_hs202_first_use_smoke.py:50: in _loaded
+    locator.wait_for(state="visible", timeout=10_000)
+.venv/lib/python3.12/site-packages/playwright/sync_api/_generated.py:18080: in wait_for
+    self._sync(self._impl_obj.wait_for(timeout=timeout, state=state))
+.venv/lib/python3.12/site-packages/playwright/_impl/_locator.py:710: in wait_for
+    await self._frame.wait_for_selector(
+.venv/lib/python3.12/site-packages/playwright/_impl/_frame.py:369: in wait_for_selector
+    await self._channel.send(
+.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 10000ms exceeded.
+E   Call log:
+E     - waiting for get_by_role("region", name="First dictation", exact=True).get_by_text("The quick brown fox jumps over the lazy dog.", exact=True) to be visible
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+________________________ test_first_use_fence[393-852] _________________________
+tests/e2e/test_hs202_first_use_smoke.py:251: in test_first_use_fence
+    _loaded(first_note.get_by_text(WORDS, exact=True))
+tests/e2e/test_hs202_first_use_smoke.py:50: in _loaded
+    locator.wait_for(state="visible", timeout=10_000)
+.venv/lib/python3.12/site-packages/playwright/sync_api/_generated.py:18080: in wait_for
+    self._sync(self._impl_obj.wait_for(timeout=timeout, state=state))
+.venv/lib/python3.12/site-packages/playwright/_impl/_locator.py:710: in wait_for
+    await self._frame.wait_for_selector(
+.venv/lib/python3.12/site-packages/playwright/_impl/_frame.py:369: in wait_for_selector
+    await self._channel.send(
+.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 10000ms exceeded.
+E   Call log:
+E     - waiting for get_by_role("region", name="First dictation", exact=True).get_by_text("The quick brown fox jumps over the lazy dog.", exact=True) to be visible
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+FAILED tests/e2e/test_hs202_first_use_smoke.py::test_first_use_fence[1440-900]
+FAILED tests/e2e/test_hs202_first_use_smoke.py::test_first_use_fence[393-852]
+2 failed in 42.99s
+PYTEST EXIT 1
+```
+
+### Captured run — 2026-09-21T02:18:06Z
+
+- **Command:** `python3 .tmp/hs202-followup/run-proof.py story02-green`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 4df98eee75e3b1160a8903745689c11d834a2ba1
+
+```text
+PROOF LEG story02-green
+ROOT /Users/karol/dev/tools/wt-202-01/.tmp/hs202-followup/story02
+HEAD 3595fcb696c07ce8d01fad0da58396fb4fc5ef9e
+SMOKE SHA256 a17bb05ff02afe32cb39ebcc2518b3cd52139507615591a76a8a68a1f86f4503
+ISOLATED HOME /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs202-followup-ac4xjkse
+COMMAND ['uv', 'run', 'pytest', '-q', '-s', '--tb=short', 'tests/e2e/test_hs202_first_use_smoke.py', 'tests/unit/test_ux_canon_ratchet.py']
+FSHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/fixture-speech-kept-393.png
+PASS: fixture speech became visible text and a kept note; PCM samples 10240
+PASS: engine setup completed visibly without a reload
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/engine-set-393.png
+PASS: Speak dock door fits and owns its hit target
+PASS: Meetings dock door fits and owns its hit target
+PASS: Desk memory dock door fits and owns its hit target
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/folded-go-menu-393.png
+PASS: New Note is visible and reachable in the folded Go menu
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/folded-menu-Desk-393.png
+FAIL: Open is visible and reachable as an Object entry in Go
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/menu-Object-393.png
+MENU GEOMETRY menu-Object {'x': 11, 'y': 877.5, 'width': 371, 'height': 28} {'height': 1404, 'scrollHeight': 1404, 'overflow': 'visible'}
+FAIL: Close window is visible and reachable as a Window entry in Go
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/menu-Window-393.png
+MENU GEOMETRY menu-Window {'x': 11, 'y': 1221.5, 'width': 371, 'height': 28} {'height': 1404, 'scrollHeight': 1404, 'overflow': 'visible'}
+PASS: Write a thought opens a note authoring surface
+PASS: The edit has a new visible Kept receipt in its editor before Save
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/editor-kept-before-save-393.png
+PLANNED 127.0.0.1 sha256:faac7738587f1901bcb9aebd0c511b1decc2a3c8308b481cde7b3ab6dc59af57
+FAIL: The imported transcript exposes Run summary without a reload
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/import-refresh-393.png
+RECOVERY: reopen the imported meeting after the recorded import refresh failure.
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/planned-host-393.png
+RECEIPT succeeded sha256:faac7738587f1901bcb9aebd0c511b1decc2a3c8308b481cde7b3ab6dc59af57 127.0.0.1
+PASS: The open record shows the completed summary and actual host without a reload
+PASS: the persisted summary and run receipt agree with the planned host
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/summary-reopened-393.png
+Notes query highlighted: ○ / Fence architecture note / NOTE
+PASS: Typing Notes and Enter reaches notes
+PASS: refind the saved note and its body in two navigation moves
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/note-after-restart-393.png
+PASS: refind the meeting summary in two navigation moves; its receipt survives in the hub
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/meeting-after-restart-393.png
+F...ratchet: A1 175 -> 174 -- lower the ceiling
+ratchet: A3-prose 48 -> 43 -- lower the ceiling
+ratchet: B 32 -> 30 -- lower the ceiling
+.
+=================================== FAILURES ===================================
+________________________ test_first_use_fence[1440-900] ________________________
+tests/e2e/test_hs202_first_use_smoke.py:253: in test_first_use_fence
+    _loaded(first_note.get_by_text(WORDS, exact=True))
+tests/e2e/test_hs202_first_use_smoke.py:50: in _loaded
+    locator.wait_for(state="visible", timeout=10_000)
+.venv/lib/python3.12/site-packages/playwright/sync_api/_generated.py:18080: in wait_for
+    self._sync(self._impl_obj.wait_for(timeout=timeout, state=state))
+.venv/lib/python3.12/site-packages/playwright/_impl/_locator.py:710: in wait_for
+    await self._frame.wait_for_selector(
+.venv/lib/python3.12/site-packages/playwright/_impl/_frame.py:369: in wait_for_selector
+    await self._channel.send(
+.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 10000ms exceeded.
+E   Call log:
+E     - waiting for get_by_role("region", name="First dictation", exact=True).get_by_text("The quick brown fox jumps over the lazy dog.", exact=True) to be visible
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+________________________ test_first_use_fence[393-852] _________________________
+tests/e2e/test_hs202_first_use_smoke.py:581: in test_first_use_fence
+    assert not failures, f"{width}: first-use steps failed: {', '.join(sorted(failures))}"
+E   AssertionError: 393: first-use steps failed: import-refresh, menu-Object, menu-Window
+E   assert not {'import-refresh', 'menu-Object', 'menu-Window'}
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+FAILED tests/e2e/test_hs202_first_use_smoke.py::test_first_use_fence[1440-900]
+FAILED tests/e2e/test_hs202_first_use_smoke.py::test_first_use_fence[393-852]
+2 failed, 4 passed in 85.82s (0:01:25)
+PYTEST EXIT 1
+```
+
+### Captured run — 2026-09-21T02:27:13Z
+
+- **Command:** `python3 .tmp/hs202-followup/run-proof.py inventory-red`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 4df98eee75e3b1160a8903745689c11d834a2ba1
+
+```text
+PROOF LEG inventory-red
+ROOT /Users/karol/dev/tools/wt-202-01-baseline
+HEAD 50ca0dd6cf8f45a7b78576fbd3d995761be97001
+SMOKE SHA256 1529454a786f613e1555df1091ffce3cd83f9b288a8936b74a0988ed66f6b530
+ISOLATED HOME /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs202-followup-xqkm92v8
+COMMAND ['uv', 'run', 'pytest', '-q', '-s', '--tb=short', 'tests/e2e/test_hs202_first_use_smoke.py']
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_1440_900_0/shots/fixture-speech-kept-1440.png
+PASS: fixture speech became visible text and a kept note; PCM samples 9898
+PASS: engine setup completed visibly without a reload
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_1440_900_0/shots/engine-set-1440.png
+PASS: Speak dock door fits and owns its hit target
+PASS: Meetings dock door fits and owns its hit target
+PASS: Desk memory dock door fits and owns its hit target
+PASS: Desk menu door is reachable
+PASS: Desk menu content loaded
+PASS: Object menu door is reachable
+PASS: Object menu content loaded
+PASS: Go menu door is reachable
+PASS: Go menu content loaded
+PASS: Window menu door is reachable
+PASS: Window menu content loaded
+FAIL: Write a thought opens a note authoring surface
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_1440_900_0/shots/thought-door-1440.png
+FAIL: The edit has a new visible Kept receipt in its editor before Save
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_1440_900_0/shots/save-confirmation-1440.png
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_1440_900_0/shots/editor-kept-before-save-1440.png
+PLANNED 127.0.0.1 sha256:9e2fd3bfcb2bc4c7b8c8c0285adb84c496a83db03e9cc80e0066b20ddb0be1f1
+FAIL: The imported transcript exposes Run summary without a reload
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_1440_900_0/shots/import-refresh-1440.png
+RECOVERY: reopen the imported meeting after the recorded import refresh failure.
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_1440_900_0/shots/planned-host-1440.png
+RECEIPT succeeded sha256:9e2fd3bfcb2bc4c7b8c8c0285adb84c496a83db03e9cc80e0066b20ddb0be1f1 127.0.0.1
+FAIL: The open record shows the completed summary and actual host without a reload
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_1440_900_0/shots/record-refresh-1440.png
+RECOVERY: reopen the persisted meeting after the recorded refresh failure.
+PASS: the persisted summary and run receipt agree with the planned host
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_1440_900_0/shots/summary-reopened-1440.png
+Notes query highlighted: ▧ / Change places / PROGRAM / ⌘⇧P
+FAIL: Typing Notes and Enter reaches notes
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_1440_900_0/shots/notes-query-1440.png
+PASS: refind the saved note and its body in two navigation moves
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_1440_900_0/shots/note-after-restart-1440.png
+PASS: refind the meeting summary in two navigation moves; its receipt survives in the hub
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_1440_900_0/shots/meeting-after-restart-1440.png
+FSHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/fixture-speech-kept-393.png
+PASS: fixture speech became visible text and a kept note; PCM samples 9898
+PASS: engine setup completed visibly without a reload
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/engine-set-393.png
+PASS: Speak dock door fits and owns its hit target
+PASS: Meetings dock door fits and owns its hit target
+FAIL: Desk memory dock door fits and owns its hit target
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/dock-memory-393.png
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/folded-go-menu-393.png
+FAIL: New Note is visible and reachable in the folded Go menu (missing from Go)
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/menu-Desk-393.png
+FAIL: Open is visible and reachable as an Object entry in Go (missing from Go)
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/menu-Object-393.png
+FAIL: Close window is visible and reachable as a Window entry in Go (missing from Go)
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/menu-Window-393.png
+FAIL: Write a thought opens a note authoring surface
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/thought-door-393.png
+RECOVERY: use New Note keyboard command after the recorded menu failure.
+FAIL: The edit has a new visible Kept receipt in its editor before Save
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/save-confirmation-393.png
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/editor-kept-before-save-393.png
+PLANNED 127.0.0.1 sha256:fa52864d741f098b8996ddb8af9fec2c9173f4aba2337c69dd4597dd2684dc1e
+FAIL: The imported transcript exposes Run summary without a reload
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/import-refresh-393.png
+RECOVERY: reopen the imported meeting after the recorded import refresh failure.
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/planned-host-393.png
+RECEIPT succeeded sha256:fa52864d741f098b8996ddb8af9fec2c9173f4aba2337c69dd4597dd2684dc1e 127.0.0.1
+FAIL: The open record shows the completed summary and actual host without a reload
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/record-refresh-393.png
+RECOVERY: reopen the persisted meeting after the recorded refresh failure.
+PASS: the persisted summary and run receipt agree with the planned host
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/summary-reopened-393.png
+Notes query highlighted: ▧ / Change places / PROGRAM / ⌘⇧P
+FAIL: Typing Notes and Enter reaches notes
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/notes-query-393.png
+PASS: refind the saved note and its body in two navigation moves
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/note-after-restart-393.png
+PASS: refind the meeting summary in two navigation moves; its receipt survives in the hub
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9424/test_first_use_fence_393_852_0/shots/meeting-after-restart-393.png
+F
+=================================== FAILURES ===================================
+________________________ test_first_use_fence[1440-900] ________________________
+tests/e2e/test_hs202_first_use_smoke.py:579: in test_first_use_fence
+    assert not failures, f"{width}: first-use steps failed: {', '.join(sorted(failures))}"
+E   AssertionError: 1440: first-use steps failed: import-refresh, notes-query, record-refresh, save-confirmation, thought-door
+E   assert not {'import-refresh', 'notes-query', 'record-refresh', 'save-confirmation', 'thought-door'}
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+________________________ test_first_use_fence[393-852] _________________________
+tests/e2e/test_hs202_first_use_smoke.py:579: in test_first_use_fence
+    assert not failures, f"{width}: first-use steps failed: {', '.join(sorted(failures))}"
+E   AssertionError: 393: first-use steps failed: dock-memory, import-refresh, menu-Desk, menu-Object, menu-Window, notes-query, record-refresh, save-confirmation, thought-door
+E   assert not {'dock-memory', 'import-refresh', 'menu-Desk', 'menu-Object', 'menu-Window', 'notes-query', ...}
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+FAILED tests/e2e/test_hs202_first_use_smoke.py::test_first_use_fence[1440-900]
+FAILED tests/e2e/test_hs202_first_use_smoke.py::test_first_use_fence[393-852]
+2 failed in 87.76s (0:01:27)
+PYTEST EXIT 1
+```
+
+### Captured run — 2026-09-21T02:28:51Z
+
+- **Command:** `python3 .tmp/hs202-followup/run-proof.py story02-green`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 4df98eee75e3b1160a8903745689c11d834a2ba1
+
+```text
+PROOF LEG story02-green
+ROOT /Users/karol/dev/tools/wt-202-01/.tmp/hs202-followup/story02
+HEAD 3595fcb696c07ce8d01fad0da58396fb4fc5ef9e
+SMOKE SHA256 1529454a786f613e1555df1091ffce3cd83f9b288a8936b74a0988ed66f6b530
+ISOLATED HOME /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs202-followup-m0dhszom
+COMMAND ['uv', 'run', 'pytest', '-q', '-s', '--tb=short', 'tests/e2e/test_hs202_first_use_smoke.py', 'tests/unit/test_ux_canon_ratchet.py']
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/fixture-speech-kept-1440.png
+PASS: fixture speech became visible text and a kept note; PCM samples 9898
+PASS: engine setup completed visibly without a reload
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/engine-set-1440.png
+PASS: Speak dock door fits and owns its hit target
+PASS: Meetings dock door fits and owns its hit target
+PASS: Desk memory dock door fits and owns its hit target
+PASS: Desk menu door is reachable
+PASS: Desk menu content loaded
+PASS: Object menu door is reachable
+PASS: Object menu content loaded
+PASS: Go menu door is reachable
+PASS: Go menu content loaded
+PASS: Window menu door is reachable
+PASS: Window menu content loaded
+PASS: Write a thought opens a note authoring surface
+PASS: The edit has a new visible Kept receipt in its editor before Save
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/editor-kept-before-save-1440.png
+PLANNED 127.0.0.1 sha256:adfd91308384de34ddcc2f04a65a2ece3b2d1a6ad9c430d09c08d982f4f6ea34
+FAIL: The imported transcript exposes Run summary without a reload
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/import-refresh-1440.png
+RECOVERY: reopen the imported meeting after the recorded import refresh failure.
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/planned-host-1440.png
+RECEIPT succeeded sha256:adfd91308384de34ddcc2f04a65a2ece3b2d1a6ad9c430d09c08d982f4f6ea34 127.0.0.1
+PASS: The open record shows the completed summary and actual host without a reload
+PASS: the persisted summary and run receipt agree with the planned host
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/summary-reopened-1440.png
+Notes query highlighted: ○ / Fence architecture note / NOTE
+PASS: Typing Notes and Enter reaches notes
+PASS: refind the saved note and its body in two navigation moves
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/note-after-restart-1440.png
+PASS: refind the meeting summary in two navigation moves; its receipt survives in the hub
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/meeting-after-restart-1440.png
+FSHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/fixture-speech-kept-393.png
+PASS: fixture speech became visible text and a kept note; PCM samples 9898
+PASS: engine setup completed visibly without a reload
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/engine-set-393.png
+PASS: Speak dock door fits and owns its hit target
+PASS: Meetings dock door fits and owns its hit target
+PASS: Desk memory dock door fits and owns its hit target
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/folded-go-menu-393.png
+PASS: New Note is visible and reachable in the folded Go menu
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/folded-menu-Desk-393.png
+FAIL: Open is visible and reachable as an Object entry in Go
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/menu-Object-393.png
+MENU GEOMETRY menu-Object {'x': 11, 'y': 877.5, 'width': 371, 'height': 28} {'height': 1404, 'scrollHeight': 1404, 'overflow': 'visible'}
+FAIL: Close window is visible and reachable as a Window entry in Go
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/menu-Window-393.png
+MENU GEOMETRY menu-Window {'x': 11, 'y': 1221.5, 'width': 371, 'height': 28} {'height': 1404, 'scrollHeight': 1404, 'overflow': 'visible'}
+PASS: Write a thought opens a note authoring surface
+PASS: The edit has a new visible Kept receipt in its editor before Save
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/editor-kept-before-save-393.png
+PLANNED 127.0.0.1 sha256:ddbefc6e26251fcbd905e5d71c25522f8b2d2d355ef148ee6f40c613a584dda3
+FAIL: The imported transcript exposes Run summary without a reload
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/import-refresh-393.png
+RECOVERY: reopen the imported meeting after the recorded import refresh failure.
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/planned-host-393.png
+RECEIPT succeeded sha256:ddbefc6e26251fcbd905e5d71c25522f8b2d2d355ef148ee6f40c613a584dda3 127.0.0.1
+PASS: The open record shows the completed summary and actual host without a reload
+PASS: the persisted summary and run receipt agree with the planned host
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/summary-reopened-393.png
+Notes query highlighted: ○ / Fence architecture note / NOTE
+PASS: Typing Notes and Enter reaches notes
+PASS: refind the saved note and its body in two navigation moves
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/note-after-restart-393.png
+PASS: refind the meeting summary in two navigation moves; its receipt survives in the hub
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/meeting-after-restart-393.png
+F...ratchet: A1 175 -> 174 -- lower the ceiling
+ratchet: A3-prose 48 -> 43 -- lower the ceiling
+ratchet: B 32 -> 30 -- lower the ceiling
+.
+=================================== FAILURES ===================================
+________________________ test_first_use_fence[1440-900] ________________________
+tests/e2e/test_hs202_first_use_smoke.py:579: in test_first_use_fence
+    assert not failures, f"{width}: first-use steps failed: {', '.join(sorted(failures))}"
+E   AssertionError: 1440: first-use steps failed: import-refresh
+E   assert not {'import-refresh'}
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+________________________ test_first_use_fence[393-852] _________________________
+tests/e2e/test_hs202_first_use_smoke.py:579: in test_first_use_fence
+    assert not failures, f"{width}: first-use steps failed: {', '.join(sorted(failures))}"
+E   AssertionError: 393: first-use steps failed: import-refresh, menu-Object, menu-Window
+E   assert not {'import-refresh', 'menu-Object', 'menu-Window'}
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+FAILED tests/e2e/test_hs202_first_use_smoke.py::test_first_use_fence[1440-900]
+FAILED tests/e2e/test_hs202_first_use_smoke.py::test_first_use_fence[393-852]
+2 failed, 4 passed in 72.14s (0:01:12)
+PYTEST EXIT 1
+```
+
+### Captured run — 2026-09-21T02:30:40Z
+
+- **Command:** `python3 .tmp/hs202-followup/run-proof.py inventory-strict`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 4df98eee75e3b1160a8903745689c11d834a2ba1
+
+```text
+PROOF LEG inventory-strict
+ROOT /Users/karol/dev/tools/wt-202-01-baseline
+HEAD 50ca0dd6cf8f45a7b78576fbd3d995761be97001
+SMOKE SHA256 1529454a786f613e1555df1091ffce3cd83f9b288a8936b74a0988ed66f6b530
+ISOLATED HOME /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs202-followup-93ofga06
+COMMAND ['uv', 'run', 'pytest', '-q', '-s', '--tb=short', 'tests/e2e/test_hs202_first_use_smoke.py', 'tests/unit/test_ux_canon_ratchet.py']
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_1440_900_0/shots/fixture-speech-kept-1440.png
+PASS: fixture speech became visible text and a kept note; PCM samples 9898
+PASS: engine setup completed visibly without a reload
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_1440_900_0/shots/engine-set-1440.png
+PASS: Speak dock door fits and owns its hit target
+PASS: Meetings dock door fits and owns its hit target
+PASS: Desk memory dock door fits and owns its hit target
+PASS: Desk menu door is reachable
+PASS: Desk menu content loaded
+PASS: Object menu door is reachable
+PASS: Object menu content loaded
+PASS: Go menu door is reachable
+PASS: Go menu content loaded
+PASS: Window menu door is reachable
+PASS: Window menu content loaded
+FAIL: Write a thought opens a note authoring surface
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_1440_900_0/shots/thought-door-1440.png
+FAIL: The edit has a new visible Kept receipt in its editor before Save
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_1440_900_0/shots/save-confirmation-1440.png
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_1440_900_0/shots/editor-kept-before-save-1440.png
+PLANNED 127.0.0.1 sha256:40bbfc74fdb6ded618d7c0ccd9a254bdd8d0e9041d88d7189020eec11f5d24c1
+FAIL: The imported transcript exposes Run summary without a reload
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_1440_900_0/shots/import-refresh-1440.png
+RECOVERY: reopen the imported meeting after the recorded import refresh failure.
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_1440_900_0/shots/planned-host-1440.png
+RECEIPT succeeded sha256:40bbfc74fdb6ded618d7c0ccd9a254bdd8d0e9041d88d7189020eec11f5d24c1 127.0.0.1
+FAIL: The open record shows the completed summary and actual host without a reload
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_1440_900_0/shots/record-refresh-1440.png
+RECOVERY: reopen the persisted meeting after the recorded refresh failure.
+PASS: the persisted summary and run receipt agree with the planned host
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_1440_900_0/shots/summary-reopened-1440.png
+Notes query highlighted: ▧ / Change places / PROGRAM / ⌘⇧P
+FAIL: Typing Notes and Enter reaches notes
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_1440_900_0/shots/notes-query-1440.png
+PASS: refind the saved note and its body in two navigation moves
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_1440_900_0/shots/note-after-restart-1440.png
+PASS: refind the meeting summary in two navigation moves; its receipt survives in the hub
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_1440_900_0/shots/meeting-after-restart-1440.png
+VERIFIED exact expected failures: 1440 ['import-refresh', 'notes-query', 'record-refresh', 'save-confirmation', 'thought-door']
+.SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/fixture-speech-kept-393.png
+PASS: fixture speech became visible text and a kept note; PCM samples 10239
+PASS: engine setup completed visibly without a reload
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/engine-set-393.png
+PASS: Speak dock door fits and owns its hit target
+PASS: Meetings dock door fits and owns its hit target
+FAIL: Desk memory dock door fits and owns its hit target
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/dock-memory-393.png
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/folded-go-menu-393.png
+FAIL: New Note is visible and reachable in the folded Go menu (missing from Go)
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/menu-Desk-393.png
+FAIL: Open is visible and reachable as an Object entry in Go (missing from Go)
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/menu-Object-393.png
+FAIL: Close window is visible and reachable as a Window entry in Go (missing from Go)
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/menu-Window-393.png
+FAIL: Write a thought opens a note authoring surface
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/thought-door-393.png
+RECOVERY: use New Note keyboard command after the recorded menu failure.
+FAIL: The edit has a new visible Kept receipt in its editor before Save
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/save-confirmation-393.png
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/editor-kept-before-save-393.png
+PLANNED 127.0.0.1 sha256:5df7abee67ba9dc4862d0a2b4a69728465ccd9970c41b49b19636722b7b7cea4
+FAIL: The imported transcript exposes Run summary without a reload
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/import-refresh-393.png
+RECOVERY: reopen the imported meeting after the recorded import refresh failure.
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/planned-host-393.png
+RECEIPT succeeded sha256:5df7abee67ba9dc4862d0a2b4a69728465ccd9970c41b49b19636722b7b7cea4 127.0.0.1
+FAIL: The open record shows the completed summary and actual host without a reload
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/record-refresh-393.png
+RECOVERY: reopen the persisted meeting after the recorded refresh failure.
+PASS: the persisted summary and run receipt agree with the planned host
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/summary-reopened-393.png
+Notes query highlighted: ▧ / Change places / PROGRAM / ⌘⇧P
+FAIL: Typing Notes and Enter reaches notes
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/notes-query-393.png
+PASS: refind the saved note and its body in two navigation moves
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/note-after-restart-393.png
+PASS: refind the meeting summary in two navigation moves; its receipt survives in the hub
+SHOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-9426/test_first_use_fence_393_852_0/shots/meeting-after-restart-393.png
+VERIFIED exact expected failures: 393 ['dock-memory', 'import-refresh', 'menu-Desk', 'menu-Object', 'menu-Window', 'notes-query', 'record-refresh', 'save-confirmation', 'thought-door']
+....ratchet: A3-prose 48 -> 43 -- lower the ceiling
+ratchet: B 32 -> 30 -- lower the ceiling
+.
+6 passed in 92.95s (0:01:32)
+PYTEST EXIT 0
+```
+
+### Captured run — 2026-09-21T02:36:58Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.UCrG6298Ga uv run pytest -q tests/unit/test_doc_drift_guard.py::test_no_live_doc_has_a_dangling_relative_link tests/uat/test_build_ledger.py::test_committed_ledger_is_up_to_date`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 4df98eee75e3b1160a8903745689c11d834a2ba1
+
+```text
+..                                                                       [100%]
+2 passed in 1.40s
 ```

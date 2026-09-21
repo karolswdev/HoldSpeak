@@ -114,6 +114,9 @@ def _search(page, query, *, keyboard=False):
     door = page.locator(".desk-tools-launch")
     assert _hit(door, fit=False), "Search must have a pointer door; keyboard alone is not sufficient"
     if keyboard:
+        # A stationary pointer over the results can select a hovered row
+        # when the query reorders them. Exercise the keyboard selection.
+        page.mouse.move(0, 0)
         page.keyboard.press("Meta+k")
     else:
         door.click()
@@ -288,15 +291,73 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             if meetings_ok:
                 _meetings(page)
                 _desk(page, base)
-            for name in ("Desk", "Object", "Go", "Window"):
-                title = page.locator(".desk-verbbar").get_by_role("button", name=name, exact=True, include_hidden=True)
-                if not check("menu-" + name, _hit(title), name + " menu door is reachable"):
-                    continue
-                title.click()
-                menu = page.get_by_role("menu", name=name + " menu", exact=True)
-                _loaded(menu.get_by_role("menuitem").first)
-                print("PASS:", name, "menu content loaded")
+            if width <= 720:
+                # HS-202-02 folds the three phone-unrenderable titles into the
+                # one reachable Go door. Keep the inventory names so the
+                # original five/nine failure vocabulary remains stable.
+                go_title = page.locator(".desk-verbbar").get_by_role(
+                    "button", name="Go", exact=True
+                )
+                assert _hit(go_title), "Go menu door is unreachable at 393"
+                go_title.click()
+                folded = page.get_by_role("menu", name="Go menu", exact=True)
+                _loaded(folded.get_by_role("menuitem").first)
+                shot("folded-go-menu")
+
+                def folded_item(key, label, message, *, ghosted=False):
+                    # A hidden title is not a compact-width door. The content
+                    # must be in Go and the row must own a hit after the
+                    # menu's nearest scroll path has been used.
+                    separate_title = page.locator(".desk-verbbar").get_by_role(
+                        "button", name=key.removeprefix("menu-"), exact=True
+                    )
+                    item = folded.get_by_role("menuitem").filter(has=page.locator(
+                        ".desk-menu-label").filter(has_text=re.compile(
+                            r"^" + re.escape(label) + r"(?:\s*·|$)")))
+                    if item.count() != 1:
+                        return check(key, False, message + " (missing from Go)")
+                    try:
+                        item.scroll_into_view_if_needed(timeout=2500)
+                    except BrowserTimeout:
+                        return check(key, False, message + " (cannot scroll to Go item)")
+                    title_ok = separate_title.count() == 0
+                    row_ok = item.is_visible() and _hit(item)
+                    # Object/Window may be ghosted by the current context;
+                    # either state is valid once the folded row is visible.
+                    state_ok = ghosted or item.get_attribute("aria-disabled") != "true"
+                    passed = check(key, title_ok and row_ok and state_ok, message)
+                    if passed:
+                        shot("folded-" + key)
+                    else:
+                        print("MENU GEOMETRY", key, item.bounding_box(),
+                              folded.evaluate("e => ({height:e.clientHeight, scrollHeight:e.scrollHeight, overflow:getComputedStyle(e).overflowY})"))
+                    return passed
+
+                folded_item(
+                    "menu-Desk", "New Note",
+                    "New Note is visible and reachable in the folded Go menu",
+                )
+                folded_item(
+                    "menu-Object", "Open",
+                    "Open is visible and reachable as an Object entry in Go",
+                    ghosted=True,
+                )
+                folded_item(
+                    "menu-Window", "Close window",
+                    "Close window is visible and reachable as a Window entry in Go",
+                    ghosted=True,
+                )
                 page.keyboard.press("Escape")
+            else:
+                for name in ("Desk", "Object", "Go", "Window"):
+                    title = page.locator(".desk-verbbar").get_by_role("button", name=name, exact=True, include_hidden=True)
+                    if not check("menu-" + name, _hit(title), name + " menu door is reachable"):
+                        continue
+                    title.click()
+                    menu = page.get_by_role("menu", name=name + " menu", exact=True)
+                    _loaded(menu.get_by_role("menuitem").first)
+                    print("PASS:", name, "menu content loaded")
+                    page.keyboard.press("Escape")
 
             # Job 3: the named door must lead to a place that keeps a thought.
             _desk(page, base)
@@ -318,7 +379,22 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             # The actual New Note command; no pre-seeded note can satisfy this proof.
             before_notes = {note["id"] for note in _api(page, "GET", "/api/notes", token=TOKEN)["notes"]}
             desk_menu = page.locator(".desk-verbbar").get_by_role("button", name="Desk", exact=True, include_hidden=True)
-            if _hit(desk_menu):
+            if width <= 720 and "menu-Desk" not in failures:
+                # At 393 the actual create path is Go -> New Note. The old
+                # keyboard recovery is allowed only after that named check
+                # records its inventory failure.
+                go_title = page.locator(".desk-verbbar").get_by_role("button", name="Go", exact=True)
+                assert _hit(go_title), "Go menu door is unreachable for New Note"
+                go_title.click()
+                folded = page.get_by_role("menu", name="Go menu", exact=True)
+                new_note = folded.get_by_role(
+                    "menuitem", name=re.compile(r"^New Note(?:\s|$)")
+                )
+                assert new_note.count() == 1, "Go menu does not expose New Note"
+                new_note.scroll_into_view_if_needed()
+                assert _hit(new_note), "Go -> New Note is not reachable at 393"
+                new_note.click()
+            elif _hit(desk_menu):
                 desk_menu.click()
                 page.get_by_role("menuitem", name=re.compile(r"^New Note")).click()
             else:
@@ -327,6 +403,12 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 page.keyboard.press("Meta+n")
             editor = page.locator(".desk-editor-window")
             _loaded(editor.get_by_role("button", name="Save", exact=True))
+            # This new note has no earlier autosave. The editor's own Kept
+            # receipt must appear for this edit, not elsewhere on the desk.
+            receipt = editor.get_by_role("status").filter(has_text=re.compile(r"^Kept · "))
+            assert receipt.count() == 0, "New note already has a Kept receipt before typing"
+            editor_id = editor.get_attribute("id")
+            assert editor_id and editor_id.startswith("editor:note:")
             with page.expect_response(lambda response: "/api/notes/" in response.url
                                       and response.request.method == "PUT"
                                       and response.request.post_data_json.get("body_markdown") == NOTE_BODY) as persisted:
@@ -337,13 +419,18 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             created = [n for n in notes if n["id"] not in before_notes and n["title"] == NOTE_TITLE]
             assert len(created) == 1 and created[0]["body_markdown"] == NOTE_BODY, {"before": before_notes, "notes": notes}
             note_id = created[0]["id"]
-            # No preexisting success status may be mistaken for this Save.
-            assert page.get_by_role("status").filter(has_text=re.compile(r"saved|kept", re.I)).count() == 0
+            # The ruled editor autosaves; Save only closes it. Require the
+            # fresh keep on glass before the close removes its status node.
+            observe("save-confirmation", """id => [...(document.getElementById(id)
+              ?.querySelectorAll('[role=status]') || [])]
+              .some(e => visible(e) && /^Kept · /.test(e.textContent))""",
+                    "The edit has a new visible Kept receipt in its editor before Save",
+                    arg=editor_id)
+            shot("editor-kept-before-save")
             editor.get_by_role("button", name="Save", exact=True).click()
             editor.wait_for(state="detached")
-            observe("save-confirmation", """() => [...document.querySelectorAll('[role=status]')]
-              .some(e => visible(e) && /saved|kept/i.test(e.textContent))""",
-                    "Save shows a new visible confirmation")
+            saved = _api(page, "GET", "/api/notes/" + note_id, token=TOKEN)["note"]
+            assert saved["title"] == NOTE_TITLE and saved["body_markdown"] == NOTE_BODY
 
             # Job 2: actual file import, transcript, planned host, admitted run.
             _desk(page, base)

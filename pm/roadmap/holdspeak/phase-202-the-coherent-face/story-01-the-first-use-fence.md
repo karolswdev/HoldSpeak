@@ -62,3 +62,22 @@ Normal RED and strict GREEN are captured in [the evidence](evidence-story-01.md)
 The full suite is not green: all eight failures have a classification and
 follow-up in [the verification ledger](verification-ledger-story-01.md).
 This done call covers the owner's RED-fence delivery boundary only.
+
+## Follow-up — match the ruled story 02 design
+
+The phone menus fold into Go: New Note and the Object and Window entries
+must be reachable there, with no unusable separate title announced. Desktop
+still checks all four menus. The note editor autosaves, so the fence checks
+its own fresh Kept receipt for the edit before Save closes it, then checks
+closure and exact persistence. This does not claim that Save emits a second
+receipt. The literal after-click wording and source counsel are recorded in
+[the follow-up check](checks/story-01-followup-muaddib.md); the owner may
+overrule the interpretation. Story 01 stays done; no product code changes.
+
+
+Verification is partial against the requested story 02 GREEN: the receipt,
+New Note and both restart legs pass, but import-refresh remains red at both
+widths and folded Object/Window entries are off-screen at 393. Inventory
+still reports the exact original failures; strict mode plus the unchanged
+ratchet passes 6 tests. See the final follow-up table in the evidence and the
+remaining findings in the ledger. No source changes hide those failures.
