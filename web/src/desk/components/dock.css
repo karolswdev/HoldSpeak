@@ -238,29 +238,72 @@
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 0;
+    /* HS-202-02 — the sheet stops where the dock starts. `--desk-dock-h`
+       is published by Dock.tsx from the dock's own measured height, so a
+       dock that wraps to two rows still keeps every door reachable. */
+    bottom: var(--desk-dock-h, 0px);
     top: auto;
     width: auto;
     /* HS-98-02: a desktop min-width (420px surface floor) must never
        push a sheet past a 393px phone — the sheet owns the edge. */
     min-width: 0;
-    max-height: 78vh;
+    max-height: min(78vh, calc(100dvh - var(--desk-dock-h, 0px) - 48px));
     border-radius: var(--radius-sm) var(--desk-sheet-top-radius) 0 0;
     /* HS-129-02 — the sheet is still a window: its body owns scroll so
        the fixed head and foot stay visible above the material. */
     overflow: hidden;
   }
+  /* HS-202-02 — the dock is the phone's ONLY persistent door, and the
+     Record orb rides it. It now lays out FOR the phone: it wraps inside
+     the viewport instead of running 410px past its right edge, and it
+     keeps the shell layer so a bottom sheet no longer buries all eleven
+     buttons (03-interaction-walk.md finding 1). */
   .desk-next .desk-dock {
-    left: 8px;
-    right: 8px;
-    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    left: 0;
+    right: 0;
+    bottom: 0;
     transform: none;
     max-width: none;
-    overflow-x: auto;
-    /* Sheets own the phone's bottom; the dock yields beneath them. */
-    z-index: var(--desk-z-dock-under);
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 4px;
+    overflow-x: visible;
+    padding: 4px 8px calc(4px + env(safe-area-inset-bottom, 0px));
+    z-index: var(--desk-z-dock);
+  }
+  /* HS-202-02: the Chair keeps its own hands clear of the dock. The
+     phone dock wraps, so it is taller than the 52px the desktop work
+     band reserves, and the arrival's capture bar sat UNDER it (caught by
+     tests/e2e/test_hs141_chair_geometry.py). The work-band token is a
+     shell-wide invariant and is left alone; the Chair pads itself by the
+     dock's own measured height (`--desk-dock-h`, published by Dock.tsx),
+     minus the band already reserved. */
+  .desk-next .chair:not(.chair-first-value) {
+    padding-bottom: calc(
+      var(--space-4) +
+        max(0px, var(--desk-dock-h, var(--desk-snap-bottom)) - var(--desk-snap-bottom))
+    );
+  }
+  /* Icon-only at phone width. Every launcher already carries an
+     `aria-label`, so the name stays in the accessibility tree while the
+     printed word folds away and eleven doors fit the screen. */
+  .desk-next .desk-dock-launch .desk-dock-label {
+    display: none;
+  }
+  .desk-next .desk-dock-launch {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    padding: 4px;
   }
   .desk-next .desk-dock-main {
     max-width: 96px;
+    min-height: 44px;
+  }
+  /* There is no hover on a phone: the chip's close verb is a real target
+     or it is not a verb at all (finding 12, measured 0x11 px). */
+  .desk-next .desk-dock-x {
+    width: 28px;
+    min-height: 44px;
   }
 }

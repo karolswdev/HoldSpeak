@@ -210,6 +210,14 @@ def _populate(db: Any, principal: Any) -> None:
         )
     )
     # --- a generated brief: populates the Brief lane (HS-135-07) ----------
+    # HS-202-02: opt-in skip so a rig can photograph the arrival's
+    # `No brief yet` + `Generate` branch, which a seeded brief hides.
+    # Unset it behaves exactly as before.
+    if os.environ.get("HOLDSPEAK_WALK_SKIP_BRIEF") == "1":
+        print("SKIPPED brief (HOLDSPEAK_WALK_SKIP_BRIEF=1)", flush=True)
+        print(f"POPULATED records={first['id']}->{second['id']} sessions={sessions}",
+              flush=True)
+        return
     try:
         from holdspeak.services.monday_brief_service import MondayBriefService
 

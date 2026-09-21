@@ -15,12 +15,12 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { useDrag } from "@use-gesture/react";
 import { useDesk, type PanelRect } from "../store";
+import { useCompactViewport } from "../useCompactViewport";
 import { WorkMenu } from "./DeskMenu";
 import { headMenuEntries } from "../windowMenuAdapter";
 import { DESK_WINDOW, DESK_Z } from "../../lib/tokens.gen";
@@ -490,21 +490,6 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     ),
     edges,
   };
-}
-
-function useCompactViewport(): boolean {
-  return useSyncExternalStore(
-    (cb) => {
-      if (typeof window.matchMedia !== "function") return () => {};
-      const mq = window.matchMedia("(max-width: 720px)");
-      mq.addEventListener("change", cb);
-      return () => mq.removeEventListener("change", cb);
-    },
-    () =>
-      typeof window.matchMedia === "function"
-        ? window.matchMedia("(max-width: 720px)").matches
-        : false,
-  );
 }
 
 export interface DeskWindowFrameProps {

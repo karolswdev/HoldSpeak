@@ -171,13 +171,16 @@ describe("variant matrix — root attribute gating (HS-148-02)", () => {
 });
 
 describe("Go menu grouping separator (HS-148-02)", () => {
-  it("Go menu entries have the 4/11 app/tool group split with a separator", () => {
+  // HS-202-02: 12 tools — `configure-setup` was unparked and given a Go/⌘K
+  // door (the readiness face had none at any width). The four app
+  // primaries are unchanged.
+  it("Go menu entries have the 4/12 app/tool group split with a separator", () => {
     const goVerbs = menuVerbs("go");
     // First 4 should be "app" group, rest "tool" group.
     const appVerbs = goVerbs.filter((v) => v.group === "app");
     const toolVerbs = goVerbs.filter((v) => v.group === "tool");
     expect(appVerbs.length).toBe(4);
-    expect(toolVerbs.length).toBe(11);
+    expect(toolVerbs.length).toBe(12);
     expect(toolVerbs.some((verb) => verb.id === "go.change-places")).toBe(true);
     expect(toolVerbs.some((verb) => verb.id === "go.open-project-memory")).toBe(true);
     // Verify the order: first 4 are app, rest are tool.

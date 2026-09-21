@@ -205,12 +205,35 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
         })),
     },
   },
-  // PARKED (HS-170-02): configure-setup retired by Phase 169; project-setup replaced it.
-  // {
-  //   action: "configure-setup",
-  //   windowId: "surface-setup",
-  //   ...
-  // },
+  /* HS-202-02 — `configure-setup` UNPARKED. HS-170-02 parked it on the
+     claim that "project-setup replaced it", but `project-setup` is the
+     New Project door (DoorCore); it shows no readiness check at all. The
+     face that reads `/api/setup/status` — and with it the doctor's
+     `_check_microphone()` row (holdspeak/commands/doctor.py:1064, carried
+     1:1 into the sections by setup_status.py:254-260) — is
+     `pages/cores/SetupCore.tsx`, which had ZERO callers and no door at
+     any width. The microphone recovery needs it, so it gets its key back
+     and a Go/⌘K door with it. */
+  {
+    action: "configure-setup",
+    windowId: "surface-setup",
+    label: "Setup",
+    description: "What this device is ready for, check by check.",
+    glyph: "⚙",
+    href: "/",
+    // A tool, not one of the four dock primaries: it reaches Go and ⌘K in
+    // the tool cluster and takes no dock seat.
+    group: "tool",
+    surface: {
+      eyebrow: "Readiness",
+      minW: 560,
+      defaultH: 560,
+      load: () =>
+        import("../pages/cores/SetupCore").then((module) => ({
+          default: module.SetupCore,
+        })),
+    },
+  },
   {
     action: "open-constitutional-context",
     windowId: "surface-constitutional-context",

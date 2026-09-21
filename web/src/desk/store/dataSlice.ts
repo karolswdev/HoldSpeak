@@ -345,6 +345,9 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
         return;
       }
       clearWriteFailure();
+      // HS-202-02 — the hub answered ok: the object is KEPT, and the
+      // editor's foot may say so (04-sober-eye.md, rank 5).
+      set({ keptAt: { ...get().keptAt, [id]: Date.now() } });
     } catch (cause) {
       await refused(cause);
     }

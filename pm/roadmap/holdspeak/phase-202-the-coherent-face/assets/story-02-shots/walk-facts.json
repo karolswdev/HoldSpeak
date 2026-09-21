@@ -1,0 +1,256 @@
+{
+  "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.f1jvuCffwh",
+  "hubs": {
+    "1440": "http://127.0.0.1:51328",
+    "393": "http://127.0.0.1:51492"
+  },
+  "mic_refusal": {
+    "1440": {
+      "message": "\u26a0\ufe0e\nThe browser gave no microphone. Your draft remains editable. Check the microphone, then retry.",
+      "verbs": [
+        "Click to retry",
+        "",
+        "Copy",
+        "Keep as Note",
+        "Check the microphone",
+        "Continue later",
+        "Skip for now"
+      ]
+    },
+    "393": {
+      "message": "\u26a0\ufe0e\nThe browser gave no microphone. Your draft remains editable. Check the microphone, then retry.",
+      "verbs": [
+        "Click to retry",
+        "",
+        "Copy",
+        "Keep as Note",
+        "Check the microphone",
+        "Continue later",
+        "Skip for now"
+      ]
+    }
+  },
+  "mic_recovery_opens": {
+    "1440": {
+      "setup_window": 1,
+      "new_project_window": 0,
+      "readiness_face": 3
+    },
+    "393": {
+      "setup_window": 1,
+      "new_project_window": 0,
+      "readiness_face": 3
+    }
+  },
+  "brief_badge": {
+    "1440": "THIS DEVICE",
+    "393": "THIS DEVICE"
+  },
+  "dock_box": {
+    "1440": {
+      "x": 102.3515625,
+      "y": 849,
+      "width": 1235.296875,
+      "height": 51
+    },
+    "393": {
+      "x": 0,
+      "y": 751,
+      "width": 393,
+      "height": 101
+    }
+  },
+  "dock_buttons": {
+    "1440": {
+      "total": 9,
+      "inside_viewport": 9
+    },
+    "393": {
+      "total": 9,
+      "inside_viewport": 9
+    }
+  },
+  "record_orb": {
+    "1440": {
+      "x": 1289.6484375,
+      "y": 855,
+      "width": 40,
+      "height": 40
+    },
+    "393": {
+      "x": 338.328125,
+      "y": 806,
+      "width": 40,
+      "height": 40
+    }
+  },
+  "generate": {
+    "1440": {
+      "verb_present": 1,
+      "badge_before": "THIS DEVICE",
+      "receipt_after": "Brief ready \u00b7 3 items \u00b7 10:38 PM"
+    },
+    "393": {
+      "verb_present": 1,
+      "badge_before": "THIS DEVICE",
+      "receipt_after": "Brief ready \u00b7 3 items \u00b7 10:41 PM"
+    }
+  },
+  "menu_titles": {
+    "1440": [
+      "desk",
+      "object",
+      "go",
+      "window"
+    ],
+    "393": [
+      "go"
+    ]
+  },
+  "go_has_new_note": {
+    "1440": false,
+    "393": true
+  },
+  "shelf_ask_doors": {
+    "1440": 1,
+    "393": 1
+  },
+  "shelf_ask_ghosts": {
+    "1440": 0,
+    "393": 0
+  },
+  "shelf_notes_top": {
+    "1440": "Start here",
+    "393": "Start here"
+  },
+  "shelf_ghost_rows": {
+    "1440": 0,
+    "393": 0
+  },
+  "shelf_ask_rows": {
+    "1440": 0,
+    "393": 0
+  },
+  "thought_window": {
+    "1440": {
+      "thought_face": 1,
+      "any_pullout": 1,
+      "speak_surface": 0
+    },
+    "393": {
+      "thought_face": 1,
+      "any_pullout": 1,
+      "speak_surface": 0
+    }
+  },
+  "note_keep_receipt": {
+    "1440": "KEPT \u00b7 10:38 PM",
+    "393": "KEPT \u00b7 10:41 PM"
+  },
+  "desk_memory": {
+    "1440": {
+      "body": 1,
+      "results_region": 1,
+      "rows": 2,
+      "aria": "Recent on this desk"
+    },
+    "393": {
+      "body": 1,
+      "results_region": 1,
+      "rows": 2,
+      "aria": "Recent on this desk"
+    }
+  },
+  "server_placeholder": {
+    "1440": "http://<host>:<port>/v1",
+    "393": "http://<host>:<port>/v1"
+  },
+  "settings_rows": {
+    "1440": [
+      "No engine for summaries",
+      "Land the write-receipt channel",
+      "Decide the streaming-partials question",
+      "Photograph the placement dial states",
+      "Thought",
+      "Meeting recorded: Phase 132 desk review",
+      "Overdue: Land the write-receipt channel",
+      "Unassigned: Decide the streaming-partials question",
+      "Phase 132 desk review",
+      "/Users/karol/dev/tools/wt-202-02",
+      "Models",
+      "Assignments",
+      "Connections",
+      "Voice",
+      "Meetings",
+      "Rhythm",
+      "Sounds & Presence",
+      "Wallpaper",
+      "System"
+    ],
+    "393": [
+      "No engine for summaries",
+      "Land the write-receipt channel",
+      "Decide the streaming-partials question",
+      "Photograph the placement dial states",
+      "Thought",
+      "Meeting recorded: Phase 132 desk review",
+      "Overdue: Land the write-receipt channel",
+      "Unassigned: Decide the streaming-partials question",
+      "Phase 132 desk review",
+      "/Users/karol/dev/tools/wt-202-02",
+      "Models",
+      "Assignments",
+      "Connections",
+      "Voice",
+      "Meetings",
+      "Rhythm",
+      "Sounds & Presence",
+      "Wallpaper",
+      "System"
+    ]
+  },
+  "transcript_import": {
+    "1440": 202,
+    "393": 202
+  },
+  "record_reads": [
+    1440,
+    1440,
+    1440,
+    1440,
+    393,
+    393,
+    393,
+    393
+  ],
+  "meeting_record": {
+    "1440": {
+      "title": "HS-202-02 transcript",
+      "route_disclosed": 1,
+      "run_verb": 0,
+      "record_rereads_on_signal": 1
+    },
+    "393": {
+      "title": "HS-202-02 transcript",
+      "route_disclosed": 1,
+      "run_verb": 0,
+      "record_rereads_on_signal": 1
+    }
+  },
+  "speak_footer_chips": {
+    "1440": [],
+    "393": []
+  },
+  "dock_presses": {
+    "1440": {
+      "total": 9,
+      "pressed": 9,
+      "refused": []
+    },
+    "393": {
+      "total": 9,
+      "pressed": 9,
+      "refused": []
+    }
+  }
+}

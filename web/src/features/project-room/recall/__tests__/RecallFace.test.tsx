@@ -102,7 +102,12 @@ describe("RecallFace (HS-200-13)", () => {
     expect(searchedToken("2026-09-07T09:20:00")).toBe("SEARCHED 09:20");
   });
 
-  it("empty: the well, the mic, the five filters and one token; no results region", () => {
+  /* HS-202-02 — the cold face is no longer a blank field: it asks the hub
+     for the desk's RECENT memory on open (03-interaction-walk.md finding
+     7). The well, the mic, the five filters and the token are unchanged
+     at the first instant, before that read lands; what the read then
+     draws is fenced in `recentMemory202.test.tsx`. */
+  it("empty: the well, the mic, the five filters and one token; no results region yet", () => {
     wire(result());
     render(<RecallFace />);
     expect(screen.getByTestId("recall-empty-token").textContent).toBe("SEARCH THE DESK");
@@ -254,7 +259,9 @@ describe("RecallFace (HS-200-13)", () => {
   });
 
   it("failed: CANT SEARCH with the reason and Retry; the query stays in the well", async () => {
-    vi.mocked(apiFetch).mockRejectedValueOnce(new Error("memory index locked"));
+    // HS-202-02: the face opens with a RECENT read, so the refusal is
+    // wired for every call until the Retry re-wires a good one.
+    vi.mocked(apiFetch).mockRejectedValue(new Error("memory index locked"));
     render(<RecallFace />);
     fireEvent.change(screen.getByRole("searchbox", { name: "Search the Desk" }), { target: { value: "freeze window" } });
     fireEvent.click(screen.getByRole("button", { name: "Search desk memory" }));

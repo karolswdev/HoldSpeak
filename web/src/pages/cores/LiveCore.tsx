@@ -61,6 +61,8 @@ import {
 } from "../../desk/surface/gadgets";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { presentValue } from "../../desk/surface/format";
+import { intelEgressBadge } from "./liveEgress";
+import { onReturnToTask } from "../../desk/returnToTask";
 
 type Segment = Record<string, unknown>;
 
@@ -71,6 +73,28 @@ export function LiveCore({ hero }: CoreProps) {
   const pluginJobs = useResource<PluginJobsSummaryResponse>("/api/plugin-jobs/summary", {});
   const devices = useResource<DevicesHealthResponse>("/api/devices/health", {});
   const { state: connection, subscribe } = useRuntimeBus();
+  /* HS-202-02 (Astra's counsel finding 3) — the Intelligence badge maps
+     the hub's real posture, but only what it read ONCE on mount. Set an
+     engine in the Concierge and this face kept the old placement until it
+     remounted. It rides the same signals the Meetings face does. */
+  const reloadRuntimeStatus = runtimeStatus.reload;
+  useEffect(() => {
+    let timer = 0;
+    const bump = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => void reloadRuntimeStatus(), 300);
+    };
+    const offDeskChanged = subscribe("desk_changed", bump);
+    const offReturn = onReturnToTask(() => void reloadRuntimeStatus());
+    const onFocus = () => void reloadRuntimeStatus();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.clearTimeout(timer);
+      offDeskChanged();
+      offReturn();
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [subscribe, reloadRuntimeStatus]);
   const [state, setState] = useState<Record<string, unknown>>({});
   const [segments, setSegments] = useState<Segment[]>([]);
   const action = useAction();
@@ -367,12 +391,22 @@ export function LiveCore({ hero }: CoreProps) {
         .map((key) => [key, presentValue(previewResult[key])] as const)
         .filter(([, value]) => value !== "")
     : [];
-  const egressLabel = presentValue(
-    (runtimeStatus.data.intel_egress as Record<string, unknown> | undefined)?.label ??
-      (typeof runtimeStatus.data.intel_egress === "string"
-        ? runtimeStatus.data.intel_egress
-        : ""),
-  );
+  /* HS-202-02 — the badge states what the hub said. `intel_egress.label`
+     was never a key the hub publishes, so this chip printed the species
+     default ("⌂ This device") on every desk, under a hardcoded home glyph
+     and with no scope (03-interaction-walk.md Appendix B.2). */
+  const intelBadge = intelEgressBadge(runtimeStatus.data.intel_egress);
+  const intelEgressChip = intelBadge ? (
+    <EgressChip
+      label={intelBadge.label}
+      scope={intelBadge.scope}
+      title={
+        intelBadge.scope === "local"
+          ? "Transcript processing stays on this device."
+          : "Transcript text can leave this device."
+      }
+    />
+  ) : null;
   const configureFace = (
     <>
       <SurfaceSection label="Intent routing">
@@ -447,7 +481,7 @@ export function LiveCore({ hero }: CoreProps) {
           >
             {intelState}
           </span>
-          <EgressChip label={egressLabel ? `⌂ ${egressLabel}` : undefined} />
+          {intelEgressChip}
         </div>
       </SurfaceSection>
       <SurfaceSection label="Deferred plugin jobs">
@@ -655,7 +689,7 @@ export function LiveCore({ hero }: CoreProps) {
       )}
       {/* HS-129-05 — the readiness fact rides the shared receipt slot. */}
       <SurfaceFooter
-        egress={<EgressChip />}
+        egress={intelEgressChip}
         receipt={
           <span className="surface-footer-receipt-line" role="status">
             {active ? `REC ${duration}` : "READY"}

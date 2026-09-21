@@ -20,6 +20,7 @@ import {
   type VerbContext,
 } from "../verbRegistry";
 import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
+import { useCompactViewport } from "../useCompactViewport";
 
 const MENUS: { id: MenuId; label: string }[] = [
   { id: "desk", label: "Desk" },
@@ -30,6 +31,13 @@ const MENUS: { id: MenuId; label: string }[] = [
 
 export function DeskMenuBar() {
   const settled = useSettleState((s) => s.settled);
+  // HS-202-02 — the phone bar has room for ONE navigator. Go is that door
+  // (the chrome-menus.css phone block already declared the design), so at
+  // phone width Desk, Object and Window are not rendered at all and their
+  // verbs ride inside Go. Before this they were rendered and then hidden
+  // by CSS: every `New …` verb, `New Note` among them, was unreachable at
+  // 393 (03-interaction-walk.md finding 2).
+  const compact = useCompactViewport();
   const [open, setOpen] = useState<MenuId | null>(null);
   useEffect(() => {
     if (settled) setOpen(null);
@@ -62,8 +70,7 @@ export function DeskMenuBar() {
     setOpen(id);
   };
 
-  const entries = (id: MenuId): WorkMenuEntry[] => {
-    const out: WorkMenuEntry[] = [];
+  const menuEntries = (id: MenuId, out: WorkMenuEntry[]): void => {
     let lastGroup: string | undefined;
     for (const v of menuVerbs(id)) {
       if (out.length && v.group !== lastGroup)
@@ -79,12 +86,20 @@ export function DeskMenuBar() {
         onSelect: () => v.run(ctx),
       });
     }
+  };
+
+  const entries = (id: MenuId): WorkMenuEntry[] => {
+    const out: WorkMenuEntry[] = [];
+    menuEntries(id, out);
+    // The one phone door carries every menu's verbs, in bar order.
+    if (compact && id === "go")
+      for (const m of MENUS) if (m.id !== "go") menuEntries(m.id, out);
     return out;
   };
 
   return (
     <nav ref={barRef} className="desk-verbbar" aria-label="Desk menus">
-      {MENUS.map((m) => (
+      {(compact ? MENUS.filter((m) => m.id === "go") : MENUS).map((m) => (
         <span key={m.id} className="desk-verbbar-item" data-menu-id={m.id}>
           <button
             type="button"

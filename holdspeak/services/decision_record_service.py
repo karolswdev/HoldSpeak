@@ -490,7 +490,9 @@ class DecisionRecordService:
             ).fetchall()
         return [self._record_dict(row) for row in rows]
 
-    def search(self, principal: Any, query: str, *, limit: int = 50) -> list[dict[str, Any]]:
+    def search(
+        self, principal: Any, query: str, *, limit: int = 50, recent: bool = False
+    ) -> list[dict[str, Any]]:
         """Find records by their decision facts or linked affected-work labels.
 
         Record tables deliberately remain ordinary SQLite tables, so this uses a
@@ -504,9 +506,23 @@ class DecisionRecordService:
             if term.strip("?!.,:;\"'()[]{}") and term.lower().strip("?!.,:;\"'()[]{}")
             not in {"why", "what", "when", "where", "who", "how", "is", "are", "was", "were", "the", "a", "an"}
         ]
-        if not terms:
-            return []
         bounded_limit = max(1, min(int(limit), 500))
+        if not terms:
+            # HS-202-02 — `recent` is an EXPLICIT read: the newest records,
+            # in the same shape a search answers. Without it a wordless
+            # search is still a search with no words, and answers nothing.
+            if not recent:
+                return []
+            with self._db._connection() as conn:
+                rows = conn.execute(
+                    """SELECT r.*, 0 AS relevance
+                       FROM decision_records AS r
+                       WHERE r.deleted = 0
+                       ORDER BY r.updated_at DESC, r.id DESC
+                       LIMIT ?""",
+                    (bounded_limit,),
+                ).fetchall()
+            return [self._record_dict(row) for row in rows]
         predicates: list[str] = []
         params: list[str] = []
         for term in terms:

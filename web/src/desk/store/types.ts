@@ -129,6 +129,10 @@ export interface DeskState {
   setup: SetupStatus | null;
   /** Freshly-created ids wearing the NEW beat (settles after ~4.5s). */
   newIds: string[];
+  /** HS-202-02 — when each object was last KEPT by a hub write that
+   *  answered ok. The editors' foot states it; a save that gives no
+   *  receipt is a save the owner has to verify by hand. */
+  keptAt: Record<string, number>;
   /** The world object id whose in-world editor is open (one at a time). */
   editingId: string | null;
   /** The client point that invoked the editor's separate window path. */
