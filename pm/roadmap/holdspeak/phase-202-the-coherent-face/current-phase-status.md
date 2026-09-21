@@ -23,7 +23,7 @@ Every face on the owner's first-use path has a door at every width, tells the tr
 | HS-202-01 | The first-use fence | backlog | [story-01-the-first-use-fence](./story-01-the-first-use-fence.md) | - |
 | HS-202-02 | First-use doors and truthful state | done | [story-02-first-use-doors-and-truthful-state](./story-02-first-use-doors-and-truthful-state.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-202-03 | Shared controls on the first-use path become library species | backlog | [story-03-shared-controls-on-the-first-use-path-become-library-species](./story-03-shared-controls-on-the-first-use-path-become-library-species.md) | - |
-| HS-202-04 | Names and repeats on the touched flows | backlog | [story-04-names-and-repeats-on-the-touched-flows](./story-04-names-and-repeats-on-the-touched-flows.md) | - |
+| HS-202-04 | Names and repeats on the touched flows | done | [story-04-names-and-repeats-on-the-touched-flows](./story-04-names-and-repeats-on-the-touched-flows.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-202-05 | The type-scale ruling, then the tokens | backlog | [story-05-the-type-scale-ruling-then-the-tokens](./story-05-the-type-scale-ruling-then-the-tokens.md) | - |
 | HS-202-06 | The sitting selects the next scope | backlog | [story-06-the-sitting-selects-the-next-scope](./story-06-the-sitting-selects-the-next-scope.md) | - |
 

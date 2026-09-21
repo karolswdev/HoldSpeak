@@ -1467,9 +1467,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
               {autoDisplayFact(autoVal)}
             </div>
             <div className="prefs-rule" aria-hidden="true" />
-            <GadgetRow label="Intelligence">
+            {/* HS-202-04 (F06): the registry's word for a meeting's result
+                is Summary on every face (`docs/product-language.json:23`);
+                `intelligence` stays the wire key underneath. */}
+            <GadgetRow label="Summary">
               <CycleGadget
-                label="Auto-run intelligence"
+                label="Auto-run the summary"
                 value={autoVal}
                 options={INTELLIGENCE_AUTO_OPTIONS}
                 onChange={(next) => update(["meeting", "intelligence_auto"], next)}
@@ -1686,7 +1689,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   step: 0.05,
                 })}
               </GadgetGroup>
-              <GadgetGroup label="Intelligence">
+              {/* HS-202-04 (F06): same rule, the advanced sheet. */}
+              <GadgetGroup label="Summary">
                 {check(["meeting", "intel_cloud_store"], "Cloud store")}
               </GadgetGroup>
               <GadgetGroup label="Deferred queue">

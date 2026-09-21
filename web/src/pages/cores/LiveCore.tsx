@@ -347,9 +347,14 @@ export function LiveCore({ hero }: CoreProps) {
       state.intel_status ??
       "idle",
   );
-  const factsLine = active
-    ? `Recording · ${duration}${segments.length ? ` · ${segments.length} segment${segments.length === 1 ? "" : "s"}` : ""}`
-    : `${connection || "This device"} · ready`;
+  /* HS-202-04 (M6, UX-CANON A.7) — one fact, one place. This row printed
+     the running clock that the footer receipt already carries, and the
+     segment count that the stream head already counts, so the same two
+     facts stood three times on one screen. The row keeps the fact nothing
+     else on this face states: WHERE the meeting is being heard. */
+  const factsLine = `${connection || "This device"} · ${
+    active ? "recording" : "ready"
+  }`;
 
   const intelSummary = String(intelResult?.summary ?? "");
   const intelTopics = Array.isArray(intelResult?.topics)
@@ -360,8 +365,14 @@ export function LiveCore({ hero }: CoreProps) {
     : Number(intelResult?.action_item_count ?? 0);
   const intelFace =
     intelResult ? (
+      /* HS-202-04 (F06) — a meeting result is a SUMMARY on every face.
+         The registry ruled it already (`docs/product-language.json:23`:
+         "The wire calls it meeting intelligence… Every face says
+         Summary") and Live was the one face that disobeyed its own
+         registry. `Intelligence` stays the name of the durable ledger
+         application, never of a meeting's result. */
       <SurfaceSection
-        label="Intelligence"
+        label="Summary"
         actions={<LampGadget on tone="ok" label="READY" />}
       >
         {intelResult ? (
@@ -473,7 +484,9 @@ export function LiveCore({ hero }: CoreProps) {
           </>
         ) : null}
       </SurfaceSection>
-      <SurfaceSection label="Intelligence">
+      {/* HS-202-04 (F06) — the gear door's run-state section names the
+          same thing the result section does: the Summary. */}
+      <SurfaceSection label="Summary">
         <div className="surface-actions">
           <span
             className="surface-token"
@@ -687,13 +700,16 @@ export function LiveCore({ hero }: CoreProps) {
           </SurfaceSection>
         </>
       )}
-      {/* HS-129-05 — the readiness fact rides the shared receipt slot. */}
+      {/* HS-129-05 — the readiness fact rides the shared receipt slot.
+          HS-202-04 (F21, M6) — the receipt carries the clock and nothing
+          else: the segment count belongs to the stream head that counts
+          them, and `SEG` was an abbreviation no face ever defined (the
+          recovery slab spelled it out in HS-201-06). */}
       <SurfaceFooter
         egress={intelEgressChip}
         receipt={
           <span className="surface-footer-receipt-line" role="status">
             {active ? `REC ${duration}` : "READY"}
-            {segments.length ? ` · ${segments.length} SEG` : ""}
           </span>
         }
       />

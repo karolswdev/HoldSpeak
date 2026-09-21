@@ -43,7 +43,12 @@ export function ChainPullout({ object: o }: PulloutContentProps) {
               empty
               emptyLabel="No steps"
               emptyGlyph="○"
-              actionLabel="Edit chain"
+              /* HS-202-04 (F08) — the object is a Sequence on its own
+                 window (`lib/primitives.ts:531` draws
+                 `productLabel("sequence")`), and `chain` is the registry's
+                 LEGACY ALIAS for it (`docs/product-language.json`
+                 legacy_aliases). The verb said the alias. */
+              actionLabel="Edit Sequence"
               onAction={() => openEditor(o.id)}
             />
           )}

@@ -19,6 +19,7 @@ import type { VoiceProposal } from "../voice/grammar";
 import { OBJECT_DELETE_REQUEST, verbById } from "../verbRegistry";
 import { useUndoReceipt } from "../hooks/useUndoReceipt";
 import { WorkMenu } from "../components/DeskMenu";
+import { countToken } from "../surface/count";
 import {
   floorMenuEntries,
   objectMenuEntries,
@@ -355,7 +356,14 @@ export function WorldStage() {
             key={`zone:${z.id}`}
             type="button"
             data-zone-id={z.id}
-            aria-label={`${z.title} zone, ${z.count} ${z.count === 1 ? "item" : "items"}`}
+            /* HS-202-04 (UX-CANON A.8) — the Floor's own zone buttons are
+               the site the inventory named: an empty zone announced
+               "<name> zone, 0 items" to a screen reader
+               (`SURFACE-INVENTORY-2026-09-20.md` §4). A counter of zero is
+               a bounce in an accessible name too. */
+            aria-label={[`${z.title} zone`, countToken(z.count, "item", "items")]
+              .filter(Boolean)
+              .join(", ")}
             onClick={() => useDesk.getState().openZoneWindow(z.id)}
           >
             {z.title}
