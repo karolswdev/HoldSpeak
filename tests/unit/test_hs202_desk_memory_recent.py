@@ -253,3 +253,77 @@ def test_recent_memory_is_newest_first(client) -> None:
     body = http.get("/api/memory/recall", params={"recent": "1"}).json()
     refs = [m["source_ref"] for m in body["meetings"]]
     assert refs.index("meeting:m-new") < refs.index("meeting:m-old"), refs
+
+
+# ── Astra round 2, residual 3: the same hole, one kind further ──
+# `recall_service.py:54` asks for `thread` under `also`, and RECENT had no
+# spec for it (`db/memory.py`), so `recent()` skipped the kind in silence:
+# a desk whose only memory is threads read as an empty desk, exactly as a
+# desk of only meetings did before finding 5 was paid.
+
+
+def _seed_thread(db, thread_id: str = "th-recent", *, updated_at: float = 1_758_000_000.0) -> None:
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT INTO threads (id, title, created_at, updated_at)
+               VALUES (?, ?, ?, ?)""",
+            (thread_id, "What the reader flag still needs", updated_at - 60, updated_at),
+        )
+        conn.execute(
+            """INSERT INTO thread_messages
+               (id, thread_id, role, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?)""",
+            (f"{thread_id}-m1", thread_id, "user", updated_at - 30, updated_at - 30),
+        )
+        conn.execute(
+            """INSERT INTO thread_message_parts
+               (id, message_id, ordinal, kind, text)
+               VALUES (?, ?, ?, ?, ?)""",
+            (
+                f"{thread_id}-p1",
+                f"{thread_id}-m1",
+                0,
+                "text",
+                "Two reviews outstanding before the flag comes down.",
+            ),
+        )
+
+
+def test_a_desk_of_only_threads_is_not_empty(client) -> None:
+    db, http = client
+    _seed_thread(db)
+
+    body = http.get("/api/memory/recall", params={"recent": "1"}).json()
+
+    assert body["remembered"] > 0, body
+    refs = [row["source_ref"] for row in body["also"]]
+    assert "thread:th-recent" in refs, body["also"]
+    row = next(r for r in body["also"] if r["source_ref"] == "thread:th-recent")
+    assert row["title"] == "What the reader flag still needs"
+    assert "Two reviews outstanding" in row["snippet"]
+
+
+def test_a_deleted_thread_is_not_recent_memory(client) -> None:
+    """The recency spec wears the lexical pass's own custody filters."""
+    db, http = client
+    _seed_thread(db, "th-gone")
+    with db._connection() as conn:
+        conn.execute(
+            "UPDATE threads SET deleted_at=? WHERE id=?", (1_758_000_100.0, "th-gone")
+        )
+
+    body = http.get("/api/memory/recall", params={"recent": "1"}).json()
+    assert [r["source_ref"] for r in body["also"]] == []
+
+
+def test_every_kind_recall_asks_for_has_a_recent_source(client) -> None:
+    """No kind may be asked for and then skipped in silence."""
+    from holdspeak.db.memory import _ECOSYSTEM_SPECS, _RECENT_SPECS
+    from holdspeak.services.recall_service import _ALSO_KINDS
+
+    missing = [
+        kind
+        for kind in _ALSO_KINDS
+        if kind not in _RECENT_SPECS and kind not in _ECOSYSTEM_SPECS
+    ]
+    assert missing == [], missing

@@ -182,6 +182,34 @@ _RECENT_SPECS: dict[str, dict[str, str]] = {
             " ORDER BY pr.project_id LIMIT 1)"
         ),
     },
+    # HS-202-02 (Astra round 2, residual 3) — recall asks for `thread`
+    # under `also` (`services/recall_service.py:54`), and RECENT had no
+    # spec for it: the kind was skipped in silence, so a desk whose only
+    # memory is threads read as an empty desk. The custody filters are the
+    # lexical pass's own (`_thread_rows`): deleted threads and messages,
+    # sensitive parts and drafts never reach memory.
+    "thread": {
+        "table": "threads",
+        "alias": "t",
+        "id": "t.id",
+        "title": "COALESCE(NULLIF(t.title,''),t.id)",
+        "body": (
+            "COALESCE((SELECT group_concat(q.text,' ') FROM ("
+            "SELECT p.text text FROM thread_message_parts p"
+            " JOIN thread_messages m ON m.id=p.message_id"
+            " WHERE m.thread_id=t.id AND m.deleted_at IS NULL"
+            " AND p.sensitive=0 AND p.draft=0 AND p.kind='text'"
+            " AND COALESCE(p.text,'')<>''"
+            " ORDER BY m.created_at, p.ordinal LIMIT 4) q),'')"
+        ),
+        "time": "datetime(t.updated_at,'unixepoch')",
+        "active": "t.deleted_at IS NULL",
+        "project_id": (
+            "(SELECT pr.project_id FROM project_resources pr"
+            " WHERE pr.resource_ref='thread:'||t.id AND pr.deleted=0"
+            " ORDER BY pr.project_id LIMIT 1)"
+        ),
+    },
     "decision": {
         "table": "decisions",
         "alias": "d",

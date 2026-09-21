@@ -27,3 +27,25 @@ MISSED: Ranked by owner cost: dead first-run recovery; silent note creation; wro
 TUESDAY: Not yet—the successful paths are shorter, but ordinary failure and recovery still strand the owner.
 
 UNKNOWN: Review pinned to `3595fcb6`; all 26 supplied PNGs inspected. No suites or live-device walk rerun. External story-01 merge changes appeared during review and remain unreviewed. I changed nothing.
+VERDICT: **DO-NOT-RATIFY** #595 at `750c720e`. Clean CI alone would not clear these findings. Keep #596 queued.
+
+FINDINGS:
+
+1. **Ask AI deduplication widened into hiding saved objects — tenets 3, 7.** The helper now deduplicates every palette row by label, before ranking. A read-only execution of the actual helper reduced two distinct notes and a meeting titled “Thought” to one result. Restrict deduplication to equivalent action doors; preserve object identities. Evidence: `web/src/desk/components/DeskToolShelf.tsx:170`, applied globally at `web/src/desk/components/DeskToolShelf.tsx:469`.
+
+2. **The new microphone-start failure offers the wrong recovery — tenets 3–4.** `microphone_unavailable` enables Setup, but only `no_microphone` selects the doctor. Thus `NotReadableError`/`TrackStartError` offers **New Project** as microphone recovery. Route this condition to the doctor or remove the inapplicable action. Evidence: `web/src/lib/dictationRecovery.ts:63`, `web/src/desk/components/FirstWords.tsx:474`.
+
+3. **RECENT remains incomplete for threads — tenets 3, 7.** Recall requests `thread`, but neither recency specification supports it; the repository silently skips it. Executing the actual method against an in-memory thread returned `[]` without querying. Meetings and notes are repaired; “every memory kind” is not. Evidence: `holdspeak/services/recall_service.py:54`, `holdspeak/db/memory.py:375`.
+
+4. **The principal repairs hold — tenets 1–3, 5–6.** Stable frame subscription, selection guards, ledger reconciliation, persistent Generate receipt, visible write failure, vocabulary parity and scrolling Go are supported. All 34 shots inspected; no new desktop layout regression identified. The captured smoke reports **2 passed**, both widths; the subsequent import test also passes both widths. Evidence: `pm/roadmap/holdspeak/phase-202-the-coherent-face/evidence-story-02.md:512`, `pm/roadmap/holdspeak/phase-202-the-coherent-face/evidence-story-02.md:584`.
+
+CONDITIONS: Correct findings 1–3 with focused regression proof, reconcile the ledger, resolve merge conflicts and verify the combined revision. Then #595 can merge with clean CI; #596 follows once its default smoke passes on that merged revision, without expected-failure mode.
+
+MISSED: Owner cost, descending: hidden saved objects; misleading microphone recovery; omitted threads. Retain FirstWords’ canvas design beat after story 05, the four `-n auto`-only failures pending a clean parallel pass, and the engine-less meeting-shot limitation. Remove stale “STILL RED” import and deferred-vocabulary entries. The engine-less shots do not prove summary execution; the smoke supplies that evidence.
+
+TUESDAY: The exercised jobs now pass, but ordinary repeated note titles and microphone-start failures still mislead.
+
+UNKNOWN: Both PRs currently report `DIRTY` with no checks returned. I could not find the four parallel-only failure IDs or full Python tail in the supplied Notes. No suites rerun; tree unchanged.
+## Round 2 — Muad'Dib's ruling
+
+Findings 1–3 are (b) defects this round introduced and are paid before the merge: deduplication restricted to equivalent action doors so saved objects keep their identities; microphone_unavailable routed to the doctor; a thread recency spec so RECENT covers every kind recall asks for. The ledger loses its stale entries and names the four parallel-only failures. The branch takes main's merge (the status doc conflict) and the combined revision is verified by the story's fence and Astra's smoke; then #595 merges on a clean CI read and #596 follows once its default smoke passes on that merged revision. Under TWO-BRAINS §3 the lane owner rules after one round each; the dissent-free record stands.

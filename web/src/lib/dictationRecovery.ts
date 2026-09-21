@@ -152,6 +152,27 @@ export const DICTATION_FAILURES: Record<
   },
 };
 
+/** The failures whose `setup` recovery is the MICROPHONE doctor.
+ *
+ * HS-202-02 (Astra round 2, residual 2): both microphone failures set
+ * `setup: true`, but only `no_microphone` selected the readiness face, so
+ * `NotReadableError` / `TrackStartError` — a device that exists and will
+ * not start — offered New Project as its microphone recovery. The doctor
+ * checks the hub's device (`holdspeak/commands/doctor.py:1064`), which is
+ * the same question in both cases, so both go there under the same verb.
+ */
+const MICROPHONE_DOCTOR: ReadonlySet<DictationFailure> = new Set<DictationFailure>([
+  "no_microphone",
+  "microphone_unavailable",
+]);
+
+/** True when this failure's setup door is `Check the microphone`. */
+export function needsMicrophoneDoctor(
+  failure: DictationFailure | null | undefined,
+): boolean {
+  return failure != null && MICROPHONE_DOCTOR.has(failure);
+}
+
 export type DictationRecoveryAction =
   | "retry"
   | "copy"

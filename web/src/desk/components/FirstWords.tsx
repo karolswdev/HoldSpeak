@@ -7,6 +7,7 @@ import { openSurfaceOr } from "../shell";
 import {
   DICTATION_FAILURES,
   dictationFailure,
+  needsMicrophoneDoctor,
   streamFailure,
   type DictationFailure,
 } from "../../lib/dictationRecovery";
@@ -471,12 +472,12 @@ export function FirstWords({
             variant="secondary"
             onClick={() => {
               void tracker.current?.event("setup_selected");
-              if (failure === "no_microphone")
+              if (needsMicrophoneDoctor(failure))
                 openSurfaceOr("configure-setup", "/");
               else openSurfaceOr("project-setup", "/");
             }}
           >
-            {failure === "no_microphone" ? "Check the microphone" : "Setup"}
+            {needsMicrophoneDoctor(failure) ? "Check the microphone" : "Setup"}
           </Button>
         ) : null}
       </div>

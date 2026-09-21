@@ -591,3 +591,160 @@ PASS 1440: the imported record shows its transcript, Run summary and host same_d
 PASS 393: the imported record shows its transcript, Run summary and host same_device with no reload (meeting 8dcc8362)
 1 passed in 17.09s
 ```
+
+## Round 2 residuals
+
+Astra's round-two residuals (b), each fixed at its source and fenced
+red-first.
+
+**1 — deduplication hid the desk's own objects.**
+`web/src/desk/components/DeskToolShelf.tsx:170` ran `oneDoorPerName` over
+EVERY palette row (applied at `:493`), so three notes and a meeting all
+titled "Thought" collapsed to one row and the other three were
+unreachable from ⌘K. Deduplication is a rule about DOORS — two ways to one
+job — so it now skips object sections (`OBJECTS`, `MEETINGS`, `PROJECTS`,
+`SETTINGS`, `DeskToolShelf.tsx:154`), and the live-name set that drops a
+ghost is read from doors alone, so a note titled "Open" can never withdraw
+the `Open` verb. Red first (`web/src/desk/__tests__/counsel595.test.tsx`):
+
+```text
+× keeps every object that wears one title
+  AssertionError: expected [ 'note:a' ] to deeply equal [ 'note:a', 'note:b', 'meeting:c' ]
+× never lets an object's title withdraw a verb of the same name
+  AssertionError: expected [ 'note:open' ] to deeply equal [ 'note:open', 'object.open' ]
+```
+
+The `Ask AI` fold is unchanged: the launcher and the object verb still
+collapse to one door.
+
+**2 — `microphone_unavailable` offered New Project as microphone
+recovery.** Both microphone failures set `setup: true`
+(`web/src/lib/dictationRecovery.ts:63`), but `FirstWords.tsx:474` selected
+the doctor for `no_microphone` alone, so `NotReadableError` /
+`TrackStartError` sent the owner to the one-screen Door. The routing
+decision now lives with the contract — `needsMicrophoneDoctor()`,
+`dictationRecovery.ts:155-173` — and the face reads it for BOTH the
+surface and the verb text. Red first:
+
+```text
+× sends both microphone failures to the readiness face
+  AssertionError: expected false to be true
+× is the gate the face itself reads, for the route AND the verb
+```
+
+**3 — recall asked for `thread` and RECENT had no source for it.**
+`holdspeak/services/recall_service.py:54` lists `thread` under `_ALSO_KINDS`;
+neither `_RECENT_SPECS` nor `_ECOSYSTEM_SPECS` carried it, so
+`db/memory.py:376` skipped the kind in silence and a desk whose only
+memory is threads read as an empty desk. Added the thread recency spec
+(`holdspeak/db/memory.py:185-213`) wearing the lexical pass's own custody
+filters — deleted threads and messages, sensitive parts and drafts never
+reach memory. Red first
+(`tests/unit/test_hs202_desk_memory_recent.py`):
+
+```text
+FAILED test_a_desk_of_only_threads_is_not_empty
+FAILED test_every_kind_recall_asks_for_has_a_recent_source
+  AssertionError: ['thread']
+2 failed, 9 passed
+```
+
+The third new case is a drift fence: no kind recall asks for may be
+skipped in silence again.
+
+**4 — ledger hygiene.** The story's Notes lost the stale `STILL RED`
+import entry (paid — see `## The import-refresh gap`) and the "deferred
+vocabulary" entry (paid in full, fenced in
+`tests/unit/test_hs202_first_value_failure_vocabulary.py`). The inherited
+failures are now listed as node IDs — five, not four — answering Astra's
+round-2 UNKNOWN ("I could not find the four parallel-only failure IDs or
+full Python tail"), with this measured correction: **none of them is
+parallel-only.** All five reproduce in a plain serial run of their own
+file, which the capture below shows (exit code 1, preserved).
+
+### Captured run — 2026-09-21T05:03:56Z
+
+- **Command:** `bash -c set -o pipefail; cd web && HOME=$(mktemp -d) npx vitest run --maxWorkers=2 src/desk/__tests__/counsel595.test.tsx src/desk/__tests__/phoneDoors.test.tsx src/desk/__tests__/menuGlyphs.test.tsx src/desk/__tests__/shelfTypedMatch.test.ts src/desk/components/FirstWords.test.tsx src/lib/dictationRecovery.test.ts src/pages/cores/__tests__/meetingRefresh202.test.tsx src/pages/cores/__tests__/speakRoom.test.tsx 2>&1 | grep -v "npm notice" | tail -6`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** aa0dd18f486e80102955e0aed07d8af26e9e7723
+
+```text
+
+ Test Files  8 passed (8)
+      Tests  108 passed (108)
+   Start at  23:03:57
+   Duration  3.92s (transform 799ms, setup 456ms, import 1.89s, tests 3.00s, environment 1.73s)
+```
+
+### Captured run — 2026-09-21T05:04:01Z
+
+- **Command:** `bash -c set -o pipefail; cd web && HOME=$(mktemp -d) npx tsc --noEmit && echo "tsc --noEmit: clean"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** aa0dd18f486e80102955e0aed07d8af26e9e7723
+
+```text
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.19.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1
+npm notice To update run: npm install -g npm@11.19.1
+npm notice
+tsc --noEmit: clean
+```
+
+### Captured run — 2026-09-21T05:04:15Z
+
+- **Command:** `bash -c set -o pipefail; HOME=$(mktemp -d) uv run pytest -q tests/unit/test_hs202_desk_memory_recent.py tests/unit/test_hs202_import_announces.py tests/unit/test_hs202_first_value_failure_vocabulary.py -rf 2>&1 | tail -4`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** aa0dd18f486e80102955e0aed07d8af26e9e7723
+
+```text
+................                                                         [100%]
+16 passed in 3.07s
+```
+
+### Captured run — 2026-09-21T05:04:19Z
+
+- **Command:** `bash -c set -o pipefail; HOME_REAL=$HOME; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright uv run pytest -q -s tests/e2e/test_hs202_02_first_use_glass.py 2>&1 | grep -E "PASS |MISSING|passed|failed"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** aa0dd18f486e80102955e0aed07d8af26e9e7723
+
+```text
+PASS 1440: the imported record shows its transcript, Run summary and host same_device with no reload (meeting 143840ba)
+PASS 393: the imported record shows its transcript, Run summary and host same_device with no reload (meeting 4c99b0a0)
+1 passed in 11.27s
+```
+
+### Captured run — 2026-09-21T05:04:38Z
+
+- **Command:** `bash -c set -o pipefail; HOME_REAL=$HOME; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright uv run pytest -q -s tests/e2e/test_hs202_first_use_smoke.py 2>&1 | grep -E "FAIL:|RECOVERY|Run summary|passed|failed" | tail -6`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** aa0dd18f486e80102955e0aed07d8af26e9e7723
+
+```text
+PASS: The imported transcript exposes Run summary without a reload
+PASS: The imported transcript exposes Run summary without a reload
+2 passed in 57.23s
+```
+
+### Captured run — 2026-09-21T05:05:42Z
+
+- **Command:** `bash -c set -o pipefail; HOME_REAL=$HOME; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright uv run pytest -q -p no:randomly tests/unit/test_doc_drift_guard.py tests/unit/test_hs175_calendar_sources.py tests/e2e/test_hs154_call_glass.py tests/e2e/test_hs170_meetings_glass.py -rf 2>&1 | tail -8`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** aa0dd18f486e80102955e0aed07d8af26e9e7723
+
+```text
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+FAILED tests/unit/test_doc_drift_guard.py::test_no_live_doc_has_a_dangling_relative_link
+FAILED tests/unit/test_hs175_calendar_sources.py::TestCalendarSourcesRoute::test_matched_this_week
+FAILED tests/e2e/test_hs154_call_glass.py::test_tts_api_404_law - assert True...
+FAILED tests/e2e/test_hs154_call_glass.py::test_tts_settings_glass - Assertio...
+FAILED tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face
+5 failed, 53 passed in 70.03s (0:01:10)
+```

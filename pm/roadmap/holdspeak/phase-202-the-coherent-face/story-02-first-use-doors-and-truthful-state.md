@@ -46,37 +46,42 @@ From the surface inventory of 2026-09-20 (`docs/internal/SURFACE-INVENTORY-2026-
   the cold card and then pressing `Continue later` left the card spinning
   forever — a recovery window was still on glass when first value handed
   over. `FirstWords.dismiss` clears surface windows first.
-- **STILL RED:** the first-use smoke's `import-refresh` leg at both
-  widths. The hub now emits `desk_changed` on import completion (proved
-  in-process, and traced live inside the smoke's own hub with
-  `root=True`), and the face merges rather than replaces, but the open
-  record still does not expose `Run summary` inside the fence's 2.5 s
-  window without a reopen. Every other leg of that smoke passes (35 PASS
-  lines). Next step for whoever picks it up: instrument the client's
-  `desk_changed` handler in the smoke's browser — the frame leaves the
-  hub, so the remaining gap is between the bus and `refreshFace`.
-- **Inherited, not mine (evidence in the report):**
-  `tests/unit/test_doc_drift_guard.py` (dangling links in
-  `docs/internal/checks/surface-inventory-astra.md`, present unchanged at
-  the base commit), `tests/e2e/test_hs154_call_glass.py` (the `tts` extra
-  IS installed in this worktree's venv, so the "not installed" copy is
-  correctly absent), `tests/unit/test_hs175_calendar_sources.py` (a
-  local-week boundary case on a Sunday evening),
-  `tests/e2e/test_hs170_meetings_glass.py::test_meetings_face` (needs an
-  open action item to draw the facet; my diff touches no line of that
-  path).
+- **PAID:** the first-use smoke's `import-refresh` leg, green at 1440 and
+  393. Cause: the import announces itself the instant the transcript
+  lands (`services/meeting_service.py:285`), which is BEFORE the owner
+  clicks the row — and `HistoryCore`'s debounce lived in an effect that
+  listed `refreshFace`, so opening a record tore the effect down and
+  `clearTimeout`-ed that very announcement. One dependency
+  (`HistoryCore.tsx:259`), plus the open record now following the ledger
+  on every rows change (`HistoryCore.tsx:226-246`). Fenced red-then-green
+  in `web/src/pages/cores/__tests__/meetingRefresh202.test.tsx` and in
+  the story's own glass rig,
+  `tests/e2e/test_hs202_02_first_use_glass.py`.
+- **Inherited, not mine — FIVE node IDs across four files (Astra round 2,
+  UNKNOWN: "I could not find the four parallel-only failure IDs or full
+  Python tail"). Measured correction: they are NOT parallel-only. Each
+  reproduces in a plain serial run of its own file, so the next clean
+  pass can read them one at a time:**
+  - `tests/unit/test_doc_drift_guard.py::test_no_live_doc_has_a_dangling_relative_link`
+    — dangling links in `docs/internal/checks/surface-inventory-astra.md`,
+    present unchanged at the base commit.
+  - `tests/unit/test_hs175_calendar_sources.py::TestCalendarSourcesRoute::test_matched_this_week`
+    — `assert row["cnt"] >= 1` / `assert 0 >= 1` at
+    `tests/unit/test_hs175_calendar_sources.py:169`; a local-week boundary
+    case.
+  - `tests/e2e/test_hs154_call_glass.py::test_tts_api_404_law` and
+    `::test_tts_settings_glass` — the `tts` extra IS installed in this
+    worktree's venv, so the "not installed" copy is correctly absent.
+  - `tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face`
+    — needs an open action item to draw the facet; my diff touches no line
+    of that path.
+
+  The full tails are under `## Round 2 residuals` in
+  `evidence-story-02.md` (one captured run reproduces all five serially,
+  exit code preserved with `set -o pipefail`).
 
 ### Ledger — classifications and homes (Astra's counsel on PR #595)
 
-- **PAID HERE, not deferred:** the first-value failure vocabulary
-  (`holdspeak/db/onboarding.py:17-33`). Naming `no_microphone` on the face
-  made `POST /api/setup/first-value/<id>/finish` answer 400; the same gap
-  already existed for the three HS-132-05 streaming refusals
-  (`mic_interval_closed`, `provider_failure`, `audio_floor_held`), which
-  the face has been able to send since that story. All five names are now
-  accepted and fenced against drift in
-  `tests/unit/test_hs202_first_value_failure_vocabulary.py`. Nothing is
-  left with "next lane" as its home.
 - **(a) honest test updates** (the behaviour changed, so the fence did):
   `web/src/pages/cores/__tests__/speakRoom.test.tsx:420` (the footer no
   longer claims a placement), `web/src/desk/__tests__/menuGlyphs.test.tsx:174`

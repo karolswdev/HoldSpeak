@@ -142,7 +142,22 @@ export function rankRow(
   return score ? score + (recent ? 10 : 0) : 0;
 }
 
-/** One door per name.
+/** The sections whose rows are SAVED THINGS, not doors to a job.
+ *
+ * HS-202-02 (Astra round 2, residual 1): deduplicating by label is a rule
+ * about doors — two ways to one job. Applied to these sections it hides
+ * the desk's own contents: three notes and a meeting all titled "Thought"
+ * are four different objects, and the palette must open any of them.
+ * A row with no section is a door (the registry faces below always carry
+ * VERBS or PROGRAMS).
+ */
+const OBJECT_SECTIONS = new Set(["OBJECTS", "MEETINGS", "PROJECTS", "SETTINGS"]);
+
+function isObjectRow(row: { section?: string }): boolean {
+  return OBJECT_SECTIONS.has(String(row.section ?? ""));
+}
+
+/** One door per name — for doors only.
  *
  * HS-202-02 — `Ask AI` appeared in ⌘K twice: the object-scoped verb
  * (ghosted "Select an object" whenever nothing is selected) and the live
@@ -150,12 +165,18 @@ export function rankRow(
  * one (03-interaction-walk.md finding 8). The Object menu stays the
  * registry face that ghosts a verb with its reason; the palette is a way
  * THERE, so a ghost whose name a live row already carries is dropped.
+ *
+ * Object rows pass through untouched, and never make a door look like a
+ * duplicate either: a note titled "Open" must not withdraw the `Open`
+ * verb, so the live-name set is read from doors alone.
  */
 export function oneDoorPerName<
   T extends { label: string; ghost?: string | null; section?: string },
 >(rows: T[]): T[] {
   const live = new Set(
-    rows.filter((row) => !row.ghost).map((row) => row.label.toLocaleLowerCase()),
+    rows
+      .filter((row) => !isObjectRow(row) && !row.ghost)
+      .map((row) => row.label.toLocaleLowerCase()),
   );
   /* HS-202-02 (Astra's counsel finding 6) — dropping ghosts is only half
      of it. With an askable object SELECTED the object verb stops being a
@@ -165,6 +186,10 @@ export function oneDoorPerName<
   const kept = new Set<string>();
   const out: T[] = [];
   for (const row of rows) {
+    if (isObjectRow(row)) {
+      out.push(row);
+      continue;
+    }
     const name = row.label.toLocaleLowerCase();
     if (row.ghost && live.has(name)) continue;
     if (kept.has(name)) continue;
