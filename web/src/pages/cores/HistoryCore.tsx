@@ -1,7 +1,7 @@
 // HS-170-04 — the Meetings face, rewritten to the settled design.
 // Board: display headline + Record/Import + stream rows + SurfaceSplit detail.
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { openSurfaceOr } from "../../desk/shell";
 import type { CoreProps, MeetingsListResponse, MeetingDetailResponse } from "./core-types";
 import { Button } from "../../components/signal/Signal";
@@ -223,26 +223,62 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     }
   }, [keepOpen, reloadMeetings, selectedId]);
 
+  /* HS-202-02 — the open record FOLLOWS the ledger, whatever moved it.
+     `refreshFace` merges only into a record that is already open, so a
+     list read that was in flight when the owner clicked (or a re-read the
+     search box started) lands its fresh rows AFTER `selected` was frozen,
+     and no later frame arrives to reconcile them. The record then wears a
+     snapshot the ledger beside it has already replaced. Guarded twice:
+     by id, so a row for a record the owner left is dropped, and by
+     content, so an unchanged row keeps the same object and the record's
+     own reads are not re-fetched on every reload. */
+  useEffect(() => {
+    if (!selectedId) return;
+    const row = meetingRows.find((item) => String(item.id) === selectedId);
+    if (!row) return;
+    setSelected((current) => {
+      if (!current || String(current.id ?? "") !== selectedId) return current;
+      const moved = Object.keys(row).some(
+        (key) => JSON.stringify(current[key]) !== JSON.stringify(row[key]),
+      );
+      return moved ? { ...current, ...row } : current;
+    });
+  }, [meetingRows, selectedId]);
+
   const { subscribe: subscribeFrames } = useRuntimeBus();
+  /* HS-202-02 (the first-use smoke's `import-refresh` leg) — the
+     subscription is held for the life of the face, and the debounce with
+     it. `refreshFace` changes whenever the open record changes, so an
+     effect that listed it as a dependency tore itself down and
+     `clearTimeout`-ed the pending refresh every time the owner clicked a
+     row. The import worker announces the desk change the instant the
+     transcript lands (`services/meeting_service.py:285`) — before the
+     owner opens the row it just changed — so THAT announcement was the
+     one the click cancelled: the ledger was never re-read, the record
+     kept the `importing` snapshot the click had taken, and `Run summary`
+     stayed off the record until a reopen. The ref keeps the callback
+     current without making the subscription depend on it. */
+  const refreshRef = useRef(refreshFace);
+  refreshRef.current = refreshFace;
   useEffect(() => {
     let timer = 0;
+    const refresh = () => void refreshRef.current();
     const bump = () => {
       window.clearTimeout(timer);
-      timer = window.setTimeout(() => void refreshFace(), 300);
+      timer = window.setTimeout(refresh, 300);
     };
     const offDeskChanged = subscribeFrames("desk_changed", bump);
     const offAftercare = subscribeFrames("aftercare_ready", bump);
-    const offReturn = onReturnToTask(() => void refreshFace());
-    const onFocus = () => void refreshFace();
-    window.addEventListener("focus", onFocus);
+    const offReturn = onReturnToTask(refresh);
+    window.addEventListener("focus", refresh);
     return () => {
       window.clearTimeout(timer);
       offDeskChanged();
       offAftercare();
       offReturn();
-      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("focus", refresh);
     };
-  }, [subscribeFrames, refreshFace]);
+  }, [subscribeFrames]);
 
   // Run the summary of a meeting
   const handleRunIntelligence = useCallback(async (

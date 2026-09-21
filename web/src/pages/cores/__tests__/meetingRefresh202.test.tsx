@@ -36,17 +36,19 @@ vi.mock("../../../lib/api", async (original) => ({
 }));
 
 const frameListeners = new Map<string, Set<(frame: { data: unknown }) => void>>();
+/* The real bus hands out ONE `subscribe` for the life of the provider
+ * (`runtime/RuntimeBus.tsx:31` — `useCallback([])`). A mock that minted a
+ * fresh function per render made every subscriber's effect re-run on
+ * every render, which hid the debounce-cancelling defect this file
+ * catches below. */
+const subscribe = (type: string, listener: (frame: { data: unknown }) => void) => {
+  const set = frameListeners.get(type) ?? new Set();
+  set.add(listener);
+  frameListeners.set(type, set);
+  return () => set.delete(listener);
+};
 vi.mock("../../../runtime/RuntimeBus", () => ({
-  useRuntimeBus: () => ({
-    state: "connected",
-    lastFrame: null,
-    subscribe: (type: string, listener: (frame: { data: unknown }) => void) => {
-      const set = frameListeners.get(type) ?? new Set();
-      set.add(listener);
-      frameListeners.set(type, set);
-      return () => set.delete(listener);
-    },
-  }),
+  useRuntimeBus: () => ({ state: "connected", lastFrame: null, subscribe }),
   useRuntimeFrame: () => null,
 }));
 
@@ -248,6 +250,138 @@ describe("a refresh never withdraws what the record had", () => {
 
     expect(
       await screen.findByTestId("detail-run-intelligence-btn"),
+    ).toBeVisible();
+  });
+});
+
+/* ── the first-use smoke's `import-refresh` leg, one layer under the
+ *    merge rule above ──
+ * The import worker announces the desk change the INSTANT the transcript
+ * lands (`services/meeting_service.py:285`), which is before the owner
+ * clicks the row it just changed. Opening a record changes `selectedId`,
+ * which changes `refreshFace`, which re-ran the subscription effect —
+ * and its cleanup cleared the announcement's pending debounce. The
+ * announced refresh therefore never ran: the ledger was never re-read,
+ * the open record kept the `importing` snapshot the click had taken, and
+ * `Run summary` (gated on `summaryIsOff(selected)`) never appeared
+ * without a reopen. */
+describe("the announced refresh survives the owner opening a record", () => {
+  it("catches the record up when the frame arrived before the click", async () => {
+    const importing = {
+      ...detail(),
+      intel_status: "importing",
+      intel_status_detail: "Transcribing…",
+      transcriptWords: null,
+      planned_route: READY_ROUTE,
+    };
+    const transcribed = {
+      ...detail(),
+      intel_status: "disabled",
+      transcriptWords: 9,
+      planned_route: READY_ROUTE,
+      segments: [
+        { text: "The quick brown fox.", speaker: "Me", start_time: 0, end_time: 1 },
+      ],
+    };
+    let listRow: Record<string, unknown> = importing;
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const url = String(path);
+      if (url.startsWith("/api/meetings?")) return { meetings: [listRow] } as never;
+      if (url === "/api/meetings/m-1") {
+        detailReads += 1;
+        return listRow as never;
+      }
+      return {} as never;
+    });
+
+    render(<HistoryCore />);
+    const rowBody = await waitFor(() => {
+      const found = document.querySelector(
+        '[data-testid="meeting-row-m-1"] .meetings-stream-row-body',
+      );
+      expect(found, "the ledger draws the importing row").toBeTruthy();
+      return found as Element;
+    });
+
+    // The import finishes while nothing is open; the hub announces it.
+    listRow = transcribed;
+    act(() => {
+      emit("desk_changed");
+    });
+    // The owner opens the row that is still on the glass, INSIDE the
+    // announcement's debounce window.
+    fireEvent.click(rowBody);
+    await waitFor(() =>
+      expect(document.querySelector(".meetings-detail-head")).toBeTruthy(),
+    );
+
+    expect(
+      await screen.findByTestId("detail-run-intelligence-btn", {}, { timeout: 4000 }),
+    ).toBeVisible();
+  });
+});
+
+/* ── the residual race under the one above ──
+ * `refreshFace` merges only into a record that is ALREADY open. A list
+ * read that was in flight when the owner clicked -- or one the search box
+ * started -- lands its fresh rows afterwards, with no frame following to
+ * reconcile them, and the open record keeps a snapshot the ledger beside
+ * it has already replaced. The open record must follow the ledger. */
+describe("the open record follows the ledger", () => {
+  it("takes the new row's fields when the rows change under it", async () => {
+    const importing = {
+      ...detail(),
+      title: "Still importing",
+      intel_status: "importing",
+      transcriptWords: null,
+      planned_route: READY_ROUTE,
+    };
+    const transcribed = {
+      ...detail(),
+      title: "The transcribed meeting",
+      intel_status: "disabled",
+      transcriptWords: 9,
+      planned_route: READY_ROUTE,
+      segments: [
+        { text: "The quick brown fox.", speaker: "Me", start_time: 0, end_time: 1 },
+      ],
+    };
+    let listRow: Record<string, unknown> = importing;
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const url = String(path);
+      if (url.startsWith("/api/meetings?")) return { meetings: [listRow] } as never;
+      if (url === "/api/meetings/m-1") {
+        detailReads += 1;
+        return listRow as never;
+      }
+      return {} as never;
+    });
+
+    render(<HistoryCore />);
+    const rowBody = await waitFor(() => {
+      const found = document.querySelector(
+        '[data-testid="meeting-row-m-1"] .meetings-stream-row-body',
+      );
+      expect(found, "the ledger draws the importing row").toBeTruthy();
+      return found as Element;
+    });
+    fireEvent.click(rowBody);
+    const openTitle = () =>
+      document.querySelector(".meetings-detail-head .surface-display")
+        ?.textContent ?? "";
+    await waitFor(() => expect(openTitle()).toBe("Still importing"));
+    expect(screen.queryByTestId("detail-run-intelligence-btn")).toBeNull();
+
+    // The ledger re-reads itself with NO frame behind it: the owner types
+    // in the search box, which changes the list's own url.
+    listRow = transcribed;
+    fireEvent.change(screen.getByPlaceholderText("Search meetings"), {
+      target: { value: "transcribed" },
+    });
+
+    await waitFor(() => expect(openTitle()).toBe("The transcribed meeting"));
+    expect(
+      await screen.findByTestId("detail-run-intelligence-btn", {}, { timeout: 4000 }),
     ).toBeVisible();
   });
 });

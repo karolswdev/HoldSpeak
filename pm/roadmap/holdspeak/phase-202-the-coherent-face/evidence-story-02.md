@@ -409,3 +409,185 @@ step_errors null
 ........................................                                 [100%]
 40 passed in 278.14s (0:04:38)
 ```
+
+## The import-refresh gap
+
+The one red the counsel round left open: after an Import completed, the
+meeting record showed the transcript but not `Run summary`, and only a
+reopen brought the verb back (Astra's first-use smoke, `import-refresh`
+leg, red at 1440 and 393).
+
+**Cause.** `holdspeak/services/meeting_service.py:285` announces the desk
+change the instant the import worker finishes — which is BEFORE the owner
+clicks the row it just changed, so the announcement lands while nothing is
+open. `web/src/pages/cores/HistoryCore.tsx` debounced that announcement by
+300 ms inside an effect whose dependency list carried `refreshFace`;
+opening a record changes `selectedId`, which changes `refreshFace`, which
+re-ran the effect — and its cleanup `clearTimeout`-ed the pending refresh.
+The ledger was therefore never re-read at all. The open record kept the
+`intel_status: "importing"` snapshot the click had taken, `summaryIsOff`
+(`history/helpers.ts:198`) read `SAVED` from it, and `HistoryCore.tsx:480`
+withheld `onRunIntelligence` — so `NeedsYouTable` had no verb to draw.
+
+**Fix.** One dependency: the subscription is now held for the life of the
+face, and the debounce with it; a ref keeps `refreshFace` current without
+making the subscription depend on it.
+
+**Red then green**, one line apart (`}, [subscribeFrames, refreshFace]);`
+vs `}, [subscribeFrames]);`), everything else identical:
+
+| Fence | with the dependency | without it |
+| --- | --- | --- |
+| `meetingRefresh202.test.tsx` — the frame arrived before the click | 1 failed \| 5 passed | 6 passed |
+| `test_hs202_02_first_use_glass.py` (the story's own) | `MISSING verb 0 route 0 needs-you 0 transcript 1` | PASS 1440 + PASS 393 |
+| Astra's smoke, `import-refresh` leg | `FAIL: The imported transcript exposes Run summary without a reload` | `PASS: …` at both widths |
+
+The unit fence needed one repair of its own before it could see any of
+this: its `RuntimeBus` mock minted a fresh `subscribe` per render, while
+the real bus hands out one for the life of the provider
+(`runtime/RuntimeBus.tsx:31`). Every subscriber's effect therefore re-ran
+on every render inside the mock, which hid exactly the defect above.
+
+### Captured run — 2026-09-21T04:31:46Z
+
+- **Command:** `bash -c set -o pipefail; cd web && HOME=$(mktemp -d) npx vitest run --maxWorkers=2 src/pages/cores/__tests__/meetingRefresh202.test.tsx src/pages/cores/__tests__/speakRoom.test.tsx src/desk/__tests__/counsel595.test.tsx src/desk/__tests__/phoneDoors.test.tsx src/desk/__tests__/menuGlyphs.test.tsx src/desk/__tests__/shelfTypedMatch.test.ts src/desk/components/FirstWords.test.tsx src/lib/dictationRecovery.test.ts 2>&1 | tail -6`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 0d1383a0299529c6e9833928cd540f02ccb0d250
+
+```text
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.19.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1
+npm notice To update run: npm install -g npm@11.19.1
+npm notice
+```
+
+### Captured run — 2026-09-21T04:31:54Z
+
+- **Command:** `bash -c set -o pipefail; cd web && HOME=$(mktemp -d) npx tsc --noEmit && echo "tsc --noEmit: clean"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 0d1383a0299529c6e9833928cd540f02ccb0d250
+
+```text
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.19.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1
+npm notice To update run: npm install -g npm@11.19.1
+npm notice
+tsc --noEmit: clean
+```
+
+### Captured run — 2026-09-21T04:32:08Z
+
+- **Command:** `bash -c set -o pipefail; HOME_REAL=$HOME; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright uv run pytest -q tests/e2e/test_hs141_chair_geometry.py tests/e2e/test_hs170_speak_glass.py tests/e2e/test_hs170_settings_hub_glass.py tests/e2e/test_hs200_continuity_glass.py tests/e2e/test_hs201_one_thing_glass.py tests/e2e/test_hs201_12_thought_note_glass.py tests/e2e/test_hs202_02_first_use_glass.py 2>&1 | tail -3`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 0d1383a0299529c6e9833928cd540f02ccb0d250
+
+```text
+.........................................                                [100%]
+41 passed in 261.32s (0:04:21)
+```
+
+### Captured run — 2026-09-21T04:36:49Z
+
+- **Command:** `bash -c set -o pipefail; cd web && HOME=$(mktemp -d) npx vitest run --maxWorkers=2 src/pages/cores/__tests__/meetingRefresh202.test.tsx src/pages/cores/__tests__/speakRoom.test.tsx src/desk/__tests__/counsel595.test.tsx src/desk/__tests__/phoneDoors.test.tsx src/desk/__tests__/menuGlyphs.test.tsx src/desk/__tests__/shelfTypedMatch.test.ts src/desk/components/FirstWords.test.tsx src/lib/dictationRecovery.test.ts 2>&1 | grep -v "npm notice" | tail -6`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 0d1383a0299529c6e9833928cd540f02ccb0d250
+
+```text
+
+ Test Files  8 passed (8)
+      Tests  101 passed (101)
+   Start at  22:36:50
+   Duration  3.84s (transform 777ms, setup 433ms, import 1.83s, tests 2.97s, environment 1.71s)
+```
+
+### Captured run — 2026-09-21T04:36:59Z
+
+- **Command:** `bash -c set -o pipefail; HOME_REAL=$HOME; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright uv run pytest -q -s tests/e2e/test_hs202_first_use_smoke.py 2>&1 | grep -E "import-refresh|Run summary|FAIL:|RECOVERY|passed|failed" | tail -8`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 0d1383a0299529c6e9833928cd540f02ccb0d250
+
+```text
+PASS: The imported transcript exposes Run summary without a reload
+PASS: The imported transcript exposes Run summary without a reload
+2 passed in 57.10s
+```
+
+### Captured run — 2026-09-21T04:38:03Z
+
+- **Command:** `bash -c set -o pipefail; HOME_REAL=$HOME; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright uv run python pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-02-shots/shoot.py 2>&1 | grep -E "meeting_record|console_errors|page_errors|step_errors|bad_responses|SHOT" | tail -8`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 0d1383a0299529c6e9833928cd540f02ccb0d250
+
+```text
+  "meeting_record": {
+```
+
+### The residual race, closed (coordinator's follow-up)
+
+`refreshFace` merges only into a record that is ALREADY open. A list read
+in flight at the moment of the click — or one the search box starts —
+lands its fresh rows after `selected` was frozen, with no frame following
+to reconcile them, so the open record wears a snapshot the ledger beside
+it has already replaced.
+
+`web/src/pages/cores/HistoryCore.tsx:226-247` makes the open record follow
+the ledger on every rows change, guarded twice: by id (a row for a record
+the owner left is dropped) and by content (an unchanged row keeps the same
+object, so the record's own reads are not re-fetched on every reload).
+
+Red first: with the merge disabled, `meetingRefresh202.test.tsx` fails with
+`expected 'Still importing' to be 'The transcribed meeting'`
+(`Tests 1 failed | 6 passed (7)`); with it, `Tests 7 passed (7)`.
+
+### Captured run — 2026-09-21T04:46:39Z
+
+- **Command:** `bash -c set -o pipefail; cd web && HOME=$(mktemp -d) npx vitest run src/pages/cores/__tests__/meetingRefresh202.test.tsx 2>&1 | grep -v "npm notice" | tail -6`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 0d1383a0299529c6e9833928cd540f02ccb0d250
+
+```text
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  22:46:39
+   Duration  2.51s (transform 356ms, setup 104ms, import 500ms, tests 1.54s, environment 288ms)
+```
+
+### Captured run — 2026-09-21T04:46:47Z
+
+- **Command:** `bash -c set -o pipefail; cd web && HOME=$(mktemp -d) npx tsc --noEmit && echo "tsc --noEmit: clean"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 0d1383a0299529c6e9833928cd540f02ccb0d250
+
+```text
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.19.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1
+npm notice To update run: npm install -g npm@11.19.1
+npm notice
+tsc --noEmit: clean
+```
+
+### Captured run — 2026-09-21T04:46:57Z
+
+- **Command:** `bash -c set -o pipefail; HOME_REAL=$HOME; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright uv run pytest -q -s tests/e2e/test_hs202_02_first_use_glass.py 2>&1 | grep -E "PASS |MISSING|passed|failed"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 0d1383a0299529c6e9833928cd540f02ccb0d250
+
+```text
+PASS 1440: the imported record shows its transcript, Run summary and host same_device with no reload (meeting 890b042d)
+PASS 393: the imported record shows its transcript, Run summary and host same_device with no reload (meeting 8dcc8362)
+1 passed in 17.09s
+```

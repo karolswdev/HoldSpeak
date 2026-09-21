@@ -1,8 +1,8 @@
 {
-  "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.YfaunetiDJ",
+  "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.f1jvuCffwh",
   "hubs": {
-    "1440": "http://127.0.0.1:61718",
-    "393": "http://127.0.0.1:62241"
+    "1440": "http://127.0.0.1:51328",
+    "393": "http://127.0.0.1:51492"
   },
   "mic_refusal": {
     "1440": {
@@ -88,12 +88,12 @@
     "1440": {
       "verb_present": 1,
       "badge_before": "THIS DEVICE",
-      "receipt_after": "Brief ready \u00b7 3 items \u00b7 9:49 PM"
+      "receipt_after": "Brief ready \u00b7 3 items \u00b7 10:38 PM"
     },
     "393": {
       "verb_present": 1,
       "badge_before": "THIS DEVICE",
-      "receipt_after": "Brief ready \u00b7 3 items \u00b7 9:53 PM"
+      "receipt_after": "Brief ready \u00b7 3 items \u00b7 10:41 PM"
     }
   },
   "menu_titles": {
@@ -144,8 +144,8 @@
     }
   },
   "note_keep_receipt": {
-    "1440": "KEPT \u00b7 9:50 PM",
-    "393": "KEPT \u00b7 9:53 PM"
+    "1440": "KEPT \u00b7 10:38 PM",
+    "393": "KEPT \u00b7 10:41 PM"
   },
   "desk_memory": {
     "1440": {
