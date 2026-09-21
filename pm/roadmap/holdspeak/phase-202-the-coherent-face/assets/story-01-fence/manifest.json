@@ -1,0 +1,162 @@
+{
+  "source": "green-exported",
+  "capture": "pm/roadmap/holdspeak/phase-202-the-coherent-face/evidence-story-01.md\t0\t2026-09-21T00:52:00Z",
+  "files": [
+    {
+      "file": "dock-memory-393.png",
+      "sha256": "c33e00a3df9cdbf5a9478cca79f483c5bc3cd4eb9c745c53e5189de10c2dadb9",
+      "width": 393,
+      "height": 852
+    },
+    {
+      "file": "engine-set-1440.png",
+      "sha256": "3a2ec12140dcd6587d6abc74c03714cd5681245a5a19bc56d161b8df1f753d87",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "engine-set-393.png",
+      "sha256": "c33e00a3df9cdbf5a9478cca79f483c5bc3cd4eb9c745c53e5189de10c2dadb9",
+      "width": 393,
+      "height": 852
+    },
+    {
+      "file": "fixture-speech-kept-1440.png",
+      "sha256": "8624662516e80086e0862588eab11a743cbd2eee675b59aa29cf85596bc42e07",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "fixture-speech-kept-393.png",
+      "sha256": "2767f080e741f45084e4fb0213dcf0382af595ee80ffed66c5a6d27de86e4e7d",
+      "width": 393,
+      "height": 852
+    },
+    {
+      "file": "import-refresh-1440.png",
+      "sha256": "87877a80d721d1b08a59d73c06c88205a11f6a35502f0e0fc3422b060626ba97",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "import-refresh-393.png",
+      "sha256": "690168c8cd4d4b3f2427e038b2eb4a31301d63e7f1d44615cddcffc4dc19f169",
+      "width": 393,
+      "height": 852
+    },
+    {
+      "file": "meeting-after-restart-1440.png",
+      "sha256": "33eade12c20ebecb668d83f35e152b5d09e91f5e78e8f88ef62570326739aad1",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "meeting-after-restart-393.png",
+      "sha256": "de2640630688f9d14b447e84bafeaac437f58c3ea137786a5a3759f3d1742875",
+      "width": 393,
+      "height": 852
+    },
+    {
+      "file": "menu-Desk-393.png",
+      "sha256": "6e1e6bbdbd7a9299e5af9949d05275bac85b3a8abda5c8696c1607401bff541a",
+      "width": 393,
+      "height": 852
+    },
+    {
+      "file": "menu-Object-393.png",
+      "sha256": "6e1e6bbdbd7a9299e5af9949d05275bac85b3a8abda5c8696c1607401bff541a",
+      "width": 393,
+      "height": 852
+    },
+    {
+      "file": "menu-Window-393.png",
+      "sha256": "3a1c6a712e421f445bdfae98f8ba5c331f8e7ebe1c06750ab103ece7f8d5d2af",
+      "width": 393,
+      "height": 852
+    },
+    {
+      "file": "note-after-restart-1440.png",
+      "sha256": "92a7184e47c8f2e99ef4fd4de44bdc3d4354f058ace0f3c0837c4cf67a1d3204",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "note-after-restart-393.png",
+      "sha256": "d81bacb849546a32a0cc04dac72541066f464fffd6e575e5c8d01d6008f3d65c",
+      "width": 393,
+      "height": 852
+    },
+    {
+      "file": "notes-query-1440.png",
+      "sha256": "35c4d251b0d79096a1fe3778247aa26afea6f69e17ac4df585c3dd7241c0e56d",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "notes-query-393.png",
+      "sha256": "88025a18d1ffe89a8d08c714cfa6a71d2b2fea197f849e1bd743f18ab0c00ca6",
+      "width": 393,
+      "height": 852
+    },
+    {
+      "file": "planned-host-1440.png",
+      "sha256": "90c2eb361e870dac94d7ffb8fee0ee1c54cf6156f6081803a0e27c582959a87d",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "planned-host-393.png",
+      "sha256": "3aec540b51d0434667e421b84c943309d314b9c11cb19a3259e59d133d73745b",
+      "width": 393,
+      "height": 852
+    },
+    {
+      "file": "record-refresh-1440.png",
+      "sha256": "0957816c3de8538df6d5c6eec2a16da687574e2c3cc44e938613cf3413519383",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "record-refresh-393.png",
+      "sha256": "f696f92c0e82908084c1bbdd6cae728dcf3dd4b612949c1403db44cdb790ef12",
+      "width": 393,
+      "height": 852
+    },
+    {
+      "file": "save-confirmation-1440.png",
+      "sha256": "928e07f58cf0eab5114e6d491f942f1ab67c2d801f1b5ac3a9d772113e74e863",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "save-confirmation-393.png",
+      "sha256": "1d5a8f1d3ff7938a8c9de9087d928ef2a60d3656d175151cd5c2ec52121edebc",
+      "width": 393,
+      "height": 852
+    },
+    {
+      "file": "summary-reopened-1440.png",
+      "sha256": "cf7f9f30e7827d0d753662785b105d6dc3432d52ea3fdefbc3e0bbef751ee846",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "summary-reopened-393.png",
+      "sha256": "d2c1f8352a6c784109d46fcbdfbc70a179dd483c9bb481ebdb7fa8b386c35844",
+      "width": 393,
+      "height": 852
+    },
+    {
+      "file": "thought-door-1440.png",
+      "sha256": "7500bb1e295c41454f0b0da68f74a3a404713d3d1de71fdf363fd9476a851496",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "thought-door-393.png",
+      "sha256": "b57ce8455c7abfe6daf80157587d51a055e2587319b24a0159dafd6b14600a36",
+      "width": 393,
+      "height": 852
+    }
+  ]
+}

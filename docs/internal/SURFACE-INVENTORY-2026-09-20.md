@@ -188,3 +188,4 @@ and 26 partly-matched rows.
 | [02-coherence-astra.md](surface-inventory-2026-09-20/02-coherence-astra.md) | species, tokens and type, the noun and verb maps, doors and states, SRS parity; top 30 (Astra, PR #593) |
 | [03-interaction-walk.md](surface-inventory-2026-09-20/03-interaction-walk.md) | every verb pressed, keyboard, touch, motion, the menus and ⌘K, egress per verb, window grammar; `interaction.json` |
 | [04-sober-eye.md](surface-inventory-2026-09-20/04-sober-eye.md) | the five jobs cold, no lore: scorecard, noun count, promise gap, delete list |
+| [05-first-use-fence.md](surface-inventory-2026-09-20/05-first-use-fence.md) | the fixture fence: what it proves, its named failures, and the real voice boundary |

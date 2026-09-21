@@ -1,0 +1,92 @@
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/fixture-speech-kept-1440.png
+PASS: fixture speech became visible text and a kept note; PCM samples 9898
+PASS: engine setup completed visibly without a reload
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/engine-set-1440.png
+PASS: Speak dock door fits and owns its hit target
+PASS: Meetings dock door fits and owns its hit target
+PASS: Desk memory dock door fits and owns its hit target
+PASS: Desk menu door is reachable
+PASS: Desk menu content loaded
+PASS: Object menu door is reachable
+PASS: Object menu content loaded
+PASS: Go menu door is reachable
+PASS: Go menu content loaded
+PASS: Window menu door is reachable
+PASS: Window menu content loaded
+PASS: Write a thought opens a note authoring surface
+PASS: The edit has a new visible Kept receipt in its editor before Save
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/editor-kept-before-save-1440.png
+PLANNED 127.0.0.1 sha256:adfd91308384de34ddcc2f04a65a2ece3b2d1a6ad9c430d09c08d982f4f6ea34
+FAIL: The imported transcript exposes Run summary without a reload
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/import-refresh-1440.png
+RECOVERY: reopen the imported meeting after the recorded import refresh failure.
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/planned-host-1440.png
+RECEIPT succeeded sha256:adfd91308384de34ddcc2f04a65a2ece3b2d1a6ad9c430d09c08d982f4f6ea34 127.0.0.1
+PASS: The open record shows the completed summary and actual host without a reload
+PASS: the persisted summary and run receipt agree with the planned host
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/summary-reopened-1440.png
+Notes query highlighted: ○ / Fence architecture note / NOTE
+PASS: Typing Notes and Enter reaches notes
+PASS: refind the saved note and its body in two navigation moves
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/note-after-restart-1440.png
+PASS: refind the meeting summary in two navigation moves; its receipt survives in the hub
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/meeting-after-restart-1440.png
+FSHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/fixture-speech-kept-393.png
+PASS: fixture speech became visible text and a kept note; PCM samples 9898
+PASS: engine setup completed visibly without a reload
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/engine-set-393.png
+PASS: Speak dock door fits and owns its hit target
+PASS: Meetings dock door fits and owns its hit target
+PASS: Desk memory dock door fits and owns its hit target
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/folded-go-menu-393.png
+PASS: New Note is visible and reachable in the folded Go menu
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/folded-menu-Desk-393.png
+FAIL: Open is visible and reachable as an Object entry in Go
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/menu-Object-393.png
+MENU GEOMETRY menu-Object {'x': 11, 'y': 877.5, 'width': 371, 'height': 28} {'height': 1404, 'scrollHeight': 1404, 'overflow': 'visible'}
+FAIL: Close window is visible and reachable as a Window entry in Go
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/menu-Window-393.png
+MENU GEOMETRY menu-Window {'x': 11, 'y': 1221.5, 'width': 371, 'height': 28} {'height': 1404, 'scrollHeight': 1404, 'overflow': 'visible'}
+PASS: Write a thought opens a note authoring surface
+PASS: The edit has a new visible Kept receipt in its editor before Save
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/editor-kept-before-save-393.png
+PLANNED 127.0.0.1 sha256:ddbefc6e26251fcbd905e5d71c25522f8b2d2d355ef148ee6f40c613a584dda3
+FAIL: The imported transcript exposes Run summary without a reload
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/import-refresh-393.png
+RECOVERY: reopen the imported meeting after the recorded import refresh failure.
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/planned-host-393.png
+RECEIPT succeeded sha256:ddbefc6e26251fcbd905e5d71c25522f8b2d2d355ef148ee6f40c613a584dda3 127.0.0.1
+PASS: The open record shows the completed summary and actual host without a reload
+PASS: the persisted summary and run receipt agree with the planned host
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/summary-reopened-393.png
+Notes query highlighted: ○ / Fence architecture note / NOTE
+PASS: Typing Notes and Enter reaches notes
+PASS: refind the saved note and its body in two navigation moves
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/note-after-restart-393.png
+PASS: refind the meeting summary in two navigation moves; its receipt survives in the hub
+SHOT pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence/meeting-after-restart-393.png
+F...ratchet: A1 175 -> 174 -- lower the ceiling
+ratchet: A3-prose 48 -> 43 -- lower the ceiling
+ratchet: B 32 -> 30 -- lower the ceiling
+.
+=================================== FAILURES ===================================
+________________________ test_first_use_fence[1440-900] ________________________
+tests/e2e/test_hs202_first_use_smoke.py:579: in test_first_use_fence
+    assert not failures, f"{width}: first-use steps failed: {', '.join(sorted(failures))}"
+E   AssertionError: 1440: first-use steps failed: import-refresh
+E   assert not {'import-refresh'}
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+________________________ test_first_use_fence[393-852] _________________________
+tests/e2e/test_hs202_first_use_smoke.py:579: in test_first_use_fence
+    assert not failures, f"{width}: first-use steps failed: {', '.join(sorted(failures))}"
+E   AssertionError: 393: first-use steps failed: import-refresh, menu-Object, menu-Window
+E   assert not {'import-refresh', 'menu-Object', 'menu-Window'}
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+FAILED tests/e2e/test_hs202_first_use_smoke.py::test_first_use_fence[1440-900]
+FAILED tests/e2e/test_hs202_first_use_smoke.py::test_first_use_fence[393-852]
+2 failed, 4 passed in 72.14s (0:01:12)
