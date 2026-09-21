@@ -622,13 +622,13 @@ export function LiveCore({ hero }: CoreProps) {
         <p className="surface-receipt-line" data-tone="ok" role="status">
           <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>{" "}
           Meeting saved{" "}
-          <button
-            type="button"
+          <Button
+            variant="chrome"
             className="btn-link"
             onClick={() => openPrimitive(`meeting:${retainedMeetingId}`)}
           >
             Return to saved Meeting
-          </button>
+          </Button>
         </p>
       ) : null}
       {doorOpen ? (

@@ -5,6 +5,7 @@
 // else through the primitive opener. Ask and Project Memory both speak
 // this species; a third rendering is a defect.
 import { openPrimitive, openSurfaceOr } from "../shell";
+import { Button } from "../../components/signal/Signal";
 
 /** The honest "grounded on N" arithmetic: matches minus overflow —
  * the receipt never counts material the hub did not actually read. */
@@ -56,14 +57,14 @@ export function CitationChips({
   return (
     <div className="surface-citations" aria-label="Citations">
       {refs.map((ref) => (
-        <button
+        <Button
+          variant="chrome"
           key={ref}
-          type="button"
           className="desk-chip quiet"
           onClick={() => onOpen(ref)}
         >
           {sourceLabel(ref)}
-        </button>
+        </Button>
       ))}
     </div>
   );

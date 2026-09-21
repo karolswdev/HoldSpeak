@@ -142,7 +142,7 @@ def _check_raw_buttons(page: Any, face_name: str) -> str | None:
         let raw = 0;
         for (const btn of allBtns) {
             // Library Button: has class 'btn' (the Signal Button component)
-            if (btn.classList.contains('btn')) continue;
+            if ((btn.classList.contains('btn') || btn.classList.contains('btn--chrome'))) continue;
             // Exclude known library/surface-kit buttons:
             if (btn.closest('[role="tablist"]')) continue;
             if (btn.closest('.cycle-gadget')) continue;

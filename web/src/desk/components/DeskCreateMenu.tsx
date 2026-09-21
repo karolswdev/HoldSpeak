@@ -5,6 +5,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { verbsFor, type VerbContext } from "../verbRegistry";
 import { DeskMenuItem, DeskMenuList } from "./DeskMenu";
+import { Button } from "../../components/signal/Signal";
 
 const CTX: VerbContext = { selectedRef: null };
 
@@ -37,9 +38,9 @@ export function DeskCreateMenu({ className = "" }: { className?: string }) {
 
   return (
     <div ref={rootRef} className={`desk-create ${className}`.trim()}>
-      <button
+      <Button
+        variant="chrome"
         ref={buttonRef}
-        type="button"
         className="desk-chip desk-create-button"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -47,7 +48,7 @@ export function DeskCreateMenu({ className = "" }: { className?: string }) {
         onClick={() => setOpen((value) => !value)}
       >
         <span aria-hidden="true">＋</span> Create
-      </button>
+      </Button>
       {open ? (
         <DeskMenuList
           className="desk-create-menu"

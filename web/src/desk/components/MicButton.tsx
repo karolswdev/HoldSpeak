@@ -36,6 +36,7 @@ import { VoiceProposalStrip } from "../voice/ProposalStrip";
 import type { VoiceGrammar, VoiceProposal } from "../voice/grammar";
 import { routeVoiceIntent } from "../voice/intentRouter";
 import { play as sfx } from "../../lib/sfx";
+import { Button } from "../../components/signal/Signal";
 
 export type MicState = "idle" | "listening" | "busy" | "failed";
 
@@ -161,8 +162,8 @@ export function MicButton({
       speakToFillUnsupportedReason() ??
       "This browser cannot capture microphone audio.";
     return (
-      <button
-        type="button"
+      <Button
+        variant="chrome"
         className={
           transport
             ? "desk-mic gadget-transport-key is-unsupported"
@@ -174,7 +175,7 @@ export function MicButton({
         onClick={(e) => e.stopPropagation()}
       >
         <MicFace transport={transport} state="idle" />
-      </button>
+      </Button>
     );
   }
 
@@ -373,8 +374,8 @@ export function MicButton({
 
   return (
     <>
-      <button
-        type="button"
+      <Button
+        variant="chrome"
         className={
           transport
             ? `desk-mic gadget-transport-key is-${state}`
@@ -404,7 +405,7 @@ export function MicButton({
         }}
       >
         <MicFace transport={transport} state={state} />
-      </button>
+      </Button>
       {listening && !transport ? (
         <span
           className="desk-mic-level"

@@ -3,6 +3,7 @@
  *  Receipt/egress slots, one resume/retry action. */
 import { useRef, type ReactNode } from "react";
 import "./progress-plan.css";
+import { Button } from "../../../components/signal/Signal";
 
 export type PlanStep = {
   id: string;
@@ -96,13 +97,13 @@ export function ProgressPlan({
             <div className="surface-plan-footer-slot">{egress}</div>
           ) : null}
           {action ? (
-            <button
-              type="button"
+            <Button
+              variant="chrome"
               className="surface-plan-action-btn"
               onClick={action.onClick}
             >
               {action.label}
-            </button>
+            </Button>
           ) : null}
         </div>
       ) : null}

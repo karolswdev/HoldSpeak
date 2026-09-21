@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import "./disclosure.css";
+import { Button } from "../../../components/signal/Signal";
 
 export function Disclosure({
   label,
@@ -97,9 +98,9 @@ export function Disclosure({
       data-token={token != null ? "" : undefined}
       onKeyDown={handleKeyDown}
     >
-      <button
+      <Button
+        variant="chrome"
         ref={triggerRef}
-        type="button"
         className="surface-disclosure-trigger"
         aria-expanded={isOpen}
         aria-controls={controlsId}
@@ -113,7 +114,7 @@ export function Disclosure({
         {token != null ? (
           <span className="surface-disclosure-token">{token}</span>
         ) : null}
-      </button>
+      </Button>
       {isOpen && !controlsId ? (
         <div className="surface-disclosure-body" role="region" aria-label={ariaLabel ?? label}>
           {children}

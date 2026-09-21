@@ -31,6 +31,7 @@ import { VERBS, verbLabel, type VerbContext } from "../verbRegistry";
 import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
 import { useLaunchers } from "./DeskWindow";
 import type { CoverageRecord } from "../coverage";
+import { Button } from "../../components/signal/Signal";
 
 // Re-exported so existing imports keep one source (the data moved to
 // desk/tools.ts so the registry never imports a component).
@@ -585,9 +586,9 @@ export function DeskToolShelf() {
 
   return (
     <>
-      <button
+      <Button
+        variant="chrome"
         ref={launchRef}
-        type="button"
         className="desk-chip desk-tools-launch"
         aria-expanded={open}
         aria-controls="desk-tool-shelf"
@@ -603,7 +604,7 @@ export function DeskToolShelf() {
           draggable={false}
         />{" "}
         Search <kbd>⌘K</kbd>
-      </button>
+      </Button>
       {/* Round 9 - the deck PORTALS to the desk root: rendered inside
           the chrome bar it inherited the bar's z-30 stacking context and
           every desk window (z 42+) covered the ⌘K results - a palette
@@ -650,9 +651,9 @@ export function DeskToolShelf() {
                         {band ? (
                           <span className="desk-deck-band">{band}</span>
                         ) : null}
-                        <button
+                        <Button
+                          variant="chrome"
                           id={`desk-palette-option-${row.id}`}
-                          type="button"
                           role="option"
                           aria-selected={isSel}
                           className={
@@ -685,7 +686,7 @@ export function DeskToolShelf() {
                           ) : null}
                           <span className="desk-deck-kind">{row.kind}</span>
                           {row.keycap ? <kbd>{row.keycap}</kbd> : null}
-                        </button>
+                        </Button>
                       </li>
                     );
                   })}

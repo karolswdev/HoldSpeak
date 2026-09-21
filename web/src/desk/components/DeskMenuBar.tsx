@@ -21,6 +21,7 @@ import {
 } from "../verbRegistry";
 import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
 import { useCompactViewport } from "../useCompactViewport";
+import { Button } from "../../components/signal/Signal";
 
 const MENUS: { id: MenuId; label: string }[] = [
   { id: "desk", label: "Desk" },
@@ -101,8 +102,8 @@ export function DeskMenuBar() {
     <nav ref={barRef} className="desk-verbbar" aria-label="Desk menus">
       {(compact ? MENUS.filter((m) => m.id === "go") : MENUS).map((m) => (
         <span key={m.id} className="desk-verbbar-item" data-menu-id={m.id}>
-          <button
-            type="button"
+          <Button
+            variant="chrome"
             className={`desk-verbbar-title${open === m.id ? " on" : ""}`}
             aria-haspopup="menu"
             aria-expanded={open === m.id}
@@ -128,7 +129,7 @@ export function DeskMenuBar() {
             }
           >
             {m.label}
-          </button>
+          </Button>
           {!settled && open === m.id && (
             <WorkMenu
               className="desk-verbbar-menu"

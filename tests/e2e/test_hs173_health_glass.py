@@ -176,7 +176,7 @@ def _assert_no_raw_button(page: Any) -> None:
         const btns = body.querySelectorAll('button');
         const raw = [];
         for (const b of btns) {
-            if (b.classList.contains('btn') ||
+            if ((b.classList.contains('btn') || b.classList.contains('btn--chrome')) ||
                 b.classList.contains('signal-button') ||
                 b.classList.contains('surface-ledger-line') ||
                 b.classList.contains('surface-edit-in-place') ||

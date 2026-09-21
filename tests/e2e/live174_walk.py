@@ -239,7 +239,7 @@ function countRawButtons(root) {
     const allBtns = root.querySelectorAll('button');
     let count = 0;
     for (const btn of allBtns) {
-        if (btn.classList.contains('btn') ||
+        if ((btn.classList.contains('btn') || btn.classList.contains('btn--chrome')) ||
             btn.classList.contains('signal-button') ||
             btn.classList.contains('surface-ledger-line') ||
             btn.classList.contains('surface-edit-in-place') ||

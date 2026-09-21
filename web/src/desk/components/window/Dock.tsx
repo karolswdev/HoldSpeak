@@ -1,6 +1,7 @@
 // Dock — the application launcher + running window toolbar.
 // Extracted from DeskWindow.tsx (HS-117-04).
 import { useEffect, useRef, useState, useCallback, type ReactNode } from "react";
+import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { useIntelligenceAttention } from "../../intelligenceAttention";
 import { openIntelligence } from "../../intelligenceNavigation";
@@ -144,9 +145,9 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             : null;
         const overdue = badge !== null && badge !== "•";
         return (
-          <button
+          <Button
             key={application.windowId}
-            type="button"
+            variant="chrome"
             className={
               "desk-dock-launch desk-dock-app" +
               (running ? " is-run" : "") +
@@ -192,14 +193,14 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
                 {badge}
               </span>
             ) : null}
-          </button>
+          </Button>
         );
       })}
       {/* HS-135-06 + HS-135-14: Floor/Chair toggle — the floor-grid
           sprite replaces the ▦ glyph character. */}
-      <button
+      <Button
         key="chair-floor-toggle"
-        type="button"
+        variant="chrome"
         className={
           "desk-dock-launch" +
           (chairSurface === "floor" ? " is-run" : "")
@@ -213,13 +214,13 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
         <span className="desk-dock-label">
           {chairSurface === "chair" ? "Floor" : "Chair"}
         </span>
-      </button>
+      </Button>
       {shown.map((launcher) => {
         const actionable = ACTIONABLE_LAUNCHERS.has(launcher.id);
         return (
-          <button
+          <Button
             key={launcher.id}
-            type="button"
+            variant="chrome"
             className={
               "desk-dock-launch" +
               (launcher.open ? " is-run" : "") +
@@ -242,7 +243,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
                 {launcher.badge}
               </span>
             ) : null}
-          </button>
+          </Button>
         );
       })}
       <RoomActions />
@@ -261,8 +262,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               (c.id === front && !minimized ? " is-front" : "")
             }
           >
-            <button
-              type="button"
+            <Button
+              variant="chrome"
               className="desk-dock-main"
               ref={(el) => {
                 if (el) chipEls.set(c.id, el);
@@ -288,38 +289,38 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             >
               <span aria-hidden="true">{c.glyph}</span>
               <span className="desk-dock-label">{c.label}</span>
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="chrome"
               className="desk-dock-x"
               aria-label={`Close ${c.label}`}
               onClick={c.close}
             >
               <VerbGlyph kind="close" />
-            </button>
+            </Button>
           </span>
         );
       })}
       {windows.length > 0 ? (
         <>
-          <button
-            type="button"
+          <Button
+            variant="chrome"
             className="desk-dock-reset"
             aria-label="Overview"
             title="Overview"
             onClick={() => toggleExpose(true)}
           >
             <VerbGlyph kind="overview" />
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="chrome"
             className="desk-dock-reset"
             aria-label="Reset layout"
             title="Reset layout"
             onClick={() => useDesk.getState().resetLayout()}
           >
             <VerbGlyph kind="reset" />
-          </button>
+          </Button>
         </>
       ) : null}
       {!settled && chipMenu ? (
