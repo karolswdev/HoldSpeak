@@ -61,6 +61,7 @@ import {
 } from "../../desk/surface/gadgets";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { presentValue } from "../../desk/surface/format";
+import { countToken } from "../../desk/surface/count";
 import { intelEgressBadge } from "./liveEgress";
 import { onReturnToTask } from "../../desk/returnToTask";
 
@@ -350,11 +351,36 @@ export function LiveCore({ hero }: CoreProps) {
   /* HS-202-04 (M6, UX-CANON A.7) — one fact, one place. This row printed
      the running clock that the footer receipt already carries, and the
      segment count that the stream head already counts, so the same two
-     facts stood three times on one screen. The row keeps the fact nothing
-     else on this face states: WHERE the meeting is being heard. */
-  const factsLine = `${connection || "This device"} · ${
-    active ? "recording" : "ready"
-  }`;
+     facts stood three times on one screen.
+     Astra's counsel on #599, finding 2: the row's remaining state word
+     still repeated the footer receipt (`ready` beside `READY`). The two
+     slots hold DIFFERENT facts and now say so: this row is the LINK to
+     the hub (`runtime/RuntimeBus.tsx:14` — connecting/connected/
+     reconnecting/offline), the footer receipt is the CAPTURE. The axis is
+     named, per the copy contract's `unqualified-state` rule. */
+  const factsLine = `Link · ${connection || "unknown"}`;
+
+  /** HS-202-04 — the queue summary with its zero counts dropped. A
+   *  non-count value (a timestamp, a state word) is kept as it is; only a
+   *  number that counts nothing is withheld (UX-CANON A.8). */
+  const jobFacts = useMemo(() => {
+    const wire = (pluginJobs.data ?? {}) as Record<string, unknown>;
+    const kept: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(wire)) {
+      /* Keep only what `SurfaceFacts` would actually DRAW
+         (`desk/surface/Surface.tsx:381-393`: string | number | boolean,
+         minus anything that presents as nothing). The idle wire carries
+         `next_retry_at: null` (`holdspeak/services/plugin_job_service.py:29`),
+         which draws nothing — counted as a fact it left the section
+         looking non-empty and the shot showed a header with a lone verb
+         under it (M5). */
+      if (!["string", "number", "boolean"].includes(typeof value)) continue;
+      if (typeof value === "number" && value <= 0) continue;
+      if (typeof value === "string" && !value.trim()) continue;
+      kept[key] = value;
+    }
+    return kept;
+  }, [pluginJobs.data]);
 
   const intelSummary = String(intelResult?.summary ?? "");
   const intelTopics = Array.isArray(intelResult?.topics)
@@ -387,10 +413,17 @@ export function LiveCore({ hero }: CoreProps) {
                 ))}
               </div>
             ) : null}
+            {/* HS-202-04 (UX-CANON A.8; Astra's counsel on #599, finding
+                2) — a Summary with nothing to do printed `0 action
+                items`. `countToken` withholds the zero, and the line is
+                omitted entirely when it would carry no fact. */}
             <SurfaceFacts
-              value={`${intelActionCount} action item${intelActionCount === 1 ? "" : "s"}${
-                intelResult.final ? " · final" : ""
-              }`}
+              value={[
+                countToken(intelActionCount, "action item", "action items"),
+                intelResult.final ? "final" : "",
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             />
           </div>
         ) : null}
@@ -501,9 +534,17 @@ export function LiveCore({ hero }: CoreProps) {
         <SurfaceState
           loading={pluginJobs.loading}
           error={pluginJobs.error}
+          empty={!Object.keys(jobFacts).length}
+          emptyLabel="No jobs waiting"
+          emptyGlyph="○"
           onRetry={() => void pluginJobs.reload()}
         >
-          <SurfaceFacts value={pluginJobs.data} />
+          {/* HS-202-04 (UX-CANON A.8; Astra's counsel on #599, finding 2)
+              — the hub's queue summary is all counts, so an idle desk drew
+              SIX counters of zero in this one section
+              (`assets/story-04-shots/live-door-summary-393.png`). A count
+              of zero says nothing; the section says the true thing. */}
+          <SurfaceFacts value={jobFacts} />
           <div className="surface-actions">
             <Button
               dense

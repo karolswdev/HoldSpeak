@@ -20,7 +20,9 @@
  *    the segments, the footer receipt carries the clock.
  */
 import { render, screen, waitFor, act } from "@testing-library/react";
+import { useState, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { WingSlotContext } from "../../../desk/surface/wings";
 
 type Frame = { type: string; data: unknown };
 
@@ -58,8 +60,37 @@ vi.mock("../../../runtime/RuntimeBus", () => ({
 
 import { LiveCore } from "../LiveCore";
 
+/* The wing strip (and with it the gear door) lives in the HOSTING
+ * window's head: the core publishes it through `WingSlotContext`
+ * (`desk/surface/wings.tsx:45`). A bare `render(<LiveCore />)` has no
+ * host, so the door cannot be pressed and the door face is unreachable —
+ * which is why the first round of this fence never saw the gear door's
+ * six zeros. This host is the smallest thing that provides the slot. */
+function WindowHost({ children }: { children: ReactNode }) {
+  const [wings, setWings] = useState<ReactNode>(null);
+  return (
+    <WingSlotContext.Provider value={setWings}>
+      <div data-testid="window-head">{wings}</div>
+      {children}
+    </WingSlotContext.Provider>
+  );
+}
+
+/** Press the Live window's configuration door. */
+async function openDoor() {
+  const gear = screen.getByRole("button", { name: "Configure meeting" });
+  await act(async () => {
+    gear.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+}
+
 async function mount() {
-  const view = render(<LiveCore />);
+  const view = render(
+    <WindowHost>
+      <LiveCore />
+    </WindowHost>,
+  );
   await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalled());
   /* `/api/state` answers with a fresh object, and the face resets its
    * segment list from that answer (`LiveCore.tsx:135-137`). A frame emitted
@@ -99,6 +130,137 @@ describe("Live calls the meeting result a Summary (F06)", () => {
     });
     await screen.findByText("Shipping is on for Friday.");
     expect(document.body.textContent ?? "").not.toMatch(/Intelligence/);
+  });
+});
+
+/* Astra's counsel on #599, finding 2: the touched Live flow was not
+ * finished. `live-door-summary-393.png` showed SIX counters of zero in the
+ * gear door's queue section, the Summary could still print `0 action
+ * items`, and the facts row repeated the footer receipt's state word. */
+describe("the Live gear door counts nothing to zero (A.8)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.listeners.clear();
+    mocks.apiFetch.mockResolvedValue({});
+  });
+
+  it("names its run-state section Summary, never Intelligence", async () => {
+    await mount();
+    await openDoor();
+    const labels = [...document.querySelectorAll("h3")].map(
+      (head) => head.textContent ?? "",
+    );
+    expect(labels).toContain("Summary");
+    expect(labels).not.toContain("Intelligence");
+    expect(document.body.textContent ?? "").not.toMatch(/Intelligence/);
+  });
+
+  it("says the true thing instead of six zeros on an idle queue", async () => {
+    mocks.apiFetch.mockImplementation(async (path: string) =>
+      String(path).startsWith("/api/plugin-jobs/summary")
+        ? ({
+            total_jobs: 0,
+            queued_jobs: 0,
+            running_jobs: 0,
+            failed_jobs: 0,
+            queued_due_jobs: 0,
+            scheduled_retry_jobs: 0,
+          } as never)
+        : ({} as never),
+    );
+    await mount();
+    await openDoor();
+    const text = document.body.textContent ?? "";
+    expect(text).toContain("No jobs waiting");
+    expect(text).not.toMatch(/\b0\b/);
+  });
+
+  it("says it on the REAL idle wire, which carries a null next retry", async () => {
+    // `holdspeak/services/plugin_job_service.py:29` — the hub always
+    // sends `next_retry_at`, null when nothing is scheduled. Counted as a
+    // fact it drew an empty section (header + lone verb) on the shot.
+    mocks.apiFetch.mockImplementation(async (path: string) =>
+      String(path).startsWith("/api/plugin-jobs/summary")
+        ? ({
+            total_jobs: 0,
+            queued_jobs: 0,
+            running_jobs: 0,
+            failed_jobs: 0,
+            queued_due_jobs: 0,
+            scheduled_retry_jobs: 0,
+            next_retry_at: null,
+          } as never)
+        : ({} as never),
+    );
+    await mount();
+    await openDoor();
+    expect(document.body.textContent ?? "").toContain("No jobs waiting");
+  });
+
+  it("still counts the jobs that exist", async () => {
+    mocks.apiFetch.mockImplementation(async (path: string) =>
+      String(path).startsWith("/api/plugin-jobs/summary")
+        ? ({ total_jobs: 2, queued_jobs: 0, failed_jobs: 1 } as never)
+        : ({} as never),
+    );
+    await mount();
+    await openDoor();
+    const facts = [...document.querySelectorAll(".surface-facts div")].map(
+      (row) => row.textContent ?? "",
+    );
+    expect(facts).toEqual(["total jobs2", "failed jobs1"]);
+  });
+});
+
+describe("the Summary never counts its action items to zero (A.8)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.listeners.clear();
+    mocks.apiFetch.mockResolvedValue({});
+  });
+
+  it("omits the line when a final Summary has nothing to do", async () => {
+    await mount();
+    emit("intel_complete", {
+      summary: "Nothing was assigned.",
+      topics: [],
+      action_items: [],
+      final: true,
+    });
+    await screen.findByText("Nothing was assigned.");
+    const text = document.body.textContent ?? "";
+    expect(text).not.toMatch(/0 action items/);
+    expect(text).toContain("final");
+  });
+
+  it("counts the action items that exist", async () => {
+    await mount();
+    emit("intel_complete", {
+      summary: "Two things to do.",
+      topics: [],
+      action_items: [{ task: "a" }, { task: "b" }],
+      final: true,
+    });
+    await screen.findByText("Two things to do.");
+    expect(document.body.textContent ?? "").toContain("2 action items · final");
+  });
+});
+
+describe("Live's row and its receipt hold different facts (M6)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.listeners.clear();
+    mocks.apiFetch.mockResolvedValue({});
+  });
+
+  it("never says the same state word twice", async () => {
+    await mount();
+    const row = document.querySelector(".surface-fact-line")?.textContent ?? "";
+    const receipt =
+      document.querySelector(".surface-footer-receipt-line")?.textContent ?? "";
+    expect(row).toBe("Link · connected");
+    expect(receipt).toBe("READY");
+    expect(row.toUpperCase()).not.toContain(receipt.toUpperCase());
   });
 });
 

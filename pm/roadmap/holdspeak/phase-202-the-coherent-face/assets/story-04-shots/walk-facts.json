@@ -1,13 +1,13 @@
 {
-  "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.WMsc9HZGsH",
+  "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.T3S4FSrkwO",
   "hubs": {
-    "1440": "http://127.0.0.1:55085",
-    "393": "http://127.0.0.1:55238"
+    "1440": "http://127.0.0.1:61906",
+    "393": "http://127.0.0.1:62175"
   },
   "live": {
     "1440": {
       "window": 1,
-      "facts_line": "connected \u00b7 recording",
+      "facts_line": "Link \u00b7 connected",
       "footer_receipt": "REC 00:00",
       "section_labels": [
         "SUMMARY",
@@ -23,7 +23,7 @@
     },
     "393": {
       "window": 1,
-      "facts_line": "connected \u00b7 recording",
+      "facts_line": "Link \u00b7 connected",
       "footer_receipt": "REC 00:00",
       "section_labels": [
         "SUMMARY",
@@ -190,9 +190,18 @@
     "1440": 1,
     "393": 2
   },
+  "menu_door_used": {
+    "1440": {
+      "List view": "desk",
+      "Spatial view": "desk"
+    },
+    "393": {
+      "Spatial view": "go"
+    }
+  },
   "list_view_opened": {
     "1440": true,
-    "393": false
+    "393": true
   },
   "floor_list": {
     "1440": {
@@ -200,8 +209,8 @@
       "rows": 35
     },
     "393": {
-      "list_view": 0,
-      "rows": 0
+      "list_view": 1,
+      "rows": 35
     }
   },
   "floor_zone": {
@@ -234,7 +243,10 @@
       ],
       "zero_item_names": [],
       "zero_item_cells": [],
-      "empty_cells": []
+      "empty_cells": [
+        "EMPTY",
+        "EMPTY"
+      ]
     }
   },
   "meetings_cleared": {

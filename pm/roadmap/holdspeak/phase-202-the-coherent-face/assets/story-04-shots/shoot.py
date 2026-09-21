@@ -230,22 +230,39 @@ def walk(page, width: int, hub: Hub, facts: dict[str, Any]) -> None:
     goto_desk(page, hub, width, facts)
 
     def menu_verb(menu: str, name: str) -> bool:
-        """Press a verb through its own menu (the Floor's view verbs are
-        scoped to the Floor and are not palette rows)."""
+        """Press a verb through its own menu.
+
+        Astra's counsel on #599, finding/condition 4: at 393 the menu bar
+        renders ONLY `go`, and the Desk/Object/Window entries are folded
+        inside it (HS-202-02; `desk/__tests__/phoneDoors.test.tsx:104`).
+        A rig that only knows the `desk` menu cannot reach the Floor's
+        view verbs at phone width — which is why the first round recorded
+        "the list face did not open at 393" as if it were a product fact.
+        The fold carries about forty rows, so the entry is scrolled to
+        before it is pressed."""
         close_shelf(page)
-        title = page.locator(f'[data-menu-id="{menu}"] .desk-verbbar-title')
-        if not title.count():
-            return False
-        title.first.click(timeout=5000)
-        settle(page, 700)
-        item = page.get_by_role("menuitem", name=name)
-        if not item.count():
-            page.keyboard.press("Escape")
-            settle(page, 400)
-            return False
-        item.first.click(timeout=5000)
-        settle(page, 1500)
-        return True
+        for candidate in (menu, "go"):
+            title = page.locator(
+                f'[data-menu-id="{candidate}"] .desk-verbbar-title')
+            if not title.count():
+                continue
+            title.first.click(timeout=5000)
+            settle(page, 700)
+            item = page.get_by_role("menuitem", name=name)
+            if not item.count():
+                page.keyboard.press("Escape")
+                settle(page, 400)
+                continue
+            try:
+                item.first.scroll_into_view_if_needed(timeout=3000)
+            except Exception:  # noqa: BLE001
+                pass
+            item.first.click(timeout=5000)
+            settle(page, 1500)
+            facts.setdefault("menu_door_used", {}).setdefault(
+                str(width), {})[name] = candidate
+            return True
+        return False
 
     def live() -> None:
         # The orb IS Live's door (the census: Live has no Go/dock entry).
@@ -363,12 +380,13 @@ def walk(page, width: int, hub: Hub, facts: dict[str, Any]) -> None:
                 pass
         facts.setdefault("floor_opened", {})[str(width)] = page.locator(
             ".desk-floor, .desk-stage, .desk-listmode").count()
-        # The Floor's view verbs are Floor-scoped: the palette carries
-        # them, and the Desk menu is the fallback door.
-        open_surface(page, "List view")
-        settle(page, 1200)
+        # The Floor's view verbs are Floor-scoped. The menu door is the
+        # one a person uses (the Desk menu at 1440, the folded Go menu at
+        # 393); the palette is the fallback.
+        menu_verb("desk", "List view")
         if not page.locator(".desk-listmode").count():
-            menu_verb("desk", "List view")
+            open_surface(page, "List view")
+            settle(page, 1200)
         facts.setdefault("list_view_opened", {})[str(width)] = (
             page.locator(".desk-listmode").count() > 0)
         settle(page, 1500)
@@ -393,9 +411,9 @@ def walk(page, width: int, hub: Hub, facts: dict[str, Any]) -> None:
         }
         shoot(page, "floor-list-zone", width)
         # back to the spatial Floor for the next steps
-        open_surface(page, "Spatial view")
+        menu_verb("desk", "Spatial view")
         if page.locator(".desk-listmode").count():
-            menu_verb("desk", "Spatial view")
+            open_surface(page, "Spatial view")
         settle(page, 1200)
 
     def ask_session() -> None:

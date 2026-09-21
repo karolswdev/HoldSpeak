@@ -6873,7 +6873,7 @@
     },
     {
       "path": "web/src/desk/components/AskPanel.tsx",
-      "line": 109,
+      "line": 110,
       "kinds": [
         "http_client"
       ],
@@ -8083,7 +8083,7 @@
     },
     {
       "path": "web/src/lib/productLanguage.ts",
-      "line": 170,
+      "line": 176,
       "kinds": [
         "input_injection"
       ],
@@ -8273,7 +8273,7 @@
     },
     {
       "path": "web/src/pages/cores/LiveCore.tsx",
-      "line": 286,
+      "line": 287,
       "kinds": [
         "http_client"
       ],
@@ -8283,7 +8283,7 @@
     },
     {
       "path": "web/src/pages/cores/LiveCore.tsx",
-      "line": 419,
+      "line": 463,
       "kinds": [
         "http_client"
       ],
@@ -8293,7 +8293,7 @@
     },
     {
       "path": "web/src/pages/cores/LiveCore.tsx",
-      "line": 498,
+      "line": 552,
       "kinds": [
         "http_client"
       ],
