@@ -25,7 +25,7 @@ Every face on the owner's first-use path has a door at every width, tells the tr
 | HS-202-02 | First-use doors and truthful state | done | [story-02-first-use-doors-and-truthful-state](./story-02-first-use-doors-and-truthful-state.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-202-03 | Shared controls on the first-use path become library species | done | [story-03-shared-controls-on-the-first-use-path-become-library-species](./story-03-shared-controls-on-the-first-use-path-become-library-species.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-202-04 | Names and repeats on the touched flows | done | [story-04-names-and-repeats-on-the-touched-flows](./story-04-names-and-repeats-on-the-touched-flows.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-202-05 | The type-scale ruling, then the tokens | backlog | [story-05-the-type-scale-ruling-then-the-tokens](./story-05-the-type-scale-ruling-then-the-tokens.md) | - |
+| HS-202-05 | The type-scale ruling, then the tokens | done | [story-05-the-type-scale-ruling-then-the-tokens](./story-05-the-type-scale-ruling-then-the-tokens.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-202-06 | The sitting selects the next scope | backlog | [story-06-the-sitting-selects-the-next-scope](./story-06-the-sitting-selects-the-next-scope.md) | - |
 
 ## Where we are
@@ -117,6 +117,9 @@ visible Kept after the successful autosave, then Save closes and the exact
 text persists. No new after-click receipt is claimed. This interpretation,
 the pending clarification and the owner's right to overrule are explicit in
 [the follow-up check](checks/story-01-followup-muaddib.md).
+
+- 2026-09-21 - The 44 px hit halo lives in a viewport media query and global.css joins the container-query law allowlist: most Buttons at 393 (dock, menu bar, Chair shell, first-run) sit outside every named surface container; chair.css:566 is the precedent - tenet 1 - Muad'Dib, on the worker's disclosure.
+- 2026-09-21 - The 126 ember contrast pairs (59 of them the filled primary Button) stay: no light foreground reaches 4.5:1 on the ember accent, only a near-black one, which repaints every filled primary. A look change the owner sees before it is made: decided at the sitting (story 06), recorded in story 05's Notes with the arithmetic.
 
 ## Decisions deferred
 

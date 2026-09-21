@@ -30,6 +30,14 @@ const viewportWidthMediaAllowlist = new Set([
   "/src/desk/pullouts/intelligence.css", // phone sheet shell
   "/src/desk/thought-workspace/thought-workspace.css", // full-viewport mobile workspace shell
   "/src/styles/react-app.css", // route shell
+  // HS-202-05 (the type-scale ruling, §3 rule 4): the ONE viewport block
+  // in global.css gives every library Button a 44px hit area at the
+  // narrow desk. The area belongs to the device, not to a window body,
+  // and most Buttons at 393 (the dock, the menu bar, the Chair shell,
+  // the first-use pages) sit outside every named `surface` container, so
+  // a container query cannot reach them. chair.css carries the same
+  // exception for the same reason (chair.css:566).
+  "/src/styles/global.css",
 ]);
 
 describe("HS-129-06 container-query law", () => {

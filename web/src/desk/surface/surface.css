@@ -2976,6 +2976,12 @@ button.surface-edit-in-place:hover {
 .model-library-row-copy strong {
   overflow-wrap: anywhere;
   color: var(--text);
+  /* HS-202-05: --font-sans had no declaration anywhere, so this whole
+     shorthand was invalid at computed-value time and fell back to
+     `unset` -- the name rendered 13px/400, not 13px/600. The semantic
+     alias in design-tokens.json revives the line exactly as authored.
+     Probed before/after on an isolated fixture: 13px/400/Inter ->
+     13px/600/Inter. */
   font: 600 var(--desk-surface-body-size) / 1.25 var(--font-sans);
 }
 .model-library-row-copy small,
@@ -3013,6 +3019,10 @@ button.surface-edit-in-place:hover {
 .model-library-repair {
   margin: 0;
   color: var(--danger);
+  /* HS-202-05: same dead shorthand as .model-library-row-copy strong
+     above. Probed before/after: 13px/400/Inter -> 12px/500/Inter. The
+     detail token is what the author wrote and it sits ON the 12px
+     readable floor, so the revival is kept, not retuned. */
   font: 500 var(--desk-surface-detail-size) / 1.35 var(--font-sans);
 }
 .model-library-detail .gadget-fold {
@@ -3096,6 +3106,14 @@ button.surface-edit-in-place:hover {
   border-radius: var(--radius-sm);
   color: var(--text);
   background: var(--desk-window-well);
+  /* HS-202-05 (counsel round, finding 3): the THIRD dead --font-sans
+     shorthand, and the only one on a raw <button>. The author rule was
+     invalid at computed-value time, so it fell back to `unset` and the
+     choice card inherited the body face instead of wearing its own.
+     Probed before/after on an isolated fixture: 13px/400/Inter ->
+     13px/600/Inter. A raw <button> with NO author font declaration is
+     what puts UA Arial in the census's M10 stack counts; this one always
+     had a declaration, it just never resolved. */
   font: 600 var(--desk-surface-body-size) / 1.25 var(--font-sans);
   text-align: start;
   cursor: pointer;

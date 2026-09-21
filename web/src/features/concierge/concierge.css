@@ -40,7 +40,7 @@
 .concierge-checked-at {
   font: 400 11px/1 "JetBrains Mono", monospace;
   letter-spacing: 0.06em;
-  color: var(--faint, #767e8d);
+  color: var(--text-faint);
   text-transform: uppercase;
 }
 
