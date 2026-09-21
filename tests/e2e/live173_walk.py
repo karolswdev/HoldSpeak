@@ -553,7 +553,7 @@ def _step_room_health_face(page: Any, out_dir: Path, w: int, token: str,
         const allBtns = body.querySelectorAll('button');
         let rawBtnCount = 0;
         for (const btn of allBtns) {
-            if (btn.classList.contains('btn') ||
+            if ((btn.classList.contains('btn') || btn.classList.contains('btn--chrome')) ||
                 btn.classList.contains('signal-button') ||
                 btn.classList.contains('surface-ledger-line') ||
                 btn.classList.contains('surface-edit-in-place') ||
@@ -846,7 +846,7 @@ def _step_update_editor(page: Any, out_dir: Path, w: int, token: str,
         const allBtns = area.querySelectorAll('button');
         let rawBtnCount = 0;
         for (const btn of allBtns) {
-            if (btn.classList.contains('btn') ||
+            if ((btn.classList.contains('btn') || btn.classList.contains('btn--chrome')) ||
                 btn.classList.contains('desk-mic') ||
                 btn.classList.contains('desk-chip') ||
                 btn.classList.contains('surface-ledger-line') ||
@@ -1077,7 +1077,7 @@ def _step_steward_posture(page: Any, out_dir: Path, w: int, token: str,
         const allBtns = area.querySelectorAll('button');
         let rawBtnCount = 0;
         for (const btn of allBtns) {
-            if (btn.classList.contains('btn') ||
+            if ((btn.classList.contains('btn') || btn.classList.contains('btn--chrome')) ||
                 btn.classList.contains('desk-mic') ||
                 btn.classList.contains('surface-ledger-line') ||
                 btn.closest('.desk-traffic') ||

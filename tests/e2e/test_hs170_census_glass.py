@@ -188,7 +188,7 @@ MEASURE_JS = """(windowSelector) => {
   let rawButtons = 0;
   const rawButtonTexts = [];
   for (const b of allButtons) {
-    if (!b.classList.contains("btn")) {
+    if (!b.classList.contains("btn") && !b.classList.contains("btn--chrome")) {
       rawButtons++;
       rawButtonTexts.push((b.textContent || "").trim().slice(0, 40));
     }

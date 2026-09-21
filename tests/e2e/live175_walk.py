@@ -231,7 +231,7 @@ def _close_surface(page: Any) -> None:
 # -- Raw-button exclusion list (from live173_walk.py) --
 
 _RAW_BTN_EXCLUDE_JS = """
-    if (btn.classList.contains('btn') ||
+    if ((btn.classList.contains('btn') || btn.classList.contains('btn--chrome')) ||
         btn.classList.contains('signal-button') ||
         btn.classList.contains('surface-ledger-line') ||
         btn.classList.contains('surface-edit-in-place') ||
@@ -542,7 +542,7 @@ def _step_arrival(page: Any, out_dir: Path, w: int, token: str,
         const allBtns = body.querySelectorAll('button');
         let rawBtnCount = 0;
         for (const btn of allBtns) {
-            if (btn.classList.contains('btn') ||
+            if ((btn.classList.contains('btn') || btn.classList.contains('btn--chrome')) ||
                 btn.classList.contains('signal-button') ||
                 btn.classList.contains('surface-ledger-line') ||
                 btn.classList.contains('surface-edit-in-place') ||
@@ -808,7 +808,7 @@ def _step_settings_meetings(page: Any, out_dir: Path, w: int, token: str,
         const allBtns = body.querySelectorAll('button');
         let rawBtnCount = 0;
         for (const btn of allBtns) {
-            if (btn.classList.contains('btn') ||
+            if ((btn.classList.contains('btn') || btn.classList.contains('btn--chrome')) ||
                 btn.classList.contains('signal-button') ||
                 btn.classList.contains('surface-ledger-line') ||
                 btn.classList.contains('surface-edit-in-place') ||
@@ -1033,7 +1033,7 @@ def _step_room_sources(page: Any, out_dir: Path, w: int, token: str,
         const allBtns = body.querySelectorAll('button');
         let rawBtnCount = 0;
         for (const btn of allBtns) {
-            if (btn.classList.contains('btn') ||
+            if ((btn.classList.contains('btn') || btn.classList.contains('btn--chrome')) ||
                 btn.classList.contains('signal-button') ||
                 btn.classList.contains('surface-ledger-line') ||
                 btn.classList.contains('surface-edit-in-place') ||
@@ -1214,7 +1214,7 @@ def _step_rhythm(page: Any, out_dir: Path, w: int, token: str,
         const allBtns = body.querySelectorAll('button');
         let rawBtnCount = 0;
         for (const btn of allBtns) {
-            if (btn.classList.contains('btn') ||
+            if ((btn.classList.contains('btn') || btn.classList.contains('btn--chrome')) ||
                 btn.classList.contains('signal-button') ||
                 btn.classList.contains('surface-ledger-line') ||
                 btn.classList.contains('surface-edit-in-place') ||
