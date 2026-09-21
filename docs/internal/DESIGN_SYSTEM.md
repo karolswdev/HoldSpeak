@@ -366,13 +366,30 @@ attribute, its `not-allowed` cursor and its flat treatment
 states the disabled position.
 
 **4. Hit ownership at 393.** `--desk-button-hit-size` (44px) is the
-area each library Button owns at the narrow desk. A transparent halo
-carries the area, so the painted face keeps its 24/28 px height
+area each PLATED library Button owns at the narrow desk. A transparent
+halo carries the area, so the painted face keeps its 24/28 px height
 (`--size-btn`); `--size-touch` (40px) still serves the row glyph and
 does not change. Layout can grow. A clipped area is a defect, and two
 controls must not own the same point. `elementFromPoint` plus a real
 pointer at the center, the edges and the corners is the proof; a
 rectangle measurement is not.
+
+A CHROME Button carries no plate — it is a row in a strip (menu row,
+wing tab, dock chip). A halo there would reach over its neighbours, so
+the strip owes the target: the row is at least 44 px high at 393.
+Measure the row height; never add the halo.
+
+Two readings are facts, not defects: a control under a window in front
+is occluded, and a halo that reaches under that window is covered. The
+layer order is doing its job in both.
+
+**5. The ember under text.** `--accent` carries no readable small text.
+No light foreground reaches 4.5:1 on it — `--text-on-accent` reads
+3.79:1 and pure white 4.20:1. A fill that carries text uses
+`--accent-ink` (with `--accent-ink-hover` and `--accent-ink-press`),
+one stop down the same forge-ember ramp, where `--text-on-accent`
+reads 5.24:1. `--accent` keeps every other duty: rails, glows,
+borders, tints.
 
 ### The composition rules
 

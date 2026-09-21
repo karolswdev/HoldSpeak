@@ -48,6 +48,11 @@ MEETING_TITLE = "First recorded meeting"
 WIDTHS = {1440: 900, 393: 852}
 FLOOR = 12.0
 
+# The two contrast rules this story owns and gates: the ruling's faint
+# gray, and its ember ledger on the faces the first-use path crosses.
+# Anything else is printed as measured residue, never swallowed.
+GATED_CONTRAST = ("faint", "ember")
+
 # The floor ledger: every consumer on a first-use screen whose readable
 # text still computes under 12px at HS-202-05's close. Each line is a raw
 # CSS size that does NOT read a type token, so the ruling's token change
@@ -191,8 +196,24 @@ _MEASURE = """(faintHex) => {
     const f = (v) => { v /= 255; return v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); };
     return 0.2126*f(c.r) + 0.7152*f(c.g) + 0.0722*f(c.b);
   };
-  const over = (fg, bg) => ({ r: fg.r*fg.a + bg.r*(1-fg.a), g: fg.g*fg.a + bg.g*(1-fg.a),
-                              b: fg.b*fg.a + bg.b*(1-fg.a), a: 1 });
+  // Source-over, alpha-correct. The census's own M8 block
+  // (`scripts/surface_census_measure.js`, bgOf/over) composites a
+  // translucent layer onto a translucent backdrop as if the backdrop
+  // were OPAQUE, and then marks the result a:1 -- so a dark chip fill
+  // (rgba(0,0,0,.28)) over a white hairline wash (rgba(255,255,255,.035))
+  // reads as rgb(184,184,184) instead of the near-black the eye sees.
+  // This rig gates on the number, so it does the arithmetic properly and
+  // keeps walking until the stack is actually opaque.
+  const over = (fg, bg) => {
+    const a = fg.a + bg.a * (1 - fg.a);
+    if (a <= 0) return { r: 0, g: 0, b: 0, a: 0 };
+    return {
+      r: (fg.r*fg.a + bg.r*bg.a*(1-fg.a)) / a,
+      g: (fg.g*fg.a + bg.g*bg.a*(1-fg.a)) / a,
+      b: (fg.b*fg.a + bg.b*bg.a*(1-fg.a)) / a,
+      a,
+    };
+  };
   const path = (el) => {
     const bits = [];
     for (let n = el; n && n.nodeType === 1 && bits.length < 6; n = n.parentElement) {
@@ -229,6 +250,8 @@ _MEASURE = """(faintHex) => {
   };
 
   const faint = hex(faintHex);
+  // The ember family, exactly as design-tokens.json spells it.
+  const EMBER = ['#a86e4a', '#bc8058', '#936041', '#da9868'];
   const small = [], contrast = [];
   for (const el of leaves) {
     const cs = getComputedStyle(el);
@@ -242,8 +265,14 @@ _MEASURE = """(faintHex) => {
         // The signature is the consumer, not the instance: the element's
         // own classes (or its tag) plus the computed size. A face that
         // repeats one styled span twenty times is ONE ledger line.
+        // HS-202-03 adds a `btn--chrome` marker to the Buttons that
+        // replace today's raw wing tabs, menu rows and dock chips. It
+        // marks a species, not a size, so it must not mint twelve new
+        // ledger signatures on the combined revision. Drop that ONE
+        // marker; every other class and the size stay part of the key.
         const cls = (el.className && typeof el.className === 'string')
-          ? '.' + el.className.trim().split(/\s+/).join('.')
+          ? '.' + el.className.trim().split(/\s+/)
+                    .filter((c) => c !== 'btn--chrome').join('.')
           : el.tagName.toLowerCase();
         small.push({ sig: cls + '@' + Math.round(size*100)/100 + 'px',
                      path: path(el), px: Math.round(size*100)/100,
@@ -252,7 +281,7 @@ _MEASURE = """(faintHex) => {
     }
 
     const fg = parse(cs.color);
-    if (!fg || !same(fg, faint)) continue;   // only --text-faint is gated here
+    if (!fg) continue;
     let painted = false, bg = null;
     for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
       const bi = getComputedStyle(n).backgroundImage;
@@ -261,19 +290,116 @@ _MEASURE = """(faintHex) => {
       if (bc && bc.a > 0) { bg = bg ? over(bg, bc) : bc; if (bg.a >= 0.999) break; }
     }
     if (painted) continue;                    // the census skips these too
-    const page = parse(getComputedStyle(document.body).backgroundColor) || {r:255,g:255,b:255,a:1};
+    // Census parity (`scripts/surface_census_measure.js`, bgOf): a body
+    // whose own background is TRANSPARENT is not a ground. Falling back
+    // to it paints every composite against rgb(0,0,0) and invents
+    // ratios. White is the base the census uses in that case.
+    const pageBg = parse(getComputedStyle(document.body).backgroundColor);
+    const page = pageBg && pageBg.a > 0 ? pageBg : {r:255,g:255,b:255,a:1};
     bg = !bg ? page : (bg.a < 1 ? over(bg, page) : bg);
     const eff = fg.a < 1 ? over(fg, bg) : fg;
     const l1 = lum(eff), l2 = lum(bg);
     const ratio = (Math.max(l1,l2)+0.05) / (Math.min(l1,l2)+0.05);
     const bold = parseInt(cs.fontWeight, 10) >= 700;
     const need = (size >= 24 || (bold && size >= 18.66)) ? 3 : 4.5;
-    if (ratio < need)
+    if (ratio < need) {
+      // Which rule owns this observation: the ruling's faint gray, the
+      // ruling's ember ledger, or neither.
+      const isFaint = same(fg, faint);
+      const onEmber = EMBER.some((e) => same(bg, hex(e)));
+      const inEmber = EMBER.some((e) => same(fg, hex(e)));
+      // The composited ground is a derived number; record the chain that
+      // produced it so a reader can tell a real defect from a bad read.
+      const chain = [];
+      for (let n = el; n && n.nodeType === 1 && chain.length < 10; n = n.parentElement) {
+        const bc = getComputedStyle(n).backgroundColor;
+        const c = parse(bc);
+        if (c && c.a > 0) chain.push((n.className && typeof n.className === 'string'
+          ? '.' + n.className.trim().split(/\s+/)[0] : n.tagName.toLowerCase()) + '=' + bc);
+        if (c && c.a >= 0.999) break;
+      }
       contrast.push({ path: path(el), ratio: Math.round(ratio*100)/100, need,
                       px: Math.round(size*10)/10, text: text.slice(0, 40),
+                      kind: isFaint ? 'faint' : (onEmber || inEmber ? 'ember' : 'other'),
+                      fg: cs.color, chain: chain.join(' < '),
                       bg: `rgb(${Math.round(bg.r)}, ${Math.round(bg.g)}, ${Math.round(bg.b)})` });
+    }
   }
-  return { leaves: leaves.length, small, contrast };
+  // ── the hit contract, in the REAL layout (393 only) ──────────────
+  //
+  // The isolated fixture proves the CSS; it cannot prove that a live
+  // face leaves the halo unclipped or that no neighbour steals a point.
+  // This pass runs `elementFromPoint` over the nine points of every
+  // visible plated Button ON THE SCREEN ITSELF. It does NOT click:
+  // a real pointer on a live first-use face would fire real verbs, and
+  // the pointer half of the proof belongs to the fixture rig.
+  //
+  // Chrome-variant Buttons (menu rows, wing tabs, dock chips) carry no
+  // plate, so they take their target from the strip's own row height.
+  // Those are measured, not probed.
+  const plated = [], chromeRows = [];
+  if (innerWidth <= 420) {
+    const hit = parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue('--desk-button-hit-size')) || 44;
+    for (const el of document.querySelectorAll('.btn')) {
+      if (!visible(el)) continue;
+      const r = el.getBoundingClientRect();
+      if (r.bottom <= 0 || r.top >= innerHeight || r.right <= 0 || r.left >= innerWidth) continue;
+      const halfW = Math.max(hit, r.width) / 2, halfH = Math.max(hit, r.height) / 2;
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      // A Desk window covers the Chair behind it. Those Buttons are in
+      // the DOM and laid out, but nothing can reach them and the halo is
+      // not what is in their way. The centre decides: if the Button does
+      // not own its own middle, it is OCCLUDED and this probe has no
+      // claim on it. Counting it would make the rig report a layering
+      // fact as a hit-area defect.
+      const centre = document.elementFromPoint(cx, cy);
+      if (!centre || !(centre === el || el.contains(centre))) {
+        plated.push({ label: (el.textContent || '').trim().slice(0, 24),
+                      occluded: true, by: centre ? (centre.className || centre.tagName) : 'null',
+                      w: Math.round(halfW*2), h: Math.round(halfH*2), covered: [],
+                      painted: Math.round(r.height), path: path(el), bad: [] });
+        continue;
+      }
+      // The ruling rejects two things: a CLIPPED area, and an adjacent
+      // CONTROL owning the same point. A window drawn in front of the
+      // Chair is neither -- it is the layer order doing its job. Split
+      // the two, so a real clip is never excused and a layering fact is
+      // never reported as a hit-area defect.
+      const LAYER = '.desk-surface-window, .desk-pullout, .desk-window, .desk-next-window,'
+                  + ' [role=dialog], [role=menu], .desk-dock, .desk-verbbar';
+      const ourLayer = el.closest(LAYER);
+      const bad = [], covered = [];
+      for (const [fx, fy] of [[0,0],[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]]) {
+        const x = cx + fx * (halfW - 1), y = cy + fy * (halfH - 1);
+        if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) continue;  // off-screen edge
+        const top = document.elementFromPoint(x, y);
+        if (!top || top === el || el.contains(top)) continue;
+        const where = `(${fx},${fy})->` + (top.className || top.tagName);
+        if (top.closest(LAYER) !== ourLayer) covered.push(where);
+        else bad.push(where);
+      }
+      plated.push({ label: (el.textContent || '').trim().slice(0, 24), occluded: false,
+                    w: Math.round(halfW*2), h: Math.round(halfH*2), covered,
+                    painted: Math.round(r.height), path: path(el), bad });
+    }
+    // The chrome strips this product actually has at 393.
+    for (const [kind, sel] of [
+        ['wing tab', '.desk-wings-tabs > button'],
+        ['dock chip', '.desk-dock button'],
+        ['menu row', '[role=menuitem]'],
+    ]) {
+      for (const el of document.querySelectorAll(sel)) {
+        if (!visible(el)) continue;
+        const r = el.getBoundingClientRect();
+        chromeRows.push({ kind, label: (el.getAttribute('aria-label')
+          || el.textContent || '').trim().slice(0, 24),
+          h: Math.round(r.height * 10) / 10, path: path(el) });
+      }
+    }
+  }
+
+  return { leaves: leaves.length, small, contrast, plated, chromeRows };
 }"""
 
 
@@ -383,6 +509,12 @@ def test_first_use_screens_hold_the_floor_and_the_contrast(
 
     report: dict[str, dict] = {}
     floor_seen: dict[str, dict] = {}
+    other_contrast: list[str] = []
+    plated_seen = [0]
+    occluded = [0]
+    halo_covered: list[str] = []
+    chrome_seen: dict[str, list[float]] = {}
+    chrome_short: list[str] = []
     failures: list[str] = []
     errors: list[str] = []
 
@@ -399,6 +531,17 @@ def test_first_use_screens_hold_the_floor_and_the_contrast(
                 f"{name} never loaded at {width}; a screen that did not open "
                 "proves nothing"
             )
+            if os.environ.get("HS202_05_ACCENT_OVERRIDE") == "1":
+                # The BEFORE leg for the counsel round: paint the ember
+                # ink steps back to the plate they replaced, on the real
+                # screens, and read the same M8 logic against it.
+                page.evaluate("""() => {
+                  const r = document.documentElement.style;
+                  const cs = getComputedStyle(document.documentElement);
+                  r.setProperty('--accent-ink', cs.getPropertyValue('--accent').trim());
+                  r.setProperty('--accent-ink-hover', cs.getPropertyValue('--accent-hover').trim());
+                  r.setProperty('--accent-ink-press', cs.getPropertyValue('--accent-press').trim());
+                }""")
             override = os.environ.get("HS202_05_FAINT_OVERRIDE")
             if override:
                 # The BEFORE leg: paint the pre-ruling faint gray onto the
@@ -430,6 +573,35 @@ def test_first_use_screens_hold_the_floor_and_the_contrast(
                 "under_floor": len(seen["small"]),
                 "faint_contrast_fails": len(seen["contrast"]),
             }
+            # ── the hit contract on the live face (393 only) ──────
+            for b in seen.get("plated", []):
+                if b["occluded"]:
+                    occluded[0] += 1
+                    continue
+                if b.get("covered"):
+                    halo_covered.append(
+                        f"{name}@{width} {b['label']!r} halo runs under the layer in "
+                        f"front at {', '.join(b['covered'])} ({b['path']})"
+                    )
+                if b["bad"]:
+                    failures.append(
+                        f"{name}@{width} HIT {b['label']!r} lost "
+                        f"{len(b['bad'])}/9 points: {', '.join(b['bad'])} ({b['path']})"
+                    )
+                if b["w"] < 44 or b["h"] < 44:
+                    failures.append(
+                        f"{name}@{width} HIT {b['label']!r} area is {b['w']}x{b['h']}px "
+                        f"(painted {b['painted']}px) ({b['path']})"
+                    )
+                plated_seen[0] += 1
+            for c in seen.get("chromeRows", []):
+                chrome_seen.setdefault(c["kind"], []).append(c["h"])
+                if c["h"] < 44:
+                    chrome_short.append(
+                        f"{name}@{width} {c['kind']} {c['label']!r} row is {c['h']}px "
+                        f"high, under the 44px the strip owes it ({c['path']})"
+                    )
+
             for s in seen["small"]:
                 sig = f"{width}|{name}|{s['sig']}"
                 floor_seen.setdefault(sig, s)
@@ -439,10 +611,15 @@ def test_first_use_screens_hold_the_floor_and_the_contrast(
                         f"({s['path']})"
                     )
             for c in seen["contrast"]:
-                failures.append(
-                    f"{name}@{width} M8 {c['ratio']}:1 < {c['need']} at {c['px']}px on "
-                    f"{c['bg']}: {c['text']!r} ({c['path']})"
+                line = (
+                    f"{name}@{width} M8[{c['kind']}] {c['ratio']}:1 < {c['need']} at "
+                    f"{c['px']}px {c['fg']} on {c['bg']}: {c['text']!r} ({c['path']})"
+                    + (f"  ground: {c['chain']}" if c["kind"] == "other" else "")
                 )
+                if c["kind"] in GATED_CONTRAST:
+                    failures.append(line)
+                else:
+                    other_contrast.append(line)
 
         if os.environ.get("HS202_05_DUMP"):
             Path(os.environ["HS202_05_DUMP"] + f".{width}.json").write_text(
@@ -455,6 +632,19 @@ def test_first_use_screens_hold_the_floor_and_the_contrast(
             (SHOTS / f"first-use-type-floor-{width}.json").write_text(
                 json.dumps(report, indent=2) + "\n", encoding="utf-8"
             )
+        if width <= 420:
+            print(f"HIT CONTRACT {width}: {plated_seen[0]} reachable plated Button "
+                  f"observations, every one owning its nine points at 44x44; "
+                  f"{occluded[0]} skipped as occluded by a window in front")
+            for line in halo_covered:
+                print("HALO UNDER A LAYER IN FRONT (ledger, not a clip):", line)
+            for kind, heights in sorted(chrome_seen.items()):
+                print(f"CHROME ROWS {width}: {kind} x{len(heights)} "
+                      f"min {min(heights)}px max {max(heights)}px")
+            for line in chrome_short:
+                print("CHROME ROW UNDER 44 (ledger):", line)
+        for line in other_contrast:
+            print("CONTRAST RESIDUE (not gated by HS-202-05):", line)
         recorded = {k for k in FLOOR_LEDGER if k.startswith(f"{width}|")}
         healed = sorted(recorded - set(floor_seen))
         for sig in healed:

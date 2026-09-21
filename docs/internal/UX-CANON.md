@@ -97,12 +97,20 @@ replace the earlier 11 px caption allowance.
   really on. Faint gray is `--text-faint` (`#8b93a3`); muted gray
   stays `#9ba2b0`. A disabled control stays different through its
   disabled state and its flat treatment, not through gray alone.
-- **Hit ownership at 393.** Each library Button owns a 44 × 44 px area
+- **Hit ownership at 393.** Each PLATED library Button — the Button
+  that wears a face of its own — owns a 44 × 44 px area
   (`--desk-button-hit-size`). A transparent halo carries the area; the
   painted face keeps its height. Layout can grow. A clipped area is a
   defect, and two controls must not own the same point. Prove it with
   `elementFromPoint` and a real pointer at the center, the edges and
   the corners. A rectangle measurement is not proof.
+  A chrome Button has no plate: it is a row in a strip (a menu row, a
+  wing tab, a dock chip). A halo on it would reach over its neighbours,
+  so the STRIP owes it the target: each such row is at least 44 px high
+  at 393. Measure the row, do not add a halo.
+  Two things are not defects here. A control under a window in front is
+  occluded, and the layer order is correct. A halo that reaches under
+  that window is covered, not clipped. Record both; fail neither.
 
 ## D. Grammar rules the scars taught
 
@@ -110,6 +118,16 @@ replace the earlier 11 px caption allowance.
   drawn two ways (compose repeated things as one object).
 - 393 stacks under a container query named `surface` (the desk's
   container; `surface-window` never matched) — never viewport media.
+  ONE exception, and only this shape (HS-202-05): a DEVICE rule that
+  sets a target size and stacks no content. The 44 px Button area is
+  the only one. It lives in `web/src/styles/global.css` under
+  `@media (max-width: 420px)`, and `global.css` is named in the
+  allowlist of the container-query law
+  (`web/src/desk/__tests__/containerQueryLaw.test.ts`). The reason is
+  reach, not preference: the Dock, the menu bar, the Chair shell and
+  the first-use pages sit outside every named `surface` container, so
+  no container query can find them. Content layout still answers to the
+  window, never to the viewport.
 - A control that must be clicked LOOKS clickable (the beveled gadget
   with a stroke chevron), and an entry card carries its verb.
 - Owning the body means UNMOUNT the rest; an inline wizard under other

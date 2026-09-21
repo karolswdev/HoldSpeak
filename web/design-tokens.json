@@ -55,6 +55,10 @@
           "value": "#936041",
           "doc": "accent pressed"
         },
+        "650": {
+          "value": "#8a5a3d",
+          "doc": "ember ink (HS-202-05): the accent plate that CARRIES TEXT \u2014 5.24:1 with paper.0, where orange.500 reads 3.79:1"
+        },
         "700": {
           "value": "#834f32",
           "doc": "gradient ember tail"
@@ -257,6 +261,21 @@
       {
         "name": "--accent-press",
         "value": "{primitive.color.orange.600}"
+      },
+      {
+        "name": "--accent-ink",
+        "value": "{primitive.color.orange.650}",
+        "doc": "HS-202-05: the ember fill under TEXT (filled Button, the Talk key). --accent stays the signal colour for rails, glows and borders; no light foreground reaches 4.5:1 on it."
+      },
+      {
+        "name": "--accent-ink-hover",
+        "value": "{primitive.color.orange.600}",
+        "doc": "HS-202-05: lighter than --accent-ink and still 4.74:1 with --text-on-accent"
+      },
+      {
+        "name": "--accent-ink-press",
+        "value": "{primitive.color.orange.700}",
+        "doc": "HS-202-05: the settle, darker than --accent-ink; 6.04:1 with --text-on-accent"
       },
       {
         "name": "--accent-tint",

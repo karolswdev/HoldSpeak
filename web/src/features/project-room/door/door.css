@@ -40,7 +40,7 @@
 }
 
 .door-outcome-input::placeholder {
-  color: var(--faint, #767e8d);
+  color: var(--text-faint);
   font-weight: 400;
 }
 
@@ -48,7 +48,7 @@
   font: 600 11px/1 "JetBrains Mono", monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--faint, #767e8d);
+  color: var(--text-faint);
   padding-left: 2px;
 }
 
@@ -176,7 +176,7 @@
 }
 
 .door-count-reason {
-  color: var(--faint, #767e8d);
+  color: var(--text-faint);
 }
 
 /* ── Row trailing: egress + adjust ── */
@@ -273,7 +273,7 @@
 
 .door-picker-card-detail {
   font: 400 12px/1 "JetBrains Mono", monospace;
-  color: var(--faint, #767e8d);
+  color: var(--text-faint);
   flex-shrink: 0;
 }
 

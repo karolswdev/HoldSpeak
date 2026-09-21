@@ -496,9 +496,12 @@
 }
 /* Talk is the PRIMARY verb — accent-filled at rest (the board).
    Same treatment as Speak's transport key. */
+/* HS-202-05 (counsel round, finding 1): the Talk key carries its word on
+   the plate, so the plate is --accent-ink. On --accent the word read
+   3.79:1 at 9px on the owner's first-use face. */
 .arrival-capture-bar .desk-mic.gadget-transport-key {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-ink);
+  border-color: var(--accent-ink);
   color: var(--text-on-accent);
   box-shadow: inset 0 1px 0 var(--bevel-light-strong),
               0 1px 2px var(--etch-dark),
@@ -509,7 +512,9 @@
   stroke: var(--text-on-accent);
 }
 .arrival-capture-bar .desk-mic.gadget-transport-key:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 85%, white);
+  /* HS-202-05: a mix toward white lifts the plate back over the 4.5:1
+     ceiling; the ink ramp's own hover step stays under it. */
+  background: var(--accent-ink-hover);
 }
 
 /* ── FIX 4: 393 narrow needs-you rows ─────────────────────────────── */

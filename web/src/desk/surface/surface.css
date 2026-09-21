@@ -3106,6 +3106,14 @@ button.surface-edit-in-place:hover {
   border-radius: var(--radius-sm);
   color: var(--text);
   background: var(--desk-window-well);
+  /* HS-202-05 (counsel round, finding 3): the THIRD dead --font-sans
+     shorthand, and the only one on a raw <button>. The author rule was
+     invalid at computed-value time, so it fell back to `unset` and the
+     choice card inherited the body face instead of wearing its own.
+     Probed before/after on an isolated fixture: 13px/400/Inter ->
+     13px/600/Inter. A raw <button> with NO author font declaration is
+     what puts UA Arial in the census's M10 stack counts; this one always
+     had a declaration, it just never resolved. */
   font: 600 var(--desk-surface-body-size) / 1.25 var(--font-sans);
   text-align: start;
   cursor: pointer;

@@ -175,3 +175,104 @@ measured 12/12 legs
 ......                                                                   [100%]
 6 passed in 29.55s
 ```
+
+### Captured run — 2026-09-21T19:02:38Z
+
+- **Command:** `bash -c set -o pipefail; cd /Users/karol/dev/tools/wt-202-05 && echo "COUNSEL ROUND -- RED: the ember plate before the ink ramp (live first-use screens)"; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright HS202_05_ACCENT_OVERRIDE=1 uv run pytest -q tests/e2e/test_hs202_05_first_use_type_floor.py -p no:randomly 2>&1 | grep -E "M8\[ember\]|failed|passed" | sed "s/ (div.*//;s/ (section.*//" | grep -v "f\\"" | head -16`
+- **Cwd:** .
+- **Exit code:** 2
+- **Index-tree:** e2173b16df804dee69083b14c0ef95afa96f0b98
+
+```text
+bash: -c: line 0: unexpected EOF while looking for matching `"'
+bash: -c: line 1: syntax error: unexpected end of file
+```
+
+### Captured run — 2026-09-21T19:02:48Z
+
+- **Command:** `./.tmp/hs202-05-red-ember.sh`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** e2173b16df804dee69083b14c0ef95afa96f0b98
+
+```text
+COUNSEL ROUND -- RED: the ember plate before the ink ramp, on the live first-use screens
+E           arrival@393 M8[ember] 3.79:1 < 4.5 at 9px rgb(242, 243, 245) on rgb(168, 110, 74): 'Talk'
+E           meetings-ledger@393 M8[ember] 3.79:1 < 4.5 at 9px rgb(242, 243, 245) on rgb(168, 110, 74): 'Talk'
+E           meetings-record@393 M8[ember] 3.79:1 < 4.5 at 9px rgb(242, 243, 245) on rgb(168, 110, 74): 'Talk'
+E           thought@393 M8[ember] 3.79:1 < 4.5 at 9px rgb(242, 243, 245) on rgb(168, 110, 74): 'Talk'
+E           models@393 M8[ember] 3.79:1 < 4.5 at 9px rgb(242, 243, 245) on rgb(168, 110, 74): 'Talk'
+E           settings@393 M8[ember] 3.79:1 < 4.5 at 9px rgb(242, 243, 245) on rgb(168, 110, 74): 'Talk'
+E       assert not ["arrival@393 M8[ember] 3.79:1 < 4.5 at 9px rgb(242, 243, 245) on rgb(168, 110, 74): 'Talk'
+E           arrival@1440 M8[ember] 3.79:1 < 4.5 at 9px rgb(242, 243, 245) on rgb(168, 110, 74): 'Talk'
+E           meetings-ledger@1440 M8[ember] 3.79:1 < 4.5 at 9px rgb(242, 243, 245) on rgb(168, 110, 74): 'Talk'
+E           meetings-record@1440 M8[ember] 3.79:1 < 4.5 at 9px rgb(242, 243, 245) on rgb(168, 110, 74): 'Talk'
+E           thought@1440 M8[ember] 3.79:1 < 4.5 at 9px rgb(242, 243, 245) on rgb(168, 110, 74): 'Talk'
+E           models@1440 M8[ember] 3.79:1 < 4.5 at 9px rgb(242, 243, 245) on rgb(168, 110, 74): 'Talk'
+E           settings@1440 M8[ember] 3.79:1 < 4.5 at 9px rgb(242, 243, 245) on rgb(168, 110, 74): 'Talk'
+E       assert not ["arrival@1440 M8[ember] 3.79:1 < 4.5 at 9px rgb(242, 243, 245) on rgb(168, 110, 74): 'Talk'
+2 failed in 28.91s
+```
+
+### Captured run — 2026-09-21T19:03:27Z
+
+- **Command:** `./.tmp/hs202-05-green.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** e2173b16df804dee69083b14c0ef95afa96f0b98
+
+```text
+COUNSEL ROUND -- GREEN: contrast, floor, hit contract and chrome rows on the live first-use screens
+....HIT CONTRACT 393: 42 reachable plated Button observations, every one owning its nine points at 44x44; 27 skipped as occluded by a window in front
+HALO UNDER A LAYER IN FRONT (ledger, not a clip): meetings-ledger@393 'Generate' halo runs under the layer in front at (0,1)->desk-pullout-head desk-window-handle has-wings, (-1,1)->desk-pullout-head desk-window-handle has-wings, (1,1)->desk-pullout-head desk-window-handle has-wings
+CHROME ROWS 393: dock chip x86 min 22px max 44px
+CHROME ROWS 393: wing tab x10 min 23px max 23px
+FLOOR LEDGER 393: 51 of 51 recorded consumers still under 12.0px; 0 healed
+.FLOOR LEDGER 1440: 58 of 58 recorded consumers still under 12.0px; 0 healed
+6 passed in 32.19s
+```
+
+### Captured run — 2026-09-21T19:04:10Z
+
+- **Command:** `./.tmp/hs202-05-rigs.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** e2173b16df804dee69083b14c0ef95afa96f0b98
+
+```text
+COUNSEL ROUND -- the four named rigs + HS-202-01's first-use smoke, on the ink ramp
+.............................                                            [100%]
+29 passed in 252.00s (0:04:12)
+```
+
+### Captured run — 2026-09-21T19:08:37Z
+
+- **Command:** `./.tmp/hs202-05-check.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** e2173b16df804dee69083b14c0ef95afa96f0b98
+
+```text
+tokens.css and tokens.gen.ts match design-tokens.json
+token gate: clean (11 allow-listed exceptions, all in use)
+React architecture guard passed (808 source files; zero framework residue).
+ Test Files  290 passed (290)
+      Tests  2722 passed (2722)
+bundle gate passed (Desk JS 1310819 B; Desk CSS 316091 B; source maps 0)
+```
+
+### Captured run — 2026-09-21T19:10:29Z
+
+- **Command:** `./.tmp/hs202-05-probe.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** e2173b16df804dee69083b14c0ef95afa96f0b98
+
+```text
+COUNSEL ROUND finding 3 -- the three dead --font-sans shorthands, probed before/after
+consumer                                         BEFORE (--font-sans undefined)               AFTER (alias -> --font-ui)
+surface.css:2979 .model-library-row-copy strong  13px / 400 / Inter                           13px / 600 / Inter  CHANGED
+surface.css:3016 .model-library-repair           13px / 400 / Inter                           12px / 500 / Inter  CHANGED
+surface.css:2984 .model-library-row-copy small   12px / 500 / "JetBrains Mono"                12px / 500 / "JetBrains Mono"  same
+surface.css:3109 .model-library-add-choices > button 13px / 400 / Inter                           13px / 600 / Inter  CHANGED
+```

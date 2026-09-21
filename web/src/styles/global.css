@@ -198,9 +198,15 @@ body {
   }
 }
 
+/* HS-202-05 (counsel round, finding 1): the filled Button's plate is
+ * --accent-ink, not --accent. On --accent NO light foreground reaches
+ * 4.5:1 — --text-on-accent reads 3.79:1 there and pure white only
+ * 4.20:1 — so the label could never pass while the plate stayed. The ink
+ * step is the same forge-ember ramp one stop down (5.24:1), and --accent
+ * keeps every non-text duty: rails, glows, borders, tints. */
 :where(.btn--primary, .btn.primary) {
-  border-color: var(--accent);
-  background: var(--accent);
+  border-color: var(--accent-ink);
+  background: var(--accent-ink);
   color: var(--accent-on);
   box-shadow: inset 1px 1px 0 rgba(255,255,255,0.22), inset -1px -1px 0 rgba(0,0,0,0.3);
 }
@@ -227,7 +233,7 @@ body {
 }
 
 :where(.btn--primary, .btn.primary):active:not(:disabled) {
-  background: var(--accent-press);
+  background: var(--accent-ink-press);
 }
 
 :where(.btn):hover:not(:disabled) {
@@ -236,8 +242,8 @@ body {
 }
 
 :where(.btn--primary, .btn.primary):hover:not(:disabled) {
-  border-color: var(--accent-hover);
-  background: var(--accent-hover);
+  border-color: var(--accent-ink-hover);
+  background: var(--accent-ink-hover);
 }
 
 :where(.btn.danger, .btn--danger):hover:not(:disabled) {

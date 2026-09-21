@@ -191,7 +191,7 @@
     inset -1px -1px 0 var(--border-subtle);
 }
 .gadget-check-token.is-off .gadget-check-token-face {
-  color: var(--text-faint, #767e8d);
+  color: var(--text-faint);
   border-color: var(--border, #2a2e3e);
   box-shadow:
     inset 1px 1px 0 var(--p-color-wash-08),
@@ -781,9 +781,11 @@
 .gadget-transport-key[data-active],
 .gadget-transport-key:active:not(:disabled),
 .desk-next .desk-mic.gadget-transport-key.is-listening {
-  background: var(--accent);
+  /* HS-202-05: the key-down plate carries the word; --accent-ink is the
+     ember step that lets --text-on-accent reach 4.5:1. */
+  background: var(--accent-ink);
   color: var(--text-on-accent);
-  border-color: var(--accent);
+  border-color: var(--accent-ink);
   box-shadow: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light);
   /* the key IS down — no pulse, no glow ring, ever */
   animation: none;

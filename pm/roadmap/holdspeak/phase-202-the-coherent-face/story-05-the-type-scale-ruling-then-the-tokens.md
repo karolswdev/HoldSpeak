@@ -204,3 +204,175 @@ is named here so no one reads a failure as a result:
    green, including `2722 passed (2722)`.
 8. `exit 0` — the cold census walk, 12/12 legs measured.
 9. `exit 0` — the three fences green after the last edit.
+
+## Counsel round
+
+Astra's verdict on #597 was **DO-NOT-RATIFY**. Five findings; all five
+are answered below, each red first.
+
+### 1. The ember on the first-use screens — the ledger was too wide
+
+The counsel is right. The ruling requires readable pairs ON TOUCHED
+FACES before closure; a blanket deferral of all 126 contradicts it.
+The first contrast gate read `--text-faint` alone, so green established
+nothing about first-use AA.
+
+**The gate now reads every text leaf on every first-use screen** and
+splits each failure into `faint`, `ember` or `other`. Faint and ember
+are gated; anything else prints as measured residue. RED before the
+fix, at both widths:
+
+```
+arrival@393        M8[ember] 3.79:1 < 4.5 at  9px on rgb(168,110,74): 'Talk'
+models@393         M8[ember] 3.79:1 < 4.5 at 12px on rgb(168,110,74): 'Continue'
+thought@1440       M8[ember] 3.79:1 < 4.5 at 12px on rgb(168,110,74): 'Finish'
+… 20 observations across six screens × two widths
+```
+
+**The decision: option (a), a darker ember for text-bearing fills.**
+Option (b) cannot work. `--accent-press` `#936041` is DARKER than
+`--accent`, so a near-black foreground fails there (3.99:1 with pure
+black) while a light one passes (4.74:1). No single foreground clears
+all three accent states. Moving the plate does.
+
+`--accent-ink` is one stop down the same forge-ember ramp, and the
+ramp already held two of the three steps it needs:
+
+| Token | Value | Ramp step | With `--text-on-accent` |
+| --- | --- | --- | ---: |
+| `--accent` (unchanged, non-text duties) | `#a86e4a` | orange.500 | 3.79:1 |
+| `--accent-ink` (**new step**) | `#8a5a3d` | orange.650 | **5.24:1** |
+| `--accent-ink-hover` | `#936041` | orange.600 | **4.74:1** |
+| `--accent-ink-press` | `#834f32` | orange.700 | **6.04:1** |
+
+Hover is still lighter than rest and press still darker, so the
+interaction grammar is intact. One new hex enters the palette.
+
+Bound at three text-bearing fills: the filled Button
+(`web/src/styles/global.css`, rest / hover / active), the Chair's Talk
+key (`web/src/desk/chair/chair.css` — its hover was
+`color-mix(… var(--accent) 85%, white)`, which lifted the plate back
+over the ceiling), and the transport key's key-down state
+(`web/src/desk/surface/gadgets.css`). `--text-on-accent` does not move.
+
+**This is the look the owner reviews at the sitting.** Shots:
+`filled-primary-before-after-1440.png`, `…-393.png` — the same three
+controls on both plates, with the measured ratio printed on each row.
+He may overrule the look; the numbers pass now.
+
+Off-path ember pairs stay ledgered in the table above.
+
+**A second colour defect fell out of the same gate.** Five consumers
+spelled `var(--faint, #767e8d)` — and `--faint` is not a token in this
+product. The fallback won, so those labels were pinned to the
+pre-ruling gray and the ruling could not reach them:
+`features/concierge/concierge.css:43` (the Models face, 4.38:1),
+`features/project-room/door/door.css:43,51,179,276`, plus a stale
+fallback at `desk/surface/gadgets.css:194`. All six now read
+`var(--text-faint)`.
+
+**And a third, in the instrument.** The census's own M8 block
+(`scripts/surface_census_measure.js`, `bgOf`/`over`) composites a
+translucent layer onto a translucent backdrop as if the backdrop were
+opaque, then marks the result opaque. A dark chip fill over a white
+hairline wash therefore read as `rgb(184,184,184)` and produced a
+1.29:1 that does not exist on the glass. This rig gates on the number,
+so it does source-over properly and keeps walking until the stack is
+actually opaque. Any census M8 figure for stacked translucent layers
+carries that error.
+
+After all three: **zero gated contrast failures and zero residue** on
+the six screens at both widths.
+
+### 2. "Each library Button" vs the chrome species
+
+The canon over-promised. `Signal.tsx` has four variants today
+(`primary | secondary | ghost | danger`) and HS-202-03 adds `chrome`
+for the rows that replace raw wing tabs, menu rows and dock chips. A
+44 px halo on a strip row would reach over its neighbours.
+
+Canon now says **plated** Button, and states the chrome contract:
+the strip owes the row its target, at least 44 px high at 393; measure
+the row, never add the halo. `docs/internal/UX-CANON.md` §C rule 4 and
+`docs/internal/DESIGN_SYSTEM.md` rule 4.
+
+The fence measures the real strips at 393, and the product does NOT
+keep that promise yet:
+
+| Strip | Rows seen | Min | Max |
+| --- | ---: | ---: | ---: |
+| dock chip | 86 | **22px** | 44px |
+| wing tab | 10 | **23px** | 23px |
+
+Named rows under 44: the wing tabs `Outcomes` / `Review` / `Record` /
+`Artifacts` (23px), and the dock's `Overview` / `Reset layout` (22px),
+`◌Hide the menus` / `Change places` (36px), `Record a meeting` (40px).
+Recorded, not gated: those three strips are HS-202-03's lane. The
+fence prints them every run so the list can only shrink.
+
+### 3. The third `font:` shorthand consumer
+
+Found and probed: `web/src/desk/surface/surface.css:3117`,
+`.model-library-add-choices > button`. (Astra cited `:3109`; the
+comments this round added shifted it eight lines. Line numbers below
+are the ones in the tree now; the probe script prints its own
+pre-comment labels.)
+
+| Consumer | BEFORE | AFTER |
+| --- | --- | --- |
+| `surface.css:2985 .model-library-row-copy strong` | 13px / 400 / Inter | 13px / **600** / Inter |
+| `surface.css:3026 .model-library-repair` | 13px / 400 / Inter | **12px / 500** / Inter |
+| `surface.css:3117 .model-library-add-choices > button` | 13px / 400 / Inter | 13px / **600** / Inter |
+| `surface.css:2990 .model-library-row-copy small` (control) | 12px / 500 / JetBrains Mono | unchanged |
+
+The third is the only one on a raw `<button>`, and it answers an open
+question from the first round: a raw `<button>` with an author font
+declaration inherits when that declaration dies — it does NOT fall to
+the UA's Arial. The Arial in the census's M10 counts comes from raw
+buttons with **no** declaration at all.
+
+### 4. The viewport exception, written into UX-CANON D
+
+Recorded as a shape, not a licence: ONE device rule that sets a target
+size and stacks no content. `docs/internal/UX-CANON.md` §D names the
+file, the query, the allowlist entry
+(`web/src/desk/__tests__/containerQueryLaw.test.ts`) and the reason —
+the Dock, the menu bar, the Chair shell and the first-use pages sit
+outside every named `surface` container. Content layout still answers
+to the window.
+
+### 5. The combined revision and `btn--chrome`
+
+The floor rig keyed its ledger on every class, so HS-202-03's new
+`btn--chrome` marker would have minted twelve fresh wing signatures and
+failed the combined run. The rig now drops that ONE marker when it
+builds a signature; every other class and the size stay in the key.
+Verified both ways: `.desk-wing.is-on` and
+`.desk-wing.is-on.btn--chrome` normalize to the same signature.
+
+### The hit contract, inside the real first-use layouts
+
+Astra's MISSED: the fixture proves CSS, not live ownership. The floor
+rig now runs `elementFromPoint` over the nine points of every visible
+plated Button ON the six screens at 393. It does not click — a real
+pointer on a live first-use face fires real verbs, and the pointer half
+of the proof stays in the isolated fixture.
+
+```
+HIT CONTRACT 393: 42 reachable plated Button observations, every one
+owning its nine points at 44x44; 27 skipped as occluded by a window in
+front
+```
+
+Two readings are facts, not defects, and the rig says which is which:
+
+- **Occluded** — 27 Chair Buttons sit behind an open Desk window. They
+  do not own their own centre, and the halo is not what is in their
+  way. Skipped, counted, reported.
+- **Covered** — one halo reaches under the layer in front:
+  `meetings-ledger@393 'Generate'`, three of its nine points on the
+  Meetings window's title bar. That is the layer order working, not a
+  clip. Ledgered, printed every run.
+
+A point lost to an ANCESTOR CLIP or to an ADJACENT CONTROL in the same
+layer still fails. Both of those are what the ruling rejects.
