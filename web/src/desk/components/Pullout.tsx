@@ -122,7 +122,7 @@ function NoteWindowRouter({ o, origin }: { o: WorldObject; origin?: { x: number;
 
   if (status?.ownership === "thought") return <ThoughtWorkspaceWindow object={o} thought={status.thought} origin={origin} onClose={close} />;
   if (status?.ownership === "ordinary") return <PulloutFrame o={o} origin={origin} noteStatus={status} onThoughtOwned={(thought) => setStatus({ ownership: "thought", thought })} />;
-  return <PulloutFrame o={o} origin={origin} overrideContent={<div className="desk-pullout-body desk-surface-body thought-workspace-opening" aria-busy={!failed}>{failed ? <><p>Could not check this Note on this hub.</p><button type="button" className="btn btn--primary" onClick={load}>Try again</button></> : <span>Opening Note…</span>}</div>} />;
+  return <PulloutFrame o={o} origin={origin} overrideContent={<div className="desk-pullout-body desk-surface-body thought-workspace-opening" aria-busy={!failed}>{failed ? <><p>Could not check this Note on this hub.</p><Button variant="primary" onClick={load}>Try again</Button></> : <span>Opening Note…</span>}</div>} />;
 }
 
 export function Pullout({ o, origin }: { o: WorldObject; origin?: { x: number; y: number } | null }) {

@@ -8,6 +8,7 @@
 // the Prefs `models` module (`settingsModels.tsx`), the one dial.
 import { useEffect, useState } from "react";
 import { GadgetGroup, GadgetRow } from "../../desk/surface/gadgets";
+import { Button } from "../../components/signal/Signal";
 
 /* ── the hotkey: pressed, not typed ────────────────────────────── */
 
@@ -76,8 +77,8 @@ export function HotkeyCapture({
   return (
     <GadgetGroup>
       <GadgetRow label="Push-to-talk key" fact="hold · release types">
-        <button
-          type="button"
+        <Button
+          variant="chrome"
           className={"gadget-keycap" + (listening ? " is-listening" : "")}
           aria-label={
             listening
@@ -90,7 +91,7 @@ export function HotkeyCapture({
           }}
         >
           {listening ? "" : current}
-        </button>
+        </Button>
       </GadgetRow>
     </GadgetGroup>
   );

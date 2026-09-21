@@ -6,6 +6,7 @@ import { useReducedMotion } from "motion/react";
 import { useDesk } from "../../store";
 import { exposeLayout } from "./windowGeometry";
 import { useOpenWindows, shellEls } from "./windowRegistry";
+import { Button } from "../../../components/signal/Signal";
 
 /** HS-97-06 — expose state (module-level so the dock verb and the
  * keyboard share one truth). */
@@ -121,9 +122,9 @@ export function Expose() {
         }}
       >
         {entries.map((en, i) => (
-          <button
+          <Button
+            variant="chrome"
             key={en.id}
-            type="button"
             ref={i === 0 ? firstBtnRef : undefined}
             className={"desk-expose-cell" + (en.minimized ? " is-min" : "")}
             style={{
@@ -143,7 +144,7 @@ export function Expose() {
             <span className="desk-expose-name">
               <span aria-hidden="true">{en.glyph}</span> {en.label}
             </span>
-          </button>
+          </Button>
         ))}
       </div>
     </>

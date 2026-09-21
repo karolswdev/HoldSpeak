@@ -365,8 +365,8 @@ export function FirstWords({
           per sentence, and the verbs are the ones on this card. The line
           stays under 40 characters: UX-CANON A3 admits no prose. */}
       <p>Speak. Then edit and keep your text.</p>
-      <button
-        type="button"
+      <Button
+        variant="chrome"
         className={`desk-first-talk is-${state}`}
         disabled={
           (!supported && !canRetryRetainedAudio) ||
@@ -404,7 +404,7 @@ export function FirstWords({
               : state === "failed"
                 ? "Voice typing unavailable"
                 : "Click to speak"}
-      </button>
+      </Button>
       {!supported && state !== "success" && !recoveredAudioAvailable ? (
         <SurfaceState error={micUnsupportedMessage} />
       ) : null}

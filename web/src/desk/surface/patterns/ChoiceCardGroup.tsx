@@ -16,6 +16,7 @@ import { Children, useRef, type CSSProperties, type ReactNode } from "react";
 import { useRovingRows } from "../roving";
 import { ChoiceCardShell } from "./ChoiceCardShell";
 import "./choice-card.css";
+import { Button } from "../../../components/signal/Signal";
 
 export function ChoiceCardGroup({
   name,
@@ -60,14 +61,14 @@ export function ChoiceCardGroup({
     >
       {children}
       {confirmLabel && onConfirm ? (
-        <button
-          type="button"
+        <Button
+          variant="chrome"
           className="surface-choice-confirm-btn"
           disabled={disabled || value == null}
           onClick={onConfirm}
         >
           {confirmLabel}
-        </button>
+        </Button>
       ) : null}
     </div>
   );

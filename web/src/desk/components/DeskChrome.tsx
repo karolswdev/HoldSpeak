@@ -23,6 +23,7 @@ import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
 import { SYSTEM } from "../systemSprites";
 import { MARK_APPLICATION_COMMANDS } from "../applications";
+import { Button } from "../../components/signal/Signal";
 
 /** The mark menu's registry rows: the floor verbs, then the four
  * applications (the same go.* truth the Go menu and the dock speak).
@@ -38,8 +39,8 @@ function AttentionBell() {
   if (!attention) return null;
   const badge = (attention.badge ?? 0) + heldCount;
   return (
-    <button
-      type="button"
+    <Button
+      variant="chrome"
       className={`desk-bell${attention.open ? " is-open" : ""}`}
       aria-label={
         badge
@@ -52,7 +53,7 @@ function AttentionBell() {
       {/* HS-111-09 — 16px source renders at 16 CSS px (integer-true). */}
       <img src={SYSTEM.menuBell} alt="" width={16} height={16} className="desk-chrome-sprite" draggable={false} />
       {badge ? <strong>{badge}</strong> : null}
-    </button>
+    </Button>
   );
 }
 
@@ -157,8 +158,8 @@ export function DeskChrome({
     <div className="desk-menubar">
       <div className="desk-chrome desk-chrome-tl">
         <div className="desk-menu-wrap">
-          <button
-            type="button"
+          <Button
+            variant="chrome"
             ref={markRef}
             className="desk-mark"
             aria-expanded={menuOpen}
@@ -183,7 +184,7 @@ export function DeskChrome({
           >
             <img src={SYSTEM.menuMark} alt="" width={16} height={16} className="desk-mark-glyph desk-chrome-sprite" draggable={false} />
             HoldSpeak
-          </button>
+          </Button>
           {!settled && menuOpen &&
             (() => {
               const ctx: VerbContext = { selectedRef: null };

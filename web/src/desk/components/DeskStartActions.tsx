@@ -1,6 +1,7 @@
 import { openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
 import { DeskCreateMenu } from "./DeskCreateMenu";
+import { Button } from "../../components/signal/Signal";
 
 export function DeskStartActions({ compact = false }: { compact?: boolean }) {
   // One Record verb (UX remediation): the chip drives the same hub
@@ -13,15 +14,15 @@ export function DeskStartActions({ compact = false }: { compact?: boolean }) {
       role="group"
       aria-label="Daily starts"
     >
-      <button
-        type="button"
+      <Button
+        variant="chrome"
         className="desk-chip desk-start-action"
         onClick={() => openSurfaceOr("dictate", "/dictation")}
       >
         <span aria-hidden="true">⌁</span> Dictate
-      </button>
-      <button
-        type="button"
+      </Button>
+      <Button
+        variant="chrome"
         className={
           "desk-chip desk-start-action" +
           (recording === "recording" ? " is-recording" : "")
@@ -40,7 +41,7 @@ export function DeskStartActions({ compact = false }: { compact?: boolean }) {
       >
         <span className="desk-start-record" aria-hidden="true" />{" "}
         {recording === "recording" ? "Stop" : "Record"}
-      </button>
+      </Button>
       <DeskCreateMenu />
     </div>
   );

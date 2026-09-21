@@ -19,6 +19,7 @@ import { MeetingConflictRecovery } from "../../meetings/MeetingConflictRecovery"
 import { MeetingIntelRecovery } from "../../meetings/MeetingIntelRecovery";
 import { ThreadsSection } from "./shared/ThreadsSection";
 import type { PulloutContentProps } from "./types";
+import { Button } from "../../components/signal/Signal";
 
 interface MeetingDetail {
   intel?: { summary?: string; action_items?: any[]; topics?: string[] } | null;
@@ -176,22 +177,22 @@ export function MeetingPullout({ object: o, onClose }: PulloutContentProps) {
           objectId={o.id}
         />
       </div>
-      <SurfaceFooter verbs={<> <button
-          type="button"
+      <SurfaceFooter verbs={<> <Button
+          variant="chrome"
           className="desk-chip quiet"
           onClick={() =>
             openSurfaceOr("dictate", "/dictation", resourceRef)
           }
         >
           Dictate about this
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="chrome"
           className="desk-chip quiet"
           onClick={() => openSurfaceOr("record-live", "/live", resourceRef)}
         >
           Record follow-up
-        </button> </>} />
+        </Button> </>} />
     </>
   );
 }

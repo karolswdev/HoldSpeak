@@ -34,15 +34,15 @@ function IntelligenceHeader({
   return (
     <div className="intelligence-segments" role="group" aria-label="Intelligence view">
       {VIEWS.map((view) => (
-        <button
+        <Button
+          variant="chrome"
           key={view.id}
-          type="button"
           className={`intelligence-segment${activeView === view.id ? " is-active" : ""}`}
           aria-pressed={activeView === view.id}
           onClick={() => selectView(view.id)}
         >
           {view.label}
-        </button>
+        </Button>
       ))}
     </div>
   );
