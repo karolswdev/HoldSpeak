@@ -21,6 +21,10 @@ Escape", and both were overclaims):
      non-zero outline; ArrowDown/ArrowUp rove the open menu and Escape
      closes it; the wing strip holds exactly one Tab stop and ArrowRight
      moves the selected wing; one rail stop computes a non-zero outline.
+     At 393 it also measures the two strips 03 owns: every row of the dock
+     and of the wing bar has a bounding height of at least 44px, and no two
+     rows overlap (story 05's ruling — a plated Button owns 44px through a
+     halo, a chrome Button is a strip row and the STRIP owes it the height).
   3. The Meetings row body computes the same box the `div` computed
      (background, border, padding, text-align, display).
 
@@ -164,6 +168,63 @@ def _library_species(
     return rows
 
 
+#: Story 05's ruling, measured on the live screens: a PLATED Button owns its
+#: 44px through a halo, and a CHROME Button is a strip ROW -- so the strip
+#: owes it >= 44px at the phone width. This rig fences the strips 03 owns.
+TOUCH = 44.0
+
+
+def _strip_targets(page: Any, selector: str, *, subject: str) -> list[dict]:
+    """Every row of a strip is a 44px target, and no two rows overlap.
+
+    Measured at 393 only. Bounding boxes, not CSS: a `min-height` that a
+    flex parent squashes is not a target, and only the box on the glass
+    says so.
+    """
+    rows = page.evaluate(
+        """(sel) => Array.from(document.querySelectorAll(sel)).map(el => {
+             const r = el.getBoundingClientRect();
+             return {
+               label: (el.getAttribute('aria-label') || el.textContent || '')
+                        .trim().slice(0, 26),
+               classes: Array.from(el.classList).join(' '),
+               chrome: el.classList.contains('btn--chrome'),
+               h: Math.round(r.height * 10) / 10,
+               w: Math.round(r.width * 10) / 10,
+               top: r.top, bottom: r.bottom, left: r.left, right: r.right,
+             };
+           })""",
+        selector,
+    )
+    assert rows, f"{subject}: nothing matched {selector!r}"
+    short = [r for r in rows if r["h"] < TOUCH]
+    assert not short, (
+        f"{subject}: rows under {TOUCH:.0f}px at 393 — the strip owns its row "
+        f"height, and a chrome verb has no plate to own it instead: "
+        + ", ".join(f"{r['label']!r} {r['h']}px" for r in short)
+    )
+    assert any(r["chrome"] for r in rows), (
+        f"{subject}: no chrome row here — the rig is measuring the wrong strip"
+    )
+    # Adjacent rows must not overlap. One pixel is allowed on purpose: the
+    # wing segments butt with a shared hairline (`pullout.css`,
+    # `.desk-wing + .desk-wing { margin-left: -1px }`).
+    overlaps = []
+    for i, a in enumerate(rows):
+        for b in rows[i + 1:]:
+            dx = min(a["right"], b["right"]) - max(a["left"], b["left"])
+            dy = min(a["bottom"], b["bottom"]) - max(a["top"], b["top"])
+            if dx > 1 and dy > 1:
+                overlaps.append(
+                    f"{a['label']!r} x {b['label']!r} ({dx:.1f}x{dy:.1f}px)"
+                )
+    assert not overlaps, (
+        f"{subject}: rows overlap after the 44px growth — a taller target that "
+        f"eats its neighbour is not a target: " + ", ".join(overlaps)
+    )
+    return rows
+
+
 def _seed_meeting() -> None:
     """One finalized meeting, so the Meetings stream draws a real row.
 
@@ -235,6 +296,8 @@ class TestSharedControlsAreSpecies:
 
             # ── the dock: every chip is the species ────────────────────
             _library_species(page, ".desk-dock button", subject="the dock")
+            if width <= 720:
+                _strip_targets(page, ".desk-dock button", subject="the dock")
             _shot(page, f"dock-{tag}.png")
 
             # ── the dock tab-walks in DOM order, every stop with a ring ─
@@ -330,6 +393,23 @@ class TestSharedControlsAreSpecies:
                     page, ".desk-wings button", subject="the wing bar",
                     chrome_only=True,
                 )
+                if width <= 720:
+                    _strip_targets(
+                        page, ".desk-wings button", subject="the wing bar",
+                    )
+                    # The dock again, WITH a window open: `Overview` and
+                    # `Reset layout` (`.desk-dock-reset`, measured 22px) and
+                    # the window chip only exist once something is open, so
+                    # the arrival pass above cannot see them.
+                    reset = page.locator(".desk-dock-reset")
+                    assert reset.count() >= 2, (
+                        "the dock drew no overview/reset keys with a window "
+                        "open: those targets were NOT ASSESSED"
+                    )
+                    _strip_targets(
+                        page, ".desk-dock button",
+                        subject="the dock, with a window open",
+                    )
                 _shot(page, f"wings-{tag}.png")
                 stops = page.evaluate(
                     """() => Array.from(

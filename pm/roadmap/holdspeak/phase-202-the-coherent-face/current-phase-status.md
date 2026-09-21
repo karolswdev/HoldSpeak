@@ -46,7 +46,12 @@ complete keyboard or pixel identity), the reduced-motion ring loss settled as
 INHERITED by a paired reproduction against 73758ef3, Escape's missing
 `returnFocus` ledgered with file:line, and all six Philo inventories
 regenerated and re-checked. Two ledger rows below carry owners inside this
-phase rather than riding on story 05.
+phase rather than riding on story 05. 03 then paid the touch targets story
+05's measurement found on its two strips: ten rows under 44 px at 393 (the
+four wing tabs and the gear door at 23-24 px, the overview/reset keys at
+22 px, the Record orb at 40 px, the two Room verbs at 36 px) are now 44 px in
+each strip's own phone-width CSS, fenced in the species rig, with the 1440
+face proven unchanged by a paired bundle swap (19 rows, 0 changed).
 
 ## Active risks
 

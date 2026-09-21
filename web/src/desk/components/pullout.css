@@ -365,6 +365,20 @@
   padding: 4px 9px;
   font-size: 11px;
 }
+/* HS-202-03 — the wing strip owes its rows a 44px target at the phone
+   width. Story 05's ruling: a plated Button owns 44px through its halo,
+   but a wing tab is a CHROME Button — a row of this strip — so the strip
+   owns its height. Measured on the live 393 desk the four tabs were 23px
+   and the gear door 24px. The breakpoint is the product's ONE declared
+   phone width (`web/src/desk/useCompactViewport.ts:5`, the same
+   `max-width: 720px` the dock uses), so there is no third seam to drift.
+   Height only: the caption type, the letter-spacing, the sunken active
+   state and the 1440 strip are unchanged. */
+@media (max-width: 720px) {
+  .desk-next .desk-wing {
+    min-height: 44px;
+  }
+}
 
 
 /* HS-101 sitting round 2 / HS-111-04 — one composer well, the route

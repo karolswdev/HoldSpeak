@@ -157,3 +157,48 @@ Read at `.tmp/two-brains/20260921-123218-counsel-202-345-counsel/last.md`.
   files whose imports moved) ship with this round.
 - MISSED, "give the reduced-motion item a surviving home" — done: it is a
   phase-status ledger row with an owner, no longer parked on story 05.
+
+### The strips owe their rows 44 px at 393 (story 05's measurement)
+
+05's canon splits the duty: a PLATED Button owns 44 px through its halo; a
+CHROME Button is a strip ROW, so the STRIP owes it the height. 03 owns two
+such strips, and both were short on the live 393 screens. Measured, fixed in
+each strip's own CSS, and re-measured —
+`assets/story-03-shots/strip-touch-targets-393.json`:
+
+| row | class | before | after |
+|---|---|---|---|
+| Outcomes · Review · Record · Artifacts | `desk-wing` | 23 px | 44 px |
+| the wing gear door (`Meeting plumbing`) | `desk-wing desk-wing-door` | 24 px | 44 px |
+| Overview · Reset layout | `desk-dock-reset` | 22 px | 44 px |
+| Record a meeting | `desk-orb` | 40 px | 44 px |
+| Hide the menus · Change places | `btn btn--secondary` | 36 px | 44 px |
+
+Ten short rows before, **none after**. The gear door was not in the note; the
+measurement found it and it is paid with the rest.
+
+- `web/src/desk/components/pullout.css` — a new `@media (max-width: 720px)`
+  block gives `.desk-wing` `min-height: 44px`. The breakpoint is the
+  product's ONE declared phone width (`web/src/desk/useCompactViewport.ts:5`,
+  the same query `dock.css` already uses), so no third seam is invented.
+- `web/src/desk/components/dock.css` — inside the EXISTING
+  `@media (max-width: 720px)` block (the one HS-202-02 used to pay the
+  launchers and the chip close): `.desk-dock-reset` becomes a 44×44
+  `inline-grid` around its 14 px glyph, `.desk-dock .desk-orb` 40→44 px
+  (the 40 px sprite stays 40 px, centred), and
+  `.desk-room-actions > button` 36→44 px. Real geometry, which composes
+  with 05's halo rather than arguing with it.
+
+**The 1440 face is untouched, by measurement, not by assertion:** the same
+page measured with the pre-fix bundle and the post-fix bundle swapped
+underneath it — 19 rows compared, **0 changed**, dock box 53 px → 53 px.
+Both rules live inside the phone media query.
+
+Fenced in the glass rig (`tests/e2e/test_hs202_03_species_glass.py`,
+`_strip_targets`): at 393 every row of the dock and of the wing bar has a
+bounding height ≥ 44 px and no two rows overlap (one pixel allowed — the wing
+segments butt with a shared hairline by design). The dock is measured twice,
+the second time with a window open, because `Overview` and `Reset layout` do
+not exist until then. Proven red on the pre-fix bundle:
+`the dock: rows under 44px at 393 … 'Hide the menus' 36px, 'Change places'
+36px, 'Record a meeting' 40px`. `wings-393.png` and `dock-393.png` re-shot.

@@ -283,3 +283,95 @@ Suite totals: 2745 passed, 0 failed, 0 skipped
 
 VERDICT: baseline-subset, zero branch-new
 ```
+
+### Captured run — 2026-09-21T19:17:29Z
+
+- **Command:** `bash -c set -o pipefail; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q tests/e2e/test_hs202_03_species_glass.py 2>&1 | tail -4`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** f5ece779f86701668836aa9df0ed52bb2d93eaf7
+
+```text
+....                                                                     [100%]
+4 passed in 29.72s
+```
+
+### Captured run — 2026-09-21T19:18:29Z
+
+- **Command:** `bash -c set -o pipefail; python3 -c "
+import json
+d=json.load(open(\"pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-03-shots/strip-touch-targets-393.json\"))
+print(\"STRIP TOUCH TARGETS at 393 (dock + wing bar, bounding boxes off the glass)\")
+print(\"  under 44px BEFORE:\", len(d[\"at_393\"][\"rows_under_44_before\"]))
+for l,h in d[\"at_393\"][\"rows_under_44_before\"]: print(\"      %-26s %4.0f px\" % (l,h))
+print(\"  under 44px AFTER :\", len(d[\"at_393\"][\"rows_under_44_after\"]) or \"none\")
+print(\"  dock box height  : %d -> %d px\" % (d[\"at_393\"][\"dock_box_height\"][\"before\"], d[\"at_393\"][\"dock_box_height\"][\"after\"]))
+print(\"AT 1440, paired bundle swap on the same page:\")
+print(\"  rows compared %d, rows changed %d, dock box %d -> %d\" % (d[\"at_1440\"][\"rows_compared\"], len(d[\"at_1440\"][\"rows_changed\"]), d[\"at_1440\"][\"dock_box_height\"][\"before\"], d[\"at_1440\"][\"dock_box_height\"][\"after\"]))
+print(\"  \", d[\"at_1440\"][\"verdict\"])
+"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** f5ece779f86701668836aa9df0ed52bb2d93eaf7
+
+```text
+STRIP TOUCH TARGETS at 393 (dock + wing bar, bounding boxes off the glass)
+  under 44px BEFORE: 10
+      Artifacts                    23 px
+      Change places                36 px
+      Meeting plumbing             24 px
+      Outcomes                     23 px
+      Overview                     22 px
+      Record                       23 px
+      Record a meeting             40 px
+      Reset layout                 22 px
+      Review                       23 px
+      ◌Hide the menus              36 px
+  under 44px AFTER : none
+  dock box height  : 127 -> 149 px
+AT 1440, paired bundle swap on the same page:
+  rows compared 19, rows changed 0, dock box 53 -> 53
+   UNCHANGED — both rules live inside @media (max-width: 720px).
+```
+
+### Captured run — 2026-09-21T19:18:35Z
+
+- **Command:** `bash -c set -o pipefail; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q tests/e2e/test_hs202_03_species_glass.py tests/e2e/test_hs202_first_use_smoke.py tests/e2e/test_hs202_02_first_use_glass.py tests/e2e/test_hs201_one_thing_glass.py tests/e2e/test_hs201_summary_face_glass.py tests/e2e/test_hs201_09_connect_engine_glass.py tests/e2e/test_hs201_12_thought_note_glass.py tests/e2e/test_hs141_chair_geometry.py 2>&1 | tail -6`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** f5ece779f86701668836aa9df0ed52bb2d93eaf7
+
+```text
+....................................                                     [100%]
+36 passed in 302.36s (0:05:02)
+```
+
+### Captured run — 2026-09-21T19:23:59Z
+
+- **Command:** `bash -c set -o pipefail; cd web && npm run tokens:gate 2>&1 | tail -1 && npx vitest run src/desk/__tests__/hs202ChromeSpecies.test.tsx src/desk/surface/__tests__/wings.test.tsx --maxWorkers=2 2>&1 | tail -4; cd .. && HOME=$(mktemp -d) uv run python scripts/check_web_baseline.py --run 2>&1 | tail -3`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** f5ece779f86701668836aa9df0ed52bb2d93eaf7
+
+```text
+token gate: clean (11 allow-listed exceptions, all in use)
+      Tests  29 passed (29)
+   Start at  13:24:00
+   Duration  1.03s (transform 340ms, setup 258ms, import 541ms, tests 131ms, environment 726ms)
+
+Suite totals: 2745 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+```
+
+### Captured run — 2026-09-21T19:25:18Z
+
+- **Command:** `bash -c set -o pipefail; HOME=$(mktemp -d) uv run pytest -q tests/unit/test_ux_canon_ratchet.py tests/unit/test_ux_canon_scan.py -p no:cacheprovider 2>&1 | tail -2`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** f5ece779f86701668836aa9df0ed52bb2d93eaf7
+
+```text
+......................................                                   [100%]
+38 passed in 1.06s
+```
