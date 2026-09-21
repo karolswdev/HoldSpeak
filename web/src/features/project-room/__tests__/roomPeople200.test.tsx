@@ -145,7 +145,12 @@ describe("RoomPeopleSection (HS-200-14)", () => {
     expect(within(row).getAllByText("2 PRS WAITING")).toHaveLength(1);
     const commitmentRow = within(row).getByTestId("room-people-commitment");
     expect(within(commitmentRow).getByText("Own the PostgreSQL migration")).toBeTruthy();
-    expect(within(commitmentRow).getByText("MTG · Architecture review · SEG 4")).toBeTruthy();
+    /* HS-202-04 (F21) re-points this rig, which pinned the OLD token.
+     * `MTG` and `SEG` were abbreviations no face defined
+     * (`02-coherence-astra.md:133`); the line now says the words
+     * (`RoomPeopleSection.tsx` sourceToken). The assertion still proves
+     * the commitment carries its source — in plain words. */
+    expect(within(commitmentRow).getByText("Meeting · Architecture review · Segment 4")).toBeTruthy();
     expect(within(commitmentRow).getByText(/^DUE /)).toBeTruthy();
     fireEvent.click(within(commitmentRow).getByRole("button", { name: "Open source: Architecture review" }));
     expect(openPrimitive).toHaveBeenCalledWith("meeting:m1");

@@ -501,7 +501,11 @@ export function PrefsFace({
               : null}
           </>}
         />
-        {/* Meetings: INTELLIGENCE ON · AFTER ROOM MEETINGS / OFF */}
+        {/* Meetings: SUMMARY ON · AFTER ROOM MEETINGS / OFF.
+            HS-202-04 (F06): the registry rules that every face says
+            Summary for a meeting's result (`docs/product-language.json:23`);
+            the hub row said the wire's word while the Meetings face two
+            windows over said Summary on the same setting. */}
         <SurfaceLedgerRow
           primary="Meetings"
           expands={false}
@@ -509,8 +513,8 @@ export function PrefsFace({
           trailing={openVerb("meetings")}
           cells={<>
             {hub.meetings.intelligence
-              ? <StateChip state="success" label={`INTELLIGENCE ON${hub.meetings.auto && hub.meetings.auto !== "off" ? ` · ${autoLabel(hub.meetings.auto)}` : ""}`} />
-              : <StateChip state="warning" label="INTELLIGENCE OFF" />}
+              ? <StateChip state="success" label={`SUMMARY ON${hub.meetings.auto && hub.meetings.auto !== "off" ? ` · ${autoLabel(hub.meetings.auto)}` : ""}`} />
+              : <StateChip state="warning" label="SUMMARY OFF" />}
           </>}
         />
         {/* Rhythm: EVERY N MIN · NEXT HH:MM when sweep runs; NO LOOPS only at zero + no sweep */}

@@ -13,6 +13,10 @@ export const PRODUCT_TERMS = {
   desk: ["Desk", "Desks"],
   meeting: ["Meeting", "Meetings"],
   transcript: ["Transcript", "Transcripts"],
+  /* HS-202-04 (F21) — `SEG` stood on the Live footer and in the Room's
+   * provenance line with no face that ever defined it. The registry now
+   * owns the word so both halves of the product say Segment. */
+  segment: ["Segment", "Segments"],
   // HS-201-06 added `summary` to docs/product-language.json (the wire's
   // "meeting intelligence" said in plain words) and this table was not
   // moved with it, so the registry contract test failed on the branch.
@@ -48,6 +52,8 @@ export const LEGACY_PRODUCT_ALIASES = {
   kb: "knowledge",
   knowledge_base: "knowledge",
   chain: "sequence",
+  seg: "segment",
+  mtg: "meeting",
   connector: "integration",
   plugin: "integration",
   profile: "runs_on",

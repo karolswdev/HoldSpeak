@@ -42,6 +42,7 @@ import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
 import { DeskWindowFrame } from "./DeskWindow";
 import { Material } from "../surface/Material";
 import { SurfaceTraffic, SurfaceTrafficTurn } from "../surface/Surface";
+import { countToken } from "../surface/count";
 import {
   GadgetGroup,
   LampGadget,
@@ -289,7 +290,14 @@ export function AskPanel() {
     >
       <div className="desk-pullout-body desk-ask-body">
         <SurfaceTraffic
-          head={`SESSION · ${turnCount} ${turnCount === 1 ? "TURN" : "TURNS"}`}
+          /* HS-202-04 (UX-CANON A.8) — a freshly opened Ask headed itself
+             `SESSION · 0 TURNS` on every desk and both widths
+             (`01-measured-walk.md:150`). `countToken` withholds the zero
+             (`desk/surface/count.ts:39`), so the head names the session
+             and counts only once there is something to count. */
+          head={["SESSION", countToken(turnCount, "TURN")]
+            .filter(Boolean)
+            .join(" · ")}
           showEmpty={!sent && phase !== "routing"}
         >
           {sent ? (
