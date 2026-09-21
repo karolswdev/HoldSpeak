@@ -185,9 +185,9 @@ export function SurfaceRow({
     >
       <div className="surface-row-line">
         {onOpen ? (
-          <button type="button" className="surface-row-open" onClick={onOpen}>
+          <Button variant="chrome" className="surface-row-open" onClick={onOpen}>
             {body}
-          </button>
+          </Button>
         ) : (
           <span className="surface-row-main">{body}</span>
         )}
@@ -270,13 +270,13 @@ export function SurfaceState({
           )}
           <span>{emptyLabel}</span>
           {onAction && actionLabel ? (
-            <button
-              type="button"
+            <Button
+              variant="chrome"
               className="desk-chip surface-state-action"
               onClick={onAction}
             >
               {actionLabel}
-            </button>
+            </Button>
           ) : null}
         </>}
       </div>
@@ -984,13 +984,13 @@ export function SurfaceLibraryGhost({
 }) {
   return (
     <li className="surface-tile surface-tile-ghost">
-      <button type="button" className="surface-tile-ghost-btn" onClick={onCreate}>
+      <Button variant="chrome" className="surface-tile-ghost-btn" onClick={onCreate}>
         <span className="surface-tile-ghost-plus" aria-hidden="true">
           ＋
         </span>
         <span>{label}</span>
         {hint ? <small>{hint}</small> : null}
-      </button>
+      </Button>
     </li>
   );
 }
@@ -1136,8 +1136,8 @@ export function EditInPlace({
   }
   if (!editing) {
     return (
-      <button
-        type="button"
+      <Button
+        variant="chrome"
         className={cx}
         aria-label={`Edit ${label}`}
         onClick={() => {
@@ -1146,7 +1146,7 @@ export function EditInPlace({
         }}
       >
         {value}
-      </button>
+      </Button>
     );
   }
   const shared = {

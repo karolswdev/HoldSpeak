@@ -306,4 +306,28 @@
     width: 28px;
     min-height: 44px;
   }
+  /* HS-202-03 — the STRIP owes every row it carries a 44px target at the
+     phone width. Story 05's ruling splits the duty: a PLATED Button owns
+     its 44px through the halo, and a CHROME Button is a strip row, so the
+     strip owns its height. HS-202-02 paid the launchers and the chip
+     close; measured on the live 393 desk, these were the rest of the dock:
+     the overview/reset keys at 22px, the Record orb at 40px, and the Room
+     verbs at 36px (plated, but they ride this strip, and real geometry
+     composes with a halo rather than arguing with it).
+     Height and hit box only — the printed face, the sprites and the
+     1440 dock are untouched (this block is phone-only). */
+  .desk-next .desk-dock-reset {
+    display: inline-grid;
+    place-items: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 4px;
+  }
+  .desk-next .desk-dock .desk-orb {
+    width: 44px;
+    height: 44px;
+  }
+  .desk-next .desk-room-actions > button {
+    min-height: 44px;
+  }
 }

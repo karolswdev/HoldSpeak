@@ -332,7 +332,7 @@ def _no_raw_buttons(page: Any, width: int) -> None:
         const body = document.querySelector('[data-testid="meeting-review"]');
         if (!body) return ["no review face"];
         return Array.from(body.querySelectorAll('button'))
-            .filter(b => !b.classList.contains('btn')
+            .filter(b => !b.classList.contains('btn') && !b.classList.contains('btn--chrome')
                       && !b.classList.contains('desk-mic')
                       && !b.classList.contains('surface-disclosure-trigger')
                       && !b.classList.contains('surface-edit-in-place')

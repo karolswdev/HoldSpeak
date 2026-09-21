@@ -482,27 +482,29 @@ CLAIMS: list[Claim] = [
     # ── owned by HS-200-44 ────────────────────────────────────────────
     Claim(
         doc="docs/internal/UX-CANON.md",
-        anchor="A1 (raw `<button>`) is held to a\ndated, down-only ratchet of 175, measured on 2026-09-17 by HS-200-44",
+        anchor="A1 (raw `<button>`) is held to a\ndated, down-only ratchet of 106, measured on 2026-09-21 by HS-202-03",
         sentence=(
-            "A1 (raw `<button>`) is held to a dated, down-only ratchet of 175, "
-            "measured on 2026-09-17 by HS-200-44 once the matcher could see a "
-            "multi-line opening tag. That number can only shrink."
+            "A1 (raw `<button>`) is held to a dated, down-only ratchet of 106, "
+            "measured on 2026-09-21 by HS-202-03 (175 on 2026-09-17 by HS-200-44, "
+            "once the matcher could see a multi-line opening tag). That number "
+            "can only shrink."
         ),
         predicate=lambda: (
-            ux_canon_ceiling_a1() == 175
+            ux_canon_ceiling_a1() == 106
             and int(re.search(r"down-only ratchet of (\d+)", _read("docs/internal/UX-CANON.md")).group(1))
             == ux_canon_ceiling_a1()
             and canon_scanner_a1_total() <= ux_canon_ceiling_a1()
         ),
         state="holds",
         truth=(
-            "tests/ux_canon_ceiling.json holds A1 = 175 with a dated reason, the "
+            "tests/ux_canon_ceiling.json holds A1 = 106 with a dated reason, the "
             "canon scanner's A1 count over web/src is at or under it, and the "
-            "document states the same number; the independent count over ALL of "
-            "web/src is 203 (28 sit in design/, _parked/ and *.test.tsx outside the "
-            "scanner's scope). Corrected 2026-09-17 by HS-200-44"
+            "document states the same number. Lowered 175 -> 106 on 2026-09-21 by "
+            "HS-202-03 (the shared species on the first-use path became library "
+            "Buttons); the row is re-pinned to the new number so the predicate "
+            "keeps the down-only law honest. Corrected 2026-09-17 by HS-200-44"
         ),
-        story="HS-200-44",
+        story="HS-202-03",
     ),
     # Philo corrects known descriptive drift without adding missing behavior.
     Claim(

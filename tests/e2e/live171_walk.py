@@ -123,7 +123,7 @@ def _check_raw_buttons(page: Any, face_name: str) -> str | None:
         const allBtns = win.querySelectorAll('button');
         let raw = 0;
         for (const btn of allBtns) {
-            if (btn.classList.contains('btn')) continue;
+            if ((btn.classList.contains('btn') || btn.classList.contains('btn--chrome'))) continue;
             if (btn.closest('[role="tablist"]')) continue;
             if (btn.closest('.cycle-gadget')) continue;
             if (btn.closest('.fold-gadget')) continue;

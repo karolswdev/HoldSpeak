@@ -1,6 +1,7 @@
 /** ProvenanceChip + Receipt — promoted provenance/receipt patterns
  *  for composing into SurfaceFooter. */
 import "./provenance.css";
+import { Button } from "../../../components/signal/Signal";
 
 /** ProvenanceChip: typed source/boundary label with inspect action. */
 export function ProvenanceChip({
@@ -19,14 +20,14 @@ export function ProvenanceChip({
         <span className="surface-provenance-boundary">{boundary}</span>
       ) : null}
       {onInspect ? (
-        <button
-          type="button"
+        <Button
+          variant="chrome"
           className="surface-provenance-inspect"
           onClick={onInspect}
           aria-label={`Inspect ${source}`}
         >
           {"ℹ"}
-        </button>
+        </Button>
       ) : null}
     </span>
   );
@@ -52,14 +53,14 @@ export function Receipt({
         <span className="surface-receipt-time">{timestamp}</span>
       ) : null}
       {onInspect ? (
-        <button
-          type="button"
+        <Button
+          variant="chrome"
           className="surface-receipt-inspect"
           onClick={onInspect}
           aria-label={`Inspect ${label}`}
         >
           {"ℹ"}
-        </button>
+        </Button>
       ) : null}
     </span>
   );

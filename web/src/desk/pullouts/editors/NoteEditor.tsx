@@ -13,6 +13,7 @@ import type { VoiceProposal } from "../../voice/grammar";
 import type { Note } from "../../../lib/primitives";
 import { useDebouncedSave } from "./useDebouncedSave";
 import type { InlineEditorContentProps } from "./types";
+import { Button } from "../../../components/signal/Signal";
 
 export function NoteEditor({ object: o, onClose, autoFocusName }: InlineEditorContentProps) {
   const items = useDesk((s) => s.items);
@@ -109,20 +110,20 @@ export function NoteEditor({ object: o, onClose, autoFocusName }: InlineEditorCo
       </span>
       <div className="editor-proposal-copy">{proposal.proposed}</div>
       <div className="editor-proposal-actions">
-        <button
-          type="button"
+        <Button
+          variant="chrome"
           className="desk-chip editor-proposal-action is-accept"
           onClick={acceptProposal}
         >
           ACCEPT
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="chrome"
           className="desk-chip editor-proposal-action is-reject"
           onClick={() => setProposal(null)}
         >
           REJECT
-        </button>
+        </Button>
         <span className="editor-proposal-receipt">
           {proposal.receipt.target} · {proposal.receipt.model || "model"} · {proposal.receipt.latency}ms
         </span>

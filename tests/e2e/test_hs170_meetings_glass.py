@@ -297,7 +297,7 @@ class TestMeetingsGlass:
                     const raw = [];
                     for (const b of all) {
                         // .btn = library Button; .desk-mic = library MicButton
-                        if (!b.classList.contains('btn') && !b.classList.contains('desk-mic')) {
+                        if (!b.classList.contains('btn') && !b.classList.contains('btn--chrome') && !b.classList.contains('desk-mic')) {
                             raw.push((b.textContent || '').trim().slice(0, 40));
                         }
                     }

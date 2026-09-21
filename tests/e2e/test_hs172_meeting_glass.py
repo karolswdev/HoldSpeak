@@ -206,7 +206,7 @@ class TestMeetingAfterRun:
                 const body = document.querySelector('.desk-surface-body');
                 if (!body) return [];
                 return Array.from(body.querySelectorAll('button'))
-                    .filter(b => !b.classList.contains('btn') && !b.classList.contains('desk-mic'))
+                    .filter(b => !b.classList.contains('btn') && !b.classList.contains('btn--chrome') && !b.classList.contains('desk-mic'))
                     .map(b => (b.textContent || '').trim().slice(0, 40));
             }""")
             assert len(raw_buttons) == 0, f"Raw buttons at {width}: {raw_buttons}"

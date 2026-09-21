@@ -365,3 +365,31 @@ The token functions (`claimKindToken`, `claimSupportToken`,
 `claimAcceptanceToken`, `claimUnknownToken`) are exported beside it and are
 the ONE vocabulary; a feature that needs the words imports them, never
 re-spells them.
+
+## Button `variant="chrome"` (HS-202-03)
+
+The verb species WITHOUT the button plate. Some verbs are not plated
+buttons — a menu row (`DeskMenu`), a wing tab (`SurfaceWings`), a dock chip
+(`Dock`), the editor's formatting rail (`DeskEditor`), the mic, the record
+orb, a ledger row's own body — and their material is drawn by the strip they
+ride (`chrome-menus.css` keys off `.desk-menu-list button`, `pullout.css` off
+`.desk-wing`, `window-chrome.css` off `.desk-dock-*`). For `variant="chrome"`
+the plate classes (`btn`, `btn--secondary`, `btn--sm`) are therefore
+WITHHELD; only the marker `btn--chrome` is stamped, so the strip keeps its
+ink to the pixel and the verb is still the library `Button` (UX-CANON A.1).
+
+- It always rides a host className that already owns the control's material.
+  A `chrome` verb with no class draws nothing — that is a caller bug, not a
+  new look to invent here.
+- `dense` is ignored (there is no plate to shrink).
+- Everything else is the species: one element, `type="button"` by default
+  (a raw `<button>` in a form submits; this one never does unless asked),
+  and one `loading` / `disabled` / `aria-busy` grammar.
+- Fenced by `components/signal/Signal.test.tsx` and
+  `desk/__tests__/hs202ChromeSpecies.test.tsx` (no plate; the first-use
+  screens carry no raw `<button>`), and counted by the A1 source ratchet
+  (`tests/unit/test_ux_canon_ratchet.py`).
+
+The surface inventory of 2026-09-20 (§3.3) is why this exists: raw buttons
+outnumbered library Buttons more than two to one, and the worst sites were
+the shared species themselves.

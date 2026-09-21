@@ -211,7 +211,7 @@ def _assert_learned_board(page: Any) -> None:
             const wing = document.querySelector('.speak-learned');
             if (!wing) return ['no wing'];
             return Array.from(wing.querySelectorAll('button'))
-              .filter(b => !b.classList.contains('btn')
+              .filter(b => !b.classList.contains('btn') && !b.classList.contains('btn--chrome')
                         && !b.classList.contains('surface-ledger-line')
                         && !b.classList.contains('desk-mic'))
               .map(b => b.className || b.textContent);

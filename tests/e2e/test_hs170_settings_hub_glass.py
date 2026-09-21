@@ -151,7 +151,7 @@ def test_settings_hub_cold(
                 for (const btn of buttons) {
                     // Library buttons have the .btn class, surface-ledger-line,
                     // or gadget-cycle class.
-                    if (!btn.classList.contains('btn') &&
+                    if (!btn.classList.contains('btn') && !btn.classList.contains('btn--chrome') &&
                         !btn.classList.contains('surface-ledger-line') &&
                         !btn.classList.contains('gadget-cycle')) {
                         raw++;

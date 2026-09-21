@@ -17,6 +17,7 @@ import {
   SurfaceSection,
   SurfaceSettingRow,
 } from "../surface/Surface";
+import { Button } from "../../components/signal/Signal";
 
 type TrustDestination = {
   id: string;
@@ -155,8 +156,8 @@ export function TrustWindow() {
           </SurfaceSection>
         ))}
         <p>
-          <button
-            type="button"
+          <Button
+            variant="chrome"
             className="desk-chip quiet"
             onClick={() => {
               useTrustWindow.getState().setOpen(false);
@@ -164,7 +165,7 @@ export function TrustWindow() {
             }}
           >
             Review privacy settings
-          </button>
+          </Button>
         </p>
       </div>
     </DeskWindowFrame>

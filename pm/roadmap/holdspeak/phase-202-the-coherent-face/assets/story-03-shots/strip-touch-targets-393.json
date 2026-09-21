@@ -1,0 +1,295 @@
+{
+ "what": "HS-202-03 strip touch targets, measured on the live screens (coordinator's note from story 05's measurement).",
+ "rule": "Story 05's canon: a PLATED Button owns 44px through a halo; a CHROME Button is a strip ROW and the STRIP owes it >= 44px at 393. 03 owns two strips: the wing bar (pullout.css) and the dock (dock.css).",
+ "method": "Real hub, cold seeded desk with one meeting, Meetings window open so the overview/reset keys and the wing bar both exist. Bounding boxes off the glass, not CSS. The 1440 pair swaps only the built bundle (pre-fix vs post-fix) on the same page.",
+ "at_393": {
+  "before": [
+   {
+    "label": "Intelligence",
+    "classes": "btn--chrome desk-dock-launch desk-dock-app",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Speak",
+    "classes": "btn--chrome desk-dock-launch desk-dock-app",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Meetings",
+    "classes": "btn--chrome desk-dock-launch desk-dock-app is-run is-front",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Agents",
+    "classes": "btn--chrome desk-dock-launch desk-dock-app",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Settings",
+    "classes": "btn--chrome desk-dock-launch desk-dock-app",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Floor",
+    "classes": "btn--chrome desk-dock-launch",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Desk memory",
+    "classes": "btn--chrome desk-dock-launch",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Delivery",
+    "classes": "btn--chrome desk-dock-launch",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Panes",
+    "classes": "btn--chrome desk-dock-launch",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "\u25ccHide the menus",
+    "classes": "btn btn--secondary",
+    "h": 36,
+    "w": 139
+   },
+   {
+    "label": "Change places",
+    "classes": "btn btn--secondary",
+    "h": 36,
+    "w": 76.6
+   },
+   {
+    "label": "Record a meeting",
+    "classes": "btn--chrome desk-orb is-idle",
+    "h": 40,
+    "w": 40
+   },
+   {
+    "label": "Overview",
+    "classes": "btn--chrome desk-dock-reset",
+    "h": 22,
+    "w": 26
+   },
+   {
+    "label": "Reset layout",
+    "classes": "btn--chrome desk-dock-reset",
+    "h": 22,
+    "w": 26
+   },
+   {
+    "label": "Outcomes",
+    "classes": "btn--chrome desk-wing is-on",
+    "h": 23,
+    "w": 78.8
+   },
+   {
+    "label": "Review",
+    "classes": "btn--chrome desk-wing",
+    "h": 23,
+    "w": 65.6
+   },
+   {
+    "label": "Record",
+    "classes": "btn--chrome desk-wing",
+    "h": 23,
+    "w": 65.6
+   },
+   {
+    "label": "Artifacts",
+    "classes": "btn--chrome desk-wing",
+    "h": 23,
+    "w": 85.4
+   },
+   {
+    "label": "Meeting plumbing",
+    "classes": "btn--chrome desk-wing desk-wing-door",
+    "h": 24,
+    "w": 27.3
+   }
+  ],
+  "after": [
+   {
+    "label": "Intelligence",
+    "classes": "btn--chrome desk-dock-launch desk-dock-app",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Speak",
+    "classes": "btn--chrome desk-dock-launch desk-dock-app",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Meetings",
+    "classes": "btn--chrome desk-dock-launch desk-dock-app is-run is-front",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Agents",
+    "classes": "btn--chrome desk-dock-launch desk-dock-app",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Settings",
+    "classes": "btn--chrome desk-dock-launch desk-dock-app",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Floor",
+    "classes": "btn--chrome desk-dock-launch",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Desk memory",
+    "classes": "btn--chrome desk-dock-launch",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Delivery",
+    "classes": "btn--chrome desk-dock-launch",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Panes",
+    "classes": "btn--chrome desk-dock-launch",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "\u25ccHide the menus",
+    "classes": "btn btn--secondary",
+    "h": 44,
+    "w": 139
+   },
+   {
+    "label": "Change places",
+    "classes": "btn btn--secondary",
+    "h": 44,
+    "w": 76.6
+   },
+   {
+    "label": "Record a meeting",
+    "classes": "btn--chrome desk-orb is-idle",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Overview",
+    "classes": "btn--chrome desk-dock-reset",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Reset layout",
+    "classes": "btn--chrome desk-dock-reset",
+    "h": 44,
+    "w": 44
+   },
+   {
+    "label": "Outcomes",
+    "classes": "btn--chrome desk-wing is-on",
+    "h": 44,
+    "w": 78.8
+   },
+   {
+    "label": "Review",
+    "classes": "btn--chrome desk-wing",
+    "h": 44,
+    "w": 65.6
+   },
+   {
+    "label": "Record",
+    "classes": "btn--chrome desk-wing",
+    "h": 44,
+    "w": 65.6
+   },
+   {
+    "label": "Artifacts",
+    "classes": "btn--chrome desk-wing",
+    "h": 44,
+    "w": 85.4
+   },
+   {
+    "label": "Meeting plumbing",
+    "classes": "btn--chrome desk-wing desk-wing-door",
+    "h": 44,
+    "w": 27.3
+   }
+  ],
+  "rows_under_44_before": [
+   [
+    "Artifacts",
+    23
+   ],
+   [
+    "Change places",
+    36
+   ],
+   [
+    "Meeting plumbing",
+    24
+   ],
+   [
+    "Outcomes",
+    23
+   ],
+   [
+    "Overview",
+    22
+   ],
+   [
+    "Record",
+    23
+   ],
+   [
+    "Record a meeting",
+    40
+   ],
+   [
+    "Reset layout",
+    22
+   ],
+   [
+    "Review",
+    23
+   ],
+   [
+    "\u25ccHide the menus",
+    36
+   ]
+  ],
+  "rows_under_44_after": [],
+  "dock_box_height": {
+   "before": 127,
+   "after": 149
+  }
+ },
+ "at_1440": {
+  "rows_compared": 19,
+  "rows_changed": [],
+  "dock_box_height": {
+   "before": 53,
+   "after": 53
+  },
+  "verdict": "UNCHANGED \u2014 both rules live inside @media (max-width: 720px)."
+ }
+}
