@@ -1,0 +1,1571 @@
+{
+  "product_revision": "93f9524f682aacf2fdb6138fa259506a338a1e2f",
+  "branch": "audit/surface-coherence-astra",
+  "worktree": "/Users/karol/dev/tools/wt-202-astra",
+  "rulebook_sha256": "dee847f6b75d1590b995dab2cf458c73cc930c5f9f64539570914ff99b48754e",
+  "inventory": {
+    "revision": "93f9524f682aacf2fdb6138fa259506a338a1e2f",
+    "applications": [
+      {
+        "line": 49,
+        "action": "change-places",
+        "windowId": "surface-places",
+        "label": "Change places",
+        "description": "Environments, favorites, atmosphere, wallpaper, and room sound.",
+        "glyph": "\u25a7",
+        "href": "/",
+        "group": "tool",
+        "shortcut": "\u2318\u21e7P",
+        "core": "../pages/cores/ChangePlacesCore"
+      },
+      {
+        "line": 65,
+        "action": "open-intelligence",
+        "windowId": "intelligence:desk",
+        "label": "Intelligence",
+        "description": "Briefs, follow-through, receipts, and reasons.",
+        "glyph": "\u25c8",
+        "href": "/",
+        "dock": "{ order: 0, launch: \"intelligence\" }",
+        "mark": "true"
+      },
+      {
+        "line": 75,
+        "action": "dictate",
+        "windowId": "surface-dictation",
+        "label": "Speak",
+        "description": "Voice typing: speak, see it land, teach it.",
+        "glyph": "\u2301",
+        "href": "/dictation",
+        "group": "app",
+        "dock": "{ order: 1, launch: \"surface\" }",
+        "shortcut": "\u23181",
+        "mark": "true",
+        "core": "../pages/cores/DictationCore"
+      },
+      {
+        "line": 96,
+        "action": "ask",
+        "windowId": "ask:desk",
+        "label": "Ask AI",
+        "description": "Ask across the work on your desk.",
+        "glyph": "\u2726",
+        "href": "/ask",
+        "group": "app"
+      },
+      {
+        "line": 105,
+        "action": "review-meetings",
+        "windowId": "surface-meetings",
+        "label": "Meetings",
+        "description": "Outcomes, recordings, and the typed record.",
+        "glyph": "\u25a3",
+        "href": "/history",
+        "group": "app",
+        "dock": "{ order: 2, launch: \"surface\" }",
+        "shortcut": "\u23182",
+        "mark": "true",
+        "core": "../pages/cores/HistoryCore"
+      },
+      {
+        "line": 125,
+        "action": "inspect-personas-and-coders",
+        "windowId": "surface-companion",
+        "label": "Agents",
+        "toolLabel": "Agents and coder sessions",
+        "description": "Use saved behavior and inspect live sessions.",
+        "glyph": "\u25c9",
+        "href": "/companion",
+        "group": "tool",
+        "dock": "{ order: 3, launch: \"surface\" }",
+        "shortcut": "\u23183",
+        "mark": "true",
+        "core": "../pages/cores/CompanionCore"
+      },
+      {
+        "line": 146,
+        "action": "configure-settings",
+        "windowId": "surface-settings",
+        "label": "Settings",
+        "description": "Every boundary, stated once.",
+        "glyph": "\u2699",
+        "href": "/settings",
+        "group": "app",
+        "dock": "{ order: 4, launch: \"surface\" }",
+        "shortcut": "\u23184",
+        "mark": "true",
+        "core": "../pages/cores/SettingsCore"
+      },
+      {
+        "line": 174,
+        "action": "record-live",
+        "windowId": "surface-live",
+        "label": "Live meeting",
+        "description": "The live meeting room.",
+        "glyph": "\u25cf",
+        "href": "/live",
+        "core": "../pages/cores/LiveCore"
+      },
+      {
+        "line": 190,
+        "action": "configure-cadence",
+        "windowId": "surface-cadence",
+        "label": "Rhythm",
+        "description": "Sweep, brief, and notification cadence.",
+        "glyph": "\u25f7",
+        "href": "/cadence",
+        "group": "tool",
+        "core": "../pages/cores/CadenceCore"
+      },
+      {
+        "line": 214,
+        "action": "open-constitutional-context",
+        "windowId": "surface-constitutional-context",
+        "label": "Context",
+        "description": "The always-on briefing every agent receives.",
+        "glyph": "\u00a7",
+        "href": "/context",
+        "group": "tool",
+        "core": "../pages/cores/ConstitutionalContextCore"
+      },
+      {
+        "line": 231,
+        "action": "open-workbenches",
+        "windowId": "surface-workbenches",
+        "label": "Workbenches",
+        "description": "Mission control for your agent workbenches.",
+        "glyph": "\u2692",
+        "href": "/workbenches",
+        "group": "tool",
+        "core": "../pages/cores/WorkbenchesHomeCore"
+      },
+      {
+        "line": 248,
+        "action": "design-components",
+        "windowId": "surface-components",
+        "label": "Components",
+        "description": "The executable Signal component catalog.",
+        "glyph": "\u25a6",
+        "href": "/components",
+        "core": "../pages/cores/ComponentsCore"
+      },
+      {
+        "line": 264,
+        "action": "inspect-activity",
+        "windowId": "surface-activity",
+        "label": "Activity",
+        "toolGlyph": "\u224b",
+        "description": "Inspect work context and source records.",
+        "glyph": "\u2299",
+        "href": "/activity",
+        "group": "tool",
+        "core": "../pages/cores/ActivityCore"
+      },
+      {
+        "line": 282,
+        "action": "open-project-memory",
+        "windowId": "surface-project-memory",
+        "label": "Desk memory",
+        "description": "Search connected evidence across the Desk or within a Project.",
+        "glyph": "\u25a4",
+        "href": "/project-memory",
+        "group": "tool",
+        "core": "../pages/cores/ProjectMemoryCore"
+      },
+      {
+        "line": 301,
+        "action": "open-concierge",
+        "windowId": "surface-concierge",
+        "label": "Models",
+        "description": "Engines found, the proposed set, Use these.",
+        "glyph": "\u25a3",
+        "href": "/models",
+        "core": "../features/concierge/ConciergeCore"
+      },
+      {
+        "line": 324,
+        "action": "project-setup",
+        "windowId": "surface-project-setup",
+        "label": "New Project",
+        "description": "Create a Project in one screen.",
+        "glyph": "\u25a3",
+        "href": "/",
+        "core": "../features/project-room/door/DoorCore"
+      },
+      {
+        "line": 341,
+        "action": "inspect-processes",
+        "windowId": "surface-processes",
+        "label": "Processes",
+        "description": "See what the kernel is running.",
+        "glyph": "\u2237",
+        "href": "/#processes",
+        "group": "tool",
+        "core": "../pages/cores/ProcessCore"
+      },
+      {
+        "line": 358,
+        "action": "configure-commands",
+        "windowId": "surface-commands",
+        "label": "Commands",
+        "description": "Map spoken phrases to registered actions.",
+        "glyph": "\u2318",
+        "href": "/commands",
+        "group": "tool",
+        "core": "../pages/cores/CommandsCore"
+      },
+      {
+        "line": 375,
+        "action": "open-people",
+        "windowId": "surface-people",
+        "label": "People",
+        "description": "Relationships, commitments, and follow-through.",
+        "glyph": "\u2667",
+        "href": "/",
+        "mark": "true",
+        "core": "../pages/cores/PeopleCore"
+      },
+      {
+        "line": 392,
+        "action": "review-calendar-snapshot",
+        "windowId": "surface-calendar-snapshot",
+        "label": "Calendar snapshot",
+        "description": "Review calendar evidence before it enters the Desk.",
+        "glyph": "\u25a6",
+        "href": "/calendar-snapshot",
+        "core": "../pages/cores/CalendarSnapshotReviewCore"
+      },
+      {
+        "line": 409,
+        "action": "configure-runs-on",
+        "windowId": "surface-concierge",
+        "label": "Models",
+        "description": "Engines found, the proposed set, Use these.",
+        "glyph": "\u25a3",
+        "href": "/models",
+        "group": "tool"
+      },
+      {
+        "line": 418,
+        "action": "configure-integrations",
+        "windowId": "surface-settings",
+        "label": "Connections",
+        "description": "Configure connected destinations and credentials.",
+        "glyph": "\u2197",
+        "href": "/settings",
+        "group": "tool",
+        "subjectRef": "integration:destinations"
+      }
+    ],
+    "cores": [
+      "web/src/pages/cores/ActivityCore.tsx",
+      "web/src/pages/cores/CadenceCore.tsx",
+      "web/src/pages/cores/CalendarSnapshotReviewCore.tsx",
+      "web/src/pages/cores/CapabilityAssignmentsCore.tsx",
+      "web/src/pages/cores/ChangePlacesCore.tsx",
+      "web/src/pages/cores/CommandsCore.tsx",
+      "web/src/pages/cores/CompanionCore.tsx",
+      "web/src/pages/cores/ComponentsCore.tsx",
+      "web/src/pages/cores/ConstitutionalContextCore.tsx",
+      "web/src/pages/cores/DictationCore.tsx",
+      "web/src/pages/cores/HistoryCore.tsx",
+      "web/src/pages/cores/LiveCore.tsx",
+      "web/src/pages/cores/ModelLibraryCore.tsx",
+      "web/src/pages/cores/PeopleCore.tsx",
+      "web/src/pages/cores/ProcessCore.tsx",
+      "web/src/pages/cores/ProjectMemoryCore.tsx",
+      "web/src/pages/cores/RuntimeDocsCore.tsx",
+      "web/src/pages/cores/SettingsCore.tsx",
+      "web/src/pages/cores/SetupCore.tsx",
+      "web/src/pages/cores/WorkbenchesHomeCore.tsx"
+    ],
+    "surface_files": [
+      "web/src/App.tsx",
+      "web/src/components/AmbientLayer.tsx",
+      "web/src/components/AppShell.tsx",
+      "web/src/components/ErrorBoundary.tsx",
+      "web/src/components/signal/Signal.tsx",
+      "web/src/design/AtmospherePreview.tsx",
+      "web/src/design/atmosphere-preview.tsx",
+      "web/src/desk/DeskApp.tsx",
+      "web/src/desk/chair/Chair.tsx",
+      "web/src/desk/chair/ChairHome.tsx",
+      "web/src/desk/chair/_parked/FinishThoughtsLane.tsx",
+      "web/src/desk/chair/_parked/Lane.tsx",
+      "web/src/desk/chair/_parked/ThoughtEntry.tsx",
+      "web/src/desk/chair/_parked/hero/CaptureHero.tsx",
+      "web/src/desk/chair/_parked/lanes/AgentsLane.tsx",
+      "web/src/desk/chair/_parked/lanes/BriefLane.tsx",
+      "web/src/desk/chair/_parked/lanes/DoorBoardLane.tsx",
+      "web/src/desk/chair/_parked/lanes/MeetingsLane.tsx",
+      "web/src/desk/components/AgentAvatar.tsx",
+      "web/src/desk/components/ApplicationBoundary.tsx",
+      "web/src/desk/components/AskPanel.tsx",
+      "web/src/desk/components/AttentionDrawer.tsx",
+      "web/src/desk/components/CallChip.tsx",
+      "web/src/desk/components/DeliveryBoard.tsx",
+      "web/src/desk/components/DeliveryDossierWindow.tsx",
+      "web/src/desk/components/DeliveryListSection.tsx",
+      "web/src/desk/components/DeliveryTerminalWindow.tsx",
+      "web/src/desk/components/DeskChrome.tsx",
+      "web/src/desk/components/DeskComposer.tsx",
+      "web/src/desk/components/DeskCreateMenu.tsx",
+      "web/src/desk/components/DeskEditor.tsx",
+      "web/src/desk/components/DeskFilingStrip.tsx",
+      "web/src/desk/components/DeskListView.tsx",
+      "web/src/desk/components/DeskMenu.tsx",
+      "web/src/desk/components/DeskMenuBar.tsx",
+      "web/src/desk/components/DeskSortableTable.tsx",
+      "web/src/desk/components/DeskStartActions.tsx",
+      "web/src/desk/components/DeskToolInspector.tsx",
+      "web/src/desk/components/DeskToolShelf.tsx",
+      "web/src/desk/components/DeskWindow.tsx",
+      "web/src/desk/components/EditorAIBar.tsx",
+      "web/src/desk/components/EmptyDesk.tsx",
+      "web/src/desk/components/FirstWords.tsx",
+      "web/src/desk/components/GlassDropLayer.tsx",
+      "web/src/desk/components/GroundingSection.tsx",
+      "web/src/desk/components/InfoWindow.tsx",
+      "web/src/desk/components/InletAutocomplete.tsx",
+      "web/src/desk/components/InlineEditor.tsx",
+      "web/src/desk/components/InterviewPanel.tsx",
+      "web/src/desk/components/MicButton.tsx",
+      "web/src/desk/components/MissionControlConveyor.tsx",
+      "web/src/desk/components/ModeTabs.tsx",
+      "web/src/desk/components/NewWorkbenchChooser.tsx",
+      "web/src/desk/components/PrReceiptsSection.tsx",
+      "web/src/desk/components/Pullout.tsx",
+      "web/src/desk/components/RailsPicker.tsx",
+      "web/src/desk/components/ReceiptLine.tsx",
+      "web/src/desk/components/RecordOrb.tsx",
+      "web/src/desk/components/RepoWindow.tsx",
+      "web/src/desk/components/RoadmapWindow.tsx",
+      "web/src/desk/components/ScheduleCreateWindow.tsx",
+      "web/src/desk/components/SessionPullout.tsx",
+      "web/src/desk/components/SpeakerGlyph.tsx",
+      "web/src/desk/components/SurfaceWindows.tsx",
+      "web/src/desk/components/SystemShade.tsx",
+      "web/src/desk/components/ThreadComposer.tsx",
+      "web/src/desk/components/TrustWindow.tsx",
+      "web/src/desk/components/WhyControl.tsx",
+      "web/src/desk/components/WorkbenchAutomations.tsx",
+      "web/src/desk/components/WorkbenchResourceful.tsx",
+      "web/src/desk/components/WorkbenchTemplatePicker.tsx",
+      "web/src/desk/components/WorkbenchWindow.tsx",
+      "web/src/desk/components/ZoneWindow.tsx",
+      "web/src/desk/components/window/Dock.tsx",
+      "web/src/desk/components/window/Expose.tsx",
+      "web/src/desk/components/window/RoomActions.tsx",
+      "web/src/desk/components/window/ShortcutSheet.tsx",
+      "web/src/desk/components/window/SnapGhost.tsx",
+      "web/src/desk/components/window/Switcher.tsx",
+      "web/src/desk/components/window/VerbGlyph.tsx",
+      "web/src/desk/components/workbench/WorkbenchRunsWing.tsx",
+      "web/src/desk/gl/Atmosphere.tsx",
+      "web/src/desk/gl/WorldStage.tsx",
+      "web/src/desk/pullouts/ArtifactPullout.tsx",
+      "web/src/desk/pullouts/ChainPullout.tsx",
+      "web/src/desk/pullouts/CoderPullout.tsx",
+      "web/src/desk/pullouts/DecisionPullout.tsx",
+      "web/src/desk/pullouts/DirectoryPullout.tsx",
+      "web/src/desk/pullouts/FallbackPullout.tsx",
+      "web/src/desk/pullouts/IntelligencePullout.tsx",
+      "web/src/desk/pullouts/KbPullout.tsx",
+      "web/src/desk/pullouts/MeetingPullout.tsx",
+      "web/src/desk/pullouts/NotePullout.tsx",
+      "web/src/desk/pullouts/PeoplePullout.tsx",
+      "web/src/desk/pullouts/RecipePullout.tsx",
+      "web/src/desk/pullouts/ThoughtContextPicker.tsx",
+      "web/src/desk/pullouts/ThreadPullout.tsx",
+      "web/src/desk/pullouts/WorkflowPullout.tsx",
+      "web/src/desk/pullouts/editors/KbEditor.tsx",
+      "web/src/desk/pullouts/editors/NoteEditor.tsx",
+      "web/src/desk/pullouts/editors/RecipeEditor.tsx",
+      "web/src/desk/pullouts/editors/ThoughtNoteEditor.tsx",
+      "web/src/desk/pullouts/editors/WorkflowEditor.tsx",
+      "web/src/desk/pullouts/shared/CapabilitySection.tsx",
+      "web/src/desk/pullouts/shared/ThreadsSection.tsx",
+      "web/src/desk/pullouts/views/BriefView.tsx",
+      "web/src/desk/pullouts/views/DecisionsView.tsx",
+      "web/src/desk/pullouts/views/FollowThroughView.tsx",
+      "web/src/desk/surface/FilterTokens.tsx",
+      "web/src/desk/surface/LedgerFilter.tsx",
+      "web/src/desk/surface/Material.tsx",
+      "web/src/desk/surface/Surface.tsx",
+      "web/src/desk/surface/SurfaceFooter.tsx",
+      "web/src/desk/surface/XtermPane.tsx",
+      "web/src/desk/surface/citations.tsx",
+      "web/src/desk/surface/gadgets.tsx",
+      "web/src/desk/surface/graph/TopologySurface.tsx",
+      "web/src/desk/surface/patterns/ActionNotice.tsx",
+      "web/src/desk/surface/patterns/ChoiceCardGroup.tsx",
+      "web/src/desk/surface/patterns/ChoiceCardShell.tsx",
+      "web/src/desk/surface/patterns/ClaimAxes.tsx",
+      "web/src/desk/surface/patterns/CoverageRow.tsx",
+      "web/src/desk/surface/patterns/Disclosure.tsx",
+      "web/src/desk/surface/patterns/LedgerRemainder.tsx",
+      "web/src/desk/surface/patterns/Popover.tsx",
+      "web/src/desk/surface/patterns/ProgressPlan.tsx",
+      "web/src/desk/surface/patterns/ProjectButton.tsx",
+      "web/src/desk/surface/patterns/ProvenanceChip.tsx",
+      "web/src/desk/surface/patterns/StateChip.tsx",
+      "web/src/desk/surface/patterns/TaskResume.tsx",
+      "web/src/desk/surface/wings.tsx",
+      "web/src/desk/thought-workspace/ThoughtDocumentPane.tsx",
+      "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
+      "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+      "web/src/desk/voice/ProposalStrip.tsx",
+      "web/src/desk/windowMenuAdapter.tsx",
+      "web/src/features/concierge/ConciergeCore.tsx",
+      "web/src/features/project-room/ProjectRoomCore.tsx",
+      "web/src/features/project-room/RoomPeopleSection.tsx",
+      "web/src/features/project-room/_parked/setup/ActivationReview.tsx",
+      "web/src/features/project-room/_parked/setup/ClarifyStep.tsx",
+      "web/src/features/project-room/_parked/setup/JiraWizard.tsx",
+      "web/src/features/project-room/_parked/setup/ProviderWizardStep.tsx",
+      "web/src/features/project-room/_parked/setup/SetupBrief.tsx",
+      "web/src/features/project-room/_parked/setup/SetupInterview.tsx",
+      "web/src/features/project-room/_parked/setup/SetupRoot.tsx",
+      "web/src/features/project-room/_parked/setup/SuggestionCards.tsx",
+      "web/src/features/project-room/_parked/setup/TestResult.tsx",
+      "web/src/features/project-room/_parked/setup/ToolsRow.tsx",
+      "web/src/features/project-room/door/DoorCore.tsx",
+      "web/src/features/project-room/prepare/PreparePosture.tsx",
+      "web/src/features/project-room/recall/RecallFace.tsx",
+      "web/src/features/project-room/review/ReviewPosture.tsx",
+      "web/src/features/project-room/steward/StewardPosture.tsx",
+      "web/src/features/project-room/update/UpdatePosture.tsx",
+      "web/src/main.tsx",
+      "web/src/meetings/MeetingConflictRecovery.tsx",
+      "web/src/meetings/MeetingIntelRecovery.tsx",
+      "web/src/meetings/MeetingSummarySlab.tsx",
+      "web/src/meetings/RouteDisclosure.tsx",
+      "web/src/pages/PresencePage.tsx",
+      "web/src/pages/WelcomePage.tsx",
+      "web/src/pages/cores/ActivityCore.tsx",
+      "web/src/pages/cores/AssignmentEditor.tsx",
+      "web/src/pages/cores/AssignmentModelChooser.tsx",
+      "web/src/pages/cores/AssignmentSummary.tsx",
+      "web/src/pages/cores/CadenceCore.tsx",
+      "web/src/pages/cores/CalendarSnapshotReviewCore.tsx",
+      "web/src/pages/cores/CapabilityAssignmentsCore.tsx",
+      "web/src/pages/cores/ChangePlacesCore.tsx",
+      "web/src/pages/cores/CommandsCore.tsx",
+      "web/src/pages/cores/CompanionCore.tsx",
+      "web/src/pages/cores/ComponentsCore.tsx",
+      "web/src/pages/cores/ConstitutionalContextCore.tsx",
+      "web/src/pages/cores/ContextualAssignment.tsx",
+      "web/src/pages/cores/DictationCore.tsx",
+      "web/src/pages/cores/HistoryCore.tsx",
+      "web/src/pages/cores/LiveCore.tsx",
+      "web/src/pages/cores/ModelLibraryCore.tsx",
+      "web/src/pages/cores/PeopleCore.tsx",
+      "web/src/pages/cores/ProcessCore.tsx",
+      "web/src/pages/cores/RuntimeDocsCore.tsx",
+      "web/src/pages/cores/SettingsCore.tsx",
+      "web/src/pages/cores/SetupCore.tsx",
+      "web/src/pages/cores/TopologyMapView.tsx",
+      "web/src/pages/cores/WorkbenchesHomeCore.tsx",
+      "web/src/pages/cores/connections/ConnectionsPane.tsx",
+      "web/src/pages/cores/core-hooks.tsx",
+      "web/src/pages/cores/core-layout.tsx",
+      "web/src/pages/cores/dictation/Blocks.tsx",
+      "web/src/pages/cores/dictation/DictationSections.tsx",
+      "web/src/pages/cores/dictation/Journal.tsx",
+      "web/src/pages/cores/dictation/Knowledge.tsx",
+      "web/src/pages/cores/dictation/Learned.tsx",
+      "web/src/pages/cores/dictation/Memory.tsx",
+      "web/src/pages/cores/dictation/Readiness.tsx",
+      "web/src/pages/cores/dictation/SpeakFace.tsx",
+      "web/src/pages/cores/dictation/_parked/AimRow.tsx",
+      "web/src/pages/cores/dictation/_parked/InstrumentStrip.tsx",
+      "web/src/pages/cores/dictation/_parked/ResultPanel.tsx",
+      "web/src/pages/cores/dictation/_parked/UtteranceWell.tsx",
+      "web/src/pages/cores/frontDoor.tsx",
+      "web/src/pages/cores/history/AftercareGadgets.tsx",
+      "web/src/pages/cores/history/ArtifactsLibrary.tsx",
+      "web/src/pages/cores/history/CaptureSlab.tsx",
+      "web/src/pages/cores/history/CatalogRail.tsx",
+      "web/src/pages/cores/history/DoorSection.tsx",
+      "web/src/pages/cores/history/ImportSection.tsx",
+      "web/src/pages/cores/history/MeetingDetail.tsx",
+      "web/src/pages/cores/history/MeetingHeader.tsx",
+      "web/src/pages/cores/history/MeetingReview.tsx",
+      "web/src/pages/cores/history/MeetingsConfig.tsx",
+      "web/src/pages/cores/history/NeedsYouTable.tsx",
+      "web/src/pages/cores/history/SettledList.tsx",
+      "web/src/pages/cores/history/StateTokenSpan.tsx",
+      "web/src/pages/cores/history/TranscriptWell.tsx",
+      "web/src/pages/cores/history/useMeetingData.tsx",
+      "web/src/pages/cores/settingsBespoke.tsx",
+      "web/src/pages/cores/settingsModels.tsx",
+      "web/src/pages/cores/settingsPrefs.tsx",
+      "web/src/pages/cores/settingsTts.tsx",
+      "web/src/pages/cores/settingsWallpaper.tsx",
+      "web/src/pages/pageSupport.tsx",
+      "web/src/runtime/RuntimeBus.tsx"
+    ]
+  },
+  "species_summary": {
+    "active_tsx_files": 207,
+    "base": "93f9524f682aacf2fdb6138fa259506a338a1e2f",
+    "candidates_by_classification": {
+      "needs reading": 10,
+      "sanctioned": 31
+    },
+    "consumer_support_files": 177,
+    "dev_preview_files": 2,
+    "library_implementation_files": 28,
+    "library_imports": 907,
+    "library_instances": 1992,
+    "menu_modal_portal_candidates": 41,
+    "raw_control_occurrences": 233,
+    "raw_controls_by_classification": {
+      "face violation": 176,
+      "library implementation": 40,
+      "needs reading": 10,
+      "sanctioned": 7
+    },
+    "scope": "web/src/**/*.tsx excluding __tests__, *.test.tsx, and _parked"
+  },
+  "species_ast_comparison": {
+    "ast_count": 233,
+    "worker_count": 233,
+    "only_ast": [],
+    "only_worker": [],
+    "counts": {
+      "<button>": 187,
+      "<input>": 32,
+      "<textarea>": 8,
+      "<select>": 3,
+      "role=button": 3
+    }
+  },
+  "css_crosscheck": [
+    {
+      "path": "web/src/design/atmosphere-preview.css",
+      "decls": 97,
+      "font_family_declarations": 1,
+      "font_size_declarations": 8,
+      "hex_occurrences": 0,
+      "px_occurrences": 43,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/chair/_parked/hero/hero.css",
+      "decls": 60,
+      "font_family_declarations": 2,
+      "font_size_declarations": 4,
+      "hex_occurrences": 0,
+      "px_occurrences": 18,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/chair/chair.css",
+      "decls": 315,
+      "font_family_declarations": 22,
+      "font_size_declarations": 24,
+      "hex_occurrences": 5,
+      "px_occurrences": 74,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/RepoWindow.css",
+      "decls": 54,
+      "font_family_declarations": 0,
+      "font_size_declarations": 2,
+      "hex_occurrences": 1,
+      "px_occurrences": 22,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/RoadmapWindow.css",
+      "decls": 113,
+      "font_family_declarations": 0,
+      "font_size_declarations": 5,
+      "hex_occurrences": 0,
+      "px_occurrences": 61,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/attention.css",
+      "decls": 329,
+      "font_family_declarations": 1,
+      "font_size_declarations": 19,
+      "hex_occurrences": 1,
+      "px_occurrences": 134,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/chrome-menus.css",
+      "decls": 536,
+      "font_family_declarations": 7,
+      "font_size_declarations": 18,
+      "hex_occurrences": 1,
+      "px_occurrences": 183,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/delivery.css",
+      "decls": 235,
+      "font_family_declarations": 4,
+      "font_size_declarations": 18,
+      "hex_occurrences": 0,
+      "px_occurrences": 70,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/dock.css",
+      "decls": 156,
+      "font_family_declarations": 1,
+      "font_size_declarations": 6,
+      "hex_occurrences": 0,
+      "px_occurrences": 45,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/inlet-autocomplete.css",
+      "decls": 22,
+      "font_family_declarations": 1,
+      "font_size_declarations": 1,
+      "hex_occurrences": 0,
+      "px_occurrences": 7,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/inline-editor.css",
+      "decls": 140,
+      "font_family_declarations": 4,
+      "font_size_declarations": 8,
+      "hex_occurrences": 0,
+      "px_occurrences": 42,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/interview.css",
+      "decls": 27,
+      "font_family_declarations": 1,
+      "font_size_declarations": 3,
+      "hex_occurrences": 0,
+      "px_occurrences": 18,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/list-view.css",
+      "decls": 156,
+      "font_family_declarations": 0,
+      "font_size_declarations": 4,
+      "hex_occurrences": 0,
+      "px_occurrences": 44,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/mission-control.css",
+      "decls": 442,
+      "font_family_declarations": 20,
+      "font_size_declarations": 29,
+      "hex_occurrences": 0,
+      "px_occurrences": 125,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/pullout.css",
+      "decls": 440,
+      "font_family_declarations": 5,
+      "font_size_declarations": 20,
+      "hex_occurrences": 0,
+      "px_occurrences": 142,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/record-orb.css",
+      "decls": 33,
+      "font_family_declarations": 0,
+      "font_size_declarations": 2,
+      "hex_occurrences": 0,
+      "px_occurrences": 6,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/session-pullout.css",
+      "decls": 176,
+      "font_family_declarations": 10,
+      "font_size_declarations": 14,
+      "hex_occurrences": 0,
+      "px_occurrences": 65,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/speak-to-fill.css",
+      "decls": 116,
+      "font_family_declarations": 1,
+      "font_size_declarations": 5,
+      "hex_occurrences": 0,
+      "px_occurrences": 31,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/speak.css",
+      "decls": 269,
+      "font_family_declarations": 1,
+      "font_size_declarations": 1,
+      "hex_occurrences": 0,
+      "px_occurrences": 105,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/window-chrome.css",
+      "decls": 400,
+      "font_family_declarations": 5,
+      "font_size_declarations": 19,
+      "hex_occurrences": 0,
+      "px_occurrences": 89,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/components/workbench-config.css",
+      "decls": 407,
+      "font_family_declarations": 29,
+      "font_size_declarations": 38,
+      "hex_occurrences": 0,
+      "px_occurrences": 127,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/desk.css",
+      "decls": 116,
+      "font_family_declarations": 0,
+      "font_size_declarations": 1,
+      "hex_occurrences": 0,
+      "px_occurrences": 21,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/hooks/write-receipt.css",
+      "decls": 37,
+      "font_family_declarations": 1,
+      "font_size_declarations": 3,
+      "hex_occurrences": 0,
+      "px_occurrences": 15,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/pullouts/intelligence.css",
+      "decls": 482,
+      "font_family_declarations": 25,
+      "font_size_declarations": 35,
+      "hex_occurrences": 0,
+      "px_occurrences": 62,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/pullouts/thread-pullout.css",
+      "decls": 733,
+      "font_family_declarations": 38,
+      "font_size_declarations": 59,
+      "hex_occurrences": 54,
+      "px_occurrences": 284,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/filter-tokens.css",
+      "decls": 21,
+      "font_family_declarations": 1,
+      "font_size_declarations": 1,
+      "hex_occurrences": 0,
+      "px_occurrences": 3,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/gadgets.css",
+      "decls": 609,
+      "font_family_declarations": 12,
+      "font_size_declarations": 21,
+      "hex_occurrences": 5,
+      "px_occurrences": 236,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/graph/topology-surface.css",
+      "decls": 130,
+      "font_family_declarations": 1,
+      "font_size_declarations": 0,
+      "hex_occurrences": 0,
+      "px_occurrences": 25,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/patterns/action-notice.css",
+      "decls": 40,
+      "font_family_declarations": 1,
+      "font_size_declarations": 2,
+      "hex_occurrences": 0,
+      "px_occurrences": 16,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/patterns/choice-card.css",
+      "decls": 140,
+      "font_family_declarations": 5,
+      "font_size_declarations": 7,
+      "hex_occurrences": 1,
+      "px_occurrences": 48,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/patterns/claim-axes.css",
+      "decls": 4,
+      "font_family_declarations": 0,
+      "font_size_declarations": 0,
+      "hex_occurrences": 0,
+      "px_occurrences": 1,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/patterns/coverage-row.css",
+      "decls": 23,
+      "font_family_declarations": 2,
+      "font_size_declarations": 3,
+      "hex_occurrences": 1,
+      "px_occurrences": 4,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/patterns/disclosure.css",
+      "decls": 61,
+      "font_family_declarations": 4,
+      "font_size_declarations": 5,
+      "hex_occurrences": 0,
+      "px_occurrences": 19,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/patterns/ledger-remainder.css",
+      "decls": 13,
+      "font_family_declarations": 1,
+      "font_size_declarations": 1,
+      "hex_occurrences": 0,
+      "px_occurrences": 5,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/patterns/popover.css",
+      "decls": 27,
+      "font_family_declarations": 1,
+      "font_size_declarations": 1,
+      "hex_occurrences": 0,
+      "px_occurrences": 9,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/patterns/progress-plan.css",
+      "decls": 80,
+      "font_family_declarations": 1,
+      "font_size_declarations": 4,
+      "hex_occurrences": 0,
+      "px_occurrences": 32,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/patterns/project-button.css",
+      "decls": 21,
+      "font_family_declarations": 1,
+      "font_size_declarations": 1,
+      "hex_occurrences": 0,
+      "px_occurrences": 4,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/patterns/provenance.css",
+      "decls": 62,
+      "font_family_declarations": 0,
+      "font_size_declarations": 1,
+      "hex_occurrences": 0,
+      "px_occurrences": 15,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/patterns/state-chip.css",
+      "decls": 27,
+      "font_family_declarations": 0,
+      "font_size_declarations": 1,
+      "hex_occurrences": 0,
+      "px_occurrences": 6,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/patterns/task-resume.css",
+      "decls": 60,
+      "font_family_declarations": 1,
+      "font_size_declarations": 2,
+      "hex_occurrences": 0,
+      "px_occurrences": 10,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/surface-footer.css",
+      "decls": 255,
+      "font_family_declarations": 11,
+      "font_size_declarations": 14,
+      "hex_occurrences": 0,
+      "px_occurrences": 77,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/surface/surface.css",
+      "decls": 2387,
+      "font_family_declarations": 47,
+      "font_size_declarations": 106,
+      "hex_occurrences": 2,
+      "px_occurrences": 642,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/desk/thought-workspace/thought-workspace.css",
+      "decls": 201,
+      "font_family_declarations": 1,
+      "font_size_declarations": 4,
+      "hex_occurrences": 0,
+      "px_occurrences": 77,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/features/concierge/concierge.css",
+      "decls": 248,
+      "font_family_declarations": 0,
+      "font_size_declarations": 0,
+      "hex_occurrences": 39,
+      "px_occurrences": 99,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/features/project-room/_parked/setup/jira-wizard.css",
+      "decls": 56,
+      "font_family_declarations": 3,
+      "font_size_declarations": 5,
+      "hex_occurrences": 0,
+      "px_occurrences": 6,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/features/project-room/_parked/setup/setup.css",
+      "decls": 458,
+      "font_family_declarations": 5,
+      "font_size_declarations": 43,
+      "hex_occurrences": 0,
+      "px_occurrences": 41,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/features/project-room/door/door.css",
+      "decls": 182,
+      "font_family_declarations": 0,
+      "font_size_declarations": 0,
+      "hex_occurrences": 21,
+      "px_occurrences": 72,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/features/project-room/prepare/prepare-posture.css",
+      "decls": 56,
+      "font_family_declarations": 0,
+      "font_size_declarations": 0,
+      "hex_occurrences": 0,
+      "px_occurrences": 17,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/features/project-room/project-room.css",
+      "decls": 345,
+      "font_family_declarations": 17,
+      "font_size_declarations": 17,
+      "hex_occurrences": 17,
+      "px_occurrences": 98,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/features/project-room/recall/recall.css",
+      "decls": 137,
+      "font_family_declarations": 0,
+      "font_size_declarations": 6,
+      "hex_occurrences": 1,
+      "px_occurrences": 36,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/features/project-room/review/review-posture.css",
+      "decls": 103,
+      "font_family_declarations": 6,
+      "font_size_declarations": 14,
+      "hex_occurrences": 5,
+      "px_occurrences": 43,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/features/project-room/steward/steward-posture.css",
+      "decls": 90,
+      "font_family_declarations": 1,
+      "font_size_declarations": 7,
+      "hex_occurrences": 1,
+      "px_occurrences": 10,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/features/project-room/update/update-posture.css",
+      "decls": 53,
+      "font_family_declarations": 1,
+      "font_size_declarations": 1,
+      "hex_occurrences": 4,
+      "px_occurrences": 7,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/pages/cores/connections/connections.css",
+      "decls": 94,
+      "font_family_declarations": 5,
+      "font_size_declarations": 5,
+      "hex_occurrences": 0,
+      "px_occurrences": 12,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/pages/cores/constitutional-context.css",
+      "decls": 13,
+      "font_family_declarations": 1,
+      "font_size_declarations": 1,
+      "hex_occurrences": 0,
+      "px_occurrences": 2,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/pages/cores/dictation/journal.css",
+      "decls": 75,
+      "font_family_declarations": 1,
+      "font_size_declarations": 1,
+      "hex_occurrences": 0,
+      "px_occurrences": 20,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/pages/cores/dictation/learned.css",
+      "decls": 68,
+      "font_family_declarations": 3,
+      "font_size_declarations": 3,
+      "hex_occurrences": 0,
+      "px_occurrences": 13,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/pages/cores/frontDoor.css",
+      "decls": 46,
+      "font_family_declarations": 0,
+      "font_size_declarations": 0,
+      "hex_occurrences": 0,
+      "px_occurrences": 12,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/pages/cores/people.css",
+      "decls": 139,
+      "font_family_declarations": 2,
+      "font_size_declarations": 8,
+      "hex_occurrences": 2,
+      "px_occurrences": 45,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/pages/cores/rhythm.css",
+      "decls": 23,
+      "font_family_declarations": 0,
+      "font_size_declarations": 0,
+      "hex_occurrences": 0,
+      "px_occurrences": 14,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/pages/cores/topologyMap.css",
+      "decls": 148,
+      "font_family_declarations": 0,
+      "font_size_declarations": 1,
+      "hex_occurrences": 0,
+      "px_occurrences": 29,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/styles/global.css",
+      "decls": 232,
+      "font_family_declarations": 3,
+      "font_size_declarations": 6,
+      "hex_occurrences": 0,
+      "px_occurrences": 58,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/styles/react-app.css",
+      "decls": 259,
+      "font_family_declarations": 0,
+      "font_size_declarations": 5,
+      "hex_occurrences": 0,
+      "px_occurrences": 58,
+      "z_index_literal_declarations": 0
+    },
+    {
+      "path": "web/src/styles/tokens.css",
+      "decls": 292,
+      "font_family_declarations": 0,
+      "font_size_declarations": 0,
+      "hex_occurrences": 81,
+      "px_occurrences": 53,
+      "z_index_literal_declarations": 0
+    }
+  ],
+  "srs_summary": {
+    "audit_revision": "93f9524f682aacf2fdb6138fa259506a338a1e2f",
+    "data_anchor": "675401a857b85336d4acaa8c65383dfc9636e4c8",
+    "requirement_count": 63,
+    "face_counts": {
+      "YES": 17,
+      "PARTLY": 26,
+      "NO": 7,
+      "N/A": 13
+    },
+    "srs_status_counts": {
+      "IMPLEMENTED": 23,
+      "PARTIAL": 10,
+      "SPEC-DEBT": 13,
+      "UNIMPLEMENTED": 17
+    },
+    "explicit_status_corrections": [
+      "FR-SEL-002: SPEC-DEBT -> PARTIAL",
+      "FR-STATE-001: IMPLEMENTED -> PARTIAL",
+      "NFR-ERR-001: IMPLEMENTED -> PARTIAL"
+    ],
+    "registry_counts": {
+      "components_catalogue": 73,
+      "desk_capabilities": 8,
+      "voice_capabilities": 41,
+      "runtime_capabilities": 11,
+      "integration_capabilities": 17
+    },
+    "test_execution": "not_run",
+    "owner_observation": false,
+    "report": "report.md"
+  },
+  "trust_probe": {
+    "fixture": "/Users/karol/dev/tools/wt-202-astra/.tmp/coherence/trust-glass/fixture-6tl7m2tz",
+    "probe": "real local hub; browser injects setup-status 503 only after normal arrival; no microphone; no owner DB",
+    "injected_response_status": 503,
+    "window_text": "Data boundaries\n\nAll data stays on this device\n\nCurrent scope\nthis device + external\nOpen to the network\nno \u00b7 Token: not set\nEnabled destinations\nNone\n\nReview privacy settings",
+    "false_local_claim": true,
+    "shots": [
+      ".tmp/coherence/trust-glass/trust-failed-1440.png",
+      ".tmp/coherence/trust-glass/trust-failed-393.png"
+    ],
+    "image_sha256": {
+      ".tmp/coherence/trust-glass/trust-failed-1440.png": "04b37018dacb8fb53252fcbfcf281da1d79bde734bf67d27c1ae47a9aaf9ee0b",
+      ".tmp/coherence/trust-glass/trust-failed-393.png": "600fdf558e8bd2ed5045e33afa93e84b28fae5817574428df20676f81003b417"
+    }
+  },
+  "test_outputs": {
+    "canon-collect": {
+      "path": ".tmp/coherence/canon-collect.log",
+      "sha256": "a11d472e129166a9565f0f11df0911a0279a6076051f6bac75290435aa2cf6ad",
+      "tail": "tests/unit/test_ux_canon_scan.py::test_scan_produces_valid_output\ntests/unit/test_ux_canon_scan.py::test_scan_empty_tree\ntests/unit/test_ux_canon_scan.py::TestA1SkipsComments::test_jsx_comment_not_flagged\ntests/unit/test_ux_canon_scan.py::TestA1SkipsComments::test_line_comment_not_flagged\ntests/unit/test_ux_canon_scan.py::TestA1SkipsComments::test_real_button_still_flagged\ntests/unit/test_ux_canon_scan.py::TestA3SkipsCode::test_usestate_code_not_flagged\ntests/unit/test_ux_canon_scan.py::TestA3SkipsCode::test_ternary_code_not_flagged\ntests/unit/test_ux_canon_scan.py::TestA3SkipsCode::test_real_sentence_still_flagged\ntests/unit/test_ux_canon_scan.py::TestRawIdsSkipsPropertyAccess::test_property_access_not_flagged\ntests/unit/test_ux_canon_scan.py::TestRawIdsSkipsPropertyAccess::test_dot_accessor_display_name\ntests/unit/test_ux_canon_scan.py::TestRawIdsSkipsPropertyAccess::test_bare_snake_still_flagged\ntests/unit/test_ux_canon_scan.py::TestA8SkipsImportsAndBooleans::test_import_line_not_flagged\ntests/unit/test_ux_canon_scan.py::TestA8SkipsImportsAndBooleans::test_negation_boolean_not_flagged\ntests/unit/test_ux_canon_scan.py::TestA8SkipsImportsAndBooleans::test_disabled_boolean_not_flagged\ntests/unit/test_ux_canon_scan.py::TestA8SkipsImportsAndBooleans::test_arithmetic_length_not_flagged\ntests/unit/test_ux_canon_scan.py::TestA8SkipsImportsAndBooleans::test_unguarded_length_still_flagged\ntests/unit/test_ux_canon_scan.py::TestMicPerElement::test_two_bare_inputs_are_two_violations\ntests/unit/test_ux_canon_scan.py::TestMicPerElement::test_textarea_is_matched\ntests/unit/test_ux_canon_scan.py::TestMicPerElement::test_string_gadget_is_not_an_uncovered_input\ntests/unit/test_ux_canon_scan.py::TestMicPerElement::test_mic_false_opt_out_is_a_violation\ntests/unit/test_ux_canon_scan.py::TestMicPerElement::test_mic_false_opt_out_across_lines_is_a_violation\ntests/unit/test_ux_canon_scan.py::TestMicPerElement::test_mic_button_in_the_same_component_covers\ntests/unit/test_ux_canon_scan.py::TestMicPerElement::test_mic_button_in_another_component_does_not_cover\ntests/unit/test_ux_canon_scan.py::TestMicPerElement::test_non_text_types_are_not_candidates\ntests/unit/test_ux_canon_scan.py::TestMicPerElement::test_search_and_email_are_candidates\ntests/unit/test_ux_canon_scan.py::TestMicPerElement::test_closed_jsx_comment_does_not_hide_the_element\ntests/unit/test_ux_canon_scan.py::TestMicPerElement::test_commented_out_element_is_skipped\ntests/unit/test_ux_canon_scan.py::TestMicPerElement::test_rule_is_not_gated_on_face_classification\ntests/unit/test_ux_canon_scan.py::TestMicAllowlist::test_allowlisted_element_is_not_a_violation\ntests/unit/test_ux_canon_scan.py::TestMicAllowlist::test_the_allowlist_is_file_scoped\ntests/unit/test_ux_canon_scan.py::TestMicAllowlist::test_r13_utterance_well_is_allowlisted_in_advance\ntests/unit/test_ux_canon_scan.py::TestMicAllowlist::test_every_entry_names_a_reason\ntests/unit/test_ux_canon_scan.py::TestMicAllowlist::test_every_entry_still_matches_the_tree\ntests/unit/test_ux_canon_scan.py::TestMicAllowlist::test_the_ledger_matches_the_census\ntests/unit/test_ux_canon_ratchet.py::test_ratchet\ntests/unit/test_ux_canon_ratchet.py::test_hard_zeros\ntests/unit/test_ux_canon_ratchet.py::test_ceiling_carries_its_date_and_reason\ntests/unit/test_ux_canon_ratchet.py::test_healing\n\n38 tests collected in 0.10s"
+    },
+    "canon-tests": {
+      "path": ".tmp/coherence/canon-tests.log",
+      "sha256": "f7aa2be85e44f60abe079a82711e02772377667ed08b2d49648b6dd92015a82d",
+      "tail": "......................................                                   [100%]\n38 passed in 1.70s"
+    },
+    "tokens-check": {
+      "path": ".tmp/coherence/tokens-check.log",
+      "sha256": "e65c0dc44c4d8055b149852164210b00fa0ff805e82c7ab392c0261c632fbf2f",
+      "tail": "\n> holdspeak-web@0.0.1 tokens:check\n> node scripts/generate-tokens.cjs --check\n\ntokens.css and tokens.gen.ts match design-tokens.json"
+    },
+    "tokens-gate": {
+      "path": ".tmp/coherence/tokens-gate.log",
+      "sha256": "1de3ce90ae1a3b4c3886ef8d0cc2879af9e6d1d981523a0a83909631d642cc25",
+      "tail": "\n> holdspeak-web@0.0.1 tokens:gate\n> node scripts/validate-tokens.cjs\n\ntoken gate: clean (11 allow-listed exceptions, all in use)"
+    },
+    "full-collect": {
+      "path": ".tmp/coherence/full-collect.log",
+      "sha256": "f671bc44b582afa693f5f2c61b4b62bc7a0ed5607703646772de22cb7b0291d6",
+      "tail": "tests/unit/test_workbench_run_frames.py::test_no_frames_without_a_wired_hub\ntests/unit/test_workbench_runner_migration.py::test_manual_attempt_creates_one_authenticated_workbench_parent\ntests/unit/test_workbench_runner_migration.py::test_item_scoped_run_never_sweeps_other_pending_work\ntests/unit/test_workbench_runner_migration.py::test_replay_returns_the_original_terminal_attempt_and_receipt\ntests/unit/test_workbench_runner_migration.py::test_reaction_source_event_is_bound_into_kernel_parent_input\ntests/unit/test_workbench_runner_migration.py::test_each_item_provider_call_has_one_admitted_child_and_receipt\ntests/unit/test_workbench_runner_migration.py::test_memory_writeback_is_a_distinct_child_linked_to_its_item_child\ntests/unit/test_workbench_runner_migration.py::test_memory_disabled_admits_no_memory_child\ntests/unit/test_workbench_runner_migration.py::test_item_and_memory_children_freeze_provenance_and_per_child_placement\ntests/unit/test_workbench_runner_migration.py::test_item_memory_artifact_and_attempt_history_are_receipt_gated\ntests/unit/test_workbench_runner_migration.py::test_retry_mint_reads_the_exact_item_historical_route_not_a_later_run\ntests/unit/test_workbench_runner_migration.py::test_cancel_before_item_checkpoint_leaves_no_item_or_memory_write\ntests/unit/test_workbench_runner_migration.py::test_cancel_after_item_preserves_item_and_fences_memory_late_write\ntests/unit/test_workbench_runner_migration.py::test_repeated_or_foreign_parent_cancel_cannot_cross_workbenches_or_mutate_receipts\ntests/unit/test_workbench_runner_migration.py::test_manual_workbench_uses_only_trusted_runner_children\ntests/unit/test_workbench_runner_migration.py::test_memory_service_contract_hashes_the_exact_submitted_payload\ntests/unit/test_workbench_runner_migration.py::test_workbench_deadline_expiry_fences_new_children_and_late_projections\ntests/unit/test_workbench_runner_migration.py::test_cross_request_cancel_adopts_parent_receipt_and_preserves_child_receipt\ntests/unit/test_workbench_runner_migration.py::test_checkpoint_that_did_not_advance_never_stages_workbench_success_aggregate\ntests/unit/test_workbench_runner_migration.py::test_cancel_after_parent_result_stage_never_finalizes_completed_history\ntests/unit/test_workbench_runner_migration.py::test_cancellation_before_claim_does_not_strand_item_and_next_run_processes_it\ntests/unit/test_workbench_triage.py::TestWorkbenchTriageCodec::test_parse_valid_accept\ntests/unit/test_workbench_triage.py::TestWorkbenchTriageCodec::test_parse_valid_reject\ntests/unit/test_workbench_triage.py::TestWorkbenchTriageCodec::test_parse_valid_rework\ntests/unit/test_workbench_triage.py::TestWorkbenchTriageCodec::test_parse_invalid_action\ntests/unit/test_workbench_triage.py::TestWorkbenchTriageCodec::test_parse_missing_fields\ntests/unit/test_workbench_triage.py::TestTriageAcceptDB::test_accept_changes_artifact_to_draft\ntests/unit/test_workbench_triage.py::TestTriageAcceptDB::test_accepted_artifact_visible_in_run_list\ntests/unit/test_workbench_triage.py::TestTriageRejectDB::test_reject_archives_artifact_and_dismisses_item\ntests/unit/test_workbench_triage.py::TestTriageRejectDB::test_rejected_artifact_hidden_from_run_list\ntests/unit/test_workbench_triage.py::TestTriageRejectDB::test_rejected_artifact_still_in_db\ntests/unit/test_workbench_triage.py::TestTriageReworkDB::test_rework_resets_item_to_pending\ntests/unit/test_workbench_triage.py::TestTriageReworkDB::test_rework_cycle_allows_new_triage\ntests/unit/test_workbench_triage.py::TestDoubleTriage::test_double_accept_fails\ntests/unit/test_workbench_triage.py::TestTriageWithoutArtifact::test_no_artifact_id\ntests/unit/test_workbench_triage_kernel.py::test_workbench_triage_codec_registered\ntests/unit/test_workbench_triage_kernel.py::test_triage_parse_accept\ntests/unit/test_workbench_triage_kernel.py::test_triage_parse_reject\ntests/unit/test_workbench_triage_kernel.py::test_triage_parse_rework\ntests/unit/test_workbench_triage_kernel.py::test_triage_parse_rejects_invalid_action\ntests/unit/test_workbench_triage_kernel.py::test_triage_parse_rejects_missing_fields\ntests/unit/test_workflow_graph.py::test_parse_graph_decodes_tagged_union_kinds\ntests/unit/test_workflow_graph.py::test_parse_graph_rejects_non_graphs_and_dupes\ntests/unit/test_workflow_graph.py::test_linearize_orders_a_single_chain\ntests/unit/test_workflow_graph.py::test_linearize_chain_without_declared_entry\ntests/unit/test_workflow_graph.py::test_linearize_refuses_branch\ntests/unit/test_workflow_graph.py::test_linearize_refuses_for_each_and_while_and_sequence\ntests/unit/test_workflow_graph.py::test_linearize_refuses_fan_out_even_with_linear_kinds\ntests/unit/test_workflow_graph.py::test_linearize_refuses_fan_in_join\ntests/unit/test_workflow_graph.py::test_linearize_refuses_dangling_edge_and_disconnected\ntests/unit/test_workflow_graph.py::test_linearize_refuses_unknown_kind\ntests/unit/test_workflow_graph.py::test_build_node_prompt_matches_swift_templates\ntests/unit/test_workflow_graph.py::test_apply_pure_transform\ntests/unit/test_workflow_graph.py::test_parse_graph_carries_failure_policy_and_runs_on\ntests/unit/test_workflow_graph.py::test_parse_graph_preserves_the_desktop_pin\ntests/unit/test_workflow_graph.py::test_parse_graph_unset_or_unknown_provenance_is_byte_identical_default\ntests/unit/test_workflow_graph.py::test_resolved_failure_policy_falls_back_to_run_default\ntests/unit/test_workflow_graph.py::test_on_node_error_honors_carry_skip_and_hold\ntests/unit/test_workflow_graph.py::test_linearize_preserves_provenance_through_ordering\ntests/unit/test_workroom_context.py::test_workroom_context_round_trips_only_identity_and_orientation\ntests/unit/test_workroom_context.py::test_workroom_context_is_forward_tolerant_but_refuses_content\ntests/unit/test_workroom_context.py::test_workroom_context_has_no_open_return_destination[https://example.com]\ntests/unit/test_workroom_context.py::test_workroom_context_has_no_open_return_destination[/settings]\ntests/unit/test_workroom_context.py::test_workroom_context_has_no_open_return_destination[]\ntests/unit/test_workroom_context.py::test_integration_is_a_qualified_desk_subject\ntests/unit/test_write_through_verbs.py::test_done_marks_action_loop_and_commitment_terminal\ntests/unit/test_write_through_verbs.py::test_dismiss_marks_action_loop_and_commitment_terminal\ntests/unit/test_write_through_verbs.py::test_snooze_preserves_action_and_snoozes_its_loop\ntests/unit/test_write_through_verbs.py::test_delegate_updates_action_and_commitment_owner\ntests/unit/test_write_through_verbs.py::test_reopen_after_done_restores_all_linked_records\ntests/unit/test_write_through_verbs.py::test_board_reflects_verb_immediately\ntests/unit/test_write_through_verbs.py::test_action_only_card_can_complete\ntests/web/test_hs168_connections_routes.py::TestListConnections::test_returns_five_tools\ntests/web/test_hs168_connections_routes.py::TestListConnections::test_all_not_configured_when_no_adapters\ntests/web/test_hs168_connections_routes.py::TestRecheckConnection::test_recheck_returns_entry\ntests/web/test_hs168_connections_routes.py::TestRecheckConnection::test_recheck_unknown_provider\ntests/web/test_hs168_connections_routes.py::TestSuggestAnnotation::test_proposals_carry_connection\ntests/web/test_hs168_connections_routes.py::TestKnownScopes::test_session_returns_known_scopes\ntests/web/test_hs168_connections_routes.py::TestPerProviderCap::test_per_provider_cap_preserves_all_providers\n\n=========================== short test summary info ============================\nSKIPPED [1] tests/e2e/test_dictation_learning_digest_spoken_e2e.py:33: opt-in: set HOLDSPEAK_SPOKEN_DICTATION_E2E=1 to run the spoken-dictation learning-digest e2e (uses macOS `say` + the Whisper base model)\nSKIPPED [1] tests/e2e/test_hs141_models_setup_glass.py:21: HS-170: Settings -> Models module PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge (web/src/features/concierge/ConciergeCore.tsx, open-concierge window)\nSKIPPED [1] tests/e2e/test_hs142_model_acquisition_glass.py:26: HS-170: Model Library front-door PARKED (HS-170-03, settled-design-four-faces.md Face 3); download-verify-add now at the Concierge's preset Download (ConciergeCore.tsx)\nSKIPPED [1] tests/e2e/test_hs143_assignments_glass.py:17: HS-170: Settings -> Assignments PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge's THE SET section + Adjust well (ConciergeCore.tsx)\nSKIPPED [1] tests/e2e/test_hs143_model_library_glass.py:19: HS-170: ModelLibraryCore PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge's FOUND section (ConciergeCore.tsx)\nSKIPPED [1] tests/e2e/test_spoken_meeting_e2e.py:41: opt-in: set HOLDSPEAK_SPOKEN_E2E=1 to run the spoken-meeting e2e\nSKIPPED [1] tests/e2e/test_workbench_walk.py:46: no hub listening at http://localhost:8778\nSKIPPED [1] tests/unit/test_mesh_discovery.py:21: could not import 'zeroconf': No module named 'zeroconf'\n11417 tests collected in 26.61s"
+    },
+    "full-suite": {
+      "path": ".tmp/coherence/full-suite.log",
+      "sha256": "c03bdf30f1a31358dc25c95176238bf3d952fb927238638a9479c10171fa149e",
+      "tail": "E                     - waiting for locator(\"[data-testid='meetings-facets']\")\n\ntests/e2e/test_hs170_meetings_glass.py:318: AssertionError\n------------------------------ Captured log setup ------------------------------\nWARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.\n=========================== short test summary info ============================\nSKIPPED [1] tests/e2e/test_dictation_learning_digest_spoken_e2e.py:33: opt-in: set HOLDSPEAK_SPOKEN_DICTATION_E2E=1 to run the spoken-dictation learning-digest e2e (uses macOS `say` + the Whisper base model)\nSKIPPED [1] tests/e2e/test_hs141_models_setup_glass.py:21: HS-170: Settings -> Models module PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge (web/src/features/concierge/ConciergeCore.tsx, open-concierge window)\nSKIPPED [1] tests/e2e/test_hs142_model_acquisition_glass.py:26: HS-170: Model Library front-door PARKED (HS-170-03, settled-design-four-faces.md Face 3); download-verify-add now at the Concierge's preset Download (ConciergeCore.tsx)\nSKIPPED [1] tests/e2e/test_hs143_assignments_glass.py:17: HS-170: Settings -> Assignments PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge's THE SET section + Adjust well (ConciergeCore.tsx)\nSKIPPED [1] tests/e2e/test_hs143_model_library_glass.py:19: HS-170: ModelLibraryCore PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge's FOUND section (ConciergeCore.tsx)\nSKIPPED [1] tests/e2e/test_spoken_meeting_e2e.py:41: opt-in: set HOLDSPEAK_SPOKEN_E2E=1 to run the spoken-meeting e2e\nSKIPPED [1] tests/e2e/test_workbench_walk.py:46: no hub listening at http://localhost:8778\nSKIPPED [1] tests/unit/test_mesh_discovery.py:21: could not import 'zeroconf': No module named 'zeroconf'\nSKIPPED [1] tests/e2e/test_dictation_enrichment_e2e.py:57: set HOLDSPEAK_DICTATION_E2E_BASE_URL + HOLDSPEAK_DICTATION_E2E_MODEL to a reachable OpenAI-compatible endpoint to run the real dictation enrichment e2e\nSKIPPED [1] tests/e2e/test_dictation_journal_e2e.py:57: set HOLDSPEAK_DICTATION_E2E_BASE_URL + HOLDSPEAK_DICTATION_E2E_MODEL to a reachable OpenAI-compatible endpoint to run the real dictation journal e2e\nSKIPPED [1] tests/e2e/test_dogfood_plumbing_e2e.py:44: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e\nSKIPPED [3] tests/e2e/test_dogfood_plumbing_e2e.py:52: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e\nSKIPPED [12] tests/e2e/test_dogfood_plumbing_e2e.py:66: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e\nSKIPPED [1] tests/e2e/test_dogfood_plumbing_e2e.py:85: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e\nSKIPPED [3] tests/e2e/test_dogfood_plumbing_e2e.py:95: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e\nSKIPPED [2] tests/e2e/test_hs14104_refinement_glass.py:58: superseded by the Thought Workbench real-path glass\nSKIPPED [2] tests/e2e/test_hs14105_context_glass.py:109: superseded by the Thought Workbench real-path glass\nSKIPPED [2] tests/e2e/test_hs14105a_default_context_glass.py:99: superseded by the Thought Workbench real-path glass\nSKIPPED [1] tests/uat/test_induction_integration_43.py:107: live .43 model proof is opt-in: set HOLDSPEAK_UAT_LIVE_43=1 (it runs a real extraction on the LAN model and takes minutes)\nSKIPPED [1] tests/uat/test_induction_integration_43.py:118: the UAT node harness cannot pair a mesh worker: since HS-131-16 `mesh serve` requires an imported node pairing (hub pin + node token) and refuses the owner token, but nodes.py still spawns it with --token-env HOLDSPEAK_HUB_TOKEN and never pairs\nSKIPPED [1] tests/integration/test_rails_observer_live.py:37: no rail events on this machine to summarize\nSKIPPED [1] tests/integration/test_rails_observer_live.py:72: no rail events on this machine\nSKIPPED [1] tests/unit/test_dictation_grammars.py:91: could not import 'llama_cpp': No module named 'llama_cpp'\nSKIPPED [1] tests/integration/test_runtime_llama_cpp.py:38: llama-cpp-python and /Users/karol/dev/tools/wt-202-astra/.tmp/coherence/full-home-gyscbtib/xdist-gw4/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf are required for this integration test\nSKIPPED [1] tests/integration/test_runtime_mlx.py:38: mlx-lm + outlines + /Users/karol/dev/tools/wt-202-astra/.tmp/coherence/full-home-gyscbtib/xdist-gw4/Models/mlx/Qwen3.5-8B-MLX-4bit are required for this integration test\nSKIPPED [1] tests/uat/test_mesh_dispatch.py:85: the UAT node harness cannot pair a mesh worker: since HS-131-16 `mesh serve` requires an imported node pairing (hub pin + node token) and refuses the owner token, but nodes.py still spawns it with --token-env HOLDSPEAK_HUB_TOKEN and never pairs\nSKIPPED [1] tests/unit/test_dictation_session_admission.py:497: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)\nSKIPPED [1] tests/unit/test_delta_schema.py:640: Owner's real DB not found (CI or isolated HOME)\nSKIPPED [1] tests/unit/test_dictation_session_admission.py:924: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)\nSKIPPED [1] tests/unit/test_dictation_session_admission.py:993: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)\nSKIPPED [1] tests/unit/test_dictation_session_admission.py:1175: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)\nSKIPPED [1] tests/unit/test_dictation_session_admission.py:1196: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)\nSKIPPED [1] tests/unit/test_dictation_session_admission.py:2242: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)\nSKIPPED [1] tests/unit/test_dictation_session_admission.py:2494: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)\nSKIPPED [1] tests/unit/test_dictation_session_admission.py:2534: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)\nSKIPPED [2] tests/unit/test_dictation_session_admission.py:2548: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)\nSKIPPED [1] tests/unit/test_dictation_session_admission.py:2588: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)\nSKIPPED [1] tests/unit/test_github_provider.py:526: gh CLI not authenticated or not installed\nSKIPPED [1] tests/unit/test_github_provider.py:537: gh CLI not authenticated or not installed\nSKIPPED [1] tests/integration/test_update_drafter_live_43.py:110: live .43 model proof is opt-in: set HOLDSPEAK_UAT_LIVE_43=1 (runs a real model call on the LAN endpoint)\nSKIPPED [1] tests/unit/test_hs166_walk_fixes.py:183: No proposals generated\nSKIPPED [1] tests/integration/test_dictation_llama_cpp_e2e.py:72: llama-cpp-python and /Users/karol/dev/tools/wt-202-astra/.tmp/coherence/full-home-gyscbtib/xdist-gw2/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf are required for this integration test\nSKIPPED [1] tests/integration/test_grounding_rails_live.py:35: holdspeak not in the project map on this machine\nSKIPPED [1] tests/integration/test_grounding_rails_live.py:54: holdspeak not in the project map on this machine\nSKIPPED [1] tests/integration/test_grounding_rails_live.py:71: holdspeak not in the project map on this machine\nSKIPPED [1] tests/e2e/test_hs145_door_polish_glass.py:181: HS-170: door-board scroll-hint PARKED (HS-170-04); the arrival has no horizontal-scroll viewport -- capability intentionally gone\nSKIPPED [1] tests/unit/test_phase143_speech_lifecycle_adoption.py:84: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)\nSKIPPED [1] tests/unit/test_phase143_speech_lifecycle_adoption.py:139: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)\nSKIPPED [1] tests/unit/test_phase143_speech_lifecycle_adoption.py:169: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)\nSKIPPED [1] tests/unit/test_phase143_speech_lifecycle_adoption.py:207: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)\nSKIPPED [1] tests/e2e/test_hs147_one_tap_glass.py:160: HS-170: door-rail one-tap arm PARKED (HS-170-04); per-event RECORD THIS gone; Schedule + Cancel at the arrival's capture bar covered by test_hs144_door_glass::test_upcoming_rail_schedule_create_round_trip_and_form_cancel\nSKIPPED [1] tests/unit/test_project_updates_schema.py:576: Owner's real DB not found (CI or isolated HOME)\nSKIPPED [1] tests/unit/test_project_room_schema.py:390: Owner's real DB not found (CI or isolated HOME)\nSKIPPED [1] tests/unit/test_watch_graduation_schema.py:493: Owner's real DB not found (CI or isolated HOME)\nSKIPPED [1] tests/unit/test_web_runtime.py:269: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)\nSKIPPED [1] tests/e2e/test_hs156_front_door_glass.py:552: HS-170: front-door pack cards PARKED (HS-170-03); capability now at the Concierge's FOUND section (ConciergeCore.tsx)\nSKIPPED [1] tests/e2e/test_hs156_front_door_glass.py:618: HS-170: front-door candidate picker PARKED (HS-170-03); capability now at the Concierge's picker ChoiceCards (ConciergeCore.tsx)\nSKIPPED [2] tests/e2e/test_hs158_room_glass.py:171: HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig\nSKIPPED [2] tests/e2e/test_hs158_room_glass.py:232: HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig\nSKIPPED [1] tests/e2e/test_hs158_room_glass.py:281: HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig\nSKIPPED [2] tests/e2e/test_hs159_interview_glass.py:149: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); see test_hs169_door_glass.py for the replacement rig\nSKIPPED [1] tests/e2e/test_hs159_interview_glass.py:396: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); see test_hs169_door_glass.py for the replacement rig\nSKIPPED [1] tests/e2e/test_hs159_interview_glass.py:461: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); blank leg ported to test_hs169_door_legs_glass.py\nSKIPPED [1] tests/e2e/test_hs159_interview_glass.py:554: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); abandon leg ported to test_hs169_door_legs_glass.py\nSKIPPED [2] tests/e2e/test_hs161_github_glass.py:270: HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig\nSKIPPED [2] tests/e2e/test_hs161_github_glass.py:521: HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig\nSKIPPED [2] tests/e2e/test_hs161_github_glass.py:673: HS-169-07 retired the interview entry point this leg used for project creation; evaluation/delta review is a live capability noted in the close ledger for re-pointing\nSKIPPED [2] tests/e2e/test_hs161_github_glass.py:921: HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig\nSKIPPED [1] tests/e2e/test_hs161_github_glass.py:1090: gh CLI not authenticated or not installed (skip-clean)\nSKIPPED [2] tests/e2e/test_hs166_jira_glass.py:327: HS-169-07 retired the interview + Jira wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig\nSKIPPED [2] tests/e2e/test_hs166_jira_walk.py:1636: acli jira auth status failed (exit 1): \u2717 Error: unauthorized: use 'acli jira auth login' to authenticate\nSKIPPED [2] tests/e2e/test_hs168_connections_glass.py:318: gh auth status failed (exit 1): You are not logged into any GitHub hosts. To log in, run: gh auth login\nSKIPPED [2] tests/e2e/test_hs168_sources_glass.py:281: HS-169-02 retired the Sources step (ProgressPlan, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig\nSKIPPED [2] tests/e2e/test_hs168_sources_glass.py:367: HS-169-02 retired the Sources step (ProgressPlan, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig\nSKIPPED [10] tests/e2e/test_meeting_transcription.py: Mock meeting fixture not found: /Users/karol/dev/tools/wt-202-astra/tests/fixtures/mock_meeting.wav\nSKIPPED [1] tests/e2e/test_mermaid_renders.py:118: mermaid renderer unavailable in this env: npm error render timed out after 60s\nXFAIL tests/e2e/test_hs200_meeting_outcomes_glass.py::test_meeting_review_proposals_stay_live_under_amendment[1440-1200] - HS-201 ratified analysis-only summary amendment; parked proposal pipeline\nXFAIL tests/e2e/test_hs200_meeting_outcomes_glass.py::test_meeting_review_proposals_stay_live_under_amendment[393-900] - HS-201 ratified analysis-only summary amendment; parked proposal pipeline\nXFAIL tests/e2e/test_hs200_meeting_outcomes_glass.py::test_meeting_partial_chain_retry_stays_live_under_amendment[1440-1200] - HS-201 ratified analysis-only summary amendment; parked proposal pipeline\nXFAIL tests/e2e/test_hs200_meeting_outcomes_glass.py::test_meeting_partial_chain_retry_stays_live_under_amendment[393-900] - HS-201 ratified analysis-only summary amendment; parked proposal pipeline\nFAILED tests/unit/test_phase200_canon_guard.py::test_a_plain_run_writes_nothing_under_the_repo\nFAILED tests/unit/test_sequence_workflow_runner_migration.py::test_parent_cancel_fences_admission_and_late_output_while_child_receipts_survive\nFAILED tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face\n3 failed, 11302 passed, 116 skipped, 4 xfailed in 1905.13s (0:31:45)"
+    },
+    "web-baseline": {
+      "path": ".tmp/coherence/web-baseline.log",
+      "sha256": "a609f3868546c0648844d9c674125de8564c8e5725176a9bde0a8e2b2f9a09fc",
+      "tail": "Running vitest...\n\n=== Web baseline report ===\n\nHEALED (5):\n  src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions\n  src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch\n  src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout\n  src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-132-05) > never claims retention the session cannot prove\n  src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger\n\nSuite totals: 2645 passed, 0 failed, 0 skipped\n\nVERDICT: baseline-subset, zero branch-new"
+    },
+    "quiet-collect": {
+      "path": ".tmp/coherence/quiet-collect.log",
+      "sha256": "b6db87597ecc52d08645e05c25d5872fb13b580caba2e5ddc6763ca04c2265ba",
+      "tail": "tests/unit/test_phase200_canon_guard.py::test_a_plain_run_writes_nothing_under_the_repo\ntests/unit/test_sequence_workflow_runner_migration.py::test_parent_cancel_fences_admission_and_late_output_while_child_receipts_survive\n\n2 tests collected in 0.58s"
+    },
+    "quiet-run": {
+      "path": ".tmp/coherence/quiet-run.log",
+      "sha256": "9cd65c5d5099472e7c4b20f2da5cb0f0bdf58498a293ec49acc3e537d20b8c95",
+      "tail": "..                                                                       [100%]\n2 passed in 2.10s"
+    },
+    "quiet-run-2": {
+      "path": ".tmp/coherence/quiet-run-2.log",
+      "sha256": "f1e43ed19d1685219160e564ee70bc04a73ede942205705e3f5f13be6db3146f",
+      "tail": "..                                                                       [100%]\n2 passed in 1.96s"
+    }
+  },
+  "test_results": [
+    {
+      "name": "browser-install",
+      "command": [
+        "uv",
+        "run",
+        "--extra",
+        "test",
+        "playwright",
+        "install",
+        "chromium"
+      ],
+      "exit_code": 0,
+      "seconds": 191.12
+    },
+    {
+      "name": "full-collect",
+      "command": [
+        "uv",
+        "run",
+        "--extra",
+        "test",
+        "pytest",
+        "--collect-only",
+        "-q",
+        "--ignore=tests/e2e/test_metal.py"
+      ],
+      "exit_code": 0,
+      "seconds": 27.99
+    },
+    {
+      "name": "full-suite",
+      "command": [
+        "uv",
+        "run",
+        "--extra",
+        "test",
+        "pytest",
+        "-q",
+        "-n",
+        "auto",
+        "--ignore=tests/e2e/test_metal.py"
+      ],
+      "exit_code": 1,
+      "seconds": 1905.81
+    }
+  ],
+  "web_result": {
+    "command": [
+      "uv",
+      "run",
+      "python",
+      "scripts/check_web_baseline.py",
+      "--run"
+    ],
+    "exit_code": 0,
+    "seconds": 40.93,
+    "isolated_home": "/Users/karol/dev/tools/wt-202-astra/.tmp/coherence/web-home-resnl304"
+  },
+  "dw_check_output": "ERROR pm/roadmap/holdspeak/phase-101-the-native-innards/evidence-story-04.md: evidence exists but matching story is not done\nERROR pm/roadmap/holdspeak/phase-152-the-hands: all stories are done but final-summary.md is missing\nERROR pm/roadmap/holdspeak/phase-153-the-practice: all stories are done but final-summary.md is missing\nERROR pm/roadmap/holdspeak/phase-154-the-call: all stories are done but final-summary.md is missing\nERROR pm/roadmap/holdspeak/phase-156-the-front-door: all stories are done but final-summary.md is missing\nERROR pm/roadmap/holdspeak/phase-200-the-working-practice: all stories are done but final-summary.md is missing\n",
+  "scope_notes": [
+    "No product source changed.",
+    "No owner DB/microphone used; test HOME isolated.",
+    "Static source presence is not measured whole-face acceptance.",
+    "Raw/CSS/language rows include candidates, not blanket violations.",
+    "CSV paths cite the pinned product revision."
+  ],
+  "quiet_results": [
+    {
+      "name": "quiet-collect",
+      "command": [
+        "uv",
+        "run",
+        "--extra",
+        "test",
+        "pytest",
+        "-q",
+        "--collect-only",
+        "tests/unit/test_phase200_canon_guard.py::test_a_plain_run_writes_nothing_under_the_repo",
+        "tests/unit/test_sequence_workflow_runner_migration.py::test_parent_cancel_fences_admission_and_late_output_while_child_receipts_survive"
+      ],
+      "exit_code": 0,
+      "seconds": 1.06
+    },
+    {
+      "name": "quiet-run",
+      "command": [
+        "uv",
+        "run",
+        "--extra",
+        "test",
+        "pytest",
+        "-q",
+        "tests/unit/test_phase200_canon_guard.py::test_a_plain_run_writes_nothing_under_the_repo",
+        "tests/unit/test_sequence_workflow_runner_migration.py::test_parent_cancel_fences_admission_and_late_output_while_child_receipts_survive"
+      ],
+      "exit_code": 0,
+      "seconds": 2.59
+    },
+    {
+      "name": "quiet-run-2",
+      "command": [
+        "uv",
+        "run",
+        "--extra",
+        "test",
+        "pytest",
+        "-q",
+        "tests/unit/test_phase200_canon_guard.py::test_a_plain_run_writes_nothing_under_the_repo",
+        "tests/unit/test_sequence_workflow_runner_migration.py::test_parent_cancel_fences_admission_and_late_output_while_child_receipts_survive"
+      ],
+      "exit_code": 0,
+      "seconds": 2.5,
+      "note": "fresh isolated HOME; same blocked workbench URL as full run"
+    }
+  ],
+  "restoration": {
+    "restored_tracked_pngs": 475,
+    "restored_tracked_generated_records": [
+      "pm/roadmap/holdspeak/phase-162-the-update-factory/assets/story-06-stopwatch.json",
+      "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-effect-inventory.json",
+      "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-stopwatch.json",
+      "pm/roadmap/holdspeak/phase-164-the-unattended-desk/assets/story-06-effect-inventory.json",
+      "pm/roadmap/holdspeak/phase-164-the-unattended-desk/assets/story-06-stopwatch.json",
+      "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/census.md"
+    ],
+    "parked_new_pngs": [
+      "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/door-no-chip-1440.png",
+      "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/door-no-chip-393.png",
+      "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/change-places-1440.png",
+      "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/change-places-393.png",
+      "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-07-shots/build-command-deck-archive-1440.png",
+      "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-07-shots/build-command-deck-search-1440.png",
+      "pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-revoked-1440.png",
+      "pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-revoked-393.png",
+      "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-after-restart-393.png"
+    ],
+    "remaining_tracked_diff": ""
+  },
+  "full_failure_detail": "________________ test_a_plain_run_writes_nothing_under_the_repo ________________\n[gw4] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-202-astra/.venv/bin/python\n\n    def test_a_plain_run_writes_nothing_under_the_repo() -> None:\n        before = _tree_fingerprint()\n        result = subprocess.run(\n            [sys.executable, str(SCRIPT), \"--root\", str(REPO_ROOT)],\n            capture_output=True, text=True, timeout=120, cwd=str(REPO_ROOT),\n        )\n        assert result.returncode == 0, result.stderr\n        after = _tree_fingerprint()\n        changed = sorted(k for k in set(before) | set(after)\n                         if before.get(k) != after.get(k))\n>       assert not changed, (\n            \"a plain scanner run changed the tree: \" + \", \".join(changed)\n            + \"\\n(every write must sit behind --write-census / --json / --md / \"\n              \"--ranking / --write-ceiling)\"\n        )\nE       AssertionError: a plain scanner run changed the tree: git status --porcelain\nE         (every write must sit behind --write-census / --json / --md / --ranking / --write-ceiling)\nE       assert not ['git status --porcelain']\n\ntests/unit/test_phase200_canon_guard.py:353: AssertionError\n_ test_parent_cancel_fences_admission_and_late_output_while_child_receipts_survive _\n[gw7] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-202-astra/.venv/bin/python\n\nroute_rig = (<starlette.testclient.TestClient object at 0x118c52470>, <holdspeak.db.core.Database object at 0x11a1efd90>, {'block'...ading.Event at 0x118827f50: set>, 'fail': False, 'payloads': [{'system_prompt': 'SYS slow', 'user_prompt': 'x'}], ...})\n\n    def test_parent_cancel_fences_admission_and_late_output_while_child_receipts_survive(route_rig):\n        \"\"\"Route-level interleaving: cancel wins while provider dispatch is blocked.\"\"\"\n        client, db, state = route_rig\n        chain = _sequence(client, [_recipe(client, \"slow\")])\n        state[\"block\"] = True\n        with ThreadPoolExecutor(max_workers=1) as executor:\n            run = executor.submit(client.post, f\"/api/chains/{chain}/run\", json={\"input\": \"x\"})\n            assert state[\"entered\"].wait(5)\n            with db._connection() as conn:\n                parent_id = conn.execute(\"SELECT operation_id FROM kernel_operations WHERE name='sequence.run' ORDER BY created_at DESC LIMIT 1\").fetchone()[0]\n            cancel = client.post(f\"/api/chains/runs/{parent_id}/cancel\")\n            assert cancel.status_code == 200 and cancel.json()[\"parent_operation_id\"] == parent_id\n            state[\"release\"].set()\n>           assert run.result(timeout=10).status_code == 409\nE           assert 502 == 409\nE            +  where 502 = <Response [502 Bad Gateway]>.status_code\nE            +    where <Response [502 Bad Gateway]> = result(timeout=10)\nE            +      where result = <Future at 0x119c21f50 state=finished returned Response>.result\n\ntests/unit/test_sequence_workflow_runner_migration.py:297: AssertionError\n_____________________ TestMeetingsGlass.test_meetings_face _____________________\n[gw0] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-202-astra/.venv/bin/python\n\nself = <tests.e2e.test_hs170_meetings_glass.TestMeetingsGlass object at 0x10d3c9450>\n\n    def test_meetings_face(self) -> None:\n        from playwright.sync_api import sync_playwright, expect\n    \n        errors: list[str] = []\n        with sync_playwright() as pw:\n            browser = pw.chromium.launch()\n    \n            for width in (1440, 393):\n                page = browser.new_page(viewport={\"width\": width, \"height\": 900})\n                page.on(\"pageerror\", lambda err: errors.append(str(err)))\n    \n                # Navigate with auth token\n                page.goto(f\"{self.base}/?token={TOKEN}\", wait_until=\"load\")\n                _api(page, \"POST\", \"/api/desk/seed\", token=TOKEN)\n                _api(page, \"PUT\", \"/api/setup/onboarding\",\n                     {\"disposition\": \"completed\"}, token=TOKEN)\n                _normal_chair(page)\n    \n                # Open the meetings surface\n                _open_surface(page, \"review-meetings\")\n                found = _wait_for_surface_window(page, timeout=12000)\n                assert found, f\"Meetings surface window did not open at {width}\"\n    \n                # Wait for data to render (headline is the signal)\n                headline = page.locator(\"[data-testid='meetings-headline']\")\n                headline.wait_for(timeout=8_000)\n                _settle(page)\n    \n                # \u2500\u2500 Assert: headline \u2500\u2500\n                headline_text = headline.text_content() or \"\"\n                assert \"1\" in headline_text and \"summary\" in headline_text.lower(), (\n                    f\"Headline at {width}: expected '1 ... summary', got '{headline_text}'\"\n                )\n    \n                # \u2500\u2500 Assert: Run summary on OFF-with-words row \u2500\u2500\n                run_btns = page.locator(\"[data-testid='run-intelligence-btn']\")\n                expect(run_btns.first).to_be_visible(timeout=5_000)\n                assert run_btns.count() == 1, (\n                    f\"Expected exactly 1 'Run summary' at {width}, got {run_btns.count()}\"\n                )\n    \n                # \u2500\u2500 Assert: NO TRANSCRIPT renders \u2500\u2500\n                no_transcript = page.locator(\"[data-testid='no-transcript-token']\")\n                expect(no_transcript.first).to_be_visible(timeout=3_000)\n    \n                # \u2500\u2500 Assert: 0 SEG never appears \u2500\u2500\n                win = page.locator(\".desk-surface-window\")\n                page_text = win.text_content() or \"\"\n                assert \"0 SEG\" not in page_text, (\n                    f\"'0 SEG' found in page at {width}\"\n                )\n    \n                # \u2500\u2500 Assert: INTERRUPTED renders for dead capture, REC never does \u2500\u2500\n                assert \"INTERRUPTED\" in page_text, (\n                    f\"'INTERRUPTED' not found at {width} for dead capture\"\n                )\n                state_tokens_text = page.evaluate(\"\"\"() => {\n                    const body = document.querySelector('.desk-surface-body');\n                    if (!body) return '';\n                    const tokens = body.querySelectorAll('[data-testid=\"state-token\"]');\n                    return Array.from(tokens).map(t => t.textContent).join('|');\n                }\"\"\")\n                assert \"REC\" not in state_tokens_text.split(\"|\"), (\n                    f\"'REC' state token found at {width}: {state_tokens_text}\"\n                )\n    \n                # \u2500\u2500 Assert: no raw <button> in the face body \u2500\u2500\n                raw_buttons = page.evaluate(\"\"\"() => {\n                    const body = document.querySelector('.desk-surface-body');\n                    if (!body) return [];\n                    const all = body.querySelectorAll('button');\n                    const raw = [];\n                    for (const b of all) {\n                        // .btn = library Button; .desk-mic = library MicButton\n                        if (!b.classList.contains('btn') && !b.classList.contains('desk-mic')) {\n                            raw.push((b.textContent || '').trim().slice(0, 40));\n                        }\n                    }\n                    return raw;\n                }\"\"\")\n                assert len(raw_buttons) == 0, (\n                    f\"Raw buttons at {width}: {raw_buttons}\"\n                )\n    \n                # \u2500\u2500 Assert: HS-170-04 restored doors \u2500\u2500\n                if width == 1440:\n                    # Search StringGadget with mic in the list head\n                    search_input = page.locator(\".meetings-search .gadget-string input\")\n                    expect(search_input).to_be_visible(timeout=3_000)\n    \n                    # Facet token toggles on the caption row\n                    facet_area = page.locator(\"[data-testid='meetings-facets']\")\n>                   expect(facet_area).to_be_visible(timeout=3_000)\nE                   AssertionError: Locator expected to be visible\nE                   Actual value: None\nE                   Error: element(s) not found \nE                   Call log:\nE                     - Expect \"to_be_visible\" with timeout 3000ms\nE                     - waiting for locator(\"[data-testid='meetings-facets']\")\n\ntests/e2e/test_hs170_meetings_glass.py:318: AssertionError\n------------------------------ Captured log setup ------------------------------\nWARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.\n",
+  "test_failure_classification": [
+    {
+      "test": "tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face",
+      "class": "a",
+      "reason": "old unconditional facet assertion contradicted by HS-201-11 conditional facet source and passing web test"
+    },
+    {
+      "test": "tests/unit/test_phase200_canon_guard.py::test_a_plain_run_writes_nothing_under_the_repo",
+      "class": "c",
+      "reason": "two quiet serial passes; likely concurrent evidence write; root cause not proved"
+    },
+    {
+      "test": "tests/unit/test_sequence_workflow_runner_migration.py::test_parent_cancel_fences_admission_and_late_output_while_child_receipts_survive",
+      "class": "c",
+      "reason": "two quiet serial passes; timing/cause unknown",
+      "watch": "Open: two serial passes do not rule out a cancellation race under load."
+    }
+  ],
+  "imperative_portal_sites": [
+    {
+      "path": "web/src/desk/components/DeskMenu.tsx",
+      "line": 644,
+      "mechanism": "React portal call",
+      "classification": "ownership/egress/focus review; not automatically modal",
+      "source": "return createPortal("
+    },
+    {
+      "path": "web/src/desk/components/DeskToolShelf.tsx",
+      "line": 525,
+      "mechanism": "React portal call",
+      "classification": "ownership/egress/focus review; not automatically modal",
+      "source": "? createPortal("
+    },
+    {
+      "path": "web/src/desk/components/window/ShortcutSheet.tsx",
+      "line": 43,
+      "mechanism": "React portal call",
+      "classification": "ownership/egress/focus review; not automatically modal",
+      "source": "return createPortal("
+    },
+    {
+      "path": "web/src/desk/pullouts/ThoughtContextPicker.tsx",
+      "line": 206,
+      "mechanism": "React portal call",
+      "classification": "ownership/egress/focus review; not automatically modal",
+      "source": "return createPortal(<div className=\"desk-next thought-context-overlay\">{picker}</div>, document.body);"
+    },
+    {
+      "path": "web/src/desk/surface/SurfaceFooter.tsx",
+      "line": 30,
+      "mechanism": "React portal call",
+      "classification": "ownership/egress/focus review; not automatically modal",
+      "source": "? createPortal(contents, target)"
+    },
+    {
+      "path": "web/src/desk/surface/patterns/Popover.tsx",
+      "line": 120,
+      "mechanism": "React portal call",
+      "classification": "ownership/egress/focus review; not automatically modal",
+      "source": "return createPortal("
+    },
+    {
+      "path": "web/src/pages/cores/ContextualAssignment.tsx",
+      "line": 85,
+      "mechanism": "React portal call",
+      "classification": "ownership/egress/focus review; not automatically modal",
+      "source": "{open && projection ? createPortal("
+    },
+    {
+      "path": "web/src/pages/cores/SettingsCore.tsx",
+      "line": 1620,
+      "mechanism": "imperative native control",
+      "classification": "native file picker; T5 scope review",
+      "source": "const input = document.createElement(\"input\");"
+    }
+  ],
+  "peer_check": {
+    "session_id": "5428bdbd-d77b-48de-b66d-4ac62bff164e",
+    "requested_model": "claude-fable-5-1",
+    "verdict": "RATIFY-WITH-CONDITIONS",
+    "result": "VERDICT: RATIFY-WITH-CONDITIONS\n\nRead-only check of `docs/internal/surface-inventory-2026-09-20/02-coherence-astra.md` and its `02-*` tables at `93f9524f`. I ran no tests, no browser and no git mutations. The Claude session id is in the caller's `.tmp/coherence/muad-check.json`.\n\nFINDINGS\n\n1. **F01 holds.** Tenet 3; A6, C4.\n   - `web/src/desk/components/TrustWindow.tsx:61-64` swallows the failed read with `.catch(() => null)`.\n   - `:66-67` turns a null trust into an empty destination list.\n   - `:86-88` then prints \"All data stays on this device\". `:68-71` prints \"this device + external\", because null is not `\"none\"`.\n   - The two lines contradict each other inside one window. The interpretation is correct.\n   - One addition: `trust` is never reset on reopen. A failure after one good read shows stale data as current. This is the same class, so it needs no new row.\n\n2. **F02 holds.** Tenet 3; A6, C4.\n   - `ProjectRoomCore.tsx:282` sets the count to 0 when the state is not `ok`.\n   - `:264` prints \"Nothing needs you\". `:732` returns null for the section.\n   - Every `state !== \"ok\"` branch in the file returns null (`:732`, `:923`, `:1131`, `:1175`, `:1920`). None paints the degraded state.\n   - The decoder at `model.ts:554` keeps the degraded state. The fault is in the face only.\n\n3. **F03 holds as a conditional finding.** Tenet 3.\n   - `verbRegistry.ts:381-393` gates Open on selection only.\n   - `compositorSlice.ts:163` has `case \"none\": break`.\n   - `primitives.ts:572`, `:594` and `:650` declare `none` for game, story and layout.\n   - The \"conditional object\" label is the right level of caution.\n\n4. **F04 has the right anchor and the wrong wording.** A3, A6; Tenet 3.\n   - The source list renders from `data._calendar_sources` (`SettingsCore.tsx:1414`), not from the failed fetch.\n   - The `/api/calendar/sources` read at `:814-816` has no catch and no loading state.\n   - When that read is missing, three things fall back:\n     - the per-source stats (`:1416`, `:1537`);\n     - `auto_record` and the lead minutes (`:1654-1663`);\n     - the snapshot egress chip (`:1611`).\n   - The list itself does not fall back to empty. See MISSED 1.\n\n5. **F05 holds.** `SettingsCore.tsx:580` is `if (loading) return null`. Tenet 3.\n\n6. **F06, F07, F08 and F21 hold.** Tenet 4.\n   - F06: `LiveCore.tsx:340` has `label=\"Intelligence\"`. `MeetingSummarySlab.tsx:52` has `SUMMARY`.\n   - F07: `NeedsYouTable.tsx:101-110` has \"Run summary\" and \"Retry\". `DoorSection.tsx:127-129` has \"Retry intelligence\" and \"Retry background work\".\n   - F07 also breaks the registry's own rule that every face says Summary (`product-language.json:23`). That strengthens the row.\n   - F08: `ChainPullout.tsx:45` has `actionLabel=\"Edit chain\"`.\n   - F21: `LiveCore.tsx:662` and `RoomPeopleSection.tsx:150-152` hold SEG and MTG.\n\n7. **F10 holds, with a loose anchor.**\n   - `POSITIONING.md:153` is the table head. The rows are `:155` (Home) and `:157` (Studio).\n   - `POSITIONING.md:110` already says \"there is no Studio\". The document contradicts itself, which is stronger than \"stale\".\n\n8. **The counts reconcile with the tables.** Tenet 5.\n   - `02-raw-controls.csv` has 233 rows: 187 button, 32 input, 8 textarea, 3 select, 3 role=button.\n   - Its classes are 176 face violation, 40 library, 7 sanctioned and 10 needs-reading.\n   - `02-srs-parity.csv` has 63 rows: 17 YES, 26 PARTLY, 7 NO, 13 N/A.\n   - Its SRS statuses are 23 IMPLEMENTED, 10 PARTIAL, 13 SPEC-DEBT and 17 UNIMPLEMENTED.\n   - `02-surface-rules.csv` has 229 rows, which matches the TSX count.\n\n9. **The raw-button debt already has a home in canon, and the report does not say so.**\n   - `UX-CANON.md:136-142` holds A1 to a dated, down-only ratchet of 175 (HS-200-44).\n   - The report gives 187, 175 and 157 and says \"different scope\". It does not reconcile the three numbers, and it calls F12\u2013F20 \"their own ledger home\".\n   - A reader could take this as 176 new debts.\n   - Dock, DeskWindow and DeskMenu are the Workbench chrome (F15, 14 sites in total), not a face in the sense of `UX-CANON.md:19-21`. Classing them as species bugs is lawful. Ranking them with job faces is a judgement, so label it as one.\n\n10. **The report's caution is sound.**\n    - It keeps the static-versus-glass distinction, the \"blank is not a pass\" note, and the scanner's A9 caveat.\n    - It states the M10 seam against `DESIGN_SYSTEM.md:325` and refuses to downgrade SRS rows for lack of a trace.\n    - No tenet fails in the method. No fix is authorized, which is lawful for an audit.\n\nCONDITIONS (smallest corrections; none changes the verdict's direction)\n\n- **C1 \u2014 F04 text.**\n  - Replace \"an unread source list falls back to empty\" with \"source stats, auto-record state and the snapshot egress chip fall back silently; the source list itself comes from the settings payload\".\n  - Add rule A3 to the row.\n- **C2 \u2014 Settings table.**\n  - `setting:meetings` cites \"F04/F05\". Make it F04.\n  - `setting:system` cites \"F04/F05\". Make it F05.\n- **C3 \u2014 Full-suite accounting.**\n  - The \"Full Python execution\" row and the ledger's pending sentence must carry the final tail and the named failures before staging.\n  - Make no green claim and no flake class. Once that is recorded, I do not need a second look.\n- **C4 \u2014 F10 anchor.** Cite `POSITIONING.md:155` and `:157`, and add `:110`.\n- **C5 \u2014 Noun collision table.** Add the Integration row from MISSED 3. This plane is the lane's core mandate, and one face name is absent.\n- **C6 \u2014 \"Not assessed\" list.**\n  - Rulebook \u00a7A rules U4, U5 and A3 have no plane in the report, and neither does any per-egress-point check. Name them as not assessed.\n  - Without that line, a reader takes silence as a pass.\n- **C7 \u2014 Species reconciliation.** Add one sentence to Plane 1 that reconciles 187, 175 and 157 and names the existing A1 ratchet (`tests/ux_canon_ceiling.json`) as the prior home.\n\nMISSED (ranked by cost to the owner)\n\n1. **The egress badge disappears beside an egress verb.** A3; the owner's hard boundary; Tenet 3.\n   - `SettingsCore.tsx:1611` paints the snapshot egress chip only when `calSources?.snapshot_egress` resolves.\n   - `snapshotEgressChip` at `:156-166` also returns null for a non-local scope with an empty host.\n   - The upload button at `:1618` stays live in every case.\n   - A pending or failed read, or a missing host, gives a cloud upload with no badge before the click.\n   - The report's A9 caveat predicted this class. This is the concrete instance.\n2. **The owner's only real-use datum is not in the executive view.**\n   - On 2026-09-20 he said of the Thought window: \"hides things; doesn't look good\".\n   - `thought-workspace/ThoughtWorkspaceWindow.tsx` is in the CSV: A7, D1, D2, and 62 direct CSS literal records. That is the largest per-face literal count I saw.\n   - It is absent from the executive matrix and from the Top 30.\n   - The hiding belongs to the sibling lane (M2, M4). This lane should still list the row and point to it.\n   - A top 30 \"by owner cost\" that omits the one face he bounced is ranked on judgement alone. Tenets 2 and 7.\n3. **Integration has three face names.**\n   - The registry noun is Integration (`product-language.json:95`).\n   - Faces say \"Connections\" at `applications.ts:421`, `settingsPrefs.tsx:57` and `:464`.\n   - `ActivityCore.tsx:230` says \"Connectors\".\n   - In the noun CSV, the \"observed\" evidence for Integration includes `lib/productLanguage.ts:31`. That file is the registry mirror, not a face.\n   - The canonical word renders on about one face (`DeliveryBoard.tsx:329`). The report marks this \"scope review only\". C2, U6; Tenet 4.\n4. **The chrome egress badge has the same default as F01.**\n   - `web/src/desk/setup.ts:99-135`: `egressBadge(null)` returns \"\u2302 This device\".\n   - That feeds the always-visible chip at `DeskChrome.tsx:150` and `:254`.\n   - If the chrome can render with `setup === null`, the false all-clear is on every screen, not in one window.\n   - The report's own note on `DeskApp.tsx:110` suggests chrome is held while setup is pending. I did not trace that, so this is a candidate. A6.\n5. **Four doors open one face, and one door has the wrong name.** Tenet 3; C2, C3.\n   - \"Models\" is an application label twice (`applications.ts:304`, `:412`).\n   - The Settings modules Models and Assignments both redirect to Concierge (`SettingsCore.tsx:1803-1811`).\n   - \"Desk memory\" (`applications.ts:285`) opens the Project Room.\n   - The reachability table has the facts. No finding draws the conclusion.\n6. **One unhandled rejection and one swallowed failure for the sibling lane (M9).**\n   - `SettingsCore.tsx:815` has a `.then` with no catch, which gives an unhandled rejection on failure.\n   - `TrustWindow.tsx:64` swallows the failure silently.\n\nTUESDAY: Not yet. A tired owner would get two false all-clears (Trust and the Room's needs-you section) and one upload with no egress badge, and he would have to learn four names for two things. The report says this honestly, and its verdict of \"not yet established\" is correct.\n\nUNKNOWN\n\n- I did not open the glass shots or `02-verification.json`. The Trust 503 reproduction is accepted on root's word together with my source reading.\n- I did not re-derive the CSS and token counts (4,191 records; 474 off-scale) or the 6,670 language rows.\n- I sampled the reachability rows against `applications.ts` labels only. I did not trace all 42 dispatch chains.\n- I did not verify whether `setup` can be null while the chrome is painted (MISSED 4).\n- I did not check whether any game, story or layout object exists on the owner's Desk.\n- I did not verify the five Luna workers' rollouts (model and effort).\n- The full Python suite result is pending. C3 governs it.",
+    "final_verdict": "RATIFY",
+    "reply": "VERDICT: RATIFY\n\nThis verdict covers committing the report and its `02-*` tables only. It does not cover merging, accepting any product work, or authorizing any fix. This is round two of the read-only check of `docs/internal/surface-inventory-2026-09-20/02-coherence-astra.md` at `93f9524f`, continuing session `5428bdbd-d77b-48de-b66d-4ac62bff164e`. I ran no tests and made no edits.\n\nFINDINGS\n\n1. **C1 is closed.** Tenet 3; A3, A6.\n   - F04 (report line 116) now says that stats, auto-record state and the snapshot egress chip fall back silently, and that the source list comes from the settings payload.\n   - A3 is on the row and `SettingsCore.tsx:156` is added as an anchor. This matches the source I read.\n\n2. **C2 is closed.**\n   - `setting:meetings` cites F04 (line 403) and `setting:system` cites F05 (line 408).\n   - The application row at line 342 keeps \"F04/F05\". That is correct, because both modules are gaps inside Settings.\n\n3. **C4 is closed.** F10 (line 122) and the collision table (line 272) cite `POSITIONING.md:155`, `:157` and the contradiction at `:110`.\n\n4. **C5 is closed.** Tenet 4; C2, U6.\n   - Line 274 adds Integration, Connections and Connectors with the face anchors: `DeliveryBoard.tsx:329`, `applications.ts:421`, `settingsPrefs.tsx:57` and `ActivityCore.tsx:230`.\n   - It says that a registry-mirror string is not proof of rendering. Meeting plugins stay a separate concept, which is correct.\n   - `02-nouns.csv` now has 129 data rows, as the report says.\n\n5. **C6 is closed.**\n   - Line 600 names U4, U5 and A3 at every egress decision as not assessed exhaustively.\n   - It gives F04 as the checked counterexample and says no pass is implied.\n\n6. **C7 is closed.** Tenet 5.\n   - The arithmetic holds: 187 = 157 consumer + 24 library + 6 preview, and 175 = 187 \u2212 1 \u2212 5 \u2212 6.\n   - The A1 ceiling is named as the existing home. Line 109 now calls F-rows \"audit references\", not new ledger homes.\n\n7. **C3 is closed.**\n   - Line 542 has the real tail: 3 failed, 11,302 passed, 116 skipped, 4 xfailed, exit 1.\n   - The report says \"not green\" in plain words.\n\n8. **The class (a) failure is verified at source.**\n   - `tests/e2e/test_hs170_meetings_glass.py:317` demands that `meetings-facets` is visible without condition.\n   - `HistoryCore.tsx:460-465` draws it only when `openActionsFacetDrawn` is true (HS-201-11).\n   - `openActionsFacet.test.tsx:67` asserts the new empty posture. The classification is correct.\n   - The failure was introduced on my side of the house: HS-201-11 is one of the Phase 201 stories I recorded in session memory as merged with main green, and its e2e test was not updated. I take it as debt. See MISSED 1.\n\n9. **The flake class is accepted.**\n   - My first-round condition said \"no flake class\" because at that time no repeated evidence existed. It was not meant to override the law.\n   - Two fresh-HOME serial runs were green (2 passed in 2.10s, then 2 passed in 1.96s). That meets the ORCHESTRATION criterion, so class (c) is lawful.\n   - The report leaves both causes unproven and keeps the full-suite result red. That is the honest reading.\n   - One reservation is in MISSED 2.\n\n10. **The owner-quote handling is accepted.**\n    - My first-round evidence for that point was memory, not a record in the tree. Astra was right not to repeat it as verified.\n    - ThoughtWorkspaceWindow is now in the executive matrix (line 105) and in F24, and the hiding question is sent to the sibling M2/M4 lane. That is enough.\n    - The chrome null-egress default remains a candidate behind the `DeskApp` guards. That position is sound, because I did not trace a counterexample either.\n\n11. **Staging scope is clean.**\n    - The tracked diff is empty.\n    - Only `docs/internal/surface-inventory-2026-09-20/` and the stray `docs/internal/00-rulebook.md` are untracked under `docs/`.\n    - The new `02-dom-portals.csv` has 8 data rows (1 imperative file input and 7 portal calls). It is a separate supplement and is not mixed into the 233 count.\n\nCONDITIONS: none. There is one staging instruction. It does not change the verdict.\n- Use explicit paths only.\n- Leave `docs/internal/00-rulebook.md` (the duplicate) and the 9 parked PNGs out.\n- Whoever owns the rulebook decides separately whether `00-rulebook.md` inside the folder ships.\n\nMISSED (ranked by cost to the owner)\n\n1. **Main is red on `test_hs170_meetings_glass.py`, and it has been since the HS-201-11 merge.**\n   - The audit found this and classified it correctly, but it has no fix story yet.\n   - It needs a test-only correction that keeps the open-actions case. This is my lane's debt to pay.\n2. **The cancellation 502-versus-409 failure is the (c) most likely to be a real defect.**\n   - The test is `test_sequence_workflow_runner_migration.py:297`.\n   - Two serial-green runs cannot rule out a product race that appears only under load.\n   - Record it as (c) with a watch, and do not close it. The owner cancels runs.\n3. **The tree guard at `test_phase200_canon_guard.py:353` will keep failing under parallel runs.**\n   - The suite rewrites hundreds of tracked PNGs while the guard fingerprints the tree.\n   - Every future `-n auto` run is likely to show this red, and that teaches people to ignore red.\n   - The report names the mechanism as likely. It deserves a small test charter soon.\n4. **MISSED 4 to 6 from round one stand as candidates.**\n   - They are the chrome badge default, the four doors into Concierge together with \"Desk memory\" opening the Room, and the unhandled rejection at `SettingsCore.tsx:815`.\n   - Astra's response addresses the first two. No further correction is needed for an audit.\n\nTUESDAY: Still not yet, and the report still says so. Nothing in the corrections changes the product. The corrections make the record of the product's state accurate.\n\nUNKNOWN\n\n- I did not open `quiet-run.log`, `quiet-run-2.log`, `full-suite.log` or the restored-PNG byte archive. I accept the run results and the \"475 tracked PNGs and 6 test records restored\" claim on the strength of the empty tracked diff I observed and on root's word.\n- I did not re-derive the CSS and language counts or all reachability chains. That is unchanged from round one.\n- I did not verify the Luna rollouts.\n- I did not check whether the link to `02-dom-portals.csv` renders in the report. I confirmed the file and its row count, not the link text.",
+    "reply_session_id": "5428bdbd-d77b-48de-b66d-4ac62bff164e"
+  },
+  "a1_reconciliation": {
+    "jsx_buttons_total": 187,
+    "consumer_buttons": 157,
+    "library_buttons": 24,
+    "preview_buttons": 6,
+    "canon_scanner_buttons": 175,
+    "scanner_excluded_from_ast_total": {
+      "Signal.tsx": 1,
+      "gadgets.tsx": 5,
+      "AtmospherePreview.tsx": 6
+    },
+    "existing_debt_home": "tests/ux_canon_ceiling.json"
+  },
+  "artifact_validation": {
+    "csv_row_counts": {
+      "02-canon-candidates.csv": 317,
+      "02-copy-candidates.csv": 252,
+      "02-css-files.csv": 64,
+      "02-css-occurrences.csv": 4191,
+      "02-dom-portals.csv": 8,
+      "02-language-findings.csv": 11,
+      "02-language-strings.csv": 6670,
+      "02-menu-portals.csv": 41,
+      "02-nouns.csv": 129,
+      "02-raw-controls.csv": 233,
+      "02-reachability.csv": 42,
+      "02-species-files.csv": 207,
+      "02-srs-parity.csv": 63,
+      "02-surface-rules.csv": 229,
+      "02-verbs.csv": 24
+    },
+    "json_parse": "pass",
+    "report_anchors": "all existing and within line count",
+    "relative_links": "pass",
+    "unique_surface_files": 229,
+    "unique_reachability_ids": 42,
+    "srs_rows": 63,
+    "checks": "data/schema and report references only, not product acceptance",
+    "repository_markdown_checker": "check_documents([02-coherence-astra.md], root): []",
+    "report_sha256": "9a92e571c75f0ad9709909926f673670a207af6741582c616477182ebdeb7ec4",
+    "peer_final": "RATIFY; conditions none; commit artifacts only",
+    "csv_line_endings": "LF; CSV records revalidated after normalization"
+  },
+  "artifact_tables": [
+    {
+      "path": "02-canon-candidates.csv",
+      "bytes": 42855,
+      "sha256": "9955dcd0091897f05d46de78e78aacac5d00cae776f3eb7c1d58859defef0155"
+    },
+    {
+      "path": "02-copy-candidates.csv",
+      "bytes": 79655,
+      "sha256": "eec549d5145faf0e96e7536d6c7888bb1d79880e05bb3a5e31d0bedf24aed215"
+    },
+    {
+      "path": "02-css-files.csv",
+      "bytes": 5376,
+      "sha256": "f2060d899f4155a28f24ec3bafd2af89cd467731586872fcba68dab140fc73e2"
+    },
+    {
+      "path": "02-css-occurrences.csv",
+      "bytes": 1017630,
+      "sha256": "41acee0c6854804d7fb0e6eb3d5fe5a3bf71b9389f9b9fffc712e6c934d05c08"
+    },
+    {
+      "path": "02-dom-portals.csv",
+      "bytes": 1291,
+      "sha256": "5c8dc342e5868781e1baada3809b44678a34d281ad13758d7fb46ec0b13f578d"
+    },
+    {
+      "path": "02-language-findings.csv",
+      "bytes": 11513,
+      "sha256": "83be23edcf99dfa70a9f8d0da34588250a3518c1797f7a7b1287eb3d17c48cf0"
+    },
+    {
+      "path": "02-language-strings.csv",
+      "bytes": 1150495,
+      "sha256": "0e7ab8a40fdac6f38fe60840960fd7cb0187cbb46881e4fd5234159d0067b9be"
+    },
+    {
+      "path": "02-menu-portals.csv",
+      "bytes": 6717,
+      "sha256": "eddee4af3e750978d98df227cbbe0c068e27bc6b58b7adfce96bfd721930f559"
+    },
+    {
+      "path": "02-nouns.csv",
+      "bytes": 33520,
+      "sha256": "8bad89e07308f98bf03799ae5a550e37474b75fdb124300a5c97866919ee6b72"
+    },
+    {
+      "path": "02-raw-controls.csv",
+      "bytes": 85553,
+      "sha256": "c6985e403d7b117738a9373cc0281ba6afab9475609aee9b62201527521ae1c8"
+    },
+    {
+      "path": "02-reachability.csv",
+      "bytes": 24575,
+      "sha256": "736f681b66dc9e7b13c855e987a5e70c63e46a6bc102e232df052288b45ca3d1"
+    },
+    {
+      "path": "02-reachability.json",
+      "bytes": 37415,
+      "sha256": "a40bbd142284fec374a51f33220c534d59fb27187d3280f83040d978a4464d24"
+    },
+    {
+      "path": "02-species-files.csv",
+      "bytes": 38839,
+      "sha256": "a02bd4a0a03d4e3345ea91aa37315edef84f8f95d97936f84f6d926054e65abd"
+    },
+    {
+      "path": "02-srs-parity.csv",
+      "bytes": 14746,
+      "sha256": "0bf839623e4b24c6f47d17a9a54191d854d932d78162ba3e25d12a4e701b346b"
+    },
+    {
+      "path": "02-surface-rules.csv",
+      "bytes": 56658,
+      "sha256": "c37e967ed8482d82450fa58a52bc49cfcb691b701f46291caa374795118ed78b"
+    },
+    {
+      "path": "02-verbs.csv",
+      "bytes": 6484,
+      "sha256": "423bed974372c66865ad8fc45fd761c7e283951835d7b6bbc223fcfb2b478b05"
+    }
+  ]
+}

@@ -1,0 +1,208 @@
+kind,library_import_count,library_imports,library_instance_count,library_instances,menu_modal_portal_candidates,path,raw_control_count,raw_face_violation_count,raw_needs_reading_count,raw_sanctioned_count
+consumer/support,1,SurfaceState,1,SurfaceState:1,0,web/src/App.tsx,0,0,0,0
+consumer/support,2,"LampGadget, SurfaceState",2,"LampGadget:1, SurfaceState:1",0,web/src/components/AmbientLayer.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/components/AppShell.tsx,0,0,0,0
+consumer/support,1,SurfaceState,1,SurfaceState:1,0,web/src/components/ErrorBoundary.tsx,0,0,0,0
+library implementation,0,,0,,0,web/src/components/signal/Signal.tsx,4,0,0,0
+dev preview,0,,0,,0,web/src/design/AtmospherePreview.tsx,6,0,0,6
+dev preview,0,,0,,0,web/src/design/atmosphere-preview.tsx,0,0,0,0
+consumer/support,1,Button,1,Button:1,0,web/src/desk/DeskApp.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/desk/chair/Chair.tsx,0,0,0,0
+consumer/support,15,"Button, CoverageLedger, Disclosure, EgressChip, FilterTokens, LedgerRemainder, ProjectButton, StateChip, StringGadget, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, countLabel, countToken, egressFor",68,"Button:28, CoverageLedger:1, Disclosure:2, EgressChip:1, FilterTokens:1, LedgerRemainder:1, ProjectButton:1, StateChip:9, StringGadget:1, SurfaceLedger:7, SurfaceLedgerRow:7, SurfaceSection:9",0,web/src/desk/chair/ChairHome.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/desk/components/AgentAvatar.tsx,0,0,0,0
+consumer/support,1,Button,1,Button:1,0,web/src/desk/components/ApplicationBoundary.tsx,0,0,0,0
+consumer/support,12,"Button, CitationChips, GadgetGroup, LampGadget, LedMeter, Material, MxRadio, SurfaceFooter, SurfaceTraffic, SurfaceTrafficTurn, TransportKey, groundedMatchCount",21,"Button:7, CitationChips:1, GadgetGroup:1, LampGadget:1, LedMeter:2, Material:1, MxRadio:1, SurfaceFooter:1, SurfaceTraffic:1, SurfaceTrafficTurn:4, TransportKey:1",0,web/src/desk/components/AskPanel.tsx,1,1,0,0
+consumer/support,6,"Button, CycleGadget, FoldGadget, StringGadget, SurfaceCode, SurfaceState",19,"Button:12, CycleGadget:1, FoldGadget:1, StringGadget:1, SurfaceCode:1, SurfaceState:3",0,web/src/desk/components/AttentionDrawer.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/desk/components/CallChip.tsx,1,1,0,0
+consumer/support,12,"Button, CycleGadget, EgressChip, GadgetGroup, GadgetRow, StringGadget, SurfaceFooter, SurfaceLedger, SurfaceLedgerRow, SurfaceState, TransportKey, countLabel",20,"Button:1, CycleGadget:1, EgressChip:1, GadgetGroup:2, GadgetRow:5, StringGadget:3, SurfaceFooter:1, SurfaceLedger:2, SurfaceLedgerRow:2, SurfaceState:1, TransportKey:1",0,web/src/desk/components/DeliveryBoard.tsx,3,3,0,0
+consumer/support,7,"Button, EgressChip, FoldGadget, SurfaceLedger, SurfaceLedgerRow, SurfaceState, SurfaceWell",10,"Button:1, EgressChip:1, FoldGadget:2, SurfaceLedger:2, SurfaceLedgerRow:1, SurfaceState:1, SurfaceWell:2",0,web/src/desk/components/DeliveryDossierWindow.tsx,1,1,0,0
+consumer/support,0,,0,,0,web/src/desk/components/DeliveryListSection.tsx,1,1,0,0
+consumer/support,5,"PadGadget, PaneWell, SurfaceFooter, TransportKey, TransportRow",8,"PadGadget:1, PaneWell:1, SurfaceFooter:1, TransportKey:4, TransportRow:1",0,web/src/desk/components/DeliveryTerminalWindow.tsx,0,0,0,0
+consumer/support,2,"EgressChip, LampGadget",5,"EgressChip:1, LampGadget:4",3,web/src/desk/components/DeskChrome.tsx,2,2,0,0
+consumer/support,3,"Button, PadGadget, StringGadget",3,"Button:1, PadGadget:1, StringGadget:1",0,web/src/desk/components/DeskComposer.tsx,0,0,0,0
+consumer/support,0,,0,,2,web/src/desk/components/DeskCreateMenu.tsx,1,1,0,0
+consumer/support,0,,0,,0,web/src/desk/components/DeskEditor.tsx,11,11,0,0
+consumer/support,3,"FoldGadget, SurfaceCode, SurfaceState",5,"FoldGadget:2, SurfaceCode:1, SurfaceState:2",0,web/src/desk/components/DeskFilingStrip.tsx,4,4,0,0
+consumer/support,2,"Button, countToken",4,Button:4,1,web/src/desk/components/DeskListView.tsx,0,0,0,0
+consumer/support,0,,0,,21,web/src/desk/components/DeskMenu.tsx,4,4,0,0
+consumer/support,0,,0,,1,web/src/desk/components/DeskMenuBar.tsx,1,1,0,0
+consumer/support,2,"SurfaceState, useRovingRows",1,SurfaceState:1,0,web/src/desk/components/DeskSortableTable.tsx,1,1,0,0
+consumer/support,0,,0,,0,web/src/desk/components/DeskStartActions.tsx,2,2,0,0
+consumer/support,2,"FoldGadget, SurfaceState",3,"FoldGadget:1, SurfaceState:2",0,web/src/desk/components/DeskToolInspector.tsx,10,10,0,0
+consumer/support,1,StringGadget,1,StringGadget:1,1,web/src/desk/components/DeskToolShelf.tsx,2,2,0,0
+consumer/support,0,,0,,1,web/src/desk/components/DeskWindow.tsx,3,3,0,0
+consumer/support,1,Button,2,Button:2,0,web/src/desk/components/EditorAIBar.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/desk/components/EmptyDesk.tsx,2,2,0,0
+consumer/support,3,"Button, PadGadget, SurfaceState",8,"Button:5, PadGadget:1, SurfaceState:2",0,web/src/desk/components/FirstWords.tsx,2,2,0,0
+consumer/support,0,,0,,0,web/src/desk/components/GlassDropLayer.tsx,3,3,0,0
+consumer/support,3,"CheckGadget, FoldGadget, LedMeter",7,"CheckGadget:5, FoldGadget:1, LedMeter:1",0,web/src/desk/components/GroundingSection.tsx,5,5,0,0
+consumer/support,4,"CycleGadget, FoldGadget, StringGadget, humanTime",3,"CycleGadget:1, FoldGadget:1, StringGadget:1",0,web/src/desk/components/InfoWindow.tsx,4,4,0,0
+consumer/support,2,"SurfaceRow, SurfaceRows",4,"SurfaceRow:2, SurfaceRows:2",4,web/src/desk/components/InletAutocomplete.tsx,0,0,0,0
+consumer/support,2,"Button, SurfaceFooter",3,"Button:2, SurfaceFooter:1",0,web/src/desk/components/InlineEditor.tsx,0,0,0,0
+consumer/support,4,"Button, Select, countLabel, countToken",10,"Button:9, Select:1",0,web/src/desk/components/InterviewPanel.tsx,0,0,0,0
+library implementation,0,,0,,0,web/src/desk/components/MicButton.tsx,2,0,0,0
+consumer/support,10,"Button, ConfirmVerb, FoldGadget, GadgetRow, MxRadio, SurfaceCode, SurfaceLedger, SurfaceLedgerRow, SurfaceWell, countLabel",20,"Button:10, ConfirmVerb:1, FoldGadget:1, GadgetRow:1, MxRadio:1, SurfaceCode:1, SurfaceLedger:2, SurfaceLedgerRow:2, SurfaceWell:1",0,web/src/desk/components/MissionControlConveyor.tsx,4,4,0,0
+consumer/support,0,,0,,0,web/src/desk/components/ModeTabs.tsx,1,1,0,0
+consumer/support,0,,0,,0,web/src/desk/components/NewWorkbenchChooser.tsx,0,0,0,0
+consumer/support,5,"Button, FoldGadget, SurfaceCode, SurfaceState, SurfaceWell",18,"Button:8, FoldGadget:3, SurfaceCode:3, SurfaceState:1, SurfaceWell:3",0,web/src/desk/components/PrReceiptsSection.tsx,0,0,0,0
+consumer/support,1,Button,2,Button:2,0,web/src/desk/components/Pullout.tsx,1,1,0,0
+consumer/support,3,"CheckGadget, FoldGadget, LedMeter",3,"CheckGadget:1, FoldGadget:1, LedMeter:1",0,web/src/desk/components/RailsPicker.tsx,1,1,0,0
+consumer/support,0,,0,,0,web/src/desk/components/ReceiptLine.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/desk/components/RecordOrb.tsx,1,1,0,0
+consumer/support,8,"Button, CheckGadget, CycleGadget, StringGadget, SurfaceFooter, SurfaceState, SurfaceWings, humanTime",12,"Button:4, CheckGadget:1, CycleGadget:1, StringGadget:1, SurfaceFooter:1, SurfaceState:3, SurfaceWings:1",0,web/src/desk/components/RepoWindow.tsx,0,0,0,0
+consumer/support,4,"Button, SurfaceFooter, SurfaceState, SurfaceWings",7,"Button:1, SurfaceFooter:1, SurfaceState:4, SurfaceWings:1",0,web/src/desk/components/RoadmapWindow.tsx,0,0,0,0
+consumer/support,5,"Button, CycleGadget, GadgetGroup, GadgetRow, StringGadget",12,"Button:2, CycleGadget:2, GadgetGroup:1, GadgetRow:5, StringGadget:2",0,web/src/desk/components/ScheduleCreateWindow.tsx,1,0,1,0
+consumer/support,9,"CycleGadget, LampGadget, LedMeter, PaneWell, StringGadget, SurfaceFacts, SurfaceFooter, TransportKey, TransportRow",27,"CycleGadget:1, LampGadget:1, LedMeter:2, PaneWell:1, StringGadget:3, SurfaceFacts:2, SurfaceFooter:1, TransportKey:13, TransportRow:3",0,web/src/desk/components/SessionPullout.tsx,7,7,0,0
+consumer/support,0,,0,,0,web/src/desk/components/SpeakerGlyph.tsx,1,1,0,0
+consumer/support,3,"FootSlotContext, TitleSlotContext, WingSlotContext",0,,0,web/src/desk/components/SurfaceWindows.tsx,0,0,0,0
+consumer/support,8,"Button, EgressChip, StringGadget, SurfaceState, countToken, egressForEvent, humanTime, receiptLabel",15,"Button:13, EgressChip:1, StringGadget:1",0,web/src/desk/components/SystemShade.tsx,0,0,0,0
+consumer/support,3,"Button, SurfaceRow, SurfaceRows",7,"Button:5, SurfaceRow:1, SurfaceRows:1",1,web/src/desk/components/ThreadComposer.tsx,2,2,0,0
+consumer/support,4,"LampGadget, SurfaceGroup, SurfaceSection, SurfaceSettingRow",8,"LampGadget:1, SurfaceGroup:2, SurfaceSection:1, SurfaceSettingRow:4",0,web/src/desk/components/TrustWindow.tsx,1,1,0,0
+consumer/support,2,"Button, countToken",1,Button:1,0,web/src/desk/components/WhyControl.tsx,0,0,0,0
+consumer/support,7,"Button, StringGadget, SurfaceLedger, SurfaceLedgerRow, SurfaceState, countLabel, humanTime",13,"Button:4, StringGadget:1, SurfaceLedger:1, SurfaceLedgerRow:1, SurfaceState:6",0,web/src/desk/components/WorkbenchAutomations.tsx,0,0,0,0
+consumer/support,7,"CheckGadget, ConfirmVerb, GadgetGroup, GadgetRow, StepperGadget, SurfaceState, humanTime",17,"CheckGadget:2, ConfirmVerb:1, GadgetGroup:1, GadgetRow:6, StepperGadget:5, SurfaceState:2",0,web/src/desk/components/WorkbenchResourceful.tsx,2,2,0,0
+consumer/support,3,"SurfaceSection, SurfaceState, useRovingRows",3,"SurfaceSection:1, SurfaceState:2",0,web/src/desk/components/WorkbenchTemplatePicker.tsx,2,2,0,0
+consumer/support,21,"CheckGadget, ConfirmVerb, EditInPlace, EgressChip, FoldGadget, LampGadget, LedMeter, Material, PadGadget, StringGadget, SurfaceFooter, SurfaceLedger, SurfaceLedgerRow, SurfaceRow, SurfaceRows, SurfaceSection, SurfaceState, SurfaceWings, countLabel, countToken, humanTime",34,"CheckGadget:1, ConfirmVerb:1, EditInPlace:1, EgressChip:2, LampGadget:1, LedMeter:1, Material:2, PadGadget:1, StringGadget:1, SurfaceFooter:1, SurfaceLedger:1, SurfaceLedgerRow:1, SurfaceRow:2, SurfaceRows:2, SurfaceSection:5, SurfaceState:10, SurfaceWings:1",0,web/src/desk/components/WorkbenchWindow.tsx,24,24,0,0
+consumer/support,5,"SurfaceFooter, SurfaceState, SurfaceWings, countToken, humanTime",3,"SurfaceFooter:1, SurfaceState:1, SurfaceWings:1",0,web/src/desk/components/ZoneWindow.tsx,2,2,0,0
+consumer/support,0,,0,,1,web/src/desk/components/window/Dock.tsx,7,7,0,0
+consumer/support,0,,0,,0,web/src/desk/components/window/Expose.tsx,1,1,0,0
+consumer/support,1,Button,2,Button:2,0,web/src/desk/components/window/RoomActions.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/desk/components/window/ShortcutSheet.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/desk/components/window/SnapGhost.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/desk/components/window/Switcher.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/desk/components/window/VerbGlyph.tsx,0,0,0,0
+consumer/support,4,"SurfaceLedger, SurfaceLedgerRow, SurfaceState, humanTime",3,"SurfaceLedger:1, SurfaceLedgerRow:1, SurfaceState:1",0,web/src/desk/components/workbench/WorkbenchRunsWing.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/desk/gl/Atmosphere.tsx,0,0,0,0
+consumer/support,0,,0,,2,web/src/desk/gl/WorldStage.tsx,4,4,0,0
+consumer/support,2,"Material, SurfaceFooter",2,"Material:1, SurfaceFooter:1",0,web/src/desk/pullouts/ArtifactPullout.tsx,3,3,0,0
+consumer/support,4,"SurfaceFooter, SurfaceRow, SurfaceRows, SurfaceState",4,"SurfaceFooter:1, SurfaceRow:1, SurfaceRows:1, SurfaceState:1",0,web/src/desk/pullouts/ChainPullout.tsx,2,2,0,0
+consumer/support,5,"FoldGadget, Material, SurfaceCode, SurfaceFooter, SurfaceWell",5,"FoldGadget:1, Material:1, SurfaceCode:1, SurfaceFooter:1, SurfaceWell:1",0,web/src/desk/pullouts/CoderPullout.tsx,6,6,0,0
+consumer/support,8,"Button, FoldGadget, Material, PadGadget, SurfaceFooter, SurfaceRow, SurfaceRows, humanTime",16,"Button:8, FoldGadget:1, Material:3, PadGadget:1, SurfaceFooter:1, SurfaceRow:1, SurfaceRows:1",0,web/src/desk/pullouts/DecisionPullout.tsx,0,0,0,0
+consumer/support,5,"SurfaceFooter, SurfaceRow, SurfaceRows, SurfaceSection, SurfaceState",5,"SurfaceFooter:1, SurfaceRow:1, SurfaceRows:1, SurfaceSection:1, SurfaceState:1",0,web/src/desk/pullouts/DirectoryPullout.tsx,1,1,0,0
+consumer/support,2,"SurfaceFooter, SurfaceState",2,"SurfaceFooter:1, SurfaceState:1",0,web/src/desk/pullouts/FallbackPullout.tsx,0,0,0,0
+consumer/support,2,"Button, SurfaceFooter",4,"Button:2, SurfaceFooter:2",0,web/src/desk/pullouts/IntelligencePullout.tsx,1,1,0,0
+consumer/support,6,"Button, Material, SurfaceFooter, SurfaceRow, SurfaceRows, SurfaceState",10,"Button:5, Material:1, SurfaceFooter:1, SurfaceRow:1, SurfaceRows:1, SurfaceState:1",0,web/src/desk/pullouts/KbPullout.tsx,0,0,0,0
+consumer/support,6,"Material, SurfaceFooter, SurfaceRow, SurfaceRows, SurfaceState, humanTime",4,"SurfaceFooter:1, SurfaceRow:1, SurfaceRows:1, SurfaceState:1",0,web/src/desk/pullouts/MeetingPullout.tsx,2,2,0,0
+consumer/support,6,"Button, Material, PadGadget, SurfaceFooter, SurfaceState, countToken",48,"Button:43, Material:2, PadGadget:1, SurfaceFooter:1, SurfaceState:1",1,web/src/desk/pullouts/NotePullout.tsx,0,0,0,0
+consumer/support,2,"SurfaceFooter, SurfaceState",3,"SurfaceFooter:2, SurfaceState:1",0,web/src/desk/pullouts/PeoplePullout.tsx,0,0,0,0
+consumer/support,4,"Button, FoldGadget, Material, SurfaceFooter",8,"Button:5, FoldGadget:1, Material:1, SurfaceFooter:1",0,web/src/desk/pullouts/RecipePullout.tsx,0,0,0,0
+consumer/support,2,"Button, countToken",7,Button:7,1,web/src/desk/pullouts/ThoughtContextPicker.tsx,2,2,0,0
+consumer/support,7,"Button, LampGadget, Material, SurfaceRow, SurfaceRows, SurfaceState, countLabel",32,"Button:13, LampGadget:2, Material:2, SurfaceRow:6, SurfaceRows:6, SurfaceState:3",0,web/src/desk/pullouts/ThreadPullout.tsx,9,7,2,0
+consumer/support,2,"Button, SurfaceFooter",5,"Button:4, SurfaceFooter:1",0,web/src/desk/pullouts/WorkflowPullout.tsx,0,0,0,0
+consumer/support,1,StringGadget,1,StringGadget:1,0,web/src/desk/pullouts/editors/KbEditor.tsx,2,2,0,0
+consumer/support,1,StringGadget,2,StringGadget:2,0,web/src/desk/pullouts/editors/NoteEditor.tsx,2,2,0,0
+consumer/support,3,"CycleGadget, PadGadget, StringGadget",7,"CycleGadget:1, PadGadget:2, StringGadget:4",0,web/src/desk/pullouts/editors/RecipeEditor.tsx,1,1,0,0
+consumer/support,2,"Button, StringGadget",3,"Button:1, StringGadget:2",0,web/src/desk/pullouts/editors/ThoughtNoteEditor.tsx,0,0,0,0
+consumer/support,1,StringGadget,4,StringGadget:4,0,web/src/desk/pullouts/editors/WorkflowEditor.tsx,3,3,0,0
+consumer/support,2,"Material, SurfaceState",2,"Material:1, SurfaceState:1",0,web/src/desk/pullouts/shared/CapabilitySection.tsx,4,4,0,0
+consumer/support,2,"SurfaceRow, SurfaceRows",2,"SurfaceRow:1, SurfaceRows:1",0,web/src/desk/pullouts/shared/ThreadsSection.tsx,0,0,0,0
+consumer/support,6,"Button, StateChip, SurfaceFooter, SurfaceLedgerRow, SurfaceState, countToken",12,"Button:5, StateChip:1, SurfaceFooter:1, SurfaceLedgerRow:1, SurfaceState:4",0,web/src/desk/pullouts/views/BriefView.tsx,1,1,0,0
+consumer/support,7,"Button, MicButton, StringGadget, SurfaceLedger, SurfaceLedgerRow, SurfaceState, countLabel",15,"Button:6, MicButton:1, StringGadget:1, SurfaceLedger:1, SurfaceLedgerRow:1, SurfaceState:5",0,web/src/desk/pullouts/views/DecisionsView.tsx,0,0,0,0
+consumer/support,7,"Button, StringGadget, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, countToken",15,"Button:6, StringGadget:1, SurfaceLedger:1, SurfaceLedgerRow:1, SurfaceSection:1, SurfaceState:5",0,web/src/desk/pullouts/views/FollowThroughView.tsx,1,1,0,0
+library implementation,1,Button,1,Button:1,0,web/src/desk/surface/FilterTokens.tsx,0,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/LedgerFilter.tsx,3,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/Material.tsx,0,0,0,0
+library implementation,1,Button,2,Button:2,0,web/src/desk/surface/Surface.tsx,7,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/SurfaceFooter.tsx,0,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/XtermPane.tsx,0,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/citations.tsx,1,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/controls/MicButton.tsx,0,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/foot.tsx,0,0,0,0
+library implementation,1,Button,1,Button:1,0,web/src/desk/surface/gadgets.tsx,13,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/graph/TopologySurface.tsx,1,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/patterns/ActionNotice.tsx,1,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/patterns/ChoiceCardGroup.tsx,2,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/patterns/ChoiceCardShell.tsx,0,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/patterns/ClaimAxes.tsx,0,0,0,0
+library implementation,1,Button,1,Button:1,0,web/src/desk/surface/patterns/CoverageRow.tsx,0,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/patterns/Disclosure.tsx,1,0,0,0
+library implementation,1,Button,1,Button:1,0,web/src/desk/surface/patterns/LedgerRemainder.tsx,0,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/patterns/Popover.tsx,0,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/patterns/ProgressPlan.tsx,1,0,0,0
+library implementation,1,Button,1,Button:1,0,web/src/desk/surface/patterns/ProjectButton.tsx,0,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/patterns/ProvenanceChip.tsx,2,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/patterns/StateChip.tsx,0,0,0,0
+library implementation,1,Button,2,Button:2,0,web/src/desk/surface/patterns/TaskResume.tsx,0,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/title.tsx,0,0,0,0
+library implementation,0,,0,,0,web/src/desk/surface/wings.tsx,2,0,0,0
+consumer/support,1,EditInPlace,1,EditInPlace:1,0,web/src/desk/thought-workspace/ThoughtDocumentPane.tsx,0,0,0,0
+consumer/support,3,"CheckGadget, StringGadget, countToken",2,"CheckGadget:1, StringGadget:1",0,web/src/desk/thought-workspace/ThoughtReadsWell.tsx,0,0,0,0
+consumer/support,5,"Button, EgressChip, PadGadget, SurfaceFooter, countToken",14,"Button:11, EgressChip:1, PadGadget:1, SurfaceFooter:1",0,web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx,0,0,0,0
+consumer/support,2,"Button, EgressChip",4,"Button:2, EgressChip:2",0,web/src/desk/voice/ProposalStrip.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/desk/windowMenuAdapter.tsx,0,0,0,0
+consumer/support,9,"Button, ChoiceCardShell, EgressChip, StateChip, StringGadget, SurfaceFooter, SurfaceLedgerRow, TitleSlotContext, countToken",40,"Button:13, ChoiceCardShell:2, EgressChip:7, StateChip:13, StringGadget:1, SurfaceFooter:1, SurfaceLedgerRow:3",0,web/src/features/concierge/ConciergeCore.tsx,0,0,0,0
+consumer/support,31,"Button, CitationChips, ConfirmVerb, CycleGadget, EgressChip, Material, MicButton, StateChip, StringGadget, SurfaceFooter, SurfaceLedger, SurfaceLedgerRow, SurfaceRow, SurfaceRows, SurfaceSection, SurfaceState, SurfaceStream, SurfaceStreamDay, SurfaceStreamEntry, SurfaceWell, TaskResume, TaskResumeList, countLabel, egressFor, egressForEvent, groundedMatchCount, humanTime, receiptLabel, sourceLabel, streamDayLabel, useWindowTitle",97,"Button:32, CitationChips:1, ConfirmVerb:1, CycleGadget:1, EgressChip:7, Material:1, MicButton:2, StateChip:11, StringGadget:4, SurfaceFooter:1, SurfaceLedger:6, SurfaceLedgerRow:14, SurfaceSection:10, SurfaceStream:1, SurfaceStreamDay:1, SurfaceStreamEntry:1, SurfaceWell:1, TaskResume:1, TaskResumeList:1",0,web/src/features/project-room/ProjectRoomCore.tsx,2,2,0,0
+consumer/support,6,"Button, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, countLabel, countToken",13,"Button:6, SurfaceLedger:1, SurfaceLedgerRow:5, SurfaceSection:1",0,web/src/features/project-room/RoomPeopleSection.tsx,0,0,0,0
+consumer/support,9,"Button, CheckGadget, EgressChip, MicButton, StateChip, StringGadget, SurfaceFooter, SurfaceLedgerRow, TitleSlotContext",24,"Button:7, CheckGadget:2, EgressChip:1, MicButton:1, StateChip:4, StringGadget:6, SurfaceFooter:1, SurfaceLedgerRow:2",0,web/src/features/project-room/door/DoorCore.tsx,1,1,0,0
+consumer/support,18,"Button, ClaimAxes, ConfirmVerb, CycleGadget, Disclosure, EgressChip, Material, PadGadget, ProgressPlan, StateChip, SurfaceFooter, SurfaceIdentity, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, countLabel, egressFor",60,"Button:13, ClaimAxes:1, ConfirmVerb:1, CycleGadget:1, Disclosure:2, EgressChip:5, Material:1, PadGadget:1, ProgressPlan:1, StateChip:9, SurfaceFooter:1, SurfaceIdentity:1, SurfaceLedger:8, SurfaceLedgerRow:7, SurfaceSection:7, SurfaceState:1",0,web/src/features/project-room/prepare/PreparePosture.tsx,0,0,0,0
+consumer/support,11,"Button, FilterTokens, ProjectButton, StringGadget, SurfaceFooter, SurfaceRow, SurfaceRows, SurfaceSection, countLabel, openSourceRef, useRovingRows",21,"Button:6, FilterTokens:1, ProjectButton:2, StringGadget:2, SurfaceFooter:1, SurfaceRow:1, SurfaceRows:1, SurfaceSection:7",0,web/src/features/project-room/recall/RecallFace.tsx,0,0,0,0
+consumer/support,16,"Button, Disclosure, MicButton, ProvenanceChip, StateChip, SurfaceCode, SurfaceColumns, SurfaceFacts, SurfaceFooter, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, SurfaceVerbs, countLabel, humanTime",37,"Button:14, Disclosure:1, MicButton:1, ProvenanceChip:3, StateChip:2, SurfaceCode:1, SurfaceColumns:1, SurfaceFacts:1, SurfaceFooter:1, SurfaceLedger:1, SurfaceLedgerRow:1, SurfaceSection:4, SurfaceState:4, SurfaceVerbs:2",1,web/src/features/project-room/review/ReviewPosture.tsx,2,1,1,0
+consumer/support,20,"ActionNotice, Button, CheckGadget, EgressChip, GadgetGroup, GadgetRow, ProgressPlan, StateChip, StepperGadget, StringGadget, SurfaceFooter, SurfaceLedger, SurfaceLedgerRow, SurfaceState, SurfaceToggle, SurfaceVerbs, countLabel, humanTime, openSourceRef, useScrollHint",44,"ActionNotice:1, Button:8, CheckGadget:1, EgressChip:2, GadgetGroup:1, GadgetRow:8, ProgressPlan:1, StepperGadget:4, StringGadget:1, SurfaceFooter:3, SurfaceLedger:2, SurfaceLedgerRow:2, SurfaceState:5, SurfaceToggle:2, SurfaceVerbs:3",0,web/src/features/project-room/steward/StewardPosture.tsx,1,1,0,0
+consumer/support,19,"ActionNotice, Button, CitationChips, EgressChip, LibraryClaimAxes, Material, MicButton, ProvenanceChip, StateChip, SurfaceFooter, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, SurfaceVerbs, countLabel, egressFor, humanTime, openSourceRef",30,"Button:8, EgressChip:2, LibraryClaimAxes:1, Material:1, MicButton:1, ProvenanceChip:1, StateChip:4, SurfaceFooter:2, SurfaceLedger:1, SurfaceLedgerRow:1, SurfaceSection:2, SurfaceState:4, SurfaceVerbs:2",0,web/src/features/project-room/update/UpdatePosture.tsx,2,2,0,0
+consumer/support,0,,0,,0,web/src/main.tsx,0,0,0,0
+consumer/support,3,"Button, GadgetGroup, SurfaceState",4,"Button:2, GadgetGroup:1, SurfaceState:1",0,web/src/meetings/MeetingConflictRecovery.tsx,0,0,0,0
+consumer/support,5,"Button, GadgetGroup, GadgetRow, SurfaceState, countToken",5,"Button:2, GadgetGroup:1, GadgetRow:1, SurfaceState:1",0,web/src/meetings/MeetingIntelRecovery.tsx,0,0,0,0
+consumer/support,1,SurfaceWell,1,SurfaceWell:1,0,web/src/meetings/MeetingSummarySlab.tsx,0,0,0,0
+consumer/support,2,"EgressChip, egressFor",3,EgressChip:3,0,web/src/meetings/RouteDisclosure.tsx,0,0,0,0
+consumer/support,1,LampGadget,1,LampGadget:1,0,web/src/pages/PresencePage.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/pages/WelcomePage.tsx,0,0,0,0
+consumer/support,12,"Button, CheckGadget, ConfirmVerb, LampGadget, StringGadget, SurfaceFooter, SurfaceRow, SurfaceRows, SurfaceSection, SurfaceState, humanTime, presentValue",15,"Button:3, CheckGadget:1, ConfirmVerb:2, LampGadget:1, StringGadget:1, SurfaceFooter:1, SurfaceRow:1, SurfaceRows:1, SurfaceSection:3, SurfaceState:1",0,web/src/pages/cores/ActivityCore.tsx,0,0,0,0
+consumer/support,4,"Button, EgressChip, FoldGadget, SurfaceState",14,"Button:10, EgressChip:2, FoldGadget:1, SurfaceState:1",0,web/src/pages/cores/AssignmentEditor.tsx,0,0,0,0
+consumer/support,4,"EgressChip, ProvenanceChip, StateChip, useRovingRows",3,"EgressChip:1, ProvenanceChip:1, StateChip:1",0,web/src/pages/cores/AssignmentModelChooser.tsx,1,1,0,0
+consumer/support,1,Button,1,Button:1,0,web/src/pages/cores/AssignmentSummary.tsx,0,0,0,0
+consumer/support,20,"Button, CheckGadget, ConfirmVerb, CycleGadget, EgressChip, LampGadget, PadGadget, StateChip, SurfaceFooter, SurfaceLedger, SurfaceLedgerRow, SurfaceRow, SurfaceRows, SurfaceSection, SurfaceState, countLabel, countToken, deSnake, egressForEvent, humanTime",33,"Button:4, CheckGadget:1, ConfirmVerb:2, CycleGadget:4, EgressChip:2, LampGadget:1, PadGadget:1, StateChip:5, SurfaceFooter:1, SurfaceLedger:4, SurfaceLedgerRow:4, SurfaceRow:1, SurfaceRows:1, SurfaceSection:1, SurfaceState:1",0,web/src/pages/cores/CadenceCore.tsx,0,0,0,0
+consumer/support,7,"Button, CycleGadget, GadgetTable, StringGadget, SurfaceFooter, SurfaceSection, countLabel",16,"Button:1, CycleGadget:1, GadgetTable:1, StringGadget:5, SurfaceFooter:3, SurfaceSection:5",0,web/src/pages/cores/CalendarSnapshotReviewCore.tsx,0,0,0,0
+consumer/support,4,"Button, SurfaceState, SurfaceVerbs, countLabel",7,"Button:2, SurfaceState:4, SurfaceVerbs:1",0,web/src/pages/cores/CapabilityAssignmentsCore.tsx,0,0,0,0
+consumer/support,2,"Button, SurfaceVerbs",5,"Button:4, SurfaceVerbs:1",0,web/src/pages/cores/ChangePlacesCore.tsx,0,0,0,0
+consumer/support,12,"Button, ConfirmVerb, CycleGadget, GadgetGroup, GadgetRow, StringGadget, SurfaceFooter, SurfaceRow, SurfaceRows, SurfaceSection, SurfaceState, countToken",23,"Button:7, ConfirmVerb:1, CycleGadget:1, GadgetGroup:1, GadgetRow:3, StringGadget:2, SurfaceFooter:1, SurfaceRow:1, SurfaceRows:1, SurfaceSection:2, SurfaceState:3",0,web/src/pages/cores/CommandsCore.tsx,0,0,0,0
+consumer/support,12,"Button, FoldGadget, LampGadget, SurfaceFacts, SurfaceFooter, SurfaceLedger, SurfaceLedgerRow, SurfaceState, SurfaceWings, countLabel, presentValue, useWindowWings",13,"Button:1, FoldGadget:1, LampGadget:2, SurfaceFacts:1, SurfaceFooter:1, SurfaceLedger:1, SurfaceLedgerRow:2, SurfaceState:3, SurfaceWings:1",0,web/src/pages/cores/CompanionCore.tsx,0,0,0,0
+consumer/support,37,"ActionNotice, Button, CheckGadget, ChoiceCard, ChoiceCardGroup, ConfirmVerb, CycleGadget, Disclosure, EgressChip, FoldGadget, GadgetGroup, GadgetRow, GadgetTable, LampGadget, LedMeter, MetricStrip, PadGadget, Popover, ProgressPlan, PropGadget, ProvenanceChip, Receipt, StateChip, StepperGadget, StringGadget, SurfaceFooter, SurfaceLedger, SurfaceLedgerRow, SurfaceRow, SurfaceRows, SurfaceSection, SurfaceState, SurfaceVerbs, SurfaceWings, TopologySurface, TransportKey, TransportRow",94,"ActionNotice:5, Button:9, CheckGadget:1, ChoiceCard:3, ChoiceCardGroup:1, ConfirmVerb:1, CycleGadget:1, Disclosure:4, EgressChip:1, FoldGadget:1, GadgetGroup:1, GadgetRow:7, GadgetTable:1, LampGadget:4, LedMeter:1, MetricStrip:1, PadGadget:1, Popover:1, ProgressPlan:2, PropGadget:1, ProvenanceChip:5, Receipt:5, StateChip:2, StepperGadget:1, StringGadget:1, SurfaceFooter:1, SurfaceLedger:1, SurfaceLedgerRow:3, SurfaceRow:2, SurfaceRows:1, SurfaceSection:15, SurfaceState:2, SurfaceVerbs:1, SurfaceWings:1, TopologySurface:1, TransportKey:4, TransportRow:1",0,web/src/pages/cores/ComponentsCore.tsx,1,1,0,0
+consumer/support,7,"Button, CycleGadget, LampGadget, PadGadget, SurfaceFooter, SurfaceSection, SurfaceState",15,"Button:2, CycleGadget:1, LampGadget:6, PadGadget:1, SurfaceFooter:1, SurfaceSection:2, SurfaceState:2",0,web/src/pages/cores/ConstitutionalContextCore.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/pages/cores/ContextualAssignment.tsx,0,0,0,0
+consumer/support,4,"Button, EgressChip, SurfaceFooter, countToken",4,"Button:2, EgressChip:1, SurfaceFooter:1",0,web/src/pages/cores/DictationCore.tsx,0,0,0,0
+consumer/support,9,"Button, CheckGadget, ConfirmVerb, EgressChip, StringGadget, SurfaceFooter, SurfaceSplit, countToken, egressFor",13,"Button:5, CheckGadget:1, ConfirmVerb:1, EgressChip:3, StringGadget:1, SurfaceFooter:1, SurfaceSplit:1",0,web/src/pages/cores/HistoryCore.tsx,0,0,0,0
+consumer/support,22,"Button, CycleGadget, EgressChip, FoldGadget, GadgetGroup, GadgetRow, LampGadget, PadGadget, StringGadget, SurfaceCode, SurfaceFacts, SurfaceFooter, SurfaceRow, SurfaceRows, SurfaceSection, SurfaceState, SurfaceStream, SurfaceStreamEntry, SurfaceWell, SurfaceWings, presentValue, useWindowWings",47,"Button:7, CycleGadget:1, EgressChip:2, FoldGadget:1, GadgetGroup:3, GadgetRow:5, LampGadget:2, PadGadget:1, StringGadget:3, SurfaceCode:1, SurfaceFacts:3, SurfaceFooter:1, SurfaceRow:1, SurfaceRows:1, SurfaceSection:6, SurfaceState:5, SurfaceStream:1, SurfaceStreamEntry:1, SurfaceWell:1, SurfaceWings:1",0,web/src/pages/cores/LiveCore.tsx,1,1,0,0
+consumer/support,10,"Button, CycleGadget, EgressChip, FoldGadget, StringGadget, SurfaceFacts, SurfaceSplit, SurfaceState, SurfaceVerbs, countToken",35,"Button:14, CycleGadget:2, EgressChip:3, FoldGadget:3, StringGadget:5, SurfaceFacts:2, SurfaceSplit:1, SurfaceState:4, SurfaceVerbs:1",0,web/src/pages/cores/ModelLibraryCore.tsx,4,0,3,1
+consumer/support,16,"Button, ConfirmVerb, CycleGadget, EgressChip, PadGadget, StringGadget, SurfaceColumns, SurfaceFooter, SurfaceLedger, SurfaceLedgerRow, SurfaceRow, SurfaceRows, SurfaceSection, SurfaceSplit, SurfaceState, countToken",99,"Button:25, ConfirmVerb:3, CycleGadget:5, EgressChip:1, PadGadget:2, StringGadget:5, SurfaceColumns:1, SurfaceFooter:1, SurfaceLedger:3, SurfaceLedgerRow:3, SurfaceRow:12, SurfaceRows:12, SurfaceSection:13, SurfaceSplit:1, SurfaceState:12",0,web/src/pages/cores/PeopleCore.tsx,0,0,0,0
+consumer/support,7,"LampGadget, SurfaceFooter, SurfaceLedger, SurfaceLedgerRow, SurfaceState, SurfaceVerbs, countLabel",6,"LampGadget:1, SurfaceFooter:1, SurfaceLedger:1, SurfaceLedgerRow:1, SurfaceState:1, SurfaceVerbs:1",0,web/src/pages/cores/ProcessCore.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/pages/cores/ProjectMemoryCore.tsx,0,0,0,0
+consumer/support,6,"Button, FoldGadget, SurfaceFooter, SurfaceRow, SurfaceRows, SurfaceSection",29,"Button:2, FoldGadget:4, SurfaceFooter:1, SurfaceRow:15, SurfaceRows:5, SurfaceSection:2",0,web/src/pages/cores/RuntimeDocsCore.tsx,0,0,0,0
+consumer/support,23,"Button, CheckGadget, CycleGadget, EgressChip, FoldGadget, GadgetGroup, GadgetRow, GadgetTable, PropGadget, Receipt, SecretRow, StateChip, StepperGadget, StringGadget, SurfaceFooter, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, SurfaceWell, countToken, egressFor, humanTime",127,"Button:16, CheckGadget:3, CycleGadget:8, EgressChip:5, FoldGadget:6, GadgetGroup:28, GadgetRow:30, GadgetTable:1, PropGadget:1, Receipt:1, SecretRow:1, StateChip:8, StepperGadget:1, StringGadget:8, SurfaceFooter:1, SurfaceLedger:1, SurfaceLedgerRow:4, SurfaceSection:1, SurfaceState:1, SurfaceWell:2",0,web/src/pages/cores/SettingsCore.tsx,0,0,0,0
+consumer/support,10,"Button, LampGadget, SurfaceColumns, SurfaceFooter, SurfaceRow, SurfaceRows, SurfaceSection, SurfaceState, deSnake, presentValue",14,"Button:4, LampGadget:2, SurfaceColumns:1, SurfaceFooter:1, SurfaceRow:1, SurfaceRows:1, SurfaceSection:2, SurfaceState:2",0,web/src/pages/cores/SetupCore.tsx,0,0,0,0
+consumer/support,10,"ActionNotice, Button, Disclosure, EgressChip, MxRadio, StateChip, StringGadget, SurfaceState, TopologySurface, countToken",27,"ActionNotice:3, Button:8, Disclosure:3, EgressChip:1, MxRadio:1, StateChip:1, StringGadget:5, SurfaceState:4, TopologySurface:1",0,web/src/pages/cores/TopologyMapView.tsx,2,0,2,0
+consumer/support,7,"Button, SurfaceFooter, SurfaceLedger, SurfaceLedgerRow, SurfaceState, countToken, humanTime",6,"Button:1, SurfaceFooter:1, SurfaceLedger:1, SurfaceLedgerRow:1, SurfaceState:2",0,web/src/pages/cores/WorkbenchesHomeCore.tsx,1,1,0,0
+consumer/support,10,"Button, EgressChip, GadgetGroup, ProvenanceChip, Receipt, StateChip, StringGadget, SurfaceState, SurfaceWell, TransportKey",36,"Button:9, EgressChip:6, GadgetGroup:1, ProvenanceChip:7, StateChip:7, StringGadget:2, SurfaceState:2, SurfaceWell:1, TransportKey:1",0,web/src/pages/cores/connections/ConnectionsPane.tsx,0,0,0,0
+consumer/support,3,"SurfaceWings, WingSpec, useWindowWings",2,SurfaceWings:2,0,web/src/pages/cores/core-hooks.tsx,0,0,0,0
+consumer/support,2,"SurfaceState, SurfaceVerbs",3,"SurfaceState:1, SurfaceVerbs:2",0,web/src/pages/cores/core-layout.tsx,0,0,0,0
+consumer/support,12,"Button, ConfirmVerb, CycleGadget, EditInPlace, PadGadget, StringGadget, SurfaceLibrary, SurfaceLibraryGhost, SurfaceLibraryTile, SurfaceSection, SurfaceState, countToken",14,"Button:2, ConfirmVerb:1, CycleGadget:1, EditInPlace:2, PadGadget:1, StringGadget:2, SurfaceLibrary:1, SurfaceLibraryGhost:1, SurfaceLibraryTile:1, SurfaceSection:1, SurfaceState:1",0,web/src/pages/cores/dictation/Blocks.tsx,0,0,0,0
+consumer/support,10,"Button, CheckGadget, FoldGadget, GadgetGroup, GadgetRow, SurfaceCode, SurfaceState, presentValue, streamDate, streamTime",14,"Button:3, CheckGadget:1, FoldGadget:1, GadgetGroup:3, GadgetRow:3, SurfaceCode:1, SurfaceState:2",0,web/src/pages/cores/dictation/DictationSections.tsx,0,0,0,0
+consumer/support,15,"Button, ConfirmVerb, EditInPlace, FilterTokens, StringGadget, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, SurfaceStreamDay, deSnake, isSameStreamDay, presentValue, streamDate, streamTime",13,"Button:3, ConfirmVerb:2, EditInPlace:1, FilterTokens:1, StringGadget:1, SurfaceLedger:1, SurfaceLedgerRow:1, SurfaceSection:1, SurfaceState:1, SurfaceStreamDay:1",0,web/src/pages/cores/dictation/Journal.tsx,0,0,0,0
+consumer/support,7,"Button, ConfirmVerb, EditInPlace, GadgetGroup, GadgetRow, GadgetTable, StringGadget",14,"Button:3, ConfirmVerb:1, EditInPlace:2, GadgetGroup:3, GadgetRow:1, GadgetTable:1, StringGadget:3",0,web/src/pages/cores/dictation/Knowledge.tsx,0,0,0,0
+consumer/support,7,"ConfirmVerb, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, deSnake, presentValue",5,"ConfirmVerb:1, SurfaceLedger:1, SurfaceLedgerRow:1, SurfaceSection:1, SurfaceState:1",0,web/src/pages/cores/dictation/Learned.tsx,0,0,0,0
+consumer/support,3,"GadgetGroup, SurfaceFacts, SurfaceState",3,"GadgetGroup:1, SurfaceFacts:1, SurfaceState:1",0,web/src/pages/cores/dictation/Memory.tsx,0,0,0,0
+consumer/support,10,"Button, FoldGadget, GadgetGroup, GadgetRow, LampGadget, SurfaceFacts, SurfaceFooter, SurfaceState, countToken, presentValue",23,"Button:4, FoldGadget:1, GadgetGroup:2, GadgetRow:5, LampGadget:4, SurfaceFacts:3, SurfaceFooter:3, SurfaceState:1",0,web/src/pages/cores/dictation/Readiness.tsx,0,0,0,0
+consumer/support,12,"Button, CheckGadget, CycleGadget, Disclosure, EgressChip, LampGadget, LedMeter, MicButton, PadGadget, StateChip, TransportKey, presentValue",28,"Button:8, CheckGadget:1, CycleGadget:3, Disclosure:1, EgressChip:3, LampGadget:2, LedMeter:1, MicButton:1, PadGadget:2, StateChip:5, TransportKey:1",0,web/src/pages/cores/dictation/SpeakFace.tsx,0,0,0,0
+consumer/support,8,"ActionNotice, Button, ChoiceCard, ChoiceCardGroup, Disclosure, ProgressPlan, SurfaceState, countToken",15,"ActionNotice:4, Button:5, ChoiceCard:1, ChoiceCardGroup:1, Disclosure:1, ProgressPlan:1, SurfaceState:2",0,web/src/pages/cores/frontDoor.tsx,0,0,0,0
+consumer/support,3,"Button, GadgetGroup, GadgetRow",6,"Button:2, GadgetGroup:1, GadgetRow:3",0,web/src/pages/cores/history/AftercareGadgets.tsx,0,0,0,0
+consumer/support,10,"Button, FoldGadget, Material, SurfaceCode, SurfaceLibrary, SurfaceLibraryTile, SurfaceState, SurfaceWell, countToken, humanTime",8,"Button:1, FoldGadget:1, Material:1, SurfaceCode:1, SurfaceLibrary:1, SurfaceLibraryTile:1, SurfaceState:1, SurfaceWell:1",0,web/src/pages/cores/history/ArtifactsLibrary.tsx,0,0,0,0
+consumer/support,2,"GadgetGroup, GadgetRow",2,"GadgetGroup:1, GadgetRow:1",0,web/src/pages/cores/history/CaptureSlab.tsx,0,0,0,0
+consumer/support,3,"Button, SurfaceState, countToken",2,"Button:1, SurfaceState:1",0,web/src/pages/cores/history/CatalogRail.tsx,1,1,0,0
+consumer/support,11,"Button, CycleGadget, GadgetGroup, GadgetRow, LampGadget, SurfaceRow, SurfaceRows, SurfaceSection, SurfaceState, humanTime, presentValue",9,"Button:1, CycleGadget:1, GadgetGroup:1, GadgetRow:1, LampGadget:1, SurfaceRow:1, SurfaceRows:1, SurfaceSection:1, SurfaceState:1",0,web/src/pages/cores/history/DoorSection.tsx,0,0,0,0
+consumer/support,6,"Button, GadgetGroup, GadgetRow, StringGadget, SurfaceSection, SurfaceState",12,"Button:3, GadgetGroup:1, GadgetRow:3, StringGadget:3, SurfaceSection:1, SurfaceState:1",0,web/src/pages/cores/history/ImportSection.tsx,1,0,1,0
+consumer/support,1,SurfaceSection,1,SurfaceSection:1,0,web/src/pages/cores/history/MeetingDetail.tsx,0,0,0,0
+consumer/support,3,"EgressChip, StateChip, egressFor",3,"EgressChip:1, StateChip:2",0,web/src/pages/cores/history/MeetingHeader.tsx,0,0,0,0
+consumer/support,13,"Button, ConfirmVerb, Disclosure, EditInPlace, EgressChip, ProgressPlan, StateChip, SurfaceFooter, SurfaceState, countLabel, egressFor, useRovingRows, useWindowTitle",29,"Button:10, ConfirmVerb:2, Disclosure:2, EditInPlace:3, EgressChip:2, ProgressPlan:1, StateChip:7, SurfaceFooter:1, SurfaceState:1",0,web/src/pages/cores/history/MeetingReview.tsx,0,0,0,0
+consumer/support,5,"CheckGadget, CycleGadget, GadgetGroup, GadgetRow, StringGadget",9,"CheckGadget:1, CycleGadget:1, GadgetGroup:1, GadgetRow:4, StringGadget:2",0,web/src/pages/cores/history/MeetingsConfig.tsx,0,0,0,0
+consumer/support,2,"Button, countLabel",4,Button:4,0,web/src/pages/cores/history/NeedsYouTable.tsx,0,0,0,0
+consumer/support,2,"countLabel, presentValue",0,,0,web/src/pages/cores/history/SettledList.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/pages/cores/history/StateTokenSpan.tsx,0,0,0,0
+consumer/support,3,"SurfaceState, SurfaceWell, countLabel",2,"SurfaceState:1, SurfaceWell:1",0,web/src/pages/cores/history/TranscriptWell.tsx,0,0,0,0
+consumer/support,2,"Button, presentValue",4,Button:4,0,web/src/pages/cores/history/useMeetingData.tsx,0,0,0,0
+consumer/support,2,"GadgetGroup, GadgetRow",2,"GadgetGroup:1, GadgetRow:1",0,web/src/pages/cores/settingsBespoke.tsx,1,1,0,0
+consumer/support,0,,0,,0,web/src/pages/cores/settingsModels.tsx,0,0,0,0
+consumer/support,11,"Button, ConfirmVerb, CycleGadget, EgressChip, GadgetGroup, Receipt, StateChip, SurfaceFooter, SurfaceLedger, SurfaceLedgerRow, countToken",22,"Button:2, ConfirmVerb:1, CycleGadget:1, EgressChip:1, GadgetGroup:1, StateChip:6, SurfaceFooter:1, SurfaceLedger:1, SurfaceLedgerRow:8",0,web/src/pages/cores/settingsPrefs.tsx,0,0,0,0
+consumer/support,4,"Button, EgressChip, GadgetGroup, GadgetRow",7,"Button:1, EgressChip:1, GadgetGroup:2, GadgetRow:3",0,web/src/pages/cores/settingsTts.tsx,0,0,0,0
+consumer/support,4,"Button, CheckGadget, GadgetGroup, GadgetRow",7,"Button:2, CheckGadget:2, GadgetGroup:1, GadgetRow:2",0,web/src/pages/cores/settingsWallpaper.tsx,0,0,0,0
+consumer/support,1,SurfaceState,1,SurfaceState:1,0,web/src/pages/pageSupport.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/routes.tsx,0,0,0,0
+consumer/support,0,,0,,0,web/src/runtime/RuntimeBus.tsx,0,0,0,0

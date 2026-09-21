@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Current phase:** [Phase 201: One Meeting Result](./phase-201-one-meeting-result/current-phase-status.md), the smallest first-use phase, chartered 2026-09-19 under the Seven Tenets; Phase 200 pauses behind it (stories 24 to 36 and 47 to 53 parked, never deleted).
+**Current phase:** [Phase 202: The Coherent Face](./phase-202-the-coherent-face/current-phase-status.md) (chartered 2026-09-20 from the surface inventory; Phase 201 story 07, the owner's sitting, stays open and is Phase 202 story 06's exit) — previously [Phase 201: One Meeting Result](./phase-201-one-meeting-result/current-phase-status.md), the smallest first-use phase, chartered 2026-09-19 under the Seven Tenets; Phase 200 pauses behind it (stories 24 to 36 and 47 to 53 parked, never deleted).
 **Status:** planning.
 
 Phase 200 is the owner-directed line in the sand for new delivery.
@@ -1061,6 +1061,7 @@ canon, canon wins.
 | 180 | The Proof: a measured week of real use on his desk; the census re-run at the ratchet's floor; the Constitution audit article by article; the full suite and live legs; the performance ledger; the positioning re-read; Gate B partner feedback; the release candidate. | planned | [phase-180-the-proof](./phase-180-the-proof/) |
 | 200 | The Working Practice: dependable daily architect work, three repeatable recipes, supervised assignments, bounded unattended execution, and measured owner value. | planned | [phase-200-the-working-practice](./phase-200-the-working-practice/) |
 | 201 | The owner records one real meeting, gets a truthful, useful summary he can find again after a restart. His first real use. | in-progress | [phase-201-one-meeting-result](./phase-201-one-meeting-result/) |
+| 202 | Every face on the owner's first-use path has a door at every width, tells the truth, and is built from the library; a small fence keeps it so; the sitting selects the next scope. | not-started | [phase-202-the-coherent-face](./phase-202-the-coherent-face/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
