@@ -330,7 +330,7 @@ def _run_ready_resolve_and_people(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
             commitment = marek_li.get_by_test_id("room-people-commitment").first
             assert "Own the PostgreSQL migration" in commitment.inner_text()
             # Tokens are CSS-uppercased on the face; compare the rendered case.
-            assert "MTG · ARCHITECTURE REVIEW · SEG 4" in commitment.inner_text().upper()
+            assert "MEETING · ARCHITECTURE REVIEW · SEGMENT 4" in commitment.inner_text().upper()
             assert commitment.get_by_test_id("room-people-open-source").count() == 1
             fact = marek_li.get_by_test_id("room-people-fact").first
             assert "karolswdev/HoldSpeak" in fact.inner_text() and "2 PRS WAITING" in fact.inner_text()
