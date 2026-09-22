@@ -9,7 +9,7 @@
 
 ## Problem
 
-A graph read from the tree cannot see an Open that fails with zero diff. The live pass presses every edge in every atlas state and records what changed: DOM, URL, open windows, requests fired, DB rows, receipt line. Zero diff is a finding.
+A graph read from the tree cannot see an Open that answers with nothing. The live pass drives every applicable case (an edge in a reachable state) through its real production entry point and judges it by the outcome law (brief §3): the expected result is recorded before the trigger; an enabled action that promises a change and produces neither it nor an intelligible refusal is a finding; an unexplained zero diff is unresolved, never pass.
 
 ## Scope
 
@@ -18,8 +18,8 @@ A graph read from the tree cannot see an Open that fails with zero diff. The liv
 
 ## Acceptance criteria
 
-- [ ] `scripts/graph_walk.py` (the one press-and-diff rig; parametrised by state and width; it replaces the phase walks, which are parked, never deleted) runs against a real hub in an isolated HOME with states minted through the real API (never a double), at 1440 and 393, with the clock advanced per the atlas.
-- [ ] The first-use twenty are walked first with the real LAN engine; every other edge with a recorded engine reply.
+- [ ] `scripts/graph_walk.py` (the one versioned rig, shared by both brains; interface-specific trigger adapters permitted; walk parking is story 07's business under its replacement criteria) runs against a real hub in a fresh isolated HOME and browser profile, states minted through their real production entry points and transitions, with explicitly labelled boundary substitutions where the brief permits them (recorded engine replies at the provider boundary; the fixture WAV at the input boundary), at 1440 and 393 for face cases, with every clock source named and its mechanism verified or the case recorded as unexercised (brief §7).
+- [ ] The owner-selected first-use cases (story 01) are walked first with the real LAN engine, its identity and result recorded, technical completion and owner usefulness reported separately; every other applicable case with a labelled recorded engine reply.
 - [ ] Per applicable case: preconditions, expected result, initial feedback and terminal outcome observed separately, before/after evidence and a shot; the rig is calibrated first against a dead action, a request with no promised result, a wrong-target result, a valid focus/geometry change, an unchanged-result contract and an operation that never completes (brief §7); a timer, tool or CLI edge is driven through its real entry point, never a substitute click; unexercised cases are recorded with the missing mechanism.
 - [ ] The pass never touches the owner's desk (`~/.local/share/holdspeak`), never the microphone (fixture WAV), never his keychain.
 - [ ] Output: `docs/internal/philo/graph/live-muaddib.json` + `live-muaddib.md` + shots; Astra's check recorded beside it.

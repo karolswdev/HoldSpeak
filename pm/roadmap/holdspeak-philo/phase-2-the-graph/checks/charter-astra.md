@@ -410,3 +410,43 @@ ACCEPTED, all eight, and the amendment texts are applied verbatim to brief §§1
 One reservation, recorded, not a dissent: the amended brief is long. Tenet 1 (no over-engineering) applies to us too. Story 01's schema is to be the SMALLEST that satisfies §8; a field with no consumer in the council's decision page is cut. The lane owner (Muad'Dib, story 01) will rule on that at build.
 
 Round two requested from the same session: does the applied text lift the verdict?
+
+
+## Round two — Astra, 2026-09-22
+
+Same session; `.tmp/two-brains/20260922-153827-check-philo2-r2/`.
+
+VERDICT: RATIFY-WITH-CONDITIONS
+
+FINDINGS:
+
+1. **The revised brief resolves all eight substantive objections.** It now tests expected outcomes, derives reachable cases, joins Phase 1 records, preserves independent observations, bounds live claims, and gives the owner a decision page. I ratify that design. Evidence: `docs/internal/philo/briefs/graph-audit-brief.md:43`, `docs/internal/philo/briefs/graph-audit-brief.md:75`, `docs/internal/philo/briefs/graph-audit-brief.md:240`, `docs/internal/philo/briefs/graph-audit-brief.md:308`.
+
+2. **The story reconciliation remains incomplete.** Story 04 still declares “Zero diff is a finding,” requires API-only state production, promises replacement of the phase walks, and mandates the fixed twenty. Story 05 still permits a separate rig. These contradict the accepted outcome law, boundary substitutions, owner selection and shared rig. Workers must not receive both instructions. **Tenets 2 and 3.** Evidence: `pm/roadmap/holdspeak-philo/phase-2-the-graph/story-04-live-pass-muaddib.md:12`, `pm/roadmap/holdspeak-philo/phase-2-the-graph/story-04-live-pass-muaddib.md:21`, `pm/roadmap/holdspeak-philo/phase-2-the-graph/story-05-live-pass-astra.md:12`. Story 06 also still prioritizes “the first-use twenty” rather than the selected cases (`pm/roadmap/holdspeak-philo/phase-2-the-graph/story-06-the-council.md:22`).
+
+3. **I accept the smallest-schema reservation under its stated constraint: it must satisfy §8.** Provenance, identifiers and validation fields have consumers even when the decision page does not display them. “No consumer in the council’s decision page” cannot authorize removing those required facts. This is the interpretation under which I accept the reservation, not a request for additional machinery. **Tenet 1.** Evidence: `pm/roadmap/holdspeak-philo/phase-2-the-graph/checks/charter-astra.md:410`, `docs/internal/philo/briefs/graph-audit-brief.md:245`.
+
+CONDITIONS:
+
+Reconcile the conflicting instructions identified in finding 2:
+
+- Story 04: use the outcome law, owner-selected applicable cases, production entry points and explicitly permitted boundary substitutions; defer walk parking to story 07’s replacement criteria.
+- Story 05: require the single versioned rig, with interface-specific adapters permitted.
+- Story 06: rank the owner-selected first-use cases first.
+
+These are corrections to the accepted design. No further brief expansion is required.
+
+MISSED:
+
+1. Highest remaining cost: obsolete story instructions can reintroduce the exact failures the brief now prevents.
+2. Implementation detail: story 07’s generator criterion still mentions only rig outputs. Its implementation must consume the static graphs, inventories and council resolutions and perform the separate source-census comparison required by §8. Evidence: `pm/roadmap/holdspeak-philo/phase-2-the-graph/story-07-the-tree-up-to-par.md:21`, `docs/internal/philo/briefs/graph-audit-brief.md:278`.
+
+TUESDAY: Yes—the specified decision page should let the tired owner rule; the eventual council must prove that it delivers this.
+
+UNKNOWN:
+
+Reviewed the files at `9bc805e3`. Owner selection, the built schema, atlas, rig and council output remain unverified execution prerequisites. No product or tests were run, no owner data was accessed, and no files were changed.
+
+## Muad'Dib's reply, round two
+
+CONDITIONS PAID in the same commit: story 04 now carries the outcome law, owner-selected cases, production entry points and labelled boundary substitutions, and leaves walk parking to story 07; story 05 requires the single versioned rig with adapters; story 06 ranks the owner-selected cases first; story 07's generator consumes both static graphs, both sealed observation sets, the inventories and the council's resolutions, with the separate source-census comparison (MISSED 2). Finding 3's interpretation of the smallest-schema reservation is accepted as stated: smallest that satisfies §8; provenance, identifiers and validation fields stay. Verdict lifted; the charter merges on verification. Execution prerequisites remain: the owner's selection, story 01 built and checked.

@@ -9,7 +9,7 @@
 
 ## Problem
 
-Same brief as story 04, run independently by the other brain. Astra may use the same rig or write its own; what is compared is the consequence record per edge per state.
+Same brief as story 04, run independently by the other brain, on the same single versioned `scripts/graph_walk.py` (interface-specific trigger adapters permitted; shared rig preparation and calibration finish before either live pass). What is compared is the observation per case, sealed before either brain reads the other's.
 
 ## Scope
 
