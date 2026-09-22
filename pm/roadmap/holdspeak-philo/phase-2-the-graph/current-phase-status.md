@@ -36,7 +36,7 @@ Every pass, every finding and the council's verdict is read through that lens an
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| PHILO-2-01 | The rulebook and the state atlas | backlog | [story-01-the-rulebook-and-the-state-atlas](./story-01-the-rulebook-and-the-state-atlas.md) | - |
+| PHILO-2-01 | The rulebook and the state atlas | in-progress | [story-01-the-rulebook-and-the-state-atlas](./story-01-the-rulebook-and-the-state-atlas.md) | - |
 | PHILO-2-02 | The static pass, Muad'Dib | backlog | [story-02-static-pass-muaddib](./story-02-static-pass-muaddib.md) | - |
 | PHILO-2-03 | The static pass, Astra | backlog | [story-03-static-pass-astra](./story-03-static-pass-astra.md) | - |
 | PHILO-2-04 | The live pass, Muad'Dib | backlog | [story-04-live-pass-muaddib](./story-04-live-pass-muaddib.md) | - |
@@ -60,6 +60,8 @@ Order: 01 (brief, schema, atlas, owner's selection, shared rig calibration) → 
 
 ## Where we are
 
+2026-09-22 evening: the owner deferred the first-use selection to the two brains ("You and Astra? You push this forward"). Muad'Dib ruled eleven jobs (story 01, the selection table), Astra checks. Story 01 IN BUILD in ../wt-philo-2-01: the graph schema, the reachable-case atlas, the calibrated rig.
+
 Chartered 2026-09-22 on the owner's ruling, the same day his sitting on a wiped desk found two dead basics in two clicks (HS-202-06). Astra's check of the charter (2026-09-22, DO-NOT-RATIFY, eight findings; `checks/charter-astra.md`) replaced brief §§1–9: an outcome law instead of a zero-diff law; a reachable-case atlas instead of a Cartesian product; a schema that JOINS Phase 1 record ids; the twenty are candidates until the owner selects; four sealed passes; a council decision page. Applied the same day; round two awaited. Nothing runs until the brief is ratified and the owner has selected the first-use cases.
 
 ## Active risks
@@ -77,6 +79,7 @@ Chartered 2026-09-22 on the owner's ruling, the same day his sitting on a wiped 
 
 - 2026-09-22 — the audit is Philo Phase 2; both brains, both passes; council; Phase 3 for engineering — the owner — verbatim above.
 - 2026-09-22 — doc drift ledgered then corrected in a lane; nothing fixed mid-sweep — the owner ("Yes, I do agree").
+- 2026-09-22 — the first-use selection: the owner deferred; Muad'Dib ruled eleven jobs from SITTING-07 + the two sitting defects + the Thought-window gripe; Astra checks — recorded in story 01.
 - 2026-09-22 — the Phase 1 package is the spine; edges and consequences are ADDED as generated inventories — Muad'Dib, on the owner's rebuke.
 
 ## Decisions deferred
