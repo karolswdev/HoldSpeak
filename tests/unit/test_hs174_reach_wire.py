@@ -1061,3 +1061,33 @@ def test_desk_projection_defaults_none():
     assert d["origin"] is None
     assert d["caller"] is None
     assert d["caller_identity"] is None
+
+
+# ── HS-202-06 (the owner's sitting, 2026-09-21): a receipt names a door
+#    only where one exists. The sweep's "Open" did nothing because its
+#    door was "/" and the shade fell through to a pull-out opener. ──────
+
+class TestSittingReceiptDoors:
+    def _pipeline_rows(self, db):
+        return [
+            r for r in db.projections.list()["projections"]
+            if r["source_kind"] == "pipeline_event"
+        ]
+
+    def test_sweep_receipt_opens_the_rhythm_face(self, _wire_db):
+        _insert_pipeline_event(
+            _wire_db, event_id="ev-sweep-1", service="HeartbeatService",
+            method="run_sweep", result_summary='{"watches":0,"rooms":0,"held":false}',
+        )
+        rows = self._pipeline_rows(_wire_db)
+        assert [r["detail_url"] for r in rows] == ["/cadence"]
+        assert rows[0]["title"] == "SWEEP"
+
+    def test_receipt_with_no_face_behind_it_carries_no_door(self, _wire_db):
+        _insert_pipeline_event(
+            _wire_db, event_id="ev-remote-2", service="ProjectService",
+            method="project_list", origin="remote", caller="100.64.0.5",
+        )
+        rows = self._pipeline_rows(_wire_db)
+        assert len(rows) == 1
+        assert rows[0]["detail_url"] == ""

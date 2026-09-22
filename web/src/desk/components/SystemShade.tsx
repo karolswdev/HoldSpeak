@@ -187,6 +187,10 @@ export function SystemShade({
     .filter((row) => row.attention_state !== "needs_attention")
     .slice(0, 4);
   const learned = (corrections ?? []).slice(0, 3);
+  /* A verb is drawn only where a door exists (UX-CANON: a dead verb is a
+     bounce). Pipeline receipts with nothing behind them carry no door. */
+  const hasDoor = (row: (typeof store.projections)[number]) =>
+    Boolean(row.detail_url) && row.detail_url !== "/";
   const openSource = (row: (typeof store.projections)[number]) => {
     onClose();
     if (row.detail_url.startsWith("/history")) {
@@ -327,9 +331,11 @@ export function SystemShade({
                   {row.subject_label} &middot; {humanTime(row.timestamp)}
                 </small>
                 <span className="desk-shade-do">
-                  <Button dense variant="ghost" onClick={() => openSource(row)}>
-                    Open
-                  </Button>
+                  {hasDoor(row) ? (
+                    <Button dense variant="ghost" onClick={() => openSource(row)}>
+                      Open
+                    </Button>
+                  ) : null}
                   <Button
                     dense
                     variant="ghost"
@@ -376,11 +382,13 @@ export function SystemShade({
                   ) : null}
                   {" "}&middot; {humanTime(row.timestamp)}
                 </small>
-                <span className="desk-shade-do">
-                  <Button dense variant="ghost" onClick={() => openSource(row)}>
-                    Open
-                  </Button>
-                </span>
+                {hasDoor(row) ? (
+                  <span className="desk-shade-do">
+                    <Button dense variant="ghost" onClick={() => openSource(row)}>
+                      Open
+                    </Button>
+                  </span>
+                ) : null}
               </div>
             </div>
             );

@@ -49,6 +49,10 @@ export function AttentionDrawer() {
   const intelligence = useIntelligenceAttention();
   // HS-132-08 — a finished meeting is desk attention, not mascot business.
   const aftercare = useAftercare();
+  /* A verb only where a door exists: a pipeline receipt with nothing behind
+     it carries no door (holdspeak/db/projections.py) and gets no Open. */
+  const hasDoor = (row: (typeof store.projections)[number]) =>
+    Boolean(row.detail_url) && row.detail_url !== "/";
   const openSource = (row: (typeof store.projections)[number]) => {
     if (row.detail_url.startsWith("/history")) {
       openSurfaceWhenReady("review-meetings", row.subject_ref);
@@ -246,9 +250,11 @@ export function AttentionDrawer() {
                 </div>
               </dl>
               <div className="desk-receipt-actions">
-                <Button dense variant="ghost" onClick={() => openSource(selected)}>
+                {hasDoor(selected) ? (
+                  <Button dense variant="ghost" onClick={() => openSource(selected)}>
                   Open source
                 </Button>
+                ) : null}
                 {selected.attention_state === "needs_attention" ? (
                   <Button
                     dense

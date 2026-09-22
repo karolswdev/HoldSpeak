@@ -300,7 +300,7 @@ function Qlippy() {
             )}
         </p>
         <div className="button-row">
-          {projection ? (
+          {projection && projection.detail_url && projection.detail_url !== "/" ? (
             <Button
               dense
               variant="primary"
