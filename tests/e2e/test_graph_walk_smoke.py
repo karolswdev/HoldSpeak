@@ -88,6 +88,14 @@ def _assert_observation_shape(record, viewport, out):
     real_home = Path(pwd.getpwuid(os.getuid()).pw_dir)
     assert not str(db).startswith(str(real_home / ".local"))
 
+    # what product wiring this hub HAS and LACKS — so no observation is read
+    # as if it came from the whole product (Astra's counsel item 8)
+    wiring = prov["product_wiring"]
+    assert "the database owner lock" in wiring["has"]
+    assert "the intelligence queue drainer" in wiring["has"]
+    assert any("AudioRecorder" in lack for lack in wiring["lacks"])
+    assert any("HotkeyListener" in lack for lack in wiring["lacks"])
+
     run_dir = out / record["run_id"]
     assert (run_dir / "observation.json").exists()
     assert (run_dir / "before.png").exists()

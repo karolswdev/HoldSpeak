@@ -20,6 +20,7 @@ from jsonschema import Draft202012Validator
 REPO = Path(__file__).resolve().parents[2]
 ATLAS_PATH = REPO / "docs/internal/philo/graph/atlas.json"
 SCHEMA_PATH = REPO / "docs/internal/philo/graph/atlas.schema.json"
+GRAPH_SCHEMA_PATH = REPO / "docs/internal/philo/graph/graph.schema.json"
 OPENAPI_PATH = REPO / "docs/generated/openapi.json"
 
 # The seven families brief section 4 rules the initial atlas must cover.
@@ -36,12 +37,23 @@ JOBS = [f"j{n}" for n in range(1, 12)]
 RIG_PATH = REPO / "scripts/graph_walk.py"
 
 
+
 def _rig():
     """The rig itself, imported (stdlib-only at module level), never retyped."""
     spec = importlib.util.spec_from_file_location("_graph_walk_for_atlas", RIG_PATH)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def _rig_ui_actions() -> set[str]:
+    """The ui actions the rig implements, read off `_ui_step`'s own branches.
+
+    The rig exports no constant for them (checked at this revision), so the set
+    is derived from the implementation rather than retyped here.
+    """
+    source = inspect.getsource(_rig()._ui_step)
+    return set(re.findall(r'action == "([a-z_]+)"', source))
 
 
 def _rig_predicate_kinds() -> set[str]:
@@ -52,6 +64,15 @@ def _rig_predicate_kinds() -> set[str]:
     """
     source = inspect.getsource(_rig().check_predicate)
     return set(re.findall(r'kind == "([a-z_]+)"', source))
+
+
+def _checks(case: dict) -> list[dict]:
+    """The executable check steps among a case's preconditions."""
+    return [
+        entry
+        for entry in case["preconditions"]
+        if isinstance(entry, dict) and entry.get("kind") == "check"
+    ]
 
 
 def _acts(case: dict) -> list[dict]:
@@ -316,16 +337,26 @@ def test_quiet_is_never_an_attention_state(atlas: dict) -> None:
 def test_face_cases_carry_both_ruled_viewports(atlas: dict) -> None:
     """Brief section 4: exercise each applicable face case at 1440 and 393.
 
-    A case whose setup touches the face is a face case; a protocol-only case
-    has no invented viewport requirement.
+    A case is a FACE case when its trigger is fired at the face or its
+    observation location is a selector. Setup alone does not make one: a case
+    observed at a route stays protocol-only even when its reproduction chain
+    had to drive the desk to reach the starting state.
     """
     problems: list[str] = []
     for case in atlas["cases"]:
         if case["applicability"] != "applicable":
             continue
-        touches_face = any(step["kind"] == "ui" for step in _acts(case))
-        if touches_face and sorted(case["viewports"]) != [393, 1440]:
-            problems.append(f"{case['id']}: face case with viewports {case['viewports']}")
+        where = case["expected"].get("observe_at") or ""
+        face = (
+            case.get("trigger", {}).get("kind") == "ui"
+            or (bool(where) and not where.startswith("protocol:"))
+        )
+        want = [393, 1440] if face else []
+        if sorted(case["viewports"]) != want:
+            problems.append(
+                f"{case['id']}: {'face' if face else 'protocol-only'} case with "
+                f"viewports {case['viewports']}"
+            )
     assert not problems, problems
 
 
@@ -361,13 +392,17 @@ def test_every_applicable_predicate_is_a_kind_the_rig_implements(atlas: dict) ->
     assert kinds, "could not read the rig's predicate kinds"
     problems: list[str] = []
     for case in atlas["cases"]:
-        predicate = case["expected"].get("predicate")
-        if predicate is None:
-            continue
-        if predicate["kind"] not in kinds:
-            problems.append(
-                f"{case['id']}: predicate kind {predicate['kind']!r} is not one of {sorted(kinds)}"
-            )
+        candidates = [case["expected"].get("predicate")] + [
+            entry["predicate"] for entry in _checks(case)
+        ]
+        for predicate in candidates:
+            if predicate is None:
+                continue
+            if predicate["kind"] not in kinds:
+                problems.append(
+                    f"{case['id']}: predicate kind {predicate['kind']!r} is not one "
+                    f"of {sorted(kinds)}"
+                )
     assert not problems, problems
 
 
@@ -406,4 +441,208 @@ def test_protocol_predicates_ask_for_a_new_row(atlas: dict) -> None:
 def test_every_case_keeps_its_human_sentence(atlas: dict) -> None:
     """`words` is the prose the owner and the council read; it is never dropped."""
     problems = [case["id"] for case in atlas["cases"] if not case["expected"].get("words")]
+    assert not problems, problems
+
+
+# ───────────── the rig's ui vocabulary, and the one case contract ─────────────
+
+
+def test_every_ui_action_is_one_the_rig_implements(atlas: dict) -> None:
+    """Prose in a ui step is a step the rig raises `unknown ui action` on."""
+    actions = _rig_ui_actions()
+    assert actions, "could not read the rig's ui actions"
+    problems: list[str] = []
+    for case in atlas["cases"]:
+        for step in _acts(case):
+            if step["kind"] != "ui":
+                continue
+            if step["action"] not in actions:
+                problems.append(
+                    f"{case['id']}: ui action {step['action']!r} is not one of {sorted(actions)}"
+                )
+    assert not problems, problems
+
+
+def test_every_boundary_names_its_substitution(atlas: dict) -> None:
+    """A boundary is a NAMED substitution, not a sentence (brief section 7)."""
+    problems: list[str] = []
+    for case in atlas["cases"]:
+        for step in _acts(case):
+            if step["kind"] != "boundary":
+                continue
+            name = step.get("substitute", "")
+            if not name or " " in name:
+                problems.append(f"{case['id']}: boundary substitute {name!r} is not a name")
+    assert not problems, problems
+
+
+@pytest.fixture(scope="module")
+def graph_case_schema() -> dict:
+    return json.loads(GRAPH_SCHEMA_PATH.read_text())
+
+
+def test_the_two_schemas_agree_on_the_case_contract(graph_case_schema: dict, schema: dict) -> None:
+    """One case contract, not two (brief section 8: the graph is a JOIN)."""
+    mine = schema["$defs"]["case"]
+    theirs = graph_case_schema["$defs"]["case"]
+    assert set(mine["required"]) == set(theirs["required"]), (
+        f"required keys differ: mine-only={sorted(set(mine['required']) - set(theirs['required']))}, "
+        f"theirs-only={sorted(set(theirs['required']) - set(mine['required']))}"
+    )
+    assert set(mine["properties"]) == set(theirs["properties"]), (
+        f"case fields differ: mine-only={sorted(set(mine['properties']) - set(theirs['properties']))}, "
+        f"theirs-only={sorted(set(theirs['properties']) - set(mine['properties']))}"
+    )
+    assert (mine["properties"]["applicability"]["enum"]
+            == theirs["properties"]["applicability"]["enum"])
+    assert (set(mine["properties"]["expected"]["required"])
+            <= set(theirs["properties"]["expected"]["required"]) | {"words"})
+
+
+def test_every_case_validates_against_the_graph_case_schema(
+    atlas: dict, graph_case_schema: dict
+) -> None:
+    """Every atlas case must be a legal graph case, so the generator can join them.
+
+    No exemption: the atlas case definition IS the graph's, so every case that
+    validates against one validates against the other.
+    """
+    validator = Draft202012Validator(
+        {"$schema": "https://json-schema.org/draft/2020-12/schema",
+         "$ref": "#/$defs/case", "$defs": graph_case_schema["$defs"]}
+    )
+    problems: list[str] = []
+    for case in atlas["cases"]:
+        for error in validator.iter_errors(case):
+            path = list(error.absolute_path)
+            if path[:3] == ["expected", "predicate", "kind"]:
+                continue
+            if path[:1] == ["expected"] and case["applicability"] != "applicable":
+                # An unreachable case is never fired, so it has no expected
+                # RESULT to structure -- only a reason. graph.schema.json
+                # already makes `trigger` conditional on applicability (its
+                # allOf); `expected` needs the same treatment. Until it does,
+                # this is the one shape the two schemas disagree on, and the
+                # disagreement is NAMED here, never hidden.
+                assert case.get("reason"), f"{case['id']} has neither predicate nor reason"
+                continue
+            problems.append(f"{case['id']}: {'/'.join(str(p) for p in path)}: {error.message}")
+    assert not problems, "\n".join(problems[:20])
+
+
+def test_the_graph_predicate_enum_does_not_outrun_the_rig(graph_case_schema: dict) -> None:
+    """The graph schema may lag the rig; it may never claim a kind the rig lacks."""
+    declared = set(
+        graph_case_schema["$defs"]["case"]["properties"]["expected"]["properties"]
+        ["predicate"]["properties"]["kind"]["enum"]
+    )
+    implemented = _rig_predicate_kinds()
+    assert declared <= implemented, (
+        f"the graph schema declares kinds the rig does not implement: "
+        f"{sorted(declared - implemented)}"
+    )
+
+
+def test_a_case_without_a_predicate_is_unreachable_with_a_reason(atlas: dict) -> None:
+    """The graph case contract requires a structured predicate, so a case that
+    cannot carry one may not sit in the walk list as if it will run."""
+    problems = [
+        case["id"]
+        for case in atlas["cases"]
+        if "predicate" not in case["expected"]
+        and not (case["applicability"] == "unreachable" and case.get("reason"))
+    ]
+    assert not problems, problems
+
+
+
+def test_every_council_reading_names_its_sources(atlas: dict) -> None:
+    """A reading is not a case: no trigger, no predicate, no verdict - so its
+    only evidence is the source it cites and the payload it asks the council to
+    read. Both are required."""
+    problems: list[str] = []
+    for reading in atlas["council_readings"]:
+        if not reading["sources"]:
+            problems.append(f"{reading['id']}: no sources")
+        if not reading["reads"]:
+            problems.append(f"{reading['id']}: names no payload to read")
+        if not reading["words"].startswith("COUNCIL READING:"):
+            problems.append(f"{reading['id']}: does not announce itself")
+        for ref in reading["sources"]:
+            target = REPO / ref["path"]
+            if not target.is_file():
+                problems.append(f"{reading['id']}: missing file {ref['path']}")
+                continue
+            lines = target.read_text(errors="replace").splitlines()
+            if not (1 <= ref["line"] <= len(lines)) or ref["symbol"] not in lines[ref["line"] - 1]:
+                problems.append(f"{reading['id']}: {ref['path']}:{ref['line']} lost {ref['symbol']!r}")
+    assert not problems, problems
+
+
+# ──────────────────── executable preconditions ────────────────────
+
+# `check_preconditions` evaluates a check against ONE snapshot, passed as both
+# `before` and `after` (scripts/graph_walk.py:1896-1897). Every predicate kind
+# that decides by comparing the two is therefore useless there: `protocol_rows`
+# and `protocol_rows_gone` always see zero movement, `unchanged` always holds,
+# `presentation_change` never does, and `window_titled` reports "already open"
+# and fails. A check must read the AFTER snapshot alone.
+COMPARING_KINDS = frozenset({
+    "protocol_rows", "protocol_rows_gone", "unchanged",
+    "presentation_change", "window_titled",
+})
+
+
+def test_no_precondition_check_compares_two_snapshots(atlas: dict) -> None:
+    problems = [
+        f"{case['id']}: check uses {entry['predicate']['kind']!r}, which decides by "
+        "comparing before and after; a precondition has only one snapshot"
+        for case in atlas["cases"]
+        for entry in _checks(case)
+        if entry["predicate"]["kind"] in COMPARING_KINDS
+    ]
+    assert not problems, problems
+
+
+def test_every_precondition_check_observes_a_selector_or_a_route(atlas: dict) -> None:
+    prefix = _rig().PROTOCOL_PREFIX
+    problems: list[str] = []
+    for case in atlas["cases"]:
+        for entry in _checks(case):
+            where = entry["observe_at"] or ""
+            if not (where.startswith(prefix) or _is_css_selector(where)):
+                problems.append(f"{case['id']}: check observe_at {where!r} is not a location")
+            if not entry.get("why"):
+                problems.append(f"{case['id']}: check says nothing about why it is needed")
+    assert not problems, problems
+
+
+def test_no_check_asserts_the_result_the_trigger_must_produce(atlas: dict) -> None:
+    """A precondition runs BEFORE the trigger. One that reads the case's own
+    observation location would decide the case before it was fired."""
+    problems = [
+        f"{case['id']}: a precondition check reads {entry['observe_at']!r}, the case's "
+        "own observation location"
+        for case in atlas["cases"]
+        for entry in _checks(case)
+        if entry["observe_at"] == case["expected"].get("observe_at")
+    ]
+    assert not problems, problems
+
+
+def test_every_protocol_field_path_with_a_placeholder_is_a_json_pointer(atlas: dict) -> None:
+    """`_json_path` splits a dotted path on "." and a pointer path on "/"
+    (scripts/graph_walk.py:627-628), so an id holding a dot must travel as a
+    pointer or it is silently split into two segments that resolve to nothing.
+    """
+    problems: list[str] = []
+    for case in atlas["cases"]:
+        for predicate in [case["expected"].get("predicate")] + [
+            entry["predicate"] for entry in _checks(case)
+        ]:
+            if not predicate or predicate.get("kind") != "protocol_field":
+                continue
+            path = predicate["path"]
+            if "{" in path and not path.startswith("/"):
+                problems.append(f"{case['id']}: {path!r} holds a placeholder but is dotted")
     assert not problems, problems

@@ -130,6 +130,108 @@ def test_duplicate_ids_are_refused(schema, example):
     ]
 
 
+def test_phase1_record_id_must_exist_in_that_inventory(schema, example):
+    """Astra's counsel on built: a made-up record id used to pass. The graph
+    does not own Phase 1 semantics, so a reference must land on a real record."""
+
+    def mutate(graph: dict) -> None:
+        graph["nodes"][0]["phase1_refs"][0] = {
+            "inventory_path": "docs/internal/philo/data/desk.json",
+            "record_id": "desk.does_not_exist",
+        }
+
+    violations = validator_module.validate(_mutated(example, mutate), schema)
+    assert violations == [
+        "phase1-record-unresolved: nodes[0].phase1_refs[0]: record_id "
+        "'desk.does_not_exist' is not a record in "
+        "'docs/internal/philo/data/desk.json'"
+    ]
+
+
+def test_phase1_api_reference_must_exist_as_that_method_and_path(schema, example):
+    def mutate(graph: dict) -> None:
+        graph["nodes"][2]["phase1_refs"][0] = {
+            "inventory_path": "docs/generated/openapi.json",
+            "method": "GET",
+            "path": "/api/desk/does-not-exist",
+        }
+
+    violations = validator_module.validate(_mutated(example, mutate), schema)
+    assert violations == [
+        "phase1-api-unresolved: nodes[2].phase1_refs[0]: GET "
+        "/api/desk/does-not-exist is not declared in 'docs/generated/openapi.json'"
+    ]
+
+
+def test_phase1_api_reference_must_match_the_declared_method(schema, example):
+    """A real path under a method the API does not declare is still a miss."""
+
+    def mutate(graph: dict) -> None:
+        graph["nodes"][2]["phase1_refs"][0] = {
+            "inventory_path": "docs/generated/openapi.json",
+            "method": "DELETE",
+            "path": "/api/desk/projections",
+        }
+
+    violations = validator_module.validate(_mutated(example, mutate), schema)
+    assert violations == [
+        "phase1-api-unresolved: nodes[2].phase1_refs[0]: DELETE "
+        "/api/desk/projections is not declared in 'docs/generated/openapi.json'"
+    ]
+
+
+def test_phase1_inventory_must_be_a_file_in_the_tree(schema, example):
+    def mutate(graph: dict) -> None:
+        graph["nodes"][0]["phase1_refs"][0] = {
+            "inventory_path": "docs/internal/philo/data/nope.json",
+            "record_id": "desk.execute",
+        }
+
+    violations = validator_module.validate(_mutated(example, mutate), schema)
+    assert violations == [
+        "phase1-inventory-unreadable: nodes[0].phase1_refs[0]: inventory "
+        "'docs/internal/philo/data/nope.json' does not exist in the tree"
+    ]
+
+
+def test_claim_review_record_reference_must_exist(schema, example):
+    """A claim_ref that names a record and field carries the same Phase 1
+    shape, and owes the same proof."""
+
+    def mutate(graph: dict) -> None:
+        graph["claim_reviews"][0]["claim_ref"]["record_id"] = "desk.not_a_record"
+
+    violations = validator_module.validate(_mutated(example, mutate), schema)
+    assert violations == [
+        "phase1-record-unresolved: claim_reviews[0].claim_ref: record_id "
+        "'desk.not_a_record' is not a record in 'docs/generated/domain-model.yaml'"
+    ]
+
+
+def test_source_path_must_exist_in_the_tree(schema, example):
+    def mutate(graph: dict) -> None:
+        graph["nodes"][0]["sources"][0]["path"] = "web/src/desk/components/NoSuchFile.tsx"
+
+    violations = validator_module.validate(_mutated(example, mutate), schema)
+    assert violations == [
+        "source-path-missing: nodes[0].sources[0].path: "
+        "'web/src/desk/components/NoSuchFile.tsx' does not exist in the tree"
+    ]
+
+
+def test_evidence_path_must_exist_in_the_tree(schema, example):
+    """Evidence carries the same source-reference shape as sources."""
+
+    def mutate(graph: dict) -> None:
+        graph["findings"][0]["evidence"][0]["path"] = "holdspeak/db/gone.py"
+
+    violations = validator_module.validate(_mutated(example, mutate), schema)
+    assert violations == [
+        "source-path-missing: findings[0].evidence[0].path: "
+        "'holdspeak/db/gone.py' does not exist in the tree"
+    ]
+
+
 def test_cli_exits_zero_on_the_example_and_one_on_a_broken_graph(tmp_path, capsys, example):
     clean = validator_module.main([str(EXAMPLE_PATH)])
     first = capsys.readouterr().out

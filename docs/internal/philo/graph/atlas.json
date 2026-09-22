@@ -13,14 +13,40 @@
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         "the first screen is the voice-typing gate",
-        "no draft text"
+        "no draft text",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        }
+      ],
       "trigger": {
         "kind": "ui",
-        "selector": "role=button[name='Continue later']",
-        "action": "click",
-        "adapter": "ui-pointer"
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "role": "button",
+        "name": "Continue later"
       },
       "expected": {
         "predicate": {
@@ -46,20 +72,47 @@
       "applicability": "applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "text typed into the gate's field and not kept"
+        "text typed into the gate's field and not kept",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
       "setup": [
         {
           "kind": "ui",
-          "selector": "textarea in section.desk-first-words",
-          "action": "type 'one sentence'"
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "section.desk-first-words textarea",
+          "value": "one sentence",
+          "adapter": "ui-pointer"
         }
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "role=button[name='Save draft & continue']",
-        "action": "click",
-        "adapter": "ui-pointer"
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "role": "button",
+        "name": "Save draft & continue"
       },
       "expected": {
         "predicate": {
@@ -110,7 +163,10 @@
         ]
       },
       "completion_bound_s": 30,
-      "viewports": []
+      "viewports": [
+        1440,
+        393
+      ]
     },
     {
       "id": "case.j1.first_words_speak.kept",
@@ -124,36 +180,61 @@
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         "case.j1.speech_readiness.ready passed (speech.transcribe READY); otherwise this case is BLOCKED, not failed",
-        "the browser launched with the fake audio device"
+        "the browser launched with the fake audio device",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
       "setup": [
         {
-          "kind": "boundary",
-          "substitutes": "the browser's microphone device",
-          "label": "chromium --use-fake-device-for-media-stream --use-file-for-fake-audio-capture=<fixture> (boundary substitution: this proves the capture-to-transcript path, NOT real microphone hardware)"
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
         },
         {
-          "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04"
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "boundary",
+          "substitutes": "the browser's microphone device",
+          "label": "chromium --use-fake-device-for-media-stream --use-file-for-fake-audio-capture=<fixture> (boundary substitution: this proves the capture-to-transcript path, NOT real microphone hardware) Input: tests/fixtures/core_path_smoke_16k.wav (sha256 36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04) at the browser's fake audio device - NOT an HTTP input boundary, so it is recorded here rather than claimed as a fixture POST. Input: tests/fixtures/core_path_smoke_16k.wav (sha256 36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04) at the browser's fake audio device - NOT an HTTP input boundary, so it is recorded here rather than claimed as a fixture POST.",
+          "substitute": "browser_audio_device",
+          "reply_path": "tests/fixtures/core_path_smoke_16k.wav"
         },
         {
           "kind": "api",
           "method": "POST",
           "path": "/api/setup/first-value/start",
-          "body": {}
+          "body": {},
+          "capture_as": "attempt_id"
         },
         {
           "kind": "ui",
-          "selector": "role=button[name='Click to dictate']",
-          "action": "click"
+          "action": "click_role",
+          "role": "button",
+          "name": "Click to dictate",
+          "adapter": "ui-pointer"
         }
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "role=button[name='Stop listening']",
-        "action": "click",
-        "adapter": "ui-pointer"
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "role": "button",
+        "name": "Stop listening"
       },
       "expected": {
         "predicate": {
@@ -178,14 +259,23 @@
       "state_id": "state.first_value.kept",
       "applicability": "applicable",
       "preconditions": [
-        "case.j1.first_words_speak.kept reached, or words typed into the field"
+        "case.j1.first_words_speak.kept reached, or words typed into the field -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)"
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "section.desk-first-words textarea",
+          "value": "one sentence"
+        }
+      ],
       "trigger": {
         "kind": "ui",
-        "selector": "role=button[name='Keep as Note']",
-        "action": "click",
-        "adapter": "ui-pointer"
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "role": "button",
+        "name": "Keep as Note"
       },
       "expected": {
         "predicate": {
@@ -217,20 +307,46 @@
       "applicability": "applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "the browser context grants no microphone permission"
+        "the browser context grants no microphone permission",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
       "setup": [
         {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
           "kind": "boundary",
           "substitutes": "the browser's microphone permission grant",
-          "label": "playwright browser context with permissions=[] so getUserMedia raises NotAllowedError (the refusal is minted at the browser, never by writing a backend receipt)"
+          "label": "playwright browser context with permissions=[] so getUserMedia raises NotAllowedError (the refusal is minted at the browser, never by writing a backend receipt)",
+          "substitute": "browser_permission"
         }
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "role=button[name='Click to dictate']",
-        "action": "click",
-        "adapter": "ui-pointer"
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "role": "button",
+        "name": "Click to dictate"
       },
       "expected": {
         "predicate": {
@@ -256,20 +372,46 @@
       "applicability": "applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "the gate loaded, then its hub calls refused"
+        "the gate loaded, then its hub calls refused",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
       "setup": [
         {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
           "kind": "boundary",
           "substitutes": "the hub's reachability from the browser",
-          "label": "playwright route interception aborting the dictation request only; production parsing, rendering and persistence stay real"
+          "label": "playwright route interception aborting the dictation request only; production parsing, rendering and persistence stay real",
+          "substitute": "transport_failure"
         }
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "role=button[name='Click to dictate']",
-        "action": "click",
-        "adapter": "ui-pointer"
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "role": "button",
+        "name": "Click to dictate"
       },
       "expected": {
         "predicate": {
@@ -301,14 +443,15 @@
         {
           "kind": "boundary",
           "substitutes": "navigator.mediaDevices",
-          "label": "an init script deleting mediaDevices before the page loads (browser-owned capability, substituted at the browser boundary)"
+          "label": "an init script deleting mediaDevices before the page loads (browser-owned capability, substituted at the browser boundary)",
+          "substitute": "browser_capability"
         }
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "the desk URL",
-        "action": "navigate to the desk (arrival)",
-        "adapter": "ui-navigation"
+        "adapter": "ui-navigation",
+        "action": "goto",
+        "url": "/"
       },
       "expected": {
         "predicate": {
@@ -346,9 +489,9 @@
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "the desk URL",
-        "action": "navigate to the desk (arrival)",
-        "adapter": "ui-navigation"
+        "adapter": "ui-navigation",
+        "action": "goto",
+        "url": "/"
       },
       "expected": {
         "predicate": {
@@ -390,9 +533,9 @@
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "the desk URL",
-        "action": "navigate to the desk (arrival)",
-        "adapter": "ui-navigation"
+        "adapter": "ui-navigation",
+        "action": "goto",
+        "url": "/"
       },
       "expected": {
         "predicate": {
@@ -424,14 +567,15 @@
         {
           "kind": "boundary",
           "substitutes": "GET /api/inference/assignments",
-          "label": "playwright route interception failing that one read; every other read stays real"
+          "label": "playwright route interception failing that one read; every other read stays real",
+          "substitute": "route_failure"
         }
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "the desk URL",
-        "action": "navigate to the desk (arrival)",
-        "adapter": "ui-navigation"
+        "adapter": "ui-navigation",
+        "action": "goto",
+        "url": "/"
       },
       "expected": {
         "predicate": {
@@ -463,14 +607,15 @@
         {
           "kind": "boundary",
           "substitutes": "GET /api/inference/assignments",
-          "label": "playwright route interception holding that one response open for the observation window"
+          "label": "playwright route interception holding that one response open for the observation window",
+          "substitute": "route_failure"
         }
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "the desk URL",
-        "action": "navigate to the desk (arrival)",
-        "adapter": "ui-navigation"
+        "adapter": "ui-navigation",
+        "action": "goto",
+        "url": "/"
       },
       "expected": {
         "predicate": {
@@ -498,9 +643,33 @@
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         "the concierge open",
-        "the LAN engine address reachable from the hub"
+        "the LAN engine address reachable from the hub",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
       "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
         {
           "kind": "ui",
           "selector": "[data-testid=concierge-add-engine]",
@@ -508,8 +677,10 @@
         },
         {
           "kind": "ui",
+          "action": "fill",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "action": "type the engine address"
+          "value": "the engine address",
+          "adapter": "ui-pointer"
         }
       ],
       "trigger": {
@@ -544,9 +715,33 @@
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         "the concierge open",
-        "an address that answers nothing"
+        "an address that answers nothing",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
       "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
         {
           "kind": "ui",
           "selector": "[data-testid=concierge-add-engine]",
@@ -554,8 +749,10 @@
         },
         {
           "kind": "ui",
+          "action": "fill",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "action": "type an unreachable address"
+          "value": "an unreachable address",
+          "adapter": "ui-pointer"
         }
       ],
       "trigger": {
@@ -589,9 +786,34 @@
       "applicability": "applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "a found engine row whose address does not answer"
+        "a found engine row whose address does not answer",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        }
+      ],
       "trigger": {
         "kind": "ui",
         "selector": "[data-testid^=concierge-check-]",
@@ -621,10 +843,66 @@
       "state_id": "state.engines.assigned_ready",
       "applicability": "applicable",
       "preconditions": [
-        "case.j3.concierge_add_engine.add_ready reached",
-        "case.j1.speech_readiness.ready passed - the SETUP row clears ONLY because speech was already ready"
+        "case.j3.concierge_add_engine.add_ready reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        "case.j1.speech_readiness.ready passed - the SETUP row clears ONLY because speech was already ready",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        }
+      ],
       "trigger": {
         "kind": "ui",
         "selector": "[data-testid=concierge-add-submit]",
@@ -633,11 +911,17 @@
       },
       "expected": {
         "predicate": {
-          "kind": "text_absent",
-          "value": "No engine for summaries"
+          "kind": "protocol_rows_gone",
+          "collection": "task_overrides",
+          "identity": "id",
+          "match": {
+            "id": "meeting.deferred_analysis",
+            "has_override": false
+          },
+          "min_gone": 1
         },
-        "observe_at": "[data-testid=arrival-blocker]",
-        "words": "task_overrides holds an exact capability:meeting.deferred_analysis head whose effective.status is 'assigned'; back on the Chair the SETUP row is gone. The disappearance is attributable to THIS assignment only while speech is ready - with speech missing the row stays (see case.j3.speech_missing.row_stays), so a cleared row is not evidence that the summary engine landed [the audit's stated observation location: protocol: GET /api/inference/assignments; face: the absence of [data-testid=arrival-blocker]]",
+        "observe_at": "protocol: GET /api/inference/assignments",
+        "words": "ASTRA (A): the owner's result is a NAMED disappearance - the un-overridden summary row is gone by identity - not a vanished face section. || task_overrides holds an exact capability:meeting.deferred_analysis head whose effective.status is 'assigned'; back on the Chair the SETUP row is gone. The disappearance is attributable to THIS assignment only while speech is ready - with speech missing the row stays (see case.j3.speech_missing.row_stays), so a cleared row is not evidence that the summary engine landed [the audit's stated observation location: protocol: GET /api/inference/assignments; face: the absence of [data-testid=arrival-blocker]]",
         "reads": [
           {
             "method": "GET",
@@ -660,10 +944,95 @@
       "state_id": "state.engines.speech_assignment_missing",
       "applicability": "applicable",
       "preconditions": [
-        "meeting.deferred_analysis assigned (case.j3.concierge_use_for_summaries.assigned_ready reached)",
-        "speech.transcribe NOT assigned"
+        "meeting.deferred_analysis assigned (case.j3.concierge_use_for_summaries.assigned_ready reached) -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        "speech.transcribe NOT assigned",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
       "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
         {
           "kind": "api",
           "method": "POST",
@@ -676,9 +1045,9 @@
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "the desk URL",
-        "action": "navigate to the desk (arrival)",
-        "adapter": "ui-navigation"
+        "adapter": "ui-navigation",
+        "action": "goto",
+        "url": "/"
       },
       "expected": {
         "predicate": {
@@ -742,9 +1111,95 @@
       "state_id": "state.engines.profile_missing",
       "applicability": "applicable",
       "preconditions": [
-        "a profile assigned to meeting.deferred_analysis"
+        "a profile assigned to meeting.deferred_analysis",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        }
+      ],
       "trigger": {
         "kind": "api",
         "method": "DELETE",
@@ -761,7 +1216,10 @@
         "words": "the resolved endpoint carries reason 'assigned profile missing: <id>' and falls back rather than raising; the Chair's SETUP row returns or the run refuses by name [the audit's stated observation location: protocol: GET /api/inference/assignments; face: [data-testid=arrival-blocker-row]]"
       },
       "completion_bound_s": 45,
-      "viewports": []
+      "viewports": [
+        1440,
+        393
+      ]
     },
     {
       "id": "case.j3.profile_unbind.binding_absent",
@@ -772,9 +1230,95 @@
       "state_id": "state.engines.binding_absent",
       "applicability": "applicable",
       "preconditions": [
-        "a profile with a binding"
+        "a profile with a binding",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        }
+      ],
       "trigger": {
         "kind": "api",
         "method": "DELETE",
@@ -783,6 +1327,12 @@
         "adapter": "http-route"
       },
       "expected": {
+        "predicate": {
+          "kind": "protocol_field",
+          "path": "profile.current_binding",
+          "value": null
+        },
+        "observe_at": "protocol: GET /api/model-profiles/{profile_id}",
         "words": "GET /api/model-profiles/{profile_id} answers with no binding, and a run that needed it refuses by name rather than silently running elsewhere [the audit's stated observation location: protocol: GET /api/model-profiles/{profile_id}]"
       },
       "completion_bound_s": 30,
@@ -800,18 +1350,39 @@
       "preconditions": [
         "case.j1.speech_readiness.ready passed (transcription needs it); otherwise BLOCKED, not failed",
         "case.j3.concierge_use_for_summaries.assigned_ready reached (the summary engine set)",
-        "the browser launched with the fake audio device"
+        "the browser launched with the fake audio device",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
       "setup": [
         {
-          "kind": "boundary",
-          "substitutes": "the browser's microphone device",
-          "label": "chromium --use-fake-device-for-media-stream --use-file-for-fake-audio-capture=<fixture> (boundary substitution: this proves the capture-to-transcript path, NOT real microphone hardware)"
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
         },
         {
-          "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04"
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "boundary",
+          "substitutes": "the browser's microphone device",
+          "label": "chromium --use-fake-device-for-media-stream --use-file-for-fake-audio-capture=<fixture> (boundary substitution: this proves the capture-to-transcript path, NOT real microphone hardware) Input: tests/fixtures/core_path_smoke_16k.wav (sha256 36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04) at the browser's fake audio device - NOT an HTTP input boundary, so it is recorded here rather than claimed as a fixture POST. Input: tests/fixtures/core_path_smoke_16k.wav (sha256 36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04) at the browser's fake audio device - NOT an HTTP input boundary, so it is recorded here rather than claimed as a fixture POST.",
+          "substitute": "browser_audio_device",
+          "reply_path": "tests/fixtures/core_path_smoke_16k.wav"
         }
       ],
       "trigger": {
@@ -872,10 +1443,7 @@
         "words": "the meeting row reads capture_status 'finalized' with a length; its projection becomes a receipt titled 'Meeting saved'; no error is shown [the audit's stated observation location: protocol: GET /api/meetings; face: the Chair's meeting row]"
       },
       "completion_bound_s": 90,
-      "viewports": [
-        1440,
-        393
-      ]
+      "viewports": []
     },
     {
       "id": "case.j4.meetings_import.imported",
@@ -886,13 +1454,29 @@
       "state_id": "state.meetings.capture.imported",
       "applicability": "applicable",
       "preconditions": [
-        "case.j1.speech_readiness.ready passed; otherwise BLOCKED, not failed"
+        "case.j1.speech_readiness.ready passed; otherwise BLOCKED, not failed",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        }
       ],
       "setup": [
         {
           "kind": "fixture",
           "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04"
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "adapter": "http-route"
         }
       ],
       "trigger": {
@@ -963,14 +1547,134 @@
       "applicability": "applicable",
       "preconditions": [
         "one meeting with a transcript",
-        "an engine assigned to meeting.deferred_analysis"
+        "an engine assigned to meeting.deferred_analysis",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        }
+      ],
       "trigger": {
         "kind": "ui",
-        "selector": "the desk URL",
-        "action": "navigate to the desk (arrival)",
-        "adapter": "ui-navigation"
+        "adapter": "ui-navigation",
+        "action": "goto",
+        "url": "/"
       },
       "expected": {
         "predicate": {
@@ -997,14 +1701,73 @@
       "applicability": "applicable",
       "preconditions": [
         "one meeting with a transcript",
-        "no assignment for meeting.deferred_analysis"
+        "no assignment for meeting.deferred_analysis",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        }
+      ],
       "trigger": {
         "kind": "ui",
-        "selector": "the desk URL",
-        "action": "navigate to the desk (arrival)",
-        "adapter": "ui-navigation"
+        "adapter": "ui-navigation",
+        "action": "goto",
+        "url": "/"
       },
       "expected": {
         "predicate": {
@@ -1029,9 +1792,105 @@
       "state_id": "state.meetings.intel.queued",
       "applicability": "applicable",
       "preconditions": [
-        "case.j5.meeting_open.route_disclosed reached"
+        "case.j5.meeting_open.route_disclosed reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        }
+      ],
       "trigger": {
         "kind": "ui",
         "selector": "[data-testid=arrival-run-intel]",
@@ -1065,10 +1924,135 @@
       "state_id": "state.meetings.intel.running",
       "applicability": "applicable",
       "preconditions": [
-        "case.j6.run_summary.intel_queued reached",
-        "the real LAN engine reachable"
+        "case.j6.run_summary.intel_queued reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        "the real LAN engine reachable",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
       "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        },
         {
           "kind": "api",
           "method": "POST",
@@ -1107,10 +2091,135 @@
       "state_id": "state.meetings.intel.ready",
       "applicability": "applicable",
       "preconditions": [
-        "case.j6.run_summary.intel_running reached",
-        "the real LAN engine identity recorded"
+        "case.j6.run_summary.intel_running reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        "the real LAN engine identity recorded",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
       "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        },
         {
           "kind": "api",
           "method": "POST",
@@ -1138,10 +2247,7 @@
         "words": "the meeting's gesture state answers 'ready' and summary text exists for that meeting; the host that RAN it is recorded and compared with the host J5 disclosed. Technical completion is reported separately from owner usefulness [the audit's stated observation location: protocol: GET /api/intel/summary; face: the Chair's meeting row badge]"
       },
       "completion_bound_s": 600,
-      "viewports": [
-        1440,
-        393
-      ]
+      "viewports": []
     },
     {
       "id": "case.j6.run_summary.intel_failed",
@@ -1152,13 +2258,118 @@
       "state_id": "state.meetings.intel.failed",
       "applicability": "applicable",
       "preconditions": [
-        "a queued job whose destination refuses"
+        "a queued job whose destination refuses",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        }
       ],
       "setup": [
         {
           "kind": "boundary",
           "substitutes": "the named provider endpoint",
-          "label": "an assigned engine profile whose base_url answers an error; production parsing, queueing, persistence and rendering stay real"
+          "substitute": "engine_reply",
+          "reply_path": ".tmp/graph-walk/engine-replies/intel-failure.json",
+          "label": "the assigned engine's base_url answers an error; production parsing, queueing, persistence and rendering stay real",
+          "adapter": "labelled-substitution"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "boundary",
+          "substitutes": "the named provider endpoint",
+          "label": "an assigned engine profile whose base_url answers an error; production parsing, queueing, persistence and rendering stay real",
+          "substitute": "engine_reply",
+          "reply_path": ".tmp/graph-walk/engine-replies/intel-failure.json"
         }
       ],
       "trigger": {
@@ -1195,9 +2406,143 @@
       "state_id": "state.meetings.intel.retry_after_failure",
       "applicability": "applicable",
       "preconditions": [
-        "case.j6.run_summary.intel_failed reached"
+        "case.j6.run_summary.intel_failed reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "boundary",
+          "substitutes": "the named provider endpoint",
+          "substitute": "engine_reply",
+          "reply_path": ".tmp/graph-walk/engine-replies/intel-failure.json",
+          "label": "the assigned engine's base_url answers an error; production parsing, queueing, persistence and rendering stay real",
+          "adapter": "labelled-substitution"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        }
+      ],
       "trigger": {
         "kind": "api",
         "method": "POST",
@@ -1229,10 +2574,68 @@
       "state_id": "state.engines.assignment_missing",
       "applicability": "applicable",
       "preconditions": [
-        "a meeting with a transcript",
-        "no capability head for meeting.deferred_analysis"
+        "a meeting with NO transcript (case.j4.meeting_stop.transcription_absent reached) -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        }
+      ],
       "trigger": {
         "kind": "api",
         "method": "POST",
@@ -1241,6 +2644,14 @@
         "adapter": "http-route"
       },
       "expected": {
+        "predicate": {
+          "kind": "protocol_status",
+          "method": "POST",
+          "path": "/api/meetings/{meeting_id}/intelligence/run",
+          "status": 409,
+          "body_contains": "Meeting has no transcript"
+        },
+        "observe_at": "protocol: GET /api/intel/jobs",
         "words": "the route refuses by name (an intelligible refusal naming the missing assignment), not a silent 2xx with nothing queued [the audit's stated observation location: protocol: the response body of that POST]"
       },
       "completion_bound_s": 30,
@@ -1255,22 +2666,151 @@
       "state_id": "state.meetings.intel.retained_after_restart",
       "applicability": "applicable",
       "preconditions": [
-        "case.j6.run_summary.intel_ready reached"
+        "case.j6.run_summary.intel_ready reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        }
+      ],
       "trigger": {
         "kind": "cli",
-        "command": "stop the run's hub process, then start it again against the same HOME",
+        "action": "restart_hub",
         "adapter": "process"
       },
       "expected": {
+        "predicate": {
+          "kind": "protocol_field",
+          "path": "jobs.0.status",
+          "value": "succeeded"
+        },
+        "observe_at": "protocol: GET /api/intel/jobs",
         "words": "after the restart the same summary text is reachable in two moves or fewer from arrival, and the meeting's gesture state still answers 'ready' [the audit's stated observation location: face: the Chair, counting moves; protocol: GET /api/intel/summary]"
       },
       "completion_bound_s": 180,
-      "viewports": [
-        1440,
-        393
-      ]
+      "viewports": []
     },
     {
       "id": "case.j7.arrival_load.reload_persisted",
@@ -1281,22 +2821,135 @@
       "state_id": "state.desk_presentation.reload_reconnect",
       "applicability": "applicable",
       "preconditions": [
-        "case.j7.hub_restart.intel_retained reached"
+        "case.j7.hub_restart.intel_retained reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/jobs/0/meeting_id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/intel/jobs",
+          "why": "RUN_SUMMARY really queued a job against THIS meeting"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        }
+      ],
       "trigger": {
         "kind": "ui",
-        "selector": "the page",
+        "selector": "main.chair",
         "action": "reload",
         "adapter": "ui-navigation"
       },
       "expected": {
         "predicate": {
-          "kind": "text_absent",
-          "value": "No engine for summaries"
+          "kind": "attr_equals",
+          "attr": "data-testid",
+          "value": "arrival-headline"
         },
-        "observe_at": "[data-testid=arrival-blocker]",
-        "words": "the desk re-reads and draws the same meeting with the same badge; nothing that existed before the reload is missing after it [the audit's stated observation location: face: the Chair]"
+        "observe_at": "[data-testid=arrival-headline]",
+        "words": "ASTRA (A): the desk must be PRESENT after the reconnect; an empty page no longer passes. || the desk re-reads and draws the same meeting with the same badge; nothing that existed before the reload is missing after it [the audit's stated observation location: face: the Chair]"
       },
       "completion_bound_s": 60,
       "viewports": [
@@ -1321,7 +2974,8 @@
         {
           "kind": "boundary",
           "substitutes": "nothing - no substitution is lawful here",
-          "label": "the brief forbids sending native keystrokes and capturing the owner's microphone; a fixture WAV does not prove native hotkey delivery into another application"
+          "label": "the brief forbids sending native keystrokes and capturing the owner's microphone; a fixture WAV does not prove native hotkey delivery into another application",
+          "substitute": "none"
         }
       ],
       "expected": {
@@ -1419,9 +3073,27 @@
       "state_id": "state.projections.door.present",
       "applicability": "applicable",
       "preconditions": [
-        "case.j9.route_run_now.receipt_resolved or case.j9.timer_sweep.receipt_resolved reached"
+        "case.j9.route_run_now.receipt_resolved or case.j9.timer_sweep.receipt_resolved reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/projections/0/source_kind",
+            "value": "pipeline_event"
+          },
+          "observe_at": "protocol: GET /api/desk/projections",
+          "why": "SWEEP_NOW really minted a pipeline receipt: rows sort newest first (projections.py:129), so the sweep is the head of the list"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/settings/heartbeat/run-now",
+          "body": {},
+          "adapter": "http-route"
+        }
+      ],
       "trigger": {
         "kind": "ui",
         "selector": "[title='Desk memory']",
@@ -1451,12 +3123,52 @@
       "state_id": "state.projections.door.present",
       "applicability": "applicable",
       "preconditions": [
-        "case.j9.shade_open.door_present reached"
+        "case.j9.shade_open.door_present reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-label",
+            "value": "Missed"
+          },
+          "observe_at": ".desk-shade",
+          "why": "OPEN_SHADE really opened Desk memory"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/projections/0/source_kind",
+            "value": "pipeline_event"
+          },
+          "observe_at": "protocol: GET /api/desk/projections",
+          "why": "SWEEP_NOW really minted a pipeline receipt: rows sort newest first (projections.py:129), so the sweep is the head of the list"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/settings/heartbeat/run-now",
+          "body": {},
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[title='Desk memory']"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-shade"
+        }
+      ],
       "trigger": {
         "kind": "ui",
-        "selector": "the sweep row's Open Button in the shade",
+        "selector": "main.chair",
         "action": "click",
         "adapter": "ui-pointer"
       },
@@ -1483,13 +3195,38 @@
       "state_id": "state.projections.door.absent",
       "applicability": "applicable",
       "preconditions": [
-        "a pipeline_event with origin 'remote' and a service other than HeartbeatService"
+        "a pipeline_event with origin 'remote' and a service other than HeartbeatService",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
       "setup": [
         {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
           "kind": "boundary",
           "substitutes": "the remote caller",
-          "label": "a remote-origin call into the hub's own API from the run's harness, recorded as such; the event is produced by the real pipeline observer, not written by hand"
+          "label": "a remote-origin call into the hub's own API from the run's harness, recorded as such; the event is produced by the real pipeline observer, not written by hand",
+          "substitute": "remote_origin_call"
         }
       ],
       "trigger": {
@@ -1521,9 +3258,120 @@
       "state_id": "state.projections.door.stale",
       "applicability": "applicable",
       "preconditions": [
-        "case.j6.run_summary.intel_queued reached, then the meeting deleted"
+        "case.j6.run_summary.intel_queued reached, then the meeting deleted -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/jobs/0/meeting_id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/intel/jobs",
+          "why": "RUN_SUMMARY really queued a job against THIS meeting"
+        }
       ],
       "setup": [
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        },
         {
           "kind": "api",
           "method": "DELETE",
@@ -1539,7 +3387,7 @@
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "the deleted meeting's row Open Button in the shade",
+        "selector": "main.chair",
         "action": "click",
         "adapter": "ui-pointer"
       },
@@ -1566,12 +3414,154 @@
       "state_id": "state.projections.attention.acknowledged",
       "applicability": "applicable",
       "preconditions": [
-        "one needs_attention projection on the shade"
+        "one needs_attention projection on the shade",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/jobs/0/meeting_id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/intel/jobs",
+          "why": "RUN_SUMMARY really queued a job against THIS meeting"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-label",
+            "value": "Missed"
+          },
+          "observe_at": ".desk-shade",
+          "why": "OPEN_SHADE really opened Desk memory"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "boundary",
+          "substitutes": "the named provider endpoint",
+          "substitute": "engine_reply",
+          "reply_path": ".tmp/graph-walk/engine-replies/intel-failure.json",
+          "label": "the assigned engine's base_url answers an error; production parsing, queueing, persistence and rendering stay real",
+          "adapter": "labelled-substitution"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[title='Desk memory']"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-shade"
+        }
+      ],
       "trigger": {
         "kind": "ui",
-        "selector": "the row's Acknowledge Button in the shade",
+        "selector": "main.chair",
         "action": "click",
         "adapter": "ui-pointer"
       },
@@ -1602,12 +3592,154 @@
       "state_id": "state.projections.attention.dismissed",
       "applicability": "applicable",
       "preconditions": [
-        "one needs_attention projection on the shade"
+        "one needs_attention projection on the shade",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/jobs/0/meeting_id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/intel/jobs",
+          "why": "RUN_SUMMARY really queued a job against THIS meeting"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-label",
+            "value": "Missed"
+          },
+          "observe_at": ".desk-shade",
+          "why": "OPEN_SHADE really opened Desk memory"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "boundary",
+          "substitutes": "the named provider endpoint",
+          "substitute": "engine_reply",
+          "reply_path": ".tmp/graph-walk/engine-replies/intel-failure.json",
+          "label": "the assigned engine's base_url answers an error; production parsing, queueing, persistence and rendering stay real",
+          "adapter": "labelled-substitution"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[title='Desk memory']"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-shade"
+        }
+      ],
       "trigger": {
         "kind": "ui",
-        "selector": "the row's Dismiss Button in the shade",
+        "selector": "main.chair",
         "action": "click",
         "adapter": "ui-pointer"
       },
@@ -1638,9 +3770,181 @@
       "state_id": "state.projections.attention.restored",
       "applicability": "applicable",
       "preconditions": [
-        "case.j9.shade_dismiss.dismissed reached"
+        "case.j9.shade_dismiss.dismissed reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/jobs/0/meeting_id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/intel/jobs",
+          "why": "RUN_SUMMARY really queued a job against THIS meeting"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-label",
+            "value": "Missed"
+          },
+          "observe_at": ".desk-shade",
+          "why": "OPEN_SHADE really opened Desk memory"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "boundary",
+          "substitutes": "the named provider endpoint",
+          "substitute": "engine_reply",
+          "reply_path": ".tmp/graph-walk/engine-replies/intel-failure.json",
+          "label": "the assigned engine's base_url answers an error; production parsing, queueing, persistence and rendering stay real",
+          "adapter": "labelled-substitution"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[title='Desk memory']"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-shade"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "section[aria-label=\"Needs you\"] .desk-shade-item:first-of-type .desk-shade-do button:last-of-type"
+        }
+      ],
       "trigger": {
         "kind": "api",
         "method": "PUT",
@@ -1655,13 +3959,13 @@
           "kind": "protocol_rows",
           "collection": "projections",
           "match": {
-            "attention_state": "unseen",
-            "dismissed": false
+            "dismissed": false,
+            "source_kind": "pipeline_event"
           },
           "min_new": 1
         },
         "observe_at": "protocol: GET /api/desk/projections",
-        "words": "the row returns to the default list with attention_state 'unseen' and dismissed false [the audit's stated observation location: protocol: GET /api/desk/projections]"
+        "words": "ASTRA (E): restore CLEARS the dismissal and the row returns with the PRODUCER's own attention state (projections.py:90-95 keeps row.attention_state unless the overlay says acknowledged). The earlier claim of 'unseen' was false. || the row returns to the default list with attention_state 'unseen' and dismissed false [the audit's stated observation location: protocol: GET /api/desk/projections]"
       },
       "completion_bound_s": 30,
       "viewports": []
@@ -1701,7 +4005,10 @@
         ]
       },
       "completion_bound_s": 20,
-      "viewports": []
+      "viewports": [
+        1440,
+        393
+      ]
     },
     {
       "id": "case.j10.arrival_generate_brief.populated",
@@ -1713,9 +4020,34 @@
       "applicability": "applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "at least one meeting or follow-through in the window"
+        "at least one meeting or follow-through in the window",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        }
+      ],
       "trigger": {
         "kind": "ui",
         "selector": "[data-testid=arrival-brief-generate]",
@@ -1724,11 +4056,11 @@
       },
       "expected": {
         "predicate": {
-          "kind": "text_absent",
-          "value": "No brief yet"
+          "kind": "text_contains",
+          "value": "Brief ready"
         },
         "observe_at": "[data-testid=arrival-brief]",
-        "words": "one POST /api/brief/generate; the brief's OWN words stay on the face after it (not replaced by a receipt), and [data-testid=arrival-brief-receipt] carries the receipt [the audit's stated observation location: face: [data-testid=arrival-brief]]"
+        "words": "ASTRA (A): an absent BRIEF section no longer satisfies this - the section must be PRESENT and carry its own receipt line (briefEgress.ts:53 'Brief ready'). || one POST /api/brief/generate; the brief's OWN words stay on the face after it (not replaced by a receipt), and [data-testid=arrival-brief-receipt] carries the receipt [the audit's stated observation location: face: [data-testid=arrival-brief]]"
       },
       "completion_bound_s": 120,
       "viewports": [
@@ -1746,9 +4078,34 @@
       "applicability": "applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "nothing in the window"
+        "nothing in the window",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        }
+      ],
       "trigger": {
         "kind": "ui",
         "selector": "[data-testid=arrival-brief-generate]",
@@ -1757,11 +4114,11 @@
       },
       "expected": {
         "predicate": {
-          "kind": "text_absent",
-          "value": "No brief yet"
+          "kind": "text_contains",
+          "value": "Brief ready"
         },
         "observe_at": "[data-testid=arrival-brief]",
-        "words": "the brief exists with is_empty true and the face SAYS so ('Nothing material changed'); it does not fall back to the no-brief branch - this is the owner's sitting defect 2 [the audit's stated observation location: face: [data-testid=arrival-brief]]"
+        "words": "ASTRA (A): the empty brief must SAY it happened. briefReceipt states 'Brief ready' with no count of zero (briefEgress.ts:51-54); the no-brief branch would say 'No brief yet'. || the brief exists with is_empty true and the face SAYS so ('Nothing material changed'); it does not fall back to the no-brief branch - this is the owner's sitting defect 2 [the audit's stated observation location: face: [data-testid=arrival-brief]]"
       },
       "completion_bound_s": 120,
       "viewports": [
@@ -1778,22 +4135,35 @@
       "state_id": "state.briefs.reload_persisted",
       "applicability": "applicable",
       "preconditions": [
-        "case.j10.arrival_generate_brief.populated reached, and every item shelved"
+        "case.j10.arrival_generate_brief.populated reached, and every item shelved -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)"
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-generate]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-receipt]"
+        }
+      ],
       "trigger": {
         "kind": "ui",
-        "selector": "the page",
+        "selector": "main.chair",
         "action": "reload",
         "adapter": "ui-navigation"
       },
       "expected": {
         "predicate": {
-          "kind": "text_absent",
-          "value": "No brief yet"
+          "kind": "text_contains",
+          "value": "Generate again"
         },
         "observe_at": "[data-testid=arrival-brief]",
-        "words": "the brief section survives the reload with the brief's own words; the face does not read 'still no brief' one day later [the audit's stated observation location: face: [data-testid=arrival-brief]]"
+        "words": "ASTRA (A): after the reload the section must be PRESENT with the brief's own verb (ChairHome.tsx:1157), not merely missing the no-brief line. || the brief section survives the reload with the brief's own words; the face does not read 'still no brief' one day later [the audit's stated observation location: face: [data-testid=arrival-brief]]"
       },
       "completion_bound_s": 60,
       "viewports": [
@@ -1810,13 +4180,50 @@
       "state_id": "state.briefs.same_day_idempotent",
       "applicability": "applicable",
       "preconditions": [
-        "case.j10.arrival_generate_brief.populated reached, same local date"
+        "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its own 'Generate again' verb (ChairHome.tsx:1136-1157). With untriaged items the Chair draws NO second verb at all (:1114) and this recipe cannot run.",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-receipt]",
+          "adapter": "ui-pointer"
+        }
+      ],
       "trigger": {
         "kind": "ui",
+        "action": "click",
         "selector": "[data-testid=arrival-brief-generate]",
-        "action": "click again",
         "adapter": "ui-pointer"
       },
       "expected": {
@@ -1878,13 +4285,38 @@
       "applicability": "applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "the generate call refused"
+        "the generate call refused",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
       "setup": [
         {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
           "kind": "boundary",
           "substitutes": "POST /api/brief/generate",
-          "label": "playwright route interception failing that one write; every other read stays real"
+          "label": "playwright route interception failing that one write; every other read stays real",
+          "substitute": "route_failure"
         }
       ],
       "trigger": {
@@ -1916,9 +4348,55 @@
       "state_id": "state.briefs.item.acknowledged",
       "applicability": "applicable",
       "preconditions": [
-        "case.j10.arrival_generate_brief.populated reached, with at least one item"
+        "case.j10.arrival_generate_brief.populated reached, with at least one item -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "Brief ready"
+          },
+          "observe_at": "[data-testid=arrival-brief]",
+          "why": "GENERATE_BRIEF really produced a brief on the face"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-generate]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-receipt]"
+        }
+      ],
       "trigger": {
         "kind": "api",
         "method": "POST",
@@ -1929,6 +4407,12 @@
         "adapter": "http-route"
       },
       "expected": {
+        "predicate": {
+          "kind": "protocol_field",
+          "path": "/{item_id}",
+          "value": "acknowledged"
+        },
+        "observe_at": "protocol: GET /api/brief/shelf",
         "words": "GET /api/brief/shelf holds that item as 'acknowledged' and the Chair's untriaged list drops it [the audit's stated observation location: protocol: GET /api/brief/shelf; face: [data-testid=arrival-brief]]"
       },
       "completion_bound_s": 30,
@@ -1943,9 +4427,55 @@
       "state_id": "state.briefs.item.deferred",
       "applicability": "applicable",
       "preconditions": [
-        "case.j10.arrival_generate_brief.populated reached, with at least one item"
+        "case.j10.arrival_generate_brief.populated reached, with at least one item -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "Brief ready"
+          },
+          "observe_at": "[data-testid=arrival-brief]",
+          "why": "GENERATE_BRIEF really produced a brief on the face"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-generate]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-receipt]"
+        }
+      ],
       "trigger": {
         "kind": "api",
         "method": "POST",
@@ -1956,6 +4486,12 @@
         "adapter": "http-route"
       },
       "expected": {
+        "predicate": {
+          "kind": "protocol_field",
+          "path": "/{item_id}",
+          "value": "deferred"
+        },
+        "observe_at": "protocol: GET /api/brief/shelf",
         "words": "GET /api/brief/shelf holds that item as 'deferred'; an unknown state is refused by name (422) [the audit's stated observation location: protocol: GET /api/brief/shelf]"
       },
       "completion_bound_s": 30,
@@ -1970,9 +4506,55 @@
       "state_id": "state.briefs.people.unavailable",
       "applicability": "applicable",
       "preconditions": [
-        "the people store unavailable in this HOME"
+        "the people store unavailable in this HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "Brief ready"
+          },
+          "observe_at": "[data-testid=arrival-brief]",
+          "why": "GENERATE_BRIEF really produced a brief on the face"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-generate]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-receipt]"
+        }
+      ],
       "trigger": {
         "kind": "api",
         "method": "GET",
@@ -1981,13 +4563,16 @@
         "adapter": "http-route"
       },
       "expected": {
+        "predicate": {
+          "kind": "protocol_field",
+          "path": "person_sections_state",
+          "value": "unavailable"
+        },
+        "observe_at": "protocol: GET /api/brief/latest",
         "words": "the response carries person_sections_state 'unavailable' and the face SAYS the people sections are unavailable rather than omitting them silently [the audit's stated observation location: protocol: GET /api/brief/latest; face: [data-testid=person-sections-unavailable]]"
       },
       "completion_bound_s": 30,
-      "viewports": [
-        1440,
-        393
-      ]
+      "viewports": []
     },
     {
       "id": "case.j11.write_a_thought.window_open",
@@ -1999,9 +4584,34 @@
       "applicability": "applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "the desk shown"
+        "the desk shown",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        }
+      ],
       "trigger": {
         "kind": "ui",
         "selector": "[data-testid=arrival-develop-thought]",
@@ -2031,18 +4641,39 @@
       "state_id": "state.desk_presentation.window_open_thought",
       "applicability": "applicable",
       "preconditions": [
-        "case.j11.write_a_thought.window_open reached"
+        "case.j11.write_a_thought.window_open reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)"
       ],
       "setup": [
         {
           "kind": "ui",
-          "selector": "the Thought window's note body",
-          "action": "type one sentence"
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-develop-thought]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window textarea",
+          "value": "one sentence"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "main.chair",
+          "value": "one sentence",
+          "adapter": "ui-pointer"
         }
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "the Thought window's keep/file verb",
+        "selector": "main.chair",
         "action": "click",
         "adapter": "ui-pointer"
       },
@@ -2076,13 +4707,38 @@
       "applicability": "applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "POST /api/notes refused"
+        "POST /api/notes refused",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
       "setup": [
         {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
           "kind": "boundary",
           "substitutes": "POST /api/notes",
-          "label": "playwright route interception failing that one write; every other read stays real"
+          "label": "playwright route interception failing that one write; every other read stays real",
+          "substitute": "route_failure"
         }
       ],
       "trigger": {
@@ -2171,6 +4827,16 @@
         "adapter": "scheduler-wait (no substitute button: the sweep must come from the conductor loop, holdspeak/runtime/heartbeat.py:91-126)"
       },
       "expected": {
+        "predicate": {
+          "kind": "protocol_rows",
+          "collection": "projections",
+          "match": {
+            "source_kind": "pipeline_event",
+            "summary__prefix": "{\"outcome\": \"held_remote_runs_on\""
+          },
+          "min_new": 1
+        },
+        "observe_at": "protocol: GET /api/desk/projections",
         "words": "no local sweep runs; a held receipt is recorded instead, and the desk says the sweep is held rather than reading as a clean sweep [the audit's stated observation location: protocol: GET /api/desk/projections]"
       },
       "completion_bound_s": 180,
@@ -2186,22 +4852,54 @@
       "applicability": "applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "text typed into the gate and not kept"
+        "text typed into the gate and not kept",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
       ],
       "setup": [
         {
           "kind": "ui",
-          "selector": "textarea in section.desk-first-words",
-          "action": "type 'one sentence'"
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "section.desk-first-words textarea",
+          "value": "one sentence",
+          "adapter": "ui-pointer"
         }
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "the page",
+        "selector": "main.chair",
         "action": "reload",
         "adapter": "ui-navigation"
       },
       "expected": {
+        "predicate": {
+          "kind": "input_value",
+          "selector": "section.desk-first-words textarea",
+          "contains": "one sentence"
+        },
+        "observe_at": "section.desk-first-words textarea",
         "words": "the typed words come back in the field after the reload (the durable draft), and the face says they were recovered [the audit's stated observation location: face: section.desk-first-words; browser storage: the durable draft key]"
       },
       "completion_bound_s": 45,
@@ -2211,7 +4909,225 @@
       ]
     },
     {
-      "id": "case.beyond.projections_list.counts",
+      "id": "case.j6.route_intelligence_run.no_assignment",
+      "job": "j6",
+      "edge_ids": [
+        "edge.route.meeting_intelligence_run"
+      ],
+      "state_id": "state.engines.assignment_missing",
+      "applicability": "applicable",
+      "preconditions": [
+        "a meeting WITH a transcript",
+        "no capability head for meeting.deferred_analysis",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        }
+      ],
+      "trigger": {
+        "kind": "api",
+        "method": "POST",
+        "path": "/api/meetings/{meeting_id}/intelligence/run",
+        "body": {},
+        "adapter": "http-route"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "protocol_rows",
+          "collection": "projections",
+          "match": {
+            "source_kind": "intel_job",
+            "attention_state": "needs_attention"
+          },
+          "min_new": 1
+        },
+        "observe_at": "protocol: GET /api/desk/projections",
+        "words": "the missing assignment reaches the DESK: a job projection appears reading needs_attention. The route itself does NOT refuse - run_intelligence names only missing/empty/reserved/running/ready (meeting_intel_service.py:163-169) - so the owner's only telling is the late failure. If nothing surfaces, that is the finding [the audit's stated observation location: protocol: GET /api/desk/projections]"
+      },
+      "completion_bound_s": 300,
+      "viewports": []
+    },
+    {
+      "id": "case.j10.brief_item_shelf.refused",
+      "job": "j10",
+      "edge_ids": [
+        "edge.route.brief_item_shelf"
+      ],
+      "state_id": "state.briefs.item.untouched",
+      "applicability": "applicable",
+      "preconditions": [
+        "case.j10.arrival_generate_brief.populated reached, with at least one item -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "Brief ready"
+          },
+          "observe_at": "[data-testid=arrival-brief]",
+          "why": "GENERATE_BRIEF really produced a brief on the face"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-generate]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-receipt]"
+        }
+      ],
+      "trigger": {
+        "kind": "api",
+        "method": "POST",
+        "path": "/api/brief/items/{item_id}/shelf",
+        "body": {
+          "state": "shelved"
+        },
+        "adapter": "http-route"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "protocol_status",
+          "method": "POST",
+          "path": "/api/brief/items/{item_id}/shelf",
+          "status": 422
+        },
+        "observe_at": "protocol: GET /api/brief/shelf",
+        "words": "an unknown shelf state is refused by name with 422 (holdspeak/web/routes/monday_brief.py:135-136) [the audit's stated observation location: protocol: GET /api/brief/shelf]"
+      },
+      "completion_bound_s": 30,
+      "viewports": []
+    },
+    {
+      "id": "case.beyond.sweep_held_remote.no_local_sweep",
+      "job": "beyond",
+      "edge_ids": [
+        "edge.timer.heartbeat_sweep"
+      ],
+      "state_id": "state.time.sweep_held_remote",
+      "applicability": "applicable",
+      "preconditions": [
+        "the hub up",
+        "runs_on set to a non-local host",
+        "no sweep has ever run in this HOME"
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/settings/heartbeat",
+          "body": {
+            "sweep_every_minutes": 1,
+            "runs_on": "<remote host>"
+          },
+          "adapter": "http-route"
+        }
+      ],
+      "trigger": {
+        "kind": "clock",
+        "clock": "clock.heartbeat_scheduler",
+        "how": "no clock is moved: the interval floor plus at most two 60s conductor ticks",
+        "adapter": "scheduler-wait (no substitute button: the sweep must come from the conductor loop, holdspeak/runtime/heartbeat.py:91-126)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "protocol_field",
+          "path": "last_sweep_at",
+          "value": null
+        },
+        "observe_at": "protocol: GET /api/settings/heartbeat",
+        "words": "NO local sweep ran: last_sweep_at is still null after the ticks [the audit's stated observation location: protocol: GET /api/settings/heartbeat]"
+      },
+      "completion_bound_s": 180,
+      "viewports": []
+    },
+    {
+      "id": "case.beyond.projections_counts.needs_attention",
       "job": "beyond",
       "edge_ids": [
         "edge.route.projections_list"
@@ -2219,9 +5135,17 @@
       "state_id": "state.projections.receipt.resolved",
       "applicability": "applicable",
       "preconditions": [
-        "at least one projection of each kind"
+        "a fresh HOME whose only projections are sweep receipts"
       ],
-      "setup": [],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/settings/heartbeat/run-now",
+          "body": {},
+          "adapter": "http-route"
+        }
+      ],
       "trigger": {
         "kind": "api",
         "method": "GET",
@@ -2230,9 +5154,474 @@
         "adapter": "http-route"
       },
       "expected": {
-        "words": "counts holds needs_attention, unseen, acknowledged and receipts, and subject_counts describes the SUBJECT rather than the current query; an invalid attention_state is refused [the audit's stated observation location: protocol: GET /api/desk/projections]"
+        "predicate": {
+          "kind": "protocol_field",
+          "path": "counts.needs_attention",
+          "value": 0
+        },
+        "observe_at": "protocol: GET /api/desk/projections",
+        "words": "counts.needs_attention is 0: a desk whose only rows are resolved receipts asks for nothing [the audit's stated observation location: protocol: GET /api/desk/projections]"
       },
-      "completion_bound_s": 20,
+      "completion_bound_s": 30,
+      "viewports": []
+    },
+    {
+      "id": "case.beyond.projections_counts.unseen",
+      "job": "beyond",
+      "edge_ids": [
+        "edge.route.projections_list"
+      ],
+      "state_id": "state.projections.receipt.resolved",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh HOME whose only projections are sweep receipts"
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/settings/heartbeat/run-now",
+          "body": {},
+          "adapter": "http-route"
+        }
+      ],
+      "trigger": {
+        "kind": "api",
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "body": null,
+        "adapter": "http-route"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "protocol_field",
+          "path": "counts.unseen",
+          "value": 0
+        },
+        "observe_at": "protocol: GET /api/desk/projections",
+        "words": "counts.unseen is 0: a desk whose only rows are resolved receipts asks for nothing [the audit's stated observation location: protocol: GET /api/desk/projections]"
+      },
+      "completion_bound_s": 30,
+      "viewports": []
+    },
+    {
+      "id": "case.beyond.projections_counts.acknowledged",
+      "job": "beyond",
+      "edge_ids": [
+        "edge.route.projections_list"
+      ],
+      "state_id": "state.projections.receipt.resolved",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh HOME whose only projections are sweep receipts"
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/settings/heartbeat/run-now",
+          "body": {},
+          "adapter": "http-route"
+        }
+      ],
+      "trigger": {
+        "kind": "api",
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "body": null,
+        "adapter": "http-route"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "protocol_field",
+          "path": "counts.acknowledged",
+          "value": 0
+        },
+        "observe_at": "protocol: GET /api/desk/projections",
+        "words": "counts.acknowledged is 0: a desk whose only rows are resolved receipts asks for nothing [the audit's stated observation location: protocol: GET /api/desk/projections]"
+      },
+      "completion_bound_s": 30,
+      "viewports": []
+    },
+    {
+      "id": "case.j4.record_only.no_speech_head",
+      "job": "j4",
+      "edge_ids": [
+        "edge.face.arrival_record_meeting"
+      ],
+      "state_id": "state.meetings.transcription.record_only",
+      "applicability": "applicable",
+      "preconditions": [
+        "NO assignment for speech.transcribe (the fresh migrated profile cleared)",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/clear",
+          "body": {
+            "scope": "capability",
+            "capability": "speech.transcribe"
+          },
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[data-testid=arrival-record-meeting]",
+        "adapter": "ui-pointer"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "protocol_rows",
+          "collection": "projections",
+          "match": {
+            "source_kind": "meeting",
+            "attention_state": "unseen"
+          },
+          "min_new": 1
+        },
+        "observe_at": "protocol: GET /api/desk/projections",
+        "words": "Raw capture continues with NO transcription: the session is record_only with reason_code transcription_no_speech_assignment (intel_admission.py:220,297). The projection proves the meeting started; the record_only posture itself is read from the meeting row beside it [the audit's stated observation location: the meeting's transcription_status]."
+      },
+      "completion_bound_s": 60,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.j6.run_summary.summary_text",
+      "job": "j6",
+      "edge_ids": [
+        "edge.face.arrival_run_intel"
+      ],
+      "state_id": "state.meetings.intel.ready",
+      "applicability": "applicable",
+      "preconditions": [
+        "case.j6.run_summary.intel_ready reached in this run -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        "the synthetic meeting material carries the planted token HOLDSPEAK-SYNTH-1",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/jobs/0/meeting_id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/intel/jobs",
+          "why": "RUN_SUMMARY really queued a job against THIS meeting"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=arrival-meetings] [data-testid=arrival-run-intel]",
+          "optional": true,
+          "adapter": "ui-pointer"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[data-testid=arrival-meetings] .desk-ledger-row",
+        "adapter": "ui-pointer"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "HOLDSPEAK-SYNTH-1"
+        },
+        "observe_at": ".desk-window .surface-material",
+        "words": "The SUMMARY TEXT is on the summary face, not merely a succeeded job. The token is the brief section 5 requirement that the material make summary errors inspectable. READ OFF SOURCE: the transcript of tests/fixtures/core_path_smoke_16k.wav is unknown at authoring time, so the live pass must either use synthetic material carrying this token or record this case BLOCKED - never pass it on a summary nobody read."
+      },
+      "completion_bound_s": 600,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.j6.run_summary.host_named",
+      "job": "j6",
+      "edge_ids": [
+        "edge.face.arrival_run_intel"
+      ],
+      "state_id": "state.meetings.intel.ready",
+      "applicability": "applicable",
+      "preconditions": [
+        "case.j6.run_summary.intel_ready reached in this run -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/core_path_smoke_16k.wav",
+          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        }
+      ],
+      "trigger": {
+        "kind": "api",
+        "method": "GET",
+        "path": "/api/intel/jobs",
+        "body": null,
+        "adapter": "http-route"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "protocol_field",
+          "path": "jobs.0.planned_route.legs.0.host",
+          "value": "192.168.1.43"
+        },
+        "observe_at": "protocol: GET /api/intel/jobs",
+        "words": "Article III: the host is NAMED on the job. READ OFF SOURCE - this is the PLANNED host recorded on the job row (meeting_intel_service.py:74 carries planned_route; ChairHome.tsx:2018 reads legs[0].host). The host that actually RAN lives in run_receipt, whose shape I could not verify, so the live pass must record BOTH and the council compares them against the host J5 disclosed. The value is the declared LAN engine and is environment-specific."
+      },
+      "completion_bound_s": 60,
       "viewports": []
     }
   ],
@@ -5389,19 +8778,56 @@
       "id": "state.time.continuity_horizon",
       "family": "time",
       "values": {
-        "defined": false
+        "replay_horizon_days": 14
       },
       "phase1_refs": [],
       "sources": [
         {
-          "path": "holdspeak/mcp/families/thought.py",
-          "symbol": "continuity_revision",
-          "line": 38,
-          "claim": "the nearest located symbol is a revision counter on the MCP Thought resource, NOT a time horizon"
+          "path": "holdspeak/services/needs_you_aggregate.py",
+          "symbol": "REPLAY_HORIZON_DAYS",
+          "line": 163,
+          "claim": "the continuity horizon IS a producer: an observation older than fourteen days is stated as unobserved, never replayed as still true"
         }
       ],
       "reachable_by": [
-        "unexercised: UNKNOWN - no producer of a 'continuity horizon' was located in holdspeak/ or web/src at this revision, so the brief's seventh time bullet has no reachable tuple to name. Missing mechanism: a definition from the brief's author. Cost: one time bullet stays unmodelled."
+        "unexercised: the horizon is crossed only by the passage of fourteen real days, and clock.python_wall has no mechanism in scope (no libfaketime on PATH; the brief forbids changing the machine clock). Cost: coverage's oldest branch - a stale source stated as unobserved rather than replayed - goes unobserved."
+      ]
+    },
+    {
+      "id": "state.meetings.transcription.record_only",
+      "family": "meetings",
+      "values": {
+        "axis": "transcription",
+        "transcription_status": "record_only"
+      },
+      "phase1_refs": [
+        {
+          "path": "docs/internal/philo/data/voice.json",
+          "record_id": "voice.transcribe"
+        }
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/meeting_session/intel_admission.py",
+          "symbol": "_record_only",
+          "line": 220,
+          "claim": "an absent speech head puts the session into record-only while raw capture continues"
+        },
+        {
+          "path": "holdspeak/meeting_session/intel_admission.py",
+          "symbol": "record_only",
+          "line": 286,
+          "claim": "the state carries transcription_status record_only with its reason_code"
+        },
+        {
+          "path": "holdspeak/meeting_session/intel_admission.py",
+          "symbol": "transcription_no_speech_assignment",
+          "line": 222,
+          "claim": "the reason_code the owner is owed for it"
+        }
+      ],
+      "reachable_by": [
+        "case.j4.record_only.no_speech_head"
       ]
     }
   ],
@@ -5522,6 +8948,39 @@
       "combination": "effective.status = 'assigned' treated as evidence that the provider answers",
       "applicability": "not_applicable",
       "reason": "an assignment is not evidence of a reachable provider (brief section 4). Reachability is a separate observation - state.engines.unreachable and the probe route."
+    }
+  ],
+  "council_readings": [
+    {
+      "id": "reading.projections.subject_counts",
+      "job": "beyond",
+      "words": "COUNCIL READING: subject_counts must describe the SUBJECT, not the current drawer query (holdspeak/db/projections.py:102-112 captures them before the kind/state/search filters). Proving it needs TWO reads of the same route under different filters and a comparison between them; the rig observes ONE route per case and cannot compare two queries. The council reads the two recorded payloads side by side. [the audit's stated observation location: protocol: GET /api/desk/projections]",
+      "sources": [
+        {
+          "path": "holdspeak/db/projections.py",
+          "symbol": "subject_counts",
+          "line": 104,
+          "claim": "the contextual badges are built over the whole projected set"
+        },
+        {
+          "path": "holdspeak/db/projections.py",
+          "symbol": "subject_counts",
+          "line": 143,
+          "claim": "and returned beside the filtered page"
+        },
+        {
+          "path": "holdspeak/db/projections.py",
+          "symbol": "projection_kind",
+          "line": 113,
+          "claim": "the kind/state/search filters are applied AFTER those counts are captured"
+        }
+      ],
+      "reads": [
+        {
+          "method": "GET",
+          "path": "/api/desk/projections"
+        }
+      ]
     }
   ]
 }

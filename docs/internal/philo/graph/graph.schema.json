@@ -312,7 +312,6 @@
         "applicability",
         "preconditions",
         "setup",
-        "expected",
         "completion_bound_s",
         "viewports"
       ],
@@ -346,9 +345,43 @@
         },
         "preconditions": {
           "type": "array",
+          "description": "Human lines (recorded, not checked) and/or executable check steps evaluated after setup and before the before-capture (brief \u00a73, \u00a77).",
           "items": {
-            "type": "string",
-            "minLength": 1
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "object",
+                "required": [
+                  "kind",
+                  "predicate",
+                  "observe_at"
+                ],
+                "additionalProperties": true,
+                "properties": {
+                  "kind": {
+                    "const": "check"
+                  },
+                  "predicate": {
+                    "type": "object",
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  "observe_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "why": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
           }
         },
         "setup": {
@@ -419,8 +452,7 @@
           "type": "object",
           "additionalProperties": false,
           "required": [
-            "predicate",
-            "observe_at"
+            "words"
           ],
           "description": "The expected result in the rig's contract (scripts/graph_walk.py PREDICATES): a structured predicate at a named observation location; `words` keeps the human sentence.",
           "properties": {
@@ -434,14 +466,18 @@
                 "kind": {
                   "type": "string",
                   "enum": [
+                    "attr_equals",
+                    "input_value",
+                    "presentation_change",
+                    "protocol_field",
+                    "protocol_rows",
+                    "protocol_rows_gone",
+                    "protocol_status",
+                    "text_absent",
                     "text_contains",
                     "text_equals",
-                    "text_absent",
-                    "attr_equals",
-                    "window_titled",
-                    "presentation_change",
                     "unchanged",
-                    "protocol_rows"
+                    "window_titled"
                   ]
                 }
               }
@@ -528,8 +564,17 @@
           },
           "then": {
             "required": [
-              "trigger"
-            ]
+              "trigger",
+              "expected"
+            ],
+            "properties": {
+              "expected": {
+                "required": [
+                  "predicate",
+                  "observe_at"
+                ]
+              }
+            }
           }
         }
       ]

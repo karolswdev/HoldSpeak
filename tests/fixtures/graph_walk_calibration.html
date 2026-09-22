@@ -55,6 +55,31 @@
   <span class="out" id="f-out">waiting</span>
 </section>
 
+<!-- (o) a Refresh with its handler REMOVED: the replay identity is already on
+     the page, so a rig that reads it from there passes a dead verb. -->
+<section id="case-o">
+  <button id="o-btn" type="button">Refresh</button>
+  <span class="out" id="o-out" data-replay-id="rev-7">3 items</span>
+</section>
+
+<!-- (p) a result that arrives long after any sane bound -->
+<section id="case-p">
+  <button id="p-btn" type="button">Run it</button>
+  <span class="out" id="p-out">waiting</span>
+</section>
+
+<!-- (q) a precondition that does not hold -->
+<section id="case-q">
+  <button id="q-btn" type="button">Go</button>
+  <span class="out" id="q-out">not ready</span>
+</section>
+
+<!-- (k) a draft that must survive a reload: the value lives in the field,
+     not in the DOM text. -->
+<section id="case-k">
+  <textarea id="k-draft" rows="2"></textarea>
+</section>
+
 <!-- (g) a stand-in scheduler: armed by setup, then it ticks on its own.
      Not one of the six; it calibrates the scheduler-wait adapter. -->
 <section id="case-g">
@@ -99,6 +124,27 @@
     const out = document.getElementById("e-out");
     out.textContent = "3 items";
     out.setAttribute("data-replay-id", "rev-7");
+  });
+
+  // (o) has NO handler: the Refresh is dead, and `data-replay-id` is stale.
+
+  // (p) answers, but only at 4s — long after a 1s bound.
+  document.getElementById("p-btn").addEventListener("click", () => {
+    setTimeout(() => {
+      document.getElementById("p-out").textContent = "ready";
+    }, 4000);
+  });
+
+  // (q) works; its case's PRECONDITION is what does not hold.
+  document.getElementById("q-btn").addEventListener("click", () => {
+    document.getElementById("q-out").textContent = "went";
+  });
+
+  // (k) the durable draft: typed text is kept and read back on load.
+  const draft = document.getElementById("k-draft");
+  try { draft.value = localStorage.getItem("cal.draft") || ""; } catch (e) {}
+  draft.addEventListener("input", () => {
+    try { localStorage.setItem("cal.draft", draft.value); } catch (e) {}
   });
 
   // (g) the stand-in scheduler. Setup arms it (as the real case lowers the
