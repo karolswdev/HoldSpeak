@@ -19,10 +19,10 @@ The Philo package already holds the connections and actions layers (openapi.json
 ## Acceptance criteria
 
 - [ ] From the tree alone (no hub), every edge is enumerated: browser verbs (verbRegistry, applications.ts, every library Button `onClick`), keyboard and the hotkey, timers (heartbeat, intel drainer, schedules), WebSocket frames, the 82 MCP tools, CLI verbs, connector webhooks, engine replies.
-- [ ] Every edge is linked to its interface, connection and action with evidence path:line; an edge whose chain breaks statically (a handler that resolves nothing, a route with no service, a service with no table) is a finding.
+- [ ] Every edge is linked to its interface, connection and action with evidence path:line; an edge whose ACTUAL wiring breaks (a handler that resolves nothing, an execution owner that never performs the promised operation) is a finding; a route, table or receipt is not required merely to complete the shape (brief §§1–2, 6).
 - [ ] Orphans both ways are listed: verbs with no effect, effects with no verb (capabilities.yaml entries with no interface), faces with no state, states with no face.
 - [ ] The pass reads the existing inventories and marks each Philo claim it can verify or contradict (doc drift bin).
-- [ ] Output: `docs/internal/philo/graph/static-muaddib.json` + `static-muaddib.md` in the four-bin, ranked report shape; Astra's check recorded beside it.
+- [ ] Output: `docs/internal/philo/graph/static-muaddib.json` + `static-muaddib.md` in the three-bin, ranked report shape (brief §9); Astra's check recorded beside it.
 
 ## Test plan
 
@@ -31,5 +31,7 @@ The Philo package already holds the connections and actions layers (openapi.json
 - **Manual / device:** none; this pass never starts the product.
 
 ## Notes / open questions
+
+Sealing law (brief §§6–7, 9): this pass's report is sealed (committed on its own branch) before its author reads any other pass; shared schema, fixture recipes and rig calibration are preparation, not shared findings. Every run records source revision and dirty-tree status, contract versions, runtime provenance and unexercised cases with reasons.
 
 The roots lens applies to every criterion: the owner works ninety percent of his day on the desk; the interfaces guide him; Workbench 2.0+ on steroids (Tenet 6). A finding that does not cost him on a Tuesday ranks last.

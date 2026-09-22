@@ -1,11 +1,50 @@
-# The graph audit — the one brief (Philo Phase 2)
+# Check — Astra, 2026-09-22, on the Phase 2 charter and the one brief
 
-**Status:** DRAFT, round two. Astra's check of 2026-09-22 (DO-NOT-RATIFY, eight findings) replaced §§1–9 with the texts below; Muad'Dib accepted them (`pm/roadmap/holdspeak-philo/phase-2-the-graph/checks/charter-astra.md`). Both brains run this brief verbatim, twice each: once static (from the tree), once live (from a hub). Ratified when Astra's reply on this text is recorded.
+Session 01a0cafe-2338-77b3-948f-03c2f98c39d7 (`.tmp/two-brains/20260922-152046-check-philo2/`). Muad'Dib's response follows the report.
 
-## 0. The roots
+VERDICT: DO-NOT-RATIFY
 
-The owner, 2026-09-22: "we're actually intended to work 90% of our time on the desk, with beautiful, cohesive interfaces that guide us, and all of this grounded in the ideology of Workbench 2.0+ on steroids." Read everything below through that, and through the Seven Tenets (CONSTITUTION.md). A dead verb is not a plumbing fault; it is a face that stopped guiding. The finding that matters is the one that costs him on a Tuesday.
+FINDINGS:
 
+1. **The zero-diff rule can both miss dead verbs and condemn working ones.** A request, unrelated DB write, or receipt can change while the promised result remains absent. Conversely, focus, selection, window position and accessibility state can change without changing the listed text, URL or window set. Window cycling and snapping are real examples. Article III governs egress; XI.5 explicitly exempts effect-free reads and presentation from receipts. Require the promised outcome, with causal evidence—not merely any diff. **Tenets 1, 3, 6.** Evidence: `docs/internal/philo/briefs/graph-audit-brief.md:30`, `web/src/desk/verbRegistry.ts:629`, `docs/internal/CONSTITUTION.md:189`.
+
+2. **The atlas is neither model-derived nor a valid Cartesian product.** `quiet` is not an accepted projection attention state; `unseen` and `acknowledged` are missing. Dismissal is a separate axis. Projection kinds and attention states are derived from producer branches, not freely combinable fields. Further omissions include meeting capture interruption, queued/running intelligence, brief loading/generation errors, item-level acknowledged/deferred shelving, missing/disabled/unknown engine readiness, and first-value permission/provider/delivery failures. Browser recovery and focus states cannot be derived from the backend data model alone. **Tenets 2, 3, 6.** Evidence: `holdspeak/services/projection_service.py:22`, `holdspeak/db/projections.py:85`, `holdspeak/meeting_session/models.py:136`, `holdspeak/db/intel.py:480`, `web/src/desk/pullouts/views/BriefView.tsx:149`, `holdspeak/db/onboarding.py:21`.
+
+3. **Section 8 does not yet extend Phase 1: it permits an independent, weaker inventory.** Phase 1 already supplies stable IDs, entry points, surfaces, APIs, persistence, lifecycle, failure states, authority and separate evidence levels. The graph has no required references to those records, no relationship types, no expected outcomes, and no structured observation provenance. Its single `consequence` slot does not specify how two brains, multiple states, widths and attempts coexist. Regenerating saved rig outputs can prove reproducible serialization while missing new source edges. **Tenets 2, 3.** Evidence: `docs/internal/philo/briefs/graph-audit-brief.md:59`, `docs/internal/philo/data/README.md:22`, `docs/generated/domain-model.yaml:390`, `pm/roadmap/holdspeak-philo/phase-2-the-graph/story-07-the-tree-up-to-par.md:21`. The schema is compatible in purpose, but **not adequately joined in its present form**.
+
+4. **The static method mistakes one implementation pattern for the platform contract.** A connection need not traverse a route, service and table: local window actions are legitimate. A registry runner can be intentionally empty because another component owns execution. Conversely, enumerating library Button `onClick` handlers misses form submission, field changes, raw controls, direct manipulation and other inputs. “No table” and “no user verb” are not sufficient defect predicates. **Tenets 3, 5, 6.** Evidence: `pm/roadmap/holdspeak-philo/phase-2-the-graph/story-02-static-pass-muaddib.md:21`, `web/src/desk/verbRegistry.ts:695`, `web/src/desk/components/AttentionDrawer.tsx:117`.
+
+5. **These are proposed audit candidates, not demonstrably the owner’s twenty.** The established sitting starts with the voice gate or Continue later, treats Record and Import as alternatives, checks planned versus actual engine, asks whether the summary is useful, and requires finding it after restart in two moves. The brief turns those into labels and places Continue later last. Story 01 omits Continue later and splits restart/find, producing a different twenty. Neither list tests substantive value to an architect with reports. **Tenets 2, 7.** Evidence: `docs/internal/philo/briefs/graph-audit-brief.md:45`, `pm/roadmap/holdspeak-philo/phase-2-the-graph/story-01-the-rulebook-and-the-state-atlas.md:25`, `pm/roadmap/holdspeak/phase-201-one-meeting-result/SITTING-07.md:39`. Story 01 correctly requests owner confirmation; no confirmation is supplied here.
+
+6. **The live protocol promises observations its execution contract cannot establish.** “Every edge in every state” includes impossible combinations and hardware actions excluded by scope. A WAV does not prove microphone capture, native hotkey delivery or typing into another application. HOME isolation does not itself isolate those effects. Recorded model replies are boundary substitutions and need explicit labels. Clock advancement also lacks a mechanism: the brief route supplies no clock argument, while the scheduler reads wall time. Finally, the four parallel passes have no settled edge manifest, common rig revision or rules for preserving independent results before cross-checks. **Tenets 1, 2, 3.** Evidence: `docs/internal/philo/briefs/graph-audit-brief.md:57`, `pm/roadmap/holdspeak-philo/phase-2-the-graph/current-phase-status.md:59`, `holdspeak/web/routes/monday_brief.py:110`, `holdspeak/runtime/heartbeat.py:106`, `docs/internal/UX-CANON.md:154`.
+
+7. **COUNCIL.md has a reconciliation format, but not yet a decision format.** A page of roots commentary plus ranked findings does not guarantee that the owner can see what to build first, what it enables, what it costs, what remains unknown, or precisely which dissent needs his ruling. Twenty initial interactions cannot establish that he can spend 90% of his working day on the Desk. That must remain a design aim, with selected jobs and observed limitations reported honestly. **Tenets 2, 3, 6, 7.** Evidence: `pm/roadmap/holdspeak-philo/phase-2-the-graph/story-06-the-council.md:12`, `pm/roadmap/holdspeak-philo/phase-2-the-graph/story-06-the-council.md:21`.
+
+8. **Story 07 contains an impossible debt option and premature consolidation.** It permits adding `known_false` claims while requiring the ratchet only to fall; its current ceiling is zero. Correct the factual description and retain the product gap separately. Also, parking existing walks requires proof that their assertions and callers have replacements; implementing a general click rig does not establish that. The portable Phase 1 skills should remain the shared maintenance entry point. **Tenets 1, 2, 3.** Evidence: `pm/roadmap/holdspeak-philo/phase-2-the-graph/story-07-the-tree-up-to-par.md:22`, `tests/unit/doc_claims/registry.py:836`, `agent/skills/README.md:3`.
+
+CONDITIONS:
+
+Apply the brief amendments below and reconcile the story criteria and phase ordering with them. Story 01 must settle the identifiers, schema, reachable-state recipes and outcome rules before execution. Replace its phrase-presence test with meaningful schema/reference validation. Preserve all four independent reports before cross-checking. Correct story 02’s “four-bin” wording to three bins.
+
+MISSED:
+
+1. Highest cost: a green audit that records activity while the owner still receives no useful result.
+2. Next: an exhaustive-looking state matrix that omits recovery, local presentation and the owner’s actual task order.
+3. Next: a second inventory and replacement rig that weaken existing evidence while increasing maintenance.
+
+TUESDAY: Not yet—the proposed council pack does not guarantee a short, evidence-backed choice about the next useful job.
+
+UNKNOWN:
+
+Reviewed the checkout headed by `ea939386107ee4df99144bee7093086a542ef06b`. I did not run the product, access the owner’s data, or change files. Other activity modified UI/test files during the review; this is not a quiet-tree runtime audit. Owner approval of the twenty, live state reachability, engine availability and the future COUNCIL.md remain unverified.
+
+## AMENDMENTS
+
+The following are exact replacement texts for the brief. Keep §0 unchanged.
+
+**Replace §§1–2 with:**
+
+```markdown
 ## 1. Five definitions
 
 - **Edge** — a specific trigger at a production entry point: a user
@@ -39,7 +78,11 @@ Classify orphan candidates against their declared exposure and lifecycle.
 An internal capability need not have a user button. A parked surface is
 not an active edge. A local presentation action need not write a table.
 Follow execution ownership before calling a registry stub a dead verb.
+```
 
+**Replace §3 with:**
+
+```markdown
 ## 3. The outcome law
 
 A diff is evidence to inspect, not a success criterion.
@@ -69,7 +112,11 @@ Reads and presentation without effects do not acquire a receipt
 requirement through this audit (Article XI.5). Consequential operations
 must have their applicable terminal receipts, including refusal,
 failure and indeterminate outcomes (Articles V and XI).
+```
 
+**Replace §4 with:**
+
+```markdown
 ## 4. The state atlas
 
 Derive reachable cases from Phase 1 lifecycle and failure-state records,
@@ -123,7 +170,11 @@ reachability or claim a clock advance that did not reach the producer.
 
 Exercise each applicable face case at 1440 and 393. Protocol-only cases
 have no invented viewport requirement.
+```
 
+**Replace §5 with:**
+
+```markdown
 ## 5. First-use candidates — owner selection pending
 
 The proposed coverage set is:
@@ -157,7 +208,11 @@ technical completion and owner usefulness separately.
 Use synthetic meeting material that makes summary errors inspectable.
 Report which architect-with-reports jobs the chosen cases cover and
 which remain outside the walk. This walk does not measure 90% daily use.
+```
 
+**Replace §6 with:**
+
+```markdown
 ## 6. The static pass
 
 From the tree alone, enumerate production entry points and their actual
@@ -185,7 +240,11 @@ Each brain seals its own static graph before its live pass. Neither
 reads the other brain's findings until all four pass outputs are sealed.
 Shared schema, fixture recipes and rig calibration are preparation,
 not shared findings.
+```
 
+**Replace §7 with:**
+
+```markdown
 ## 7. The live pass
 
 Both brains use one versioned scripts/graph_walk.py entry point and the
@@ -234,7 +293,11 @@ None may be classified solely by the presence of a diff.
 Run one state at a time on this machine. Give evidence a run-specific
 output directory; do not overwrite tracked shots or use blanket restore
 loops. Use pipefail for captured command pipelines.
+```
 
+**Replace §8 with:**
+
+```markdown
 ## 8. The graph schema and Phase 1 ownership
 
 docs/generated/graph.json is a generated join over existing Philo
@@ -284,7 +347,11 @@ provenance, case coverage and deterministic output.
 must separately detect new, removed or changed entry points. Saved
 observations retain their original revision; regeneration does not turn
 old execution evidence into proof of current behavior.
+```
 
+**Replace §9 with:**
+
+```markdown
 ## 9. Reports and the council
 
 Every pass reports:
@@ -334,3 +401,12 @@ Park a prior walk only after mapping its callers and assertions to
 verified replacements or an explicit council disposition. Extend the
 portable Phase 1 skills and maintenance index; tool-specific instructions
 link to that shared procedure.
+```
+
+## Muad'Dib's response, 2026-09-22
+
+ACCEPTED, all eight, and the amendment texts are applied verbatim to brief §§1–9 (§0 kept). The stories and the phase order are reconciled: story 01 delivers a machine-validatable schema and a reachable-case atlas, and records the OWNER'S selection of the first-use cases (his twenty, or fewer); 02–05 carry the sealing law and "three bins"; 04–05 carry the six calibration cases and the no-substitute-click rule; 06 opens with the decision page and caps Phase 3 at ten stories; 07 keeps the known-false ceiling at zero, parks a walk only against mapped replacements, and extends the Phase 1 skills rather than adding a parallel skill.
+
+One reservation, recorded, not a dissent: the amended brief is long. Tenet 1 (no over-engineering) applies to us too. Story 01's schema is to be the SMALLEST that satisfies §8; a field with no consumer in the council's decision page is cut. The lane owner (Muad'Dib, story 01) will rule on that at build.
+
+Round two requested from the same session: does the applied text lift the verdict?

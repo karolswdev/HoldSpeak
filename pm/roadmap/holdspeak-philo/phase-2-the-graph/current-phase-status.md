@@ -56,17 +56,18 @@ Every pass, every finding and the council's verdict is read through that lens an
 | Council | 06 | both | the owner | main checkout | docs/philo-2-06-council |
 | Up to par | 07 | Muad'Dib (Opus) | Astra | ../wt-philo-2-07 | feat/philo-2-07-up-to-par |
 
-Order: 01 → (02 ‖ 03 ‖ 04 ‖ 05) → 06 → 07. Stories 02–05 start from the ratified brief and end before either brain reads the other's output.
+Order: 01 (brief, schema, atlas, owner's selection, shared rig calibration) → 02 ‖ 03 (each brain seals its static graph) → 04 ‖ 05 (live; one versioned `scripts/graph_walk.py`, adapters may differ) → all four reports sealed → 06 → 07. Neither brain reads the other's findings until all four are sealed; shared schema, fixture recipes and rig calibration are preparation, not findings.
 
 ## Where we are
 
-Chartered 2026-09-22 on the owner's ruling, the same day his sitting on a wiped desk found two dead basics in two clicks (HS-202-06). The brief is drafted beside this charter for Astra's check; nothing runs until it is ratified.
+Chartered 2026-09-22 on the owner's ruling, the same day his sitting on a wiped desk found two dead basics in two clicks (HS-202-06). Astra's check of the charter (2026-09-22, DO-NOT-RATIFY, eight findings; `checks/charter-astra.md`) replaced brief §§1–9: an outcome law instead of a zero-diff law; a reachable-case atlas instead of a Cartesian product; a schema that JOINS Phase 1 record ids; the twenty are candidates until the owner selects; four sealed passes; a council decision page. Applied the same day; round two awaited. Nothing runs until the brief is ratified and the owner has selected the first-use cases.
 
 ## Active risks
 
 | Risk | Likelihood | Mitigation | Stop signal |
 |---|---|---|---|
-| The sweep becomes a product-wide cleanup program again (Astra's 2026-09-20 DO-NOT-RATIFY) | high | first-use twenty first; counts are diagnostics; Phase 3 is cut by the council, not by the finding count | a Phase 3 draft with more than ten stories |
+| The sweep becomes a product-wide cleanup program again (Astra's 2026-09-20 DO-NOT-RATIFY) | high | the owner's selected first-use cases first; counts are diagnostics; Phase 3 is cut by the council, not by the finding count | a Phase 3 draft with more than ten stories: SCOPE STOP, the owner re-cuts |
+| A green audit that records activity while the owner still gets no useful result (Astra, finding 1 / missed 1) | high | the outcome law: expected result recorded before the trigger; technical completion and owner usefulness reported separately | a pass report with no JOBS block |
 | Doubles that lie (the HS-200-05 scar) | medium | states minted through the real API only; negative controls in the rig | a consequence record produced without a hub pid |
 | The machine kills long runs (fseventsd) | high | one state per run, slow polls, CI as the full run | a killed rig with no partial record |
 | The two live passes drift on clock and seed | medium | the atlas fixes the seeds and the clock; the rig is shared | consequence records that disagree on the same edge for reasons of seed |

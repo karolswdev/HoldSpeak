@@ -20,15 +20,15 @@ Three audits measured properties and callers; the owner's sitting found two dead
 
 - [ ] `docs/internal/philo/briefs/graph-audit-brief.md` is the ONE brief both brains run, verbatim (this story ratifies it; it is drafted at charter).
 - [ ] The four definitions (edge, interface, connection, action) and the four questions are pinned with examples from the sitting.
-- [ ] The zero-diff law is stated: a verb that leaves no visible consequence where the click left the user is a finding, by Article III; no allowlist.
-- [ ] The state atlas names the states to mint, derived from the data model: every projection kind x attention_state; brief none/empty/full/shelved; meeting recorded/imported/no-summary/summary/failed; engine assignment none/missing-profile/ready; first-value no_speech/no_microphone/microphone_unavailable; the clock t0, +1 sweep, +1 day, +1 week boundary.
-- [ ] The first-use twenty are listed: the edges the owner touches in a demo, in order (arrival, SETUP row, Choose an engine, Add an engine, Check, Use this for summaries, Record, Stop, Import, open meeting, Run summary, Desk memory, a receipt's Open, Generate brief, Generate again, Write a thought, Kept, restart, find the summary, voice typing).
-- [ ] The graph file schema is fixed (`docs/generated/graph.json`: nodes typed edge|interface|connection|action|state, links with evidence path:line or a shot or a DB row, and per-link `consequence` from the live pass).
+- [ ] The outcome law (brief §3) is stated: a diff is evidence to inspect, not a success criterion; an enabled action that promises a change and produces neither it nor an intelligible refusal is a finding; an unexplained zero diff is unresolved, never pass; reads and presentation owe no receipt (Article XI.5).
+- [ ] The state atlas (brief §4) lists REACHABLE cases, each with a stable id, source evidence, edge ids, preconditions, a production setup recipe, fixture and clock settings, expected transition and presentation, and execution limits; derived from Phase 1 lifecycle/failure records and producer code, never a Cartesian product; `quiet` is not an attention_state.
+- [ ] The first-use candidates (brief §5) are mapped to job, starting state, trigger, expected result and source of priority, ordered by SITTING-07.md; THE OWNER SELECTS the set and his selection is recorded here; the number is whatever he selects.
+- [ ] The graph schema (brief §8) is delivered as a machine-validatable JSON Schema joining Phase 1 record ids: root provenance, nodes, links with relations, cases, observations (one per run/case/brain/pass/viewport, never overwritten), claim reviews, findings and resolutions; verdicts pass/fail/blocked/not-run/not-applicable.
 - [ ] Findings have three bins (product defect; doc drift; tooling debt) and one ranking: cost to the owner on a Tuesday.
 
 ## Test plan
 
-- **Unit:** `tests/unit/test_philo_graph_brief.py` — the brief exists, names the twenty, the four definitions, the zero-diff law, the atlas states, and the schema; the schema validates an example graph.
+- **Unit:** `tests/unit/test_philo_graph_schema.py` — the JSON Schema validates a worked example graph and rejects: an unresolved link endpoint, an observation without provenance, a finding without a bin, a case without an expected-result predicate; the atlas file validates against its own schema (no phrase-presence tests).
 - **Integration:** n/a.
 - **Manual / device:** the owner reads the brief once and says whether the twenty are his twenty.
 
