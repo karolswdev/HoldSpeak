@@ -37,7 +37,7 @@ Every pass, every finding and the council's verdict is read through that lens an
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | PHILO-2-01 | The rulebook and the state atlas | done | [story-01-the-rulebook-and-the-state-atlas](./story-01-the-rulebook-and-the-state-atlas.md) | [evidence-story-01](./evidence-story-01.md) |
-| PHILO-2-02 | The static pass, Muad'Dib | backlog | [story-02-static-pass-muaddib](./story-02-static-pass-muaddib.md) | - |
+| PHILO-2-02 | The static pass, Muad'Dib | done | [story-02-static-pass-muaddib](./story-02-static-pass-muaddib.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-2-03 | The static pass, Astra | backlog | [story-03-static-pass-astra](./story-03-static-pass-astra.md) | - |
 | PHILO-2-04 | The live pass, Muad'Dib | backlog | [story-04-live-pass-muaddib](./story-04-live-pass-muaddib.md) | - |
 | PHILO-2-05 | The live pass, Astra | backlog | [story-05-live-pass-astra](./story-05-live-pass-astra.md) | - |
@@ -59,6 +59,8 @@ Every pass, every finding and the council's verdict is read through that lens an
 Order: 01 (brief, schema, atlas, owner's selection, shared rig calibration) → 02 ‖ 03 (each brain seals its static graph) → 04 ‖ 05 (live; one versioned `scripts/graph_walk.py`, adapters may differ) → all four reports sealed → 06 → 07. Neither brain reads the other's findings until all four are sealed; shared schema, fixture recipes and rig calibration are preparation, not findings.
 
 ## Where we are
+
+2026-09-22 night: PHILO-2-02 (Muad'Dib's static pass) SEALED on its own branch; 15 findings, J3 and J6 statically broken. PHILO-2-03 (Astra's) runs sealed in parallel. Story 01 in counsel round three (integration defects between atlas and rig) — the live passes wait for it.
 
 2026-09-22 evening: the owner deferred the first-use selection to the two brains ("You and Astra? You push this forward"). Muad'Dib ruled eleven jobs (story 01, the selection table), Astra checks. Story 01 BUILT (schema 10 fences; atlas 61 cases/110 states, 22 fences; rig v1.0.0, 18 calibration fences + the J9 real-hub smoke at both widths; the timer edge driven by the real conductor via scheduler-wait). Four predicate kinds still owed to the rig before the live passes (story 01 ledger). Next: Astra's counsel on built, then 02 ‖ 03 (sealed static passes).
 
