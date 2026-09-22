@@ -683,6 +683,13 @@ class ProjectionRepository(BaseRepository):
                     pass
 
             outcome = "completed" if not error else "failed"
+            # The owner's first sitting (2026-09-21): every receipt row said
+            # "Open" and the sweep's Open did nothing, because its door was
+            # "/" and the shade fell through to a pull-out opener that cannot
+            # resolve an event id. A door is named only where one exists: the
+            # sweep opens the Rhythm face; a receipt with no face behind it
+            # carries no door and the shade draws no verb for it.
+            detail_url = "/cadence" if service == "HeartbeatService" else ""
             ts_epoch = float(row["timestamp"])
             from datetime import datetime, timezone
             ts_iso = datetime.fromtimestamp(ts_epoch, tz=timezone.utc).isoformat(timespec="seconds")
@@ -706,7 +713,7 @@ class ProjectionRepository(BaseRepository):
                 source_kind="pipeline_event",
                 source_id=str(row["event_id"]),
                 source_api="/api/desk/projections",
-                detail_url="/",
+                detail_url=detail_url,
                 severity="error" if error else "normal",
                 origin=origin,
                 caller=caller_val,

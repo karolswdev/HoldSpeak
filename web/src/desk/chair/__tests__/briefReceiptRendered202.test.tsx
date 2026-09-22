@@ -35,6 +35,9 @@ let generated: Record<string, unknown> = {
   },
 };
 
+/** What `GET /api/brief/latest` answers on arrival (null = no brief yet). */
+let latest: Record<string, unknown> | null = null;
+
 function wire() {
   vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
     const url = String(path);
@@ -43,7 +46,7 @@ function wire() {
     if (url.startsWith("/api/desk/needs-you"))
       return { count: 0, items: [], projects: [], next: null, coverage: [], complete: true } as never;
     // No brief yet: the `!brief` branch, with Generate on it.
-    if (url.startsWith("/api/brief/latest")) return null as never;
+    if (url.startsWith("/api/brief/latest")) return latest as never;
     if (url === "/api/brief/generate" && (init as { method?: string })?.method === "POST")
       return generated as never;
     return null as never;
@@ -53,7 +56,27 @@ function wire() {
 describe("Generate is badged before and receipted after (counsel 2)", () => {
   beforeEach(() => {
     vi.mocked(apiFetch).mockReset();
+    latest = null;
     wire();
+  });
+
+  /* The owner's sitting, 2026-09-21: Generate answered with an empty brief,
+     the whole row vanished, and a reload the next day showed nothing — "one
+     day later, still no brief". An empty brief is a result: its headline
+     stays on the face, and the verb to make another stays with it. */
+  it("shows an empty brief's own words and keeps Generate after a reload", async () => {
+    latest = {
+      id: "brief-0",
+      headline: "Nothing material changed.",
+      generated_at: "2026-09-21T19:37:43",
+      is_empty: true,
+      sections: {},
+    };
+    render(<ChairHome />);
+    const headline = await screen.findByTestId("arrival-brief-headline");
+    expect(headline.textContent).toBe("Nothing material changed.");
+    expect(screen.getByTestId("arrival-brief-generate").textContent).toBe("Generate again");
+    expect(screen.queryByText("No brief yet")).toBeNull();
   });
 
   it("names the destination on the row, before the press", async () => {

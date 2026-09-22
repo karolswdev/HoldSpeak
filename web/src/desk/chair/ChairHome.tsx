@@ -1133,18 +1133,46 @@ function Arrival() {
             </span>
           ) : null}
         </div>
-      ) : briefKept ? (
-        /* A generated brief with nothing untriaged still happened: the
-           section survives to say so, and never disappears mid-gesture. */
+      ) : !briefLoading && brief ? (
+        /* A brief with nothing untriaged still happened — tonight, or on a
+           day before this reload. The section survives with the brief's own
+           words (its headline: "Nothing material changed." is a result, not
+           an absence), the receipt when this gesture made it, and the verb to
+           make another. The owner's first sitting (2026-09-21) met the
+           previous shape: Generate answered, the whole row vanished, and a
+           reload showed nothing at all — "one day later, still no brief". */
         <div data-testid="arrival-brief">
-          <SurfaceSection label="BRIEF">
-            <span
-              className="surface-receipt-line"
-              role="status"
-              data-testid="arrival-brief-receipt"
-            >
-              {briefKept}
-            </span>
+          <SurfaceSection
+            label="BRIEF"
+            actions={
+              <>
+                <BriefEgress />
+                <Button
+                  variant="ghost"
+                  dense
+                  disabled={generating}
+                  onClick={() => void generateBrief()}
+                  data-testid="arrival-brief-generate"
+                >
+                  {generating ? "Generating..." : "Generate again"}
+                </Button>
+              </>
+            }
+          >
+            {brief.headline ? (
+              <span className="arrival-brief-headline" data-testid="arrival-brief-headline">
+                {brief.headline}
+              </span>
+            ) : null}
+            {briefKept ? (
+              <span
+                className="surface-receipt-line"
+                role="status"
+                data-testid="arrival-brief-receipt"
+              >
+                {briefKept}
+              </span>
+            ) : null}
           </SurfaceSection>
         </div>
       ) : null}

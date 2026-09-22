@@ -26,7 +26,7 @@ Every face on the owner's first-use path has a door at every width, tells the tr
 | HS-202-03 | Shared controls on the first-use path become library species | done | [story-03-shared-controls-on-the-first-use-path-become-library-species](./story-03-shared-controls-on-the-first-use-path-become-library-species.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-202-04 | Names and repeats on the touched flows | done | [story-04-names-and-repeats-on-the-touched-flows](./story-04-names-and-repeats-on-the-touched-flows.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-202-05 | The type-scale ruling, then the tokens | done | [story-05-the-type-scale-ruling-then-the-tokens](./story-05-the-type-scale-ruling-then-the-tokens.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-202-06 | The sitting selects the next scope | backlog | [story-06-the-sitting-selects-the-next-scope](./story-06-the-sitting-selects-the-next-scope.md) | - |
+| HS-202-06 | The sitting selects the next scope | in-progress | [story-06-the-sitting-selects-the-next-scope](./story-06-the-sitting-selects-the-next-scope.md) | - |
 
 ## Where we are
 
@@ -124,3 +124,34 @@ the pending clarification and the owner's right to overrule are explicit in
 ## Decisions deferred
 
 - Detailed story breakdown - trigger before implementation begins - default is no code changes without stories.
+
+## The sitting — findings, 2026-09-21/22 (HS-202-06)
+
+The owner wiped his desk to a fresh database (parked, not deleted, at
+`~/.local/share/holdspeak-parked/2026-09-21-191251/`), logged in, and met two
+basics in his first two clicks. Both fixed on 2026-09-22 before his demo; both
+fences fail pre-fix.
+
+1. **"Desk memory" → a sweep row → Open does nothing.** The row is a
+   pipeline-event receipt (`holdspeak/db/projections.py::_pipeline_events`)
+   whose door was `/`; the shade's `openSource` fell through to
+   `openPrimitive(event_id)`, which resolves nothing, silently. Now: the sweep
+   receipt's door is the Rhythm face (`/cadence`); a receipt with no face
+   behind it carries no door and the shade, the Desk memory window and the
+   ambient card draw no Open for it. Fences:
+   `tests/unit/test_hs174_reach_wire.py::TestSittingReceiptDoors`,
+   `web/src/desk/components/__tests__/shadeDoorless202.test.tsx`.
+2. **"No brief yet" → Generate → the whole row disappears; a day later, still
+   no brief.** Generate worked (a `monday_briefs` row at 19:37:43, headline
+   "Nothing material changed.", zero items). The face had no branch for an
+   empty brief after a reload (`brief` set, no untriaged rows, no receipt in
+   state) so the section rendered `null`, and the Generate verb went with it.
+   Now: the section keeps the brief's own headline, the receipt when this
+   gesture made it, and "Generate again". Fence:
+   `briefReceiptRendered202.test.tsx` ("shows an empty brief's own words…").
+
+Still open from the same two clicks (ledgered, not fixed): the dock launcher
+labelled "Desk memory" opens the shade titled "Missed" (already in the
+ledger above); the assigned intel profile on a fresh desk points at a missing
+`legacy-intel` (`meeting intel destination unavailable`, log 23:15/23:16) —
+step 2 of the sitting is where he chooses an engine.

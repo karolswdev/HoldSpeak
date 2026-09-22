@@ -419,6 +419,16 @@
   letter-spacing: 0.03em;
 }
 
+/* The brief's own words when it has no untriaged rows (its headline). */
+.arrival-brief-headline {
+  display: block;
+  padding: 4px 6px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size, 12px);
+  letter-spacing: 0.03em;
+}
+
 /* ── Thoughts ──────────────────────────────────────────────────────── */
 .arrival-thought-state {
   color: var(--text-muted);
