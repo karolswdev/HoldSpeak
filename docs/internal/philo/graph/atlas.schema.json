@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.local/philo/graph/atlas.schema.json",
+  "title": "Philo Phase 2 state atlas",
+  "description": "The reachable-case atlas required by docs/internal/philo/briefs/graph-audit-brief.md section 4. Cases carry the section 8 case contract; states are reachable tuples, never a Cartesian product.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "source_commit", "cases", "states", "clocks", "excluded"],
+  "properties": {
+    "schema_version": {"type": "integer", "minimum": 1},
+    "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "cases": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/case"}},
+    "states": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/state"}},
+    "clocks": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/clock"}},
+    "excluded": {"type": "array", "items": {"$ref": "#/$defs/excluded"}}
+  },
+  "$defs": {
+    "sourceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "symbol", "line", "claim"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "symbol": {"type": "string", "minLength": 1},
+        "line": {"type": "integer", "minimum": 1},
+        "claim": {"type": "string", "minLength": 1}
+      }
+    },
+    "phase1Ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "record_id"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^docs/internal/philo/data/[a-z-]+\\.json$"},
+        "record_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "step": {
+      "description": "One ordered act. A setup step prepares the case; the case's single `trigger` is the same shape and is the act fired through the real production entry point.",
+      "type": "object",
+      "required": ["kind"],
+      "properties": {"kind": {"enum": ["api", "ui", "clock", "fixture", "boundary", "cli"]}},
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "required": ["kind", "method", "path", "body"],
+          "properties": {
+            "kind": {"const": "api"},
+            "method": {"enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]},
+            "path": {"type": "string", "pattern": "^/"},
+            "body": {"type": ["object", "null"]},
+            "adapter": {"type": "string", "minLength": 1}
+          }
+        },
+        {
+          "additionalProperties": false,
+          "required": ["kind", "selector", "action"],
+          "properties": {
+            "kind": {"const": "ui"},
+            "selector": {"type": "string", "minLength": 1},
+            "action": {"type": "string", "minLength": 1},
+            "adapter": {"type": "string", "minLength": 1}
+          }
+        },
+        {
+          "additionalProperties": false,
+          "required": ["kind", "clock", "how"],
+          "properties": {
+            "kind": {"const": "clock"},
+            "clock": {"type": "string", "pattern": "^clock\\."},
+            "how": {"type": "string", "minLength": 1},
+            "adapter": {"type": "string", "minLength": 1}
+          }
+        },
+        {
+          "additionalProperties": false,
+          "required": ["kind", "path", "sha256"],
+          "properties": {
+            "kind": {"const": "fixture"},
+            "path": {"type": "string", "pattern": "^tests/fixtures/"},
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "adapter": {"type": "string", "minLength": 1}
+          }
+        },
+        {
+          "additionalProperties": false,
+          "required": ["kind", "substitutes", "label"],
+          "properties": {
+            "kind": {"const": "boundary"},
+            "substitutes": {"type": "string", "minLength": 1},
+            "label": {"type": "string", "minLength": 1},
+            "adapter": {"type": "string", "minLength": 1}
+          }
+        },
+        {
+          "additionalProperties": false,
+          "required": ["kind", "command"],
+          "properties": {
+            "kind": {"const": "cli"},
+            "command": {"type": "string", "minLength": 1},
+            "adapter": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "job", "edge_ids", "state_id", "applicability",
+        "preconditions", "setup", "expected", "completion_bound_s", "viewports"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^case\\.[a-z0-9_]+\\.[a-z0-9_]+\\.[a-z0-9_]+$"},
+        "job": {"enum": ["j1", "j2", "j3", "j4", "j5", "j6", "j7", "j8", "j9", "j10", "j11", "beyond"]},
+        "edge_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "pattern": "^edge\\.(face|route|timer|tool|cli)\\.[a-z0-9_]+$"}
+        },
+        "state_id": {"type": "string", "pattern": "^state\\."},
+        "applicability": {"enum": ["applicable", "not_applicable", "unreachable"]},
+        "reason": {"type": "string", "minLength": 1},
+        "preconditions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "setup": {"type": "array", "items": {"$ref": "#/$defs/step"}},
+        "trigger": {
+          "description": "The one act fired through the real production entry point, after setup and after the `before` capture. A timer, tool or CLI edge is never triggered by a substitute button.",
+          "$ref": "#/$defs/step"
+        },
+        "expected": {
+          "description": "The rig's expected-result contract (scripts/graph_walk.py, \"PREDICATES\"). A predicate written in prose is not read, so the machine-checkable half is a structured object and the human sentence stays in `words`. A case whose result cannot be expressed in the rig's kinds carries `words` alone and is reported.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["words"],
+          "properties": {
+            "predicate": {
+              "type": "object",
+              "required": ["kind"],
+              "properties": {"kind": {"type": "string", "minLength": 1}}
+            },
+            "observe_at": {"type": "string", "minLength": 1},
+            "words": {"type": "string", "minLength": 1},
+            "reads": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["method", "path"],
+                "properties": {
+                  "method": {"enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]},
+                  "path": {"type": "string", "pattern": "^/"}
+                }
+              }
+            }
+          },
+          "dependentRequired": {"predicate": ["observe_at"]}
+        },
+        "completion_bound_s": {"type": "number", "exclusiveMinimum": 0},
+        "viewports": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"enum": [1440, 393]}
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"applicability": {"enum": ["not_applicable", "unreachable"]}}},
+          "then": {"required": ["reason"]}
+        },
+        {
+          "if": {"properties": {"applicability": {"const": "applicable"}}},
+          "then": {"required": ["trigger"]}
+        }
+      ]
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "family", "values", "phase1_refs", "sources", "reachable_by"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^state\\.[a-z0-9_]+\\."},
+        "family": {
+          "enum": ["projections", "briefs", "meetings", "engines", "first_value", "desk_presentation", "time"]
+        },
+        "values": {"type": "object", "minProperties": 1},
+        "phase1_refs": {"type": "array", "items": {"$ref": "#/$defs/phase1Ref"}},
+        "sources": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/sourceRef"}},
+        "reachable_by": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "pattern": "^(case\\.|unexercised: )"}
+        }
+      }
+    },
+    "clock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "source", "mechanism", "status", "used_by"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^clock\\.[a-z0-9_]+$"},
+        "source": {"type": "string", "minLength": 1},
+        "mechanism": {"type": "string", "minLength": 1},
+        "status": {"enum": ["available", "tooling_debt"]},
+        "used_by": {"type": "array", "items": {"type": "string", "pattern": "^case\\."}}
+      }
+    },
+    "excluded": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "combination", "applicability", "reason"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^excluded\\."},
+        "combination": {"type": "string", "minLength": 1},
+        "applicability": {"enum": ["not_applicable", "unreachable"]},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

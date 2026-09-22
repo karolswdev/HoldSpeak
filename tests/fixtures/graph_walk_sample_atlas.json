@@ -1,0 +1,179 @@
+{
+  "atlas_version": "sample-1",
+  "note": "The RIG's own test fixture, not the audit's atlas. The real state atlas is docs/internal/philo/graph/atlas.json. Two cases: one real-hub case in the CASE contract, and one not-applicable case. J9-timer-sweep-receipt is the structured twin of W2's case.j9.timer_sweep.receipt_resolved: the same setup and the same scheduler-wait trigger, with a machine-checkable predicate.",
+  "cases": [
+    {
+      "id": "J9-sweep-receipt-open",
+      "job": "J9 Open what the desk remembered: a sweep receipt's Open opens the Rhythm face",
+      "edge_ids": [
+        "edge:shade.receipt.open"
+      ],
+      "state_id": "state:desk.attention.finished.sweep-receipt",
+      "applicability": {
+        "applicable": true,
+        "reason": "a pointer case on the desk; both viewports are declared"
+      },
+      "preconditions": "a fresh hub, an empty database, one heartbeat sweep receipt minted through the real producer",
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer",
+          "why": "the first-value gate stands in front of the desk on a cold HOME"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/settings/heartbeat/run-now",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route (the owner's Run now -> HeartbeatService.run_sweep, holdspeak/web/routes/system/settings.py:321)",
+          "why": "the sweep receipt is minted by the REAL producer, never written into pipeline_events by hand"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "the desk refetches /api/desk/projections on load"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-bell",
+          "timeout_s": 20,
+          "adapter": "ui-pointer",
+          "why": "Desk memory (web/src/desk/components/DeskChrome.tsx:35)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-shade",
+          "timeout_s": 15,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "section[aria-label=\"Finished\"] .desk-shade-item",
+          "timeout_s": 15,
+          "adapter": "ui-pointer",
+          "why": "the sweep row lands in Finished (attention_state resolved, holdspeak/db/projections.py:706)"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "section[aria-label=\"Finished\"] .desk-shade-item:has-text(\"SWEEP\") .desk-shade-do button",
+        "timeout_s": 15,
+        "adapter": "ui-pointer",
+        "why": "the receipt's own Open (web/src/desk/components/SystemShade.tsx:387) -- the real entry point, not a substitute"
+      },
+      "expected": {
+        "observe_at": "#surface-cadence",
+        "predicate": {
+          "kind": "window_titled",
+          "value": "Rhythm"
+        },
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/desk/projections"
+          }
+        ]
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "J9-timer-sweep-receipt",
+      "job": "J9 (timer edge): the REAL heartbeat conductor mints the sweep receipt on its own tick",
+      "edge_ids": [
+        "edge.timer.heartbeat_sweep"
+      ],
+      "state_id": "state.time.next_due_sweep",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME; the hub started against it with the real heartbeat conductor loop running",
+        "no out-of-band POST /api/settings/heartbeat/run-now is used: that is the owner-hand edge"
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/settings/heartbeat",
+          "body": {
+            "sweep_every_minutes": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route (the real settings service; the floor is 1 minute, holdspeak/services/heartbeat_service.py:176-178)"
+        }
+      ],
+      "trigger": {
+        "kind": "clock",
+        "clock": "clock.heartbeat_scheduler",
+        "how": "no clock is moved: the interval is lowered to its floor and the run waits at most two 60s conductor ticks; the sweep is produced by the real timer",
+        "adapter": "scheduler-wait (holdspeak/runtime/heartbeat.py:86-126)",
+        "max_wait_s": 140,
+        "poll_s": 5
+      },
+      "expected": {
+        "observe_at": "protocol: GET /api/desk/projections",
+        "predicate": {
+          "kind": "protocol_rows",
+          "collection": "projections",
+          "match": {
+            "subject_ref": "service:HeartbeatService",
+            "projection_kind": "receipt",
+            "attention_state": "resolved",
+            "title__prefix": "SWEEP"
+          },
+          "min_new": 1
+        }
+      },
+      "completion_bound_s": 180,
+      "viewports": []
+    },
+    {
+      "id": "J8-voice-typing-other-app",
+      "job": "J8 Type by voice into another app (hold Option+R, speak, release)",
+      "edge_ids": [
+        "edge:hotkey.dictation.push-to-talk"
+      ],
+      "state_id": "state:dictation.idle",
+      "applicability": {
+        "applicable": false,
+        "reason": "UNEXERCISED by this rig: a native hotkey and delivery into another application. The rig never sends native keystrokes and never opens the microphone (brief section 7). The owner's sitting observes this job."
+      },
+      "preconditions": "the hub is up and the desktop runtime holds the hotkey",
+      "setup": [],
+      "trigger": {
+        "kind": "boundary",
+        "label": "native hotkey + other-application delivery",
+        "adapter": "none available"
+      },
+      "expected": {
+        "observe_at": null,
+        "predicate": {
+          "kind": "text_contains",
+          "value": "the spoken words at the cursor"
+        }
+      },
+      "completion_bound_s": 30,
+      "viewports": []
+    }
+  ]
+}

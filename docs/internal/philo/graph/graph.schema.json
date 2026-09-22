@@ -1,0 +1,845 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.local/philo/graph.schema.json",
+  "title": "Philo graph audit join (docs/generated/graph.json)",
+  "description": "The machine-validatable contract of brief section 8. It is a join over the Phase 1 inventories, new edge/state metadata, immutable pass observations, claim reviews, findings and the council's resolutions. It is not a second source of truth for capabilities, APIs, components or domain entities.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generator",
+    "source_commit",
+    "phase1_baseline",
+    "inputs",
+    "nodes",
+    "links",
+    "cases",
+    "observations",
+    "claim_reviews",
+    "findings",
+    "resolutions"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "generator": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The tool that produced this file, with its version."
+    },
+    "source_commit": {
+      "$ref": "#/$defs/revision",
+      "description": "The revision the static and live passes examined."
+    },
+    "phase1_baseline": {
+      "$ref": "#/$defs/revision",
+      "description": "The Phase 1 research snapshot the inventories belong to."
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "sha256"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/link"
+      }
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/observation"
+      }
+    },
+    "claim_reviews": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/claim_review"
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "resolutions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/resolution"
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 120,
+      "pattern": "^[a-z][a-z0-9_]*(?:[.:-][a-z0-9_]+)*$",
+      "description": "A stable, human-readable identifier. A label or a source line number is evidence, not identity."
+    },
+    "revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revision",
+        "path",
+        "line",
+        "claim"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "symbol"
+          ]
+        },
+        {
+          "required": [
+            "anchor"
+          ]
+        }
+      ],
+      "properties": {
+        "revision": {
+          "$ref": "#/$defs/revision"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbol": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anchor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "claim": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What these lines establish."
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/source_ref"
+      }
+    },
+    "phase1_ref": {
+      "description": "A reference into an existing Phase 1 inventory. Curated semantics stay in the shard; this graph only points at them.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "inventory_path",
+            "record_id"
+          ],
+          "properties": {
+            "inventory_path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "record_id": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "inventory_path",
+            "method",
+            "path"
+          ],
+          "properties": {
+            "inventory_path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "method": {
+              "type": "string",
+              "enum": [
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "HEAD",
+                "OPTIONS"
+              ]
+            },
+            "path": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "label",
+        "phase1_refs",
+        "sources"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "edge",
+            "interface",
+            "connection",
+            "action",
+            "state"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subtype": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The trigger or interface subtype where one applies, for example pointer.click, hotkey, timer, http."
+        },
+        "phase1_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/phase1_ref"
+          },
+          "description": "Empty where this trigger or state is new in Phase 2 and owns no Phase 1 record."
+        },
+        "sources": {
+          "$ref": "#/$defs/evidence"
+        }
+      }
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to",
+        "relation",
+        "evidence"
+      ],
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/id"
+        },
+        "to": {
+          "$ref": "#/$defs/id"
+        },
+        "relation": {
+          "type": "string",
+          "enum": [
+            "calls",
+            "reads",
+            "writes",
+            "produces",
+            "renders",
+            "triggers",
+            "presents"
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        }
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "job",
+        "edge_ids",
+        "state_id",
+        "applicability",
+        "preconditions",
+        "setup",
+        "expected",
+        "completion_bound_s",
+        "viewports"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "job": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The owner job this case serves, for example J9."
+        },
+        "edge_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "state_id": {
+          "$ref": "#/$defs/id"
+        },
+        "applicability": {
+          "type": "string",
+          "enum": [
+            "applicable",
+            "not_applicable",
+            "unreachable"
+          ]
+        },
+        "preconditions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "setup": {
+          "type": "array",
+          "description": "The production setup sequence, including the fixture and clock settings the case depends on.",
+          "items": {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "additionalProperties": true,
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "api",
+                  "ui",
+                  "clock",
+                  "fixture",
+                  "boundary",
+                  "cli",
+                  "tool"
+                ]
+              },
+              "adapter": {
+                "type": "string",
+                "description": "How the rig reaches the real entry point (ui-pointer, http-route, scheduler, ...)."
+              },
+              "why": {
+                "type": "string",
+                "description": "Why this step is the real path and not a substitute."
+              }
+            },
+            "description": "An executable step in the rig's contract (scripts/graph_walk.py): kind plus kind-specific fields (api: method, path, body; ui: action, selector/role+name; fixture: path, boundary; clock: mechanism; boundary: label + inner step)."
+          }
+        },
+        "trigger": {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "api",
+                "ui",
+                "clock",
+                "fixture",
+                "boundary",
+                "cli",
+                "tool"
+              ]
+            },
+            "adapter": {
+              "type": "string",
+              "description": "How the rig reaches the real entry point (ui-pointer, http-route, scheduler, ...)."
+            },
+            "why": {
+              "type": "string",
+              "description": "Why this step is the real path and not a substitute."
+            }
+          },
+          "description": "The step fired through its real entry point after setup and the before-capture (brief \u00a77). Required when applicability is applicable."
+        },
+        "expected": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "predicate",
+            "observe_at"
+          ],
+          "description": "The expected result in the rig's contract (scripts/graph_walk.py PREDICATES): a structured predicate at a named observation location; `words` keeps the human sentence.",
+          "properties": {
+            "predicate": {
+              "type": "object",
+              "required": [
+                "kind"
+              ],
+              "additionalProperties": true,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "text_contains",
+                    "text_equals",
+                    "text_absent",
+                    "attr_equals",
+                    "window_titled",
+                    "presentation_change",
+                    "unchanged",
+                    "protocol_rows"
+                  ]
+                }
+              }
+            },
+            "observe_at": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "A CSS selector/testid for face cases, or 'protocol: METHOD /path' for protocol cases."
+            },
+            "words": {
+              "type": "string"
+            },
+            "reads": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "method",
+                  "path"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "method": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "completion_bound_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "viewports": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "description": "Empty for protocol-only cases; face cases carry 1440 and 393."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why the case is not_applicable or unreachable (the atlas's field)."
+        }
+      },
+      "if": {
+        "properties": {
+          "applicability": {
+            "enum": [
+              "not_applicable",
+              "unreachable"
+            ]
+          }
+        },
+        "required": [
+          "applicability"
+        ]
+      },
+      "then": {
+        "required": [
+          "reason"
+        ]
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "applicability": {
+                "const": "applicable"
+              }
+            },
+            "required": [
+              "applicability"
+            ]
+          },
+          "then": {
+            "required": [
+              "trigger"
+            ]
+          }
+        }
+      ]
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "run_id",
+        "case_id",
+        "brain",
+        "pass",
+        "provenance",
+        "verdict"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "case_id": {
+          "$ref": "#/$defs/id"
+        },
+        "brain": {
+          "type": "string",
+          "enum": [
+            "muaddib",
+            "astra"
+          ]
+        },
+        "pass": {
+          "type": "string",
+          "enum": [
+            "static",
+            "live"
+          ]
+        },
+        "viewport": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "revision",
+            "dirty",
+            "frontend_build",
+            "hub",
+            "db_path",
+            "fixture_hashes",
+            "clock",
+            "engine_mode"
+          ],
+          "properties": {
+            "revision": {
+              "$ref": "#/$defs/revision"
+            },
+            "dirty": {
+              "type": "boolean"
+            },
+            "frontend_build": {
+              "type": "string"
+            },
+            "hub": {
+              "type": "string"
+            },
+            "db_path": {
+              "type": "string"
+            },
+            "fixture_hashes": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "clock": {
+              "type": "string"
+            },
+            "engine_mode": {
+              "type": "string",
+              "enum": [
+                "real",
+                "replayed",
+                "none"
+              ]
+            }
+          }
+        },
+        "before": {
+          "type": "string"
+        },
+        "after": {
+          "type": "string"
+        },
+        "initial_feedback": {
+          "type": "string"
+        },
+        "terminal_outcome": {
+          "type": "string"
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail",
+            "blocked",
+            "not_run",
+            "not_applicable"
+          ]
+        }
+      },
+      "if": {
+        "properties": {
+          "verdict": {
+            "enum": [
+              "pass",
+              "fail"
+            ]
+          }
+        },
+        "required": [
+          "verdict"
+        ]
+      },
+      "then": {
+        "required": [
+          "before",
+          "after",
+          "initial_feedback",
+          "terminal_outcome"
+        ]
+      }
+    },
+    "claim_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "claim_ref",
+        "revision",
+        "verdict",
+        "evidence",
+        "limits"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "claim_ref": {
+          "description": "The exact record and field, or the exact source claim, under review.",
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "inventory_path",
+                "record_id",
+                "field"
+              ],
+              "properties": {
+                "inventory_path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "record_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "field": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            {
+              "$ref": "#/$defs/source_ref"
+            }
+          ]
+        },
+        "revision": {
+          "$ref": "#/$defs/revision"
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "verified",
+            "contradicted",
+            "unresolved",
+            "not_applicable"
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "limits": {
+          "type": "string"
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "bin",
+        "owner_cost",
+        "expected",
+        "actual",
+        "evidence",
+        "case_ids",
+        "claim_ids",
+        "positions"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "bin": {
+          "type": "string",
+          "enum": [
+            "product-defect",
+            "doc-drift",
+            "tooling-debt"
+          ]
+        },
+        "owner_cost": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What this costs the owner on a Tuesday. This is the ranking."
+        },
+        "expected": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actual": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "case_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "claim_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "positions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "muaddib",
+            "astra"
+          ],
+          "properties": {
+            "muaddib": {
+              "type": "string",
+              "minLength": 1
+            },
+            "astra": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "finding_id",
+        "disposition",
+        "by",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "finding_id": {
+          "$ref": "#/$defs/id"
+        },
+        "disposition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        }
+      }
+    }
+  }
+}

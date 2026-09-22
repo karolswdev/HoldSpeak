@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 2
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** see the phase status doc
 - **Owner:** both brains (co-authored; the other checks)
@@ -18,13 +18,13 @@ Three audits measured properties and callers; the owner's sitting found two dead
 
 ## Acceptance criteria
 
-- [ ] `docs/internal/philo/briefs/graph-audit-brief.md` is the ONE brief both brains run, verbatim (this story ratifies it; it is drafted at charter).
-- [ ] The four definitions (edge, interface, connection, action) and the four questions are pinned with examples from the sitting.
-- [ ] The outcome law (brief §3) is stated: a diff is evidence to inspect, not a success criterion; an enabled action that promises a change and produces neither it nor an intelligible refusal is a finding; an unexplained zero diff is unresolved, never pass; reads and presentation owe no receipt (Article XI.5).
-- [ ] The state atlas (brief §4) lists REACHABLE cases, each with a stable id, source evidence, edge ids, preconditions, a production setup recipe, fixture and clock settings, expected transition and presentation, and execution limits; derived from Phase 1 lifecycle/failure records and producer code, never a Cartesian product; `quiet` is not an attention_state.
-- [ ] The first-use candidates (brief §5) are mapped to job, starting state, trigger, expected result and source of priority, ordered by SITTING-07.md; the owner DEFERRED the selection to the two brains (2026-09-22) and the ruled selection is recorded below, checked by Astra.
-- [ ] The graph schema (brief §8) is delivered as a machine-validatable JSON Schema joining Phase 1 record ids: root provenance, nodes, links with relations, cases, observations (one per run/case/brain/pass/viewport, never overwritten), claim reviews, findings and resolutions; verdicts pass/fail/blocked/not-run/not-applicable.
-- [ ] Findings have three bins (product defect; doc drift; tooling debt) and one ranking: cost to the owner on a Tuesday.
+- [x] `docs/internal/philo/briefs/graph-audit-brief.md` is the ONE brief both brains run, verbatim (this story ratifies it; it is drafted at charter).
+- [x] The four definitions (edge, interface, connection, action) and the four questions are pinned with examples from the sitting.
+- [x] The outcome law (brief §3) is stated: a diff is evidence to inspect, not a success criterion; an enabled action that promises a change and produces neither it nor an intelligible refusal is a finding; an unexplained zero diff is unresolved, never pass; reads and presentation owe no receipt (Article XI.5).
+- [x] The state atlas (brief §4) lists REACHABLE cases, each with a stable id, source evidence, edge ids, preconditions, a production setup recipe, fixture and clock settings, expected transition and presentation, and execution limits; derived from Phase 1 lifecycle/failure records and producer code, never a Cartesian product; `quiet` is not an attention_state.
+- [x] The first-use candidates (brief §5) are mapped to job, starting state, trigger, expected result and source of priority, ordered by SITTING-07.md; the owner DEFERRED the selection to the two brains (2026-09-22) and the ruled selection is recorded below, checked by Astra.
+- [x] The graph schema (brief §8) is delivered as a machine-validatable JSON Schema joining Phase 1 record ids: root provenance, nodes, links with relations, cases, observations (one per run/case/brain/pass/viewport, never overwritten), claim reviews, findings and resolutions; verdicts pass/fail/blocked/not-run/not-applicable.
+- [x] Findings have three bins (product defect; doc drift; tooling debt) and one ranking: cost to the owner on a Tuesday.
 
 ## Test plan
 
@@ -34,6 +34,21 @@ Three audits measured properties and callers; the owner's sitting found two dead
 
 ## Notes / open questions
 
+**Built 2026-09-22 (three Opus workers, disjoint files; the orchestrator reconciled the contracts):**
+- Schema: `docs/internal/philo/graph/graph.schema.json` (+ worked example for J9, `scripts/philo_graph_validate.py`, 10 fences). Two contract corrections found at build and paid in the brief §8: every applicable case carries a top-level `trigger` step (the rig fires it through the real entry point after setup and the before-capture), and steps are the rig's executable shape (`kind` + kind-specific fields, incl. `cli`/`tool`). The reason field is `reason`.
+- Atlas: `docs/internal/philo/graph/atlas.json` — 61 cases, 110 states over the seven §4 families, 4 clocks, 12 excluded tuples, 18 fences each proven to bite; every case validates against the graph schema's case definition. J8 unexercised (native hotkey, other-app delivery). 31 states unexercised with the missing mechanism and its cost recorded in the atlas.
+- Rig: `scripts/graph_walk.py` v1.0.0 — six calibration cases (no verdict from a diff), fresh-HOME guard, run-specific observation directories, one real-hub smoke (J9 at 1440 and 393: pass). The timer edge is triggered by the REAL scheduler (`scheduler-wait`: floor `sweep_every_minutes` to 1, wait ≤2 ticks); `POST /api/settings/heartbeat/run-now` is the owner-hand edge, a separate case (W2's ruling, upheld).
+
+**Ledger (for the live passes and story 07), not blocking:**
+- `state.meetings.transcription.record_only` is not in the atlas: no producer enum for a record-only posture was found (`transcription_status` is a runtime field, `web_runtime.py:320`; import sets `complete`, `meeting_import.py:68`); modelled as `complete_imported`. The live pass rules whether record-only exists as a state.
+- The brief §4 "continuity horizon" is the LastKnownStore horizon of HS-200-15 (`tests/unit/test_phase200_continuity.py::test_the_last_known_observation_survives_a_restart`, red on main since the horizon passed); the atlas has no reachable tuple for it because `clock.python_wall` and `clock.sqlite_now` have no mechanism in scope (tooling-debt).
+- `next_day` and `week_boundary` are unreachable for the same reason; `clock.browser_date` (Playwright `Page.clock`) and `clock.heartbeat_scheduler` are available.
+- Astra's MISSED on the selection: summary-to-decision follow-through is outside this first sitting.
+- The rig's `scheduler-wait` observed the conductor's FIRST sweep (the `last_sweep_at is None` branch, `heartbeat.py:99`), so `sweep_every_minutes: 1` was set but not load-bearing; proving the interval branch needs a baseline taken after the first sweep. The rig starts the product's own `_heartbeat_loop` in its hub (`serve --scheduler`) without the rest of `WebRuntime.run` (microphone + hotkey are forbidden), so `_sweep_watch_service` takes its documented fallback; irrelevant with zero watches, material for a watch case.
+- Predicates: the atlas's first cut stated expected results in prose; the rig refused to guess (BLOCKED, not failed) and the cases were converted to the rig's structured kinds (`text_contains`, `text_equals`, `text_absent`, `attr_equals`, `window_titled`, `presentation_change`, `unchanged`, `protocol_rows`) with the sentence kept as `words`.
+- Nine applicable cases are `words`-only because the rig lacks four predicate kinds (ruled: shared rig preparation before the live passes, story 04/05, not story 01's exit): `protocol_status` (a 4xx refusal — `case.j6.route_intelligence_run.refusal`), `protocol_rows_gone` (a row disappearing — `case.j3.profile_unbind.binding_absent`, `case.beyond.sweep_held_remote.receipt_resolved`), `protocol_field` (a flat JSON field — `case.j10.brief_item_shelf.acknowledged`/`.deferred`, `case.beyond.projections_list.counts`, `case.j10.brief_people.unavailable`), `input_value` (a textarea value — `case.beyond.first_words_reload.retained_draft`); `case.j7.hub_restart.intel_retained` needs a move-count, which is the owner's observation (SITTING-07 step 6), so the rig records the face and the count stays his. Until those kinds exist, generated graph.json (story 07) will refuse these nine cases' `expected`.
+- Unexercised by any test yet: the `fixture` step against a real hub (the WAV import route), the `boundary` step, and `--engine real|replayed` beyond recording the mode — the live passes pay these or record them blocked.
+
 The roots lens applies to every criterion: the owner works ninety percent of his day on the desk; the interfaces guide him; Workbench 2.0+ on steroids (Tenet 6). A finding that does not cost him on a Tuesday ranks last.
 
 ## The owner's selection — ruled on his deferral, 2026-09-22
@@ -42,16 +57,16 @@ The owner, asked to select the first-use cases: "No, dude. You and Astra? You pu
 
 | # | Job (owner result) | Starting state | Triggers | Expected result | Priority source |
 |---|---|---|---|---|---|
-| J1 | Get past the gate | fresh desk, first screen VOICE TYPING | Continue later; or speak one sentence (fixture WAV) → Kept | the desk; or the words kept with a receipt | SITTING-07 step 0; owner's first use 2026-09-20 |
+| J1 | Get past the gate | fresh desk, first screen VOICE TYPING; the voice branch additionally requires a READY speech assignment (a fresh desk has one migrated speech profile, `speech-migrated-…`; the rig verifies readiness before the branch or records it blocked) | Continue later; or speak one sentence (fixture WAV at the input boundary) → Kept | the desk; or the words kept with a receipt | SITTING-07 step 0; owner's first use 2026-09-20 |
 | J2 | See what the desk asks of me | fresh desk | arrival (observation) | one SETUP row naming what is missing; the head counts what asks; an offer does not count | SITTING-07 step 1 |
-| J3 | Give the desk an engine | no engine / missing profile `legacy-intel` | Choose an engine → Add an engine → address → Check → Use this for summaries | READY; the SETUP row gone | SITTING-07 step 2; fresh-desk log 2026-09-21 |
-| J4 | Have one meeting on the desk | engine set | Record → Stop (fixture WAV at the input boundary); or Import a sound file | a meeting row with its length; no summary yet; no error | SITTING-07 step 3 (alternatives) |
+| J3 | Give the desk a summary engine | speech READY; summary assignment missing or pointing at the missing profile `legacy-intel` | Choose an engine → Add an engine → address → Check → Use this for summaries | READY; the SETUP row gone ONLY because speech was already ready — with speech missing the row stays and says "No engine for speech" (`meetingPathBlocker.ts:83`), which is a second, separate case | SITTING-07 step 2; fresh-desk log 2026-09-21 |
+| J4 | Have one meeting on the desk | speech READY (transcription needs it); summary engine set by J3 | Record → Stop (fixture WAV at the input boundary); or Import a sound file | a meeting row with its length; no summary yet; no error; import stops without an automatic summary | SITTING-07 step 3 (alternatives) |
 | J5 | Know where the summary will run | one meeting | open the meeting (observation beside Run summary) | the planned host, before the click | SITTING-07 step 4; Article III |
 | J6 | Get the summary | J5 | Run summary (real LAN engine) | the host that DID run it; the summary text; technical completion and usefulness reported separately | SITTING-07 step 5 |
 | J7 | Find it again after a restart | J6 | stop the hub; start it; find the summary | the same summary in two moves or less | SITTING-07 step 6 |
 | J8 | Type by voice into another app | hub up | hold ⌥R, speak, release | words at the cursor of the other app | SITTING-07 step 7 — UNEXERCISED by the rig (native hotkey, other-app delivery); the owner's sitting observes it |
 | J9 | Open what the desk remembered | +1 sweep (15 min) | Desk memory → a receipt's Open | the Rhythm face opens; a doorless receipt shows no Open | sitting defect 1, 2026-09-21 |
-| J10 | Get a brief, and another | fresh desk; then +1 day | Generate brief → (reload) → Generate again | the brief's own words stay on the face; a second POST; a receipt | sitting defect 2, 2026-09-21 |
+| J10 | Get a brief, and another | fresh desk; then +1 day | Generate brief → (reload) → Generate again | the brief's own words stay on the face after the reload; after Generate again the RETURNED brief is the one DISPLAYED and it is RETAINED across another reload (not a stale face beside a new receipt); the same-day variant expects the producer to return the existing brief (`monday_brief_service.py:185`), the next-day variant must first PROVE the producer's date advanced (the clock mechanism named in the atlas) or is recorded blocked | sitting defect 2, 2026-09-21 |
 | J11 | Develop a thought | desk | Write a thought → type → Kept | a note, kept, with "Kept · time"; nothing hidden | the owner's first gripe, 2026-09-20 ("completely unusable; hides things") |
 
-Out, by this ruling: everything else on the platform is walked after these, with recorded engine replies. Astra's check of this selection is recorded in `checks/selection-astra.md`.
+Out, by this ruling: everything else on the platform is walked after these, with recorded engine replies. Astra's check of this selection (RATIFY-WITH-CONDITIONS, conditions paid in this table: speech readiness explicit in J1/J3/J4; J10 asserts the displayed and retained result with a proven date boundary) is recorded in `checks/selection-astra.md`. Astra's MISSED stands as a ledger line: summary-to-decision follow-through is not in this first sitting; these eleven jobs do not establish a working day.
