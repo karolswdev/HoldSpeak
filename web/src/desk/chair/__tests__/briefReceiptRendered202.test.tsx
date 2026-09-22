@@ -75,8 +75,20 @@ describe("Generate is badged before and receipted after (counsel 2)", () => {
     render(<ChairHome />);
     const headline = await screen.findByTestId("arrival-brief-headline");
     expect(headline.textContent).toBe("Nothing material changed.");
-    expect(screen.getByTestId("arrival-brief-generate").textContent).toBe("Generate again");
+    const again = screen.getByTestId("arrival-brief-generate");
+    expect(again.textContent).toBe("Generate again");
     expect(screen.queryByText("No brief yet")).toBeNull();
+    // Pressing it makes another brief: the POST fires and the receipt lands.
+    await act(async () => {
+      again.click();
+    });
+    expect(vi.mocked(apiFetch)).toHaveBeenCalledWith(
+      "/api/brief/generate",
+      expect.objectContaining({ method: "POST" }),
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("arrival-brief-receipt").textContent).toMatch(/^Brief ready · /),
+    );
   });
 
   it("names the destination on the row, before the press", async () => {

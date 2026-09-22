@@ -300,16 +300,23 @@ function Qlippy() {
             )}
         </p>
         <div className="button-row">
-          {projection && projection.detail_url && projection.detail_url !== "/" ? (
-            <Button
-              dense
-              variant="primary"
-              onClick={() => {
-                window.location.href = projection.detail_url;
-              }}
-            >
-              Review source
-            </Button>
+          {/* HS-202-06 — a projection with no door draws no "Review source",
+              and NEVER falls into the card branch below (Astra's counsel on
+              #600: with Qlippy on and no queued card, `card!` is undefined
+              and the whole desk threw). Projection rendering and card
+              rendering are separate branches. */}
+          {projection ? (
+            projection.detail_url && projection.detail_url !== "/" ? (
+              <Button
+                dense
+                variant="primary"
+                onClick={() => {
+                  window.location.href = projection.detail_url;
+                }}
+              >
+                Review source
+              </Button>
+            ) : null
           ) : card!.frameType === "actuator_proposed" ? (
             <>
               <Button
