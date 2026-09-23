@@ -139,3 +139,4 @@ HoldSpeak uses the [Apache License 2.0](LICENSE).
 - [User Guide](docs/USER_GUIDE.md): operate the product each day.
 - [Architecture](docs/ARCHITECTURE.md): understand the runtime and data flow.
 - [Documentation index](docs/README.md): find a task, reference, or internal specification.
+- [Graph join](docs/generated/graph.json): see which triggers reach which actions, and what the audit observed.

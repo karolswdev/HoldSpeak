@@ -2591,7 +2591,7 @@
         "holdspeak/services/inference_assignment_service.py::InferenceAssignmentService"
       ],
       "evidence_level": "source_and_assertions_inspected",
-      "exposure": "operator",
+      "exposure": "user",
       "failure_states": [
         "owner_required",
         "no_compatible_assignment",
@@ -2606,7 +2606,7 @@
       "kernel_operations": [],
       "limitations": [
         "An assignment can name a destination that is unavailable later.",
-        "No owner settings surface was observed."
+        "The Philo live pass configured the summary engine through the Models window in the rig (PHILO-2-04, J6 setup); the owner has not observed it."
       ],
       "model_requirements": [],
       "name": "Inference assignment",
@@ -2644,13 +2644,31 @@
           "line": 52,
           "path": "holdspeak/services/inference_assignment_service.py",
           "symbol": "_CANONICAL_GROUPS"
+        },
+        {
+          "claim": "The Models window verb \"Use this for summaries\" writes the summary assignment (useConciergeController.useNewEngineForSummaries).",
+          "line": 571,
+          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "symbol": "ConciergeCore"
+        },
+        {
+          "claim": "The arrival draws a SETUP row while the meeting path has no summary engine; its verb opens Models.",
+          "line": 953,
+          "path": "web/src/desk/chair/ChairHome.tsx",
+          "symbol": "Arrival"
+        },
+        {
+          "claim": "The SETUP row states \"No engine for summaries\" when the summary capability has no assignment.",
+          "line": 95,
+          "path": "web/src/desk/chair/meetingPathBlocker.ts",
+          "symbol": "meetingPathBlockers"
         }
       ],
       "status": "internal",
       "status_reason": "The owner-only assignment service and readiness projection are implemented as configuration control plane; execution remains a later route step.",
       "surfaces": [
-        "model assignment settings",
-        "owner projection"
+        "arrival SETUP row \"No engine for summaries\" (opens Models)",
+        "Models window verb \"Use this for summaries\""
       ],
       "tests": [
         {

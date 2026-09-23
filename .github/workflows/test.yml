@@ -32,6 +32,7 @@ jobs:
           python scripts/philo_boundary_census.py --check
           python scripts/philo_doctor_reference.py --check
           python scripts/philo_config_reference.py --check
+          python scripts/philo_graph_reference.py --check
           python scripts/validate_architecture.py
           python scripts/generate_capability_docs.py --check
           python scripts/check_doc_coverage.py --check

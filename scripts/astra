@@ -35,6 +35,9 @@ case "$ROLE" in
   ask) PREAMBLE="ROLE: ask. You are Astra, co-orchestrator of HoldSpeak (docs/internal/TWO-BRAINS.md). Answer the question below tersely, with evidence where a claim rests on the tree. Change nothing unless the question asks you to.";;
   *) echo "astra: role must be check|lane|counsel|ask" >&2; exit 64;;
 esac
+# The scars (docs/internal/ORCHESTRATION.md §3, worker-brief laws). Every role that builds or judges carries them.
+SCARS="SCARS: (1) a fence that names old words fails when the words are corrected - change words and fences in one commit; (2) a test double that lies about the field a check reads proves nothing - mint through the real producer and show each fence fails before the fix; (3) a receipt rendered in ONE JSX branch dies when the branch changes - render the receipt wherever the click leaves the face and fence the rendered transition; (4) never a blanket restore loop - restore only ' M' paths by explicit path, never '??' (a loop truncated untracked shots); (5) calibration on a sample proves nothing about the real atlas - run actual atlas cases. Walk procedure: agent/skills/holdspeak-capability-verifier/SKILL.md (Walk a case)."
+[[ "$ROLE" == "ask" ]] || PREAMBLE="$PREAMBLE $SCARS"
 
 if [[ "$BRIEF" == "-" ]]; then BODY="$(cat)"; else BODY="$(cat "$BRIEF")"; fi
 TS="$(date +%Y%m%d-%H%M%S)"

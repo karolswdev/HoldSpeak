@@ -16,6 +16,7 @@ It does not replace the active HoldSpeak Phase 201 pointer.
 - [UX Canon](../../../docs/internal/UX-CANON.md).
 - [Preserved owner brief](../../../docs/internal/philo/briefs/owner-request.txt).
 - [Philo plan](../../../docs/internal/philo/README.md).
+- [Graph join](../../../docs/generated/graph.json): the Phase 2 passes and council rulings as one generated file (`scripts/philo_graph_reference.py --check`).
 
 ## Phase index
 

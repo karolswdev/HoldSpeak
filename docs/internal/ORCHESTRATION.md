@@ -197,6 +197,27 @@ Opus workers implement in **parallel waves with serialized shipping**:
   tests that did not exist. When an agent's tool-use count balloons
   across rounds, retire it and brief a fresh one; the settled design
   travels in the brief, not in the tired context.
+- **Worker-brief laws — the scars (Philo Phase 2, 2026-09-22).** Every
+  worker brief carries these, and so do `.claude/agents/opus-worker.md`
+  and the `scripts/astra` preambles:
+  - *Fences that name old words.* A test that pins a face's old words
+    fails the day the words are corrected; every branch-new CI red of
+    Phase 202 was one. Change words and their fences in one commit; fence behaviour,
+    not prose the test does not own.
+  - *Doubles that lie.* A test double that lies about the field a check
+    reads proves nothing. Mint through the real producer, assert against
+    the real validator's constants, and show each fence fails before the
+    fix.
+  - *The receipt under one branch.* A receipt that lives in ONE JSX branch dies when the branch changes: HS-202-02's Generate receipt rendered only under `!brief`, so success replaced the branch that held it and the owner saw nothing. Render the receipt wherever the click leaves the face (Article III), and fence the RENDERED transition, not the helper.
+  - *The restore loop.* A blanket restore loop over `git status` output
+    truncated untracked shots. Restore only ` M` paths, by explicit path;
+    never touch `??`. Workers restore nothing.
+  - *Calibration on a sample.* The rig's own sample atlas passed while
+    the real atlas could not run. Calibration on a sample proves nothing
+    about the real atlas; run actual atlas cases on a real hub.
+
+  The walk procedure these laws guard is
+  `agent/skills/holdspeak-capability-verifier/SKILL.md`, "Walk a case".
 
 ### 4. Verification between landings
 

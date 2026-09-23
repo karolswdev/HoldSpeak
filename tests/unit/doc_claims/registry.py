@@ -707,6 +707,66 @@ CLAIMS: list[Claim] = [
         ),
         story="HS-200-17",
     ),
+
+    # ── PHILO-2-07: the council's three doc-drift lines ──────────────
+    Claim(
+        doc="web/src/desk/useDeskChangedRefresh.ts",
+        anchor="One meeting write announces itself too: the import worker",
+        sentence=(
+            "One meeting write announces itself too: the import worker emits a "
+            "`meeting` frame when an import ends, success or failure "
+            "(`MeetingService._run_import_job`). Other meeting writes, the summary "
+            "queue, project rooms, thoughts and sync emit no frame; their surfaces "
+            "carry their own signals."
+        ),
+        predicate=lambda: desk_changed_comment_holds(),
+        state="holds",
+        truth=(
+            "the only literal-kind 'meeting' desk_changed call under holdspeak/ is "
+            "in MeetingService._run_import_job (meeting_service.py:289); no literal "
+            "thought/project/room/sync kind exists; intel_queue.py, "
+            "intel_queue_conductor.py and meeting_intel_service.py never announce "
+            "(fnd.docs.desk_changed_comment_drift, corrected 2026-09-22)"
+        ),
+        story="PHILO-2-07",
+    ),
+    Claim(
+        doc="docs/internal/philo/data/voice.json",
+        anchor='Models window verb \\"Use this for summaries\\"',
+        sentence=(
+            "model.assignment: exposure user; surfaces: arrival SETUP row \"No "
+            "engine for summaries\" (opens Models); Models window verb \"Use this "
+            "for summaries\"."
+        ),
+        predicate=lambda: model_assignment_exposure_holds(),
+        state="holds",
+        truth=(
+            "the record's exposure is 'user'; ConciergeCore.tsx:571 draws 'Use this "
+            "for summaries', whose handler useNewEngineForSummaries calls "
+            "conciergeSummarySelection; meetingPathBlocker.ts:95 states 'No engine "
+            "for summaries' for the arrival's SETUP row (ChairHome.tsx:953). The "
+            "owner has not observed it (fnd.docs.model_assignment_exposure, "
+            "corrected 2026-09-22)"
+        ),
+        story="PHILO-2-07",
+    ),
+    Claim(
+        doc="docs/internal/philo/briefs/live-pass-lane-brief.md",
+        anchor="the SET_ENGINE chain fills the atlas address `http://192.168.1.43:8080`, unchanged",
+        sentence=(
+            "the SET_ENGINE chain fills the atlas address `http://192.168.1.43:8080`, "
+            "unchanged (corrected by PHILO-2-07: this line named `…:8080/v1` when "
+            "both live passes ran ...)"
+        ),
+        predicate=lambda: lane_brief_engine_address_holds(),
+        state="holds",
+        truth=(
+            "every LAN engine address in docs/internal/philo/graph/atlas.json is "
+            "http://192.168.1.43:8080, the address the brief now names "
+            "(fnd.live.lane_brief_engine_address, corrected 2026-09-22)"
+        ),
+        story="PHILO-2-07",
+    ),
 ]
 
 
@@ -817,6 +877,135 @@ def _sidecar_counts_match_doc() -> bool:
         live["nonowner_templates"],
         live["nonowner_total"],
     ]
+
+
+# ---------------------------------------------------------------------------
+# PHILO-2-07 — the three doc-drift lines the PHILO-2-06 council named
+# (docs/internal/philo/graph/COUNCIL.md, "Findings restored, split or
+# narrowed"; council-resolutions.json res.docs_*).  Each sentence was corrected
+# to the current truth in the same commit that added its row.
+# ---------------------------------------------------------------------------
+
+_DESK_CHANGED_CALLS = {"notify_desk_changed", "emit_desk_changed"}
+
+
+def desk_changed_literal_kinds() -> dict[str, set[tuple[str, str]]]:
+    """Every ``desk_changed`` announcement under holdspeak/ whose kind is a
+    string literal: kind -> {(file, innermost enclosing function)}.
+
+    Parsed out of the real modules with ``ast``; a variable kind (the
+    composed services' own frames) is not a literal and is not collected.
+    """
+    import ast
+
+    found: dict[str, set[tuple[str, str]]] = {}
+    for path in sorted((REPO_ROOT / "holdspeak").rglob("*.py")):
+        text = path.read_text(encoding="utf-8")
+        if "desk_changed" not in text:
+            continue
+        rel = str(path.relative_to(REPO_ROOT))
+
+        class Visitor(ast.NodeVisitor):
+            def __init__(self) -> None:
+                self.stack: list[str] = []
+
+            def _function(self, node: ast.AST) -> None:
+                self.stack.append(node.name)  # type: ignore[attr-defined]
+                self.generic_visit(node)
+                self.stack.pop()
+
+            visit_FunctionDef = _function
+            visit_AsyncFunctionDef = _function
+
+            def visit_Call(self, node: ast.Call) -> None:
+                func = node.func
+                name = func.attr if isinstance(func, ast.Attribute) else getattr(func, "id", None)
+                if (
+                    name in _DESK_CHANGED_CALLS
+                    and node.args
+                    and isinstance(node.args[0], ast.Constant)
+                    and isinstance(node.args[0].value, str)
+                ):
+                    where = self.stack[-1] if self.stack else "<module>"
+                    found.setdefault(node.args[0].value, set()).add((rel, where))
+                self.generic_visit(node)
+
+        Visitor().visit(ast.parse(text))
+    return found
+
+
+def desk_changed_comment_holds() -> bool:
+    """The corrected useDeskChangedRefresh comment, against the real emitters."""
+    kinds = desk_changed_literal_kinds()
+    if kinds.get("meeting") != {("holdspeak/services/meeting_service.py", "_run_import_job")}:
+        return False
+    if set(kinds) & {"thought", "thoughts", "project", "project_room", "room", "sync"}:
+        return False
+    # "the summary queue ... emit no frame": neither the queue, its conductor
+    # nor the meeting-intelligence service announces a desk change.
+    for rel in (
+        "holdspeak/intel_queue.py",
+        "holdspeak/intel_queue_conductor.py",
+        "holdspeak/services/meeting_intel_service.py",
+    ):
+        if "desk_changed" in _read(rel):
+            return False
+    return True
+
+
+def _philo_record(shard: str, record_id: str) -> dict[str, Any]:
+    document = json.loads(_read(shard))
+    for records in document.values():
+        if isinstance(records, list):
+            for record in records:
+                if isinstance(record, dict) and record.get("id") == record_id:
+                    return record
+    raise KeyError(record_id)
+
+
+def model_assignment_exposure_holds() -> bool:
+    """``model.assignment`` is recorded as a user capability, and every quoted
+    face word in its surfaces is really drawn by one of its cited web sources."""
+    record = _philo_record("docs/internal/philo/data/voice.json", "model.assignment")
+    if record.get("exposure") != "user":
+        return False
+    web = [s["path"] for s in record.get("sources", []) if s["path"].startswith("web/src/")]
+    if not web:
+        return False
+    texts = [_read(path) for path in web]
+    for surface in record.get("surfaces", []):
+        words = re.findall(r'"([^"]+)"', surface)
+        if not words:
+            return False
+        if not all(any(word in text for text in texts) for word in words):
+            return False
+    # The Models verb really writes the summary assignment.
+    controller = _read("web/src/features/concierge/useConciergeController.ts")
+    body = controller.split("const useNewEngineForSummaries = useCallback", 1)
+    return len(body) == 2 and "conciergeSummarySelection(" in body[1].split("\n  }, [", 1)[0]
+
+
+def lane_brief_engine_address_holds() -> bool:
+    """The lane brief names exactly the LAN address every atlas step fills."""
+    brief = _read("docs/internal/philo/briefs/live-pass-lane-brief.md")
+    match = re.search(r"fills the atlas address `([^`]+)`", brief)
+    if not match:
+        return False
+
+    values: set[str] = set()
+
+    def walk(node: Any) -> None:
+        if isinstance(node, dict):
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+        elif isinstance(node, str) and re.match(r"https?://192\.168\.1\.43[:/]", node):
+            values.add(node)
+
+    walk(json.loads(_read("docs/internal/philo/graph/atlas.json")))
+    return values == {match.group(1)}
 
 
 # ---------------------------------------------------------------------------

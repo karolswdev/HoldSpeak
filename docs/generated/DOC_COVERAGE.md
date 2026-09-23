@@ -13,7 +13,7 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 245 / 245 |
+| Source paths | 248 / 248 |
 | Test paths | 179 / 179 |
 | Documentation paths | 216 / 216 |
 | Assertions inspected | 179 |
@@ -54,7 +54,7 @@ Validation errors at generation: **0**.
 | `meeting.intelligence` | capabilities | 3/3 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `meeting.aftercare` | capabilities | 2/2 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `model.registry` | capabilities | 2/2 | 1/1 | 1 | 1 | 1 | partially_evidenced |
-| `model.assignment` | capabilities | 2/2 | 2/2 | 2 | 2 | 1 | partially_evidenced |
+| `model.assignment` | capabilities | 5/5 | 2/2 | 2 | 2 | 1 | partially_evidenced |
 | `model.route_plan` | capabilities | 3/3 | 2/2 | 2 | 2 | 2 | partially_evidenced |
 | `model.execution` | capabilities | 3/3 | 3/3 | 3 | 3 | 2 | partially_evidenced |
 | `model.destination_readiness` | capabilities | 2/2 | 3/3 | 3 | 3 | 1 | partially_evidenced |
