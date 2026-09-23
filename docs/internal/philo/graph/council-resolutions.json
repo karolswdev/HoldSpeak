@@ -15,7 +15,8 @@
         "muaddib": "agree",
         "astra": "agree"
       },
-      "astra_disposition": "proposed:A1; create/read/reopen proof; brief and shelf require their own outcomes"
+      "astra_disposition": "proposed:A1; create/read/reopen proof; brief and shelf require their own outcomes",
+      "disposition_final": "phase3:A1"
     },
     {
       "id": "res.summary_lands_on_arrival",
@@ -30,7 +31,8 @@
         "astra": "agree"
       },
       "astra_disposition": "proposed:A2; actual host, automatic arrival refresh, honest retry and retained restart result",
-      "notes": "Astra accepts the source-backed arrival/retry defects. No sealed terminal summary observation exists; Muaddib reports off-rig completion/restart but says the raw output was not retained. The recipe finding is split into tooling debt."
+      "notes": "Astra accepts the source-backed arrival/retry defects. No sealed terminal summary observation exists; Muaddib reports off-rig completion/restart but says the raw output was not retained. The recipe finding is split into tooling debt.",
+      "disposition_final": "phase3:A2"
     },
     {
       "id": "res.thought_receipt",
@@ -44,7 +46,8 @@
         "muaddib": "agree",
         "astra": "agree"
       },
-      "astra_disposition": "deferred:first follow-up after A1-A3; current-write receipt remains unpaid"
+      "astra_disposition": "deferred:first follow-up after A1-A3; current-write receipt remains unpaid",
+      "disposition_final": "phase3:A4 (pending owner D3)"
     },
     {
       "id": "res.brief_unknown_is_not_absence",
@@ -59,7 +62,8 @@
         "muaddib": "agree",
         "astra": "agree"
       },
-      "astra_disposition": "proposed:A3; dated brief, load failure/Retry, same-day identity and next-day decision inclusion"
+      "astra_disposition": "proposed:A3; dated brief, load failure/Retry, same-day identity and next-day decision inclusion",
+      "disposition_final": "phase3:A3"
     },
     {
       "id": "res.receipt_open_goes_somewhere",
@@ -75,7 +79,8 @@
         "astra": "agree"
       },
       "astra_disposition": "deferred:receipt target and return-path repair; backend restore exists; no data-loss claim",
-      "notes": "Dismiss has no user-facing return path. The store and API support restore, so this does not establish deletion or a broken restore endpoint."
+      "notes": "Dismiss has no user-facing return path. The store and API support restore, so this does not establish deletion or a broken restore endpoint.",
+      "disposition_final": "deferred"
     },
     {
       "id": "res.first_value_recovery_owner",
@@ -90,7 +95,8 @@
         "muaddib": "agree",
         "astra": "agree"
       },
-      "astra_disposition": "deferred:separate first-value and native-capture scope; no New Project recovery, lost Talk output or recovery door certified"
+      "astra_disposition": "deferred:separate first-value and native-capture scope; no New Project recovery, lost Talk output or recovery door certified",
+      "disposition_final": "deferred"
     },
     {
       "id": "res.local_time",
@@ -104,7 +110,8 @@
         "muaddib": "agree",
         "astra": "agree"
       },
-      "astra_disposition": "deferred:Rhythm and Settings show local time or a named zone"
+      "astra_disposition": "deferred:Rhythm and Settings show local time or a named zone",
+      "disposition_final": "deferred"
     },
     {
       "id": "res.desk_memory_one_thing",
@@ -118,7 +125,8 @@
         "muaddib": "agree",
         "astra": "disagree: Confusing names and stale Recall results are real, but one face is not required by Tenets 3 and 5. Repair recent-mode refresh separately; a consolidation is outside the minimum meeting result."
       },
-      "astra_disposition": "deferred:targeted Recall recent-mode refresh and clear naming; no mandated three-face consolidation"
+      "astra_disposition": "deferred:targeted Recall recent-mode refresh and clear naming; no mandated three-face consolidation",
+      "disposition_final": "deferred: recall refresh only (consolidation withdrawn, \u00a74.7)"
     },
     {
       "id": "res.concierge_finishes",
@@ -133,7 +141,8 @@
         "muaddib": "agree",
         "astra": "agree"
       },
-      "astra_disposition": "deferred:alternate download/cloud setup; not a dependency of the configured LAN result"
+      "astra_disposition": "deferred:alternate download/cloud setup; not a dependency of the configured LAN result",
+      "disposition_final": "deferred"
     },
     {
       "id": "res.arrival_record_says_something",
@@ -147,7 +156,8 @@
         "astra": "agree"
       },
       "astra_disposition": "deferred:native recording feedback/recovery; import duration remains a separate unverified outcome",
-      "notes": "The finding establishes different Record entry behavior by source. Duration zero during an accepted import does not establish a product duration defect."
+      "notes": "The finding establishes different Record entry behavior by source. Duration zero during an accepted import does not establish a product duration defect.",
+      "disposition_final": "deferred"
     },
     {
       "id": "res.tooling_live_prep",
@@ -173,7 +183,8 @@
         "astra": "agree"
       },
       "astra_disposition": "proposed:A2/A3 for required waits/replies/clock/failure cases only; remaining adapters and cases deferred with their limits; story7 owns documented maintenance",
-      "notes": "Assigned speech is not healthy speech. Old placeholder-control findings have their own historical resolution; repaired selectors do not close blocked recovery cases. Retain the J10 serial replacements and the disclosed incident. Missing clock control is a dependency of any next-day claim; story7 currently does not charter all six adapter implementations."
+      "notes": "Assigned speech is not healthy speech. Old placeholder-control findings have their own historical resolution; repaired selectors do not close blocked recovery cases. Retain the J10 serial replacements and the disclosed incident. Missing clock control is a dependency of any next-day claim; story7 currently does not charter all six adapter implementations.",
+      "disposition_final": "story7 + A2 proof repairs"
     },
     {
       "id": "res.summary_recipe_tooling",
@@ -266,7 +277,8 @@
           "anchor": "notes"
         }
       ],
-      "notes": "Split from the product arrival-refresh resolution. Wait for a completed import, issue Run exactly once, and bind terminal output to the meeting/job. Astra installed the declared test extra before later recipe blocks; missing client is not the cause of every attempt."
+      "notes": "Split from the product arrival-refresh resolution. Wait for a completed import, issue Run exactly once, and bind terminal output to the meeting/job. Astra installed the declared test extra before later recipe blocks; missing client is not the cause of every attempt.",
+      "disposition_final": "proposed:A2 proof prerequisites"
     },
     {
       "id": "res.runtime_client_prerequisite",
@@ -302,7 +314,8 @@
           "anchor": "_ensure_runtime_loaded"
         }
       ],
-      "notes": "Agree about the missing client in the reported dev-only runtime. Astra installed the declared test extra before subsequent runs. Whether the owner install has the client is unknown; unretained success diagnostics are not verified terminal proof. Inspect README source-install and pyproject dependencies in isolation before assigning product or documentation repair."
+      "notes": "Agree about the missing client in the reported dev-only runtime. Astra installed the declared test extra before subsequent runs. Whether the owner install has the client is unknown; unretained success diagnostics are not verified terminal proof. Inspect README source-install and pyproject dependencies in isolation before assigning product or documentation repair.",
+      "disposition_final": "proposed:A2 isolated documented-install check"
     },
     {
       "id": "res.atlas_controls_corrected_before_live",
@@ -416,7 +429,8 @@
           "claim": "The click adapter directly resolves and clicks step.selector; reload is a distinct branch that ignores the selector."
         }
       ],
-      "notes": "Historical source evidence is retained at c42963bc. Current atlas.json:3355 uses the receipt Open control; :5399 edits Note body; :5408 binds the saved body. J9 Open and J11 saved words have live records. Other stale/acknowledge/dismiss/restore cases remain blocked on their separate adapters/replies; do not schedule removal of already-removed main.chair triggers."
+      "notes": "Historical source evidence is retained at c42963bc. Current atlas.json:3355 uses the receipt Open control; :5399 edits Note body; :5408 binds the saved body. J9 Open and J11 saved words have live records. Other stale/acknowledge/dismiss/restore cases remain blocked on their separate adapters/replies; do not schedule removal of already-removed main.chair triggers.",
+      "disposition_final": "historical:pre-live preparation corrected named selectors and J11 content predicate"
     },
     {
       "id": "res.thread_keep_note_result",
@@ -466,7 +480,8 @@
           "claim": "as_kind is accepted but unused; all successful calls record a plugin_output artifact and return artifact_id at line 1797. No note is created."
         }
       ],
-      "notes": "The callback chain executes, but ThreadService.keep accepts as_kind and always persists a plugin_output artifact. Preserve the intended note type and prove Notes lookup in the future repair; outside the selected meeting-to-brief result."
+      "notes": "The callback chain executes, but ThreadService.keep accepts as_kind and always persists a plugin_output artifact. Preserve the intended note type and prove Notes lookup in the future repair; outside the selected meeting-to-brief result.",
+      "disposition_final": "proposed:deferred Thread Keep as note result repair"
     },
     {
       "id": "res.raw_control_census",
@@ -502,7 +517,8 @@
           "symbol": "MeetingStreamRow"
         }
       ],
-      "notes": "Agree on the concrete raw-button debt at the cited sites under Tenet 5 and UX-CANON A.1. Retain 183 as the sealed raw-element handler-site census, not a count of individually established Button violations; form/input/container handlers require ownership classification. This check did not independently recount every site."
+      "notes": "Agree on the concrete raw-button debt at the cited sites under Tenet 5 and UX-CANON A.1. Retain 183 as the sealed raw-element handler-site census, not a count of individually established Button violations; form/input/container handlers require ownership classification. This check did not independently recount every site.",
+      "disposition_final": "proposed:pay actual Button violations in touched faces; classify wider census later"
     },
     {
       "id": "res.no_transcript_during_import",
@@ -539,7 +555,8 @@
         }
       ],
       "notes": "Original bin and Muaddib position retained. Astra proposes recipe repair in A2; no product wording change is authorized by this observation alone.",
-      "astra_bin": "tooling-debt"
+      "astra_bin": "tooling-debt",
+      "disposition_final": "open-dissent:COUNCIL section 4.6"
     },
     {
       "id": "res.docs_desk_changed_comment",
@@ -568,7 +585,8 @@
           "symbol": "import_meeting"
         }
       ],
-      "notes": "Correct the current comment to include the import event; retain the sealed historical graph and source revision."
+      "notes": "Correct the current comment to include the import event; retain the sealed historical graph and source revision.",
+      "disposition_final": "story7"
     },
     {
       "id": "res.docs_assignment_exposure",
@@ -597,7 +615,8 @@
           "symbol": "Arrival"
         }
       ],
-      "notes": "Correct the curated exposure/surface claim to include the user-facing SETUP and Models path. This does not verify every field or provider readiness."
+      "notes": "Correct the curated exposure/surface claim to include the user-facing SETUP and Models path. This does not verify every field or provider readiness.",
+      "disposition_final": "story7"
     },
     {
       "id": "res.docs_engine_address",
@@ -626,7 +645,8 @@
           "anchor": "after"
         }
       ],
-      "notes": "Reconcile future brief/atlas instructions. Preserve Muaddib's no-/v1 input and Astra's authorized endpoint-only runtime substitution as distinct provenance; neither is a terminal execution proof."
+      "notes": "Reconcile future brief/atlas instructions. Preserve Muaddib's no-/v1 input and Astra's authorized endpoint-only runtime substitution as distinct provenance; neither is a terminal execution proof.",
+      "disposition_final": "story7"
     }
   ],
   "astra_review": {
@@ -636,5 +656,9 @@
     "record": "docs/internal/philo/graph/COUNCIL.md#astra--check-and-counter-draft",
     "position_scope": "Positions address the finding and stated qualifications. Original draft dispositions remain attributed to Muaddib; astra_disposition is a counter-proposal, not a ratified charter. New Muaddib positions quote the sealed pass where available; an unrecorded reply is not agreement.",
     "open_dissents": "docs/internal/philo/graph/COUNCIL.md#4-open-dissents-verbatim"
-  }
+  },
+  "council_round": 2,
+  "open_dissents": [
+    "4.3 the smallest Phase 3 (D3)"
+  ]
 }

@@ -1,6 +1,6 @@
 # THE COUNCIL — Philo Phase 2, The Graph (PHILO-2-06)
 
-**Status:** DRAFT by Muad'Dib, 2026-09-23, from all four sealed passes (`static-muaddib`, `static-astra`, `live-muaddib`, `live-astra`, main `34323afe`). Astra's check and counter-draft follow under "Astra"; open dissents are verbatim; the owner rules them and the Phase 3 charter. Plain words, per brief §9.
+**Status:** ROUND TWO, 2026-09-23 — Muad'Dib's draft, Astra's check and counter-draft (DO-NOT-RATIFY the first page), Muad'Dib's reply and rulings below. Narrowed per the counter-draft; one dissent open for the owner (§4.3). Drafted by Muad'Dib, 2026-09-23, from all four sealed passes (`static-muaddib`, `static-astra`, `live-muaddib`, `live-astra`, main `34323afe`). Astra's check and counter-draft follow under "Astra"; open dissents are verbatim; the owner rules them and the Phase 3 charter. Plain words, per brief §9.
 
 ## 1. The decision page
 
@@ -9,15 +9,15 @@
 | Job | Result | Evidence |
 |---|---|---|
 | J1 Get past the gate | **Works** for Continue later and for typing one sentence and keeping it (both brains, both widths). **Unverified** for speaking: no rig may open a microphone. **Broken** for two failure recoveries: a missing model or a rejected token sends him to "New Project" (Astra static #1). | live-muaddib J1; live-astra J1; static-astra J1 |
-| J2 See what the desk asks | **Works on the glass**, unproven by a rig pass: one SETUP row "No engine for summaries", head "1 need you", the calendar offer not counted. | live-muaddib J2 shots |
-| J3 Give the desk a summary engine | **Works as a chain** (every J6 run configured the LAN engine through the face and reached READY), **unproven as its own job** (no J3 case reached its trigger by a correct recipe). The Download and cloud Check alternatives are broken (both statics). | live-muaddib J3; static-muaddib #4; static-astra #6, #7 |
-| J4 Have one meeting on the desk | **Works** by import (a row by id; the length is not proven at capture). **Unverified** by recording (microphone). | live-muaddib J4; live-astra #5 |
-| J5 Know where the summary will run | **Works**: "192.168.1.43 · LAN" beside Run summary before the click, both widths. | live-muaddib J5 |
-| J6 Get the summary | **Unverified by the rig.** Every summary in the lane runtime failed because that runtime lacks the model client (`openai` is only in the `test`/`meeting` extras). A diagnostic with the client present shows the real LAN engine summarising in 1.46 s and the host on the receipt. **Usefulness unverified**: the only material is a nine-word pangram. **Broken on the face** by static trace: the arrival refreshes once after the click and nothing tells it the summary landed; a retrying summary reads as "Nothing needs you". | live-muaddib J6 + DIAGNOSTICS; live-astra #1; static-muaddib #1; live-muaddib #2 |
-| J7 Find it again after a restart | **Unverified by the rig** (the restart step never fired). Diagnostic: after a restart the row reads RAN and one Open shows the same summary. The two-move count is his. | live-muaddib J7 |
+| J2 See what the desk asks | **One displayed state observed**, not the whole truth table, and no rig pass: one SETUP row "No engine for summaries", head "1 need you", the calendar offer not counted. | live-muaddib J2 shots |
+| J3 Give the desk a summary engine | **The LAN setup chain was observed succeeding** (the J6 runs configured the engine through the face and reached READY); provider execution is not proven by READY, and no J3 case reached its own trigger (no J3 case reached its trigger by a correct recipe). The Download and cloud Check alternatives are broken (both statics). | live-muaddib J3; static-muaddib #4; static-astra #6, #7 |
+| J4 Have one meeting on the desk | **Import is ACCEPTED** (a 202 and a row by id; at capture the row is still importing, duration 0, no segments) — a completed meeting with its length and transcript is **unverified**. **Unverified** by recording (microphone). | live-muaddib J4; live-astra #5 |
+| J5 Know where the summary will run | **Works at 1440**: "192.168.1.43 · LAN" beside Run summary before the click. **Unverified at 393**: both phone shots show the Models window covering the meeting control (a proof gap, not a stacking defect). | live-muaddib J5 |
+| J6 Get the summary | **Unverified.** Muad'Dib's lane runtime lacked the model client (`openai` is only in the `test`/`meeting` extras) and every summary failed; Astra installed the extra and later attempts still blocked on the recipes. Muad'Dib REPORTED a diagnostic (the real LAN engine summarising in 1.46 s, the host on the receipt) whose raw output is NOT retained in the tree: it is a report, not council-certified evidence. **Usefulness unverified**: the only material is a nine-word pangram. **Broken on the face** by static trace: the arrival refreshes once after the click and nothing tells it the summary landed; a retrying summary reads as "Nothing needs you". | live-muaddib J6 + DIAGNOSTICS; live-astra #1; static-muaddib #1; live-muaddib #2 |
+| J7 Find it again after a restart | **Unverified** (the restart step never fired in either lane). Muad'Dib REPORTED an unretained diagnostic (after a restart the row reads RAN and one Open shows the same summary). The two-move count is his. | live-muaddib J7 |
 | J8 Voice typing into another app | **Unexercised** by design; his sitting. | atlas |
 | J9 Open what the desk remembered | **Works**: the real scheduler minted a sweep receipt, Desk memory shows it, its Open opens Rhythm, both widths, both brains. **Broken beside it**: Rhythm shows UTC (both brains); a dictation receipt's Open opens the wrong window; invocation and steering receipts open nothing; a dismissed card can never return. | live-muaddib J9; live-astra #11; static-muaddib #5, #6; static-astra #5 |
-| J10 Get a brief, and another | **Works** same-day: the words stay after a reload; Generate again returns, displays and retains the same brief, proven by id. **Broken**: a populated brief cannot be made because **recording a decision answers 500** (both brains, both widths). A brief load failure is drawn as "No brief yet" (both statics). No date on the face. Next day unexercised (no clock). | live-muaddib J10; live-astra #2; static-astra #4; static-muaddib #7, #8 |
+| J10 Get a brief, and another | **Works** same-day: the words stay after a reload; Generate again returns, displays and retains the same brief, proven by id. **Broken**: **recording a decision answers 500** (both brains, both widths), so the decision-backed populated brief is **unverified** (other collectors exist, `monday_brief_service.py:258`; the recipe never reached Generate). A brief load failure is drawn as "No brief yet" (both statics). No date on the face. Next day unexercised (no clock). | live-muaddib J10; live-astra #2; static-astra #4; static-muaddib #7, #8 |
 | J11 Develop a thought | **Works** for the words: typed words reach the store by autosave (both brains). **Broken** for the receipt: the face shows KEPT from filing status, never *when* the newest words were kept; there is no Keep verb; "Kept · time" does not exist on this face. | live-muaddib J11; live-astra #12; static-astra #2 |
 
 Two defects from his sitting of 2026-09-21 no longer reproduce (the receipt's Open reaches Rhythm; the empty brief keeps its face).
@@ -26,31 +26,29 @@ Two defects from his sitting of 2026-09-21 no longer reproduce (the receipt's Op
 
 **The result:** one real meeting, summarised on his LAN engine, seen landing on the arrival, found again after a restart, and one decision recorded from it into the next brief. Today the chain breaks at three places he will hit in that order: the arrival never learns the summary landed; a decision cannot be recorded; the thought he writes about it shows no receipt.
 
-**Smallest Phase 3 (ten stories, ranked by owner cost; effort is a build estimate, not a promise):**
+**The cut, after the council (Muad'Dib's ruling as lane owner; Astra's counter-draft proposed A1–A3; the fourth is Muad'Dib's addition and the one open dissent, §4.3):**
 
-| # | Story | Closes | Effort |
-|---|---|---|---|
-| 1 | **Decisions can be recorded** — `del ctx` before its use in `holdspeak/web/routes/primitives/decisions.py:20,27`; a fence that POSTs and reads one | J10 populated; the shelf; the brief's decisions section | hours |
-| 2 | **The summary lands on the arrival** — the Chair subscribes to `intel_complete`/`intel_status` (today only Live does) or the drainer emits `desk_changed`; a retrying job is not "Nothing needs you"; the cause reaches the face | J6 on the arrival; live-muaddib #2; static-muaddib #1 | days |
-| 3 | **The thought's receipt** — "Kept · HH:MM" bound to the last successful write, a distinct pending and failure state; the filing state stays separate | J11; the owner's first gripe | days |
-| 4 | **A brief that failed to load is not "No brief yet"** — a named load failure with Retry; the date on the face | J10; static-astra #4; static-muaddib #7, #8 | hours |
-| 5 | **Every receipt's Open goes somewhere** — dictation receipts open the journal, invocation/steering receipts open their subject, dismissed cards can be restored (a caller for `restore`, `include_dismissed`) | J9's neighbours; static-muaddib #5, #6; static-astra #5 | days |
-| 6 | **First-value recovery reaches the right owner** — missing model / rejected token open the engine or access owner, never New Project; capture recovery gets its face; Talk delivers its words | J1's failure branches; static-astra #1; static-muaddib #2, #3 | days |
-| 7 | **Local time on every face** — Rhythm and Settings render local time from ISO, or name the zone | J9; both live passes | hours |
-| 8 | **Desk memory is one thing** — one name, one face; Recall's recent actions refresh after a write | J9; static-muaddib #10; static-astra #3 | days |
-| 9 | **Concierge finishes what it starts** — Download polls to completion or fails visibly and can be retried; cloud Check actually probes | J3 alternatives; both statics | days |
-| 10 | **The arrival's Record says something** — Record shows the Live window or its own Stop; import shows its length when the import finishes | J4 | days |
+| # | Story | Owner result | Closes | Effort (estimate, incl. proof repairs) |
+|---|---|---|---|---|
+| A1 | **Record the decision** | the existing decision face saves a decision from the reviewed meeting and reopens it; a create/read failure is named (`del ctx` at `decisions.py:20,27`) | J10 populated/shelf setup | hours for the route; up to a day for the face path |
+| A2 | **See and find the summary** | a COMPLETED import with length and transcript; one Run; the actual host and the summary appear on the arrival without a manual refresh; a retrying/failed job reads truthfully; the same summary after a hub restart | J4 completion, J5 at 393, J6, J7; static-muaddib #1, live-muaddib #2 | 2–4 days, incl. one synthetic meeting with planted decisions, an isolated documented-install check, the import wait, a one-trigger recipe, a lawful failure reply, retained restart evidence |
+| A3 | **Read the dated brief with that decision** | a brief load failure is distinct from absence with Retry; the date is on the face; a new producer-day's brief contains the decision; same-day regeneration keeps the id | J10 absent/loading/failure/populated/next-day; static-astra #4, static-muaddib #7/#8 | 1–3 days, incl. the minimum verified producer-clock boundary (no machine clock change) |
+| A4 | **The thought's receipt** (Muad'Dib's addition — the owner's first gripe, 2026-09-20; Tenet 7) | "Kept · HH:MM" bound to the last successful write, distinct pending and failure states; filing state stays separate | J11; static-astra #2, live-astra #12 | days; a checked canvas first |
 
-Not in Phase 3 (story 07 of this phase, tooling): the lane runtime's missing client; the six boundary substitutions the rig lacks (fake audio, permission, transport, route failure, remote origin, engine reply files); the atlas recipes that click Run summary in setup or send stale request bodies; a wait for import completion; real meeting material for the summary.
+Order: A1 first (hours), A2 the largest blocker, A3 closes the stated result, A4 rides in a second lane. The one end-to-end chain (import → summary on the arrival → restart → decision → next-day brief) is the closure evidence, not a further audit.
+
+**Deferred, explicitly, with their cost (not dependencies of the stated result):** first-value recovery destinations (missing model / rejected token → New Project) and capture recovery's missing face and Talk's dropped words; receipt targets and restore (dictation, invocation, steering; `include_dismissed`); Recall's recent-mode refresh after a write (a targeted repair; NO three-face consolidation, per §4.7); Rhythm/Settings local time; the arrival's Record feedback; the Concierge download/cloud Check alternatives; Thread's Keep-as-note writing an artifact; raw controls outside the library on touched faces. Deferral is not permission to call those jobs done.
+
+Tooling (PHILO-2-07 and A2's own proof repairs): the lane runtime's missing client, import waits and one-trigger recipes, the six boundary substitutions, the engine-reply files, stale request bodies, the `/v1` address drift, the three doc-drift lines.
 
 ### Decisions for the owner
 
 | # | Question | Recommendation | Alternative | Cost | Decisive evidence | Dissent |
 |---|---|---|---|---|---|---|
-| D1 | Is the summary useful? Nobody can say from a pangram. | Give the audit one real recording of yours (or one synthetic meeting with planted decisions), imported through the multipart route, before Phase 3 story 2 closes | Keep the fixture and judge only technical completion | one recording; usefulness stays unverified otherwise | live-muaddib J6 usefulness; live-astra #10 | none |
-| D2 | Does your own install have the model client? The lane runtime did not, and every summary failed with "openai package is not available". | Run `uv run holdspeak web` from your checkout once and read the first summary's receipt; if it fails the same way, the install extras are Phase 3 story 2's first line | Assume the demo install is fine | if wrong, J6 is broken on your desk today, not only in the rig | live-muaddib DIAGNOSTICS; `pyproject.toml:86,90` | none |
-| D3 | The Phase 3 cut and order above. | Ratify as listed; ten stories, the first four in the first lane | Re-cut by your day, not by ours | a re-cut moves nothing in the graph, only the order | this page | Astra's counter-draft may re-rank; recorded below |
-| D4 | The ember accent look from Phase 202 (`--accent-ink`), still your call. | See the story-05 shots and say whether it stays | Revert to the lighter ember and accept 2.2:1 labels | one look | phase-202 story-05 shots | none |
+| D1 | What material tests the summary's usefulness? | The lane prepares ONE synthetic architect meeting with known decisions, owners and actions (input and output shown together); your own recording follows when you choose | You supply a recording first | a day of preparation; a pangram can only test transport | live-astra #10; live-muaddib J6 | resolved (Astra's default adopted) |
+| D2 | Does the product's documented install carry the model client? | The lane reproduces the documented install in isolation (README, `pyproject.toml:86,90`) and retains the result BEFORE you touch it; you judge a summary, never diagnose a missing client | You run it and read the receipt | if the documented install lacks the client, A2's first line | live-muaddib DIAGNOSTICS; live-astra.md:29 | resolved (Astra's position adopted) |
+| D3 | The size of Phase 3. | **Muad'Dib: A1–A4** (three for the meeting loop, plus the thought's receipt because it is your stated gripe). **Astra: A1–A3** (the smallest cut for the stated result; Thought is a real cost but not a dependency). | Re-cut by your day | one lane-week either way; A4 adds days and a canvas | §4.3 verbatim | **OPEN — yours to rule** |
+| D4 | The ember accent look from Phase 202. | Choose between the built dark ember (`--accent-ink`, 5.24:1) and a second look that ALSO meets 4.5:1 on small text, to be drawn; both shown as shots | Name a canon amendment to the contrast rule | one look | phase-202 story-05 shots; UX-CANON §C | resolved (a 2.2:1 option is withdrawn) |
 
 ### Deferred, and what you still cannot do
 
@@ -108,6 +106,9 @@ Muad'Dib reply are marked as such in the resolutions file.
 
 Evidence: Astra findings 1–2 below, including the raw import row and J5 phone shots.
 
+
+**Ruling (Muad'Dib, lane owner): RESOLVED for Astra.** The labels in §1 are narrowed as Astra wrote them.
+
 ### 4.2 Summary and restart diagnostics
 
 **Muad'Dib, §1 J6:**
@@ -117,6 +118,9 @@ Evidence: Astra findings 1–2 below, including the raw import row and J5 phone 
 > The missing client explains Muad'Dib's reported runtime failure and Astra's first attempt. Astra installed the declared test extra before later attempts, which still blocked on recipes. The 1.46-second completion and restart are Muad'Dib's reported diagnostics, whose raw output is absent; I cannot verify them. Neither is a council-certified completion or an observed arrival refresh.
 
 Evidence: `live-astra.md:29`; `live-muaddib.md:55` (DIAGNOSTICS).
+
+
+**Ruling: RESOLVED for Astra.** The diagnostics are labelled reported and unretained in §§1, 2 and 5; A2 owes retained evidence.
 
 ### 4.3 The smallest Phase 3
 
@@ -128,6 +132,9 @@ Evidence: `live-astra.md:29`; `live-muaddib.md:55` (DIAGNOSTICS).
 
 Evidence and dependencies: Astra's Phase 3 table below. This is a scope proposal, not authority to start work.
 
+
+**Ruling: OPEN for the owner (D3).** Muad'Dib holds A1–A4; Astra holds A1–A3. The difference is one story, the thought's receipt, argued from Tenet 7 (his stated gripe) against Tenet 1 (the smallest cut). Both positions stand verbatim above.
+
 ### 4.4 Who diagnoses the install
 
 **Muad'Dib, D2 recommendation:**
@@ -138,6 +145,9 @@ Evidence and dependencies: Astra's Phase 3 table below. This is a scope proposal
 
 Evidence: `README.md:23`, `pyproject.toml:86`, `pyproject.toml:90`; Tenets 2 and 3.
 
+
+**Ruling: RESOLVED for Astra.** D2 rewritten: the lane reproduces the documented install in isolation; the owner judges a summary.
+
 ### 4.5 The accent alternative
 
 **Muad'Dib, D4 alternative:**
@@ -147,6 +157,9 @@ Evidence: `README.md:23`, `pyproject.toml:86`, `pyproject.toml:90`; Tenets 2 and
 > Offer two looks that both meet the 4.5:1 small-text rule, or name a proposed canon amendment. A 2.2:1 label is not an ordinary compliant taste option. Keep this separate from the meeting result.
 
 Evidence: `docs/internal/UX-CANON.md:96` (Contrast); Tenets 5 and 6.
+
+
+**Ruling: RESOLVED for Astra.** D4 rewritten: two compliant looks, or a named canon amendment; the 2.2:1 option is withdrawn.
 
 ### 4.6 Refusal during import
 
@@ -161,6 +174,9 @@ Evidence: `docs/internal/UX-CANON.md:96` (Contrast); Tenets 5 and 6.
 
 Evidence: `holdspeak/services/meeting_intel_service.py:160`; `finding.live_astra.unminted_preconditions`.
 
+
+**Ruling: RESOLVED for Astra.** Re-binned to tooling-debt (a wrong test precondition); the sealed pass keeps its original bin as history; the resolutions file records the re-bin.
+
 ### 4.7 Desk memory consolidation
 
 **Muad'Dib, Phase 3 story 8:**
@@ -172,9 +188,12 @@ Evidence: `holdspeak/services/meeting_intel_service.py:160`; `finding.live_astra
 Evidence: `web/src/features/project-room/recall/useRecallController.ts:143,159,193`;
 `web/src/desk/components/SystemShade.tsx:180`.
 
+
+**Ruling: RESOLVED for Astra.** Story 8 withdrawn; Recall's recent-mode refresh is a targeted deferred repair; naming is designed with that work.
+
 ## 5. The roots verdict — the observed faces against Tenet 6
 
-The owner said: ninety percent of the day on the desk, interfaces that guide, Workbench 2.0+ on steroids. On the eleven jobs the desk **guides on the way in**: the SETUP row names what is missing, the planned host is beside the verb before the click, the sweep receipt opens the face it belongs to, the brief keeps its words. The desk **stops guiding where a result must come back to the face**: the summary lands in the store and the arrival keeps saying QUEUED; the thought's words are kept and the face says only a filing state; a decision cannot be recorded at all; time is shown in a zone he does not live in; a receipt's Open sometimes opens nothing. The chrome is Workbench; the seams are plumbing. Phase 3 is the seams. This verdict is on the observed faces; it does not measure a working day, and it does not judge the summary's usefulness, which nobody has seen on real material (D1).
+The owner said: ninety percent of the day on the desk, interfaces that guide, Workbench 2.0+ on steroids. On the eleven jobs the desk **guides on the way in**: the SETUP row names what is missing, the planned host is beside the verb before the click, the sweep receipt opens the face it belongs to, the brief keeps its words. The desk **stops guiding where a result must come back to the face**: the summary (by source trace, and by an unretained diagnostic) lands in the store while the arrival keeps saying QUEUED; the thought's words are kept and the face says only a filing state; a decision cannot be recorded at all; time is shown in a zone he does not live in; a receipt's Open sometimes opens nothing. The chrome is Workbench; the seams are plumbing. Phase 3 is the seams. This verdict is on the observed faces; it does not measure a working day, and it does not judge the summary's usefulness, which nobody has seen on real material (D1).
 
 ## Astra — check and counter-draft
 
@@ -424,3 +443,7 @@ proof.
 - `.githooks/dw check holdspeak-philo` returned `dw check: ok`.
   `git diff --check` passed. Only the two council files changed;
   PHILO-2-06 remains in-progress. No product tests or runtime were run.
+
+## Muad'Dib — reply to the counter-draft, and the rulings (round two, 2026-09-23)
+
+Astra's check is accepted on findings 1, 2, 4 and 5 without reservation: the job labels are narrowed in §1, the diagnostics are labelled reported and unretained, the thirteen dropped findings are back with their bins (the resolutions file is Astra's version plus the final dispositions), and D1/D2/D4 now ask the owner for a judgement, not a diagnosis. Finding 3, the cut, is where the two brains differ by one story and it is left to the owner as D3: Astra's A1–A3 is the smallest scope that buys the stated result and I adopt it as the core; A4 (the thought's receipt) is added because the first user named that face as unusable on 2026-09-20 and Tenet 7 ranks his stated jobs first — Astra is right that it is not a dependency of the meeting loop, and says so. §3's replies from Astra are all agreements with evidence and are recorded as such. The resolutions file carries `disposition_final` for every finding; the Phase 3 charter is drafted from this page (A1–A4, the fourth marked as pending the owner's D3), and the phase status record carries the open dissent.

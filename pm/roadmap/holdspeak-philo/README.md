@@ -35,3 +35,4 @@ Do not edit the main HoldSpeak project's current phase or Phase 201 status.
 | Phase | Goal (one line) | Status | Folder |
 |---|---|---|---|
 | 2 | Audit the platform as one graph, edges to interfaces to connections to actions, both brains on both passes, a council rules, the outcome is Phase 3. | active | [phase-2-the-graph](./phase-2-the-graph/) |
+| 3 | One imported meeting, its summary arriving on the arrival with the actual host, found again after a restart, one decision recorded from it, seen in the next day's dated brief; plus the thought's receipt, pending the owner's D3. | not-started | [phase-3-the-meeting-loop](./phase-3-the-meeting-loop/) |
