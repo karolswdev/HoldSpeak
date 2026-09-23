@@ -621,11 +621,12 @@ def test_no_check_asserts_the_result_the_trigger_must_produce(atlas: dict) -> No
     """A precondition runs BEFORE the trigger. One that reads the case's own
     observation location would decide the case before it was fired."""
     problems = [
-        f"{case['id']}: a precondition check reads {entry['observe_at']!r}, the case's "
-        "own observation location"
+        f"{case['id']}: a precondition check reads {entry['observe_at']!r} with the "
+        "case's own predicate; it would decide the case before the trigger fired"
         for case in atlas["cases"]
         for entry in _checks(case)
         if entry["observe_at"] == case["expected"].get("observe_at")
+        and entry["predicate"] == case["expected"].get("predicate")
     ]
     assert not problems, problems
 
@@ -645,4 +646,148 @@ def test_every_protocol_field_path_with_a_placeholder_is_a_json_pointer(atlas: d
             path = predicate["path"]
             if "{" in path and not path.startswith("/"):
                 problems.append(f"{case['id']}: {path!r} holds a placeholder but is dotted")
+    assert not problems, problems
+
+
+# ─────────────── no step may act on a root placeholder ───────────────
+
+# `main.chair` was a fallback invented when a prose selector could not be
+# parsed. The only <main className="chair..."> in the Chair is the FIRST-VALUE
+# branch (web/src/desk/chair/ChairHome.tsx:413); the arrival branch has no such
+# root, so the class was never verified for the desk. A click or a fill aimed at
+# a page root is not aimed at a control.
+ROOT_PLACEHOLDERS = frozenset({"main.chair", "body", "main", "#root", ".desk"})
+
+
+def test_no_step_acts_on_a_root_placeholder(atlas: dict) -> None:
+    problems = [
+        f"{case['id']}: {step['action']} on the root placeholder {step['selector']!r}"
+        for case in atlas["cases"]
+        for step in _acts(case)
+        if step.get("kind") == "ui"
+        and step.get("selector") in ROOT_PLACEHOLDERS
+    ]
+    assert not problems, problems
+
+
+def test_navigation_steps_carry_no_selector(atlas: dict) -> None:
+    """`goto` and `reload` take no selector (scripts/graph_walk.py::_ui_step), so
+    one riding along is a claim about a control that is never touched."""
+    problems = [
+        f"{case['id']}: {step['action']} carries selector {step['selector']!r}"
+        for case in atlas["cases"]
+        for step in _acts(case)
+        if step.get("kind") == "ui"
+        and step.get("action") in ("goto", "reload")
+        and "selector" in step
+    ]
+    assert not problems, problems
+
+
+def test_every_click_and_fill_names_a_control(atlas: dict) -> None:
+    """A control is named by a testid, an aria-label, a role or its own class."""
+    problems = [
+        f"{case['id']}: {step['action']} selector {step['selector']!r} names no control"
+        for case in atlas["cases"]
+        for step in _acts(case)
+        if step.get("kind") == "ui"
+        and step.get("action") in ("click", "fill")
+        and not any(
+            token in step["selector"]
+            for token in ("data-testid", "aria-label", "title=", "button", "input",
+                          "textarea", ".desk-", ".thought-", ".concierge-", ".surface-")
+        )
+    ]
+    assert not problems, problems
+
+
+# ───────────────────── the first-value gate ─────────────────────
+
+# Measured live by the rig's integration smoke on a fresh HOME: before the gate
+# is crossed `.chair-first-value` is present and EVERY desk selector -- the Desk
+# memory bell, the arrival headline -- is absent; after `Continue later` the
+# counts invert. A face case that reaches for the desk without crossing the gate
+# blocks and proves nothing.
+GATE_SCOPE = "[data-testid=chair-first-value]"          # ChairHome.tsx:413
+GATE_MARKERS = ("desk-first-words", "chair-first-value")
+
+
+def _is_face_case(case: dict) -> bool:
+    where = case["expected"].get("observe_at") or ""
+    return (
+        case.get("trigger", {}).get("kind") == "ui"
+        or (bool(where) and not where.startswith("protocol:"))
+    )
+
+
+def _is_gate_case(case: dict) -> bool:
+    """A case that acts ON the gate, so crossing it would remove the control."""
+    blob = json.dumps(case)
+    return any(marker in blob for marker in GATE_MARKERS)
+
+
+def test_every_desk_face_case_crosses_the_gate_first(atlas: dict) -> None:
+    problems: list[str] = []
+    for case in atlas["cases"]:
+        if case["applicability"] != "applicable" or not _is_face_case(case):
+            continue
+        setup = case["setup"]
+        if _is_gate_case(case):
+            continue
+        if len(setup) < 2:
+            problems.append(f"{case['id']}: no gate crossing at all")
+            continue
+        first, second = setup[0], setup[1]
+        if not (first.get("action") == "goto" and first.get("url") == "/"):
+            problems.append(f"{case['id']}: first setup step is not goto /")
+        if not (
+            second.get("action") == "click_role"
+            and second.get("name") == "Continue later"
+            and second.get("optional") is True
+        ):
+            problems.append(f"{case['id']}: second setup step is not the optional gate click")
+    assert not problems, problems
+
+
+def test_no_gate_case_crosses_the_gate_in_setup(atlas: dict) -> None:
+    """The press IS the trigger for the gate cases; pressing it in setup would
+    take the control under test off the page."""
+    problems = [
+        f"{case['id']}: setup presses Continue later, the control this case tests"
+        for case in atlas["cases"]
+        if _is_gate_case(case)
+        for step in case["setup"]
+        if step.get("action") == "click_role" and step.get("name") == "Continue later"
+    ]
+    assert not problems, problems
+
+
+def test_gate_cases_check_the_gate_not_the_desk(atlas: dict) -> None:
+    """A gate case's precondition must prove the GATE is up. Checking the
+    arrival headline would assert the very state the case must not be in."""
+    problems: list[str] = []
+    for case in atlas["cases"]:
+        if not (_is_gate_case(case) and _is_face_case(case)):
+            continue
+        where = {entry["observe_at"] for entry in _checks(case)}
+        if "[data-testid=arrival-headline]" in where:
+            problems.append(f"{case['id']}: checks the desk headline, not the gate")
+        if GATE_SCOPE not in where:
+            problems.append(f"{case['id']}: never proves the gate is present")
+    assert not problems, problems
+
+
+def test_every_captured_id_names_the_field_it_reads(atlas: dict) -> None:
+    """The rig defaults `capture_path` to `id`; a route that answers another
+    name refuses by name. The import answers `{meeting_id, status}`
+    (holdspeak/services/meeting_service.py:226).
+    """
+    problems = [
+        f"{case['id']}: captures {step['capture_as']!r} with no capture_path"
+        for case in atlas["cases"]
+        for step in _acts(case)
+        if step.get("capture_as") and step["capture_as"] != "id"
+        and "capture_path" not in step
+        and step.get("kind") == "fixture"
+    ]
     assert not problems, problems

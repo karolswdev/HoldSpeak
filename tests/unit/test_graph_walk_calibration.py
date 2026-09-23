@@ -31,6 +31,7 @@ from scripts.graph_walk import (
     Blocked,
     Refused,
     _ReplayIntel,
+    _read_identity,
     arm_replay_identity,
     calibrate,
     calibration_table,
@@ -39,6 +40,7 @@ from scripts.graph_walk import (
     check_predicate,
     guard_home,
     guard_path,
+    identity_spec,
     run_case,
     run_step,
     substitute,
@@ -421,6 +423,138 @@ def test_the_step_vocabulary_is_closed_and_exported():
         run_step({"kind": "telekinesis"}, page=None, hub=None, provenance={})
     assert "'telekinesis'" in str(raised.value)
     assert "not in the rig's vocabulary" in str(raised.value)
+
+
+# ── atlas-to-rig integration (Astra's round two) ───────────────────────
+
+
+def test_a_relative_goto_resolves_against_the_hub(tmp_path):
+    """An atlas case says `goto "/"`. Without a base url Chromium answers
+    "Cannot navigate to invalid URL" and the whole case blocks."""
+    case = {
+        "id": "CAL-relative-goto", "job": "a case navigates with a bare path",
+        "edge_ids": ["cal:goto"], "state_id": "cal:page",
+        "applicability": "applicable", "preconditions": "the page is served",
+        "setup": [{"kind": "ui", "action": "goto", "url": "/",
+                   "adapter": "ui-navigation"}],
+        "trigger": {"kind": "ui", "action": "click", "selector": "#c-btn",
+                    "adapter": "ui-pointer"},
+        "expected": {"observe_at": "#c-wrong",
+                     "predicate": {"kind": "text_contains", "value": "saved"}},
+        "completion_bound_s": 5, "viewports": [1440],
+    }
+    record = calibrate(tmp_path, cases=[case])[0]
+    assert record["verdict"] == "pass", record["notes"]
+    assert record["setup"][0]["done"] is True
+    assert record["before"]["url"].startswith("http://127.0.0.1")
+
+
+def test_a_fixture_step_captures_from_its_own_response():
+    """The import route answers 202 {"meeting_id": …}, so an import case
+    declares `capture_path: "meeting_id"` — and the default `id` must refuse
+    rather than silently leave the placeholder unfilled."""
+    class _Hub:
+        def upload(self, *_args, **_kwargs):
+            return 202, {"meeting_id": "m-9", "status": "importing"}
+
+    variables = {}
+    provenance = {"fixture_hashes": {}, "boundary_substitutions": [], "restarts": []}
+    step = {"kind": "fixture", "path": "tests/fixtures/core_path_smoke_16k.wav",
+            "route": {"method": "POST", "path": "/api/meetings/import"},
+            "capture_as": "meeting_id", "capture_path": "meeting_id"}
+    record = run_step(step, page=None, hub=_Hub(), provenance=provenance,
+                      variables=variables)
+    assert variables == {"meeting_id": "m-9"}
+    assert record["captured"]["value"] == "m-9"
+    assert provenance["fixture_hashes"][step["path"]]
+
+    with pytest.raises(Blocked) as raised:
+        run_step({**step, "capture_path": None} | {"capture_path": "id"},
+                 page=None, hub=_Hub(), provenance=dict(provenance,
+                 fixture_hashes={}), variables={})
+    assert "no value at 'id'" in str(raised.value)
+
+
+def test_a_trigger_identity_is_read_from_the_response_not_the_page():
+    """`replay_identity: "trigger:id"` was handed to querySelector as CSS and
+    raised a SyntaxError in the snapshot path."""
+    spec = identity_spec({"kind": "unchanged", "replay_identity": "trigger:id"})
+    assert spec == {"from": "trigger", "path": "id"}
+    # nothing on the page is armed or cleared for it
+    assert arm_replay_identity(None, {"kind": "unchanged",
+                                      "replay_identity": "trigger:id"}, {}) is None
+    # and the snapshot never treats it as a selector
+    assert _read_identity(None, spec)["value"] is None
+
+    same = {"text": "the brief", "attrs": {}}
+    after = {**same, "trigger_response": {"status": 200, "body": {"id": "b-7"}}}
+    ok, why = check_predicate({"kind": "unchanged", "replay_identity": "trigger:id"},
+                              same, after)
+    assert ok is True and "b-7" in why
+    # an operation whose response carries no such identity cannot pass
+    empty = {**same, "trigger_response": {"status": 200, "body": {"other": 1}}}
+    assert check_predicate({"kind": "unchanged", "replay_identity": "trigger:id"},
+                           same, empty)[0] is False
+
+
+def test_identity_display_requires_the_returned_id_to_be_the_displayed_one():
+    """J10's contract: the RETURNED brief is the one DISPLAYED — not a stale
+    face beside a new receipt."""
+    predicate = {"kind": "unchanged", "replay_identity": "trigger:id",
+                 "identity_display": "[data-testid=arrival-brief]@data-brief-id"}
+    spec = identity_spec(predicate)
+    assert spec["from"] == "trigger"
+    assert spec["display"] == "[data-testid=arrival-brief]"
+    assert spec["display_attr"] == "data-brief-id"
+
+    same = {"text": "the brief", "attrs": {}}
+    agreeing = {**same, "trigger_response": {"body": {"id": "b-7"}},
+                "identity_display": {"value": "b-7"}}
+    stale = {**same, "trigger_response": {"body": {"id": "b-8"}},
+             "identity_display": {"value": "b-7"}}
+    missing = {**same, "trigger_response": {"body": {"id": "b-8"}},
+               "identity_display": {"value": None}}
+    assert check_predicate(predicate, same, agreeing)[0] is True
+    ok, why = check_predicate(predicate, same, stale)
+    assert ok is False and "stale face" in why
+    ok, why = check_predicate(predicate, same, missing)
+    assert ok is False and why.startswith("BLOCKED:")
+
+
+def test_a_row_match_reaches_a_nested_field():
+    predicate = {"kind": "protocol_rows", "collection": "rows", "min_new": 1,
+                 "match": {"effective.status": "ready"}}
+    before = {"protocol": {"status": 200, "rows": []}}
+    after = {"protocol": {"status": 200,
+                          "rows": [{"id": "a", "effective": {"status": "ready"}}]}}
+    other = {"protocol": {"status": 200,
+                          "rows": [{"id": "a", "effective": {"status": "queued"}}]}}
+    assert check_predicate(predicate, before, after)[0] is True
+    assert check_predicate(predicate, before, other)[0] is False
+    # the prefix suffix still applies to a nested key
+    prefixed = {**predicate, "match": {"effective.status__prefix": "rea"}}
+    assert check_predicate(prefixed, before, after)[0] is True
+    assert check_predicate(prefixed, before, other)[0] is False
+    # a missing nested path is not a match
+    flat = {"protocol": {"status": 200, "rows": [{"id": "a", "status": "ready"}]}}
+    assert check_predicate(predicate, before, flat)[0] is False
+
+
+def test_prose_in_expected_words_is_not_a_placeholder(tmp_path):
+    """An atlas case's `words` says `POST …/{attempt_id}/finish` as English."""
+    case = {
+        "id": "CAL-prose-braces", "job": "prose braces", "edge_ids": ["cal:w"],
+        "state_id": "cal:page", "applicability": "applicable",
+        "preconditions": "the page is served", "setup": [],
+        "trigger": {"kind": "ui", "action": "click", "selector": "#c-btn",
+                    "adapter": "ui-pointer"},
+        "expected": {"observe_at": "#c-wrong",
+                     "predicate": {"kind": "text_contains", "value": "saved"},
+                     "words": "no 4xx on POST /api/setup/first-value/{attempt_id}/finish"},
+        "completion_bound_s": 5, "viewports": [1440],
+    }
+    record = calibrate(tmp_path, cases=[case])[0]
+    assert record["verdict"] == "pass", record["notes"]
 
 
 # ── (6) a boundary must PERFORM its substitution ───────────────────────

@@ -29,6 +29,61 @@ ATLAS = REPO / "tests/fixtures/graph_walk_sample_atlas.json"
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(300, method="thread")]
 
 
+# ── THE INTEGRATION FENCE ──────────────────────────────────────────────
+#
+# Three cases from the REAL atlas (docs/internal/philo/graph/atlas.json), one
+# hub each, serial, at 1440. A rig that only ever runs its own sample atlas
+# proves nothing about the pass it was built for.
+#
+# Two of the three are BLOCKED, and the block is the atlas's, not the rig's.
+# Both were confirmed against a live desk (counts queried on a fresh HOME):
+#
+#   behind the first-value gate   after "Continue later"
+#   .chair-first-value        1        0
+#   [title='Desk memory']     0        1
+#   [data-testid=arrival-headline] 0   1
+#   role=button "Continue later"  1    0
+#
+# So `[title='Desk memory']` is a CORRECT selector that does not exist until
+# the gate is crossed, and "Continue later" is gone once it has been pressed.
+REAL_ATLAS = REPO / "docs/internal/philo/graph/atlas.json"
+ATLAS_FENCE = {
+    "case.j9.shade_receipt_open.rhythm_face": (
+        "pass", "", "the sweep receipt's own Open reaches the Rhythm face (the "
+        "atlas crosses the first-value gate before the bell since round three)",
+    ),
+    "case.j1.first_words_continue_later.idle": (
+        "pass", "", "Continue later is the trigger, pressed by nothing in setup; "
+        "the desk (the arrival headline) is the promised result",
+    ),
+    "case.j10.arrival_generate_brief.generated_empty": (
+        "pass", "", "the empty brief says so on the face",
+    ),
+}
+
+
+@pytest.mark.parametrize("case_id", sorted(ATLAS_FENCE))
+def test_the_rig_drives_the_real_atlas(case_id, tmp_path):
+    want_verdict, names, why = ATLAS_FENCE[case_id]
+    record = run_case(REAL_ATLAS, case_id, brain="muaddib", viewport=1440,
+                      out=tmp_path, engine="none")
+
+    assert record["verdict"] == want_verdict, (
+        f"{case_id}: {why}\n" + json.dumps(record["notes"], indent=2))
+    assert record["complete"] is True
+    assert record["provenance"]["revision"]
+    assert (tmp_path / record["run_id"] / "observation.json").exists()
+
+    if want_verdict == "blocked":
+        # a named block: the record says WHAT could not be reached
+        blocked = [n for n in record["notes"] if n.startswith("BLOCKED:")]
+        assert blocked, record["notes"]
+        assert names in blocked[0], blocked[0]
+    else:
+        assert record["terminal_outcome"]["within_bound"] is True
+        assert record["before"] and record["after"]
+
+
 @pytest.mark.parametrize("viewport", [1440, 393])
 def test_the_rig_drives_j9_through_the_real_hub(viewport, tmp_path):
     record = run_case(

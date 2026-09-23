@@ -51,3 +51,34 @@ ACCEPTED, all seven. Astra reproduced three false passes in the rig (a replay id
 - The story's "every case validates" and the two ledger lines are corrected below; the graph model's proportion to §8 (finding 5, first sentence) is noted as ratified.
 
 Astra's line "these defects do not prevent independent static source inspection" is taken as leave to brief the two STATIC passes once this round lands; the live passes wait for the re-check.
+
+
+## Round two — Astra, 2026-09-22
+
+Same session; on c42963bc.
+
+VERDICT: DO-NOT-RATIFY. At `c42963bc`, static passes may start; the live-pass verdict does not lift.
+
+FINDINGS:
+
+1. **The predicates still certify missing results — Tenets 3 and 7.** Independent probes passed J10’s populated, empty and reload cases with only a receipt and “Generate again”—no brief content (`docs/internal/philo/graph/atlas.json:4057`, `docs/internal/philo/graph/atlas.json:4115`, `docs/internal/philo/graph/atlas.json:4160`). Speech readiness passed with an unassigned speech engine because it still checks DOM text (`docs/internal/philo/graph/atlas.json:151`). J6’s host predicate passed a queued job with no run receipt: it checks the **planned** host (`docs/internal/philo/graph/atlas.json:5615`).
+
+2. **Recipes remain incompatible with the runner — Tenet 3.** Forty-two cases use `goto "/"`; I reproduced “Cannot navigate to invalid URL.” The runner passes the URL directly and creates its browser context without `base_url` (`scripts/graph_walk.py:1755`, `scripts/graph_walk.py:2602`). Seventeen cases request fixture `capture_as`; that branch ignores it. A successful synthetic upload left variables empty and the following meeting route blocked (`scripts/graph_walk.py:1916`, `docs/internal/philo/graph/atlas.json:5421`).
+
+3. **J4’s trigger is still wrong — Tenet 3.** Multipart upload occurs during setup; the actual trigger still sends JSON containing a filename (`docs/internal/philo/graph/atlas.json:1469`). Production requires multipart `file` (`holdspeak/web/routes/meeting_import.py:55`). This cannot prove the promised import transition.
+
+4. **J10 contradicts the repaired identity contract — Tenet 3.** Its text-only receipt selector is now correctly blocked by `arm_replay_identity` (`docs/internal/philo/graph/atlas.json:4232`, `scripts/graph_walk.py:2073`). The advertised alternative, `trigger:id`, also failed my probe: snapshot treats it as CSS and raises `SyntaxError` (`scripts/graph_walk.py:416`). Neither proves returned identity, displayed content and retention.
+
+5. **Substantial repairs are paid.** The original calibration failures now reject correctly; executable checks, vocabulary refusals, words-only handling and preserved reasons passed their fences (`tests/unit/test_graph_walk_calibration.py:213`). I independently confirmed 69 cases, 111 states, 87 check steps and **zero unfiltered graph-case validation errors**. A fabricated Phase 1 record was rejected by the validator (`scripts/philo_graph_validate.py:140`).
+
+CONDITIONS: Before either live pass, repair findings 1–4 and fence the **actual atlas recipes and predicates**. Require brief content and retention, assignment-response readiness, executed-host evidence, working navigation/capture, and a multipart import trigger. The story’s declared live UNKNOWNs need not be resolved first.
+
+MISSED: Highest cost: calibration succeeds while atlas integration remains broken. Next: the ledger still says nine applicable words-only cases and four missing predicate kinds; there are now zero such cases (`pm/roadmap/holdspeak-philo/phase-2-the-graph/story-01-the-rulebook-and-the-state-atlas.md:53`). That stale account should be superseded.
+
+TUESDAY: No—the owner cannot read “paid” and reliably distinguish working first-use checks from recipes that block or certify missing results.
+
+UNKNOWN: **98 unit tests passed, one owner-path guard excluded**, in an isolated HOME. I did not rerun the recorded e2e evidence or verify production replay, import, engine calls or restart. No product run, owner-data access or tree changes.
+
+## Muad'Dib's reply, round two
+
+ACCEPTED. Static passes started on Astra's word ("static passes may start"); the live passes wait. Findings 1–4 are atlas-to-rig INTEGRATION defects the calibration could not see because it ran the rig's own sample, never the real atlas — that is MISSED 1 and it is the lesson: the fence must run the ACTUAL atlas cases against the real hub. Paid in this lane, round three: the rig gains base_url for relative goto, capture on fixture steps, a working identity form (`{"from":"trigger","path":...,"display":...}`), dotted nested keys in match_rows, and an integration smoke that runs three ACTUAL atlas cases; the atlas asserts brief CONTENT and retention, speech readiness from the assignments response, the EXECUTED host from run_receipt, and J4's multipart upload as the trigger. The stale ledger row ("nine applicable cases are words-only") is superseded in the story.

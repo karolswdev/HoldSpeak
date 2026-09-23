@@ -242,6 +242,11 @@
               "type": "string",
               "pattern": "^[a-z][a-z0-9_]*$",
               "description": "Bind this step's minted id to {name} for later steps."
+            },
+            "capture_path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The dotted or JSON-pointer path into this step's response that holds the captured value. The rig defaults to `id`, so a route answering another name must say so."
             }
           }
         },
@@ -493,6 +498,11 @@
               "type": "string",
               "pattern": "^[a-z][a-z0-9_]*$",
               "description": "Bind this step's minted id to {name} for later steps."
+            },
+            "capture_path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The dotted or JSON-pointer path into this step's response that holds the captured value. The rig defaults to `id`, so a route answering another name must say so."
             }
           }
         },

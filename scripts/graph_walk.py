@@ -87,8 +87,16 @@ PREDICATES (`expected.predicate.kind`):
   window_titled {value}          a window with that title, absent before
   presentation_change {fields}   focus | geometry | windows — a valid
                                  presentation change, promised by the contract
-  unchanged {replay_identity}    an idempotent/read contract: the same result
-                                 AND the same recorded replay identity. An
+  unchanged {identity}           an idempotent/read contract: the same result
+                                 AND a replay identity produced by THIS
+                                 operation. `identity` is
+                                 {"from":"trigger","path":…,"display":…?} —
+                                 the value the operation's own response
+                                 returned, and with `display` it must BE the
+                                 one on the face — or
+                                 {"from":"selector","selector":…,"attr":…},
+                                 which the rig blanks before the trigger so
+                                 the operation must write it again. An
                                  unexplained zero diff is UNRESOLVED, not pass.
   protocol_rows {collection, match, min_new, max_new?}
                                  for `observe_at: "protocol: GET /path"` — a
@@ -413,8 +421,14 @@ def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[st
     raw["document_text_sha256"] = hashlib.sha256(body.encode()).hexdigest()
     raw["document_text_len"] = len(body)
     raw["_body_text"] = body  # stripped before the record is written
-    identity = predicate.get("replay_identity") if isinstance(predicate, dict) else None
+    identity = identity_spec(predicate)
     raw["replay_identity"] = _read_identity(page, identity) if identity else None
+    display = (identity or {}).get("display")
+    if display:
+        raw["identity_display"] = _read_identity(
+            page, {"from": "selector", "selector": display,
+                   "attr": (identity or {}).get("display_attr")})
+        raw["identity_display"]["spec"] = predicate.get("identity_display")
     reads = expected.get("reads") or []
     if reads and hub is not None:
         collected = []
@@ -431,18 +445,57 @@ def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[st
     return raw
 
 
-def _read_identity(page: Any, spec: str) -> dict[str, Any]:
-    """`#sel@attr` — the replay identity an idempotent contract must repeat."""
-    selector, _, attr = spec.partition("@")
+def identity_spec(predicate: Any) -> dict[str, Any] | None:
+    """The replay identity, normalised to one of two shapes.
+
+    `{"from": "trigger", "path": …, "display": …?}` — the value the operation's
+    own response returned (and, with `display`, the value shown at that
+    selector: J10's contract is that the returned id IS the displayed one).
+
+    `{"from": "selector", "selector": …, "attr": …}` — an attribute the rig
+    blanks before the trigger, so the operation must write it again.
+
+    The legacy string forms `"#sel@attr"` and `"trigger:<path>"` are read into
+    the same shapes; `trigger:` was being handed to `querySelector` as if it
+    were CSS (Astra's round two).
+    """
+    if not isinstance(predicate, dict):
+        return None
+    raw = predicate.get("identity") or predicate.get("replay_identity")
+    if not raw:
+        return None
+    if isinstance(raw, dict):
+        spec = dict(raw)
+        spec.setdefault("from", "selector" if spec.get("selector") else "trigger")
+    elif str(raw).startswith("trigger:"):
+        spec = {"from": "trigger", "path": str(raw).split(":", 1)[1]}
+    else:
+        selector, _, attr = str(raw).partition("@")
+        spec = {"from": "selector", "selector": selector, "attr": attr or None}
+    shown = predicate.get("identity_display")
+    if shown:
+        selector, _, attr = str(shown).partition("@")
+        spec["display"] = selector
+        spec["display_attr"] = attr or None
+    return spec
+
+
+def _read_identity(page: Any, spec: dict[str, Any]) -> dict[str, Any] | None:
+    """Read a SELECTOR identity off the page. A trigger identity is not here:
+    it lives in the operation's response and is read by the evaluator."""
+    if spec.get("from") != "selector":
+        return {"from": spec.get("from"), "path": spec.get("path"), "value": None,
+                "read_from": "the trigger's response, not the page"}
     value = page.evaluate(
         """([selector, attr]) => {
             const el = document.querySelector(selector);
             if (!el) return null;
             return attr ? el.getAttribute(attr) : (el.innerText || "").trim();
         }""",
-        [selector, attr],
+        [spec.get("selector"), spec.get("attr")],
     )
-    return {"spec": spec, "value": value}
+    return {"from": "selector", "selector": spec.get("selector"),
+            "attr": spec.get("attr"), "value": value}
 
 
 _DIFF_KEYS = (
@@ -632,15 +685,40 @@ def check_predicate(
                 and (before.get("attrs") or {}) == (after.get("attrs") or {}))
         if not same:
             return False, "the contract promised an unchanged result; it changed"
-        identity_before = (before.get("replay_identity") or {}).get("value")
-        identity_after = (after.get("replay_identity") or {}).get("value")
-        if not predicate.get("replay_identity"):
+        spec = identity_spec(predicate)
+        if not spec:
             return False, (
                 "UNRESOLVED: a zero diff with no recorded replay identity. "
-                "An unexplained zero diff cannot pass (brief §3)."
-            )
+                "An unexplained zero diff cannot pass (brief §3).")
+
+        if spec.get("from") == "trigger":
+            answer = after.get("trigger_response") or {}
+            if not answer:
+                return False, ("BLOCKED: the identity comes from the trigger's "
+                               "response, and no response was recorded")
+            found, returned = _json_path(answer.get("body"), spec.get("path", "id"))
+            if not found or returned is None:
+                return False, (f"the operation's response carries no "
+                               f"{spec.get('path')!r} to identify the replay")
+            shown = (after.get("identity_display") or {}).get("value")
+            if spec.get("display"):
+                if shown is None:
+                    return False, (f"BLOCKED: nothing at {spec['display']!r} "
+                                   "displays the returned identity")
+                if str(shown).find(str(returned)) < 0 and str(shown) != str(returned):
+                    return False, (f"the operation returned {returned!r} but the "
+                                   f"face shows {shown!r} — a stale face beside a "
+                                   "new result")
+                return True, (f"unchanged result; the returned identity {returned!r} "
+                              f"IS the one displayed at {spec['display']!r}")
+            return True, (f"unchanged result; the operation's own response "
+                          f"returned the identity {returned!r}")
+
+        identity_before = (before.get("replay_identity") or {}).get("value")
+        identity_after = (after.get("replay_identity") or {}).get("value")
         if identity_after is None:
-            return False, f"the replay identity {predicate['replay_identity']!r} was not readable"
+            return False, (f"the replay identity at {spec.get('selector')!r} was "
+                           "not readable after the operation")
         if identity_before != identity_after:
             return False, f"replay identity moved: {identity_before!r} -> {identity_after!r}"
         return True, f"unchanged result with the same replay identity {identity_after!r}"
@@ -690,10 +768,14 @@ def match_rows(snap: dict[str, Any], predicate: dict[str, Any]) -> list[dict[str
             continue
         ok = True
         for key, want in match.items():
+            # a dotted or JSON-pointer key reaches a NESTED field
+            # (`effective.status`); `__prefix` still applies to it
+            path = key[: -len("__prefix")] if key.endswith("__prefix") else key
+            seen, value = _json_path(row, path)
             if key.endswith("__prefix"):
-                ok = ok and str(row.get(key[: -len("__prefix")], "")).startswith(str(want))
+                ok = ok and seen and str(value or "").startswith(str(want))
             else:
-                ok = ok and row.get(key) == want
+                ok = ok and seen and value == want
         if ok:
             found.append(row)
     return found
@@ -1706,6 +1788,10 @@ STEP_KINDS = frozenset({"api", "ui", "fixture", "clock", "boundary", "cli", "che
 #: so JSON braces in a body are never mistaken for a placeholder.
 _PLACEHOLDER = re.compile(r"\{([A-Za-z_][A-Za-z0-9_]*)\}")
 
+#: The fields of `expected` the rig actually READS. `words` is prose for the
+#: council and may carry `{attempt_id}` as English, not as a placeholder.
+_EXPECTED_READ_FIELDS = ("observe_at", "predicate", "reads", "pending_marker")
+
 #: The step fields a captured value may travel into.
 _SUBSTITUTED_FIELDS = ("path", "selector", "name", "value", "url", "key", "body",
                        "observe_at")
@@ -1742,7 +1828,7 @@ UI_ACTIONS = frozenset({
 })
 
 
-def _ui_step(page: Any, step: dict[str, Any]) -> dict[str, Any]:
+def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]:
     action = step.get("action")
     if action not in UI_ACTIONS:
         raise Blocked(
@@ -1753,7 +1839,15 @@ def _ui_step(page: Any, step: dict[str, Any]) -> dict[str, Any]:
     timeout = float(step.get("timeout_s", 10)) * 1000
     try:
         if action == "goto":
-            page.goto(step["url"])
+            url = step["url"]
+            if not str(url).startswith("http"):
+                # relative: resolved by the context's base_url, and the hub's
+                # token is carried so a bare "/" is not an unauthenticated load
+                token = step.get("token") or getattr(hub, "token", None)
+                if token and "token=" not in str(url):
+                    url = f"{url}{'&' if '?' in str(url) else '?'}token={token}"
+            page.goto(url)
+            record["url"] = url
         elif action == "reload":
             page.reload(wait_until=step.get("wait_until", "load"))
         elif action == "click":
@@ -1781,7 +1875,12 @@ def _ui_step(page: Any, step: dict[str, Any]) -> dict[str, Any]:
         record["done"] = False
         record["error"] = repr(exc)[:400]
         if not optional:
-            raise Blocked(f"ui step {action} failed: {exc!r}"[:400]) from exc
+            # name the TARGET plainly: a reader (and a fence) should not have
+            # to unescape a repr to learn which selector was unreachable
+            target = step.get("selector") or step.get("name") or step.get("url")
+            raise Blocked(
+                f"ui step {action} on {target!r} failed: {type(exc).__name__}: "
+                f"{str(exc)[:200]}") from exc
     return record
 
 
@@ -1867,15 +1966,25 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
             "`capture_as`, never sent literally.")
 
     if kind == "check":
-        # The same evaluator a verdict uses, at a point in the setup.
+        # The same evaluator a verdict uses, at the point it stands. It is
+        # given a bounded wait: a face that is still loading has not yet
+        # refused the precondition.
         probe_case = {"expected": {"observe_at": step.get("observe_at"),
                                    "predicate": step.get("predicate")}}
-        snap = snapshot(page, probe_case, hub)
-        ok, why = check_predicate(step.get("predicate"), snap, snap)
+        deadline = time.monotonic() + float(step.get("timeout_s", 5))
+        waited = 0.0
+        while True:
+            snap = snapshot(page, probe_case, hub)
+            ok, why = check_predicate(step.get("predicate"), snap, snap)
+            if ok or time.monotonic() >= deadline:
+                break
+            if page is not None:
+                page.wait_for_timeout(300)
+            waited = round(time.monotonic() - (deadline - float(step.get("timeout_s", 5))), 2)
         record = {"kind": "check", "observe_at": step.get("observe_at"),
                   "predicate": step.get("predicate"),
                   "adapter": step.get("adapter", "observation"),
-                  "holds": ok, "reading": why}
+                  "waited_s": waited, "holds": ok, "reading": why}
         if not ok:
             raise Blocked(
                 f"precondition not met: {step.get('predicate')} at "
@@ -1883,7 +1992,7 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
         return record
 
     if kind == "ui":
-        return _ui_step(page, step)
+        return _ui_step(page, step, hub)
     if kind == "api":
         if hub is None:
             raise Blocked("an api step needs a hub; this pass has none")
@@ -1932,6 +2041,20 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
                   "response": payload if isinstance(payload, (dict, list)) else str(payload)[:600]}
         if status >= 400:
             raise Blocked(f"the input boundary answered {status}: {record['response']}"[:500])
+        name = step.get("capture_as")
+        if name:
+            # the import route answers 202 {"meeting_id": …, "status": "importing"}
+            # (holdspeak/services/meeting_service.py:226), so an import case
+            # declares `capture_path: "meeting_id"`.
+            where = step.get("capture_path", "id")
+            found, value = _json_path(payload, where)
+            if not found or value is None:
+                raise Blocked(
+                    f"capture_as {name!r}: no value at {where!r} in the response "
+                    f"of the input boundary {route['method']} {route['path']} "
+                    f"(it answered {record['response']})"[:500])
+            variables[name] = str(value)
+            record["captured"] = {"name": name, "path": where, "value": str(value)}
         return record
     if kind == "cli":
         action = step.get("action")
@@ -2066,10 +2189,10 @@ def arm_replay_identity(page: Any, predicate: Any, before: dict[str, Any]) -> di
     """
     if not isinstance(predicate, dict) or predicate.get("kind") != "unchanged":
         return None
-    spec = predicate.get("replay_identity")
-    if not spec or str(spec).startswith("trigger:"):
-        return None
-    selector, _, attr = str(spec).partition("@")
+    spec = identity_spec(predicate)
+    if not spec or spec.get("from") != "selector":
+        return None  # a trigger identity needs no probe: the response is fresh
+    selector, attr = spec.get("selector"), spec.get("attr")
     if not attr:
         raise Blocked(
             f"replay identity {spec!r} names no attribute. An identity the "
@@ -2226,7 +2349,8 @@ def exercise(
     # From here the case reads with its captured values filled in.
     case = {**case, "expected": substitute(case.get("expected") or {}, variables)}
     predicate = case_predicate(case)
-    outstanding = unresolved(case["expected"])
+    outstanding = unresolved({field: case["expected"].get(field)
+                              for field in _EXPECTED_READ_FIELDS})
     if outstanding:
         raise Blocked(
             f"unresolved placeholder(s) {sorted(set(outstanding))} in the case's "
@@ -2234,6 +2358,7 @@ def exercise(
 
     # Preconditions, AFTER setup and BEFORE the before-capture: a case whose
     # starting state was never reached is blocked, not failed.
+    settle(page)
     checks = check_preconditions(case, page, hub, recorder, variables)
     recorder.set(preconditions=checks)
 
@@ -2463,6 +2588,8 @@ def calibrate(out: Path, *, brain: str = "muaddib", viewport: int = 1440,
             context = play.chromium.launch_persistent_context(
                 user_data_dir=str(profile),
                 viewport={"width": viewport, "height": 900},
+                # a case's `goto "/"` resolves against the server under test
+                base_url=fixture.base,
                 args=["--use-fake-device-for-media-stream",
                       "--use-fake-ui-for-media-stream"],
             )
@@ -2604,6 +2731,10 @@ def run_case(
                 viewport={"width": viewport,
                           "height": 900 if viewport >= 1000 else 852},
                 device_scale_factor=2,
+                # An atlas case says `goto "/"`. Without a base url Chromium
+                # answers "Cannot navigate to invalid URL"; with it the case
+                # reads the same on any port. An http(s) url stays absolute.
+                base_url=hub.url,
                 args=["--use-fake-device-for-media-stream",
                       "--use-fake-ui-for-media-stream"],
             )
