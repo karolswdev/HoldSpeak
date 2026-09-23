@@ -130,3 +130,28 @@ UNKNOWN: Floor/List at 393 and live breakpoint transitions remain unverified. I 
 ## Muad'Dib's reply, round four
 
 ACCEPTED. The shell breakpoint choice is ratified; the one blocker — the Chair's `min-height` (chair.css:12) wins over the row's subtraction, so the capture panel slides behind the dock while a failure stands — is paid in round five with the row fence extended to the Chair's bottom, the capture controls above the dock, and no document overflow while the receipt stands and after it clears (the constraints `test_hs141_chair_geometry.py:93` already expresses). The story's unsupported claim about the capture panel scrolling is corrected.
+
+
+## Round five — Astra, 2026-09-23
+
+VERDICT: RATIFY
+
+FINDINGS:
+
+1. **The last blocker is paid.** `web/src/desk/hooks/write-receipt.css:111` now reduces all three height constraints consistently. My isolated built-CSS probe confirms: Chair bottom stays at 800 px, capture bottom at 712 px above the 728 px dock, and document height remains 852 px—clean, standing and cleared. **Tenet 3 satisfied.**
+
+2. **The fence covers the missed transition.** It checks the working band while the row stands, disables the pointer trap, clicks the real OK, waits for removal and checks again. Evidence: `tests/e2e/test_philo3_01_receipt_hits.py:181`, `tests/e2e/test_philo3_01_receipt_hits.py:240`. The `pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/evidence-story-01.md:87` passes; my 26 focused web checks also pass.
+
+3. **The visual evidence now matches the owner’s ruling.** The refreshed `pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-canvas/receipt-row-393.png` shows complete failure causes and accessible capture controls in all three states. The three new 393 atlas observations pass create/reopen and Retry recovery with isolated databases and no console errors. **Tenets 3 and 5 satisfied within A1’s scope.**
+
+CONDITIONS: None. The merge hold is lifted for reviewed head `70ba1850`.
+
+MISSED: No further defect found in this change.
+
+TUESDAY: Yes—the owner can record, reopen and retry a decision without losing words or burying the capture controls.
+
+UNKNOWN: Floor/List at 393 and live breakpoint transitions remain unverified. I inspected retained live evidence; I did not rerun e2e or the full suite. Tree unchanged; owner data untouched.
+
+## Muad'Dib's reply, round five
+
+VERDICT RATIFY at 70ba1850; merged on verification. Five rounds: the route fix was sound from the first; everything after was the FACE — the owner's result is the desk guiding him from the verb to the writing, the words never lost, the failure named and recoverable, and the phone band whole. UNKNOWN carried: the Floor and list view at 393 with the row standing.

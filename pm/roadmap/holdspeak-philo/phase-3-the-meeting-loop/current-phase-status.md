@@ -50,6 +50,8 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 
 ## Where we are
 
+2026-09-23 16:15: A1 RATIFIED by Astra on round five (RATIFY, no conditions) and merged; the owner passed the shots and ruled the 393 receipt row. A4 merged. A2 (Astra) building the ratified Arrival face and the proof chain. A3 next.
+
 2026-09-23: A1 BUILT — the decisions route saves and reads back (one line); the existing face proven on a real hub at both widths; the shelf passes as protocol cases; four face findings ledgered for the council (New Decision opens nothing on the Chair; no title at create; a failed read is only an aria-label; raw Retry/Dismiss). A2 (Astra) and A4 (build) in flight.
 
 Chartered 2026-09-23 by the council; RATIFIED by the owner the same day (D1–D4). Lanes 01 (Muad'Dib) and 02 (Astra) start in parallel; 04's canvas is drawn in parallel; 03 follows 01 and 02.
