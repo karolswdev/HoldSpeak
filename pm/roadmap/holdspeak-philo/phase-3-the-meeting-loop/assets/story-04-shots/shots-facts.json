@@ -1,0 +1,130 @@
+[
+  {
+    "width": 1440,
+    "state": "1-kept",
+    "shot": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-04-shots/1440-1-kept.png",
+    "write": "KEPT · 11:37 PM",
+    "filing": "IN INBOX",
+    "filing_line_font_px": "12px",
+    "verbs": [
+      "Change",
+      "Finish"
+    ],
+    "patch_last_modified": "2026-09-23T05:37:22Z"
+  },
+  {
+    "width": 1440,
+    "state": "2-saving",
+    "shot": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-04-shots/1440-2-saving.png",
+    "write": "SAVING…",
+    "filing": "IN INBOX",
+    "filing_line_font_px": "12px",
+    "verbs": [
+      "Change",
+      "Finish"
+    ]
+  },
+  {
+    "width": 1440,
+    "state": "3a-did-not-save-no-answer",
+    "shot": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-04-shots/1440-3a-did-not-save-no-answer.png",
+    "write": "DID NOT SAVE · THE HUB DID NOT ANSWER",
+    "filing": "IN INBOX",
+    "filing_line_font_px": "12px",
+    "verbs": [
+      "Retry",
+      "Change",
+      "Finish"
+    ]
+  },
+  {
+    "width": 1440,
+    "state": "3b-did-not-save-not-accepted",
+    "shot": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-04-shots/1440-3b-did-not-save-not-accepted.png",
+    "write": "DID NOT SAVE · THE HUB DID NOT ACCEPT THE CHANGE",
+    "filing": "IN INBOX",
+    "filing_line_font_px": "12px",
+    "verbs": [
+      "Retry",
+      "Change",
+      "Finish"
+    ]
+  },
+  {
+    "width": 1440,
+    "state": "4-changed-elsewhere",
+    "shot": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-04-shots/1440-4-changed-elsewhere.png",
+    "write": "CHANGED ELSEWHERE",
+    "filing": "IN INBOX",
+    "filing_line_font_px": "12px",
+    "verbs": [
+      "Reload",
+      "Change",
+      "Finish"
+    ]
+  },
+  {
+    "width": 393,
+    "state": "1-kept",
+    "shot": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-04-shots/393-1-kept.png",
+    "write": "KEPT · 11:37 PM",
+    "filing": "IN INBOX",
+    "filing_line_font_px": "12px",
+    "verbs": [
+      "Change",
+      "Finish"
+    ],
+    "patch_last_modified": "2026-09-23T05:37:33Z"
+  },
+  {
+    "width": 393,
+    "state": "2-saving",
+    "shot": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-04-shots/393-2-saving.png",
+    "write": "SAVING…",
+    "filing": "IN INBOX",
+    "filing_line_font_px": "12px",
+    "verbs": [
+      "Change",
+      "Finish"
+    ]
+  },
+  {
+    "width": 393,
+    "state": "3a-did-not-save-no-answer",
+    "shot": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-04-shots/393-3a-did-not-save-no-answer.png",
+    "write": "DID NOT SAVE · THE HUB DID NOT ANSWER",
+    "filing": "IN INBOX",
+    "filing_line_font_px": "12px",
+    "verbs": [
+      "Retry",
+      "Change",
+      "Finish"
+    ]
+  },
+  {
+    "width": 393,
+    "state": "3b-did-not-save-not-accepted",
+    "shot": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-04-shots/393-3b-did-not-save-not-accepted.png",
+    "write": "DID NOT SAVE · THE HUB DID NOT ACCEPT THE CHANGE",
+    "filing": "IN INBOX",
+    "filing_line_font_px": "12px",
+    "verbs": [
+      "Retry",
+      "Change",
+      "Finish"
+    ]
+  },
+  {
+    "width": 393,
+    "state": "4-changed-elsewhere",
+    "shot": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-04-shots/393-4-changed-elsewhere.png",
+    "write": "CHANGED ELSEWHERE",
+    "filing": "IN INBOX",
+    "filing_line_font_px": "12px",
+    "verbs": [
+      "Reload",
+      "Change",
+      "Finish"
+    ]
+  }
+]

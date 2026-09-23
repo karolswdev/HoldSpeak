@@ -2,7 +2,7 @@
 
 LANE: PHILO-3-02. Owner Astra; checker Muad'Dib. Worktree `/Users/karol/dev/tools/wt-philo-3-02`. Branch `feat/philo-3-02-summary`, starting at `7ce95358`. No PR yet. Product commits, through the gate with zero story closures: `794f07ff` (install, first), `a28c19f9` (queue, second).
 
-OUTCOME: partial. The authorized install and queue seams are built and committed. The corrected canvas is ready for Muad'Dib to publish for the owner's ratification. **Arrival implementation remains held.** [Design](summary-design.md), [recorded RATIFY-WITH-CONDITIONS](checks/summary-design-muaddib.md), [boards and the one owner question](assets/story-02-canvas/README.md). Astra owns this lane; Muad'Dib ratified these backend seams and required the owner decision before the face. No acceptance box is checked.
+OUTCOME: in progress. The authorized install and queue seams are built and committed. The owner RATIFIED the corrected canvas on 2026-09-23 ("Ratify, build it"), published by Muad'Dib at https://claude.ai/artifact/KnASxYRZc4UXkAiFU1z5zX. **Arrival implementation and actual-atlas proof are authorized and under way.** [Design](summary-design.md), [recorded RATIFY-WITH-CONDITIONS](checks/summary-design-muaddib.md), [boards and the one owner question](assets/story-02-canvas/README.md). Astra owns this lane; Muad'Dib ratified these backend seams and required the owner decision before the face. No acceptance box is checked.
 
 PROOF:
 
@@ -24,7 +24,7 @@ No existing test was weakened or updated to accept the queue change. Focused run
 | Deferred queue omits desk notifications | Existing product defect | Fixed by `a28c19f9`; four real-producer red/green fences |
 | Arrival omits persisted detail and truthful retry/cause | Existing product defect | PHILO-3-02 face continuation after owner ratification |
 | Atlas import wait, duplicate Run, absent failure reply, weak restart evidence | Existing tooling debt | Failure artifact prepared; actual recipes and cases remain PHILO-3-02 continuation |
-| Draft title, footer, token and verb defects | Canvas defects against Tenets 3–7 | Corrected boards supersede the parked drafts below; owner ratification pending |
+| Draft title, footer, token and verb defects | Canvas defects against Tenets 3–7 | Corrected boards supersede the parked drafts below; owner ratified on 2026-09-23 |
 | Node 25 fails to load `libllhttp.9.3.dylib` | Existing environment defect | Use nvm Node 22; no machine-level repair |
 | Worktree `npm ci` failed with `ENOTEMPTY` | Local dependency-directory problem, not classified as a flake | Complete failure retained; partial `web/node_modules` parked under `.tmp/philo3-node_modules-partial-20260923`; fresh npm ci succeeds, 12 frontend checks pass |
 | First worker install omitted venv activation | Worker workflow error | Worktree development metadata was refreshed; excluded from D2 proof. Independent source/HOME/venv reproduction supplies decisive proof |
@@ -34,7 +34,7 @@ AMENDMENTS: none. D1–D4, all A2 acceptance criteria, and the council's deferre
 
 UNKNOWN: real LAN completion and engine identity at execution, completed import on the row, automatic rendered summary and actual-host arrival, truthful rendered retry/failure, actual J5 hit ownership at 393, restart equality, recovered planted facts, full-suite outcome, counsel on built and the owner's sitting.
 
-## Handoff to Muad'Dib
+## Earlier handoff to Muad'Dib — superseded by owner ratification
 
 Publish [the corrected canvas README](assets/story-02-canvas/README.md) and its four paired state boards. It names one question: whether this corrected existing-row presentation is the face to build. The owner ratifies; Astra does not substitute counsel for that decision.
 

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 3
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** the meeting loop
 - **Owner:** unassigned (two-brains: one owner brain, the other counsels on built)
@@ -23,9 +23,9 @@ edge.face.thought_editor_fill; edge.route.thoughts_working_patch; state.thoughts
 
 ## Acceptance criteria
 
-- [ ] The Thought face shows "Kept · HH:MM" bound to the LAST SUCCESSFUL WRITE, with distinct pending and failure states; the filing state stays a separate line.
-- [ ] The face is designed on the canvas first (UX-CANON: design before build) and the owner ratifies the canvas.
-- [ ] Closure evidence: type → autosave → the receipt with its time on the face and the row in `GET /api/notes`, at both widths; a failed write shows its failure.
+- [x] The Thought face shows "Kept · HH:MM" bound to the LAST SUCCESSFUL WRITE, with distinct pending and failure states; the filing state stays a separate line.
+- [x] The face is designed on the canvas first (UX-CANON: design before build) and the owner ratifies the canvas.
+- [x] Closure evidence: type → autosave → the receipt with its time on the face and the row in `GET /api/notes`, at both widths; a failed write shows its failure.
 
 ## Effort (council estimate, not a promise)
 
@@ -36,3 +36,7 @@ days; a checked canvas first
 - **Unit:** fences that fail pre-fix for every repaired seam.
 - **Integration:** the rig case(s) named above, run through `scripts/graph_walk.py`, observations retained.
 - **Manual / device:** the owner's sitting on the finished chain.
+
+## Deferred (library debt, ledgered, not fixed here)
+
+- `.surface-footer-readiness` (`web/src/desk/surface/surface-footer.css:56-66`) still computes at 10 px, below the 12 px floor (type-scale ruling 2026-09-21). Speak uses it on its footer today (`web/src/pages/cores/DictationCore.tsx:128`, `:161`). It is not on this story's canvas. Pay it in the library, with a fence like `web/src/desk/surface/__tests__/receiptTypeFloor.test.ts`. Source: Astra's counsel on A4, condition 3.

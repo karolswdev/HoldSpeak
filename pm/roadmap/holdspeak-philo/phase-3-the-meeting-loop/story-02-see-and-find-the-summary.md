@@ -41,4 +41,6 @@ edge.face.arrival_run_intel; edge.timer.intel_drainer; edge.cli.restart_hub; sta
 
 ## Lane record
 
+2026-09-23 — **OWNER RATIFIED:** “Ratify, build it.” The corrected Arrival boards in `assets/story-02-canvas/` were published at [the owner canvas](https://claude.ai/artifact/KnASxYRZc4UXkAiFU1z5zX). Seams (c) and (d) now build under that ratification and Muad'Dib's recorded check: existing row grammar, length and words, planned host before Run, actual receipt afterwards, summary/transcript wells, LAST ATTEMPT / LAST ERROR, no new row verb or attempt limit.
+
 2026-09-23: under Muad'Dib's recorded RATIFY-WITH-CONDITIONS, install correction committed first as `794f07ff`, verified by an independent base install from fresh source/HOME/venv. Queue correction committed as `a28c19f9`, after four pre-fix failing producer fences and 77 passing focused tests. [Corrected canvas](assets/story-02-canvas/README.md) goes to Muad'Dib for the owner's ratification before Arrival implementation. [Retained proof and remaining steps](summary-lane-record.md). Acceptance criteria are unchanged and unclosed.

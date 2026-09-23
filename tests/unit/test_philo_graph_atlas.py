@@ -20,6 +20,13 @@ from jsonschema import Draft202012Validator
 REPO = Path(__file__).resolve().parents[2]
 ATLAS_PATH = REPO / "docs/internal/philo/graph/atlas.json"
 SCHEMA_PATH = REPO / "docs/internal/philo/graph/atlas.schema.json"
+# PHILO-3-04 counsel (Astra, condition 2): every atlas file under the graph
+# directory — atlas.json and each phase extension (atlas-phase3.json, ...) —
+# keeps the schema and the source-anchor contract, not only atlas.json.
+ATLAS_FILES = sorted(
+    path for path in (REPO / "docs/internal/philo/graph").glob("atlas*.json")
+    if path.name != SCHEMA_PATH.name
+)
 GRAPH_SCHEMA_PATH = REPO / "docs/internal/philo/graph/graph.schema.json"
 OPENAPI_PATH = REPO / "docs/generated/openapi.json"
 
@@ -109,6 +116,16 @@ def atlas() -> dict:
     return json.loads(ATLAS_PATH.read_text())
 
 
+@pytest.fixture(scope="module", params=ATLAS_FILES, ids=lambda path: path.name)
+def every_atlas(request: pytest.FixtureRequest) -> dict:
+    return json.loads(request.param.read_text())
+
+
+def test_every_atlas_file_is_read() -> None:
+    names = {path.name for path in ATLAS_FILES}
+    assert ATLAS_PATH.name in names and len(names) >= 2, names
+
+
 @pytest.fixture(scope="module")
 def schema() -> dict:
     return json.loads(SCHEMA_PATH.read_text())
@@ -123,9 +140,9 @@ def test_schema_is_a_valid_2020_12_schema(schema: dict) -> None:
     Draft202012Validator.check_schema(schema)
 
 
-def test_atlas_validates_against_its_schema(atlas: dict, schema: dict) -> None:
+def test_atlas_validates_against_its_schema(every_atlas: dict, schema: dict) -> None:
     errors = sorted(
-        Draft202012Validator(schema).iter_errors(atlas),
+        Draft202012Validator(schema).iter_errors(every_atlas),
         key=lambda e: list(e.absolute_path),
     )
     assert not errors, "\n".join(
@@ -234,14 +251,14 @@ def test_every_fixture_step_exists_and_hashes_as_claimed(atlas: dict) -> None:
     assert not problems, problems
 
 
-def test_every_source_reference_lands_on_its_symbol(atlas: dict) -> None:
+def test_every_source_reference_lands_on_its_symbol(every_atlas: dict) -> None:
     """A line number is evidence, not identity (brief section 1).
 
     The cited line must still hold the cited symbol, or the reference has
     drifted and the claim behind it is no longer proven.
     """
     problems: list[str] = []
-    for state in atlas["states"]:
+    for state in every_atlas["states"]:
         for ref in state["sources"]:
             target = REPO / ref["path"]
             if not target.is_file():

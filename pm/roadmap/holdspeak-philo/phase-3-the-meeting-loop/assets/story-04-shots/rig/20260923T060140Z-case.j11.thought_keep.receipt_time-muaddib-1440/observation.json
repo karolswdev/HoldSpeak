@@ -1,0 +1,583 @@
+{
+  "id": "obs-20260923T060140Z-case.j11.thought_keep.receipt_time-muaddib-1440",
+  "run_id": "20260923T060140Z-case.j11.thought_keep.receipt_time-muaddib-1440",
+  "case_id": "case.j11.thought_keep.receipt_time",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "j11",
+  "edge_ids": [
+    "edge.face.thought_keep"
+  ],
+  "state_id": "state.desk_presentation.window_open_thought",
+  "provenance": {
+    "revision": "e8f5e19b470be5b878c998ab1113fe4162e7f225",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "ed452d64d904a6c7749dcde90efe887abcf15b07a9976476f3c87535e7bd4f5a",
+      "assets": [
+        "index-C9jJLQR4.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:49717",
+      "port": 49717,
+      "pid": 19020,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-qsnfa1jc",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-qsnfa1jc/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T06:01:40.269159+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "41312065d79dd4da9148cd8421e3eb9ac1c8ef19aa04286cad07ad8e4d9e421b",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-develop-thought]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[aria-label=\"Note body\"]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "case.j11.write_a_thought.window_open reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "ui",
+    "action": "fill",
+    "adapter": "ui-pointer",
+    "done": true
+  },
+  "diff": {
+    "document_text_sha256": {
+      "before": "415cb34c8302d15163af631fe13ababde917badd02b7acd76febcb5b058ebfdb",
+      "after": "1f652a2d05a684d5c3a2465470755d0c3297e1f978fa2bebaed76a071c01b619"
+    },
+    "document_text_len": {
+      "before": 539,
+      "after": 540
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "body_sha256": "f63fa0b93a36cbc29259cfe5c3bbc099960518977f6ade7c1284f19b494d0a42"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "body_sha256": "ab72c5f90c5dd5fe47a4c553550b483b145d670170ba5a4aba5322ee8d72e424"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": ".thought-note-foot .surface-footer-receipt-line",
+    "target_present": true,
+    "text": "KEPT \u00b7 12:01 AM",
+    "attrs": {
+      "class": "surface-footer-receipt-line",
+      "role": "status"
+    },
+    "rect": {
+      "x": 1146,
+      "y": 660,
+      "w": 119,
+      "h": 18
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "div.thought-note-field > div.desk-editor > div.desk-code-editor.thought-note-body > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping",
+    "focus_label": "Note body",
+    "url": "http://127.0.0.1:49717/",
+    "windows": [
+      {
+        "title": "Thought",
+        "rect": {
+          "x": 610,
+          "y": 64,
+          "w": 820,
+          "h": 640
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "415cb34c8302d15163af631fe13ababde917badd02b7acd76febcb5b058ebfdb",
+    "document_text_len": 539,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "body_sha256": "f63fa0b93a36cbc29259cfe5c3bbc099960518977f6ade7c1284f19b494d0a42"
+      }
+    ],
+    "at_utc": "2026-09-23T06:01:47.125364+00:00"
+  },
+  "after": {
+    "observe_at": ".thought-note-foot .surface-footer-receipt-line",
+    "target_present": true,
+    "text": "KEPT \u00b7 12:01 AM",
+    "attrs": {
+      "class": "surface-footer-receipt-line",
+      "role": "status"
+    },
+    "rect": {
+      "x": 1146,
+      "y": 660,
+      "w": 119,
+      "h": 18
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "div.thought-note-field > div.desk-editor > div.desk-code-editor.thought-note-body > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping",
+    "focus_label": "Note body",
+    "url": "http://127.0.0.1:49717/",
+    "windows": [
+      {
+        "title": "Thought",
+        "rect": {
+          "x": 610,
+          "y": 64,
+          "w": 820,
+          "h": 640
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "1f652a2d05a684d5c3a2465470755d0c3297e1f978fa2bebaed76a071c01b619",
+    "document_text_len": 540,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "body_sha256": "ab72c5f90c5dd5fe47a4c553550b483b145d670170ba5a4aba5322ee8d72e424"
+      }
+    ],
+    "at_utc": "2026-09-23T06:01:48.287265+00:00",
+    "trigger_response": {
+      "method": "PATCH",
+      "path": "/api/thoughts/thought_65a732d10066/working",
+      "status": 200,
+      "body_sha256": "764aaa5d4827a7b4a4eb6dec93c61bb138c34b50c471b6b35c5e6875572d4d47",
+      "body": {
+        "thought": {
+          "id": "thought_65a732d10066",
+          "raw_id": "thought_65a732d10066",
+          "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source": {
+            "kind": "note"
+          },
+          "raw_captured_at": "2026-09-23T06:01:45Z",
+          "state": "working",
+          "aggregate_revision": 2,
+          "lifecycle_revision": 1,
+          "working_revision": 2,
+          "attachment_revision": 0,
+          "attachment_sha256": "7565f2a523ce8085aa2df6bbfef6ab3203df20f7fe5a86e3cb18f46e7db9b6ef",
+          "attachments": [],
+          "working_note": {
+            "id": "note_103ffccdd1e6",
+            "title": "Thought",
+            "body_markdown": "Graph walk J11 receipt time",
+            "tags": [],
+            "deleted": false,
+            "last_modified": "2026-09-23T06:01:47Z"
+          },
+          "filing_status": "filed",
+          "continuity": {
+            "state": "idle",
+            "code": ""
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox"
+        },
+        "workbench": {
+          "schema_version": 1,
+          "process_scope": {
+            "kind": "hub_local",
+            "hub_id": "hub_d1eb84e33c9800422b108353b3ec425e",
+            "state": "unavailable"
+          },
+          "workspace_cursor": {
+            "hub_id": "hub_d1eb84e33c9800422b108353b3ec425e",
+            "thought_id": "thought_65a732d10066",
+            "aggregate_revision": 2,
+            "continuity_revision": 1
+          },
+          "thought": {
+            "id": "thought_65a732d10066",
+            "raw_id": "thought_65a732d10066",
+            "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "source": {
+              "kind": "note"
+            },
+            "raw_captured_at": "2026-09-23T06:01:45Z",
+            "state": "working",
+            "aggregate_revision": 2,
+            "lifecycle_revision": 1,
+            "working_revision": 2,
+            "attachment_revision": 0,
+            "attachment_sha256": "7565f2a523ce8085aa2df6bbfef6ab3203df20f7fe5a86e3cb18f46e7db9b6ef",
+            "attachments": [],
+            "working_note": {
+              "id": "note_103ffccdd1e6",
+              "title": "Thought",
+              "body_markdown": "Graph walk J11 receipt time",
+              "tags": [],
+              "deleted": false,
+              "last_modified": "2026-09-23T06:01:47Z"
+            },
+            "filing_status": "filed",
+            "continuity": {
+              "state": "idle",
+              "code": ""
+            },
+            "directory_id": "hs-seed-inbox",
+            "directory_name": "Inbox"
+          },
+          "workspace_state": "idle",
+          "actions": {
+            "primary": {
+              "kind": "configure_ai"
+            },
+            "state": [
+              {
+                "kind": "configure_ai"
+              }
+            ],
+            "ambient": [
+              "update_working",
+              "attach_context",
+              "complete"
+            ]
+          },
+          "review": null,
+          "context_status": {
+            "summary": "",
+            "state": "empty",
+            "repair_ref": null
+          },
+          "inference": {
+            "availability": "unavailable",
+            "continuation_admission": "unavailable",
+            "intended_placement": {
+              "target_id": "this_machine",
+              "target_name": "This device",
+              "target_kind": "this_device",
+              "boundary": "same_device",
+              "readiness": "unavailable"
+            }
+          },
+          "terminal_status": null
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:49717) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".thought-note-foot .surface-footer-receipt-line",
+    "target_present": true,
+    "text": "KEPT \u00b7 12:01 AM",
+    "attrs": {
+      "class": "surface-footer-receipt-line",
+      "role": "status"
+    },
+    "rect": {
+      "x": 1146,
+      "y": 660,
+      "w": 119,
+      "h": 18
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "div.thought-note-field > div.desk-editor > div.desk-code-editor.thought-note-body > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping",
+    "focus_label": "Note body",
+    "url": "http://127.0.0.1:49717/",
+    "windows": [
+      {
+        "title": "Thought",
+        "rect": {
+          "x": 610,
+          "y": 64,
+          "w": 820,
+          "h": 640
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "1f652a2d05a684d5c3a2465470755d0c3297e1f978fa2bebaed76a071c01b619",
+    "document_text_len": 540,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "body_sha256": "ab72c5f90c5dd5fe47a4c553550b483b145d670170ba5a4aba5322ee8d72e424"
+      }
+    ],
+    "at_utc": "2026-09-23T06:01:48.155289+00:00",
+    "trigger_response": {
+      "method": "PATCH",
+      "path": "/api/thoughts/thought_65a732d10066/working",
+      "status": 200,
+      "body_sha256": "764aaa5d4827a7b4a4eb6dec93c61bb138c34b50c471b6b35c5e6875572d4d47",
+      "body": {
+        "thought": {
+          "id": "thought_65a732d10066",
+          "raw_id": "thought_65a732d10066",
+          "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source": {
+            "kind": "note"
+          },
+          "raw_captured_at": "2026-09-23T06:01:45Z",
+          "state": "working",
+          "aggregate_revision": 2,
+          "lifecycle_revision": 1,
+          "working_revision": 2,
+          "attachment_revision": 0,
+          "attachment_sha256": "7565f2a523ce8085aa2df6bbfef6ab3203df20f7fe5a86e3cb18f46e7db9b6ef",
+          "attachments": [],
+          "working_note": {
+            "id": "note_103ffccdd1e6",
+            "title": "Thought",
+            "body_markdown": "Graph walk J11 receipt time",
+            "tags": [],
+            "deleted": false,
+            "last_modified": "2026-09-23T06:01:47Z"
+          },
+          "filing_status": "filed",
+          "continuity": {
+            "state": "idle",
+            "code": ""
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox"
+        },
+        "workbench": {
+          "schema_version": 1,
+          "process_scope": {
+            "kind": "hub_local",
+            "hub_id": "hub_d1eb84e33c9800422b108353b3ec425e",
+            "state": "unavailable"
+          },
+          "workspace_cursor": {
+            "hub_id": "hub_d1eb84e33c9800422b108353b3ec425e",
+            "thought_id": "thought_65a732d10066",
+            "aggregate_revision": 2,
+            "continuity_revision": 1
+          },
+          "thought": {
+            "id": "thought_65a732d10066",
+            "raw_id": "thought_65a732d10066",
+            "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "source": {
+              "kind": "note"
+            },
+            "raw_captured_at": "2026-09-23T06:01:45Z",
+            "state": "working",
+            "aggregate_revision": 2,
+            "lifecycle_revision": 1,
+            "working_revision": 2,
+            "attachment_revision": 0,
+            "attachment_sha256": "7565f2a523ce8085aa2df6bbfef6ab3203df20f7fe5a86e3cb18f46e7db9b6ef",
+            "attachments": [],
+            "working_note": {
+              "id": "note_103ffccdd1e6",
+              "title": "Thought",
+              "body_markdown": "Graph walk J11 receipt time",
+              "tags": [],
+              "deleted": false,
+              "last_modified": "2026-09-23T06:01:47Z"
+            },
+            "filing_status": "filed",
+            "continuity": {
+              "state": "idle",
+              "code": ""
+            },
+            "directory_id": "hs-seed-inbox",
+            "directory_name": "Inbox"
+          },
+          "workspace_state": "idle",
+          "actions": {
+            "primary": {
+              "kind": "configure_ai"
+            },
+            "state": [
+              {
+                "kind": "configure_ai"
+              }
+            ],
+            "ambient": [
+              "update_working",
+              "attach_context",
+              "complete"
+            ]
+          },
+          "review": null,
+          "context_status": {
+            "summary": "",
+            "state": "empty",
+            "repair_ref": null
+          },
+          "inference": {
+            "availability": "unavailable",
+            "continuation_admission": "unavailable",
+            "intended_placement": {
+              "target_id": "this_machine",
+              "target_name": "This device",
+              "target_kind": "this_device",
+              "boundary": "same_device",
+              "readiness": "unavailable"
+            }
+          },
+          "terminal_status": null
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:49717) non-GET response after the click"
+    },
+    "predicate_satisfied": true,
+    "reading": "'KEPT \u00b7' in observe_at text",
+    "elapsed_s": 0.918
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'KEPT \u00b7' in observe_at text",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.047,
+    "first_satisfied_at_s": 0.918,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'KEPT \u00b7' in observe_at text"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:49717) non-GET response after the click",
+    "chosen": {
+      "method": "PATCH",
+      "path": "/api/thoughts/thought_65a732d10066/working",
+      "status": 200,
+      "body_sha256": "764aaa5d4827a7b4a4eb6dec93c61bb138c34b50c471b6b35c5e6875572d4d47",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:49717) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:49717) non-GET response after the click",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/thoughts/thought_65a732d10066/working",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-04-shots/rig/20260923T060140Z-case.j11.thought_keep.receipt_time-muaddib-1440/before.png",
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-04-shots/rig/20260923T060140Z-case.j11.thought_keep.receipt_time-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-qsnfa1jc/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:49717"
+  ]
+}

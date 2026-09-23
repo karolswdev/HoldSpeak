@@ -22,7 +22,8 @@
   align-items: center;
   gap: 5px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  /* PHILO-3-04: the 12 px floor (type-scale ruling 2026-09-21); was 10px. */
+  font-size: var(--desk-surface-label-size);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -76,7 +77,8 @@
   white-space: nowrap;
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
+  /* PHILO-3-04: the 12 px floor (type-scale ruling 2026-09-21); was 10px. */
+  font-size: var(--desk-surface-label-size);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }

@@ -1,6 +1,8 @@
 # PHILO-3-02 — implementation briefs
 
-**2026-09-23 resume:** [Muad'Dib's recorded check](checks/summary-design-muaddib.md) authorizes the install correction first, then queue notifications. Corrected canvas boards go to the owner through Muad'Dib. Arrival implementation waits for the owner's ratification. The later recovery projection and atlas briefs below remain held for that continuation. [Design](summary-design.md), [story](story-02-see-and-find-the-summary.md), [lane record](summary-lane-record.md).
+**2026-09-23 ratified continuation:** The owner said "Ratify, build it" on the corrected canvas, published at https://claude.ai/artifact/KnASxYRZc4UXkAiFU1z5zX. Fresh Luna workers own disjoint Arrival, detail projection, and actual-atlas repair paths; Astra owns serial rig execution, full suites and delivery. The shared recovery job projection rides the existing detail response to keep the Chair within three HTTP reads per refresh. No acceptance criterion changes.
+
+**Earlier 2026-09-23 checkpoint:** [Muad'Dib's recorded check](checks/summary-design-muaddib.md) authorizes the install correction first, then queue notifications. Corrected canvas boards go to the owner through Muad'Dib. Arrival implementation waits for the owner's ratification. The later recovery projection and atlas briefs below remain held for that continuation. [Design](summary-design.md), [story](story-02-see-and-find-the-summary.md), [lane record](summary-lane-record.md).
 
 **Checkpoint:** install `794f07ff` and queue `a28c19f9` are committed and verified with the focused proofs in the lane record. Do not repeat those implementation tasks. The corrected canvas, synthetic WAV and failure reply are retained; the remaining briefs describe work after the owner ratifies the face.
 

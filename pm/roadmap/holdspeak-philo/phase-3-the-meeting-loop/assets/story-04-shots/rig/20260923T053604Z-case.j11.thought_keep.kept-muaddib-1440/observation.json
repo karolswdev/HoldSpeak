@@ -1,0 +1,1322 @@
+{
+  "id": "obs-20260923T053604Z-case.j11.thought_keep.kept-muaddib-1440",
+  "run_id": "20260923T053604Z-case.j11.thought_keep.kept-muaddib-1440",
+  "case_id": "case.j11.thought_keep.kept",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j11",
+  "edge_ids": [
+    "edge.face.thought_keep"
+  ],
+  "state_id": "state.desk_presentation.window_open_thought",
+  "provenance": {
+    "revision": "7ce953580b0dd27f7e4445d5e41da4c9a0a55f75",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "729d996cfb1f8f348d99932180849f854dc2e5affb7f023429aec33afabc3f7e",
+      "assets": [
+        "index-Dc9oVND8.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:64133",
+      "port": 64133,
+      "pid": 94687,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-l3shwvo5",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-l3shwvo5/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T05:36:04.523546+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "64af1de4364c57c4df644b8df23445fcd6bccf713e3429d6855882abb875dafe",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-develop-thought]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[aria-label=\"Note body\"]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "case.j11.write_a_thought.window_open reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "ui",
+    "action": "fill",
+    "adapter": "ui-pointer",
+    "done": true
+  },
+  "diff": {
+    "document_text_sha256": {
+      "before": "45a3d8162b6030ad423ade8267174e973259fa7b7ff665996cb7c0f9b5ffeb8a",
+      "after": "8dc038e8851b562cbfdef62da4b43ecc9082b45ea7ac6d6c83b56ad32159264f"
+    },
+    "document_text_len": {
+      "before": 539,
+      "after": 538
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "body_sha256": "7ffd74fb158c053ada04f9550fd8d569921b4ded372208df0df55807d76e8284"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "body_sha256": "20585840257e930bbe5ac7945716cbf6fac0cccc00308003d005371cc30f0166"
+        }
+      ]
+    },
+    "protocol_digest": {
+      "before": {
+        "status": 200,
+        "row_count": 11,
+        "payload_sha256": "99cea6eb5c66a9234d16ab5bd105735b088b71a1b22340a117bc92f03e050f25"
+      },
+      "after": {
+        "status": 200,
+        "row_count": 11,
+        "payload_sha256": "ab7828876cfc1875864f19d96358df1c445e50f7a5fb8cb176633dea9fdb2445"
+      }
+    }
+  },
+  "before": {
+    "observe_at": "protocol: GET /api/notes",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div.thought-note-field > div.desk-editor > div.desk-code-editor.thought-note-body > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping",
+    "focus_label": "Note body",
+    "url": "http://127.0.0.1:64133/",
+    "windows": [
+      {
+        "title": "Thought",
+        "rect": {
+          "x": 610,
+          "y": 64,
+          "w": 820,
+          "h": 640
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/notes",
+      "status": 200,
+      "collection": "notes",
+      "row_count": 11,
+      "payload_sha256": "99cea6eb5c66a9234d16ab5bd105735b088b71a1b22340a117bc92f03e050f25",
+      "rows": [
+        {
+          "id": "note_0c062209bc77",
+          "title": "Thought",
+          "body_markdown": "",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:10Z",
+          "updated_at": "2026-09-23T05:36:10Z",
+          "last_modified": "2026-09-23T05:36:10Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-start-here",
+          "title": "Start here",
+          "body_markdown": "These drawers and notes are yours to edit, rename, move, or delete.\n\nEveryday context is never automatically included in an AI request. Attach it in Ask, or select it for an Agent, only when you want it used.\n\nNormal Desk sync continues to follow your existing device-pairing choices.\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-about-me",
+          "title": "About me",
+          "body_markdown": "What would be useful to share when you explicitly attach this context?\n\n- Name or form of address: [example: ]\n- Work or life context: [example: ]\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-current-priorities",
+          "title": "Current priorities",
+          "body_markdown": "What deserves attention right now?\n\n- Priority: [example: ]\n- Why it matters: [example: ]\n- Next step: [example: ]\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-how-i-like-help",
+          "title": "How I like help",
+          "body_markdown": "How should help be shaped when you explicitly attach this context?\n\n- Tone: [example: direct, warm, concise]\n- Useful format: [example: bullets, draft, checklist]\n- Avoid: [example: ]\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-people-vocabulary",
+          "title": "People & vocabulary",
+          "body_markdown": "Which names, terms, or abbreviations would be useful to explain?\n\n- Name or team: [example: ]\n- Term or abbreviation: [example: ]\n- Meaning: [example: ]\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-meeting-preferences",
+          "title": "Meeting preferences",
+          "body_markdown": "What would make a meeting record useful?\n\n- Capture: [example: decisions, actions, open questions]\n- Follow-up format: [example: ]\n- People to include: [example: ]\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-prompt-weekly-update",
+          "title": "Weekly update",
+          "body_markdown": "Summarize what happened this week.\nFocus on decisions made, commitments moved, and open questions.\nOne paragraph per topic, no filler.\nEnd with what needs attention next week.\n",
+          "tags": [
+            "prompt"
+          ],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-prompt-one-on-one-prep",
+          "title": "1:1 prep",
+          "body_markdown": "Prepare for my next 1:1.\nList open commitments, recent decisions that need follow-up,\nand any blockers worth raising.\nKeep it to three sections, one paragraph each.\n",
+          "tags": [
+            "prompt"
+          ],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-guardrail-effect-guard",
+          "title": "Effect guard",
+          "body_markdown": "---\ninstruction: >\n  Flag any tool call that writes to a person's ledger\n  (people.commitment.transition, people.agenda.add,\n  people.note.create) without naming a specific source\n  (meeting, decision record, or owner directive) in its\n  arguments. A call with no source is a violation.\ntrigger_tools:\n  - \"people.*\"\nn_messages: 6\n---\n",
+          "tags": [
+            "guardrail"
+          ],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-guardrail-egress-guard",
+          "title": "Egress guard",
+          "body_markdown": "---\ninstruction: >\n  Flag any pending tool call whose result would carry\n  people-sourced data (a people.* read) to a cloud\n  egress boundary. Reading people data on a local\n  boundary is fine; sending it over a cloud route is a\n  violation.\ntrigger_tools:\n  - \"people.*\"\nn_messages: 4\n---\n",
+          "tags": [
+            "guardrail"
+          ],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        }
+      ],
+      "payload": {
+        "notes": [
+          {
+            "id": "note_0c062209bc77",
+            "title": "Thought",
+            "body_markdown": "",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:10Z",
+            "updated_at": "2026-09-23T05:36:10Z",
+            "last_modified": "2026-09-23T05:36:10Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-start-here",
+            "title": "Start here",
+            "body_markdown": "These drawers and notes are yours to edit, rename, move, or delete.\n\nEveryday context is never automatically included in an AI request. Attach it in Ask, or select it for an Agent, only when you want it used.\n\nNormal Desk sync continues to follow your existing device-pairing choices.\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-about-me",
+            "title": "About me",
+            "body_markdown": "What would be useful to share when you explicitly attach this context?\n\n- Name or form of address: [example: ]\n- Work or life context: [example: ]\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-current-priorities",
+            "title": "Current priorities",
+            "body_markdown": "What deserves attention right now?\n\n- Priority: [example: ]\n- Why it matters: [example: ]\n- Next step: [example: ]\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-how-i-like-help",
+            "title": "How I like help",
+            "body_markdown": "How should help be shaped when you explicitly attach this context?\n\n- Tone: [example: direct, warm, concise]\n- Useful format: [example: bullets, draft, checklist]\n- Avoid: [example: ]\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-people-vocabulary",
+            "title": "People & vocabulary",
+            "body_markdown": "Which names, terms, or abbreviations would be useful to explain?\n\n- Name or team: [example: ]\n- Term or abbreviation: [example: ]\n- Meaning: [example: ]\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-meeting-preferences",
+            "title": "Meeting preferences",
+            "body_markdown": "What would make a meeting record useful?\n\n- Capture: [example: decisions, actions, open questions]\n- Follow-up format: [example: ]\n- People to include: [example: ]\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-prompt-weekly-update",
+            "title": "Weekly update",
+            "body_markdown": "Summarize what happened this week.\nFocus on decisions made, commitments moved, and open questions.\nOne paragraph per topic, no filler.\nEnd with what needs attention next week.\n",
+            "tags": [
+              "prompt"
+            ],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-prompt-one-on-one-prep",
+            "title": "1:1 prep",
+            "body_markdown": "Prepare for my next 1:1.\nList open commitments, recent decisions that need follow-up,\nand any blockers worth raising.\nKeep it to three sections, one paragraph each.\n",
+            "tags": [
+              "prompt"
+            ],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-guardrail-effect-guard",
+            "title": "Effect guard",
+            "body_markdown": "---\ninstruction: >\n  Flag any tool call that writes to a person's ledger\n  (people.commitment.transition, people.agenda.add,\n  people.note.create) without naming a specific source\n  (meeting, decision record, or owner directive) in its\n  arguments. A call with no source is a violation.\ntrigger_tools:\n  - \"people.*\"\nn_messages: 6\n---\n",
+            "tags": [
+              "guardrail"
+            ],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-guardrail-egress-guard",
+            "title": "Egress guard",
+            "body_markdown": "---\ninstruction: >\n  Flag any pending tool call whose result would carry\n  people-sourced data (a people.* read) to a cloud\n  egress boundary. Reading people data on a local\n  boundary is fine; sending it over a cloud route is a\n  violation.\ntrigger_tools:\n  - \"people.*\"\nn_messages: 4\n---\n",
+            "tags": [
+              "guardrail"
+            ],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          }
+        ]
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 11,
+      "payload_sha256": "99cea6eb5c66a9234d16ab5bd105735b088b71a1b22340a117bc92f03e050f25"
+    },
+    "document_text_sha256": "45a3d8162b6030ad423ade8267174e973259fa7b7ff665996cb7c0f9b5ffeb8a",
+    "document_text_len": 539,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "body_sha256": "7ffd74fb158c053ada04f9550fd8d569921b4ded372208df0df55807d76e8284"
+      }
+    ],
+    "at_utc": "2026-09-23T05:36:11.769910+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/notes",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div.thought-note-field > div.desk-editor > div.desk-code-editor.thought-note-body > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping",
+    "focus_label": "Note body",
+    "url": "http://127.0.0.1:64133/",
+    "windows": [
+      {
+        "title": "Thought",
+        "rect": {
+          "x": 610,
+          "y": 64,
+          "w": 820,
+          "h": 640
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/notes",
+      "status": 200,
+      "collection": "notes",
+      "row_count": 11,
+      "payload_sha256": "ab7828876cfc1875864f19d96358df1c445e50f7a5fb8cb176633dea9fdb2445",
+      "rows": [
+        {
+          "id": "note_0c062209bc77",
+          "title": "Thought",
+          "body_markdown": "Graph walk J11 kept words",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:10Z",
+          "updated_at": "2026-09-23T05:36:12Z",
+          "last_modified": "2026-09-23T05:36:12Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-start-here",
+          "title": "Start here",
+          "body_markdown": "These drawers and notes are yours to edit, rename, move, or delete.\n\nEveryday context is never automatically included in an AI request. Attach it in Ask, or select it for an Agent, only when you want it used.\n\nNormal Desk sync continues to follow your existing device-pairing choices.\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-about-me",
+          "title": "About me",
+          "body_markdown": "What would be useful to share when you explicitly attach this context?\n\n- Name or form of address: [example: ]\n- Work or life context: [example: ]\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-current-priorities",
+          "title": "Current priorities",
+          "body_markdown": "What deserves attention right now?\n\n- Priority: [example: ]\n- Why it matters: [example: ]\n- Next step: [example: ]\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-how-i-like-help",
+          "title": "How I like help",
+          "body_markdown": "How should help be shaped when you explicitly attach this context?\n\n- Tone: [example: direct, warm, concise]\n- Useful format: [example: bullets, draft, checklist]\n- Avoid: [example: ]\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-people-vocabulary",
+          "title": "People & vocabulary",
+          "body_markdown": "Which names, terms, or abbreviations would be useful to explain?\n\n- Name or team: [example: ]\n- Term or abbreviation: [example: ]\n- Meaning: [example: ]\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-meeting-preferences",
+          "title": "Meeting preferences",
+          "body_markdown": "What would make a meeting record useful?\n\n- Capture: [example: decisions, actions, open questions]\n- Follow-up format: [example: ]\n- People to include: [example: ]\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-prompt-weekly-update",
+          "title": "Weekly update",
+          "body_markdown": "Summarize what happened this week.\nFocus on decisions made, commitments moved, and open questions.\nOne paragraph per topic, no filler.\nEnd with what needs attention next week.\n",
+          "tags": [
+            "prompt"
+          ],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-prompt-one-on-one-prep",
+          "title": "1:1 prep",
+          "body_markdown": "Prepare for my next 1:1.\nList open commitments, recent decisions that need follow-up,\nand any blockers worth raising.\nKeep it to three sections, one paragraph each.\n",
+          "tags": [
+            "prompt"
+          ],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-guardrail-effect-guard",
+          "title": "Effect guard",
+          "body_markdown": "---\ninstruction: >\n  Flag any tool call that writes to a person's ledger\n  (people.commitment.transition, people.agenda.add,\n  people.note.create) without naming a specific source\n  (meeting, decision record, or owner directive) in its\n  arguments. A call with no source is a violation.\ntrigger_tools:\n  - \"people.*\"\nn_messages: 6\n---\n",
+          "tags": [
+            "guardrail"
+          ],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-guardrail-egress-guard",
+          "title": "Egress guard",
+          "body_markdown": "---\ninstruction: >\n  Flag any pending tool call whose result would carry\n  people-sourced data (a people.* read) to a cloud\n  egress boundary. Reading people data on a local\n  boundary is fine; sending it over a cloud route is a\n  violation.\ntrigger_tools:\n  - \"people.*\"\nn_messages: 4\n---\n",
+          "tags": [
+            "guardrail"
+          ],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        }
+      ],
+      "payload": {
+        "notes": [
+          {
+            "id": "note_0c062209bc77",
+            "title": "Thought",
+            "body_markdown": "Graph walk J11 kept words",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:10Z",
+            "updated_at": "2026-09-23T05:36:12Z",
+            "last_modified": "2026-09-23T05:36:12Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-start-here",
+            "title": "Start here",
+            "body_markdown": "These drawers and notes are yours to edit, rename, move, or delete.\n\nEveryday context is never automatically included in an AI request. Attach it in Ask, or select it for an Agent, only when you want it used.\n\nNormal Desk sync continues to follow your existing device-pairing choices.\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-about-me",
+            "title": "About me",
+            "body_markdown": "What would be useful to share when you explicitly attach this context?\n\n- Name or form of address: [example: ]\n- Work or life context: [example: ]\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-current-priorities",
+            "title": "Current priorities",
+            "body_markdown": "What deserves attention right now?\n\n- Priority: [example: ]\n- Why it matters: [example: ]\n- Next step: [example: ]\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-how-i-like-help",
+            "title": "How I like help",
+            "body_markdown": "How should help be shaped when you explicitly attach this context?\n\n- Tone: [example: direct, warm, concise]\n- Useful format: [example: bullets, draft, checklist]\n- Avoid: [example: ]\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-people-vocabulary",
+            "title": "People & vocabulary",
+            "body_markdown": "Which names, terms, or abbreviations would be useful to explain?\n\n- Name or team: [example: ]\n- Term or abbreviation: [example: ]\n- Meaning: [example: ]\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-meeting-preferences",
+            "title": "Meeting preferences",
+            "body_markdown": "What would make a meeting record useful?\n\n- Capture: [example: decisions, actions, open questions]\n- Follow-up format: [example: ]\n- People to include: [example: ]\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-prompt-weekly-update",
+            "title": "Weekly update",
+            "body_markdown": "Summarize what happened this week.\nFocus on decisions made, commitments moved, and open questions.\nOne paragraph per topic, no filler.\nEnd with what needs attention next week.\n",
+            "tags": [
+              "prompt"
+            ],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-prompt-one-on-one-prep",
+            "title": "1:1 prep",
+            "body_markdown": "Prepare for my next 1:1.\nList open commitments, recent decisions that need follow-up,\nand any blockers worth raising.\nKeep it to three sections, one paragraph each.\n",
+            "tags": [
+              "prompt"
+            ],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-guardrail-effect-guard",
+            "title": "Effect guard",
+            "body_markdown": "---\ninstruction: >\n  Flag any tool call that writes to a person's ledger\n  (people.commitment.transition, people.agenda.add,\n  people.note.create) without naming a specific source\n  (meeting, decision record, or owner directive) in its\n  arguments. A call with no source is a violation.\ntrigger_tools:\n  - \"people.*\"\nn_messages: 6\n---\n",
+            "tags": [
+              "guardrail"
+            ],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-guardrail-egress-guard",
+            "title": "Egress guard",
+            "body_markdown": "---\ninstruction: >\n  Flag any pending tool call whose result would carry\n  people-sourced data (a people.* read) to a cloud\n  egress boundary. Reading people data on a local\n  boundary is fine; sending it over a cloud route is a\n  violation.\ntrigger_tools:\n  - \"people.*\"\nn_messages: 4\n---\n",
+            "tags": [
+              "guardrail"
+            ],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          }
+        ]
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 11,
+      "payload_sha256": "ab7828876cfc1875864f19d96358df1c445e50f7a5fb8cb176633dea9fdb2445"
+    },
+    "document_text_sha256": "8dc038e8851b562cbfdef62da4b43ecc9082b45ea7ac6d6c83b56ad32159264f",
+    "document_text_len": 538,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "body_sha256": "20585840257e930bbe5ac7945716cbf6fac0cccc00308003d005371cc30f0166"
+      }
+    ],
+    "at_utc": "2026-09-23T05:36:12.949176+00:00",
+    "trigger_response": {
+      "method": "PATCH",
+      "path": "/api/thoughts/thought_e30bf4506a32/working",
+      "status": 200,
+      "body_sha256": "803dc43b76cd777a3e5225cbe5444069e6835431d1d7651ed8687786152e7084",
+      "body": {
+        "thought": {
+          "id": "thought_e30bf4506a32",
+          "raw_id": "thought_e30bf4506a32",
+          "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source": {
+            "kind": "note"
+          },
+          "raw_captured_at": "2026-09-23T05:36:10Z",
+          "state": "working",
+          "aggregate_revision": 2,
+          "lifecycle_revision": 1,
+          "working_revision": 2,
+          "attachment_revision": 0,
+          "attachment_sha256": "135fb94436c8a6061592feb9bd182842e7b6249b39fa246cc19e48050112beda",
+          "attachments": [],
+          "working_note": {
+            "id": "note_0c062209bc77",
+            "title": "Thought",
+            "body_markdown": "Graph walk J11 kept words",
+            "tags": [],
+            "deleted": false,
+            "last_modified": "2026-09-23T05:36:12Z"
+          },
+          "filing_status": "filed",
+          "continuity": {
+            "state": "idle",
+            "code": ""
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox"
+        },
+        "workbench": {
+          "schema_version": 1,
+          "process_scope": {
+            "kind": "hub_local",
+            "hub_id": "hub_30e5d31105d14597ff35840083b7e216",
+            "state": "unavailable"
+          },
+          "workspace_cursor": {
+            "hub_id": "hub_30e5d31105d14597ff35840083b7e216",
+            "thought_id": "thought_e30bf4506a32",
+            "aggregate_revision": 2,
+            "continuity_revision": 1
+          },
+          "thought": {
+            "id": "thought_e30bf4506a32",
+            "raw_id": "thought_e30bf4506a32",
+            "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "source": {
+              "kind": "note"
+            },
+            "raw_captured_at": "2026-09-23T05:36:10Z",
+            "state": "working",
+            "aggregate_revision": 2,
+            "lifecycle_revision": 1,
+            "working_revision": 2,
+            "attachment_revision": 0,
+            "attachment_sha256": "135fb94436c8a6061592feb9bd182842e7b6249b39fa246cc19e48050112beda",
+            "attachments": [],
+            "working_note": {
+              "id": "note_0c062209bc77",
+              "title": "Thought",
+              "body_markdown": "Graph walk J11 kept words",
+              "tags": [],
+              "deleted": false,
+              "last_modified": "2026-09-23T05:36:12Z"
+            },
+            "filing_status": "filed",
+            "continuity": {
+              "state": "idle",
+              "code": ""
+            },
+            "directory_id": "hs-seed-inbox",
+            "directory_name": "Inbox"
+          },
+          "workspace_state": "idle",
+          "actions": {
+            "primary": {
+              "kind": "configure_ai"
+            },
+            "state": [
+              {
+                "kind": "configure_ai"
+              }
+            ],
+            "ambient": [
+              "update_working",
+              "attach_context",
+              "complete"
+            ]
+          },
+          "review": null,
+          "context_status": {
+            "summary": "",
+            "state": "empty",
+            "repair_ref": null
+          },
+          "inference": {
+            "availability": "unavailable",
+            "continuation_admission": "unavailable",
+            "intended_placement": {
+              "target_id": "this_machine",
+              "target_name": "This device",
+              "target_kind": "this_device",
+              "boundary": "same_device",
+              "readiness": "unavailable"
+            }
+          },
+          "terminal_status": null
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:64133) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/notes",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div.thought-note-field > div.desk-editor > div.desk-code-editor.thought-note-body > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping",
+    "focus_label": "Note body",
+    "url": "http://127.0.0.1:64133/",
+    "windows": [
+      {
+        "title": "Thought",
+        "rect": {
+          "x": 610,
+          "y": 64,
+          "w": 820,
+          "h": 640
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/notes",
+      "status": 200,
+      "collection": "notes",
+      "row_count": 11,
+      "payload_sha256": "ab7828876cfc1875864f19d96358df1c445e50f7a5fb8cb176633dea9fdb2445",
+      "rows": [
+        {
+          "id": "note_0c062209bc77",
+          "title": "Thought",
+          "body_markdown": "Graph walk J11 kept words",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:10Z",
+          "updated_at": "2026-09-23T05:36:12Z",
+          "last_modified": "2026-09-23T05:36:12Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-start-here",
+          "title": "Start here",
+          "body_markdown": "These drawers and notes are yours to edit, rename, move, or delete.\n\nEveryday context is never automatically included in an AI request. Attach it in Ask, or select it for an Agent, only when you want it used.\n\nNormal Desk sync continues to follow your existing device-pairing choices.\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-about-me",
+          "title": "About me",
+          "body_markdown": "What would be useful to share when you explicitly attach this context?\n\n- Name or form of address: [example: ]\n- Work or life context: [example: ]\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-current-priorities",
+          "title": "Current priorities",
+          "body_markdown": "What deserves attention right now?\n\n- Priority: [example: ]\n- Why it matters: [example: ]\n- Next step: [example: ]\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-how-i-like-help",
+          "title": "How I like help",
+          "body_markdown": "How should help be shaped when you explicitly attach this context?\n\n- Tone: [example: direct, warm, concise]\n- Useful format: [example: bullets, draft, checklist]\n- Avoid: [example: ]\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-people-vocabulary",
+          "title": "People & vocabulary",
+          "body_markdown": "Which names, terms, or abbreviations would be useful to explain?\n\n- Name or team: [example: ]\n- Term or abbreviation: [example: ]\n- Meaning: [example: ]\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-meeting-preferences",
+          "title": "Meeting preferences",
+          "body_markdown": "What would make a meeting record useful?\n\n- Capture: [example: decisions, actions, open questions]\n- Follow-up format: [example: ]\n- People to include: [example: ]\n",
+          "tags": [],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-prompt-weekly-update",
+          "title": "Weekly update",
+          "body_markdown": "Summarize what happened this week.\nFocus on decisions made, commitments moved, and open questions.\nOne paragraph per topic, no filler.\nEnd with what needs attention next week.\n",
+          "tags": [
+            "prompt"
+          ],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-prompt-one-on-one-prep",
+          "title": "1:1 prep",
+          "body_markdown": "Prepare for my next 1:1.\nList open commitments, recent decisions that need follow-up,\nand any blockers worth raising.\nKeep it to three sections, one paragraph each.\n",
+          "tags": [
+            "prompt"
+          ],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-guardrail-effect-guard",
+          "title": "Effect guard",
+          "body_markdown": "---\ninstruction: >\n  Flag any tool call that writes to a person's ledger\n  (people.commitment.transition, people.agenda.add,\n  people.note.create) without naming a specific source\n  (meeting, decision record, or owner directive) in its\n  arguments. A call with no source is a violation.\ntrigger_tools:\n  - \"people.*\"\nn_messages: 6\n---\n",
+          "tags": [
+            "guardrail"
+          ],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        },
+        {
+          "id": "hs-seed-guardrail-egress-guard",
+          "title": "Egress guard",
+          "body_markdown": "---\ninstruction: >\n  Flag any pending tool call whose result would carry\n  people-sourced data (a people.* read) to a cloud\n  egress boundary. Reading people data on a local\n  boundary is fine; sending it over a cloud route is a\n  violation.\ntrigger_tools:\n  - \"people.*\"\nn_messages: 4\n---\n",
+          "tags": [
+            "guardrail"
+          ],
+          "created_at": "2026-09-23T05:36:08Z",
+          "updated_at": "2026-09-23T05:36:08Z",
+          "last_modified": "2026-09-23T05:36:08Z",
+          "deleted": false
+        }
+      ],
+      "payload": {
+        "notes": [
+          {
+            "id": "note_0c062209bc77",
+            "title": "Thought",
+            "body_markdown": "Graph walk J11 kept words",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:10Z",
+            "updated_at": "2026-09-23T05:36:12Z",
+            "last_modified": "2026-09-23T05:36:12Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-start-here",
+            "title": "Start here",
+            "body_markdown": "These drawers and notes are yours to edit, rename, move, or delete.\n\nEveryday context is never automatically included in an AI request. Attach it in Ask, or select it for an Agent, only when you want it used.\n\nNormal Desk sync continues to follow your existing device-pairing choices.\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-about-me",
+            "title": "About me",
+            "body_markdown": "What would be useful to share when you explicitly attach this context?\n\n- Name or form of address: [example: ]\n- Work or life context: [example: ]\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-current-priorities",
+            "title": "Current priorities",
+            "body_markdown": "What deserves attention right now?\n\n- Priority: [example: ]\n- Why it matters: [example: ]\n- Next step: [example: ]\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-how-i-like-help",
+            "title": "How I like help",
+            "body_markdown": "How should help be shaped when you explicitly attach this context?\n\n- Tone: [example: direct, warm, concise]\n- Useful format: [example: bullets, draft, checklist]\n- Avoid: [example: ]\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-people-vocabulary",
+            "title": "People & vocabulary",
+            "body_markdown": "Which names, terms, or abbreviations would be useful to explain?\n\n- Name or team: [example: ]\n- Term or abbreviation: [example: ]\n- Meaning: [example: ]\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-meeting-preferences",
+            "title": "Meeting preferences",
+            "body_markdown": "What would make a meeting record useful?\n\n- Capture: [example: decisions, actions, open questions]\n- Follow-up format: [example: ]\n- People to include: [example: ]\n",
+            "tags": [],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-prompt-weekly-update",
+            "title": "Weekly update",
+            "body_markdown": "Summarize what happened this week.\nFocus on decisions made, commitments moved, and open questions.\nOne paragraph per topic, no filler.\nEnd with what needs attention next week.\n",
+            "tags": [
+              "prompt"
+            ],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-prompt-one-on-one-prep",
+            "title": "1:1 prep",
+            "body_markdown": "Prepare for my next 1:1.\nList open commitments, recent decisions that need follow-up,\nand any blockers worth raising.\nKeep it to three sections, one paragraph each.\n",
+            "tags": [
+              "prompt"
+            ],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-guardrail-effect-guard",
+            "title": "Effect guard",
+            "body_markdown": "---\ninstruction: >\n  Flag any tool call that writes to a person's ledger\n  (people.commitment.transition, people.agenda.add,\n  people.note.create) without naming a specific source\n  (meeting, decision record, or owner directive) in its\n  arguments. A call with no source is a violation.\ntrigger_tools:\n  - \"people.*\"\nn_messages: 6\n---\n",
+            "tags": [
+              "guardrail"
+            ],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          },
+          {
+            "id": "hs-seed-guardrail-egress-guard",
+            "title": "Egress guard",
+            "body_markdown": "---\ninstruction: >\n  Flag any pending tool call whose result would carry\n  people-sourced data (a people.* read) to a cloud\n  egress boundary. Reading people data on a local\n  boundary is fine; sending it over a cloud route is a\n  violation.\ntrigger_tools:\n  - \"people.*\"\nn_messages: 4\n---\n",
+            "tags": [
+              "guardrail"
+            ],
+            "created_at": "2026-09-23T05:36:08Z",
+            "updated_at": "2026-09-23T05:36:08Z",
+            "last_modified": "2026-09-23T05:36:08Z",
+            "deleted": false
+          }
+        ]
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 11,
+      "payload_sha256": "ab7828876cfc1875864f19d96358df1c445e50f7a5fb8cb176633dea9fdb2445"
+    },
+    "document_text_sha256": "8dc038e8851b562cbfdef62da4b43ecc9082b45ea7ac6d6c83b56ad32159264f",
+    "document_text_len": 538,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "body_sha256": "20585840257e930bbe5ac7945716cbf6fac0cccc00308003d005371cc30f0166"
+      }
+    ],
+    "at_utc": "2026-09-23T05:36:12.811841+00:00",
+    "trigger_response": {
+      "method": "PATCH",
+      "path": "/api/thoughts/thought_e30bf4506a32/working",
+      "status": 200,
+      "body_sha256": "803dc43b76cd777a3e5225cbe5444069e6835431d1d7651ed8687786152e7084",
+      "body": {
+        "thought": {
+          "id": "thought_e30bf4506a32",
+          "raw_id": "thought_e30bf4506a32",
+          "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source": {
+            "kind": "note"
+          },
+          "raw_captured_at": "2026-09-23T05:36:10Z",
+          "state": "working",
+          "aggregate_revision": 2,
+          "lifecycle_revision": 1,
+          "working_revision": 2,
+          "attachment_revision": 0,
+          "attachment_sha256": "135fb94436c8a6061592feb9bd182842e7b6249b39fa246cc19e48050112beda",
+          "attachments": [],
+          "working_note": {
+            "id": "note_0c062209bc77",
+            "title": "Thought",
+            "body_markdown": "Graph walk J11 kept words",
+            "tags": [],
+            "deleted": false,
+            "last_modified": "2026-09-23T05:36:12Z"
+          },
+          "filing_status": "filed",
+          "continuity": {
+            "state": "idle",
+            "code": ""
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox"
+        },
+        "workbench": {
+          "schema_version": 1,
+          "process_scope": {
+            "kind": "hub_local",
+            "hub_id": "hub_30e5d31105d14597ff35840083b7e216",
+            "state": "unavailable"
+          },
+          "workspace_cursor": {
+            "hub_id": "hub_30e5d31105d14597ff35840083b7e216",
+            "thought_id": "thought_e30bf4506a32",
+            "aggregate_revision": 2,
+            "continuity_revision": 1
+          },
+          "thought": {
+            "id": "thought_e30bf4506a32",
+            "raw_id": "thought_e30bf4506a32",
+            "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "source": {
+              "kind": "note"
+            },
+            "raw_captured_at": "2026-09-23T05:36:10Z",
+            "state": "working",
+            "aggregate_revision": 2,
+            "lifecycle_revision": 1,
+            "working_revision": 2,
+            "attachment_revision": 0,
+            "attachment_sha256": "135fb94436c8a6061592feb9bd182842e7b6249b39fa246cc19e48050112beda",
+            "attachments": [],
+            "working_note": {
+              "id": "note_0c062209bc77",
+              "title": "Thought",
+              "body_markdown": "Graph walk J11 kept words",
+              "tags": [],
+              "deleted": false,
+              "last_modified": "2026-09-23T05:36:12Z"
+            },
+            "filing_status": "filed",
+            "continuity": {
+              "state": "idle",
+              "code": ""
+            },
+            "directory_id": "hs-seed-inbox",
+            "directory_name": "Inbox"
+          },
+          "workspace_state": "idle",
+          "actions": {
+            "primary": {
+              "kind": "configure_ai"
+            },
+            "state": [
+              {
+                "kind": "configure_ai"
+              }
+            ],
+            "ambient": [
+              "update_working",
+              "attach_context",
+              "complete"
+            ]
+          },
+          "review": null,
+          "context_status": {
+            "summary": "",
+            "state": "empty",
+            "repair_ref": null
+          },
+          "inference": {
+            "availability": "unavailable",
+            "continuation_admission": "unavailable",
+            "intended_placement": {
+              "target_id": "this_machine",
+              "target_name": "This device",
+              "target_kind": "this_device",
+              "boundary": "same_device",
+              "readiness": "unavailable"
+            }
+          },
+          "terminal_status": null
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:64133) non-GET response after the click"
+    },
+    "predicate_satisfied": true,
+    "reading": "rows matching {'body_markdown__prefix': 'Graph walk J11 kept words'} at /api/notes: before=0 after=1 (new=1; wanted >= 1)",
+    "elapsed_s": 0.924
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "rows matching {'body_markdown__prefix': 'Graph walk J11 kept words'} at /api/notes: before=0 after=1 (new=1; wanted >= 1)",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.058,
+    "first_satisfied_at_s": 0.924,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: rows matching {'body_markdown__prefix': 'Graph walk J11 kept words'} at /api/notes: before=0 after=1 (new=1; wanted >= 1)"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:64133) non-GET response after the click",
+    "chosen": {
+      "method": "PATCH",
+      "path": "/api/thoughts/thought_e30bf4506a32/working",
+      "status": 200,
+      "body_sha256": "803dc43b76cd777a3e5225cbe5444069e6835431d1d7651ed8687786152e7084",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:64133) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:64133) non-GET response after the click",
+    "seen": [
+      {
+        "method": "PATCH",
+        "path": "/api/thoughts/thought_e30bf4506a32/working",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-04-shots/rig/20260923T053604Z-case.j11.thought_keep.kept-muaddib-1440/before.png",
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-04-shots/rig/20260923T053604Z-case.j11.thought_keep.kept-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-l3shwvo5/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:64133"
+  ]
+}

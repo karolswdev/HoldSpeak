@@ -1,6 +1,6 @@
 # PHILO-3-02 corrected Arrival canvas
 
-**PENDING OWNER RATIFICATION.** This directory is the corrected static canvas
+**OWNER RATIFIED, 2026-09-23: “Ratify, build it.”** Published at [the owner canvas](https://claude.ai/artifact/KnASxYRZc4UXkAiFU1z5zX). This directory is the corrected static canvas
 for the existing Arrival meeting row. It is not product code and it is not a
 live product shot.
 
@@ -8,8 +8,8 @@ The one owner ratification question is: **is this corrected existing-row
 presentation of transcript, arriving summary, and retry/failure facts the face
 to build?**
 
-Muad'Dib: publish this set for that owner decision. The Arrival face remains
-held until the owner ratifies it.
+Muad'Dib published this set; the owner answered the question above with
+“Ratify, build it.” The face implementation is now authorized.
 
 | State | 1440 arrival | 393 arrival | 393 footer after scroll |
 | --- | --- | --- | --- |
