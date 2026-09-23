@@ -1,0 +1,132 @@
+{
+  "source_revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+  "brain": "astra",
+  "entries": [
+    {
+      "case_id": "case.j3.concierge_add_engine.add_ready",
+      "job": "j3",
+      "viewports": [
+        1440,
+        393
+      ],
+      "invoked": false,
+      "verdict": "blocked",
+      "reason": "The brief requires replay for this engine-dependent Check, but the atlas has no recorded engine_reply artifact for the trigger at selector [data-testid=concierge-add-check] after filling [data-testid=concierge-add-engine-row] input with 'the engine address'. Missing artifact/field: engine_reply boundary reply (case.trigger response)."
+    },
+    {
+      "case_id": "case.j3.concierge_add_check.refused",
+      "job": "j3",
+      "viewports": [
+        1440,
+        393
+      ],
+      "invoked": false,
+      "verdict": "blocked",
+      "reason": "The brief requires replay for this engine-dependent Check, but the atlas has no recorded engine_reply artifact for the trigger at selector [data-testid=concierge-add-check] after filling [data-testid=concierge-add-engine-row] input with 'an unreachable address'. Missing artifact/field: engine_reply boundary reply (case.trigger response)."
+    },
+    {
+      "case_id": "case.j3.concierge_check.engine_unreachable",
+      "job": "j3",
+      "viewports": [
+        1440,
+        393
+      ],
+      "invoked": false,
+      "verdict": "blocked",
+      "reason": "The brief requires replay for this engine-dependent Check, but the atlas has no recorded engine_reply artifact for the trigger selector [data-testid^=concierge-check-] on a found engine row whose address does not answer. Missing artifact/field: engine_reply boundary reply (case.trigger response)."
+    },
+    {
+      "case_id": "case.j3.concierge_use_for_summaries.assigned_ready",
+      "job": "j3",
+      "viewports": [
+        1440,
+        393
+      ],
+      "invoked": false,
+      "verdict": "blocked",
+      "reason": "The brief requires replay for this engine-dependent Check, but the atlas has no recorded engine_reply artifact for setup selector [data-testid=concierge-add-check] after filling [data-testid=concierge-add-engine-row] input with 'http://192.168.1.43:8080'. Missing artifact/field: engine_reply boundary reply (setup Check response)."
+    },
+    {
+      "case_id": "case.j3.speech_missing.row_stays",
+      "job": "j3",
+      "viewports": [
+        1440,
+        393
+      ],
+      "invoked": false,
+      "verdict": "blocked",
+      "reason": "The brief requires replay for this engine-dependent Check, but the atlas has no recorded engine_reply artifact for setup selector [data-testid=concierge-add-check] after filling [data-testid=concierge-add-engine-row] input with 'http://192.168.1.43:8080'. Missing artifact/field: engine_reply boundary reply (setup Check response)."
+    },
+    {
+      "case_id": "case.j3.profile_delete.profile_missing",
+      "job": "j3",
+      "viewports": [
+        1440,
+        393
+      ],
+      "invoked": false,
+      "verdict": "blocked",
+      "reason": "The brief requires replay for this engine-dependent Check, but the atlas has no recorded engine_reply artifact for setup selector [data-testid=concierge-add-check] after filling [data-testid=concierge-add-engine-row] input with 'http://192.168.1.43:8080'. Missing artifact/field: engine_reply boundary reply (setup Check response)."
+    },
+    {
+      "case_id": "case.j3.profile_unbind.binding_absent",
+      "job": "j3",
+      "viewports": [],
+      "invoked": false,
+      "verdict": "blocked",
+      "reason": "The brief requires replay for this engine-dependent Check, but the atlas has no recorded engine_reply artifact for setup selector [data-testid=concierge-add-check] after filling [data-testid=concierge-add-engine-row] input with 'http://192.168.1.43:8080'. Missing artifact/field: engine_reply boundary reply (setup Check response)."
+    },
+    {
+      "case_id": "case.j5.meeting_open.route_disclosed",
+      "job": "j5",
+      "viewports": [
+        1440,
+        393
+      ],
+      "invoked": false,
+      "verdict": "blocked",
+      "reason": "The brief requires replay for this engine-dependent Check, but the atlas has no recorded engine_reply artifact for setup selector [data-testid=concierge-add-check] after filling [data-testid=concierge-add-engine-row] input with 'http://192.168.1.43:8080'. Missing artifact/field: engine_reply boundary reply (setup Check response)."
+    },
+    {
+      "case_id": "case.j5.meeting_open.planned_host_disclosed",
+      "job": "j5",
+      "viewports": [
+        1440,
+        393
+      ],
+      "invoked": false,
+      "verdict": "blocked",
+      "reason": "The brief requires replay for this engine-dependent Check, but the atlas has no recorded engine_reply artifact for setup selector [data-testid=concierge-add-check] after filling [data-testid=concierge-add-engine-row] input with 'http://192.168.1.43:8080'. Missing artifact/field: engine_reply boundary reply (setup Check response)."
+    },
+    {
+      "case_id": "case.j7.hub_restart.intel_retained",
+      "job": "j7",
+      "viewports": [],
+      "invoked": false,
+      "verdict": "blocked",
+      "reason": "The case setup invokes Run summary outside J6. Missing artifact: a recorded successful meeting-intelligence provider reply for tests/fixtures/core_path_smoke_16k.wav, declared by a setup boundary step with substitute=engine_reply and reply=<recorded path>. The atlas declares neither the boundary nor its reply; --engine replayed alone installs nothing (scripts/graph_walk.py:2409). No real provider call was substituted for the required replay."
+    },
+    {
+      "case_id": "case.j7.arrival_load.reload_persisted",
+      "job": "j7",
+      "viewports": [
+        1440,
+        393
+      ],
+      "invoked": false,
+      "verdict": "blocked",
+      "reason": "The case setup invokes Run summary outside J6. Missing artifact: a recorded successful meeting-intelligence provider reply for tests/fixtures/core_path_smoke_16k.wav, declared by a setup boundary step with substitute=engine_reply and reply=<recorded path>. The atlas declares neither the boundary nor its reply; --engine replayed alone installs nothing (scripts/graph_walk.py:2409). No real provider call was substituted for the required replay."
+    },
+    {
+      "case_id": "case.j9.shade_open.door_stale",
+      "job": "j9",
+      "viewports": [
+        1440,
+        393
+      ],
+      "invoked": false,
+      "verdict": "blocked",
+      "reason": "The case setup invokes Run summary outside J6. Missing artifact: a recorded successful meeting-intelligence provider reply for tests/fixtures/core_path_smoke_16k.wav, declared by a setup boundary step with substitute=engine_reply and reply=<recorded path>. The atlas declares neither the boundary nor its reply; --engine replayed alone installs nothing (scripts/graph_walk.py:2409). No real provider call was substituted for the required replay."
+    }
+  ]
+}
