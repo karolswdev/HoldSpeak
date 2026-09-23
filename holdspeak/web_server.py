@@ -201,6 +201,7 @@ class MeetingWebServer:
         dictation_journal_repository: Optional[Any] = None,
         gh_runner: Optional[Any] = None,
         acli_runner: Optional[Any] = None,
+        brief_clock: Optional[Any] = None,
     ) -> None:
         if _IMPORT_ERROR is not None:
             raise RuntimeError(
@@ -217,6 +218,10 @@ class MeetingWebServer:
         # responses instead of real subprocess calls.
         self._gh_runner = gh_runner
         self._acli_runner = acli_runner
+        # PHILO-3-03: test-only producer clock for the brief (None = the wall
+        # clock). The graph-walk rig's hub passes one to reach the next
+        # producer-day; production never does.
+        self._brief_clock = brief_clock
         # HS-39-02: one session-scoped dictation correction store, shared by the
         # dictation routes (record/read) and the live runtime (consult).
         # HS-40-02: when the live runtime injects a repository the store is
@@ -928,6 +933,7 @@ class MeetingWebServer:
             meeting_intel_service_factory=lambda: MeetingIntelService(get_database(), notify=notify, observer=obs),
             meeting_aftercare_service=meeting_aftercare_service,
             meeting_aftercare_service_factory=lambda: MeetingAftercareService(get_database(), notify=notify, observer=obs),
+            brief_clock=self._brief_clock,
             # Late-bind broadcast: the prior inline handlers called
             # `self.broadcast(...)`, which resolves the attribute at call time
             # (tests reassign `server.broadcast` to spy on it). A thunk keeps

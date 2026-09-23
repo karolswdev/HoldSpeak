@@ -92,9 +92,13 @@ def _compose_overlay(brief_dict: dict[str, Any], service: MondayBriefService, re
 
 def build_monday_brief_router(ctx: WebContext) -> APIRouter:
     """Expose the durable Monday Brief through the web API."""
-    del ctx
     router = APIRouter(prefix="/api/brief", tags=["monday-brief"])
-    service = MondayBriefService(get_database(), observer=get_observer())
+    # PHILO-3-03: the producer clock the composition wires (None = wall clock).
+    service = MondayBriefService(
+        get_database(),
+        observer=get_observer(),
+        clock=getattr(ctx, "brief_clock", None),
+    )
     principal = lambda request: getattr(request.state, "principal", UNAUTHENTICATED)
 
     @router.get("/latest")

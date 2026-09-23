@@ -6,7 +6,7 @@ import datetime
 import re
 import uuid
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Callable
 
 from holdspeak.services.follow_through_service import FollowThroughService
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
@@ -127,9 +127,19 @@ class MondayBriefService:
     existing local-time convention.
     """
 
-    def __init__(self, db: Any, *, observer: PipelineObserver | None = None) -> None:
+    def __init__(
+        self,
+        db: Any,
+        *,
+        observer: PipelineObserver | None = None,
+        clock: Callable[[], datetime.datetime] | None = None,
+    ) -> None:
         self._db = db
         self._observer = observer or NullObserver()
+        # PHILO-3-03: the producer's ONE clock. It is the wall clock unless the
+        # composition passes another (the rig's own hub, a test); a case that
+        # needs the next producer-day moves this, never the machine clock.
+        self._clock = clock or datetime.datetime.now
 
     def compute_window(
         self, now: datetime.datetime | None = None
@@ -183,7 +193,8 @@ class MondayBriefService:
         self, principal: Any, *, now: datetime.datetime | None = None
     ) -> MondayBrief:
         """Generate or return the existing brief for the current local date."""
-        period_start, period_end = self.compute_window(now)
+        # PHILO-3-03: the producer's day comes from its one clock.
+        period_start, period_end = self.compute_window(now or self._clock())
         date_key = period_end.date().isoformat()
         # HS-200-07 (C4): the needs-you half of the brief names what was
         # NOT observed, so an empty brief cannot read as an all-clear over
@@ -773,7 +784,7 @@ class MondayBriefService:
 
         # Open, due-soon commitments require attention, but they never outrank
         # an authorization or an unresolved decision review.
-        today = datetime.date.today()
+        today = self._clock().date()
         horizon = today + datetime.timedelta(days=7)
         with self._db._connection() as conn:
             commitments = conn.execute(

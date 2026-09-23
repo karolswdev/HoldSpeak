@@ -4298,7 +4298,9 @@
         "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs175_rhythm_brief_glass.py",
         "tests/e2e/test_philo3_01_receipt_hits.py",
+        "tests/unit/test_graph_walk_producer_clock.py",
         "tests/unit/test_hs175_week_brief.py",
+        "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -4358,6 +4360,7 @@
         "tests/e2e/test_hs175_rhythm_brief_glass.py",
         "tests/unit/test_brief_shelf.py",
         "tests/unit/test_hs175_week_brief.py",
+        "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8027,6 +8030,7 @@
         "tests/integration/test_decision_records.py",
         "tests/unit/test_graph_walk_http_fault.py",
         "tests/unit/test_philo3_01_decision_route.py",
+        "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8091,6 +8095,7 @@
         "tests/integration/test_decision_records.py",
         "tests/unit/test_graph_walk_http_fault.py",
         "tests/unit/test_philo3_01_decision_route.py",
+        "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8172,6 +8177,7 @@
         "tests/integration/test_decision_records.py",
         "tests/unit/test_graph_walk_http_fault.py",
         "tests/unit/test_philo3_01_decision_route.py",
+        "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",

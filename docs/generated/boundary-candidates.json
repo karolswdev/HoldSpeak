@@ -6013,7 +6013,7 @@
     },
     {
       "path": "holdspeak/web/context.py",
-      "line": 186,
+      "line": 190,
       "kinds": [
         "websocket"
       ],
@@ -6023,7 +6023,7 @@
     },
     {
       "path": "holdspeak/web/context.py",
-      "line": 236,
+      "line": 240,
       "kinds": [
         "websocket"
       ],
@@ -6483,7 +6483,7 @@
     },
     {
       "path": "holdspeak/web_server.py",
-      "line": 217,
+      "line": 218,
       "kinds": [
         "process_or_shell"
       ],
@@ -6493,7 +6493,7 @@
     },
     {
       "path": "holdspeak/web_server.py",
-      "line": 574,
+      "line": 579,
       "kinds": [
         "websocket"
       ],
@@ -6503,7 +6503,7 @@
     },
     {
       "path": "holdspeak/web_server.py",
-      "line": 580,
+      "line": 585,
       "kinds": [
         "websocket"
       ],
@@ -6513,7 +6513,7 @@
     },
     {
       "path": "holdspeak/web_server.py",
-      "line": 588,
+      "line": 593,
       "kinds": [
         "websocket"
       ],
@@ -6663,7 +6663,7 @@
     },
     {
       "path": "web/src/desk/api.ts",
-      "line": 1022,
+      "line": 1026,
       "kinds": [
         "http_client"
       ],
@@ -6753,7 +6753,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 699,
+      "line": 724,
       "kinds": [
         "http_client"
       ],
@@ -6763,7 +6763,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 851,
+      "line": 876,
       "kinds": [
         "http_client"
       ],
@@ -6773,7 +6773,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1332,
+      "line": 1388,
       "kinds": [
         "http_client"
       ],
@@ -6783,7 +6783,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1614,
+      "line": 1670,
       "kinds": [
         "http_client"
       ],
@@ -6793,7 +6793,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1668,
+      "line": 1724,
       "kinds": [
         "http_client"
       ],
@@ -6803,7 +6803,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1727,
+      "line": 1783,
       "kinds": [
         "http_client"
       ],
@@ -7183,7 +7183,7 @@
     },
     {
       "path": "web/src/desk/pullouts/DecisionPullout.tsx",
-      "line": 56,
+      "line": 73,
       "kinds": [
         "http_client"
       ],
@@ -7403,7 +7403,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 224,
+      "line": 237,
       "kinds": [
         "http_client"
       ],
@@ -7413,7 +7413,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 338,
+      "line": 354,
       "kinds": [
         "http_client"
       ],
@@ -7423,7 +7423,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 369,
+      "line": 385,
       "kinds": [
         "http_client"
       ],
@@ -7433,7 +7433,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 406,
+      "line": 422,
       "kinds": [
         "http_client"
       ],
@@ -7443,7 +7443,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 457,
+      "line": 473,
       "kinds": [
         "http_client"
       ],
@@ -7453,7 +7453,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 470,
+      "line": 486,
       "kinds": [
         "http_client"
       ],
@@ -7463,7 +7463,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 483,
+      "line": 499,
       "kinds": [
         "http_client"
       ],
@@ -7473,7 +7473,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 495,
+      "line": 511,
       "kinds": [
         "http_client"
       ],
@@ -7483,7 +7483,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 509,
+      "line": 525,
       "kinds": [
         "http_client"
       ],
@@ -7493,7 +7493,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 514,
+      "line": 530,
       "kinds": [
         "http_client"
       ],
@@ -7503,7 +7503,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 536,
+      "line": 552,
       "kinds": [
         "http_client"
       ],
@@ -7513,7 +7513,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 621,
+      "line": 637,
       "kinds": [
         "http_client"
       ],
@@ -7523,7 +7523,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 638,
+      "line": 654,
       "kinds": [
         "http_client"
       ],
@@ -7583,7 +7583,7 @@
     },
     {
       "path": "web/src/desk/thoughts.ts",
-      "line": 311,
+      "line": 314,
       "kinds": [
         "http_client"
       ],
@@ -7593,7 +7593,7 @@
     },
     {
       "path": "web/src/desk/thoughts.ts",
-      "line": 335,
+      "line": 338,
       "kinds": [
         "http_client"
       ],
@@ -7603,7 +7603,7 @@
     },
     {
       "path": "web/src/desk/thoughts.ts",
-      "line": 362,
+      "line": 365,
       "kinds": [
         "http_client"
       ],
@@ -7613,7 +7613,7 @@
     },
     {
       "path": "web/src/desk/thoughts.ts",
-      "line": 370,
+      "line": 373,
       "kinds": [
         "http_client"
       ],
@@ -7623,7 +7623,7 @@
     },
     {
       "path": "web/src/desk/thoughts.ts",
-      "line": 380,
+      "line": 383,
       "kinds": [
         "http_client"
       ],
@@ -7633,7 +7633,7 @@
     },
     {
       "path": "web/src/desk/thoughts.ts",
-      "line": 418,
+      "line": 421,
       "kinds": [
         "http_client"
       ],
@@ -7643,7 +7643,7 @@
     },
     {
       "path": "web/src/desk/thoughts.ts",
-      "line": 437,
+      "line": 440,
       "kinds": [
         "http_client"
       ],
@@ -7653,7 +7653,7 @@
     },
     {
       "path": "web/src/desk/thoughts.ts",
-      "line": 452,
+      "line": 455,
       "kinds": [
         "http_client"
       ],

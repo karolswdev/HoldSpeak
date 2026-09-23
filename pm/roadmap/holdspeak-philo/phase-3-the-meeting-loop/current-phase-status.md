@@ -36,7 +36,7 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 |---|---|---|---|---|
 | PHILO-3-01 | Record the decision (A1) | done | [story-01-record-the-decision](./story-01-record-the-decision.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-3-02 | See and find the summary (A2) | backlog | [story-02-see-and-find-the-summary](./story-02-see-and-find-the-summary.md) | - |
-| PHILO-3-03 | Read the dated brief with that decision (A3) | backlog | [story-03-read-the-dated-brief](./story-03-read-the-dated-brief.md) | - |
+| PHILO-3-03 | Read the dated brief with that decision (A3) | done | [story-03-read-the-dated-brief](./story-03-read-the-dated-brief.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-3-04 | The thought's receipt (A4) | done | [story-04-the-thoughts-receipt](./story-04-the-thoughts-receipt.md) | [evidence-story-04](./evidence-story-04.md) |
 
 ## Lanes
@@ -49,6 +49,8 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 | The thought | 04 | Muad'Dib (Opus 5.5; canvas first, owner ratifies) | Astra | ../wt-philo-3-04 | feat/philo-3-04-thought |
 
 ## Where we are
+
+2026-09-23 19:05: A3 BUILT on the ratified canvas — a brief load failure is named with Retry, READING… while the read is open, No brief yet only on null, the period and generated date on the face; the producer-clock seam (`MondayBriefService(clock=)`, wired through the web server) lets the rig advance the brief's day without touching the machine clock; the next-day brief contains the recorded decision with a new id at both widths; the old J10 next-day case is applicable again. Astra counsel next. A2 (Astra) finishing its proof chain.
 
 2026-09-23: A4 BUILT on the ratified canvas — the Thought foot shows KEPT · time / SAVING… / DID NOT SAVE · cause + Retry / CHANGED ELSEWHERE + Reload with the filing line below; every state shot on a real hub at both widths; the library receipt line raised to the 12 px floor. A1 on PR #613 (Astra counsel). A2 (Astra) in flight.
 

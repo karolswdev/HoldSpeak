@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "atlas_version": "phase3-01",
+  "atlas_version": "phase3-03",
   "extends": "docs/internal/philo/graph/atlas.json",
   "source_commit": "7ce953580b0dd27f7e4445d5e41da4c9a0a55f75",
   "cases": [
@@ -515,6 +515,412 @@
         1440,
         393
       ]
+    },
+    {
+      "id": "case.a3.brief_next_day.decision_on_the_face",
+      "job": "a3",
+      "edge_ids": [
+        "edge.face.arrival_generate",
+        "edge.route.brief_generate",
+        "edge.route.brief_latest"
+      ],
+      "state_id": "state.briefs.next_day_window",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME WITH the producer clock seam (the case carries a producer-clock step); no decision on the desk before the setup",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "completion_bound_s": 120,
+      "viewports": [
+        1440,
+        393
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before the brief is generated"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "adapter": "ui-pointer",
+          "why": "day one: the Chair's Generate makes the EMPTY brief (a fresh HOME has nothing material)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-receipt]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "first_brief_id",
+          "capture_path": "id",
+          "adapter": "http-route",
+          "why": "the day-one brief's id, before the decision exists"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Graph walk next-day decision A3",
+            "status": "proposed"
+          },
+          "adapter": "http-route",
+          "why": "the decision is recorded AFTER the empty brief (PHILO-3-01's route); the decisions collector names every proposed desk decision 'Review decision: <title>' (holdspeak/services/monday_brief_service.py:765-773)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/brief/generate",
+          "body": null,
+          "adapter": "http-route",
+          "why": "the same producer-day: generate returns the existing brief (monday_brief_service.py:205-213)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/sections/decisions",
+            "value": []
+          },
+          "observe_at": "protocol: GET /api/brief/latest",
+          "why": "same-day idempotency: the retained brief still has NO decision item, so inclusion can only come from a new producer-day"
+        },
+        {
+          "kind": "clock",
+          "clock": "clock.python_wall",
+          "adapter": "producer-clock",
+          "advance_days": 1,
+          "how": "the rig's own hub runs MeetingWebServer(brief_clock=) with the wall clock plus an offset read from a file in the run's HOME (scripts/graph_walk.py _producer_clock); this step writes advance_days=1. The machine clock is not moved; the hub prints what the producer read (PRODUCER_CLOCK_READ) into provenance",
+          "why": "cross the producer-day boundary (COUNCIL.md A3: the minimum verified producer-clock boundary)"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[data-testid=arrival-brief-generate]",
+        "adapter": "ui-pointer",
+        "why": "the Chair's 'Generate again' on the retained empty brief (ChairHome.tsx), now on the next producer-day",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/brief/generate"
+        }
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "Review decision: Graph walk next-day decision A3"
+        },
+        "observe_at": "[data-testid=arrival-brief] .surface-ledger",
+        "words": "day one: Generate makes an empty brief; the decision is recorded after it; a same-day generate keeps that brief and it has no decision item. The producer's day moves by one inside the rig's own hub (never the machine clock). Generate again on the face then draws the NEW brief's item row 'Review decision: Graph walk next-day decision A3' in the BRIEF ledger; the trigger's own response (recorded) carries a new id and GET /api/brief/latest is read after.",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          }
+        ]
+      }
+    },
+    {
+      "id": "case.a3.brief_next_day.new_id_with_the_decision",
+      "job": "a3",
+      "edge_ids": [
+        "edge.face.arrival_generate",
+        "edge.route.brief_generate",
+        "edge.route.brief_latest"
+      ],
+      "state_id": "state.briefs.next_day_window",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME WITH the producer clock seam (the case carries a producer-clock step); no decision on the desk before the setup",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "completion_bound_s": 120,
+      "viewports": [
+        1440,
+        393
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before the brief is generated"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "adapter": "ui-pointer",
+          "why": "day one: the Chair's Generate makes the EMPTY brief (a fresh HOME has nothing material)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-receipt]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "first_brief_id",
+          "capture_path": "id",
+          "adapter": "http-route",
+          "why": "the day-one brief's id, before the decision exists"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Graph walk next-day decision A3",
+            "status": "proposed"
+          },
+          "adapter": "http-route",
+          "why": "the decision is recorded AFTER the empty brief (PHILO-3-01's route); the decisions collector names every proposed desk decision 'Review decision: <title>' (holdspeak/services/monday_brief_service.py:765-773)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/brief/generate",
+          "body": null,
+          "adapter": "http-route",
+          "why": "the same producer-day: generate returns the existing brief (monday_brief_service.py:205-213)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/sections/decisions",
+            "value": []
+          },
+          "observe_at": "protocol: GET /api/brief/latest",
+          "why": "same-day idempotency: the retained brief still has NO decision item, so inclusion can only come from a new producer-day"
+        },
+        {
+          "kind": "clock",
+          "clock": "clock.python_wall",
+          "adapter": "producer-clock",
+          "advance_days": 1,
+          "how": "the rig's own hub runs MeetingWebServer(brief_clock=) with the wall clock plus an offset read from a file in the run's HOME (scripts/graph_walk.py _producer_clock); this step writes advance_days=1. The machine clock is not moved; the hub prints what the producer read (PRODUCER_CLOCK_READ) into provenance",
+          "why": "cross the producer-day boundary (COUNCIL.md A3: the minimum verified producer-clock boundary)"
+        }
+      ],
+      "trigger": {
+        "kind": "api",
+        "method": "POST",
+        "path": "/api/brief/generate",
+        "body": null,
+        "adapter": "http-route",
+        "why": "the same producer entry the Chair's Generate again calls, on the next producer-day"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "protocol_status",
+          "method": "POST",
+          "path": "/api/brief/generate",
+          "status": 200,
+          "body_contains": "Review decision: Graph walk next-day decision A3",
+          "body_excludes": "{first_brief_id}"
+        },
+        "observe_at": "protocol: GET /api/brief/latest",
+        "words": "the protocol sibling of case.a3.brief_next_day.decision_on_the_face: on the next producer-day POST /api/brief/generate answers 200 with a brief that carries 'Review decision: Graph walk next-day decision A3' and NOT the day-one id {first_brief_id} (a new brief, by machine); GET /api/brief/latest is read after and returns it.",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          }
+        ]
+      }
+    },
+    {
+      "id": "case.a3.brief_load_failure.named_with_retry",
+      "job": "a3",
+      "edge_ids": [
+        "edge.route.brief_latest"
+      ],
+      "state_id": "state.briefs.load_failure",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; BOUNDARY SUBSTITUTION: the browser answers every GET /api/brief/latest with 500 (Playwright page.route, hub origin only) until the lift; the hub never sees them",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any fault or reload (a reload that races the PUT /api/setup/onboarding brings the first-value gate back)"
+        },
+        {
+          "kind": "boundary",
+          "label": "hub fault on the brief read",
+          "substitute": "http_fault",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 500,
+          "body": {
+            "error": "substituted hub fault"
+          },
+          "times": 1000,
+          "adapter": "browser-boundary"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "the Chair reads GET /api/brief/latest again on mount, now under the fault"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "BRIEF DID NOT LOAD \u00b7 HTTP 500"
+          },
+          "observe_at": "[data-testid=arrival-brief]",
+          "timeout_s": 10,
+          "why": "the failed read is named with its status (ChairHome.tsx, the ratified canvas state 3), never drawn as 'No brief yet'"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_absent",
+            "value": "No brief yet"
+          },
+          "observe_at": "[data-testid=arrival-brief]",
+          "why": "a failed read makes no claim that the hub has no brief"
+        },
+        {
+          "kind": "boundary",
+          "label": "hub back",
+          "substitute": "http_fault_lift",
+          "adapter": "browser-boundary"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[data-testid=arrival-brief-retry]",
+        "adapter": "ui-pointer",
+        "why": "the failure line's Retry, a library Button: it reads GET /api/brief/latest again",
+        "trigger_route": {
+          "method": "GET",
+          "path": "/api/brief/latest"
+        }
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "No brief yet"
+        },
+        "observe_at": "[data-testid=arrival-brief]",
+        "words": "setup: every brief read fails at the browser boundary; after a reload the BRIEF section says 'BRIEF DID NOT LOAD \u00b7 HTTP 500' with Retry and NOT 'No brief yet'; the fault lifts. trigger: Retry reads again; the hub answers null (a fresh HOME has no brief), so the section now says 'No brief yet'. before.png is the failure line, after.png the answered read.",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          }
+        ]
+      },
+      "completion_bound_s": 60,
+      "viewports": [
+        1440,
+        393
+      ]
     }
   ],
   "states": [
@@ -562,10 +968,13 @@
     },
     {
       "id": "clock.python_wall",
-      "source": "datetime.datetime.now() / time.time() inside the hub process (holdspeak/services/monday_brief_service.py:146, holdspeak/runtime/heartbeat.py:110)",
-      "mechanism": "none within scope - the hub is a separate process, no libfaketime is on PATH, and the brief forbids changing the machine clock. Any case needing a different calendar day is tooling-debt, not a state.",
-      "status": "tooling_debt",
-      "used_by": []
+      "source": "datetime.datetime.now() inside the hub process; for the brief producer it is MondayBriefService's one clock (holdspeak/services/monday_brief_service.py:142, read by generate at :197)",
+      "mechanism": "producer-clock (PHILO-3-03): the brief producer takes ONE injectable clock, MondayBriefService(clock=), default the wall clock, wired from the app factory MeetingWebServer(brief_clock=) -> WebContext.brief_clock -> the brief router (holdspeak/web/routes/monday_brief.py:100). The rig's OWN hub passes the wall clock plus an offset from a file in the run's HOME; the clock step (adapter producer-clock, advance_days) writes the offset. It moves ONLY the brief producer's day in the rig's hub; the machine clock, other producers (heartbeat, cadence, SQL datetime('now')) and the MCP sidecar are not moved.",
+      "status": "available",
+      "used_by": [
+        "case.a3.brief_next_day.decision_on_the_face",
+        "case.a3.brief_next_day.new_id_with_the_decision"
+      ]
     },
     {
       "id": "clock.sqlite_now",
