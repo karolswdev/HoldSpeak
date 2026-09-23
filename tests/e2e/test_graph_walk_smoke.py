@@ -31,7 +31,7 @@ pytestmark = [pytest.mark.e2e, pytest.mark.timeout(300, method="thread")]
 
 # ── THE INTEGRATION FENCE ──────────────────────────────────────────────
 #
-# Five cases from the REAL atlas (docs/internal/philo/graph/atlas.json), one
+# Seven case slots from the REAL atlas (one reserved) (docs/internal/philo/graph/atlas.json), one
 # hub each, serial, at 1440. A rig that only ever runs its own sample atlas
 # proves nothing about the pass it was built for.
 #
@@ -69,12 +69,33 @@ ATLAS_FENCE = {
         "pass", "", "the clicked Generate again's OWN response is the identity, "
         "and the face shows what it returned",
     ),
+    # Astra round four, MISSED: the same-id claim lives in the protocol
+    # sibling; the second POST must return the brief captured before it.
+    "case.j10.route_generate_again.same_day_same_id": (
+        "pass", "", "the second POST /api/brief/generate returns the SAME brief "
+        "id that GET /api/brief/latest held before it",
+    ),
+    # Reserved for W2's retention case (Astra round four). Skipped by name
+    # while the atlas does not carry it; it runs the moment it does.
+    "case.j10.arrival_generate_again.retained_after_reload": (
+        "pass", "", "after the second POST and a reload, the same brief is "
+        "retained on the face",
+    ),
 }
+
+#: Cases reserved in the fence before the atlas carries them. A missing one
+#: SKIPS, naming itself; the orchestrator removes it from here once it lands.
+PENDING_IN_ATLAS = {"case.j10.arrival_generate_again.retained_after_reload"}
 
 
 @pytest.mark.parametrize("case_id", sorted(ATLAS_FENCE))
 def test_the_rig_drives_the_real_atlas(case_id, tmp_path):
     want_verdict, names, why = ATLAS_FENCE[case_id]
+    if case_id in PENDING_IN_ATLAS:
+        present = {c["id"] for c in json.loads(REAL_ATLAS.read_text())["cases"]}
+        if case_id not in present:
+            pytest.skip(f"{case_id} is not in the atlas yet (W2 is adding it); "
+                        "reserved slot, flip when it lands")
     record = run_case(REAL_ATLAS, case_id, brain="muaddib", viewport=1440,
                       out=tmp_path, engine="none")
 
@@ -99,6 +120,14 @@ def test_the_rig_drives_the_real_atlas(case_id, tmp_path):
         assert answer["status"] == 202, answer
         assert answer["path"] == "/api/meetings/import"
         assert record["variables"]["meeting_id"] == answer["body"]["meeting_id"]
+    if case_id == "case.j10.route_generate_again.same_day_same_id":
+        # the id captured BEFORE the second POST is in that POST's own body
+        first = record["variables"]["first_brief_id"]
+        answer = record["after"]["trigger_response"]
+        assert (answer["method"], answer["path"], answer["status"]) == (
+            "POST", "/api/brief/generate", 200), answer
+        assert first in json.dumps(answer["body"]), (first, answer["body"])
+        assert answer["body"]["id"] == first
     if case_id == "case.j10.arrival_generate_again.same_day_idempotent":
         # the identity came from the click's own POST (finding 3)
         chosen = record["trigger_response_capture"]["chosen"]

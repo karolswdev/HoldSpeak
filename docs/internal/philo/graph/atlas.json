@@ -4701,6 +4701,232 @@
       "viewports": []
     },
     {
+      "id": "case.j10.arrival_generate_again.retained_after_reload",
+      "job": "j10",
+      "edge_ids": [
+        "edge.face.arrival_load"
+      ],
+      "state_id": "state.briefs.reload_persisted",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its own 'Generate again' verb (ChairHome.tsx:1136-1157). With untriaged items the Chair draws NO second verb at all (:1114) and this recipe cannot run.",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-brief-headline"
+          },
+          "observe_at": "[data-testid=arrival-brief-headline]",
+          "why": "RETAINED: after the reload the first brief's own headline is on the face (ChairHome.tsx:1163), read back from GET /api/brief/latest, before the second POST"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-receipt]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-headline]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "adapter": "ui-pointer",
+          "why": "the second Generate again, the owner's own verb"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-receipt]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "second_headline",
+          "capture_path": "headline",
+          "adapter": "http-route",
+          "why": "the headline of the brief the second generate left in the store, read BEFORE the final reload; a store that already lost it blocks here (no value to capture), never passes"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "why": "ANOTHER reload after the second generate: the owner's J10 retention (story table J10)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "{second_headline}"
+        },
+        "observe_at": "[data-testid=arrival-brief-headline]",
+        "words": "ASTRA round 4: retention across ANOTHER reload after the second Generate again (story table J10). After the reload the face must draw the headline of the brief the second generate returned (ChairHome.tsx:1163, loaded from GET /api/brief/latest at :469). Zero headline elements after the reload is a FAIL: a store that lost the brief behind a same-id, same-headline response is exactly what this case catches. The id half is the protocol sibling case.j10.route_generate_again.retained_after_reload [the audit's stated observation location: face: [data-testid=arrival-brief-headline] after the final reload]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          }
+        ]
+      },
+      "completion_bound_s": 60,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.j10.route_generate_again.retained_after_reload",
+      "job": "j10",
+      "edge_ids": [
+        "edge.route.brief_latest"
+      ],
+      "state_id": "state.briefs.reload_persisted",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its own 'Generate again' verb (ChairHome.tsx:1136-1157). With untriaged items the Chair draws NO second verb at all (:1114) and this recipe cannot run.",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-brief-headline"
+          },
+          "observe_at": "[data-testid=arrival-brief-headline]",
+          "why": "RETAINED: after the reload the first brief's own headline is on the face (ChairHome.tsx:1163), read back from GET /api/brief/latest, before the second POST"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-receipt]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-headline]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/brief/generate",
+          "body": null,
+          "capture_as": "second_brief_id",
+          "capture_path": "id",
+          "adapter": "http-route",
+          "why": "the second generate through the same producer entry the Generate again verb calls (ChairHome.tsx:559); its RETURNED id is captured as {second_brief_id}, the mechanism of case.j10.route_generate_again.same_day_same_id"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "why": "ANOTHER reload after the second generate: the owner's J10 retention (story table J10)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "protocol_field",
+          "path": "/id",
+          "value": "{second_brief_id}"
+        },
+        "observe_at": "protocol: GET /api/brief/latest",
+        "words": "ASTRA round 4: after ANOTHER reload the store still holds the brief the second generate RETURNED: GET /api/brief/latest (holdspeak/web/routes/monday_brief.py:100) answers /id == {second_brief_id}. A null latest (the brief lost) or a different id is a FAIL [the audit's stated observation location: protocol: GET /api/brief/latest after the final reload]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          }
+        ]
+      },
+      "completion_bound_s": 60,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
       "id": "case.j10.arrival_generate_again.next_day",
       "job": "j10",
       "edge_ids": [
@@ -7119,7 +7345,9 @@
         }
       ],
       "reachable_by": [
-        "case.j10.arrival_reload.reload_persisted"
+        "case.j10.arrival_reload.reload_persisted",
+        "case.j10.arrival_generate_again.retained_after_reload",
+        "case.j10.route_generate_again.retained_after_reload"
       ]
     },
     {

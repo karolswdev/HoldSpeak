@@ -976,3 +976,58 @@ def test_same_day_same_id_fails_a_different_id_by_machine(atlas: dict) -> None:
     ok, why = rig.check_predicate(bound, {}, after("brief-second"))
     assert not ok, f"a different id beside unchanged content passed: {why}"
     assert not rig.check_predicate(bound, {}, after("brief-first", 500))[0]
+
+
+RETAINED_FACE = "case.j10.arrival_generate_again.retained_after_reload"
+RETAINED_ROUTE = "case.j10.route_generate_again.retained_after_reload"
+
+
+def _generates(setup: list[dict]) -> list[int]:
+    """The indices of the steps that generate a brief (the verb or its route)."""
+    return [i for i, s in enumerate(setup)
+            if (s.get("action") == "click" and s.get("selector") == GENERATE)
+            or (s.get("kind") == "api" and s.get("path") == "/api/brief/generate")]
+
+
+def test_j10_retention_is_proven_after_another_reload(atlas: dict) -> None:
+    """Astra round four: a same-id, same-headline response beside a LOST store
+    passed both same-day cases. Retention is read after a reload that comes
+    after the second generate."""
+    for case_id, name in ((RETAINED_FACE, "second_headline"),
+                          (RETAINED_ROUTE, "second_brief_id")):
+        case = _case(atlas, case_id)
+        setup = case["setup"]
+        made = _generates(setup)
+        assert len(made) == 2, f"{case_id}: not a first and a second generate"
+        first_reload = next(i for i, s in enumerate(setup) if s.get("action") == "reload")
+        assert made[0] < first_reload < made[1], f"{case_id}: no reload between the generates"
+        captured = [i for i, s in enumerate(setup) if s.get("capture_as") == name]
+        assert captured and captured[0] >= made[1], f"{case_id}: {name} not captured after the second"
+        assert case["trigger"]["action"] == "reload" and case["trigger"]["kind"] == "ui"
+        assert case_id in next(s for s in atlas["states"]
+                               if s["id"] == case["state_id"])["reachable_by"]
+
+    rig = _rig()
+    face = _case(atlas, RETAINED_FACE)
+    assert face["expected"]["observe_at"] == BRIEF_HEADLINE
+    assert sorted(face["viewports"]) == [393, 1440]
+    shown = "Nothing material changed."
+    fp = rig.substitute(face["expected"]["predicate"], {"second_headline": shown})
+    assert rig.check_predicate(fp, {}, {"text": shown, "target_present": True})[0]
+    ok, why = rig.check_predicate(fp, {}, {"text": "", "target_present": False})
+    assert not ok, f"zero headline elements after the reload passed: {why}"
+    assert not rig.check_predicate(fp, {}, {"text": "2 things changed.",
+                                            "target_present": True})[0]
+
+    route = _case(atlas, RETAINED_ROUTE)
+    assert route["expected"]["observe_at"] == f"{rig.PROTOCOL_PREFIX} GET /api/brief/latest"
+    rp = rig.substitute(route["expected"]["predicate"], {"second_brief_id": "brief-second"})
+    assert rp["kind"] == "protocol_field" and rp["value"] == "brief-second"
+
+    def latest(payload: object) -> dict:
+        return {"protocol": {"status": 200, "path": "/api/brief/latest", "payload": payload}}
+
+    assert rig.check_predicate(rp, {}, latest({"id": "brief-second"}))[0]
+    ok, why = rig.check_predicate(rp, {}, latest(None))
+    assert not ok, f"a null latest (the brief lost) passed: {why}"
+    assert not rig.check_predicate(rp, {}, latest({"id": "brief-other"}))[0]

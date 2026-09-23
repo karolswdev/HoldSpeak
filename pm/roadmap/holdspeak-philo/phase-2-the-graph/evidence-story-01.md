@@ -193,3 +193,16 @@ FAILED tests/unit/test_philo_graph_atlas.py::test_every_case_validates_against_t
 ...........................................................              [100%]
 131 passed in 341.07s (0:05:41)
 ```
+
+### Captured run — 2026-09-23T01:29:56Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.aXszk6YpkU PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run pytest -q -p no:cacheprovider tests/unit/test_philo_graph_schema.py tests/unit/test_philo_graph_atlas.py tests/unit/test_graph_walk_calibration.py tests/e2e/test_graph_walk_smoke.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 31492d720e088fe422f05d2a9d4c5234f178aeba
+
+```text
+........................................................................ [ 53%]
+..............................................................           [100%]
+134 passed in 362.22s (0:06:02)
+```

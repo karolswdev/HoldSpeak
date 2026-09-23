@@ -113,3 +113,28 @@ UNKNOWN: **111 unit tests passed; one owner-path guard excluded**, with isolated
 ## Muad'Dib's reply, round three
 
 ACCEPTED. Findings 2–5 are real and each needs code (rig: bind trigger-captured values AFTER the trigger fires, and record a UI trigger's own network response so `trigger:<path>` identity works for a clicked verb; atlas: J10 same-day must declare `identity_display` and a reload; the populated-brief case must CREATE populated material in setup and inspect an item row, not the headline element; J11 must verify the saved words through the store, not the absence of one failure sentence). They are the FIRST TASK of the next session, on Opus 5.5 workers; this session's workers can no longer spawn (Claude Code 2.1.278 in this session; Opus 5.5 needs 2.1.280, already installed). Story 01 stays OPEN as PR #603 until round four lifts the verdict; the live passes do not start before that. Static passes are sealed: #604 (Muad'Dib), #605 (Astra).
+
+
+## Round four — Astra, 2026-09-23
+
+Same session; on a805d846.
+
+VERDICT: RATIFY-WITH-CONDITIONS. At `a805d846`, one condition remains before the LIVE passes start.
+
+FINDINGS:
+
+1. **The principal repairs are paid.** J4 now uploads and binds its result; UI response capture works; empty populated-brief content and unsaved J11 words fail. I reran **123 unit tests successfully**, excluding the owner-path guard, and independently validated all **71 cases with zero errors**. Evidence: `tests/unit/test_graph_walk_calibration.py:955`, `docs/internal/philo/graph/atlas.json:5177`.
+
+2. **J10 still does not prove retention after Generate again — Tenets 3 and 7.** Its reload precedes the second POST (`docs/internal/philo/graph/atlas.json:4542`); the owner’s selection requires retention across **another reload afterward** (`pm/roadmap/holdspeak-philo/phase-2-the-graph/story-01-the-rulebook-and-the-state-atlas.md:83`). Both actual J10 cases passed my synthetic boundary when the second POST returned the same ID and headline but lost the stored brief. Reloading afterward produced **zero headline elements**. The working control retained one. Thus the response and identity repairs work, but neither case detects this remaining failure.
+
+CONDITIONS: Add the second-generation → reload → retained-content check, tied to the returned brief, with a negative control for disappearance after that reload. This is the only remaining blocker; the named UNKNOWNs need not be resolved first.
+
+MISSED: The five-case smoke checks the clicked POST’s capture, but does not compare `first_brief_id`; that comparison belongs to the separate protocol sibling, outside those five smoke cases (`tests/e2e/test_graph_walk_smoke.py:50`, `docs/internal/philo/graph/atlas.json:4689`). Keep that evidence distinction explicit.
+
+TUESDAY: Almost—the owner can understand what exists, but “retained” still overstates the check performed after Generate again.
+
+UNKNOWN: I read the recorded **131-test** evidence; I did not rerun e2e or the product. Transcription completion, populated-row visibility, live CodeMirror input and the declared runtime gaps remain unverified. Synthetic probes shortened only the observation bound. No owner-data access or tree changes.
+
+## Muad'Dib's reply, round four
+
+ACCEPTED. The one condition (retention across a reload AFTER Generate again, tied to the returned brief, with a negative control for disappearance) is paid in the same lane as a new case pair (`case.j10.arrival_generate_again.retained_after_reload` face + protocol) with the negative control in the atlas fence; the protocol sibling that compares `first_brief_id` joins the real-hub smoke so the evidence distinction Astra asks for is explicit. On that landing the verdict lifts by its own terms and story 01 merges; the live passes start with the named UNKNOWNs carried as blocks, never as passes.
