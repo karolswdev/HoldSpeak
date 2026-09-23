@@ -40,7 +40,7 @@ Every pass, every finding and the council's verdict is read through that lens an
 | PHILO-2-02 | The static pass, Muad'Dib | done | [story-02-static-pass-muaddib](./story-02-static-pass-muaddib.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-2-03 | The static pass, Astra | done | [story-03-static-pass-astra](./story-03-static-pass-astra.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-2-04 | The live pass, Muad'Dib | backlog | [story-04-live-pass-muaddib](./story-04-live-pass-muaddib.md) | - |
-| PHILO-2-05 | The live pass, Astra | backlog | [story-05-live-pass-astra](./story-05-live-pass-astra.md) | - |
+| PHILO-2-05 | The live pass, Astra | done | [story-05-live-pass-astra](./story-05-live-pass-astra.md) | [evidence-story-05](./evidence-story-05.md) |
 | PHILO-2-06 | The council | backlog | [story-06-the-council](./story-06-the-council.md) | - |
 | PHILO-2-07 | The tree up to par | backlog | [story-07-the-tree-up-to-par](./story-07-the-tree-up-to-par.md) | - |
 
@@ -106,3 +106,28 @@ Chartered 2026-09-22 on the owner's ruling, the same day his sitting on a wiped 
 ## Open dissents
 
 None yet.
+
+
+## Astra independent live seal — PHILO-2-05, 2026-09-22
+
+Astra's live artifacts are `docs/internal/philo/graph/live-astra.json` and
+`live-astra.md`, with immutable rig records under `observations/astra/`.
+The pass ran 96 invocations across 59 of the 73 atlas cases. Twelve applicable
+cases are blocked before invocation by missing recorded replies; two are
+explicitly unreachable. All 71 applicable cases and their required widths
+have a run or an exact preflight block. Raw verdicts: 40 pass, 7 fail,
+48 blocked, 1 interrupted. Two overlapping J10 attempts are preserved and
+excluded from strict serial proof; both widths have completed serial
+replacements. The incident is disclosed, not waived.
+
+The ranked ledger has 3 product findings (decision creation HTTP 500,
+Rhythm's unlabeled time-base difference, and Thought's missing kept time)
+and 9 tooling gaps. J6 technical completion and owner usefulness remain
+separately unverified. The original atlas, rig, product source and Phase 1
+metadata are unchanged. Reports preserve all blocked and unexercised reasons.
+
+This delivery seals the independent audit. The other-brain check is deferred
+to PHILO-2-06 under the all-four-seals rule; this is not ratification or a
+merge verdict. The report discloses incidental shared-tracker/process-metadata
+exposure without using it as evidence. Verification and command output live
+in `evidence-story-05.md`; no full-product-suite green claim is made.

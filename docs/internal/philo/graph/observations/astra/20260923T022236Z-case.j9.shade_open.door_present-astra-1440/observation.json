@@ -1,0 +1,340 @@
+{
+  "id": "obs-20260923T022236Z-case.j9.shade_open.door_present-astra-1440",
+  "run_id": "20260923T022236Z-case.j9.shade_open.door_present-astra-1440",
+  "case_id": "case.j9.shade_open.door_present",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j9",
+  "edge_ids": [
+    "edge.face.shade_open"
+  ],
+  "state_id": "state.projections.door.present",
+  "provenance": {
+    "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f872c6384eb22ce20c3a6d429fe833a2bc682f6bf2091f207c1f45cc4d4539fc",
+      "assets": [
+        "index-BNDgWxUD.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:55307",
+      "port": 55307,
+      "pid": 87237,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uz5a5sfy",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uz5a5sfy/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T02:22:37.123699+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "64af1de4364c57c4df644b8df23445fcd6bccf713e3429d6855882abb875dafe",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/settings/heartbeat/run-now",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "kind": "heartbeat.sweep",
+        "at": "2026-09-23T02:22:40+00:00",
+        "rooms": 0,
+        "watches": 0,
+        "watches_baselined": 0,
+        "watches_deferred": 0,
+        "quiet_overridden": false,
+        "duration_ms": 0.7,
+        "held": false,
+        "errors": 0,
+        "outcomes": {
+          "counts": {},
+          "total": 0,
+          "failed_watch_ids": []
+        },
+        "notify": {
+          "kind": "heartbeat.notify",
+          "outcome": "held_no_edge",
+          "count": 0,
+          "projectCount": 0,
+          "fired": false,
+          "newItems": 0,
+          "escalatedItems": 0,
+          "complete": true,
+          "lastNotifiedCount": 0
+        }
+      },
+      "response_sha256": "fd2a93e32fe689dea508cb68d6e49d10a24faa28ba488f6809b0666d7e11b32a"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "case.j9.route_run_now.receipt_resolved or case.j9.timer_sweep.receipt_resolved reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "protocol: GET /api/desk/projections",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/projections/0/source_kind",
+        "value": "pipeline_event"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/projections/0/source_kind = 'pipeline_event', wanted 'pipeline_event'"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[title='Desk memory']",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "FINISHED \u00b7 1\n\u2726\nSWEEP\ncompleted \u00b7 just now\nOpen"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "desk-shade-group",
+        "aria-label": "Finished"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 1051,
+        "y": 83,
+        "w": 378,
+        "h": 125
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "body",
+      "after": "div#desk-next > div.desk-menubar > div.desk-chrome.desk-chrome-tr > button.btn--chrome.desk-bell"
+    },
+    "focus_label": {
+      "before": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nTue,",
+      "after": "Desk memory"
+    },
+    "document_text_sha256": {
+      "before": "1784ce19ea5f78f56ef7e7041e3545c3687d88783d5ae1f4bd632b3556bfb169",
+      "after": "ea6e3a8f879146a03f5f9ecafd1666773feb97849675eed5c54eb96d6c5760cc"
+    },
+    "document_text_len": {
+      "before": 359,
+      "after": 425
+    }
+  },
+  "before": {
+    "observe_at": "section[aria-label=\"Finished\"]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nTue,",
+    "url": "http://127.0.0.1:55307/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "1784ce19ea5f78f56ef7e7041e3545c3687d88783d5ae1f4bd632b3556bfb169",
+    "document_text_len": 359,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T02:22:42.452320+00:00"
+  },
+  "after": {
+    "observe_at": "section[aria-label=\"Finished\"]",
+    "target_present": true,
+    "text": "FINISHED \u00b7 1\n\u2726\nSWEEP\ncompleted \u00b7 just now\nOpen",
+    "attrs": {
+      "class": "desk-shade-group",
+      "aria-label": "Finished"
+    },
+    "rect": {
+      "x": 1051,
+      "y": 83,
+      "w": 378,
+      "h": 125
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > div.desk-menubar > div.desk-chrome.desk-chrome-tr > button.btn--chrome.desk-bell",
+    "focus_label": "Desk memory",
+    "url": "http://127.0.0.1:55307/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "ea6e3a8f879146a03f5f9ecafd1666773feb97849675eed5c54eb96d6c5760cc",
+    "document_text_len": 425,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T02:22:43.619276+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": "section[aria-label=\"Finished\"]",
+    "target_present": true,
+    "text": "FINISHED \u00b7 1\n\u2726\nSWEEP\ncompleted \u00b7 just now\nOpen",
+    "attrs": {
+      "class": "desk-shade-group",
+      "aria-label": "Finished"
+    },
+    "rect": {
+      "x": 1051,
+      "y": 83,
+      "w": 378,
+      "h": 125
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > div.desk-menubar > div.desk-chrome.desk-chrome-tr > button.btn--chrome.desk-bell",
+    "focus_label": "Desk memory",
+    "url": "http://127.0.0.1:55307/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "ea6e3a8f879146a03f5f9ecafd1666773feb97849675eed5c54eb96d6c5760cc",
+    "document_text_len": 425,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T02:22:43.488526+00:00",
+    "predicate_satisfied": true,
+    "reading": "'SWEEP' in observe_at text",
+    "elapsed_s": 0.929
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'SWEEP' in observe_at text",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.059,
+    "first_satisfied_at_s": 0.929,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'SWEEP' in observe_at text"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:55307) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:55307) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/gate/proposals",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/dictation/corrections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "docs/internal/philo/graph/observations/astra/20260923T022236Z-case.j9.shade_open.door_present-astra-1440/before.png",
+    "docs/internal/philo/graph/observations/astra/20260923T022236Z-case.j9.shade_open.door_present-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uz5a5sfy/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:55307"
+  ]
+}

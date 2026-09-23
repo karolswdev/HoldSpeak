@@ -1,0 +1,546 @@
+{
+  "id": "obs-20260923T022223Z-case.j9.route_run_now.receipt_resolved-astra-1440",
+  "run_id": "20260923T022223Z-case.j9.route_run_now.receipt_resolved-astra-1440",
+  "case_id": "case.j9.route_run_now.receipt_resolved",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j9",
+  "edge_ids": [
+    "edge.route.heartbeat_run_now"
+  ],
+  "state_id": "state.projections.receipt.resolved",
+  "provenance": {
+    "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f872c6384eb22ce20c3a6d429fe833a2bc682f6bf2091f207c1f45cc4d4539fc",
+      "assets": [
+        "index-BNDgWxUD.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:55286",
+      "port": 55286,
+      "pid": 87109,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jysdzb2i",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jysdzb2i/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T02:22:23.292419+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "64af1de4364c57c4df644b8df23445fcd6bccf713e3429d6855882abb875dafe",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "the hub up",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "api",
+    "method": "POST",
+    "path": "/api/settings/heartbeat/run-now",
+    "adapter": "http-route",
+    "status": 200,
+    "response": {
+      "kind": "heartbeat.sweep",
+      "at": "2026-09-23T02:22:25+00:00",
+      "rooms": 0,
+      "watches": 0,
+      "watches_baselined": 0,
+      "watches_deferred": 0,
+      "quiet_overridden": false,
+      "duration_ms": 0.9,
+      "held": false,
+      "errors": 0,
+      "outcomes": {
+        "counts": {},
+        "total": 0,
+        "failed_watch_ids": []
+      },
+      "notify": {
+        "kind": "heartbeat.notify",
+        "outcome": "held_no_edge",
+        "count": 0,
+        "projectCount": 0,
+        "fired": false,
+        "newItems": 0,
+        "escalatedItems": 0,
+        "complete": true,
+        "lastNotifiedCount": 0
+      }
+    },
+    "response_sha256": "8e54dd60501273e9d7c20cd33c836faedfe24687a9e38b1d8dad7b5ba06acf46"
+  },
+  "diff": {
+    "focus_label": {
+      "before": "",
+      "after": "VOICE TYPING\nDictate one sentence\n\nSpeak. Then edit and keep"
+    },
+    "document_text_sha256": {
+      "before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "after": "7af36687590250af61f701ce0893b3ddbcaab0f186b2c14b6fda8d125b707df5"
+    },
+    "document_text_len": {
+      "before": 0,
+      "after": 120
+    },
+    "protocol_digest": {
+      "before": {
+        "status": 200,
+        "row_count": 0,
+        "payload_sha256": "1764c9dcf7f74236fecc1d65e0c151f275530b536bd1ee12626198c49e0ae445"
+      },
+      "after": {
+        "status": 200,
+        "row_count": 1,
+        "payload_sha256": "c3a5c4f37841524ad0498ef678a6d829afb6a61b9a62ac6f33095e4d9a4a36b2"
+      }
+    },
+    "values": {
+      "before": [],
+      "after": [
+        {
+          "selector": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+          "value": ""
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "protocol: GET /api/desk/projections",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "",
+    "url": "http://127.0.0.1:55286/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/desk/projections",
+      "status": 200,
+      "collection": "projections",
+      "row_count": 0,
+      "payload_sha256": "1764c9dcf7f74236fecc1d65e0c151f275530b536bd1ee12626198c49e0ae445",
+      "rows": [],
+      "payload": {
+        "version": 1,
+        "projections": [],
+        "counts": {
+          "needs_attention": 0,
+          "unseen": 0,
+          "acknowledged": 0,
+          "receipts": 0
+        },
+        "subject_counts": {},
+        "page": {
+          "offset": 0,
+          "limit": 50,
+          "total": 0,
+          "has_more": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "1764c9dcf7f74236fecc1d65e0c151f275530b536bd1ee12626198c49e0ae445"
+    },
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T02:22:25.915404+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/desk/projections",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [
+      {
+        "selector": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "VOICE TYPING\nDictate one sentence\n\nSpeak. Then edit and keep",
+    "url": "http://127.0.0.1:55286/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/desk/projections",
+      "status": 200,
+      "collection": "projections",
+      "row_count": 1,
+      "payload_sha256": "c3a5c4f37841524ad0498ef678a6d829afb6a61b9a62ac6f33095e4d9a4a36b2",
+      "rows": [
+        {
+          "id": "pipeline:ca7e98db-e212-430d-b2bd-1a35ce1e0360",
+          "projection_kind": "receipt",
+          "subject_ref": "service:HeartbeatService",
+          "subject_label": "Heartbeat",
+          "title": "SWEEP",
+          "summary": "{\"watches\":0,\"rooms\":0,\"held\":false}",
+          "reason_code": "pipeline_completed",
+          "decision_kind": "receipt",
+          "attention_state": "resolved",
+          "actual_destination": "this_machine",
+          "authority_basis": "pipeline",
+          "attempt": null,
+          "outcome": "completed",
+          "timestamp": "2026-09-23T02:22:25Z",
+          "correlation_id": "5507b809-097e-444d-8cd3-4a36c36a57f2",
+          "source_kind": "pipeline_event",
+          "source_id": "ca7e98db-e212-430d-b2bd-1a35ce1e0360",
+          "source_api": "/api/desk/projections",
+          "detail_url": "/cadence",
+          "control_mode": null,
+          "policy_version": null,
+          "effect_class": null,
+          "severity": "normal",
+          "dismissed": false,
+          "version": 1,
+          "origin": "local",
+          "caller": "",
+          "caller_identity": ""
+        }
+      ],
+      "payload": {
+        "version": 1,
+        "projections": [
+          {
+            "id": "pipeline:ca7e98db-e212-430d-b2bd-1a35ce1e0360",
+            "projection_kind": "receipt",
+            "subject_ref": "service:HeartbeatService",
+            "subject_label": "Heartbeat",
+            "title": "SWEEP",
+            "summary": "{\"watches\":0,\"rooms\":0,\"held\":false}",
+            "reason_code": "pipeline_completed",
+            "decision_kind": "receipt",
+            "attention_state": "resolved",
+            "actual_destination": "this_machine",
+            "authority_basis": "pipeline",
+            "attempt": null,
+            "outcome": "completed",
+            "timestamp": "2026-09-23T02:22:25Z",
+            "correlation_id": "5507b809-097e-444d-8cd3-4a36c36a57f2",
+            "source_kind": "pipeline_event",
+            "source_id": "ca7e98db-e212-430d-b2bd-1a35ce1e0360",
+            "source_api": "/api/desk/projections",
+            "detail_url": "/cadence",
+            "control_mode": null,
+            "policy_version": null,
+            "effect_class": null,
+            "severity": "normal",
+            "dismissed": false,
+            "version": 1,
+            "origin": "local",
+            "caller": "",
+            "caller_identity": ""
+          }
+        ],
+        "counts": {
+          "needs_attention": 0,
+          "unseen": 0,
+          "acknowledged": 0,
+          "receipts": 1
+        },
+        "subject_counts": {
+          "service:HeartbeatService": {
+            "needs_attention": 0,
+            "receipts": 1
+          }
+        },
+        "page": {
+          "offset": 0,
+          "limit": 50,
+          "total": 1,
+          "has_more": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "c3a5c4f37841524ad0498ef678a6d829afb6a61b9a62ac6f33095e4d9a4a36b2"
+    },
+    "document_text_sha256": "7af36687590250af61f701ce0893b3ddbcaab0f186b2c14b6fda8d125b707df5",
+    "document_text_len": 120,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T02:22:27.050550+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/settings/heartbeat/run-now",
+      "status": 200,
+      "body_sha256": "8e54dd60501273e9d7c20cd33c836faedfe24687a9e38b1d8dad7b5ba06acf46",
+      "body": {
+        "kind": "heartbeat.sweep",
+        "at": "2026-09-23T02:22:25+00:00",
+        "rooms": 0,
+        "watches": 0,
+        "watches_baselined": 0,
+        "watches_deferred": 0,
+        "quiet_overridden": false,
+        "duration_ms": 0.9,
+        "held": false,
+        "errors": 0,
+        "outcomes": {
+          "counts": {},
+          "total": 0,
+          "failed_watch_ids": []
+        },
+        "notify": {
+          "kind": "heartbeat.notify",
+          "outcome": "held_no_edge",
+          "count": 0,
+          "projectCount": 0,
+          "fired": false,
+          "newItems": 0,
+          "escalatedItems": 0,
+          "complete": true,
+          "lastNotifiedCount": 0
+        }
+      }
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/desk/projections",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [
+      {
+        "selector": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "VOICE TYPING\nDictate one sentence\n\nSpeak. Then edit and keep",
+    "url": "http://127.0.0.1:55286/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/desk/projections",
+      "status": 200,
+      "collection": "projections",
+      "row_count": 1,
+      "payload_sha256": "c3a5c4f37841524ad0498ef678a6d829afb6a61b9a62ac6f33095e4d9a4a36b2",
+      "rows": [
+        {
+          "id": "pipeline:ca7e98db-e212-430d-b2bd-1a35ce1e0360",
+          "projection_kind": "receipt",
+          "subject_ref": "service:HeartbeatService",
+          "subject_label": "Heartbeat",
+          "title": "SWEEP",
+          "summary": "{\"watches\":0,\"rooms\":0,\"held\":false}",
+          "reason_code": "pipeline_completed",
+          "decision_kind": "receipt",
+          "attention_state": "resolved",
+          "actual_destination": "this_machine",
+          "authority_basis": "pipeline",
+          "attempt": null,
+          "outcome": "completed",
+          "timestamp": "2026-09-23T02:22:25Z",
+          "correlation_id": "5507b809-097e-444d-8cd3-4a36c36a57f2",
+          "source_kind": "pipeline_event",
+          "source_id": "ca7e98db-e212-430d-b2bd-1a35ce1e0360",
+          "source_api": "/api/desk/projections",
+          "detail_url": "/cadence",
+          "control_mode": null,
+          "policy_version": null,
+          "effect_class": null,
+          "severity": "normal",
+          "dismissed": false,
+          "version": 1,
+          "origin": "local",
+          "caller": "",
+          "caller_identity": ""
+        }
+      ],
+      "payload": {
+        "version": 1,
+        "projections": [
+          {
+            "id": "pipeline:ca7e98db-e212-430d-b2bd-1a35ce1e0360",
+            "projection_kind": "receipt",
+            "subject_ref": "service:HeartbeatService",
+            "subject_label": "Heartbeat",
+            "title": "SWEEP",
+            "summary": "{\"watches\":0,\"rooms\":0,\"held\":false}",
+            "reason_code": "pipeline_completed",
+            "decision_kind": "receipt",
+            "attention_state": "resolved",
+            "actual_destination": "this_machine",
+            "authority_basis": "pipeline",
+            "attempt": null,
+            "outcome": "completed",
+            "timestamp": "2026-09-23T02:22:25Z",
+            "correlation_id": "5507b809-097e-444d-8cd3-4a36c36a57f2",
+            "source_kind": "pipeline_event",
+            "source_id": "ca7e98db-e212-430d-b2bd-1a35ce1e0360",
+            "source_api": "/api/desk/projections",
+            "detail_url": "/cadence",
+            "control_mode": null,
+            "policy_version": null,
+            "effect_class": null,
+            "severity": "normal",
+            "dismissed": false,
+            "version": 1,
+            "origin": "local",
+            "caller": "",
+            "caller_identity": ""
+          }
+        ],
+        "counts": {
+          "needs_attention": 0,
+          "unseen": 0,
+          "acknowledged": 0,
+          "receipts": 1
+        },
+        "subject_counts": {
+          "service:HeartbeatService": {
+            "needs_attention": 0,
+            "receipts": 1
+          }
+        },
+        "page": {
+          "offset": 0,
+          "limit": 50,
+          "total": 1,
+          "has_more": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "c3a5c4f37841524ad0498ef678a6d829afb6a61b9a62ac6f33095e4d9a4a36b2"
+    },
+    "document_text_sha256": "7af36687590250af61f701ce0893b3ddbcaab0f186b2c14b6fda8d125b707df5",
+    "document_text_len": 120,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T02:22:26.915456+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/settings/heartbeat/run-now",
+      "status": 200,
+      "body_sha256": "8e54dd60501273e9d7c20cd33c836faedfe24687a9e38b1d8dad7b5ba06acf46",
+      "body": {
+        "kind": "heartbeat.sweep",
+        "at": "2026-09-23T02:22:25+00:00",
+        "rooms": 0,
+        "watches": 0,
+        "watches_baselined": 0,
+        "watches_deferred": 0,
+        "quiet_overridden": false,
+        "duration_ms": 0.9,
+        "held": false,
+        "errors": 0,
+        "outcomes": {
+          "counts": {},
+          "total": 0,
+          "failed_watch_ids": []
+        },
+        "notify": {
+          "kind": "heartbeat.notify",
+          "outcome": "held_no_edge",
+          "count": 0,
+          "projectCount": 0,
+          "fired": false,
+          "newItems": 0,
+          "escalatedItems": 0,
+          "complete": true,
+          "lastNotifiedCount": 0
+        }
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "rows matching {'source_kind': 'pipeline_event', 'detail_url': '/cadence'} at /api/desk/projections: before=0 after=1 (new=1; wanted >= 1)",
+    "elapsed_s": 0.919
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "rows matching {'source_kind': 'pipeline_event', 'detail_url': '/cadence'} at /api/desk/projections: before=0 after=1 (new=1; wanted >= 1)",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.054,
+    "first_satisfied_at_s": 0.919,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: rows matching {'source_kind': 'pipeline_event', 'detail_url': '/cadence'} at /api/desk/projections: before=0 after=1 (new=1; wanted >= 1)"
+  ],
+  "complete": true,
+  "shots": [
+    "docs/internal/philo/graph/observations/astra/20260923T022223Z-case.j9.route_run_now.receipt_resolved-astra-1440/before.png",
+    "docs/internal/philo/graph/observations/astra/20260923T022223Z-case.j9.route_run_now.receipt_resolved-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jysdzb2i/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:55286"
+  ]
+}

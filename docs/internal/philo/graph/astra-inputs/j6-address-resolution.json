@@ -1,0 +1,44 @@
+[
+  {
+    "case_id": "case.j6.run_summary.intel_queued",
+    "field": "setup[6].value",
+    "from": "http://192.168.1.43:8080",
+    "to": "http://192.168.1.43:8080/v1"
+  },
+  {
+    "case_id": "case.j6.run_summary.intel_running",
+    "field": "setup[6].value",
+    "from": "http://192.168.1.43:8080",
+    "to": "http://192.168.1.43:8080/v1"
+  },
+  {
+    "case_id": "case.j6.run_summary.intel_ready",
+    "field": "setup[6].value",
+    "from": "http://192.168.1.43:8080",
+    "to": "http://192.168.1.43:8080/v1"
+  },
+  {
+    "case_id": "case.j6.run_summary.intel_failed",
+    "field": "setup[7].value",
+    "from": "http://192.168.1.43:8080",
+    "to": "http://192.168.1.43:8080/v1"
+  },
+  {
+    "case_id": "case.j6.run_summary.intel_retry",
+    "field": "setup[7].value",
+    "from": "http://192.168.1.43:8080",
+    "to": "http://192.168.1.43:8080/v1"
+  },
+  {
+    "case_id": "case.j6.run_summary.summary_text",
+    "field": "setup[6].value",
+    "from": "http://192.168.1.43:8080",
+    "to": "http://192.168.1.43:8080/v1"
+  },
+  {
+    "case_id": "case.j6.run_summary.host_named",
+    "field": "setup[6].value",
+    "from": "http://192.168.1.43:8080",
+    "to": "http://192.168.1.43:8080/v1"
+  }
+]

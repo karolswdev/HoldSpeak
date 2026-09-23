@@ -1,0 +1,347 @@
+{
+  "id": "obs-20260923T023002Z-case.j10.arrival_generate_again.same_day_idempotent-astra-393",
+  "run_id": "20260923T023002Z-case.j10.arrival_generate_again.same_day_idempotent-astra-393",
+  "case_id": "case.j10.arrival_generate_again.same_day_idempotent",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j10",
+  "edge_ids": [
+    "edge.face.arrival_brief_generate_again"
+  ],
+  "state_id": "state.briefs.same_day_idempotent",
+  "provenance": {
+    "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f872c6384eb22ce20c3a6d429fe833a2bc682f6bf2091f207c1f45cc4d4539fc",
+      "assets": [
+        "index-BNDgWxUD.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:56351",
+      "port": 56351,
+      "pid": 91766,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-sv3xubpb",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-sv3xubpb/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T02:30:02.558027+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "64af1de4364c57c4df644b8df23445fcd6bccf713e3429d6855882abb875dafe",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-generate]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-receipt]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-headline]",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/brief/latest",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "brief-86f48b3b22a14c229f7feb1a51b9d0e2",
+        "period_start": "2026-09-21T17:00:00",
+        "period_end": "2026-09-22T20:30:07.929985",
+        "headline": "Nothing material changed.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": []
+        },
+        "generated_at": "2026-09-22T20:30:07.929985",
+        "is_empty": true,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 22",
+        "generated_label": "GENERATED SEP 22 20:30",
+        "person_sections_state": "unavailable"
+      },
+      "response_sha256": "7d419e1dfdbccc548fbaa92904087789abb970da67a651e7bb061859276d6431",
+      "captured": {
+        "name": "first_brief_id",
+        "path": "id",
+        "value": "brief-86f48b3b22a14c229f7feb1a51b9d0e2"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its own 'Generate again' verb (ChairHome.tsx:1136-1157). With untriaged items the Chair draws NO second verb at all (:1114) and this recipe cannot run.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-brief-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-brief-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-brief-headline', wanted 'arrival-brief-headline'"
+    }
+  ],
+  "variables": {
+    "first_brief_id": "brief-86f48b3b22a14c229f7feb1a51b9d0e2"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-brief-generate]",
+    "done": true
+  },
+  "diff": {},
+  "before": {
+    "observe_at": "[data-testid=arrival-brief-headline]",
+    "target_present": true,
+    "text": "Nothing material changed.",
+    "attrs": {
+      "class": "arrival-brief-headline",
+      "data-testid": "arrival-brief-headline"
+    },
+    "rect": {
+      "x": 12,
+      "y": 379,
+      "w": 369,
+      "h": 26
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n08:30 PM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:56351/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "7f8c08f75d15d1f751cad112a9b1c3d796c3a7f0cfe549595c333f0cddb29be1",
+    "document_text_len": 267,
+    "replay_identity": {
+      "from": "trigger",
+      "path": "headline",
+      "value": null,
+      "read_from": "the trigger's response, not the page"
+    },
+    "identity_display": {
+      "from": "selector",
+      "selector": "[data-testid=arrival-brief-headline]",
+      "attr": null,
+      "value": "Nothing material changed.",
+      "spec": "[data-testid=arrival-brief-headline]"
+    },
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "body_sha256": "7d419e1dfdbccc548fbaa92904087789abb970da67a651e7bb061859276d6431"
+      }
+    ],
+    "at_utc": "2026-09-23T02:30:09.647380+00:00"
+  },
+  "after": null,
+  "initial_feedback": {
+    "observe_at": "[data-testid=arrival-brief-headline]",
+    "target_present": true,
+    "text": "Nothing material changed.",
+    "attrs": {
+      "class": "arrival-brief-headline",
+      "data-testid": "arrival-brief-headline"
+    },
+    "rect": {
+      "x": 12,
+      "y": 379,
+      "w": 369,
+      "h": 26
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n08:30 PM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:56351/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "c1db4eeb6216426d6dae6c51d0c28c6327f786aa2190beaaaafc215c71a1165a",
+    "document_text_len": 289,
+    "replay_identity": {
+      "from": "trigger",
+      "path": "headline",
+      "value": null,
+      "read_from": "the trigger's response, not the page"
+    },
+    "identity_display": {
+      "from": "selector",
+      "selector": "[data-testid=arrival-brief-headline]",
+      "attr": null,
+      "value": "Nothing material changed.",
+      "spec": "[data-testid=arrival-brief-headline]"
+    },
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "body_sha256": "7d419e1dfdbccc548fbaa92904087789abb970da67a651e7bb061859276d6431"
+      }
+    ],
+    "at_utc": "2026-09-23T02:30:10.635632+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "7d419e1dfdbccc548fbaa92904087789abb970da67a651e7bb061859276d6431",
+      "body": {
+        "id": "brief-86f48b3b22a14c229f7feb1a51b9d0e2",
+        "period_start": "2026-09-21T17:00:00",
+        "period_end": "2026-09-22T20:30:07.929985",
+        "headline": "Nothing material changed.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": []
+        },
+        "generated_at": "2026-09-22T20:30:07.929985",
+        "is_empty": true,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 22",
+        "generated_label": "GENERATED SEP 22 20:30",
+        "person_sections_state": "unavailable"
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/generate"
+    },
+    "predicate_satisfied": true,
+    "reading": "unchanged result; the returned identity 'Nothing material changed.' (headline='Nothing material changed.') IS the one displayed at '[data-testid=arrival-brief-headline]' (response chosen by the declared trigger_route POST /api/brief/generate)",
+    "elapsed_s": 0.926
+  },
+  "terminal_outcome": null,
+  "verdict": "not_run",
+  "notes": [],
+  "complete": false,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/brief/generate",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "7d419e1dfdbccc548fbaa92904087789abb970da67a651e7bb061859276d6431",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/generate"
+    },
+    "why": "chosen by the declared trigger_route POST /api/brief/generate",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/brief/generate",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  }
+}
