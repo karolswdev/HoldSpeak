@@ -83,3 +83,26 @@ OpenAPI: 569 paths
 API reference checked
 OpenAPI: 569 paths
 ```
+
+### Captured run — 2026-09-23T16:11:04Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.Iv04LwunBc PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm sh -c set -o pipefail; (cd web && npx vitest run src/desk/__tests__/containerQueryLaw.test.ts src/desk/__tests__/philo301DecisionFace.test.tsx src/desk/__tests__/philo301DecisionNoLoss.test.tsx src/desk/__tests__/philo301RetryKept.test.tsx src/desk/DeskApp.test.tsx) && uv run --extra dev pytest -q -p no:cacheprovider tests/unit/test_philo3_01_decision_route.py tests/unit/test_graph_walk_http_fault.py tests/unit/test_phase200_doc_claims.py tests/e2e/test_philo3_01_receipt_hits.py && uv run python scripts/philo_api_reference.py --check && uv run python scripts/philo_openapi_reference.py --check`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 16339e9dab07e618e08f436c6a81a84ad6f62c55
+
+```text
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-3-01/web
+
+
+ Test Files  5 passed (5)
+      Tests  19 passed (19)
+   Start at  10:11:05
+   Duration  1.03s (transform 1.23s, setup 387ms, import 1.78s, tests 547ms, environment 1.13s)
+
+.......................................................                  [100%]
+55 passed in 22.40s
+API reference checked
+OpenAPI: 569 paths
+```

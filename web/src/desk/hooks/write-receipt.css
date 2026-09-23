@@ -106,6 +106,9 @@
 }
 .desk-next:has(> .desk-receipt-row) .chair:not(.chair-first-value) {
   margin-top: var(--space-2);
+  /* chair.css keeps a band-sized min-height; it yields the same row, or
+     it wins over height and the Chair runs under the dock. */
+  min-height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom) - var(--desk-receipt-row-h, 0px) - var(--space-2));
   height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom) - var(--desk-receipt-row-h, 0px) - var(--space-2));
   max-height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom) - var(--desk-receipt-row-h, 0px) - var(--space-2));
 }

@@ -22,7 +22,7 @@ flow between the bar and the work, seated by the shell's one phone fact
 `useCompactViewport`), `web/src/desk/hooks/write-receipt.css` (the row rules;
 the label wraps, never cut; no viewport query). `receipt-row-393.html` / `.png`
 shows the three states from real rig frames (create failed
-`20260923T153941Z`, read failed `20260923T154013Z` before Retry, clean
-`20260923T154013Z` after Retry). The strip board above
+`20260923T160902Z`, read failed `20260923T160910Z` before Retry, clean
+`20260923T160910Z` after Retry). The strip board above
 (`receipt-strip-393.*`, `state-*.png`) is the withdrawn design, kept as the
 record of what was ruled on.

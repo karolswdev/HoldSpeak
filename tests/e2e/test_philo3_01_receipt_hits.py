@@ -65,9 +65,11 @@ _OWNS = """([id, x, y]) => {
 # which probed Button a real click reached and stops the product acting on it.
 _TRAP = """() => {
   window.__fired = [];
+  window.__trapOn = true;
   if (window.__trap) return;
   window.__trap = true;
   window.addEventListener('click', (e) => {
+    if (!window.__trapOn) return;
     const b = e.target.closest && e.target.closest('[data-probe]');
     window.__fired.push(b ? b.dataset.probe : (e.target.className || e.target.tagName));
     e.stopPropagation(); e.preventDefault();
@@ -176,6 +178,34 @@ def _row_law(page, failures: list[str]) -> None:
         failures.append("row@393: the bar still holds a receipt")
 
 
+def _band_law(page, when: str, failures: list[str]) -> None:
+    """The Chair's work band holds with or without the row (the constraints of
+    tests/e2e/test_hs141_chair_geometry.py:93): the Chair ends at the band's
+    bottom, the capture bar sits above the dock, and the document does not
+    grow past the screen."""
+    g = page.evaluate("""() => {
+      const chair = document.querySelector('.chair');
+      const bar = document.querySelector('[data-testid="arrival-capture-bar"]');
+      const dock = document.querySelector('.desk-dock');
+      const style = getComputedStyle(document.documentElement);
+      return { chairBottom: chair.getBoundingClientRect().bottom,
+               chairHeight: chair.getBoundingClientRect().height,
+               barBottom: bar ? bar.getBoundingClientRect().bottom : null,
+               dockTop: dock ? dock.getBoundingClientRect().top : null,
+               vh: innerHeight,
+               workBottom: parseFloat(style.getPropertyValue('--desk-work-bottom')),
+               scrollHeight: document.scrollingElement.scrollHeight };
+    }""")
+    if g["chairBottom"] > g["vh"] - g["workBottom"] + 0.5:
+        failures.append(f"band@393 ({when}): the Chair ends at {g['chairBottom']:.1f}, past the band ({g['vh'] - g['workBottom']}); {g}")
+    if g["barBottom"] is None or g["dockTop"] is None:
+        failures.append(f"band@393 ({when}): no capture bar or no dock to measure; {g}")
+    elif g["barBottom"] > g["dockTop"]:
+        failures.append(f"band@393 ({when}): the capture bar ends at {g['barBottom']:.1f}, under the dock ({g['dockTop']:.1f})")
+    if g["scrollHeight"] > g["vh"]:
+        failures.append(f"band@393 ({when}): the document is {g['scrollHeight']} px, taller than the screen ({g['vh']})")
+
+
 @pytest.fixture(scope="module")
 def hub():
     home = Path(tempfile.mkdtemp(prefix="philo3-receipt-hits-"))
@@ -209,6 +239,13 @@ def test_receipt_verbs_own_their_areas(hub, width: int) -> None:
         _probe(page, seat, "chrome", width, failures)
         if width <= 720:
             _row_law(page, failures)
+            _band_law(page, "row standing", failures)
+            # clear it for real: OK, not the trap
+            page.evaluate("window.__trapOn = false")
+            page.locator(".desk-receipt-row .write-receipt-dismiss").click()
+            page.locator(".desk-receipt-row").wait_for(state="detached", timeout=5000)
+            page.wait_for_timeout(200)
+            _band_law(page, "row cleared", failures)
         page.unroute("**/*")
         page.reload()
         page.locator("[aria-controls=desk-tool-shelf]").wait_for(timeout=15000)

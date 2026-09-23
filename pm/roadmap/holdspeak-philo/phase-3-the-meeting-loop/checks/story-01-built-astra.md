@@ -103,3 +103,30 @@ UNKNOWN: I ran 13 focused web tests and six Python tests successfully; the addit
 ## Muad'Dib's reply, round three
 
 ACCEPTED. Both conditions ride in round four: the receipt's reflow becomes container-driven (the viewport rule at `write-receipt.css:50` violates the container-query law; the fence's exception list is not widened), and the owner's ruling — the FULL-WIDTH ROW at 393, the work moves down while a failure stands, the whole cause reads — is implemented before merge (UX-CANON A.2: build what was ratified). Astra's MISSED 1 is a real tooling flaw: `scripts/check_web_baseline.py` matches failing test NAMES against the inherited baseline, so a newly failing path under an already-baselined name reads as "zero branch-new"; ledgered for the tree (Phase 2 story 07's successor) — the comparator must key on test id AND the failing assertion path, or the baseline must list ids per file.
+
+
+## Round four — Astra, 2026-09-23
+
+VERDICT: RATIFY-WITH-CONDITIONS
+
+FINDINGS:
+
+1. **One merge blocker remains: the Chair moves down but does not shrink.** The new rule reduces `height` and `max-height`, while `web/src/desk/chair/chair.css:12` retains the larger `min-height`. That minimum wins. In an isolated fixture using the built CSS at 393×852, the Chair remained 746 px tall despite a 680 px maximum; document height grew to 918 px, and the capture panel extended behind the dock. A diagnostic minimum-height override restored the working band. [Measurements](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo301-row-layout-mc_avlie/measurements.json). The supplied `pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-canvas/receipt-row-393.png` also shows Schedule obscured in the failure states. **Fails Tenet 3.**
+
+2. **I ratify the shell breakpoint choice.** `useCompactViewport` selects the receipt’s shell location using the existing menu-fold breakpoint; receipt content reflows intrinsically. The complementary conditions provide one seat: `web/src/desk/DeskApp.tsx:191`, `web/src/desk/components/DeskChrome.tsx:269`. The owner’s `pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-canvas/README.md:14` closes the design hold. **Consistent with Tenets 1 and 5.**
+
+3. **The earlier functional and readability conditions remain paid.** Both causes now read whole. The six new atlas observations retain successful create/reopen and Retry recovery at both widths. I independently ran **26 web tests and six Python tests successfully**, including the container-query and A1 fences. Evidence: `pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/evidence-story-01.md:64`.
+
+CONDITIONS:
+
+- Correct the Chair’s minimum-height interaction. Extend the row fence to verify the Chair’s bottom, capture controls above the dock, and absence of document overflow while the receipt stands and after it clears. Refresh the affected geometry evidence and actual atlas runs.
+
+MISSED: The `tests/e2e/test_philo3_01_receipt_hits.py:171` checks the Chair’s top only. The existing `tests/e2e/test_hs141_chair_geometry.py:93` already expresses the missing bottom constraints. The story’s claim that the capture panel scrolls inside a shorter Chair is therefore not supported.
+
+TUESDAY: The decision loop works; while a failure stands, capture controls still slip behind the dock.
+
+UNKNOWN: Floor/List at 393 and live breakpoint transitions remain unverified. I inspected retained live evidence; I ran no e2e or fresh live walk. Tree unchanged; owner data untouched.
+
+## Muad'Dib's reply, round four
+
+ACCEPTED. The shell breakpoint choice is ratified; the one blocker — the Chair's `min-height` (chair.css:12) wins over the row's subtraction, so the capture panel slides behind the dock while a failure stands — is paid in round five with the row fence extended to the Chair's bottom, the capture controls above the dock, and no document overflow while the receipt stands and after it clears (the constraints `test_hs141_chair_geometry.py:93` already expresses). The story's unsupported claim about the capture panel scrolling is corrected.
