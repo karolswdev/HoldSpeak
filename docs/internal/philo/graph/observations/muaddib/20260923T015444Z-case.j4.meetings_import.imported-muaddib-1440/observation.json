@@ -1,0 +1,399 @@
+{
+  "id": "obs-20260923T015444Z-case.j4.meetings_import.imported-muaddib-1440",
+  "run_id": "20260923T015444Z-case.j4.meetings_import.imported-muaddib-1440",
+  "case_id": "case.j4.meetings_import.imported",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j4",
+  "edge_ids": [
+    "edge.route.meetings_import"
+  ],
+  "state_id": "state.meetings.capture.imported",
+  "provenance": {
+    "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f872c6384eb22ce20c3a6d429fe833a2bc682f6bf2091f207c1f45cc4d4539fc",
+      "assets": [
+        "index-BNDgWxUD.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:49947",
+      "port": 49947,
+      "pid": 73304,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ke55t87v",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ke55t87v/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/core_path_smoke_16k.wav": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T01:54:44.430982+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "64af1de4364c57c4df644b8df23445fcd6bccf713e3429d6855882abb875dafe",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "case.j1.speech_readiness.ready passed; otherwise BLOCKED, not failed",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "meeting_id": "24d55b24"
+  },
+  "trigger": {
+    "kind": "fixture",
+    "path": "tests/fixtures/core_path_smoke_16k.wav",
+    "route": {
+      "method": "POST",
+      "path": "/api/meetings/import"
+    },
+    "adapter": "http-route",
+    "status": 202,
+    "response": {
+      "meeting_id": "24d55b24",
+      "status": "importing"
+    },
+    "captured": {
+      "name": "meeting_id",
+      "path": "meeting_id",
+      "value": "24d55b24"
+    }
+  },
+  "diff": {
+    "protocol_digest": {
+      "before": {
+        "status": 200,
+        "row_count": 0,
+        "payload_sha256": "1d66a15943cee181126aa2d6e0beec103f375ef3c4985a875430ab621316d599"
+      },
+      "after": {
+        "status": 200,
+        "row_count": 1,
+        "payload_sha256": "ad41b47f9a861516c726a7a53a639d5547c2b55ea481896a9fde5f0c0f824c55"
+      }
+    }
+  },
+  "before": {
+    "observe_at": "protocol: GET /api/meetings",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "",
+    "url": "http://127.0.0.1:49947/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/meetings",
+      "status": 200,
+      "collection": "meetings",
+      "row_count": 0,
+      "payload_sha256": "1d66a15943cee181126aa2d6e0beec103f375ef3c4985a875430ab621316d599",
+      "rows": [],
+      "payload": {
+        "meetings": [],
+        "total": 0
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "1d66a15943cee181126aa2d6e0beec103f375ef3c4985a875430ab621316d599"
+    },
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T01:54:47.065453+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/meetings",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "",
+    "url": "http://127.0.0.1:49947/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/meetings",
+      "status": 200,
+      "collection": "meetings",
+      "row_count": 1,
+      "payload_sha256": "ad41b47f9a861516c726a7a53a639d5547c2b55ea481896a9fde5f0c0f824c55",
+      "rows": [
+        {
+          "id": "24d55b24",
+          "started_at": "2026-09-22T19:54:47.143853",
+          "ended_at": null,
+          "title": "core_path_smoke_16k",
+          "duration_seconds": 0.0,
+          "segment_count": 0,
+          "action_item_count": 0,
+          "tags": [],
+          "intel_status": "importing",
+          "intel_status_detail": "Preparing transcription\u2026",
+          "intel_model_host": null,
+          "intel_duration_s": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": null,
+          "needs_you_count": 0,
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null
+        }
+      ],
+      "payload": {
+        "meetings": [
+          {
+            "id": "24d55b24",
+            "started_at": "2026-09-22T19:54:47.143853",
+            "ended_at": null,
+            "title": "core_path_smoke_16k",
+            "duration_seconds": 0.0,
+            "segment_count": 0,
+            "action_item_count": 0,
+            "tags": [],
+            "intel_status": "importing",
+            "intel_status_detail": "Preparing transcription\u2026",
+            "intel_model_host": null,
+            "intel_duration_s": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": null,
+            "needs_you_count": 0,
+            "planned_route": {
+              "status": "unavailable",
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "legs": []
+            },
+            "run_receipt": null,
+            "last_refusal": null
+          }
+        ],
+        "total": 1
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "ad41b47f9a861516c726a7a53a639d5547c2b55ea481896a9fde5f0c0f824c55"
+    },
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T01:54:48.282285+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/import",
+      "status": 202,
+      "body_sha256": "260f6a8c0bbdfe019a01bfe0172408a0e7ccf5d992306a691e39b4403c49f812",
+      "body": {
+        "meeting_id": "24d55b24",
+        "status": "importing"
+      }
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/meetings",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "",
+    "url": "http://127.0.0.1:49947/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/meetings",
+      "status": 200,
+      "collection": "meetings",
+      "row_count": 1,
+      "payload_sha256": "ad41b47f9a861516c726a7a53a639d5547c2b55ea481896a9fde5f0c0f824c55",
+      "rows": [
+        {
+          "id": "24d55b24",
+          "started_at": "2026-09-22T19:54:47.143853",
+          "ended_at": null,
+          "title": "core_path_smoke_16k",
+          "duration_seconds": 0.0,
+          "segment_count": 0,
+          "action_item_count": 0,
+          "tags": [],
+          "intel_status": "importing",
+          "intel_status_detail": "Preparing transcription\u2026",
+          "intel_model_host": null,
+          "intel_duration_s": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": null,
+          "needs_you_count": 0,
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null
+        }
+      ],
+      "payload": {
+        "meetings": [
+          {
+            "id": "24d55b24",
+            "started_at": "2026-09-22T19:54:47.143853",
+            "ended_at": null,
+            "title": "core_path_smoke_16k",
+            "duration_seconds": 0.0,
+            "segment_count": 0,
+            "action_item_count": 0,
+            "tags": [],
+            "intel_status": "importing",
+            "intel_status_detail": "Preparing transcription\u2026",
+            "intel_model_host": null,
+            "intel_duration_s": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": null,
+            "needs_you_count": 0,
+            "planned_route": {
+              "status": "unavailable",
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "legs": []
+            },
+            "run_receipt": null,
+            "last_refusal": null
+          }
+        ],
+        "total": 1
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "ad41b47f9a861516c726a7a53a639d5547c2b55ea481896a9fde5f0c0f824c55"
+    },
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T01:54:48.107061+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/import",
+      "status": 202,
+      "body_sha256": "260f6a8c0bbdfe019a01bfe0172408a0e7ccf5d992306a691e39b4403c49f812",
+      "body": {
+        "meeting_id": "24d55b24",
+        "status": "importing"
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "/meetings/0/id = '24d55b24', wanted '24d55b24'",
+    "elapsed_s": 0.966
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "/meetings/0/id = '24d55b24', wanted '24d55b24'",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.141,
+    "first_satisfied_at_s": 0.966,
+    "completion_bound_s": 300.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "placeholder(s) ['meeting_id'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "predicate: /meetings/0/id = '24d55b24', wanted '24d55b24'"
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "meeting_id"
+  ],
+  "shots": [
+    "docs/internal/philo/graph/observations/muaddib/20260923T015444Z-case.j4.meetings_import.imported-muaddib-1440/before.png",
+    "docs/internal/philo/graph/observations/muaddib/20260923T015444Z-case.j4.meetings_import.imported-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ke55t87v/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:49947"
+  ]
+}

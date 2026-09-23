@@ -1,0 +1,488 @@
+{
+  "id": "obs-20260923T025016Z-case.j9.timer_sweep.receipt_resolved-muaddib-1440",
+  "run_id": "20260923T025016Z-case.j9.timer_sweep.receipt_resolved-muaddib-1440",
+  "case_id": "case.j9.timer_sweep.receipt_resolved",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j9",
+  "edge_ids": [
+    "edge.timer.heartbeat_sweep"
+  ],
+  "state_id": "state.time.next_due_sweep",
+  "provenance": {
+    "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f872c6384eb22ce20c3a6d429fe833a2bc682f6bf2091f207c1f45cc4d4539fc",
+      "assets": [
+        "index-BNDgWxUD.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:59051",
+      "port": 59051,
+      "pid": 2535,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ncohsgl5",
+      "scheduler_thread": true
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ncohsgl5/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T02:50:16.853950+00:00",
+      "mechanism": "no clock is moved: the interval is lowered to its floor (1 minute) and the run waits at most two 60s conductor ticks; the sweep is produced by the real timer, not by an out-of-band call",
+      "scheduler_thread": true,
+      "clock": "clock.heartbeat_scheduler",
+      "adapter": "scheduler-wait (no substitute button: the sweep must come from the conductor loop, holdspeak/runtime/heartbeat.py:91-126)",
+      "tick_seconds": 60,
+      "max_wait_s": 135.0,
+      "waited_s": 10.0,
+      "polls": 2,
+      "conductor_ticks_waited": 1,
+      "observe_at_changed": true,
+      "machine_clock_moved": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "64af1de4364c57c4df644b8df23445fcd6bccf713e3429d6855882abb875dafe",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer",
+        "the heartbeat conductor loop"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/settings/heartbeat",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "sweep_every_minutes": 1,
+        "quiet_hours": {
+          "start": 22,
+          "end": 8
+        },
+        "notify": "edge",
+        "muted_projects": [],
+        "last_sweep_at": null,
+        "next_sweep_at": null,
+        "last_notified_count": 0,
+        "last_notified_items": {},
+        "last_notify_outcome": "",
+        "runs_on": "local",
+        "remote_hosts": [],
+        "last_remote_run_at": null
+      },
+      "response_sha256": "22a316ecc644e2dae9635a24a3ecddf8a8c55b939eb3a22875817025baac57d4"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "the hub's heartbeat conductor thread running",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "clock",
+    "adapter": "scheduler-wait (no substitute button: the sweep must come from the conductor loop, holdspeak/runtime/heartbeat.py:91-126)",
+    "clock": "clock.heartbeat_scheduler",
+    "waited_s": 10.0,
+    "polls": 2,
+    "conductor_ticks_waited": 1,
+    "observe_at_changed": true,
+    "done": true
+  },
+  "diff": {
+    "focus_label": {
+      "before": "",
+      "after": "VOICE TYPING\nDictate one sentence\n\nSpeak. Then edit and keep"
+    },
+    "document_text_sha256": {
+      "before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "after": "7af36687590250af61f701ce0893b3ddbcaab0f186b2c14b6fda8d125b707df5"
+    },
+    "document_text_len": {
+      "before": 0,
+      "after": 120
+    },
+    "protocol_digest": {
+      "before": {
+        "status": 200,
+        "row_count": 0,
+        "payload_sha256": "1764c9dcf7f74236fecc1d65e0c151f275530b536bd1ee12626198c49e0ae445"
+      },
+      "after": {
+        "status": 200,
+        "row_count": 1,
+        "payload_sha256": "449e9c2f5ed8698096bda26a14a304ce1bf769b477d7f55e67479a58f981722b"
+      }
+    },
+    "values": {
+      "before": [],
+      "after": [
+        {
+          "selector": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+          "value": ""
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "protocol: GET /api/desk/projections",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "",
+    "url": "http://127.0.0.1:59051/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/desk/projections",
+      "status": 200,
+      "collection": "projections",
+      "row_count": 0,
+      "payload_sha256": "1764c9dcf7f74236fecc1d65e0c151f275530b536bd1ee12626198c49e0ae445",
+      "rows": [],
+      "payload": {
+        "version": 1,
+        "projections": [],
+        "counts": {
+          "needs_attention": 0,
+          "unseen": 0,
+          "acknowledged": 0,
+          "receipts": 0
+        },
+        "subject_counts": {},
+        "page": {
+          "offset": 0,
+          "limit": 50,
+          "total": 0,
+          "has_more": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "1764c9dcf7f74236fecc1d65e0c151f275530b536bd1ee12626198c49e0ae445"
+    },
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T02:50:19.443258+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/desk/projections",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [
+      {
+        "selector": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "VOICE TYPING\nDictate one sentence\n\nSpeak. Then edit and keep",
+    "url": "http://127.0.0.1:59051/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/desk/projections",
+      "status": 200,
+      "collection": "projections",
+      "row_count": 1,
+      "payload_sha256": "449e9c2f5ed8698096bda26a14a304ce1bf769b477d7f55e67479a58f981722b",
+      "rows": [
+        {
+          "id": "pipeline:afefc118-3848-49ba-ac9a-3a783c86e6a7",
+          "projection_kind": "receipt",
+          "subject_ref": "service:HeartbeatService",
+          "subject_label": "Heartbeat",
+          "title": "SWEEP",
+          "summary": "{\"watches\":0,\"rooms\":0,\"held\":false}",
+          "reason_code": "pipeline_completed",
+          "decision_kind": "receipt",
+          "attention_state": "resolved",
+          "actual_destination": "this_machine",
+          "authority_basis": "pipeline",
+          "attempt": null,
+          "outcome": "completed",
+          "timestamp": "2026-09-23T02:50:27Z",
+          "correlation_id": "bba58db4-ec6c-45d1-be5d-36c00e7c305f",
+          "source_kind": "pipeline_event",
+          "source_id": "afefc118-3848-49ba-ac9a-3a783c86e6a7",
+          "source_api": "/api/desk/projections",
+          "detail_url": "/cadence",
+          "control_mode": null,
+          "policy_version": null,
+          "effect_class": null,
+          "severity": "normal",
+          "dismissed": false,
+          "version": 1,
+          "origin": "local",
+          "caller": "",
+          "caller_identity": ""
+        }
+      ],
+      "payload": {
+        "version": 1,
+        "projections": [
+          {
+            "id": "pipeline:afefc118-3848-49ba-ac9a-3a783c86e6a7",
+            "projection_kind": "receipt",
+            "subject_ref": "service:HeartbeatService",
+            "subject_label": "Heartbeat",
+            "title": "SWEEP",
+            "summary": "{\"watches\":0,\"rooms\":0,\"held\":false}",
+            "reason_code": "pipeline_completed",
+            "decision_kind": "receipt",
+            "attention_state": "resolved",
+            "actual_destination": "this_machine",
+            "authority_basis": "pipeline",
+            "attempt": null,
+            "outcome": "completed",
+            "timestamp": "2026-09-23T02:50:27Z",
+            "correlation_id": "bba58db4-ec6c-45d1-be5d-36c00e7c305f",
+            "source_kind": "pipeline_event",
+            "source_id": "afefc118-3848-49ba-ac9a-3a783c86e6a7",
+            "source_api": "/api/desk/projections",
+            "detail_url": "/cadence",
+            "control_mode": null,
+            "policy_version": null,
+            "effect_class": null,
+            "severity": "normal",
+            "dismissed": false,
+            "version": 1,
+            "origin": "local",
+            "caller": "",
+            "caller_identity": ""
+          }
+        ],
+        "counts": {
+          "needs_attention": 0,
+          "unseen": 0,
+          "acknowledged": 0,
+          "receipts": 1
+        },
+        "subject_counts": {
+          "service:HeartbeatService": {
+            "needs_attention": 0,
+            "receipts": 1
+          }
+        },
+        "page": {
+          "offset": 0,
+          "limit": 50,
+          "total": 1,
+          "has_more": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "449e9c2f5ed8698096bda26a14a304ce1bf769b477d7f55e67479a58f981722b"
+    },
+    "document_text_sha256": "7af36687590250af61f701ce0893b3ddbcaab0f186b2c14b6fda8d125b707df5",
+    "document_text_len": 120,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T02:50:30.609106+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/desk/projections",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [
+      {
+        "selector": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "VOICE TYPING\nDictate one sentence\n\nSpeak. Then edit and keep",
+    "url": "http://127.0.0.1:59051/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/desk/projections",
+      "status": 200,
+      "collection": "projections",
+      "row_count": 1,
+      "payload_sha256": "449e9c2f5ed8698096bda26a14a304ce1bf769b477d7f55e67479a58f981722b",
+      "rows": [
+        {
+          "id": "pipeline:afefc118-3848-49ba-ac9a-3a783c86e6a7",
+          "projection_kind": "receipt",
+          "subject_ref": "service:HeartbeatService",
+          "subject_label": "Heartbeat",
+          "title": "SWEEP",
+          "summary": "{\"watches\":0,\"rooms\":0,\"held\":false}",
+          "reason_code": "pipeline_completed",
+          "decision_kind": "receipt",
+          "attention_state": "resolved",
+          "actual_destination": "this_machine",
+          "authority_basis": "pipeline",
+          "attempt": null,
+          "outcome": "completed",
+          "timestamp": "2026-09-23T02:50:27Z",
+          "correlation_id": "bba58db4-ec6c-45d1-be5d-36c00e7c305f",
+          "source_kind": "pipeline_event",
+          "source_id": "afefc118-3848-49ba-ac9a-3a783c86e6a7",
+          "source_api": "/api/desk/projections",
+          "detail_url": "/cadence",
+          "control_mode": null,
+          "policy_version": null,
+          "effect_class": null,
+          "severity": "normal",
+          "dismissed": false,
+          "version": 1,
+          "origin": "local",
+          "caller": "",
+          "caller_identity": ""
+        }
+      ],
+      "payload": {
+        "version": 1,
+        "projections": [
+          {
+            "id": "pipeline:afefc118-3848-49ba-ac9a-3a783c86e6a7",
+            "projection_kind": "receipt",
+            "subject_ref": "service:HeartbeatService",
+            "subject_label": "Heartbeat",
+            "title": "SWEEP",
+            "summary": "{\"watches\":0,\"rooms\":0,\"held\":false}",
+            "reason_code": "pipeline_completed",
+            "decision_kind": "receipt",
+            "attention_state": "resolved",
+            "actual_destination": "this_machine",
+            "authority_basis": "pipeline",
+            "attempt": null,
+            "outcome": "completed",
+            "timestamp": "2026-09-23T02:50:27Z",
+            "correlation_id": "bba58db4-ec6c-45d1-be5d-36c00e7c305f",
+            "source_kind": "pipeline_event",
+            "source_id": "afefc118-3848-49ba-ac9a-3a783c86e6a7",
+            "source_api": "/api/desk/projections",
+            "detail_url": "/cadence",
+            "control_mode": null,
+            "policy_version": null,
+            "effect_class": null,
+            "severity": "normal",
+            "dismissed": false,
+            "version": 1,
+            "origin": "local",
+            "caller": "",
+            "caller_identity": ""
+          }
+        ],
+        "counts": {
+          "needs_attention": 0,
+          "unseen": 0,
+          "acknowledged": 0,
+          "receipts": 1
+        },
+        "subject_counts": {
+          "service:HeartbeatService": {
+            "needs_attention": 0,
+            "receipts": 1
+          }
+        },
+        "page": {
+          "offset": 0,
+          "limit": 50,
+          "total": 1,
+          "has_more": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "449e9c2f5ed8698096bda26a14a304ce1bf769b477d7f55e67479a58f981722b"
+    },
+    "document_text_sha256": "7af36687590250af61f701ce0893b3ddbcaab0f186b2c14b6fda8d125b707df5",
+    "document_text_len": 120,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T02:50:30.479981+00:00",
+    "predicate_satisfied": true,
+    "reading": "rows matching {'source_kind': 'pipeline_event', 'title__prefix': 'SWEEP'} at /api/desk/projections: before=0 after=1 (new=1; wanted >= 1)",
+    "elapsed_s": 10.956
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "rows matching {'source_kind': 'pipeline_event', 'title__prefix': 'SWEEP'} at /api/desk/projections: before=0 after=1 (new=1; wanted >= 1)",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 11.085,
+    "first_satisfied_at_s": 10.956,
+    "completion_bound_s": 180.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: rows matching {'source_kind': 'pipeline_event', 'title__prefix': 'SWEEP'} at /api/desk/projections: before=0 after=1 (new=1; wanted >= 1)"
+  ],
+  "complete": true,
+  "shots": [
+    "docs/internal/philo/graph/observations/muaddib/20260923T025016Z-case.j9.timer_sweep.receipt_resolved-muaddib-1440/before.png",
+    "docs/internal/philo/graph/observations/muaddib/20260923T025016Z-case.j9.timer_sweep.receipt_resolved-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ncohsgl5/.local/share/holdspeak/holdspeak.db",
+    "SCHEDULER heartbeat conductor thread started (HeartbeatMixin._heartbeat_loop, TICK_SECONDS=60)",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\", \"the heartbeat conductor loop\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\"]}",
+    "HUB_READY http://127.0.0.1:59051"
+  ]
+}

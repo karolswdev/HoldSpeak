@@ -39,7 +39,7 @@ Every pass, every finding and the council's verdict is read through that lens an
 | PHILO-2-01 | The rulebook and the state atlas | done | [story-01-the-rulebook-and-the-state-atlas](./story-01-the-rulebook-and-the-state-atlas.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-2-02 | The static pass, Muad'Dib | done | [story-02-static-pass-muaddib](./story-02-static-pass-muaddib.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-2-03 | The static pass, Astra | done | [story-03-static-pass-astra](./story-03-static-pass-astra.md) | [evidence-story-03](./evidence-story-03.md) |
-| PHILO-2-04 | The live pass, Muad'Dib | backlog | [story-04-live-pass-muaddib](./story-04-live-pass-muaddib.md) | - |
+| PHILO-2-04 | The live pass, Muad'Dib | done | [story-04-live-pass-muaddib](./story-04-live-pass-muaddib.md) | [evidence-story-04](./evidence-story-04.md) |
 | PHILO-2-05 | The live pass, Astra | done | [story-05-live-pass-astra](./story-05-live-pass-astra.md) | [evidence-story-05](./evidence-story-05.md) |
 | PHILO-2-06 | The council | backlog | [story-06-the-council](./story-06-the-council.md) | - |
 | PHILO-2-07 | The tree up to par | backlog | [story-07-the-tree-up-to-par](./story-07-the-tree-up-to-par.md) | - |
@@ -59,6 +59,8 @@ Every pass, every finding and the council's verdict is read through that lens an
 Order: 01 (brief, schema, atlas, owner's selection, shared rig calibration) → 02 ‖ 03 (each brain seals its static graph) → 04 ‖ 05 (live; one versioned `scripts/graph_walk.py`, adapters may differ) → all four reports sealed → 06 → 07. Neither brain reads the other's findings until all four are sealed; shared schema, fixture recipes and rig calibration are preparation, not findings.
 
 ## Where we are
+
+2026-09-23: PHILO-2-04 (Muad'Dib's live pass) SEALED — 120 runs; decisions route dead (500), a retrying summary reads as nothing-needs-you, Rhythm shows UTC; J6/J7 blocked on the rig by the lane runtime's missing `openai` client (diagnostics show the real engine working). PHILO-2-05 (Astra's live pass) runs sealed. Then the council.
 
 2026-09-23 (stop point, the owner's ask): both STATIC passes SEALED — PR #604 (Muad'Dib, 15 findings) and PR #605 (Astra); neither brain has read the other's. Story 01 OPEN as PR #603 after Astra's round three (four code-level integration conditions, listed in the story as the next session's first task; Opus 5.5 workers by the owner's ruling of 2026-09-22). The live passes have not started.
 

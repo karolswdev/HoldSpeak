@@ -1,0 +1,343 @@
+{
+  "id": "obs-20260923T025407Z-case.j10.arrival_generate_brief.generated_empty-muaddib-393",
+  "run_id": "20260923T025407Z-case.j10.arrival_generate_brief.generated_empty-muaddib-393",
+  "case_id": "case.j10.arrival_generate_brief.generated_empty",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j10",
+  "edge_ids": [
+    "edge.face.arrival_brief_generate"
+  ],
+  "state_id": "state.briefs.generated_empty",
+  "provenance": {
+    "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f872c6384eb22ce20c3a6d429fe833a2bc682f6bf2091f207c1f45cc4d4539fc",
+      "assets": [
+        "index-BNDgWxUD.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:59510",
+      "port": 59510,
+      "pid": 5769,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ceeifi32",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ceeifi32/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T02:54:08.086563+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "64af1de4364c57c4df644b8df23445fcd6bccf713e3429d6855882abb875dafe",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "nothing in the window",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-brief-generate]",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "Nothing material changed."
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "arrival-brief-headline",
+        "data-testid": "arrival-brief-headline"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 12,
+        "y": 379,
+        "w": 369,
+        "h": 26
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "document_text_sha256": {
+      "before": "2d6a112cca131bab8ef47b404be9bb1d2df09234a0a164eb1a6410bef3559988",
+      "after": "1eb8d46d4a6a0a268e228432aaef63772709520a9a20c3ff09a68c1c11a64bc0"
+    },
+    "document_text_len": {
+      "before": 248,
+      "after": 289
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=arrival-brief-headline]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n08:54 PM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:59510/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "2d6a112cca131bab8ef47b404be9bb1d2df09234a0a164eb1a6410bef3559988",
+    "document_text_len": 248,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T02:54:13.980120+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=arrival-brief-headline]",
+    "target_present": true,
+    "text": "Nothing material changed.",
+    "attrs": {
+      "class": "arrival-brief-headline",
+      "data-testid": "arrival-brief-headline"
+    },
+    "rect": {
+      "x": 12,
+      "y": 379,
+      "w": 369,
+      "h": 26
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n08:54 PM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:59510/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "1eb8d46d4a6a0a268e228432aaef63772709520a9a20c3ff09a68c1c11a64bc0",
+    "document_text_len": 289,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T02:54:15.094313+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "6cfaf93b37e07d3cdc76fe4088a702d14e82c4684c83a7ae2a00582b50a0e245",
+      "body": {
+        "id": "brief-8867a2dbcbd94f4a9a058368768a9586",
+        "period_start": "2026-09-21T17:00:00",
+        "period_end": "2026-09-22T20:54:14.053511",
+        "headline": "Nothing material changed.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": []
+        },
+        "generated_at": "2026-09-22T20:54:14.053511",
+        "is_empty": true,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 22",
+        "generated_label": "GENERATED SEP 22 20:54",
+        "person_sections_state": "unavailable"
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:59510) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=arrival-brief-headline]",
+    "target_present": true,
+    "text": "Nothing material changed.",
+    "attrs": {
+      "class": "arrival-brief-headline",
+      "data-testid": "arrival-brief-headline"
+    },
+    "rect": {
+      "x": 12,
+      "y": 379,
+      "w": 369,
+      "h": 26
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n08:54 PM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:59510/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "1eb8d46d4a6a0a268e228432aaef63772709520a9a20c3ff09a68c1c11a64bc0",
+    "document_text_len": 289,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T02:54:14.966285+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "6cfaf93b37e07d3cdc76fe4088a702d14e82c4684c83a7ae2a00582b50a0e245",
+      "body": {
+        "id": "brief-8867a2dbcbd94f4a9a058368768a9586",
+        "period_start": "2026-09-21T17:00:00",
+        "period_end": "2026-09-22T20:54:14.053511",
+        "headline": "Nothing material changed.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": []
+        },
+        "generated_at": "2026-09-22T20:54:14.053511",
+        "is_empty": true,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 22",
+        "generated_label": "GENERATED SEP 22 20:54",
+        "person_sections_state": "unavailable"
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:59510) non-GET response after the click"
+    },
+    "predicate_satisfied": true,
+    "reading": "'Nothing material changed.' in observe_at text",
+    "elapsed_s": 0.933
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'Nothing material changed.' in observe_at text",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.059,
+    "first_satisfied_at_s": 0.933,
+    "completion_bound_s": 120.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'Nothing material changed.' in observe_at text"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:59510) non-GET response after the click",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "6cfaf93b37e07d3cdc76fe4088a702d14e82c4684c83a7ae2a00582b50a0e245",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:59510) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:59510) non-GET response after the click",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/brief/generate",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "docs/internal/philo/graph/observations/muaddib/20260923T025407Z-case.j10.arrival_generate_brief.generated_empty-muaddib-393/before.png",
+    "docs/internal/philo/graph/observations/muaddib/20260923T025407Z-case.j10.arrival_generate_brief.generated_empty-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ceeifi32/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:59510"
+  ]
+}
