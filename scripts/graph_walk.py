@@ -68,10 +68,17 @@ A step is `{"kind": <one of STEP_KINDS>, ...}`:
             flags and database, re-verifies the resolved db path, reloads the
             page for a face case, and records both pids and the downtime.
             Every other cli command is recorded `blocked` with its name.
-  clock     {adapter, clock, how, max_wait_s?, poll_s?}
-            ONE mechanism is implemented: `adapter: "scheduler-wait"` waits
+  clock     {adapter, clock, how, max_wait_s?, poll_s?, advance_days?}
+            TWO mechanisms are implemented. `adapter: "scheduler-wait"` waits
             (slow polls, ≤ the case's completion_bound_s) for the REAL
             scheduler to change `expected.observe_at`. No clock is moved.
+            `adapter: "producer-clock"` (clock `clock.python_wall`, PHILO-3-03)
+            moves the brief producer's day by `advance_days` INSIDE the rig's
+            OWN hub: the hub is booted with `MeetingWebServer(brief_clock=)`,
+            a clock that reads the wall clock plus an offset from a file in
+            the run's HOME; the step writes the offset. The machine clock is
+            never moved; the hub prints each new reading
+            (`PRODUCER_CLOCK_READ`), and the readings go into provenance.
             Every other clock mechanism is recorded `blocked` with its name.
   check     {predicate, observe_at}                 the same evaluator a verdict
             uses, at the point it stands in `setup` (or in `preconditions`).
@@ -127,12 +134,14 @@ PREDICATES (`expected.predicate.kind`):
   protocol_rows_gone {collection, match, min_gone, identity?}
                                  a NAMED row present before and absent after,
                                  by identity — never merely "fewer rows".
-  protocol_status {method, path, status, body_contains?}
+  protocol_status {method, path, status, body_contains?, body_excludes?}
                                  the TRIGGER's own response status (a 4xx
                                  refusal is a promised result). The call is
                                  never re-fired; the body sha256 is recorded,
                                  and `body_contains` proves the refusal NAMES
                                  what is missing rather than merely failing.
+                                 `body_excludes` names what the body must NOT
+                                 carry (a previous result's id: a NEW result).
   protocol_field {path, value | absent}
                                  one field of the observe_at payload, at a
                                  dotted or JSON-pointer path. `null` is a
@@ -180,12 +189,12 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-RIG_VERSION = "1.1.0"
+RIG_VERSION = "1.2.0"
 
 REPO = Path(__file__).resolve().parents[1]
 CALIBRATION_PAGE = REPO / "tests/fixtures/graph_walk_calibration.html"
@@ -589,11 +598,19 @@ def check_predicate(
                    f"(body sha256 {str(answer.get('body_sha256'))[:12]})")
         if got != want:
             return False, reading
+        body = json.dumps(answer.get("body"), default=str)
+        if "body_excludes" in predicate:
+            # PHILO-3-03: a NEW result is named by what it must not carry
+            # (the previous brief's id), never inferred from a changed digest.
+            refused = predicate["body_excludes"]
+            if refused in body:
+                return False, (f"{reading}; {refused!r} IS in the response body "
+                               "(it must not be)")
+            reading = f"{reading}; {refused!r} not in the response body"
         if "body_contains" in predicate:
             # A refusal must be INTELLIGIBLE: the status alone does not say
             # what is missing. The recorded body is read; the call is not
             # fired a second time.
-            body = json.dumps(answer.get("body"), default=str)
             want_text = predicate["body_contains"]
             return (want_text in body), (
                 f"{reading}; {want_text!r} "
@@ -854,10 +871,17 @@ class Hub:
     """A real hub in its own process, with its own fresh isolated HOME."""
 
     def __init__(self, home: Path, token: str = TOKEN, *, scheduler: bool = False,
-                 engine_replay: Path | None = None) -> None:
+                 engine_replay: Path | None = None,
+                 producer_clock: bool = False) -> None:
         self.home = guard_home(home)
         self.token = token
         self.scheduler = scheduler
+        # PHILO-3-03: the brief producer's clock offset lives in the run's
+        # own HOME; the `producer-clock` step writes it, the hub reads it.
+        self.producer_clock_path: Path | None = (
+            self.home / "graph-walk-producer-clock.json" if producer_clock else None)
+        self.producer_clock: str | None = None
+        self.producer_clock_reads: list[str] = []
         self.engine_replay_path = engine_replay
         self.engine_replay: str | None = None
         self.wiring: dict[str, Any] = {}
@@ -877,6 +901,10 @@ class Hub:
                 self.engine_replay = line.split(" ", 1)[1].strip()
             elif line.startswith("WIRING "):
                 self.wiring = json.loads(line.split(" ", 1)[1])
+            elif line.startswith("PRODUCER_CLOCK_READ "):
+                self.producer_clock_reads.append(line.split(" ", 1)[1].strip())
+            elif line.startswith("PRODUCER_CLOCK "):
+                self.producer_clock = line.split(" ", 1)[1].strip()
 
     def restart(self) -> dict[str, Any]:
         """Stop this hub and start it again on the same port, HOME and flags."""
@@ -887,6 +915,7 @@ class Hub:
         self.lines = []
         self.db_path = None
         self.engine_replay = None
+        self.producer_clock = None
         self.wiring = {}
         env = dict(os.environ)
         env["HOME"] = str(self.home)
@@ -898,6 +927,8 @@ class Hub:
             command.append("--scheduler")
         if self.engine_replay_path:
             command += ["--engine-replay", str(self.engine_replay_path)]
+        if self.producer_clock_path is not None:
+            command += ["--producer-clock", str(self.producer_clock_path)]
         self.proc = subprocess.Popen(
             command,
             cwd=str(REPO), env=env, text=True,
@@ -1091,8 +1122,35 @@ def _install_engine_replay(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _producer_clock(path: Path) -> Any:
+    """PHILO-3-03: the brief producer's clock inside the rig's OWN hub.
+
+    The wall clock plus `advance_days` read from `path` (in the run's HOME)
+    at every call, so the `producer-clock` step moves the producer's day
+    while the hub runs. The machine clock is never touched. Each new reading
+    is printed once as `PRODUCER_CLOCK_READ`, so the observation carries what
+    the producer really read, not only what the rig wrote.
+    """
+    seen: dict[str, int] = {}
+
+    def now() -> datetime:
+        try:
+            days = int(json.loads(path.read_text()).get("advance_days", 0))
+        except FileNotFoundError:
+            days = 0
+        reading = datetime.now() + timedelta(days=days)
+        if seen.get("days") != days:
+            seen["days"] = days
+            print(f"PRODUCER_CLOCK_READ advance_days={days} "
+                  f"now={reading.isoformat(timespec='seconds')}", flush=True)
+        return reading
+
+    return now
+
+
 def _serve(port: int, token: str, host: str = "127.0.0.1",
-           scheduler: bool = False, engine_replay: str | None = None) -> None:
+           scheduler: bool = False, engine_replay: str | None = None,
+           producer_clock: str | None = None) -> None:
     """The rig's hub subprocess: a real MeetingWebServer on a fresh HOME.
 
     It takes the product's OWN database owner lock and runs the product's own
@@ -1126,6 +1184,17 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
         has.append("a RECORDED provider reply at the real provider seam")
         print(f"ENGINE_REPLAY {digest}", flush=True)
 
+    brief_clock = None
+    if producer_clock:
+        clock_path = guard_path(producer_clock, "the producer clock file")
+        if not _under(clock_path, Path(os.environ["HOME"]).resolve()):
+            raise Refused(f"the producer clock file {clock_path} is not under the run's HOME")
+        brief_clock = _producer_clock(clock_path)
+        has.append("the brief producer clock seam (wall clock + the run's offset file)")
+        print(f"PRODUCER_CLOCK {clock_path}", flush=True)
+    else:
+        lacks.append("the brief producer clock seam (not requested; the wall clock)")
+
     lock = claim_database(Path(str(database.db_path)))
     if lock.held:
         has.append("the database owner lock")
@@ -1150,6 +1219,7 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
                                "activity": {"state": "idle", "source": "rig"}},
         ),
         host=host, port=port, auth_token=token,
+        brief_clock=brief_clock,
     )
     url = server.start()
 
@@ -2118,6 +2188,45 @@ def scheduler_wait(step: dict[str, Any], case: dict[str, Any] | None, page: Any,
             "done": True}
 
 
+def producer_clock_advance(step: dict[str, Any], hub: Hub | None,
+                           provenance: dict[str, Any]) -> dict[str, Any]:
+    """PHILO-3-03: move the brief producer's day inside the rig's own hub.
+
+    Only `clock.python_wall`, only a hub booted with the seam (it printed
+    `PRODUCER_CLOCK`), only a whole number of days. The offset is cumulative
+    and written to the file the hub's clock reads; the machine clock is never
+    moved. A hub without the seam BLOCKS: a label is not an advance.
+    """
+    if step.get("clock") != "clock.python_wall":
+        raise Blocked(f"the producer-clock adapter moves clock.python_wall only, "
+                      f"not {step.get('clock')!r}")
+    if hub is None or getattr(hub, "producer_clock_path", None) is None \
+            or not getattr(hub, "producer_clock", None):
+        raise Blocked("the hub was not booted with the producer clock seam "
+                      "(no PRODUCER_CLOCK line); no advance is claimed")
+    days = step.get("advance_days")
+    if not isinstance(days, int) or isinstance(days, bool) or days < 1:
+        raise Blocked(f"advance_days must be a whole number of days >= 1, not {days!r}")
+    path: Path = hub.producer_clock_path
+    try:
+        current = int(json.loads(path.read_text()).get("advance_days", 0))
+    except FileNotFoundError:
+        current = 0
+    total = current + days
+    path.write_text(json.dumps({"advance_days": total}))
+    provenance["clock"].update({
+        "mechanism": step.get("how") or "producer-clock",
+        "clock": step.get("clock"),
+        "adapter": step.get("adapter"),
+        "producer_clock_file": str(path),
+        "advance_days": total,
+        "machine_clock_moved": False,
+    })
+    return {"kind": "clock", "adapter": step.get("adapter"),
+            "clock": step.get("clock"), "advance_days": days,
+            "advance_days_total": total, "done": True}
+
+
 def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
              provenance: dict[str, Any], case: dict[str, Any] | None = None,
              *, allow_error: bool = False,
@@ -2250,12 +2359,14 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
     if kind == "clock":
         if str(step.get("adapter") or "").startswith("scheduler-wait"):
             return scheduler_wait(step, case, page, hub, provenance)
+        if str(step.get("adapter") or "").startswith("producer-clock"):
+            return producer_clock_advance(step, hub, provenance)
         named = step.get("mechanism") or step.get("clock") or step.get("adapter")
         raise Blocked(
             f"clock mechanism {named!r} is not implemented in this rig; the case "
             "is blocked, not claimed (brief §7: record tooling debt rather than "
-            "claiming the state). The one implemented mechanism is "
-            "adapter 'scheduler-wait'.")
+            "claiming the state). The implemented mechanisms are "
+            "adapter 'scheduler-wait' and adapter 'producer-clock'.")
     if kind == "boundary":
         # Astra's counsel: a boundary that only WROTE ITS LABEL down proved
         # nothing. It must perform the substitution it names, or block.
@@ -2500,6 +2611,15 @@ def case_needs_scheduler(case: dict[str, Any]) -> bool:
     return any(
         step.get("kind") == "clock"
         and str(step.get("adapter") or "").startswith("scheduler-wait")
+        for step in case_steps(case)
+    )
+
+
+def case_needs_producer_clock(case: dict[str, Any]) -> bool:
+    """True when a step moves the brief producer's day (`producer-clock`)."""
+    return any(
+        step.get("kind") == "clock"
+        and str(step.get("adapter") or "").startswith("producer-clock")
         for step in case_steps(case)
     )
 
@@ -3134,7 +3254,8 @@ def run_case(
         scheduler = case_needs_scheduler(case)
         replay = case_engine_replay(case)
         hub = Hub(home, token=token, scheduler=scheduler,
-                  engine_replay=_repo_path(replay) if replay else None).start()
+                  engine_replay=_repo_path(replay) if replay else None,
+                  producer_clock=case_needs_producer_clock(case)).start()
         provenance["hub"] = {"url": hub.url, "port": hub.port,
                              "pid": hub.proc.pid if hub.proc else None,
                              "home": str(home),
@@ -3178,6 +3299,11 @@ def run_case(
                 context.close()
     finally:
         if hub is not None:
+            if hub.producer_clock_path is not None:
+                # what the producer really read, from the hub's own stdout
+                provenance["clock"]["producer_clock_reads"] = list(
+                    hub.producer_clock_reads)
+                recorder.set(provenance=provenance)
             recorder.set(hub_log=hub.lines[-40:])
             hub.stop()
         shutil.rmtree(profile, ignore_errors=True)
@@ -3242,6 +3368,8 @@ def main(argv: list[str] | None = None) -> int:
                          help="also start the real heartbeat conductor loop")
     p_serve.add_argument("--engine-replay", default=None,
                          help="a recorded provider reply to install at the seam")
+    p_serve.add_argument("--producer-clock", default=None,
+                         help="the brief producer's clock offset file (in HOME)")
 
     p_cal_serve = sub.add_parser("serve-calibration",
                                  help="(internal) the calibration fixture server")
@@ -3257,7 +3385,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.mode == "serve":
         _serve(args.port or _free_port(), args.token,
                scheduler=bool(getattr(args, "scheduler", False)),
-               engine_replay=getattr(args, "engine_replay", None))
+               engine_replay=getattr(args, "engine_replay", None),
+               producer_clock=getattr(args, "producer_clock", None))
         return 0
 
     if args.mode == "calibrate":

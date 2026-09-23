@@ -905,8 +905,12 @@ def test_no_populated_brief_case_reads_the_headline(atlas: dict) -> None:
                 problems.append(f"{case['id']}: {predicate['kind']} on the headline element")
         acts = _acts(case)
         mint = next((i for i, s in enumerate(acts) if _mints_brief_material(s)), None)
-        make = next((i for i, s in enumerate(acts)
-                     if s.get("action") == "click" and s.get("selector") == GENERATE), None)
+        # PHILO-3-03: the brief under observation is the one the LAST Generate
+        # makes. The next-day case makes an empty brief FIRST on purpose (COUNCIL
+        # A3: record the decision after an empty brief), then Generates again.
+        makes = [i for i, s in enumerate(acts)
+                 if s.get("action") == "click" and s.get("selector") == GENERATE]
+        make = makes[-1] if makes else None
         if mint is None:
             problems.append(f"{case['id']}: no brief material is minted in setup")
         elif make is None or make < mint:

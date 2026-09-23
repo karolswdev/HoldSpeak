@@ -63,6 +63,10 @@ class WebContext:
     meeting_intel_service_factory: Optional[Callable[[], Any]] = None
     meeting_aftercare_service: Optional[Any] = None
     meeting_aftercare_service_factory: Optional[Callable[[], Any]] = None
+    # PHILO-3-03: the brief producer's clock. None is the wall clock; only a
+    # test or the graph-walk rig's own hub passes one, to reach the next
+    # producer-day without moving the machine clock.
+    brief_clock: Optional[Callable[[], Any]] = None
 
     # HS-123-05: durable project and projection domain boundaries, composed once
     # by the server so their routes stay transport-only adapters.

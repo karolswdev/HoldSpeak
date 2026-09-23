@@ -462,6 +462,11 @@
             "timeout_s": {
               "type": "number",
               "exclusiveMinimum": 0
+            },
+            "advance_days": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "PHILO-3-03: adapter 'producer-clock' only -- whole days the brief producer's clock moves inside the rig's own hub (clock.python_wall); the machine clock never moves."
             }
           }
         },
