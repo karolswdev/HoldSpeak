@@ -81,7 +81,11 @@
               "j9",
               "j10",
               "j11",
-              "beyond"
+              "beyond",
+              "a1",
+              "a2",
+              "a3",
+              "a4"
             ]
           },
           "words": {
@@ -124,6 +128,16 @@
           }
         }
       }
+    },
+    "atlas_version": {
+      "type": [
+        "string",
+        "integer"
+      ]
+    },
+    "extends": {
+      "type": "string",
+      "description": "The base atlas this file extends (phase-3 extension files)."
     }
   },
   "$defs": {
@@ -187,7 +201,8 @@
             "clock",
             "fixture",
             "boundary",
-            "cli"
+            "cli",
+            "check"
           ]
         }
       },
@@ -524,10 +539,9 @@
           }
         },
         {
-          "additionalProperties": false,
+          "additionalProperties": true,
           "required": [
             "kind",
-            "substitutes",
             "substitute",
             "label"
           ],
@@ -559,9 +573,7 @@
               "exclusiveMinimum": 0
             },
             "substitute": {
-              "type": "string",
-              "minLength": 1,
-              "description": "The named substitution kind, not a sentence."
+              "type": "string"
             },
             "reply_path": {
               "type": "string",
@@ -570,6 +582,19 @@
             },
             "api": {
               "type": "object"
+            },
+            "method": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "status": {
+              "type": "integer"
+            },
+            "body": {},
+            "times": {
+              "type": "integer"
             }
           }
         },
@@ -623,6 +648,38 @@
                 }
               },
               "description": "Pins which network response the rig records as the clicked trigger's own response."
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "predicate",
+            "observe_at"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "kind": {
+              "const": "check"
+            },
+            "predicate": {
+              "type": "object",
+              "required": [
+                "kind"
+              ]
+            },
+            "observe_at": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "why": {
+              "type": "string"
+            },
+            "timeout_s": {
+              "type": "number"
             }
           }
         }
@@ -730,7 +787,8 @@
                   "fixture",
                   "boundary",
                   "cli",
-                  "tool"
+                  "tool",
+                  "check"
                 ]
               },
               "adapter": {
@@ -761,7 +819,8 @@
                 "fixture",
                 "boundary",
                 "cli",
-                "tool"
+                "tool",
+                "check"
               ]
             },
             "adapter": {
@@ -923,7 +982,11 @@
                 "j9",
                 "j10",
                 "j11",
-                "beyond"
+                "beyond",
+                "a1",
+                "a2",
+                "a3",
+                "a4"
               ]
             },
             "edge_ids": {
