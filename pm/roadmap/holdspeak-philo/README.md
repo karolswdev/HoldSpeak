@@ -1,7 +1,7 @@
 # HoldSpeak Philo documentation initiative
 
 **Last updated:** 2026-09-22 (PHILO-2-05 independent live seal).
-**Current phase:** [phase-2-the-graph](phase-2-the-graph/current-phase-status.md)
+**Current phase:** [phase-3-the-meeting-loop](phase-3-the-meeting-loop/current-phase-status.md)
 **Status:** Phase 1 delivered and merged (PR #589); Phase 2 active. PHILO-2-05 seals Astra’s independent live audit; cross-check follows all four sealed outputs. This is an audit delivery, not a claim that the owner jobs all pass.
 
 ## Vision
@@ -23,7 +23,7 @@ It does not replace the active HoldSpeak Phase 201 pointer.
 | Phase | Goal | Status | Folder |
 | --- | --- | --- | --- |
 | 1 | Source audit, maintained documentation and Desk specification | done | [Phase 1](phase-1-audit-and-specification/current-phase-status.md) |
-| 2 | The Graph — edges → interfaces → connections → actions; both brains, both passes; a council; Phase 3 for what must be built | active | [Phase 2](phase-2-the-graph/current-phase-status.md) |
+| 2 | The Graph — edges → interfaces → connections → actions; both brains, both passes; a council; Phase 3 for what must be built | done | [Phase 2](phase-2-the-graph/current-phase-status.md) |
 
 ## Operating cadence
 

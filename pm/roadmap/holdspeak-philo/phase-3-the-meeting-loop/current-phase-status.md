@@ -16,7 +16,7 @@ The owner, 2026-09-22: "should there be a need to act (and, let's be honest, the
 
 ## Status of this charter
 
-DRAFT — awaiting the owner's ruling on D1–D4 (COUNCIL.md, "Decisions for the owner"). Nothing builds before that ruling. D3 decides whether story 04 is in this phase.
+RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his recording when he chooses); D2 the lane reproduces the documented install in isolation; D3 FOUR stories (04 is in); D4 the built dark ember stays. Build starts.
 
 ## Scope
 
@@ -37,20 +37,20 @@ DRAFT — awaiting the owner's ruling on D1–D4 (COUNCIL.md, "Decisions for the
 | PHILO-3-01 | Record the decision (A1) | backlog | [story-01-record-the-decision](./story-01-record-the-decision.md) | - |
 | PHILO-3-02 | See and find the summary (A2) | backlog | [story-02-see-and-find-the-summary](./story-02-see-and-find-the-summary.md) | - |
 | PHILO-3-03 | Read the dated brief with that decision (A3) | backlog | [story-03-read-the-dated-brief](./story-03-read-the-dated-brief.md) | - |
-| PHILO-3-04 | The thought's receipt (A4 (pending the owner's D3)) | backlog | [story-04-the-thoughts-receipt](./story-04-the-thoughts-receipt.md) | - |
+| PHILO-3-04 | The thought's receipt (A4) | backlog | [story-04-the-thoughts-receipt](./story-04-the-thoughts-receipt.md) | - |
 
 ## Lanes
 
 | Lane | Stories | Owner | Checker | Worktree | Branch |
 |---|---|---|---|---|---|
-| The route and the face | 01 | TBD at ratification | the other brain | ../wt-philo-3-01 | feat/philo-3-01-decision |
-| The summary | 02 | TBD | the other brain | ../wt-philo-3-02 | feat/philo-3-02-summary |
-| The brief | 03 (after 01, 02) | TBD | the other brain | ../wt-philo-3-03 | feat/philo-3-03-brief |
-| The thought | 04 (pending D3) | TBD | the other brain | ../wt-philo-3-04 | feat/philo-3-04-thought |
+| The route and the face | 01 | Muad'Dib (Opus 5.5) | Astra | ../wt-philo-3-01 | feat/philo-3-01-decision |
+| The summary | 02 | Astra (Luna) | Muad'Dib | ../wt-philo-3-02 | feat/philo-3-02-summary |
+| The brief | 03 (after 01, 02) | Muad'Dib (Opus 5.5) | Astra | ../wt-philo-3-03 | feat/philo-3-03-brief |
+| The thought | 04 | Muad'Dib (Opus 5.5; canvas first, owner ratifies) | Astra | ../wt-philo-3-04 | feat/philo-3-04-thought |
 
 ## Where we are
 
-Chartered 2026-09-23 by the council (PHILO-2-06). Awaiting the owner's ruling.
+Chartered 2026-09-23 by the council; RATIFIED by the owner the same day (D1–D4). Lanes 01 (Muad'Dib) and 02 (Astra) start in parallel; 04's canvas is drawn in parallel; 03 follows 01 and 02.
 
 ## Active risks
 
@@ -67,8 +67,7 @@ Chartered 2026-09-23 by the council (PHILO-2-06). Awaiting the owner's ruling.
 
 ## Decisions deferred
 
-- D3 (A4 in or out) — the owner.
-- Lane owners per story — at ratification.
+- (none) D3 ruled: A4 is in; lane owners assigned above.
 
 ## Open dissents
 
