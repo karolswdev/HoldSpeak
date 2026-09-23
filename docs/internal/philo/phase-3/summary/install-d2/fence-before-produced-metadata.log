@@ -1,0 +1,54 @@
+NOTE: Edited worker transcript. Complete independent command output is retained in astra-*-raw.txt.
+
+# PHILO-3-02 packaging fence — pre-fix red run
+
+The old committed package was copied to an isolated temporary tree.  The
+current fence test was copied into that tree, the editable package was built
+there, and the test inspected the produced distribution METADATA.  No repo
+worktree or shared `.venv` was used.
+
+Command:
+
+```sh
+old_root=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.AsTjT2AUuf
+old_home=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.ur3Ima4qME
+old_venv=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.eP8AG1rtzI
+HOME="$old_home" PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH \
+  UV_CACHE_DIR=/Users/karol/Library/Caches/uv \
+  uv pip install --python "$old_venv/bin/python" -e "$old_root" pytest packaging
+HOME="$old_home" "$old_venv/bin/python" -m pytest -q \
+  "$old_root/tests/unit/test_philo3_install_contract.py"
+```
+
+Selected worker output:
+
+```text
+OLD_ROOT=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.AsTjT2AUuf
+HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.ur3Ima4qME
+VENV=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.eP8AG1rtzI
+Using CPython 3.13.11 interpreter at: /Users/karol/.local/bin/python3.13
+Creating virtual environment at: /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.eP8AG1rtzI
+Using Python 3.13.11 environment at: /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.eP8AG1rtzI
+Resolved 73 packages in 158ms
+Building holdspeak @ file:///var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.AsTjT2AUuf
+Built holdspeak @ file:///var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.AsTjT2AUuf
+Installed 73 packages in 391ms
++ holdspeak==0.4.0 (from file:///var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.AsTjT2AUuf)
+--- old produced metadata fence ---
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____________ test_produced_core_metadata_has_endpoint_client_only _____________
+
+    def test_produced_core_metadata_has_endpoint_client_only() -> None:
+        ...
+>       assert "openai" in core
+E       AssertionError: assert 'openai' in {'cryptography', 'fastapi', 'icalendar', 'keyring', 'numpy', 'pynput', ...}
+
+/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.AsTjT2AUuf/tests/unit/test_philo3_install_contract.py:34: AssertionError
+=========================== short test summary info ============================
+FAILED ../../../../../var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.AsTjT2AUuf/tests/unit/test_philo3_install_contract.py::test_produced_core_metadata_has_endpoint_client_only
+1 failed, 5 warnings in 0.34s
+OLD_FENCE_EXIT=1
+```
+
+Exit status: `1`.

@@ -1,0 +1,8 @@
+{
+  "provider": "recorded-provider",
+  "model": "philo3-summary-failure",
+  "topics": [],
+  "action_items": [],
+  "summary": "",
+  "error": "recorded provider failure at the endpoint boundary"
+}

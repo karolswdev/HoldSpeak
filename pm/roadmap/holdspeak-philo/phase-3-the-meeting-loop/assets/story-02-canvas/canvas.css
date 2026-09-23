@@ -1,0 +1,146 @@
+:root {
+  --bg: #0e0f13;
+  --surface-1: #15171d;
+  --surface-2: #1c1f27;
+  --surface-3: #242833;
+  --text: #f2f3f5;
+  --text-muted: #9ba2b0;
+  --text-faint: #8b93a3;
+  --accent: #a86e4a;
+  --accent-ink: #8a5a3d;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  --border: #2a2e3e;
+  --bevel-light: rgba(255, 255, 255, 0.14);
+  --bevel-dark: rgba(0, 0, 0, 0.4);
+  --font-display: "Space Grotesk", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+}
+
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/inter-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Space Grotesk"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/space-grotesk-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Space Grotesk"; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/space-grotesk-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Space Grotesk"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/space-grotesk-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/jetbrains-mono-latin-500-normal.woff2") format("woff2"); }
+
+* { box-sizing: border-box; font-synthesis: none; }
+html, body { width: 100%; height: 100%; margin: 0; background: var(--bg); color: var(--text); }
+body { overflow: hidden; font-family: var(--font-sans); }
+button { font-family: var(--font-mono); cursor: pointer; }
+
+/* The real Desk bands: system chrome, a scroll-owning Chair, and the dock. */
+.desk { width: 100%; height: 100%; display: flex; flex-direction: column; background: var(--bg); }
+.menu {
+  height: 54px; flex: 0 0 54px; display: flex; align-items: center; gap: 16px;
+  padding: 0 18px; background: var(--surface-2); border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: baseline; gap: 12px; font: 600 13px/1 var(--font-mono); }
+.brand span:nth-child(n + 2) { color: var(--text-muted); font-weight: 400; }
+.reach { display: inline-flex; align-items: center; gap: 7px; color: var(--text-muted); font: 12px/1 var(--font-mono); letter-spacing: .04em; }
+.reach i { width: 8px; height: 8px; border-radius: 1px; background: var(--ok); }
+.menu-spacer { flex: 1; }
+.canvas-stamp { color: var(--accent); font: 12px/1 var(--font-mono); letter-spacing: .05em; white-space: nowrap; }
+
+.work-band { min-height: 0; flex: 1 1 auto; overflow: hidden; container-type: inline-size; container-name: surface; }
+.chair { width: 100%; max-width: 960px; height: 100%; overflow-y: auto; overscroll-behavior: contain; margin: 0 auto; padding: 16px; }
+.column { width: 100%; min-height: 100%; display: flex; flex-direction: column; }
+.arrival-headline { display: grid; gap: 7px; margin-bottom: 24px; }
+.arrival-display { margin: 0; color: var(--accent); font: 650 26px/1.15 var(--font-display); }
+.arrival-next { margin: 0; color: var(--text-muted); font: 600 12px/1.35 var(--font-mono); letter-spacing: .05em; text-transform: uppercase; }
+
+.section { margin-bottom: 20px; }
+.section-label { margin-bottom: 7px; color: var(--text-faint); font: 600 12px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; }
+.section-label strong { color: var(--text); font-weight: 600; }
+.meeting-row {
+  display: grid; grid-template-columns: 76px minmax(0, 1fr) max-content; grid-template-areas: "date title actions" "date meta actions";
+  align-items: center; column-gap: 12px; row-gap: 5px; min-height: 62px; padding: 9px 0;
+  border-top: 1px solid var(--border); background: transparent;
+}
+.meeting-row[data-tone="attention"] { background: rgba(168, 110, 74, .08); }
+.meeting-date { grid-area: date; align-self: start; padding-top: 4px; color: var(--text-muted); font: 600 12px/1 var(--font-mono); letter-spacing: .04em; white-space: nowrap; }
+.meeting-title { grid-area: title; min-width: 0; color: var(--text); font: 600 15px/1.3 var(--font-sans); overflow-wrap: anywhere; }
+.meeting-meta { grid-area: meta; display: flex; min-width: 0; align-items: center; flex-wrap: wrap; gap: 6px; }
+.row-actions { grid-area: actions; display: flex; align-items: center; justify-content: flex-end; gap: 7px; min-width: 0; }
+.token, .state-chip, .egress-chip {
+  display: inline-flex; align-items: center; min-height: 20px; padding: 2px 8px; border: 1px solid var(--border);
+  background: rgba(0, 0, 0, .22); color: var(--text-muted); font: 600 12px/1.15 var(--font-mono);
+  letter-spacing: .04em; text-transform: uppercase; white-space: nowrap;
+}
+.state-chip { gap: 6px; }
+.state-chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.state-chip[data-state="off"] { color: var(--text-muted); }
+.state-chip[data-state="ran"] { color: var(--ok); }
+.state-chip[data-state="retrying"] { color: var(--warn); }
+.state-chip[data-state="failed"] { color: var(--danger); }
+.egress-chip { color: var(--accent); }
+
+.button {
+  min-height: 28px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 2px; color: var(--text);
+  background: var(--surface-2); box-shadow: inset 0 1px 0 var(--bevel-light), 0 1px 2px var(--bevel-dark);
+  font: 600 12px/1 var(--font-mono); white-space: nowrap;
+}
+.button.primary { border-color: var(--accent-ink); background: var(--accent-ink); }
+.button:hover, .button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.details { display: flex; flex-direction: column; gap: 10px; padding: 11px 0 5px 88px; }
+.well { padding: 12px; border: 1px solid var(--border); background: var(--surface-2); box-shadow: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 rgba(255, 255, 255, .07); }
+.well-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 9px; color: var(--text-faint); font: 600 12px/1.2 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; }
+.well-meta { color: var(--accent); white-space: nowrap; }
+.summary-text, .transcript-text { margin: 0; color: var(--text); font: 13px/1.55 var(--font-sans); }
+.status-facts { display: flex; flex-wrap: wrap; gap: 6px; }
+.status-fact { color: var(--text-muted); font: 600 12px/1.3 var(--font-mono); letter-spacing: .04em; text-transform: uppercase; }
+.status-fact[data-tone="warning"] { color: var(--warn); }
+.status-fact[data-tone="danger"] { color: var(--danger); }
+.transcript-text { white-space: pre-wrap; }
+
+.capture-bar { display: flex; align-items: center; gap: 8px; margin-top: auto; padding: 12px; border: 1px solid var(--border); background: var(--surface-2); box-shadow: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 rgba(255, 255, 255, .07); }
+.dock { height: 52px; flex: 0 0 52px; display: flex; align-items: center; justify-content: center; gap: 26px; padding: 0 18px; border-top: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); font: 600 12px/1 var(--font-mono); }
+
+/* The shipped mono package has 400 and 500. Keep caption/chrome weight at
+   the available 500 step instead of asking the browser for synthetic 600. */
+.brand, .arrival-next, .section-label, .meeting-date, .token, .state-chip,
+.egress-chip, .button, .well-head, .status-fact, .dock { font-weight: 500; }
+
+@container surface (max-width: 480px) {
+  .chair { padding: 12px; }
+  .arrival-headline { margin-bottom: 19px; }
+  .arrival-display { font-size: 26px; }
+  .meeting-row { grid-template-columns: minmax(0, 1fr); grid-template-areas: "title" "meta" "actions"; row-gap: 8px; min-height: 0; padding: 10px 0; }
+  .meeting-date { display: inline; padding: 0; margin-right: 8px; }
+  .meeting-title { font-size: 15px; }
+  .meeting-meta { gap: 5px; }
+  .row-actions { justify-content: flex-end; min-height: 44px; }
+  .button { min-height: 44px; padding-inline: 12px; }
+  .details { padding: 10px 0 5px; }
+  .well { padding: 10px; }
+  .capture-bar { flex-wrap: wrap; }
+  .dock { height: 52px; flex-basis: 52px; gap: 12px; padding: 0 10px; }
+}
+
+/* The shell bands are siblings of the `surface` container. Their phone
+   sizing therefore follows the real desk's device rule, while Chair content
+   above follows the named container. */
+@media (max-width: 480px) {
+  .menu { height: 54px; flex-basis: 54px; gap: 9px; padding: 0 12px; }
+  .brand { font-size: 12px; }
+  .brand span:nth-child(n + 2), .reach span { display: none; }
+  .reach { margin-left: auto; }
+  .canvas-stamp { font-size: 12px; }
+  .chair { padding: 12px; }
+  .arrival-headline { margin-bottom: 19px; }
+  .arrival-display { font-size: 26px; }
+  .meeting-row { grid-template-columns: minmax(0, 1fr); grid-template-areas: "title" "date" "meta" "actions"; row-gap: 8px; min-height: 0; padding: 10px 0; }
+  .meeting-date { grid-area: date; display: inline; padding: 0; margin-right: 8px; }
+  .meeting-title { grid-area: title; font-size: 15px; }
+  .meeting-meta { grid-area: meta; gap: 5px; }
+  .row-actions { grid-area: actions; justify-content: flex-end; min-height: 44px; }
+  .button { min-height: 44px; padding-inline: 12px; }
+  .details { padding: 10px 0 5px; }
+  .well { padding: 10px; }
+  .dock { height: 52px; flex-basis: 52px; gap: 12px; padding: 0 10px; }
+}

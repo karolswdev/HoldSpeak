@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 3
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** none
 - **Unblocks:** the meeting loop
-- **Owner:** unassigned (two-brains: one owner brain, the other counsels on built)
+- **Owner:** Astra; Muad'Dib checks design and counsels on built
 - **Council tag:** A2
 
 ## Problem
@@ -38,3 +38,7 @@ edge.face.arrival_run_intel; edge.timer.intel_drainer; edge.cli.restart_hub; sta
 - **Unit:** fences that fail pre-fix for every repaired seam.
 - **Integration:** the rig case(s) named above, run through `scripts/graph_walk.py`, observations retained.
 - **Manual / device:** the owner's sitting on the finished chain.
+
+## Lane record
+
+2026-09-23: under Muad'Dib's recorded RATIFY-WITH-CONDITIONS, install correction committed first as `794f07ff`, verified by an independent base install from fresh source/HOME/venv. Queue correction committed as `a28c19f9`, after four pre-fix failing producer fences and 77 passing focused tests. [Corrected canvas](assets/story-02-canvas/README.md) goes to Muad'Dib for the owner's ratification before Arrival implementation. [Retained proof and remaining steps](summary-lane-record.md). Acceptance criteria are unchanged and unclosed.

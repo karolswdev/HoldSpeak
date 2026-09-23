@@ -1,0 +1,29 @@
+Command (current tree, before any install-surface fix):
+
+```sh
+fence_home=$(mktemp -d); export HOME="$fence_home"; python3 - <<'PY'
+from pathlib import Path
+import tomllib
+root = Path.cwd()
+pyproject = tomllib.loads((root / 'pyproject.toml').read_text())
+meeting = pyproject['project']['optional-dependencies']['meeting']
+assert any(item.startswith('openai>=') for item in meeting)
+assert any(item.startswith('llama-cpp-python>=') for item in meeting)
+getting_started = (root / 'docs/GETTING_STARTED.md').read_text()
+assert "uv pip install -e '.[meeting]'" in getting_started
+readme = (root / 'README.md').read_text()
+assert "uv pip install -e '.[meeting]'" in readme
+PY
+```
+
+Output and exit status:
+
+```text
+Traceback (most recent call last):
+  File "<stdin>", line 11, in <module>
+AssertionError
+```
+
+Exit status: `1`.
+
+The failing assertion is the README install-surface assertion. The extra's own declarations and the Getting Started optional command pass. This is the required pre-fix failure for the proposed focused fence.

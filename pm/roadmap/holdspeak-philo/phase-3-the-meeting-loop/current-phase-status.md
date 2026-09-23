@@ -35,7 +35,7 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | PHILO-3-01 | Record the decision (A1) | backlog | [story-01-record-the-decision](./story-01-record-the-decision.md) | - |
-| PHILO-3-02 | See and find the summary (A2) | backlog | [story-02-see-and-find-the-summary](./story-02-see-and-find-the-summary.md) | - |
+| PHILO-3-02 | See and find the summary (A2) | in-progress | [story-02-see-and-find-the-summary](./story-02-see-and-find-the-summary.md) | - |
 | PHILO-3-03 | Read the dated brief with that decision (A3) | backlog | [story-03-read-the-dated-brief](./story-03-read-the-dated-brief.md) | - |
 | PHILO-3-04 | The thought's receipt (A4) | backlog | [story-04-the-thoughts-receipt](./story-04-the-thoughts-receipt.md) | - |
 
@@ -52,12 +52,14 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 
 Chartered 2026-09-23 by the council; RATIFIED by the owner the same day (D1–D4). Lanes 01 (Muad'Dib) and 02 (Astra) start in parallel; 04's canvas is drawn in parallel; 03 follows 01 and 02.
 
+PHILO-3-02 checkpoint, 2026-09-23: install committed first as `794f07ff`, then queue as `a28c19f9`, both through the gate without closing a story. The independent base install from fresh source/HOME/venv passes; 17 install/client and 77 queue tests pass, with pre-fix failures retained. The corrected [eight canvas boards](assets/story-02-canvas/README.md), with four additional phone footer views, are ready for Muad'Dib to publish for the owner's ratification. The Arrival face remains held. Technical summary completion and owner usefulness remain separately unverified. See [lane record](summary-lane-record.md) and [check record](checks/summary-design-muaddib.md).
+
 ## Active risks
 
 | Risk | Likelihood | Mitigation | Stop signal |
 |---|---|---|---|
 | The summary is technically complete but useless to the owner | medium | synthetic material with planted decisions; usefulness reported separately; his sitting decides | he says it is not useful |
-| The documented install lacks the model client | unknown | reproduce the install in isolation first (D2) | the isolated install fails the first summary |
+| The documented install lacks the model client | corrected at package boundary | D2 before/after install retained; `794f07ff` includes endpoint client in core | real summary still requires the later LAN rig proof |
 | The producer-clock boundary needs product change | medium | the smallest mechanism that moves the producer's date under test; never the machine clock | no mechanism without touching production code paths beyond a seam |
 | Scope creep from the deferred list | high | the deferred list is explicit; a new story needs the owner's word | a fifth story appears |
 

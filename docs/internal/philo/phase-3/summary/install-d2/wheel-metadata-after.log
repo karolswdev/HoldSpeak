@@ -1,0 +1,31 @@
+NOTE: Edited worker transcript. Complete independent command output is retained in astra-*-raw.txt.
+
+# PHILO-3-02 produced wheel metadata
+
+Command:
+
+```sh
+HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.SaC3ghF1rN \
+PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH \
+UV_CACHE_DIR=/Users/karol/Library/Caches/uv HOLDSPEAK_SKIP_WEB_BUILD=1 \
+uv build --wheel --out-dir \
+  /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.hOu1dSlamn --no-progress
+unzip -p /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.hOu1dSlamn/holdspeak-0.4.0-py3-none-any.whl \
+  '*/METADATA' | rg '^(Name|Version|Requires-Dist):' | \
+  rg 'openai|llama-cpp-python|resemblyzer|^(Name|Version):'
+```
+
+Output and exit status:
+
+```text
+Building wheel...
+Successfully built /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.hOu1dSlamn/holdspeak-0.4.0-py3-none-any.whl
+Name: holdspeak
+Version: 0.4.0
+Requires-Dist: openai>=1.0.0
+Requires-Dist: llama-cpp-python>=0.3.34; extra == 'dictation-llama'
+Requires-Dist: openai>=1.0.0; extra == 'dictation-openai'
+Requires-Dist: llama-cpp-python>=0.3.34; extra == 'meeting'
+Requires-Dist: resemblyzer>=0.1.3; extra == 'meeting'
+WHEEL_METADATA_EXIT=0
+```
