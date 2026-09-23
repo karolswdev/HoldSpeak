@@ -47,3 +47,27 @@ OpenAPI: 569 paths
 110 passed in 38.78s
 API reference drift: docs/generated/api-reference.json
 ```
+
+### Captured run — 2026-09-23T06:12:38Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.GK3WlhHRGV PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm sh -c set -o pipefail; (cd web && npx vitest run src/desk/thought-workspace src/desk/pullouts/editors src/desk/surface/__tests__/receiptTypeFloor.test.ts) && uv run --extra dev pytest -q -p no:cacheprovider tests/unit/test_refinement_thought_service.py tests/unit/test_doc_drift_guard.py tests/unit/test_philo_graph_atlas.py tests/e2e/test_philo304_thought_foot_reflow.py && uv run python scripts/philo_api_reference.py --check && uv run python scripts/philo_openapi_reference.py --check`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 3b9209aa6998973d64462fa55b3b96b44881c931
+
+```text
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-3-04/web
+
+
+ Test Files  7 passed (7)
+      Tests  46 passed (46)
+   Start at  00:12:38
+   Duration  3.57s (transform 1.33s, setup 767ms, import 2.22s, tests 4.64s, environment 2.23s)
+
+........................................................................ [ 65%]
+......................................                                   [100%]
+110 passed in 39.24s
+API reference checked
+OpenAPI: 569 paths
+```

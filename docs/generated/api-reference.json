@@ -14498,6 +14498,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/uat/test_seeding.py",
         "tests/unit/test_web_routes_primitives.py"
@@ -14568,6 +14569,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/uat/test_seeding.py",
         "tests/unit/test_web_routes_primitives.py"
@@ -14633,6 +14635,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
@@ -14697,6 +14700,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
@@ -14770,6 +14774,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
@@ -14832,6 +14837,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
@@ -14900,6 +14906,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
@@ -14970,6 +14977,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
@@ -35906,6 +35914,7 @@
         "tests/e2e/test_hs145_door_polish_glass.py",
         "tests/e2e/test_hs170_arrival_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -35984,6 +35993,7 @@
         "tests/e2e/test_hs145_door_polish_glass.py",
         "tests/e2e/test_hs170_arrival_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36308,6 +36318,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36387,6 +36398,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36457,6 +36469,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36542,6 +36555,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36609,6 +36623,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36686,6 +36701,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36766,6 +36782,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36846,6 +36863,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36923,6 +36941,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36994,6 +37013,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37078,6 +37098,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37167,6 +37188,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37234,6 +37256,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37314,6 +37337,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
+        "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
