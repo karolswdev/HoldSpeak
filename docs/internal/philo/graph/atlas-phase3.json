@@ -41,6 +41,17 @@
           "adapter": "ui-pointer"
         },
         {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any fault or reload (a reload that races the PUT /api/setup/onboarding brings the first-value gate back)"
+        },
+        {
           "kind": "ui",
           "action": "click",
           "selector": "[aria-controls=desk-tool-shelf]",
@@ -218,7 +229,7 @@
       "state_id": "state.decisions.desk.create_failed",
       "applicability": "applicable",
       "preconditions": [
-        "a fresh isolated HOME; the hub fault is a BOUNDARY SUBSTITUTION: the browser answers the one POST /api/decisions with 500 (Playwright page.route); the hub never sees it"
+        "a fresh isolated HOME; BOUNDARY SUBSTITUTION: the browser answers the one POST /api/decisions and every GET /api/decisions with 500 (Playwright page.route, hub origin only) until the lift; the hub never sees them"
       ],
       "setup": [
         {
@@ -236,6 +247,17 @@
           "adapter": "ui-pointer"
         },
         {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any fault or reload (a reload that races the PUT /api/setup/onboarding brings the first-value gate back)"
+        },
+        {
           "kind": "boundary",
           "label": "hub fault on create",
           "substitute": "http_fault",
@@ -246,6 +268,19 @@
             "error": "substituted hub fault"
           },
           "times": 1,
+          "adapter": "browser-boundary"
+        },
+        {
+          "kind": "boundary",
+          "label": "hub fault on read",
+          "substitute": "http_fault",
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 500,
+          "body": {
+            "error": "substituted hub fault"
+          },
+          "times": 1000,
           "adapter": "browser-boundary"
         },
         {
@@ -261,14 +296,46 @@
           "selector": "[aria-controls=desk-palette-listbox]",
           "value": "New Decision",
           "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[id='desk-palette-option-desk.new-decision']",
+          "adapter": "ui-pointer",
+          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and ⌘⇧N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "CREATE DECISION FAILED · HTTP 500"
+          },
+          "observe_at": ".write-receipt",
+          "why": "the failed create is named, and the read failure that follows (refresh) does not replace it or its Retry"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "decisions",
+            "value": []
+          },
+          "observe_at": "protocol: GET /api/decisions",
+          "why": "the hub holds no decision: the one POST never reached it"
+        },
+        {
+          "kind": "boundary",
+          "label": "hub back",
+          "substitute": "http_fault_lift",
+          "adapter": "browser-boundary"
         }
       ],
       "trigger": {
         "kind": "ui",
         "action": "click",
-        "selector": "[id='desk-palette-option-desk.new-decision']",
+        "selector": ".write-receipt-retry",
         "adapter": "ui-pointer",
-        "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and ⌘⇧N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)",
+        "why": "the receipt's Retry, a library Button (useWriteReceipt.ts receiptElement)",
         "trigger_route": {
           "method": "POST",
           "path": "/api/decisions"
@@ -276,11 +343,14 @@
       },
       "expected": {
         "predicate": {
-          "kind": "text_contains",
-          "value": "CREATE DECISION FAILED · HTTP 500"
+          "kind": "protocol_status",
+          "method": "POST",
+          "path": "/api/decisions",
+          "status": 201,
+          "body_contains": "New decision"
         },
-        "observe_at": ".write-receipt",
-        "words": "the face names the failed create on the desk receipt line with Retry (library Button): dataSlice.ts reportCreateFailure -> useWriteReceipt.ts receiptElement"
+        "observe_at": "protocol: POST /api/decisions",
+        "words": "after the create and the reads fail and then recover, the rendered Retry re-issues the create and the hub answers 201 with the new record"
       },
       "completion_bound_s": 30,
       "viewports": [
@@ -297,7 +367,7 @@
       "state_id": "state.decisions.desk.read_failed",
       "applicability": "applicable",
       "preconditions": [
-        "a fresh isolated HOME; the hub fault is a BOUNDARY SUBSTITUTION: the browser answers every GET /api/decisions with 500 (Playwright page.route); the hub never sees them"
+        "a fresh isolated HOME; BOUNDARY SUBSTITUTION: the browser answers every GET /api/decisions with 500 (Playwright page.route, hub origin only) until the lift; the hub never sees them"
       ],
       "setup": [
         {
@@ -315,6 +385,17 @@
           "adapter": "ui-pointer"
         },
         {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any fault or reload (a reload that races the PUT /api/setup/onboarding brings the first-value gate back)"
+        },
+        {
           "kind": "boundary",
           "label": "hub fault on read",
           "substitute": "http_fault",
@@ -326,20 +407,42 @@
           },
           "times": 1000,
           "adapter": "browser-boundary"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "READ DECISIONS FAILED · HTTP 500"
+          },
+          "observe_at": ".write-receipt",
+          "why": "a failed decisions read is named with Retry"
+        },
+        {
+          "kind": "boundary",
+          "label": "hub back",
+          "substitute": "http_fault_lift",
+          "adapter": "browser-boundary"
         }
       ],
       "trigger": {
         "kind": "ui",
-        "action": "reload",
-        "adapter": "ui-navigation"
+        "action": "click",
+        "selector": ".write-receipt-retry",
+        "adapter": "ui-pointer",
+        "why": "the receipt's Retry, a library Button (useWriteReceipt.ts receiptElement)"
       },
       "expected": {
         "predicate": {
-          "kind": "text_contains",
-          "value": "READ DECISIONS FAILED · HTTP 500"
+          "kind": "text_absent",
+          "value": "READ DECISIONS FAILED"
         },
-        "observe_at": ".write-receipt",
-        "words": "a failed decisions read is named on the desk receipt line with Retry (library Button): api.ts loadAll `failed` -> dataSlice.ts refresh -> reportWriteFailure"
+        "observe_at": ".desk-menubar",
+        "words": "after the lift, Retry reads again and the READ receipt clears. A background refresh would clear it too; the trigger is the Retry press."
       },
       "completion_bound_s": 30,
       "viewports": [

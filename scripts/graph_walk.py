@@ -79,13 +79,15 @@ A step is `{"kind": <one of STEP_KINDS>, ...}`:
             with the predicate and the location named.
   boundary  {label, substitute: "engine_reply", reply, api?}
             | {label, substitute: "http_fault", method, path, status, body?, times?}
+            | {label, substitute: "http_fault_lift"}
             A substitution must be PERFORMED, never merely labelled:
             `engine_reply` installs a recorded provider reply at the product's
             own seam INSIDE the hub process, and the step blocks if the hub
             was not booted with it. The observation is labelled
             `engine_mode: replayed`. `http_fault` answers the next `times`
             matching same-origin requests with `status` in the BROWSER
-            (Playwright page.route); the hub never sees them.
+            (Playwright page.route); the hub never sees them. Only the
+            hub's own origin matches. `http_fault_lift` removes them.
 
 Every step carries an `adapter` string naming the real entry point it drives
 (`ui-pointer`, `http-route`, `scheduler-entry`, …); it is recorded, never
@@ -2263,12 +2265,14 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
             "kind": "boundary", "label": label, "substitute": substitution,
             "adapter": step.get("adapter", "labelled-substitution")}
         if substitution == "http_fault":
-            return _http_fault(step, page, record, provenance)
+            return _http_fault(step, page, record, provenance, hub)
+        if substitution == "http_fault_lift":
+            return _http_fault_lift(page, record, provenance)
         if substitution != "engine_reply":
             raise Blocked(
                 f"boundary substitution {substitution!r} (label {label!r}) is not "
                 "implemented; a label alone substitutes nothing. The implemented "
-                "substitutions are 'engine_reply' and 'http_fault'.")
+                "substitutions are 'engine_reply', 'http_fault' and 'http_fault_lift'.")
         if hub is None or getattr(hub, "engine_replay", None) is None:
             raise Blocked(
                 "the recorded provider reply is NOT installed in the hub "
@@ -2297,8 +2301,13 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
     raise Blocked(f"step kind {kind!r} has no runner in this rig")  # pragma: no cover
 
 
+def _origin(url: str) -> tuple[str, str]:
+    parts = urllib.parse.urlsplit(url)
+    return parts.scheme, parts.netloc
+
+
 def _http_fault(step: dict[str, Any], page: Any, record: dict[str, Any],
-                provenance: dict[str, Any]) -> dict[str, Any]:
+                provenance: dict[str, Any], hub: Any = None) -> dict[str, Any]:
     """PHILO-3-01: a hub fault at the BROWSER boundary, performed, not labelled.
 
     `{"substitute": "http_fault", "method", "path", "status", "body"?,
@@ -2316,10 +2325,14 @@ def _http_fault(step: dict[str, Any], page: Any, record: dict[str, Any],
     body = json.dumps(step.get("body") or {"error": f"substituted HTTP {status}"})
     times = int(step.get("times", 1))
     hits: list[str] = []
+    # same-origin only: the hub's origin (else the page's own), never a
+    # third-party request that happens to share the path
+    origin = _origin(str(getattr(hub, "url", None) or page.url))
 
     def handler(route: Any) -> None:
         request = route.request
         if (request.method.upper() == method
+                and _origin(request.url) == origin
                 and urllib.parse.urlsplit(request.url).path == path
                 and len(hits) < times):
             hits.append(request.url)
@@ -2328,12 +2341,26 @@ def _http_fault(step: dict[str, Any], page: Any, record: dict[str, Any],
         route.fallback()
 
     page.route("**/*", handler)
-    record.update({"method": method, "path": path, "status": status,
+    record.update({"origin": "://".join(origin),
+                   "method": method, "path": path, "status": status,
                    "times": times, "seam": "playwright page.route (browser boundary)",
                    "fulfilled": hits})
     provenance.setdefault("boundary_substitutions", []).append(
         {"label": record["label"], "substitute": "http_fault", "method": method,
          "path": path, "status": status, "times": times})
+    return record
+
+
+def _http_fault_lift(page: Any, record: dict[str, Any],
+                     provenance: dict[str, Any]) -> dict[str, Any]:
+    """PHILO-3-01: remove every `http_fault` this page carries; the hub answers again."""
+    if page is None:
+        raise Blocked("http_fault_lift needs a page: the substitution lives at the "
+                      "browser boundary")
+    page.unroute("**/*")
+    record["seam"] = "playwright page.unroute (browser boundary)"
+    provenance.setdefault("boundary_substitutions", []).append(
+        {"label": record["label"], "substitute": "http_fault_lift"})
     return record
 
 

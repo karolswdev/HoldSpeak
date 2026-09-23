@@ -103,7 +103,7 @@
   }
   .desk-next .surface-footer-egress { grid-area: egress; }
   .desk-next .surface-footer-verbs { grid-area: verbs; }
-  .desk-next .surface-footer-receipt { grid-area: receipt; height: 27px; }
+  .desk-next .surface-footer-receipt { grid-area: receipt; min-height: 27px; }
   .desk-next .surface-footer-receipt:empty { display: none; }
 }
 
@@ -367,4 +367,23 @@
   background: var(--danger-soft, var(--accent-tint));
   color: var(--danger-signal);
   outline: none;
+}
+
+/* PHILO-3-01 — a footer that holds a write receipt gives it the full
+   second row. In the middle column (a 400 px pullout at 1440, any pullout
+   at 393 -- a pullout's footer sits in no `surface` container, so the
+   narrow rule above never reaches it) the label clipped to "ACK…" and the
+   cause was lost. The named failure and its verbs get the whole row. */
+.desk-next .surface-footer:has(.write-receipt) {
+  height: auto;
+}
+.desk-next .surface-footer-layout:has(.write-receipt) {
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  grid-template-areas: "egress . verbs" "receipt receipt receipt";
+  row-gap: 3px;
+  height: auto;
+  padding-block: 4px;
+}
+.desk-next .surface-footer-layout:has(.write-receipt) .surface-footer-receipt {
+  justify-content: flex-start;
 }

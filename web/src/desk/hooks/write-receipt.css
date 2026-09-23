@@ -14,7 +14,8 @@
   border: 1px solid var(--danger-signal);
   box-shadow: var(--desk-window-etch);
   font-family: var(--font-mono);
-  font-size: 10px;
+  /* PHILO-3-01: the type-scale ruling's 12 px floor (UX-CANON). */
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -37,9 +38,28 @@
 
 .write-receipt-retry,
 .write-receipt-dismiss {
-  height: 18px;
-  font-size: 9px;
+  height: 20px;
+  font-size: 12px;
   padding: 0 6px;
+}
+
+/* PHILO-3-01: at the narrow desk the verbs keep the library's 24 px face
+   and 44 px owned area (global.css, HS-202-05). The strip grows in layout
+   to hold the areas (the ruling: allow layout growth, reject a clipped
+   area), and the label wraps above the verbs when the row is short. */
+@media (max-width: 420px) {
+  .write-receipt {
+    height: auto;
+    min-height: 24px;
+    flex-wrap: wrap;
+  }
+  .write-receipt-label {
+    min-width: min(100%, max-content);
+  }
+  .write-receipt-retry,
+  .write-receipt-dismiss {
+    height: 24px;
+  }
 }
 
 .write-receipt-row {
@@ -55,12 +75,15 @@
   overflow: hidden;
 }
 .desk-next .desk-menubar .write-receipt {
-  height: 20px;
+  height: 24px;
   max-width: 46vw;
 }
-.desk-next .desk-menubar .write-receipt .desk-chip {
-  min-height: 16px;
+/* PHILO-3-01: the verbs are the library Button (no longer .desk-chip). The
+   bar's own button rule would give them 22 px in a 24 px strip; they keep
+   the 12 px floor and fit inside the strip, so no edge is clipped. */
+.desk-next .desk-menubar .write-receipt .btn {
+  min-height: 20px;
+  height: 20px;
   padding: 0 6px;
-  font-size: 9px;
-  color: var(--danger-signal);
+  font-size: 12px;
 }

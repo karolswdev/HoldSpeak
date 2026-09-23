@@ -1,0 +1,132 @@
+{
+  "id": "obs-20260923T065248Z-case.a1.decisions_read.failure_named-muaddib-1440",
+  "run_id": "20260923T065248Z-case.a1.decisions_read.failure_named-muaddib-1440",
+  "case_id": "case.a1.decisions_read.failure_named",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "a1",
+  "edge_ids": [
+    "edge.route.decisions_list"
+  ],
+  "state_id": "state.decisions.desk.read_failed",
+  "provenance": {
+    "revision": "328f2c1c81fc6fc18c35540612675a112ae9a68c",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f3937b51eb226409836b7d0ffc1d1bc99fac5a0a0d01013cd6dc395cfe3bab77",
+      "assets": [
+        "index-d1Cgo_LD.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:50820",
+      "port": 50820,
+      "pid": 45480,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-qui1kutf",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-qui1kutf/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T06:52:48.388737+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [
+      {
+        "label": "hub fault on read",
+        "substitute": "http_fault",
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 500,
+        "times": 1000
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "75bef4b6ffc2b4a55a0c33e8fb51d2ac2aedeecdf317b8e2ee91603df47b34ce",
+      "version": "phase3-01"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "boundary",
+      "label": "hub fault on read",
+      "substitute": "http_fault",
+      "adapter": "browser-boundary",
+      "origin": "http://127.0.0.1:50820",
+      "method": "GET",
+      "path": "/api/decisions",
+      "status": 500,
+      "times": 1000,
+      "seam": "playwright page.route (browser boundary)",
+      "fulfilled": [
+        "http://127.0.0.1:50820/api/decisions"
+      ]
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    }
+  ],
+  "preconditions": [],
+  "variables": {},
+  "trigger": null,
+  "diff": {},
+  "before": null,
+  "after": null,
+  "initial_feedback": null,
+  "terminal_outcome": null,
+  "verdict": "blocked",
+  "notes": [
+    "BLOCKED: precondition not met: {'kind': 'text_contains', 'value': 'READ DECISIONS FAILED \u00b7 HTTP 500'} at '.write-receipt' \u2014 'READ DECISIONS FAILED \u00b7 HTTP 500' NOT in observe_at text"
+  ],
+  "complete": true,
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-qui1kutf/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:50820"
+  ]
+}

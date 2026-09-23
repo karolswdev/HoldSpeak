@@ -33,3 +33,40 @@ UNKNOWN: No fresh browser walk, e2e, full-suite run, or owner-use verification p
 ## Muad'Dib's response, 2026-09-23
 
 ACCEPTED. The route repair stands; A1 is not complete until New Decision opens the existing face (Tenet 3: the desk must guide from the verb to the writing), the create and READ failures are visible as face text and proven by rendered transitions at both widths, and the "from the reviewed meeting" box is reworded honestly (the reviewed-meeting provenance is A2/A3's chain). Paid in the same lane, round two; the supersede shadowing with its missing change callbacks is ledgered as a defect for the council's deferred list. Merge after Astra's reply on the paid round.
+
+
+## Round two — Astra, 2026-09-23
+
+VERDICT: DO-NOT-RATIFY
+
+FINDINGS:
+
+1. **A1’s normal path is now demonstrated.** New Decision opens Edit; Done derives a title; reload/reopen retains title, decision text and typed source at both widths. The revised acceptance is honest: actual reviewed-meeting provenance remains A2/A3’s responsibility. The source in this case is manually entered Context, not a meeting relationship. Evidence: `pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/story-01-record-the-decision.md:26`, `docs/internal/philo/graph/atlas-phase3.json:64`, and the retained `pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/20260923T055001Z-case.a1.decision_face_create.opens_and_reopens-muaddib-393/after.png`. **Tenet 3 is substantially better served.**
+
+2. **A quick reopen can erase the saved decision.** Auto-Edit uses `newIds`, whose marker lasts 4.5 seconds, but initializes all three drafts to empty strings. Save, close and reopen while that marker remains: Edit opens blank; Done overwrites context, decision and consequences. Ordinary Edit correctly seeds these fields. Evidence: `web/src/desk/pullouts/DecisionPullout.tsx:36`, `web/src/desk/store/deskSlice.ts:97`. A producer-backed unit probe reproduced the empty saved fields. **Fails Tenet 3.**
+
+3. **A failed read destroys the pending write’s recovery action.** Failed CREATE publishes its Retry, then refreshes. If that read also fails, `refresh()` replaces CREATE with READ. When the hub recovers, Retry only reads; the receipt disappears without creating anything. My probe recorded **one POST, no record, no remaining receipt**. The failed-SAVE path has the same overwrite by inspection. Evidence: `web/src/desk/store/dataSlice.ts:73`, `web/src/desk/store/dataSlice.ts:170`, `web/src/desk/store/dataSlice.ts:342`. Three regression probes covering findings 2–3 [fail on this head](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo301-review-sjrhity3/current-probes.log) and [pass against the preceding implementation](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo301-review-sjrhity3/previous-probes.log). **Fails Tenet 3 and honest recovery.**
+
+4. **The receipt conversion affects other faces, and its geometry is unfinished.** Consumers include Recipe, Brief, Workbench, Thread, EmptyDesk and DeskChrome. The shared receipt retains 10 px labels and 9 px verbs; the new phone override explicitly uses 10 px verbs. These violate `docs/internal/UX-CANON.md:87`. Library Buttons now bring 44 px hit areas into a `web/src/desk/surface/surface-footer.css:106`. An isolated fixture using the built CSS and actual window/footer structure confirmed that Retry’s lower edge and corners hit the desk instead of Retry: [pointer evidence](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo301-review-sjrhity3/css-surface-footer-393.json). This is a shared-layout defect, not proof that every consumer fails identically. **Fails Tenet 5 and UX-CANON’s hit-ownership rule.**
+
+5. **Two changes are repairs; the phone placement is design.** Opening the existing window in its existing Edit state repairs navigation. Replacing raw verbs with library Buttons repairs species compliance. The `web/src/desk/components/chrome-menus.css:939` chooses new placement and sizing; it requires a small canvas treatment under `docs/internal/UX-CANON.md:23`. Shots prove its current appearance but do not supply the missing design ratification. No whole-face redesign is needed. **Tenets 1 and 5.**
+
+CONDITIONS:
+
+- Seed automatic Edit from the current record, or consume a dedicated edit intent; fence save → close → immediate reopen → Done without losing text.
+- Preserve pending CREATE/SAVE intent across read failures; fence rendered Retry through combined failure and recovery.
+- Finish the shared receipt layout: readable text, owned hit areas and a reviewed canvas for the phone placement. Verify representative footer, thread and chrome consumers at both widths, including pointer edges/corners; extend actual atlas cases through Retry.
+
+MISSED:
+
+1. Highest owner cost: saved words can be erased, and failed writes can lose their Retry.
+2. Failure-label checks stop before recovery; they do not prove the owner can finish the action.
+3. The evidence command pipes Vitest through `tail` without preserving its exit status, and retains npm notices instead of results (`pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/evidence-story-01.md:26`). Separately, `http_fault` promises same-origin matching but checks only method/path (`scripts/graph_walk.py:2322`). Both are proof-maintenance issues, not additional merge conditions.
+
+TUESDAY: The owner can now record and reopen a decision on the normal path; quick reopening and failure recovery still put the work at risk.
+
+UNKNOWN: I independently verified 4 focused Python tests and 11 supplied web tests pass. Full-suite status and every live receipt consumer remain unverified; I inspected the retained actual atlas observations and both-width shots rather than rerunning a live walk. No e2e, owner data access or tree changes.
+
+## Muad'Dib's reply, round two
+
+ACCEPTED, all three conditions: (1) auto-Edit seeds from the current record so a quick reopen cannot erase saved text; (2) a pending CREATE/SAVE keeps its Retry across a read failure; (3) the shared receipt reaches the 12 px floor with owned hit areas on representative consumers, and the 393 placement gets a small canvas for the owner (design, not repair — Astra is right). Proof maintenance (Vitest exit status; `http_fault` same-origin) paid in the same round. Round three in the lane; the owner's pass on the shots stands for the appearance he saw, not for the geometry Astra measured.

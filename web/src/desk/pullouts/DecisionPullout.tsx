@@ -33,22 +33,22 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
     `# Consequences\n\n${String(ir.consequencesMarkdown || "")}`,
   ].join("\n\n");
 
+  // PHILO-3-01 — every draft starts from the current record, so an Edit
+  // that opens by itself (a decision just created) never writes blanks
+  // over saved text.
+  const draftFromRecord = () => ({
+    context_markdown: String(ir.contextMarkdown || ""),
+    decision_markdown: String(ir.decisionMarkdown || ""),
+    consequences_markdown: String(ir.consequencesMarkdown || ""),
+  });
   // PHILO-3-01 — a decision just created opens in Edit.
   const [editingDecision, setEditingDecision] = useState(() =>
     useDesk.getState().newIds.includes(o.id),
   );
-  const [decisionDraft, setDecisionDraft] = useState({
-    context_markdown: "",
-    decision_markdown: "",
-    consequences_markdown: "",
-  });
+  const [decisionDraft, setDecisionDraft] = useState(draftFromRecord);
 
   const startDecisionEdit = () => {
-    setDecisionDraft({
-      context_markdown: String(ir.contextMarkdown || ""),
-      decision_markdown: String(ir.decisionMarkdown || ""),
-      consequences_markdown: String(ir.consequencesMarkdown || ""),
-    });
+    setDecisionDraft(draftFromRecord());
     setEditingDecision(true);
   };
   const commitDecisionEdit = () => {

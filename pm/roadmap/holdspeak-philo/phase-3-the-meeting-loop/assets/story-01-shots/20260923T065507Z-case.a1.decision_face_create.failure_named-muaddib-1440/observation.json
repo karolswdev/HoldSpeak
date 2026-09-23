@@ -1,0 +1,767 @@
+{
+  "id": "obs-20260923T065507Z-case.a1.decision_face_create.failure_named-muaddib-1440",
+  "run_id": "20260923T065507Z-case.a1.decision_face_create.failure_named-muaddib-1440",
+  "case_id": "case.a1.decision_face_create.failure_named",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "a1",
+  "edge_ids": [
+    "edge.route.decisions_create"
+  ],
+  "state_id": "state.decisions.desk.create_failed",
+  "provenance": {
+    "revision": "328f2c1c81fc6fc18c35540612675a112ae9a68c",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f3937b51eb226409836b7d0ffc1d1bc99fac5a0a0d01013cd6dc395cfe3bab77",
+      "assets": [
+        "index-d1Cgo_LD.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:50973",
+      "port": 50973,
+      "pid": 47125,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jqe1makx",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jqe1makx/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T06:55:07.436968+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [
+      {
+        "label": "hub fault on create",
+        "substitute": "http_fault",
+        "method": "POST",
+        "path": "/api/decisions",
+        "status": 500,
+        "times": 1
+      },
+      {
+        "label": "hub fault on read",
+        "substitute": "http_fault",
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 500,
+        "times": 1000
+      },
+      {
+        "label": "hub back",
+        "substitute": "http_fault_lift"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "b0ad56e14ecd630c7804ddbae2df35902cba23995662ae124c8793b0aeabab58",
+      "version": "phase3-01"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.97,
+      "holds": true,
+      "reading": "arrival_required = False, wanted False"
+    },
+    {
+      "kind": "boundary",
+      "label": "hub fault on create",
+      "substitute": "http_fault",
+      "adapter": "browser-boundary",
+      "origin": "http://127.0.0.1:50973",
+      "method": "POST",
+      "path": "/api/decisions",
+      "status": 500,
+      "times": 1,
+      "seam": "playwright page.route (browser boundary)",
+      "fulfilled": [
+        "http://127.0.0.1:50973/api/decisions"
+      ]
+    },
+    {
+      "kind": "boundary",
+      "label": "hub fault on read",
+      "substitute": "http_fault",
+      "adapter": "browser-boundary",
+      "origin": "http://127.0.0.1:50973",
+      "method": "GET",
+      "path": "/api/decisions",
+      "status": 500,
+      "times": 1000,
+      "seam": "playwright page.route (browser boundary)",
+      "fulfilled": [
+        "http://127.0.0.1:50973/api/decisions"
+      ]
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-desk.new-decision']",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": ".write-receipt",
+      "predicate": {
+        "kind": "text_contains",
+        "value": "CREATE DECISION FAILED \u00b7 HTTP 500"
+      },
+      "adapter": "observation",
+      "waited_s": 0.3,
+      "holds": true,
+      "reading": "'CREATE DECISION FAILED \u00b7 HTTP 500' in observe_at text"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/decisions",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "decisions",
+        "value": []
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "decisions = [], wanted []"
+    },
+    {
+      "kind": "boundary",
+      "label": "hub back",
+      "substitute": "http_fault_lift",
+      "adapter": "browser-boundary",
+      "seam": "playwright page.unroute (browser boundary)"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME; BOUNDARY SUBSTITUTION: the browser answers the one POST /api/decisions and every GET /api/decisions with 500 (Playwright page.route, hub origin only) until the lift; the hub never sees them",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": ".write-receipt-retry",
+    "done": true
+  },
+  "diff": {
+    "focus": {
+      "before": "body",
+      "after": "div#pullout:decision_c49b3ddf04d9"
+    },
+    "focus_label": {
+      "before": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nCREATE DECISIO",
+      "after": "New decision"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "New decision",
+          "rect": {
+            "x": 1059,
+            "y": 64,
+            "w": 400,
+            "h": 529
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "41cc9c059cc951d96ac03d7c98ffd616027e622e669d1d70ac5c0a55f2faf66d",
+      "after": "f9c38dc9d6e647ac370ad9020ff673771a211ac288053368388645c87b5de646"
+    },
+    "document_text_len": {
+      "before": 402,
+      "after": 482
+    },
+    "values": {
+      "before": [],
+      "after": [
+        {
+          "selector": "div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-decision-editor > label.surface-eyebrow > span.gadget-pad > textarea",
+          "value": ""
+        },
+        {
+          "selector": "div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-decision-editor > label.surface-eyebrow > span.gadget-pad > textarea",
+          "value": ""
+        },
+        {
+          "selector": "div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-decision-editor > label.surface-eyebrow > span.gadget-pad > textarea",
+          "value": ""
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "protocol: POST /api/decisions",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nCREATE DECISIO",
+    "url": "http://127.0.0.1:50973/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "POST",
+      "path": "/api/decisions",
+      "status": 400,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "9a0a5d1561c86df758f382b6b5a9fb60b3e5436526df0f8e20c65de2dc993cf2",
+      "rows": [],
+      "payload": "{\"error\":\"expected a JSON object\"}"
+    },
+    "protocol_digest": {
+      "status": 400,
+      "row_count": 0,
+      "payload_sha256": "9a0a5d1561c86df758f382b6b5a9fb60b3e5436526df0f8e20c65de2dc993cf2"
+    },
+    "document_text_sha256": "41cc9c059cc951d96ac03d7c98ffd616027e622e669d1d70ac5c0a55f2faf66d",
+    "document_text_len": 402,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T06:55:13.120927+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: POST /api/decisions",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [
+      {
+        "selector": "div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-decision-editor > label.surface-eyebrow > span.gadget-pad > textarea",
+        "value": ""
+      },
+      {
+        "selector": "div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-decision-editor > label.surface-eyebrow > span.gadget-pad > textarea",
+        "value": ""
+      },
+      {
+        "selector": "div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-decision-editor > label.surface-eyebrow > span.gadget-pad > textarea",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "div#pullout:decision_c49b3ddf04d9",
+    "focus_label": "New decision",
+    "url": "http://127.0.0.1:50973/",
+    "windows": [
+      {
+        "title": "New decision",
+        "rect": {
+          "x": 1059,
+          "y": 64,
+          "w": 400,
+          "h": 529
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "POST",
+      "path": "/api/decisions",
+      "status": 400,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "9a0a5d1561c86df758f382b6b5a9fb60b3e5436526df0f8e20c65de2dc993cf2",
+      "rows": [],
+      "payload": "{\"error\":\"expected a JSON object\"}"
+    },
+    "protocol_digest": {
+      "status": 400,
+      "row_count": 0,
+      "payload_sha256": "9a0a5d1561c86df758f382b6b5a9fb60b3e5436526df0f8e20c65de2dc993cf2"
+    },
+    "document_text_sha256": "f9c38dc9d6e647ac370ad9020ff673771a211ac288053368388645c87b5de646",
+    "document_text_len": 482,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T06:55:14.267012+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/decisions",
+      "status": 201,
+      "body_sha256": "000021834cb8becfdcb0f95014cb299f58fb436c7ce5372ad1907e075c3cafd3",
+      "body": {
+        "decision": {
+          "id": "decision_c49b3ddf04d9",
+          "title": "New decision",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-23T06:55:13Z",
+          "updated_at": "2026-09-23T06:55:13Z",
+          "deleted": false
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/decisions"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: POST /api/decisions",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nREAD DECISIONS",
+    "url": "http://127.0.0.1:50973/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "POST",
+      "path": "/api/decisions",
+      "status": 400,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "9a0a5d1561c86df758f382b6b5a9fb60b3e5436526df0f8e20c65de2dc993cf2",
+      "rows": [],
+      "payload": "{\"error\":\"expected a JSON object\"}"
+    },
+    "protocol_digest": {
+      "status": 400,
+      "row_count": 0,
+      "payload_sha256": "9a0a5d1561c86df758f382b6b5a9fb60b3e5436526df0f8e20c65de2dc993cf2"
+    },
+    "document_text_sha256": "7c2d72096f9b82f81b7d8dc6573bdf79a294e43c82b506866249787a598492cb",
+    "document_text_len": 401,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T06:55:14.137782+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/decisions",
+      "status": 201,
+      "body_sha256": "000021834cb8becfdcb0f95014cb299f58fb436c7ce5372ad1907e075c3cafd3",
+      "body": {
+        "decision": {
+          "id": "decision_c49b3ddf04d9",
+          "title": "New decision",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-23T06:55:13Z",
+          "updated_at": "2026-09-23T06:55:13Z",
+          "deleted": false
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/decisions"
+    },
+    "predicate_satisfied": true,
+    "reading": "POST /api/decisions answered 201, wanted 201 (body sha256 000021834cb8); 'New decision' in the response body",
+    "elapsed_s": 0.922
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "POST /api/decisions answered 201, wanted 201 (body sha256 000021834cb8); 'New decision' in the response body",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.05,
+    "first_satisfied_at_s": 0.922,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: POST /api/decisions answered 201, wanted 201 (body sha256 000021834cb8); 'New decision' in the response body"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/decisions",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/decisions",
+      "status": 201,
+      "body_sha256": "000021834cb8becfdcb0f95014cb299f58fb436c7ce5372ad1907e075c3cafd3",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/decisions"
+    },
+    "why": "chosen by the declared trigger_route POST /api/decisions",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/decisions",
+        "status": 201,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/note7.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/20260923T065507Z-case.a1.decision_face_create.failure_named-muaddib-1440/before.png",
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/20260923T065507Z-case.a1.decision_face_create.failure_named-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jqe1makx/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:50973"
+  ]
+}

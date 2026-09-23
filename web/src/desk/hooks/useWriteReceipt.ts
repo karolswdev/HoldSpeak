@@ -82,7 +82,8 @@ function receiptElement(
     createElement("span", { className: "write-receipt-lamp" }),
     createElement(
       "span",
-      { className: "write-receipt-label" },
+      // PHILO-3-01: the whole label stays readable where the strip clips it.
+      { className: "write-receipt-label", title: writeFailureLabel(failure) },
       writeFailureLabel(failure),
     ),
     failure.retry

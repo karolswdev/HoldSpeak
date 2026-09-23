@@ -167,9 +167,14 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
     ] = await Promise.all([loadAll(), loadSetup()]);
     // PHILO-3-01 — a failed collection read is named on the face (the desk
     // receipt line), with Retry; a clean read clears only a READ receipt.
+    // A pending write (CREATE, SAVE, ...) keeps its receipt and its Retry:
+    // a read failure never replaces it.
+    const standing = currentWriteFailure();
+    const readReceipt = !standing || standing.verb.startsWith("READ ");
     if (failed) {
-      reportWriteFailure(`READ ${failed.label}`, failed.cause, () => void get().refresh());
-    } else if (currentWriteFailure()?.verb.startsWith("READ ")) {
+      if (readReceipt)
+        reportWriteFailure(`READ ${failed.label}`, failed.cause, () => void get().refresh());
+    } else if (standing && standing.verb.startsWith("READ ")) {
       clearWriteFailure();
     }
     set({
