@@ -1883,7 +1883,11 @@ class RefinementThoughtService:
         from .refinement_context_service import RefinementContextService
         attachments=RefinementContextService(self._db).project_in_transaction(conn,record)
         out={"id":record["id"],"raw_id":record["id"],"raw_sha256":record["raw_sha256"],"source":{"kind":record["raw_source_kind"]},"raw_captured_at":record["raw_captured_at"],"state":record["state"],"aggregate_revision":record["aggregate_revision"],"lifecycle_revision":record["lifecycle_revision"],"working_revision":record["working_revision"],"attachment_revision":record["attachment_revision"],"attachment_sha256":attachment_hash,"attachments":attachments,"working_note":self._note(note),"filing_status":"filed" if member and not member["deleted"] else "missing","continuity":({"state":"unavailable_remote","code":"continuity_unavailable_remote"} if remote else self._continuity(conn,record["id"]))}
-        if member and not member["deleted"]: out["directory_id"]=member["directory_id"]
+        if member and not member["deleted"]:
+            out["directory_id"]=member["directory_id"]
+            # PHILO-3-04: the foot's filing line names the drawer ("IN <drawer>").
+            drawer=conn.execute("SELECT name FROM directories WHERE id=? AND deleted=0",(member["directory_id"],)).fetchone()
+            out["directory_name"]=str(drawer["name"]) if drawer else ""
         if include_raw:
             out["raw_text"]=base64.b64decode(record["raw_utf8_b64"]).decode("utf-8","strict"); out["source"]["ref"]=record["raw_source_ref"]
         return out

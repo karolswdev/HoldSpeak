@@ -2746,7 +2746,8 @@ button.surface-edit-in-place:hover {
   gap: 6px;
   margin: 2px 0;
   font-family: var(--font-mono);
-  font-size: 11px;
+  /* PHILO-3-04: the 12 px floor (type-scale ruling 2026-09-21); was 11px. */
+  font-size: var(--desk-surface-label-size);
   letter-spacing: 0.02em;
   color: var(--text-muted);
 }

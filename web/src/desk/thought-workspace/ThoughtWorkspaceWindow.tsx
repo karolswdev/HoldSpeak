@@ -21,10 +21,11 @@ import type { WorldObject } from "../world";
 import { Button } from "../../components/signal/Signal";
 import { countToken, EgressChip, PadGadget, SurfaceFooter } from "../surface";
 import { DeskWindowFrame } from "../components/DeskWindow";
-import { useThoughtNoteWriter } from "../pullouts/editors/useThoughtNoteWriter";
+import { ThoughtSaveFault, useThoughtNoteWriter } from "../pullouts/editors/useThoughtNoteWriter";
 import { ThoughtDocumentPane } from "./ThoughtDocumentPane";
 import { ThoughtReadsWell, type ReadsResult } from "./ThoughtReadsWell";
 import { useThoughtWorkspaceController } from "./useThoughtWorkspaceController";
+import { thoughtFilingLine, thoughtWriteLine } from "./thoughtReceipt";
 import "./thought-workspace.css";
 
 function stableId(key: string): string {
@@ -117,6 +118,9 @@ function WorkspaceReady({
   const [messageVerb, setMessageVerb] = useState<"reload" | null>(null);
   /* One line at a time, and the verb belongs to the line that set it. */
   const say = (line: string) => { setMessage(line); setMessageVerb(null); };
+  /* PHILO-3-04 — the writer's own refusal is stated by the foot (DID NOT
+     SAVE / CHANGED ELSEWHERE), never again as prose on the message line. */
+  const sayFault = (cause: unknown) => say(cause instanceof ThoughtSaveFault ? "" : readableError(cause));
   const [reads, setReads] = useState(false);
   const [revealRange, setRevealRange] = useState<{ start: number; end: number; focus?: boolean } | null>(null);
   /* HS-176-04 — the answer well is a PadGadget (the voice law): the ref
@@ -144,7 +148,7 @@ function WorkspaceReady({
     if (busy) return;
     setBusy(true); say("");
     void writer.flush({ fence: true }).then(() => onClose()).catch((cause) => {
-      say(readableError(cause));
+      sayFault(cause);
       writer.release();
       setBusy(false);
     });
@@ -199,7 +203,7 @@ function WorkspaceReady({
       } else if (code === "workspace_cursor_conflict") {
         await reload(false).catch(() => undefined);
       }
-      say(readableError(cause));
+      sayFault(cause);
       return false;
     } finally {
       writer.release();
@@ -253,7 +257,7 @@ function WorkspaceReady({
       await reload(false).catch(() => undefined);
       return true;
     } catch (cause) {
-      say(readableError(cause));
+      sayFault(cause);
       return false;
     } finally {
       writer.release();
@@ -307,7 +311,7 @@ function WorkspaceReady({
       await stopRefinement(snapshot.thought, invocation, snapshot.workspaceCursor || projection.workspace_cursor);
       await reload();
       say("Stopped. The note did not change.");
-    } catch (cause) { say(readableError(cause)); }
+    } catch (cause) { sayFault(cause); }
     finally { writer.resume(); setBusy(false); }
   };
 
@@ -372,7 +376,7 @@ function WorkspaceReady({
     }).join(" · ")
     : "NOTHING";
 
-  const saveFailed = writer.failed || writer.conflicted;
+  const writeLine = thoughtWriteLine(writer);
   /* Astra finding 4 — `writer.retry` returns during a conflict
      (useThoughtNoteWriter.ts:238), so "Try again" there was a verb that
      does nothing (A.11).  The honest verb re-reads the note: the hub's
@@ -392,7 +396,7 @@ function WorkspaceReady({
       setRevealRange(null);
       writer.edit({ title: note.title, body: note.body_markdown, tags: note.tags.join(", ") });
     } catch (cause) {
-      say(readableError(cause));
+      sayFault(cause);
     } finally {
       reloading.current = false;
     }
@@ -406,7 +410,7 @@ function WorkspaceReady({
     try {
       await writer.flush({ fence: true });
       setReads(true);
-    } catch (cause) { say(readableError(cause)); }
+    } catch (cause) { sayFault(cause); }
     finally { writer.release(); setBusy(false); }
   };
   const readsResult = (result: ReadsResult) => {
@@ -420,7 +424,7 @@ function WorkspaceReady({
     if (event.key.toLowerCase() === "s") {
       event.preventDefault();
       if (busy) return;
-      void writer.flush().catch((cause) => say(readableError(cause)));
+      void writer.flush().catch((cause) => sayFault(cause));
       return;
     }
     if (event.key !== "Enter") return;
@@ -481,13 +485,14 @@ function WorkspaceReady({
     <SurfaceFooter
       className="thought-note-foot"
       egress={<span className="thought-note-reads" title={`Reads ${readsToken}`}>READS · {readsToken}</span>}
-      receipt={saveFailed
-        ? <span className="surface-footer-receipt-line" data-tone="danger">{writer.conflicted ? "CHANGED ELSEWHERE" : "THE NOTE DID NOT SAVE"}</span>
-        : <span className="surface-footer-receipt-line">{documentThought.filing_status === "filed" ? "KEPT" : "NOT IN A DRAWER"}{completed ? " · FINISHED" : ""}</span>}
+      receipt={<>
+        {writeLine ? <span className="surface-footer-receipt-line" role="status" data-tone={writeLine.danger ? "danger" : undefined}>{writeLine.text}</span> : null}
+        <span className="surface-footer-receipt-line" data-line="filing">{thoughtFilingLine(documentThought, completed)}</span>
+      </>}
       verbs={<>
         {writer.conflicted
           ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button>
-          : writer.failed ? <Button dense onClick={writer.retry}>Try again</Button> : null}
+          : writer.failed ? <Button dense onClick={writer.retry}>Retry</Button> : null}
         <Button ref={readsRef} dense aria-expanded={reads} disabled={busy} onClick={() => void openReads()}>Change</Button>
         {completed
           ? <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={() => void resume()}>Resume</Button>

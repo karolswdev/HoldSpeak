@@ -673,3 +673,19 @@ def test_sync_rejects_forged_command_prior_and_tombstone_fence_is_absolute(tmp_p
     assert fenced_member.value.code == "thought_tombstoned"
     with pytest.raises(ConflictError):
         SyncService(fenced, hub_model_name=lambda: "").push(None, live)
+
+
+def test_projection_names_the_drawer_and_stamps_each_kept_write(db):
+    """PHILO-3-04: the foot reads `IN <drawer>` and `KEPT · <time>` from the projection."""
+    service = RefinementThoughtService(db)
+    thought = _create(db)
+    assert thought["filing_status"] == "filed"
+    assert thought["directory_id"] == INBOX_DIRECTORY_ID
+    assert thought["directory_name"] == "Inbox"
+    saved = service.update_working(OWNER, thought["id"], expected_aggregate_revision=1, expected_working_revision=1, body_markdown="kept words")
+    assert saved["directory_name"] == "Inbox"
+    stamp = saved["working_note"]["last_modified"]
+    assert isinstance(stamp, str) and stamp.endswith("Z")
+    with db._connection() as conn:
+        row = conn.execute("SELECT last_modified FROM notes WHERE id=?", (saved["working_note"]["id"],)).fetchone()
+    assert row["last_modified"] == stamp
