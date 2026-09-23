@@ -4297,6 +4297,7 @@
       "test_candidates": [
         "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs175_rhythm_brief_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/unit/test_hs175_week_brief.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -4325,6 +4326,7 @@
       "source": "holdspeak/web/routes/monday_brief.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/unit/test_brief_shelf.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8021,7 +8023,10 @@
         "tests/e2e/test_hs159_interview_glass.py",
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_decision_records.py",
+        "tests/unit/test_graph_walk_http_fault.py",
+        "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8054,7 +8059,7 @@
             "GET"
           ],
           "symbol": "api_list_desk_decisions",
-          "line": 37,
+          "line": 36,
           "parameters": [
             {
               "name": "request",
@@ -8082,7 +8087,10 @@
         "tests/e2e/test_hs159_interview_glass.py",
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_decision_records.py",
+        "tests/unit/test_graph_walk_http_fault.py",
+        "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8115,7 +8123,7 @@
             "POST"
           ],
           "symbol": "api_create_decision",
-          "line": 44,
+          "line": 43,
           "parameters": [
             {
               "name": "request",
@@ -8160,7 +8168,10 @@
         "tests/e2e/test_hs159_interview_glass.py",
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_decision_records.py",
+        "tests/unit/test_graph_walk_http_fault.py",
+        "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8193,7 +8204,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_decision",
-          "line": 93,
+          "line": 92,
           "parameters": [
             {
               "name": "decision_id",
@@ -8224,7 +8235,8 @@
         }
       ],
       "test_candidates": [
-        "tests/integration/test_decision_records.py"
+        "tests/integration/test_decision_records.py",
+        "tests/unit/test_philo3_01_decision_route.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8251,7 +8263,8 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
-        "tests/integration/test_decision_records.py"
+        "tests/integration/test_decision_records.py",
+        "tests/unit/test_philo3_01_decision_route.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8283,7 +8296,7 @@
             "GET"
           ],
           "symbol": "api_get_desk_decision",
-          "line": 69,
+          "line": 68,
           "parameters": [
             {
               "name": "decision_id",
@@ -8314,7 +8327,8 @@
         }
       ],
       "test_candidates": [
-        "tests/integration/test_decision_records.py"
+        "tests/integration/test_decision_records.py",
+        "tests/unit/test_philo3_01_decision_route.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8346,7 +8360,7 @@
             "PUT"
           ],
           "symbol": "api_update_decision",
-          "line": 78,
+          "line": 77,
           "parameters": [
             {
               "name": "decision_id",
@@ -8380,7 +8394,8 @@
         }
       ],
       "test_candidates": [
-        "tests/integration/test_decision_records.py"
+        "tests/integration/test_decision_records.py",
+        "tests/unit/test_philo3_01_decision_route.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8407,7 +8422,8 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
-        "tests/integration/test_decision_records.py"
+        "tests/integration/test_decision_records.py",
+        "tests/unit/test_philo3_01_decision_route.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8434,7 +8450,8 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
-        "tests/integration/test_decision_records.py"
+        "tests/integration/test_decision_records.py",
+        "tests/unit/test_philo3_01_decision_route.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8461,7 +8478,8 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
-        "tests/integration/test_decision_records.py"
+        "tests/integration/test_decision_records.py",
+        "tests/unit/test_philo3_01_decision_route.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8488,7 +8506,8 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
-        "tests/integration/test_decision_records.py"
+        "tests/integration/test_decision_records.py",
+        "tests/unit/test_philo3_01_decision_route.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8515,7 +8534,8 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
-        "tests/integration/test_decision_records.py"
+        "tests/integration/test_decision_records.py",
+        "tests/unit/test_philo3_01_decision_route.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8547,7 +8567,7 @@
             "PUT"
           ],
           "symbol": "api_update_decision_status",
-          "line": 103,
+          "line": 102,
           "parameters": [
             {
               "name": "decision_id",
@@ -8584,7 +8604,8 @@
         }
       ],
       "test_candidates": [
-        "tests/integration/test_decision_records.py"
+        "tests/integration/test_decision_records.py",
+        "tests/unit/test_philo3_01_decision_route.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8611,7 +8632,8 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
-        "tests/integration/test_decision_records.py"
+        "tests/integration/test_decision_records.py",
+        "tests/unit/test_philo3_01_decision_route.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8643,7 +8665,7 @@
             "POST"
           ],
           "symbol": "api_supersede_decision",
-          "line": 120,
+          "line": 119,
           "parameters": [
             {
               "name": "decision_id",
@@ -8674,7 +8696,8 @@
         }
       ],
       "test_candidates": [
-        "tests/integration/test_decision_records.py"
+        "tests/integration/test_decision_records.py",
+        "tests/unit/test_philo3_01_decision_route.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -37405,6 +37428,7 @@
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"
@@ -37481,6 +37505,7 @@
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"
@@ -37612,6 +37637,7 @@
         "tests/e2e/test_hs152_hands_glass.py",
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"
@@ -37679,6 +37705,7 @@
         "tests/e2e/test_hs152_hands_glass.py",
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"
@@ -37762,6 +37789,7 @@
         "tests/e2e/test_hs152_hands_glass.py",
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"
@@ -37828,6 +37856,7 @@
         "tests/e2e/test_hs152_hands_glass.py",
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"
@@ -37912,6 +37941,7 @@
         "tests/e2e/test_hs152_hands_glass.py",
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"
@@ -37986,6 +38016,7 @@
         "tests/e2e/test_hs152_hands_glass.py",
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"
@@ -38062,6 +38093,7 @@
         "tests/e2e/test_hs152_hands_glass.py",
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"
@@ -38129,6 +38161,7 @@
         "tests/e2e/test_hs152_hands_glass.py",
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"
@@ -38213,6 +38246,7 @@
         "tests/e2e/test_hs152_hands_glass.py",
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"
@@ -38289,6 +38323,7 @@
         "tests/e2e/test_hs152_hands_glass.py",
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"
@@ -38356,6 +38391,7 @@
         "tests/e2e/test_hs152_hands_glass.py",
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"
@@ -38432,6 +38468,7 @@
         "tests/e2e/test_hs152_hands_glass.py",
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"
@@ -38507,6 +38544,7 @@
         "tests/e2e/test_hs152_hands_glass.py",
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"
@@ -38581,6 +38619,7 @@
         "tests/e2e/test_hs152_hands_glass.py",
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"
@@ -38659,6 +38698,7 @@
         "tests/e2e/test_hs152_hands_glass.py",
         "tests/e2e/test_hs153_practice_glass.py",
         "tests/e2e/test_hs154_call_glass.py",
+        "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
         "tests/integration/test_threads_api.py"

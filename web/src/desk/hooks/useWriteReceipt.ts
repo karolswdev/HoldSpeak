@@ -19,6 +19,7 @@ import {
   useSyncExternalStore,
   type ReactElement,
 } from "react";
+import { Button } from "../../components/signal/Signal";
 import "./write-receipt.css";
 
 export interface WriteFailure {
@@ -81,25 +82,28 @@ function receiptElement(
     createElement("span", { className: "write-receipt-lamp" }),
     createElement(
       "span",
-      { className: "write-receipt-label" },
+      // PHILO-3-01: the whole label stays readable where the strip clips it.
+      { className: "write-receipt-label", title: writeFailureLabel(failure) },
       writeFailureLabel(failure),
     ),
     failure.retry
       ? createElement(
-          "button",
+          Button,
           {
-            type: "button",
-            className: "desk-chip write-receipt-retry",
+            variant: "ghost",
+            dense: true,
+            className: "write-receipt-retry",
             onClick: failure.retry,
           },
           "Retry",
         )
       : null,
     createElement(
-      "button",
+      Button,
       {
-        type: "button",
-        className: "desk-chip write-receipt-dismiss",
+        variant: "ghost",
+        dense: true,
+        className: "write-receipt-dismiss",
         onClick: onDismiss,
       },
       "OK",

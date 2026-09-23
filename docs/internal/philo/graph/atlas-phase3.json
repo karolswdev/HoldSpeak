@@ -1,7 +1,455 @@
 {
   "schema_version": 1,
+  "atlas_version": "phase3-01",
+  "extends": "docs/internal/philo/graph/atlas.json",
   "source_commit": "7ce953580b0dd27f7e4445d5e41da4c9a0a55f75",
   "cases": [
+    {
+      "id": "case.a1.decision_face_create.opens_and_reopens",
+      "job": "a1",
+      "edge_ids": [
+        "edge.route.decisions_create"
+      ],
+      "state_id": "state.decisions.desk.recorded",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME; no decision on the desk before the setup",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any fault or reload (a reload that races the PUT /api/setup/onboarding brings the first-value gate back)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer",
+          "why": "the menubar Search (web/src/desk/components/DeskToolShelf.tsx), present at 1440 and 393; the Desk menu is hidden at 393"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New Decision",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[id='desk-palette-option-desk.new-decision']",
+          "adapter": "ui-pointer",
+          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and \u2318\u21e7N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-decision-card textarea[aria-label=Decision]",
+          "adapter": "ui-pointer",
+          "why": "PHILO-3-01: the create OPENS the decision face (DecisionPullout), in Edit for a new decision"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "New decision"
+          },
+          "observe_at": "[role=region][aria-label='New decision']",
+          "why": "the opened face is the new decision's pullout, titled by it"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/decisions",
+          "body": null,
+          "capture_as": "decision_id",
+          "capture_path": "decisions.0.id",
+          "adapter": "http-route",
+          "why": "the id the face create minted; the desk had no decision before"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": ".desk-decision-card textarea[aria-label=Context]",
+          "value": "Source: meeting review 2026-09-22",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": ".desk-decision-card textarea[aria-label=Decision]",
+          "value": "Adopt the one desk bus\nfor every frame",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Done",
+          "adapter": "ui-pointer",
+          "why": "DecisionPullout Done -> updatePrimitive('decision') -> PUT /api/decisions/{id}; the default title yields to the first line"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "decision.title",
+            "value": "Adopt the one desk bus"
+          },
+          "observe_at": "protocol: GET /api/decisions/{decision_id}",
+          "why": "the title is the first line of the decision text, so the brief item reads 'Review decision: <first line>' (monday_brief_service.py:750-758)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "decision.decision_markdown",
+            "value": "Adopt the one desk bus\nfor every frame"
+          },
+          "observe_at": "protocol: GET /api/decisions/{decision_id}"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "decision.context_markdown",
+            "value": "Source: meeting review 2026-09-22"
+          },
+          "observe_at": "protocol: GET /api/decisions/{decision_id}",
+          "why": "the source the owner wrote reads back (a desk decision has no source field; context carries it)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Adopt the one desk bus",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[id='desk-palette-option-decision:{decision_id}']",
+          "adapter": "ui-pointer",
+          "why": "reopen after the reload; the row id is desk-palette-option-<kind>:<id> (DeskToolShelf.tsx:656)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "for every frame"
+          },
+          "observe_at": "[role=region][aria-label='Adopt the one desk bus'] .desk-decision-card",
+          "why": "the reopened face, now titled by the first line, shows the saved text"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "Source: meeting review 2026-09-22"
+          },
+          "observe_at": "[role=region][aria-label='Adopt the one desk bus'] .desk-decision-card"
+        }
+      ],
+      "trigger": {
+        "kind": "api",
+        "method": "POST",
+        "path": "/api/decisions",
+        "body": {
+          "title": "Refused decision",
+          "status": "bogus"
+        },
+        "adapter": "http-route",
+        "why": "the named failure branch of the same create route: a status outside proposed|accepted|superseded|deprecated (holdspeak/db/primitives.py:225-248)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "protocol_status",
+          "method": "POST",
+          "path": "/api/decisions",
+          "status": 400,
+          "body_contains": "invalid decision status"
+        },
+        "observe_at": "protocol: POST /api/decisions",
+        "words": "setup: Search > New Decision creates a decision (201) and OPENS its face (the DecisionPullout, in Edit); the owner writes Context (the source) and Decision; Done titles it by the first line; the hub holds title, text and source under the face-minted id; after a reload Search reopens it under the new title and the card shows text and source. trigger: the same route refuses a bad status with 400 that NAMES the refusal."
+      },
+      "completion_bound_s": 60,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.a1.decision_face_create.failure_named",
+      "job": "a1",
+      "edge_ids": [
+        "edge.route.decisions_create"
+      ],
+      "state_id": "state.decisions.desk.create_failed",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME; BOUNDARY SUBSTITUTION: the browser answers the one POST /api/decisions and every GET /api/decisions with 500 (Playwright page.route, hub origin only) until the lift; the hub never sees them"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any fault or reload (a reload that races the PUT /api/setup/onboarding brings the first-value gate back)"
+        },
+        {
+          "kind": "boundary",
+          "label": "hub fault on create",
+          "substitute": "http_fault",
+          "method": "POST",
+          "path": "/api/decisions",
+          "status": 500,
+          "body": {
+            "error": "substituted hub fault"
+          },
+          "times": 1,
+          "adapter": "browser-boundary"
+        },
+        {
+          "kind": "boundary",
+          "label": "hub fault on read",
+          "substitute": "http_fault",
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 500,
+          "body": {
+            "error": "substituted hub fault"
+          },
+          "times": 1000,
+          "adapter": "browser-boundary"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer",
+          "why": "the menubar Search (web/src/desk/components/DeskToolShelf.tsx), present at 1440 and 393; the Desk menu is hidden at 393"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New Decision",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[id='desk-palette-option-desk.new-decision']",
+          "adapter": "ui-pointer",
+          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and \u2318\u21e7N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "CREATE DECISION FAILED \u00b7 HTTP 500"
+          },
+          "observe_at": ".write-receipt",
+          "why": "the failed create is named, and the read failure that follows (refresh) does not replace it or its Retry"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "decisions",
+            "value": []
+          },
+          "observe_at": "protocol: GET /api/decisions",
+          "why": "the hub holds no decision: the one POST never reached it"
+        },
+        {
+          "kind": "boundary",
+          "label": "hub back",
+          "substitute": "http_fault_lift",
+          "adapter": "browser-boundary"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": ".write-receipt-retry",
+        "adapter": "ui-pointer",
+        "why": "the receipt's Retry, a library Button (useWriteReceipt.ts receiptElement)",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/decisions"
+        }
+      },
+      "expected": {
+        "predicate": {
+          "kind": "protocol_status",
+          "method": "POST",
+          "path": "/api/decisions",
+          "status": 201,
+          "body_contains": "New decision"
+        },
+        "observe_at": "protocol: POST /api/decisions",
+        "words": "after the create and the reads fail and then recover, the rendered Retry re-issues the create and the hub answers 201 with the new record"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.a1.decisions_read.failure_named",
+      "job": "a1",
+      "edge_ids": [
+        "edge.route.decisions_list"
+      ],
+      "state_id": "state.decisions.desk.read_failed",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME; BOUNDARY SUBSTITUTION: the browser answers every GET /api/decisions with 500 (Playwright page.route, hub origin only) until the lift; the hub never sees them"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any fault or reload (a reload that races the PUT /api/setup/onboarding brings the first-value gate back)"
+        },
+        {
+          "kind": "boundary",
+          "label": "hub fault on read",
+          "substitute": "http_fault",
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 500,
+          "body": {
+            "error": "substituted hub fault"
+          },
+          "times": 1000,
+          "adapter": "browser-boundary"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "READ DECISIONS FAILED \u00b7 HTTP 500"
+          },
+          "observe_at": ".write-receipt",
+          "why": "a failed decisions read is named with Retry"
+        },
+        {
+          "kind": "boundary",
+          "label": "hub back",
+          "substitute": "http_fault_lift",
+          "adapter": "browser-boundary"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": ".write-receipt-retry",
+        "adapter": "ui-pointer",
+        "why": "the receipt's Retry, a library Button (useWriteReceipt.ts receiptElement)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_absent",
+          "value": "READ DECISIONS FAILED"
+        },
+        "observe_at": "#desk-next",
+        "words": "after the lift, Retry reads again and the READ receipt clears from the whole desk (the bar at 1440, the full-width row at 393). A background refresh would clear it too; the trigger is the Retry press."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
     {
       "id": "case.j11.thought_keep.receipt_time",
       "job": "j11",
@@ -51,10 +499,10 @@
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "KEPT ·"
+          "value": "KEPT \u00b7"
         },
         "observe_at": ".thought-note-foot .surface-footer-receipt-line",
-        "words": "PHILO-3-04 (canvas ratified 2026-09-23): after autosave the Thought foot's FIRST receipt line (the write) reads `KEPT · <local time>`, bound to the hub's `working_note.last_modified` on the PATCH /api/thoughts/{id}/working response (useThoughtNoteWriter.ts success path, thoughtReceipt.ts thoughtWriteLine). The fill flips that line to `SAVING…` in the same discrete input event, so the predicate cannot hold again until the 450 ms wait and the PATCH are over: the observation's `first_satisfied_at_s` must be at or above 0.45 s, or the pass read the open-time stamp and is void. The filing state is the SECOND line ([data-line=filing]); observe_at's first match is the write line. The row in the store is the sibling case case.j11.thought_keep.kept (protocol_rows on GET /api/notes).",
+        "words": "PHILO-3-04 (canvas ratified 2026-09-23): after autosave the Thought foot's FIRST receipt line (the write) reads `KEPT \u00b7 <local time>`, bound to the hub's `working_note.last_modified` on the PATCH /api/thoughts/{id}/working response (useThoughtNoteWriter.ts success path, thoughtReceipt.ts thoughtWriteLine). The fill flips that line to `SAVING\u2026` in the same discrete input event, so the predicate cannot hold again until the 450 ms wait and the PATCH are over: the observation's `first_satisfied_at_s` must be at or above 0.45 s, or the pass read the open-time stamp and is void. The filing state is the SECOND line ([data-line=filing]); observe_at's first match is the write line. The row in the store is the sibling case case.j11.thought_keep.kept (protocol_rows on GET /api/notes).",
         "reads": [
           {
             "method": "GET",
@@ -93,7 +541,7 @@
           "path": "web/src/desk/thought-workspace/thoughtReceipt.ts",
           "symbol": "filing_status",
           "line": 42,
-          "claim": "its foot states the write (KEPT · <time>, SAVING…, DID NOT SAVE · <cause>, CHANGED ELSEWHERE) and, on its own line, IN <drawer>, IN A DRAWER or NOT IN A DRAWER"
+          "claim": "its foot states the write (KEPT \u00b7 <time>, SAVING\u2026, DID NOT SAVE \u00b7 <cause>, CHANGED ELSEWHERE) and, on its own line, IN <drawer>, IN A DRAWER or NOT IN A DRAWER"
         }
       ],
       "reachable_by": [

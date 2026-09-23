@@ -1,0 +1,431 @@
+{
+  "id": "obs-20260923T153922Z-case.a1.decisions_read.failure_named-muaddib-1440",
+  "run_id": "20260923T153922Z-case.a1.decisions_read.failure_named-muaddib-1440",
+  "case_id": "case.a1.decisions_read.failure_named",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "a1",
+  "edge_ids": [
+    "edge.route.decisions_list"
+  ],
+  "state_id": "state.decisions.desk.read_failed",
+  "provenance": {
+    "revision": "e775383bb02a0bd8dbcc4da76a61c2a644b2046b",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "6d604ed4b7379b289f37d6a7efe6758824bd3b7e324f80b554881a47c246ceeb",
+      "assets": [
+        "index-COjK9Uzz.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:55496",
+      "port": 55496,
+      "pid": 54091,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xaekcmky",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xaekcmky/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T15:39:22.272754+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [
+      {
+        "label": "hub fault on read",
+        "substitute": "http_fault",
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 500,
+        "times": 1000
+      },
+      {
+        "label": "hub back",
+        "substitute": "http_fault_lift"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "b0ad56e14ecd630c7804ddbae2df35902cba23995662ae124c8793b0aeabab58",
+      "version": "phase3-01"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.97,
+      "holds": true,
+      "reading": "arrival_required = False, wanted False"
+    },
+    {
+      "kind": "boundary",
+      "label": "hub fault on read",
+      "substitute": "http_fault",
+      "adapter": "browser-boundary",
+      "origin": "http://127.0.0.1:55496",
+      "method": "GET",
+      "path": "/api/decisions",
+      "status": 500,
+      "times": 1000,
+      "seam": "playwright page.route (browser boundary)",
+      "fulfilled": [
+        "http://127.0.0.1:55496/api/decisions"
+      ]
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": ".write-receipt",
+      "predicate": {
+        "kind": "text_contains",
+        "value": "READ DECISIONS FAILED \u00b7 HTTP 500"
+      },
+      "adapter": "observation",
+      "waited_s": 1.23,
+      "holds": true,
+      "reading": "'READ DECISIONS FAILED \u00b7 HTTP 500' in observe_at text"
+    },
+    {
+      "kind": "boundary",
+      "label": "hub back",
+      "substitute": "http_fault_lift",
+      "adapter": "browser-boundary",
+      "seam": "playwright page.unroute (browser boundary)"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME; BOUNDARY SUBSTITUTION: the browser answers every GET /api/decisions with 500 (Playwright page.route, hub origin only) until the lift; the hub never sees them",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": ".write-receipt-retry",
+    "done": true
+  },
+  "diff": {
+    "text": {
+      "before": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nREAD DECISIONS FAILED \u00b7 HTTP 500\nRetry\nOK\nSearch\n\u2318K\nWed, Sep 23\n09:39 AM",
+      "after": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed, Sep 23\n09:39 AM"
+    },
+    "focus_label": {
+      "before": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nREAD DECISIONS",
+      "after": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,"
+    },
+    "document_text_sha256": {
+      "before": "bf3f1066034dd047c0cc188a8a39b87591a6b70144b90b835b768cc11670fe15",
+      "after": "d97aee5aeade30a40f5cd8212dca18d10046a50e9e8c2b2b3a5297a3d4da5a79"
+    },
+    "document_text_len": {
+      "before": 401,
+      "after": 359
+    }
+  },
+  "before": {
+    "observe_at": ".desk-menubar",
+    "target_present": true,
+    "text": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nREAD DECISIONS FAILED \u00b7 HTTP 500\nRetry\nOK\nSearch\n\u2318K\nWed, Sep 23\n09:39 AM",
+    "attrs": {
+      "class": "desk-menubar"
+    },
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 28
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nREAD DECISIONS",
+    "url": "http://127.0.0.1:55496/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "bf3f1066034dd047c0cc188a8a39b87591a6b70144b90b835b768cc11670fe15",
+    "document_text_len": 401,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T15:39:28.271073+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-menubar",
+    "target_present": true,
+    "text": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed, Sep 23\n09:39 AM",
+    "attrs": {
+      "class": "desk-menubar"
+    },
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 28
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:55496/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "d97aee5aeade30a40f5cd8212dca18d10046a50e9e8c2b2b3a5297a3d4da5a79",
+    "document_text_len": 359,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T15:39:29.821230+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-menubar",
+    "target_present": true,
+    "text": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nREAD DECISIONS FAILED \u00b7 HTTP 500\nRetry\nOK\nSearch\n\u2318K\nWed, Sep 23\n09:39 AM",
+    "attrs": {
+      "class": "desk-menubar"
+    },
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 28
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > div.desk-menubar > div.desk-chrome.desk-chrome-receipt > span.write-receipt > button.btn.btn--ghost",
+    "focus_label": "Retry",
+    "url": "http://127.0.0.1:55496/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "bf3f1066034dd047c0cc188a8a39b87591a6b70144b90b835b768cc11670fe15",
+    "document_text_len": 401,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T15:39:29.289123+00:00",
+    "predicate_satisfied": false,
+    "reading": "'READ DECISIONS FAILED' PRESENT at observe_at",
+    "elapsed_s": 0.934
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'READ DECISIONS FAILED' absent at observe_at",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.466,
+    "first_satisfied_at_s": 1.34,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'READ DECISIONS FAILED' absent at observe_at"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:55496) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:55496) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/20260923T153922Z-case.a1.decisions_read.failure_named-muaddib-1440/before.png",
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/20260923T153922Z-case.a1.decisions_read.failure_named-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xaekcmky/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:55496"
+  ]
+}

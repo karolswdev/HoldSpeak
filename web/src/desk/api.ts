@@ -119,6 +119,8 @@ export interface LoadResult {
   models: HubModel[];
   status: Status;
   error: string;
+  /** PHILO-3-01 — the first collection that did not load, and why. */
+  failed: { label: string; cause: unknown } | null;
 }
 
 /** Canonical identity shared with the hub and native Desk. */
@@ -553,8 +555,10 @@ export async function loadAll(): Promise<LoadResult> {
   let inferenceTargets: InferenceTarget[] = [];
   let models: HubModel[] = [];
   let error = "";
+  let failed: LoadResult["failed"] = null;
   const fail = (kind: PrimitiveKind | "profile" | "project", label: string, e: unknown) => {
     status[kind] = "unreachable";
+    if (!failed) failed = { label, cause: e };
     if (!error) error = `${label}: ${e && typeof e === "object" && "message" in e ? (e as Error).message : String(e)}`;
   };
 
@@ -742,7 +746,7 @@ export async function loadAll(): Promise<LoadResult> {
     }));
   status.profile = inferenceTargets.length > 0 ? "live" : (status.profile || "unreachable");
 
-  return { items, profiles, projects, inferenceTargets, models, status, error };
+  return { items, profiles, projects, inferenceTargets, models, status, error, failed };
 }
 
 /* ── Workbench detail endpoints (HS-117-13) ──────────────────────────── */

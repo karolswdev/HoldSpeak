@@ -17,7 +17,6 @@ log = get_logger("web.routes.primitives")
 
 
 def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
-    del ctx
     router = APIRouter()
 
     def _svc() -> PrimitiveService:
