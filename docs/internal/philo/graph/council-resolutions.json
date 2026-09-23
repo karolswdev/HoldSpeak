@@ -525,11 +525,11 @@
       "findings": [
         "fnd.live.run_refused_as_no_transcript_while_transcribing"
       ],
-      "bin": "product-defect",
+      "bin": "tooling-debt",
       "disposition": "open-dissent:COUNCIL section 4.6",
       "positions": {
-        "muaddib": "Rank 4, protocol only: the face withholds the verb until the import finishes, so he does not see this; an agent or MCP caller does.",
-        "astra": "disagree: The request ran while the import had no transcript. The truthful empty refusal demonstrates the wrong no-assignment test precondition, not a product defect without a further contract or misleading face observation."
+        "muaddib": "agree (ruling \u00a74.6)",
+        "astra": "agree"
       },
       "evidence": [
         {
@@ -556,7 +556,7 @@
       ],
       "notes": "Original bin and Muaddib position retained. Astra proposes recipe repair in A2; no product wording change is authorized by this observation alone.",
       "astra_bin": "tooling-debt",
-      "disposition_final": "open-dissent:COUNCIL section 4.6"
+      "disposition_final": "resolved for Astra (COUNCIL \u00a74.6): tooling-debt \u2014 a wrong test precondition; the sealed pass keeps its original bin as history"
     },
     {
       "id": "res.docs_desk_changed_comment",

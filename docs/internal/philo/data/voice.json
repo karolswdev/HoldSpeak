@@ -1172,10 +1172,10 @@
       "domain": "model",
       "status": "internal",
       "status_reason": "The owner-only assignment service and readiness projection are implemented as configuration control plane; execution remains a later route step.",
-      "exposure": "operator",
+      "exposure": "user",
       "surfaces": [
-        "model assignment settings",
-        "owner projection"
+        "arrival SETUP row \"No engine for summaries\" (opens Models)",
+        "Models window verb \"Use this for summaries\""
       ],
       "entry_points": [
         "holdspeak/services/inference_assignment_service.py::InferenceAssignmentService"
@@ -1231,6 +1231,24 @@
           "symbol": "_CANONICAL_GROUPS",
           "line": 52,
           "claim": "The service defines canonical assignment groups including writing, speech recognition, and meetings."
+        },
+        {
+          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "symbol": "ConciergeCore",
+          "line": 571,
+          "claim": "The Models window verb \"Use this for summaries\" writes the summary assignment (useConciergeController.useNewEngineForSummaries)."
+        },
+        {
+          "path": "web/src/desk/chair/ChairHome.tsx",
+          "symbol": "Arrival",
+          "line": 953,
+          "claim": "The arrival draws a SETUP row while the meeting path has no summary engine; its verb opens Models."
+        },
+        {
+          "path": "web/src/desk/chair/meetingPathBlocker.ts",
+          "symbol": "meetingPathBlockers",
+          "line": 95,
+          "claim": "The SETUP row states \"No engine for summaries\" when the summary capability has no assignment."
         }
       ],
       "tests": [
@@ -1262,7 +1280,7 @@
       ],
       "limitations": [
         "An assignment can name a destination that is unavailable later.",
-        "No owner settings surface was observed."
+        "The Philo live pass configured the summary engine through the Models window in the rig (PHILO-2-04, J6 setup); the owner has not observed it."
       ],
       "failure_states": [
         "owner_required",

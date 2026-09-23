@@ -83,7 +83,13 @@ spawn_agent(task_name="<snake_case>", model="gpt-5.6-luna",
   `tests/e2e/test_metal.py`.
 - Read the output before you flip anything. Type-check is not
   validation. A full-suite run rewrites ~388 tracked evidence PNGs from
-  other phases; restore them before staging.
+  other phases; restore them before staging, by explicit path, only the
+  ` M` paths (a blanket loop truncated untracked shots).
+- A live walk runs through `scripts/graph_walk.py`, one case per
+  invocation. The one procedure (mint a case, run the rig, read an
+  observation, output directories) is
+  `agent/skills/holdspeak-capability-verifier/SKILL.md`, "Walk a case";
+  the worker-brief scars are in `docs/internal/ORCHESTRATION.md` §3.
 
 ## Commits — the gate is the same gate
 

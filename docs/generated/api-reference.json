@@ -4291,8 +4291,10 @@
       "source": "holdspeak/web/routes/monday_brief.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs175_rhythm_brief_glass.py",
-        "tests/unit/test_hs175_week_brief.py"
+        "tests/unit/test_hs175_week_brief.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -4346,9 +4348,11 @@
       "source": "holdspeak/web/routes/monday_brief.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs175_rhythm_brief_glass.py",
         "tests/unit/test_brief_shelf.py",
-        "tests/unit/test_hs175_week_brief.py"
+        "tests/unit/test_hs175_week_brief.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8013,7 +8017,8 @@
         "tests/e2e/test_hs159_interview_glass.py",
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
-        "tests/integration/test_decision_records.py"
+        "tests/integration/test_decision_records.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8073,7 +8078,8 @@
         "tests/e2e/test_hs159_interview_glass.py",
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
-        "tests/integration/test_decision_records.py"
+        "tests/integration/test_decision_records.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8150,7 +8156,8 @@
         "tests/e2e/test_hs159_interview_glass.py",
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
-        "tests/integration/test_decision_records.py"
+        "tests/integration/test_decision_records.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -10964,6 +10971,8 @@
       "source": "holdspeak/web/routes/projections.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/unit/test_graph_walk_calibration.py",
+        "tests/unit/test_philo_graph_schema.py",
         "tests/unit/test_web_routes_projections.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19079,6 +19088,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs159_interview_glass.py",
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
@@ -19115,6 +19125,7 @@
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
         "tests/unit/test_api_surface.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -19351,6 +19362,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs159_interview_glass.py",
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
@@ -19382,6 +19394,7 @@
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
         "tests/unit/test_api_surface.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -19541,6 +19554,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
         "tests/e2e/test_hs202_02_first_use_glass.py",
@@ -19548,7 +19562,8 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/integration/test_web_history_import_ui.py",
         "tests/integration/test_web_meeting_import_api.py",
-        "tests/integration/test_web_transcript_import_api.py"
+        "tests/integration/test_web_transcript_import_api.py",
+        "tests/unit/test_graph_walk_calibration.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19614,6 +19629,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -19641,6 +19657,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -19710,6 +19727,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -19737,6 +19755,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -19812,6 +19831,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -19839,6 +19859,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -19904,6 +19925,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -19931,6 +19953,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -20000,6 +20023,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -20027,6 +20051,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -20097,6 +20122,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -20124,6 +20150,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -20188,6 +20215,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -20215,6 +20243,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -20289,6 +20318,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -20316,6 +20346,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -20385,6 +20416,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -20412,6 +20444,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -20479,6 +20512,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -20506,6 +20540,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -20568,6 +20603,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -20595,6 +20631,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -20659,6 +20696,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -20686,6 +20724,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -20753,6 +20792,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -20780,6 +20820,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -20844,6 +20885,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -20871,6 +20913,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -20940,6 +20983,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -20967,6 +21011,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -21037,6 +21082,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -21064,6 +21110,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -21129,6 +21176,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -21156,6 +21204,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -21228,6 +21277,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -21255,6 +21305,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -21319,6 +21370,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -21346,6 +21398,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -21415,6 +21468,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -21442,6 +21496,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -21508,6 +21563,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -21535,6 +21591,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -21609,6 +21666,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -21636,6 +21694,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -21703,6 +21762,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -21730,6 +21790,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -21809,6 +21870,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs201_lane_a_glass.py",
         "tests/e2e/test_hs201_summary_face_glass.py",
@@ -21836,6 +21898,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/uat/test_egress_cloud.py",
         "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
@@ -23433,6 +23496,7 @@
         "tests/uat/test_induction_integration_local.py",
         "tests/uat/test_seeding.py",
         "tests/unit/test_notes_tag_query.py",
+        "tests/unit/test_philo_graph_atlas.py",
         "tests/unit/test_web_routes_ask.py",
         "tests/unit/test_web_routes_primitives.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -23515,6 +23579,7 @@
         "tests/uat/test_induction_integration_local.py",
         "tests/uat/test_seeding.py",
         "tests/unit/test_notes_tag_query.py",
+        "tests/unit/test_philo_graph_atlas.py",
         "tests/unit/test_web_routes_ask.py",
         "tests/unit/test_web_routes_primitives.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -33339,6 +33404,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs141_models_setup_glass.py",
         "tests/e2e/test_hs144_door_glass.py",
         "tests/e2e/test_hs145_door_polish_glass.py",
@@ -33447,6 +33513,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs141_models_setup_glass.py",
         "tests/e2e/test_hs144_door_glass.py",
         "tests/e2e/test_hs145_door_polish_glass.py",
@@ -33536,6 +33603,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs170_arrival_glass.py",
         "tests/e2e/test_hs171_rhythm_glass.py",
         "tests/e2e/test_hs171_shade_glass.py",
@@ -33603,6 +33671,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs170_arrival_glass.py",
         "tests/e2e/test_hs171_rhythm_glass.py",
         "tests/e2e/test_hs171_shade_glass.py",
@@ -33667,6 +33736,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs171_rhythm_glass.py",
         "tests/unit/test_phase200_watch_arming.py"
       ],
@@ -34420,6 +34490,7 @@
       "test_candidates": [
         "tests/integration/test_setup_first_value_journey.py",
         "tests/integration/test_web_welcome_wizard.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs202_first_value_failure_vocabulary.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -34485,6 +34556,7 @@
       "test_candidates": [
         "tests/integration/test_setup_first_value_journey.py",
         "tests/integration/test_web_welcome_wizard.py",
+        "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_hs202_first_value_failure_vocabulary.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -42030,7 +42102,10 @@
       "source": null,
       "handler_evidence": [],
       "test_candidates": [
-        "tests/unit/test_api_surface.py"
+        "tests/unit/test_api_surface.py",
+        "tests/unit/test_philo_graph_atlas.py",
+        "tests/unit/test_philo_graph_reference.py",
+        "tests/unit/test_philo_graph_schema.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {

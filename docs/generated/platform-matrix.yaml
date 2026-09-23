@@ -1225,7 +1225,10 @@
       "platform": "aipi",
       "source_ids": [
         "holdspeak/services/inference_assignment_service.py",
-        "holdspeak/services/inference_assignment_service.py"
+        "holdspeak/services/inference_assignment_service.py",
+        "web/src/features/concierge/ConciergeCore.tsx",
+        "web/src/desk/chair/ChairHome.tsx",
+        "web/src/desk/chair/meetingPathBlocker.ts"
       ],
       "status": "internal"
     },
@@ -1236,7 +1239,10 @@
       "platform": "ipad",
       "source_ids": [
         "holdspeak/services/inference_assignment_service.py",
-        "holdspeak/services/inference_assignment_service.py"
+        "holdspeak/services/inference_assignment_service.py",
+        "web/src/features/concierge/ConciergeCore.tsx",
+        "web/src/desk/chair/ChairHome.tsx",
+        "web/src/desk/chair/meetingPathBlocker.ts"
       ],
       "status": "internal"
     },
@@ -1247,7 +1253,10 @@
       "platform": "linux_wayland",
       "source_ids": [
         "holdspeak/services/inference_assignment_service.py",
-        "holdspeak/services/inference_assignment_service.py"
+        "holdspeak/services/inference_assignment_service.py",
+        "web/src/features/concierge/ConciergeCore.tsx",
+        "web/src/desk/chair/ChairHome.tsx",
+        "web/src/desk/chair/meetingPathBlocker.ts"
       ],
       "status": "internal"
     },
@@ -1258,7 +1267,10 @@
       "platform": "linux_x11",
       "source_ids": [
         "holdspeak/services/inference_assignment_service.py",
-        "holdspeak/services/inference_assignment_service.py"
+        "holdspeak/services/inference_assignment_service.py",
+        "web/src/features/concierge/ConciergeCore.tsx",
+        "web/src/desk/chair/ChairHome.tsx",
+        "web/src/desk/chair/meetingPathBlocker.ts"
       ],
       "status": "internal"
     },
@@ -1269,7 +1281,10 @@
       "platform": "macos",
       "source_ids": [
         "holdspeak/services/inference_assignment_service.py",
-        "holdspeak/services/inference_assignment_service.py"
+        "holdspeak/services/inference_assignment_service.py",
+        "web/src/features/concierge/ConciergeCore.tsx",
+        "web/src/desk/chair/ChairHome.tsx",
+        "web/src/desk/chair/meetingPathBlocker.ts"
       ],
       "status": "internal"
     },

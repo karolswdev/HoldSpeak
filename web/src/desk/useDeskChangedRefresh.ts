@@ -12,8 +12,11 @@
  * directories, workflows, chains, workbenches, items, skills), whoever made it,
  * plus the writers below those services that announce themselves (reaction and
  * resourceful projections, coder-materialized notes, the rails journal, the
- * guardrail seeds). Writes on other tables (meetings, project rooms, thoughts,
- * sync) emit no frame; their surfaces carry their own signals. This hook is the
+ * guardrail seeds). One meeting write announces itself too: the import worker
+ * emits a `meeting` frame when an import ends, success or failure
+ * (`MeetingService._run_import_job`). Other meeting writes, the summary queue,
+ * project rooms, thoughts and sync emit no frame; their surfaces carry their
+ * own signals. This hook is the
  * whole client half: subscribe, and re-read. No per-kind patching and no new
  * UI -- the existing `refresh()` already loads the desk consistently, and a
  * patch-by-kind reducer would be a second, divergent model of the same data.
