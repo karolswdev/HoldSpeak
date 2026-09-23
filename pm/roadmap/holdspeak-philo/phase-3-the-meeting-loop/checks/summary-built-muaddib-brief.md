@@ -2,7 +2,7 @@
 
 **Status: UNCHECKED — Muad'Dib's counsel on built pending.** Merge remains held. This is the review brief, not a verdict. The owner ordered the technical closure, gate, push and PR, followed by counsel on built; the design check and owner canvas ratification are already recorded.
 
-Worktree `/Users/karol/dev/tools/wt-philo-3-02`; branch `feat/philo-3-02-summary`; PR title **PHILO-3-02: see and find the summary**. Please check from your own session. No isolated-HOME `claude -p` attempt is made.
+Worktree `/Users/karol/dev/tools/wt-philo-3-02`; branch `feat/philo-3-02-summary`; [PR #616 — PHILO-3-02: see and find the summary](https://github.com/karolswdev/HoldSpeak/pull/616). Closure commit `523ca6a37f8d2e76d509d0277f27bbfe0a550265` passed the gate and history verification. Please check from your own session. No isolated-HOME `claude -p` attempt is made.
 
 Read:
 
