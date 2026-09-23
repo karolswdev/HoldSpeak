@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "atlas_version": "phase3-01",
+  "extends": "docs/internal/philo/graph/atlas.json",
+  "source_commit": "7ce953580b0dd27f7e4445d5e41da4c9a0a55f75",
+  "cases": [
+    {
+      "id": "case.a1.decision_face_create.reopened",
+      "job": "a1",
+      "edge_ids": [
+        "edge.route.decisions_create"
+      ],
+      "state_id": "state.decisions.desk.recorded",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME; no decision on the desk before the setup",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer",
+          "why": "the menubar Search (web/src/desk/components/DeskToolShelf.tsx), present at 1440 and 393; the Desk menu is hidden at 393"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New Decision",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[id='desk-palette-option-desk.new-decision']",
+          "adapter": "ui-pointer",
+          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:148-158; also Desk menu > New Decision and ⌘⇧N at 1440) -> createPrimitive('decision') -> POST /api/decisions (web/src/desk/store/dataSlice.ts:181-256)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "decisions.0.title",
+            "value": "New decision"
+          },
+          "observe_at": "protocol: GET /api/decisions",
+          "timeout_s": 10,
+          "why": "the face create landed on the hub before its id is read"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/decisions",
+          "body": null,
+          "capture_as": "decision_id",
+          "capture_path": "decisions.0.id",
+          "adapter": "http-route",
+          "why": "the id the face create minted, read from the list route; the desk had no decision before"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer",
+          "why": "the menubar Search (web/src/desk/components/DeskToolShelf.tsx)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New decision",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[id='desk-palette-option-decision:{decision_id}']",
+          "adapter": "ui-pointer",
+          "why": "reopen the created decision after the reload; the row id is desk-palette-option-<kind>:<id> (DeskToolShelf.tsx:656)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-decision-card",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Edit",
+          "adapter": "ui-pointer",
+          "why": "DecisionPullout.tsx:147 Edit -> the three PadGadget wells"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "textarea[aria-label=Decision]",
+          "value": "Adopt the one desk bus for every frame",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Done",
+          "adapter": "ui-pointer",
+          "why": "DecisionPullout.tsx:144 Done -> updatePrimitive('decision') -> PUT /api/decisions/{id}"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "decision.decision_markdown",
+            "value": "Adopt the one desk bus for every frame"
+          },
+          "observe_at": "protocol: GET /api/decisions/{decision_id}",
+          "why": "the face-written text is on the hub under the face-minted id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New decision",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[id='desk-palette-option-decision:{decision_id}']",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "Adopt the one desk bus for every frame"
+          },
+          "observe_at": ".desk-decision-card",
+          "why": "the reopened decision shows the saved text after a reload"
+        }
+      ],
+      "trigger": {
+        "kind": "api",
+        "method": "POST",
+        "path": "/api/decisions",
+        "body": {
+          "title": "Refused decision",
+          "status": "bogus"
+        },
+        "adapter": "http-route",
+        "why": "the named failure branch of the same create route: a status outside proposed|accepted|superseded|deprecated (holdspeak/db/primitives.py:225-248)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "protocol_status",
+          "method": "POST",
+          "path": "/api/decisions",
+          "status": 400,
+          "body_contains": "invalid decision status"
+        },
+        "observe_at": "protocol: POST /api/decisions",
+        "words": "setup: the Desk menu New Decision creates a decision (201), the id is read back, the decision reopens after a reload through Search, Edit/Done writes its Decision text, the hub holds that text under that id, and after a second reload the reopened card shows it. trigger: the same route refuses a bad status with 400 that NAMES the refusal. The face's own create-failure receipt (CREATE DECISION FAILED · HTTP <n>, with Retry) is web/src/desk/store/dataSlice.ts:66-74 + web/src/desk/hooks/useWriteReceipt.ts:61-64; the rig cannot make the face create fail without a failing hub."
+      },
+      "completion_bound_s": 60,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ]
+}

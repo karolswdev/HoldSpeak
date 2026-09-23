@@ -34,7 +34,7 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| PHILO-3-01 | Record the decision (A1) | backlog | [story-01-record-the-decision](./story-01-record-the-decision.md) | - |
+| PHILO-3-01 | Record the decision (A1) | done | [story-01-record-the-decision](./story-01-record-the-decision.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-3-02 | See and find the summary (A2) | backlog | [story-02-see-and-find-the-summary](./story-02-see-and-find-the-summary.md) | - |
 | PHILO-3-03 | Read the dated brief with that decision (A3) | backlog | [story-03-read-the-dated-brief](./story-03-read-the-dated-brief.md) | - |
 | PHILO-3-04 | The thought's receipt (A4) | backlog | [story-04-the-thoughts-receipt](./story-04-the-thoughts-receipt.md) | - |
@@ -49,6 +49,8 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 | The thought | 04 | Muad'Dib (Opus 5.5; canvas first, owner ratifies) | Astra | ../wt-philo-3-04 | feat/philo-3-04-thought |
 
 ## Where we are
+
+2026-09-23: A1 BUILT — the decisions route saves and reads back (one line); the existing face proven on a real hub at both widths; the shelf passes as protocol cases; four face findings ledgered for the council (New Decision opens nothing on the Chair; no title at create; a failed read is only an aria-label; raw Retry/Dismiss). A2 (Astra) and A4 (build) in flight.
 
 Chartered 2026-09-23 by the council; RATIFIED by the owner the same day (D1–D4). Lanes 01 (Muad'Dib) and 02 (Astra) start in parallel; 04's canvas is drawn in parallel; 03 follows 01 and 02.
 
