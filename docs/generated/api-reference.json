@@ -431,7 +431,8 @@
       ],
       "test_candidates": [
         "tests/integration/test_web_activity_api.py",
-        "tests/unit/test_activity_routes_split.py"
+        "tests/unit/test_activity_routes_split.py",
+        "tests/unit/test_philo_graph_reference.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -491,7 +492,8 @@
       ],
       "test_candidates": [
         "tests/integration/test_web_activity_api.py",
-        "tests/unit/test_activity_routes_split.py"
+        "tests/unit/test_activity_routes_split.py",
+        "tests/unit/test_philo_graph_reference.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -2343,7 +2345,8 @@
       ],
       "test_candidates": [
         "tests/integration/test_web_activity_api.py",
-        "tests/unit/test_activity_routes_split.py"
+        "tests/unit/test_activity_routes_split.py",
+        "tests/unit/test_philo_graph_reference.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -2417,7 +2420,8 @@
       ],
       "test_candidates": [
         "tests/integration/test_web_activity_api.py",
-        "tests/unit/test_activity_routes_split.py"
+        "tests/unit/test_activity_routes_split.py",
+        "tests/unit/test_philo_graph_reference.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
