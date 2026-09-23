@@ -2,7 +2,7 @@
 
 How multi-agent phases run in this repository. There are two
 orchestrators, Muad'Dib and Astra, equals ([TWO-BRAINS.md](TWO-BRAINS.md));
-Muad'Dib's implementation agents are the Fedaykin (Opus 4.6 sessions,
+Muad'Dib's implementation agents are the Fedaykin (Opus 5.5 sessions since 2026-09-22,
 "Opus workers" hereafter), Astra's are the Luna lanes; the spice is
 the pipeline. Written after Phase 129 (One Grammar: two bug
 screenshots → four audits → eleven stories → thirteen workers → merged,
@@ -22,9 +22,9 @@ the other has checked it. The protocol is canon in
 differ.
 
 **Each orchestrates down to its own workers, never the other's.**
-Muad'Dib's Fedaykin are Opus 4.6 (1M) sessions through
+Muad'Dib's Fedaykin are Opus 5.5 (`claude-opus-5-5`) sessions through
 `.claude/agents/opus-worker.md` (`model: opus`; the owner's 2026-09-18
-ruling "all your workers must also be Opus 4-6 workers"; the file is
+ruling "all your workers must also be Opus 4-6 workers", amended 2026-09-22 to Opus 5.5 ("there's a new king in town"); the file is
 gitignored and re-applied per clone). Astra's lanes are
 `gpt-5.6-luna` at `xhigh` via `spawn_agent` (the owner's 2026-09-19
 ruling "codex will be told to orchestrate down to luna-xhigh").
@@ -116,7 +116,7 @@ human-compliance. Its report is charter evidence, not commentary.
 
 A vague mandate ("make it a proper product") never goes straight to
 stories. Fan out **parallel read-only audit agents, one per plane**
-(all `claude-opus-4-6[1m]`), each with a tight mission and a required
+(all `claude-opus-5-5`), each with a tight mission and a required
 report format:
 
 - structural census (code-level, exhaustive tables, file:line for
@@ -256,7 +256,7 @@ Walk discipline hardened by the 138/139 closes:
 ### 6. The counsel
 
 Before the close is called, the orchestrator **takes the phase to the
-Opus counsel — a fresh `claude-opus-4-6[1m]` session — and asks for
+Opus counsel — a fresh `claude-opus-5-5` session — and asks for
 its opinion — always**. The counsel is the sounding board and
 acceptance partner, a different mind with standing in this repo's
 history: the Phase 106 council pass where the counsel (Sol, in that
