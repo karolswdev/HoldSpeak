@@ -78,11 +78,14 @@ A step is `{"kind": <one of STEP_KINDS>, ...}`:
             A check that does not hold is `blocked: precondition not met`,
             with the predicate and the location named.
   boundary  {label, substitute: "engine_reply", reply, api?}
+            | {label, substitute: "http_fault", method, path, status, body?, times?}
             A substitution must be PERFORMED, never merely labelled:
             `engine_reply` installs a recorded provider reply at the product's
             own seam INSIDE the hub process, and the step blocks if the hub
             was not booted with it. The observation is labelled
-            `engine_mode: replayed`.
+            `engine_mode: replayed`. `http_fault` answers the next `times`
+            matching same-origin requests with `status` in the BROWSER
+            (Playwright page.route); the hub never sees them.
 
 Every step carries an `adapter` string naming the real entry point it drives
 (`ui-pointer`, `http-route`, `scheduler-entry`, …); it is recorded, never
@@ -2259,11 +2262,13 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
         record: dict[str, Any] = {
             "kind": "boundary", "label": label, "substitute": substitution,
             "adapter": step.get("adapter", "labelled-substitution")}
+        if substitution == "http_fault":
+            return _http_fault(step, page, record, provenance)
         if substitution != "engine_reply":
             raise Blocked(
                 f"boundary substitution {substitution!r} (label {label!r}) is not "
-                "implemented; a label alone substitutes nothing. The one "
-                "implemented substitution is 'engine_reply'.")
+                "implemented; a label alone substitutes nothing. The implemented "
+                "substitutions are 'engine_reply' and 'http_fault'.")
         if hub is None or getattr(hub, "engine_replay", None) is None:
             raise Blocked(
                 "the recorded provider reply is NOT installed in the hub "
@@ -2290,6 +2295,46 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
             record["inner"] = run_step({"kind": "api", **inner}, page, hub, provenance, case)
         return record
     raise Blocked(f"step kind {kind!r} has no runner in this rig")  # pragma: no cover
+
+
+def _http_fault(step: dict[str, Any], page: Any, record: dict[str, Any],
+                provenance: dict[str, Any]) -> dict[str, Any]:
+    """PHILO-3-01: a hub fault at the BROWSER boundary, performed, not labelled.
+
+    `{"substitute": "http_fault", "method", "path", "status", "body"?,
+    "times"?}` installs a Playwright route in the page, so the next
+    `times` (default 1) requests of that method to that same-origin path are
+    answered with `status` by the browser boundary; the hub never sees them.
+    The observation records it in `provenance.boundary_substitutions`.
+    """
+    if page is None:
+        raise Blocked("http_fault needs a page: the substitution lives at the "
+                      "browser boundary")
+    method = str(step.get("method", "GET")).upper()
+    path = str(step["path"])
+    status = int(step["status"])
+    body = json.dumps(step.get("body") or {"error": f"substituted HTTP {status}"})
+    times = int(step.get("times", 1))
+    hits: list[str] = []
+
+    def handler(route: Any) -> None:
+        request = route.request
+        if (request.method.upper() == method
+                and urllib.parse.urlsplit(request.url).path == path
+                and len(hits) < times):
+            hits.append(request.url)
+            route.fulfill(status=status, content_type="application/json", body=body)
+            return
+        route.fallback()
+
+    page.route("**/*", handler)
+    record.update({"method": method, "path": path, "status": status,
+                   "times": times, "seam": "playwright page.route (browser boundary)",
+                   "fulfilled": hits})
+    provenance.setdefault("boundary_substitutions", []).append(
+        {"label": record["label"], "substitute": "http_fault", "method": method,
+         "path": path, "status": status, "times": times})
+    return record
 
 
 def case_predicate(case: dict[str, Any]) -> Any:

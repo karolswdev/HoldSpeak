@@ -1,0 +1,474 @@
+{
+  "id": "obs-20260923T054936Z-case.a1.decision_face_create.failure_named-muaddib-1440",
+  "run_id": "20260923T054936Z-case.a1.decision_face_create.failure_named-muaddib-1440",
+  "case_id": "case.a1.decision_face_create.failure_named",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "a1",
+  "edge_ids": [
+    "edge.route.decisions_create"
+  ],
+  "state_id": "state.decisions.desk.create_failed",
+  "provenance": {
+    "revision": "ec3d6dd5adbae0fc926fbc93753754901d443536",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "6a9bde409510a0a2109d834da80c8eda1dbaebef03599b24485bf9d79dcc95bf",
+      "assets": [
+        "index-BEhX0xe7.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:65152",
+      "port": 65152,
+      "pid": 8130,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lb5jruaz",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lb5jruaz/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T05:49:36.569668+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [
+      {
+        "label": "hub fault on create",
+        "substitute": "http_fault",
+        "method": "POST",
+        "path": "/api/decisions",
+        "status": 500,
+        "times": 1
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "5bfa2f2ca5f616c4a0dd886461421bf30134c1c4b4cb00f09e34e0396810fc8b",
+      "version": "phase3-01"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "boundary",
+      "label": "hub fault on create",
+      "substitute": "http_fault",
+      "adapter": "browser-boundary",
+      "method": "POST",
+      "path": "/api/decisions",
+      "status": 500,
+      "times": 1,
+      "seam": "playwright page.route (browser boundary)",
+      "fulfilled": [
+        "http://127.0.0.1:65152/api/decisions"
+      ]
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME; the hub fault is a BOUNDARY SUBSTITUTION: the browser answers the one POST /api/decisions with 500 (Playwright page.route); the hub never sees it",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[id='desk-palette-option-desk.new-decision']",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "CREATE DECISION FAILED \u00b7 HTTP 500\nRetry\nOK"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "write-receipt",
+        "role": "status"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 626,
+        "y": 4,
+        "w": 344,
+        "h": 20
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+      "after": "body"
+    },
+    "focus_label": {
+      "before": "Search tools and Desk items",
+      "after": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nCREATE DECISIO"
+    },
+    "document_text_sha256": {
+      "before": "64ec427f655e8f1a3bde8c894cebd1035ff8c32d847731a768b60eebc5d78f2c",
+      "after": "680288666c40382af34b768a6f5d991cdbca47ff38987ff028e139e28ad4967f"
+    },
+    "document_text_len": {
+      "before": 417,
+      "after": 402
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+          "value": "New Decision"
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": ".write-receipt",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [
+      {
+        "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+        "value": "New Decision"
+      }
+    ],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:65152/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "64ec427f655e8f1a3bde8c894cebd1035ff8c32d847731a768b60eebc5d78f2c",
+    "document_text_len": 417,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T05:49:42.671268+00:00"
+  },
+  "after": {
+    "observe_at": ".write-receipt",
+    "target_present": true,
+    "text": "CREATE DECISION FAILED \u00b7 HTTP 500\nRetry\nOK",
+    "attrs": {
+      "class": "write-receipt",
+      "role": "status"
+    },
+    "rect": {
+      "x": 626,
+      "y": 4,
+      "w": 344,
+      "h": 20
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nCREATE DECISIO",
+    "url": "http://127.0.0.1:65152/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "680288666c40382af34b768a6f5d991cdbca47ff38987ff028e139e28ad4967f",
+    "document_text_len": 402,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T05:49:43.829237+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/decisions",
+      "status": 500,
+      "body_sha256": "f0e0965b710e6de2f4593f80898dc8e398d4329fbbedcf2362f01bc52302d38b",
+      "body": {
+        "error": "substituted hub fault"
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/decisions"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".write-receipt",
+    "target_present": true,
+    "text": "CREATE DECISION FAILED \u00b7 HTTP 500\nRetry\nOK",
+    "attrs": {
+      "class": "write-receipt",
+      "role": "status"
+    },
+    "rect": {
+      "x": 626,
+      "y": 4,
+      "w": 344,
+      "h": 20
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nCREATE DECISIO",
+    "url": "http://127.0.0.1:65152/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "680288666c40382af34b768a6f5d991cdbca47ff38987ff028e139e28ad4967f",
+    "document_text_len": 402,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T05:49:43.701672+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/decisions",
+      "status": 500,
+      "body_sha256": "f0e0965b710e6de2f4593f80898dc8e398d4329fbbedcf2362f01bc52302d38b",
+      "body": {
+        "error": "substituted hub fault"
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/decisions"
+    },
+    "predicate_satisfied": true,
+    "reading": "'CREATE DECISION FAILED \u00b7 HTTP 500' in observe_at text",
+    "elapsed_s": 0.926
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'CREATE DECISION FAILED \u00b7 HTTP 500' in observe_at text",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.053,
+    "first_satisfied_at_s": 0.926,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'CREATE DECISION FAILED \u00b7 HTTP 500' in observe_at text"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/decisions",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/decisions",
+      "status": 500,
+      "body_sha256": "f0e0965b710e6de2f4593f80898dc8e398d4329fbbedcf2362f01bc52302d38b",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/decisions"
+    },
+    "why": "chosen by the declared trigger_route POST /api/decisions",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/decisions",
+        "status": 500,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/20260923T054936Z-case.a1.decision_face_create.failure_named-muaddib-1440/before.png",
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/20260923T054936Z-case.a1.decision_face_create.failure_named-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lb5jruaz/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:65152"
+  ]
+}

@@ -8022,6 +8022,7 @@
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
         "tests/integration/test_decision_records.py",
+        "tests/unit/test_graph_walk_http_fault.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -8084,6 +8085,7 @@
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
         "tests/integration/test_decision_records.py",
+        "tests/unit/test_graph_walk_http_fault.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -8163,6 +8165,7 @@
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
         "tests/integration/test_decision_records.py",
+        "tests/unit/test_graph_walk_http_fault.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],

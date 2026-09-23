@@ -5,7 +5,7 @@
   "source_commit": "7ce953580b0dd27f7e4445d5e41da4c9a0a55f75",
   "cases": [
     {
-      "id": "case.a1.decision_face_create.reopened",
+      "id": "case.a1.decision_face_create.opens_and_reopens",
       "job": "a1",
       "edge_ids": [
         "edge.route.decisions_create"
@@ -59,18 +59,23 @@
           "action": "click",
           "selector": "[id='desk-palette-option-desk.new-decision']",
           "adapter": "ui-pointer",
-          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:148-158; also Desk menu > New Decision and ⌘⇧N at 1440) -> createPrimitive('decision') -> POST /api/decisions (web/src/desk/store/dataSlice.ts:181-256)"
+          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and ⌘⇧N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-decision-card textarea[aria-label=Decision]",
+          "adapter": "ui-pointer",
+          "why": "PHILO-3-01: the create OPENS the decision face (DecisionPullout), in Edit for a new decision"
         },
         {
           "kind": "check",
           "predicate": {
-            "kind": "protocol_field",
-            "path": "decisions.0.title",
+            "kind": "text_contains",
             "value": "New decision"
           },
-          "observe_at": "protocol: GET /api/decisions",
-          "timeout_s": 10,
-          "why": "the face create landed on the hub before its id is read"
+          "observe_at": "[role=region][aria-label='New decision']",
+          "why": "the opened face is the new decision's pullout, titled by it"
         },
         {
           "kind": "api",
@@ -80,53 +85,20 @@
           "capture_as": "decision_id",
           "capture_path": "decisions.0.id",
           "adapter": "http-route",
-          "why": "the id the face create minted, read from the list route; the desk had no decision before"
-        },
-        {
-          "kind": "ui",
-          "action": "reload",
-          "adapter": "ui-navigation"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "selector": "[aria-controls=desk-tool-shelf]",
-          "adapter": "ui-pointer",
-          "why": "the menubar Search (web/src/desk/components/DeskToolShelf.tsx)"
+          "why": "the id the face create minted; the desk had no decision before"
         },
         {
           "kind": "ui",
           "action": "fill",
-          "selector": "[aria-controls=desk-palette-listbox]",
-          "value": "New decision",
+          "selector": ".desk-decision-card textarea[aria-label=Context]",
+          "value": "Source: meeting review 2026-09-22",
           "adapter": "ui-keyboard"
         },
         {
           "kind": "ui",
-          "action": "click",
-          "selector": "[id='desk-palette-option-decision:{decision_id}']",
-          "adapter": "ui-pointer",
-          "why": "reopen the created decision after the reload; the row id is desk-palette-option-<kind>:<id> (DeskToolShelf.tsx:656)"
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "selector": ".desk-decision-card",
-          "adapter": "ui-pointer"
-        },
-        {
-          "kind": "ui",
-          "action": "click_role",
-          "role": "button",
-          "name": "Edit",
-          "adapter": "ui-pointer",
-          "why": "DecisionPullout.tsx:147 Edit -> the three PadGadget wells"
-        },
-        {
-          "kind": "ui",
           "action": "fill",
-          "selector": "textarea[aria-label=Decision]",
-          "value": "Adopt the one desk bus for every frame",
+          "selector": ".desk-decision-card textarea[aria-label=Decision]",
+          "value": "Adopt the one desk bus\nfor every frame",
           "adapter": "ui-keyboard"
         },
         {
@@ -135,17 +107,36 @@
           "role": "button",
           "name": "Done",
           "adapter": "ui-pointer",
-          "why": "DecisionPullout.tsx:144 Done -> updatePrimitive('decision') -> PUT /api/decisions/{id}"
+          "why": "DecisionPullout Done -> updatePrimitive('decision') -> PUT /api/decisions/{id}; the default title yields to the first line"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "decision.title",
+            "value": "Adopt the one desk bus"
+          },
+          "observe_at": "protocol: GET /api/decisions/{decision_id}",
+          "why": "the title is the first line of the decision text, so the brief item reads 'Review decision: <first line>' (monday_brief_service.py:750-758)"
         },
         {
           "kind": "check",
           "predicate": {
             "kind": "protocol_field",
             "path": "decision.decision_markdown",
-            "value": "Adopt the one desk bus for every frame"
+            "value": "Adopt the one desk bus\nfor every frame"
+          },
+          "observe_at": "protocol: GET /api/decisions/{decision_id}"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "decision.context_markdown",
+            "value": "Source: meeting review 2026-09-22"
           },
           "observe_at": "protocol: GET /api/decisions/{decision_id}",
-          "why": "the face-written text is on the hub under the face-minted id"
+          "why": "the source the owner wrote reads back (a desk decision has no source field; context carries it)"
         },
         {
           "kind": "ui",
@@ -162,23 +153,32 @@
           "kind": "ui",
           "action": "fill",
           "selector": "[aria-controls=desk-palette-listbox]",
-          "value": "New decision",
+          "value": "Adopt the one desk bus",
           "adapter": "ui-keyboard"
         },
         {
           "kind": "ui",
           "action": "click",
           "selector": "[id='desk-palette-option-decision:{decision_id}']",
-          "adapter": "ui-pointer"
+          "adapter": "ui-pointer",
+          "why": "reopen after the reload; the row id is desk-palette-option-<kind>:<id> (DeskToolShelf.tsx:656)"
         },
         {
           "kind": "check",
           "predicate": {
             "kind": "text_contains",
-            "value": "Adopt the one desk bus for every frame"
+            "value": "for every frame"
           },
-          "observe_at": ".desk-decision-card",
-          "why": "the reopened decision shows the saved text after a reload"
+          "observe_at": "[role=region][aria-label='Adopt the one desk bus'] .desk-decision-card",
+          "why": "the reopened face, now titled by the first line, shows the saved text"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "Source: meeting review 2026-09-22"
+          },
+          "observe_at": "[role=region][aria-label='Adopt the one desk bus'] .desk-decision-card"
         }
       ],
       "trigger": {
@@ -201,9 +201,147 @@
           "body_contains": "invalid decision status"
         },
         "observe_at": "protocol: POST /api/decisions",
-        "words": "setup: the Desk menu New Decision creates a decision (201), the id is read back, the decision reopens after a reload through Search, Edit/Done writes its Decision text, the hub holds that text under that id, and after a second reload the reopened card shows it. trigger: the same route refuses a bad status with 400 that NAMES the refusal. The face's own create-failure receipt (CREATE DECISION FAILED · HTTP <n>, with Retry) is web/src/desk/store/dataSlice.ts:66-74 + web/src/desk/hooks/useWriteReceipt.ts:61-64; the rig cannot make the face create fail without a failing hub."
+        "words": "setup: Search > New Decision creates a decision (201) and OPENS its face (the DecisionPullout, in Edit); the owner writes Context (the source) and Decision; Done titles it by the first line; the hub holds title, text and source under the face-minted id; after a reload Search reopens it under the new title and the card shows text and source. trigger: the same route refuses a bad status with 400 that NAMES the refusal."
       },
       "completion_bound_s": 60,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.a1.decision_face_create.failure_named",
+      "job": "a1",
+      "edge_ids": [
+        "edge.route.decisions_create"
+      ],
+      "state_id": "state.decisions.desk.create_failed",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME; the hub fault is a BOUNDARY SUBSTITUTION: the browser answers the one POST /api/decisions with 500 (Playwright page.route); the hub never sees it"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "boundary",
+          "label": "hub fault on create",
+          "substitute": "http_fault",
+          "method": "POST",
+          "path": "/api/decisions",
+          "status": 500,
+          "body": {
+            "error": "substituted hub fault"
+          },
+          "times": 1,
+          "adapter": "browser-boundary"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer",
+          "why": "the menubar Search (web/src/desk/components/DeskToolShelf.tsx), present at 1440 and 393; the Desk menu is hidden at 393"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New Decision",
+          "adapter": "ui-keyboard"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[id='desk-palette-option-desk.new-decision']",
+        "adapter": "ui-pointer",
+        "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and ⌘⇧N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/decisions"
+        }
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "CREATE DECISION FAILED · HTTP 500"
+        },
+        "observe_at": ".write-receipt",
+        "words": "the face names the failed create on the desk receipt line with Retry (library Button): dataSlice.ts reportCreateFailure -> useWriteReceipt.ts receiptElement"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.a1.decisions_read.failure_named",
+      "job": "a1",
+      "edge_ids": [
+        "edge.route.decisions_list"
+      ],
+      "state_id": "state.decisions.desk.read_failed",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME; the hub fault is a BOUNDARY SUBSTITUTION: the browser answers every GET /api/decisions with 500 (Playwright page.route); the hub never sees them"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "boundary",
+          "label": "hub fault on read",
+          "substitute": "http_fault",
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 500,
+          "body": {
+            "error": "substituted hub fault"
+          },
+          "times": 1000,
+          "adapter": "browser-boundary"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "READ DECISIONS FAILED · HTTP 500"
+        },
+        "observe_at": ".write-receipt",
+        "words": "a failed decisions read is named on the desk receipt line with Retry (library Button): api.ts loadAll `failed` -> dataSlice.ts refresh -> reportWriteFailure"
+      },
+      "completion_bound_s": 30,
       "viewports": [
         1440,
         393

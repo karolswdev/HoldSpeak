@@ -20,3 +20,20 @@ API reference checked
 OpenAPI: 569 paths
 Architecture documentation checked (10 outputs).
 ```
+
+### Captured run — 2026-09-23T05:56:01Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.Hpf6JLmXCD PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright sh -c uv run --extra dev pytest -q -p no:cacheprovider tests/unit/test_philo3_01_decision_route.py tests/unit/test_graph_walk_http_fault.py tests/unit/test_phase200_doc_claims.py && cd web && npx vitest run src/desk/__tests__/philo301DecisionFace.test.tsx src/desk/__tests__/writeReceiptGuard.test.ts 2>&1 | tail -3 && cd .. && uv run python scripts/philo_api_reference.py --check && uv run python scripts/philo_openapi_reference.py --check`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 2d410d2027370a26df33760a1f2254104f226175
+
+```text
+...................................................                      [100%]
+51 passed in 2.67s
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.20.0
+npm notice To update run: npm install -g npm@11.20.0
+npm notice
+API reference checked
+OpenAPI: 569 paths
+```

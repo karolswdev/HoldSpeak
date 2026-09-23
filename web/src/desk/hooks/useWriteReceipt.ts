@@ -19,6 +19,7 @@ import {
   useSyncExternalStore,
   type ReactElement,
 } from "react";
+import { Button } from "../../components/signal/Signal";
 import "./write-receipt.css";
 
 export interface WriteFailure {
@@ -86,20 +87,22 @@ function receiptElement(
     ),
     failure.retry
       ? createElement(
-          "button",
+          Button,
           {
-            type: "button",
-            className: "desk-chip write-receipt-retry",
+            variant: "ghost",
+            dense: true,
+            className: "write-receipt-retry",
             onClick: failure.retry,
           },
           "Retry",
         )
       : null,
     createElement(
-      "button",
+      Button,
       {
-        type: "button",
-        className: "desk-chip write-receipt-dismiss",
+        variant: "ghost",
+        dense: true,
+        className: "write-receipt-dismiss",
         onClick: onDismiss,
       },
       "OK",
