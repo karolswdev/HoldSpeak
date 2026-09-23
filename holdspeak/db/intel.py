@@ -1463,6 +1463,7 @@ class IntelRepository(BaseRepository):
                         "meeting_deferred_plugin_plan_invalid",
                         f"Installed plugin planning refused: {type(exc).__name__}",
                     )
+                    setattr(refusal, "_holdspeak_queue_meeting_id", meeting_id)
                     setattr(
                         refusal,
                         "_holdspeak_queue_advanced",
@@ -1544,6 +1545,7 @@ class IntelRepository(BaseRepository):
                 try:
                     prepare(job, command_ids)
                 except Exception as exc:
+                    setattr(exc, "_holdspeak_queue_meeting_id", meeting_id)
                     setattr(exc, "_holdspeak_queue_advanced", self.settle_bound_claim_refusal(job_id, exc))
                     raise
                 conn.execute("BEGIN IMMEDIATE")
@@ -1614,6 +1616,7 @@ class IntelRepository(BaseRepository):
                 conn.rollback()
                 if callable(discard):
                     discard(job_id)
+                setattr(exc, "_holdspeak_queue_meeting_id", meeting_id)
                 setattr(exc, "_holdspeak_queue_advanced", self.settle_bound_claim_refusal(job_id, exc))
                 raise
             required = {"parent_operation_id", "bundle_id", "bundle_sha256"}

@@ -1,0 +1,127 @@
+PHILO-3-02 queue fence — pre-fix failure
+Date: 2026-09-23
+Command:
+  test_home=$(mktemp -d); HOME="$test_home" uv run --no-sync pytest -q tests/unit/test_philo3_summary_queue.py
+Exit code: 1
+
+Raw output:
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+________ test_real_admitted_success_notifies_after_running_and_receipt _________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-231/test_real_admitted_success_not0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10de65350>
+
+    def test_real_admitted_success_notifies_after_running_and_receipt(
+        tmp_path, monkeypatch
+    ):
+        db, _broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+        state = _meeting(db, "m-philo3-success")
+        observations = _observe_notifications(db, monkeypatch)
+    
+        admitted = _admit(db, state.id)
+        assert admitted["state"] == "queued"
+    
+        from holdspeak.intel_queue import process_next_intel_job
+    
+        assert process_next_intel_job() is True
+>       assert [item["meeting_status"] for item in observations] == ["running", "ready"]
+E       AssertionError: assert [] == ['running', 'ready']
+E         
+E         Right contains 2 more items, first extra item: 'running'
+E         Use -v to get more diff
+
+tests/unit/test_philo3_summary_queue.py:85: AssertionError
+___ test_real_admitted_retry_notifies_after_scheduled_successor_and_receipt ____
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-231/test_real_admitted_retry_notif0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d19d220>
+
+    def test_real_admitted_retry_notifies_after_scheduled_successor_and_receipt(
+        tmp_path, monkeypatch
+    ):
+        db, _broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+        state = _meeting(db, "m-philo3-retry")
+        observations = _observe_notifications(db, monkeypatch)
+        _admit(db, state.id)
+        engine.error = "provider unavailable"
+    
+        from holdspeak.intel_queue import process_next_intel_job
+    
+        assert process_next_intel_job(retry_base_seconds=60) is True
+>       assert [item["meeting_status"] for item in observations] == ["running", "queued"]
+E       AssertionError: assert [] == ['running', 'queued']
+         
+E         Right contains 2 more items, first extra item: 'running'
+         Use -v to get more diff
+
+tests/unit/test_philo3_summary_queue.py:104: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue:intel_queue.py:120 Deferred intel failed for meeting m-philo3-retry (attempt 1/6): retrying in 60s
+__ test_real_admitted_terminal_failure_notifies_after_settlement_and_receipt ___
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-231/test_real_admitted_terminal_fa0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e160050>
+
+    def test_real_admitted_terminal_failure_notifies_after_settlement_and_receipt(
+        tmp_path, monkeypatch
+    ):
+        db, _broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+        state = _meeting(db, "m-philo3-terminal")
+        observations = _observe_notifications(db, monkeypatch)
+        _admit(db, state.id)
+        engine.error = "provider unavailable"
+    
+        from holdspeak.intel_queue import process_next_intel_job
+    
+        assert process_next_intel_job(retry_max_attempts=1) is True
+>       assert [item["meeting_status"] for item in observations] == ["running", "error"]
+E       AssertionError: assert [] == ['running', 'error']
+         
+E         Right contains 2 more items, first extra item: 'running'
+         Use -v to get more diff
+
+tests/unit/test_philo3_summary_queue.py:122: AssertionError
+______ test_real_admission_refusal_notifies_after_durable_refusal_receipt ______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-231/test_real_admission_refusal_no0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e0eebe0>
+
+    def test_real_admission_refusal_notifies_after_durable_refusal_receipt(
+        tmp_path, monkeypatch
+    ):
+        db, _broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+        state = _meeting(db, "m-philo3-refusal")
+        observations = _observe_notifications(db, monkeypatch)
+        _admit(db, state.id)
+    
+        # The Run gesture froze a real route.  Clear its core assignment through
+        # the owner assignment service before the queue claims, modelling a stale
+        # desk configuration without replacing the binder or provider boundary.
+        from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    
+        InferenceAssignmentService(db).clear_assignment(
+            OWNER,
+            {
+                "command_id": "philo3-clear-deferred-analysis",
+                "expected_revision": 1,
+                "scope": {"kind": "capability", "capability_id": "meeting.deferred_analysis"},
+                "capability_id": "meeting.deferred_analysis",
+            },
+        )
+        from holdspeak.intel_queue import process_next_intel_job
+    
+        assert process_next_intel_job() is True
+>       assert len(observations) == 1
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/unit/test_philo3_summary_queue.py:153: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue:intel_queue.py:746 Bound deferred intel claim refused: ConflictError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo3_summary_queue.py::test_real_admitted_success_notifies_after_running_and_receipt
+FAILED tests/unit/test_philo3_summary_queue.py::test_real_admitted_retry_notifies_after_scheduled_successor_and_receipt
+FAILED tests/unit/test_philo3_summary_queue.py::test_real_admitted_terminal_failure_notifies_after_settlement_and_receipt
+FAILED tests/unit/test_philo3_summary_queue.py::test_real_admission_refusal_notifies_after_durable_refusal_receipt
+4 failed in 1.53s
