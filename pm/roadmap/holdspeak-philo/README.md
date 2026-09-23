@@ -1,8 +1,8 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-22.
+**Last updated:** 2026-09-22 (PHILO-2-03 independent static seal).
 **Current phase:** [phase-2-the-graph](phase-2-the-graph/current-phase-status.md)
-**Status:** Phase 1 delivered and merged (PR #589); Phase 2 The Graph chartered 2026-09-22.
+**Status:** Phase 1 delivered and merged (PR #589); Phase 2 active. PHILO-2-03 seals Astra’s independent static pass; cross-check follows all four sealed outputs.
 
 ## Vision
 
@@ -34,4 +34,4 @@ Do not edit the main HoldSpeak project's current phase or Phase 201 status.
 
 | Phase | Goal (one line) | Status | Folder |
 |---|---|---|---|
-| 2 | Audit the platform as one graph, edges to interfaces to connections to actions, both brains on both passes, a council rules, the outcome is Phase 3. | not-started | [phase-2-the-graph](./phase-2-the-graph/) |
+| 2 | Audit the platform as one graph, edges to interfaces to connections to actions, both brains on both passes, a council rules, the outcome is Phase 3. | active | [phase-2-the-graph](./phase-2-the-graph/) |
