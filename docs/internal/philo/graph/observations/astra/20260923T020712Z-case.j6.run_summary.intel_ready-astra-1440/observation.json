@@ -1,0 +1,208 @@
+{
+  "id": "obs-20260923T020712Z-case.j6.run_summary.intel_ready-astra-1440",
+  "run_id": "20260923T020712Z-case.j6.run_summary.intel_ready-astra-1440",
+  "case_id": "case.j6.run_summary.intel_ready",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/astra-inputs/j6-runtime-atlas.json",
+  "job": "j6",
+  "edge_ids": [
+    "edge.timer.intel_drainer"
+  ],
+  "state_id": "state.meetings.intel.ready",
+  "provenance": {
+    "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f872c6384eb22ce20c3a6d429fe833a2bc682f6bf2091f207c1f45cc4d4539fc",
+      "assets": [
+        "index-BNDgWxUD.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:51950",
+      "port": 51950,
+      "pid": 80390,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2dxcpbhn",
+      "scheduler_thread": true
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2dxcpbhn/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/core_path_smoke_16k.wav": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T02:07:12.553409+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": true
+    },
+    "engine_mode": "real",
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/astra-inputs/j6-runtime-atlas.json",
+      "sha256": "c745c2e01f1cfd17adcfa6e358d35fafc8c853b433b23522933cd185f5a7cbf7",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer",
+        "the heartbeat conductor loop"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "error": "TimeoutError('Locator.click: Timeout 10000ms exceeded.\\nCall log:\\n  - waiting for locator(\"[data-testid=arrival-blocker-verb-engines]\").first\\n')"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-blocker-verb-summary]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-engine]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-engine]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-pointer",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-check]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-submit]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-submit]",
+      "done": true
+    },
+    {
+      "kind": "fixture",
+      "path": "tests/fixtures/core_path_smoke_16k.wav",
+      "route": {
+        "method": "POST",
+        "path": "/api/meetings/import"
+      },
+      "adapter": "http-route",
+      "status": 202,
+      "response": {
+        "meeting_id": "b01517b5",
+        "status": "importing"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "b01517b5"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-meetings]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-run-intel]",
+      "done": true
+    }
+  ],
+  "preconditions": [],
+  "variables": {
+    "meeting_id": "b01517b5"
+  },
+  "trigger": null,
+  "diff": {},
+  "before": null,
+  "after": null,
+  "initial_feedback": null,
+  "terminal_outcome": null,
+  "verdict": "blocked",
+  "notes": [
+    "BLOCKED: POST /api/meetings/b01517b5/intelligence/run answered 409: {\"success\":false,\"error\":\"Meeting intelligence is already queued\",\"plainReason\":\"Meeting intelligence is already queued\",\"code\":\"queued\",\"planned_route\":{\"status\":\"ready\",\"reason_code\":null,\"selection_hash\":\"sha256:8161535b140b2cc5e5335f58b6d5519ba8a128ecf0489385922478b4532bbc8e\",\"legs\":[{\"ordinal\":1,\"host\":\"192.168.1.43\",\"boundary\":\"lan\",\"profile_id\":\"engine-192-168-1-43-8080\",\"profile_revision\":1,\"deployment_revision_id\":\"dep_b90351fcd"
+  ],
+  "complete": true,
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2dxcpbhn/.local/share/holdspeak/holdspeak.db",
+    "SCHEDULER heartbeat conductor thread started (HeartbeatMixin._heartbeat_loop, TICK_SECONDS=60)",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\", \"the heartbeat conductor loop\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\"]}",
+    "HUB_READY http://127.0.0.1:51950",
+    "",
+    "Fetching 4 files:   0%|          | 0/4 [00:00<?, ?it/s]Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.",
+    "",
+    "Fetching 4 files:  25%|\u2588\u2588\u258c       | 1/4 [00:00<00:00,  8.37it/s]",
+    "Fetching 4 files: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 4/4 [00:09<00:00,  2.43s/it]",
+    "Fetching 4 files: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 4/4 [00:09<00:00,  2.26s/it]"
+  ]
+}

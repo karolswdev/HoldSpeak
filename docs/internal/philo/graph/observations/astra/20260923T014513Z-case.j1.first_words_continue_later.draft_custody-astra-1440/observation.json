@@ -1,0 +1,651 @@
+{
+  "id": "obs-20260923T014513Z-case.j1.first_words_continue_later.draft_custody-astra-1440",
+  "run_id": "20260923T014513Z-case.j1.first_words_continue_later.draft_custody-astra-1440",
+  "case_id": "case.j1.first_words_continue_later.draft_custody",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j1",
+  "edge_ids": [
+    "edge.face.first_words_continue_later"
+  ],
+  "state_id": "state.first_value.draft_custody",
+  "provenance": {
+    "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f872c6384eb22ce20c3a6d429fe833a2bc682f6bf2091f207c1f45cc4d4539fc",
+      "assets": [
+        "index-BNDgWxUD.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:64424",
+      "port": 64424,
+      "pid": 66698,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2c2v9nfa",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2c2v9nfa/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T01:45:13.771302+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "64af1de4364c57c4df644b8df23445fcd6bccf713e3429d6855882abb875dafe",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-pointer",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "text typed into the gate's field and not kept",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=chair-first-value]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "chair-first-value"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='chair-first-value', wanted 'chair-first-value'"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "ui",
+    "action": "click_role",
+    "adapter": "ui-pointer",
+    "name": "Save draft & continue",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": true,
+      "after": false
+    },
+    "text": {
+      "before": "VOICE TYPING\nDictate one sentence\n\nSpeak. Then edit and keep your text.\n\nClick to speak\nCopy\nKeep as Note\nSave draft & continue",
+      "after": null
+    },
+    "attrs": {
+      "before": {
+        "class": "desk-first-words",
+        "aria-labelledby": "first-words-title"
+      },
+      "after": null
+    },
+    "rect": {
+      "before": {
+        "x": 410,
+        "y": 246,
+        "w": 620,
+        "h": 407
+      },
+      "after": null
+    },
+    "visible": {
+      "before": true,
+      "after": null
+    },
+    "focus": {
+      "before": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+      "after": "div#pullout:note_f1c1cecac5cd4a4d8f8bdc3fb1acab3f"
+    },
+    "focus_label": {
+      "before": "Your dictated text",
+      "after": "First dictation"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "First dictation",
+          "rect": {
+            "x": 1022,
+            "y": 64,
+            "w": 400,
+            "h": 172
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "ccf03fcc20089584a3947d24403612bc0de6e43b42868e9952f1555f3cb629e3",
+      "after": "3ea977014596f2535e20184477657d6a2a7ec7701dcf0c12d06ff71c339b8ac9"
+    },
+    "document_text_len": {
+      "before": 127,
+      "after": 471
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+          "value": "one sentence"
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": "section.desk-first-words",
+    "target_present": true,
+    "text": "VOICE TYPING\nDictate one sentence\n\nSpeak. Then edit and keep your text.\n\nClick to speak\nCopy\nKeep as Note\nSave draft & continue",
+    "attrs": {
+      "class": "desk-first-words",
+      "aria-labelledby": "first-words-title"
+    },
+    "rect": {
+      "x": 410,
+      "y": 246,
+      "w": 620,
+      "h": 407
+    },
+    "visible": true,
+    "values": [
+      {
+        "selector": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+        "value": "one sentence"
+      }
+    ],
+    "field_value": null,
+    "focus": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+    "focus_label": "Your dictated text",
+    "url": "http://127.0.0.1:64424/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "ccf03fcc20089584a3947d24403612bc0de6e43b42868e9952f1555f3cb629e3",
+    "document_text_len": 127,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T01:45:17.987163+00:00"
+  },
+  "after": {
+    "observe_at": "section.desk-first-words",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#pullout:note_f1c1cecac5cd4a4d8f8bdc3fb1acab3f",
+    "focus_label": "First dictation",
+    "url": "http://127.0.0.1:64424/",
+    "windows": [
+      {
+        "title": "First dictation",
+        "rect": {
+          "x": 1022,
+          "y": 64,
+          "w": 400,
+          "h": 172
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "3ea977014596f2535e20184477657d6a2a7ec7701dcf0c12d06ff71c339b8ac9",
+    "document_text_len": 471,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T01:45:43.475832+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/notes",
+      "status": 201,
+      "body_sha256": "c23bf925023fccd6b5910dfc32f9825b001c378d4f94710bd162be351c2f223e",
+      "body": {
+        "note": {
+          "id": "note_f1c1cecac5cd4a4d8f8bdc3fb1acab3f",
+          "title": "First dictation",
+          "body_markdown": "one sentence",
+          "tags": [
+            "dictation"
+          ],
+          "created_at": "2026-09-23T01:45:18Z",
+          "updated_at": "2026-09-23T01:45:18Z",
+          "last_modified": "2026-09-23T01:45:18Z",
+          "deleted": false
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:64424) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "section.desk-first-words",
+    "target_present": true,
+    "text": "VOICE TYPING\nDictate one sentence\n\nSpeak. Then edit and keep your text.\n\nClick to speak\nCopy\nKeep as Note\nContinue later",
+    "attrs": {
+      "class": "desk-first-words",
+      "aria-labelledby": "first-words-title"
+    },
+    "rect": {
+      "x": 410,
+      "y": 246,
+      "w": 620,
+      "h": 407
+    },
+    "visible": true,
+    "values": [
+      {
+        "selector": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+        "value": "one sentence"
+      }
+    ],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "VOICE TYPING\nDictate one sentence\n\nSpeak. Then edit and keep",
+    "url": "http://127.0.0.1:64424/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "7af36687590250af61f701ce0893b3ddbcaab0f186b2c14b6fda8d125b707df5",
+    "document_text_len": 120,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T01:45:19.028635+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/notes",
+      "status": 201,
+      "body_sha256": "c23bf925023fccd6b5910dfc32f9825b001c378d4f94710bd162be351c2f223e",
+      "body": {
+        "note": {
+          "id": "note_f1c1cecac5cd4a4d8f8bdc3fb1acab3f",
+          "title": "First dictation",
+          "body_markdown": "one sentence",
+          "tags": [
+            "dictation"
+          ],
+          "created_at": "2026-09-23T01:45:18Z",
+          "updated_at": "2026-09-23T01:45:18Z",
+          "last_modified": "2026-09-23T01:45:18Z",
+          "deleted": false
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:64424) non-GET response after the click"
+    },
+    "predicate_satisfied": false,
+    "reading": "'Save draft & continue' NOT in observe_at text",
+    "elapsed_s": 0.929
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": false,
+    "reading": "'Save draft & continue' NOT in observe_at text",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 25.375,
+    "first_satisfied_at_s": null,
+    "completion_bound_s": 25.0,
+    "late_result_s": null,
+    "within_bound": false
+  },
+  "verdict": "fail",
+  "notes": [
+    "predicate: 'Save draft & continue' NOT in observe_at text",
+    "a nonzero diff with the wrong result is a finding, not a pass (changed: ['attrs', 'document_text_len', 'document_text_sha256', 'focus', 'focus_label', 'rect', 'target_present', 'text', 'values', 'visible', 'windows'])."
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:64424) non-GET response after the click",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/notes",
+      "status": 201,
+      "body_sha256": "c23bf925023fccd6b5910dfc32f9825b001c378d4f94710bd162be351c2f223e",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:64424) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:64424) non-GET response after the click",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/notes",
+        "status": 201,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/desk/seed",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "PUT",
+        "path": "/api/setup/onboarding",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "docs/internal/philo/graph/observations/astra/20260923T014513Z-case.j1.first_words_continue_later.draft_custody-astra-1440/before.png",
+    "docs/internal/philo/graph/observations/astra/20260923T014513Z-case.j1.first_words_continue_later.draft_custody-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2c2v9nfa/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:64424"
+  ]
+}

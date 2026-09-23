@@ -1,0 +1,36 @@
+{
+  "source_commit": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+  "brain": "astra",
+  "incidents": [
+    {
+      "id": "serial_overlap_j10",
+      "rule": "One rig invocation and one hub at a time from this lane.",
+      "detected_utc": "2026-09-23T02:30:47+00:00",
+      "affected_runs": [
+        "20260923T022840Z-case.j10.arrival_generate_again.same_day_idempotent-astra-1440",
+        "20260923T023002Z-case.j10.arrival_generate_again.same_day_idempotent-astra-393"
+      ],
+      "observed_processes": [
+        {
+          "rig_pid": 91161,
+          "hub_pid": 91165,
+          "viewport": 1440,
+          "state_at_detection": "Both alive; elapsed about 127 seconds."
+        },
+        {
+          "rig_pid": 91762,
+          "hub_pid": 91766,
+          "viewport": 393,
+          "state_at_detection": "Both alive; elapsed about 45 seconds."
+        }
+      ],
+      "action": "Root verified exact own rig command lines, sent SIGTERM to 91762 and 91766, interrupted the worker, and allowed the first case to finish. Both original records are retained unchanged and excluded from strict serial proof. Replacement runs will be listed below.",
+      "root_action_recorded_utc": "2026-09-23T02:32:16.116197+00:00",
+      "replacement_runs": [
+        "20260923T023227Z-case.j10.arrival_generate_again.same_day_idempotent-astra-1440",
+        "20260923T023602Z-case.j10.arrival_generate_again.same_day_idempotent-astra-393"
+      ],
+      "root_cause": "Worker treated a completed orchestration wrapper with no output as proof that its child rig had exited. The child was still holding the 180-second unchanged-result bound. Future transitions require the rig exit result, complete observation, and stopped own hub."
+    }
+  ]
+}

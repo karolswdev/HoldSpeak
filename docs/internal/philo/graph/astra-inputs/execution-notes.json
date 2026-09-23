@@ -1,0 +1,36 @@
+{
+  "source_commit": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+  "requested_brain": "astra",
+  "rig_version": "1.1.0",
+  "original_atlas_sha256": "64af1de4364c57c4df644b8df23445fcd6bccf713e3429d6855882abb875dafe",
+  "runtime_address_resolution": "J6 only: setup fill address http://192.168.1.43:8080 -> http://192.168.1.43:8080/v1, as live-pass brief requires; no recipe/selector/predicate changes.",
+  "environment_bootstrap": {
+    "reason": "First J6 analysis attempt logged openai package is not available; pyproject.toml test extra declares openai.",
+    "command": "HOME=$(mktemp -d) uv sync --extra dev --extra test",
+    "installed_openai": "2.30.0",
+    "subsequent_run_flags": "uv run --extra dev --extra test",
+    "first_affected_run": "20260923T020613Z-case.j6.run_summary.intel_running-astra-1440"
+  },
+  "observed_engine_identity": {
+    "source": "20260923T020409Z-case.j6.run_summary.intel_queued-astra-1440/after.png",
+    "display_name": "Qwen3.6 35B A3B",
+    "display_variant": "UD-Q5_K_XL",
+    "display_host": "192.168.1.43 \u00b7 LAN",
+    "display_state": "READY",
+    "planned_profile_id": "engine-192-168-1-43-8080",
+    "planned_profile_revision": 1,
+    "executed_model_identity": "Not established by this queued-state observation; its run_receipt is null."
+  },
+  "fixture": {
+    "path": "tests/fixtures/core_path_smoke_16k.wav",
+    "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+    "source_spoken_text": "the quick brown fox jumps over the lazy dog",
+    "source_evidence": "tests/integration/test_core_path_smoke.py:16-24",
+    "live_transcript": "Not captured verbatim in the completed J6 observations; the source phrase is not claimed as observed transcription.",
+    "usefulness_limit": "One synthetic sentence, not an architect meeting with decisions, owners and actions. The atlas summary_text predicate requests HOLDSPEAK-SYNTH-1, which the documented source phrase does not contain."
+  },
+  "j6_completion": {
+    "technical": "Unverified: recipes block before terminal summary text and executed-host receipt.",
+    "owner_usefulness": "Unverified separately: no summary text captured and fixture is not an architect meeting."
+  }
+}

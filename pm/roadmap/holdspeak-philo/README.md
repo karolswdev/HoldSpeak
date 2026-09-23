@@ -1,8 +1,8 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-22 (PHILO-2-03 independent static seal).
+**Last updated:** 2026-09-22 (PHILO-2-05 independent live seal).
 **Current phase:** [phase-2-the-graph](phase-2-the-graph/current-phase-status.md)
-**Status:** Phase 1 delivered and merged (PR #589); Phase 2 active. PHILO-2-03 seals Astra’s independent static pass; cross-check follows all four sealed outputs.
+**Status:** Phase 1 delivered and merged (PR #589); Phase 2 active. PHILO-2-05 seals Astra’s independent live audit; cross-check follows all four sealed outputs. This is an audit delivery, not a claim that the owner jobs all pass.
 
 ## Vision
 

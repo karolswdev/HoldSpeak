@@ -1,0 +1,23 @@
+[
+  {
+    "run_id": "20260923T023227Z-case.j10.arrival_generate_again.same_day_idempotent-astra-1440",
+    "retained_before_id": "brief-6eaae59632cf4aa6a75a8b2d03c845d5",
+    "returned_id": "brief-6eaae59632cf4aa6a75a8b2d03c845d5",
+    "equal": true,
+    "verdict": "pass"
+  },
+  {
+    "run_id": "20260923T023602Z-case.j10.arrival_generate_again.same_day_idempotent-astra-393",
+    "retained_before_id": "brief-dea96c318e0545cf800ce2860d488089",
+    "returned_id": "brief-dea96c318e0545cf800ce2860d488089",
+    "equal": true,
+    "verdict": "pass"
+  },
+  {
+    "run_id": "20260923T023923Z-case.j10.route_generate_again.same_day_same_id-astra-1440",
+    "retained_before_id": "brief-5b2efcb798474cf7b68fed96a6b50a55",
+    "returned_id": "brief-5b2efcb798474cf7b68fed96a6b50a55",
+    "equal": true,
+    "verdict": "pass"
+  }
+]

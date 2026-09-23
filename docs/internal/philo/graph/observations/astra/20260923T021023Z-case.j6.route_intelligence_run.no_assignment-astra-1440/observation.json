@@ -1,0 +1,596 @@
+{
+  "id": "obs-20260923T021023Z-case.j6.route_intelligence_run.no_assignment-astra-1440",
+  "run_id": "20260923T021023Z-case.j6.route_intelligence_run.no_assignment-astra-1440",
+  "case_id": "case.j6.route_intelligence_run.no_assignment",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/astra-inputs/j6-runtime-atlas.json",
+  "job": "j6",
+  "edge_ids": [
+    "edge.route.meeting_intelligence_run"
+  ],
+  "state_id": "state.engines.assignment_missing",
+  "provenance": {
+    "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f872c6384eb22ce20c3a6d429fe833a2bc682f6bf2091f207c1f45cc4d4539fc",
+      "assets": [
+        "index-BNDgWxUD.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:52788",
+      "port": 52788,
+      "pid": 81948,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-k5w5mqzi",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-k5w5mqzi/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/core_path_smoke_16k.wav": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T02:10:23.825733+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "real",
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/astra-inputs/j6-runtime-atlas.json",
+      "sha256": "c745c2e01f1cfd17adcfa6e358d35fafc8c853b433b23522933cd185f5a7cbf7",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "fixture",
+      "path": "tests/fixtures/core_path_smoke_16k.wav",
+      "route": {
+        "method": "POST",
+        "path": "/api/meetings/import"
+      },
+      "adapter": "http-route",
+      "status": 202,
+      "response": {
+        "meeting_id": "1d647db5",
+        "status": "importing"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "1d647db5"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-meetings]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a meeting WITH a transcript",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "no capability head for meeting.deferred_analysis",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/meetings/0/id",
+        "value": "1d647db5"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/meetings/0/id = '1d647db5', wanted '1d647db5'"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {
+    "meeting_id": "1d647db5"
+  },
+  "trigger": {
+    "kind": "api",
+    "method": "POST",
+    "path": "/api/meetings/1d647db5/intelligence/run",
+    "adapter": "http-route",
+    "status": 409,
+    "response": "{\"success\":false,\"error\":\"Meeting has no transcript\",\"plainReason\":\"Meeting has no transcript\",\"code\":\"empty\",\"planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"current_planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"run_receipt\":null,\"last_refusal\":null}",
+    "response_sha256": "fa2ae8cac82ebb06a720300d1e8300b8fd01279a9e885759515eccbfa057d8f5"
+  },
+  "diff": {
+    "document_text_sha256": {
+      "before": "0362afa9ef9457fb63e85bbb489a21db2362b52afc4432d2c383c168e67952de",
+      "after": "a8738a1467480b6d22ff65a84a0f464857ce8918900c64621bd94ac9cd1f6922"
+    },
+    "document_text_len": {
+      "before": 408,
+      "after": 434
+    },
+    "protocol_digest": {
+      "before": {
+        "status": 200,
+        "row_count": 1,
+        "payload_sha256": "e20df9496cae0cb874277ae2dcbe5e9d8f76ef61fc854ba29c0e4313e1577be5"
+      },
+      "after": {
+        "status": 200,
+        "row_count": 1,
+        "payload_sha256": "ea50342e435efd48ef2753bf64449dc97ab498dca4bd1cccc9207a7bbf09d676"
+      }
+    }
+  },
+  "before": {
+    "observe_at": "protocol: GET /api/desk/projections",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nTue,",
+    "url": "http://127.0.0.1:52788/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/desk/projections",
+      "status": 200,
+      "collection": "projections",
+      "row_count": 1,
+      "payload_sha256": "e20df9496cae0cb874277ae2dcbe5e9d8f76ef61fc854ba29c0e4313e1577be5",
+      "rows": [
+        {
+          "id": "meeting:1d647db5:capture:finalized",
+          "projection_kind": "receipt",
+          "subject_ref": "meeting:1d647db5",
+          "subject_label": "core_path_smoke_16k",
+          "title": "Meeting saved",
+          "summary": "Open the Meeting for its durable checkpoint, transcript, and recovery actions.",
+          "reason_code": "capture_finalized",
+          "decision_kind": "recovery",
+          "attention_state": "resolved",
+          "actual_destination": "this_machine",
+          "authority_basis": "explicit_capture",
+          "attempt": null,
+          "outcome": "finalized",
+          "timestamp": "2026-09-23T02:10:27Z",
+          "correlation_id": "meeting:1d647db5",
+          "source_kind": "meeting",
+          "source_id": "1d647db5",
+          "source_api": "/api/meetings/1d647db5",
+          "detail_url": "/history?meeting=1d647db5",
+          "control_mode": null,
+          "policy_version": null,
+          "effect_class": null,
+          "severity": "normal",
+          "dismissed": false,
+          "version": 1,
+          "origin": null,
+          "caller": null,
+          "caller_identity": null
+        }
+      ],
+      "payload": {
+        "version": 1,
+        "projections": [
+          {
+            "id": "meeting:1d647db5:capture:finalized",
+            "projection_kind": "receipt",
+            "subject_ref": "meeting:1d647db5",
+            "subject_label": "core_path_smoke_16k",
+            "title": "Meeting saved",
+            "summary": "Open the Meeting for its durable checkpoint, transcript, and recovery actions.",
+            "reason_code": "capture_finalized",
+            "decision_kind": "recovery",
+            "attention_state": "resolved",
+            "actual_destination": "this_machine",
+            "authority_basis": "explicit_capture",
+            "attempt": null,
+            "outcome": "finalized",
+            "timestamp": "2026-09-23T02:10:27Z",
+            "correlation_id": "meeting:1d647db5",
+            "source_kind": "meeting",
+            "source_id": "1d647db5",
+            "source_api": "/api/meetings/1d647db5",
+            "detail_url": "/history?meeting=1d647db5",
+            "control_mode": null,
+            "policy_version": null,
+            "effect_class": null,
+            "severity": "normal",
+            "dismissed": false,
+            "version": 1,
+            "origin": null,
+            "caller": null,
+            "caller_identity": null
+          }
+        ],
+        "counts": {
+          "needs_attention": 0,
+          "unseen": 0,
+          "acknowledged": 0,
+          "receipts": 1
+        },
+        "subject_counts": {
+          "meeting:1d647db5": {
+            "needs_attention": 0,
+            "receipts": 1
+          }
+        },
+        "page": {
+          "offset": 0,
+          "limit": 50,
+          "total": 1,
+          "has_more": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "e20df9496cae0cb874277ae2dcbe5e9d8f76ef61fc854ba29c0e4313e1577be5"
+    },
+    "document_text_sha256": "0362afa9ef9457fb63e85bbb489a21db2362b52afc4432d2c383c168e67952de",
+    "document_text_len": 408,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T02:10:30.435781+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/desk/projections",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nTue,",
+    "url": "http://127.0.0.1:52788/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/desk/projections",
+      "status": 200,
+      "collection": "projections",
+      "row_count": 1,
+      "payload_sha256": "ea50342e435efd48ef2753bf64449dc97ab498dca4bd1cccc9207a7bbf09d676",
+      "rows": [
+        {
+          "id": "meeting:1d647db5:capture:finalized",
+          "projection_kind": "receipt",
+          "subject_ref": "meeting:1d647db5",
+          "subject_label": "core_path_smoke_16k",
+          "title": "Meeting saved",
+          "summary": "Open the Meeting for its durable checkpoint, transcript, and recovery actions.",
+          "reason_code": "capture_finalized",
+          "decision_kind": "recovery",
+          "attention_state": "resolved",
+          "actual_destination": "this_machine",
+          "authority_basis": "explicit_capture",
+          "attempt": null,
+          "outcome": "finalized",
+          "timestamp": "2026-09-23T02:10:35Z",
+          "correlation_id": "meeting:1d647db5",
+          "source_kind": "meeting",
+          "source_id": "1d647db5",
+          "source_api": "/api/meetings/1d647db5",
+          "detail_url": "/history?meeting=1d647db5",
+          "control_mode": null,
+          "policy_version": null,
+          "effect_class": null,
+          "severity": "normal",
+          "dismissed": false,
+          "version": 1,
+          "origin": null,
+          "caller": null,
+          "caller_identity": null
+        }
+      ],
+      "payload": {
+        "version": 1,
+        "projections": [
+          {
+            "id": "meeting:1d647db5:capture:finalized",
+            "projection_kind": "receipt",
+            "subject_ref": "meeting:1d647db5",
+            "subject_label": "core_path_smoke_16k",
+            "title": "Meeting saved",
+            "summary": "Open the Meeting for its durable checkpoint, transcript, and recovery actions.",
+            "reason_code": "capture_finalized",
+            "decision_kind": "recovery",
+            "attention_state": "resolved",
+            "actual_destination": "this_machine",
+            "authority_basis": "explicit_capture",
+            "attempt": null,
+            "outcome": "finalized",
+            "timestamp": "2026-09-23T02:10:35Z",
+            "correlation_id": "meeting:1d647db5",
+            "source_kind": "meeting",
+            "source_id": "1d647db5",
+            "source_api": "/api/meetings/1d647db5",
+            "detail_url": "/history?meeting=1d647db5",
+            "control_mode": null,
+            "policy_version": null,
+            "effect_class": null,
+            "severity": "normal",
+            "dismissed": false,
+            "version": 1,
+            "origin": null,
+            "caller": null,
+            "caller_identity": null
+          }
+        ],
+        "counts": {
+          "needs_attention": 0,
+          "unseen": 0,
+          "acknowledged": 0,
+          "receipts": 1
+        },
+        "subject_counts": {
+          "meeting:1d647db5": {
+            "needs_attention": 0,
+            "receipts": 1
+          }
+        },
+        "page": {
+          "offset": 0,
+          "limit": 50,
+          "total": 1,
+          "has_more": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "ea50342e435efd48ef2753bf64449dc97ab498dca4bd1cccc9207a7bbf09d676"
+    },
+    "document_text_sha256": "a8738a1467480b6d22ff65a84a0f464857ce8918900c64621bd94ac9cd1f6922",
+    "document_text_len": 434,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T02:15:31.001801+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/1d647db5/intelligence/run",
+      "status": 409,
+      "body_sha256": "fa2ae8cac82ebb06a720300d1e8300b8fd01279a9e885759515eccbfa057d8f5",
+      "body": "{\"success\":false,\"error\":\"Meeting has no transcript\",\"plainReason\":\"Meeting has no transcript\",\"code\":\"empty\",\"planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"current_planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"run_receipt\":null,\"last_refusal\":null}"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/desk/projections",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nTue,",
+    "url": "http://127.0.0.1:52788/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/desk/projections",
+      "status": 200,
+      "collection": "projections",
+      "row_count": 1,
+      "payload_sha256": "e20df9496cae0cb874277ae2dcbe5e9d8f76ef61fc854ba29c0e4313e1577be5",
+      "rows": [
+        {
+          "id": "meeting:1d647db5:capture:finalized",
+          "projection_kind": "receipt",
+          "subject_ref": "meeting:1d647db5",
+          "subject_label": "core_path_smoke_16k",
+          "title": "Meeting saved",
+          "summary": "Open the Meeting for its durable checkpoint, transcript, and recovery actions.",
+          "reason_code": "capture_finalized",
+          "decision_kind": "recovery",
+          "attention_state": "resolved",
+          "actual_destination": "this_machine",
+          "authority_basis": "explicit_capture",
+          "attempt": null,
+          "outcome": "finalized",
+          "timestamp": "2026-09-23T02:10:27Z",
+          "correlation_id": "meeting:1d647db5",
+          "source_kind": "meeting",
+          "source_id": "1d647db5",
+          "source_api": "/api/meetings/1d647db5",
+          "detail_url": "/history?meeting=1d647db5",
+          "control_mode": null,
+          "policy_version": null,
+          "effect_class": null,
+          "severity": "normal",
+          "dismissed": false,
+          "version": 1,
+          "origin": null,
+          "caller": null,
+          "caller_identity": null
+        }
+      ],
+      "payload": {
+        "version": 1,
+        "projections": [
+          {
+            "id": "meeting:1d647db5:capture:finalized",
+            "projection_kind": "receipt",
+            "subject_ref": "meeting:1d647db5",
+            "subject_label": "core_path_smoke_16k",
+            "title": "Meeting saved",
+            "summary": "Open the Meeting for its durable checkpoint, transcript, and recovery actions.",
+            "reason_code": "capture_finalized",
+            "decision_kind": "recovery",
+            "attention_state": "resolved",
+            "actual_destination": "this_machine",
+            "authority_basis": "explicit_capture",
+            "attempt": null,
+            "outcome": "finalized",
+            "timestamp": "2026-09-23T02:10:27Z",
+            "correlation_id": "meeting:1d647db5",
+            "source_kind": "meeting",
+            "source_id": "1d647db5",
+            "source_api": "/api/meetings/1d647db5",
+            "detail_url": "/history?meeting=1d647db5",
+            "control_mode": null,
+            "policy_version": null,
+            "effect_class": null,
+            "severity": "normal",
+            "dismissed": false,
+            "version": 1,
+            "origin": null,
+            "caller": null,
+            "caller_identity": null
+          }
+        ],
+        "counts": {
+          "needs_attention": 0,
+          "unseen": 0,
+          "acknowledged": 0,
+          "receipts": 1
+        },
+        "subject_counts": {
+          "meeting:1d647db5": {
+            "needs_attention": 0,
+            "receipts": 1
+          }
+        },
+        "page": {
+          "offset": 0,
+          "limit": 50,
+          "total": 1,
+          "has_more": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "e20df9496cae0cb874277ae2dcbe5e9d8f76ef61fc854ba29c0e4313e1577be5"
+    },
+    "document_text_sha256": "0362afa9ef9457fb63e85bbb489a21db2362b52afc4432d2c383c168e67952de",
+    "document_text_len": 408,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T02:10:31.477361+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/1d647db5/intelligence/run",
+      "status": 409,
+      "body_sha256": "fa2ae8cac82ebb06a720300d1e8300b8fd01279a9e885759515eccbfa057d8f5",
+      "body": "{\"success\":false,\"error\":\"Meeting has no transcript\",\"plainReason\":\"Meeting has no transcript\",\"code\":\"empty\",\"planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"current_planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"run_receipt\":null,\"last_refusal\":null}"
+    },
+    "predicate_satisfied": false,
+    "reading": "rows matching {'source_kind': 'intel_job', 'attention_state': 'needs_attention'} at /api/desk/projections: before=0 after=0 (new=0; wanted >= 1)",
+    "elapsed_s": 0.92
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": false,
+    "reading": "rows matching {'source_kind': 'intel_job', 'attention_state': 'needs_attention'} at /api/desk/projections: before=0 after=0 (new=0; wanted >= 1)",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 300.444,
+    "first_satisfied_at_s": null,
+    "completion_bound_s": 300.0,
+    "late_result_s": null,
+    "within_bound": false
+  },
+  "verdict": "fail",
+  "notes": [
+    "predicate: rows matching {'source_kind': 'intel_job', 'attention_state': 'needs_attention'} at /api/desk/projections: before=0 after=0 (new=0; wanted >= 1)",
+    "a nonzero diff with the wrong result is a finding, not a pass (changed: ['document_text_len', 'document_text_sha256', 'protocol_digest'])."
+  ],
+  "complete": true,
+  "shots": [
+    "docs/internal/philo/graph/observations/astra/20260923T021023Z-case.j6.route_intelligence_run.no_assignment-astra-1440/before.png",
+    "docs/internal/philo/graph/observations/astra/20260923T021023Z-case.j6.route_intelligence_run.no_assignment-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-k5w5mqzi/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:52788",
+    "",
+    "Fetching 4 files:   0%|          | 0/4 [00:00<?, ?it/s]Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.",
+    "",
+    "Fetching 4 files:  25%|\u2588\u2588\u258c       | 1/4 [00:00<00:00,  3.84it/s]",
+    "Fetching 4 files: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 4/4 [00:06<00:00,  1.68s/it]",
+    "Fetching 4 files: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 4/4 [00:06<00:00,  1.57s/it]"
+  ]
+}
